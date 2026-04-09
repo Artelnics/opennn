@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "dataset.h"
+#include <regex>
 #include "time_series_dataset.h"
 #include "statistics.h"
 #include "scaling.h"
@@ -124,10 +125,15 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
 
     const Index batches_number = (samples_number + batch_size - 1) / batch_size;
 
-    vector<Index> indices = sample_indices;
+    vector<Index> shuffled_indices;
 
     if(shuffle)
-        shuffle_vector_blocks(indices);
+    {
+        shuffled_indices = sample_indices;
+        shuffle_vector_blocks(shuffled_indices);
+    }
+
+    const vector<Index>& indices = shuffle ? shuffled_indices : sample_indices;
 
     vector<vector<Index>> batches(batches_number);
 
@@ -1530,7 +1536,7 @@ VectorI Dataset::calculate_correlations_rank() const
 
     const VectorR absolute_mean_correlations = absolute_correlations.rowwise().mean();
 
-    return calculate_rank_less(absolute_mean_correlations);
+    return calculate_rank(absolute_mean_correlations);
 }
 
 void Dataset::set_default_variable_scalers()
@@ -1749,7 +1755,8 @@ void Dataset::samples_from_XML(const XMLElement *samples_element)
     {
         const vector<vector<Index>> all_feature_indices = get_feature_indices();
 
-        data.resize(samples_number, all_feature_indices[all_feature_indices.size() - 1][all_feature_indices[all_feature_indices.size() - 1].size() - 1] + 1);
+        const auto& last_indices = all_feature_indices.back();
+        data.resize(samples_number, last_indices.back() + 1);
         data.setZero();
 
         sample_roles.resize(samples_number);

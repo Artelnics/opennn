@@ -49,9 +49,34 @@ struct Batch
 
     Memory target;
     Shape target_shape;
-};
 
-// @todo BatchCuda removed - unified Batch with Memory handles both CPU and CUDA
+#ifdef CUDA
+
+    void fill_host(const vector<Index>&,
+                   const vector<Index>&,
+                   const vector<Index>&,
+                   const vector<Index>&);
+
+    void copy_device(const Index);
+    void copy_device_async(const Index, cudaStream_t);
+
+    vector<TensorView> get_inputs_device() const;
+    TensorView get_targets_device() const;
+
+    Index num_input_features = 0;
+    Index num_decoder_features = 0;
+    Index num_target_features = 0;
+
+    float* inputs_host = nullptr;
+    float* decoder_host = nullptr;
+    float* targets_host = nullptr;
+
+    Index inputs_host_allocated_size = 0;
+    Index decoder_host_allocated_size = 0;
+    Index targets_host_allocated_size = 0;
+
+#endif
+};
 
 }
 

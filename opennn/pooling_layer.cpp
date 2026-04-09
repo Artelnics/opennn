@@ -215,59 +215,8 @@ void Pooling::from_XML(const XMLDocument& document)
     set_padding_width(read_xml_index(pooling_layer_element, "PaddingWidth"));
 }
 
-#ifdef CUDA
-
-void PoolingForwardPropagationCuda::initialize()
-{
-    const Pooling* pooling_layer = static_cast<Pooling*>(layer);
-
-    const Index input_height = pooling_layer->get_input_height();
-    const Index input_width = pooling_layer->get_input_width();
-    const Index channels = pooling_layer->get_channels_number();
-
-    const Index output_height = pooling_layer->get_output_height();
-    const Index output_width = pooling_layer->get_output_width();
-
-    // Inputs
-    
-    cudnnSetTensor4dDescriptor(input_tensor_descriptor,
-                               CUDNN_TENSOR_NHWC,
-                               CUDNN_DATA_FLOAT,
-                               batch_size,
-                               channels,
-                               input_height,
-                               input_width);
-
-    // Outputs
-
-    outputs.set_descriptor({ batch_size, output_height, output_width, channels });
-}
-
-vector<TensorView*> PoolingForwardPropagationCuda::get_workspace_views()
-{
-    return { &outputs };
-}
-
-void PoolingForwardPropagationCuda::free()
-{
-    cudnnDestroyTensorDescriptor(input_tensor_descriptor);
-    input_tensor_descriptor = nullptr;
-}
-
-void PoolingBackPropagationCuda::initialize()
-{
-    const Pooling* pooling_layer = static_cast<Pooling*>(layer);
-
-    const Index input_height = pooling_layer->get_input_height();
-    const Index input_width = pooling_layer->get_input_width();
-    const Index channels = pooling_layer->get_channels_number();
-
-    // Input derivatives
-
-    input_gradients = {TensorView({batch_size, input_height, input_width, channels})};
-}
-
-#endif
+// CUDA forward/backward handled via unified ForwardPropagation/BackPropagation views
+// and operators in math_utilities.h
 
 REGISTER(Layer, Pooling, "Pooling")
 

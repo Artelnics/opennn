@@ -435,6 +435,13 @@ void OptimizerData::print() const
          << initial_learning_rate << endl;
 }
 
+
+
+TrainingResults Optimizer::train_cuda()
+{
+    return train();
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

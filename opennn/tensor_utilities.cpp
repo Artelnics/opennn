@@ -59,7 +59,7 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
     return feasible_rows;
 }
 
-VectorI calculate_rank_greater(const VectorR& vector)
+VectorI calculate_rank(const VectorR& vector, bool ascending)
 {
     const Index size = vector.size();
 
@@ -68,21 +68,7 @@ VectorI calculate_rank_greater(const VectorR& vector)
 
     sort(rank.data(),
          rank.data() + rank.size(),
-         [&](Index i, Index j){return vector[i] > vector[j];});
-
-    return rank;
-}
-
-VectorI calculate_rank_less(const VectorR& vector)
-{
-    const Index size = vector.size();
-
-    VectorI rank(size);
-    iota(rank.data(), rank.data() + rank.size(), 0);
-
-    sort(rank.data(),
-         rank.data() + rank.size(),
-         [&](Index i, Index j){return vector[i] < vector[j];});
+         [&](Index i, Index j){ return ascending ? vector[i] < vector[j] : vector[i] > vector[j]; });
 
     return rank;
 }
@@ -163,8 +149,11 @@ void fill_tensor_data(const MatrixR& matrix,
     const bool contiguous = is_contiguous(column_indices);
 
     if (contiguous)
+    {
+        #pragma omp parallel for schedule(static) if (parallelize)
         for(Index i = 0; i < rows_number; ++i)
             memcpy(tensor_data + i * columns_number, &matrix(row_indices[i], column_indices[0]), static_cast<size_t>(columns_number) * sizeof(float));
+    }
     else
     {
         #pragma omp parallel for schedule(static) if (parallelize)
@@ -186,7 +175,7 @@ string shape_to_string(const Shape& x, const string& separator)
 
     ostringstream buffer;
 
-    if(x.size() == 0)
+    if(size == 0)
         throw runtime_error("Error: Dimensions size must be greater than 0.\n");
 
     for(Index i = 0; i < size; i++)
@@ -209,8 +198,8 @@ Shape string_to_shape(const string& x, const string& separator)
     {
         try
         {
-            if(!token.empty())
-                result.push_back(stoi(token));
+            if(!token.empty() && result.rank < Shape::MaxRank)
+                result.shape[result.rank++] = stoi(token);
         }
         catch (const invalid_argument&)
         {
@@ -249,7 +238,7 @@ MatrixMap tensor_map(const Tensor4& tensor, Index index_3, Index index_2)
                                       tensor.dimension(0), tensor.dimension(1));
 }
 
-type* link(type *pointer, vector<TensorView*> views)
+type* link(type *pointer, const vector<TensorView*>& views)
 {
     for(TensorView* view : views)
     {
@@ -267,13 +256,13 @@ type* link(type *pointer, vector<TensorView*> views)
     return pointer;
 }
 
-void link(type *pointer, vector<vector<TensorView*>> views)
+void link(type *pointer, const vector<vector<TensorView*>>& views)
 {
     for(size_t i = 0; i < views.size(); i++)
         pointer = link(pointer, views[i]);
 }
 
-Index get_size(const vector<TensorView*> views)
+Index get_size(const vector<TensorView*>& views)
 {
     Index total_size = 0;
 
@@ -288,7 +277,7 @@ Index get_size(const vector<TensorView*> views)
     return total_size;
 }
 
-Index get_size(vector<vector<TensorView*>> views)
+Index get_size(const vector<vector<TensorView*>>& views)
 {
     Index total_size = 0;
 
@@ -404,117 +393,8 @@ void shuffle_rows(MatrixR& matrix)
     }
 }
 
-#ifdef CUDA
+// CUDA link/get_size not needed - TensorView unified
 
-type* link(type* pointer, const vector<TensorView*>& views)
-{
-    for (TensorView* view : views)
-    {
-        if (!view || view->size() == 0)
-            continue;
-
-        view->data = pointer;
-
-        pointer += (view->size() + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
-    }
-
-    return pointer;
-}
-
-void link(type* pointer, const vector<vector<TensorView*>>& views)
-{
-    for (size_t i = 0; i < views.size(); i++)
-        pointer = link(pointer, views[i]);
-}
-
-Index get_size(const vector<TensorView*>& views)
-{
-    Index total_size = 0;
-
-    for (const TensorView* view : views)
-    {
-        if (!view || view->size() == 0)
-            continue;
-
-        total_size += (view->size() + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
-    }
-
-    return total_size;
-}
-
-Index get_size(const vector<vector<TensorView*>>& views)
-{
-    Index total_size = 0;
-
-    for (size_t i = 0; i < views.size(); i++)
-        total_size += get_size(views[i]);
-
-    return total_size;
-}
-
-VectorR vector_from_device(const type* pointer, const size_t& new_size)
-{
-    if (new_size == 0) cout << "Empty vector" << endl;
-
-    VectorR  vector(new_size);
-
-    if (cudaMemcpy(vector.data(), pointer, new_size * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Cuda vector memcpy error" << endl;
-
-    return vector;
-}
-
-MatrixR matrix_from_device(const type* pointer, const size_t& new_rows_number, const size_t& new_variables_number)
-{
-    MatrixR matrix(new_rows_number, new_variables_number);
-
-    matrix.setZero();
-
-    if (matrix.size() == 0) cout << "Empty matrix" << endl;
-
-    if (cudaMemcpy(matrix.data(), pointer, new_rows_number * new_variables_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Cuda matrix memcpy error" << endl;
-
-    return matrix;
-}
-
-Tensor3 tensor3_from_device(const type* pointer, const size_t& new_depth_number, const size_t& new_rows_number, const size_t& new_columns_number)
-{
-
-    Tensor3 matrix_3d(static_cast<long long>(new_depth_number), static_cast<long long>(new_rows_number), static_cast<long long>(new_columns_number));
-
-    matrix_3d.setZero();
-
-    if (matrix_3d.size() == 0) {
-        cout << "Empty matrix_3d" << endl;
-    }
-
-    if (cudaMemcpy(matrix_3d.data(), pointer, new_rows_number * new_columns_number * new_depth_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess) {
-        cout << "CUDA tensor memcpy error" << endl;
-    }
-
-    return matrix_3d;
-}
-
-Tensor4 tensor4_from_device(const type* pointer, const size_t& new_batch_samples_number, const size_t& new_rows_number, const size_t& new_columns_number, const size_t& new_channels_number)
-{
-
-    Tensor4 matrix_4d(static_cast<long long>(new_batch_samples_number), static_cast<long long>(new_rows_number), static_cast<long long>(new_columns_number), static_cast<long long>(new_channels_number));
-
-    matrix_4d.setZero();
-
-    if (matrix_4d.size() == 0) {
-        cout << "Empty matrix_4d" << endl;
-    }
-
-    if (cudaMemcpy(matrix_4d.data(), pointer, new_batch_samples_number * new_rows_number * new_columns_number * new_channels_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess) {
-        cout << "CUDA tensor memcpy error" << endl;
-    }
-
-    return matrix_4d;
-}
-
-#endif
 
 Device::Device()
 {

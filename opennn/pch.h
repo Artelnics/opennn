@@ -21,7 +21,6 @@
 #include <cassert>
 #include <cmath>
 #include <ctime>
-#include <codecvt>
 #include <filesystem>
 #include <functional>
 #include <iomanip>
@@ -36,19 +35,15 @@
 #include <exception>
 #include <memory>
 #include <random>
+#include <regex>
 #include <cstring>
 #include <cstdlib>
 #include <fstream>
 #include <stdexcept>
 #include <stdlib.h>
 #include <set>
-#include <regex>
 #include <sstream>
 #include <omp.h>
-#include <future>
-#include <queue>
-#include <mutex>
-#include <condition_variable>
 
 #include "../eigen/Eigen/Core"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"

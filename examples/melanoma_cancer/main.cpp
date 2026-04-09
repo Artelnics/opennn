@@ -62,7 +62,7 @@ int main()
 
         cout << "Calculating Binary classification tests..." << endl;
         TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
-        testing_analysis.set_batch_size(16);
+        // testing_analysis.set_batch_size(16); // @todo
         testing_analysis.print_binary_classification_tests();
 
         #endif

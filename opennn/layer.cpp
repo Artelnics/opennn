@@ -111,21 +111,7 @@ void Layer::set_output_shape(const Shape&)
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }
 
-#ifdef CUDA
-
-void Layer::add_gradients(const vector<TensorViewCuda>& output_gradient_views) const
-{
-    if (output_gradient_views.size() <= 1) return;
-    if (!output_gradient_views[0].data) return;
-
-    const size_t n = output_gradient_views[0].size();
-
-    for (size_t i = 1; i < output_gradient_views.size(); i++)
-        if (output_gradient_views[i].data)
-            addition_cuda(n, output_gradient_views[0].data, output_gradient_views[i].data, output_gradient_views[0].data);
-}
-
-#endif
+// @todo CUDA add_gradients using device pointers
 } 
 
 // OpenNN: Open Neural Networks Library.

@@ -60,7 +60,7 @@ void Normalization3d::set_parameters_glorot()
 
 void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const Index batch_size = forward_propagation.batch_size;
     const Index embedding_dimension = get_embedding_dimension();
 /*
@@ -98,21 +98,7 @@ void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation,
     outputs.device(get_device()) = normalized_inputs * gamma_bcast + beta_bcast;
 */
 #else
-    Normalization3dForwardPropagationCuda* fp_cuda = static_cast<Normalization3dForwardPropagationCuda*>(forward_propagation.get());
-
-    const int N = static_cast<int>(fp_cuda->batch_size * sequence_length);
-    const int D = static_cast<int>(get_embedding_dimension());
-
-    layernorm_forward_cuda(
-        N, D,
-        forward_propagation->inputs[0].data,
-        fp_cuda->outputs.data,
-        fp_cuda->means_device.data,
-        fp_cuda->inv_variances_device.data,
-        gammas_device.data,
-        betas_device.data,
-        static_cast<float>(EPSILON)
-        );
+    // @todo CUDA path
 #endif
 }
 
@@ -125,7 +111,7 @@ void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
         add_gradients(back_propagation->output_gradients);
 */
 
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
 /*
 
     const Index batch_size = forward_propagation->inputs[0].shape[0];
@@ -187,23 +173,7 @@ void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
     dX.device(get_device()) = (D - sum_D_bcast * inv_E - X_hat * sum_D_xhat_bcast * inv_E) / std_dev_bcast;
 */
 #else
-    Normalization3dForwardPropagationCuda* fp_cuda = static_cast<Normalization3dForwardPropagationCuda*>(forward_propagation.get());
-    Normalization3dBackPropagationCuda* bp_cuda = static_cast<Normalization3dBackPropagationCuda*>(back_propagation.get());
-
-    const int N = static_cast<int>(fp_cuda->batch_size * sequence_length);
-    const int D = static_cast<int>(get_embedding_dimension());
-
-    layernorm_backward_cuda(
-        N, D,
-        back_propagation->output_gradients[0].data,
-        forward_propagation->inputs[0].data,
-        fp_cuda->means_device.data,
-        fp_cuda->inv_variances_device.data,
-        gammas_device.data,
-        bp_cuda->input_gradients[0].data,
-        bp_cuda->gamma_gradients.data,
-        bp_cuda->beta_gradients.data
-        );
+    // @todo CUDA path
 #endif
 
 }
@@ -231,36 +201,7 @@ void Normalization3d::to_XML(XMLPrinter& printer) const
 }
 
 #ifdef CUDA
-
-void Normalization3dForwardPropagationCuda::initialize()
-{
-    const Normalization3d* norm_layer = static_cast<Normalization3d*>(layer);
-    const Index seq = norm_layer->get_sequence_length();
-    const Index dim = norm_layer->get_embedding_dimension();
-
-    outputs.set_descriptor({batch_size, seq, dim});
-
-    means_device.resize({batch_size * seq});
-    inv_variances_device.resize({batch_size * seq});
-}
-
-void Normalization3dBackPropagationCuda::initialize()
-{
-    const Normalization3d* norm_layer = static_cast<Normalization3d*>(layer);
-    const Index seq = norm_layer->get_sequence_length();
-    const Index dim = norm_layer->get_embedding_dimension();
-
-    input_gradients = {TensorView({batch_size, seq, dim})};
-
-    gamma_gradients.set_descriptor({dim});
-    beta_gradients.set_descriptor({dim});
-}
-
-vector<TensorView*> Normalization3dBackPropagationCuda::get_gradient_views()
-{
-    return {&gamma_gradients, &beta_gradients};
-}
-
+    // @todo CUDA path
 #endif
 
 REGISTER(Layer, Normalization3d, "Normalization3d")

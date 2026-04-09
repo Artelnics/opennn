@@ -92,8 +92,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     const Loss* loss = training_strategy->get_loss();
     training_strategy->get_optimization_algorithm()->set_display(false);
 
-    type previus_validation_error = MAX;
-    type previus_training_error = MAX;
+    type previous_validation_error = MAX;
+    type previous_training_error = MAX;
 
     const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
@@ -223,7 +223,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                 << "   Validation error: " << training_results.get_validation_error() << endl;
         }
 
-        if(previus_training_error < minimum_training_error)
+        if(previous_training_error < minimum_training_error)
         {
             if(display) cout << "Validation failure" << endl;
             validation_failures++;
@@ -235,8 +235,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         }
         else
         {
-            previus_training_error = minimum_training_error;
-            previus_validation_error = minimum_validation_error;
+            previous_training_error = minimum_training_error;
+            previous_validation_error = minimum_validation_error;
 
             input_selection_results.training_error_history(epoch) = minimum_training_error;
             input_selection_results.validation_error_history(epoch) = minimum_validation_error;

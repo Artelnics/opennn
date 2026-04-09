@@ -17,6 +17,7 @@
 #include "addition_layer.h"
 #include "embedding_layer.h"
 #include "variable.h"
+#include "string_utilities.h"
 
 namespace opennn
 {
@@ -816,7 +817,7 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
                 if(text)
                 {
                     Shape s = string_to_shape(text, " ");
-                    layer_input_indices[layer_idx] = vector<Index>(s.begin(), s.end());
+                    layer_input_indices[layer_idx] = vector<Index>(s.shape, s.shape + s.rank);
                 }
             }
             indices_element = indices_element->NextSiblingElement("LayerInputsIndices");
@@ -1174,6 +1175,24 @@ void ForwardPropagation::print() const
         //layers[i]->print();
     }
 }
+
+
+
+#ifdef CUDA
+
+void NeuralNetwork::copy_parameters_device()
+{
+    // @todo Copy CPU parameters to GPU
+    // With unified Memory, parameters are already on GPU when CUDA is active.
+    // This will be needed when parameters are initialized on CPU and need to be copied.
+}
+
+void NeuralNetwork::copy_parameters_host()
+{
+    // @todo Copy GPU parameters back to CPU
+}
+
+#endif
 
 }
 

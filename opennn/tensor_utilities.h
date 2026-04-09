@@ -9,6 +9,9 @@
 #pragma once
 
 #include "pch.h"
+#include <queue>
+#include <mutex>
+#include <condition_variable>
 
 namespace opennn
 {
@@ -27,6 +30,8 @@ inline bool is_aligned(const void* ptr)
 {
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
 }
+
+#ifdef CUDA
 
 template <typename T>
 class ThreadSafeQueue
@@ -64,6 +69,8 @@ public:
     }
 };
 
+#endif
+
 struct Shape
 {
     static constexpr size_t MaxRank = 4;
@@ -71,15 +78,6 @@ struct Shape
     size_t rank = 0;
 
     Shape() noexcept = default;
-
-    Shape(initializer_list<Index> list)
-    {
-        rank = min(list.size(), MaxRank);
-        size_t i = 0;
-        for (Index d : list)
-            if (i < rank)
-                shape[i++] = d;
-    }
 
     Shape(size_t n, Index value)
     {
@@ -89,15 +87,13 @@ struct Shape
             shape[i] = value;
     }
 
-    template<typename InputIt, typename = typename enable_if<!is_integral<InputIt>::value>::type>
-    Shape(InputIt first, InputIt last)
+    Shape(initializer_list<Index> list)
     {
-        rank = 0;
-        while (first != last && rank < MaxRank)
-        {
-            shape[rank++] = static_cast<Index>(*first);
-            ++first;
-        }
+        rank = min(list.size(), MaxRank);
+        size_t i = 0;
+        for (Index d : list)
+            if (i < rank)
+                shape[i++] = d;
     }
 
     const Index& operator[](size_t i) const noexcept
@@ -125,39 +121,13 @@ struct Shape
         return rank == 0;
     }
 
-    Index* begin() noexcept
-    {
-        return shape;
-    }
-
-    Index* end() noexcept
-    {
-        return shape + rank;
-    }
-
-    const Index* begin() const noexcept
-    {
-        return shape;
-    }
-
-    const Index* end() const noexcept
-    {
-        return shape + rank;
-    }
-
-    void push_back(Index d)
-    {
-        if (rank < MaxRank)
-            shape[rank++] = d;
-    }
-
     Index size() const noexcept
     {
         if (rank == 0) return 0;
 
-        Index total = 1;
+        Index total = shape[0];
 
-        for (size_t i = 0; i < rank; ++i)
+        for (size_t i = 1; i < rank; ++i)
             total *= shape[i];
 
         return total;
@@ -166,22 +136,6 @@ struct Shape
     void clear() noexcept
     {
         rank = 0;
-    }
-
-    void resize(size_t n)
-    {
-        if (n > MaxRank)
-            throw out_of_range("Shape::resize: rank exceeds MaxRank (" + to_string(MaxRank) + ")");
-
-        rank = n;
-    }
-
-    void resize(size_t n, Index value)
-    {
-        resize(n);
-
-        for (size_t i = 0; i < rank; ++i)
-            shape[i] = value;
     }
 
     friend ostream& operator<<(ostream& os, const Shape& s)
@@ -235,7 +189,6 @@ struct Shape
 
 struct Memory
 {
-#ifndef CUDA
     VectorR vector;
 
     type* data() { return vector.data(); }
@@ -245,15 +198,11 @@ struct Memory
     void resize(Index n) { vector.resize(n); }
     void setZero() { vector.setZero(); }
 
-#else
+#ifdef CUDA
     float* device_data = nullptr;
     Index allocated_size = 0;
 
-    type* data() { return device_data; }
-    const type* data() const { return device_data; }
-    Index size() const { return allocated_size; }
-
-    void resize(Index n)
+    void resize_device(Index n)
     {
         if(n == allocated_size) return;
         if(device_data) cudaFree(device_data);
@@ -261,20 +210,14 @@ struct Memory
         if(n > 0) CHECK_CUDA(cudaMalloc(&device_data, n * sizeof(float)));
     }
 
-    void setZero()
+    void setZero_device()
     {
         if(device_data && allocated_size > 0)
             CHECK_CUDA(cudaMemset(device_data, 0, allocated_size * sizeof(float)));
     }
 
-    ~Memory() { if(device_data) cudaFree(device_data); device_data = nullptr; allocated_size = 0; }
-    Memory() = default;
-    Memory(const Memory&) = delete;
-    Memory& operator=(const Memory&) = delete;
-    Memory(Memory&& other) noexcept : device_data(other.device_data), allocated_size(other.allocated_size)
-    { other.device_data = nullptr; other.allocated_size = 0; }
-    Memory& operator=(Memory&& other) noexcept
-    { if(this != &other) { if(device_data) cudaFree(device_data); device_data = other.device_data; allocated_size = other.allocated_size; other.device_data = nullptr; other.allocated_size = 0; } return *this; }
+    type* device() { return device_data; }
+    const type* device() const { return device_data; }
 #endif
 };
 
@@ -286,30 +229,16 @@ struct TensorView
 
     type* data = nullptr;
 
-#ifndef CUDA
-
     Shape shape;
 
     TensorView(type* new_data, const Shape& new_shape) noexcept
-    {
-        data = new_data;
-        shape = new_shape;
-    }
+        : data(new_data), shape(new_shape) {}
 
-    Index get_rank() const noexcept
-    {
-        return shape.rank;
-    }
+    Index get_rank() const noexcept { return shape.rank; }
 
-    Index size() const noexcept
-    {
-        return shape.size();
-    }
+    Index size() const noexcept { return shape.size(); }
 
-    bool empty() const noexcept
-    {
-        return shape.empty();
-    }
+    bool empty() const noexcept { return shape.empty(); }
 
     void print() const
     {
@@ -339,14 +268,12 @@ struct TensorView
     inline MatrixMap as_matrix() const
     {
         assert(data && shape.rank >= 2);
-
         return MatrixMap(data, shape[0], shape.size() / shape[0]);
     }
 
     inline VectorMap as_vector() const
     {
         assert(data);
-
         return VectorMap(data, shape.size());
     }
 
@@ -354,28 +281,22 @@ struct TensorView
     inline TensorMapR<Rank> as_tensor() const
     {
         assert(data && shape.rank == Rank);
-
         return TensorMapR<Rank>(data, shape.template get_eigen_dims<Rank>());
     }
 
-#else 
+#ifdef CUDA
 
     float* device = nullptr;
-    cudnnTensorDescriptor_t descriptor = nullptr;
-
-    if (descriptor == nullptr) cudnnCreateTensorDescriptor(&descriptor);
 
     shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
 
-    TensorView() = default;
-
     TensorView(float* new_data, std::shared_ptr<cudnnTensorStruct> handle)
-        : data(new_data), descriptor_handle(handle) {
-    }
+        : data(new_data), descriptor_handle(handle) {}
 
-    explicit TensorView(const Shape& shape)
+    explicit TensorView(const Shape& new_shape)
+        : shape(new_shape)
     {
-        set_descriptor(shape);
+        set_descriptor(new_shape);
     }
 
     cudnnTensorDescriptor_t get_descriptor() const
@@ -383,26 +304,26 @@ struct TensorView
         return descriptor_handle ? descriptor_handle.get() : nullptr;
     }
 
-    void set_descriptor(const Shape& shape)
+    void set_descriptor(const Shape& desc_shape)
     {
         int n = 1, c = 1, h = 1, w = 1;
-        if (shape.rank == 4) { // NHWC
-            n = static_cast<int>(shape[0]);
-            h = static_cast<int>(shape[1]);
-            w = static_cast<int>(shape[2]);
-            c = static_cast<int>(shape[3]);
+        if (desc_shape.rank == 4) {
+            n = static_cast<int>(desc_shape[0]);
+            h = static_cast<int>(desc_shape[1]);
+            w = static_cast<int>(desc_shape[2]);
+            c = static_cast<int>(desc_shape[3]);
         }
-        else if (shape.rank == 3) { // NWC
-            n = static_cast<int>(shape[0]);
-            w = static_cast<int>(shape[1]);
-            c = static_cast<int>(shape[2]);
+        else if (desc_shape.rank == 3) {
+            n = static_cast<int>(desc_shape[0]);
+            w = static_cast<int>(desc_shape[1]);
+            c = static_cast<int>(desc_shape[2]);
         }
-        else if (shape.rank == 2) { // NC
-            n = static_cast<int>(shape[0]);
-            c = static_cast<int>(shape[1]);
+        else if (desc_shape.rank == 2) {
+            n = static_cast<int>(desc_shape[0]);
+            c = static_cast<int>(desc_shape[1]);
         }
-        else if (shape.rank == 1) { // C
-            c = static_cast<int>(shape[0]);
+        else if (desc_shape.rank == 1) {
+            c = static_cast<int>(desc_shape[0]);
         }
 
         if (n <= 0 || c <= 0 || h <= 0 || w <= 0)
@@ -416,36 +337,36 @@ struct TensorView
 
             descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
                 if (p) cudnnDestroyTensorDescriptor(p);
-                });
+            });
         }
 
         CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, n, c, h, w));
+    }
 
-        Index size() const
-        {
-            if (descriptor_handle == nullptr) return 0;
+    Index device_size() const
+    {
+        if (descriptor_handle == nullptr) return 0;
 
-            constexpr int REQUESTED_DIMS = CUDNN_DIM_MAX;
-            cudnnDataType_t dataType;
-            int nbDims = 0, dimA[REQUESTED_DIMS], strideA[REQUESTED_DIMS];
+        constexpr int REQUESTED_DIMS = CUDNN_DIM_MAX;
+        cudnnDataType_t dataType;
+        int nbDims = 0, dimA[REQUESTED_DIMS], strideA[REQUESTED_DIMS];
 
-            CHECK_CUDNN(cudnnGetTensorNdDescriptor(descriptor_handle.get(), REQUESTED_DIMS, &dataType, &nbDims, dimA, strideA));
+        CHECK_CUDNN(cudnnGetTensorNdDescriptor(descriptor_handle.get(), REQUESTED_DIMS, &dataType, &nbDims, dimA, strideA));
 
-            Index total_elements = 1;
-            for (int i = 0; i < nbDims; ++i)
-                total_elements *= static_cast<Index>(dimA[i]);
-            return total_elements;
-        }
+        Index total_elements = 1;
+        for (int i = 0; i < nbDims; ++i)
+            total_elements *= static_cast<Index>(dimA[i]);
+        return total_elements;
+    }
 
-        void fill(float value)
-        {
-            if (data == nullptr || descriptor_handle == nullptr) return;
+    void fill(float value)
+    {
+        if (data == nullptr || descriptor_handle == nullptr) return;
 
-            if (value == 0.0f)
-                CHECK_CUDA(cudaMemset(data, 0, size() * sizeof(float)));
-            else
-                CHECK_CUDNN(cudnnSetTensor(get_cudnn_handle(), get_descriptor(), data, &value));
-        }
+        if (value == 0.0f)
+            CHECK_CUDA(cudaMemset(data, 0, device_size() * sizeof(float)));
+        // @todo non-zero fill needs get_cudnn_handle()
+    }
 
 #endif
 
@@ -459,8 +380,8 @@ pair<MatrixR, MatrixR> filter_missing_values(const MatrixR&, const MatrixR&);
 
 void shuffle_rows(MatrixR& matrix);
 
-type* link(type*, vector<TensorView*>);
-void link(type*, vector<vector<TensorView*>>);
+type* link(type*, const vector<TensorView*>&);
+void link(type*, const vector<vector<TensorView*>>&);
 
 inline Index get_size(const vector<Shape>& shapes)
 {
@@ -486,8 +407,8 @@ inline Index get_size(const vector<vector<Shape>>& shapes)
     return total;
 }
 
-Index get_size(const vector<TensorView*>);
-Index get_size(vector<vector<TensorView*>>);
+Index get_size(const vector<TensorView*>&);
+Index get_size(const vector<vector<TensorView*>>&);
 
 template<typename T, size_t N>
 using array = Eigen::array<T, N>;
@@ -610,15 +531,14 @@ inline vector<Index> get_true_indices(const VectorB& v)
 
     for(Index i = 0; i < v.size(); ++i)
         if (v(i))
-            indices.push_back(v[i]);
+            indices.push_back(i);
 
     return indices;
 }
 
 Index count_greater_than(const vector<Index>&, Index);
 
-VectorI calculate_rank_greater(const VectorR&);
-VectorI calculate_rank_less(const VectorR&);
+VectorI calculate_rank(const VectorR&, bool ascending = true);
 
 vector<Index> get_elements_greater_than(const vector<Index>&, Index);
 vector<Index> get_elements_greater_than(const vector<vector<Index>>&, Index);
@@ -1101,16 +1021,10 @@ struct TensorCuda
     }
 };
 
-type* link(type*, const vector<TensorView*>&);
-void link(type*, const vector<vector<TensorView*>>&);
-
-Index get_size(const vector<TensorView*>&);
-Index get_size(const vector<vector<TensorView*>>&);
-
-VectorR vector_from_device(const type*, const size_t&);
-MatrixR matrix_from_device(const type*, const size_t&, const size_t&);
-Tensor3 tensor3_from_device(const type*, const size_t&, const size_t&, const size_t&);
-Tensor4 tensor4_from_device(const type*, const size_t&, const size_t&, const size_t&, const size_t&);
+VectorR vector_from_device(const type*, size_t);
+MatrixR matrix_from_device(const type*, size_t, size_t);
+Tensor3 tensor3_from_device(const type*, size_t, size_t, size_t);
+Tensor4 tensor4_from_device(const type*, size_t, size_t, size_t, size_t);
 
 #endif
 

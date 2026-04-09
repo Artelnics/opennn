@@ -16,10 +16,6 @@ namespace opennn
 struct BackPropagation;
 struct StochasticGradientDescentData;
 
-#ifdef CUDA
-struct SGDOptimizationDataCuda;
-#endif
-
 class StochasticGradientDescent final : public Optimizer
 {
 
@@ -38,9 +34,13 @@ public:
     void set_momentum(const type);
     void set_nesterov(bool);
 
-    void update_parameters(BackPropagation& , StochasticGradientDescentData&, type) const;
+    void update_parameters(BackPropagation&, StochasticGradientDescentData&, type) const;
 
     TrainingResults train() override;
+
+#ifdef CUDA
+    TrainingResults train_cuda() override;
+#endif
 
     void from_XML(const XMLDocument&) override;
 
@@ -57,17 +57,6 @@ private:
     bool nesterov = false;
 
     Index batch_size = 1000;
-
-#ifdef CUDA
-
-public:
-
-    TrainingResults train_cuda() override;
-
-    void update_parameters(BackPropagationCuda&, SGDOptimizationDataCuda&, type) const;
-
-#endif
-
 };
 
 struct StochasticGradientDescentData final : public OptimizerData
@@ -80,30 +69,9 @@ struct StochasticGradientDescentData final : public OptimizerData
 
     Index iteration = 0;
 
-    VectorR parameter_updates;
-    VectorR last_parameter_updates;
+    Memory parameter_updates;
+    Memory last_parameter_updates;
 };
-
-#ifdef CUDA
-
-struct SGDOptimizationDataCuda final : public OptimizerData
-{
-    SGDOptimizationDataCuda(StochasticGradientDescent* = nullptr);
-
-    //~SGDOptimizationDataCuda() { free(); }
-
-    void set(StochasticGradientDescent* = nullptr);
-
-    void print() const override;
-
-    StochasticGradientDescent* stochastic_gradient_descent = nullptr;
-
-    Index iteration = 0;
-
-    TensorCuda velocity;
-};
-
-#endif
 
 }
 

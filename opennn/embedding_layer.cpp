@@ -50,17 +50,19 @@ void Embedding::set(const Index new_vocabulary_size,
 
     const type half_depth = type(new_embedding_dimension) / 2;
 
+    VectorR divisors(new_embedding_dimension);
+    for(Index j = 0; j < new_embedding_dimension; j++)
+        divisors(j) = pow(type(10000), (j < Index(half_depth) ? j : j - Index(half_depth)) / half_depth);
+
     #pragma omp parallel for collapse(2)
     for(Index i = 0; i < new_sequence_length; i++)
         for(Index j = 0; j < new_embedding_dimension; j++)
             positional_encoding(i, j) = (j < Index(half_depth))
-                ? sin(i / pow(type(10000), j / half_depth))
-                : cos(i / pow(type(10000), (j - Index(half_depth)) / half_depth));
+                ? sin(i / divisors(j))
+                : cos(i / divisors(j));
 #ifdef CUDA
 
-    weights_device.set_descriptor({new_vocabulary_size, new_embedding_dimension});
-
-    positional_encoding_device.resize({sequence_length, new_embedding_dimension});
+    positional_encoding_device.resize(new_sequence_length * new_embedding_dimension);
 
 #endif
 }
@@ -98,7 +100,7 @@ void Embedding::set_parameters_glorot()
 
 void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
 
     const Index batch_size = forward_propagation.batch_size;
     const Index total_tokens = batch_size * get_sequence_length();
@@ -184,7 +186,7 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
                                size_t layer) const
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
 
     const TensorView& input_indices = forward_propagation.views[layer][Inputs][0];
     TensorView& output_gradient = back_propagation.backward_views[layer][0][0];

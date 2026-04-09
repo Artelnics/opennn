@@ -8,16 +8,18 @@
 
 #pragma once
 
+#include <regex>
 #include "statistics.h"
 //#include "scaling.h"
-#include "string_utilities.h"
+//#include "string_utilities.h"
 #include "math_utilities.h"
 #include "neural_network.h"
+#include "tensor_utilities.h"
+#include <regex>
 
 namespace opennn
 {
 
-template<int Rank> struct ScalingForwardPropagationCuda;
 
 template<int Rank>
 class Scaling final : public Layer
@@ -25,7 +27,7 @@ class Scaling final : public Layer
 
 public:
 
-    Scaling(const Shape& new_input_shape = Shape(Rank - 1, 0))
+    Scaling(const Shape& new_input_shape = {})
     {
         set(new_input_shape);
     }
@@ -268,7 +270,7 @@ public:
         if constexpr (Rank == 2)
             set({ neurons_number });
         else
-            set(Shape(Rank - 1, neurons_number));
+            set({ neurons_number }); // @todo handle multi-dim scaling from XML
 
         const XMLElement* start_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
 /*

@@ -109,8 +109,8 @@ void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
     const VectorR& e = back_propagation_lm.errors;
     const type factor = type(2) / type(e.size());
 
-    back_propagation_lm.gradient = factor * J.transpose() * e;
-    back_propagation_lm.hessian = factor * J.transpose() * J;
+    back_propagation_lm.gradient.noalias() = factor * J.transpose() * e;
+    back_propagation_lm.hessian.noalias() = factor * J.transpose() * J;
 
     back_propagation_lm.loss_value = back_propagation_lm.error;
 }
@@ -200,7 +200,7 @@ VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient()
     type error_backward = 0;
 
     VectorR numerical_gradient_lm(parameters_number);
-    numerical_gradient_lm.setConstant(type(0));
+    numerical_gradient_lm.setZero();
 
     for(Index i = 0; i < parameters_number; i++)
     {
