@@ -9,6 +9,9 @@
 #pragma once
 
 #include "pch.h"
+#include <queue>
+#include <mutex>
+#include <condition_variable>
 
 namespace opennn
 {
@@ -27,6 +30,8 @@ inline bool is_aligned(const void* ptr)
 {
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
 }
+
+#ifdef CUDA
 
 template <typename T>
 class ThreadSafeQueue
@@ -64,6 +69,8 @@ public:
     }
 };
 
+#endif
+
 struct Shape
 {
     static constexpr size_t MaxRank = 4;
@@ -79,25 +86,6 @@ struct Shape
         for (Index d : list)
             if (i < rank)
                 shape[i++] = d;
-    }
-
-    Shape(size_t n, Index value)
-    {
-        rank = (n > MaxRank) ? MaxRank : n;
-
-        for (size_t i = 0; i < rank; ++i)
-            shape[i] = value;
-    }
-
-    template<typename InputIt, typename = typename enable_if<!is_integral<InputIt>::value>::type>
-    Shape(InputIt first, InputIt last)
-    {
-        rank = 0;
-        while (first != last && rank < MaxRank)
-        {
-            shape[rank++] = static_cast<Index>(*first);
-            ++first;
-        }
     }
 
     const Index& operator[](size_t i) const noexcept
@@ -125,39 +113,13 @@ struct Shape
         return rank == 0;
     }
 
-    Index* begin() noexcept
-    {
-        return shape;
-    }
-
-    Index* end() noexcept
-    {
-        return shape + rank;
-    }
-
-    const Index* begin() const noexcept
-    {
-        return shape;
-    }
-
-    const Index* end() const noexcept
-    {
-        return shape + rank;
-    }
-
-    void push_back(Index d)
-    {
-        if (rank < MaxRank)
-            shape[rank++] = d;
-    }
-
     Index size() const noexcept
     {
         if (rank == 0) return 0;
 
-        Index total = 1;
+        Index total = shape[0];
 
-        for (size_t i = 0; i < rank; ++i)
+        for (size_t i = 1; i < rank; ++i)
             total *= shape[i];
 
         return total;
@@ -166,22 +128,6 @@ struct Shape
     void clear() noexcept
     {
         rank = 0;
-    }
-
-    void resize(size_t n)
-    {
-        if (n > MaxRank)
-            throw out_of_range("Shape::resize: rank exceeds MaxRank (" + to_string(MaxRank) + ")");
-
-        rank = n;
-    }
-
-    void resize(size_t n, Index value)
-    {
-        resize(n);
-
-        for (size_t i = 0; i < rank; ++i)
-            shape[i] = value;
     }
 
     friend ostream& operator<<(ostream& os, const Shape& s)
@@ -459,8 +405,8 @@ pair<MatrixR, MatrixR> filter_missing_values(const MatrixR&, const MatrixR&);
 
 void shuffle_rows(MatrixR& matrix);
 
-type* link(type*, vector<TensorView*>);
-void link(type*, vector<vector<TensorView*>>);
+type* link(type*, const vector<TensorView*>&);
+void link(type*, const vector<vector<TensorView*>>&);
 
 inline Index get_size(const vector<Shape>& shapes)
 {
@@ -486,8 +432,8 @@ inline Index get_size(const vector<vector<Shape>>& shapes)
     return total;
 }
 
-Index get_size(const vector<TensorView*>);
-Index get_size(vector<vector<TensorView*>>);
+Index get_size(const vector<TensorView*>&);
+Index get_size(const vector<vector<TensorView*>>&);
 
 template<typename T, size_t N>
 using array = Eigen::array<T, N>;
@@ -610,15 +556,14 @@ inline vector<Index> get_true_indices(const VectorB& v)
 
     for(Index i = 0; i < v.size(); ++i)
         if (v(i))
-            indices.push_back(v[i]);
+            indices.push_back(i);
 
     return indices;
 }
 
 Index count_greater_than(const vector<Index>&, Index);
 
-VectorI calculate_rank_greater(const VectorR&);
-VectorI calculate_rank_less(const VectorR&);
+VectorI calculate_rank(const VectorR&, bool ascending = true);
 
 vector<Index> get_elements_greater_than(const vector<Index>&, Index);
 vector<Index> get_elements_greater_than(const vector<vector<Index>>&, Index);
@@ -1107,10 +1052,10 @@ void link(type*, const vector<vector<TensorView*>>&);
 Index get_size(const vector<TensorView*>&);
 Index get_size(const vector<vector<TensorView*>>&);
 
-VectorR vector_from_device(const type*, const size_t&);
-MatrixR matrix_from_device(const type*, const size_t&, const size_t&);
-Tensor3 tensor3_from_device(const type*, const size_t&, const size_t&, const size_t&);
-Tensor4 tensor4_from_device(const type*, const size_t&, const size_t&, const size_t&, const size_t&);
+VectorR vector_from_device(const type*, size_t);
+MatrixR matrix_from_device(const type*, size_t, size_t);
+Tensor3 tensor3_from_device(const type*, size_t, size_t, size_t);
+Tensor4 tensor4_from_device(const type*, size_t, size_t, size_t, size_t);
 
 #endif
 

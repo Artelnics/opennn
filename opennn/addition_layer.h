@@ -46,7 +46,7 @@ public:
         else if constexpr (Rank == 4)
             name = "Addition4d";
         else
-            throw runtime_error("Addition layer not implemented for rank: " + Rank);
+            throw runtime_error("Addition layer not implemented for rank: " + to_string(Rank));
     }
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override

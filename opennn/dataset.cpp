@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "dataset.h"
+#include <regex>
 #include "time_series_dataset.h"
 #include "statistics.h"
 #include "scaling.h"
@@ -1530,7 +1531,7 @@ VectorI Dataset::calculate_correlations_rank() const
 
     const VectorR absolute_mean_correlations = absolute_correlations.rowwise().mean();
 
-    return calculate_rank_less(absolute_mean_correlations);
+    return calculate_rank(absolute_mean_correlations);
 }
 
 void Dataset::set_default_variable_scalers()
@@ -1749,7 +1750,8 @@ void Dataset::samples_from_XML(const XMLElement *samples_element)
     {
         const vector<vector<Index>> all_feature_indices = get_feature_indices();
 
-        data.resize(samples_number, all_feature_indices[all_feature_indices.size() - 1][all_feature_indices[all_feature_indices.size() - 1].size() - 1] + 1);
+        const auto& last_indices = all_feature_indices.back();
+        data.resize(samples_number, last_indices.back() + 1);
         data.setZero();
 
         sample_roles.resize(samples_number);
