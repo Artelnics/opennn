@@ -223,14 +223,16 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
 
     if(maximum_target_sequence_length == 6 && target_vocabulary.size() >= 6)
     {
+        const unordered_map<string, Index> target_vocab_map = create_vocabulary_map(target_vocabulary);
+
         for(size_t sample_index = 0; sample_index < target_document_tokens_number; sample_index++)
         {
             const string& token = target_document_tokens[sample_index][0];
 
-            auto iterator = find(target_vocabulary.begin(), target_vocabulary.end(), token);
+            auto iterator = target_vocab_map.find(token);
 
-            const Index token_index = (iterator != target_vocabulary.end())
-                                          ? distance(target_vocabulary.begin(), iterator)
+            const Index token_index = (iterator != target_vocab_map.end())
+                                          ? iterator->second
                                           : 1;
 
             data(sample_index, maximum_input_sequence_length + token_index - reserved_tokens.size()) = 1;
@@ -261,9 +263,9 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
 
                 const string& current_token = target_tokens[token_index];
 
-                auto iterator = find(target_vocabulary.begin(), target_vocabulary.end(), current_token);
+                auto iterator = target_vocabulary_map.find(current_token);
 
-                data(sample, variable) = (iterator != target_vocabulary.end()) ? distance(target_vocabulary.begin(), iterator) : 1;
+                data(sample, variable) = (iterator != target_vocabulary_map.end()) ? iterator->second : 1;
             }
 
             data(sample, maximum_input_sequence_length + target_tokens.size() + 1) = 3; // end;

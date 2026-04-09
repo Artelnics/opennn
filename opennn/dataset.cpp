@@ -647,9 +647,10 @@ void Dataset::set_variable_indices(const vector<Index>& input_variables,
     const Index input_dimensions_num = get_features_number("Input");
     const Index target_shape_num = get_features_number("Target");
 
-    dynamic_cast<TimeSeriesDataset*>(this)
-        ? set_shape("Input", {dynamic_cast<TimeSeriesDataset*>(this)->get_past_time_steps(), input_dimensions_num})
-        : set_shape("Input", {input_dimensions_num});
+    if (auto* ts = dynamic_cast<TimeSeriesDataset*>(this))
+        set_shape("Input", {ts->get_past_time_steps(), input_dimensions_num});
+    else
+        set_shape("Input", {input_dimensions_num});
 
     set_shape("Target", {target_shape_num});
 }
@@ -2475,7 +2476,7 @@ void Dataset::read_csv()
 
     if(!has_sample_ids && samples_number > 0)
     {
-        std::set<string> unique_elements;
+        std::unordered_set<string> unique_elements;
 
         bool possible_id = true;
         bool is_numeric_column = true;
@@ -2555,6 +2556,13 @@ void Dataset::read_csv()
     variables_missing_values_number.resize(variables_number);
     variables_missing_values_number.setZero();
 
+    // Build category lookup maps for O(1) access during data loading
+    vector<unordered_map<string, Index>> category_maps(variables_number);
+    for(Index v = 0; v < variables_number; v++)
+        if(variables[v].type == VariableType::Categorical)
+            for(Index c = 0; c < static_cast<Index>(variables[v].categories.size()); c++)
+                category_maps[v][variables[v].categories[c]] = c;
+
     for(Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {
         const vector<string>& tokens = raw_file_content[sample_index];
@@ -2605,17 +2613,14 @@ void Dataset::read_csv()
                         data(sample_index, cat_idx) = NAN;
                 else
                 {
-                    auto it = find(variable.categories.begin(), variable.categories.end(), token);
-                    if(it != variable.categories.end())
-                    {
-                        const Index category_index = distance(variable.categories.begin(), it);
-                        data(sample_index, feature_indices[category_index]) = 1;
-                    }
+                    auto it = category_maps[variable_index].find(token);
+                    if(it != category_maps[variable_index].end())
+                        data(sample_index, feature_indices[it->second]) = 1;
                 }
                 break;
             case VariableType::Binary:
-                if(contains(positive_words, token) || contains(negative_words, token))
-                    data(sample_index, feature_indices[0]) = contains(positive_words, token) ? 1 : 0;
+                if(const bool is_positive = contains(positive_words, token); is_positive || contains(negative_words, token))
+                    data(sample_index, feature_indices[0]) = is_positive ? 1 : 0;
                 else
                 {
                     const vector<string>& categories = variable.categories;

@@ -83,6 +83,9 @@ struct AdaptiveMomentEstimationData final : public OptimizerData
 
     Index iteration = 0;
 
+    type beta_1_power = type(1);
+    type beta_2_power = type(1);
+
     type step = 0;
 
     Index learning_rate_iteration = 0;

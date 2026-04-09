@@ -193,9 +193,6 @@ VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient()
 
     type h = 0;
 
-    VectorR parameters_forward = parameters;
-    VectorR parameters_backward = parameters;
-
     type error_forward = 0;
     type error_backward = 0;
 
@@ -206,10 +203,10 @@ VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient()
     {
         h = Loss::calculate_h(parameters(i));
 
-        parameters_forward(i) += h;
+        parameters(i) += h;
 
         neural_network->forward_propagate(batch.get_inputs(),
-                                          parameters_forward,
+                                          parameters,
                                           forward_propagation);
 
         calculate_errors(batch, forward_propagation, back_propagation_lm);
@@ -220,12 +217,10 @@ VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient()
 
         error_forward = back_propagation_lm.error;
 
-        parameters_forward(i) -= h;
-
-        parameters_backward(i) -= h;
+        parameters(i) -= type(2) * h;
 
         neural_network->forward_propagate(batch.get_inputs(),
-                                          parameters_backward,
+                                          parameters,
                                           forward_propagation);
 
         calculate_errors(batch, forward_propagation, back_propagation_lm);
@@ -236,7 +231,7 @@ VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient()
 
         error_backward = back_propagation_lm.error;
 
-        parameters_backward(i) += h;
+        parameters(i) += h;
 
         numerical_gradient_lm(i) = (error_forward - error_backward)/type(2*h);
     }
@@ -268,9 +263,6 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_jacobian()
 
     type perturbation;
 
-    VectorR parameters_forward(parameters);
-    VectorR parameters_backward(parameters);
-
     VectorR error_terms_forward(total_error_terms);
     VectorR error_terms_backward(total_error_terms);
 
@@ -280,19 +272,19 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_jacobian()
     {
         perturbation = Loss::calculate_h(parameters(j));
 
-        parameters_backward(j) -= perturbation;
-        neural_network->forward_propagate(batch.get_inputs(), parameters_backward, forward_propagation);
+        parameters(j) -= perturbation;
+        neural_network->forward_propagate(batch.get_inputs(), parameters, forward_propagation);
         calculate_errors(batch, forward_propagation, back_propagation_lm);
         calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
         error_terms_backward = back_propagation_lm.squared_errors;
-        parameters_backward(j) += perturbation;
 
-        parameters_forward(j) += perturbation;
-        neural_network->forward_propagate(batch.get_inputs(), parameters_forward, forward_propagation);
+        parameters(j) += type(2) * perturbation;
+        neural_network->forward_propagate(batch.get_inputs(), parameters, forward_propagation);
         calculate_errors(batch, forward_propagation, back_propagation_lm);
         calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
         error_terms_forward = back_propagation_lm.squared_errors;
-        parameters_forward(j) -= perturbation;
+
+        parameters(j) -= perturbation;
 
         for(Index i = 0; i < total_error_terms; i++)
             jacobian(i, j) = (error_terms_forward(i) - error_terms_backward(i)) / (type(2.0) * perturbation);
@@ -341,18 +333,6 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
     type h_i;
     type h_j;
 
-    VectorR x_backward_2i = parameters;
-    VectorR x_backward_i = parameters;
-
-    VectorR x_forward_i = parameters;
-    VectorR x_forward_2i = parameters;
-
-    VectorR x_backward_ij = parameters;
-    VectorR x_forward_ij = parameters;
-
-    VectorR x_backward_i_forward_j = parameters;
-    VectorR x_forward_i_backward_j = parameters;
-
     type y_backward_2i;
     type y_backward_i;
 
@@ -369,150 +349,125 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
     {
         h_i = Loss::calculate_h(parameters(i));
 
-        x_backward_2i(i) -= static_cast<type>(2.0) * h_i;
+        // parameters(i) - 2*h_i
+        parameters(i) -= type(2) * h_i;
 
         neural_network->forward_propagate(batch.get_inputs(),
-                                          x_backward_2i,
+                                          parameters,
                                           forward_propagation);
 
         calculate_errors(batch, forward_propagation, back_propagation_lm);
-
         calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
-
         calculate_error(batch, forward_propagation, back_propagation_lm);
 
         y_backward_2i = back_propagation_lm.error;
 
-        x_backward_2i(i) += static_cast<type>(2.0) * h_i;
-
-        x_backward_i(i) -= h_i;
+        // parameters(i) - h_i
+        parameters(i) += h_i;
 
         neural_network->forward_propagate(batch.get_inputs(),
-                                          x_backward_i,
+                                          parameters,
                                           forward_propagation);
 
         calculate_errors(batch, forward_propagation, back_propagation_lm);
-
         calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
-
         calculate_error(batch, forward_propagation, back_propagation_lm);
 
         y_backward_i = back_propagation_lm.error;
 
-        x_backward_i(i) += h_i;
-
-        x_forward_i(i) += h_i;
+        // parameters(i) + h_i
+        parameters(i) += type(2) * h_i;
 
         neural_network->forward_propagate(batch.get_inputs(),
-                                          x_forward_i,
+                                          parameters,
                                           forward_propagation);
 
         calculate_errors(batch, forward_propagation, back_propagation_lm);
-
         calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
-
         calculate_error(batch, forward_propagation, back_propagation_lm);
 
         y_forward_i = back_propagation_lm.error;
 
-        x_forward_i(i) -= h_i;
-
-        x_forward_2i(i) += static_cast<type>(2.0) * h_i;
+        // parameters(i) + 2*h_i
+        parameters(i) += h_i;
 
         neural_network->forward_propagate(batch.get_inputs(),
-                                          x_forward_2i,
+                                          parameters,
                                           forward_propagation);
 
         calculate_errors(batch, forward_propagation, back_propagation_lm);
-
         calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
-
         calculate_error(batch, forward_propagation, back_propagation_lm);
 
         y_forward_2i = back_propagation_lm.error;
 
-        x_forward_2i(i) -= static_cast<type>(2.0) * h_i;
+        // restore parameters(i)
+        parameters(i) -= type(2) * h_i;
 
-        H(i, i) = (-y_forward_2i + type(16.0) * y_forward_i - type(30.0) * y + type(16.0) * y_backward_i - y_backward_2i) / (type(12.0) * pow(h_i, type(2)));
+        H(i, i) = (-y_forward_2i + type(16.0) * y_forward_i - type(30.0) * y + type(16.0) * y_backward_i - y_backward_2i) / (type(12.0) * h_i * h_i);
 
         for(Index j = i; j < parameters_number; j++)
         {
-            // if(j == i)
-            // continue;
-
             h_j = Loss::calculate_h(parameters(j));
 
-            x_backward_ij(i) -= h_i;
-            x_backward_ij(j) -= h_j;
+            // parameters(i) - h_i, parameters(j) - h_j
+            parameters(i) -= h_i;
+            parameters(j) -= h_j;
 
             neural_network->forward_propagate(batch.get_inputs(),
-                                              x_backward_ij,
+                                              parameters,
                                               forward_propagation);
 
             calculate_errors(batch, forward_propagation, back_propagation_lm);
-
             calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
-
             calculate_error(batch, forward_propagation, back_propagation_lm);
 
             y_backward_ij = back_propagation_lm.error;
 
-            x_backward_ij(i) += h_i;
-            x_backward_ij(j) += h_j;
-
-            x_forward_ij(i) += h_i;
-            x_forward_ij(j) += h_j;
+            // parameters(i) + h_i, parameters(j) + h_j
+            parameters(i) += type(2) * h_i;
+            parameters(j) += type(2) * h_j;
 
             neural_network->forward_propagate(batch.get_inputs(),
-                                              x_forward_ij,
+                                              parameters,
                                               forward_propagation);
 
             calculate_errors(batch, forward_propagation, back_propagation_lm);
-
             calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
-
             calculate_error(batch, forward_propagation, back_propagation_lm);
 
             y_forward_ij = back_propagation_lm.error;
 
-            x_forward_ij(i) -= h_i;
-            x_forward_ij(j) -= h_j;
-
-            x_backward_i_forward_j(i) -= h_i;
-            x_backward_i_forward_j(j) += h_j;
+            // parameters(i) - h_i, parameters(j) + h_j
+            parameters(i) -= type(2) * h_i;
 
             neural_network->forward_propagate(batch.get_inputs(),
-                                              x_backward_i_forward_j,
+                                              parameters,
                                               forward_propagation);
 
             calculate_errors(batch, forward_propagation, back_propagation_lm);
-
             calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
-
             calculate_error(batch, forward_propagation, back_propagation_lm);
 
             y_backward_i_forward_j = back_propagation_lm.error;
 
-            x_backward_i_forward_j(i) += h_i;
-            x_backward_i_forward_j(j) -= h_j;
-
-            x_forward_i_backward_j(i) += h_i;
-            x_forward_i_backward_j(j) -= h_j;
+            // parameters(i) + h_i, parameters(j) - h_j
+            parameters(i) += type(2) * h_i;
+            parameters(j) -= type(2) * h_j;
 
             neural_network->forward_propagate(batch.get_inputs(),
-                                              x_forward_i_backward_j,
+                                              parameters,
                                               forward_propagation);
 
             calculate_errors(batch, forward_propagation, back_propagation_lm);
-
             calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
-
             calculate_error(batch, forward_propagation, back_propagation_lm);
 
             y_forward_i_backward_j = back_propagation_lm.error;
 
-            x_forward_i_backward_j(i) -= h_i;
-            x_forward_i_backward_j(j) += h_j;
+            // restore parameters(i) and parameters(j)
+            parameters(i) -= h_i;
+            parameters(j) += h_j;
 
             H(i, j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij) / (type(4.0) * h_i * h_j);
         }

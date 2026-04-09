@@ -608,18 +608,21 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     frequencies.setZero();
 
     vector<type> unique_values;
+    unordered_set<type> unique_set;
 
     unique_values.reserve(min<Index>(size, bins_number));
     unique_values.push_back(new_vector(0));
+    unique_set.insert(new_vector(0));
 
     for(Index i = 1; i < size; i++)
     {
         const type value = new_vector(i);
 
         if(!isnan(value))
-            if (find(unique_values.begin(), unique_values.end(), value) == unique_values.end())
+            if (unique_set.find(value) == unique_set.end())
             {
                 unique_values.push_back(value);
+                unique_set.insert(value);
 
                 if (static_cast<Index>(unique_values.size()) > bins_number)
                     break;
@@ -638,7 +641,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
 
         centers = tensor_unique;
         minimums = tensor_unique;
-        maximums = tensor_unique;
+        maximums = std::move(tensor_unique);
 
         frequencies.resize(unique_values_number);
         frequencies.setZero();

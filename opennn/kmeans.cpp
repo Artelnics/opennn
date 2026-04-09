@@ -23,8 +23,6 @@ void KMeans::fit(const MatrixR& data)
     const Index rows_number = data.rows();
     const Index columns_number = data.cols();
 
-    VectorR row(rows_number);
-    VectorR center(columns_number);
     VectorR center_sum(columns_number);
 
     cluster_centers.resize(clusters_number, columns_number);
@@ -33,7 +31,7 @@ void KMeans::fit(const MatrixR& data)
     set_centers_random(data);
 
     for(Index iterations_number = 0; iterations_number < maximum_iterations; iterations_number++)
-    {              
+    {
         for(Index row_index = 0; row_index < rows_number; row_index++)
         {
             (cluster_centers.rowwise() - data.row(row_index)).rowwise().squaredNorm().minCoeff(&rows_cluster_labels(row_index));
@@ -49,18 +47,13 @@ void KMeans::fit(const MatrixR& data)
             {
                 if(rows_cluster_labels(row_index) == cluster_index)
                 {
-                    row = data.row(row_index);
-
-                    center_sum += row;
+                    center_sum += data.row(row_index);
                     count++;
                 }
             }
 
             if(count != 0)
-            {
-                center = center_sum / type(count);
-                cluster_centers.row(cluster_index) = center;
-            }
+                cluster_centers.row(cluster_index) = center_sum / type(count);
         }
     }
 }
@@ -68,32 +61,12 @@ void KMeans::fit(const MatrixR& data)
 VectorI KMeans::calculate_outputs(const MatrixR& data)
 {
     const Index rows_number = data.rows();
-    VectorR row(data.cols());
-    VectorR center;
 
     VectorI predictions(rows_number);
 
     for(Index row_index = 0; row_index < rows_number; row_index++)
     {
-        row = data.row(row_index);
-        center = cluster_centers.row(0);
-
-        type minimum_distance = (row - center).norm();
-        Index minimal_distance_cluster_index = 0;
-
-        for(Index cluster_index = 1; cluster_index < clusters_number; cluster_index++)
-        {
-            center = cluster_centers.row(cluster_index);
-            const type distance = (row - center).norm();
-
-            if(distance < minimum_distance)
-            {
-                minimum_distance = distance;
-                minimal_distance_cluster_index = cluster_index;
-            }
-        }
-
-        predictions(row_index) = minimal_distance_cluster_index;
+        (cluster_centers.rowwise() - data.row(row_index)).rowwise().squaredNorm().minCoeff(&predictions(row_index));
     }
 
     return predictions;
@@ -101,8 +74,6 @@ VectorI KMeans::calculate_outputs(const MatrixR& data)
 
 VectorR KMeans::elbow_method(const MatrixR& data, Index max_clusters)
 {
-    VectorR data_point;
-    VectorR cluster_center;
     VectorR sum_squared_error_values(max_clusters);
 
     const Index rows_number = data.rows();
@@ -120,10 +91,7 @@ VectorR KMeans::elbow_method(const MatrixR& data, Index max_clusters)
 
         for(Index row_index = 0; row_index < rows_number; row_index++)
         {
-            data_point = data.row(row_index);
-            cluster_center = cluster_centers.row(rows_cluster_labels(row_index));
-
-            mean_squared_error += type(pow((data_point - cluster_center).norm(), 2));
+            mean_squared_error += (data.row(row_index) - cluster_centers.row(rows_cluster_labels(row_index))).squaredNorm();
         }
 
         sum_squared_error_values(cluster_index-1) = mean_squared_error;
@@ -147,18 +115,15 @@ Index KMeans::find_optimal_clusters(const VectorR& sum_squared_error_values) con
     type max_distance = type(0);
     Index optimal_clusters_number = 1;
 
-    VectorR current_point(2);
-    type perpendicular_distance;
+    const type dy = override_endpoint(1) - initial_endpoint(1);
+    const type dx = override_endpoint(0) - initial_endpoint(0);
+    const type cross_term = override_endpoint(0) * initial_endpoint(1) - override_endpoint(1) * initial_endpoint(0);
+    const type inv_line_length = type(1) / sqrt(dy * dy + dx * dx);
 
     for(Index cluster_index = 1; cluster_index <= cluster_number; cluster_index++)
     {
-        current_point << type(cluster_index), sum_squared_error_values(cluster_index - 1);
-         
-        perpendicular_distance
-            = type(abs((override_endpoint(1) - initial_endpoint(1)) * current_point(0) -
-                  (override_endpoint(0) - initial_endpoint(0)) * current_point(1) +
-                   override_endpoint(0) * initial_endpoint(1) - override_endpoint(1) * initial_endpoint(0))) /
-              type(sqrt(pow(override_endpoint(1) - initial_endpoint(1), 2) + pow(override_endpoint(0) - initial_endpoint(0), 2)));
+        const type perpendicular_distance
+            = abs(dy * type(cluster_index) - dx * sum_squared_error_values(cluster_index - 1) + cross_term) * inv_line_length;
 
         if(perpendicular_distance > max_distance)
         {
