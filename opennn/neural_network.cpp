@@ -1018,10 +1018,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Display", to_string(display));
 
     // Parameters
-    printer.OpenElement("Parameters");
-    if(get_parameters_number() > 0)
-        printer.PushText(vector_to_string(parameters, " ").c_str());
-    printer.CloseElement();
+    add_xml_element(printer, "ParametersNumber", to_string(get_parameters_number()));
 
     printer.CloseElement(); // NeuralNetwork
 }
@@ -1040,23 +1037,6 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     set_display(read_xml_bool(neural_network_element, "Display"));
 
     compile();
-
-    const XMLElement* parameters_element = neural_network_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    VectorR xml_parameters;
-
-    if (parameters_element && parameters_element->GetText())
-        string_to_vector(parameters_element->GetText(), xml_parameters);
-
-    if (xml_parameters.size() > 0 && parameters.size() > 0)
-    {
-        const Index elements_to_copy = min(parameters.size(), xml_parameters.size());
-
-        memcpy(parameters.data(), xml_parameters.data(), elements_to_copy * sizeof(type));
-    }
 }
 
 
@@ -1240,6 +1220,24 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
         throw runtime_error("Cannot open parameters data file.\n");
 
     file << parameters << endl;
+
+    file.close();
+}
+
+
+void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) const
+{
+    ofstream file(file_name, ios::binary);
+
+    if(!file.is_open())
+        throw runtime_error("Cannot open binary file for writing: " + file_name.string() + "\n");
+
+    const Index parameters_number = parameters.size();
+
+    file.write(reinterpret_cast<const char*>(parameters.data()), parameters_number * sizeof(type));
+
+    if(!file)
+        throw runtime_error("Error writing binary file: " + file_name.string() + "\n");
 
     file.close();
 }

@@ -712,6 +712,9 @@ void Convolutional::from_XML(const XMLDocument& document)
         running_means.resize(kernels_number);
         running_standard_deviations.resize(kernels_number);
 
+        gammas.shape = {kernels_number};
+        betas.shape = {kernels_number};
+
         string_to_vector(read_xml_string(convolutional_layer_element, "RunningMeans"), running_means);
         string_to_vector(read_xml_string(convolutional_layer_element, "RunningStandardDeviations"), running_standard_deviations);
     }
