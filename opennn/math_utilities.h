@@ -556,10 +556,9 @@ inline void batch_normalization_backward(
 
     const type batch_size_type = static_cast<type>(effective_batch_size);
 
-    input_gradients.array() = (gammas.array() * inverse_variances.array() / batch_size_type).transpose().replicate(effective_batch_size, 1) *
-                              (batch_size_type * output_gradients.array() -
-                               beta_gradients.transpose().replicate(effective_batch_size, 1).array() -
-                               x_hat.array() * gamma_gradients.transpose().replicate(effective_batch_size, 1).array());
+    input_gradients = (batch_size_type * output_gradients).rowwise() - beta_gradients.transpose();
+    input_gradients.array() -= x_hat.array().rowwise() * gamma_gradients.transpose().array();
+    input_gradients.array().rowwise() *= (gammas.array() * inverse_variances.array() / batch_size_type).transpose();
 
 #else
     const cudnnBatchNormMode_t mode = (input.get_rank() == 4)

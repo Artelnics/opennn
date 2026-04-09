@@ -17,6 +17,7 @@
 #include "addition_layer.h"
 #include "embedding_layer.h"
 #include "variable.h"
+#include "string_utilities.h"
 
 namespace opennn
 {
@@ -813,9 +814,7 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
                 if(text)
                 {
                     Shape s = string_to_shape(text, " ");
-                    layer_input_indices[layer_idx].resize(s.rank);
-                    for(size_t k = 0; k < s.rank; k++)
-                        layer_input_indices[layer_idx][k] = s[k];
+                    layer_input_indices[layer_idx] = vector<Index>(s.shape, s.shape + s.rank);
                 }
             }
             indices_element = indices_element->NextSiblingElement("LayerInputsIndices");

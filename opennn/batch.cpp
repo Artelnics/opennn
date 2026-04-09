@@ -159,10 +159,12 @@ bool Batch::is_empty() const
 vector<TensorView> Batch::get_inputs() const
 {
     vector<TensorView> input_views;
-    input_views.push_back(TensorView(const_cast<type*>(input.data()), input_shape));
+    input_views.reserve(decoder_shape.empty() ? 1 : 2);
 
     if(!decoder_shape.empty())
-        input_views.insert(input_views.begin(), TensorView(const_cast<type*>(decoder.data()), decoder_shape));
+        input_views.push_back(TensorView(const_cast<type*>(decoder.data()), decoder_shape));
+
+    input_views.push_back(TensorView(const_cast<type*>(input.data()), input_shape));
 
     return input_views;
 }

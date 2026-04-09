@@ -47,9 +47,8 @@ Index count_tokens(const string& text, const string& separator)
 
     string::size_type position = 0;
 
-    while(text.find(separator, position) != string::npos)
+    while((position = text.find(separator, position)) != string::npos)
     {
-        position = text.find(separator, position);
         tokens_number++;
         position += separator.length();
     }
@@ -154,13 +153,14 @@ vector<string> convert_string_vector(const vector<vector<string>>& input_vector,
     for(const auto& subvec : input_vector)
     {
         stringstream ss;
+        const size_t n = subvec.size();
 
-        for(size_t i = 0; i < subvec.size(); ++i)
+        for(size_t i = 0; i < n; ++i)
         {
             ss << subvec[i];
 
-            if (i != subvec.size() - 1)
-                ss << separator.c_str();
+            if (i != n - 1)
+                ss << separator;
         }
 
         vector_result.push_back(ss.str());
@@ -236,11 +236,21 @@ bool is_date_time_string(const string& text)
 
 time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format)
 {
+    static const regex re_ymd_hms_ms(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))");
+    static const regex re_ymd_hms(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2}))");
+    static const regex re_ymd_hm(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}))");
+    static const regex re_ymd(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}))");
+    static const regex re_ym(R"((\d{4})[-/.](\d{1,2}))");
+    static const regex re_dmy_hms(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}):(\d{1,2})((?: ([AP]M))?)?)");
+    static const regex re_dmy_hm(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}))");
+    static const regex re_dmy(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))");
+    static const regex re_hms(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))");
+
     struct tm time_structure = {};
     smatch matches;
 
     // yyyy/mm/dd hh:mm:ss.sss
-    if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))")))
+    if((format == YMD || format == AUTO) && regex_match(date, matches, re_ymd_hms_ms))
     {
         time_structure.tm_year = stoi(matches[1].str()) - 1900;
         time_structure.tm_mon = stoi(matches[2].str()) - 1;
@@ -251,7 +261,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         return mktime(&time_structure);
     }
     // yyyy/mm/dd hh:mm:ss
-    else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2}))")))
+    else if((format == YMD || format == AUTO) && regex_match(date, matches, re_ymd_hms))
     {
         time_structure.tm_year = stoi(matches[1].str()) - 1900;
         time_structure.tm_mon = stoi(matches[2].str()) - 1;
@@ -262,7 +272,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         return mktime(&time_structure);
     }
     // yyyy/mm/dd hh:mm
-    else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}))")))
+    else if((format == YMD || format == AUTO) && regex_match(date, matches, re_ymd_hm))
     {
         time_structure.tm_year = stoi(matches[1].str()) - 1900;
         time_structure.tm_mon = stoi(matches[2].str()) - 1;
@@ -272,7 +282,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         return mktime(&time_structure);
     }
     // yyyy/mm/dd
-    else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}))")))
+    else if((format == YMD || format == AUTO) && regex_match(date, matches, re_ymd))
     {
         time_structure.tm_year = stoi(matches[1].str()) - 1900;
         time_structure.tm_mon = stoi(matches[2].str()) - 1;
@@ -280,7 +290,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         return mktime(&time_structure);
     }
     // yyyy/mm
-    else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2}))")))
+    else if((format == YMD || format == AUTO) && regex_match(date, matches, re_ym))
     {
         time_structure.tm_year = stoi(matches[1].str()) - 1900;
         time_structure.tm_mon = stoi(matches[2].str()) - 1;
@@ -288,7 +298,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         return mktime(&time_structure);
     }
     // dd/mm/yyyy hh:mm:ss
-    else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}):(\d{1,2})((?: ([AP]M))?)?)")))
+    else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, re_dmy_hms))
     {
         const int part1 = stoi(matches[1].str()); const int part2 = stoi(matches[2].str());
 
@@ -326,12 +336,11 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         return mktime(&time_structure);
     }
     // dd/mm/yyyy hh:mm
-    else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}))")))
+    else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, re_dmy_hm))
     {
         const int part1 = stoi(matches[1].str()); const int part2 = stoi(matches[2].str());
 
-        if
-            (format == DMY || (format == AUTO && part1 > 12))
+        if(format == DMY || (format == AUTO && part1 > 12))
         {
             time_structure.tm_mday = part1;
             time_structure.tm_mon = part2 - 1;
@@ -354,7 +363,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         return mktime(&time_structure);
     }
     // dd/mm/yyyy
-    else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))")))
+    else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, re_dmy))
     {
         const int part1 = stoi(matches[1].str()); const int part2 = stoi(matches[2].str());
         if (format == DMY || (format == AUTO && part1 > 12)) { time_structure.tm_mday = part1; time_structure.tm_mon = part2 - 1; }
@@ -364,7 +373,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         return mktime(&time_structure);
     }
     // hh:mm:ss
-    else if (format == AUTO && regex_match(date, matches, regex(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))")))
+    else if (format == AUTO && regex_match(date, matches, re_hms))
     {
         time_structure.tm_hour = stoi(matches[1].str()) - gmt;
         time_structure.tm_min = stoi(matches[2].str());
