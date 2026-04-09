@@ -10,9 +10,11 @@
 
 #include "statistics.h"
 //#include "scaling.h"
-#include "string_utilities.h"
+//#include "string_utilities.h"
 #include "math_utilities.h"
 #include "neural_network.h"
+#include "tensor_utilities.h"
+#include <regex>
 
 namespace opennn
 {

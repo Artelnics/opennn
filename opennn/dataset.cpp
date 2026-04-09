@@ -125,10 +125,15 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
 
     const Index batches_number = (samples_number + batch_size - 1) / batch_size;
 
-    vector<Index> indices = sample_indices;
+    vector<Index> shuffled_indices;
 
     if(shuffle)
-        shuffle_vector_blocks(indices);
+    {
+        shuffled_indices = sample_indices;
+        shuffle_vector_blocks(shuffled_indices);
+    }
+
+    const vector<Index>& indices = shuffle ? shuffled_indices : sample_indices;
 
     vector<vector<Index>> batches(batches_number);
 

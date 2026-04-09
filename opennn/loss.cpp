@@ -513,41 +513,39 @@ VectorR Loss::calculate_numerical_gradient()
 
     type h = 0;
 
-    VectorR parameters_forward = parameters;
-    VectorR parameters_backward = parameters;
+    VectorR perturbed = parameters;
 
     type error_forward = 0;
     type error_backward = 0;
 
     VectorR numerical_gradient(parameters_number);
-    numerical_gradient.setConstant(type(0));
+    numerical_gradient.setZero();
 
     for(Index i = 0; i < parameters_number; i++)
     {
         h = calculate_h(parameters(i));
 
-        parameters_forward(i) += h;
+        perturbed(i) += h;
 
         neural_network->forward_propagate(batch.get_inputs(),
-                                          parameters_forward,
+                                          perturbed,
                                           forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
 
         error_forward = back_propagation.error;
 
-        parameters_forward(i) -= h;
-        parameters_backward(i) -= h;
+        perturbed(i) -= type(2) * h;
 
         neural_network->forward_propagate(batch.get_inputs(),
-                                          parameters_backward,
+                                          perturbed,
                                           forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
 
         error_backward = back_propagation.error;
 
-        parameters_backward(i) += h;
+        perturbed(i) += h;
 
         numerical_gradient(i) = (error_forward - error_backward)/type(2*h);
     }
@@ -578,7 +576,7 @@ VectorR Loss::calculate_numerical_input_gradients()
     type error_backward;
 
     VectorR numerical_inputs_gradients(values_number);
-    numerical_inputs_gradients.setConstant(type(0));
+    numerical_inputs_gradients.setZero();
 
     const vector<TensorView>& input_views = batch.get_inputs();
 

@@ -79,6 +79,14 @@ struct Shape
 
     Shape() noexcept = default;
 
+    Shape(size_t n, Index value)
+    {
+        rank = (n > MaxRank) ? MaxRank : n;
+
+        for (size_t i = 0; i < rank; ++i)
+            shape[i] = value;
+    }
+
     Shape(initializer_list<Index> list)
     {
         rank = min(list.size(), MaxRank);

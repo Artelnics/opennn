@@ -200,7 +200,7 @@ VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient()
     type error_backward = 0;
 
     VectorR numerical_gradient_lm(parameters_number);
-    numerical_gradient_lm.setConstant(type(0));
+    numerical_gradient_lm.setZero();
 
     for(Index i = 0; i < parameters_number; i++)
     {

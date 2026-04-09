@@ -1267,7 +1267,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
     const MatrixR input = language_dataset->get_data("Testing", "Decoder");
     const MatrixR target = language_dataset->get_data("Testing", "Target");
 
-    const Index testing_batch_size = input.rows() > 2000 ? 2000 : input.rows();
+    const Index testing_batch_size = min(static_cast<Index>(2000), input.rows());
 
     MatrixR testing_input = input.topRows(testing_batch_size);
     MatrixR testing_context = context.topRows(testing_batch_size);
