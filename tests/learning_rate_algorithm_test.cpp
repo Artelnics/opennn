@@ -1,7 +1,7 @@
 
 #include "pch.h"
 
-#include "../opennn/mean_squared_error.h"
+#include "../opennn/loss.h"
 
 using namespace opennn;
 /*
@@ -9,21 +9,20 @@ TEST(LearningRateAlgorithmTest, DefaultConstructor)
 {
     LearningRateAlgorithm learning_rate_algorithm;
 
-    EXPECT_EQ(learning_rate_algorithm.has_loss(), false);
+    EXPECT_EQ(learning_rate_algorithm.get_loss() == nullptr, true);
 }
 
-/*
 TEST(LearningRateAlgorithmTest, GeneralConstructor)
 {
-    MeanSquaredError mean_squared_error;
-    LearningRateAlgorithm learning_rate_algorithm(&mean_squared_error);
+    Loss loss;
+    LearningRateAlgorithm learning_rate_algorithm(&loss);
 
-    EXPECT_EQ(learning_rate_algorithm.has_loss(), true);
+    EXPECT_EQ(learning_rate_algorithm.get_loss() != nullptr, true);
 }
 
 
 TEST(LearningRateAlgorithmTest, BracketingTriplet)
-{    
+{
 
     Dataset dataset(1, {1}, {1});
     dataset.set_data_random();
@@ -34,19 +33,20 @@ TEST(LearningRateAlgorithmTest, BracketingTriplet)
 
     ForwardPropagation forward_propagation(1, &neural_network);
 
-    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
 
-    BackPropagation back_propagation(1, &mean_squared_error);
+    BackPropagation back_propagation(1, &loss);
 
-    LearningRateAlgorithm learning_rate_algorithm(&mean_squared_error);
+    LearningRateAlgorithm learning_rate_algorithm(&loss);
 
     //LearningRateAlgorithm::Triplet triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
 
     Tensor<Index, 3> sample_indices(0, 1, samples_number);
 
-    LearningRateAlgorithm learning_rate_algorithm(&mean_squared_error);
+    LearningRateAlgorithm learning_rate_algorithm(&loss);
 
-    type loss = 0.0;
+    type loss_val = 0.0;
     Tensor1 training_direction;
     type initial_learning_rate = 0.0;
 
@@ -60,16 +60,16 @@ TEST(LearningRateAlgorithmTest, BracketingTriplet)
 
 void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 {
-    mean_squared_error.set_regularization(LossIndex::"L2");
+    loss.set_regularization("L2");
 
     neural_network.set_parameters_random();
 
-    //loss = mean_squared_error.calculate_training_loss();
-    //training_direction = mean_squared_error.calculate_training_loss_gradient()*(-1.0);
+    //loss_val = loss.calculate_training_loss();
+    //training_direction = loss.calculate_training_loss_gradient()*(-1.0);
 
     initial_learning_rate = 0.01;
 
-    //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
+    //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss_val, training_direction, initial_learning_rate);
 
     EXPECT_EQ(triplet.A.first <= triplet.U.first);
     EXPECT_EQ(triplet.U.first <= triplet.B.first);
@@ -82,7 +82,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     initial_learning_rate = 0.01;
 
-    //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
+    //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss_val, training_direction, initial_learning_rate);
 
     // Test
 
@@ -90,7 +90,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     initial_learning_rate = 0.0;
 
-    //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
+    //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss_val, training_direction, initial_learning_rate);
 
     // Test
 
@@ -102,7 +102,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     initial_learning_rate = 0.001;
 
-    //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
+    //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss_val, training_direction, initial_learning_rate);
 
     EXPECT_EQ(triplet.A.first <= triplet.U.first);
     EXPECT_EQ(triplet.U.first <= triplet.B.first);
@@ -119,7 +119,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     initial_learning_rate = 0.001;
 
-    //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
+    //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss_val, training_direction, initial_learning_rate);
 
     EXPECT_EQ(triplet.A.first <= triplet.U.first);
     EXPECT_EQ(triplet.U.first <= triplet.B.first);
@@ -142,7 +142,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {1, 1});
 
-    LearningRateAlgorithm learning_rate_algorithm(&mean_squared_error);
+    LearningRateAlgorithm learning_rate_algorithm(&loss);
 
     neural_network.set_parameters_constant(type(1));
 
@@ -153,10 +153,10 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
     learning_rate_algorithm.set_loss_tolerance(loss_tolerance);
 
     pair<type, type> directional_point
-            = learning_rate_algorithm.calculate_golden_section_directional_point(loss, training_direction, initial_learning_rate);
+            = learning_rate_algorithm.calculate_golden_section_directional_point(loss_val, training_direction, initial_learning_rate);
 
     EXPECT_EQ(directional_point.first >= type(0));
-    EXPECT_EQ(directional_point.second < loss);
+    EXPECT_EQ(directional_point.second < loss_val);
 
 }
 
@@ -180,7 +180,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
     //loss_index.calculate_training_loss not available
 
-    Tensor1 gradient = mean_squared_error.calculate_numerical_gradient();
+    Tensor1 gradient = loss.calculate_numerical_gradient();
 
     Tensor1 training_direction = gradient*(type(-1.0));
 

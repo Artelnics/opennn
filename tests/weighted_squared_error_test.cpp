@@ -1,17 +1,17 @@
 #include "pch.h"
 
 #include "../opennn/dataset.h"
-#include "../opennn/weighted_squared_error.h"
+#include "../opennn/loss.h"
 #include "../opennn/standard_networks.h"
 
 using namespace opennn;
 
 TEST(WeightedSquaredErrorTest, DefaultConstructor)
 {
-    WeightedSquaredError weighted_squared_error;
+    Loss loss;
 
-    EXPECT_EQ(weighted_squared_error.has_neural_network(), false);
-    EXPECT_EQ(weighted_squared_error.has_dataset(), false);
+    EXPECT_EQ(loss.get_neural_network() == nullptr, true);
+    EXPECT_EQ(loss.get_dataset() == nullptr, true);
 }
 
 
@@ -20,10 +20,11 @@ TEST(WeightedSquaredErrorTest, GeneralConstructor)
     NeuralNetwork neural_network;
     Dataset dataset;
 
-    WeightedSquaredError weighted_squared_error(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::WeightedSquaredError);
 
-    EXPECT_EQ(weighted_squared_error.has_neural_network(), true);
-    EXPECT_EQ(weighted_squared_error.has_dataset(), true);
+    EXPECT_EQ(loss.get_neural_network() != nullptr, true);
+    EXPECT_EQ(loss.get_dataset() != nullptr, true);
 }
 
 
@@ -39,10 +40,11 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
 
     ClassificationNetwork neural_network({ inputs_number }, { neurons_number }, { outputs_number });
 
-    WeightedSquaredError weighted_squared_error(&neural_network, &data_set);
+    Loss loss(&neural_network, &data_set);
+    loss.set_error(Loss::Error::WeightedSquaredError);
 
-    const VectorR analytical_gradient = weighted_squared_error.calculate_gradient();
-    const VectorR numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
+    const VectorR analytical_gradient = loss.calculate_gradient();
+    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
     EXPECT_TRUE(are_equal(analytical_gradient, numerical_gradient, type(1.0e-2)));
 }

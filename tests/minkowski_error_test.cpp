@@ -3,17 +3,17 @@
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/dataset.h"
-#include "../opennn/minkowski_error.h"
+#include "../opennn/loss.h"
 #include "../opennn/standard_networks.h"
 
 using namespace opennn;
 
 TEST(MinkowskiErrorTest, DefaultConstructor)
 {
-    MinkowskiError minkowski_error;
+    Loss loss;
 
-    EXPECT_EQ(minkowski_error.has_neural_network(), false);
-    EXPECT_EQ(minkowski_error.has_dataset(), false);
+    EXPECT_EQ(loss.get_neural_network() == nullptr, true);
+    EXPECT_EQ(loss.get_dataset() == nullptr, true);
 }
 
 
@@ -22,10 +22,11 @@ TEST(MinkowskiErrorTest, GeneralConstructor)
     NeuralNetwork neural_network;
     Dataset dataset;
 
-    MinkowskiError minkowski_error(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MinkowskiError);
 
-    EXPECT_EQ(minkowski_error.has_neural_network(), true);
-    EXPECT_EQ(minkowski_error.has_dataset(), true);
+    EXPECT_EQ(loss.get_neural_network() != nullptr, true);
+    EXPECT_EQ(loss.get_dataset() != nullptr, true);
 }
 
 
@@ -42,11 +43,12 @@ TEST(MinkowskiErrorTest, BackPropagate)
 
     ApproximationNetwork neural_network({ inputs_number }, { neurons_number }, { outputs_number });
 
-    MinkowskiError minkowski_error(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MinkowskiError);
 
-    const VectorR gradient = minkowski_error.calculate_gradient();
+    const VectorR gradient = loss.calculate_gradient();
 
-    const VectorR numerical_gradient = minkowski_error.calculate_numerical_gradient();
+    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-2)), true);
 }

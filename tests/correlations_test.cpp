@@ -80,7 +80,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
     VectorR y(20);
     y << 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1;
 
-    Correlation correlation = logistic_correlation_vector_vector(x, y);
+    Correlation correlation = logistic_correlation(x, y);
 
     correlation.print();
     //correlation.print(); system("pause");
@@ -98,7 +98,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
     y.resize(size);
     y << 0,0,0,0,0,1,1,1,1,1;
 
-    correlation = logistic_correlation_vector_vector(x, y);
+    correlation = logistic_correlation(x, y);
 
     //correlation.print();
 
@@ -126,7 +126,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     for (Index i = size - (size / 2); i < size; i++) y[i] = 1;
 
-    correlation = logistic_correlation_vector_vector(x, y);
+    correlation = logistic_correlation(x, y);
 
     //correlation.print();
 
@@ -141,7 +141,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     for (Index i = size - (size / 2); i < size; i++) y[i] = 0.0;
 
-    correlation = logistic_correlation_vector_vector(x, y);
+    correlation = logistic_correlation(x, y);
 
     //correlation.print();
 
@@ -151,7 +151,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     y.setConstant(type(0));
 
-    correlation = logistic_correlation_vector_vector(x, y);
+    correlation = logistic_correlation(x, y);
 
     EXPECT_EQ(isnan(correlation.r), true);
 
@@ -159,7 +159,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     for (Index i = size - (size / 2); i < size; i++) y[i] = 1;
 
-    correlation = logistic_correlation_vector_vector(x, y);
+    correlation = logistic_correlation(x, y);
 
     //EXPECT_NEAR(correlation.r, type(1), EPSILON);
     //EXPECT_EQ(correlation.form, Correlation::Form::Sigmoid);
@@ -181,7 +181,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     for (Index i = size - (size / 2); i < size; i++) y[i] = 1;
 
-    correlation = logistic_correlation_vector_vector(x, y);
+    correlation = logistic_correlation(x, y);
 
     EXPECT_LE(correlation.r, type(1));
 
@@ -200,7 +200,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     for (Index i = size - (size / 2); i < size; i++) y[i] = 0.0;
 
-    correlation = logistic_correlation_vector_vector(x, y);
+    correlation = logistic_correlation(x, y);
 
     EXPECT_GE(abs(correlation.r), type(-0.95));
 
@@ -208,7 +208,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     y.setConstant(type(0));
 
-    correlation = logistic_correlation_vector_vector(x, y);
+    correlation = logistic_correlation(x, y);
 
     EXPECT_EQ(isnan(correlation.r), true);
 

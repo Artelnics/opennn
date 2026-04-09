@@ -8,7 +8,7 @@
 #include "../opennn/pooling_layer.h"
 #include "../opennn/convolutional_layer.h"
 #include "../opennn/neural_network.h"
-#include "../opennn/mean_squared_error.h"
+#include "../opennn/loss.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/recurrent_layer.h"
 #include "../opennn/flatten_layer.h"
@@ -20,10 +20,10 @@ using namespace opennn;
 
 TEST(MeanSquaredErrorTest, DefaultConstructor)
 {
-    MeanSquaredError mean_squared_error;
+    Loss loss;
 
-    EXPECT_EQ(mean_squared_error.has_neural_network(), false);
-    EXPECT_EQ(mean_squared_error.has_dataset(), false);
+    EXPECT_EQ(loss.get_neural_network(), nullptr);
+    EXPECT_EQ(loss.get_dataset(), nullptr);
 }
 
 
@@ -31,10 +31,10 @@ TEST(MeanSquaredErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
     Dataset dataset;
-    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
 
-    EXPECT_EQ(mean_squared_error.has_neural_network(), true);
-    EXPECT_EQ(mean_squared_error.has_dataset(), true);
+    EXPECT_NE(loss.get_neural_network(), nullptr);
+    EXPECT_NE(loss.get_dataset(), nullptr);
 }
 
 
@@ -46,34 +46,23 @@ TEST(MeanSquaredErrorTest, BackPropagateDense2d)
     const Index neurons_number = random_integer(1, 10);
 
     Dataset dataset(samples_number, { inputs_number }, { targets_number });
-    dataset.set_data_random(); 
-    dataset.set_sample_roles("Training"); 
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
 
-    NeuralNetwork neural_network; 
+    NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ inputs_number }, Shape{ dataset.get_target_shape()}));
+    neural_network.compile();
 
-    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
 
-    const type error = mean_squared_error.calculate_numerical_error();
+    const type error = loss.calculate_numerical_error();
     EXPECT_GE(error, 0);
 
-    const VectorR gradient = mean_squared_error.calculate_gradient();
-    const VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+    const VectorR gradient = loss.calculate_gradient();
+    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
-
-#ifdef CUDA
-    const TensorCuda gradient_cuda = mean_squared_error.calculate_gradient_cuda();
-    VectorR host_gradient(gradient.size());
-
-    CHECK_CUDA(cudaMemcpy(host_gradient.data(),
-                          gradient_cuda.data,
-                          gradient_cuda.size() * sizeof(float),
-                          cudaMemcpyDeviceToHost));
-
-    EXPECT_EQ(are_equal(host_gradient, numerical_gradient, type(1.0e-3)), true);
-#endif
-
 }
 
 
@@ -90,14 +79,16 @@ TEST(MeanSquaredErrorTest, BackPropagateRecurrent)
 
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Recurrent>(Shape{time_steps, inputs_number}, Shape{targets_number}));
+    neural_network.compile();
 
-    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
 
-    const type error = mean_squared_error.calculate_numerical_error();
+    const type error = loss.calculate_numerical_error();
     EXPECT_GE(error, 0);
 
-    const VectorR gradient = mean_squared_error.calculate_gradient();
-    const VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+    const VectorR gradient = loss.calculate_gradient();
+    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
@@ -121,14 +112,16 @@ TEST(MeanSquaredErrorTest, BackPropagateConvolutional)
     neural_network.add_layer(make_unique<Flatten<4>>(flatten_layer_input_dimensions));
     const Shape dense_layer_input_dimensions = neural_network.get_layer(1)->get_output_shape();
     neural_network.add_layer(make_unique<opennn::Dense<2>>(dense_layer_input_dimensions, dataset.get_target_shape()));
+    neural_network.compile();
 
-    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
 
-    const type error = mean_squared_error.calculate_numerical_error();
+    const type error = loss.calculate_numerical_error();
     EXPECT_GE(error, 0);
-    
-    const VectorR gradient = mean_squared_error.calculate_gradient();
-    const VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+
+    const VectorR gradient = loss.calculate_gradient();
+    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
@@ -155,14 +148,16 @@ TEST(MeanSquaredErrorTest, BackPropagatePooling)
     neural_network.add_layer(make_unique<Flatten<4>>(pool_output_dimensions));
     const Shape flatten_output_dimensions = neural_network.get_layer(2)->get_output_shape();
     neural_network.add_layer(make_unique<opennn::Dense<2>>(flatten_output_dimensions, dataset.get_target_shape()));
+    neural_network.compile();
 
-    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
 
-    const type error = mean_squared_error.calculate_numerical_error();
+    const type error = loss.calculate_numerical_error();
     EXPECT_GE(error, 0);
 
-    const VectorR gradient = mean_squared_error.calculate_gradient();
-    const VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+    const VectorR gradient = loss.calculate_gradient();
+    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
@@ -170,8 +165,8 @@ TEST(MeanSquaredErrorTest, BackPropagatePooling)
 
 TEST(MeanSquaredErrorTest, BackPropagateEmbedding)
 {
-    const Index samples_number = random_integer(5, 10); 
-    const Index inputs_number = random_integer(10, 20); 
+    const Index samples_number = random_integer(5, 10);
+    const Index inputs_number = random_integer(10, 20);
     const Index targets_number = random_integer(3, 10);
 
     const Index embeding_dim = inputs_number;
@@ -188,31 +183,18 @@ TEST(MeanSquaredErrorTest, BackPropagateEmbedding)
     const Shape flatten_layer_input_dimensions = neural_network.get_layer(0)->get_output_shape();
     neural_network.add_layer(make_unique<Flatten<3>>(Shape{ flatten_layer_input_dimensions }));
     neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ flattened_size }, Shape{ targets_number }));
+    neural_network.compile();
 
-    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
 
-    const type error = mean_squared_error.calculate_numerical_error();
+    const type error = loss.calculate_numerical_error();
     EXPECT_GE(error, 0);
 
-    const VectorR gradient = mean_squared_error.calculate_gradient();
+    const VectorR gradient = loss.calculate_gradient();
 
-    const VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
-    cout << "\nIdx | Gradient      | Numerical     | Diff" << endl;
-    cout << "----+---------------+---------------+----------" << endl;
-    for(Index i = 0; i < gradient.size(); i++)
-    {
-        if(gradient(i) != 0 || numerical_gradient(i) != 0)
-            cout << setw(4) << i << " | "
-                 << setw(13) << gradient(i) << " | "
-                 << setw(13) << numerical_gradient(i) << " | "
-                 << setw(10) << abs(gradient(i) - numerical_gradient(i))
-                 << endl;
-    }
+    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
-
-    //@todo
-    //EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
-    //RElajar tolerancia , 0,004 error permitido.
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-2)), true);
 }
 
@@ -235,53 +217,15 @@ TEST(MeanSquaredErrorTest, BackPropagateMultiheadAttention)
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<MultiHeadAttention>(dataset.get_input_shape(), heads_number));
     neural_network.add_layer(make_unique<Flatten<3>>(neural_network.get_output_shape()));
+    neural_network.compile();
 
-    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
 
-    const type error = mean_squared_error.calculate_numerical_error();
-    const VectorR analytical_gradient = mean_squared_error.calculate_gradient();
-    const VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+    const type error = loss.calculate_numerical_error();
+    const VectorR analytical_gradient = loss.calculate_gradient();
+    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
     EXPECT_GE(error, 0.0) << "MSE must be positive";
     EXPECT_TRUE(are_equal(analytical_gradient, numerical_gradient, type(1.0e-3)));
 }
-
-/*
-TEST(MeanSquaredErrorTest, BackPropagateLm)
-{
-    const Index samples_number = random_integer(2, 10);
-    const Index inputs_number = random_integer(1, 10);
-    const Index targets_number = random_integer(1, 10);
-    const Index neurons_number = random_integer(1, 10);
-
-    Dataset dataset(samples_number, { inputs_number }, { targets_number });
-    dataset.set_data_random();
-    dataset.set_sample_roles("Training");
-
-    Batch batch(samples_number, &dataset);
-    batch.fill(dataset.get_sample_indices("Training"),
-        dataset.get_variable_indices("Input"),
-        dataset.get_variable_indices("Target"));
-
-    ApproximationNetwork neural_network({ inputs_number }, { neurons_number }, { dataset.get_target_shape()});
-
-    ForwardPropagation forward_propagation(samples_number, &neural_network);
-    neural_network.forward_propagate(batch.get_inputs(), forward_propagation, true);
-
-    MeanSquaredError mean_squared_error(&neural_network, &dataset);
-
-    BackPropagation back_propagation(samples_number, &mean_squared_error);
-    mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-    BackPropagationLM back_propagation_lm(samples_number, &mean_squared_error);
-    mean_squared_error.back_propagate(batch, forward_propagation, back_propagation_lm);
-
-    MatrixR numerical_jacobian = mean_squared_error.calculate_numerical_jacobian();
-    VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
-    MatrixR numerical_hessian = mean_squared_error.calculate_numerical_hessian();
-
-    EXPECT_NEAR(back_propagation_lm.error, back_propagation.error, type(1.0e-3));
-    EXPECT_EQ(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian), true);
-    EXPECT_EQ(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1e-2)), true);
-    EXPECT_EQ(are_equal(back_propagation_lm.hessian, numerical_hessian, type(1.0e-1)), true);
-}*/

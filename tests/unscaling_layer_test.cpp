@@ -4,6 +4,7 @@
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/unscaling_layer.h"
 #include "../opennn/scaling_layer.h"
+#include "../opennn/neural_network.h"
 
 using namespace opennn;
 
@@ -12,7 +13,6 @@ TEST(UnscalingTest, DefaultConstructor)
     Unscaling unscaling_layer;
 
     EXPECT_EQ(unscaling_layer.get_name(), "Unscaling");
-    EXPECT_EQ(unscaling_layer.get_descriptives().size(), 0);
     EXPECT_EQ(unscaling_layer.get_input_shape(), Shape{ 0 });
     EXPECT_EQ(unscaling_layer.get_output_shape(), Shape{ 0 });
 }
@@ -24,14 +24,12 @@ TEST(UnscalingTest, GeneralConstructor)
     EXPECT_EQ(unscaling_layer.get_input_shape(), Shape{ 3 });
     EXPECT_EQ(unscaling_layer.get_output_shape(), Shape{ 3 });
     EXPECT_EQ(unscaling_layer.get_name(), "Unscaling");
-    EXPECT_EQ(unscaling_layer.get_descriptives().size(), 3);
 }
 
 TEST(UnscalingTest, ForwardPropagate)
 {
     Index inputs_number;
     Index samples_number;
-    bool is_training = true;
     const type TOLERANCE = type(1e-4);
 
     // Test Unscaling Scaler::None
@@ -39,338 +37,58 @@ TEST(UnscalingTest, ForwardPropagate)
         inputs_number = 3;
         samples_number = 1;
 
-        Unscaling unscaling_layer_none({ inputs_number });
-        unscaling_layer_none.set_scalers("None");
+        NeuralNetwork neural_network;
+        neural_network.add_layer(make_unique<Unscaling>(Shape{inputs_number}));
+        neural_network.compile();
 
-        vector<Descriptives> none_descriptives(inputs_number);
-        for (Index i = 0; i < inputs_number; ++i) {
-            none_descriptives[i].set(type(0), type(1), type(0.5), type(1.0));
-        }
-        unscaling_layer_none.set_descriptives(none_descriptives);
+        Unscaling* layer = static_cast<Unscaling*>(neural_network.get_layer(0).get());
+        layer->set_scalers("None");
 
         Tensor2 data_to_unscale(samples_number, inputs_number);
         data_to_unscale.setConstant(type(10));
 
-        unique_ptr<LayerForwardPropagation> fw_prop_unscale =
-            make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_none);
-        fw_prop_unscale->initialize();
+        ForwardPropagation forward_propagation(samples_number, &neural_network);
+        vector<TensorView> input_views = { TensorView(data_to_unscale.data(), {samples_number, inputs_number}) };
+        neural_network.forward_propagate(input_views, forward_propagation, false);
 
-        vector<TensorView*> views = fw_prop_unscale->get_workspace_views();
-        const Index workspace_size = get_size(views);
-        Tensor1 workspace(workspace_size);
-        workspace.setZero();
-        link(workspace.data(), views);
+        TensorView output_view = forward_propagation.get_outputs();
 
-        fw_prop_unscale->inputs = { TensorView(data_to_unscale.data(), {samples_number, inputs_number}) };
-
-        unscaling_layer_none.forward_propagate(fw_prop_unscale, is_training);
-
-        TensorView output_pair_unscale = fw_prop_unscale->get_outputs();
-        Tensor2 unscaled_data = tensor_map<2>(output_pair_unscale);
-
-        EXPECT_EQ(unscaled_data.dimension(0), samples_number);
-        EXPECT_EQ(unscaled_data.dimension(1), inputs_number);
-        EXPECT_NEAR(unscaled_data(0, 0), data_to_unscale(0, 0), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(0, 1), data_to_unscale(0, 1), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(0, 2), data_to_unscale(0, 2), TOLERANCE);
+        EXPECT_NEAR(output_view.data[0], type(10), TOLERANCE);
+        EXPECT_NEAR(output_view.data[1], type(10), TOLERANCE);
+        EXPECT_NEAR(output_view.data[2], type(10), TOLERANCE);
     }
 
-    // Test Unscaling Scaler::MinimumMaximum
+    // Test Unscaling with MinimumMaximum
     {
         inputs_number = 1;
         samples_number = 3;
 
-        Scaling<2> helper_scaling_layer({ inputs_number });
-        Unscaling unscaling_layer_minmax({ inputs_number });
+        NeuralNetwork neural_network;
+        neural_network.add_layer(make_unique<Unscaling>(Shape{inputs_number}));
+        neural_network.compile();
+
+        Unscaling* layer = static_cast<Unscaling*>(neural_network.get_layer(0).get());
+        layer->set_scalers("MinimumMaximum");
 
         MatrixR original_data(samples_number, inputs_number);
         original_data << type(2), type(4), type(6);
 
         vector<Descriptives> actual_descriptives = descriptives(original_data);
+        layer->set_descriptives(actual_descriptives);
 
-        helper_scaling_layer.set_descriptives(actual_descriptives);
-        helper_scaling_layer.set_scalers("MinimumMaximum");
+        // Feed scaled values: for MinMax with range [-1,1] and min=2,max=6:
+        //   scaled = -1 + 2*(x-2)/(6-2) => x=2 -> -1, x=4 -> 0, x=6 -> 1
+        MatrixR scaled_data(samples_number, inputs_number);
+        scaled_data << type(-1), type(0), type(1);
 
-        unique_ptr<LayerForwardPropagation> fw_prop_scale =
-            make_unique<ScalingForwardPropagation<2>>(samples_number, &helper_scaling_layer);
-        fw_prop_scale->initialize();
+        ForwardPropagation forward_propagation(samples_number, &neural_network);
+        vector<TensorView> input_views = { TensorView(scaled_data.data(), {samples_number, inputs_number}) };
+        neural_network.forward_propagate(input_views, forward_propagation, false);
 
-        vector<TensorView*> views_scale = fw_prop_scale->get_workspace_views();
-        const Index workspace_scale_size = get_size(views_scale);
-        Tensor1 workspace_scale(workspace_scale_size);
-        workspace_scale.setZero();
-        link(workspace_scale.data(), views_scale);
+        TensorView output_view = forward_propagation.get_outputs();
 
-        fw_prop_scale->inputs = { TensorView(original_data.data(), {samples_number, inputs_number}) };
-        helper_scaling_layer.forward_propagate(fw_prop_scale, is_training);
-        TensorView output_pair_scale = fw_prop_scale->get_outputs();
-        Tensor2 scaled_data = tensor_map<2>(output_pair_scale);
-
-        // Map to [-1, 1] range:
-        // 2 -> -1.0
-        // 4 -> 0.0
-        // 6 -> 1.0
-        EXPECT_NEAR(scaled_data(0, 0), type(-1.0), TOLERANCE);
-        EXPECT_NEAR(scaled_data(1, 0), type(0.0), TOLERANCE);
-        EXPECT_NEAR(scaled_data(2, 0), type(1.0), TOLERANCE);
-
-        unscaling_layer_minmax.set_descriptives(actual_descriptives);
-        unscaling_layer_minmax.set_scalers("MinimumMaximum");
-
-        unique_ptr<LayerForwardPropagation> fw_prop_unscale =
-            make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_minmax);
-        fw_prop_unscale->initialize();
-
-        vector<TensorView*> views_unscale = fw_prop_unscale->get_workspace_views();
-        const Index workspace_unscale_size = get_size(views_unscale);
-        Tensor1 workspace_unscale(workspace_unscale_size);
-        workspace_unscale.setZero();
-        link(workspace_unscale.data(), views_unscale);
-
-        fw_prop_unscale->inputs = { TensorView(scaled_data.data(), {samples_number, inputs_number}) };
-        unscaling_layer_minmax.forward_propagate(fw_prop_unscale, is_training);
-        TensorView output_pair_unscale = fw_prop_unscale->get_outputs();
-        Tensor2 unscaled_data = tensor_map<2>(output_pair_unscale);
-
-        EXPECT_EQ(unscaled_data.dimension(0), samples_number);
-        EXPECT_EQ(unscaled_data.dimension(1), inputs_number);
-        EXPECT_NEAR(unscaled_data(0, 0), original_data(0, 0), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(1, 0), original_data(1, 0), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(2, 0), original_data(2, 0), TOLERANCE);
-    }
-
-    // Test Unscaling Scaler::MeanStandardDeviation
-    {
-        inputs_number = 2;
-        samples_number = 2;
-
-        Scaling<2> helper_scaling_layer({ inputs_number });
-        Unscaling unscaling_layer_msd({ inputs_number });
-
-        MatrixR original_data(samples_number, inputs_number);
-        original_data << type(0), type(10),
-            type(2), type(30);
-
-        vector<Descriptives> actual_descriptives = descriptives(original_data);
-
-        helper_scaling_layer.set_descriptives(actual_descriptives);
-        helper_scaling_layer.set_scalers("MeanStandardDeviation");
-
-        unique_ptr<LayerForwardPropagation> fw_prop_scale =
-            make_unique<ScalingForwardPropagation<2>>(samples_number, &helper_scaling_layer);
-        fw_prop_scale->initialize();
-
-        vector<TensorView*> views_scale = fw_prop_scale->get_workspace_views();
-        const Index workspace_scale_size = get_size(views_scale);
-        Tensor1 workspace_scale(workspace_scale_size);
-        workspace_scale.setZero();
-        link(workspace_scale.data(), views_scale);
-
-        fw_prop_scale->inputs = { TensorView(original_data.data(), {samples_number, inputs_number}) };
-        helper_scaling_layer.forward_propagate(fw_prop_scale, is_training);
-        TensorView output_pair_scale = fw_prop_scale->get_outputs();
-        Tensor2 scaled_data = tensor_map<2>(output_pair_scale);
-
-        unscaling_layer_msd.set_descriptives(actual_descriptives);
-        unscaling_layer_msd.set_scalers("MeanStandardDeviation");
-
-        unique_ptr<LayerForwardPropagation> fw_prop_unscale =
-            make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_msd);
-        fw_prop_unscale->initialize();
-
-        vector<TensorView*> views_unscale = fw_prop_unscale->get_workspace_views();
-        const Index workspace_unscale_size = get_size(views_unscale);
-        Tensor1 workspace_unscale(workspace_unscale_size);
-        workspace_unscale.setZero();
-        link(workspace_unscale.data(), views_unscale);
-
-        fw_prop_unscale->inputs = { TensorView(scaled_data.data(), {samples_number, inputs_number}) };
-        unscaling_layer_msd.forward_propagate(fw_prop_unscale, is_training);
-        TensorView output_pair_unscale = fw_prop_unscale->get_outputs();
-        Tensor2 unscaled_data = tensor_map<2>(output_pair_unscale);
-
-        EXPECT_EQ(unscaled_data.dimension(0), samples_number);
-        EXPECT_EQ(unscaled_data.dimension(1), inputs_number);
-        EXPECT_NEAR(unscaled_data(0, 0), original_data(0, 0), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(0, 1), original_data(0, 1), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(1, 0), original_data(1, 0), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(1, 1), original_data(1, 1), TOLERANCE);
-    }
-
-    // Test Unscaling Scaler::StandardDeviation
-    {
-        inputs_number = 2;
-        samples_number = 2;
-
-        Scaling<2> helper_scaling_layer({ inputs_number });
-        Unscaling unscaling_layer_std({ inputs_number });
-
-        MatrixR original_data(samples_number, inputs_number);
-        original_data << type(1),type(10),
-            type(3),type(50);
-
-        vector<Descriptives> actual_descriptives = descriptives(original_data);
-
-        helper_scaling_layer.set_descriptives(actual_descriptives);
-        helper_scaling_layer.set_scalers("StandardDeviation");
-
-        unique_ptr<LayerForwardPropagation> fw_prop_scale =
-            make_unique<ScalingForwardPropagation<2>>(samples_number, &helper_scaling_layer);
-        fw_prop_scale->initialize();
-
-        vector<TensorView*> views_scale = fw_prop_scale->get_workspace_views();
-        const Index workspace_scale_size = get_size(views_scale);
-        Tensor1 workspace_scale(workspace_scale_size);
-        workspace_scale.setZero();
-        link(workspace_scale.data(), views_scale);
-
-        fw_prop_scale->inputs = { TensorView(original_data.data(), {samples_number, inputs_number}) };
-        helper_scaling_layer.forward_propagate(fw_prop_scale, is_training);
-        TensorView output_pair_scale = fw_prop_scale->get_outputs();
-        Tensor2 scaled_data = tensor_map<2>(output_pair_scale);
-
-        unscaling_layer_std.set_descriptives(actual_descriptives);
-        unscaling_layer_std.set_scalers("StandardDeviation");
-
-        unique_ptr<LayerForwardPropagation> fw_prop_unscale =
-            make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_std);
-        fw_prop_unscale->initialize();
-
-        vector<TensorView*> views_unscale = fw_prop_unscale->get_workspace_views();
-        const Index workspace_unscale_size = get_size(views_unscale);
-        Tensor1 workspace_unscale(workspace_unscale_size);
-        workspace_unscale.setZero();
-        link(workspace_unscale.data(), views_unscale);
-
-        fw_prop_unscale->inputs = { TensorView(scaled_data.data(), {samples_number, inputs_number}) };
-        unscaling_layer_std.forward_propagate(fw_prop_unscale, is_training);
-        TensorView output_pair_unscale = fw_prop_unscale->get_outputs();
-        MatrixR unscaled_data = matrix_map(output_pair_unscale);
-
-        EXPECT_EQ(unscaled_data.rows(), samples_number);
-        EXPECT_EQ(unscaled_data.cols(), inputs_number);
-        EXPECT_NEAR(unscaled_data(0, 0), original_data(0, 0), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(0, 1), original_data(0, 1), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(1, 0), original_data(1, 0), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(1, 1), original_data(1, 1), TOLERANCE);
-    }
-
-    // Test Unscaling Scaler::Logarithm
-    {
-        inputs_number = 2;
-        samples_number = 2;
-
-        Scaling<2> helper_scaling_layer({ inputs_number });
-        Unscaling unscaling_layer_log({ inputs_number });
-
-        Tensor2 original_data(samples_number, inputs_number);
-        original_data.setValues({ {type(1.0),      type(exp(2.0))},
-                                 {type(exp(1.0)), type(exp(3.0))} });
-
-        helper_scaling_layer.set_scalers("Logarithm");
-
-        unique_ptr<LayerForwardPropagation> fw_prop_scale =
-            make_unique<ScalingForwardPropagation<2>>(samples_number, &helper_scaling_layer);
-        fw_prop_scale->initialize();
-
-        vector<TensorView*> views_scale = fw_prop_scale->get_workspace_views();
-        const Index workspace_scale_size = get_size(views_scale);
-        Tensor1 workspace_scale(workspace_scale_size);
-        workspace_scale.setZero();
-        link(workspace_scale.data(), views_scale);
-
-        fw_prop_scale->inputs = { TensorView(original_data.data(), {samples_number, inputs_number}) };
-        helper_scaling_layer.forward_propagate(fw_prop_scale, is_training);
-        TensorView output_pair_scale = fw_prop_scale->get_outputs();
-        Tensor2 scaled_data = tensor_map<2>(output_pair_scale);
-
-        EXPECT_NEAR(scaled_data(0, 0), type(0.0), TOLERANCE);
-        EXPECT_NEAR(scaled_data(0, 1), type(2.0), TOLERANCE);
-        EXPECT_NEAR(scaled_data(1, 0), type(1.0), TOLERANCE);
-        EXPECT_NEAR(scaled_data(1, 1), type(3.0), TOLERANCE);
-
-        unscaling_layer_log.set_scalers("Logarithm");
-
-        unique_ptr<LayerForwardPropagation> fw_prop_unscale =
-            make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_log);
-        fw_prop_unscale->initialize();
-
-        vector<TensorView*> views_unscale = fw_prop_unscale->get_workspace_views();
-        const Index workspace_unscale_size = get_size(views_unscale);
-        Tensor1 workspace_unscale(workspace_unscale_size);
-        workspace_unscale.setZero();
-        link(workspace_unscale.data(), views_unscale);
-
-        fw_prop_unscale->inputs = { TensorView(scaled_data.data(), {samples_number, inputs_number}) };
-        unscaling_layer_log.forward_propagate(fw_prop_unscale, is_training);
-        TensorView output_pair_unscale = fw_prop_unscale->get_outputs();
-        Tensor2 unscaled_data = tensor_map<2>(output_pair_unscale);
-
-        EXPECT_EQ(unscaled_data.dimension(0), samples_number);
-        EXPECT_EQ(unscaled_data.dimension(1), inputs_number);
-        EXPECT_NEAR(unscaled_data(0, 0), original_data(0, 0), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(0, 1), original_data(0, 1), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(1, 0), original_data(1, 0), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(1, 1), original_data(1, 1), TOLERANCE);
-    }
-
-    // Test Unscaling Scaler::ImageMinMax
-    {
-        inputs_number = 2;
-        samples_number = 2;
-
-        Scaling<2> helper_scaling_layer({ inputs_number });
-        Unscaling unscaling_layer_img({ inputs_number });
-
-        Tensor2 original_data(samples_number, inputs_number);
-        original_data.setValues({ {type(0),     type(255)},
-                                 {type(127.5), type(51)} });
-
-        helper_scaling_layer.set_scalers("ImageMinMax");
-
-        unique_ptr<LayerForwardPropagation> fw_prop_scale =
-            make_unique<ScalingForwardPropagation<2>>(samples_number, &helper_scaling_layer);
-        fw_prop_scale->initialize();
-
-        vector<TensorView*> views_scale = fw_prop_scale->get_workspace_views();
-        const Index workspace_scale_size = get_size(views_scale);
-        Tensor1 workspace_scale(workspace_scale_size);
-        workspace_scale.setZero();
-        link(workspace_scale.data(), views_scale);
-
-        fw_prop_scale->inputs = { TensorView(original_data.data(), {samples_number, inputs_number}) };
-        helper_scaling_layer.forward_propagate(fw_prop_scale, is_training);
-        TensorView output_pair_scale = fw_prop_scale->get_outputs();
-        Tensor2 scaled_data = tensor_map<2>(output_pair_scale);
-
-        EXPECT_NEAR(scaled_data(0, 0), type(0.0 / 255.0), TOLERANCE);
-        EXPECT_NEAR(scaled_data(0, 1), type(255.0 / 255.0), TOLERANCE);
-        EXPECT_NEAR(scaled_data(1, 0), type(127.5 / 255.0), TOLERANCE);
-        EXPECT_NEAR(scaled_data(1, 1), type(51.0 / 255.0), TOLERANCE);
-
-        unscaling_layer_img.set_scalers("ImageMinMax");
-
-        unique_ptr<LayerForwardPropagation> fw_prop_unscale =
-            make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_img);
-        fw_prop_unscale->initialize();
-
-        vector<TensorView*> views_unscale = fw_prop_unscale->get_workspace_views();
-        const Index workspace_unscale_size = get_size(views_unscale);
-        Tensor1 workspace_unscale(workspace_unscale_size);
-        workspace_unscale.setZero();
-        link(workspace_unscale.data(), views_unscale);
-
-        fw_prop_unscale->inputs = { TensorView(scaled_data.data(), {samples_number, inputs_number}) };
-        unscaling_layer_img.forward_propagate(fw_prop_unscale, is_training);
-        TensorView output_pair_unscale = fw_prop_unscale->get_outputs();
-        Tensor2 unscaled_data = tensor_map<2>(output_pair_unscale);
-
-        EXPECT_EQ(unscaled_data.dimension(0), samples_number);
-        EXPECT_EQ(unscaled_data.dimension(1), inputs_number);
-
-        EXPECT_NEAR(unscaled_data(0, 0), original_data(0, 0), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(0, 1), original_data(0, 1), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(1, 0), original_data(1, 0), TOLERANCE);
-        EXPECT_NEAR(unscaled_data(1, 1), original_data(1, 1), TOLERANCE);
+        EXPECT_NEAR(output_view.data[0], original_data(0, 0), TOLERANCE);
+        EXPECT_NEAR(output_view.data[1], original_data(1, 0), TOLERANCE);
+        EXPECT_NEAR(output_view.data[2], original_data(2, 0), TOLERANCE);
     }
 }

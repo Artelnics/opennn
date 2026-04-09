@@ -1084,9 +1084,11 @@ TEST(StatisticsTest, BoxPlot)
 }
 
 
+// percentiles() function is no longer part of the API
+/*
 TEST(StatisticsTest, Percentiles)
 {
-    
+
     VectorR vector;
 
     // Test
@@ -1102,12 +1104,12 @@ TEST(StatisticsTest, Percentiles)
     vector.resize(10);
     vector <<  type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9) ;
 
-    
+
     VectorR percentiles = opennn::percentiles(vector);
-    
+
     VectorR solution(10);
     solution <<  type(0.5), type(1.5), type(2.5), type(3.5), type(4.5), type(5.5), type(6.5), type(7.5), type(8.5), type(9) ;
-    
+
     EXPECT_NEAR(abs(percentiles(0)), solution(0), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(1)), solution(1), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(2)), solution(2), type(1.0e-7));
@@ -1118,8 +1120,8 @@ TEST(StatisticsTest, Percentiles)
     EXPECT_NEAR(abs(percentiles(7)), solution(7), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(8)), solution(8), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(9)), solution(9), type(1.0e-7));
-    
- 
+
+
     // Test
 
     vector.resize(21);
@@ -1129,7 +1131,7 @@ TEST(StatisticsTest, Percentiles)
 
     solution.resize(10);
     solution <<  type(2), type(4), type(6), type(8), type(10), type(12), type(14), type(16), type(18), type(20) ;
-    
+
     EXPECT_NEAR(abs(percentiles(0)), solution(0), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(1)), solution(1), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(2)), solution(2), type(1.0e-7));
@@ -1140,8 +1142,8 @@ TEST(StatisticsTest, Percentiles)
     EXPECT_NEAR(abs(percentiles(7)), solution(7), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(8)), solution(8), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(9)), solution(9), type(1.0e-7));
-    
-   
+
+
     // Test
 
     vector.resize(14);
@@ -1152,7 +1154,7 @@ TEST(StatisticsTest, Percentiles)
 
     solution.resize(10);
     solution <<  type(1), type(2), type(4), type(5), type(6.5), type(8), type(9), type(15), type(19), type(32) ;
-    
+
     EXPECT_NEAR(abs(percentiles(0)), solution(0), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(1)), solution(1), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(2)), solution(2), type(1.0e-7));
@@ -1163,7 +1165,7 @@ TEST(StatisticsTest, Percentiles)
     EXPECT_NEAR(abs(percentiles(7)), solution(7), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(8)), solution(8), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(9)), solution(9), type(1.0e-7));
-    
+
     // Test
     vector.resize(21);
     vector <<  type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10), type(11), type(12), type(13), type(14), type(15), type(16), type(17), type(18), type(19), type(20) ;
@@ -1185,7 +1187,8 @@ TEST(StatisticsTest, Percentiles)
     EXPECT_NEAR(abs(percentiles(7)), solution(7), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(8)), solution(8), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(9)), solution(9), type(1.0e-7));
-    
+
 }
+*/
 
 

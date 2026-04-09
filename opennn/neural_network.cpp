@@ -416,15 +416,18 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
 
 // Now the overloads become one-liners:
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs) {
-    return calculate_outputs({TensorView(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()})});
+    vector<TensorView> views = {TensorView(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()})};
+    return calculate_outputs(views);
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs) {
-    return calculate_outputs({TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)})});
+    vector<TensorView> views = {TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)})};
+    return calculate_outputs(views);
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs) {
-    return calculate_outputs({TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)})});
+    vector<TensorView> views = {TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)})};
+    return calculate_outputs(views);
 }
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
@@ -1141,10 +1144,19 @@ vector<vector<TensorView>> ForwardPropagation::get_layer_input_views(const vecto
 
 TensorView ForwardPropagation::get_outputs() const
 {
-/*
-    return layers.back()->get_outputs();
-*/
-    return {};
+    if(!neural_network || views.empty()) return {};
+
+    const Index last_layer = static_cast<Index>(neural_network->get_layers_number()) - 1;
+
+    if(last_layer < 0
+       || static_cast<size_t>(last_layer) >= views.size()
+       || views[last_layer].size() < 2
+       || views[last_layer].back().empty())
+    {
+        return get_last_trainable_layer_outputs();
+    }
+
+    return views[last_layer].back()[0];
 }
 
 void ForwardPropagation::print() const

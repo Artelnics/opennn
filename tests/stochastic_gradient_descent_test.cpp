@@ -2,8 +2,7 @@
 
 #include "../opennn/language_dataset.h"
 #include "../opennn/standard_networks.h"
-#include "../opennn/mean_squared_error.h"
-#include "../opennn/cross_entropy_error_3d.h"
+#include "../opennn/loss.h"
 #include "../opennn/stochastic_gradient_descent.h"
 
 using namespace opennn;
@@ -12,25 +11,22 @@ TEST(StochasticGradientDescentTest, DefaultConstructor)
 {
     StochasticGradientDescent adaptive_moment_estimation;
 
-    EXPECT_TRUE(!adaptive_moment_estimation.has_loss());
+    EXPECT_TRUE(adaptive_moment_estimation.get_loss() == nullptr);
 }
 
 
 TEST(StochasticGradientDescentTest, GeneralConstructor)
 {
-    MeanSquaredError mean_squared_error;
-    StochasticGradientDescent adaptive_moment_estimation(&mean_squared_error);
+    Loss loss;
+    StochasticGradientDescent adaptive_moment_estimation(&loss);
 
-    EXPECT_TRUE(adaptive_moment_estimation.has_loss());
+    EXPECT_TRUE(adaptive_moment_estimation.get_loss() != nullptr);
 }
 
 
 TEST(StochasticGradientDescentTest, Train)
 {
-    MeanSquaredError mean_squared_error;
-    StochasticGradientDescent adaptive_moment_estimation(&mean_squared_error);
-
-    type old_error = MAX;
+    type old_error = numeric_limits<type>::max();
 
     type error = 0;
 
@@ -44,7 +40,10 @@ TEST(StochasticGradientDescentTest, Train)
     ApproximationNetwork neural_network({inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_random();
 
-    StochasticGradientDescent stochastic_gradient_descent;
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    StochasticGradientDescent stochastic_gradient_descent(&loss);
     stochastic_gradient_descent.set_maximum_epochs(1);
     stochastic_gradient_descent.set_display(false);
 
@@ -95,7 +94,7 @@ TEST(StochasticGradientDescentTest, Train)
 TEST(StochasticGradientDescentTest, TrainTransformer)
 {
 
-    type old_error = MAX;
+    type old_error = numeric_limits<type>::max();
 
     type error = 0;
 
@@ -112,9 +111,10 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
 
     Transformer transformer;
 
-    CrossEntropyError3d cross_entropy_error_3d(&transformer, &language_dataset);
+    Loss cross_entropy_loss(&transformer, &language_dataset);
+    cross_entropy_loss.set_error(Loss::Error::CrossEntropy);
 
-    StochasticGradientDescent stochastic_gradient_descent(&cross_entropy_error_3d);
+    StochasticGradientDescent stochastic_gradient_descent(&cross_entropy_loss);
 
     Index samples_number = 1;
 
