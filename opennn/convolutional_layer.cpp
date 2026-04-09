@@ -177,38 +177,24 @@ void Convolutional::set(const Shape& new_input_shape,
 
 #ifdef CUDA
 
-    if (batch_normalization)
-    {
-        const Shape batch_normalization_shape = { kernels_number };
-
-        gammas_device.set_descriptor(batch_normalization_shape);
-        betas_device.set_descriptor(batch_normalization_shape);
-        running_means_device.resize(batch_normalization_shape);
-        running_variances_device.resize(batch_normalization_shape);
-    }
-
     cudnnCreateActivationDescriptor(&activation_descriptor);
 
-    cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
+    cudnnActivationMode_t act_mode = CUDNN_ACTIVATION_IDENTITY;
 
-    if(activation_function == "Linear")
-        activation = CUDNN_ACTIVATION_IDENTITY;
-    else if(activation_function == "Sigmoid")
-        activation = CUDNN_ACTIVATION_SIGMOID;
-    else if (activation_function == "HyperbolicTangent")
-        activation = CUDNN_ACTIVATION_TANH;
-    else if(activation_function == "RectifiedLinear")
-        activation = CUDNN_ACTIVATION_RELU;
-    else if(activation_function == "ScaledExponentialLinear")
-        activation = CUDNN_ACTIVATION_ELU;
-    else if (activation_function == "ClippedRelu")
-        activation = CUDNN_ACTIVATION_CLIPPED_RELU;
-    else if (activation_function == "Swish")
-        activation = CUDNN_ACTIVATION_SWISH;
+    switch(activation_function)
+    {
+    case ActivationFunction::Sigmoid:
+        act_mode = CUDNN_ACTIVATION_SIGMOID; break;
+    case ActivationFunction::HyperbolicTangent:
+        act_mode = CUDNN_ACTIVATION_TANH; break;
+    case ActivationFunction::RectifiedLinear:
+        act_mode = CUDNN_ACTIVATION_RELU; break;
+    case ActivationFunction::ScaledExponentialLinear:
+        act_mode = CUDNN_ACTIVATION_ELU; break;
+    default: break;
+    }
 
-    cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
-
-    // Kernel
+    cudnnSetActivationDescriptor(activation_descriptor, act_mode, CUDNN_PROPAGATE_NAN, 0.0);
 
     cudnnCreateFilterDescriptor(&kernel_descriptor);
 
@@ -219,8 +205,6 @@ void Convolutional::set(const Shape& new_input_shape,
                                kernel_channels,
                                kernel_height,
                                kernel_width);
-
-    // Convolution
 
     cudnnCreateConvolutionDescriptor(&convolution_descriptor);
 
@@ -438,187 +422,8 @@ vector<Shape> Convolutional::get_forward_shapes(const Index batch_size) const
     return shapes;
 }
 
-#ifdef CUDA
+// CUDA forward/backward handled via unified views and operators in math_utilities.h
 
-void ConvolutionalForwardPropagationCuda::initialize()
-{
-    const bool use_convolutions = convolutional_layer->use_convolutions();
-
-    const Index input_height = convolutional_layer->get_input_height();
-    const Index input_width = convolutional_layer->get_input_width();
-    const Index channels = convolutional_layer->get_input_channels();
-
-    const Index output_height = convolutional_layer->get_output_height();
-    const Index output_width = convolutional_layer->get_output_width();
-
-    string layer_label = convolutional_layer->get_label();
-
-    // Inputs
-
-    cudnnSetTensor4dDescriptor(input_tensor_descriptor,
-                               CUDNN_TENSOR_NHWC,
-                               CUDNN_DATA_FLOAT,
-                               batch_size, channels, input_height, input_width );
-
-    // Outputs
-
-    outputs.set_descriptor({batch_size, output_height, output_width, kernels_number});
-
-    if (use_convolutions)
-        convolutions.resize({batch_size, output_height, output_width, kernels_number});
-
-    // Convolution Workspace
-
-    convolution_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
-    
-    cudnnConvolutionFwdAlgoPerf_t fwd_perf_results[CUDNN_CONVOLUTION_FWD_ALGO_COUNT];
-
-    int returnedAlgoCount;
-
-    CHECK_CUDNN(cudnnFindConvolutionForwardAlgorithm(
-        get_cudnn_handle(),
-        input_tensor_descriptor,
-        convolutional_layer->get_kernel_descriptor(),
-        convolutional_layer->get_convolution_descriptor(),
-        outputs.get_descriptor(),
-        CUDNN_CONVOLUTION_FWD_ALGO_COUNT,
-        &returnedAlgoCount,
-        fwd_perf_results));
-
-    convolution_algorithm = fwd_perf_results[0].algo;
-    
-    cudnnGetConvolutionForwardWorkspaceSize(
-        get_cudnn_handle(),
-        input_tensor_descriptor, convolutional_layer->get_kernel_descriptor(),
-        convolutional_layer->get_convolution_descriptor(), outputs.get_descriptor(),
-        convolution_algorithm, &workspace_size);
-
-    if (workspace_size > 0)
-        CHECK_CUDA(cudaMalloc(&workspace, workspace_size));
-
-    // Batch Normalization
-
-    if (convolutional_layer->get_batch_normalization())
-    {
-        Shape batch_normalization_shape = { kernels_number };
-
-        means.resize(batch_normalization_shape);
-        inverse_variance.resize(batch_normalization_shape);
-    }
-}
-
-void ConvolutionalForwardPropagationCuda::print() const
-{
-    const Shape output_shape = layer->get_output_shape();
-    const Index output_height = output_shape[0];
-    const Index output_width = output_shape[1];
-    const Index kernels_number = output_shape[2];
-
-    cout << layer->get_name() + " forward propagation CUDA" << endl;
-    cout << "Batch size: " << batch_size << endl;
-    cout << "Outputs dimensions: " << output_height << "x" << output_width << "x" << kernels_number << endl;
-
-    cout << "Outputs data:" << endl;
-    if (outputs.data)
-        cout << tensor4_from_device(outputs.data, batch_size, output_height, output_width, kernels_number) << endl;
-    else
-        cout << "Empty (nullptr)" << endl;
-}
-
-void ConvolutionalForwardPropagationCuda::free()
-{
-    cudnnDestroyTensorDescriptor(input_tensor_descriptor);
-}
-
-void ConvolutionalBackPropagationCuda::initialize()
-{
-    const Index input_height = convolutional_layer->get_input_height();
-    const Index input_width = convolutional_layer->get_input_width();
-    const Index channels = convolutional_layer->get_input_channels();
-
-    const Index output_height = convolutional_layer->get_output_height();
-    const Index output_width = convolutional_layer->get_output_width();
-
-    // Input Deltas
-
-    input_gradients = {TensorView({batch_size, input_height, input_width, channels})};
-
-    // Deltas
-
-    cudnnSetTensor4dDescriptor(gradients_tensor_descriptor,
-                               CUDNN_TENSOR_NHWC,
-                               CUDNN_DATA_FLOAT,
-                               batch_size,
-                               kernels_number,
-                               output_height,
-                               output_width);
-
-    // Biases derivatives
-
-    bias_gradients.set_descriptor({ kernels_number });
-
-    // Weight derivatives
-
-    weight_gradients.set_descriptor({ kernels_number, kernel_height, kernel_width, channels });
-
-    // Workspace
-
-    int returned_algo_count;
-    cudnnConvolutionBwdDataAlgoPerf_t data_perf;
-    cudnnConvolutionBwdFilterAlgoPerf_t filter_perf;
-
-    CHECK_CUDNN(cudnnFindConvolutionBackwardDataAlgorithm(
-        get_cudnn_handle(),
-        convolutional_layer->get_kernel_descriptor(),
-        gradients_tensor_descriptor,
-        convolutional_layer->get_convolution_descriptor(),
-        input_gradients[0].get_descriptor(),
-        1, &returned_algo_count, &data_perf));
-    
-    algo_data = data_perf.algo;
-
-    CHECK_CUDNN(cudnnFindConvolutionBackwardFilterAlgorithm(
-        get_cudnn_handle(),
-        input_gradients[0].get_descriptor(),
-        gradients_tensor_descriptor,
-        convolutional_layer->get_convolution_descriptor(),
-        convolutional_layer->get_kernel_descriptor(),
-        1, &returned_algo_count, &filter_perf));
-    
-    algo_filter = filter_perf.algo;
-
-    cudnnGetConvolutionBackwardDataWorkspaceSize(get_cudnn_handle(),
-                                                 convolutional_layer->get_kernel_descriptor(),
-                                                 gradients_tensor_descriptor,
-                                                 convolutional_layer->get_convolution_descriptor(),
-                                                 input_gradients[0].get_descriptor(),
-                                                 algo_data,
-                                                 &workspace_size);
-
-    cudnnGetConvolutionBackwardFilterWorkspaceSize(get_cudnn_handle(),
-                                                   input_gradients[0].get_descriptor(),
-                                                   gradients_tensor_descriptor,
-                                                   convolutional_layer->get_convolution_descriptor(),
-                                                   convolutional_layer->get_kernel_descriptor(),
-                                                   algo_filter,
-                                                   &backward_filter_workspace_bytes);
-
-    // Workspace memory
-
-    CHECK_CUDA(cudaMalloc(&workspace, workspace_size));
-
-    CHECK_CUDA(cudaMalloc(&backward_filter_workspace, backward_filter_workspace_bytes));
-
-    // Batch Normalization
-
-    if (convolutional_layer->get_batch_normalization())
-    {
-        beta_gradients.set_descriptor({ kernels_number });
-        gamma_gradients.set_descriptor({ kernels_number });
-    }
-}
-
-#endif
 
 REGISTER(Layer, Convolutional, "Convolutional")
 

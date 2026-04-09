@@ -114,6 +114,19 @@ TrainingResults TrainingStrategy::train()
     return optimizer->train();
 }
 
+
+TrainingResults TrainingStrategy::train_cuda()
+{
+    if(!get_neural_network())
+        throw runtime_error("Neural network is null.");
+
+    if(!get_dataset())
+        throw runtime_error("Dataset is null.");
+
+    return optimizer->train_cuda();
+}
+
+
 void TrainingStrategy::fix_forecasting()
 {
 /*

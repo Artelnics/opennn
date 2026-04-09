@@ -19,10 +19,6 @@ struct Batch;
 struct ForwardPropagation;
 struct BackPropagation;
 
-#ifdef CUDA
-struct BatchCuda;
-struct BackPropagationCuda;
-#endif
 
 class Loss
 {
@@ -186,6 +182,23 @@ struct BackPropagation
 
     bool built_mask = false;
     type loss_value = type(0);
+
+#ifdef CUDA
+
+    float* errors_device = nullptr;
+    float* error_device = nullptr;
+
+    cudnnReduceTensorDescriptor_t reduce_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t output_reduce_tensor_descriptor = nullptr;
+
+    void* reduction_workspace = nullptr;
+    size_t reduction_workspace_size = 0;
+
+    TensorView get_output_gradients_device() const;
+
+    void free_cuda();
+
+#endif
 };
 
 }

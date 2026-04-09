@@ -58,9 +58,7 @@ void Embedding::set(const Index new_vocabulary_size,
                 : cos(i / pow(type(10000), (j - Index(half_depth)) / half_depth));
 #ifdef CUDA
 
-    weights_device.set_descriptor({new_vocabulary_size, new_embedding_dimension});
-
-    positional_encoding_device.resize({new_sequence_length, new_embedding_dimension});
+    positional_encoding_device.resize(new_sequence_length * new_embedding_dimension);
 
 #endif
 }
@@ -98,7 +96,7 @@ void Embedding::set_parameters_glorot()
 
 void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
 
     const Index batch_size = forward_propagation.batch_size;
     const Index total_tokens = batch_size * get_sequence_length();
@@ -184,7 +182,7 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
                                size_t layer) const
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
 
     const TensorView& input_indices = forward_propagation.views[layer][Inputs][0];
     TensorView& output_gradient = back_propagation.backward_views[layer][0][0];

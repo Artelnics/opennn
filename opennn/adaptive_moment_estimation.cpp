@@ -308,11 +308,11 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
 #else
 
-    const Index parameters_number = neural_network->get_parameters_number();
+    const Index parameters_number = neural_network->get_parameters_size();
 
     adam_update_device(
         parameters_number,
-        neural_network->parameters.data(),
+        neural_network->get_parameters_data(),
         optimization_data.gradient_exponential_decay.data(),
         optimization_data.square_gradient_exponential_decay.data(),
         back_propagation.gradient.data(),
@@ -357,7 +357,7 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
     const Loss* loss = new_adaptive_moment_estimation->get_loss();
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    const Index parameters_number = neural_network->get_parameters().size();
+    const Index parameters_number = neural_network->get_parameters_size();
 
     gradient_exponential_decay.resize(parameters_number);
     gradient_exponential_decay.setZero();

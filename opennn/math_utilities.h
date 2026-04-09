@@ -89,7 +89,7 @@ inline void copy(const TensorView& source, TensorView& destination)
     if(source.size() != destination.size())
         throw runtime_error("Math Error: Tensor sizes mismatch in copy operation.");
 
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     destination.as_vector() = source.as_vector();
 #else
     CHECK_CUDA(cudaMemcpy(destination.data,
@@ -104,7 +104,7 @@ inline void addition(const TensorView& input_1, const TensorView& input_2, Tenso
     if(input_1.size() != input_2.size() || input_1.size() != output.size())
         throw runtime_error("Addition Error: Tensor dimensions do not match.");
 
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     output.as_vector() = input_1.as_vector() + input_2.as_vector();
 #else
     CHECK_CUDNN(cudnnOpTensor(get_cudnn_handle(),
@@ -128,7 +128,7 @@ inline void multiply(const TensorView& input_A, bool transpose_A,
 {
     const size_t rank = input_A.get_rank();
 
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     auto gemm = [&](const MatrixMap& A, const MatrixMap& B, MatrixMap& C)
     {
         if (!transpose_A && !transpose_B)
@@ -229,7 +229,7 @@ inline void combination(const TensorView& input,
                         const TensorView& biases,
                         TensorView& output)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     output.as_matrix().noalias()
         = (input.as_matrix() * weights.as_matrix()).rowwise() + biases.as_vector().transpose();
 #else
@@ -245,7 +245,7 @@ inline void activation(TensorView& output, ActivationArguments arguments)
 {
     if (output.empty()) return;
 
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
 
     const ActivationFunction activation_function = arguments.activation_function;
 
@@ -304,7 +304,7 @@ inline void activation_gradient(const TensorView& outputs,
 {
     if (outputs.empty()) return;
 
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const auto y = outputs.as_vector().array();
     const auto dy = output_gradient.as_vector().array();
     auto dx = activation_derivative.as_vector().array();
@@ -356,7 +356,7 @@ inline void activation_gradient(const TensorView& outputs,
 
 inline void dropout(TensorView& output, type dropout_rate)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const type scale = type(1) / (type(1) - dropout_rate);
 
     type* data = output.data;
@@ -380,7 +380,7 @@ inline void dropout_gradient(const TensorView& output_gradient,
                              const TensorView& mask, type dropout_rate,
                              TensorView& input_gradient)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const type scale = type(1) / (type(1) - dropout_rate);
 
     input_gradient.as_vector().array() = output_gradient.as_vector().array() * mask.as_vector().array().cast<type>() * scale;
@@ -400,7 +400,7 @@ inline void softmax(TensorView& output)
 {
     if (output.empty()) return;
 
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
 
     const Index columns = output.shape.back();
     const Index rows = output.size() / columns;
@@ -426,7 +426,7 @@ inline void softmax(TensorView& output)
 
 inline void batch_normalization(const TensorView& input, TensorView& output)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     // @todo CPU batch normalization inference
 #else
     if (is_training)
@@ -477,7 +477,7 @@ inline void batch_normalization_training(
     TensorView& output,
     type momentum = type(0.9))
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const Index neurons_number = gamma.size();
     const Index effective_batch_size = input.size() / neurons_number;
 
@@ -535,7 +535,7 @@ inline void batch_normalization_backward(
     TensorView& beta_gradient,
     TensorView& input_gradient)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const Index neurons_number = gamma.size();
     const Index effective_batch_size = input.size() / neurons_number;
 
@@ -597,7 +597,7 @@ inline void bounding(const TensorView& input,
 {
     const Index features = lower_bounds.size();
 
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap lower_bounds_vector = lower_bounds.as_vector();
     const VectorMap upper_bounds_vector = upper_bounds.as_vector();
@@ -627,7 +627,7 @@ inline void bounding(const TensorView& input,
 
 inline void padding(const TensorView& input, TensorView& output)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const TensorMap4 input_map = input.as_tensor<4>();
     TensorMap4 output_map = output.as_tensor<4>();
 
@@ -652,7 +652,7 @@ inline void convolution(const TensorView& input,
                         TensorView& output,
                         const ConvolutionArguments& arguments = {})
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const TensorMap4 inputs = input.as_tensor<4>();
     TensorMap4 outputs = output.as_tensor<4>();
     const VectorMap biases = bias.as_vector();
@@ -705,7 +705,7 @@ inline void convolution_backward_weights(const TensorView& padded_input,
                                           TensorView& bias_gradient,
                                           const ConvolutionArguments& arguments = {})
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const TensorMap4 inputs = padded_input.as_tensor<4>();
     const TensorMap4 out_grad = output_gradient.as_tensor<4>();
 
@@ -756,7 +756,7 @@ inline void convolution_backward_data(const TensorView& output_gradient,
                                        TensorView& rotated_weights_buffer,
                                        const ConvolutionArguments& arguments = {})
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const TensorMap4 out_grad = output_gradient.as_tensor<4>();
     TensorMap4 in_grad = input_gradient.as_tensor<4>();
 
@@ -837,7 +837,7 @@ inline void max_pooling(const TensorView& input,
                         const PoolingArguments& arguments,
                         bool is_training = false)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const TensorMap4 inputs = input.as_tensor<4>();
     TensorMap4 outputs = output.as_tensor<4>();
 
@@ -910,7 +910,7 @@ inline void max_pooling_backward(const TensorView& output_gradient,
                                   TensorView& input_gradient,
                                   const PoolingArguments& arguments)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const TensorMap4 out_grad = output_gradient.as_tensor<4>();
     const TensorMap4 max_idx = maximal_indices.as_tensor<4>();
     TensorMap4 in_grad = input_gradient.as_tensor<4>();
@@ -958,7 +958,7 @@ inline void max_pooling_backward(const TensorView& output_gradient,
 
 inline void average_pooling(const TensorView& input, TensorView& output, const PoolingArguments& arguments)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const TensorMap4 inputs = input.as_tensor<4>();
     TensorMap4 outputs = output.as_tensor<4>();
 
@@ -1015,7 +1015,7 @@ inline void average_pooling_backward(const TensorView& output_gradient,
                                       TensorView& input_gradient,
                                       const PoolingArguments& arguments)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const TensorMap4 out_grad = output_gradient.as_tensor<4>();
     TensorMap4 in_grad = input_gradient.as_tensor<4>();
 
@@ -1078,7 +1078,7 @@ inline void max_pooling_3d_forward(const TensorView& input,
                                     TensorView& maximal_indices,
                                     bool is_training)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const TensorMap3 inputs = input.as_tensor<3>();
     MatrixMap outputs(output.data, output.shape[0], output.shape[1]);
 
@@ -1111,7 +1111,7 @@ inline void max_pooling_3d_backward(const TensorView& maximal_indices,
                                      const TensorView& output_gradient,
                                      TensorView& input_gradient)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     TensorMap3 in_grad = input_gradient.as_tensor<3>();
     const MatrixMap delta(output_gradient.data, output_gradient.shape[0], output_gradient.shape[1]);
 
@@ -1133,7 +1133,7 @@ inline void max_pooling_3d_backward(const TensorView& maximal_indices,
 
 inline void average_pooling_3d_forward(const TensorView& input, TensorView& output)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const TensorMap3 inputs = input.as_tensor<3>();
     MatrixMap outputs(output.data, output.shape[0], output.shape[1]);
 
@@ -1172,7 +1172,7 @@ inline void average_pooling_3d_backward(const TensorView& input,
                                          const TensorView& output_gradient,
                                          TensorView& input_gradient)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const TensorMap3 inputs = input.as_tensor<3>();
     const MatrixMap delta(output_gradient.data, output_gradient.shape[0], output_gradient.shape[1]);
     TensorMap3 in_grad = input_gradient.as_tensor<3>();
@@ -1223,7 +1223,7 @@ inline void embedding_backward(const TensorView& input_indices,
                                 Index embedding_dimension,
                                 bool scale_embedding)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const Index total_tokens = output_gradient.size() / embedding_dimension;
 
     MatrixMap grad_map(output_gradient.data, total_tokens, embedding_dimension);
@@ -1256,7 +1256,7 @@ inline void projection(const TensorView& input,
                        const TensorView& biases,
                        TensorView& output)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const Index batch_size = input.shape[0];
     const Index sequence_length = input.shape[1];
     const Index embedding_dimension = weights.shape[0];
@@ -1308,7 +1308,7 @@ inline void multihead_attention_forward(
     bool use_causal_mask,
     const MatrixR& causal_mask)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const Index total_heads = batch_size * heads_number;
 
     type* query_data = query.data;
@@ -1444,7 +1444,7 @@ inline void multihead_attention_backward(
     type scaling_factor,
     bool self_attention)
 {
-#ifndef CUDA
+#ifndef OPENNN_CUDA_OPERATORS
     const Index total_rows = batch_size * query_sequence_length;
     const Index total_heads = batch_size * heads_number;
 

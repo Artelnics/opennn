@@ -103,11 +103,11 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
 #else
 
-    const Index parameters_number = neural_network->parameters.size();
+    const Index parameters_number = neural_network->get_parameters_size();
 
     sgd_update_device(
         parameters_number,
-        neural_network->parameters.data(),
+        neural_network->get_parameters_data(),
         optimization_data.parameter_updates.data(),
         back_propagation.gradient.data(),
         current_learning_rate,

@@ -35,6 +35,7 @@
 #include <exception>
 #include <memory>
 #include <random>
+#include <regex>
 #include <cstring>
 #include <cstdlib>
 #include <fstream>

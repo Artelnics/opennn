@@ -68,9 +68,7 @@ public:
 
 private:
 
-    TensorView weights_device;
-
-    TensorCuda positional_encoding_device;
+    Memory positional_encoding_device;
 
 #endif
 

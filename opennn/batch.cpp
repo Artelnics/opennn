@@ -158,17 +158,18 @@ bool Batch::is_empty() const
 
 vector<TensorView> Batch::get_inputs() const
 {
-    vector<TensorView> input_views = {{const_cast<type*>(input.data()), input_shape}};
+    vector<TensorView> input_views;
+    input_views.push_back(TensorView(const_cast<type*>(input.data()), input_shape));
 
     if(!decoder_shape.empty())
-        input_views.insert(input_views.begin(), {const_cast<type*>(decoder.data()), decoder_shape});
+        input_views.insert(input_views.begin(), TensorView(const_cast<type*>(decoder.data()), decoder_shape));
 
     return input_views;
 }
 
 TensorView Batch::get_targets() const
 {
-    return {const_cast<type*>(target.data()), target_shape};
+    return TensorView(const_cast<type*>(target.data()), target_shape);
 }
 
 #ifdef CUDA

@@ -57,7 +57,7 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
 
     // workspace_device is used by CUDA to store intermediate diffs or CE values
 #ifdef CUDA
-    float* workspace_device = back_propagation.errors;
+    float* workspace_device = back_propagation.errors_device;
 #else
     float* workspace_device = nullptr;
 #endif
@@ -377,7 +377,50 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             }
         }
     }
+
+#ifdef CUDA
+
+    CHECK_CUDA(cudaMalloc(&errors_device, batch_size * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&error_device, 2 * sizeof(float)));
+
+    cudnnCreateReduceTensorDescriptor(&reduce_tensor_descriptor);
+    cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor,
+                                    CUDNN_REDUCE_TENSOR_ADD,
+                                    CUDNN_DATA_FLOAT,
+                                    CUDNN_NOT_PROPAGATE_NAN,
+                                    CUDNN_REDUCE_TENSOR_NO_INDICES,
+                                    CUDNN_32BIT_INDICES);
+
+    cudnnCreateTensorDescriptor(&output_reduce_tensor_descriptor);
+    cudnnSetTensor4dDescriptor(output_reduce_tensor_descriptor,
+                               CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+                               1, 1, 1, 1);
+
+    // @todo get reduction workspace size - needs output_gradients descriptor
+    reduction_workspace_size = 0;
+
+#endif
 }
+
+
+#ifdef CUDA
+
+TensorView BackPropagation::get_output_gradients_device() const
+{
+    return {const_cast<type*>(output_gradients.data()), output_gradient_dimensions};
+}
+
+void BackPropagation::free_cuda()
+{
+    if(errors_device) { cudaFree(errors_device); errors_device = nullptr; }
+    if(error_device) { cudaFree(error_device); error_device = nullptr; }
+    if(reduction_workspace) { cudaFree(reduction_workspace); reduction_workspace = nullptr; }
+    if(reduce_tensor_descriptor) { cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor); reduce_tensor_descriptor = nullptr; }
+    if(output_reduce_tensor_descriptor) { cudnnDestroyTensorDescriptor(output_reduce_tensor_descriptor); output_reduce_tensor_descriptor = nullptr; }
+}
+
+#endif
+
 
 vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
 {

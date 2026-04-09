@@ -181,7 +181,6 @@ struct Shape
 
 struct Memory
 {
-#ifndef CUDA
     VectorR vector;
 
     type* data() { return vector.data(); }
@@ -191,15 +190,11 @@ struct Memory
     void resize(Index n) { vector.resize(n); }
     void setZero() { vector.setZero(); }
 
-#else
+#ifdef CUDA
     float* device_data = nullptr;
     Index allocated_size = 0;
 
-    type* data() { return device_data; }
-    const type* data() const { return device_data; }
-    Index size() const { return allocated_size; }
-
-    void resize(Index n)
+    void resize_device(Index n)
     {
         if(n == allocated_size) return;
         if(device_data) cudaFree(device_data);
@@ -207,20 +202,14 @@ struct Memory
         if(n > 0) CHECK_CUDA(cudaMalloc(&device_data, n * sizeof(float)));
     }
 
-    void setZero()
+    void setZero_device()
     {
         if(device_data && allocated_size > 0)
             CHECK_CUDA(cudaMemset(device_data, 0, allocated_size * sizeof(float)));
     }
 
-    ~Memory() { if(device_data) cudaFree(device_data); device_data = nullptr; allocated_size = 0; }
-    Memory() = default;
-    Memory(const Memory&) = delete;
-    Memory& operator=(const Memory&) = delete;
-    Memory(Memory&& other) noexcept : device_data(other.device_data), allocated_size(other.allocated_size)
-    { other.device_data = nullptr; other.allocated_size = 0; }
-    Memory& operator=(Memory&& other) noexcept
-    { if(this != &other) { if(device_data) cudaFree(device_data); device_data = other.device_data; allocated_size = other.allocated_size; other.device_data = nullptr; other.allocated_size = 0; } return *this; }
+    type* device() { return device_data; }
+    const type* device() const { return device_data; }
 #endif
 };
 
@@ -232,30 +221,16 @@ struct TensorView
 
     type* data = nullptr;
 
-#ifndef CUDA
-
     Shape shape;
 
     TensorView(type* new_data, const Shape& new_shape) noexcept
-    {
-        data = new_data;
-        shape = new_shape;
-    }
+        : data(new_data), shape(new_shape) {}
 
-    Index get_rank() const noexcept
-    {
-        return shape.rank;
-    }
+    Index get_rank() const noexcept { return shape.rank; }
 
-    Index size() const noexcept
-    {
-        return shape.size();
-    }
+    Index size() const noexcept { return shape.size(); }
 
-    bool empty() const noexcept
-    {
-        return shape.empty();
-    }
+    bool empty() const noexcept { return shape.empty(); }
 
     void print() const
     {
@@ -285,14 +260,12 @@ struct TensorView
     inline MatrixMap as_matrix() const
     {
         assert(data && shape.rank >= 2);
-
         return MatrixMap(data, shape[0], shape.size() / shape[0]);
     }
 
     inline VectorMap as_vector() const
     {
         assert(data);
-
         return VectorMap(data, shape.size());
     }
 
@@ -300,28 +273,22 @@ struct TensorView
     inline TensorMapR<Rank> as_tensor() const
     {
         assert(data && shape.rank == Rank);
-
         return TensorMapR<Rank>(data, shape.template get_eigen_dims<Rank>());
     }
 
-#else 
+#ifdef CUDA
 
     float* device = nullptr;
-    cudnnTensorDescriptor_t descriptor = nullptr;
-
-    if (descriptor == nullptr) cudnnCreateTensorDescriptor(&descriptor);
 
     shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
 
-    TensorView() = default;
-
     TensorView(float* new_data, std::shared_ptr<cudnnTensorStruct> handle)
-        : data(new_data), descriptor_handle(handle) {
-    }
+        : data(new_data), descriptor_handle(handle) {}
 
-    explicit TensorView(const Shape& shape)
+    explicit TensorView(const Shape& new_shape)
+        : shape(new_shape)
     {
-        set_descriptor(shape);
+        set_descriptor(new_shape);
     }
 
     cudnnTensorDescriptor_t get_descriptor() const
@@ -329,26 +296,26 @@ struct TensorView
         return descriptor_handle ? descriptor_handle.get() : nullptr;
     }
 
-    void set_descriptor(const Shape& shape)
+    void set_descriptor(const Shape& desc_shape)
     {
         int n = 1, c = 1, h = 1, w = 1;
-        if (shape.rank == 4) { // NHWC
-            n = static_cast<int>(shape[0]);
-            h = static_cast<int>(shape[1]);
-            w = static_cast<int>(shape[2]);
-            c = static_cast<int>(shape[3]);
+        if (desc_shape.rank == 4) {
+            n = static_cast<int>(desc_shape[0]);
+            h = static_cast<int>(desc_shape[1]);
+            w = static_cast<int>(desc_shape[2]);
+            c = static_cast<int>(desc_shape[3]);
         }
-        else if (shape.rank == 3) { // NWC
-            n = static_cast<int>(shape[0]);
-            w = static_cast<int>(shape[1]);
-            c = static_cast<int>(shape[2]);
+        else if (desc_shape.rank == 3) {
+            n = static_cast<int>(desc_shape[0]);
+            w = static_cast<int>(desc_shape[1]);
+            c = static_cast<int>(desc_shape[2]);
         }
-        else if (shape.rank == 2) { // NC
-            n = static_cast<int>(shape[0]);
-            c = static_cast<int>(shape[1]);
+        else if (desc_shape.rank == 2) {
+            n = static_cast<int>(desc_shape[0]);
+            c = static_cast<int>(desc_shape[1]);
         }
-        else if (shape.rank == 1) { // C
-            c = static_cast<int>(shape[0]);
+        else if (desc_shape.rank == 1) {
+            c = static_cast<int>(desc_shape[0]);
         }
 
         if (n <= 0 || c <= 0 || h <= 0 || w <= 0)
@@ -362,36 +329,36 @@ struct TensorView
 
             descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
                 if (p) cudnnDestroyTensorDescriptor(p);
-                });
+            });
         }
 
         CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, n, c, h, w));
+    }
 
-        Index size() const
-        {
-            if (descriptor_handle == nullptr) return 0;
+    Index device_size() const
+    {
+        if (descriptor_handle == nullptr) return 0;
 
-            constexpr int REQUESTED_DIMS = CUDNN_DIM_MAX;
-            cudnnDataType_t dataType;
-            int nbDims = 0, dimA[REQUESTED_DIMS], strideA[REQUESTED_DIMS];
+        constexpr int REQUESTED_DIMS = CUDNN_DIM_MAX;
+        cudnnDataType_t dataType;
+        int nbDims = 0, dimA[REQUESTED_DIMS], strideA[REQUESTED_DIMS];
 
-            CHECK_CUDNN(cudnnGetTensorNdDescriptor(descriptor_handle.get(), REQUESTED_DIMS, &dataType, &nbDims, dimA, strideA));
+        CHECK_CUDNN(cudnnGetTensorNdDescriptor(descriptor_handle.get(), REQUESTED_DIMS, &dataType, &nbDims, dimA, strideA));
 
-            Index total_elements = 1;
-            for (int i = 0; i < nbDims; ++i)
-                total_elements *= static_cast<Index>(dimA[i]);
-            return total_elements;
-        }
+        Index total_elements = 1;
+        for (int i = 0; i < nbDims; ++i)
+            total_elements *= static_cast<Index>(dimA[i]);
+        return total_elements;
+    }
 
-        void fill(float value)
-        {
-            if (data == nullptr || descriptor_handle == nullptr) return;
+    void fill(float value)
+    {
+        if (data == nullptr || descriptor_handle == nullptr) return;
 
-            if (value == 0.0f)
-                CHECK_CUDA(cudaMemset(data, 0, size() * sizeof(float)));
-            else
-                CHECK_CUDNN(cudnnSetTensor(get_cudnn_handle(), get_descriptor(), data, &value));
-        }
+        if (value == 0.0f)
+            CHECK_CUDA(cudaMemset(data, 0, device_size() * sizeof(float)));
+        // @todo non-zero fill needs get_cudnn_handle()
+    }
 
 #endif
 
@@ -1045,12 +1012,6 @@ struct TensorCuda
         return TensorView(data, descriptor_handle);
     }
 };
-
-type* link(type*, const vector<TensorView*>&);
-void link(type*, const vector<vector<TensorView*>>&);
-
-Index get_size(const vector<TensorView*>&);
-Index get_size(const vector<vector<TensorView*>>&);
 
 VectorR vector_from_device(const type*, size_t);
 MatrixR matrix_from_device(const type*, size_t, size_t);

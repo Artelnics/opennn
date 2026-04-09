@@ -1165,6 +1165,24 @@ void ForwardPropagation::print() const
     }
 }
 
+
+
+#ifdef CUDA
+
+void NeuralNetwork::copy_parameters_device()
+{
+    // @todo Copy CPU parameters to GPU
+    // With unified Memory, parameters are already on GPU when CUDA is active.
+    // This will be needed when parameters are initialized on CPU and need to be copied.
+}
+
+void NeuralNetwork::copy_parameters_host()
+{
+    // @todo Copy GPU parameters back to CPU
+}
+
+#endif
+
 }
 
 // OpenNN: Open Neural Networks Library.

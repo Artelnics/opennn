@@ -18,7 +18,6 @@
 namespace opennn
 {
 
-template<int Rank> struct ScalingForwardPropagationCuda;
 
 template<int Rank>
 class Scaling final : public Layer

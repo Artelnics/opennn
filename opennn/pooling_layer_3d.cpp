@@ -103,36 +103,7 @@ void Pooling3d::from_XML(const XMLDocument& document)
 }
 
 #ifdef CUDA
-
-void Pooling3dForwardPropagationCuda::initialize()
-{
-    const Pooling3d* pooling_layer = static_cast<Pooling3d*>(layer);
-    const Index features = pooling_layer->get_output_shape()[0];
-
-    outputs.set_descriptor({batch_size, features});
-
-    if (pooling_layer->get_pooling_method() == Pooling3d::PoolingMethod::MaxPooling)
-        maximal_indices_device.resize({batch_size, features});
-}
-
-
-void Pooling3dForwardPropagationCuda::free()
-{
-    maximal_indices_device.free();
-}
-
-
-void Pooling3dBackPropagationCuda::initialize()
-{
-    const Pooling3d* pooling_layer = static_cast<Pooling3d*>(layer);
-
-    const Shape layer_input_dimensions = pooling_layer->get_input_shape();
-    const Index sequence_length = layer_input_dimensions[0];
-    const Index features = layer_input_dimensions[1];
-
-    input_gradients = {TensorView({batch_size, sequence_length, features})};
-}
-
+    // @todo CUDA path
 #endif
 
 REGISTER(Layer, Pooling3d, "Pooling3d")

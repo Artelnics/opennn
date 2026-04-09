@@ -94,9 +94,10 @@ public:
 
     bool is_empty() const { return layers.empty(); }
 
-#ifndef CUDA
     VectorR& get_parameters() { return parameters.vector; }
-#endif
+
+    type* get_parameters_data() { return parameters.data(); }
+    Index get_parameters_size() const { return parameters.size(); }
 
     const vector<Variable>& get_input_variables() const { return input_variables; }
     const vector<string> get_input_feature_names() const;
@@ -164,9 +165,7 @@ public:
 
     vector<Index> get_layer_parameter_numbers() const;
 
-#ifndef CUDA
     void set_parameters(const VectorR& p) { parameters.vector = p; }
-#endif
 
     // Parameters initialization
 
@@ -223,27 +222,8 @@ public:
 
 public:
 
-    TensorCuda& get_parameters_device();
-
-    vector<vector<TensorView*>> get_layer_parameter_views_device();
-
-    void allocate_parameters_device();
     void copy_parameters_device();
     void copy_parameters_host();
-
-    void forward_propagate(const vector<TensorView>&,
-                           ForwardPropagationCuda&,
-                           bool = false) const;
-
-    void forward_propagate(const vector<TensorView>&,
-                           const VectorR&,
-                           ForwardPropagationCuda&);
-
-    TensorView calculate_outputs(TensorView, Index);
-
-protected:
-
-    TensorCuda parameters_device;
 
 #endif
 

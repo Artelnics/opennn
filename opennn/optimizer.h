@@ -63,6 +63,8 @@ public:
 
     virtual TrainingResults train() = 0;
 
+    virtual TrainingResults train_cuda();
+
     const string& get_name() const { return name; }
 
     virtual void print() const {}
@@ -105,15 +107,6 @@ protected:
     bool display = true;
 
     string name;
-
-#ifdef CUDA
-
-public:
-
-    virtual TrainingResults train_cuda() = 0;
-
-#endif
-
 };
 
 struct OptimizerData

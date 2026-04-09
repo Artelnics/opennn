@@ -16,13 +16,6 @@
 namespace opennn
 {
 
-#ifdef CUDA
-
-template<int Rank> struct FlattenForwardPropagationCuda;
-template<int Rank> struct FlattenBackPropagationCuda;
-
-#endif // CUDA
-
 template<int Rank>
 class Flatten final : public Layer
 {

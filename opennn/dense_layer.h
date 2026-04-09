@@ -152,19 +152,7 @@ public:
         name = "Dense" + to_string(Rank) + "d";
 
 #ifdef CUDA
-
-        cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
-
-        if (batch_normalization)
-        {
-            Shape batch_normalization_shape = { outputs_number };
-
-            betas_device.set_descriptor(batch_normalization_shape);
-            gammas_device.set_descriptor(batch_normalization_shape);
-            running_means_device.resize(batch_normalization_shape);
-            running_variances_device.resize(batch_normalization_shape);
-        }
-
+        // @todo batch normalization device descriptors
 #endif
     }
 
@@ -211,52 +199,28 @@ public:
 
 #ifdef CUDA
 
-        if (activation_descriptor == nullptr && activation_function != "Softmax")
+        if (activation_descriptor == nullptr && activation_function != ActivationFunction::Softmax)
             cudnnCreateActivationDescriptor(&activation_descriptor);
 
         cudnnActivationMode_t activation_mode = CUDNN_ACTIVATION_IDENTITY;
         double relu_ceiling = 0.0;
 
-        if (activation_function == "Linear")
+        switch(activation_function)
         {
-            activation_mode = CUDNN_ACTIVATION_IDENTITY;
-            use_combinations = false;
+        case ActivationFunction::Linear:
+            activation_mode = CUDNN_ACTIVATION_IDENTITY; break;
+        case ActivationFunction::Sigmoid:
+            activation_mode = CUDNN_ACTIVATION_SIGMOID; break;
+        case ActivationFunction::HyperbolicTangent:
+            activation_mode = CUDNN_ACTIVATION_TANH; break;
+        case ActivationFunction::RectifiedLinear:
+            activation_mode = CUDNN_ACTIVATION_RELU; break;
+        case ActivationFunction::ScaledExponentialLinear:
+            activation_mode = CUDNN_ACTIVATION_ELU; break;
+        default: break;
         }
-        else if (activation_function == "Sigmoid")
-        {
-            activation_mode = CUDNN_ACTIVATION_SIGMOID;
-            use_combinations = false;
-        }
-        else if (activation_function == "HyperbolicTangent")
-        {
-            activation_mode = CUDNN_ACTIVATION_TANH;
-            use_combinations = false;
-        }
-        else if (activation_function == "RectifiedLinear")
-        {
-            activation_mode = CUDNN_ACTIVATION_RELU;
-            use_combinations = false;
-        }
-        else if (activation_function == "ScaledExponentialLinear")
-        {
-            activation_mode = CUDNN_ACTIVATION_ELU;
-            use_combinations = true;
-        }
-        else if (activation_function == "ClippedRelu")
-        {
-            activation_mode = CUDNN_ACTIVATION_CLIPPED_RELU;
-            use_combinations = true;
-            relu_ceiling = 6.0;
-        }
-        else if (activation_function == "Swish")
-        {
-            activation_mode = CUDNN_ACTIVATION_SWISH;
-            use_combinations = true;
-        }
-        else if (activation_function == "Softmax")
-            use_combinations = true;
 
-        if (activation_function != "Softmax")
+        if (activation_function != ActivationFunction::Softmax)
             cudnnSetActivationDescriptor(activation_descriptor, activation_mode, CUDNN_PROPAGATE_NAN, relu_ceiling);
 
 #endif
