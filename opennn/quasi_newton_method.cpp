@@ -83,7 +83,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     NeuralNetwork* neural_network = forward_propagation.neural_network;
 
     VectorR& parameters = neural_network->get_parameters();
-    const VectorR& gradient = back_propagation.gradient;
+    const VectorR& gradient = back_propagation.gradient.vector;
 
     VectorR& old_parameters = optimization_data.old_parameters;
     VectorR& parameter_differences = optimization_data.parameter_differences;

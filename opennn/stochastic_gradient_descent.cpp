@@ -82,7 +82,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
     VectorR& parameters = neural_network->get_parameters();
 
-    const VectorR& gradient = back_propagation.gradient;
+    const VectorR& gradient = back_propagation.gradient.vector;
 
     VectorR& parameter_updates = optimization_data.parameter_updates;
     VectorR& last_parameter_updates = optimization_data.last_parameter_updates;

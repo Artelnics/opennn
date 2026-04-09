@@ -157,10 +157,10 @@ struct BackPropagation
 
     NeuralNetwork* neural_network = nullptr;
 
-    VectorR gradient;
+    Memory gradient;
     vector<vector<TensorView>> gradient_views;
 
-    VectorR backward;
+    Memory backward;
     vector<vector<vector<TensorView>>> backward_views;
 
     vector<vector<TensorView>> get_layer_gradients() const;
@@ -175,7 +175,7 @@ struct BackPropagation
 
     type error;
     MatrixR errors;
-    VectorR output_gradients;
+    Memory output_gradients;
     Shape output_gradient_dimensions;
 
     Tensor0 accuracy;
