@@ -16,18 +16,13 @@ namespace opennn
 struct BackPropagation;
 struct AdaptiveMomentEstimationData;
 
-#ifdef CUDA
-struct BackPropagationCuda;
-struct ADAMOptimizationDataCuda;
-#endif
-
 class AdaptiveMomentEstimation final : public Optimizer
 {
-    
+
 public:
 
    AdaptiveMomentEstimation(Loss* = nullptr);
-   
+
    // Set
 
    void set_batch_size(const Index new_batch_size);
@@ -48,17 +43,21 @@ public:
 
    TrainingResults train() override;
 
+   void update_parameters(BackPropagation&, AdaptiveMomentEstimationData&) const;
+
    // Serialization
 
    void from_XML(const XMLDocument&) override;
 
    void to_XML(XMLPrinter&) const override;
 
-   void update_parameters(BackPropagation&, AdaptiveMomentEstimationData&) const;
+#ifdef CUDA
+
+   TrainingResults train_cuda() override;
+
+#endif
 
 private:
-
-   // TRAINING OPERATORS
 
    type learning_rate = type(0.001);
 
@@ -67,17 +66,6 @@ private:
    type beta_2 = type(0.999);
 
    Index batch_size = 1000;
-
-#ifdef CUDA
-
-    public:
-
-    TrainingResults train_cuda() override;
-
-    void update_parameters(BackPropagationCuda&, ADAMOptimizationDataCuda&) const;
-
-#endif
-
 };
 
 struct AdaptiveMomentEstimationData final : public OptimizerData
@@ -90,8 +78,8 @@ struct AdaptiveMomentEstimationData final : public OptimizerData
 
     AdaptiveMomentEstimation* adaptive_moment_estimation = nullptr;
 
-    VectorR gradient_exponential_decay;
-    VectorR square_gradient_exponential_decay;
+    Memory gradient_exponential_decay;
+    Memory square_gradient_exponential_decay;
 
     Index iteration = 0;
 
@@ -99,31 +87,5 @@ struct AdaptiveMomentEstimationData final : public OptimizerData
 
     Index learning_rate_iteration = 0;
 };
-
-#ifdef CUDA
-
-    struct ADAMOptimizationDataCuda final : public OptimizerData
-    {
-        ADAMOptimizationDataCuda(AdaptiveMomentEstimation* = nullptr);
-
-        //~ADAMOptimizationDataCuda() { free(); }
-
-        void set(AdaptiveMomentEstimation* = nullptr);
-
-        void print() const override;
-
-        AdaptiveMomentEstimation* adaptive_moment_estimation = nullptr;
-
-        TensorCuda gradient_exponential_decay;
-        TensorCuda square_gradient_exponential_decay;
-
-        Index iteration = 0;
-
-        type step = 0;
-
-        //Index learning_rate_iteration = 0;
-    };
-
-#endif
 
 }

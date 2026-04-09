@@ -11,23 +11,6 @@
 namespace opennn
 {
 
-void Batch::fill(const vector<Index>& sample_indices,
-                 const vector<Index>& input_indices,
-                 const vector<Index>& decoder_indices,
-                 const vector<Index>& target_indices,
-                 bool augment)
-{
-    dataset->fill_inputs(sample_indices, input_indices, input.data());
-
-    if(augment)
-        dataset->augment_inputs(input.data(), sample_indices.size());
-
-    if(!decoder_shape.empty())
-        dataset->fill_decoder(sample_indices, decoder_indices, decoder.data());
-
-    dataset->fill_targets(sample_indices, target_indices, target.data());
-}
-
 Batch::Batch(const Index new_samples_number, const Dataset* new_dataset)
 {
     set(new_samples_number, new_dataset);
@@ -49,6 +32,18 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     {
         input_shape = Shape({samples_number}).append(dataset_input_shape);
         input.resize(input_shape.size());
+
+#ifdef CUDA
+        num_input_features = dataset->get_features_number("Input");
+        const Index input_size = samples_number * num_input_features;
+
+        if(input_size > inputs_host_allocated_size)
+        {
+            if(inputs_host) cudaFreeHost(inputs_host);
+            CHECK_CUDA(cudaMallocHost(&inputs_host, input_size * sizeof(float)));
+            inputs_host_allocated_size = input_size;
+        }
+#endif
     }
 
     // Target
@@ -59,6 +54,18 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     {
         target_shape = Shape({samples_number}).append(dataset_target_shape);
         target.resize(target_shape.size());
+
+#ifdef CUDA
+        num_target_features = dataset->get_features_number("Target");
+        const Index target_size = samples_number * num_target_features;
+
+        if(target_size > targets_host_allocated_size)
+        {
+            if(targets_host) cudaFreeHost(targets_host);
+            CHECK_CUDA(cudaMallocHost(&targets_host, target_size * sizeof(float)));
+            targets_host_allocated_size = target_size;
+        }
+#endif
     }
 
     // Decoder
@@ -69,7 +76,36 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     {
         decoder_shape = Shape({samples_number}).append(dataset_decoder_shape);
         decoder.resize(decoder_shape.size());
+
+#ifdef CUDA
+        num_decoder_features = dataset->get_features_number("Decoder");
+        const Index decoder_size = samples_number * num_decoder_features;
+
+        if(decoder_size > decoder_host_allocated_size)
+        {
+            if(decoder_host) cudaFreeHost(decoder_host);
+            CHECK_CUDA(cudaMallocHost(&decoder_host, decoder_size * sizeof(float)));
+            decoder_host_allocated_size = decoder_size;
+        }
+#endif
     }
+}
+
+void Batch::fill(const vector<Index>& sample_indices,
+                 const vector<Index>& input_indices,
+                 const vector<Index>& decoder_indices,
+                 const vector<Index>& target_indices,
+                 bool augment)
+{
+    dataset->fill_inputs(sample_indices, input_indices, input.data());
+
+    if(augment)
+        dataset->augment_inputs(input.data(), sample_indices.size());
+
+    if(!decoder_shape.empty())
+        dataset->fill_decoder(sample_indices, decoder_indices, decoder.data());
+
+    dataset->fill_targets(sample_indices, target_indices, target.data());
 }
 
 Index Batch::get_samples_number() const
@@ -137,7 +173,64 @@ TensorView Batch::get_targets() const
 
 #ifdef CUDA
 
-// @todo BatchCuda to be replaced by unified Batch with Memory
+void Batch::fill_host(const vector<Index>& sample_indices,
+                      const vector<Index>& input_indices,
+                      const vector<Index>& decoder_indices,
+                      const vector<Index>& target_indices)
+{
+    dataset->fill_inputs(sample_indices, input_indices, inputs_host, false);
+
+    if(!decoder_shape.empty())
+        dataset->fill_decoder(sample_indices, decoder_indices, decoder_host, false);
+
+    dataset->fill_targets(sample_indices, target_indices, targets_host, false);
+}
+
+void Batch::copy_device(const Index current_batch_size)
+{
+    const Index input_size = current_batch_size * num_input_features;
+    const Index target_size = current_batch_size * num_target_features;
+
+    CHECK_CUDA(cudaMemcpy(input.data(), inputs_host, input_size * sizeof(float), cudaMemcpyHostToDevice));
+
+    if(!decoder_shape.empty())
+    {
+        const Index decoder_size = current_batch_size * num_decoder_features;
+        CHECK_CUDA(cudaMemcpy(decoder.data(), decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice));
+    }
+
+    CHECK_CUDA(cudaMemcpy(target.data(), targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice));
+}
+
+void Batch::copy_device_async(const Index current_batch_size, cudaStream_t stream)
+{
+    const Index input_size = current_batch_size * num_input_features;
+    const Index target_size = current_batch_size * num_target_features;
+
+    CHECK_CUDA(cudaMemcpyAsync(input.data(), inputs_host, input_size * sizeof(float), cudaMemcpyHostToDevice, stream));
+
+    if(!decoder_shape.empty())
+    {
+        const Index decoder_size = current_batch_size * num_decoder_features;
+        CHECK_CUDA(cudaMemcpyAsync(decoder.data(), decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice, stream));
+    }
+
+    CHECK_CUDA(cudaMemcpyAsync(target.data(), targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice, stream));
+}
+
+vector<TensorView> Batch::get_inputs_device() const
+{
+    if(!decoder_shape.empty())
+        return { {const_cast<type*>(decoder.data()), decoder_shape},
+                 {const_cast<type*>(input.data()), input_shape} };
+
+    return { {const_cast<type*>(input.data()), input_shape} };
+}
+
+TensorView Batch::get_targets_device() const
+{
+    return {const_cast<type*>(target.data()), target_shape};
+}
 
 #endif
 
