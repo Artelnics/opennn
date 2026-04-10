@@ -10,8 +10,8 @@ TEST(TrainingStrategy, DefaultConstructor)
 {
     TrainingStrategy training_strategy;
 
-    EXPECT_EQ(training_strategy.has_neural_network(), false);
-    EXPECT_EQ(training_strategy.has_dataset(), false);
+    EXPECT_EQ(training_strategy.get_neural_network(), nullptr);
+    EXPECT_EQ(training_strategy.get_dataset(), nullptr);
 }
 
 

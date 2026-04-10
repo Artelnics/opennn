@@ -27,6 +27,8 @@ int main()
 
         Dataset dataset("../data/iris_plant_original.csv", ";", true, false);
 
+        dataset.split_samples_random(type(0.6), type(0.2), type(0.2));
+
         const Index inputs_number = dataset.get_features_number("Input");
         const Index targets_number = dataset.get_features_number("Target");
 

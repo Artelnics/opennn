@@ -2,6 +2,7 @@
 
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/bounding_layer.h"
+#include "../opennn/neural_network.h"
 
 using namespace opennn;
 
@@ -34,20 +35,25 @@ TEST(BoundingTest, ForwardPropagate)
     input_data << type(-5.0), type(0.5), type(10.0),
         type(-1.0), type(0.0), type(1.0);
 /*
-    unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<BoundingForwardPropagation>(rows_number, &bounding_layer);
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<Bounding>(Shape{columns_number}));
+    neural_network.compile();
 
-    forward_propagation->initialize();
+    // Set bounding on the layer inside the network
+    Bounding* layer = static_cast<Bounding*>(neural_network.get_layer(0).get());
+    layer->set_bounding_method(Bounding::BoundingMethod::Bounding);
+    for (Index j = 0; j < columns_number; ++j)
+    {
+        layer->set_lower_bound(j, type(-1.0));
+        layer->set_upper_bound(j, type(1.0));
+    }
 
-    Tensor1 workspace(get_size(forward_propagation->get_workspace_views()));
-    link(workspace.data(), forward_propagation->get_workspace_views());
+    ForwardPropagation forward_propagation(rows_number, &neural_network);
+    vector<TensorView> inputs = { TensorView(input_data.data(), {rows_number, columns_number}) };
+    neural_network.forward_propagate(inputs, forward_propagation, false);
 
-    forward_propagation->inputs = { TensorView(input_data.data(), {rows_number, columns_number}) };
-
-    bounding_layer.forward_propagate(forward_propagation, false);
-
-    MatrixMap outputs(forward_propagation->outputs.data,
-                      rows_number, columns_number);
+    TensorView output_view = forward_propagation.get_outputs();
+    MatrixMap outputs(output_view.data, rows_number, columns_number);
 
     EXPECT_EQ(outputs.rows(), rows_number);
     EXPECT_EQ(outputs.cols(), columns_number);
@@ -60,6 +66,6 @@ TEST(BoundingTest, ForwardPropagate)
         for(Index j = 0; j < columns_number; ++j)
             EXPECT_NEAR(outputs(i, j), expected_output(i, j), tolerance);
 
-    EXPECT_EQ(bounding_layer.get_output_shape(), Shape{ columns_number });
+    EXPECT_EQ(layer->get_output_shape(), Shape{ columns_number });
 */
 }

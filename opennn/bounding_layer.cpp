@@ -89,7 +89,6 @@ void Bounding::set_output_shape(const Shape& new_output_shape)
     input_shape = new_output_shape;
 }
 
-/*
 void Bounding::set_lower_bound(const Index index, type new_lower_bound)
 {
     const Shape output_shape = get_output_shape();
@@ -97,7 +96,7 @@ void Bounding::set_lower_bound(const Index index, type new_lower_bound)
     if(lower_bounds.size() != output_shape[0])
     {
         lower_bounds.resize(output_shape[0]);
-        lower_bounds.setConstant(-MAX);
+        lower_bounds.setConstant(-numeric_limits<type>::max());
     }
 
     lower_bounds[index] = new_lower_bound;
@@ -106,15 +105,6 @@ void Bounding::set_lower_bound(const Index index, type new_lower_bound)
 void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
 {
     lower_bounds = new_lower_bounds;
-}
-
-void Bounding::set_output_shape(const Shape& new_output_shape)
-{
-    lower_bounds.resize(new_output_shape[0]);
-    upper_bounds.resize(new_output_shape[0]);
-
-    lower_bounds.setConstant(-MAX);
-    upper_bounds.setConstant(MAX);
 }
 
 void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
@@ -129,12 +119,11 @@ void Bounding::set_upper_bound(const Index index, type new_upper_bound)
     if(upper_bounds.size() != output_shape[0])
     {
         upper_bounds.resize(output_shape[0]);
-        upper_bounds.setConstant(MAX);
+        upper_bounds.setConstant(numeric_limits<type>::max());
     }
 
     upper_bounds[index] = new_upper_bound;
 }
-*/
 
 void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {

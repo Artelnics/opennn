@@ -3,9 +3,8 @@
 #include "../opennn/standard_networks.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/adaptive_moment_estimation.h"
-#include "../opennn/mean_squared_error.h"
+#include "../opennn/loss.h"
 #include "../opennn/language_dataset.h"
-#include "../opennn/cross_entropy_error_3d.h"
 #include "gtest/gtest.h"
 
 using namespace opennn;
@@ -14,16 +13,16 @@ TEST(AdaptiveMomentEstimationTest, DefaultConstructor)
 {
     AdaptiveMomentEstimation adaptive_moment_estimation;
 
-    EXPECT_EQ(adaptive_moment_estimation.has_loss(), false);
+    EXPECT_EQ(adaptive_moment_estimation.get_loss() == nullptr, true);
 }
 
 
 TEST(AdaptiveMomentEstimationTest, GeneralConstructor)
 {
-    MeanSquaredError mean_squared_error;
-    AdaptiveMomentEstimation adaptive_moment_estimation(&mean_squared_error);
+    Loss loss;
+    AdaptiveMomentEstimation adaptive_moment_estimation(&loss);
 
-    EXPECT_TRUE(adaptive_moment_estimation.has_loss());
+    EXPECT_TRUE(adaptive_moment_estimation.get_loss() != nullptr);
 }
 
 
@@ -33,7 +32,7 @@ TEST(AdaptiveMomentEstimationTest, TrainEmpty)
 
     const TrainingResults training_results = adaptive_moment_estimation.train();
 
-    EXPECT_EQ(adaptive_moment_estimation.has_loss(), false);
+    EXPECT_EQ(adaptive_moment_estimation.get_loss() == nullptr, true);
 }
 
 
@@ -41,13 +40,14 @@ TEST(AdaptiveMomentEstimationTest, TrainApproximation)
 {
     Dataset dataset(1, {1}, {1});
     dataset.set_data_constant(type(1));
-    
+
     ApproximationNetwork neural_network({1}, {1}, {1});
     // neural_network.set_parameters_constant(type(1));
 
-    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
 
-    AdaptiveMomentEstimation adaptive_moment_estimation(&mean_squared_error);
+    AdaptiveMomentEstimation adaptive_moment_estimation(&loss);
     adaptive_moment_estimation.set_maximum_epochs(1);
     adaptive_moment_estimation.set_display(false);
 
@@ -95,8 +95,9 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
     //     layers_number
     // });
 
-    // CrossEntropyError3d cross_entropy_error_3d(&transformer, &language_dataset);
-    // AdaptiveMomentEstimation adaptive_moment_estimation(&cross_entropy_error_3d);
+    // Loss cross_entropy_loss(&transformer, &language_dataset);
+    // cross_entropy_loss.set_error(Loss::Error::CrossEntropy);
+    // AdaptiveMomentEstimation adaptive_moment_estimation(&cross_entropy_loss);
 
     // adaptive_moment_estimation.set_display(true);
     // adaptive_moment_estimation.set_display_period(100);
@@ -122,7 +123,8 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossError)
     ApproximationNetwork neural_network({inputs_number}, {}, {outputs_number});
     // neural_network.set_parameters_constant(-1);
 
-    MeanSquaredError loss(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
     AdaptiveMomentEstimation adaptive_moment_estimation(&loss);
 
     adaptive_moment_estimation.set_maximum_epochs(1);
@@ -152,7 +154,8 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossGoal)
 
     ApproximationNetwork neural_network({inputs_number}, {}, {outputs_number});
 
-    MeanSquaredError loss(&neural_network, &dataset);
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
     AdaptiveMomentEstimation adaptive_moment_estimation(&loss);
 
     const type training_loss_goal = type(0.05);

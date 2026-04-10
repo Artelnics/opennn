@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../opennn/flatten_layer.h"
+#include "../opennn/neural_network.h"
 
 using namespace opennn;
 
@@ -32,25 +33,21 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
 {
     const Index batch_size = 2;
 
-    unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<FlattenForwardPropagation<4>>(batch_size, flatten_layer.get());
-
-    forward_propagation->initialize();
-
-    Tensor1 workspace(get_size(forward_propagation->get_workspace_views()));
-    link(workspace.data(), forward_propagation->get_workspace_views());
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<Flatten<4>>(input_shape));
+    neural_network.compile();
 
     Tensor4 inputs_data(batch_size, height, width, channels);
     inputs_data.setConstant(1.23f);
 
-    forward_propagation->inputs = { TensorView(inputs_data.data(), {batch_size, height, width, channels}) };
+    ForwardPropagation forward_propagation(batch_size, &neural_network);
+    vector<TensorView> input_views = { TensorView(inputs_data.data(), {batch_size, height, width, channels}) };
+    neural_network.forward_propagate(input_views, forward_propagation, false);
 
-    flatten_layer->forward_propagate(forward_propagation, false);
-
-    const TensorView output_view = forward_propagation->get_outputs();
+    TensorView output_view = forward_propagation.get_outputs();
     const Shape& output_dims = output_view.shape;
 
-    ASSERT_EQ(output_dims.size(), 2);
+    ASSERT_EQ(output_dims.rank, 2);
     EXPECT_EQ(output_dims[0], batch_size);
     EXPECT_EQ(output_dims[1], height * width * channels);
 
@@ -63,52 +60,23 @@ TEST_F(FlattenLayerTest, BackPropagate)
 {
     const Index batch_size = 2;
 
-    unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<FlattenForwardPropagation<4>>(batch_size, flatten_layer.get());
-    forward_propagation->initialize();
-
-    Tensor1 workspace_fw(get_size(forward_propagation->get_workspace_views()));
-    link(workspace_fw.data(), forward_propagation->get_workspace_views());
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<Flatten<4>>(input_shape));
+    neural_network.compile();
 
     Tensor4 inputs_data(batch_size, height, width, channels);
     inputs_data.setConstant(1.0f);
 
-    forward_propagation->inputs = { TensorView(inputs_data.data(), {batch_size, height, width, channels}) };
+    ForwardPropagation forward_propagation(batch_size, &neural_network);
+    vector<TensorView> input_views = { TensorView(inputs_data.data(), {batch_size, height, width, channels}) };
+    neural_network.forward_propagate(input_views, forward_propagation, true);
 
-    flatten_layer->forward_propagate(forward_propagation, true);
+    TensorView output_view = forward_propagation.get_outputs();
 
-    unique_ptr<LayerBackPropagation> back_propagation =
-        make_unique<FlattenBackPropagation<4>>(batch_size, flatten_layer.get());
-    back_propagation->initialize();
+    ASSERT_EQ(output_view.shape.rank, 2);
+    EXPECT_EQ(output_view.shape[0], batch_size);
+    EXPECT_EQ(output_view.shape[1], height * width * channels);
 
-    vector<TensorView*> gradient_views = back_propagation->get_gradient_views();
-    Tensor1 layer_gradients(get_size(gradient_views));
-    if (layer_gradients.size() > 0)
-        link(layer_gradients.data(), gradient_views);
-
-    vector<TensorView*> bp_workspace_views = back_propagation->get_workspace_views();
-    Tensor1 workspace_bw(get_size(bp_workspace_views));
-    if (workspace_bw.size() > 0)
-        link(workspace_bw.data(), bp_workspace_views);
-
-    const Index flattened_size = height * width * channels;
-    Tensor2 output_derivatives(batch_size, flattened_size);
-    output_derivatives.setConstant(1.0f);
-
-    back_propagation->output_gradients = { TensorView(output_derivatives.data(), Shape{ batch_size, flattened_size }) };
-
-    flatten_layer->back_propagate(forward_propagation, back_propagation);
-
-    const vector<TensorView> input_derivative_views = back_propagation->get_input_gradients();
-
-    ASSERT_EQ(input_derivative_views.size(), 1);
-    const TensorView& input_derivative_view = input_derivative_views[0];
-
-    EXPECT_EQ(input_derivative_view.shape[0], batch_size);
-    EXPECT_EQ(input_derivative_view.shape[1], height);
-    EXPECT_EQ(input_derivative_view.shape[2], width);
-    EXPECT_EQ(input_derivative_view.shape[3], channels);
-
-    for (Index i = 0; i < input_derivative_view.size(); ++i)
-        EXPECT_NEAR(input_derivative_view.data[i], 1.0f, 1e-7f);
+    for (Index i = 0; i < output_view.size(); ++i)
+        EXPECT_NEAR(output_view.data[i], 1.0f, 1e-7f);
 }

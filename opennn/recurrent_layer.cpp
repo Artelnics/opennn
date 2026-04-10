@@ -109,6 +109,7 @@ void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_
 
     MatrixR step_input(batch_size, input_size);
     MatrixR previous_hidden_state(batch_size, output_size);
+    MatrixR step_derivatives(batch_size, output_size);
 
     for(Index t = 0; t < past_time_steps; t++)
     {
@@ -133,7 +134,6 @@ void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_
 
         if(is_training)
         {
-            MatrixR step_derivatives(batch_size, output_size);
             TensorMap2 step_derivatives_tensor(step_derivatives.data(), batch_size, output_size);
 
             calculate_activations<2>(

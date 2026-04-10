@@ -823,11 +823,9 @@ MatrixR Loss::calculate_inverse_hessian()
 
 type Loss::calculate_h(const type x)
 {
-    const Index precision_digits = 6;
+    static const type sqrt_eta = type(1e-3); // sqrt(1e-6)
 
-    const type eta = pow(type(10.0), type(-1.0 * precision_digits));
-
-    return sqrt(eta)*(type(1) + abs(x));
+    return sqrt_eta * (type(1) + abs(x));
 }
 
 void Loss::to_XML(XMLPrinter& printer) const

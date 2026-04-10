@@ -10,8 +10,6 @@ int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
 
-    ::testing::GTEST_FLAG(filter) = "*CrossEntropyError3D*";
-
     try {
         return RUN_ALL_TESTS();
     } catch (const exception& e) {

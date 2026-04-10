@@ -286,10 +286,12 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     optimization_data.iteration++;
-    const type iteration = static_cast<type>(optimization_data.iteration);
 
-    const type bias_correction_1 = type(1) - pow(beta_1, iteration);
-    const type bias_correction_2 = type(1) - pow(beta_2, iteration);
+    optimization_data.beta_1_power *= beta_1;
+    optimization_data.beta_2_power *= beta_2;
+
+    const type bias_correction_1 = type(1) - optimization_data.beta_1_power;
+    const type bias_correction_2 = type(1) - optimization_data.beta_2_power;
 
 #ifndef CUDA
 
@@ -371,6 +373,9 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
     square_gradient_exponential_decay.resize_device(parameters_number);
     square_gradient_exponential_decay.setZero_device();
 #endif
+    iteration = 0;
+    beta_1_power = type(1);
+    beta_2_power = type(1);
 }
 
 void AdaptiveMomentEstimationData::print() const
