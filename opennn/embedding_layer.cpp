@@ -43,6 +43,7 @@ void Embedding::set(const Index new_vocabulary_size,
     input_shape = {new_sequence_length};
     vocabulary_size = new_vocabulary_size;
     embedding_dimension = new_embedding_dimension;
+    embedding_scale = sqrt(static_cast<type>(new_embedding_dimension));
     label = new_label;
 
     positional_encoding.resize(new_sequence_length, new_embedding_dimension);
@@ -107,7 +108,6 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
 
     const TensorView& output_view = forward_propagation.views[layer][Outputs][0];
     MatrixMap outputs(output_view.data, total_tokens, embedding_dimension);
-    outputs.setZero();
 
     const MatrixMap weights(parameters[Weights].data, vocabulary_size, embedding_dimension);
 
@@ -130,7 +130,7 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
     }
 
     if(scale_embedding)
-        outputs *= sqrt(static_cast<type>(embedding_dimension));
+        outputs *= embedding_scale;
 
     if(add_positional_encoding)
     {

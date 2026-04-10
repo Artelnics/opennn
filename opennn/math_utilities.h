@@ -222,8 +222,6 @@ inline void bounding(const TensorView& input,
                      const TensorView& upper_bounds,
                      TensorView& output)
 {
-    const Index features = lower_bounds.size();
-
 #ifndef CUDA
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap lower_bounds_vector = lower_bounds.as_vector();
@@ -231,10 +229,11 @@ inline void bounding(const TensorView& input,
 
     MatrixMap output_matrix = output.as_matrix();
 
-    for(Index j = 0; j < features; ++j)
-        output_matrix.col(j) = input_matrix.col(j)
-                                           .cwiseMax(lower_bounds_vector(j))
-                                           .cwiseMin(upper_bounds_vector(j));
+    const Index rows = input_matrix.rows();
+
+    output_matrix = input_matrix
+        .cwiseMax(lower_bounds_vector.transpose().replicate(rows, 1))
+        .cwiseMin(upper_bounds_vector.transpose().replicate(rows, 1));
 
 #else
     // @todo CUDA bounding

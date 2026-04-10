@@ -90,7 +90,12 @@ vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
 
 vector<Index> get_elements_greater_than(const vector<vector<Index>>& vectors, Index bound)
 {
+    size_t total = 0;
+    for(const auto& v : vectors)
+        total += v.size();
+
     vector<Index> indices;
+    indices.reserve(total);
 
     for(const auto& v : vectors)
     {

@@ -119,6 +119,7 @@ Histogram::Histogram(const VectorR& data, Index bins_number)
     const type data_maximum = maximum(data);
     const type data_minimum = minimum(data);
     const type step = (data_maximum - data_minimum) / type(bins_number);
+    const type inv_step = type(1) / step;
 
     const VectorR new_centers = VectorR::LinSpaced(bins_number, data_minimum + type(0.5) * step, data_maximum - type(0.5) * step);
 
@@ -133,7 +134,7 @@ Histogram::Histogram(const VectorR& data, Index bins_number)
         value = data(i);
         if(isnan(value)) continue;
 
-        corresponding_bin = int((value - data_minimum) / step);
+        corresponding_bin = int((value - data_minimum) * inv_step);
 
         if(corresponding_bin >= bins_number)
             corresponding_bin = bins_number - 1;
@@ -154,6 +155,7 @@ Histogram::Histogram(const VectorR& probability_data)
     data_maximum = (data_maximum > type(1)) ? type(100.0) : type(1);
 
     const type step = (data_maximum - data_minimum) / type(bins_number);
+    const type inv_step = type(1) / step;
 
     const VectorR new_centers = VectorR::LinSpaced(bins_number, data_minimum + type(0.5) * step, data_maximum - type(0.5) * step);
 
@@ -166,7 +168,7 @@ Histogram::Histogram(const VectorR& probability_data)
     for(Index i = 0; i < probability_data.size(); i++)
     {
         value = probability_data(i);
-        corresponding_bin = int((value - data_minimum) / step);
+        corresponding_bin = int((value - data_minimum) * inv_step);
 
         new_frequencies(corresponding_bin)++;
     }
