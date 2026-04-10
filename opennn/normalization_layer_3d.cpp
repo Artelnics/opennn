@@ -10,6 +10,7 @@
 #include "tensor_utilities.h"
 #include "normalization_layer_3d.h"
 #include "neural_network.h"
+#include "loss.h"
 
 namespace opennn
 {
@@ -22,12 +23,12 @@ Normalization3d::Normalization3d(const Shape& new_input_shape,
 
 Shape Normalization3d::get_input_shape() const
 {
-    return { sequence_length, get_embedding_dimension() };
+    return { sequence_length, embedding_dimension };
 }
 
 Shape Normalization3d::get_output_shape() const
 {
-    return { sequence_length, get_embedding_dimension() };
+    return { sequence_length, embedding_dimension };
 }
 
 vector<Shape> Normalization3d::get_parameter_shapes() const
@@ -41,6 +42,7 @@ void Normalization3d::set(const Index new_sequence_length,
                           const string& new_label)
 {
     sequence_length = new_sequence_length;
+    embedding_dimension = new_embedding_dimension;
 
     label = new_label;
     name = "Normalization3d";
@@ -58,125 +60,132 @@ void Normalization3d::set_parameters_glorot()
     set_parameters_random();
 }
 
+
 void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-#ifndef OPENNN_CUDA_OPERATORS
     const Index batch_size = forward_propagation.batch_size;
-    const Index embedding_dimension = get_embedding_dimension();
-/*
-    const TensorMap3 inputs(forward_propagation->inputs[0].data, batch_size, sequence_length, embedding_dimension);
+    const Index E = embedding_dimension;
 
-    TensorMap3 outputs = tensor_map<3>(forward_propagation->outputs);
+    // View slots: 0=Inputs, 1=Means, 2=StdDevs, 3=NormalizedInputs, 4=Outputs
+    const TensorView& input_view = forward_propagation.views[layer][Inputs][0];
+    TensorView& means_view = forward_propagation.views[layer][Means][0];
+    TensorView& stddevs_view = forward_propagation.views[layer][StandardDeviations][0];
+    TensorView& normalized_view = forward_propagation.views[layer][NormalizedInputs][0];
+    TensorView& output_view = forward_propagation.views[layer][Outputs][0];
 
-    Normalization3dForwardPropagation* this_forward_propagation =
-        static_cast<Normalization3dForwardPropagation*>(forward_propagation.get());
+    // Map as Eigen tensors
+    const TensorMap3 inputs(input_view.data, batch_size, sequence_length, E);
+    TensorMap2 means(means_view.data, batch_size, sequence_length);
+    TensorMap2 standard_deviations(stddevs_view.data, batch_size, sequence_length);
+    TensorMap3 normalized_inputs(normalized_view.data, batch_size, sequence_length, E);
+    TensorMap3 outputs(output_view.data, batch_size, sequence_length, E);
 
-    Tensor2& means = this_forward_propagation->means;
-    Tensor2& standard_deviations = this_forward_propagation->standard_deviations;
-    Tensor3& normalized_inputs = this_forward_propagation->normalized_inputs;
+    const TensorView& gammas = parameters[Gammas];
+    const TensorView& betas = parameters[Betas];
 
     const array<Index, 3> reshape_dims({batch_size, sequence_length, 1});
-    const array<Index, 3> broadcast_dims({1, 1, embedding_dimension});
+    const array<Index, 3> broadcast_dims({1, 1, E});
 
-    means.device(get_device()) = inputs.mean(array<Index, 1>({2}));
+    // Mean over embedding dimension (axis 2)
+    means = inputs.mean(array<Index, 1>({2}));
 
+    // Centered inputs
     auto centered_inputs = inputs - means.reshape(reshape_dims).broadcast(broadcast_dims);
+
+    // Standard deviation over embedding dimension
     auto variance = centered_inputs.square().mean(array<Index, 1>({2}));
-    standard_deviations.device(get_device()) = (variance + EPSILON).sqrt();
+    standard_deviations = (variance + EPSILON).sqrt();
 
-    normalized_inputs.device(get_device()) = centered_inputs / standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims);
+    // Normalize
+    normalized_inputs = centered_inputs / standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims);
 
-    TensorMap1 gamma_map(gammas.data, embedding_dimension);
-    TensorMap1 beta_map(betas.data, embedding_dimension);
+    // Scale and shift: output = gamma * normalized + beta
+    TensorMap1 gamma_map(gammas.data, E);
+    TensorMap1 beta_map(betas.data, E);
 
-    auto gamma_bcast = gamma_map.reshape(array<Index, 3>({1, 1, embedding_dimension}))
+    auto gamma_bcast = gamma_map.reshape(array<Index, 3>({1, 1, E}))
                            .broadcast(array<Index, 3>({batch_size, sequence_length, 1}));
 
-    auto beta_bcast = beta_map.reshape(array<Index, 3>({1, 1, embedding_dimension}))
+    auto beta_bcast = beta_map.reshape(array<Index, 3>({1, 1, E}))
                           .broadcast(array<Index, 3>({batch_size, sequence_length, 1}));
 
-    outputs.device(get_device()) = normalized_inputs * gamma_bcast + beta_bcast;
-*/
-#else
-    // @todo CUDA path
-#endif
+    outputs = normalized_inputs * gamma_bcast + beta_bcast;
 }
+
 
 void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
                                      BackPropagation& back_propagation,
-                                     size_t index) const
+                                     size_t layer) const
 {
-/*
-    if(back_propagation->output_gradients.size() > 1)
-        add_gradients(back_propagation->output_gradients);
-*/
+    const Index batch_size = forward_propagation.batch_size;
+    const Index E = embedding_dimension;
 
-#ifndef OPENNN_CUDA_OPERATORS
-/*
+    // Forward views
+    const TensorView& stddevs_view = forward_propagation.views[layer][StandardDeviations][0];
+    const TensorView& normalized_view = forward_propagation.views[layer][NormalizedInputs][0];
 
-    const Index batch_size = forward_propagation->inputs[0].shape[0];
-    const Index embedding_dimension = get_embedding_dimension();
+    const TensorMap2 standard_deviations(stddevs_view.data, batch_size, sequence_length);
+    const TensorMap3 X_hat(normalized_view.data, batch_size, sequence_length, E);
 
-    if(back_propagation->output_gradients.size() > 1)
-        add_gradients(back_propagation->output_gradients);
+    // Backward views
+    const TensorView& delta_view = back_propagation.backward_views[layer][OutputGradients][0];
+    const TensorMap3 output_gradients(delta_view.data, batch_size, sequence_length, E);
 
-    const TensorMap3 output_gradients = tensor_map<3>(back_propagation->output_gradients[0]);
+    // Gradient views for parameters
+    TensorView& gamma_grad_view = back_propagation.gradient_views[layer][Gammas];
+    TensorView& beta_grad_view = back_propagation.gradient_views[layer][Betas];
 
-    const Normalization3dForwardPropagation* this_forward_propagation =
-        static_cast<Normalization3dForwardPropagation*>(forward_propagation.get());
+    VectorMap dGamma(gamma_grad_view.data, E);
+    VectorMap dBeta(beta_grad_view.data, E);
 
-    const Tensor2& standard_deviations = this_forward_propagation->standard_deviations;
-    const Tensor3& X_hat = this_forward_propagation->normalized_inputs;
-
-    Normalization3dBackPropagation* this_back_propagation =
-        static_cast<Normalization3dBackPropagation*>(back_propagation.get());
-
-    VectorMap dGamma_map = vector_map(this_back_propagation->gamma_gradients);
-    VectorMap dBeta_map = vector_map(this_back_propagation->beta_gradients);
-    TensorMap3 dX = tensor_map<3>(this_back_propagation->input_gradients[0]);
-
+    // dGamma = sum(dY * X_hat, axes={batch, sequence})
     Tensor1 dGamma_tensor = (output_gradients * X_hat).sum(array<Index, 2>({0, 1}));
+    // dBeta = sum(dY, axes={batch, sequence})
     Tensor1 dBeta_tensor = output_gradients.sum(array<Index, 2>({0, 1}));
 
-    for(Index i = 0; i < embedding_dimension; ++i)
+    for(Index i = 0; i < E; ++i)
     {
-        dGamma_map(i) = dGamma_tensor(i);
-        dBeta_map(i) = dBeta_tensor(i);
+        dGamma(i) = dGamma_tensor(i);
+        dBeta(i) = dBeta_tensor(i);
     }
 
-    TensorMap1 gamma_map(gammas.data, embedding_dimension);
-    auto gamma_bcast = gamma_map.reshape(array<Index, 3>({1, 1, embedding_dimension}))
-                           .broadcast(array<Index, 3>({batch_size, sequence_length, 1}));
+    // Input gradients (only if not the first layer)
+    if(!is_first_layer)
+    {
+        TensorView& input_grad_view = back_propagation.backward_views[layer][InputGradients][0];
+        TensorMap3 dX(input_grad_view.data, batch_size, sequence_length, E);
 
-    // D = dY * Gamma
-    Tensor3 D = output_gradients * gamma_bcast;
+        const TensorView& gammas = parameters[Gammas];
+        TensorMap1 gamma_map(gammas.data, E);
 
-    // sum_D = sum(D, axis=2)
-    Tensor2 sum_D = D.sum(array<Index, 1>({2}));
+        auto gamma_bcast = gamma_map.reshape(array<Index, 3>({1, 1, E}))
+                               .broadcast(array<Index, 3>({batch_size, sequence_length, 1}));
 
-    // sum_D_xhat = sum(D * X_hat, axis=2)
-    Tensor2 sum_D_xhat = (D * X_hat).sum(array<Index, 1>({2}));
+        // D = dY * gamma
+        Tensor3 D = output_gradients * gamma_bcast;
 
-    // Broadcast components for dX calculation
-    auto sum_D_bcast = sum_D.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
-                           .broadcast(array<Index, 3>({1, 1, embedding_dimension}));
+        // sum_D = sum(D, axis=embedding)
+        Tensor2 sum_D = D.sum(array<Index, 1>({2}));
 
-    auto sum_D_xhat_bcast = sum_D_xhat.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
-                                .broadcast(array<Index, 3>({1, 1, embedding_dimension}));
+        // sum_D_xhat = sum(D * X_hat, axis=embedding)
+        Tensor2 sum_D_xhat = (D * X_hat).sum(array<Index, 1>({2}));
 
-    auto std_dev_bcast = standard_deviations.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
-                             .broadcast(array<Index, 3>({1, 1, embedding_dimension}));
+        auto sum_D_bcast = sum_D.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
+                               .broadcast(array<Index, 3>({1, 1, E}));
 
-    const type inv_E = type(1.0) / static_cast<type>(embedding_dimension);
+        auto sum_D_xhat_bcast = sum_D_xhat.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
+                                    .broadcast(array<Index, 3>({1, 1, E}));
 
-    // dX = (1 / sigma) * (D - mean(D) - X_hat * mean(D * X_hat))
-    dX.device(get_device()) = (D - sum_D_bcast * inv_E - X_hat * sum_D_xhat_bcast * inv_E) / std_dev_bcast;
-*/
-#else
-    // @todo CUDA path
-#endif
+        auto std_dev_bcast = standard_deviations.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
+                                 .broadcast(array<Index, 3>({1, 1, E}));
 
+        const type inv_E = type(1.0) / static_cast<type>(E);
+
+        // dX = (1 / sigma) * (D - mean(D) - X_hat * mean(D * X_hat))
+        dX = (D - sum_D_bcast * inv_E - X_hat * sum_D_xhat_bcast * inv_E) / std_dev_bcast;
+    }
 }
+
 
 void Normalization3d::from_XML(const XMLDocument& document)
 {

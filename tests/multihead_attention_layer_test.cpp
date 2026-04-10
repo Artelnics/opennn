@@ -91,9 +91,11 @@ TEST_P(MultiHeadAttentionTest, ForwardPropagate)
 
     layer->forward_propagate(forward_base, false);
     const TensorView output_view = forward_base->get_outputs();
-*/
-#ifdef CUDA
 
+*/
+
+/* @todo Re-enable CUDA comparison when CPU forward propagation above is uncommented
+#ifdef CUDA
     vector<TensorView*> param_views_device = layer->get_parameter_views_device();
     TensorCuda layer_parameters_device({get_size(param_views_device)});
     link(layer_parameters_device.data, param_views_device);
@@ -128,6 +130,7 @@ TEST_P(MultiHeadAttentionTest, ForwardPropagate)
     for (Index i = 0; i < output_view.size(); ++i)
         EXPECT_NEAR(output_view.data[i], host_output_from_gpu[i], 1e-3);
 #endif
+*/
 }
 
 TEST_P(MultiHeadAttentionTest, BackPropagate)

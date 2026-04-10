@@ -41,10 +41,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wno-exit-time-destructors)
 endif()
 
+option(OpenNN_DISABLE_CUDA "Disable CUDA even if toolkit is found" OFF)
+
 include(CheckLanguage)
 check_language(CUDA)
 
-if(CMAKE_CUDA_COMPILER)
+if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     enable_language(CUDA)
     find_package(CUDAToolkit REQUIRED)
     set(OPENNN_WITH_CUDA ON CACHE BOOL "")

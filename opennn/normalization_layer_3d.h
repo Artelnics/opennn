@@ -22,19 +22,30 @@ public:
                     const string& = "normalization_layer_3d");
 
     Index get_sequence_length() const { return sequence_length; }
-    Index get_embedding_dimension() const { return parameters[Gammas].shape[0]; }
+    Index get_embedding_dimension() const { return embedding_dimension; }
 
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;
 
+    void set_input_shape(const Shape& new_input_shape) override
+    {
+        if(new_input_shape.rank >= 2)
+        {
+            sequence_length = new_input_shape[0];
+            embedding_dimension = new_input_shape[1];
+        }
+    }
+
     vector<Shape> get_parameter_shapes() const override;
 
+    // Forward shapes: intermediate buffers first, output last.
+    // The last shape is the one wired to the downstream layer.
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        return {{batch_size, sequence_length, embedding_dimension},  // Outputs
-                {batch_size, sequence_length },                      // Means
-                {batch_size, sequence_length },                      // StandardDeviations
-                {batch_size, sequence_length, embedding_dimension}}; // NormalizedInputs
+        return {{batch_size, sequence_length },                      // slot 1: Means
+                {batch_size, sequence_length },                      // slot 2: StandardDeviations
+                {batch_size, sequence_length, embedding_dimension},  // slot 3: NormalizedInputs
+                {batch_size, sequence_length, embedding_dimension}}; // slot 4: Outputs (LAST = wired downstream)
     }
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
@@ -65,12 +76,15 @@ protected:
 
 private:
 
-    Index embedding_dimension;
-    Index sequence_length;
+    Index embedding_dimension = 0;
+    Index sequence_length = 0;
 
     enum Parameters {Gammas, Betas};
-    enum Forward {Inputs, Means, StandardDeviations, Outputs};
-    enum Backward {OutputGradients, InputGradients};
+
+    // View slots: 0=Inputs(wired), 1=Means, 2=StdDevs, 3=NormalizedInputs, 4=Outputs
+    enum Forward {Inputs = 0, Means = 1, StandardDeviations = 2, NormalizedInputs = 3, Outputs = 4};
+
+    enum Backward {OutputGradients = 0, InputGradients = 1};
 
 };
 

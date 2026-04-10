@@ -1182,21 +1182,22 @@ TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
     return views[last_trainable_layer_index].back()[0];
 }
 
-vector<vector<TensorView>> ForwardPropagation::get_layer_input_views(const vector<TensorView>& batch_input_views,
-                                                                     bool is_training) const
+vector<vector<TensorView>> ForwardPropagation::get_layer_input_views(const vector<TensorView>&,
+                                                                     bool) const
 {
     const Index layers_number = neural_network->get_layers_number();
 
     if (layers_number == 0) return {};
 
-    vector<vector<TensorView>> const layer_input_views(layers_number);
-/*
-    for (Index layer_index = 0; layer_index < layers_number; ++layer_index)
-        layer_input_views[layer_index] = layers[layer_index]->inputs;
+    vector<vector<TensorView>> layer_input_views(layers_number);
+
+    for (Index i = 0; i < layers_number; ++i)
+    {
+        if(static_cast<size_t>(i) < views.size() && !views[i].empty())
+            layer_input_views[i] = views[i][0];
+    }
 
     return layer_input_views;
-*/
-    return {};
 }
 
 TensorView ForwardPropagation::get_outputs() const

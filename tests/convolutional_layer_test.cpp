@@ -108,7 +108,7 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
     TensorView output_view = forward_propagation.get_outputs();
     const Shape expected_output_dims = neural_network.get_layer(0)->get_output_shape();
 
-    ASSERT_EQ(output_view.shape.size(), 4);
+    ASSERT_EQ(output_view.shape.rank, 4);
     EXPECT_EQ(output_view.shape[0], batch_size);
     EXPECT_EQ(output_view.shape[1], expected_output_dims[0]);
     EXPECT_EQ(output_view.shape[2], expected_output_dims[1]);
@@ -162,6 +162,6 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.size(), 4);
+    ASSERT_EQ(output_view.shape.rank, 4);
     EXPECT_EQ(output_view.shape[0], batch_size);
 }
