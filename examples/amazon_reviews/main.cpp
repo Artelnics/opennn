@@ -15,6 +15,7 @@
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/loss.h"
 #include "../../opennn/adaptive_moment_estimation.h"
+#include "../../opennn/random_utilities.h"
 
 using namespace opennn;
 
@@ -23,6 +24,8 @@ int main()
     try
     {
         cout << "OpenNN. Amazon reviews example." << endl;
+
+        set_seed(42);
 
         // Settings
 
@@ -54,7 +57,11 @@ int main()
         training_strategy.set_loss("CrossEntropy");
 
         cout << "Training network..." << endl;
+#ifdef CUDA
+        training_strategy.train_cuda();
+#else
         training_strategy.train();
+#endif
 
         // Testing Analysis
 

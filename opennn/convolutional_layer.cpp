@@ -35,39 +35,45 @@ Convolutional::Convolutional(const Shape& new_input_shape,
         new_name);
 }
 
-void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     const TensorView& input = forward_propagation.views[layer][Inputs][0];
     TensorView& padded_input = forward_propagation.views[layer][PaddedInputs][0];
+    TensorView& output = forward_propagation.views[layer].back()[0];
 
     ConvolutionArguments conv_args;
+    ActivationArguments act_args;
+    act_args.activation_function = activation_function;
+
 #ifdef CUDA
     conv_args.convolution_descriptor = convolution_descriptor;
     conv_args.kernel_descriptor = kernel_descriptor;
     conv_args.algorithm_forward = convolution_algorithm;
     conv_args.workspace = cuda_workspace;
     conv_args.workspace_size = cuda_workspace_size;
+    act_args.activation_descriptor = activation_descriptor;
 
-    // In CUDA, cuDNN handles padding via convolution_descriptor — use input directly
-    convolution(input, parameters[Weights], parameters[Biases],
-                forward_propagation.views[layer].back()[0], conv_args);
+    const bool can_fuse = !batch_normalization
+                       && activation_function != ActivationFunction::Softmax
+                       && activation_function != ActivationFunction::Linear;
+
+    if(can_fuse)
+    {
+        convolution_activation(input, parameters[Weights], parameters[Biases], output, conv_args, act_args);
+    }
+    else
+    {
+        convolution(input, parameters[Weights], parameters[Biases], output, conv_args);
+        activation(output, act_args);
+    }
 #else
     convolution_type == "Same"
         ? padding(input, padded_input)
         : copy(input, padded_input);
 
-    convolution(padded_input, parameters[Weights], parameters[Biases],
-                forward_propagation.views[layer].back()[0], conv_args);
-#endif
-
-    TensorView& output = forward_propagation.views[layer].back()[0];
-
-    ActivationArguments act_args;
-    act_args.activation_function = activation_function;
-#ifdef CUDA
-    act_args.activation_descriptor = activation_descriptor;
-#endif
+    convolution(padded_input, parameters[Weights], parameters[Biases], output, conv_args);
     activation(output, act_args);
+#endif
 }
 
 void Convolutional::back_propagate(ForwardPropagation& forward_propagation,

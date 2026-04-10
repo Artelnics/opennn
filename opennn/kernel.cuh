@@ -124,6 +124,10 @@ void sgd_update_device(const size_t, float*, float*, const float*, const float, 
  __global__ void mha_causal_mask_kernel(const int n, float* scores, const int seq_q, const int seq_k);
  void mha_causal_mask_cuda(const size_t n, float* scores, const int seq_q, const int seq_k);
 
+ // Element-wise addition
+ 
+ void addition_cuda(const size_t n, const float* input1, const float* input2, float* output);
+
  // Pooling 3D
 
  __global__ void pooling3d_max_forward_kernel(const int n, const float* in, float* out, float* indices, const int B, const int S, const int F);
