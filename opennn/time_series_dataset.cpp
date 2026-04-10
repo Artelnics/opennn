@@ -42,7 +42,7 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
     }
 
     input_dimensions = {past_time_steps, get_variables_number("Input")};
-    target_dimensions = { get_variables_number("Target") };
+    target_dimensions = { get_variables_number("Target") * future_time_steps };
 
     split_samples_sequential(type(0.6), type(0.2), type(0.2));
 
@@ -116,7 +116,7 @@ TimeSeriesDataset::TimeSeriesData TimeSeriesDataset::get_data() const
     if (!target_variable_indices.empty())
     {
         const Index target_vars_number = target_variable_indices.size();
-        ts_data.targets.resize(total_samples, target_vars_number);
+        ts_data.targets.resize(total_samples, target_vars_number * future_time_steps);
         ts_data.targets.setZero();
         fill_target_tensor(all_sample_indices, target_variable_indices, ts_data.targets.data());
     }
@@ -410,7 +410,17 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
     set_display(read_xml_bool(data_set_element, "Display"));
 
     input_dimensions = { past_time_steps, get_variables_number("Input") };
-    target_dimensions = { get_variables_number("Target") };
+    target_dimensions = { get_variables_number("Target") * future_time_steps };
+
+    const Index excluded_head = past_time_steps;
+    if (samples_number > excluded_head)
+        for (Index i = 0; i < excluded_head; i++)
+            set_sample_use(i, "None");
+
+    const Index excluded_tail = future_time_steps;
+    if (samples_number > excluded_tail)
+        for (Index i = samples_number - excluded_tail; i < samples_number; i++)
+            set_sample_use(i, "None");
 }
 
 
@@ -436,12 +446,18 @@ void TimeSeriesDataset::read_csv()
     }
 
     input_dimensions = {past_time_steps, get_variables_number("Input")};
-    target_dimensions = {get_variables_number("Target")};
+    target_dimensions = {get_variables_number("Target") * future_time_steps};
 
     const Index samples_number = get_samples_number();
 
-    if(samples_number > past_time_steps)
-        for(Index i = samples_number - past_time_steps; i < samples_number; i++)
+    const Index excluded_head = past_time_steps;
+    if (samples_number > excluded_head)
+        for (Index i = 0; i < excluded_head; i++)
+            set_sample_use(i, "None");
+
+    const Index excluded_tail = future_time_steps;
+    if (samples_number > excluded_tail)
+        for (Index i = samples_number - excluded_tail; i < samples_number; i++)
             set_sample_use(i, "None");
 
     split_samples_sequential(type(0.6), type(0.2), type(0.2));
@@ -567,7 +583,7 @@ void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
 #pragma omp parallel for
     for (Index i = 0; i < batch_size; ++i)
     {
-        const Index start_row = sample_indices[i];
+        const Index start_row = sample_indices[i] - past_time_steps;
         for (Index j = 0; j < past_time_steps; ++j)
         {
             const Index actual_row = start_row + j;
@@ -575,7 +591,7 @@ void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
             {
                 const Index col_index = input_indices[k];
 
-                if (actual_row < total_rows_in_data)
+                if (actual_row >= 0 && actual_row < total_rows_in_data)
                     batch(i, j, k) = matrix_data[actual_row + total_rows_in_data * col_index];
                 else
                     batch(i, j, k) = static_cast<type>(0);
@@ -593,24 +609,30 @@ void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices,
         return;
 
     const Index batch_size = sample_indices.size();
-    const Index target_size = target_indices.size();
+    const Index base_target_size = target_indices.size();
+    const Index total_target_size = base_target_size * future_time_steps;
     const Index total_rows_in_data = data.dimension(0);
 
-    TensorMap<Tensor<type, 2>> targets(target_tensor_data, batch_size, target_size);
+    TensorMap<Tensor<type, 2>> targets(target_tensor_data, batch_size, total_target_size);
     const type* matrix_data = data.data();
 
 #pragma omp parallel for
     for (Index i = 0; i < batch_size; ++i)
     {
-        const Index target_row = sample_indices[i] + past_time_steps;
-        for (Index j = 0; j < target_size; ++j)
+        for (Index s = 0; s < future_time_steps; ++s)
         {
-            const Index col_index = target_indices[j];
+            const Index target_row = sample_indices[i] + s;
 
-            if (target_row < total_rows_in_data)
-                targets(i, j) = matrix_data[target_row + total_rows_in_data * col_index];
-            else
-                targets(i, j) = static_cast<type>(0);
+            for (Index j = 0; j < base_target_size; ++j)
+            {
+                const Index col_index = target_indices[j];
+                const Index target_col = s * base_target_size + j;
+
+                if (target_row < total_rows_in_data)
+                    targets(i, target_col) = matrix_data[target_row + total_rows_in_data * col_index];
+                else
+                    targets(i, target_col) = static_cast<type>(0);
+            }
         }
     }
 }

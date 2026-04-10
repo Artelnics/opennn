@@ -227,7 +227,7 @@ void OptimizationAlgorithm::set_names()
 
     const vector<Dataset::RawVariable> raw_variables = dataset->get_raw_variables();
     const vector<Index> input_variable_indices = dataset->get_raw_variable_indices("Input");
-    const vector<Index> target_variable_indices = dataset->get_raw_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_raw_variable_indices("Target");
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
@@ -258,26 +258,31 @@ void OptimizationAlgorithm::set_names()
         }
     }
 
-    for(Index i = 0; i < target_variables_number; i++)
+    const Index future_steps = time_series_dataset ? time_series_dataset->get_future_time_steps() : 1;
+
+    for(Index s = 0; s < future_steps; s++)
     {
-        string current_target_name;
-
-        if(target_names[i] == "")
+        for(Index i = 0; i < target_variables_number; i++)
         {
-            auto input_iterator = find(input_variable_indices.begin(), input_variable_indices.end(), target_variable_indices[i]);
+            string current_target_name;
 
-            if(input_iterator == input_variable_indices.end())
-                current_target_name = "variable_" + to_string(input_variables_number + i + 1);
+            if(target_names[i] == "")
+            {
+                auto input_iterator = find(input_variable_indices.begin(), input_variable_indices.end(), target_variable_indices[i]);
+
+                if(input_iterator == input_variable_indices.end())
+                    current_target_name = "variable_" + to_string(input_variables_number + i + 1);
+                else
+                    current_target_name = "variable_" + to_string(int(*input_iterator) + 1);
+            }
             else
-                current_target_name = "variable_" + to_string(int(*input_iterator) + 1);
+                current_target_name = target_names[i];
+
+            if(time_series_dataset)
+                current_target_name += "_ahead_t" + to_string(s + 1);
+
+            target_variable_names.push_back(current_target_name);
         }
-        else
-            current_target_name = target_names[i];
-
-        if(time_series_dataset)
-            current_target_name += "_ahead";
-
-        target_variable_names.push_back(current_target_name);
     }
 
     neural_network->set_feature_names(input_variable_names);
@@ -356,8 +361,8 @@ void OptimizationAlgorithm::set_scaling()
         target_variable_scalers = dataset->get_variable_scalers("Target");
     }
 
-    vector<Descriptives> unscaling_layer_descriptives;
-    vector<string> unscaling_layer_scalers;
+    vector<Descriptives> base_unscaling_descriptives;
+    vector<string> base_unscaling_scalers;
 
     for(size_t i = 0; i < target_variable_indices.size(); ++i)
     {
@@ -369,19 +374,44 @@ void OptimizationAlgorithm::set_scaling()
         {
             const Index input_pos = distance(input_variable_indices.begin(), it);
 
-            unscaling_layer_descriptives.push_back(input_variable_descriptives[input_pos]);
-            unscaling_layer_scalers.push_back(input_variable_scalers[input_pos]);
+            base_unscaling_descriptives.push_back(input_variable_descriptives[input_pos]);
+            base_unscaling_scalers.push_back(input_variable_scalers[input_pos]);
         }
         else
         {
-            unscaling_layer_descriptives.push_back(target_variable_descriptives[i]);
-            unscaling_layer_scalers.push_back(target_variable_scalers[i]);
+            base_unscaling_descriptives.push_back(target_variable_descriptives[i]);
+            base_unscaling_scalers.push_back(target_variable_scalers[i]);
         }
     }
 
     Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
 
-    if(static_cast<Index>(unscaling_layer_descriptives.size()) != unscaling_layer->get_outputs_number())
+    const Index unscaling_outputs = unscaling_layer->get_outputs_number();
+    const Index base_size = static_cast<Index>(base_unscaling_descriptives.size());
+
+    vector<Descriptives> unscaling_layer_descriptives;
+    vector<string> unscaling_layer_scalers;
+
+    if(unscaling_outputs > base_size && base_size > 0 && unscaling_outputs % base_size == 0)
+    {
+        const Index steps = unscaling_outputs / base_size;
+
+        for(Index s = 0; s < steps; s++)
+        {
+            for(Index i = 0; i < base_size; i++)
+            {
+                unscaling_layer_descriptives.push_back(base_unscaling_descriptives[i]);
+                unscaling_layer_scalers.push_back(base_unscaling_scalers[i]);
+            }
+        }
+    }
+    else
+    {
+        unscaling_layer_descriptives = base_unscaling_descriptives;
+        unscaling_layer_scalers = base_unscaling_scalers;
+    }
+
+    if(static_cast<Index>(unscaling_layer_descriptives.size()) != unscaling_outputs)
         throw runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
 
     unscaling_layer->set_descriptives(unscaling_layer_descriptives);

@@ -94,7 +94,7 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation() const
 
 Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>& target, const Tensor<type, 2>& output) const
 {
-    const Index outputs_number = dataset->get_variables_number("Target");
+    const Index outputs_number = neural_network->get_outputs_number();
 
     Tensor<Correlation, 1> linear_correlation(outputs_number);
 
@@ -183,7 +183,8 @@ pair<Tensor<type,2>, Tensor<type,2>> TestingAnalysis::get_targets_and_outputs(co
 
         const vector<Index> sample_indices = time_series_dataset->get_sample_indices(sample_use);
         const vector<Index> variable_indices = time_series_dataset->get_variable_indices("Target");
-        target_data.resize(static_cast<Index>(sample_indices.size()), static_cast<Index>(variable_indices.size()));
+        const Index future_steps = time_series_dataset->get_future_time_steps();
+        target_data.resize(static_cast<Index>(sample_indices.size()), static_cast<Index>(variable_indices.size()) * future_steps);
         time_series_dataset->fill_target_tensor(sample_indices, variable_indices, target_data.data());
     }
     else

@@ -564,7 +564,7 @@ string NeuralNetwork::get_expression() const
             new_output_names.resize(layer_neurons_number);
             
             for (Index j = 0; j < layer_neurons_number; j++)
-                new_output_names[j] = (layer_labels[i] == "scaling_layer")
+                new_output_names[j] = (layer_labels[i] == "scaling_layer" || layer_labels[i] == "scaling_layer_3d")
                       ? "scaled_" + feature_names[j]
                       : layer_labels[i] + "_output_" + to_string(j);
 

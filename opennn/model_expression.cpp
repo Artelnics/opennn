@@ -939,14 +939,6 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     buffer << "</table>" << endl;
 
-    if(outputs_number > maximum_output_variable_numbers)
-    {
-        buffer << "<!-- HIDDEN INPUTS -->" << endl;
-        for(Index i = 0; i < outputs_number; i++)
-            buffer << "<input type=\"hidden\" id=\"" << fixes_output_names[i] << "\" value=\"\">" << endl;
-        buffer << "\n" << endl;
-    }
-
     buffer << "<!-- BUTTON HERE -->" << endl
            << "<button type=\"button\" class=\"btn\" onclick=\"neuralNetwork()\">calculate outputs</button>" << endl
            << "<br/>\n" << endl
@@ -955,36 +947,13 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     // Outputs
 
-    if(outputs_number > maximum_output_variable_numbers)
-    {
+    for(Index i = 0; i < outputs_number; i++)
         buffer << "<tr style=\"height:3.5em\">" << endl
-               << "<td> Target </td>" << endl
+               << "<td> " << output_names[i] << " </td>" << endl
                << "<td class=\"neural-cell\">" << endl
-               << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">" << endl;
-
-        for(Index i = 0; i < outputs_number; i++)
-            buffer << "<option value=\"" << output_names[i] << "\">" << output_names[i] << "</option>" << endl;
-
-        buffer << "</select>" << endl
-               << "</td>" << endl
-               << "</tr>\n" << endl
-               << "<tr style=\"height:3.5em\">" << endl
-               << "<td> Value </td>" << endl
-               << "<td class=\"neural-cell\">" << endl
-               << "<input style=\"text-align:right; padding-right:20px;\" id=\"selected_value\" value=\"\" type=\"text\"  disabled/>" << endl
+               << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << fixes_output_names[i] << "\" value=\"\" type=\"text\"  disabled/>" << endl
                << "</td>" << endl
                << "</tr>\n" << endl;
-    }
-    else
-    {
-        for(Index i = 0; i < outputs_number; i++)
-            buffer << "<tr style=\"height:3.5em\">" << endl
-                   << "<td> " << output_names[i] << " </td>" << endl
-                   << "<td class=\"neural-cell\">" << endl
-                   << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << fixes_output_names[i] << "\" value=\"\" type=\"text\"  disabled/>" << endl
-                   << "</td>" << endl
-                   << "</tr>\n" << endl;
-    }
 
     buffer << "</table>\n" << endl
            << "</form>" << endl
@@ -994,20 +963,6 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     // Calculate outputs script
 
     buffer << "<script>" << endl;
-
-    if(outputs_number > maximum_output_variable_numbers)
-    {
-        buffer << "function updateSelectedCategory() {" << endl
-               << "\tvar selectedCategory = document.getElementById(\"category_select\").value;" << endl
-               << "\tvar selectedValueElement = document.getElementById(\"selected_value\");" << endl;
-
-        for(Index i = 0; i < outputs_number; i++)
-            buffer << "\tif(selectedCategory === \"" << fixes_output_names[i] << "\") {" << endl
-                   << "\t\tselectedValueElement.value = document.getElementById(\"" << fixes_output_names[i] << "\").value;" << endl
-                   << "\t}" << endl;
-
-        buffer << "}\n" << endl;
-    }
 
     buffer << "\nfunction Linear(x) {\n"
               "\treturn x;\n"
@@ -1033,12 +988,9 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     buffer << "\n" << "\t" << "var outputs = calculate_outputs(inputs); " << endl;
 
-    if(outputs_number > maximum_output_variable_numbers)
-        buffer << "\t" << "updateSelectedCategory();" << endl;
-    else
-        for(Index i = 0; i < outputs_number; i++)
-            buffer << "\t" << "var " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");" << endl
-                   << "\t" << fixes_output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
+    for(Index i = 0; i < outputs_number; i++)
+        buffer << "\t" << "var " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");" << endl
+               << "\t" << fixes_output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
 
     buffer << "}" << endl
            << "function calculate_outputs(inputs)" << endl
