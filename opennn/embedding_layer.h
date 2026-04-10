@@ -86,6 +86,8 @@ private:
     MatrixR positional_encoding;
     bool pos_encoding_synced = false;
 
+    type embedding_scale = type(1);
+
     type dropout_rate = type(0);
 };
 

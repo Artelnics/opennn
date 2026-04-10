@@ -92,6 +92,7 @@ bool NeuralNetwork::has(const string& name) const
 static vector<string> get_feature_names_from(const vector<Variable>& vars)
 {
     vector<string> feature_names;
+    feature_names.reserve(vars.size());
 
     for (const auto& var : vars)
     {
@@ -487,13 +488,14 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       const VectorR& new_parameters,
                                       ForwardPropagation& forward_propagation)
 {
-    const VectorR original_parameters = get_parameters();
+    VectorR& params = get_parameters();
+    VectorR saved_parameters(std::move(params));
 
-    set_parameters(new_parameters);
+    params = new_parameters;
 
     forward_propagate(input_view, forward_propagation, true);
 
-    set_parameters(original_parameters);
+    params = std::move(saved_parameters);
 }
 
 string NeuralNetwork::get_expression() const

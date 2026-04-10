@@ -237,15 +237,9 @@ void MultiHeadAttention::apply_key_padding_mask(const TensorMap3& source_input,
     {
         for(Index s = 0; s < source_sequence_length; ++s)
         {
-            bool is_pad = true;
-            for(Index d = 0; d < embedding_dimension; ++d)
-            {
-                if(abs(source_input(b, s, d)) > 1e-7f)
-                {
-                    is_pad = false;
-                    break;
-                }
-            }
+            const type* row_ptr = &source_input(b, s, 0);
+            const bool is_pad = Eigen::Map<const VectorR>(row_ptr, embedding_dimension)
+                                    .cwiseAbs().maxCoeff() <= type(1e-7f);
 
             if(is_pad)
                 for(Index h = 0; h < heads_number; ++h)
