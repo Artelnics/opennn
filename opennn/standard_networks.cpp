@@ -583,7 +583,7 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
     const Index vocabulary_size = input_shape[0];
     const Index sequence_length = input_shape[1];
     const Index embedding_dimension = input_shape[2];
-    const Index heads_number = complexity_dimensions[0];
+    const Index heads_number = input_shape[3];
 
     unique_ptr<Embedding> embedding_layer = make_unique<Embedding>(Shape({vocabulary_size, sequence_length}),
                                                   embedding_dimension,
@@ -597,10 +597,16 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
         heads_number,
         "multihead_attention_layer"));
 
-    add_layer(make_unique<Pooling3d>(get_output_shape(), Pooling3d::PoolingMethod::AveragePooling));
-    //add_layer(make_unique<Flatten<3>>(get_output_shape()));
+    add_layer(make_unique<Pooling3d>(get_output_shape(), Pooling3d::PoolingMethod::MaxPooling));
 
-    add_layer(make_unique<Dense<2>>(get_output_shape(), Shape({16}), "RectifiedLinear", false, "hidden_layer"));
+    const Index complexity_size = complexity_dimensions.size();
+
+    for(Index i = 0; i < complexity_size; i++)
+        add_layer(make_unique<Dense<2>>(get_output_shape(),
+                                       Shape({complexity_dimensions[i]}),
+                                       "RectifiedLinear",
+                                       false,
+                                       "dense2d_layer_" + to_string(i + 1)));
 
     const string output_activation = (output_shape[0] > 1) ? "Softmax" : "Sigmoid";
 

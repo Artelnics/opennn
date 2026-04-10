@@ -163,16 +163,15 @@ void TrainingStrategy::set_default()
 
     if(neural_network->has("Embedding") || neural_network->has("MultiHeadAttention"))
     {
-        if(output_activation == "Softmax")
-            set_loss("CrossEntropyError2d");
-        else
-            set_loss("WeightedSquaredError");
+        set_loss("CrossEntropyError2d");
 
         set_optimization_algorithm("AdaptiveMomentEstimation");
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = dynamic_cast<AdaptiveMomentEstimation*>(get_optimization_algorithm());
-        adaptive_moment_estimation->set_maximum_epochs(100);
-        adaptive_moment_estimation->set_display_period(10);
+        adaptive_moment_estimation->set_batch_size(64);
+        adaptive_moment_estimation->set_learning_rate(type(0.0005));
+        adaptive_moment_estimation->set_maximum_epochs(30);
+        adaptive_moment_estimation->set_display_period(1);
 
         return;
     }

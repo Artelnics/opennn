@@ -1209,6 +1209,11 @@ void NeuralNetwork::save(const filesystem::path& file_name) const
     XMLPrinter printer;
     to_XML(printer);
     file << printer.CStr();
+
+    filesystem::path binary_path = file_name;
+    binary_path.replace_extension(".bin");
+
+    save_parameters_binary(binary_path);
 }
 
 
@@ -1253,6 +1258,12 @@ void NeuralNetwork::load(const filesystem::path& file_name)
         throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
+
+    filesystem::path binary_path = file_name;
+    binary_path.replace_extension(".bin");
+
+    if(filesystem::exists(binary_path))
+        load_parameters_binary(binary_path);
 }
 
 
