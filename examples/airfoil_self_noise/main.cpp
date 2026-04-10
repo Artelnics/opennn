@@ -28,8 +28,6 @@ int main()
     {
         cout << "Airfoil self noise" << endl;
 
-        set_seed(42);
-
         const Index neurons_number = 10;
         const type regularization_weight = 0.0001;
 

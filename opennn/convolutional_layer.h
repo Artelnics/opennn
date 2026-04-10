@@ -162,7 +162,6 @@ private:
     enum Forward {Inputs, PaddedInputs};
     enum Backward {OutputGradients, InputGradients};
 
-    // @todo Forward TensorCuda inverse_variance;
     // @todo Backward: Rotated weights
 
     Index row_stride = 1;
@@ -183,9 +182,18 @@ private:
     type momentum = type(0.9);
 
 #ifdef CUDA
-    cudnnConvolutionFwdAlgo_t convolution_algorithm;
-    cudnnConvolutionBwdDataAlgo_t algo_data;
-    cudnnConvolutionBwdFilterAlgo_t algo_filter;
+public:
+    void init_cuda_workspace(Index batch_size);
+
+private:
+    cudnnConvolutionFwdAlgo_t convolution_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
+    cudnnConvolutionBwdDataAlgo_t algo_data = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
+    cudnnConvolutionBwdFilterAlgo_t algo_filter = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
+
+    void* cuda_workspace = nullptr;
+    size_t cuda_workspace_size = 0;
+    void* cuda_backward_filter_workspace = nullptr;
+    size_t cuda_backward_filter_workspace_size = 0;
 #endif
 };
 

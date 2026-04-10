@@ -151,6 +151,9 @@ void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t 
     args.pool_dimensions = {pool_height, pool_width};
     args.stride_shape = {row_stride, column_stride};
     args.padding_shape = {padding_height, padding_width};
+#ifdef CUDA
+    args.pooling_descriptor = pooling_descriptor;
+#endif
 
     if(pooling_method == "MaxPooling")
     {
@@ -165,6 +168,8 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
                              BackPropagation& back_propagation,
                              size_t layer) const
 {
+    const TensorView& input = forward_propagation.views[layer][Inputs][0];
+    const TensorView& output = forward_propagation.views[layer][Outputs][0];
     const TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
     TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
 
@@ -172,14 +177,17 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
     args.pool_dimensions = {pool_height, pool_width};
     args.stride_shape = {row_stride, column_stride};
     args.padding_shape = {padding_height, padding_width};
+#ifdef CUDA
+    args.pooling_descriptor = pooling_descriptor;
+#endif
 
     if(pooling_method == "MaxPooling")
     {
         const TensorView& maximal_indices = forward_propagation.views[layer][MaximalIndices][0];
-        max_pooling_backward(output_gradient, maximal_indices, input_gradient, args);
+        max_pooling_backward(input, output, output_gradient, maximal_indices, input_gradient, args);
     }
     else if(pooling_method == "AveragePooling")
-        average_pooling_backward(output_gradient, input_gradient, args);
+        average_pooling_backward(input, output, output_gradient, input_gradient, args);
 }
 
 void Pooling::to_XML(XMLPrinter& printer) const

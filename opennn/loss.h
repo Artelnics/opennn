@@ -80,11 +80,7 @@ public:
                                          ForwardPropagation&,
                                          BackPropagation&) const;
 
-    void add_regularization_gradient(VectorR&) const;
-
-#ifdef CUDA
-    void add_regularization_gradient_device(BackPropagation&) const;
-#endif
+    void add_regularization_gradient(BackPropagation&) const;
 
     void back_propagate(const Batch&,
                         ForwardPropagation&,
@@ -193,12 +189,6 @@ struct BackPropagation
 
     float* errors_device = nullptr;
     float* error_device = nullptr;
-
-    cudnnReduceTensorDescriptor_t reduce_tensor_descriptor = nullptr;
-    cudnnTensorDescriptor_t output_reduce_tensor_descriptor = nullptr;
-
-    void* reduction_workspace = nullptr;
-    size_t reduction_workspace_size = 0;
 
     TensorView get_output_gradients_device() const;
 

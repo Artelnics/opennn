@@ -13,6 +13,7 @@
 #include "dense_layer.h"
 #include "scaling_layer.h"
 #include "flatten_layer.h"
+#include "convolutional_layer.h"
 #include "image_utilities.h"
 #include "addition_layer.h"
 #include "embedding_layer.h"
@@ -1166,6 +1167,16 @@ void ForwardPropagation::allocate_device()
                     views[i][0][k] = views[j][output_slot][0];
                 }
             }
+        }
+    }
+
+    // Initialize CUDA workspaces for convolutional layers
+    for(auto& layer : neural_network->get_layers())
+    {
+        if(layer->get_name() == "Convolutional")
+        {
+            Convolutional* conv = static_cast<Convolutional*>(layer.get());
+            conv->init_cuda_workspace(batch_size);
         }
     }
 #endif
