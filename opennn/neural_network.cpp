@@ -1108,6 +1108,62 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             // Note: Indices j < 0 (external inputs) are wired in forward_propagate() per batch.
         }
     }
+
+}
+
+void ForwardPropagation::allocate_device()
+{
+#ifdef CUDA
+    if(!neural_network || data.size() == 0) return;
+
+    data.resize_device(data.size());
+    data.setZero_device();
+
+    const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
+    const auto& layer_input_indices = neural_network->get_layer_input_indices();
+    const size_t layers_number = neural_network->get_layers().size();
+
+    type* dev_pointer = data.device();
+
+    for(size_t i = 0; i < layers_number; ++i)
+    {
+        const vector<Shape>& shapes = forward_shapes[i];
+
+        for(size_t j = 0; j < shapes.size(); ++j)
+        {
+            const Shape& s = shapes[j];
+
+            if(s.size() > 0)
+            {
+                views[i][j + 1][0].data = dev_pointer;
+                views[i][j + 1][0].set_descriptor(s);
+                dev_pointer += get_aligned_size(s.size());
+            }
+        }
+    }
+
+    // Re-wire layer input links to device
+    for(size_t i = 0; i < layers_number; ++i)
+    {
+        const vector<Index>& input_idx = layer_input_indices[i];
+
+        for(size_t k = 0; k < input_idx.size(); ++k)
+        {
+            const Index j = input_idx[k];
+
+            if(j >= 0)
+            {
+                const size_t output_slot = forward_shapes[j].size();
+
+                if(output_slot > 0 && j < static_cast<Index>(views.size())
+                    && !views[j][output_slot].empty())
+                {
+                    views[i][0][k] = views[j][output_slot][0];
+                }
+            }
+        }
+    }
+#endif
 }
 
 TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
@@ -1170,14 +1226,69 @@ void ForwardPropagation::print() const
 
 void NeuralNetwork::copy_parameters_device()
 {
-    // @todo Copy CPU parameters to GPU
-    // With unified Memory, parameters are already on GPU when CUDA is active.
-    // This will be needed when parameters are initialized on CPU and need to be copied.
+    if(parameters.size() == 0) return;
+
+    parameters.resize_device(parameters.size());
+
+    CHECK_CUDA(cudaMemcpy(parameters.device(),
+                          parameters.vector.data(),
+                          parameters.size() * sizeof(float),
+                          cudaMemcpyHostToDevice));
 }
 
 void NeuralNetwork::copy_parameters_host()
 {
-    // @todo Copy GPU parameters back to CPU
+    if(parameters.size() == 0) return;
+
+    CHECK_CUDA(cudaMemcpy(parameters.vector.data(),
+                          parameters.device(),
+                          parameters.size() * sizeof(float),
+                          cudaMemcpyDeviceToHost));
+}
+
+void NeuralNetwork::link_parameters_device()
+{
+    type* dev_ptr = parameters.device();
+
+    for(auto& layer : layers)
+    {
+        const vector<Shape> shapes = layer->get_parameter_shapes();
+        auto& param_views = layer->get_parameter_views();
+
+        for(size_t i = 0; i < shapes.size(); ++i)
+        {
+            if(shapes[i].size() == 0) continue;
+
+            if(i < param_views.size())
+            {
+                param_views[i].data = dev_ptr;
+                param_views[i].set_descriptor(shapes[i]);
+            }
+
+            dev_ptr += get_aligned_size(shapes[i].size());
+        }
+    }
+}
+
+void NeuralNetwork::link_parameters_cpu()
+{
+    type* cpu_ptr = parameters.data();
+
+    for(auto& layer : layers)
+    {
+        const vector<Shape> shapes = layer->get_parameter_shapes();
+        auto& param_views = layer->get_parameter_views();
+
+        for(size_t i = 0; i < shapes.size(); ++i)
+        {
+            if(shapes[i].size() == 0) continue;
+
+            if(i < param_views.size())
+                param_views[i] = TensorView(cpu_ptr, shapes[i]);
+
+            cpu_ptr += get_aligned_size(shapes[i].size());
+        }
+    }
 }
 
 #endif

@@ -849,6 +849,9 @@ public:
     cudnnHandle_t get_cudnn_handle();
     cudnnOpTensorDescriptor_t get_operator_sum_descriptor();
     cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor();
+    cudnnReduceTensorDescriptor_t get_reduce_add_descriptor();
+    void* get_reduction_workspace();
+    size_t get_reduction_workspace_size();
 #endif
 
 private:
@@ -863,6 +866,9 @@ private:
     cudnnHandle_t cudnn_handle = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
     cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
+    cudnnReduceTensorDescriptor_t reduce_add_descriptor = nullptr;
+    void* reduction_workspace = nullptr;
+    size_t reduction_workspace_size = 0;
 #endif
 };
 
@@ -896,6 +902,21 @@ inline const float zero = 0.0f;
     inline cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor()
     {
         return Device::instance().get_operator_multiplication_descriptor();
+    }
+
+    inline cudnnReduceTensorDescriptor_t get_reduce_add_descriptor()
+    {
+        return Device::instance().get_reduce_add_descriptor();
+    }
+
+    inline void* get_reduction_workspace()
+    {
+        return Device::instance().get_reduction_workspace();
+    }
+
+    inline size_t get_reduction_workspace_size()
+    {
+        return Device::instance().get_reduction_workspace_size();
     }
 
 struct TensorCuda

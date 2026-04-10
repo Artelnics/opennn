@@ -10,6 +10,8 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
+#include "../../opennn/adaptive_moment_estimation.h"
+#include "../../opennn/random_utilities.h"
 
 using namespace opennn;
 
@@ -18,6 +20,8 @@ int main()
     try
     {
         cout << "OpenNN. Iris Plant Example." << endl;
+
+        set_seed(42);
 
         // Dataset
 
@@ -36,15 +40,12 @@ int main()
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
-        training_strategy.get_optimization_algorithm()->set_maximum_epochs(100);
+        training_strategy.get_loss()->set_regularization("None");
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_maximum_epochs(100);
 
-        training_strategy.train();
-
-        // Testing Analysis
-
-        TestingAnalysis testing_analysis(&classification_network, &dataset);
-
-        cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
+        training_strategy.train_cuda();
 
         return 0;
     }

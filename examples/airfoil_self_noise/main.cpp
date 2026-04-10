@@ -18,6 +18,7 @@
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/optimizer.h"
 #include "../../opennn/stochastic_gradient_descent.h"
+#include "../../opennn/random_utilities.h"
 
 using namespace opennn;
 
@@ -26,6 +27,8 @@ int main()
     try
     {
         cout << "Airfoil self noise" << endl;
+
+        set_seed(42);
 
         const Index neurons_number = 10;
         const type regularization_weight = 0.0001;
@@ -64,12 +67,12 @@ int main()
         training_strategy.get_loss()->set_regularization("L1");
         training_strategy.get_loss()->set_regularization_weight(regularization_weight);
 
-        TrainingResults training_results = training_strategy.train();
+        TrainingResults training_results = training_strategy.train_cuda();
 
         // Testing analysis
-
-        TestingAnalysis testing_analysis(&approximation_network, &dataset);
-        testing_analysis.print_goodness_of_fit_analysis();
+        // @todo: TestingAnalysis uses CPU forward_propagate which conflicts with CUDA operator paths
+        // TestingAnalysis testing_analysis(&approximation_network, &dataset);
+        // testing_analysis.print_goodness_of_fit_analysis();
 
         cout << "Good bye!" << endl;
 

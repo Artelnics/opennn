@@ -47,13 +47,22 @@ void Loss::back_propagate(const Batch& batch,
 
     add_regularization(back_propagation);
 
+#ifndef CUDA
     add_regularization_gradient(back_propagation.gradient.vector);
+#else
+    add_regularization_gradient_device(back_propagation);
+#endif
 }
 
 void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
+
+#ifndef CUDA
     const TensorView target = batch.get_targets();
+#else
+    const TensorView target = batch.get_targets_device();
+#endif
 
     // workspace_device is used by CUDA to store intermediate diffs or CE values
 #ifdef CUDA
@@ -89,8 +98,17 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
 void Loss::calculate_output_gradients(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
+
+#ifndef CUDA
     const TensorView target = batch.get_targets();
+#else
+    const TensorView target = batch.get_targets_device();
+#endif
+#ifndef CUDA
     TensorView input_gradient = back_propagation.get_output_gradients();
+#else
+    TensorView input_gradient = back_propagation.get_output_gradients_device();
+#endif
 
     switch(error)
     {
@@ -118,8 +136,13 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
 {
     if(regularization_method == "None") return;
 
+#ifndef CUDA
     const VectorR& params_vec = neural_network->get_parameters();
     back_propagation.loss_value += calculate_regularization(params_vec);
+#else
+    // In the master, CUDA regularization value is not computed on GPU either
+    // Just skip the loss_value update (gradient is the important part)
+#endif
 }
 
 type Loss::calculate_regularization(const VectorR& parameters_vec) const
@@ -183,6 +206,7 @@ void Loss::add_regularization_gradient(VectorR& gradient_vec) const
 {
     if(regularization_method == "None" || regularization_weight == 0.0f) return;
 
+#ifndef CUDA
     const VectorR& params_vec = neural_network->get_parameters();
 
     // Wrap vectors in views for hardware-agnostic utilities
@@ -193,7 +217,26 @@ void Loss::add_regularization_gradient(VectorR& gradient_vec) const
         l1_regularization_gradient(parameters, regularization_weight, gradient);
     else if (regularization_method == "L2")
         l2_regularization_gradient(parameters, regularization_weight, gradient);
+#endif
 }
+
+#ifdef CUDA
+
+void Loss::add_regularization_gradient_device(BackPropagation& back_propagation) const
+{
+    if(regularization_method == "None" || regularization_weight == 0.0f) return;
+
+    const Index n = neural_network->get_parameters_size();
+    const TensorView parameters(neural_network->get_parameters_device(), { n });
+    TensorView gradient(back_propagation.gradient.device(), { n });
+
+    if (regularization_method == "L1")
+        l1_regularization_gradient(parameters, regularization_weight, gradient);
+    else if (regularization_method == "L2")
+        l2_regularization_gradient(parameters, regularization_weight, gradient);
+}
+
+#endif
 
 void Loss::regularization_from_XML(const XMLDocument& document)
 {
@@ -378,7 +421,103 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         }
     }
 
+}
+
+void BackPropagation::allocate_device()
+{
 #ifdef CUDA
+    if(!loss) return;
+
+    const NeuralNetwork* neural_network = loss->get_neural_network();
+    if(!neural_network) return;
+
+    const Index layers_number = neural_network->get_layers_number();
+    const Shape output_shape = neural_network->get_output_shape();
+    const Index outputs_number = output_shape[0];
+
+    // Allocate device memory
+    gradient.resize_device(gradient.size());
+    gradient.setZero_device();
+    backward.resize_device(backward.size());
+    backward.setZero_device();
+    output_gradients.resize_device(output_gradients.size());
+    output_gradients.setZero_device();
+
+    // Re-wire gradient_views to device memory
+    const vector<vector<Shape>> parameter_shapes = neural_network->get_parameter_shapes();
+
+    if(gradient.size() > 0)
+    {
+        type* dev_g_ptr = gradient.device();
+
+        for(Index i = 0; i < layers_number; ++i)
+        {
+            const vector<Shape>& layer_param_shapes = parameter_shapes[i];
+
+            for(size_t j = 0; j < layer_param_shapes.size(); ++j)
+            {
+                const Shape& s = layer_param_shapes[j];
+                if(s.size() > 0 && j < gradient_views[i].size())
+                {
+                    gradient_views[i][j].data = dev_g_ptr;
+                    gradient_views[i][j].set_descriptor(s);
+                    dev_g_ptr += get_aligned_size(s.size());
+                }
+            }
+        }
+    }
+
+    // Re-wire backward_views to device memory
+    const vector<vector<Shape>> backward_shapes = neural_network->get_backward_shapes(batch_size);
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
+    const auto& layer_output_indices = neural_network->get_layer_output_indices();
+    const auto& layer_input_indices = neural_network->get_layer_input_indices();
+
+    if(backward.size() > 0)
+    {
+        type* dev_b_ptr = backward.device();
+
+        for(Index i = 0; i < layers_number; ++i)
+        {
+            const vector<Shape>& shapes = backward_shapes[i];
+
+            for(size_t j = 0; j < shapes.size(); ++j)
+            {
+                const Shape& s = shapes[j];
+                if(s.size() > 0)
+                {
+                    backward_views[i][j + 1][0].data = dev_b_ptr;
+                    backward_views[i][j + 1][0].set_descriptor(s);
+                    dev_b_ptr += get_aligned_size(s.size());
+                }
+            }
+        }
+
+        // Re-wire output gradient connections to device
+        for(Index i = 0; i < layers_number; ++i)
+        {
+            if(backward_views[i].empty()) continue;
+
+            if(i == last_trainable_layer_index)
+            {
+                TensorView og_view(output_gradients.device(), output_gradient_dimensions);
+                og_view.set_descriptor(output_gradient_dimensions);
+                backward_views[i][0][0] = og_view;
+            }
+            else
+            {
+                for(const Index consumer_idx : layer_output_indices[i])
+                {
+                    if(consumer_idx >= 0 && consumer_idx < layers_number)
+                    {
+                        if(backward_views[consumer_idx].size() > 1 && !backward_views[consumer_idx][1].empty())
+                            backward_views[i][0][0] = backward_views[consumer_idx][1][0];
+                    }
+                    break;
+                }
+            }
+        }
+    }
 
     CHECK_CUDA(cudaMalloc(&errors_device, batch_size * outputs_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&error_device, 2 * sizeof(float)));
@@ -396,9 +535,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
                                CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
                                1, 1, 1, 1);
 
-    // @todo get reduction workspace size - needs output_gradients descriptor
     reduction_workspace_size = 0;
-
 #endif
 }
 
@@ -407,7 +544,9 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
 TensorView BackPropagation::get_output_gradients_device() const
 {
-    return {const_cast<type*>(output_gradients.data()), output_gradient_dimensions};
+    TensorView tv(const_cast<type*>(output_gradients.device()), output_gradient_dimensions);
+    tv.set_descriptor(output_gradient_dimensions);
+    return tv;
 }
 
 void BackPropagation::free_cuda()

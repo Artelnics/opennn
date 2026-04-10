@@ -419,6 +419,8 @@ Device::Device()
 Device::~Device()
 {
 #ifdef CUDA
+    if (reduce_add_descriptor) cudnnDestroyReduceTensorDescriptor(reduce_add_descriptor);
+    if (reduction_workspace) cudaFree(reduction_workspace);
     if (operator_sum_descriptor) cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
     if (operator_multiplication_descriptor) cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
     if (cublas_handle) cublasDestroy(cublas_handle);
@@ -473,6 +475,37 @@ cublasHandle_t Device::get_cublas_handle() { return cublas_handle; }
 cudnnHandle_t Device::get_cudnn_handle() { return cudnn_handle; }
 cudnnOpTensorDescriptor_t Device::get_operator_sum_descriptor() { return operator_sum_descriptor; }
 cudnnOpTensorDescriptor_t Device::get_operator_multiplication_descriptor() { return operator_multiplication_descriptor; }
+cudnnReduceTensorDescriptor_t Device::get_reduce_add_descriptor()
+{
+    if(!reduce_add_descriptor)
+    {
+        cudnnCreateReduceTensorDescriptor(&reduce_add_descriptor);
+        cudnnSetReduceTensorDescriptor(reduce_add_descriptor,
+                                       CUDNN_REDUCE_TENSOR_ADD,
+                                       CUDNN_DATA_FLOAT,
+                                       CUDNN_NOT_PROPAGATE_NAN,
+                                       CUDNN_REDUCE_TENSOR_NO_INDICES,
+                                       CUDNN_32BIT_INDICES);
+    }
+    return reduce_add_descriptor;
+}
+
+void* Device::get_reduction_workspace()
+{
+    if(!reduction_workspace)
+    {
+        reduction_workspace_size = 1024 * 1024; // 1MB workspace
+        CHECK_CUDA(cudaMalloc(&reduction_workspace, reduction_workspace_size));
+    }
+    return reduction_workspace;
+}
+
+size_t Device::get_reduction_workspace_size()
+{
+    if(!reduction_workspace)
+        get_reduction_workspace(); // Initialize
+    return reduction_workspace_size;
+}
 #endif
 
 }

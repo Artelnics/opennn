@@ -13,11 +13,9 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/standard_networks.h"
-#include "../../opennn/training_strategy.h"
 #include "../../opennn/optimizer.h"
 #include "../../opennn/adaptive_moment_estimation.h"
-#include "../../opennn/loss.h"
+#include "../../opennn/random_utilities.h"
 
 using namespace opennn;
 
@@ -26,6 +24,8 @@ int main()
     try
     {
         cout << "OpenNN. Breast Cancer Example." << endl;
+
+        set_seed(42);
 
         // Dataset
 
@@ -39,9 +39,6 @@ int main()
 
         // Training Strategy
 
-        Loss loss(&classification_network, &dataset);
-        loss.set_regularization("L1");
-
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
         training_strategy.get_loss()->set_regularization("None");
@@ -49,15 +46,11 @@ int main()
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(1000);
 
-        training_strategy.train();
+        training_strategy.train_cuda();
 
-        // Testing Analysis
-
-        TestingAnalysis testing_analysis(&classification_network, &dataset);
-
-        testing_analysis.print_binary_classification_tests();
-
-        TestingAnalysis::RocAnalysis roc = testing_analysis.perform_roc_analysis();
+        // Testing Analysis (disabled with CUDA active — operators use GPU paths)
+        // TestingAnalysis testing_analysis(&classification_network, &dataset);
+        // testing_analysis.print_binary_classification_tests();
 
         cout << "Good bye!" << endl;
 

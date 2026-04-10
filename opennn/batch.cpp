@@ -34,6 +34,8 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         input.resize(input_shape.size());
 
 #ifdef CUDA
+        input.resize_device(input_shape.size());
+
         num_input_features = dataset->get_features_number("Input");
         const Index input_size = samples_number * num_input_features;
 
@@ -56,6 +58,8 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         target.resize(target_shape.size());
 
 #ifdef CUDA
+        target.resize_device(target_shape.size());
+
         num_target_features = dataset->get_features_number("Target");
         const Index target_size = samples_number * num_target_features;
 
@@ -78,6 +82,8 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         decoder.resize(decoder_shape.size());
 
 #ifdef CUDA
+        decoder.resize_device(decoder_shape.size());
+
         num_decoder_features = dataset->get_features_number("Decoder");
         const Index decoder_size = samples_number * num_decoder_features;
 
@@ -194,15 +200,15 @@ void Batch::copy_device(const Index current_batch_size)
     const Index input_size = current_batch_size * num_input_features;
     const Index target_size = current_batch_size * num_target_features;
 
-    CHECK_CUDA(cudaMemcpy(input.data(), inputs_host, input_size * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemcpy(input.device(), inputs_host, input_size * sizeof(float), cudaMemcpyHostToDevice));
 
     if(!decoder_shape.empty())
     {
         const Index decoder_size = current_batch_size * num_decoder_features;
-        CHECK_CUDA(cudaMemcpy(decoder.data(), decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice));
+        CHECK_CUDA(cudaMemcpy(decoder.device(), decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice));
     }
 
-    CHECK_CUDA(cudaMemcpy(target.data(), targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemcpy(target.device(), targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 void Batch::copy_device_async(const Index current_batch_size, cudaStream_t stream)
@@ -210,29 +216,38 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
     const Index input_size = current_batch_size * num_input_features;
     const Index target_size = current_batch_size * num_target_features;
 
-    CHECK_CUDA(cudaMemcpyAsync(input.data(), inputs_host, input_size * sizeof(float), cudaMemcpyHostToDevice, stream));
+    CHECK_CUDA(cudaMemcpyAsync(input.device(), inputs_host, input_size * sizeof(float), cudaMemcpyHostToDevice, stream));
 
     if(!decoder_shape.empty())
     {
         const Index decoder_size = current_batch_size * num_decoder_features;
-        CHECK_CUDA(cudaMemcpyAsync(decoder.data(), decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice, stream));
+        CHECK_CUDA(cudaMemcpyAsync(decoder.device(), decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice, stream));
     }
 
-    CHECK_CUDA(cudaMemcpyAsync(target.data(), targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice, stream));
+    CHECK_CUDA(cudaMemcpyAsync(target.device(), targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice, stream));
 }
 
 vector<TensorView> Batch::get_inputs_device() const
 {
     if(!decoder_shape.empty())
-        return { {const_cast<type*>(decoder.data()), decoder_shape},
-                 {const_cast<type*>(input.data()), input_shape} };
+    {
+        TensorView dec_view(const_cast<type*>(decoder.device()), decoder_shape);
+        dec_view.set_descriptor(decoder_shape);
+        TensorView in_view(const_cast<type*>(input.device()), input_shape);
+        in_view.set_descriptor(input_shape);
+        return { dec_view, in_view };
+    }
 
-    return { {const_cast<type*>(input.data()), input_shape} };
+    TensorView in_view(const_cast<type*>(input.device()), input_shape);
+    in_view.set_descriptor(input_shape);
+    return { in_view };
 }
 
 TensorView Batch::get_targets_device() const
 {
-    return {const_cast<type*>(target.data()), target_shape};
+    TensorView tv(const_cast<type*>(target.device()), target_shape);
+    tv.set_descriptor(target_shape);
+    return tv;
 }
 
 #endif

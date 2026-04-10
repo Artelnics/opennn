@@ -107,9 +107,9 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
     sgd_update_device(
         parameters_number,
-        neural_network->get_parameters_data(),
-        optimization_data.parameter_updates.data(),
-        back_propagation.gradient.data(),
+        neural_network->get_parameters_device(),
+        optimization_data.parameter_updates.device(),
+        back_propagation.gradient.device(),
         current_learning_rate,
         momentum,
         nesterov);
@@ -385,6 +385,13 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 
     last_parameter_updates.resize(parameters_number);
     last_parameter_updates.setZero();
+
+#ifdef CUDA
+    parameter_updates.resize_device(parameters_number);
+    parameter_updates.setZero_device();
+    last_parameter_updates.resize_device(parameters_number);
+    last_parameter_updates.setZero_device();
+#endif
 }
 
 #ifdef CUDA
@@ -431,6 +438,9 @@ TrainingResults StochasticGradientDescent::train_cuda()
     set_names();
     set_scaling();
 
+    neural_network->copy_parameters_device();
+    neural_network->link_parameters_device();
+
     const int PREFETCH_BATCHES = 3;
 
     ThreadSafeQueue<Batch*> empty_training_queue;
@@ -462,13 +472,18 @@ TrainingResults StochasticGradientDescent::train_cuda()
     cudaEventCreate(&batch_ready_event);
 
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
+    training_forward_propagation.allocate_device();
 
     loss->set_normalization_coefficient();
 
     BackPropagation training_back_propagation(training_batch_size, loss);
+    training_back_propagation.allocate_device();
 
     ForwardPropagation validation_forward_propagation(validation_batch_size, neural_network);
+    validation_forward_propagation.allocate_device();
+
     BackPropagation validation_back_propagation(validation_batch_size, loss);
+    validation_back_propagation.allocate_device();
 
     StochasticGradientDescentData optimization_data(this);
 
@@ -491,13 +506,15 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
         training_batches = dataset->get_batches(training_sample_indices, training_batch_size, shuffle);
 
+        const Index batches_number = training_batches.size();
+
         const type current_learning_rate = initial_learning_rate / (type(1) + type(epoch) * initial_decay);
 
         training_error = type(0);
 
         std::thread training_worker([&]()
         {
-            for(Index iteration = 0; iteration < training_batches_number; iteration++)
+            for(Index iteration = 0; iteration < batches_number; iteration++)
             {
                 Batch* batch = empty_training_queue.pop();
                 batch->fill_host(training_batches[iteration],
@@ -508,7 +525,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
             }
         });
 
-        for(Index iteration = 0; iteration < training_batches_number; iteration++)
+        for(Index iteration = 0; iteration < batches_number; iteration++)
         {
             Batch* current_batch = ready_training_queue.pop();
 
@@ -535,17 +552,18 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
         training_worker.join();
 
-        training_error /= type(training_batches_number);
+        training_error /= type(batches_number);
         results.training_error_history(epoch) = training_error;
 
         if(has_validation)
         {
             validation_batches = dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle);
+            const Index val_batches_number = validation_batches.size();
             validation_error = type(0);
 
             std::thread validation_worker([&]()
             {
-                for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+                for(Index iteration = 0; iteration < val_batches_number; iteration++)
                 {
                     Batch* batch = empty_validation_queue.pop();
                     batch->fill_host(validation_batches[iteration],
@@ -556,7 +574,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
                 }
             });
 
-            for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+            for(Index iteration = 0; iteration < val_batches_number; iteration++)
             {
                 Batch* current_batch = ready_validation_queue.pop();
 
@@ -581,7 +599,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
             validation_worker.join();
 
-            validation_error /= type(validation_batches_number);
+            validation_error /= type(val_batches_number);
             results.validation_error_history(epoch) = validation_error;
 
             if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
@@ -614,6 +632,9 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     cudaStreamDestroy(memory_stream);
     cudaEventDestroy(batch_ready_event);
+
+    neural_network->copy_parameters_host();
+    neural_network->link_parameters_cpu();
 
     set_unscaling();
 

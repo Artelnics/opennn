@@ -82,6 +82,10 @@ public:
 
     void add_regularization_gradient(VectorR&) const;
 
+#ifdef CUDA
+    void add_regularization_gradient_device(BackPropagation&) const;
+#endif
+
     void back_propagate(const Batch&,
                         ForwardPropagation&,
                         BackPropagation&) const;
@@ -148,6 +152,8 @@ struct BackPropagation
     virtual ~BackPropagation() = default;
 
     void set(const Index = 0, Loss* = nullptr);
+
+    void allocate_device();
 
     NeuralNetwork* get_neural_network() const;
 

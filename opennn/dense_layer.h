@@ -257,7 +257,12 @@ public:
                 ? batch_normalization_training(output, gammas, betas, running_means, running_variances)
                 : batch_normalization_inference(output, gammas, betas, running_means, running_variances);
 */
-        activation(output, {activation_function});
+        ActivationArguments act_args;
+        act_args.activation_function = activation_function;
+#ifdef CUDA
+        act_args.activation_descriptor = activation_descriptor;
+#endif
+        activation(output, act_args);
 
         if(is_training && dropout_rate > type(0))
             dropout(output, dropout_rate);
@@ -272,7 +277,11 @@ public:
 
         TensorView& delta = back_propagation.backward_views[layer][OutputGradients][0];
 
+#ifndef CUDA
         activation_gradient(output, delta, delta, activation_function);
+#else
+        activation_gradient(output, delta, delta, activation_function, activation_descriptor);
+#endif
 
         TensorView& bias_gradient = back_propagation.gradient_views[layer][Bias];
         TensorView& weight_gradient = back_propagation.gradient_views[layer][Weight];
