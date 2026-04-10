@@ -15,9 +15,6 @@
 namespace opennn
 {
 
-constexpr float SELU_ALPHA = 1.6732632423543772848170429916717f;
-constexpr float SELU_LAMBDA = 1.0507009873554804934193349852946f;
-
 enum class ActivationFunction{
     Linear, Sigmoid, HyperbolicTangent, RectifiedLinear, ScaledExponentialLinear, Softmax, Logistic
 };
