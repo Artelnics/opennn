@@ -42,27 +42,27 @@ public:
         return {Shape{batch_size}.append(input_shape)}; // slot 1: Output
     }
 
-    VectorR get_minimums() const
+    const VectorR& get_minimums() const
     {
         return minimums;
     }
 
-    VectorR get_maximums() const
+    const VectorR& get_maximums() const
     {
         return maximums;
     }
 
-    VectorR get_means() const
+    const VectorR& get_means() const
     {
         return means;
     }
 
-    VectorR get_standard_deviations() const
+    const VectorR& get_standard_deviations() const
     {
         return standard_deviations;
     }
 
-    vector<string> get_scalers() const
+    const vector<string>& get_scalers() const
     {
         return scalers;
     }

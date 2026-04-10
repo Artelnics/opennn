@@ -12,6 +12,9 @@
 #include "embedding_layer.h"
 #include "neural_network.h"
 #include "loss.h"
+#ifdef CUDA
+#include "kernel.cuh"
+#endif
 
 namespace opennn
 {
@@ -43,6 +46,7 @@ void Embedding::set(const Index new_vocabulary_size,
     input_shape = {new_sequence_length};
     vocabulary_size = new_vocabulary_size;
     embedding_dimension = new_embedding_dimension;
+    embedding_scale = sqrt(static_cast<type>(new_embedding_dimension));
     label = new_label;
 
     positional_encoding.resize(new_sequence_length, new_embedding_dimension);
@@ -100,14 +104,13 @@ void Embedding::set_parameters_glorot()
 
 void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-#ifndef OPENNN_CUDA_OPERATORS
+#ifndef CUDA
 
     const Index batch_size = forward_propagation.batch_size;
     const Index total_tokens = batch_size * get_sequence_length();
 
     const TensorView& output_view = forward_propagation.views[layer][Outputs][0];
     MatrixMap outputs(output_view.data, total_tokens, embedding_dimension);
-    outputs.setZero();
 
     const MatrixMap weights(parameters[Weights].data, vocabulary_size, embedding_dimension);
 
@@ -130,7 +133,7 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
     }
 
     if(scale_embedding)
-        outputs *= sqrt(static_cast<type>(embedding_dimension));
+        outputs *= embedding_scale;
 
     if(add_positional_encoding)
     {
@@ -145,27 +148,29 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
     //    dropout(outputs, dropout_rate);
 
 #else
-    const Index batch_size = forward_propagation->batch_size;
-    const Index sequence_length = this->sequence_length;
+    const Index batch_size = forward_propagation.batch_size;
     const Index embedding_dimension = get_embedding_dimension();
     const Index vocabulary_size = get_vocabulary_size();
+    const Index seq_len = get_sequence_length();
+    const Index total_elements = batch_size * seq_len * embedding_dimension;
 
-    const Index total_elements = batch_size * sequence_length * embedding_dimension;
+    const float* inputs_data = forward_propagation.views[layer][Inputs][0].data;
+    const float* weights_data = parameters[Weights].data;
 
-    TensorView& outputs = forward_propagation->outputs;
+    const float* positional_encoding_data = nullptr;
 
-    const float* inputs_data = forward_propagation->inputs[0].data;
-    const float* weights_data = weights_device.data;
-
-    if (add_positional_encoding && !pos_encoding_synced)
+    if(add_positional_encoding)
     {
-        copy_positional_encoding_device();
-        pos_encoding_synced = true;
+        const Index pe_size = seq_len * embedding_dimension;
+        positional_encoding_device.resize_device(pe_size);
+        CHECK_CUDA(cudaMemcpy(positional_encoding_device.device(),
+                              positional_encoding.data(),
+                              pe_size * sizeof(float),
+                              cudaMemcpyHostToDevice));
+        positional_encoding_data = positional_encoding_device.device();
     }
 
-    const float* positional_encoding_data = add_positional_encoding ? positional_encoding_device.data : nullptr;
-
-    float* outputs_ptr = outputs.data;
+    float* outputs_ptr = forward_propagation.views[layer][Outputs][0].data;
 
     embedding_forward_cuda(
         total_elements,
@@ -173,12 +178,12 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
         weights_data,
         positional_encoding_data,
         outputs_ptr,
-        sequence_length,
+        seq_len,
         embedding_dimension,
         vocabulary_size,
         scale_embedding,
         add_positional_encoding
-        );
+    );
 #endif
 }
 
@@ -186,7 +191,7 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
                                size_t layer) const
 {
-#ifndef OPENNN_CUDA_OPERATORS
+#ifndef CUDA
 
     const TensorView& input_indices = forward_propagation.views[layer][Inputs][0];
     TensorView& output_gradient = back_propagation.backward_views[layer][0][0];
@@ -196,31 +201,29 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
                        embedding_dimension, scale_embedding);
 
 #else
-    const Index batch_size = forward_propagation->batch_size;
-    const Index sequence_length = this->sequence_length;
-    const Index embedding_dimension = get_embedding_dimension();
-    const Index vocabulary_size = get_vocabulary_size();
-    const Index total_elements = batch_size * sequence_length * embedding_dimension;
+    const Index batch_size = forward_propagation.batch_size;
+    const Index seq_len = get_sequence_length();
+    const Index emb_dim = get_embedding_dimension();
+    const Index vocab_size = get_vocabulary_size();
+    const Index total_elements = batch_size * seq_len * emb_dim;
 
-    EmbeddingBackPropagationCuda* embedding_back_propagation = static_cast<EmbeddingBackPropagationCuda*>(back_propagation.get());
+    float* weight_gradients_data = back_propagation.gradient_views[layer][Weights].data;
 
-    float* weight_gradients_data = embedding_back_propagation->weight_gradients.data;
+    CHECK_CUDA(cudaMemset(weight_gradients_data, 0, vocab_size * emb_dim * sizeof(float)));
 
-    CHECK_CUDA(cudaMemset(weight_gradients_data, 0, vocabulary_size * embedding_dimension * sizeof(float)));
-
-    const float* inputs_data = forward_propagation->inputs[0].data;
-    const float* output_gradients_data = back_propagation->output_gradients[0].data;
+    const float* inputs_data = forward_propagation.views[layer][Inputs][0].data;
+    const float* output_gradients_data = back_propagation.backward_views[layer][0][0].data;
 
     embedding_backward_cuda(
         total_elements,
         inputs_data,
         output_gradients_data,
         weight_gradients_data,
-        sequence_length,
-        embedding_dimension,
-        vocabulary_size,
+        seq_len,
+        emb_dim,
+        vocab_size,
         scale_embedding
-        );
+    );
 #endif
 }
 

@@ -13,6 +13,7 @@
 #include "dense_layer.h"
 #include "scaling_layer.h"
 #include "flatten_layer.h"
+#include "convolutional_layer.h"
 #include "image_utilities.h"
 #include "addition_layer.h"
 #include "embedding_layer.h"
@@ -91,6 +92,7 @@ bool NeuralNetwork::has(const string& name) const
 static vector<string> get_feature_names_from(const vector<Variable>& vars)
 {
     vector<string> feature_names;
+    feature_names.reserve(vars.size());
 
     for (const auto& var : vars)
     {
@@ -486,13 +488,14 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       const VectorR& new_parameters,
                                       ForwardPropagation& forward_propagation)
 {
-    const VectorR original_parameters = get_parameters();
+    VectorR& params = get_parameters();
+    VectorR saved_parameters(std::move(params));
 
-    set_parameters(new_parameters);
+    params = new_parameters;
 
     forward_propagate(input_view, forward_propagation, true);
 
-    set_parameters(original_parameters);
+    params = std::move(saved_parameters);
 }
 
 string NeuralNetwork::get_expression() const
@@ -1164,6 +1167,16 @@ void ForwardPropagation::allocate_device()
                     views[i][0][k] = views[j][output_slot][0];
                 }
             }
+        }
+    }
+
+    // Initialize CUDA workspaces for convolutional layers
+    for(auto& layer : neural_network->get_layers())
+    {
+        if(layer->get_name() == "Convolutional")
+        {
+            Convolutional* conv = static_cast<Convolutional*>(layer.get());
+            conv->init_cuda_workspace(batch_size);
         }
     }
 #endif

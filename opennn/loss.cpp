@@ -47,11 +47,7 @@ void Loss::back_propagate(const Batch& batch,
 
     add_regularization(back_propagation);
 
-#ifndef CUDA
-    add_regularization_gradient(back_propagation.gradient.vector);
-#else
-    add_regularization_gradient_device(back_propagation);
-#endif
+    add_regularization_gradient(back_propagation);
 }
 
 void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
@@ -202,41 +198,25 @@ void Loss::set_error(const string& new_name)
     throw runtime_error("Unknown loss method: " + new_name);
 }
 
-void Loss::add_regularization_gradient(VectorR& gradient_vec) const
-{
-    if(regularization_method == "None" || regularization_weight == 0.0f) return;
-
-#ifndef CUDA
-    const VectorR& params_vec = neural_network->get_parameters();
-
-    // Wrap vectors in views for hardware-agnostic utilities
-    const TensorView parameters(const_cast<type*>(params_vec.data()), { static_cast<Index>(params_vec.size()) });
-    TensorView gradient(reinterpret_cast<type*>(gradient_vec.data()), { static_cast<Index>(gradient_vec.size()) });
-
-    if (regularization_method == "L1")
-        l1_regularization_gradient(parameters, regularization_weight, gradient);
-    else if (regularization_method == "L2")
-        l2_regularization_gradient(parameters, regularization_weight, gradient);
-#endif
-}
-
-#ifdef CUDA
-
-void Loss::add_regularization_gradient_device(BackPropagation& back_propagation) const
+void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 {
     if(regularization_method == "None" || regularization_weight == 0.0f) return;
 
     const Index n = neural_network->get_parameters_size();
+
+#ifndef CUDA
+    const TensorView parameters(const_cast<type*>(neural_network->get_parameters().data()), { n });
+    TensorView gradient(back_propagation.gradient.data(), { n });
+#else
     const TensorView parameters(neural_network->get_parameters_device(), { n });
     TensorView gradient(back_propagation.gradient.device(), { n });
+#endif
 
     if (regularization_method == "L1")
         l1_regularization_gradient(parameters, regularization_weight, gradient);
     else if (regularization_method == "L2")
         l2_regularization_gradient(parameters, regularization_weight, gradient);
 }
-
-#endif
 
 void Loss::regularization_from_XML(const XMLDocument& document)
 {
@@ -521,21 +501,6 @@ void BackPropagation::allocate_device()
 
     CHECK_CUDA(cudaMalloc(&errors_device, batch_size * outputs_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&error_device, 2 * sizeof(float)));
-
-    cudnnCreateReduceTensorDescriptor(&reduce_tensor_descriptor);
-    cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor,
-                                    CUDNN_REDUCE_TENSOR_ADD,
-                                    CUDNN_DATA_FLOAT,
-                                    CUDNN_NOT_PROPAGATE_NAN,
-                                    CUDNN_REDUCE_TENSOR_NO_INDICES,
-                                    CUDNN_32BIT_INDICES);
-
-    cudnnCreateTensorDescriptor(&output_reduce_tensor_descriptor);
-    cudnnSetTensor4dDescriptor(output_reduce_tensor_descriptor,
-                               CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
-                               1, 1, 1, 1);
-
-    reduction_workspace_size = 0;
 #endif
 }
 
@@ -553,9 +518,6 @@ void BackPropagation::free_cuda()
 {
     if(errors_device) { cudaFree(errors_device); errors_device = nullptr; }
     if(error_device) { cudaFree(error_device); error_device = nullptr; }
-    if(reduction_workspace) { cudaFree(reduction_workspace); reduction_workspace = nullptr; }
-    if(reduce_tensor_descriptor) { cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor); reduce_tensor_descriptor = nullptr; }
-    if(output_reduce_tensor_descriptor) { cudnnDestroyTensorDescriptor(output_reduce_tensor_descriptor); output_reduce_tensor_descriptor = nullptr; }
 }
 
 #endif

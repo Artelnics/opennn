@@ -67,7 +67,11 @@ int main()
         training_strategy.get_loss()->set_regularization("L1");
         training_strategy.get_loss()->set_regularization_weight(regularization_weight);
 
+#ifdef CUDA
         TrainingResults training_results = training_strategy.train_cuda();
+#else
+        TrainingResults training_results = training_strategy.train();
+#endif
 
         // Testing analysis
         // @todo: TestingAnalysis uses CPU forward_propagate which conflicts with CUDA operator paths

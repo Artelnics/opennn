@@ -164,7 +164,6 @@ TrainingResults StochasticGradientDescent::train()
                                                : 0;
 
     vector<vector<Index>> training_batches(training_batches_number);
-    vector<vector<Index>> validation_batches(validation_batches_number);
 
     vector<Index> const training_batch_indices(training_batch_size);
     vector<Index> const selection_batch_indices(training_batch_size);
@@ -205,6 +204,8 @@ TrainingResults StochasticGradientDescent::train()
     type elapsed_time = type(0);
 
     const bool shuffle = !neural_network->has("Recurrent");
+
+    const vector<vector<Index>> validation_batches = dataset->get_batches(validation_sample_indices, validation_batch_size, false);
 
     // Main loop
 
@@ -267,8 +268,6 @@ TrainingResults StochasticGradientDescent::train()
 
         if(has_validation)
         {
-            validation_batches = dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle);
-
             validation_error = type(0);
 
             for(Index iteration = 0; iteration < validation_batches_number; iteration++)
@@ -431,7 +430,6 @@ TrainingResults StochasticGradientDescent::train_cuda()
         ? validation_samples_number / validation_batch_size : 0;
 
     vector<vector<Index>> training_batches(training_batches_number);
-    vector<vector<Index>> validation_batches(validation_batches_number);
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -495,6 +493,8 @@ TrainingResults StochasticGradientDescent::train_cuda()
     constexpr bool is_training = true;
     const bool shuffle = !neural_network->has("Recurrent");
 
+    const vector<vector<Index>> validation_batches = dataset->get_batches(validation_sample_indices, validation_batch_size, false);
+
     time_t beginning_time;
     time(&beginning_time);
     type elapsed_time = type(0);
@@ -557,7 +557,6 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
         if(has_validation)
         {
-            validation_batches = dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle);
             const Index val_batches_number = validation_batches.size();
             validation_error = type(0);
 

@@ -384,6 +384,7 @@ void Dataset::set_default_variable_names()
 vector<string> Dataset::get_feature_names() const
 {
     vector<string> feature_names;
+    feature_names.reserve(variables.size());
 
     for (const auto& variable : variables)
     {
@@ -396,9 +397,12 @@ vector<string> Dataset::get_feature_names() const
 
 vector<string> Dataset::get_feature_names(const string& variable_role) const
 {
-    vector<string> feature_names;
+    const auto vars = get_variables(variable_role);
 
-    for (const auto& variable : get_variables(variable_role))
+    vector<string> feature_names;
+    feature_names.reserve(vars.size());
+
+    for (const auto& variable : vars)
     {
         const vector<string> names = variable.get_names();
 

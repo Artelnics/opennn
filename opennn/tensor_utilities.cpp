@@ -90,7 +90,12 @@ vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
 
 vector<Index> get_elements_greater_than(const vector<vector<Index>>& vectors, Index bound)
 {
+    size_t total = 0;
+    for(const auto& v : vectors)
+        total += v.size();
+
     vector<Index> indices;
+    indices.reserve(total);
 
     for(const auto& v : vectors)
     {
@@ -208,6 +213,41 @@ Shape string_to_shape(const string& x, const string& separator)
     }
 
     return result;
+}
+
+string vector_to_string(const VectorI& x, const string& separator)
+{
+    ostringstream buffer;
+
+    for(Index i = 0; i < x.size(); i++)
+        buffer << x(i) << separator;
+
+    return buffer.str();
+}
+
+string vector_to_string(const VectorR& x, const string& separator)
+{
+    ostringstream buffer;
+
+    for(Index i = 0; i < x.size(); i++)
+        buffer << x(i) << separator;
+
+    return buffer.str();
+}
+
+void string_to_vector(const string& input, VectorR& x)
+{
+    istringstream stream(input);
+    type value;
+    vector<type> buffer;
+
+    while (stream >> value)
+        buffer.push_back(value);
+
+    x.resize(static_cast<Index>(buffer.size()));
+
+    for (Index i = 0; i < x.size(); ++i)
+        x(i) = buffer[i];
 }
 
 bool contains(const vector<string>& data, const string& value)
@@ -471,40 +511,39 @@ VectorR filter_missing_values(const VectorR &input)
 }
 
 #ifdef CUDA
-cublasHandle_t Device::get_cublas_handle() { return cublas_handle; }
-cudnnHandle_t Device::get_cudnn_handle() { return cudnn_handle; }
-cudnnOpTensorDescriptor_t Device::get_operator_sum_descriptor() { return operator_sum_descriptor; }
-cudnnOpTensorDescriptor_t Device::get_operator_multiplication_descriptor() { return operator_multiplication_descriptor; }
 cudnnReduceTensorDescriptor_t Device::get_reduce_add_descriptor()
 {
-    if(!reduce_add_descriptor)
+    auto& d = instance();
+    if(!d.reduce_add_descriptor)
     {
-        cudnnCreateReduceTensorDescriptor(&reduce_add_descriptor);
-        cudnnSetReduceTensorDescriptor(reduce_add_descriptor,
+        cudnnCreateReduceTensorDescriptor(&d.reduce_add_descriptor);
+        cudnnSetReduceTensorDescriptor(d.reduce_add_descriptor,
                                        CUDNN_REDUCE_TENSOR_ADD,
                                        CUDNN_DATA_FLOAT,
                                        CUDNN_NOT_PROPAGATE_NAN,
                                        CUDNN_REDUCE_TENSOR_NO_INDICES,
                                        CUDNN_32BIT_INDICES);
     }
-    return reduce_add_descriptor;
+    return d.reduce_add_descriptor;
 }
 
 void* Device::get_reduction_workspace()
 {
-    if(!reduction_workspace)
+    auto& d = instance();
+    if(!d.reduction_workspace)
     {
-        reduction_workspace_size = 1024 * 1024; // 1MB workspace
-        CHECK_CUDA(cudaMalloc(&reduction_workspace, reduction_workspace_size));
+        d.reduction_workspace_size = 1024 * 1024;
+        CHECK_CUDA(cudaMalloc(&d.reduction_workspace, d.reduction_workspace_size));
     }
-    return reduction_workspace;
+    return d.reduction_workspace;
 }
 
 size_t Device::get_reduction_workspace_size()
 {
-    if(!reduction_workspace)
-        get_reduction_workspace(); // Initialize
-    return reduction_workspace_size;
+    auto& d = instance();
+    if(!d.reduction_workspace)
+        get_reduction_workspace();
+    return d.reduction_workspace_size;
 }
 #endif
 
