@@ -139,8 +139,6 @@ public:
     void set_input_names(const vector<string>&);
     void set_output_names(const vector<string>&);
 
-
-
     void set_input_shape(const Shape&);
 
     void set_default();

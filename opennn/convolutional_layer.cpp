@@ -40,15 +40,34 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     const TensorView& input = forward_propagation.views[layer][Inputs][0];
     TensorView& padded_input = forward_propagation.views[layer][PaddedInputs][0];
 
+    ConvolutionArguments conv_args;
+#ifdef CUDA
+    conv_args.convolution_descriptor = convolution_descriptor;
+    conv_args.kernel_descriptor = kernel_descriptor;
+    conv_args.algorithm_forward = convolution_algorithm;
+    conv_args.workspace = cuda_workspace;
+    conv_args.workspace_size = cuda_workspace_size;
+
+    // In CUDA, cuDNN handles padding via convolution_descriptor — use input directly
+    convolution(input, parameters[Weights], parameters[Biases],
+                forward_propagation.views[layer].back()[0], conv_args);
+#else
     convolution_type == "Same"
         ? padding(input, padded_input)
         : copy(input, padded_input);
 
+    convolution(padded_input, parameters[Weights], parameters[Biases],
+                forward_propagation.views[layer].back()[0], conv_args);
+#endif
+
     TensorView& output = forward_propagation.views[layer].back()[0];
 
-    convolution(padded_input, parameters[Weights], parameters[Biases], output);
-
-    activation(output, {activation_function});
+    ActivationArguments act_args;
+    act_args.activation_function = activation_function;
+#ifdef CUDA
+    act_args.activation_descriptor = activation_descriptor;
+#endif
+    activation(output, act_args);
 }
 
 void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
@@ -58,18 +77,45 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     const TensorView& output = forward_propagation.views[layer].back()[0];
     TensorView& delta = back_propagation.backward_views[layer][OutputGradients][0];
 
+#ifndef CUDA
     activation_gradient(output, delta, delta, activation_function);
+#else
+    activation_gradient(output, delta, delta, activation_function, activation_descriptor);
+#endif
 
+    ConvolutionArguments conv_args;
+#ifdef CUDA
+    conv_args.convolution_descriptor = convolution_descriptor;
+    conv_args.kernel_descriptor = kernel_descriptor;
+    conv_args.algorithm_filter = algo_filter;
+    conv_args.algorithm_data = algo_data;
+    conv_args.workspace = cuda_workspace;
+    conv_args.workspace_size = cuda_workspace_size;
+    conv_args.backward_filter_workspace = cuda_backward_filter_workspace;
+    conv_args.backward_filter_workspace_size = cuda_backward_filter_workspace_size;
+#endif
+
+#ifndef CUDA
     convolution_backward_weights(forward_propagation.views[layer][PaddedInputs][0],
                                  delta,
                                  back_propagation.gradient_views[layer][Weights],
-                                 back_propagation.gradient_views[layer][Biases]);
+                                 back_propagation.gradient_views[layer][Biases],
+                                 conv_args);
+#else
+    // In CUDA, use original input (cuDNN handles padding)
+    convolution_backward_weights(forward_propagation.views[layer][Inputs][0],
+                                 delta,
+                                 back_propagation.gradient_views[layer][Weights],
+                                 back_propagation.gradient_views[layer][Biases],
+                                 conv_args);
+#endif
 
     if(!is_first_layer)
         convolution_backward_data(delta,
                                   parameters[Weights],
                                   back_propagation.backward_views[layer][InputGradients][0],
-                                  back_propagation.backward_views[layer][InputGradients + 1][0]);
+                                  back_propagation.backward_views[layer][InputGradients + 1][0],
+                                  conv_args);
 }
 
 Index Convolutional::get_output_height() const
@@ -426,6 +472,87 @@ vector<Shape> Convolutional::get_forward_shapes(const Index batch_size) const
 
 
 REGISTER(Layer, Convolutional, "Convolutional")
+
+#ifdef CUDA
+
+void Convolutional::init_cuda_workspace(Index batch_size)
+{
+    // Create temporary input descriptor for this batch_size
+    cudnnTensorDescriptor_t input_desc;
+    cudnnCreateTensorDescriptor(&input_desc);
+
+    const Index input_h = convolution_type == "Same" ? get_input_height() : get_input_height();
+    const Index input_w = convolution_type == "Same" ? get_input_width() : get_input_width();
+
+    cudnnSetTensor4dDescriptor(input_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
+                               static_cast<int>(batch_size),
+                               static_cast<int>(kernel_channels),
+                               static_cast<int>(input_h),
+                               static_cast<int>(input_w));
+
+    // Output descriptor
+    cudnnTensorDescriptor_t output_desc;
+    cudnnCreateTensorDescriptor(&output_desc);
+    cudnnSetTensor4dDescriptor(output_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
+                               static_cast<int>(batch_size),
+                               static_cast<int>(kernels_number),
+                               static_cast<int>(get_output_height()),
+                               static_cast<int>(get_output_width()));
+
+    // Forward algorithm
+    int returned_count;
+    cudnnConvolutionFwdAlgoPerf_t fwd_perf;
+    cudnnFindConvolutionForwardAlgorithm(Device::get_cudnn_handle(),
+        input_desc, kernel_descriptor, convolution_descriptor, output_desc,
+        1, &returned_count, &fwd_perf);
+    convolution_algorithm = fwd_perf.algo;
+
+    // Forward workspace
+    cudnnGetConvolutionForwardWorkspaceSize(Device::get_cudnn_handle(),
+        input_desc, kernel_descriptor, convolution_descriptor, output_desc,
+        convolution_algorithm, &cuda_workspace_size);
+
+    // Backward data algorithm
+    cudnnConvolutionBwdDataAlgoPerf_t data_perf;
+    cudnnFindConvolutionBackwardDataAlgorithm(Device::get_cudnn_handle(),
+        kernel_descriptor, output_desc, convolution_descriptor, input_desc,
+        1, &returned_count, &data_perf);
+    algo_data = data_perf.algo;
+
+    // Backward filter algorithm
+    cudnnConvolutionBwdFilterAlgoPerf_t filter_perf;
+    cudnnFindConvolutionBackwardFilterAlgorithm(Device::get_cudnn_handle(),
+        input_desc, output_desc, convolution_descriptor, kernel_descriptor,
+        1, &returned_count, &filter_perf);
+    algo_filter = filter_perf.algo;
+
+    // Backward data workspace size
+    size_t bwd_data_ws = 0;
+    cudnnGetConvolutionBackwardDataWorkspaceSize(Device::get_cudnn_handle(),
+        kernel_descriptor, output_desc, convolution_descriptor, input_desc,
+        algo_data, &bwd_data_ws);
+
+    // Backward filter workspace size
+    cudnnGetConvolutionBackwardFilterWorkspaceSize(Device::get_cudnn_handle(),
+        input_desc, output_desc, convolution_descriptor, kernel_descriptor,
+        algo_filter, &cuda_backward_filter_workspace_size);
+
+    // Allocate workspace: use max of forward + bwd_data for shared workspace
+    cuda_workspace_size = max(cuda_workspace_size, bwd_data_ws);
+
+    if(cuda_workspace) cudaFree(cuda_workspace);
+    if(cuda_workspace_size > 0)
+        CHECK_CUDA(cudaMalloc(&cuda_workspace, cuda_workspace_size));
+
+    if(cuda_backward_filter_workspace) cudaFree(cuda_backward_filter_workspace);
+    if(cuda_backward_filter_workspace_size > 0)
+        CHECK_CUDA(cudaMalloc(&cuda_backward_filter_workspace, cuda_backward_filter_workspace_size));
+
+    cudnnDestroyTensorDescriptor(input_desc);
+    cudnnDestroyTensorDescriptor(output_desc);
+}
+
+#endif
 
 }
 

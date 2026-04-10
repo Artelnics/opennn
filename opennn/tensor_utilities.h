@@ -361,7 +361,7 @@ struct TensorView
 
     void fill(float value)
     {
-        if (data == nullptr || descriptor_handle == nullptr) return;
+        if (data == nullptr) return;
 
         if (value == 0.0f)
             CHECK_CUDA(cudaMemset(data, 0, device_size() * sizeof(float)));
@@ -598,25 +598,8 @@ string vector_to_string(const vector<T>& x, const string& separator = " ")
     return buffer.str();
 }
 
-inline string vector_to_string(const VectorI& x, const string& separator = " ")
-{
-    ostringstream buffer;
-
-    for(Index i = 0; i < x.size(); i++)
-        buffer << x(i) << separator;
-
-    return buffer.str();
-}
-
-inline string vector_to_string(const VectorR& x, const string& separator = " ")
-{
-    ostringstream buffer;
-
-    for(Index i = 0; i < x.size(); i++)
-        buffer << x(i) << separator;
-
-    return buffer.str();
-}
+string vector_to_string(const VectorI& x, const string& separator = " ");
+string vector_to_string(const VectorR& x, const string& separator = " ");
 
 template <typename T, size_t Rank>
 string tensor_to_string(const TensorR<Rank>& x, const string& separator = " ")
@@ -640,20 +623,7 @@ void string_to_tensor(const string& input, TensorR<Rank>& x)
         x(i++) = value;
 }
 
-inline void string_to_vector(const string& input, VectorR& x)
-{
-    istringstream stream(input);
-    type value;
-    vector<type> buffer;
-
-    while (stream >> value)
-        buffer.push_back(value);
-
-    x.resize(static_cast<Index>(buffer.size()));
-
-    for (Index i = 0; i < x.size(); ++i)
-        x(i) = buffer[i];
-}
+void string_to_vector(const string& input, VectorR& x);
 
 VectorMap vector_map(const MatrixR&, Index);
 
@@ -845,13 +815,13 @@ public:
     void set_threads_number(int num_threads);
 
 #ifdef CUDA
-    cublasHandle_t get_cublas_handle();
-    cudnnHandle_t get_cudnn_handle();
-    cudnnOpTensorDescriptor_t get_operator_sum_descriptor();
-    cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor();
-    cudnnReduceTensorDescriptor_t get_reduce_add_descriptor();
-    void* get_reduction_workspace();
-    size_t get_reduction_workspace_size();
+    static cublasHandle_t get_cublas_handle()                      { return instance().cublas_handle; }
+    static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn_handle; }
+    static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
+    static cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor() { return instance().operator_multiplication_descriptor; }
+    static cudnnReduceTensorDescriptor_t get_reduce_add_descriptor();
+    static void* get_reduction_workspace();
+    static size_t get_reduction_workspace_size();
 #endif
 
 private:
@@ -883,164 +853,7 @@ void set_threads_number(int num_threads);
 
 inline const float one = 1.0f;
 inline const float zero = 0.0f;
-
-    inline cublasHandle_t get_cublas_handle()
-    {
-        return Device::instance().get_cublas_handle();
-    }
-
-    inline cudnnHandle_t get_cudnn_handle()
-    {
-        return Device::instance().get_cudnn_handle();
-    }
-
-    inline cudnnOpTensorDescriptor_t get_operator_sum_descriptor()
-    {
-        return Device::instance().get_operator_sum_descriptor();
-    }
-
-    inline cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor()
-    {
-        return Device::instance().get_operator_multiplication_descriptor();
-    }
-
-    inline cudnnReduceTensorDescriptor_t get_reduce_add_descriptor()
-    {
-        return Device::instance().get_reduce_add_descriptor();
-    }
-
-    inline void* get_reduction_workspace()
-    {
-        return Device::instance().get_reduction_workspace();
-    }
-
-    inline size_t get_reduction_workspace_size()
-    {
-        return Device::instance().get_reduction_workspace_size();
-    }
-
-struct TensorCuda
-{
-    float* data = nullptr;
-
-    shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
-
-    TensorCuda() = default;
-    explicit TensorCuda(const Shape& shape) { resize(shape); }
-
-    ~TensorCuda() 
-    {
-        cudaFree(data); 
-    }
-
-    TensorCuda(const TensorCuda&) = delete;
-    TensorCuda& operator=(const TensorCuda&) = delete;
-
-    TensorCuda(TensorCuda&& other) noexcept
-        : data(other.data), descriptor_handle(std::move(other.descriptor_handle))
-    {
-        other.data = nullptr;
-    }
-
-    TensorCuda& operator = (TensorCuda&& other) noexcept
-    {
-        if (this != &other)
-        {
-            free();
-            data = other.data;
-            descriptor_handle = std::move(other.descriptor_handle);
-            other.data = nullptr;
-        }
-
-        return *this;
-    }
-
-    cudnnTensorDescriptor_t get_descriptor() const
-    {
-        return descriptor_handle ? descriptor_handle.get() : nullptr;
-    }
-
-    void resize(const Shape& shape)
-    {
-        set_descriptor(shape);
-        const size_t bytes = size() * sizeof(float);
-        cudaFree(data);
-        CHECK_CUDA(cudaMalloc(&data, bytes));
-        CHECK_CUDA(cudaMemset(data, 0, bytes));
-    }
-
-    void fill(float value) 
-    {
-        if (value == 0.0f) 
-            CHECK_CUDA(cudaMemset(data, 0, size() * sizeof(float)));
-        else 
-            CHECK_CUDNN(cudnnSetTensor(get_cudnn_handle(), get_descriptor(), data, &value));
-    }
-
-    void set_descriptor(const Shape& shape)
-    {
-        int n = 1, c = 1, h = 1, w = 1;
-        if (shape.rank == 4) { // NHWC
-            n = static_cast<int>(shape[0]);
-            h = static_cast<int>(shape[1]);
-            w = static_cast<int>(shape[2]);
-            c = static_cast<int>(shape[3]);
-        } else if (shape.rank == 3) { // NWC
-            n = static_cast<int>(shape[0]);
-            w = static_cast<int>(shape[1]);
-            c = static_cast<int>(shape[2]);
-        } else if (shape.rank == 2) { // NC
-            n = static_cast<int>(shape[0]);
-            c = static_cast<int>(shape[1]);
-        } else if (shape.rank == 1) { // C
-            c = static_cast<int>(shape[0]);
-        }
-
-        if (n <= 0 || c <= 0 || h <= 0 || w <= 0)
-            return;
-
-        if (descriptor_handle == nullptr)
-        {
-            cudnnTensorDescriptor_t raw_desc;
-            if (cudnnCreateTensorDescriptor(&raw_desc) != CUDNN_STATUS_SUCCESS)
-                throw runtime_error("TensorCuda: Failed to create descriptor.");
-
-            descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
-                if (p) cudnnDestroyTensorDescriptor(p);
-            });
-        }
-
-        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, n, c, h, w));
-    }
-
-    Index size() const
-    {
-        if (descriptor_handle == nullptr) return 0;
-        constexpr int REQUESTED_DIMS = CUDNN_DIM_MAX;
-        cudnnDataType_t dataType;
-        int nbDims = 0, dimA[REQUESTED_DIMS], strideA[REQUESTED_DIMS];
-
-        CHECK_CUDNN(cudnnGetTensorNdDescriptor(descriptor_handle.get(), REQUESTED_DIMS, &dataType, &nbDims, dimA, strideA));
-
-        Index total_elements = 1;
-        for (int i = 0; i < nbDims; ++i)
-            total_elements *= static_cast<Index>(dimA[i]);
-
-        return total_elements;
-    }
-
-    void free()
-    {
-        cudaFree(data); 
-        data = nullptr; 
-        descriptor_handle.reset();
-    }
-
-    TensorView view() const
-    {
-        return TensorView(data, descriptor_handle);
-    }
-};
+inline const float minus_one = -1.0f;
 
 VectorR vector_from_device(const type*, size_t);
 MatrixR matrix_from_device(const type*, size_t, size_t);

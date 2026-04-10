@@ -27,20 +27,17 @@ inline void mean_squared_error(const TensorView& input,
     error = (input.as_vector() - target.as_vector()).squaredNorm() / static_cast<type>(size);
 #else
     const int n = static_cast<int>(input.size());
-    const float alpha_neg = -1.0f;
-    const float alpha_pos = 1.0f;
-
-    CHECK_CUDNN(cudnnOpTensor(get_cudnn_handle(),
-                              get_operator_sum_descriptor(),
-                              &alpha_pos,
+    CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(),
+                              Device::get_operator_sum_descriptor(),
+                              &one,
                               input.get_descriptor(), input.data,
-                              &alpha_neg,
+                              &minus_one,
                               target.get_descriptor(), target.data,
                               &zero, input.get_descriptor(), workspace_device));
 
     float sse = 0.0f;
 
-    CHECK_CUBLAS(cublasSdot(get_cublas_handle(), n, workspace_device, 1, workspace_device, 1, &sse));
+    CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(), n, workspace_device, 1, workspace_device, 1, &sse));
 
     error = sse / n;
 #endif
@@ -55,16 +52,14 @@ inline void mean_squared_error_gradient(const TensorView& input,
     input_gradient.as_vector().array() = (input.as_vector().array() - target.as_vector().array()) * (2.0f / static_cast<type>(size));
 #else
     const int n = static_cast<int>(input.size());
-    const float alpha_neg = -1.0f;
-    const float alpha_pos = 1.0f;
     const float scale = 2.0f / n;
 
-    CHECK_CUDNN(cudnnOpTensor(get_cudnn_handle(), get_operator_sum_descriptor(),
-                              &alpha_pos, input.get_descriptor(), input.data,
-                              &alpha_neg, target.get_descriptor(), target.data,
+    CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(), Device::get_operator_sum_descriptor(),
+                              &one, input.get_descriptor(), input.data,
+                              &minus_one, target.get_descriptor(), target.data,
                               &zero, input_gradient.get_descriptor(), input_gradient.data));
 
-    CHECK_CUBLAS(cublasSscal(get_cublas_handle(), n, &scale, input_gradient.data, 1));
+    CHECK_CUBLAS(cublasSscal(Device::get_cublas_handle(), n, &scale, input_gradient.data, 1));
 #endif
 }
 
@@ -74,16 +69,14 @@ inline void normalized_squared_error(const TensorView& input, const TensorView& 
     error = (input.as_vector() - target.as_vector()).squaredNorm() / (coefficient + EPSILON);
 #else
     const int n = static_cast<int>(input.size());
-    const float alpha_neg = -1.0f;
-    const float alpha_pos = 1.0f;
 
-    CHECK_CUDNN(cudnnOpTensor(get_cudnn_handle(), get_operator_sum_descriptor(),
-                              &alpha_pos, input.get_descriptor(), input.data,
-                              &alpha_neg, target.get_descriptor(), target.data,
+    CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(), Device::get_operator_sum_descriptor(),
+                              &one, input.get_descriptor(), input.data,
+                              &minus_one, target.get_descriptor(), target.data,
                               &zero, input.get_descriptor(), workspace_device));
 
     float sse = 0.0f;
-    CHECK_CUBLAS(cublasSdot(get_cublas_handle(), n, workspace_device, 1, workspace_device, 1, &sse));
+    CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(), n, workspace_device, 1, workspace_device, 1, &sse));
 
     error = sse / (coefficient + EPSILON);
 #endif
@@ -108,7 +101,7 @@ inline void weighted_squared_error(const TensorView& input,
     calculate_weighted_squared_error_cuda(input.size(), workspace_device, target.data, input.data, pos_w, neg_w);
 
     float result = 0.0f;
-    CHECK_CUBLAS(cublasSasum(get_cublas_handle(), static_cast<int>(input.size()), workspace_device, 1, &result));
+    CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), static_cast<int>(input.size()), workspace_device, 1, &result));
     error = result;
 #endif
 }
@@ -148,7 +141,7 @@ inline void binary_cross_entropy(const TensorView& input, const TensorView& targ
 #else
     calculate_binary_cross_entropy_cuda(input.size(), workspace_device, target.data, input.data, EPSILON);
     float sum_ce = 0.0f;
-    CHECK_CUBLAS(cublasSasum(get_cublas_handle(), static_cast<int>(input.size()), workspace_device, 1, &sum_ce));
+    CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), static_cast<int>(input.size()), workspace_device, 1, &sum_ce));
     error = sum_ce / input.shape[0];
 #endif
 }
@@ -164,8 +157,12 @@ inline void categorical_cross_entropy(const TensorView& input,
 
     error = -(t * y.log()).sum() / static_cast<type>(input.shape[0]);
 #else
-    // @todo CUDA categorical cross entropy — needs custom kernel
-    (void)input; (void)target; (void)error; (void)workspace_device;
+    calculate_multiple_cross_entropy_cuda(input.size(), workspace_device, target.data, input.data, EPSILON);
+
+    float sum_ce = 0.0f;
+    CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), static_cast<int>(input.size()), workspace_device, 1, &sum_ce));
+
+    error = sum_ce / input.shape[0];
 #endif
 }
 
@@ -230,18 +227,15 @@ inline void normalized_squared_error_gradient(const TensorView& input, const Ten
     input_gradients.array() = (inputs.array() - targets.array()) * (2.0f / (coefficient + EPSILON));
 #else
     const int n = static_cast<int>(input.size());
-    const float alpha_pos = 1.0f;
-    const float alpha_neg = -1.0f;
     const float scale = 2.0f / (static_cast<float>(coefficient) + EPSILON);
 
-    // 1. gradient = input - target
-    CHECK_CUDNN(cudnnOpTensor(get_cudnn_handle(), get_operator_sum_descriptor(),
-                              &alpha_pos, input.get_descriptor(), input.data,
-                              &alpha_neg, target.get_descriptor(), target.data,
+    CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(), Device::get_operator_sum_descriptor(),
+                              &one, input.get_descriptor(), input.data,
+                              &minus_one, target.get_descriptor(), target.data,
                               &zero, input_gradient.get_descriptor(), input_gradient.data));
 
     // 2. Scale: gradient *= (2 / coefficient)
-    CHECK_CUBLAS(cublasSscal(get_cublas_handle(), n, &scale, input_gradient.data, 1));
+    CHECK_CUBLAS(cublasSscal(Device::get_cublas_handle(), n, &scale, input_gradient.data, 1));
 #endif
 }
 
@@ -272,7 +266,7 @@ inline void l1_regularization(const TensorView& parameters, type lambda, type& p
     penalty = lambda * parameters.as_vector().lpNorm<1>();
 #else
     float sum_abs = 0.0f;
-    CHECK_CUBLAS(cublasSasum(get_cublas_handle(), static_cast<int>(parameters.size()), parameters.data, 1, &sum_abs));
+    CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), static_cast<int>(parameters.size()), parameters.data, 1, &sum_abs));
     penalty = lambda * sum_abs;
 #endif
 }
@@ -295,7 +289,7 @@ inline void l2_regularization(const TensorView& parameters, type lambda, type& p
 #else
     float dot_product = 0.0f;
     const int n = static_cast<int>(parameters.size());
-    CHECK_CUBLAS(cublasSdot(get_cublas_handle(), n, parameters.data, 1, parameters.data, 1, &dot_product));
+    CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(), n, parameters.data, 1, parameters.data, 1, &dot_product));
     penalty = 0.5f * lambda * dot_product;
 #endif
 }
@@ -307,7 +301,7 @@ inline void l2_regularization_gradient(const TensorView& parameters, type lambda
 #else
     const int n = static_cast<int>(parameters.size());
     // gradient = lambda * parameters + gradient
-    CHECK_CUBLAS(cublasSaxpy(get_cublas_handle(), n, &lambda, parameters.data, 1, gradient.data, 1));
+    CHECK_CUBLAS(cublasSaxpy(Device::get_cublas_handle(), n, &lambda, parameters.data, 1, gradient.data, 1));
 #endif
 }
 
