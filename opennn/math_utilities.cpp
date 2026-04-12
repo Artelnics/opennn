@@ -253,17 +253,17 @@ void projection(const TensorView& input,
 
 
 void projection_gradient(const TensorView& d_head,
-                                const TensorView& input,
-                                const TensorView& weights,
-                                TensorView& d_bias,
-                                TensorView& d_weights,
-                                TensorView& d_input,
-                                Index batch_size,
-                                Index heads_number,
-                                Index sequence_length,
-                                Index embedding_dimension,
-                                Index head_dimension,
-                                bool accumulate)
+                         const TensorView& input,
+                         const TensorView& weights,
+                         TensorView& d_bias,
+                         TensorView& d_weights,
+                         TensorView& d_input,
+                         Index batch_size,
+                         Index heads_number,
+                         Index sequence_length,
+                         Index embedding_dimension,
+                         Index head_dimension,
+                         bool accumulate)
 {
 #ifdef CUDA
     const Index dh_size = d_head.size();

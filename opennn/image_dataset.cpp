@@ -279,6 +279,8 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     Index progress_counter = 0;
 
+    string omp_error;
+
     #pragma omp parallel for
     for(Index i = 0; i < samples_number; i++)
     {
@@ -289,7 +291,11 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         const Index current_channels = image.dimension(2);
 
         if (current_channels != channels)
-            throw runtime_error("Different number of channels in image: " + image_path[i] + "\n");
+        {
+            #pragma omp critical
+            { omp_error = "Different number of channels in image: " + image_path[i] + "\n"; }
+            continue;
+        }
 
         if (current_height != height || current_width != width)
             image = resize_image(image, height, width);
@@ -314,6 +320,9 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         if (omp_get_thread_num() == 0)
             display_progress_bar(progress_counter, samples_number);
     }
+
+    if(!omp_error.empty())
+        throw runtime_error(omp_error);
 
     if (display)
     {

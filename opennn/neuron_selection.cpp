@@ -45,11 +45,6 @@ void NeuronSelection::set_default()
     maximum_time = type(3600);
 }
 
-string NeuronSelection::write_stopping_condition(const TrainingResults& results) const
-{
-    return results.write_stopping_condition();
-}
-
 void NeuronSelection::check() const
 {
     // Optimization algorithm

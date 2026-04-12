@@ -272,6 +272,8 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
 
     const Index used_samples_number = used_sample_indices.size();
 
+    string omp_error;
+
     #pragma omp parallel for
     for(Index feature_index = 0; feature_index < get_features_number(); feature_index++)
     {
@@ -293,8 +295,8 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
             const Index start_missing = i;
             Index end_missing = i;
 
-            while(end_missing < used_samples_number && isnan(data(used_sample_indices[end_missing], feature_index)))            
-                end_missing++;            
+            while(end_missing < used_samples_number && isnan(data(used_sample_indices[end_missing], feature_index)))
+                end_missing++;
 
             const Index n_missing = end_missing - start_missing;
 
@@ -319,12 +321,18 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
                     data(sample_k, feature_index) = value_interpolated;
                 }
                 else
-                    throw runtime_error("The last " + to_string(sample_k-i+1) + " samples are all missing, delete them.\n");
+                {
+                    #pragma omp critical
+                    { omp_error = "The last " + to_string(sample_k-i+1) + " samples are all missing, delete them.\n"; }
+                }
             }
 
             i = end_missing;
         }
     }
+
+    if(!omp_error.empty())
+        throw runtime_error(omp_error);
 }
 
 void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,

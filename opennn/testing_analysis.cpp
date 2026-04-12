@@ -33,13 +33,6 @@ void TestingAnalysis::check() const
         throw runtime_error("Dataset pointer is nullptr.\n");
 }
 
-Tensor<Correlation, 1> TestingAnalysis::linear_correlation() const
-{
-    const auto [targets, outputs] = get_targets_and_outputs("Testing");
-
-    return linear_correlation(targets, outputs);
-}
-
 Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const MatrixR& target, const MatrixR& output) const
 {
     const Index outputs_number = dataset->get_features_number("Target");
@@ -54,7 +47,8 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const MatrixR& target
 
 void TestingAnalysis::print_linear_correlations() const
 {
-    const Tensor<Correlation, 1> linear_correlations = linear_correlation();
+    const auto [targets, outputs] = get_targets_and_outputs("Testing");
+    const Tensor<Correlation, 1> linear_correlations = linear_correlation(targets, outputs);
 
     const vector<string> targets_name = dataset->get_feature_names("Target");
 

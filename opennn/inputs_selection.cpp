@@ -19,11 +19,6 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
     set(new_training_strategy);
 }
 
-string InputsSelection::write_stopping_condition(const TrainingResults& results) const
-{
-    return results.write_stopping_condition();
-}
-
 void InputsSelection::check() const
 {
     if(!training_strategy)

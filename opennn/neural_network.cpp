@@ -398,13 +398,11 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
 {
     if(layers.empty() || input_views.empty()) return {};
 
-    // Use the first dimension of the first input as batch size
     const Index batch_size = input_views[0].shape[0];
     ForwardPropagation fp(batch_size, this);
 
     forward_propagate(input_views, fp, false);
 
-    // Fetch final outputs from the last layer's output slot
     const Index last_layer = static_cast<Index>(layers.size()) - 1;
     const TensorView out_view = (last_layer >= 0
                            && static_cast<size_t>(last_layer) < fp.views.size()
@@ -413,7 +411,6 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
                           ? fp.views[last_layer].back()[0]
                           : fp.get_last_trainable_layer_outputs();
 
-    // Convert to MatrixR (samples x features)
     return MatrixMap(out_view.data, batch_size, out_view.size() / batch_size);
 }
 
@@ -488,13 +485,14 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation)
 {
     VectorR& params = get_parameters();
-    VectorR saved_parameters(std::move(params));
+    VectorR saved_parameters;
+    std::swap(params, saved_parameters);
 
     params = new_parameters;
 
     forward_propagate(input_view, forward_propagation, true);
 
-    params = std::move(saved_parameters);
+    std::swap(params, saved_parameters);
 }
 
 string NeuralNetwork::get_expression() const
@@ -1033,217 +1031,6 @@ vector<string> NeuralNetwork::get_names_string() const
     return names;
 }
 
-ForwardPropagation::ForwardPropagation(const Index new_batch_size, NeuralNetwork* new_neural_network)
-{
-    set(new_batch_size, new_neural_network);
-}
-
-void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neural_network)
-{
-    batch_size = new_batch_size;
-    neural_network = new_neural_network;
-
-    if(!neural_network) throw runtime_error("There is no neural network.");
-
-    const vector<unique_ptr<Layer>>& nn_layers = neural_network->get_layers();
-    const size_t layers_number = nn_layers.size();
-
-    const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
-
-    Index total_size = 0;
-
-    for(const auto& layer_shapes : forward_shapes)
-        for(const Shape& s : layer_shapes)
-            total_size += get_aligned_size(s.size());
-
-    if(total_size > 0)
-    {
-        data.resize(total_size);
-        data.setZero();
-    }
-
-    views.resize(layers_number);
-    type* pointer = (total_size > 0) ? data.data() : nullptr;
-
-    for(size_t i = 0; i < layers_number; ++i)
-    {
-        const vector<Shape>& shapes = forward_shapes[i];
-        const size_t slots = shapes.size();
-
-        // Slot 0 reserved for inputs, Slots 1..N for activations/outputs
-        views[i].resize(slots + 1);
-
-        for(size_t j = 0; j < slots; ++j)
-        {
-            const Shape& s = shapes[j];
-            views[i][j + 1].resize(1);
-
-            if(s.size() > 0 && pointer)
-            {
-                views[i][j + 1][0] = TensorView(pointer, s);
-                // Advance pointer using the alignment utility
-                pointer += get_aligned_size(s.size());
-            }
-        }
-    }
-
-    // 5. Wire inputs (Slot 0) from upstream layer outputs
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
-
-    for(size_t i = 0; i < layers_number; ++i)
-    {
-        const vector<Index>& input_indices = layer_input_indices[i];
-        views[i][0].resize(input_indices.size());
-
-        for(size_t k = 0; k < input_indices.size(); ++k)
-        {
-            const Index j = input_indices[k];
-
-            if(j >= 0)
-            {
-                // The layer's final output is the last slot in its forward_shapes vector
-                const size_t output_slot = forward_shapes[j].size();
-
-                if(output_slot > 0 && j < static_cast<Index>(views.size())
-                    && !views[j][output_slot].empty())
-                {
-                    views[i][0][k] = views[j][output_slot][0];
-                }
-            }
-            // Note: Indices j < 0 (external inputs) are wired in forward_propagate() per batch.
-        }
-    }
-
-}
-
-void ForwardPropagation::allocate_device()
-{
-#ifdef CUDA
-    if(!neural_network || data.size() == 0) return;
-
-    data.resize_device(data.size());
-    data.setZero_device();
-
-    const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
-    const size_t layers_number = neural_network->get_layers().size();
-
-    type* dev_pointer = data.device();
-
-    for(size_t i = 0; i < layers_number; ++i)
-    {
-        const vector<Shape>& shapes = forward_shapes[i];
-
-        for(size_t j = 0; j < shapes.size(); ++j)
-        {
-            const Shape& s = shapes[j];
-
-            if(s.size() > 0)
-            {
-                views[i][j + 1][0].data = dev_pointer;
-                views[i][j + 1][0].set_descriptor(s);
-                dev_pointer += get_aligned_size(s.size());
-            }
-        }
-    }
-
-    // Re-wire layer input links to device
-    for(size_t i = 0; i < layers_number; ++i)
-    {
-        const vector<Index>& input_idx = layer_input_indices[i];
-
-        for(size_t k = 0; k < input_idx.size(); ++k)
-        {
-            const Index j = input_idx[k];
-
-            if(j >= 0)
-            {
-                const size_t output_slot = forward_shapes[j].size();
-
-                if(output_slot > 0 && j < static_cast<Index>(views.size())
-                    && !views[j][output_slot].empty())
-                {
-                    views[i][0][k] = views[j][output_slot][0];
-                }
-            }
-        }
-    }
-
-    // Initialize CUDA workspaces for convolutional layers
-    for(auto& layer : neural_network->get_layers())
-    {
-        if(layer->get_name() == "Convolutional")
-        {
-            Convolutional* conv = static_cast<Convolutional*>(layer.get());
-            conv->init_cuda_workspace(batch_size);
-        }
-    }
-#endif
-}
-
-TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
-{
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
-    if(last_trainable_layer_index < 0
-       || static_cast<size_t>(last_trainable_layer_index) >= views.size()
-       || views[last_trainable_layer_index].size() <= 1
-       || views[last_trainable_layer_index].back().empty())
-        return {};
-
-    return views[last_trainable_layer_index].back()[0];
-}
-
-vector<vector<TensorView>> ForwardPropagation::get_layer_input_views(const vector<TensorView>&,
-                                                                     bool) const
-{
-    const Index layers_number = neural_network->get_layers_number();
-
-    if (layers_number == 0) return {};
-
-    vector<vector<TensorView>> layer_input_views(layers_number);
-
-    for (Index i = 0; i < layers_number; ++i)
-    {
-        if(static_cast<size_t>(i) < views.size() && !views[i].empty())
-            layer_input_views[i] = views[i][0];
-    }
-
-    return layer_input_views;
-}
-
-TensorView ForwardPropagation::get_outputs() const
-{
-    if(!neural_network || views.empty()) return {};
-
-    const Index last_layer = static_cast<Index>(neural_network->get_layers_number()) - 1;
-
-    if(last_layer < 0
-       || static_cast<size_t>(last_layer) >= views.size()
-       || views[last_layer].size() < 2
-       || views[last_layer].back().empty())
-    {
-        return get_last_trainable_layer_outputs();
-    }
-
-    return views[last_layer].back()[0];
-}
-
-void ForwardPropagation::print() const
-{
-    cout << "Neural network forward propagation" << endl;
-
-    const Index layers_number = neural_network->get_layers_number();
-
-    cout << "Layers number: " << layers_number << endl;
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_label() << endl;
-
-        //layers[i]->print();
-    }
-}
 
 
 

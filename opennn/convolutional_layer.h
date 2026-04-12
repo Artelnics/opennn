@@ -27,6 +27,17 @@ public:
                   bool = false,                              // Batch Normalization)
                   const string& = "convolutional_layer");
 
+#ifdef CUDA
+    ~Convolutional()
+    {
+        if(activation_descriptor) cudnnDestroyActivationDescriptor(activation_descriptor);
+        if(kernel_descriptor) cudnnDestroyFilterDescriptor(kernel_descriptor);
+        if(convolution_descriptor) cudnnDestroyConvolutionDescriptor(convolution_descriptor);
+        if(cuda_workspace) cudaFree(cuda_workspace);
+        if(cuda_backward_filter_workspace) cudaFree(cuda_backward_filter_workspace);
+    }
+#endif
+
     bool get_batch_normalization() const { return batch_normalization; }
 
     ActivationFunction get_activation_function() const { return activation_function; }

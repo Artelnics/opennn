@@ -25,6 +25,13 @@ public:
             const string& = "MaxPooling",
             const string& = "pooling_layer");
 
+#ifdef CUDA
+    ~Pooling()
+    {
+        if(pooling_descriptor) cudnnDestroyPoolingDescriptor(pooling_descriptor);
+    }
+#endif
+
     void set(const Shape& = { 0, 0, 0 },
              const Shape& = { 1, 1 },
              const Shape& = { 1, 1 },

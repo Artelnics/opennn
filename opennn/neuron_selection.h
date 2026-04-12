@@ -47,8 +47,6 @@ public:
     void set_maximum_validation_failures(const Index n) { maximum_validation_failures = n; }
     void set_maximum_time(const type t) { maximum_time = t; }
 
-    string write_stopping_condition(const TrainingResults&) const;
-
 void check() const;
 
     virtual NeuronsSelectionResults perform_neurons_selection() = 0;

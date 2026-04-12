@@ -91,8 +91,9 @@ vector<Index> Dataset::get_sample_roles_vector() const
 
     vector<Index> sample_roles_vector(samples_number);
 
-#pragma omp parallel for
+    string omp_error;
 
+#pragma omp parallel for
     for(Index i = 0; i < samples_number; i++)
     {
         const string& role = sample_roles[i];
@@ -106,8 +107,14 @@ vector<Index> Dataset::get_sample_roles_vector() const
         else if(role == "None")
             sample_roles_vector[i] = 3;
         else
-            throw runtime_error("Unknown sample role: " + role);
+        {
+            #pragma omp critical
+            { omp_error = "Unknown sample role: " + role; }
+        }
     }
+
+    if(!omp_error.empty())
+        throw runtime_error(omp_error);
 
     return sample_roles_vector;
 }
@@ -1556,20 +1563,23 @@ void Dataset::apply_scaler(Index feature_index, const string& scaler, const Desc
 {
     if(scaler == "None")
         return;
-    else if(scaler == "MinimumMaximum")
-        unscale ? unscale_minimum_maximum(data, feature_index, desc)
-                : scale_minimum_maximum(data, feature_index, desc);
+
+    MatrixMap map(data.data(), data.rows(), data.cols());
+
+    if(scaler == "MinimumMaximum")
+        unscale ? unscale_minimum_maximum(map, feature_index, desc)
+                : scale_minimum_maximum(map, feature_index, desc);
     else if(scaler == "MeanStandardDeviation")
-        unscale ? unscale_mean_standard_deviation(data, feature_index, desc)
-                : scale_mean_standard_deviation(data, feature_index, desc);
+        unscale ? unscale_mean_standard_deviation(map, feature_index, desc)
+                : scale_mean_standard_deviation(map, feature_index, desc);
     else if(scaler == "StandardDeviation")
-        unscale ? unscale_standard_deviation(data, feature_index, desc)
-                : scale_standard_deviation(data, feature_index, desc);
+        unscale ? unscale_standard_deviation(map, feature_index, desc)
+                : scale_standard_deviation(map, feature_index, desc);
     else if(scaler == "Logarithm")
-        unscale ? unscale_logarithmic(data, feature_index)
-                : scale_logarithmic(data, feature_index);
+        unscale ? unscale_logarithmic(map, feature_index)
+                : scale_logarithmic(map, feature_index);
     else if(unscale && scaler == "ImageMinMax")
-        unscale_image_minimum_maximum(data, feature_index);
+        unscale_image_minimum_maximum(map, feature_index);
     else
         throw runtime_error("Unknown scaler: " + scaler + "\n");
 }

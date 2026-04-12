@@ -15,31 +15,7 @@
 namespace opennn
 {
 
-class NeuralNetwork;
-
-struct ForwardPropagation
-{
-    ForwardPropagation(const Index = 0, NeuralNetwork* = nullptr);
-
-    void set(const Index = 0, NeuralNetwork* = nullptr);
-
-    void allocate_device();
-
-    TensorView get_last_trainable_layer_outputs() const;
-
-    vector<vector<TensorView>> get_layer_input_views(const vector<TensorView>&, bool) const;
-
-    TensorView get_outputs() const;
-
-    void print() const;
-
-    Index batch_size = 0;
-
-    NeuralNetwork* neural_network = nullptr;
-
-    Memory data;
-    vector<vector<vector<TensorView>>> views;
-};
+#include "forward_propagation.h"
 
 class NeuralNetwork
 {
@@ -119,8 +95,6 @@ public:
     Layer* get_first(const string&) const;
 
     // Set
-
-    void set(const filesystem::path& f) { load(f); }
 
     void set_layers_number(const Index n) { layers.resize(n); layer_input_indices.resize(n); }
 

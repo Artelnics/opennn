@@ -14,11 +14,6 @@ namespace opennn
 {
     //enum class string{None, MinimumMaximum, MeanStandardDeviation, StandardDeviation, Logarithm, ImageMinMax};
 
-    void scale_mean_standard_deviation(MatrixR&, Index, const Descriptives&);
-    void scale_standard_deviation(MatrixR&, Index, const Descriptives&);
-    void scale_minimum_maximum(MatrixR&, Index, const Descriptives&, type = type(-1), type = type(1));
-    void scale_logarithmic(MatrixR&, Index);
-
     void scale_mean_standard_deviation(MatrixMap, Index, const Descriptives&);
     void scale_standard_deviation(MatrixMap, Index, const Descriptives&);
     void scale_minimum_maximum(MatrixMap, Index, const Descriptives&, type = type(-1), type = type(1));
@@ -29,12 +24,6 @@ namespace opennn
     void unscale_standard_deviation(MatrixMap, Index, const Descriptives&);
     void unscale_logarithmic(MatrixMap, Index);
     void unscale_image_minimum_maximum(MatrixMap, Index);
-
-    void unscale_minimum_maximum(MatrixR&, Index, const Descriptives&, type = type(-1), type = type(1));
-    void unscale_mean_standard_deviation(MatrixR&, Index, const Descriptives&);
-    void unscale_standard_deviation(MatrixR&, Index, const Descriptives&);
-    void unscale_logarithmic(MatrixR&, Index);
-    void unscale_image_minimum_maximum(MatrixR&, Index);
 }
 
 // OpenNN: Open Neural Networks Library.

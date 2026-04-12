@@ -124,7 +124,6 @@ public:
 
     // Goodness-of-fit analysis
 
-    Tensor<Correlation, 1> linear_correlation() const;
     Tensor<Correlation, 1> linear_correlation(const MatrixR&, const MatrixR&) const;
 
     void print_linear_correlations() const;

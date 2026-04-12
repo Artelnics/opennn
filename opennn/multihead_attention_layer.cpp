@@ -239,14 +239,14 @@ void MultiHeadAttention::apply_key_padding_mask(const TensorMap3& source_input,
         {
             const type* row_ptr = &source_input(b, s, 0);
             const bool is_pad = Eigen::Map<const VectorR>(row_ptr, embedding_dimension)
-                                    .cwiseAbs().maxCoeff() <= type(1e-7f);
+                                    .cwiseAbs().maxCoeff() <= padding_threshold;
 
             if(is_pad)
             {
                 const Index slice_size = heads_number * query_sequence_length;
                 MatrixMap att_map(attention_weights.data() + b * slice_size * source_sequence_length,
                                   slice_size, source_sequence_length);
-                att_map.col(s).setConstant(type(-1e9f));
+                att_map.col(s).setConstant(mask_value);
             }
         }
     }
