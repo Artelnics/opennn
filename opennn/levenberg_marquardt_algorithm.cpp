@@ -119,10 +119,10 @@ void LevenbergMarquardtAlgorithm::calculate_errors(const Batch& batch,
                                                    const ForwardPropagation& forward_propagation,
                                                    BackPropagationLM& back_propagation_lm) const
 {
-    const VectorR output = forward_propagation.get_last_trainable_layer_outputs().as_vector();
-    const VectorR target = batch.get_targets().as_vector();
+    const VectorMap output = forward_propagation.get_last_trainable_layer_outputs().as_vector();
+    const VectorMap target = batch.get_targets().as_vector();
 
-    back_propagation_lm.errors = output - target;
+    back_propagation_lm.errors.noalias() = output - target;
 }
 
 void LevenbergMarquardtAlgorithm::calculate_squared_errors(const Batch&,
@@ -492,18 +492,19 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
 
     const MatrixMap inputs = fp.views[layer_index][0][0].as_matrix();
 
-    for (Index s = 0; s < batch_size; ++s) {
-        for (Index j = 0; j < num_neurons; ++j) {
-            Index row = s * num_neurons + j;
+    // Biases: identity pattern repeated for each sample
+    for(Index j = 0; j < num_neurons; ++j)
+        for(Index s = 0; s < batch_size; ++s)
+            jacobian(s * num_neurons + j, parameter_offset + j) = type(1);
 
-            jacobian(row, parameter_offset + j) = type(1);
-
-            for (Index k = 0; k < num_inputs; ++k) {
-                Index weight_col = parameter_offset + num_neurons + (k * num_neurons) + j;
-                jacobian(row, weight_col) = inputs(s, k);
-            }
+    // Weights: column-oriented fill for better cache locality
+    for(Index k = 0; k < num_inputs; ++k)
+        for(Index j = 0; j < num_neurons; ++j)
+        {
+            const Index col = parameter_offset + num_neurons + k * num_neurons + j;
+            for(Index s = 0; s < batch_size; ++s)
+                jacobian(s * num_neurons + j, col) = inputs(s, k);
         }
-    }
 }
 
 TrainingResults LevenbergMarquardtAlgorithm::train()
@@ -682,11 +683,13 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
     bool success = false;
 
+    const VectorR neg_gradient = type(-1) * gradient;
+
     do
     {
         hessian.diagonal().array() += damping_parameter;
 
-        parameter_updates = perform_Householder_QR_decomposition(hessian, type(-1)*gradient);
+        parameter_updates = perform_Householder_QR_decomposition(hessian, neg_gradient);
 
         potential_parameters = parameters + parameter_updates;
 

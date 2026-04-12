@@ -217,7 +217,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
                 neural_network->forward_propagate(validation_batch.get_inputs(),
                                                   validation_forward_propagation,
-                                                  is_training);
+                                                  false);
 
                 // Loss
 
@@ -585,7 +585,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
                 neural_network->forward_propagate(current_batch->get_inputs_device(),
                                                   validation_forward_propagation,
-                                                  is_training);
+                                                  false);
 
                 loss->calculate_error(*current_batch,
                                       validation_forward_propagation,

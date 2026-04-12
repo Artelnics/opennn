@@ -172,6 +172,8 @@ private:
 
     ActivationFunction activation_function = ActivationFunction::Linear;
 
+    ConvolutionArguments cached_conv_args;
+
     // Batch normalization
 
     bool batch_normalization = false;

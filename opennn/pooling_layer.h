@@ -108,6 +108,8 @@ private:
 
     string pooling_method = "MaxPooling";
 
+    PoolingArguments cached_pool_args;
+
 #ifdef CUDA
 
     cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;

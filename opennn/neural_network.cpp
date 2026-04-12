@@ -417,7 +417,6 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     return MatrixMap(out_view.data, batch_size, out_view.size() / batch_size);
 }
 
-// Now the overloads become one-liners:
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs) {
     vector<TensorView> views = {TensorView(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()})};
     return calculate_outputs(views);

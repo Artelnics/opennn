@@ -205,8 +205,6 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
 
     float* weight_gradients_data = back_propagation.gradient_views[layer][Weights].data;
 
-    CHECK_CUDA(cudaMemset(weight_gradients_data, 0, vocab_size * emb_dim * sizeof(float)));
-
     const float* inputs_data = forward_propagation.views[layer][Inputs][0].data;
     const float* output_gradients_data = back_propagation.backward_views[layer][0][0].data;
 

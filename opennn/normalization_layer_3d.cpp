@@ -89,15 +89,15 @@ void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation,
     // Mean over embedding dimension (axis 2)
     means = inputs.mean(array<Index, 1>({2}));
 
-    // Centered inputs
-    auto centered_inputs = inputs - means.reshape(reshape_dims).broadcast(broadcast_dims);
+    // Centered inputs (materialize into normalized_inputs to avoid double evaluation)
+    normalized_inputs = inputs - means.reshape(reshape_dims).broadcast(broadcast_dims);
 
     // Standard deviation over embedding dimension
-    auto variance = centered_inputs.square().mean(array<Index, 1>({2}));
+    auto variance = normalized_inputs.square().mean(array<Index, 1>({2}));
     standard_deviations = (variance + EPSILON).sqrt();
 
-    // Normalize
-    normalized_inputs = centered_inputs / standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims);
+    // Normalize in-place
+    normalized_inputs = normalized_inputs / standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims);
 
     // Scale and shift: output = gamma * normalized + beta
     TensorMap1 gamma_map(gammas.data, E);

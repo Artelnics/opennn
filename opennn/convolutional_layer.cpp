@@ -41,16 +41,13 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     TensorView& padded_input = forward_propagation.views[layer][PaddedInputs][0];
     TensorView& output = forward_propagation.views[layer].back()[0];
 
-    ConvolutionArguments conv_args;
     ActivationArguments act_args;
     act_args.activation_function = activation_function;
 
 #ifdef CUDA
-    conv_args.convolution_descriptor = convolution_descriptor;
-    conv_args.kernel_descriptor = kernel_descriptor;
-    conv_args.algorithm_forward = convolution_algorithm;
-    conv_args.workspace = cuda_workspace;
-    conv_args.workspace_size = cuda_workspace_size;
+    cached_conv_args.algorithm_forward = convolution_algorithm;
+    cached_conv_args.workspace = cuda_workspace;
+    cached_conv_args.workspace_size = cuda_workspace_size;
     act_args.activation_descriptor = activation_descriptor;
 
     const bool can_fuse = !batch_normalization
@@ -59,11 +56,11 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
     if(can_fuse)
     {
-        convolution_activation(input, parameters[Weights], parameters[Biases], output, conv_args, act_args);
+        convolution_activation(input, parameters[Weights], parameters[Biases], output, cached_conv_args, act_args);
     }
     else
     {
-        convolution(input, parameters[Weights], parameters[Biases], output, conv_args);
+        convolution(input, parameters[Weights], parameters[Biases], output, cached_conv_args);
         activation(output, act_args);
     }
 #else
@@ -72,7 +69,7 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     else
         copy(input, padded_input);
 
-    convolution(padded_input, parameters[Weights], parameters[Biases], output, conv_args);
+    convolution(padded_input, parameters[Weights], parameters[Biases], output, cached_conv_args);
     activation(output, act_args);
 #endif
 }
@@ -90,16 +87,13 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     activation_gradient(output, delta, delta, activation_function, activation_descriptor);
 #endif
 
-    ConvolutionArguments conv_args;
 #ifdef CUDA
-    conv_args.convolution_descriptor = convolution_descriptor;
-    conv_args.kernel_descriptor = kernel_descriptor;
-    conv_args.algorithm_filter = algo_filter;
-    conv_args.algorithm_data = algo_data;
-    conv_args.workspace = cuda_workspace;
-    conv_args.workspace_size = cuda_workspace_size;
-    conv_args.backward_filter_workspace = cuda_backward_filter_workspace;
-    conv_args.backward_filter_workspace_size = cuda_backward_filter_workspace_size;
+    cached_conv_args.algorithm_filter = algo_filter;
+    cached_conv_args.algorithm_data = algo_data;
+    cached_conv_args.workspace = cuda_workspace;
+    cached_conv_args.workspace_size = cuda_workspace_size;
+    cached_conv_args.backward_filter_workspace = cuda_backward_filter_workspace;
+    cached_conv_args.backward_filter_workspace_size = cuda_backward_filter_workspace_size;
 #endif
 
 #ifndef CUDA
@@ -107,22 +101,22 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                  delta,
                                  back_propagation.gradient_views[layer][Weights],
                                  back_propagation.gradient_views[layer][Biases],
-                                 conv_args);
+                                 cached_conv_args);
 #else
     // In CUDA, use original input (cuDNN handles padding)
     convolution_backward_weights(forward_propagation.views[layer][Inputs][0],
                                  delta,
                                  back_propagation.gradient_views[layer][Weights],
                                  back_propagation.gradient_views[layer][Biases],
-                                 conv_args);
+                                 cached_conv_args);
 #endif
 
     if(!is_first_layer)
         convolution_backward_data(delta,
                                   parameters[Weights],
                                   back_propagation.backward_views[layer][InputGradients][0],
-                                  back_propagation.backward_views[layer][InputGradients + 1][0],
-                                  conv_args);
+                                  back_propagation.backward_views[layer][InputGradients][0],
+                                  cached_conv_args);
 }
 
 Index Convolutional::get_output_height() const
@@ -267,6 +261,9 @@ void Convolutional::set(const Shape& new_input_shape,
         1, 1,
         CUDNN_CROSS_CORRELATION,
         CUDNN_DATA_FLOAT);
+
+    cached_conv_args.convolution_descriptor = convolution_descriptor;
+    cached_conv_args.kernel_descriptor = kernel_descriptor;
 
 #endif
 }

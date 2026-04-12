@@ -40,7 +40,6 @@ struct ActivationArguments
 
 struct ConvolutionArguments
 {
-    string convolution_type;
     Shape stride_shape;
     Shape padding_shape;
 #ifdef CUDA
@@ -58,7 +57,6 @@ struct ConvolutionArguments
 
 struct PoolingArguments
 {
-    string pooling_method;
     Shape pool_dimensions;
     Shape stride_shape;
     Shape padding_shape;

@@ -184,10 +184,9 @@ void bounding(const TensorView& input,
 
     MatrixMap output_matrix = output.as_matrix();
 
-    for(Index j = 0; j < features; ++j)
-        output_matrix.col(j) = input_matrix.col(j)
-                                           .cwiseMax(lower_bounds_vector(j))
-                                           .cwiseMin(upper_bounds_vector(j));
+    output_matrix.array() = input_matrix.array()
+        .rowwise().max(lower_bounds_vector.array().transpose())
+        .rowwise().min(upper_bounds_vector.array().transpose());
 
 #else
     // @todo CUDA bounding
@@ -836,20 +835,36 @@ void multiply(const TensorView& input_A, bool transpose_A,
     const size_t rank = input_A.get_rank();
 
 #ifndef CUDA
+    const bool simple = (alpha == 1.0f && beta == 0.0f);
+
     if (rank <= 2)
     {
         const auto matrix_A = input_A.as_matrix();
         const auto matrix_B = input_B.as_matrix();
         auto matrix_C = output_C.as_matrix();
 
-        if (!transpose_A && !transpose_B)
-            matrix_C.noalias() = alpha * (matrix_A * matrix_B) + beta * matrix_C;
-        else if (transpose_A && !transpose_B)
-            matrix_C.noalias() = alpha * (matrix_A.transpose() * matrix_B) + beta * matrix_C;
-        else if (!transpose_A && transpose_B)
-            matrix_C.noalias() = alpha * (matrix_A * matrix_B.transpose()) + beta * matrix_C;
+        if(simple)
+        {
+            if (!transpose_A && !transpose_B)
+                matrix_C.noalias() = matrix_A * matrix_B;
+            else if (transpose_A && !transpose_B)
+                matrix_C.noalias() = matrix_A.transpose() * matrix_B;
+            else if (!transpose_A && transpose_B)
+                matrix_C.noalias() = matrix_A * matrix_B.transpose();
+            else
+                matrix_C.noalias() = matrix_A.transpose() * matrix_B.transpose();
+        }
         else
-            matrix_C.noalias() = alpha * (matrix_A.transpose() * matrix_B.transpose()) + beta * matrix_C;
+        {
+            if (!transpose_A && !transpose_B)
+                matrix_C.noalias() = alpha * (matrix_A * matrix_B) + beta * matrix_C;
+            else if (transpose_A && !transpose_B)
+                matrix_C.noalias() = alpha * (matrix_A.transpose() * matrix_B) + beta * matrix_C;
+            else if (!transpose_A && transpose_B)
+                matrix_C.noalias() = alpha * (matrix_A * matrix_B.transpose()) + beta * matrix_C;
+            else
+                matrix_C.noalias() = alpha * (matrix_A.transpose() * matrix_B.transpose()) + beta * matrix_C;
+        }
     }
     else
     {
@@ -865,14 +880,28 @@ void multiply(const TensorView& input_A, bool transpose_A,
             const MatrixMap mat_B(input_B.data + i * size_B, input_B.shape[rank - 2], input_B.shape[rank - 1]);
             MatrixMap mat_C(output_C.data + i * size_C, output_C.shape[rank - 2], output_C.shape[rank - 1]);
 
-            if (!transpose_A && !transpose_B)
-                mat_C.noalias() = alpha * (mat_A * mat_B) + beta * mat_C;
-            else if (transpose_A && !transpose_B)
-                mat_C.noalias() = alpha * (mat_A.transpose() * mat_B) + beta * mat_C;
-            else if (!transpose_A && transpose_B)
-                mat_C.noalias() = alpha * (mat_A * mat_B.transpose()) + beta * mat_C;
+            if(simple)
+            {
+                if (!transpose_A && !transpose_B)
+                    mat_C.noalias() = mat_A * mat_B;
+                else if (transpose_A && !transpose_B)
+                    mat_C.noalias() = mat_A.transpose() * mat_B;
+                else if (!transpose_A && transpose_B)
+                    mat_C.noalias() = mat_A * mat_B.transpose();
+                else
+                    mat_C.noalias() = mat_A.transpose() * mat_B.transpose();
+            }
             else
-                mat_C.noalias() = alpha * (mat_A.transpose() * mat_B.transpose()) + beta * mat_C;
+            {
+                if (!transpose_A && !transpose_B)
+                    mat_C.noalias() = alpha * (mat_A * mat_B) + beta * mat_C;
+                else if (transpose_A && !transpose_B)
+                    mat_C.noalias() = alpha * (mat_A.transpose() * mat_B) + beta * mat_C;
+                else if (!transpose_A && transpose_B)
+                    mat_C.noalias() = alpha * (mat_A * mat_B.transpose()) + beta * mat_C;
+                else
+                    mat_C.noalias() = alpha * (mat_A.transpose() * mat_B.transpose()) + beta * mat_C;
+            }
         }
     }
 #else
@@ -1018,10 +1047,11 @@ void convolution_backward_weights(const TensorView& input,
     VectorMap bias_gradients = bias_grad.as_vector();
     bias_gradients.setZero();
 
+    memset(weight_grad.data, 0, kernels_number * single_kernel_size * sizeof(type));
+
     for(Index ki = 0; ki < kernels_number; ki++)
     {
         type* __restrict wg = weight_grad.data + ki * single_kernel_size;
-        memset(wg, 0, single_kernel_size * sizeof(type));
         TensorMap3 wg_map(wg, kernel_height, kernel_width, kernel_channels);
 
         for(Index b = 0; b < batch_size; b++)
