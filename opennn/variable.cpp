@@ -71,21 +71,21 @@ Index Variable::get_categories_number() const
     return static_cast<Index>(categories.size());
 }
 
-void Variable::from_XML(const XMLDocument& document)
+void Variable::from_XML(const XmlDocument& document)
 {
-    name = read_xml_string(document.FirstChildElement(), "Name");
-    set_scaler(read_xml_string(document.FirstChildElement(), "Scaler"));
-    set_role(read_xml_string(document.FirstChildElement(), "Role"));
-    set_type(read_xml_string(document.FirstChildElement(), "Type"));
+    name = read_xml_string(document.first_child_element(), "Name");
+    set_scaler(read_xml_string(document.first_child_element(), "Scaler"));
+    set_role(read_xml_string(document.first_child_element(), "Role"));
+    set_type(read_xml_string(document.first_child_element(), "Type"));
 
     if (type == VariableType::Categorical)
     {
-        const string categories_text = read_xml_string(document.FirstChildElement(), "Categories");
+        const string categories_text = read_xml_string(document.first_child_element(), "Categories");
         categories = get_tokens(categories_text, ";");
     }
 }
 
-void Variable::to_XML(XMLPrinter& printer) const
+void Variable::to_XML(XmlPrinter& printer) const
 {
     write_xml_properties(printer, {
         {"Name", name},

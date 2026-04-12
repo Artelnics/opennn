@@ -47,9 +47,9 @@ public:
 
    // Serialization
 
-   void from_XML(const XMLDocument&) override;
+   void from_XML(const XmlDocument&) override;
 
-   void to_XML(XMLPrinter&) const override;
+   void to_XML(XmlPrinter&) const override;
 
 #ifdef CUDA
 

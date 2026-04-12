@@ -46,8 +46,8 @@ public:
     Tensor3 calculate_cross_correlations(const Index = 10) const;
     Tensor3 calculate_cross_correlations_spearman(const Index = 10) const;
 
-    void to_XML(XMLPrinter&) const override;
-    void from_XML(const XMLDocument&) override;
+    void to_XML(XmlPrinter&) const override;
+    void from_XML(const XmlDocument&) override;
 
     void read_csv() override;
 

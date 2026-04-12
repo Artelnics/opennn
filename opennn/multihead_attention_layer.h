@@ -92,8 +92,8 @@ public:
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
-    void to_XML(XMLPrinter&) const override;
-    void from_XML(const XMLDocument&) override;
+    void to_XML(XmlPrinter&) const override;
+    void from_XML(const XmlDocument&) override;
 
 private:
 

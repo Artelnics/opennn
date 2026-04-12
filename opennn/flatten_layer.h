@@ -81,9 +81,9 @@ public:
     
     // Serialization
 
-    void from_XML(const XMLDocument& document) override
+    void from_XML(const XmlDocument& document) override
     {
-        const XMLElement* element = get_xml_root(document, "Flatten");
+        const XmlElement* element = get_xml_root(document, "Flatten");
 
         const Index input_height = read_xml_index(element, "InputHeight");
         const Index input_width = read_xml_index(element, "InputWidth");
@@ -98,16 +98,16 @@ public:
 
     }
 
-    void to_XML(XMLPrinter& printer) const override
+    void to_XML(XmlPrinter& printer) const override
     {
-        printer.OpenElement("Flatten");
+        printer.open_element("Flatten");
 
         add_xml_element(printer, "InputHeight", to_string(get_input_height()));
         add_xml_element(printer, "InputWidth", to_string(get_input_width()));
         if constexpr (Rank == 3)
             add_xml_element(printer, "InputChannels", to_string(get_input_channels()));
 
-        printer.CloseElement();
+        printer.close_element();
     }
 
 private:

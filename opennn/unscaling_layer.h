@@ -50,8 +50,8 @@ public:
 
     void print() const override;
 
-    void from_XML(const XMLDocument&) override;
-    void to_XML(XMLPrinter&) const override;
+    void from_XML(const XmlDocument&) override;
+    void to_XML(XmlPrinter&) const override;
 
     string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 

@@ -303,9 +303,9 @@ string Recurrent::get_expression(const vector<string>& feature_names,
     return buffer.str();
 }
 
-void Recurrent::from_XML(const XMLDocument& document)
+void Recurrent::from_XML(const XmlDocument& document)
 {
-    const XMLElement* recurrent_layer_element = get_xml_root(document, "Recurrent");
+    const XmlElement* recurrent_layer_element = get_xml_root(document, "Recurrent");
 
     set_label(read_xml_string(recurrent_layer_element,"Label"));
     set_input_shape(string_to_shape(read_xml_string(recurrent_layer_element, "InputDimensions")));
@@ -313,9 +313,9 @@ void Recurrent::from_XML(const XMLDocument& document)
     set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
 }
 
-void Recurrent::to_XML(XMLPrinter& printer) const
+void Recurrent::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("Recurrent");
+    printer.open_element("Recurrent");
 
     write_xml_properties(printer, {
         {"Label", get_label()},
@@ -324,7 +324,7 @@ void Recurrent::to_XML(XMLPrinter& printer) const
         {"Activation", activation_function}
     });
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
 REGISTER(Layer, Recurrent, "Recurrent")

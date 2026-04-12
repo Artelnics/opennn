@@ -72,9 +72,9 @@ public:
         copy(output_gradient, input_gradient_1);
     }
 
-    void from_XML(const XMLDocument& document) override
+    void from_XML(const XmlDocument& document) override
     {
-        const XMLElement* element = document.FirstChildElement("Addition");
+        const XmlElement* element = document.first_child_element("Addition");
         if(!element) throw runtime_error(name + " element is nullptr.");
 
         const string new_label = read_xml_string(element, "Label");
@@ -83,14 +83,14 @@ public:
         set(new_input_shape, new_label);
     }
 
-    void to_XML(XMLPrinter& printer) const override
+    void to_XML(XmlPrinter& printer) const override
     {
-        printer.OpenElement("Addition");
+        printer.open_element("Addition");
 
         add_xml_element(printer, "Label", label);
         add_xml_element(printer, "InputDimensions", shape_to_string(input_shape));
 
-        printer.CloseElement();
+        printer.close_element();
     }
 
 private:

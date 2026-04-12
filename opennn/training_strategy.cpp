@@ -160,12 +160,12 @@ void TrainingStrategy::fix_forecasting()
 */
 }
 
-void TrainingStrategy::to_XML(XMLPrinter& printer) const
+void TrainingStrategy::to_XML(XmlPrinter& printer) const
 {
 
-    printer.OpenElement("TrainingStrategy");
+    printer.open_element("TrainingStrategy");
 
-    printer.OpenElement("Loss");
+    printer.open_element("Loss");
 
     add_xml_element(printer, "Error", loss->get_name());
 
@@ -173,73 +173,73 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
     loss->write_regularization_XML(printer);
 
-    printer.CloseElement();
+    printer.close_element();
 
-    printer.OpenElement("Optimizer");
+    printer.open_element("Optimizer");
 
     add_xml_element(printer, "OptimizationMethod", optimizer->get_name());
 
     optimizer->to_XML(printer);
 
-    printer.CloseElement();
+    printer.close_element();
 
     add_xml_element(printer, "Display", to_string(optimizer->get_display()));
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void TrainingStrategy::from_XML(const XMLDocument& document)
+void TrainingStrategy::from_XML(const XmlDocument& document)
 {
-    const XMLElement* root_element = get_xml_root(document, "TrainingStrategy");
+    const XmlElement* root_element = get_xml_root(document, "TrainingStrategy");
 
     // Loss
 
-    const XMLElement* loss_element = require_xml_element(root_element, "Loss");
+    const XmlElement* loss_element = require_xml_element(root_element, "Loss");
 
     // Loss method
 
     const string loss_method = read_xml_string(loss_element, "Error");
 
-    const XMLElement* loss_method_element = loss_element->FirstChildElement(loss_method.c_str());
+    const XmlElement* loss_method_element = loss_element->first_child_element(loss_method.c_str());
 
     if(loss_method_element)
     {
         set_loss(loss_method);
 
-        XMLDocument loss_method_document;
-        loss_method_document.InsertFirstChild(loss_method_element->DeepClone(&loss_method_document));
+        XmlDocument loss_method_document;
+        loss_method_document.insert_first_child(loss_method_element->deep_clone(&loss_method_document));
         loss->from_XML(loss_method_document);
     }
     else throw runtime_error(loss_method + " element is nullptr.\n");
 
     // Optimization algorithm
 
-    const XMLElement* optimization_algorithm_element = require_xml_element(root_element, "Optimizer");
+    const XmlElement* optimization_algorithm_element = require_xml_element(root_element, "Optimizer");
 
     // Optimization method
 
     const string optimization_method = read_xml_string(optimization_algorithm_element, "OptimizationMethod");
 
-    const XMLElement* optimization_method_element = optimization_algorithm_element->FirstChildElement(optimization_method.c_str());
+    const XmlElement* optimization_method_element = optimization_algorithm_element->first_child_element(optimization_method.c_str());
 
     if(optimization_method_element)
     {
         set_optimization_algorithm(optimization_method);
 
-        XMLDocument optimization_method_document;
-        optimization_method_document.InsertFirstChild(optimization_method_element->DeepClone(&optimization_method_document));
+        XmlDocument optimization_method_document;
+        optimization_method_document.insert_first_child(optimization_method_element->deep_clone(&optimization_method_document));
         optimizer->from_XML(optimization_method_document);
     }
     else throw runtime_error(optimization_method + " element is nullptr.\n");
 
     // Regularization
 
-    const XMLElement* regularization_element = loss_element->FirstChildElement("Regularization");
+    const XmlElement* regularization_element = loss_element->first_child_element("Regularization");
 
     if (regularization_element)
     {
-        XMLDocument regularization_document;
-        regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
+        XmlDocument regularization_document;
+        regularization_document.insert_first_child(regularization_element->deep_clone(&regularization_document));
         loss->regularization_from_XML(regularization_document);
     }
 
@@ -255,9 +255,9 @@ void TrainingStrategy::save(const filesystem::path& file_name) const
     if(!file.is_open())
         return;
 
-    XMLPrinter printer;
+    XmlPrinter printer;
     to_XML(printer);
-    file << printer.CStr();
+    file << printer.c_str();
 }
 
 void TrainingStrategy::load(const filesystem::path& file_name)

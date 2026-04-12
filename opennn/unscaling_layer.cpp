@@ -199,9 +199,9 @@ void Unscaling::print() const
     cout << "Unscaling layer" << endl;
 }
 
-void Unscaling::to_XML(XMLPrinter& printer) const
+void Unscaling::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("Unscaling");
+    printer.open_element("Unscaling");
 
     const Shape output_shape = get_output_shape();
 
@@ -209,44 +209,44 @@ void Unscaling::to_XML(XMLPrinter& printer) const
 
     for(Index i = 0; i < output_shape[0]; i++)
     {
-        printer.OpenElement("UnscalingNeuron");
-        printer.PushAttribute("Index", int(i + 1));
+        printer.open_element("UnscalingNeuron");
+        printer.push_attribute("Index", int(i + 1));
         //add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
         add_xml_element(printer, "Scaler", scalers[i]);
 
-        printer.CloseElement();
+        printer.close_element();
     }
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void Unscaling::from_XML(const XMLDocument& document)
+void Unscaling::from_XML(const XmlDocument& document)
 {
-    const XMLElement* root_element = get_xml_root(document, "Unscaling");
+    const XmlElement* root_element = get_xml_root(document, "Unscaling");
 
     const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
 
     set(neurons_number);
 
-    const XMLElement* start_element = root_element->FirstChildElement("NeuronsNumber");
+    const XmlElement* start_element = root_element->first_child_element("NeuronsNumber");
 
     for(Index i = 0; i < neurons_number; i++) {
-        const XMLElement* unscaling_neuron_element = start_element->NextSiblingElement("UnscalingNeuron");
+        const XmlElement* unscaling_neuron_element = start_element->next_sibling_element("UnscalingNeuron");
         if(!unscaling_neuron_element) {
             throw runtime_error("Unscaling neuron " + to_string(i + 1) + " is nullptr.\n");
         }
 
         unsigned index = 0;
-        unscaling_neuron_element->QueryUnsignedAttribute("Index", &index);
+        unscaling_neuron_element->query_unsigned_attribute("Index", &index);
         if (index != i + 1) {
             throw runtime_error("Index " + to_string(index) + " is not correct.\n");
         }
 
-        const XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");
+        const XmlElement* descriptives_element = unscaling_neuron_element->first_child_element("Descriptives");
 /*
-        if (descriptives_element->GetText())
+        if (descriptives_element->get_text())
         {
-            const vector<string> splitted_descriptives = get_tokens(descriptives_element->GetText(), " ");
+            const vector<string> splitted_descriptives = get_tokens(descriptives_element->get_text(), " ");
             descriptives[i].set(
                 type(stof(splitted_descriptives[0])),
                 type(stof(splitted_descriptives[1])),

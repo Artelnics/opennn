@@ -78,11 +78,11 @@ void ImageDataset::set_data_random()
     }
 }
 
-void ImageDataset::to_XML(XMLPrinter& printer) const
+void ImageDataset::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("ImageDataset");
+    printer.open_element("ImageDataset");
 
-    printer.OpenElement("DataSource");
+    printer.open_element("DataSource");
 
     write_xml_properties(printer, {
         {"FileType", "bmp"},
@@ -103,7 +103,7 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
         {"Codification", get_codification_string()}
     });
 
-    printer.CloseElement();
+    printer.close_element();
 
     variables_to_XML(printer);
 
@@ -111,7 +111,7 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "Display", to_string(display));
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
 void ImageDataset::augment_inputs(type* input_data, Index batch_size) const
@@ -151,13 +151,13 @@ void ImageDataset::augment_inputs(type* input_data, Index batch_size) const
     }
 }
 
-void ImageDataset::from_XML(const XMLDocument& data_set_document)
+void ImageDataset::from_XML(const XmlDocument& data_set_document)
 {
-    const XMLElement* image_dataset_element = get_xml_root(data_set_document, "ImageDataset");
+    const XmlElement* image_dataset_element = get_xml_root(data_set_document, "ImageDataset");
 
     // Data Source
 
-    const XMLElement* data_source_element = require_xml_element(image_dataset_element, "DataSource");
+    const XmlElement* data_source_element = require_xml_element(image_dataset_element, "DataSource");
 
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));

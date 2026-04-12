@@ -330,8 +330,8 @@ public:
 
     // Serialization
 
-    virtual void from_XML(const XMLDocument&);
-    virtual void to_XML(XMLPrinter&) const;
+    virtual void from_XML(const XmlDocument&);
+    virtual void to_XML(XmlPrinter&) const;
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
@@ -470,15 +470,15 @@ protected:
     const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
     const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
 
-    void variables_to_XML(XMLPrinter&) const;
-    void samples_to_XML(XMLPrinter&) const;
-    void missing_values_to_XML(XMLPrinter&) const;
-    void preview_data_to_XML(XMLPrinter&) const;
+    void variables_to_XML(XmlPrinter&) const;
+    void samples_to_XML(XmlPrinter&) const;
+    void missing_values_to_XML(XmlPrinter&) const;
+    void preview_data_to_XML(XmlPrinter&) const;
 
-    void variables_from_XML(const XMLElement*);
-    void samples_from_XML(const XMLElement*);
-    void missing_values_from_XML(const XMLElement*);
-    void preview_data_from_XML(const XMLElement*);
+    void variables_from_XML(const XmlElement*);
+    void samples_from_XML(const XmlElement*);
+    void missing_values_from_XML(const XmlElement*);
+    void preview_data_from_XML(const XmlElement*);
 };
 
 }

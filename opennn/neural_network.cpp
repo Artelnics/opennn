@@ -673,7 +673,7 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
     return outputs;
 }
 
-void NeuralNetwork::to_XML(XMLPrinter& printer) const
+void NeuralNetwork::to_XML(XmlPrinter& printer) const
 {
     const Index inputs_number = get_inputs_number();
     const Index layers_number = get_layers_number();
@@ -687,22 +687,22 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     while (output_names.size() < static_cast<size_t>(outputs_number))
         output_names.push_back("output_" + to_string(output_names.size() + 1));
 
-    printer.OpenElement("NeuralNetwork");
+    printer.open_element("NeuralNetwork");
 
     // Input
 
-    printer.OpenElement("Inputs");
+    printer.open_element("Inputs");
 
     add_xml_element(printer, "InputsNumber", to_string(inputs_number));
 
     for(Index i = 0; i < inputs_number; i++)
         add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
 
-    printer.CloseElement();
+    printer.close_element();
 
     // Layers
 
-    printer.OpenElement("Layers");
+    printer.open_element("Layers");
 
     add_xml_element(printer, "LayersNumber", to_string(layers_number));
 
@@ -711,18 +711,18 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     // Layer input indices
 
-    printer.OpenElement("LayerInputIndices");
+    printer.open_element("LayerInputIndices");
 
     for(Index i = 0; i < Index(layer_input_indices.size()); i++)
         add_xml_element_attribute(printer, "LayerInputsIndices", vector_to_string(layer_input_indices[i]), "LayerIndex", to_string(i));
 
-    printer.CloseElement();
+    printer.close_element();
 
-    printer.CloseElement();
+    printer.close_element();
 
     // Outputs
 
-    printer.OpenElement("Outputs");
+    printer.open_element("Outputs");
 
     const Index outputs_count = has("Embedding") ? outputs_number : output_names.size();
     add_xml_element(printer, "OutputsNumber", to_string(outputs_count));
@@ -730,39 +730,39 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     for(Index i = 0; i < outputs_count; i++)
         add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
 
-    printer.CloseElement();
+    printer.close_element();
 
     // Paramaters
 
-    printer.OpenElement("Parameters");
+    printer.open_element("Parameters");
 
     if (parameters.size() > 0)
-        printer.PushText(vector_to_string(parameters.vector, " ").c_str());
+        printer.push_text(vector_to_string(parameters.vector, " ").c_str());
 
-    printer.CloseElement();
+    printer.close_element();
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void NeuralNetwork::from_XML(const XMLDocument& document)
+void NeuralNetwork::from_XML(const XmlDocument& document)
 {
-    const XMLElement* neural_network_element = get_xml_root(document, "NeuralNetwork");
+    const XmlElement* neural_network_element = get_xml_root(document, "NeuralNetwork");
 
     // 1. Load Input Variables
-    const XMLElement* inputs_element = neural_network_element->FirstChildElement("Inputs");
+    const XmlElement* inputs_element = neural_network_element->first_child_element("Inputs");
     if(inputs_element)
     {
         const Index inputs_number = read_xml_index(inputs_element, "InputsNumber");
         input_variables.resize(inputs_number);
 
-        for_xml_items(inputs_element, "Input", inputs_number, [this](Index i, const XMLElement* el){
-            if(el->GetText())
-                input_variables[i].name = el->GetText();
+        for_xml_items(inputs_element, "Input", inputs_number, [this](Index i, const XmlElement* el){
+            if(el->get_text())
+                input_variables[i].name = el->get_text();
         });
     }
 
     // 2. Load Layers Topology
-    const XMLElement* layers_container = neural_network_element->FirstChildElement("Layers");
+    const XmlElement* layers_container = neural_network_element->first_child_element("Layers");
     if(!layers_container)
         throw runtime_error("Layers container is nullptr.\n");
 
@@ -775,10 +775,10 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     layer_input_indices.resize(layers_number);
 
     // Iterate through children of <Layers>, skipping the <LayersNumber> tag
-    const XMLElement* layer_element = layers_container->FirstChildElement();
+    const XmlElement* layer_element = layers_container->first_child_element();
     while(layer_element)
     {
-        string tag_name = layer_element->Name();
+        string tag_name = layer_element->name();
 
         // Skip metadata tags, only process actual Layer types
         if(tag_name != "LayersNumber" && tag_name != "LayerInputIndices")
@@ -791,49 +791,49 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
                                                                 "Ensure the layer file is linked and REGISTER macro is used.");
 
             // Create a temporary sub-document for the layer to parse its own data
-            XMLDocument layer_doc;
-            layer_doc.InsertFirstChild(layer_element->DeepClone(&layer_doc));
+            XmlDocument layer_doc;
+            layer_doc.insert_first_child(layer_element->deep_clone(&layer_doc));
             layer->from_XML(layer_doc);
 
             // Add to the network
             layers.push_back(std::move(layer));
         }
-        layer_element = layer_element->NextSiblingElement();
+        layer_element = layer_element->next_sibling_element();
     }
 
     // 3. Load Connectivity (Layer Input Indices)
-    const XMLElement* connectivity_element = layers_container->FirstChildElement("LayerInputIndices");
+    const XmlElement* connectivity_element = layers_container->first_child_element("LayerInputIndices");
     if(connectivity_element)
     {
-        const XMLElement* indices_element = connectivity_element->FirstChildElement("LayerInputsIndices");
+        const XmlElement* indices_element = connectivity_element->first_child_element("LayerInputsIndices");
         while(indices_element)
         {
             int layer_idx = -1;
-            indices_element->QueryIntAttribute("LayerIndex", &layer_idx);
+            indices_element->query_int_attribute("LayerIndex", &layer_idx);
 
             if(layer_idx >= 0 && layer_idx < static_cast<int>(layers.size()))
             {
-                const char* text = indices_element->GetText();
+                const char* text = indices_element->get_text();
                 if(text)
                 {
                     Shape s = string_to_shape(text, " ");
                     layer_input_indices[layer_idx] = vector<Index>(s.shape, s.shape + s.rank);
                 }
             }
-            indices_element = indices_element->NextSiblingElement("LayerInputsIndices");
+            indices_element = indices_element->next_sibling_element("LayerInputsIndices");
         }
     }
 
     // 4. Load Output Variables
-    const XMLElement* outputs_element = neural_network_element->FirstChildElement("Outputs");
+    const XmlElement* outputs_element = neural_network_element->first_child_element("Outputs");
     if(outputs_element)
     {
         const Index outputs_number = read_xml_index(outputs_element, "OutputsNumber");
         output_variables.resize(outputs_number);
 
-        for_xml_items(outputs_element, "Output", outputs_number, [this](Index i, const XMLElement* el){
-            if(el->GetText())
-                output_variables[i].name = el->GetText();
+        for_xml_items(outputs_element, "Output", outputs_number, [this](Index i, const XmlElement* el){
+            if(el->get_text())
+                output_variables[i].name = el->get_text();
         });
     }
 
@@ -845,11 +845,11 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     compile();
 
     // 7. Load Flattened Parameters
-    const XMLElement* parameters_element = neural_network_element->FirstChildElement("Parameters");
-    if(parameters_element && parameters_element->GetText())
+    const XmlElement* parameters_element = neural_network_element->first_child_element("Parameters");
+    if(parameters_element && parameters_element->get_text())
     {
         VectorR xml_parameters;
-        string_to_vector(parameters_element->GetText(), xml_parameters);
+        string_to_vector(parameters_element->get_text(), xml_parameters);
 
         if (xml_parameters.size() > 0)
         {
@@ -875,9 +875,9 @@ void NeuralNetwork::save(const filesystem::path& file_name) const
     if(!file.is_open())
         return;
 
-    XMLPrinter printer;
+    XmlPrinter printer;
     to_XML(printer);
-    file << printer.CStr();
+    file << printer.c_str();
 }
 
 void NeuralNetwork::save_parameters(const filesystem::path& file_name) const

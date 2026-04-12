@@ -164,9 +164,9 @@ public:
 
     // Serialization
 
-    void from_XML(const XMLDocument&);
+    void from_XML(const XmlDocument&);
 
-    void to_XML(XMLPrinter&) const;
+    void to_XML(XmlPrinter&) const;
 
     void save(const filesystem::path&) const;
     void save_parameters(const filesystem::path&) const;

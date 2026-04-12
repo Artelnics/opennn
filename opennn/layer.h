@@ -81,9 +81,9 @@ public:
 
     virtual void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const {}
 
-    virtual void from_XML(const tinyxml2::XMLDocument&) {}
+    virtual void from_XML(const tinyxml2::XmlDocument&) {}
 
-    virtual void to_XML(tinyxml2::XMLPrinter&) const {}
+    virtual void to_XML(tinyxml2::XmlPrinter&) const {}
 
     virtual string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const;
 

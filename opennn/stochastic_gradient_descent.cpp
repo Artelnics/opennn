@@ -342,20 +342,20 @@ TrainingResults StochasticGradientDescent::train()
     return results;
 }
 
-void StochasticGradientDescent::to_XML(XMLPrinter& printer) const
+void StochasticGradientDescent::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("StochasticGradientDescent");
+    printer.open_element("StochasticGradientDescent");
 
     add_xml_element(printer, "BatchSize", to_string(batch_size));
     add_xml_element(printer, "ApplyMomentum", to_string(momentum > type(0)));
     write_common_xml(printer);
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void StochasticGradientDescent::from_XML(const XMLDocument& document)
+void StochasticGradientDescent::from_XML(const XmlDocument& document)
 {
-    const XMLElement* root_element = get_xml_root(document, "StochasticGradientDescent");
+    const XmlElement* root_element = get_xml_root(document, "StochasticGradientDescent");
 
     set_batch_size(read_xml_index(root_element, "BatchSize"));
 

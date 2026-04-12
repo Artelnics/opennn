@@ -746,20 +746,20 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
 }
 
-void LevenbergMarquardtAlgorithm::to_XML(XMLPrinter& printer) const
+void LevenbergMarquardtAlgorithm::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("LevenbergMarquardt");
+    printer.open_element("LevenbergMarquardt");
 
     add_xml_element(printer, "DampingParameterFactor", to_string(damping_parameter_factor));
     add_xml_element(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
     write_common_xml(printer);
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void LevenbergMarquardtAlgorithm::from_XML(const XMLDocument& document)
+void LevenbergMarquardtAlgorithm::from_XML(const XmlDocument& document)
 {
-    const XMLElement* root_element = get_xml_root(document, "LevenbergMarquardt");
+    const XmlElement* root_element = get_xml_root(document, "LevenbergMarquardt");
 
     set_damping_parameter_factor(read_xml_type(root_element, "DampingParameterFactor"));
     set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));

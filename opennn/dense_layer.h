@@ -334,9 +334,9 @@ public:
         return buffer.str();
     }
 
-    void from_XML(const XMLDocument& document) override
+    void from_XML(const XmlDocument& document) override
     {
-        const XMLElement* dense2d_layer_element = get_xml_root(document, name);
+        const XmlElement* dense2d_layer_element = get_xml_root(document, name);
 
         set_label(read_xml_string(dense2d_layer_element, "Label"));
 
@@ -356,10 +356,10 @@ public:
         set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
         bool use_batch_normalization = false;
-        const XMLElement* bn_element = dense2d_layer_element->FirstChildElement("BatchNormalization");
+        const XmlElement* bn_element = dense2d_layer_element->first_child_element("BatchNormalization");
 
-        if (bn_element && bn_element->GetText())
-            use_batch_normalization = (string(bn_element->GetText()) == "true");
+        if (bn_element && bn_element->get_text())
+            use_batch_normalization = (string(bn_element->get_text()) == "true");
         set_batch_normalization(use_batch_normalization);
 
         if (batch_normalization)
@@ -372,10 +372,10 @@ public:
         }
     }
 
-    void to_XML(XMLPrinter& printer) const override
+    void to_XML(XmlPrinter& printer) const override
     {
 
-        printer.OpenElement(name.c_str());
+        printer.open_element(name.c_str());
 
         add_xml_element(printer, "Label", label);
         if constexpr (Rank == 3)
@@ -399,7 +399,7 @@ public:
             add_xml_element(printer, "RunningStandardDeviations", vector_to_string(running_variances));
         }
 
-        printer.CloseElement();
+        printer.close_element();
     }
 
     bool use_combinations = true;

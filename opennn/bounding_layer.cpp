@@ -166,9 +166,9 @@ string Bounding::get_expression(const vector<string>& new_input_names, const vec
     return buffer.str();
 }
 
-void Bounding::to_XML(XMLPrinter& printer) const
+void Bounding::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("Bounding");
+    printer.open_element("Bounding");
 
     const Shape output_shape = get_input_shape();
 
@@ -176,35 +176,35 @@ void Bounding::to_XML(XMLPrinter& printer) const
 
     for(Index i = 0; i < output_shape[0]; i++)
     {
-        printer.OpenElement("Item");
-        printer.PushAttribute("Index", unsigned(i + 1));
+        printer.open_element("Item");
+        printer.push_attribute("Index", unsigned(i + 1));
 /*
         add_xml_element(printer, "LowerBound", to_string(lower_bounds[i]));
         add_xml_element(printer, "UpperBound", to_string(upper_bounds[i]));
 */
-        printer.CloseElement();
+        printer.close_element();
     }
 
     add_xml_element(printer, "BoundingMethod",
                      bounding_method == BoundingMethod::Bounding ? "Bounding" : "NoBounding");
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void Bounding::from_XML(const XMLDocument& document)
+void Bounding::from_XML(const XmlDocument& document)
 {
-    const XMLElement* root_element = get_xml_root(document, "Bounding");
+    const XmlElement* root_element = get_xml_root(document, "Bounding");
 
     const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
 
     set({ neurons_number });
 
-    const auto* item_element = root_element->FirstChildElement("Item");
+    const auto* item_element = root_element->first_child_element("Item");
 
     for(Index i = 0; i < neurons_number && item_element; i++)
     {
         unsigned index = 0;
-        item_element->QueryUnsignedAttribute("Index", &index);
+        item_element->query_unsigned_attribute("Index", &index);
 
         if (index != i + 1)
             throw runtime_error("Index " + to_string(index) + " is incorrect.\n");
@@ -212,7 +212,7 @@ void Bounding::from_XML(const XMLDocument& document)
         lower_bounds[index - 1] = read_xml_type(item_element, "LowerBound");
         upper_bounds[index - 1] = read_xml_type(item_element, "UpperBound");
 */
-        item_element = item_element->NextSiblingElement("Item");
+        item_element = item_element->next_sibling_element("Item");
     }
 
     set_bounding_method(read_xml_string(root_element, "BoundingMethod"));

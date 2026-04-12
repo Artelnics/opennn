@@ -372,9 +372,9 @@ Index Convolutional::get_input_channels() const
     return input_shape[2];
 }
 
-void Convolutional::to_XML(XMLPrinter& printer) const
+void Convolutional::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("Convolutional");
+    printer.open_element("Convolutional");
 
     write_xml_properties(printer, {
         {"Label", label},
@@ -398,12 +398,12 @@ void Convolutional::to_XML(XMLPrinter& printer) const
         add_xml_element(printer, "MovingStandardDeviations", tensor_to_string<type, 1>(running_variances));
     }
 */
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void Convolutional::from_XML(const XMLDocument& document)
+void Convolutional::from_XML(const XmlDocument& document)
 {
-    const XMLElement* convolutional_layer_element = get_xml_root(document, "Convolutional");
+    const XmlElement* convolutional_layer_element = get_xml_root(document, "Convolutional");
 
     set_label(read_xml_string(convolutional_layer_element, "Label"));
 
@@ -418,9 +418,9 @@ void Convolutional::from_XML(const XMLDocument& document)
     set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
 
     bool use_batch_normalization = false;
-    const XMLElement* bn_element = convolutional_layer_element->FirstChildElement("BatchNormalization");
-    if (bn_element && bn_element->GetText())
-        use_batch_normalization = (string(bn_element->GetText()) == "true");
+    const XmlElement* bn_element = convolutional_layer_element->first_child_element("BatchNormalization");
+    if (bn_element && bn_element->get_text())
+        use_batch_normalization = (string(bn_element->get_text()) == "true");
 
     set_batch_normalization(use_batch_normalization);
 /*

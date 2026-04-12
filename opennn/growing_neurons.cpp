@@ -196,9 +196,9 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     return neuron_selection_results;
 }
 
-void GrowingNeurons::to_XML(XMLPrinter& printer) const
+void GrowingNeurons::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("GrowingNeurons");
+    printer.open_element("GrowingNeurons");
 
     write_xml_properties(printer, {
         {"MinimumNeurons", to_string(minimum_neurons)},
@@ -210,12 +210,12 @@ void GrowingNeurons::to_XML(XMLPrinter& printer) const
         {"MaximumTime", to_string(maximum_time)}
     });
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void GrowingNeurons::from_XML(const XMLDocument& document)
+void GrowingNeurons::from_XML(const XmlDocument& document)
 {
-    const XMLElement* root_element = get_xml_root(document, "GrowingNeurons");
+    const XmlElement* root_element = get_xml_root(document, "GrowingNeurons");
 
     set_minimum_neurons(read_xml_index(root_element, "MinimumNeurons"));
     set_maximum_neurons(read_xml_index(root_element, "MaximumNeurons"));

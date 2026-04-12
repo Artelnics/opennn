@@ -258,9 +258,9 @@ public:
         return expression;
     }
 
-    void from_XML(const XMLDocument& document) override
+    void from_XML(const XmlDocument& document) override
     {
-        const XMLElement* scaling_layer_element = get_xml_root(document, name);
+        const XmlElement* scaling_layer_element = get_xml_root(document, name);
 
         const Index neurons_number = read_xml_index(scaling_layer_element, "NeuronsNumber");
         
@@ -269,17 +269,17 @@ public:
         else
             set({ neurons_number }); // @todo handle multi-dim scaling from XML
 
-        const XMLElement* start_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
+        const XmlElement* start_element = scaling_layer_element->first_child_element("NeuronsNumber");
 /*
         for(Index i = 0; i < neurons_number; i++)
         {
-            const XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
+            const XmlElement* scaling_neuron_element = start_element->next_sibling_element("ScalingNeuron");
             if(!scaling_neuron_element)
                 throw runtime_error("Scaling neuron " + to_string(i + 1) + " is nullptr.\n");
 
-            const XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
-            if (descriptives_element && descriptives_element->GetText()) {
-                const vector<string> tokens = get_tokens(descriptives_element->GetText(), " ");
+            const XmlElement* descriptives_element = scaling_neuron_element->first_child_element("Descriptives");
+            if (descriptives_element && descriptives_element->get_text()) {
+                const vector<string> tokens = get_tokens(descriptives_element->get_text(), " ");
                 descriptives[i].set(
                     type(stof(tokens[0])),
                     type(stof(tokens[1])),
@@ -295,9 +295,9 @@ public:
 */
     }
 
-    void to_XML(XMLPrinter& printer) const override
+    void to_XML(XmlPrinter& printer) const override
     {
-        printer.OpenElement(name.c_str());
+        printer.open_element(name.c_str());
 
         const Index outputs_number = get_outputs_number();
 
@@ -306,15 +306,15 @@ public:
         for(Index i = 0; i < outputs_number; i++)
         {
 /*
-            printer.OpenElement("ScalingNeuron");
-            printer.PushAttribute("Index", int(i + 1));
+            printer.open_element("ScalingNeuron");
+            printer.push_attribute("Index", int(i + 1));
             add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
             add_xml_element(printer, "Scaler", scalers[i]);
-            printer.CloseElement();
+            printer.close_element();
 */
         }
 
-        printer.CloseElement();
+        printer.close_element();
     }
 
     void calculate_coefficients()

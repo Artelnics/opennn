@@ -69,9 +69,9 @@ public:
 
     virtual void print() const {}
 
-    virtual void from_XML(const XMLDocument&);
+    virtual void from_XML(const XmlDocument&);
 
-    virtual void to_XML(XMLPrinter&) const;
+    virtual void to_XML(XmlPrinter&) const;
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
@@ -87,8 +87,8 @@ protected:
     bool check_stopping_condition(TrainingResults&, Index epoch, type elapsed_time,
                                    type training_error, Index validation_failures) const;
 
-    void write_common_xml(XMLPrinter&) const;
-    void read_common_xml(const XMLElement*);
+    void write_common_xml(XmlPrinter&) const;
+    void read_common_xml(const XmlElement*);
 
     Loss* loss = nullptr;
 

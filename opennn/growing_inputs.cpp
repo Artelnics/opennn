@@ -355,9 +355,9 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     return input_selection_results;
 }
 
-void GrowingInputs::to_XML(XMLPrinter& printer) const
+void GrowingInputs::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("GrowingInputs");
+    printer.open_element("GrowingInputs");
 
     write_xml_properties(printer, {
         {"TrialsNumber", to_string(trials_number)},
@@ -371,12 +371,12 @@ void GrowingInputs::to_XML(XMLPrinter& printer) const
         {"MaximumTime", to_string(maximum_time)}
     });
 
-    printer.CloseElement();  
+    printer.close_element();  
 }
 
-void GrowingInputs::from_XML(const XMLDocument& document)
+void GrowingInputs::from_XML(const XmlDocument& document)
 {
-    const XMLElement* root_element = get_xml_root(document, "GrowingInputs");
+    const XmlElement* root_element = get_xml_root(document, "GrowingInputs");
 
     set_trials_number(read_xml_index(root_element, "TrialsNumber"));
     set_validation_error_goal(read_xml_type(root_element, "SelectionErrorGoal"));

@@ -221,9 +221,9 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
 #endif
 }
 
-void Embedding::from_XML(const XMLDocument& document)
+void Embedding::from_XML(const XmlDocument& document)
 {
-    const XMLElement* embedding_layer_element = get_xml_root(document, "Embedding");
+    const XmlElement* embedding_layer_element = get_xml_root(document, "Embedding");
 
     const string new_label = read_xml_string(embedding_layer_element, "Label");
     const Index new_vocabulary_size = read_xml_index(embedding_layer_element, "VocabularySize");
@@ -236,9 +236,9 @@ void Embedding::from_XML(const XMLDocument& document)
     set_add_positional_encoding(read_xml_bool(embedding_layer_element, "AddPositionalEncoding"));
 }
 
-void Embedding::to_XML(XMLPrinter& printer) const
+void Embedding::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("Embedding");
+    printer.open_element("Embedding");
 
     write_xml_properties(printer, {
         {"Label", label},
@@ -249,7 +249,7 @@ void Embedding::to_XML(XMLPrinter& printer) const
         {"AddPositionalEncoding", to_string(add_positional_encoding)}
     });
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
 REGISTER(Layer, Embedding, "Embedding")

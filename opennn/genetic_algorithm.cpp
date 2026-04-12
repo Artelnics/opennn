@@ -597,9 +597,9 @@ void GeneticAlgorithm::configure_neural_network_inputs(NeuralNetwork* neural_net
 }
 
 
-void GeneticAlgorithm::to_XML(XMLPrinter& printer) const
+void GeneticAlgorithm::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("GeneticAlgorithm");
+    printer.open_element("GeneticAlgorithm");
 
     write_xml_properties(printer, {
         {"PopulationSize", to_string(get_individuals_number())},
@@ -611,12 +611,12 @@ void GeneticAlgorithm::to_XML(XMLPrinter& printer) const
         {"MaximumGenerationsNumber", to_string(maximum_epochs)},
         {"MaximumTime", to_string(maximum_time)}});
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void GeneticAlgorithm::from_XML(const XMLDocument& document)
+void GeneticAlgorithm::from_XML(const XmlDocument& document)
 {
-    const XMLElement* root = get_xml_root(document, "GeneticAlgorithm");
+    const XmlElement* root = get_xml_root(document, "GeneticAlgorithm");
     set_individuals_number(read_xml_index(root, "PopulationSize"));
     set_mutation_rate(read_xml_type(root, "MutationRate"));
     set_elitism_size(read_xml_index(root, "ElitismSize"));

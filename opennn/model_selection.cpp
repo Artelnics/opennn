@@ -88,48 +88,48 @@ InputsSelectionResults ModelSelection::perform_input_selection()
     return inputs_selection->perform_input_selection();
 }
 
-void ModelSelection::to_XML(XMLPrinter& printer) const
+void ModelSelection::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("ModelSelection");
+    printer.open_element("ModelSelection");
 
-    printer.OpenElement("NeuronSelection");
+    printer.open_element("NeuronSelection");
 
     add_xml_element(printer, "NeuronsSelectionMethod", neurons_selection->get_name());
 
     neurons_selection->to_XML(printer);
 
-    printer.CloseElement();
+    printer.close_element();
 
-    printer.OpenElement("InputsSelection");
+    printer.open_element("InputsSelection");
 
     add_xml_element(printer, "InputsSelectionMethod", inputs_selection->get_name());
 
     inputs_selection->to_XML(printer);
 
-    printer.CloseElement();
+    printer.close_element();
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void ModelSelection::from_XML(const XMLDocument& document)
+void ModelSelection::from_XML(const XmlDocument& document)
 {
-    const XMLElement* root_element = get_xml_root(document, "ModelSelection");
+    const XmlElement* root_element = get_xml_root(document, "ModelSelection");
 
     // Neuron selection
 
-    const XMLElement* neurons_selection_element = require_xml_element(root_element, "NeuronSelection");
+    const XmlElement* neurons_selection_element = require_xml_element(root_element, "NeuronSelection");
 
     const string selection_method = read_xml_string(neurons_selection_element, "NeuronsSelectionMethod");
     
-    const XMLElement* neurons_selection_method_element = neurons_selection_element->FirstChildElement(selection_method.c_str());
+    const XmlElement* neurons_selection_method_element = neurons_selection_element->first_child_element(selection_method.c_str());
 
     if (neurons_selection_method_element)
     {
         set_neurons_selection(selection_method);
 
-        XMLDocument selection_method_document;
-        XMLNode* neurons_selection_method_element_copy = neurons_selection_method_element->DeepClone(&selection_method_document);
-        selection_method_document.InsertEndChild(neurons_selection_method_element_copy);
+        XmlDocument selection_method_document;
+        XmlNode* neurons_selection_method_element_copy = neurons_selection_method_element->deep_clone(&selection_method_document);
+        selection_method_document.insert_end_child(neurons_selection_method_element_copy);
 
         neurons_selection->from_XML(selection_method_document);
     }
@@ -137,19 +137,19 @@ void ModelSelection::from_XML(const XMLDocument& document)
 
     // Input Validation
 
-    const XMLElement* inputs_selection_element = require_xml_element(root_element, "InputsSelection");
+    const XmlElement* inputs_selection_element = require_xml_element(root_element, "InputsSelection");
 
     const string inputs_method = read_xml_string(inputs_selection_element, "InputsSelectionMethod");
 
-    const XMLElement* inputs_selection_method_element = inputs_selection_element->FirstChildElement(inputs_method.c_str());
+    const XmlElement* inputs_selection_method_element = inputs_selection_element->first_child_element(inputs_method.c_str());
 
     if (inputs_selection_method_element)
     {
         set_inputs_selection(inputs_method);
 
-        XMLDocument inputs_method_document;
-        XMLNode* inputs_selection_method_element_copy = inputs_selection_method_element->DeepClone(&inputs_method_document);
-        inputs_method_document.InsertEndChild(inputs_selection_method_element_copy);
+        XmlDocument inputs_method_document;
+        XmlNode* inputs_selection_method_element_copy = inputs_selection_method_element->deep_clone(&inputs_method_document);
+        inputs_method_document.insert_end_child(inputs_selection_method_element_copy);
 
         inputs_selection->from_XML(inputs_method_document);
     }
@@ -163,9 +163,9 @@ void ModelSelection::save(const filesystem::path& file_name) const
     if(!file.is_open())
         return;
 
-    XMLPrinter printer;
+    XmlPrinter printer;
     to_XML(printer);
-    file << printer.CStr();
+    file << printer.c_str();
 }
 
 void ModelSelection::load(const filesystem::path& file_name)

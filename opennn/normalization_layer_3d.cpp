@@ -176,9 +176,9 @@ void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
 }
 
 
-void Normalization3d::from_XML(const XMLDocument& document)
+void Normalization3d::from_XML(const XmlDocument& document)
 {
-    const XMLElement* element = get_xml_root(document, "Normalization3d");
+    const XmlElement* element = get_xml_root(document, "Normalization3d");
 
     const string new_name = read_xml_string(element, "Label");
     const Index new_sequence_length = read_xml_index(element, "SequenceLength");
@@ -187,15 +187,15 @@ void Normalization3d::from_XML(const XMLDocument& document)
     set(new_sequence_length, new_embedding_dimension, new_name);
 }
 
-void Normalization3d::to_XML(XMLPrinter& printer) const
+void Normalization3d::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("Normalization3d");
+    printer.open_element("Normalization3d");
     write_xml_properties(printer, {
         {"Label", label},
         {"SequenceLength", to_string(get_sequence_length())},
         {"EmbeddingDimension", to_string(get_embedding_dimension())}
     });
-    printer.CloseElement();
+    printer.close_element();
 }
 
 #ifdef CUDA

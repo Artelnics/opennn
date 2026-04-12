@@ -1633,11 +1633,11 @@ void Dataset::set_data_integer(const Index vocabulary_size)
     set_random_integer(data, 0, vocabulary_size - 1);
 }
 
-void Dataset::to_XML(XMLPrinter& printer) const
+void Dataset::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("Dataset");
+    printer.open_element("Dataset");
 
-    printer.OpenElement("DataSource");
+    printer.open_element("DataSource");
     write_xml_properties(printer, {
         {"FileType", "csv"},
         {"Path", data_path.string()},
@@ -1647,7 +1647,7 @@ void Dataset::to_XML(XMLPrinter& printer) const
         {"MissingValuesLabel", missing_values_label},
         {"Codification", get_codification_string()}
     });
-    printer.CloseElement();
+    printer.close_element();
 
     variables_to_XML(printer);
     samples_to_XML(printer);
@@ -1656,28 +1656,28 @@ void Dataset::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "Display", to_string(display));
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void Dataset::variables_to_XML(XMLPrinter &printer) const
+void Dataset::variables_to_XML(XmlPrinter &printer) const
 {
-    printer.OpenElement("Variables");
+    printer.open_element("Variables");
     add_xml_element(printer, "VariablesNumber", to_string(get_variables_number()));
 
     for(Index i = 0; i < get_variables_number(); i++)
     {
-        printer.OpenElement("Variable");
-        printer.PushAttribute("Item", to_string(i + 1).c_str());
+        printer.open_element("Variable");
+        printer.push_attribute("Item", to_string(i + 1).c_str());
         variables[i].to_XML(printer);
-        printer.CloseElement();
+        printer.close_element();
     }
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void Dataset::samples_to_XML(XMLPrinter &printer) const
+void Dataset::samples_to_XML(XmlPrinter &printer) const
 {
-    printer.OpenElement("Samples");
+    printer.open_element("Samples");
 
     add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
 
@@ -1687,12 +1687,12 @@ void Dataset::samples_to_XML(XMLPrinter &printer) const
         add_xml_element(printer, "SamplesId", vector_to_string(sample_ids, separator_string));
 
     add_xml_element(printer, "SampleRoles", vector_to_string(get_sample_roles_vector()));
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void Dataset::missing_values_to_XML(XMLPrinter &printer) const
+void Dataset::missing_values_to_XML(XmlPrinter &printer) const
 {
-    printer.OpenElement("MissingValues");
+    printer.open_element("MissingValues");
     add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
     if (missing_values_number > 0)
@@ -1702,35 +1702,35 @@ void Dataset::missing_values_to_XML(XMLPrinter &printer) const
         add_xml_element(printer, "SamplesMissingValuesNumber", to_string(rows_missing_values_number));
     }
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void Dataset::preview_data_to_XML(XMLPrinter &printer) const
+void Dataset::preview_data_to_XML(XmlPrinter &printer) const
 {
-    printer.OpenElement("PreviewData");
+    printer.open_element("PreviewData");
 
     add_xml_element(printer, "PreviewSize", to_string(data_file_preview.size()));
 
     vector<string> vector_data_file_preview = convert_string_vector(data_file_preview,",");
 
     for(size_t i = 0; i < data_file_preview.size(); i++){
-        printer.OpenElement("Row");
-        printer.PushAttribute("Item", to_string(i + 1).c_str());
-        printer.PushText(vector_data_file_preview[i].data());
-        printer.CloseElement();
+        printer.open_element("Row");
+        printer.push_attribute("Item", to_string(i + 1).c_str());
+        printer.push_text(vector_data_file_preview[i].data());
+        printer.close_element();
     }
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void Dataset::variables_from_XML(const XMLElement *variables_element)
+void Dataset::variables_from_XML(const XmlElement *variables_element)
 {
     if(!variables_element)
         throw runtime_error("Variables element is nullptr.\n");
 
     set_variables_number(read_xml_index(variables_element, "VariablesNumber"));
 
-    for_xml_items(variables_element, "Variable", variables.size(), [&](Index i, const XMLElement* el)
+    for_xml_items(variables_element, "Variable", variables.size(), [&](Index i, const XmlElement* el)
     {
         Variable& variable = variables[i];
 
@@ -1741,7 +1741,7 @@ void Dataset::variables_from_XML(const XMLElement *variables_element)
 
         if (variable.type == VariableType::Categorical || variable.type == VariableType::Binary)
         {
-            const XMLElement* categories_element = el->FirstChildElement("Categories");
+            const XmlElement* categories_element = el->first_child_element("Categories");
 
             if (categories_element)
                 variable.categories = get_tokens(read_xml_string(el, "Categories"), ";");
@@ -1753,7 +1753,7 @@ void Dataset::variables_from_XML(const XMLElement *variables_element)
     });
 }
 
-void Dataset::samples_from_XML(const XMLElement *samples_element)
+void Dataset::samples_from_XML(const XmlElement *samples_element)
 {
     if(!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
@@ -1781,7 +1781,7 @@ void Dataset::samples_from_XML(const XMLElement *samples_element)
         data.resize(0, 0);
 }
 
-void Dataset::missing_values_from_XML(const XMLElement *missing_values_element)
+void Dataset::missing_values_from_XML(const XmlElement *missing_values_element)
 {
     if(!missing_values_element)
         throw runtime_error("Missing values element is nullptr.\n");
@@ -1806,7 +1806,7 @@ void Dataset::missing_values_from_XML(const XMLElement *missing_values_element)
             {"SamplesMissingValuesNumber", "RowsMissingValuesNumber"}));
     }
 }
-void Dataset::preview_data_from_XML(const XMLElement *preview_data_element)
+void Dataset::preview_data_from_XML(const XmlElement *preview_data_element)
 {
     if(!preview_data_element)
         throw runtime_error("Preview data element is nullptr.\n ");
@@ -1817,19 +1817,19 @@ void Dataset::preview_data_from_XML(const XMLElement *preview_data_element)
     {
         data_file_preview.resize(preview_size);
 
-        for_xml_items(preview_data_element, "Row", preview_size, [&](Index i, const XMLElement* row)
+        for_xml_items(preview_data_element, "Row", preview_size, [&](Index i, const XmlElement* row)
         {
-            if(row->GetText())
-                data_file_preview[i] = get_tokens(row->GetText(), ",");
+            if(row->get_text())
+                data_file_preview[i] = get_tokens(row->get_text(), ",");
         });
     }
 }
 
-void Dataset::from_XML(const XMLDocument& data_set_document)
+void Dataset::from_XML(const XmlDocument& data_set_document)
 {
-    const XMLElement* root = get_xml_root(data_set_document, "Dataset");
+    const XmlElement* root = get_xml_root(data_set_document, "Dataset");
 
-    const XMLElement* src = require_xml_element(root, "DataSource");
+    const XmlElement* src = require_xml_element(root, "DataSource");
 
     set_data_path(read_xml_string(src, "Path"));
     set_separator_name(read_xml_string(src, "Separator"));
@@ -1856,11 +1856,11 @@ void Dataset::save(const filesystem::path& file_name) const
     if(!file.is_open())
         return;
 
-    XMLPrinter document;
+    XmlPrinter document;
 
     to_XML(document);
 
-    file << document.CStr();
+    file << document.c_str();
 }
 
 void Dataset::load(const filesystem::path& file_name)

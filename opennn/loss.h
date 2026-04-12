@@ -84,12 +84,12 @@ public:
 
     // Serialization
 
-    void from_XML(const XMLDocument&);
+    void from_XML(const XmlDocument&);
 
-    void to_XML(XMLPrinter&) const;
+    void to_XML(XmlPrinter&) const;
 
-    void regularization_from_XML(const XMLDocument&);
-    void write_regularization_XML(XMLPrinter&) const;
+    void regularization_from_XML(const XmlDocument&);
+    void write_regularization_XML(XmlPrinter&) const;
 
     const string& get_name() const { return name; }
 

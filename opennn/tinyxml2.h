@@ -11,7 +11,7 @@
 
 namespace tinyxml2 {
 
-enum XMLError {
+enum XmlError {
     XML_SUCCESS = 0,
     XML_NO_ATTRIBUTE,
     XML_WRONG_ATTRIBUTE_TYPE,
@@ -19,113 +19,113 @@ enum XMLError {
     XML_ERROR_PARSING
 };
 
-class XMLElement;
-class XMLDocument;
+class XmlElement;
+class XmlDocument;
 
-class XMLAttribute {
+class XmlAttribute {
 public:
     std::string _name;
     std::string _value;
-    const char* Name() const { return _name.c_str(); }
-    const char* Value() const { return _value.c_str(); }
-    const XMLAttribute* Next() const { return _next; }
-    XMLAttribute* _next = nullptr;
+    const char* name() const { return _name.c_str(); }
+    const char* value() const { return _value.c_str(); }
+    const XmlAttribute* next() const { return _next; }
+    XmlAttribute* _next = nullptr;
 
-    int IntValue() const { return std::stoi(_value); }
-    float FloatValue() const { return std::stof(_value); }
+    int int_value() const { return std::stoi(_value); }
+    float float_value() const { return std::stof(_value); }
 };
 
-class XMLNode {
+class XmlNode {
 public:
-    virtual ~XMLNode() = default;
-    XMLNode() = default;
-    XMLNode(const XMLNode&) = delete;
-    XMLNode& operator=(const XMLNode&) = delete;
-    XMLNode(XMLNode&&) = default;
-    XMLNode& operator=(XMLNode&&) = default;
-    virtual XMLElement* ToElement() { return nullptr; }
-    const XMLElement* FirstChildElement(const char* name = nullptr) const;
-    const XMLElement* NextSiblingElement(const char* name = nullptr) const;
+    virtual ~XmlNode() = default;
+    XmlNode() = default;
+    XmlNode(const XmlNode&) = delete;
+    XmlNode& operator=(const XmlNode&) = delete;
+    XmlNode(XmlNode&&) = default;
+    XmlNode& operator=(XmlNode&&) = default;
+    virtual XmlElement* to_element() { return nullptr; }
+    const XmlElement* first_child_element(const char* name = nullptr) const;
+    const XmlElement* next_sibling_element(const char* name = nullptr) const;
 
     std::string _value; // Tag name or Text content
-    std::vector<std::unique_ptr<XMLElement>> _children;
-    XMLNode* _parent = nullptr;
-    XMLElement* _next = nullptr;
+    std::vector<std::unique_ptr<XmlElement>> _children;
+    XmlNode* _parent = nullptr;
+    XmlElement* _next = nullptr;
 };
 
-class XMLElement : public XMLNode {
+class XmlElement : public XmlNode {
 public:
-    std::vector<XMLAttribute> _attributes;
+    std::vector<XmlAttribute> _attributes;
 
-    const char* Name() const { return _value.c_str(); }
-    XMLElement* ToElement() override { return this; }
+    const char* name() const { return _value.c_str(); }
+    XmlElement* to_element() override { return this; }
 
-    const char* Attribute(const char* name) const {
+    const char* attribute(const char* name) const {
         for(const auto& a : _attributes) if(a._name == name) return a._value.c_str();
         return nullptr;
     }
 
-    int QueryIntAttribute(const char* name, int* value) const {
-        const char* v = Attribute(name);
-        if(!v) return 1; // Error
+    int query_int_attribute(const char* name, int* value) const {
+        const char* v = attribute(name);
+        if(!v) return 1;
         *value = std::stoi(v);
-        return 0; // Success
+        return 0;
     }
 
-    int QueryUnsignedAttribute(const char* name, unsigned int* value) const {
-        const char* v = Attribute(name);
+    int query_unsigned_attribute(const char* name, unsigned int* value) const {
+        const char* v = attribute(name);
         if(!v) return 1;
         *value = (unsigned int)std::stoul(v);
         return 0;
     }
 
-    const char* GetText() const;
-    XMLElement* DeepClone(XMLDocument* target) const;
+    const char* get_text() const;
+    XmlElement* deep_clone(XmlDocument* target) const;
 };
 
-class XMLDocument : public XMLNode {
+class XmlDocument : public XmlNode {
 public:
-    int LoadFile(const char* filename);
-    int Parse(const char* xml);
-    XMLElement* RootElement() { return _children.empty() ? nullptr : _children[0].get(); }
-    XMLElement* NewElement(const char* name);
-    void InsertFirstChild(XMLNode* node);
-    void InsertEndChild(XMLNode* node);
+    int load_file(const char* filename);
+    int parse(const char* xml);
+    XmlElement* root_element() { return _children.empty() ? nullptr : _children[0].get(); }
+    XmlElement* new_element(const char* name);
+    void insert_first_child(XmlNode* node);
+    void insert_end_child(XmlNode* node);
 };
 
-class XMLPrinter {
+class XmlPrinter {
 public:
     std::ostringstream _oss;
     int _indent = 0;
 
-    XMLPrinter(FILE* f = nullptr, bool compact = false, int depth = 0) {}
+    XmlPrinter(FILE* f = nullptr, bool compact = false, int depth = 0) {}
 
-    void OpenElement(const char* name) {
+    void open_element(const char* name) {
         _oss << "\n" << std::string(_indent*2, ' ') << "<" << name;
         _stack.push_back(name);
         _indent++;
         _openTag = true;
     }
 
-    void PushAttribute(const char* name, const char* value) {
+    void push_attribute(const char* name, const char* value) {
         _oss << " " << name << "=\"" << value << "\"";
     }
 
-    void PushAttribute(const char* name, int value) { PushAttribute(name, std::to_string(value).c_str()); }
+    void push_attribute(const char* name, int value) { push_attribute(name, std::to_string(value).c_str()); }
 
-    void PushText(const char* text) {
+    void push_text(const char* text) {
         if(_openTag) { _oss << ">"; _openTag = false; }
         _oss << text;
     }
 
-    void CloseElement() {
+    void close_element() {
         _indent--;
         if(_openTag) { _oss << "/>"; _openTag = false; }
         else { _oss << "</" << _stack.back() << ">"; }
         _stack.pop_back();
     }
 
-    const char* CStr() const { _buffer = _oss.str(); return _buffer.c_str(); }
+    const char* c_str() const { _buffer = _oss.str(); return _buffer.c_str(); }
 
 private:
     std::vector<std::string> _stack;
@@ -135,45 +135,45 @@ private:
 
 // OpenNN helper wrappers — writing
 
-void add_xml_element(XMLPrinter& printer, const std::string& name, const std::string& value);
-void add_xml_element_attribute(XMLPrinter& printer, const std::string& element_name, const std::string& element_value, const std::string& attribute_name, const std::string& attribute_value);
+void add_xml_element(XmlPrinter& printer, const std::string& name, const std::string& value);
+void add_xml_element_attribute(XmlPrinter& printer, const std::string& element_name, const std::string& element_value, const std::string& attribute_name, const std::string& attribute_value);
 
-void write_xml_properties(XMLPrinter& printer, std::initializer_list<std::pair<const char*, std::string>> props);
+void write_xml_properties(XmlPrinter& printer, std::initializer_list<std::pair<const char*, std::string>> props);
 
 // OpenNN helper wrappers — reading
 
-float read_xml_type(const XMLElement* root, const std::string& element_name);
-long  read_xml_index(const XMLElement* root, const std::string& element_name);
-bool  read_xml_bool(const XMLElement* root, const std::string& element_name);
-std::string read_xml_string(const XMLElement* root, const std::string& element_name);
+float read_xml_type(const XmlElement* root, const std::string& element_name);
+long  read_xml_index(const XmlElement* root, const std::string& element_name);
+bool  read_xml_bool(const XmlElement* root, const std::string& element_name);
+std::string read_xml_string(const XmlElement* root, const std::string& element_name);
 
-std::string read_xml_string_fallback(const XMLElement* root, std::initializer_list<std::string> names);
+std::string read_xml_string_fallback(const XmlElement* root, std::initializer_list<std::string> names);
 
-const XMLElement* require_xml_element(const XMLElement* root, const std::string& element_name);
+const XmlElement* require_xml_element(const XmlElement* root, const std::string& element_name);
 
 template<typename Func>
-void for_xml_items(const XMLElement* parent, const char* tag, long count, Func func)
+void for_xml_items(const XmlElement* parent, const char* tag, long count, Func func)
 {
-    const XMLElement* item = parent->FirstChildElement(tag);
+    const XmlElement* item = parent->first_child_element(tag);
     for(long i = 0; i < count; i++)
     {
         if(!item)
             throw std::runtime_error(std::string("Missing XML element: ") + tag + " item " + std::to_string(i + 1));
 
         func(i, item);
-        item = item->NextSiblingElement(tag);
+        item = item->next_sibling_element(tag);
     }
 }
 
-XMLDocument load_xml_file(const std::filesystem::path& file_name);
-const XMLElement* get_xml_root(const XMLDocument& document, const std::string& tag);
+XmlDocument load_xml_file(const std::filesystem::path& file_name);
+const XmlElement* get_xml_root(const XmlDocument& document, const std::string& tag);
 
 template<typename T>
 void print_xml(const T& object)
 {
-    XMLPrinter printer;
+    XmlPrinter printer;
     object.to_XML(printer);
-    std::cout << printer.CStr() << std::endl;
+    std::cout << printer.c_str() << std::endl;
 }
 
 } // namespace

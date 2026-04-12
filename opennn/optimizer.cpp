@@ -29,18 +29,18 @@ void Optimizer::check() const
         throw runtime_error("loss is nullptr.\n");
 }
 
-void Optimizer::to_XML(XMLPrinter& printer) const
+void Optimizer::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("Optimizer");
+    printer.open_element("Optimizer");
 
     add_xml_element(printer, "Display", to_string(display));
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void Optimizer::from_XML(const XMLDocument& document)
+void Optimizer::from_XML(const XmlDocument& document)
 {
-    const XMLElement* root_element = get_xml_root(document, "Optimizer");
+    const XmlElement* root_element = get_xml_root(document, "Optimizer");
 
     set_display(read_xml_bool(root_element, "Display"));
 }
@@ -52,9 +52,9 @@ void Optimizer::save(const filesystem::path& file_name) const
     if(!file.is_open())
         return;
 
-    XMLPrinter printer;
+    XmlPrinter printer;
     to_XML(printer);
-    file << printer.CStr();
+    file << printer.c_str();
 }
 
 void Optimizer::load(const filesystem::path& file_name)
@@ -271,7 +271,7 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
     return true;
 }
 
-void Optimizer::write_common_xml(XMLPrinter& printer) const
+void Optimizer::write_common_xml(XmlPrinter& printer) const
 {
     write_xml_properties(printer, {
         {"LossGoal", to_string(training_loss_goal)},
@@ -282,7 +282,7 @@ void Optimizer::write_common_xml(XMLPrinter& printer) const
     });
 }
 
-void Optimizer::read_common_xml(const XMLElement* root_element)
+void Optimizer::read_common_xml(const XmlElement* root_element)
 {
     set_loss_goal(read_xml_type(root_element, "LossGoal"));
     set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));

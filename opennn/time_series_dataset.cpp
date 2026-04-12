@@ -110,11 +110,11 @@ void TimeSeriesDataset::set_multi_target(bool new_multi_target)
     multi_target = new_multi_target;
 }
 
-void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
+void TimeSeriesDataset::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("Dataset");
+    printer.open_element("Dataset");
 
-    printer.OpenElement("DataSource");
+    printer.open_element("DataSource");
     write_xml_properties(printer, {
         {"FileType", "csv"},
         {"Path", data_path.string()},
@@ -126,7 +126,7 @@ void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
         {"StepsAhead", to_string(get_future_time_steps())},
         {"Codification", get_codification_string()}
     });
-    printer.CloseElement();
+    printer.close_element();
 
     variables_to_XML(printer);
 
@@ -138,18 +138,18 @@ void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "Display", to_string(display));
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
+void TimeSeriesDataset::from_XML(const XmlDocument& data_set_document)
 {
-    const XMLElement* data_set_element = get_xml_root(data_set_document, "Dataset");
+    const XmlElement* data_set_element = get_xml_root(data_set_document, "Dataset");
 
     // Data file
 
-    const XMLElement* data_source_element = require_xml_element(data_set_element, "DataSource");
+    const XmlElement* data_source_element = require_xml_element(data_set_element, "DataSource");
 
-    const XMLElement* file_type_element = require_xml_element(data_source_element, "FileType");
+    const XmlElement* file_type_element = require_xml_element(data_source_element, "FileType");
 
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_separator_name(read_xml_string(data_source_element, "Separator"));
@@ -162,25 +162,25 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
 
     // Variables
 
-    const XMLElement* variables_element = data_set_element->FirstChildElement("Variables");
+    const XmlElement* variables_element = data_set_element->first_child_element("Variables");
 
     variables_from_XML(variables_element);
 
     // Samples
 
-    const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
+    const XmlElement* samples_element = data_set_element->first_child_element("Samples");
 
     samples_from_XML(samples_element);
 
     // Missing values
 
-    const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
+    const XmlElement* missing_values_element = data_set_element->first_child_element("MissingValues");
 
     missing_values_from_XML(missing_values_element);
 
     // Preview data
 
-    const XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
+    const XmlElement* preview_data_element = data_set_element->first_child_element("PreviewData");
 
     preview_data_from_XML(preview_data_element);
 

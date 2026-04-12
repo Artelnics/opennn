@@ -180,9 +180,9 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
         average_pooling_backward(input, output, output_gradient, input_gradient, cached_pool_args);
 }
 
-void Pooling::to_XML(XMLPrinter& printer) const
+void Pooling::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("Pooling");
+    printer.open_element("Pooling");
 
     write_xml_properties(printer, {
         {"Label", label},
@@ -196,12 +196,12 @@ void Pooling::to_XML(XMLPrinter& printer) const
         {"PaddingWidth", to_string(get_padding_width())}
     });
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void Pooling::from_XML(const XMLDocument& document)
+void Pooling::from_XML(const XmlDocument& document)
 {
-    const XMLElement* pooling_layer_element = get_xml_root(document, "Pooling");
+    const XmlElement* pooling_layer_element = get_xml_root(document, "Pooling");
 
     set_label(read_xml_string(pooling_layer_element, "Label"));
     set_input_shape(string_to_shape(read_xml_string(pooling_layer_element, "InputDimensions")));

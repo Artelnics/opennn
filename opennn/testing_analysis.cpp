@@ -1511,16 +1511,16 @@ MatrixR TestingAnalysis::calculate_multiple_classification_tests() const
     return multiple_classification_tests;
 }
 
-void TestingAnalysis::to_XML(XMLPrinter& printer) const
+void TestingAnalysis::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("TestingAnalysis");
+    printer.open_element("TestingAnalysis");
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void TestingAnalysis::from_XML(const XMLDocument& document)
+void TestingAnalysis::from_XML(const XmlDocument& document)
 {
-    const XMLElement* root_element = get_xml_root(document, "TestingAnalysis");
+    const XmlElement* root_element = get_xml_root(document, "TestingAnalysis");
 
 }
 
@@ -1531,11 +1531,11 @@ void TestingAnalysis::save(const filesystem::path& file_name) const
     if(!file.is_open())
         return;
 
-    XMLPrinter printer;
+    XmlPrinter printer;
 
     to_XML(printer);
 
-    file << printer.CStr();
+    file << printer.c_str();
 }
 
 void TestingAnalysis::load(const filesystem::path& file_name)

@@ -252,9 +252,9 @@ void MultiHeadAttention::apply_key_padding_mask(const TensorMap3& source_input,
     }
 }
 
-void MultiHeadAttention::to_XML(XMLPrinter& printer) const
+void MultiHeadAttention::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("MultiHeadAttention");
+    printer.open_element("MultiHeadAttention");
     write_xml_properties(printer, {
         {"Label", label},
         {"InputSize", to_string(get_query_sequence_length())},
@@ -264,14 +264,14 @@ void MultiHeadAttention::to_XML(XMLPrinter& printer) const
         {"HeadsNumber", to_string(get_heads_number())},
         {"CausalMask", to_string(use_causal_mask ? 1 : 0)}
     });
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void MultiHeadAttention::from_XML(const XMLDocument& document)
+void MultiHeadAttention::from_XML(const XmlDocument& document)
 {
     // @todo update notation
 
-    const XMLElement* multihead_attention_layer_element = get_xml_root(document, "MultiHeadAttention");
+    const XmlElement* multihead_attention_layer_element = get_xml_root(document, "MultiHeadAttention");
 
     const string new_label = read_xml_string(multihead_attention_layer_element, "Label");
     const Index new_input_size = read_xml_index(multihead_attention_layer_element, "InputSize");

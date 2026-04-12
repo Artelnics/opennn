@@ -45,8 +45,8 @@ struct Variable
     void set_type(const string&);
     void set_categories(const vector<string>& c) { categories = c; }
 
-    void from_XML(const XMLDocument&);
-    void to_XML(XMLPrinter&) const;
+    void from_XML(const XmlDocument&);
+    void to_XML(XmlPrinter&) const;
 
     bool is_binary() const { return type == VariableType::Binary; }
     bool is_categorical() const { return type == VariableType::Categorical; }

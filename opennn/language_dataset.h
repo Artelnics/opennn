@@ -41,8 +41,8 @@ public:
     void encode_decoder_target_sequence_to_sequence(const vector<vector<string>>&);
     void encode_target_classification(const vector<vector<string>>&);
 
-    void from_XML(const XMLDocument&) override;
-    void to_XML(XMLPrinter&) const override;
+    void from_XML(const XmlDocument&) override;
+    void to_XML(XmlPrinter&) const override;
 
     inline static const string PAD_TOKEN   = "[PAD]";     // 0
     inline static const string UNK_TOKEN   = "[UNK]";     // 1

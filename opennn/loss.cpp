@@ -218,19 +218,19 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
         l2_regularization_gradient(parameters, regularization_weight, gradient);
 }
 
-void Loss::regularization_from_XML(const XMLDocument& document)
+void Loss::regularization_from_XML(const XmlDocument& document)
 {
-    const XMLElement* root_element = get_xml_root(document, "Regularization");
+    const XmlElement* root_element = get_xml_root(document, "Regularization");
 
-    const string new_regularization_method = root_element->Attribute("Type");
+    const string new_regularization_method = root_element.->attribute("Type");
 
     set_regularization(new_regularization_method);
 
-    const XMLElement* element = root_element->FirstChildElement("RegularizationWeight");
+    const XmlElement* element = root_element->first_child_element("RegularizationWeight");
 
     if(element)
     {
-        const type new_regularization_weight = type(atof(element->GetText()));
+        const type new_regularization_weight = type(atof(element->get_text()));
 
         try
         {
@@ -243,21 +243,21 @@ void Loss::regularization_from_XML(const XMLDocument& document)
     }
 }
 
-void Loss::write_regularization_XML(XMLPrinter& file_stream) const
+void Loss::write_regularization_XML(XmlPrinter& file_stream) const
 {
-    file_stream.OpenElement("Regularization");
+    file_stream.open_element("Regularization");
 
-    file_stream.PushAttribute("Type", regularization_method.c_str());
+    file_stream.push_attribute("Type", regularization_method.c_str());
 
     // Regularization weight
 
-    file_stream.OpenElement("RegularizationWeight");
-    file_stream.PushText(to_string(regularization_weight).c_str());
-    file_stream.CloseElement();
+    file_stream.open_element("RegularizationWeight");
+    file_stream.push_text(to_string(regularization_weight).c_str());
+    file_stream.close_element();
 
     // Close regularization
 
-    file_stream.CloseElement();
+    file_stream.close_element();
 }
 
 type Loss::calculate_numerical_error() const
@@ -469,9 +469,9 @@ type Loss::calculate_h(const type x)
     return sqrt_eta * (type(1) + abs(x));
 }
 
-void Loss::to_XML(XMLPrinter& printer) const
+void Loss::to_XML(XmlPrinter& printer) const
 {
-    printer.OpenElement("Loss");
+    printer.open_element("Loss");
     write_xml_properties(printer, {
         {"Method", get_name()},
         {"Regularization", regularization_method},
@@ -489,12 +489,12 @@ void Loss::to_XML(XMLPrinter& printer) const
     if (error == Error::MinkowskiError)
         add_xml_element(printer, "MinkowskiParameter", to_string(minkowski_parameter));
 
-    printer.CloseElement();
+    printer.close_element();
 }
 
-void Loss::from_XML(const XMLDocument& document)
+void Loss::from_XML(const XmlDocument& document)
 {
-    const XMLElement* root = document.FirstChildElement("Loss");
+    const XmlElement* root = document.first_child_element("Loss");
     if(!root) return;
 
     set_error(read_xml_string(root, "Method"));
@@ -502,15 +502,15 @@ void Loss::from_XML(const XMLDocument& document)
     regularization_method = read_xml_string(root, "Regularization");
     regularization_weight = read_xml_type(root, "RegularizationWeight");
 
-    if (root->FirstChildElement("NormalizationCoefficient"))
+    if (root->first_child_element("NormalizationCoefficient"))
         normalization_coefficient = read_xml_type(root, "NormalizationCoefficient");
 
-    if (root->FirstChildElement("PositivesWeight")) {
+    if (root->first_child_element("PositivesWeight")) {
         positives_weight = read_xml_type(root, "PositivesWeight");
         negatives_weight = read_xml_type(root, "NegativesWeight");
     }
 
-    if (root->FirstChildElement("MinkowskiParameter"))
+    if (root->first_child_element("MinkowskiParameter"))
         minkowski_parameter = read_xml_type(root, "MinkowskiParameter");
 }
 

@@ -89,9 +89,9 @@ void NeuronSelection::save(const filesystem::path& file_name) const
     if(!file.is_open())
         return;
 
-    XMLPrinter printer;
+    XmlPrinter printer;
     to_XML(printer);
-    file << printer.CStr();
+    file << printer.c_str();
 }
 
 void NeuronSelection::load(const filesystem::path& file_name)
