@@ -168,6 +168,7 @@ private:
     Index column_stride = 1;
 
     string convolution_type = "Valid";
+    bool use_padding = false;
 
     ActivationFunction activation_function = ActivationFunction::Linear;
 

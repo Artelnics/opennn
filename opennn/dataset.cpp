@@ -112,18 +112,22 @@ vector<Index> Dataset::get_sample_roles_vector() const
     return sample_roles_vector;
 }
 
-vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
-                                           Index batch_size,
-                                           bool shuffle) const
+void Dataset::get_batches(const vector<Index>& sample_indices,
+                          Index batch_size,
+                          bool shuffle,
+                          vector<vector<Index>>& batches) const
 {
     const Index samples_number = sample_indices.size();
 
-    if(samples_number == 0) return {};
+    if(samples_number == 0) { batches.clear(); return; }
 
     if(batch_size <= 0 || batch_size > samples_number)
         batch_size = samples_number;
 
     const Index batches_number = (samples_number + batch_size - 1) / batch_size;
+
+    if(static_cast<Index>(batches.size()) != batches_number)
+        batches.resize(batches_number);
 
     vector<Index> shuffled_indices;
 
@@ -135,8 +139,6 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
 
     const vector<Index>& indices = shuffle ? shuffled_indices : sample_indices;
 
-    vector<vector<Index>> batches(batches_number);
-
     #pragma omp parallel for if(batches_number > 64)
     for(Index i = 0; i < batches_number; i++)
     {
@@ -145,8 +147,6 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
 
         batches[i].assign(start_it, end_it);
     }
-
-    return batches;
 }
 
 Index Dataset::get_samples_number(const string& sample_role) const

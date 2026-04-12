@@ -205,7 +205,8 @@ TrainingResults StochasticGradientDescent::train()
 
     const bool shuffle = !neural_network->has("Recurrent");
 
-    const vector<vector<Index>> validation_batches = dataset->get_batches(validation_sample_indices, validation_batch_size, false);
+    vector<vector<Index>> validation_batches;
+    dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
     // Main loop
 
@@ -213,7 +214,7 @@ TrainingResults StochasticGradientDescent::train()
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        training_batches = dataset->get_batches(training_sample_indices, training_batch_size, shuffle);
+        dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
         const Index batches_number = training_batches.size();
 
@@ -493,7 +494,8 @@ TrainingResults StochasticGradientDescent::train_cuda()
     constexpr bool is_training = true;
     const bool shuffle = !neural_network->has("Recurrent");
 
-    const vector<vector<Index>> validation_batches = dataset->get_batches(validation_sample_indices, validation_batch_size, false);
+    vector<vector<Index>> validation_batches;
+    dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
     time_t beginning_time;
     time(&beginning_time);
@@ -504,7 +506,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
     {
         if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        training_batches = dataset->get_batches(training_sample_indices, training_batch_size, shuffle);
+        dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
         const Index batches_number = training_batches.size();
 

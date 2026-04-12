@@ -224,7 +224,6 @@ struct Memory
 
 struct TensorView
 {
-
     TensorView() noexcept = default;
 
     type* data = nullptr;

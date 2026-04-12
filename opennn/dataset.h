@@ -98,7 +98,7 @@ public:
 
     vector<string> get_feature_scalers(const string&) const;
 
-    virtual vector<vector<Index>> get_batches(const vector<Index>&, Index, bool) const;
+    virtual void get_batches(const vector<Index>&, Index, bool, vector<vector<Index>>&) const;
 
     const MatrixR& get_data() const { return data; }
     MatrixR get_feature_data(const string&) const;

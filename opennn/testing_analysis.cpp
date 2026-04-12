@@ -555,7 +555,8 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
                                          ? (testing_indices.empty() ? 1 : testing_indices.size())
                                          : batch_size;
 
-    const vector<vector<Index>> testing_batches = dataset->get_batches(testing_indices, current_batch_size, false);
+    vector<vector<Index>> testing_batches;
+    dataset->get_batches(testing_indices, current_batch_size, false, testing_batches);
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");

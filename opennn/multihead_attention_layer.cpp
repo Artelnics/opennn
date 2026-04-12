@@ -242,9 +242,12 @@ void MultiHeadAttention::apply_key_padding_mask(const TensorMap3& source_input,
                                     .cwiseAbs().maxCoeff() <= type(1e-7f);
 
             if(is_pad)
-                for(Index h = 0; h < heads_number; ++h)
-                    for(Index q = 0; q < query_sequence_length; ++q)
-                        attention_weights(b, h, q, s) = -1e9f;
+            {
+                const Index slice_size = heads_number * query_sequence_length;
+                MatrixMap att_map(attention_weights.data() + b * slice_size * source_sequence_length,
+                                  slice_size, source_sequence_length);
+                att_map.col(s).setConstant(type(-1e9f));
+            }
         }
     }
 }

@@ -426,18 +426,19 @@ void batch_normalization_backward(
     VectorMap beta_gradients = beta_gradient.as_vector();
     MatrixMap input_gradients(input_gradient.data, effective_batch_size, neurons_number);
 
-    const MatrixR x_hat = (input_matrix.rowwise() - means.transpose()).array().rowwise() * inverse_variances.transpose().array();
+    // Reuse input_gradients as scratch space for x_hat to avoid temporary allocation
+    input_gradients.array() = (input_matrix.rowwise() - means.transpose()).array().rowwise() * inverse_variances.transpose().array();
 
     beta_gradients.noalias() = output_gradients.colwise().sum();
 
-    gamma_gradients = (output_gradients.array() * x_hat.array()).matrix().colwise().sum();
+    gamma_gradients = (output_gradients.array() * input_gradients.array()).matrix().colwise().sum();
 
     const type batch_size_type = static_cast<type>(effective_batch_size);
 
     const Eigen::Array<type, 1, Eigen::Dynamic> scale = (gammas.array() * inverse_variances.array() / batch_size_type).transpose();
 
     input_gradients.array() = ((batch_size_type * output_gradients.array()).rowwise() - beta_gradients.transpose().array()
-                               - x_hat.array().rowwise() * gamma_gradients.transpose().array())
+                               - input_gradients.array().rowwise() * gamma_gradients.transpose().array())
                               .rowwise() * scale;
 
 #else
@@ -509,11 +510,13 @@ void batch_normalization_training(
 
     means = input_matrix.colwise().mean();
 
-    const VectorR batch_variance = (input_matrix.rowwise() - means.transpose()).array().square().colwise().mean();
-    inverse_variances.array() = 1.0f / (batch_variance.array() + EPSILON).sqrt();
+    // Store batch variance temporarily in inverse_variances to avoid heap allocation
+    inverse_variances = (input_matrix.rowwise() - means.transpose()).array().square().colwise().mean();
 
     running_mean = running_mean * momentum + means * (type(1) - momentum);
-    running_variance = running_variance * momentum + batch_variance * (type(1) - momentum);
+    running_variance = running_variance * momentum + inverse_variances * (type(1) - momentum);
+
+    inverse_variances.array() = 1.0f / (inverse_variances.array() + EPSILON).sqrt();
 
     output_matrix.array() = (input_matrix.rowwise() - means.transpose()).array().rowwise() *
                             (inverse_variances.array() * gammas.array()).transpose();
@@ -721,7 +724,7 @@ void dropout(TensorView& output, type dropout_rate)
 #ifndef CUDA
     const type scale = type(1) / (type(1) - dropout_rate);
 
-    type* data = output.data;
+    type* __restrict data = output.data;
     const Index n = output.size();
 
     for (Index i = 0; i < n; ++i)
@@ -1017,7 +1020,7 @@ void convolution_backward_weights(const TensorView& input,
 
     for(Index ki = 0; ki < kernels_number; ki++)
     {
-        type* wg = weight_grad.data + ki * single_kernel_size;
+        type* __restrict wg = weight_grad.data + ki * single_kernel_size;
         memset(wg, 0, single_kernel_size * sizeof(type));
         TensorMap3 wg_map(wg, kernel_height, kernel_width, kernel_channels);
 
@@ -1087,7 +1090,7 @@ void convolution_backward_data(const TensorView& delta,
 
     for(Index ki = 0; ki < kernels_number; ki++)
     {
-        const type* kw = kernel.data + ki * single_kernel_size;
+        const type* __restrict kw = kernel.data + ki * single_kernel_size;
 
         for(Index b = 0; b < batch_size; b++)
             for(Index oh = 0; oh < output_height; oh++)
@@ -1451,9 +1454,10 @@ void multihead_attention_forward(
     MatrixMap att_map(attention_weights.data, total_rows, source_sequence_length);
     for(Index r = 0; r < total_rows; ++r)
     {
-        const type mx = att_map.row(r).maxCoeff();
-        att_map.row(r).array() = (att_map.row(r).array() - mx).exp();
-        att_map.row(r) /= att_map.row(r).sum();
+        auto row = att_map.row(r);
+        const type mx = row.maxCoeff();
+        row.array() = (row.array() - mx).exp();
+        row /= row.sum();
     }
 
     #pragma omp parallel for collapse(2)
@@ -1608,13 +1612,14 @@ void multihead_attention_backward(
             dP.noalias() = dO * V.transpose();
         }
 
-    #pragma omp parallel for
+    VectorR dot(query_sequence_length);
+    #pragma omp parallel for firstprivate(dot)
     for(Index i = 0; i < total_heads; ++i)
     {
         const Index off = i * query_sequence_length * source_sequence_length;
         const MatrixMap P(attention_weights.data + off, query_sequence_length, source_sequence_length);
         MatrixMap dP(att_weight_grad.data + off, query_sequence_length, source_sequence_length);
-        VectorR dot = (P.array() * dP.array()).rowwise().sum();
+        dot.noalias() = (P.array() * dP.array()).rowwise().sum().matrix();
         dP.array() = P.array() * (dP.colwise() - dot).array();
     }
 

@@ -67,9 +67,10 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
         activation(output, act_args);
     }
 #else
-    convolution_type == "Same"
-        ? padding(input, padded_input)
-        : copy(input, padded_input);
+    if(use_padding)
+        padding(input, padded_input);
+    else
+        copy(input, padded_input);
 
     convolution(padded_input, parameters[Weights], parameters[Biases], output, conv_args);
     activation(output, act_args);
@@ -286,6 +287,7 @@ void Convolutional::set_convolution_type(const string& new_convolution_type)
         throw runtime_error("Unknown convolution type: " + new_convolution_type + ".\n");
 
     convolution_type = new_convolution_type;
+    use_padding = (convolution_type == "Same");
 }
 
 void Convolutional::set_row_stride(const Index new_stride_row)
