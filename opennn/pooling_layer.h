@@ -13,6 +13,29 @@
 namespace opennn
 {
 
+enum class PoolingMethod
+{
+    MaxPooling,
+    AveragePooling
+};
+
+inline const string& pooling_method_to_string(PoolingMethod method)
+{
+    static const string max_str = "MaxPooling";
+    static const string avg_str = "AveragePooling";
+
+    if(method == PoolingMethod::AveragePooling) return avg_str;
+    return max_str;
+}
+
+inline PoolingMethod string_to_pooling_method(const string& name)
+{
+    if(name == "MaxPooling") return PoolingMethod::MaxPooling;
+    if(name == "AveragePooling") return PoolingMethod::AveragePooling;
+
+    throw runtime_error("Unknown pooling method: " + name);
+}
+
 class Pooling final : public Layer
 {
 
@@ -45,7 +68,7 @@ public:
 
         vector<Shape> shapes;
 
-        if (pooling_method == "MaxPooling")
+        if (pooling_method == PoolingMethod::MaxPooling)
             shapes.push_back(Shape{batch_size}.append(out_shape)); // MaximalIndices
 
         shapes.push_back(Shape{batch_size}.append(out_shape)); // Outputs (must be last for wiring)
@@ -78,7 +101,7 @@ public:
     Index get_pool_height() const { return pool_height; }
     Index get_pool_width() const { return pool_width; }
 
-    string get_pooling_method() const { return pooling_method; }
+    PoolingMethod get_pooling_method() const { return pooling_method; }
 
     void set_input_shape(const Shape&) override;
 
@@ -113,7 +136,7 @@ private:
     Index row_stride = 1;
     Index column_stride = 1;
 
-    string pooling_method = "MaxPooling";
+    PoolingMethod pooling_method = PoolingMethod::MaxPooling;
 
     PoolingArguments cached_pool_args;
 

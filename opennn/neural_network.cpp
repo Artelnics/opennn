@@ -37,7 +37,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
 {
     const Index old_layers_number = get_layers_number() - 1;
 
-    if (!layers.empty() && !validate_name(layers.back()->get_name())) return;
+    if (!layers.empty() && !validate_type(layers.back()->get_type())) return;
 
     layers.push_back(std::move(layer));
 
@@ -74,9 +74,9 @@ void NeuralNetwork::compile()
         pointer = layer->link_parameters(pointer);
 }
 
-bool NeuralNetwork::validate_name(const string& name) const
+bool NeuralNetwork::validate_type(LayerType type) const
 {
-    if(name == "Bounding")
+    if(type == LayerType::Bounding)
         throw runtime_error("No layers can be added after a bounding layer.\n");
 
     return true;
@@ -85,8 +85,13 @@ bool NeuralNetwork::validate_name(const string& name) const
 
 bool NeuralNetwork::has(const string& name) const
 {
+    return has(string_to_layer_type(name));
+}
+
+bool NeuralNetwork::has(LayerType type) const
+{
     return any_of(layers.begin(), layers.end(),
-                  [&](const unique_ptr<Layer>& layer) {return layer->get_name() == name;});
+                  [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
 }
 
 static vector<string> get_feature_names_from(const vector<Variable>& vars)
@@ -167,13 +172,18 @@ Index NeuralNetwork::find_input_index(const vector<Index>& layer_inputs_indices,
 
 Layer* NeuralNetwork::get_first(const string& name) const
 {
+    return get_first(string_to_layer_type(name));
+}
+
+Layer* NeuralNetwork::get_first(LayerType type) const
+{
     auto it = find_if(layers.begin(), layers.end(),
-                      [&name](const unique_ptr<Layer>& layer) { return layer->get_name() == name; });
+                      [type](const unique_ptr<Layer>& layer) { return layer->get_type() == type; });
 
     if (it != layers.end())
         return it->get();
 
-    throw runtime_error("Layer not found in Neural Network: " + name);
+    throw runtime_error("Layer not found in Neural Network: " + layer_type_to_string(type));
 }
 
 static void set_variable_names(vector<Variable>& vars, const vector<string>& new_names)
@@ -210,14 +220,14 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
     const Index total_inputs = new_input_shape.size();
     input_variables.resize(total_inputs);
 
-    if(has("Scaling2d"))
+    if(has(LayerType::Scaling2d))
     {
-        Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(get_first("Scaling2d"));
+        Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(get_first(LayerType::Scaling2d));
         scaling_layer->set_input_shape(new_input_shape);
     }
-    else if(has("Scaling3d"))
+    else if(has(LayerType::Scaling3d))
     {
-        Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(get_first("Scaling3d"));
+        Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(get_first(LayerType::Scaling3d));
         scaling_layer->set_input_shape(new_input_shape);
     }
 
@@ -270,11 +280,11 @@ Index NeuralNetwork::get_inputs_number() const
     if(layers.empty())
         return 0;
 
-    if(has("Embedding"))
+    if(has(LayerType::Embedding))
         return get_layer(0)->get_inputs_number();
 
-    if(has("Recurrent"))
-        return get_first("Recurrent")->get_input_shape()[1];
+    if(has(LayerType::Recurrent))
+        return get_first(LayerType::Recurrent)->get_input_shape()[1];
 
     const Shape input_shape = layers[0]->get_input_shape();
 
@@ -354,8 +364,13 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
 
 Index NeuralNetwork::get_layers_number(const string& name) const
 {
+    return get_layers_number(string_to_layer_type(name));
+}
+
+Index NeuralNetwork::get_layers_number(LayerType type) const
+{
     return count_if(layers.begin(), layers.end(),
-                    [&](const unique_ptr<Layer>& layer) {return layer->get_name() == name;});
+                    [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
 }
 
 void NeuralNetwork::set_parameters_random()
@@ -575,7 +590,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
     Tensor3 image = load_image(image_path);
 
-    Scaling<4> const* scaling_layer = static_cast<Scaling<4>*>(get_first("Scaling4d"));
+    Scaling<4> const* scaling_layer = static_cast<Scaling<4>*>(get_first(LayerType::Scaling4d));
 
     const Index height = scaling_layer->get_input_shape()[0];
     const Index width = scaling_layer->get_input_shape()[1];
@@ -624,7 +639,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 
 MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)
 {
-    if(layers[0]->get_name() != "Embedding")
+    if(layers[0]->get_type() != LayerType::Embedding)
         throw runtime_error("Error: First layer must be Embedding for text processing.\n");
 
     if(input_variables.empty() || input_variables[0].categories.empty())
@@ -724,7 +739,7 @@ void NeuralNetwork::to_XML(XmlPrinter& printer) const
 
     printer.open_element("Outputs");
 
-    const Index outputs_count = has("Embedding") ? outputs_number : output_names.size();
+    const Index outputs_count = has(LayerType::Embedding) ? outputs_number : output_names.size();
     add_xml_element(printer, "OutputsNumber", to_string(outputs_count));
 
     for(Index i = 0; i < outputs_count; i++)

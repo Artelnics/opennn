@@ -31,13 +31,14 @@ Shape Pooling3d::get_output_shape() const
 
 string Pooling3d::write_pooling_method() const
 {
-    return pooling_method == PoolingMethod::MaxPooling ? "MaxPooling" : "AveragePooling";
+    return pooling_method_to_string(pooling_method);
 }
 
 
 void Pooling3d::set(const Shape& new_input_shape, const PoolingMethod& new_pooling_method, const string& new_label)
 {
     name = "Pooling3d";
+    layer_type = LayerType::Pooling3d;
     input_shape = new_input_shape;
     pooling_method = new_pooling_method;
     set_label(new_label);
@@ -46,9 +47,7 @@ void Pooling3d::set(const Shape& new_input_shape, const PoolingMethod& new_pooli
 
 void Pooling3d::set_pooling_method(const string& new_pooling_method)
 {
-    if (new_pooling_method == "MaxPooling") pooling_method = PoolingMethod::MaxPooling;
-    else if (new_pooling_method == "AveragePooling") pooling_method = PoolingMethod::AveragePooling;
-    else throw runtime_error("Unknown pooling type: " + new_pooling_method);
+    pooling_method = string_to_pooling_method(new_pooling_method);
 }
 
 

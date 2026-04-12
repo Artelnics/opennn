@@ -81,7 +81,7 @@ LanguageDataset::LanguageDataset(const Index samples_number,
     // Restore roles after set_binary_variables, which may mark constant columns (e.g. START token) as "None"
     for_each(variables.begin(),
              variables.begin() + maximum_input_sequence_length,
-             [](Variable& variable) { variable.role = "Input"; });
+             [](Variable& variable) { variable.role = VariableRole::Input; });
 }
 
 void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_tokens,
@@ -333,11 +333,11 @@ void LanguageDataset::read_csv()
 
         for_each(variables.begin(),
                  variables.begin() + maximum_input_sequence_length,
-                 [](Variable& variable) { variable.role = "Input"; });
+                 [](Variable& variable) { variable.role = VariableRole::Input; });
 
         for_each(variables.begin() + maximum_input_sequence_length,
                  variables.begin() + maximum_input_sequence_length + maximum_target_sequence_length,
-                 [](Variable& variable) { variable.role = "Target"; });
+                 [](Variable& variable) { variable.role = VariableRole::Target; });
 
         if(!variables.empty())
             variables[0].categories = input_vocabulary;
@@ -374,15 +374,15 @@ void LanguageDataset::read_csv()
 
         for_each(variables.begin(),
                  variables.begin() + maximum_input_sequence_length,
-                 [](Variable& variable) { variable.role = "Input"; });
+                 [](Variable& variable) { variable.role = VariableRole::Input; });
 
         for_each(variables.begin() + decoder_offset,
                  variables.begin() + decoder_offset + maximum_target_sequence_length,
-                 [](Variable& variable) { variable.role = "Decoder"; });
+                 [](Variable& variable) { variable.role = VariableRole::Decoder; });
 
         for_each(variables.begin() + target_offset,
                  variables.begin() + target_offset + maximum_target_sequence_length,
-                 [](Variable& variable) { variable.role = "Target"; });
+                 [](Variable& variable) { variable.role = VariableRole::Target; });
 
         if(!variables.empty())
             variables[0].categories = input_vocabulary;
@@ -420,7 +420,7 @@ void LanguageDataset::read_csv()
     // constant columns (e.g. START token) as "None" and clear their categories
     for(Index i = 0; i < maximum_input_sequence_length; i++)
     {
-        variables[i].role = "Input";
+        variables[i].role = VariableRole::Input;
         variables[i].type = VariableType::Numeric;
     }
 

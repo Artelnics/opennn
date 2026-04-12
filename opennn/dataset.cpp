@@ -45,13 +45,13 @@ VectorI Dataset::get_sample_role_numbers() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        const string& role = sample_roles[i];
-
-        if (role == "Training")         count[0]++;
-        else if (role == "Validation")  count[1]++;
-        else if (role == "Testing")     count[2]++;
-        else if (role == "None")        count[3]++;
-        else throw runtime_error("Unknown sample role: " + role);
+        switch(sample_roles[i])
+        {
+        case SampleRole::Training:   count[0]++; break;
+        case SampleRole::Validation: count[1]++; break;
+        case SampleRole::Testing:    count[2]++; break;
+        case SampleRole::None:       count[3]++; break;
+        }
     }
 
     return count;
@@ -59,13 +59,14 @@ VectorI Dataset::get_sample_role_numbers() const
 
 vector<Index> Dataset::get_sample_indices(const string& sample_role) const
 {
+    const SampleRole role_type = string_to_sample_role(sample_role);
     const Index samples_number = get_samples_number();
 
     vector<Index> indices;
     indices.reserve(get_samples_number(sample_role));
 
     for(Index i = 0; i < samples_number; ++i)
-        if(sample_roles[i] == sample_role)
+        if(sample_roles[i] == role_type)
             indices.push_back(i);
 
     return indices;
@@ -79,7 +80,7 @@ vector<Index> Dataset::get_used_sample_indices() const
     used_indices.reserve(samples_number - get_samples_number("None"));
 
     for(Index i = 0; i < samples_number; i++)
-        if (sample_roles[i] != "None")
+        if (sample_roles[i] != SampleRole::None)
             used_indices.push_back(i);
 
     return used_indices;
@@ -91,30 +92,9 @@ vector<Index> Dataset::get_sample_roles_vector() const
 
     vector<Index> sample_roles_vector(samples_number);
 
-    string omp_error;
-
 #pragma omp parallel for
     for(Index i = 0; i < samples_number; i++)
-    {
-        const string& role = sample_roles[i];
-
-        if(role == "Training")
-            sample_roles_vector[i] = 0;
-        else if(role == "Validation")
-            sample_roles_vector[i] = 1;
-        else if(role == "Testing")
-            sample_roles_vector[i] = 2;
-        else if(role == "None")
-            sample_roles_vector[i] = 3;
-        else
-        {
-            #pragma omp critical
-            { omp_error = "Unknown sample role: " + role; }
-        }
-    }
-
-    if(!omp_error.empty())
-        throw runtime_error(omp_error);
+        sample_roles_vector[i] = static_cast<Index>(sample_roles[i]);
 
     return sample_roles_vector;
 }
@@ -158,7 +138,8 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
 
 Index Dataset::get_samples_number(const string& sample_role) const
 {
-    return count(sample_roles.begin(), sample_roles.end(), sample_role);
+    const SampleRole role_type = string_to_sample_role(sample_role);
+    return count(sample_roles.begin(), sample_roles.end(), role_type);
 }
 
 Index Dataset::get_used_samples_number() const
@@ -171,17 +152,13 @@ Index Dataset::get_used_samples_number() const
 
 void Dataset::set_sample_roles(const string& sample_role)
 {
-    fill(sample_roles.begin(), sample_roles.end(), sample_role);
+    const SampleRole role_type = string_to_sample_role(sample_role);
+    fill(sample_roles.begin(), sample_roles.end(), role_type);
 }
 
 void Dataset::set_sample_role(const Index index, const string& new_role)
 {
-    static const unordered_set<string> valid_roles = {"Training", "Validation", "Testing", "None"};
-
-    if (valid_roles.count(new_role))
-        sample_roles[index] = new_role;
-    else
-        throw runtime_error("Unknown sample role: " + new_role + "\n");
+    sample_roles[index] = string_to_sample_role(new_role);
 }
 
 void Dataset::set_sample_roles(const vector<string>& new_roles)
@@ -189,22 +166,14 @@ void Dataset::set_sample_roles(const vector<string>& new_roles)
     const Index samples_number = new_roles.size();
 
     for(Index i = 0; i < samples_number; i++)
-        if (new_roles[i] == "Training" || new_roles[i] == "0")
-            sample_roles[i] = "Training";
-        else if (new_roles[i] == "Validation" || new_roles[i] == "1")
-            sample_roles[i] = "Validation";
-        else if (new_roles[i] == "Testing" || new_roles[i] == "2")
-            sample_roles[i] = "Testing";
-        else if (new_roles[i] == "None" || new_roles[i] == "3")
-            sample_roles[i] = "None";
-        else
-            throw runtime_error("Unknown sample role: " + new_roles[i] + ".\n");
+        sample_roles[i] = string_to_sample_role(new_roles[i]);
 }
 
 void Dataset::set_sample_roles(const vector<Index>& indices, const string& sample_role)
 {
+    const SampleRole role_type = string_to_sample_role(sample_role);
     for(const auto& i : indices)
-        set_sample_role(i, sample_role);
+        sample_roles[i] = role_type;
 }
 
 void Dataset::split_samples(const type training_samples_ratio,
@@ -233,7 +202,7 @@ void Dataset::split_samples(const type training_samples_ratio,
     if(shuffle)
         shuffle_vector(indices);
 
-    auto assign_role = [this, &indices](const string& role, Index count, Index& i)
+    auto assign_role = [this, &indices](SampleRole role, Index count, Index& i)
     {
         Index assigned = 0;
 
@@ -241,7 +210,7 @@ void Dataset::split_samples(const type training_samples_ratio,
         {
             const Index idx = indices[i++];
 
-            if (sample_roles[idx] != "None")
+            if (sample_roles[idx] != SampleRole::None)
             {
                 sample_roles[idx] = role;
                 assigned++;
@@ -251,9 +220,9 @@ void Dataset::split_samples(const type training_samples_ratio,
 
     Index index = 0;
 
-    assign_role("Training", training_samples_number, index);
-    assign_role("Validation", validation_samples_number, index);
-    assign_role("Testing", testing_samples_number, index);
+    assign_role(SampleRole::Training, training_samples_number, index);
+    assign_role(SampleRole::Validation, validation_samples_number, index);
+    assign_role(SampleRole::Testing, testing_samples_number, index);
 }
 
 void Dataset::split_samples_random(const type training_ratio,
@@ -421,11 +390,13 @@ vector<string> Dataset::get_feature_names(const string& variable_role) const
 
 Shape Dataset::get_shape(const string& variable_role) const
 {
-    if (variable_role == "Input")
+    const VariableRole role = string_to_variable_role(variable_role);
+
+    if (role == VariableRole::Input)
         return input_shape;
-    else if (variable_role == "Target")
+    else if (role == VariableRole::Target)
         return target_shape;
-    else if (variable_role == "Decoder")
+    else if (role == VariableRole::Decoder)
          return decoder_shape;
     else
         throw invalid_argument("get_shape: Invalid variable role string: " + variable_role);
@@ -433,11 +404,13 @@ Shape Dataset::get_shape(const string& variable_role) const
 
 void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
 {
-    if (variable_role == "Input")
+    const VariableRole role = string_to_variable_role(variable_role);
+
+    if (role == VariableRole::Input)
         input_shape = new_shape;
-    else if (variable_role == "Target")
+    else if (role == VariableRole::Target)
         target_shape = new_shape;
-     else if (variable_role == "Decoder")
+     else if (role == VariableRole::Decoder)
          decoder_shape = new_shape;
     else
         throw invalid_argument("set_shape: Invalid variable role string: " + variable_role);
@@ -456,6 +429,7 @@ Index Dataset::get_used_features_number() const
 
 vector<Index> Dataset::get_feature_indices(const string& variable_role) const
 {
+    const VariableRole role_type = string_to_variable_role(variable_role);
     const Index this_features_number = get_features_number(variable_role);
     vector<Index> this_feature_indices(this_features_number);
 
@@ -466,7 +440,7 @@ vector<Index> Dataset::get_feature_indices(const string& variable_role) const
     {
         const Index count = variable.is_categorical() ? variable.get_categories_number() : 1;
 
-        if (variable.role.find(variable_role) == string::npos)
+        if (!role_matches(variable.role, role_type))
         {
             feature_index += count;
             continue;
@@ -481,11 +455,13 @@ vector<Index> Dataset::get_feature_indices(const string& variable_role) const
 
 vector<Index> Dataset::get_variable_indices(const string& variable_role) const
 {
+    const VariableRole role_type = string_to_variable_role(variable_role);
+
     vector<Index> indices;
     indices.reserve(get_variables_number(variable_role));
 
     for(size_t i = 0; i < variables.size(); i++)
-        if (variables[i].role.find(variable_role) != string::npos)
+        if (role_matches(variables[i].role, role_type))
             indices.push_back(i);
 
     return indices;
@@ -515,7 +491,7 @@ vector<string> Dataset::get_feature_scalers(const string& variable_role) const
         const Index count = var.is_categorical() ? var.get_categories_number() : 1;
 
         for(Index j = 0; j < count; j++)
-            scalers.push_back(var.scaler);
+            scalers.push_back(scaler_method_to_string(var.scaler));
     }
 
     return scalers;
@@ -533,13 +509,15 @@ vector<string> Dataset::get_variable_names() const
 
 vector<string> Dataset::get_variable_names(const string& variable_role) const
 {
+    const VariableRole role_type = string_to_variable_role(variable_role);
+
     vector<string> names;
     names.reserve(get_variables_number(variable_role));
 
     for(const Variable& variable : variables)
     {
-        if(variable.role == variable_role
-        || ((variable_role == "Input" || variable_role == "Target") && variable.role == "InputTarget"))
+        if(variable.role == role_type
+        || ((role_type == VariableRole::Input || role_type == VariableRole::Target) && variable.role == VariableRole::InputTarget))
             names.push_back(variable.name);
     }
 
@@ -548,10 +526,12 @@ vector<string> Dataset::get_variable_names(const string& variable_role) const
 
 Index Dataset::get_variables_number(const string& variable_role) const
 {
+    const VariableRole role_type = string_to_variable_role(variable_role);
+
     Index count = 0;
 
     for(const Variable& variable : variables)
-        if (variable.role.find(variable_role) != string::npos)
+        if (role_matches(variable.role, role_type))
             count++;
 
     return count;
@@ -570,8 +550,10 @@ vector<Variable> Dataset::get_variables(const string& variable_role) const
     vector<Variable> this_variables;
     this_variables.reserve(get_variables_number(variable_role));
 
+    const VariableRole role_type = string_to_variable_role(variable_role);
+
     copy_if(variables.begin(), variables.end(), back_inserter(this_variables),
-            [&variable_role](const Variable& var) { return var.role.find(variable_role) != string::npos; });
+            [role_type](const Variable& var) { return role_matches(var.role, role_type); });
 
     return this_variables;
 }
@@ -586,10 +568,12 @@ Index Dataset::get_features_number() const
 
 Index Dataset::get_features_number(const string& variable_role) const
 {
+    const VariableRole role_type = string_to_variable_role(variable_role);
+
     Index count = 0;
 
     for(const Variable& variable : variables)
-        if (variable.role.find(variable_role) != string::npos)
+        if (role_matches(variable.role, role_type))
             count += (variable.type == VariableType::Categorical)
                          ? variable.get_categories_number()
                          : 1;
@@ -609,7 +593,7 @@ vector<Index> Dataset::get_used_feature_indices() const
     {
         const Index count = variable.is_categorical() ? variable.get_categories_number() : 1;
 
-        if(variable.role == "None" || variable.role == "Time")
+        if(variable.role == VariableRole::None || variable.role == VariableRole::Time)
         {
             feature_index += count;
             continue;
@@ -651,7 +635,7 @@ void Dataset::set_variable_indices(const vector<Index>& input_variables,
         set_variable_role(index, "Input");
 
     for(const Index index : target_variables)
-        variables[index].role == "Input"
+        variables[index].role == VariableRole::Input
             ? set_variable_role(index, "InputTarget")
             : set_variable_role(index, "Target");
 
@@ -671,19 +655,13 @@ void Dataset::set_input_variables_unused()
     const Index variables_number = get_variables_number();
 
     for(Index i = 0; i < variables_number; i++)
-        if (variables[i].role == "Input")
+        if (variables[i].role == VariableRole::Input)
             set_variable_role(i, "None");
 }
 
 void Dataset::set_variable_role(const Index index, const string& new_role)
 {
-    static const unordered_set<string> valid_strings
-        = {"Id", "Input", "Target", "InputTarget", "Time", "None", "Decoder"};
-
-    if(valid_strings.count(new_role) <= 0)
-        throw runtime_error("Invalid variable role: " + new_role);
-
-    variables[index].role = new_role;
+    variables[index].set_role(new_role);
 }
 
 void Dataset::set_variable_role(const string& name, const string& new_role)
@@ -746,8 +724,9 @@ void Dataset::set_variable_roles(const string& variable_role)
 
 void Dataset::set_variable_scalers(const string& scalers)
 {
+    const ScalerMethod method = string_to_scaler_method(scalers);
     for(Variable& variable : variables)
-        variable.scaler = scalers;
+        variable.scaler = method;
 }
 
 void Dataset::set_variable_scalers(const vector<string>& new_scalers)
@@ -759,7 +738,7 @@ void Dataset::set_variable_scalers(const vector<string>& new_scalers)
                             "has to be the same as variables numbers(" + to_string(variables_number) + ").\n");
 
     for(size_t i = 0; i < variables_number; i++)
-        variables[i].scaler = new_scalers[i];
+        variables[i].set_scaler(new_scalers[i]);
 }
 
 void Dataset::infer_variable_types_from_data()
@@ -1059,7 +1038,7 @@ void Dataset::set(const Index new_samples_number,
                                : "Target";
     }
 
-    sample_roles.resize(new_samples_number);
+    sample_roles.resize(new_samples_number, SampleRole::Training);
 
     split_samples_random();
 }
@@ -1153,7 +1132,7 @@ vector<string> Dataset::unuse_uncorrelated_variables(const type minimum_correlat
             }
         }
 
-        if(!has_significant_correlation && variables[input_variable_index].role != "None")
+        if(!has_significant_correlation && variables[input_variable_index].role != VariableRole::None)
         {
             variables[input_variable_index].set_role("None");
             unused_variables.push_back(variables[input_variable_index].name);
@@ -1231,7 +1210,7 @@ vector<string> Dataset::unuse_collinear_variables(const type maximum_correlation
         {
             const Index global_variable_index = input_variable_indices[i];
 
-            if (variables[global_variable_index].role != "None")
+            if (variables[global_variable_index].role != VariableRole::None)
             {
                 variables[global_variable_index].set_role("None");
                 unused_variables.push_back(variables[global_variable_index].name);
@@ -1255,7 +1234,7 @@ vector<Histogram> Dataset::calculate_variable_distributions(const Index bins_num
 
     for(const Variable& variable : variables)
     {
-        if (variable.role == "None")
+        if (variable.role == VariableRole::None)
         {
             feature_index += (variable.type == VariableType::Categorical)
             ? variable.get_categories_number()
@@ -1353,7 +1332,7 @@ vector<BoxPlot> Dataset::calculate_variables_box_plots() const
         if (variable.type == VariableType::Numeric
         || variable.type == VariableType::Binary)
         {
-            if (variable.role != "None")
+            if (variable.role != VariableRole::None)
                 box_plots[i] = box_plot(data.col(feature_index), used_sample_indices);
 
             feature_index++;
@@ -1472,7 +1451,7 @@ bool Dataset::has_nan() const
     const Index rows_number = data.rows();
 
     for(Index i = 0; i < rows_number; i++)
-        if (sample_roles[i] != "None")
+        if (sample_roles[i] != SampleRole::None)
             if (has_nan_row(i))
                 return true;
 
@@ -1555,33 +1534,43 @@ void Dataset::set_default_variable_scalers()
 {
     for(Variable& variable : variables)
         variable.scaler = (variable.type == VariableType::Numeric)
-                                  ? "MeanStandardDeviation"
-                                  : "MinimumMaximum";
+                                  ? ScalerMethod::MeanStandardDeviation
+                                  : ScalerMethod::MinimumMaximum;
 }
 
 void Dataset::apply_scaler(Index feature_index, const string& scaler, const Descriptives& desc, bool unscale)
 {
-    if(scaler == "None")
+    const ScalerMethod method = string_to_scaler_method(scaler);
+
+    if(method == ScalerMethod::None)
         return;
 
     MatrixMap map(data.data(), data.rows(), data.cols());
 
-    if(scaler == "MinimumMaximum")
+    switch(method)
+    {
+    case ScalerMethod::MinimumMaximum:
         unscale ? unscale_minimum_maximum(map, feature_index, desc)
                 : scale_minimum_maximum(map, feature_index, desc);
-    else if(scaler == "MeanStandardDeviation")
+        break;
+    case ScalerMethod::MeanStandardDeviation:
         unscale ? unscale_mean_standard_deviation(map, feature_index, desc)
                 : scale_mean_standard_deviation(map, feature_index, desc);
-    else if(scaler == "StandardDeviation")
+        break;
+    case ScalerMethod::StandardDeviation:
         unscale ? unscale_standard_deviation(map, feature_index, desc)
                 : scale_standard_deviation(map, feature_index, desc);
-    else if(scaler == "Logarithm")
+        break;
+    case ScalerMethod::Logarithm:
         unscale ? unscale_logarithmic(map, feature_index)
                 : scale_logarithmic(map, feature_index);
-    else if(unscale && scaler == "ImageMinMax")
-        unscale_image_minimum_maximum(map, feature_index);
-    else
-        throw runtime_error("Unknown scaler: " + scaler + "\n");
+        break;
+    case ScalerMethod::ImageMinMax:
+        if(unscale) unscale_image_minimum_maximum(map, feature_index);
+        break;
+    default:
+        break;
+    }
 }
 
 vector<Descriptives> Dataset::scale_data()
@@ -1591,7 +1580,7 @@ vector<Descriptives> Dataset::scale_data()
     const vector<Descriptives> feature_descriptives = calculate_feature_descriptives();
 
     for(Index i = 0; i < features_number; i++)
-        apply_scaler(i, variables[get_variable_index(i)].scaler, feature_descriptives[i], false);
+        apply_scaler(i, scaler_method_to_string(variables[get_variable_index(i)].scaler), feature_descriptives[i], false);
 
     return feature_descriptives;
 }
@@ -1774,7 +1763,7 @@ void Dataset::samples_from_XML(const XmlElement *samples_element)
         data.resize(samples_number, last_indices.back() + 1);
         data.setZero();
 
-        sample_roles.resize(samples_number);
+        sample_roles.resize(samples_number, SampleRole::Training);
         set_sample_roles(get_tokens(read_xml_string(samples_element, "SampleRoles"), " "));
     }
     else
@@ -2003,7 +1992,7 @@ VectorI Dataset::calculate_target_distribution() const
 
         for(Index i = 0; i < samples_number; i++)
         {
-            if (get_sample_role(i) == "None")
+            if (sample_roles[i] == SampleRole::None)
                 continue;
 
             for(Index j = 0; j < targets_number; j++)
@@ -2042,13 +2031,13 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_para
     {
         const Variable& variable = variables[i];
 
-        if (variable.role == "None"
+        if (variable.role == VariableRole::None
         && variable.type == VariableType::Categorical)
         {
             feature_index += variable.get_categories_number();
             continue;
         }
-        else if (variable.role == "None")
+        else if (variable.role == VariableRole::None)
         {
             feature_index++;
             continue;
@@ -2555,7 +2544,7 @@ void Dataset::read_csv()
 
     // Samples data
 
-    sample_roles.resize(samples_number);
+    sample_roles.resize(samples_number, SampleRole::Training);
     sample_ids.resize(samples_number);
 
     const vector<vector<Index>> all_feature_indices = get_feature_indices();
@@ -2746,7 +2735,7 @@ bool Dataset::has_binary_or_categorical_variables() const
 bool Dataset::has_time_variable() const
 {
     return any_of(variables.begin(), variables.end(),
-                  [](const Variable& variable) { return variable.role == "Time"; });
+                  [](const Variable& variable) { return variable.role == VariableRole::Time; });
 }
 
 bool Dataset::has_validation() const

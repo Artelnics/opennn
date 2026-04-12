@@ -26,6 +26,7 @@ Embedding::Embedding(const Shape& new_input_shape,
     set(new_input_shape[0], new_input_shape[1], new_embedding_dimension, new_label);
 
     name = "Embedding";
+    layer_type = LayerType::Embedding;
 }
 
 Shape Embedding::get_output_shape() const

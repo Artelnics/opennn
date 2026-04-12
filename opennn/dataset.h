@@ -17,6 +17,40 @@
 namespace opennn
 {
 
+enum class SampleRole
+{
+    Training,
+    Validation,
+    Testing,
+    None
+};
+
+inline const string& sample_role_to_string(SampleRole role)
+{
+    static const string training_str = "Training";
+    static const string validation_str = "Validation";
+    static const string testing_str = "Testing";
+    static const string none_str = "None";
+
+    switch(role)
+    {
+    case SampleRole::Training:   return training_str;
+    case SampleRole::Validation: return validation_str;
+    case SampleRole::Testing:    return testing_str;
+    default:                     return none_str;
+    }
+}
+
+inline SampleRole string_to_sample_role(const string& name)
+{
+    if(name == "Training" || name == "0") return SampleRole::Training;
+    if(name == "Validation" || name == "1") return SampleRole::Validation;
+    if(name == "Testing" || name == "2") return SampleRole::Testing;
+    if(name == "None" || name == "3") return SampleRole::None;
+
+    throw runtime_error("Unknown sample role: " + name);
+}
+
 class Dataset
 {
 
@@ -52,7 +86,7 @@ public:
 
     vector<Index> get_used_sample_indices() const;
 
-    const vector<string>& get_sample_roles() const { return sample_roles; }
+    const vector<SampleRole>& get_sample_roles() const { return sample_roles; }
 
     vector<Index> get_sample_roles_vector() const;
 
@@ -223,7 +257,7 @@ public:
 
     void set_display(bool d) { display = d; }
 
-    bool is_sample_used(const Index i) const { return sample_roles[i] != "None"; }
+    bool is_sample_used(const Index i) const { return sample_roles[i] != SampleRole::None; }
 
     bool has_binary_variables() const;
     bool has_categorical_variables() const;
@@ -401,7 +435,8 @@ private:
     void infer_variable_types_from_data();
     void unuse_constant_variables();
 
-    string get_sample_role(const Index i) const { return sample_roles[i]; }
+    string get_sample_role(const Index i) const { return sample_role_to_string(sample_roles[i]); }
+    SampleRole get_sample_role_type(const Index i) const { return sample_roles[i]; }
     vector<Index> filter_used_samples_by_column(Index, bool) const;
     void apply_scaler(Index, const string&, const Descriptives&, bool);
     void infer_column_types(const vector<vector<string>>&);
@@ -425,7 +460,7 @@ protected:
 
     // Samples
 
-    vector<string> sample_roles;
+    vector<SampleRole> sample_roles;
 
     vector<string> sample_ids;
 

@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "layer.h"
+#include "pooling_layer.h"
 
 namespace opennn
 {
@@ -17,8 +17,6 @@ class Pooling3d final : public Layer
 {
 
 public:
-
-    enum class PoolingMethod{MaxPooling, AveragePooling};
 
     Pooling3d(const Shape& = {0, 0}, // Input shape {sequence_length, features}
               const PoolingMethod& = PoolingMethod::MaxPooling,

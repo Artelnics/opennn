@@ -92,44 +92,44 @@ void Optimizer::set_scaling()
     vector<Descriptives> input_variable_descriptives;
     vector<string> input_variable_scalers;
 
-    if(neural_network->has("Scaling2d"))
+    if(neural_network->has(LayerType::Scaling2d))
     {
         input_variable_scalers = dataset->get_feature_scalers("Input");
         input_variable_descriptives = dataset->scale_features("Input");
 
-        Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(neural_network->get_first("Scaling2d"));
+        Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(neural_network->get_first(LayerType::Scaling2d));
         scaling_layer->set_descriptives(input_variable_descriptives);
         scaling_layer->set_scalers(input_variable_scalers);
     }
-    else if(neural_network->has("Scaling3d"))
+    else if(neural_network->has(LayerType::Scaling3d))
     {
         TimeSeriesDataset* time_series_dataset = static_cast<TimeSeriesDataset*>(dataset);
         input_variable_scalers = time_series_dataset->get_feature_scalers("Input");
         input_variable_descriptives = time_series_dataset->scale_features("Input");
 
-        Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(neural_network->get_first("Scaling3d"));
+        Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(neural_network->get_first(LayerType::Scaling3d));
         scaling_layer->set_descriptives(input_variable_descriptives);
         scaling_layer->set_scalers(input_variable_scalers);
     }
-    else if (neural_network->has("Scaling4d"))
+    else if (neural_network->has(LayerType::Scaling4d))
     {
         ImageDataset* image_dataset = static_cast<ImageDataset*>(dataset);
 
         image_dataset->scale_features("Input");
 
-        if (neural_network->get_first("Scaling4d"))
+        if (neural_network->get_first(LayerType::Scaling4d))
         {
-            Scaling<4>* scaling_layer = static_cast<Scaling<4>*>(neural_network->get_first("Scaling4d"));
+            Scaling<4>* scaling_layer = static_cast<Scaling<4>*>(neural_network->get_first(LayerType::Scaling4d));
             scaling_layer->set_scalers("ImageMinMax");
         }
     }
 
-    if(!neural_network->has("Unscaling"))
+    if(!neural_network->has(LayerType::Unscaling))
         return;
 
     // Unscaling layer
 
-    if(!neural_network->has("Unscaling")) return;
+    if(!neural_network->has(LayerType::Unscaling)) return;
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
@@ -169,7 +169,7 @@ void Optimizer::set_scaling()
         }
     }
 
-    Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+    Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
 
     if(static_cast<Index>(unscaling_layer_descriptives.size()) != unscaling_layer->get_outputs_number())
         throw runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");

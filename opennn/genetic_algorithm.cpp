@@ -544,15 +544,15 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     configure_neural_network_inputs(neural_network, dataset, optimal_variables_number);
 
-    if(neural_network->has("Scaling2d"))
+    if(neural_network->has(LayerType::Scaling2d))
     {
-        Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(neural_network->get_first("Scaling2d"));
+        Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(neural_network->get_first(LayerType::Scaling2d));
         scaling_layer->set_descriptives(input_variable_descriptives);
         scaling_layer->set_scalers(input_variable_scalers);
     }
-    else if(neural_network->has("Scaling3d"))
+    else if(neural_network->has(LayerType::Scaling3d))
     {
-        Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(neural_network->get_first("Scaling3d"));
+        Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(neural_network->get_first(LayerType::Scaling3d));
         scaling_layer->set_descriptives(input_variable_descriptives);
         scaling_layer->set_scalers(input_variable_scalers);
     }

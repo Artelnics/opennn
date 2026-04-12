@@ -261,20 +261,20 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     if(targets_number == 1)
     {
         variables[pixels_number].name = categories[0] + "_" + categories[1];
-        variables[pixels_number].role = "Target";
+        variables[pixels_number].role = VariableRole::Target;
         variables[pixels_number].type = VariableType::Binary;
         variables[pixels_number].set_categories(categories);
-        variables[pixels_number].scaler = "None";
+        variables[pixels_number].scaler = ScalerMethod::None;
     }
     else
     {
         variables.resize(pixels_number + 1);
 
         variables[pixels_number].name = "Class";
-        variables[pixels_number].role = "Target";
+        variables[pixels_number].role = VariableRole::Target;
         variables[pixels_number].type = VariableType::Categorical;
         variables[pixels_number].set_categories(categories);
-        variables[pixels_number].scaler = "None";
+        variables[pixels_number].scaler = ScalerMethod::None;
     }
 
     Index progress_counter = 0;

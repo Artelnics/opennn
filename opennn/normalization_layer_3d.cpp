@@ -46,6 +46,7 @@ void Normalization3d::set(const Index new_sequence_length,
 
     label = new_label;
     name = "Normalization3d";
+    layer_type = LayerType::Normalization3d;
 }
 
 void Normalization3d::set_parameters_random()

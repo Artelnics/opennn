@@ -79,9 +79,11 @@ Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& fea
     Tensor3 data_3d(samples_number, past_time_steps, features_number);
     data_3d.setZero();
 
-    if (feature_role == "Input" || feature_role == "InputTarget")
+    const VariableRole role_type = string_to_variable_role(feature_role);
+
+    if (role_type == VariableRole::Input || role_type == VariableRole::InputTarget)
         fill_inputs(sample_indices, feature_indices, data_3d.data());
-    else if (feature_role == "Target")
+    else if (role_type == VariableRole::Target)
         throw runtime_error("get_data for 3D is only implemented for 'Input' variables in TimeSeriesDataset.");
 
     return data_3d;
@@ -462,7 +464,7 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
     const vector<Index> target_variable_indices = get_variable_indices("Target");
 
     for(Index i = 0; i < target_variables_number; i++)
-        if(variables[target_variable_indices[i]].role != "InputTarget")
+        if(variables[target_variable_indices[i]].role != VariableRole::InputTarget)
             input_target_variables_number++;
 
     Index input_target_numeric_variables_number = 0;
@@ -505,7 +507,7 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
 
     for(Index i = 0; i < variables_number; i++)
     {
-        if(variables[i].role == "None" || variables[i].type != VariableType::Numeric)
+        if(variables[i].role == VariableRole::None || variables[i].type != VariableType::Numeric)
             continue;
 
         input_i = get_variable_data(i);
@@ -561,7 +563,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
             const VariableType target_variable_type = variables[variable_index].type;
 
-            if(target_variable_type == VariableType::Numeric && variables[variable_index].role != "InputTarget")
+            if(target_variable_type == VariableType::Numeric && variables[variable_index].role != VariableRole::InputTarget)
                 input_target_numeric_variables_number++;
 
             count++;
@@ -586,7 +588,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
     for(Index i = 0; i < variables_number; i++)
     {
-        if(variables[i].role == "None" || variables[i].type != VariableType::Numeric)
+        if(variables[i].role == VariableRole::None || variables[i].type != VariableType::Numeric)
             continue;
 
         input_i = get_variable_data(i);
@@ -597,7 +599,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
         for(Index j = 0; j < variables_number; j++)
         {
-            if(variables[j].role == "None"
+            if(variables[j].role == VariableRole::None
             || variables[j].type != VariableType::Numeric)
                 continue;
 
@@ -632,7 +634,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations_spearman(const Index pas
     vector<Index> numeric_vars_indices;
 
     for(size_t i = 0; i < variables.size(); ++i)
-        if(variables[i].role != "None" && variables[i].type == VariableType::Numeric)
+        if(variables[i].role != VariableRole::None && variables[i].type == VariableType::Numeric)
             numeric_vars_indices.push_back(i);
 
     const Index numeric_vars_count = numeric_vars_indices.size();

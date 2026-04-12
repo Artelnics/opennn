@@ -10,6 +10,7 @@
 
 #include "layer.h"
 #include "scaling.h"
+#include "variable.h"
 
 namespace opennn
 {
@@ -65,7 +66,7 @@ private:
     VectorR multipliers;
     VectorR offsets;
 
-    vector<string> scalers;
+    vector<ScalerMethod> scalers;
 
     type min_range = -1.0f;
     type max_range = 1.0f;

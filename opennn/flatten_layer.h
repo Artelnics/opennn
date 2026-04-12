@@ -38,6 +38,9 @@ public:
             throw runtime_error("Error: Input shape size must match layer Rank in FlattenLayer::set().");
 
         name = "Flatten" + to_string(Rank) + "d";
+        if constexpr (Rank == 2) layer_type = LayerType::Flatten2d;
+        else if constexpr (Rank == 3) layer_type = LayerType::Flatten3d;
+        else layer_type = LayerType::Flatten4d;
 
         set_label("flatten_layer");
 

@@ -108,17 +108,18 @@ void Unscaling::set(const Index new_neurons_number, const string& new_label)
     multipliers.resize(new_neurons_number);
     offsets.resize(new_neurons_number);
 
-    scalers.resize(new_neurons_number, "MinimumMaximum");
+    scalers.resize(new_neurons_number, ScalerMethod::MinimumMaximum);
 
     label = new_label;
 
-    set_scalers("MinimumMaximum");
+    set_scalers("MinimumMaximum"); // string overload converts internally
 
     set_min_max_range(type(-1), type(1));
 
     calculate_coefficients();
 
     name = "Unscaling";
+    layer_type = LayerType::Unscaling;
 
     is_trainable = false;
 }
@@ -152,13 +153,16 @@ void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 
 void Unscaling::set_scalers(const vector<string>& new_scaler)
 {
-    scalers = new_scaler;
+    scalers.resize(new_scaler.size());
+    for(size_t i = 0; i < new_scaler.size(); i++)
+        scalers[i] = string_to_scaler_method(new_scaler[i]);
 }
 
 void Unscaling::set_scalers(const string& new_scalers)
 {
-    for(string& scaler : scalers)
-        scaler = new_scalers;
+    const ScalerMethod method = string_to_scaler_method(new_scalers);
+    for(auto& scaler : scalers)
+        scaler = method;
 }
 
 void Unscaling::calculate_coefficients()
@@ -166,19 +170,23 @@ void Unscaling::calculate_coefficients()
     const Index n = scalers.size();
     for(Index i = 0; i < n; ++i)
     {
-        const string& method = scalers[i];
-        if(method == "MeanStandardDeviation") {
+        switch(scalers[i])
+        {
+        case ScalerMethod::MeanStandardDeviation:
             multipliers[i] = standard_deviations[i] + EPSILON;
             offsets[i] = means[i];
-        }
-        else if(method == "MinimumMaximum") {
+            break;
+        case ScalerMethod::MinimumMaximum:
+        {
             const type range = (maximums[i] - minimums[i]) + EPSILON;
             multipliers[i] = range / (max_range - min_range);
             offsets[i] = minimums[i] - min_range * multipliers[i];
+            break;
         }
-        else { // None
+        default: // None
             multipliers[i] = 1.0f;
             offsets[i] = 0.0f;
+            break;
         }
     }
 }
@@ -212,7 +220,7 @@ void Unscaling::to_XML(XmlPrinter& printer) const
         printer.open_element("UnscalingNeuron");
         printer.push_attribute("Index", int(i + 1));
         //add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
-        add_xml_element(printer, "Scaler", scalers[i]);
+        add_xml_element(printer, "Scaler", scaler_method_to_string(scalers[i]));
 
         printer.close_element();
     }
@@ -254,7 +262,7 @@ void Unscaling::from_XML(const XmlDocument& document)
                 type(stof(splitted_descriptives[3])));
         }
 */
-        scalers[i] = read_xml_string(unscaling_neuron_element, "Scaler");
+        scalers[i] = string_to_scaler_method(read_xml_string(unscaling_neuron_element, "Scaler"));
 
         start_element = unscaling_neuron_element;
     }

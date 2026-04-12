@@ -46,6 +46,7 @@ void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 
     label = "recurrent_layer";
     name = "Recurrent";
+    layer_type = LayerType::Recurrent;
 }
 
 void Recurrent::set_input_shape(const Shape& new_input_shape)

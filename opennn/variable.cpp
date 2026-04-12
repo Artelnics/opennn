@@ -21,9 +21,9 @@ Variable::Variable(const string& new_name, const string& new_variable_role, cons
 void Variable::set(const string& new_name, const string& new_variable_role, const VariableType& new_type, const string& new_scaler, const vector<string>& new_categories)
 {
     name = new_name;
-    role = new_variable_role;
+    role = string_to_variable_role(new_variable_role);
     type = new_type;
-    scaler = new_scaler;
+    scaler = string_to_scaler_method(new_scaler);
     categories = new_categories;
 }
 
@@ -89,7 +89,7 @@ void Variable::to_XML(XmlPrinter& printer) const
 {
     write_xml_properties(printer, {
         {"Name", name},
-        {"Scaler", scaler},
+        {"Scaler", get_scaler()},
         {"Role", get_role()},
         {"Type", get_type_string()}
     });

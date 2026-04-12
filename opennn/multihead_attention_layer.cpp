@@ -94,6 +94,7 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
                              const string& new_label)
 {
     name = "MultiHeadAttention";
+    layer_type = LayerType::MultiHeadAttention;
     query_sequence_length = new_query_sequence_length;
     source_sequence_length = new_source_sequence_length;
     embedding_dimension = new_embedding_dimension;

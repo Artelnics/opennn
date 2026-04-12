@@ -17,6 +17,89 @@ namespace opennn
 struct ForwardPropagation;
 struct BackPropagation;
 
+enum class LayerType
+{
+    Addition3d,
+    Addition4d,
+    Bounding,
+    Convolutional,
+    Dense2d,
+    Dense3d,
+    Embedding,
+    Flatten2d,
+    Flatten3d,
+    Flatten4d,
+    MultiHeadAttention,
+    Normalization3d,
+    Pooling,
+    Pooling3d,
+    Recurrent,
+    Scaling2d,
+    Scaling3d,
+    Scaling4d,
+    Unscaling
+};
+
+inline const string& layer_type_to_string(LayerType type)
+{
+    static const vector<pair<LayerType, string>> map = {
+        {LayerType::Addition3d,         "Addition3d"},
+        {LayerType::Addition4d,         "Addition4d"},
+        {LayerType::Bounding,           "Bounding"},
+        {LayerType::Convolutional,      "Convolutional"},
+        {LayerType::Dense2d,            "Dense2d"},
+        {LayerType::Dense3d,            "Dense3d"},
+        {LayerType::Embedding,          "Embedding"},
+        {LayerType::Flatten2d,          "Flatten2d"},
+        {LayerType::Flatten3d,          "Flatten3d"},
+        {LayerType::Flatten4d,          "Flatten4d"},
+        {LayerType::MultiHeadAttention, "MultiHeadAttention"},
+        {LayerType::Normalization3d,    "Normalization3d"},
+        {LayerType::Pooling,            "Pooling"},
+        {LayerType::Pooling3d,          "Pooling3d"},
+        {LayerType::Recurrent,          "Recurrent"},
+        {LayerType::Scaling2d,          "Scaling2d"},
+        {LayerType::Scaling3d,          "Scaling3d"},
+        {LayerType::Scaling4d,          "Scaling4d"},
+        {LayerType::Unscaling,          "Unscaling"}
+    };
+
+    for(const auto& [t, s] : map)
+        if(t == type) return s;
+
+    throw runtime_error("Unknown LayerType");
+}
+
+inline LayerType string_to_layer_type(const string& name)
+{
+    static const vector<pair<LayerType, string>> map = {
+        {LayerType::Addition3d,         "Addition3d"},
+        {LayerType::Addition4d,         "Addition4d"},
+        {LayerType::Bounding,           "Bounding"},
+        {LayerType::Convolutional,      "Convolutional"},
+        {LayerType::Dense2d,            "Dense2d"},
+        {LayerType::Dense3d,            "Dense3d"},
+        {LayerType::Embedding,          "Embedding"},
+        {LayerType::Flatten2d,          "Flatten2d"},
+        {LayerType::Flatten3d,          "Flatten3d"},
+        {LayerType::Flatten4d,          "Flatten4d"},
+        {LayerType::MultiHeadAttention, "MultiHeadAttention"},
+        {LayerType::Normalization3d,    "Normalization3d"},
+        {LayerType::Pooling,            "Pooling"},
+        {LayerType::Pooling3d,          "Pooling3d"},
+        {LayerType::Recurrent,          "Recurrent"},
+        {LayerType::Scaling2d,          "Scaling2d"},
+        {LayerType::Scaling3d,          "Scaling3d"},
+        {LayerType::Scaling4d,          "Scaling4d"},
+        {LayerType::Unscaling,          "Unscaling"}
+    };
+
+    for(const auto& [t, s] : map)
+        if(s == name) return t;
+
+    throw runtime_error("Unknown layer type name: " + name);
+}
+
 #ifdef _MSC_VER
 #define FORCE_INLINE __forceinline
 #elif defined(__GNUC__) || defined(__clang__)
@@ -35,6 +118,8 @@ public:
     const string& get_label() const { return label; }
 
     const string& get_name() const { return name; }
+
+    LayerType get_type() const { return layer_type; }
 
     virtual void set_input_shape(const Shape&);
     virtual void set_output_shape(const Shape&);
@@ -108,6 +193,8 @@ protected:
     string label = "my_layer";
 
     string name = "layer";
+
+    LayerType layer_type = LayerType::Dense2d;
 
     bool is_trainable = true;
 

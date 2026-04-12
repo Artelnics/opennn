@@ -155,9 +155,9 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         }
 
         const Index current_variable_index = correlations_rank_descending[variable_index];
-        const string current_use = dataset->get_variables()[current_variable_index].role;
+        const VariableRole current_use = dataset->get_variables()[current_variable_index].role;
 
-        if(current_use == "InputTarget")
+        if(current_use == VariableRole::InputTarget)
             dataset->set_variable_role(current_variable_index, "InputTarget");
         else
             dataset->set_variable_role(current_variable_index, "Input");
@@ -228,7 +228,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             if(display) cout << "Validation failure" << endl;
             validation_failures++;
 
-            if(dataset->get_variables()[current_variable_index].role == "InputTarget")
+            if(dataset->get_variables()[current_variable_index].role == VariableRole::InputTarget)
                 dataset->set_variable_role(current_variable_index, "Target");
             else
                 dataset->set_variable_role(current_variable_index, "None");
@@ -335,15 +335,15 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     else
         neural_network->set_input_names(dataset->get_feature_names("Input"));
 
-    if(neural_network->has("Scaling2d"))
+    if(neural_network->has(LayerType::Scaling2d))
     {
-        Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(neural_network->get_first("Scaling2d"));
+        Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(neural_network->get_first(LayerType::Scaling2d));
         scaling_layer->set_descriptives(input_variable_descriptives);
         scaling_layer->set_scalers(input_variable_scalers);
     }
-    else if(neural_network->has("Scaling3d"))
+    else if(neural_network->has(LayerType::Scaling3d))
     {
-        Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(neural_network->get_first("Scaling3d"));
+        Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(neural_network->get_first(LayerType::Scaling3d));
         scaling_layer->set_descriptives(input_variable_descriptives);
         scaling_layer->set_scalers(input_variable_scalers);
     }

@@ -203,7 +203,7 @@ TrainingResults StochasticGradientDescent::train()
     time(&beginning_time);
     type elapsed_time = type(0);
 
-    const bool shuffle = !neural_network->has("Recurrent");
+    const bool shuffle = !neural_network->has(LayerType::Recurrent);
 
     vector<vector<Index>> validation_batches;
     dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
@@ -492,7 +492,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     bool stop_training = false;
     constexpr bool is_training = true;
-    const bool shuffle = !neural_network->has("Recurrent");
+    const bool shuffle = !neural_network->has(LayerType::Recurrent);
 
     vector<vector<Index>> validation_batches;
     dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);

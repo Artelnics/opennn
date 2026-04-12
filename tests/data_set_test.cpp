@@ -315,9 +315,9 @@ TEST(Dataset, ReadCSV_Basic)
     EXPECT_EQ(raw_vars[1].type, VariableType::Numeric);
     EXPECT_EQ(raw_vars[2].type, VariableType::Binary);
 
-    EXPECT_EQ(raw_vars[0].role, "Input");
-    EXPECT_EQ(raw_vars[1].role, "Input");
-    EXPECT_EQ(raw_vars[2].role, "Target");
+    EXPECT_EQ(raw_vars[0].role, VariableRole::Input);
+    EXPECT_EQ(raw_vars[1].role, VariableRole::Input);
+    EXPECT_EQ(raw_vars[2].role, VariableRole::Target);
 
     // Data Tensor Content
     const MatrixR& data = dataset.get_data();
@@ -1041,10 +1041,10 @@ TEST(Dataset, test_unuse_uncorrelated_raw_variables)
     EXPECT_EQ(unused[1], "C");
 
     const auto& raw_vars = dataset.get_variables();
-    EXPECT_EQ(raw_vars[0].role, "Input");
-    EXPECT_EQ(raw_vars[1].role, "None");
-    EXPECT_EQ(raw_vars[2].role, "None");
-    EXPECT_EQ(raw_vars[3].role, "Target");
+    EXPECT_EQ(raw_vars[0].role, VariableRole::Input);
+    EXPECT_EQ(raw_vars[1].role, VariableRole::None);
+    EXPECT_EQ(raw_vars[2].role, VariableRole::None);
+    EXPECT_EQ(raw_vars[3].role, VariableRole::Target);
 }
 
 

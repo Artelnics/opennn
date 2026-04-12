@@ -41,12 +41,15 @@ public:
 
         label = new_label;
 
-        if constexpr (Rank == 3)
+        if constexpr (Rank == 3) {
             name = "Addition3d";
-        else if constexpr (Rank == 4)
+            layer_type = LayerType::Addition3d;
+        } else if constexpr (Rank == 4) {
             name = "Addition4d";
-        else
+            layer_type = LayerType::Addition4d;
+        } else {
             throw runtime_error("Addition layer not implemented for rank: " + to_string(Rank));
+        }
     }
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override

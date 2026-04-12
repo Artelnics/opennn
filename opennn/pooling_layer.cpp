@@ -23,6 +23,7 @@ Pooling::Pooling(const Shape& new_input_shape,
                  const string& new_name) : Layer()
 {
     name = "Pooling";
+    layer_type = LayerType::Pooling;
 
     set(new_input_shape,
         new_pool_dimensions,
@@ -135,15 +136,12 @@ void Pooling::set_pool_size(const Index new_pool_rows_number,
 
 void Pooling::set_pooling_method(const string& new_pooling_method)
 {
-    if(new_pooling_method != "MaxPooling" && new_pooling_method != "AveragePooling")
-        throw runtime_error("Unknown pooling type: " + new_pooling_method);
-
-    pooling_method = new_pooling_method;
+    pooling_method = string_to_pooling_method(new_pooling_method);
 
 #ifdef CUDA
-    if (pooling_method == "MaxPooling")
+    if (pooling_method == PoolingMethod::MaxPooling)
         pooling_mode = CUDNN_POOLING_MAX;
-    else if (pooling_method == "AveragePooling")
+    else
         pooling_mode = CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
 #endif
 }
@@ -153,12 +151,12 @@ void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t 
     const TensorView& input = forward_propagation.views[layer][Inputs][0];
     TensorView& output = forward_propagation.views[layer][Outputs][0];
 
-    if(pooling_method == "MaxPooling")
+    if(pooling_method == PoolingMethod::MaxPooling)
     {
         TensorView& maximal_indices = forward_propagation.views[layer][MaximalIndices][0];
         max_pooling(input, output, maximal_indices, cached_pool_args, is_training);
     }
-    else if(pooling_method == "AveragePooling")
+    else
         average_pooling(input, output, cached_pool_args);
 }
 
@@ -171,12 +169,12 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
     const TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
     TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
 
-    if(pooling_method == "MaxPooling")
+    if(pooling_method == PoolingMethod::MaxPooling)
     {
         const TensorView& maximal_indices = forward_propagation.views[layer][MaximalIndices][0];
         max_pooling_backward(input, output, output_gradient, maximal_indices, input_gradient, cached_pool_args);
     }
-    else if(pooling_method == "AveragePooling")
+    else
         average_pooling_backward(input, output, output_gradient, input_gradient, cached_pool_args);
 }
 
@@ -189,7 +187,7 @@ void Pooling::to_XML(XmlPrinter& printer) const
         {"InputDimensions", shape_to_string(get_input_shape())},
         {"PoolHeight", to_string(get_pool_height())},
         {"PoolWidth", to_string(get_pool_width())},
-        {"PoolingMethod", pooling_method},
+        {"PoolingMethod", pooling_method_to_string(pooling_method)},
         {"ColumnStride", to_string(get_column_stride())},
         {"RowStride", to_string(get_row_stride())},
         {"PaddingHeight", to_string(get_padding_height())},

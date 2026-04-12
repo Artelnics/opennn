@@ -151,6 +151,7 @@ public:
         set_label(new_label);
 
         name = "Dense" + to_string(Rank) + "d";
+        layer_type = (Rank == 2) ? LayerType::Dense2d : LayerType::Dense3d;
 
 #ifdef CUDA
         // @todo batch normalization device descriptors

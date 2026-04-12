@@ -25,6 +25,7 @@ Convolutional::Convolutional(const Shape& new_input_shape,
                              const string& new_name) : Layer()
 {
     name = "Convolutional";
+    layer_type = LayerType::Convolutional;
 
     set(new_input_shape,
         new_kernel_shape,
@@ -121,14 +122,14 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
 
 Index Convolutional::get_output_height() const
 {
-    return (convolution_type == "Same")
+    return (convolution_type == ConvolutionType::Same)
         ? (get_input_height() + get_row_stride() - 1) / get_row_stride()
         : (get_input_height() - get_kernel_height()) / get_row_stride() + 1;
 }
 
 Index Convolutional::get_output_width() const
 {
-    return (convolution_type == "Same")
+    return (convolution_type == ConvolutionType::Same)
         ? (get_input_width() + get_column_stride() - 1) / get_column_stride()
         : (get_input_width() - get_kernel_width()) / get_column_stride() + 1;
 }
@@ -140,36 +141,26 @@ Shape Convolutional::get_output_shape() const
 
 Index Convolutional::get_padding_height() const
 {
-    if (convolution_type == "Valid")
+    if (convolution_type == ConvolutionType::Valid)
         return 0;
 
-    if (convolution_type == "Same")
-    {
-        const Index output_height = (get_input_height() + get_row_stride() - 1) / get_row_stride();
+    const Index output_height = (get_input_height() + get_row_stride() - 1) / get_row_stride();
 
-        const Index total_padding = (output_height - 1) * get_row_stride() + get_kernel_height() - get_input_height();
+    const Index total_padding = (output_height - 1) * get_row_stride() + get_kernel_height() - get_input_height();
 
-        return total_padding / 2;
-    }
-
-    throw runtime_error("Unknown convolution type");
+    return total_padding / 2;
 }
 
 Index Convolutional::get_padding_width() const
 {
-    if (convolution_type == "Valid")
+    if (convolution_type == ConvolutionType::Valid)
         return 0;
 
-    if (convolution_type == "Same")
-    {
-        const Index output_width = (get_input_width() + get_column_stride() - 1) / get_column_stride();
+    const Index output_width = (get_input_width() + get_column_stride() - 1) / get_column_stride();
 
-        const Index total_padding = (output_width - 1) * get_column_stride() + get_kernel_width() - get_input_width();
+    const Index total_padding = (output_width - 1) * get_column_stride() + get_kernel_width() - get_input_width();
 
-        return total_padding / 2;
-    }
-
-    throw runtime_error("Unknown convolution type");
+    return total_padding / 2;
 }
 
 void Convolutional::set(const Shape& new_input_shape,
@@ -195,7 +186,7 @@ void Convolutional::set(const Shape& new_input_shape,
     if (new_stride_shape[0] > new_input_shape[0] || new_stride_shape[1] > new_input_shape[1])
         throw runtime_error("Stride shape cannot be bigger than input shape");
 
-    if (new_convolution_type == "Same" && (new_kernel_shape[0] % 2 == 0 || new_kernel_shape[1] % 2 == 0))
+    if (string_to_convolution_type(new_convolution_type) == ConvolutionType::Same && (new_kernel_shape[0] % 2 == 0 || new_kernel_shape[1] % 2 == 0))
         throw runtime_error("Kernel shape (height and width) must be odd (3x3,5x5 etc) when using 'Same' padding mode to ensure symmetric padding.");
 
     input_shape = new_input_shape;
@@ -280,11 +271,8 @@ void Convolutional::set_batch_normalization(bool new_batch_normalization)
 
 void Convolutional::set_convolution_type(const string& new_convolution_type)
 {
-    if(new_convolution_type != "Valid" && new_convolution_type != "Same")
-        throw runtime_error("Unknown convolution type: " + new_convolution_type + ".\n");
-
-    convolution_type = new_convolution_type;
-    use_padding = (convolution_type == "Same");
+    convolution_type = string_to_convolution_type(new_convolution_type);
+    use_padding = (convolution_type == ConvolutionType::Same);
 }
 
 void Convolutional::set_row_stride(const Index new_stride_row)
@@ -486,8 +474,8 @@ void Convolutional::init_cuda_workspace(Index batch_size)
     cudnnTensorDescriptor_t input_desc;
     cudnnCreateTensorDescriptor(&input_desc);
 
-    const Index input_h = convolution_type == "Same" ? get_input_height() : get_input_height();
-    const Index input_w = convolution_type == "Same" ? get_input_width() : get_input_width();
+    const Index input_h = convolution_type == ConvolutionType::Same ? get_input_height() : get_input_height();
+    const Index input_w = convolution_type == ConvolutionType::Same ? get_input_width() : get_input_width();
 
     cudnnSetTensor4dDescriptor(input_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
                                static_cast<int>(batch_size),

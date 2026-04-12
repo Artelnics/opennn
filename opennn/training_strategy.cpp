@@ -51,7 +51,7 @@ void TrainingStrategy::set_default()
 
     // Forecasting
 
-    if(neural_network->has("Recurrent"))
+    if(neural_network->has(LayerType::Recurrent))
     {
         set_loss("MeanSquaredError");
         set_optimization_algorithm("AdaptiveMomentEstimation");
@@ -60,7 +60,7 @@ void TrainingStrategy::set_default()
 
     // Image Classification
 
-    if(neural_network->has("Convolutional"))
+    if(neural_network->has(LayerType::Convolutional))
     {
         set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");
@@ -70,7 +70,7 @@ void TrainingStrategy::set_default()
 
     // Transformer
 
-    if(neural_network->has("Dense3d"))
+    if(neural_network->has(LayerType::Dense3d))
     {
         set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");
@@ -80,7 +80,7 @@ void TrainingStrategy::set_default()
 
     // Text Classification
 
-    if(neural_network->has("Embedding") || neural_network->has("MultiHeadAttention"))
+    if(neural_network->has(LayerType::Embedding) || neural_network->has(LayerType::MultiHeadAttention))
     {
         set_loss("WeightedSquaredError");
         set_optimization_algorithm("AdaptiveMomentEstimation");
@@ -108,7 +108,7 @@ TrainingResults TrainingStrategy::train()
     if(!optimizer->get_loss())
         throw runtime_error("Optimization algorithm is wrong.");
 
-    if(neural_network->has("Recurrent"))
+    if(neural_network->has(LayerType::Recurrent))
         fix_forecasting();
 
     return optimizer->train();

@@ -14,6 +14,29 @@
 namespace opennn
 {
 
+enum class ConvolutionType
+{
+    Valid,
+    Same
+};
+
+inline const string& convolution_type_to_string(ConvolutionType type)
+{
+    static const string valid_str = "Valid";
+    static const string same_str = "Same";
+
+    if(type == ConvolutionType::Same) return same_str;
+    return valid_str;
+}
+
+inline ConvolutionType string_to_convolution_type(const string& name)
+{
+    if(name == "Same") return ConvolutionType::Same;
+    if(name == "Valid") return ConvolutionType::Valid;
+
+    throw runtime_error("Unknown convolution type: " + name);
+}
+
 class Convolutional final : public Layer
 {
 
@@ -49,7 +72,7 @@ public:
     Index get_output_height() const;
     Index get_output_width() const;
 
-    string get_convolution_type() const { return convolution_type; }
+    ConvolutionType get_convolution_type() const { return convolution_type; }
 
     Index get_column_stride() const { return column_stride; }
 
@@ -178,7 +201,7 @@ private:
     Index row_stride = 1;
     Index column_stride = 1;
 
-    string convolution_type = "Valid";
+    ConvolutionType convolution_type = ConvolutionType::Valid;
     bool use_padding = false;
 
     ActivationFunction activation_function = ActivationFunction::Linear;

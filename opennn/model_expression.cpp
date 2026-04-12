@@ -108,13 +108,13 @@ string ModelExpression::get_expression_c(const vector<Variable>& variables) cons
     vector<string> input_names = neural_network->get_input_feature_names();
     if(input_names.empty())
         for(const Variable& variable : variables)
-            if(variable.role == "Input" || variable.role == "InputTarget")
+            if(variable.role == VariableRole::Input || variable.role == VariableRole::InputTarget)
                 input_names.push_back(variable.name);
 
     vector<string> output_names = neural_network->get_output_feature_names();
     if(output_names.empty())
         for(const Variable& variable : variables)
-            if(variable.role == "Target" || variable.role == "InputTarget")
+            if(variable.role == VariableRole::Target || variable.role == VariableRole::InputTarget)
                 output_names.push_back(variable.name);
 
     vector<string> fixed_feature_names = fix_feature_names(input_names);
@@ -347,13 +347,13 @@ string ModelExpression::get_expression_api(const vector<Variable>& variables) co
     vector<string> input_names = neural_network->get_input_feature_names();
     if(input_names.empty())
         for(const Variable& variable : variables)
-            if(variable.role == "Input" || variable.role == "InputTarget")
+            if(variable.role == VariableRole::Input || variable.role == VariableRole::InputTarget)
                 input_names.push_back(variable.name);
 
     vector<string> output_names = neural_network->get_output_feature_names();
     if(output_names.empty())
         for(const Variable& variable : variables)
-            if(variable.role == "Target" || variable.role == "InputTarget")
+            if(variable.role == VariableRole::Target || variable.role == VariableRole::InputTarget)
                 output_names.push_back(variable.name);
 
     const vector<string> fixed_feature_names = fix_feature_names(input_names);
@@ -728,13 +728,13 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
     vector<string> input_names = neural_network->get_input_feature_names();
     if(input_names.empty())
         for(const Variable& variable : variables)
-            if(variable.role == "Input" || variable.role == "InputTarget")
+            if(variable.role == VariableRole::Input || variable.role == VariableRole::InputTarget)
                 input_names.push_back(variable.name);
 
     vector<string> output_names = neural_network->get_output_feature_names();
     if(output_names.empty())
         for(const Variable& variable : variables)
-            if(variable.role == "Target" || variable.role == "InputTarget")
+            if(variable.role == VariableRole::Target || variable.role == VariableRole::InputTarget)
                 output_names.push_back(variable.name);
 
     const Index inputs_number = input_names.size();
@@ -822,7 +822,7 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
 
     // Inputs
 
-    if(neural_network->has("Scaling2d") || neural_network->has("Scaling4d") || neural_network->has("Scaling3d"))
+    if(neural_network->has(LayerType::Scaling2d) || neural_network->has(LayerType::Scaling4d) || neural_network->has(LayerType::Scaling3d))
     {
         vector<Descriptives> inputs_descriptives;
         vector<string> descriptive_names;
@@ -836,7 +836,7 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
             is_scaling_3d = true;
 
             for(const Variable& var : variables)
-                if(var.role == "Input" || var.role == "InputTarget")
+                if(var.role == VariableRole::Input || var.role == VariableRole::InputTarget)
                     descriptive_names.push_back(var.name);
         }
 */
@@ -1134,7 +1134,7 @@ string ModelExpression::get_expression_python(const vector<Variable>& variables)
     vector<string> input_names = neural_network->get_input_feature_names();
     if(input_names.empty())
         for(const Variable& variable : variables)
-            if(variable.role == "Input" || variable.role == "InputTarget")
+            if(variable.role == VariableRole::Input || variable.role == VariableRole::InputTarget)
                 input_names.push_back(variable.name);
 
     vector<string> const original_outputs = neural_network->get_output_feature_names();

@@ -59,7 +59,7 @@ public:
         return standard_deviations;
     }
 
-    const vector<string>& get_scalers() const
+    const vector<ScalerMethod>& get_scalers() const
     {
         return scalers;
     }
@@ -90,7 +90,7 @@ public:
         multipliers.resize(new_inputs_number);
         offsets.resize(new_inputs_number);
 
-        scalers.resize(new_inputs_number, "MeanStandardDeviation");
+        scalers.resize(new_inputs_number, ScalerMethod::MeanStandardDeviation);
 
         label = "scaling_layer";
 
@@ -99,6 +99,9 @@ public:
         calculate_coefficients();
 
         name = "Scaling" + to_string(Rank) + "d";
+        if constexpr (Rank == 2) layer_type = LayerType::Scaling2d;
+        else if constexpr (Rank == 3) layer_type = LayerType::Scaling3d;
+        else layer_type = LayerType::Scaling4d;
 
         is_trainable = false;
     }
@@ -140,13 +143,16 @@ public:
 
     void set_scalers(const vector<string>& new_scalers)
     {
-        scalers = new_scalers;
+        scalers.resize(new_scalers.size());
+        for(size_t i = 0; i < new_scalers.size(); i++)
+            scalers[i] = string_to_scaler_method(new_scalers[i]);
     }
 
     void set_scalers(const string& new_scaler)
     {
-        for(string& scaler : scalers)
-            scaler = new_scaler;
+        const ScalerMethod method = string_to_scaler_method(new_scaler);
+        for(auto& scaler : scalers)
+            scaler = method;
     }
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
@@ -322,22 +328,24 @@ public:
         const Index n = scalers.size();
         for(Index i = 0; i < n; ++i)
         {
-            const string& method = scalers[i];
-            if(method == "MeanStandardDeviation") {
+            switch(scalers[i])
+            {
+            case ScalerMethod::MeanStandardDeviation:
                 multipliers[i] = 1.0f / (standard_deviations[i] + EPSILON);
                 offsets[i] = -means[i] * multipliers[i];
-            }
-            else if(method == "MinimumMaximum") {
+                break;
+            case ScalerMethod::MinimumMaximum:
                 multipliers[i] = (max_range - min_range) / ((maximums[i] - minimums[i]) + EPSILON);
                 offsets[i] = min_range - (minimums[i] * multipliers[i]);
-            }
-            else if(method == "ImageMinMax") {
+                break;
+            case ScalerMethod::ImageMinMax:
                 multipliers[i] = 1.0f / 255.0f;
                 offsets[i] = 0.0f;
-            }
-            else { // None
+                break;
+            default: // None
                 multipliers[i] = 1.0f;
                 offsets[i] = 0.0f;
+                break;
             }
         }
     }
@@ -354,7 +362,7 @@ private:
     VectorR multipliers;
     VectorR offsets;
 
-    vector<string> scalers;
+    vector<ScalerMethod> scalers;
 
     type min_range;
     type max_range;

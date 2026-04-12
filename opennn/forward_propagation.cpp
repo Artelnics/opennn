@@ -148,7 +148,7 @@ void ForwardPropagation::allocate_device()
     // Initialize CUDA workspaces for convolutional layers
     for(auto& layer : neural_network->get_layers())
     {
-        if(layer->get_name() == "Convolutional")
+        if(layer->get_type() == LayerType::Convolutional)
         {
             Convolutional* conv = static_cast<Convolutional*>(layer.get());
             conv->init_cuda_workspace(batch_size);

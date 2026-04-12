@@ -925,7 +925,7 @@ Index Transformer::get_embedding_dimension() const
 Index Transformer::get_heads_number() const
 {
     for(const auto& layer : layers)
-        if(layer->get_name() == "MultiHeadAttention")
+        if(layer->get_type() == LayerType::MultiHeadAttention)
             return static_cast<MultiHeadAttention*>(layer.get())->get_heads_number();
 
     return 0;

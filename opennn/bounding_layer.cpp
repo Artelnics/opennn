@@ -61,6 +61,7 @@ void Bounding::set(const Shape& new_output_shape, const string& new_label)
     bounding_method = BoundingMethod::Bounding;
 
     name = "Bounding";
+    layer_type = LayerType::Bounding;
 
     is_trainable = false;
 }

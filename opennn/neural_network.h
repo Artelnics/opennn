@@ -67,6 +67,7 @@ public:
     // Get
 
     bool has(const string&) const;
+    bool has(LayerType) const;
 
     bool is_empty() const { return layers.empty(); }
 
@@ -93,6 +94,7 @@ public:
     Index find_input_index(const vector<Index>&, Index) const;
 
     Layer* get_first(const string&) const;
+    Layer* get_first(LayerType) const;
 
     // Set
 
@@ -119,6 +121,7 @@ public:
 
     Index get_layers_number() const { return layers.size(); }
     Index get_layers_number(const string&) const;
+    Index get_layers_number(LayerType) const;
 
     Index get_first_trainable_layer_index() const;
     Index get_last_trainable_layer_index() const;
@@ -204,7 +207,7 @@ public:
 
 private:
 
-    bool validate_name(const string&) const;
+    bool validate_type(LayerType) const;
     vector<string> get_layer_labels() const;
 
 protected:
