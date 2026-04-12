@@ -26,7 +26,7 @@ void Loss::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
     neural_network = new_neural_network;
     dataset = new_dataset;
 
-    regularization_method = "L2";
+    regularization_method = Regularization::L2;
     set_error(Error::MeanSquaredError);
 
 }
@@ -130,7 +130,7 @@ void Loss::calculate_output_gradients(const Batch& batch, const ForwardPropagati
 
 void Loss::add_regularization(BackPropagation& back_propagation) const
 {
-    if(regularization_method == "None") return;
+    if(regularization_method == Regularization::NoRegularization) return;
 
     check_neural_network();
 
@@ -145,14 +145,14 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
 
 type Loss::calculate_regularization(const VectorR& parameters_vec) const
 {
-    if(regularization_method == "None" || regularization_weight == 0.0f) return 0.0f;
+    if(regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return 0.0f;
 
     const TensorView parameters(const_cast<type*>(parameters_vec.data()), { static_cast<Index>(parameters_vec.size()) });
     type penalty = 0.0f;
 
-    if (regularization_method == "L1")
+    if (regularization_method == Regularization::L1)
         l1_regularization(parameters, regularization_weight, penalty);
-    else if (regularization_method == "L2")
+    else if (regularization_method == Regularization::L2)
         l2_regularization(parameters, regularization_weight, penalty);
 
     return penalty;
@@ -204,7 +204,7 @@ void Loss::set_error(const string& new_name)
 
 void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 {
-    if(regularization_method == "None" || regularization_weight == 0.0f) return;
+    if(regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return;
 
     check_neural_network();
 
@@ -218,9 +218,9 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
     TensorView gradient(back_propagation.gradient.device(), { n });
 #endif
 
-    if (regularization_method == "L1")
+    if (regularization_method == Regularization::L1)
         l1_regularization_gradient(parameters, regularization_weight, gradient);
-    else if (regularization_method == "L2")
+    else if (regularization_method == Regularization::L2)
         l2_regularization_gradient(parameters, regularization_weight, gradient);
 }
 
@@ -246,7 +246,7 @@ void Loss::write_regularization_XML(XmlPrinter& file_stream) const
 {
     file_stream.open_element("Regularization");
 
-    file_stream.push_attribute("Type", regularization_method.c_str());
+    file_stream.push_attribute("Type", regularization_to_string(regularization_method).c_str());
 
     // Regularization weight
 
@@ -485,7 +485,7 @@ void Loss::to_XML(XmlPrinter& printer) const
     printer.open_element("Loss");
     write_xml_properties(printer, {
         {"Method", get_name()},
-        {"Regularization", regularization_method},
+        {"Regularization", regularization_to_string(regularization_method)},
         {"RegularizationWeight", to_string(regularization_weight)}
     });
 
@@ -510,7 +510,7 @@ void Loss::from_XML(const XmlDocument& document)
 
     set_error(read_xml_string(root, "Method"));
 
-    regularization_method = read_xml_string(root, "Regularization");
+    set_regularization(read_xml_string(root, "Regularization"));
     regularization_weight = read_xml_type(root, "RegularizationWeight");
 
     if (root->first_child_element("NormalizationCoefficient"))

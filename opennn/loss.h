@@ -31,10 +31,33 @@ public:
                      CrossEntropy,
                      MinkowskiError};
 
-    enum class Regularization{L1,
-                              L2,
-                              ElasticNet,
-                              NoRegularization};
+    enum class Regularization{L1, L2, ElasticNet, NoRegularization};
+
+    static const string& regularization_to_string(Regularization r)
+    {
+        static const string l1_str = "L1";
+        static const string l2_str = "L2";
+        static const string elastic_str = "ElasticNet";
+        static const string none_str = "None";
+
+        switch(r)
+        {
+        case Regularization::L1:        return l1_str;
+        case Regularization::L2:        return l2_str;
+        case Regularization::ElasticNet: return elastic_str;
+        default:                         return none_str;
+        }
+    }
+
+    static Regularization string_to_regularization(const string& name)
+    {
+        if(name == "L1")         return Regularization::L1;
+        if(name == "L2")         return Regularization::L2;
+        if(name == "ElasticNet") return Regularization::ElasticNet;
+        if(name == "None" || name == "NoRegularization") return Regularization::NoRegularization;
+
+        throw runtime_error("Unknown regularization method: " + name);
+    }
 
     Loss(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
@@ -50,7 +73,8 @@ public:
         return dataset;
     }
 
-    const string& get_regularization_method() const { return regularization_method; }
+    const string& get_regularization_method() const { return regularization_to_string(regularization_method); }
+    Regularization get_regularization_type() const { return regularization_method; }
 
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
@@ -58,7 +82,8 @@ public:
 
     virtual void set_dataset(Dataset* ds) { dataset = ds; }
 
-    void set_regularization(const string& m) { regularization_method = m; }
+    void set_regularization(const string& m) { regularization_method = string_to_regularization(m); }
+    void set_regularization(Regularization r) { regularization_method = r; }
     void set_regularization_weight(const type w) { regularization_weight = w; }
 
     virtual void set_normalization_coefficient() {}
@@ -145,7 +170,7 @@ protected:
     type minkowski_parameter = 1.5f;
 
     // Regularization
-    string regularization_method = "L2";
+    Regularization regularization_method = Regularization::L2;
     type regularization_weight = 0.001f;
 
     NeuralNetwork* neural_network = nullptr;

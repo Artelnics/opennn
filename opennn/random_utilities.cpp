@@ -6,19 +6,23 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
+#include <atomic>
 #include "random_utilities.h"
 
 namespace opennn
 {
 
-static long long global_seed = -1;
+static atomic<long long> global_seed{-1};
+static atomic<unsigned int> seed_generation{0};
 
 thread_local mt19937 generator;
-thread_local bool is_initialized = false;
+thread_local unsigned int local_generation = 0;
 
 void initialize_generator()
 {
-    if (global_seed == -1)
+    const long long seed = global_seed.load();
+
+    if (seed == -1)
     {
         random_device rd;
         generator.seed(rd());
@@ -26,27 +30,31 @@ void initialize_generator()
     else
     {
         const int thread_id = omp_get_thread_num();
-        generator.seed(static_cast<unsigned int>(global_seed + thread_id * 5489u));
+        generator.seed(static_cast<unsigned int>(seed + thread_id * 5489u));
     }
 
-    is_initialized = true;
+    local_generation = seed_generation.load();
 }
 
 void set_seed(Index seed)
 {
-    global_seed = seed;
+    global_seed.store(seed);
+    seed_generation.fetch_add(1);
 
-    is_initialized = false;
+    // Re-initialize the calling thread immediately
+    initialize_generator();
 }
 
 long long get_seed()
 {
-    return global_seed;
+    return global_seed.load();
 }
 
 inline mt19937& get_generator()
 {
-    if(!is_initialized) initialize_generator();
+    if(local_generation != seed_generation.load())
+        initialize_generator();
+
     return generator;
 }
 
