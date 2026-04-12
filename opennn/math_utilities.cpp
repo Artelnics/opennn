@@ -202,7 +202,7 @@ void copy(const TensorView& source, TensorView& destination)
         throw runtime_error("Math Error: Tensor sizes mismatch in copy operation.");
 
 #ifndef CUDA
-    destination.as_vector() = source.as_vector();
+    memcpy(destination.data, source.data, source.size() * sizeof(type));
 #else
     CHECK_CUDA(cudaMemcpy(destination.data,
                           source.data,
@@ -1441,24 +1441,13 @@ void multihead_attention_forward(
         const MatrixMap k(key.data + i * source_sequence_length * head_dimension, source_sequence_length, head_dimension);
         MatrixMap w(attention_weights.data + i * query_sequence_length * source_sequence_length, query_sequence_length, source_sequence_length);
         w.noalias() = (q * k.transpose()) * scaling_factor;
-    }
-
-    if(causal_mask.size() > 0)
-        for(Index i = 0; i < total_heads; ++i)
-        {
-            MatrixMap w(attention_weights.data + i * query_sequence_length * source_sequence_length, query_sequence_length, source_sequence_length);
+        if(use_causal_mask)
             w += causal_mask;
-        }
+    }
 
     const Index total_rows = total_heads * query_sequence_length;
-    MatrixMap att_map(attention_weights.data, total_rows, source_sequence_length);
-    for(Index r = 0; r < total_rows; ++r)
-    {
-        auto row = att_map.row(r);
-        const type mx = row.maxCoeff();
-        row.array() = (row.array() - mx).exp();
-        row /= row.sum();
-    }
+    TensorView att_view(attention_weights.data, {total_rows, source_sequence_length});
+    softmax(att_view);
 
     #pragma omp parallel for collapse(2)
     for(Index b = 0; b < batch_size; ++b)
@@ -1616,21 +1605,18 @@ void multihead_attention_backward(
     #pragma omp parallel for firstprivate(dot)
     for(Index i = 0; i < total_heads; ++i)
     {
-        const Index off = i * query_sequence_length * source_sequence_length;
-        const MatrixMap P(attention_weights.data + off, query_sequence_length, source_sequence_length);
-        MatrixMap dP(att_weight_grad.data + off, query_sequence_length, source_sequence_length);
-        dot.noalias() = (P.array() * dP.array()).rowwise().sum().matrix();
-        dP.array() = P.array() * (dP.colwise() - dot).array();
-    }
-
-    #pragma omp parallel for
-    for(Index i = 0; i < total_heads; ++i)
-    {
         const Index off_w = i * query_sequence_length * source_sequence_length;
         const Index off_q = i * query_sequence_length * head_dimension;
         const Index off_k = i * source_sequence_length * head_dimension;
 
-        const MatrixMap dP(att_weight_grad.data + off_w, query_sequence_length, source_sequence_length);
+        const MatrixMap P(attention_weights.data + off_w, query_sequence_length, source_sequence_length);
+        MatrixMap dP(att_weight_grad.data + off_w, query_sequence_length, source_sequence_length);
+
+        // Softmax gradient
+        dot.noalias() = (P.array() * dP.array()).rowwise().sum().matrix();
+        dP.array() = P.array() * (dP.colwise() - dot).array();
+
+        // dQ/dK from dP (dP still in cache)
         const MatrixMap Q(query.data + off_q, query_sequence_length, head_dimension);
         const MatrixMap K(key.data + off_k, source_sequence_length, head_dimension);
         MatrixMap dQ(query_grad.data + off_q, query_sequence_length, head_dimension);

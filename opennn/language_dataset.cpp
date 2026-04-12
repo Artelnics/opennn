@@ -166,26 +166,18 @@ void LanguageDataset::encode_decoder_target_sequence_to_sequence(const vector<ve
 
         for(Index i = 0; i < target_tokens_number; i++)
         {
-            if(i + 1 >= maximum_target_sequence_length) break;
-
-            const auto iterator = target_vocabulary_map.find(target_tokens[i]);
-
-            data(sample, decoder_offset + 1 + i) =
-                (iterator != target_vocabulary_map.end())
-                    ? static_cast<type>(iterator->second)
-                    : UNK_INDEX;
-        }
-
-        for(Index i = 0; i < target_tokens_number; i++)
-        {
             if(i >= maximum_target_sequence_length) break;
 
             const auto iterator = target_vocabulary_map.find(target_tokens[i]);
 
-            data(sample, target_offset + i) =
-                (iterator != target_vocabulary_map.end())
-                    ? static_cast<type>(iterator->second)
-                    : UNK_INDEX;
+            const type token_index = (iterator != target_vocabulary_map.end())
+                ? static_cast<type>(iterator->second)
+                : UNK_INDEX;
+
+            if(i + 1 < maximum_target_sequence_length)
+                data(sample, decoder_offset + 1 + i) = token_index;
+
+            data(sample, target_offset + i) = token_index;
         }
 
         if(target_tokens_number < maximum_target_sequence_length)

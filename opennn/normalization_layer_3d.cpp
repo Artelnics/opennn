@@ -135,19 +135,13 @@ void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
     TensorView& gamma_grad_view = back_propagation.gradient_views[layer][Gammas];
     TensorView& beta_grad_view = back_propagation.gradient_views[layer][Betas];
 
-    VectorMap dGamma(gamma_grad_view.data, E);
-    VectorMap dBeta(beta_grad_view.data, E);
+    TensorMap1 dGamma(gamma_grad_view.data, E);
+    TensorMap1 dBeta(beta_grad_view.data, E);
 
     // dGamma = sum(dY * X_hat, axes={batch, sequence})
-    Tensor1 dGamma_tensor = (output_gradients * X_hat).sum(array<Index, 2>({0, 1}));
+    dGamma = (output_gradients * X_hat).sum(array<Index, 2>({0, 1}));
     // dBeta = sum(dY, axes={batch, sequence})
-    Tensor1 dBeta_tensor = output_gradients.sum(array<Index, 2>({0, 1}));
-
-    for(Index i = 0; i < E; ++i)
-    {
-        dGamma(i) = dGamma_tensor(i);
-        dBeta(i) = dBeta_tensor(i);
-    }
+    dBeta = output_gradients.sum(array<Index, 2>({0, 1}));
 
     // Input gradients (only if not the first layer)
     if(!is_first_layer)
@@ -161,28 +155,23 @@ void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
         auto gamma_bcast = gamma_map.reshape(array<Index, 3>({1, 1, E}))
                                .broadcast(array<Index, 3>({batch_size, sequence_length, 1}));
 
-        // D = dY * gamma
-        Tensor3 D = output_gradients * gamma_bcast;
+        // Compute sums directly without materializing D = dY * gamma
+        Tensor2 sum_dY = output_gradients.sum(array<Index, 1>({2}));
+        Tensor2 sum_dY_xhat = (output_gradients * X_hat).sum(array<Index, 1>({2}));
 
-        // sum_D = sum(D, axis=embedding)
-        Tensor2 sum_D = D.sum(array<Index, 1>({2}));
+        auto sum_dY_bcast = sum_dY.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
+                                .broadcast(array<Index, 3>({1, 1, E}));
 
-        // sum_D_xhat = sum(D * X_hat, axis=embedding)
-        Tensor2 sum_D_xhat = (D * X_hat).sum(array<Index, 1>({2}));
-
-        auto sum_D_bcast = sum_D.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
-                               .broadcast(array<Index, 3>({1, 1, E}));
-
-        auto sum_D_xhat_bcast = sum_D_xhat.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
-                                    .broadcast(array<Index, 3>({1, 1, E}));
+        auto sum_dY_xhat_bcast = sum_dY_xhat.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
+                                     .broadcast(array<Index, 3>({1, 1, E}));
 
         auto std_dev_bcast = standard_deviations.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
                                  .broadcast(array<Index, 3>({1, 1, E}));
 
         const type inv_E = type(1.0) / static_cast<type>(E);
 
-        // dX = (1 / sigma) * (D - mean(D) - X_hat * mean(D * X_hat))
-        dX = (D - sum_D_bcast * inv_E - X_hat * sum_D_xhat_bcast * inv_E) / std_dev_bcast;
+        // dX = (gamma / sigma) * (dY - mean(dY) - X_hat * mean(dY * X_hat))
+        dX = gamma_bcast * (output_gradients - sum_dY_bcast * inv_E - X_hat * sum_dY_xhat_bcast * inv_E) / std_dev_bcast;
     }
 }
 

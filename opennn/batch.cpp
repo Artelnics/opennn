@@ -103,15 +103,22 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& target_indices,
                  bool augment)
 {
-    dataset->fill_inputs(sample_indices, input_indices, input.data());
+    if(input_contiguous < 0 && !input_indices.empty())
+        input_contiguous = is_contiguous(input_indices) ? 1 : 0;
+    if(decoder_contiguous < 0 && !decoder_indices.empty())
+        decoder_contiguous = is_contiguous(decoder_indices) ? 1 : 0;
+    if(target_contiguous < 0 && !target_indices.empty())
+        target_contiguous = is_contiguous(target_indices) ? 1 : 0;
+
+    dataset->fill_inputs(sample_indices, input_indices, input.data(), true, input_contiguous);
 
     if(augment)
         dataset->augment_inputs(input.data(), sample_indices.size());
 
     if(!decoder_shape.empty())
-        dataset->fill_decoder(sample_indices, decoder_indices, decoder.data());
+        dataset->fill_decoder(sample_indices, decoder_indices, decoder.data(), true, decoder_contiguous);
 
-    dataset->fill_targets(sample_indices, target_indices, target.data());
+    dataset->fill_targets(sample_indices, target_indices, target.data(), true, target_contiguous);
 }
 
 Index Batch::get_samples_number() const

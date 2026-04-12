@@ -383,19 +383,22 @@ public:
     virtual void fill_inputs(const vector<Index>&,
                              const vector<Index>&,
                              type*,
-                             bool = true) const;
+                             bool = true,
+                             int contiguous = -1) const;
 
     virtual void augment_inputs(type*, Index) const {}
 
     virtual void fill_decoder(const vector<Index>&,
                               const vector<Index>&,
                               type*,
-                              bool = true) const;
+                              bool = true,
+                              int contiguous = -1) const;
 
     virtual void fill_targets(const vector<Index>&,
                               const vector<Index>&,
                               type*,
-                              bool = true) const;
+                              bool = true,
+                              int contiguous = -1) const;
 
 private:
 

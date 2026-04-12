@@ -2695,23 +2695,23 @@ void Dataset::check_separators(const string& line) const
 
 void Dataset::fill_inputs(const vector<Index>& sample_indices,
                           const vector<Index>& input_indices,
-                          type* input_data, bool parallelize) const
+                          type* input_data, bool parallelize, int contiguous) const
 {
-    fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize);
+    fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize, contiguous);
 }
 
 void Dataset::fill_decoder(const vector<Index>& sample_indices,
                            const vector<Index>& decoder_indices,
-                           type* decoder_data, bool parallelize) const
+                           type* decoder_data, bool parallelize, int contiguous) const
 {
-    fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, parallelize);
+    fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, parallelize, contiguous);
 }
 
 void Dataset::fill_targets(const vector<Index>& sample_indices,
                            const vector<Index>& target_indices,
-                           type* target_data, bool parallelize) const
+                           type* target_data, bool parallelize, int contiguous) const
 {
-    fill_tensor_data(data, sample_indices, target_indices, target_data, parallelize);
+    fill_tensor_data(data, sample_indices, target_indices, target_data, parallelize, contiguous);
 }
 
 bool Dataset::has_binary_variables() const

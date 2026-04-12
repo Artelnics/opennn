@@ -544,7 +544,7 @@ vector<Index> get_elements_greater_than(const vector<vector<Index>>&, Index);
 
 VectorI get_nearest_points(const MatrixR& ,const VectorR& , int = 1);
 
-void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true);
+void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true, int contiguous = -1);
 
 template <typename Type, int Rank>
 bool contains(const TensorR<Rank>& tensor, const Type& value)

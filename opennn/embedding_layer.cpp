@@ -66,7 +66,13 @@ void Embedding::set(const Index new_vocabulary_size,
                 : cos(i / divisors(j));
 #ifdef CUDA
 
-    positional_encoding_device.resize(new_sequence_length * new_embedding_dimension);
+    const Index pe_size = new_sequence_length * new_embedding_dimension;
+    positional_encoding_device.resize(pe_size);
+    positional_encoding_device.resize_device(pe_size);
+    CHECK_CUDA(cudaMemcpy(positional_encoding_device.device(),
+                          positional_encoding.data(),
+                          pe_size * sizeof(float),
+                          cudaMemcpyHostToDevice));
 
 #endif
 }
@@ -138,10 +144,9 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
     if(add_positional_encoding)
     {
         #pragma omp parallel for
-        for(Index b = 0; b < batch_size; b++)
-            for(Index s = 0; s < sequence_length; s++)
-                if (static_cast<Index>(input_indices[b * sequence_length + s]) > 0)
-                    outputs.row(b * sequence_length + s) += positional_encoding.row(s);
+        for(Index i = 0; i < total_tokens; i++)
+            if (static_cast<Index>(input_indices[i]) > 0)
+                outputs.row(i) += positional_encoding.row(i % sequence_length);
     }
 
     //if(is_training && dropout_rate > 0)
@@ -157,18 +162,9 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
     const float* inputs_data = forward_propagation.views[layer][Inputs][0].data;
     const float* weights_data = parameters[Weights].data;
 
-    const float* positional_encoding_data = nullptr;
-
-    if(add_positional_encoding)
-    {
-        const Index pe_size = seq_len * embedding_dimension;
-        positional_encoding_device.resize_device(pe_size);
-        CHECK_CUDA(cudaMemcpy(positional_encoding_device.device(),
-                              positional_encoding.data(),
-                              pe_size * sizeof(float),
-                              cudaMemcpyHostToDevice));
-        positional_encoding_data = positional_encoding_device.device();
-    }
+    const float* positional_encoding_data = add_positional_encoding
+        ? positional_encoding_device.device()
+        : nullptr;
 
     float* outputs_ptr = forward_propagation.views[layer][Outputs][0].data;
 

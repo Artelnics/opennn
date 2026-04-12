@@ -147,8 +147,6 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     old_gradient = gradient;
     inverse_hessian.swap(optimization_data.old_inverse_hessian);
     optimization_data.old_learning_rate = optimization_data.learning_rate;
-
-    neural_network->set_parameters(parameters);
 }
 
 TrainingResults QuasiNewtonMethod::train()

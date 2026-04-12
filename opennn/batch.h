@@ -50,6 +50,10 @@ struct Batch
     Memory target;
     Shape target_shape;
 
+    int input_contiguous = -1;
+    int decoder_contiguous = -1;
+    int target_contiguous = -1;
+
 #ifdef CUDA
 
     void fill_host(const vector<Index>&,

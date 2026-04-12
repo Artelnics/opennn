@@ -57,12 +57,14 @@ public:
     void fill_inputs(const vector<Index>&,
                            const vector<Index>&,
                            type*,
-                           bool = true) const override;
+                           bool = true,
+                           int contiguous = -1) const override;
 
     void fill_targets(const vector<Index>&,
                             const vector<Index>&,
                             type*,
-                            bool = true) const override;
+                            bool = true,
+                            int contiguous = -1) const override;
 
 private:
 

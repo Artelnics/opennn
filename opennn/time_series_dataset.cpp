@@ -330,7 +330,8 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
 void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
                                     const vector<Index>& input_indices,
                                     type* input_data,
-                                     bool parallelize) const
+                                     bool parallelize,
+                                     int) const
 {
     if(sample_indices.empty() || input_indices.empty()) return;
 
@@ -362,7 +363,8 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
 void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
                                            const vector<Index>& target_indices,
                                            type* target_data,
-                                           bool parallelize) const
+                                           bool parallelize,
+                                           int) const
 {
     if(sample_indices.empty() || target_indices.empty()) return;
 

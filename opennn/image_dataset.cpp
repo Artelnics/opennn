@@ -146,6 +146,8 @@ void ImageDataset::augment_inputs(type* input_data, Index batch_size) const
 
         if(augmentation.vertical_translation_minimum != 0 && augmentation.vertical_translation_maximum != 0)
             translate_image_y(image, image, Index(random_uniform(augmentation.vertical_translation_minimum, augmentation.vertical_translation_maximum)));
+
+        inputs.chip(i, 0) = image;
     }
 }
 
