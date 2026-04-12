@@ -71,16 +71,8 @@ public:
                          const ForwardPropagation&,
                          BackPropagation&) const;
 
-    void add_regularization(BackPropagation&) const;
-
     void set_error(const Error&);
     void set_error(const string&);
-
-    void calculate_layers_error_gradient(const Batch&,
-                                         ForwardPropagation&,
-                                         BackPropagation&) const;
-
-    void add_regularization_gradient(BackPropagation&) const;
 
     void back_propagate(const Batch&,
                         ForwardPropagation&,
@@ -107,10 +99,6 @@ public:
 
     type calculate_numerical_error() const;
 
-    void calculate_output_gradients(const Batch&,
-                                    const ForwardPropagation&,
-                                    BackPropagation&) const;
-
     VectorR calculate_gradient();
 
     VectorR calculate_numerical_gradient();
@@ -119,6 +107,20 @@ public:
     MatrixR calculate_inverse_hessian();
 
     void print(){}
+
+private:
+
+    void add_regularization(BackPropagation&) const;
+
+    void calculate_layers_error_gradient(const Batch&,
+                                         ForwardPropagation&,
+                                         BackPropagation&) const;
+
+    void add_regularization_gradient(BackPropagation&) const;
+
+    void calculate_output_gradients(const Batch&,
+                                    const ForwardPropagation&,
+                                    BackPropagation&) const;
 
 protected:
 

@@ -88,8 +88,6 @@ public:
 
     void compile();
 
-    bool validate_name(const string&) const;
-
     // Get
 
     bool has(const string&) const;
@@ -202,7 +200,6 @@ public:
     void load(const filesystem::path&);
     void load_parameters_binary(const filesystem::path&);
 
-    vector<string> get_layer_labels() const;
     vector<string> get_names_string() const;
 
     void save_outputs(MatrixR&, const filesystem::path&);
@@ -230,6 +227,11 @@ public:
     void link_parameters_cpu();
 
 #endif
+
+private:
+
+    bool validate_name(const string&) const;
+    vector<string> get_layer_labels() const;
 
 protected:
 

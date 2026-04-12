@@ -78,11 +78,11 @@ public:
 
     static type get_elapsed_time(const time_t& beginning_time);
 
+protected:
+
     void set_names();
     void set_scaling();
     void set_unscaling();
-
-protected:
 
     bool check_stopping_condition(TrainingResults&, Index epoch, type elapsed_time,
                                    type training_error, Index validation_failures) const;

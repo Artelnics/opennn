@@ -90,8 +90,6 @@ public:
 
     // Error data
 
-    pair<MatrixR, MatrixR> get_targets_and_outputs(const string&) const;
-
     MatrixR calculate_error() const;
 
     Tensor3 calculate_error_data() const;
@@ -240,6 +238,8 @@ public:
 #endif
 
 private:
+
+    pair<MatrixR, MatrixR> get_targets_and_outputs(const string&) const;
 
     vector<Index> filter_classification_samples(const MatrixR&, const MatrixR&, const vector<Index>&, type,
                                                 bool target_positive, bool output_positive) const;

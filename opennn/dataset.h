@@ -165,8 +165,6 @@ public:
 
     void set_default_variable_names();
 
-    void set_default_variable_roles();
-    void set_default_variable_roles_forecasting();
     virtual void set_variable_roles(const vector<string>&);
 
     void set_variables(const string&);
@@ -189,9 +187,7 @@ public:
 
     void set_variable_scalers(const vector<string>&);
 
-    void infer_variable_types_from_data();
     void set_binary_variables();
-    void unuse_constant_variables();
 
     // Variables set
 
@@ -402,6 +398,9 @@ public:
 
 private:
 
+    void infer_variable_types_from_data();
+    void unuse_constant_variables();
+
     string get_sample_role(const Index i) const { return sample_roles[i]; }
     vector<Index> filter_used_samples_by_column(Index, bool) const;
     void apply_scaler(Index, const string&, const Descriptives&, bool);
@@ -410,6 +409,9 @@ private:
     void check_separators(const string&) const;
 
 protected:
+
+    void set_default_variable_roles();
+    void set_default_variable_roles_forecasting();
 
     // DATA
 
