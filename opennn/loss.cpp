@@ -132,6 +132,8 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
 {
     if(regularization_method == "None") return;
 
+    check_neural_network();
+
 #ifndef CUDA
     const VectorR& params_vec = neural_network->get_parameters();
     back_propagation.loss_value += calculate_regularization(params_vec);
@@ -160,6 +162,8 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
                                            ForwardPropagation& forward_propagation,
                                            BackPropagation& back_propagation) const
 {
+    check_neural_network();
+
     const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
     const Index layers_number = neural_network->get_layers_number();
 
@@ -202,6 +206,8 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 {
     if(regularization_method == "None" || regularization_weight == 0.0f) return;
 
+    check_neural_network();
+
     const Index n = neural_network->get_parameters_size();
 
 #ifndef CUDA
@@ -232,14 +238,7 @@ void Loss::regularization_from_XML(const XmlDocument& document)
     {
         const type new_regularization_weight = type(atof(element->get_text()));
 
-        try
-        {
-            set_regularization_weight(new_regularization_weight);
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
+        set_regularization_weight(new_regularization_weight);
     }
 }
 
@@ -261,7 +260,10 @@ void Loss::write_regularization_XML(XmlPrinter& file_stream) const
 }
 
 type Loss::calculate_numerical_error() const
-{  
+{
+    check_neural_network();
+    check_dataset();
+
     const Index samples_number = dataset->get_samples_number("Training");
 
     const vector<Index> training_indices = dataset->get_sample_indices("Training");
@@ -287,6 +289,9 @@ type Loss::calculate_numerical_error() const
 
 VectorR Loss::calculate_gradient()
 {
+    check_neural_network();
+    check_dataset();
+
     const Index samples_number = dataset->get_samples_number("Training");
 
     const vector<Index> training_indices = dataset->get_sample_indices("Training");
@@ -315,6 +320,9 @@ VectorR Loss::calculate_gradient()
 
 VectorR Loss::calculate_numerical_gradient()
 {
+    check_neural_network();
+    check_dataset();
+
     const Index samples_number = dataset->get_samples_number("Training");
 
     const vector<Index> training_indices = dataset->get_sample_indices("Training");
@@ -378,6 +386,9 @@ VectorR Loss::calculate_numerical_gradient()
 
 VectorR Loss::calculate_numerical_input_gradients()
 {
+    check_neural_network();
+    check_dataset();
+
     const Index samples_number = dataset->get_samples_number("Training");
 
     const Index values_number = neural_network->get_inputs_number()*samples_number;
@@ -495,7 +506,7 @@ void Loss::to_XML(XmlPrinter& printer) const
 void Loss::from_XML(const XmlDocument& document)
 {
     const XmlElement* root = document.first_child_element("Loss");
-    if(!root) return;
+    if(!root) throw runtime_error("Loss::from_XML error: missing Loss element.");
 
     set_error(read_xml_string(root, "Method"));
 

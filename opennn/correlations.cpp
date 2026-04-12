@@ -451,7 +451,8 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
 
     ClassificationNetwork neural_network({ input_features_number }, {1}, {target_features_number});
 
-    Dense<2>* dense_2d = static_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
+    auto* dense_2d = dynamic_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
+    if(!dense_2d) throw runtime_error("Expected Dense<2> layer.");
 
     dense_2d->set_activation_function("Softmax");
 
@@ -547,7 +548,8 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 
     ClassificationNetwork neural_network({input_features_number }, {}, {target_features_number});
 
-    Dense<2>* dense_2d = static_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
+    auto* dense_2d = dynamic_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
+    if(!dense_2d) throw runtime_error("Expected Dense<2> layer.");
 
     dense_2d->set_activation_function("Softmax");
 

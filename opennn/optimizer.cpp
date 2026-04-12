@@ -50,7 +50,7 @@ void Optimizer::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if(!file.is_open())
-        return;
+        throw runtime_error("Cannot open file: " + file_name.string());
 
     XmlPrinter printer;
     to_XML(printer);
@@ -71,6 +71,8 @@ type Optimizer::get_elapsed_time(const time_t &beginning_time)
 
 void Optimizer::set_names()
 {
+    check();
+
     const Dataset* dataset = loss->get_dataset();
 
     const vector<Variable> input_variables = dataset->get_variables("Input");
@@ -84,6 +86,8 @@ void Optimizer::set_names()
 
 void Optimizer::set_scaling()
 {
+    check();
+
     Dataset* dataset = loss->get_dataset();
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -97,31 +101,33 @@ void Optimizer::set_scaling()
         input_variable_scalers = dataset->get_feature_scalers("Input");
         input_variable_descriptives = dataset->scale_features("Input");
 
-        Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(neural_network->get_first(LayerType::Scaling2d));
+        auto* scaling_layer = dynamic_cast<Scaling<2>*>(neural_network->get_first(LayerType::Scaling2d));
+        if(!scaling_layer) throw runtime_error("Expected Scaling<2> layer.");
         scaling_layer->set_descriptives(input_variable_descriptives);
         scaling_layer->set_scalers(input_variable_scalers);
     }
     else if(neural_network->has(LayerType::Scaling3d))
     {
-        TimeSeriesDataset* time_series_dataset = static_cast<TimeSeriesDataset*>(dataset);
+        auto* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+        if(!time_series_dataset) throw runtime_error("Expected TimeSeriesDataset.");
         input_variable_scalers = time_series_dataset->get_feature_scalers("Input");
         input_variable_descriptives = time_series_dataset->scale_features("Input");
 
-        Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(neural_network->get_first(LayerType::Scaling3d));
+        auto* scaling_layer = dynamic_cast<Scaling<3>*>(neural_network->get_first(LayerType::Scaling3d));
+        if(!scaling_layer) throw runtime_error("Expected Scaling<3> layer.");
         scaling_layer->set_descriptives(input_variable_descriptives);
         scaling_layer->set_scalers(input_variable_scalers);
     }
     else if (neural_network->has(LayerType::Scaling4d))
     {
-        ImageDataset* image_dataset = static_cast<ImageDataset*>(dataset);
+        auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
+        if(!image_dataset) throw runtime_error("Expected ImageDataset.");
 
         image_dataset->scale_features("Input");
 
-        if (neural_network->get_first(LayerType::Scaling4d))
-        {
-            Scaling<4>* scaling_layer = static_cast<Scaling<4>*>(neural_network->get_first(LayerType::Scaling4d));
+        auto* scaling_layer = dynamic_cast<Scaling<4>*>(neural_network->get_first(LayerType::Scaling4d));
+        if(scaling_layer)
             scaling_layer->set_scalers("ImageMinMax");
-        }
     }
 
     if(!neural_network->has(LayerType::Unscaling))
@@ -169,7 +175,8 @@ void Optimizer::set_scaling()
         }
     }
 
-    Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
+    auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
+    if(!unscaling_layer) throw runtime_error("Expected Unscaling layer.");
 
     if(static_cast<Index>(unscaling_layer_descriptives.size()) != unscaling_layer->get_outputs_number())
         throw runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
@@ -180,6 +187,8 @@ void Optimizer::set_scaling()
 
 void Optimizer::set_unscaling()
 {
+    check();
+
     const Dataset* dataset = loss->get_dataset();
     const NeuralNetwork* neural_network = loss->get_neural_network();
 /*

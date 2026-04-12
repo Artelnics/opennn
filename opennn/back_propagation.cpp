@@ -23,10 +23,13 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     batch_size = new_batch_size;
     loss = new_loss;
 
-    if(!loss) return;
+    if(!loss)
+        throw runtime_error("BackPropagation error: loss is not set.");
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
-    if(!neural_network) return;
+
+    if(!neural_network)
+        throw runtime_error("BackPropagation error: neural network is not set in loss.");
 
     const Index layers_number = neural_network->get_layers_number();
 
@@ -152,10 +155,12 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 void BackPropagation::allocate_device()
 {
 #ifdef CUDA
-    if(!loss) return;
+    if(!loss)
+        throw runtime_error("BackPropagation::allocate_device error: loss is not set.");
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
-    if(!neural_network) return;
+    if(!neural_network)
+        throw runtime_error("BackPropagation::allocate_device error: neural network is not set.");
 
     const Index layers_number = neural_network->get_layers_number();
     const Shape output_shape = neural_network->get_output_shape();

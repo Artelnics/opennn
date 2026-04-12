@@ -154,7 +154,7 @@ Tensor3 TestingAnalysis::calculate_error_data() const
 
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
-    const Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+    const auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first("Unscaling"));
 
     if(!unscaling_layer)
         throw runtime_error("Unscaling layer not found.\n");
@@ -199,7 +199,7 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
-    const Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+    const auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first("Unscaling"));
 
     if(!unscaling_layer)
         throw runtime_error("Unscaling layer not found.\n");
@@ -1255,8 +1255,10 @@ pair<type, type> TestingAnalysis::test_transformer() const
 {
     cout << "Testing transformer..." << endl;
 
-    const Transformer* transformer = static_cast<Transformer*>(neural_network);
-    const LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
+    const auto* transformer = dynamic_cast<Transformer*>(neural_network);
+    if(!transformer) throw runtime_error("Expected Transformer neural network.");
+    const auto* language_dataset = dynamic_cast<LanguageDataset*>(dataset);
+    if(!language_dataset) throw runtime_error("Expected LanguageDataset.");
 
     const MatrixR context = language_dataset->get_data("Testing", "Input");
     const MatrixR input = language_dataset->get_data("Testing", "Decoder");
@@ -1529,7 +1531,7 @@ void TestingAnalysis::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if(!file.is_open())
-        return;
+        throw runtime_error("Cannot open file: " + file_name.string());
 
     XmlPrinter printer;
 

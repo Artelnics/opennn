@@ -222,13 +222,13 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 
     if(has(LayerType::Scaling2d))
     {
-        Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(get_first(LayerType::Scaling2d));
-        scaling_layer->set_input_shape(new_input_shape);
+        auto* scaling_layer = dynamic_cast<Scaling<2>*>(get_first(LayerType::Scaling2d));
+        if(scaling_layer) scaling_layer->set_input_shape(new_input_shape);
     }
     else if(has(LayerType::Scaling3d))
     {
-        Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(get_first(LayerType::Scaling3d));
-        scaling_layer->set_input_shape(new_input_shape);
+        auto* scaling_layer = dynamic_cast<Scaling<3>*>(get_first(LayerType::Scaling3d));
+        if(scaling_layer) scaling_layer->set_input_shape(new_input_shape);
     }
 
     layers[get_first_trainable_layer_index()]->set_input_shape(new_input_shape);
@@ -590,7 +590,8 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
     Tensor3 image = load_image(image_path);
 
-    Scaling<4> const* scaling_layer = static_cast<Scaling<4>*>(get_first(LayerType::Scaling4d));
+    const auto* scaling_layer = dynamic_cast<Scaling<4>*>(get_first(LayerType::Scaling4d));
+    if(!scaling_layer) throw runtime_error("Expected Scaling<4> layer.");
 
     const Index height = scaling_layer->get_input_shape()[0];
     const Index width = scaling_layer->get_input_shape()[1];
@@ -646,7 +647,8 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
         throw runtime_error("Error: input_variables[0] does not contain the vocabulary.\n");
 
     const Index batch_size = input_documents.size();
-    const Embedding* embedding_layer = static_cast<const Embedding*>(get_layer(0).get());
+    const auto* embedding_layer = dynamic_cast<const Embedding*>(get_layer(0).get());
+    if(!embedding_layer) throw runtime_error("Expected Embedding layer at index 0.");
     const Index sequence_length = embedding_layer->get_sequence_length();
 
     const vector<string>& vocabulary = input_variables[0].categories;
@@ -888,7 +890,7 @@ void NeuralNetwork::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if(!file.is_open())
-        return;
+        throw runtime_error("Cannot open file: " + file_name.string());
 
     XmlPrinter printer;
     to_XML(printer);

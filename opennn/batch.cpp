@@ -18,7 +18,8 @@ Batch::Batch(const Index new_samples_number, const Dataset* new_dataset)
 
 void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 {
-    if(!new_dataset) return;
+    if(!new_dataset)
+        throw runtime_error("Batch error: dataset is not set.");
 
     samples_number = new_samples_number;
 

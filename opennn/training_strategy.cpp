@@ -64,7 +64,7 @@ void TrainingStrategy::set_default()
     {
         set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");
-        static_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_maximum_epochs(100);
+        dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_maximum_epochs(100);
         return;
     }
 
@@ -74,7 +74,7 @@ void TrainingStrategy::set_default()
     {
         set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");
-        static_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_learning_rate(0.0001);
+        dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_learning_rate(0.0001);
         return;
     }
 
@@ -84,7 +84,7 @@ void TrainingStrategy::set_default()
     {
         set_loss("WeightedSquaredError");
         set_optimization_algorithm("AdaptiveMomentEstimation");
-        static_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_maximum_epochs(100);
+        dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_maximum_epochs(100);
         return;
     }
 
@@ -253,7 +253,7 @@ void TrainingStrategy::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if(!file.is_open())
-        return;
+        throw runtime_error("Cannot open file: " + file_name.string());
 
     XmlPrinter printer;
     to_XML(printer);

@@ -1486,7 +1486,7 @@ void ModelExpression::save_python(const filesystem::path& file_name, const vecto
     ofstream file(file_name);
 
     if(!file.is_open())
-        return;
+        throw runtime_error("Cannot open file: " + file_name.string());
 
     file << get_expression_python(variables);
 }
@@ -1496,7 +1496,7 @@ void ModelExpression::save_c(const filesystem::path& file_name, const vector<Var
     ofstream file(file_name);
 
     if(!file.is_open())
-        return;
+        throw runtime_error("Cannot open file: " + file_name.string());
 
     file << get_expression_c(variables);
 }
@@ -1506,7 +1506,7 @@ void ModelExpression::save_javascript(const filesystem::path& file_name, const v
     ofstream file(file_name);
 
     if(!file.is_open())
-        return;
+        throw runtime_error("Cannot open file: " + file_name.string());
 
     file << get_expression_javascript(variables);
 }
@@ -1516,7 +1516,7 @@ void ModelExpression::save_api(const filesystem::path& file_name, const vector<V
     ofstream file(file_name);
 
     if(!file.is_open())
-        return;
+        throw runtime_error("Cannot open file: " + file_name.string());
 
     file << get_expression_api(variables);
 }

@@ -110,6 +110,18 @@ public:
 
 private:
 
+    void check_neural_network() const
+    {
+        if(!neural_network)
+            throw runtime_error("Loss error: neural network is not set.");
+    }
+
+    void check_dataset() const
+    {
+        if(!dataset)
+            throw runtime_error("Loss error: dataset is not set.");
+    }
+
     void add_regularization(BackPropagation&) const;
 
     void calculate_layers_error_gradient(const Batch&,

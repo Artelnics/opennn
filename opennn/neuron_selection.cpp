@@ -87,7 +87,7 @@ void NeuronSelection::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if(!file.is_open())
-        return;
+        throw runtime_error("Cannot open file: " + file_name.string());
 
     XmlPrinter printer;
     to_XML(printer);
