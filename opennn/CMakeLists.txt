@@ -7,6 +7,17 @@ file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 
 add_library(opennn STATIC ${CPP_SOURCES} ${HEADER_FILES})
 
+# Force linker to include all object files so that REGISTER() auto-registration
+# in anonymous namespaces is not stripped from the final binary.
+if(UNIX AND NOT APPLE)
+    target_link_options(opennn INTERFACE
+        "LINKER:--whole-archive" "$<TARGET_FILE:opennn>" "LINKER:--no-whole-archive")
+elseif(APPLE)
+    target_link_options(opennn INTERFACE "LINKER:-force_load,$<TARGET_FILE:opennn>")
+elseif(MSVC)
+    target_link_options(opennn INTERFACE "/WHOLEARCHIVE:$<TARGET_FILE:opennn>")
+endif()
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(opennn PUBLIC stdc++fs)
 endif()

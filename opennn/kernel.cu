@@ -1,356 +1,7 @@
-﻿#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include <stdio.h>
-#include <cudnn.h>
-#include "kernel.cuh"
+﻿#include "kernel.cuh"
 
 
-__global__ void reorder_inputs_kernel(const float* __restrict__ source, float* __restrict__ destination,
-    const int batch_samples_number, const int channels, const int height, const int width)
-{
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int total = batch_samples_number * channels * width * height;
-    if (idx >= total) return;
-
-    int tmp = idx;
-    int h = tmp % height;    tmp /= height;
-    int w = tmp % width;     tmp /= width;
-    int c = tmp % channels;
-    int b = tmp / channels;
-
-    int in_idx = ((b * channels + c) * height + h) * width + w;
-
-    destination[idx] = source[in_idx];
-}
-
-
-void reorder_inputs_cuda(const float* source, float* destination, int N,int C,int H,int W)
-{
-    int total = N * H * W * C;
-    const int threads_per_block = 256;
-    int blocks = (total + threads_per_block - 1) / threads_per_block;
-
-    reorder_inputs_kernel << <blocks, threads_per_block >> > (source, destination, N, C, H, W);
-}
-
-
-__global__ void invert_reorder_inputs_kernel(const float* __restrict__ source, float* __restrict__ destination,
-    const int batch_samples_number, const int channels, const int height, const int width)
-{
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int total = batch_samples_number * channels * height * width;
-    if (idx >= total) return;
-
-    int tmp = idx;
-    int h = tmp % height;    tmp /= height;
-    int w = tmp % width;     tmp /= width;
-    int c = tmp % channels;  tmp /= channels;
-    int b = tmp;
-
-    int dest_idx = ((b * channels + c) * height + h) * width + w;
-    destination[dest_idx] = source[idx];
-}
-
-
-void invert_reorder_inputs_cuda(const float* source, float* destination, int N, int C, int H, int W)
-{
-    int total = N * C * H * W;
-    const int threads_per_block = 256;
-    int blocks = (total + threads_per_block - 1) / threads_per_block;
-    invert_reorder_inputs_kernel << <blocks, threads_per_block >> > (source, destination, N, C, H, W);
-}
-
-
-__global__ void reverse_kernel(type* d_kernel, int width, int height, int channels) 
-{
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-
-    for (int c = 0; c < channels; ++c) {
-        if (x < width && y < height) {
-
-            int channel_offset = c * width * height;
-            int idx1 = channel_offset + y * width + x;
-            int idx2 = channel_offset + (height - 1 - y) * width + (width - 1 - x);
-
-            if (idx1 < idx2) {
-                type temp = d_kernel[idx1];
-                d_kernel[idx1] = d_kernel[idx2];
-                d_kernel[idx2] = temp;
-            }
-        }
-    }
-}
-
-void reverse_cuda(int width, int height, int channels, type* d_kernel) 
-{
-    dim3 threadsPerBlock(16, 16);
-    dim3 blocksPerGrid((width + threadsPerBlock.x - 1) / threadsPerBlock.x,
-        (height + threadsPerBlock.y - 1) / threadsPerBlock.y);
-
-    reverse_kernel << <blocksPerGrid, threadsPerBlock >> > (d_kernel, width, height, channels);
-}
-
-
-__global__ void reorganize_inputs_kernel(const type* inputs_device, type* outputs_device, int rows, int cols)
-{
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int totalSize = rows * cols;
-
-    if (idx < totalSize) {
-
-        int row = idx % rows;
-        int col = idx / rows; 
-
-        int newIdx = row * cols + col;
-        outputs_device[idx] = inputs_device[newIdx];
-    }
-}
-
-
-void reorganize_inputs_cuda(const type* inputs_device, type* outputs_device, int rows, int cols)
-{
-    int num_elements = rows * cols;
-    int blockSize = 256;
-    int numBlocks = (num_elements + blockSize - 1) / blockSize;
-
-    reorganize_inputs_kernel << <numBlocks, blockSize >> > (inputs_device, outputs_device, rows, cols);
-}
-
-
-__global__ void reorganize_deltas_kernel(const type* inputs_device, type* outputs_device, int rows, int cols) 
-{
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int totalSize = rows * cols;
-
-    if (idx < totalSize) 
-    {
-        int row = idx % rows;
-        int col = idx / rows;
-
-        int originalIdx = col + row * cols;
-
-        outputs_device[originalIdx] = inputs_device[idx];
-    }
-}
-
-void reorganize_deltas_cuda(const type* inputs_device, type* outputs_device, int rows, int cols) 
-{
-    int num_elements = rows * cols;
-    int blockSize = 256;
-    int numBlocks = (num_elements + blockSize - 1) / blockSize;
-
-    reorganize_deltas_kernel << <numBlocks, blockSize >> > (inputs_device, outputs_device, rows, cols);
-}
-
-
-void copy_to_vector_cuda(float* destination, const float* source, const Index& size, Index& index)
-{
-    if (cudaMemcpy(destination + index, source, size * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "copy_to_vector_cuda error" << endl;
-
-    index += size;
-}
-
-
-void copy_from_vector_cuda(float* destination, const float* source, const Index& size, Index& index)
-{
-    if (cudaMemcpy(destination, source + index, size * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "copy_from_vector_cuda error" << endl;
-
-    index += size;
-}
-
-
-type* vector_to_device(const Tensor<type, 1>& vector)
-{
-    type* pointer = nullptr;
-
-    const size_t this_size = vector.size();
-
-    if (this_size == 0) cout << "Empty vector" << endl;
-
-    if (cudaMalloc(&pointer, this_size * sizeof(type)) != cudaSuccess) cout << "Cuda vector malloc error" << endl;
-
-    cudaMemcpy(pointer, vector.data(), this_size * sizeof(type), cudaMemcpyHostToDevice);
-
-    return pointer;
-}
-
-
-Tensor<type, 1> vector_from_device(const type* pointer, const size_t& new_size)
-{
-    if (new_size == 0) cout << "Empty vector" << endl;
-
-    Tensor<type, 1> vector(new_size);
-
-    if (cudaMemcpy(vector.data(), pointer, new_size * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Cuda vector memcpy error" << endl;
-
-    return vector;
-}
-
-
-void print_device_data(const type* pointer, const size_t size) {
-    type* host_data = new type[size];
-    cudaMemcpy(host_data, pointer, size * sizeof(type), cudaMemcpyDeviceToHost);
-
-    cout << "Device Data: ";
-    for (size_t i = 0; i < size; ++i) {
-        cout << host_data[i] << " ";
-    }
-    cout << endl;
-
-    delete[] host_data;
-}
-
-
-type* matrix_to_device(const Tensor<type, 2>& matrix)
-{
-    const size_t this_size = matrix.size();
-
-    if (this_size == 0) cout << "Empty matrix" << endl;
-
-    type* pointer = nullptr;
-
-    if (cudaMalloc(&pointer, this_size * sizeof(type)) != cudaSuccess) cout << "Cuda matrix malloc error" << endl;
-
-    cudaMemcpy(pointer, matrix.data(), this_size * sizeof(type), cudaMemcpyHostToDevice);
-
-    return pointer;
-}
-
-
-Tensor<type, 2> matrix_from_device(const type* pointer, const size_t& new_rows_number, const size_t& new_raw_variables_number)
-{
-    Tensor<type, 2> matrix(new_rows_number, new_raw_variables_number);
-
-    matrix.setZero();
-
-    if (matrix.size() == 0) cout << "Empty matrix" << endl;
-
-    if (cudaMemcpy(matrix.data(), pointer, new_rows_number * new_raw_variables_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Cuda matrix memcpy error" << endl;
-
-    return matrix;
-}
-
-Tensor<type, 3> matrix_3d_from_device(const type* pointer, const size_t& new_depth_number, const size_t& new_rows_number, const size_t& new_columns_number)
-{
-
-    Tensor<type, 3> matrix_3d(static_cast<long long>(new_depth_number), static_cast<long long>(new_rows_number), static_cast<long long>(new_columns_number));
-
-    matrix_3d.setZero();
-
-    if (matrix_3d.size() == 0) {
-        cout << "Empty matrix_3d" << endl;
-    }
-
-    if (cudaMemcpy(matrix_3d.data(), pointer, new_rows_number * new_columns_number * new_depth_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess) {
-        cout << "CUDA tensor memcpy error" << endl;
-    }
-
-    return matrix_3d;
-}
-
-Tensor<type, 4> matrix_4d_from_device(const type* pointer, const size_t& new_batch_samples_number, const size_t& new_rows_number, const size_t& new_columns_number, const size_t& new_channels_number)
-{
-
-    Tensor<type, 4> matrix_4d(static_cast<long long>(new_batch_samples_number), static_cast<long long>(new_rows_number), static_cast<long long>(new_columns_number), static_cast<long long>(new_channels_number));
-
-    matrix_4d.setZero();
-
-    if (matrix_4d.size() == 0) {
-        cout << "Empty matrix_4d" << endl;
-    }
-
-    if (cudaMemcpy(matrix_4d.data(), pointer, new_batch_samples_number * new_rows_number * new_columns_number * new_channels_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess) {
-        cout << "CUDA tensor memcpy error" << endl;
-    }
-
-    return matrix_4d;
-}
-
-
-// Operation kernel
-
-__global__ void addition_kernel(const int n, const float* input1, const float* input2, float* output)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n)
-    {
-        output[i] = input1[i] + input2[i];
-    }
-}
-
-void addition_cuda(const size_t n, const float* input1, const float* input2, float* output)
-{
-    if (n == 0) return;
-
-    const int threads_per_block = 256;
-    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
-
-    addition_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), input1, input2, output);
-}
-
-
-__global__
-void log_kernel(const int n, const type* x, type* y)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n) y[i] = log(x[i]);
-}
-
-void log(const size_t& n, const type* x, type* y)
-{
-    log_kernel << <(n + 255) / 256, 256 >> > (n, x, y);
-}
-
-
-__global__
-void log_in_place_kernel(const int n, type* x)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n) x[i] = log(x[i]);
-}
-
-void log_in_place(const size_t& n, type* x)
-{
-    log_in_place_kernel << <(n + 255) / 256, 256 >> > (n, x);
-}
-
-
-__global__
-void division_kernel(const int n, const type* vector_1, const type* vector_2, type* result)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n) result[i] = vector_1[i] / vector_2[i];
-}
-
-void division(const size_t& size, const type* vector_1, const type* vector2, type* result)
-{
-    division_kernel << <(size + 255) / 256, 256 >> > (size, vector_1, vector2, result);
-}
-
-
-__global__
-void divide_subtract_kernel(int size, type* parameters, const type* numerator, const type* denominator) 
-{
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < size) {
-        parameters[i] -= numerator[i] / denominator[i];
-    }
-}
-
-void divide_subtract(const size_t& n, type* parameters, const type* numerator, const type* denominator) 
-{
-    divide_subtract_kernel << <(n + 255) / 256, 256 >> > (n, parameters, numerator, denominator);
-}
-
+// ADAM
 
 __global__ void adam_update_kernel(
     const int n,
@@ -416,6 +67,7 @@ void adam_update_device(
         );
 }
 
+//SGD
 
 __global__ void sgd_update_kernel(
     const int n,
@@ -477,6 +129,7 @@ void sgd_update_device(
         nesterov);
 }
 
+// Errors
 
 __global__ void calculate_binary_cross_entropy_kernel(const int n, float* term_results, const float* targets, const float* outputs, const float epsilon)
 {
@@ -566,22 +219,347 @@ void calculate_multiple_cross_entropy_delta_cuda(const size_t& n, type* deltas, 
 }
 
 
+__global__ void calculate_weighted_squared_error_kernel(const int n, type* term_results, const type* targets, const type* outputs, const type positives_weight, const type negatives_weight)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
+        const type tgt = targets[i];
+        const type out = outputs[i];
+
+        const type diff = out - tgt;
+        const type weight = (tgt == 0.0f) ? negatives_weight : positives_weight;
+
+        term_results[i] = diff * diff * weight;
+    }
+}
+
+void calculate_weighted_squared_error_cuda(const size_t& n, type* term_results, const type* targets, const type* outputs, const type positives_weight, const type negatives_weight)
+{
+    if (n == 0) return;
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    calculate_weighted_squared_error_kernel<<<blocks_per_grid, threads_per_block>>>(static_cast<int>(n), term_results, targets, outputs, positives_weight, negatives_weight);
+}
+
+
+__global__ void calculate_weighted_squared_error_delta_kernel(const int n, type* deltas, const type* targets, const type* outputs, const type positives_weight, const type negatives_weight, const type scaling_factor)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
+        const type tgt = targets[i];
+        const type out = outputs[i];
+
+        const type diff = out - tgt;
+        const type weight = (tgt == 0.0f) ? negatives_weight : positives_weight;
+
+        deltas[i] = diff * weight * scaling_factor;
+    }
+}
+
+void calculate_weighted_squared_error_delta_cuda(const size_t& n, type* deltas, const type* targets, const type* outputs, const type positives_weight, const type negatives_weight, const type scaling_factor)
+{
+    if (n == 0) return;
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    calculate_weighted_squared_error_delta_kernel<<<blocks_per_grid, threads_per_block>>>(static_cast<int>(n), deltas, targets, outputs, positives_weight, negatives_weight, scaling_factor);
+}
+
+// Cross Entropy 3D
+
+__global__ void cross_entropy_3d_multiple_forward_kernel(const int total_tokens,
+                                                         const int vocab_size,
+                                                         const float* outputs,
+                                                         const float* targets,
+                                                         float* errors,
+                                                         const float epsilon)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(idx < total_tokens)
+    {
+        const int target_class = static_cast<int>(targets[idx]);
+
+        if(target_class > 0 && target_class < vocab_size)
+        {
+            const float prob = outputs[idx * vocab_size + target_class];
+            errors[idx] = -logf(prob + epsilon);
+        }
+        else
+        {
+            errors[idx] = 0.0f;
+        }
+    }
+}
+
+void cross_entropy_3d_multiple_forward_cuda(const size_t n,
+                                            const int batch_size,
+                                            const int seq_length,
+                                            const int vocab_size,
+                                            const float* outputs,
+                                            const float* targets,
+                                            float* errors,
+                                            const float epsilon)
+{
+    (void)n;
+
+    const int total_tokens = batch_size * seq_length;
+    if(total_tokens == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (total_tokens + block_size - 1) / block_size;
+
+    cross_entropy_3d_multiple_forward_kernel<<<grid_size, block_size>>>(
+        total_tokens, vocab_size, outputs, targets, errors, epsilon);
+}
+
+
+__global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
+                                                          const int vocab_size,
+                                                          const float* outputs,
+                                                          const float* targets,
+                                                          float* output_gradients,
+                                                          const float scale_factor)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(idx < n)
+    {
+        const int token_idx = idx / vocab_size;
+        const int class_idx = idx % vocab_size;
+        const int target_class = static_cast<int>(targets[token_idx]);
+
+        if(target_class > 0 && target_class < vocab_size)
+        {
+            if(class_idx == target_class)
+                output_gradients[idx] = (outputs[idx] - 1.0f) * scale_factor;
+            else
+                output_gradients[idx] = outputs[idx] * scale_factor;
+        }
+        else
+        {
+            output_gradients[idx] = 0.0f;
+        }
+    }
+}
+
+void cross_entropy_3d_multiple_backward_cuda(const size_t n,
+                                             const int batch_size,
+                                             const int seq_length,
+                                             const int vocab_size,
+                                             const float* outputs,
+                                             const float* targets,
+                                             float* output_gradients,
+                                             const float scale_factor)
+{
+    (void)batch_size;
+    (void)seq_length;
+
+    if(n == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (static_cast<int>(n) + block_size - 1) / block_size;
+
+    cross_entropy_3d_multiple_backward_kernel<<<grid_size, block_size>>>(
+        static_cast<int>(n), vocab_size, outputs, targets, output_gradients, scale_factor);
+}
+
+
+__global__ void cross_entropy_3d_binary_forward_kernel(const int n,
+                                                       const float* outputs,
+                                                       const float* targets,
+                                                       float* errors,
+                                                       const float epsilon)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(idx < n)
+    {
+        const float target_val = targets[idx];
+
+        if(target_val >= 0.0f)
+        {
+            const float prob = outputs[idx];
+            errors[idx] = -(target_val * logf(prob + epsilon)
+                            + (1.0f - target_val) * logf(1.0f - prob + epsilon));
+        }
+        else
+        {
+            errors[idx] = 0.0f;
+        }
+    }
+}
+
+void cross_entropy_3d_binary_forward_cuda(const size_t n,
+                                          const int batch_size,
+                                          const int seq_length,
+                                          const float* outputs,
+                                          const float* targets,
+                                          float* errors,
+                                          const float epsilon)
+{
+    (void)batch_size;
+    (void)seq_length;
+
+    if(n == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (static_cast<int>(n) + block_size - 1) / block_size;
+
+    cross_entropy_3d_binary_forward_kernel<<<grid_size, block_size>>>(
+        static_cast<int>(n), outputs, targets, errors, epsilon);
+}
+
+
+__global__ void cross_entropy_3d_binary_backward_kernel(const int n,
+                                                        const float* outputs,
+                                                        const float* targets,
+                                                        float* output_gradients,
+                                                        const float scale_factor)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(idx < n)
+    {
+        const float target_val = targets[idx];
+
+        if(target_val >= 0.0f)
+        {
+            const float prob = outputs[idx];
+
+            const float term1 = (1.0f - target_val) / (1.0f - prob + 1e-7f);
+            const float term2 = target_val / (prob + 1e-7f);
+
+            output_gradients[idx] = (term1 - term2) * scale_factor;
+        }
+        else
+        {
+            output_gradients[idx] = 0.0f;
+        }
+    }
+}
+
+void cross_entropy_3d_binary_backward_cuda(const size_t n,
+                                           const int batch_size,
+                                           const int seq_length,
+                                           const float* outputs,
+                                           const float* targets,
+                                           float* output_gradients,
+                                           const float scale_factor)
+{
+    (void)batch_size;
+    (void)seq_length;
+
+    if(n == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (static_cast<int>(n) + block_size - 1) / block_size;
+
+    cross_entropy_3d_binary_backward_kernel<<<grid_size, block_size>>>(
+        static_cast<int>(n), outputs, targets, output_gradients, scale_factor);
+}
+
+
+__global__ void cross_entropy_3d_multiple_counts_kernel(const int total_tokens,
+                                                        const int vocab_size,
+                                                        const float* outputs,
+                                                        const float* targets,
+                                                        float* counts)
+{
+    const int token_idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(token_idx < total_tokens)
+    {
+        const int target_class = static_cast<int>(targets[token_idx]);
+
+        if(target_class > 0 && target_class < vocab_size)
+        {
+            atomicAdd(&counts[0], 1.0f);
+
+            int best_index = 0;
+            float best_value = outputs[token_idx * vocab_size];
+
+            for(int k = 1; k < vocab_size; ++k)
+            {
+                const float value = outputs[token_idx * vocab_size + k];
+                if(value > best_value)
+                {
+                    best_value = value;
+                    best_index = k;
+                }
+            }
+
+            if(best_index == target_class)
+                atomicAdd(&counts[1], 1.0f);
+        }
+    }
+}
+
+void cross_entropy_3d_multiple_counts_cuda(const size_t total_tokens,
+                                           const int vocab_size,
+                                           const float* outputs,
+                                           const float* targets,
+                                           float* counts)
+{
+    if(total_tokens == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (static_cast<int>(total_tokens) + block_size - 1) / block_size;
+
+    cross_entropy_3d_multiple_counts_kernel<<<grid_size, block_size>>>(
+        static_cast<int>(total_tokens), vocab_size, outputs, targets, counts);
+}
+
+
+__global__ void cross_entropy_3d_binary_counts_kernel(const int total_tokens,
+                                                      const float* outputs,
+                                                      const float* targets,
+                                                      float* counts)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(idx < total_tokens)
+    {
+        const float target_val = targets[idx];
+
+        if(target_val >= 0.0f)
+        {
+            atomicAdd(&counts[0], 1.0f);
+
+            const float predicted = outputs[idx] >= 0.5f ? 1.0f : 0.0f;
+            if(predicted == target_val)
+                atomicAdd(&counts[1], 1.0f);
+        }
+    }
+}
+
+void cross_entropy_3d_binary_counts_cuda(const size_t total_tokens,
+                                         const float* outputs,
+                                         const float* targets,
+                                         float* counts)
+{
+    if(total_tokens == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (static_cast<int>(total_tokens) + block_size - 1) / block_size;
+
+    cross_entropy_3d_binary_counts_kernel<<<grid_size, block_size>>>(
+        static_cast<int>(total_tokens), outputs, targets, counts);
+}
+
 // Regularization
 
 __global__ void apply_l1_gradient_kernel(const int n, float* deltas, const float* params, const float weight)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n) 
+    if (i < n)
     {
-        const float param_val = params[i];
-
-        float sign = 0.0f;
-
-        if (param_val > 0.0f) sign = 1.0f;
-        else if (param_val < 0.0f) sign = -1.0f;
-
-        deltas[i] += weight * sign;
+        const float p = params[i];
+        const float s = (p > 0.0f) ? 1.0f : ((p < 0.0f) ? -1.0f : 0.0f);
+        deltas[i] += weight * s;
     }
 }
 
@@ -618,6 +596,9 @@ void apply_elastic_net_gradient_cuda(const size_t n, float* deltas, const float*
     apply_elastic_net_gradient_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), deltas, params, weight, mix_factor);
 }
 
+// Scaling
+
+#define EPSILON 1e-7f
 
 __global__ void scale_2d_kernel(const int n, const int batch_size, const int outputs_number,
     const float* inputs_device, float* outputs_device,
@@ -645,31 +626,20 @@ __global__ void scale_2d_kernel(const int n, const int batch_size, const int out
         {
             const float min_val = minimums_device[col];
             const float max_val = maximums_device[col];
-            const float range = max_val - min_val;
-            if (range > 1e-9)
-            {
-                const float scaled_01 = (input_val - min_val) / range;
-                output_val = scaled_01 * (max_range - min_range) + min_range;
-            }
+            output_val = (input_val - min_val) / ((max_val - min_val) + EPSILON) * (max_range - min_range) + min_range;
             break;
         }
         case CudaScalerMeanStandardDeviation:
         {
             const float mean = means_device[col];
             const float std_dev = std_devs_device[col];
-            if (fabsf(std_dev) > 1e-9)
-            {
-                output_val = (input_val - mean) / std_dev;
-            }
+            output_val = (input_val - mean) / (std_dev + EPSILON);
             break;
         }
         case CudaScalerStandardDeviation:
         {
             const float std_dev = std_devs_device[col];
-            if (fabsf(std_dev) > 1e-9)
-            {
-                output_val = input_val / std_dev;
-            }
+            output_val = input_val / (std_dev + EPSILON);
             break;
         }
         case CudaScalerLogarithm:
@@ -714,4 +684,586 @@ void scale_2d_cuda(const size_t n, const int batch_size, const int outputs_numbe
         min_range,
         max_range
         );
+}
+
+// Addition
+
+__global__ void addition_kernel(const int n, const float* input1, const float* input2, float* output)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n)
+    {
+        output[i] = input1[i] + input2[i];
+    }
+}
+
+void addition_cuda(const size_t n, const float* input1, const float* input2, float* output)
+{
+    if (n == 0) return;
+
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    addition_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), input1, input2, output);
+}
+
+
+// Embedding
+
+__global__ void embedding_forward_kernel(const int n, const float* inputs, const float* weights, const float* positional_encoding, float* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n)
+    {
+        const int token_idx = i / embedding_dimension;
+        const int dim_idx = i % embedding_dimension;
+        const int seq_idx = token_idx % sequence_length;
+
+        const int token_id = static_cast<int>(inputs[token_idx]);
+
+        float val = 0.0f;
+
+        if (token_id >= 0 && token_id < vocabulary_size)
+        {
+            val = weights[token_id * embedding_dimension + dim_idx];
+        }
+
+        if (scale_embedding)
+        {
+            val *= sqrtf(static_cast<float>(embedding_dimension));
+        }
+
+        if (add_positional_encoding && positional_encoding != nullptr)
+        {
+            if (token_id > 0)
+            {
+                val += positional_encoding[seq_idx * embedding_dimension + dim_idx];
+            }
+        }
+
+        outputs[i] = val;
+    }
+}
+
+void embedding_forward_cuda(const size_t n, const float* inputs, const float* weights, const float* positional_encoding, float* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding)
+{
+    if (n == 0) return;
+
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    embedding_forward_kernel<<<blocks_per_grid, threads_per_block>>>(
+        static_cast<int>(n), inputs, weights, positional_encoding, outputs,
+        sequence_length, embedding_dimension, vocabulary_size, scale_embedding, add_positional_encoding
+        );
+}
+
+
+__global__ void embedding_backward_kernel(const int n, const float* inputs, const float* output_gradients, float* weight_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n)
+    {
+        const int token_idx = i / embedding_dimension;
+        const int dim_idx = i % embedding_dimension;
+
+        const int token_id = static_cast<int>(inputs[token_idx]);
+
+        if (token_id > 0 && token_id < vocabulary_size)
+        {
+            float grad_val = output_gradients[i];
+
+            if (scale_embedding)
+            {
+                grad_val *= sqrtf(static_cast<float>(embedding_dimension));
+            }
+
+            atomicAdd(&weight_gradients[token_id * embedding_dimension + dim_idx], grad_val);
+        }
+    }
+}
+
+void embedding_backward_cuda(const size_t n, const float* inputs, const float* output_gradients, float* weight_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
+{
+    if (n == 0) return;
+
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    embedding_backward_kernel<<<blocks_per_grid, threads_per_block>>>(
+        static_cast<int>(n), inputs, output_gradients, weight_gradients,
+        sequence_length, embedding_dimension, vocabulary_size, scale_embedding
+        );
+}
+
+// Multihead
+
+__global__ void compute_padding_mask_kernel(const int num_tokens,
+                                            const float* source_input,
+                                            float* padding_mask,
+                                            const int embedding_dimension)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(i < num_tokens)
+    {
+        bool is_pad = true;
+        const int offset = i * embedding_dimension;
+
+        for(int e = 0; e < embedding_dimension; ++e)
+        {
+            if(fabsf(source_input[offset + e]) > 1e-7f)
+            {
+                is_pad = false;
+                break;
+            }
+        }
+
+        padding_mask[i] = is_pad ? 1.0f : 0.0f;
+    }
+}
+
+
+__global__ void apply_fused_masks_kernel(const int n,
+                                         float* attention_weights,
+                                         const float* padding_mask,
+                                         const int heads_number,
+                                         const int query_sequence_length,
+                                         const int source_sequence_length,
+                                         const bool use_causal_mask)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(i < n)
+    {
+        const int sk = i % source_sequence_length;
+        const int sq = (i / source_sequence_length) % query_sequence_length;
+        const int b  = i / (source_sequence_length * query_sequence_length * heads_number);
+
+        if((use_causal_mask && sk > sq) || padding_mask[b * source_sequence_length + sk] > 0.5f)
+            attention_weights[i] = -1e9f;
+    }
+}
+
+
+void mha_fused_masks_cuda(const int batch_size,
+                          const int heads_number,
+                          const int query_sequence_length,
+                          const int source_sequence_length,
+                          const int embedding_dimension,
+                          const float* source_input,
+                          float* attention_weights,
+                          float* padding_mask,
+                          const bool use_causal_mask)
+{
+    const int num_tokens = batch_size * source_sequence_length;
+
+    if(num_tokens > 0)
+    {
+        const int threads = 256;
+        const int blocks = (num_tokens + threads - 1) / threads;
+
+        compute_padding_mask_kernel<<<blocks, threads>>>(
+            num_tokens,
+            source_input,
+            padding_mask,
+            embedding_dimension);
+    }
+
+    const int n = batch_size * heads_number * query_sequence_length * source_sequence_length;
+
+    if(n > 0)
+    {
+        const int threads = 256;
+        const int blocks = (n + threads - 1) / threads;
+
+        apply_fused_masks_kernel<<<blocks, threads>>>(
+            n,
+            attention_weights,
+            padding_mask,
+            heads_number,
+            query_sequence_length,
+            source_sequence_length,
+            use_causal_mask);
+    }
+}
+
+
+// [Batch, Seq, Heads, HeadDim] -> [Batch, Heads, Seq, HeadDim]
+__global__ void mha_transpose_qkv_kernel(const int n, const float* in, float* out, const int S, const int H, const int D)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n)
+    {
+        const int d = i % D;
+        const int h = (i / D) % H;
+        const int s = (i / (D * H)) % S;
+        const int b = i / (D * H * S);
+
+        const int out_idx = ((b * H + h) * S + s) * D + d;
+        out[out_idx] = in[i];
+    }
+}
+
+void mha_transpose_qkv_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D)
+{
+    if (n == 0) return;
+    const int threads = 256;
+    mha_transpose_qkv_kernel<<<(n + threads - 1) / threads, threads>>>(n, in, out, S, H, D);
+}
+
+// [Batch, Heads, Seq, HeadDim] -> [Batch, Seq, Heads, HeadDim]
+__global__ void mha_transpose_o_kernel(const int n, const float* in, float* out, const int S, const int H, const int D)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n)
+    {
+        const int d = i % D;
+        const int s = (i / D) % S;
+        const int h = (i / (D * S)) % H;
+        const int b = i / (D * S * H);
+
+        const int out_idx = ((b * S + s) * H + h) * D + d;
+        out[out_idx] = in[i];
+    }
+}
+
+void mha_transpose_o_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D)
+{
+    if (n == 0) return;
+    const int threads = 256;
+    mha_transpose_o_kernel<<<(n + threads - 1) / threads, threads>>>(n, in, out, S, H, D);
+}
+
+
+__global__ void mha_key_padding_mask_kernel(const int n, const float* source_input, float* attention_weights, const int H, const int Sq, const int Sk, const int E)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n)
+    {
+        const int sk = i % Sk;
+        const int b  = i / (Sk * Sq * H);
+
+        bool is_padding = true;
+        const int source_token_offset = (b * Sk + sk) * E;
+
+        for (int e = 0; e < E; ++e)
+        {
+            if (fabsf(source_input[source_token_offset + e]) > 1e-7f)
+            {
+                is_padding = false;
+                break;
+            }
+        }
+
+        if (is_padding)
+        {
+            attention_weights[i] = -1e9f;
+        }
+    }
+}
+
+void mha_key_padding_mask_cuda(const size_t n, const float* source_input, float* attention_weights, const int H, const int Sq, const int Sk, const int E)
+{
+    if (n == 0) return;
+    const int threads = 256;
+    mha_key_padding_mask_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), source_input, attention_weights, H, Sq, Sk, E);
+}
+
+
+__global__ void mha_causal_mask_kernel(const int n, float* scores, const int seq_q, const int seq_k) {
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n) {
+        const int c = i % seq_k;
+        const int r = (i / seq_k) % seq_q;
+        if (c > r) scores[i] = -1e9f;
+    }
+}
+
+void mha_causal_mask_cuda(const size_t n, float* scores, const int seq_q, const int seq_k) {
+    if (n == 0) return;
+    const int threads = 256;
+    mha_causal_mask_kernel<<<(n + threads - 1) / threads, threads>>>(n, scores, seq_q, seq_k);
+}
+
+
+// Pooling 3D
+
+__global__ void pooling3d_max_forward_kernel(const int n, const float* in, float* out, float* indices, const int B, const int S, const int F)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < n) {
+        const int f = idx % F;
+        const int b = idx / F;
+
+        float max_val = -1e20f;
+        int max_idx = 0;
+
+        for (int s = 0; s < S; s++) {
+            float val = in[(b * S + s) * F + f];
+            if (val > max_val) {
+                max_val = val;
+                max_idx = s;
+            }
+        }
+        out[idx] = max_val;
+
+        if (indices != nullptr) indices[idx] = static_cast<float>(max_idx);
+    }
+}
+
+void pooling3d_max_forward_cuda(const size_t n, const float* in, float* out, float* indices, const int B, const int S, const int F) {
+    if (n == 0) return;
+    const int threads = 256;
+    pooling3d_max_forward_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), in, out, indices, B, S, F);
+}
+
+
+__global__ void pooling3d_max_backward_kernel(const int n, const float* delta, float* in_grad, const float* indices, const int B, const int S, const int F)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < n) {
+        const int f = idx % F;
+        const int b = idx / F;
+
+        const int max_s = static_cast<int>(indices[idx]);
+
+        in_grad[(b * S + max_s) * F + f] = delta[idx];
+    }
+}
+
+void pooling3d_max_backward_cuda(const size_t n, const float* delta, float* in_grad, const float* indices, const int B, const int S, const int F) {
+    if (n == 0) return;
+    const int threads = 256;
+    pooling3d_max_backward_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), delta, in_grad, indices, B, S, F);
+}
+
+
+__global__ void pooling3d_avg_forward_kernel(const int n, const float* in, float* out, const int B, const int S, const int F)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < n)
+    {
+        const int f = idx % F;
+        const int b = idx / F;
+
+        float sum = 0.0f;
+        int valid_count = 0;
+
+        for (int s = 0; s < S; s++)
+        {
+            bool is_padding = true;
+            for (int check_f = 0; check_f < F; check_f++)
+            {
+                if (fabsf(in[(b * S + s) * F + check_f]) > 1e-7f)
+                {
+                    is_padding = false;
+                    break;
+                }
+            }
+
+            if (!is_padding)
+            {
+                sum += in[(b * S + s) * F + f];
+                valid_count++;
+            }
+        }
+
+        out[idx] = (valid_count > 0) ? (sum / (float)valid_count) : 0.0f;
+    }
+}
+
+void pooling3d_avg_forward_cuda(const size_t n, const float* in, float* out, const int B, const int S, const int F) {
+    if (n == 0) return;
+    const int threads = 256;
+    pooling3d_avg_forward_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), in, out, B, S, F);
+}
+
+
+__global__ void pooling3d_avg_backward_kernel(const int n, const float* in, const float* delta, float* in_grad, const int B, const int S, const int F)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < n)
+    {
+        const int f = idx % F;
+        const int b = idx / F;
+
+        int valid_count = 0;
+
+        for (int s = 0; s < S; s++)
+        {
+            bool is_padding = true;
+            for (int check_f = 0; check_f < F; check_f++)
+            {
+                if (fabsf(in[(b * S + s) * F + check_f]) > 1e-7f)
+                {
+                    is_padding = false;
+                    break;
+                }
+            }
+            if (!is_padding) valid_count++;
+        }
+
+        if (valid_count > 0)
+        {
+            float grad_val = delta[idx] / (float)valid_count;
+
+            for (int s = 0; s < S; s++)
+            {
+                bool is_padding = true;
+                for (int check_f = 0; check_f < F; check_f++)
+                {
+                    if (fabsf(in[(b * S + s) * F + check_f]) > 1e-7f)
+                    {
+                        is_padding = false;
+                        break;
+                    }
+                }
+                if (!is_padding)
+                    in_grad[(b * S + s) * F + f] = grad_val;
+            }
+        }
+    }
+}
+
+void pooling3d_avg_backward_cuda(const size_t n, const float* in, const float* delta, float* in_grad, const int B, const int S, const int F) {
+    if (n == 0) return;
+    const int threads = 256;
+    pooling3d_avg_backward_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), in, delta, in_grad, B, S, F);
+}
+
+
+// Normalization layer
+
+__global__ void layernorm_forward_kernel(const int N, const int D, const float* X, float* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
+{
+    const int idx = blockIdx.x;
+    if (idx >= N) return;
+
+    const float* x_row = X + idx * D;
+    float* y_row = Y + idx * D;
+
+    float sum = 0.0f;
+    for (int i = threadIdx.x; i < D; i += blockDim.x) {
+        sum += x_row[i];
+    }
+
+    __shared__ float shared_sum[256];
+    shared_sum[threadIdx.x] = sum;
+    __syncthreads();
+
+    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1) {
+        if (threadIdx.x < stride) {
+            shared_sum[threadIdx.x] += shared_sum[threadIdx.x + stride];
+        }
+        __syncthreads();
+    }
+
+    float mean = shared_sum[0] / (float)D;
+    if (threadIdx.x == 0) means[idx] = mean;
+
+    float var_sum = 0.0f;
+    for (int i = threadIdx.x; i < D; i += blockDim.x) {
+        float diff = x_row[i] - mean;
+        var_sum += diff * diff;
+    }
+
+    shared_sum[threadIdx.x] = var_sum;
+    __syncthreads();
+
+    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1) {
+        if (threadIdx.x < stride) {
+            shared_sum[threadIdx.x] += shared_sum[threadIdx.x + stride];
+        }
+        __syncthreads();
+    }
+
+    float var = shared_sum[0] / (float)D;
+    float inv_var = rsqrtf(var + eps);
+    if (threadIdx.x == 0) inv_vars[idx] = inv_var;
+
+    for (int i = threadIdx.x; i < D; i += blockDim.x) {
+        float x_hat = (x_row[i] - mean) * inv_var;
+        y_row[i] = gamma[i] * x_hat + beta[i];
+    }
+}
+
+void layernorm_forward_cuda(const int N, const int D, const float* X, float* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
+{
+    if (N == 0 || D == 0) return;
+
+    int threads = 256;
+    if (D <= 32) threads = 32;
+    else if (D <= 64) threads = 64;
+    else if (D <= 128) threads = 128;
+
+    layernorm_forward_kernel<<<N, threads>>>(N, D, X, Y, means, inv_vars, gamma, beta, eps);
+}
+
+
+__global__ void layernorm_backward_kernel(const int N, const int D, const float* dY, const float* X, const float* means, const float* inv_vars, const float* gamma, float* dX, float* dGamma, float* dBeta)
+{
+    const int idx = blockIdx.x;
+    if (idx >= N) return;
+
+    const float* dy_row = dY + idx * D;
+    const float* x_row = X + idx * D;
+    float* dx_row = dX + idx * D;
+
+    float mean = means[idx];
+    float inv_var = inv_vars[idx];
+
+    float sum_D = 0.0f;
+    float sum_D_xhat = 0.0f;
+
+    for (int i = threadIdx.x; i < D; i += blockDim.x) {
+        float d = dy_row[i] * gamma[i];
+        float x_hat = (x_row[i] - mean) * inv_var;
+
+        sum_D += d;
+        sum_D_xhat += d * x_hat;
+
+        atomicAdd(&dGamma[i], dy_row[i] * x_hat);
+        atomicAdd(&dBeta[i], dy_row[i]);
+    }
+
+    __shared__ float s_sum_D[256];
+    __shared__ float s_sum_D_xhat[256];
+
+    s_sum_D[threadIdx.x] = sum_D;
+    s_sum_D_xhat[threadIdx.x] = sum_D_xhat;
+    __syncthreads();
+
+    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1) {
+        if (threadIdx.x < stride) {
+            s_sum_D[threadIdx.x] += s_sum_D[threadIdx.x + stride];
+            s_sum_D_xhat[threadIdx.x] += s_sum_D_xhat[threadIdx.x + stride];
+        }
+        __syncthreads();
+    }
+
+    float mean_D = s_sum_D[0] / (float)D;
+    float mean_D_xhat = s_sum_D_xhat[0] / (float)D;
+
+    for (int i = threadIdx.x; i < D; i += blockDim.x) {
+        float d = dy_row[i] * gamma[i];
+        float x_hat = (x_row[i] - mean) * inv_var;
+
+        dx_row[i] = (d - mean_D - x_hat * mean_D_xhat) * inv_var;
+    }
+}
+
+void layernorm_backward_cuda(const int N, const int D, const float* dY, const float* X, const float* means, const float* inv_vars, const float* gamma, float* dX, float* dGamma, float* dBeta)
+{
+    if (N == 0 || D == 0) return;
+
+    int threads = 256;
+    if (D <= 32) threads = 32;
+    else if (D <= 64) threads = 64;
+    else if (D <= 128) threads = 128;
+
+    layernorm_backward_kernel<<<N, threads>>>(N, D, dY, X, means, inv_vars, gamma, dX, dGamma, dBeta);
 }

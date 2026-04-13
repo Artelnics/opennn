@@ -6,10 +6,10 @@
 //  Artificial Intelligence Techniques SL
 //  artelnics@artelnics.com
 
-#ifndef MULTIHEADATTENTIONLAYER_H
-#define MULTIHEADATTENTIONLAYER_H
+#pragma once
 
 #include "layer.h"
+#include "pch.h"
 
 namespace opennn
 {
@@ -19,13 +19,13 @@ class MultiHeadAttention final : public Layer
 
 public:
 
-    MultiHeadAttention(const dimensions& = dimensions({0,0}),
-                       const Index& = 0,
+    MultiHeadAttention(const Shape& = Shape({0,0}),
+                       Index = 0,
                        const string& = string());
 
-    MultiHeadAttention(const dimensions&,
-                       const dimensions&,
-                       const Index& = 0,
+    MultiHeadAttention(const Shape&,
+                       const Shape&,
+                       Index = 0,
                        const string& = string());
 
     Index get_query_sequence_length() const;
@@ -36,71 +36,104 @@ public:
 
     type get_scaling_factor() const;
 
-    dimensions get_input_dimensions() const override;
+    Shape get_input_shape() const override;
 
-    dimensions get_output_dimensions() const override;
+    Shape get_output_shape() const override;
 
-    vector<ParameterView> get_parameter_views() const override;
+    vector<TensorView*> get_parameter_views() override;
 
-    void set(const Index& = 0,
-             const Index& = 0,
-             const Index& = 0,
-             const Index& = 0,
-             const bool& = false,
+    void set(const Index = 0,
+             Index = 0,
+             Index = 0,
+             Index = 0,
+             bool = false,
              const string& = "multihead_attention_layer");
 
-    void set_dropout_rate(const type&);
+    void set_dropout_rate(const type);
 
-    void apply_causal_mask(Tensor<type, 4>&) const;
+    void apply_causal_mask(Tensor4&) const;
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
-                           const bool&) override;
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
+                           bool) override;
 
-    void back_propagate(const vector<TensorView>&,
-                        const vector<TensorView>&,
-                        unique_ptr<LayerForwardPropagation>&,
+    void back_propagate(unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
+
+    void calculate_projection(const TensorMap3& inputs,
+                              const TensorView& weights,
+                              const TensorView& biases,
+                              Index sequence_length,
+                              Index batch_size,
+                              Tensor4& output) const;
+
+
+    void calculate_projection_gradient(const Tensor4& d_head,
+                                       const TensorMap3& input,
+                                       const TensorView& weights,
+                                       VectorMap& d_bias,
+                                       MatrixMap& d_weights,
+                                       TensorMap3& d_input,
+                                       Index batch_size,
+                                       bool accumulate) const;
 
     void print() const override;
 
     void to_XML(XMLPrinter&) const override;
     void from_XML(const XMLDocument&) override;
 
-#ifdef OPENNN_CUDA
-        // @todo
-#endif
+    void apply_key_padding_mask(const TensorMap3&, Tensor4&) const;
 
-    void apply_key_padding_mask(const Tensor<bool, 2>&,Tensor<type, 4>&) const;
+#ifdef OPENNN_CUDA
+
+    public:
+
+        void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
+
+        void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
+                            unique_ptr<LayerBackPropagationCuda>&) const override;
+
+        vector<TensorViewCuda*> get_parameter_views_device() override;
+
+        void linear_projection_cuda(const float*, const float*, const float*,
+                                    cudnnTensorDescriptor_t, float*, cudnnTensorDescriptor_t,
+                                    int, int, int) const;
+
+    protected:
+
+        TensorViewCuda query_weights_device;
+        TensorViewCuda query_biases_device;
+        TensorViewCuda key_weights_device;
+        TensorViewCuda key_biases_device;
+        TensorViewCuda value_weights_device;
+        TensorViewCuda value_biases_device;
+        TensorViewCuda projection_weights_device;
+        TensorViewCuda projection_biases_device;
+#endif
 
 private:
 
+    Index heads_number = 0;
     Index query_sequence_length = 0;
     Index source_sequence_length = 0;
 
-    Index heads_number = 0;
-    Index head_dimension = 0;
-    Index embedding_dimension = 0;
+    TensorView query_weights;
+    TensorView query_biases;
 
-    Tensor<type, 2> query_weights;
-    Tensor<type, 1> query_biases;
+    TensorView key_weights;
+    TensorView key_biases;
 
-    Tensor<type, 2> key_weights;
-    Tensor<type, 1> key_biases;
+    TensorView value_weights;
+    TensorView value_biases;
 
-    Tensor<type, 2> value_weights;
-    Tensor<type, 1> value_biases;
-
-    Tensor<type, 2> projection_weights;
-    Tensor<type, 1> projection_biases;
+    TensorView projection_weights;
+    TensorView projection_biases;
 
     bool use_causal_mask = false;
 
-    Tensor<type, 2> causal_mask;
-    Tensor<bool,2> key_mask;             //Starting to implement (should be used before softmax so that the probability of the padding is zero)
+    MatrixR causal_mask;
+    MatrixB key_mask; // Starting to implement (should be used before softmax so that the probability of the padding is zero)
 
     type dropout_rate = type(0);
-    type scaling_factor = 0;
 
     const type minus_inf = -numeric_limits<float>::infinity();
 };
@@ -108,99 +141,116 @@ private:
 
 struct MultiHeadAttentionForwardPropagation final : LayerForwardPropagation
 {
-    MultiHeadAttentionForwardPropagation(const Index& new_batch_size = 0,
-                                         Layer* new_layer = nullptr);
-
-    TensorView get_output_pair() const override;
+    MultiHeadAttentionForwardPropagation(const Index = 0, Layer* = nullptr);
 
     void initialize() override;
 
     void print() const override;
 
-    Tensor<type, 4> query;
-    Tensor<type, 4> key;
-    Tensor<type, 4> value;
+    Tensor4 query;
+    Tensor4 key;
+    Tensor4 value;
 
-    Tensor<type, 4> attention_weights;
-    Tensor<type, 4> attention_outputs;
+    Tensor4 attention_weights;
 
-    Tensor<type, 3> concatenated_attention_outputs;
-
-    Tensor<type, 4> projection_outputs;
-
-    Tensor<type, 3> outputs;
-
-    Tensor<type, 2> sample_matrix;
+    Tensor3 concatenated_attention_outputs;
 };
 
 
 struct MultiHeadAttentionBackPropagation final : LayerBackPropagation
 {
-    MultiHeadAttentionBackPropagation(const Index& = 0, Layer* = nullptr);
+    MultiHeadAttentionBackPropagation(const Index = 0, Layer* = nullptr);
 
-    vector<TensorView> get_input_derivative_views() const override;
-
-    vector<ParameterView> get_parameter_delta_views() const override;
+    vector<TensorView*> get_gradient_views() override;
 
     void initialize() override;
 
     void print() const override;
 
-    Tensor<type, 4> attention_weight_deltas_xxx;
-    Tensor<type, 4> attention_output_deltas;
-    Tensor<type, 3> concatenated_attention_output_deltas;
+    Tensor4 attention_weight_gradients;
+    Tensor3 concatenated_attention_output_gradients;
 
-    Tensor<type, 4> query_deltas;
-    Tensor<type, 4> key_deltas;
-    Tensor<type, 4> value_deltas;
+    Tensor4 query_gradients;
+    Tensor4 key_gradients;
+    Tensor4 value_gradients;
 
-    Tensor<type, 2> query_weight_deltas;
-    Tensor<type, 2> key_weight_deltas;
-    Tensor<type, 2> value_weight_deltas;
+    TensorView query_weight_gradients;
+    TensorView key_weight_gradients;
+    TensorView value_weight_gradients;
+    TensorView projection_weight_gradients;
 
-    Tensor<type, 2> projection_weight_deltas;
-
-    Tensor<type, 1> query_bias_deltas;
-    Tensor<type, 1> key_bias_deltas;
-    Tensor<type, 1> value_bias_deltas;
-    Tensor<type, 1> projection_bias_deltas;
-
-    Tensor<type, 1> aux_rows;
-
-    Tensor<type, 3> input_query_deltas;
-    Tensor<type, 3> input_source_deltas;
-
-    Tensor<type, 4> softmax_deltas;
-
-    Tensor<type, 3> query_deltas_reshaped;
-    Tensor<type, 3> key_deltas_reshaped;
-    Tensor<type, 3> value_deltas_reshaped;
+    TensorView query_bias_gradients;
+    TensorView key_bias_gradients;
+    TensorView value_bias_gradients;
+    TensorView projection_bias_gradients;
 };
 
+
 #ifdef OPENNN_CUDA
-    // @todo
+
+struct MultiHeadAttentionForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    MultiHeadAttentionForwardPropagationCuda(const Index = 0, Layer* = nullptr);
+
+    void initialize() override;
+
+    void print() const override;
+
+    void free() override {}
+
+    TensorCuda query, key, value;                       // [B*S, E]
+    TensorCuda attention_weights;                       // Scores [B*H*Sq, Sk]
+    TensorCuda concatenated_attention_outputs;          // [B*Sq, E]
+
+    TensorCuda query_transposed, key_transposed, value_transposed;
+    TensorCuda attention_outputs_transposed;
+    TensorCuda attention_probabilities;
+
+    TensorCuda padding_mask;                            // [B*Sk]
+};
+
+
+struct MultiHeadAttentionBackPropagationCuda : public LayerBackPropagationCuda
+{
+    MultiHeadAttentionBackPropagationCuda(const Index = 0, Layer* = nullptr);
+
+    void initialize() override;
+
+    vector<TensorViewCuda*> get_gradient_views() override;
+    vector<TensorViewCuda*> get_workspace_views() override;
+
+    void print() const override;
+
+    void free() override {}
+
+    TensorViewCuda query_weight_gradients, key_weight_gradients, value_weight_gradients, projection_weight_gradients;
+    TensorViewCuda query_bias_gradients, key_bias_gradients, value_bias_gradients, projection_bias_gradients;
+
+    TensorViewCuda query_gradients, key_gradients, value_gradients;
+    TensorViewCuda attention_weight_gradients;              // dP
+    TensorViewCuda concatenated_attention_output_gradients; // dY_proj
+    TensorViewCuda softmax_gradients;                       // dS
+
+    TensorViewCuda query_gradients_transposed, key_gradients_transposed, value_gradients_transposed;
+    TensorViewCuda attention_output_gradients_transposed;
+    TensorViewCuda query_input_gradients, source_input_gradients; // dX_q, dX_s
+    TensorViewCuda ones;
+};
+
 #endif
 
-} // namespace opennn
-
-
-#endif // MULTIHEAD_ATTENTION_LAYER_H
-
+} 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

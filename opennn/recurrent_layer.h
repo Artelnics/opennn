@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef RECURRENTLAYER_H
-#define RECURRENTLAYER_H
+#pragma once
 
 #include "layer.h"
 
@@ -19,33 +18,26 @@ class Recurrent final : public Layer
 
 public:
 
-    Recurrent(const dimensions & = {0, 0}, const dimensions& = {0});
+    Recurrent(const Shape& = {0, 0}, const Shape& = {0});
 
-    dimensions get_input_dimensions() const override;
-    dimensions get_output_dimensions() const override;
+    Shape get_input_shape() const override;
+    Shape get_output_shape() const override;
 
-    vector<ParameterView> get_parameter_views() const override;
+    vector<TensorView*> get_parameter_views() override;
 
     string get_activation_function() const;
 
-    void set(const dimensions& = {}, const dimensions& = {});
+    void set(const Shape& = {}, const Shape& = {});
 
-    void set_input_dimensions(const dimensions&) override;
-    void set_output_dimensions(const dimensions&) override;
+    void set_input_shape(const Shape&) override;
+    void set_output_shape(const Shape&) override;
 
     void set_activation_function(const string&);
 
-    void calculate_combinations(const Tensor<type, 2>&,
-                                const Tensor<type, 2>&,
-                                Tensor<type, 2>&) const;
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
+                           bool) override;
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
-                           const bool&) override;
-
-    void back_propagate(const vector<TensorView>&,
-                        const vector<TensorView>&,
-                        unique_ptr<LayerForwardPropagation>&,
+    void back_propagate(unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
     string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
@@ -57,12 +49,11 @@ public:
 
 private:
 
-    dimensions input_dimensions;
+    Shape input_shape;
 
-    Tensor<type, 1> biases;
-
-    Tensor<type, 2> input_weights;
-    Tensor<type, 2> recurrent_weights;
+    TensorView biases;
+    TensorView input_weights;
+    TensorView recurrent_weights;
 
     string activation_function = "HyperbolicTangent";
 
@@ -75,57 +66,33 @@ private:
 
 struct RecurrentForwardPropagation final : LayerForwardPropagation
 {
-    RecurrentForwardPropagation(const Index& = 0, Layer* = nullptr);
-
-    TensorView get_output_pair() const override;
+    RecurrentForwardPropagation(const Index = 0, Layer* = nullptr);
 
     void initialize() override;
 
+    vector<TensorView*> get_workspace_views() override;
+
     void print() const override;
 
-    Tensor<type, 2> outputs;
-
-    Tensor<type, 3> current_inputs;
-    Tensor<type, 2> current_activation_derivatives;
-
-    Tensor<type, 3> activation_derivatives;
-
-    Tensor<type, 3> hidden_states;
+    TensorView hidden_states;
+    TensorView activation_derivatives;
 };
 
 
 struct RecurrentBackPropagation final : LayerBackPropagation
 {
-    RecurrentBackPropagation(const Index& = 0, Layer* = nullptr);
+    RecurrentBackPropagation(const Index = 0, Layer* = nullptr);
 
-    vector<TensorView> get_input_derivative_views() const override;
-
-    vector<ParameterView> get_parameter_delta_views() const override;
+    vector<TensorView*> get_gradient_views() override;
 
     void initialize() override;
 
     void print() const override;
 
-    Tensor<type, 2> current_deltas;
-    Tensor<type, 2> current_targets;
-
-    Tensor<type, 2> combination_deltas;
-    Tensor<type, 2> current_combination_deltas;
-
-    Tensor<type, 2> combinations_bias_deltas;
-    Tensor<type, 3> combinations_input_weight_deltas;
-    Tensor<type, 3> combinations_recurrent_weight_deltas;
-
-    Tensor<type, 1> bias_deltas;
-
-    Tensor<type, 2> input_weight_deltas;
-
-    Tensor<type, 2> recurrent_weight_deltas;
-
-    Tensor<type, 3> input_deltas;
-
+    TensorView bias_gradients;
+    TensorView input_weight_gradients;
+    TensorView recurrent_weight_gradients;
 };
-
 
 #ifdef OPENNN_CUDA
 // @todo
@@ -133,22 +100,16 @@ struct RecurrentBackPropagation final : LayerBackPropagation
 
 }
 
-#endif
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

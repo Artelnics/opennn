@@ -7,16 +7,15 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "bounding_layer.h"
-#include "tinyxml2.h"
 
 namespace opennn
 {
 
-Bounding::Bounding(const dimensions& output_dimensions, const string& new_name) : Layer()
+Bounding::Bounding(const Shape& output_shape, const string& new_name) : Layer()
 {
-    set(output_dimensions, new_name);
+    set(output_shape, new_name);
 }
 
 
@@ -26,45 +25,45 @@ const Bounding::BoundingMethod& Bounding::get_bounding_method() const
 }
 
 
-dimensions Bounding::get_input_dimensions() const
+Shape Bounding::get_input_shape() const
 {
-    return { lower_bounds.dimension(0) };
+    return { lower_bounds.rows() };
 }
 
 
-type Bounding::get_lower_bound(const Index& i) const
+type Bounding::get_lower_bound(const Index i) const
 {
     return lower_bounds[i];
 }
 
 
-const Tensor<type, 1>& Bounding::get_lower_bounds() const
+const VectorR& Bounding::get_lower_bounds() const
 {
     return lower_bounds;
 }
 
 
-dimensions Bounding::get_output_dimensions() const
+Shape Bounding::get_output_shape() const
 {
-    return { lower_bounds.dimension(0) };
+    return { lower_bounds.rows() };
 }
 
 
-type Bounding::get_upper_bound(const Index& i) const
+type Bounding::get_upper_bound(const Index i) const
 {
     return upper_bounds(i);
 }
 
 
-const Tensor<type, 1>& Bounding::get_upper_bounds() const
+const VectorR& Bounding::get_upper_bounds() const
 {
     return upper_bounds;
 }
 
 
-void Bounding::set(const dimensions& new_output_dimensions, const string& new_label)
+void Bounding::set(const Shape& new_output_shape, const string& new_label)
 {
-    set_output_dimensions(new_output_dimensions);
+    set_output_shape(new_output_shape);
 
     label = new_label;
 
@@ -93,92 +92,79 @@ void Bounding::set_bounding_method(const string& new_method_string)
 }
 
 
-void Bounding::set_input_dimensions(const dimensions& new_input_dimensions)
+void Bounding::set_input_shape(const Shape& new_input_shape)
 {
-    lower_bounds.resize(new_input_dimensions[0]);
-    upper_bounds.resize(new_input_dimensions[0]);
+    lower_bounds.resize(new_input_shape[0]);
+    upper_bounds.resize(new_input_shape[0]);
 }
 
 
-void Bounding::set_lower_bound(const Index& index, const type& new_lower_bound)
+void Bounding::set_lower_bound(const Index index, type new_lower_bound)
 {
-    const dimensions output_dimensions = get_output_dimensions();
+    const Shape output_shape = get_output_shape();
 
-    if(lower_bounds.size() != output_dimensions[0])
+    if(lower_bounds.size() != output_shape[0])
     {
-        lower_bounds.resize(output_dimensions[0]);
-        lower_bounds.setConstant(-numeric_limits<type>::max());
+        lower_bounds.resize(output_shape[0]);
+        lower_bounds.setConstant(-MAX);
     }
 
     lower_bounds[index] = new_lower_bound;
 }
 
 
-void Bounding::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
+void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
 {
     lower_bounds = new_lower_bounds;
 }
 
 
-void Bounding::set_output_dimensions(const dimensions& new_output_dimensions)
+void Bounding::set_output_shape(const Shape& new_output_shape)
 {
-    lower_bounds.resize(new_output_dimensions[0]);
-    upper_bounds.resize(new_output_dimensions[0]);
+    lower_bounds.resize(new_output_shape[0]);
+    upper_bounds.resize(new_output_shape[0]);
 
-    lower_bounds.setConstant(-numeric_limits<type>::max());
-    upper_bounds.setConstant(numeric_limits<type>::max());
+    lower_bounds.setConstant(-MAX);
+    upper_bounds.setConstant(MAX);
 }
 
 
-void Bounding::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
+void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
 {
     upper_bounds = new_upper_bounds;
 }
 
 
-void Bounding::set_upper_bound(const Index& index, const type& new_upper_bound)
+void Bounding::set_upper_bound(const Index index, type new_upper_bound)
 {
-    const dimensions output_dimensions = get_output_dimensions();
+    const Shape output_shape = get_output_shape();
 
-    if(upper_bounds.size() != output_dimensions[0])
+    if(upper_bounds.size() != output_shape[0])
     {
-        upper_bounds.resize(output_dimensions[0]);
-        upper_bounds.setConstant(numeric_limits<type>::max());
+        upper_bounds.resize(output_shape[0]);
+        upper_bounds.setConstant(MAX);
     }
 
     upper_bounds[index] = new_upper_bound;
 }
 
 
-void Bounding::forward_propagate(const vector<TensorView>& input_views,
-                                 unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                 const bool&)
+void Bounding::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                 bool)
 {
-    const TensorMap<Tensor<type,2>> inputs = tensor_map<2>(input_views[0]);
-
-    BoundingForwardPropagation* this_forward_propagation =
-        static_cast<BoundingForwardPropagation*>(forward_propagation.get());
-
-    Tensor<type,2>& outputs = this_forward_propagation->outputs;
+    const MatrixMap inputs = matrix_map(forward_propagation->inputs[0]);
+    MatrixMap outputs = matrix_map(forward_propagation->outputs);
 
     if(bounding_method == BoundingMethod::NoBounding)
     {
-        outputs.device(*thread_pool_device) = inputs;
+        outputs = inputs;
         return;
     }
 
-    const Index rows_number = inputs.dimension(0);
-    const Index columns_number = inputs.dimension(1);
+    const Index columns_number = inputs.cols();
 
-#pragma omp parallel for
-    for (Index j = 0; j < columns_number; j++)
-    {
-        const type& lower_bound = lower_bounds(j);
-        const type& upper_bound = upper_bounds(j);
-
-        for (Index i = 0; i < rows_number; i++)
-            outputs(i, j) = clamp(inputs(i, j), lower_bound, upper_bound);
-    }
+    for(Index j = 0; j < columns_number; j++)
+        outputs.col(j).array() = inputs.col(j).array().max(lower_bounds(j)).min(upper_bounds(j));
 }
 
 
@@ -193,11 +179,11 @@ string Bounding::get_bounding_method_string() const
 }
 
 
-string Bounding::get_expression(const vector<string>& new_feature_names, const vector<string>& new_output_names) const
+string Bounding::get_expression(const vector<string>& new_input_names, const vector<string>& new_output_names) const
 {
-    const vector<string> feature_names = new_feature_names.empty()
+    const vector<string> input_names = new_input_names.empty()
                                            ? get_default_feature_names()
-                                           : new_feature_names;
+                                           : new_input_names;
 
     const vector<string> output_names = new_output_names.empty()
                                             ? get_default_output_names()
@@ -211,10 +197,10 @@ string Bounding::get_expression(const vector<string>& new_feature_names, const v
 
     buffer.precision(10);
 
-    const dimensions output_dimensions = get_output_dimensions();
+    const Shape output_shape = get_output_shape();
 
-    for(Index i = 0; i < output_dimensions[0]; i++)
-        buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << feature_names[i] << ")\n"
+    for(Index i = 0; i < output_shape[0]; i++)
+        buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << input_names[i] << ")\n"
                << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
 
     return buffer.str();
@@ -233,11 +219,11 @@ void Bounding::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Bounding");
 
-    const dimensions output_dimensions = get_input_dimensions();
+    const Shape output_shape = get_input_shape();
 
-    add_xml_element(printer, "NeuronsNumber", to_string(output_dimensions[0]));
+    add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
 
-    for (Index i = 0; i < output_dimensions[0]; i++)
+    for(Index i = 0; i < output_shape[0]; i++)
     {
         printer.OpenElement("Item");
         printer.PushAttribute("Index", unsigned(i + 1));
@@ -256,18 +242,18 @@ void Bounding::to_XML(XMLPrinter& printer) const
 
 void Bounding::from_XML(const XMLDocument& document)
 {
-    const auto* root_element = document.FirstChildElement("Bounding");
+    const XMLElement* root_element = document.FirstChildElement("Bounding");
 
-    if (!root_element)
+    if(!root_element)
         throw runtime_error("Bounding element is nullptr.\n");
 
     const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
 
     set({ neurons_number });
 
-    const auto* item_element = root_element->FirstChildElement("Item");
+    const XMLElement* item_element = root_element->FirstChildElement("Item");
 
-    for (Index i = 0; i < neurons_number && item_element; i++)
+    for(Index i = 0; i < neurons_number && item_element; i++)
     {
         unsigned index = 0;
         item_element->QueryUnsignedAttribute("Index", &index);
@@ -285,33 +271,25 @@ void Bounding::from_XML(const XMLDocument& document)
 }
 
 
-BoundingForwardPropagation::BoundingForwardPropagation(const Index& new_batch_size, Layer* new_layer)
+BoundingForwardPropagation::BoundingForwardPropagation(const Index new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-TensorView BoundingForwardPropagation::get_output_pair() const
-{
-    const dimensions output_dimensions = layer->get_output_dimensions();
-
-    return { (type*)outputs.data(), { batch_size, output_dimensions[0]}};
-}
-
-
 void BoundingForwardPropagation::initialize()
 {
-    const Index neurons_number = static_cast<Bounding*>(layer)->get_output_dimensions()[0];
+    const Index neurons_number = static_cast<Bounding*>(layer)->get_output_shape()[0];
 
-    outputs.resize(batch_size, neurons_number);
+    outputs.shape = {batch_size, neurons_number};
 }
 
 
 void BoundingForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
-         << outputs << endl;
+         << outputs.shape << endl;
 }
 
 REGISTER(Layer, Bounding, "Bounding")
@@ -320,52 +298,30 @@ REGISTER(LayerForwardPropagation, BoundingForwardPropagation, "Bounding")
 
 #ifdef OPENNN_CUDA
 
-void Bounding::forward_propagate_cuda(const vector<float*>& inputs_device,
-                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
-                                      const bool&)
+void Bounding::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
 {
-    BoundingForwardPropagationCuda* this_forward_propagation =
-        static_cast<BoundingForwardPropagationCuda*>(forward_propagation_cuda.get());
-
-    const size_t size = get_outputs_number() * this_forward_propagation->batch_size * sizeof(float);
-
     // @todo Implement bounding in CUDA
+    throw runtime_error("Bounding layer is not implemented in CUDA.\n");
 }
 
 
-BoundingForwardPropagationCuda::BoundingForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+BoundingForwardPropagationCuda::BoundingForwardPropagationCuda(const Index new_batch_size, Layer* new_layer)
     : LayerForwardPropagationCuda()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void BoundingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+void BoundingForwardPropagationCuda::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-    batch_size = new_batch_size;
-
-    const size_t size = layer->get_outputs_number() * batch_size;
-
-    //cudaMalloc(&outputs, size * sizeof(float));
+    // @todo
 }
 
 
 void BoundingForwardPropagationCuda::print() const
 {
-    const Index outputs_number = layer->get_outputs_number();
-
-    cout << "Bounding CUDA Outputs (pass-through):" << endl
-        << matrix_from_device(outputs, batch_size, outputs_number) << endl;
-}
-
-
-void BoundingForwardPropagationCuda::free()
-{
-    cudaFree(outputs);
-    outputs = nullptr;
+    cout << "Bounding Forward Propagation CUDA:" << endl
+         << "Batch size: " << batch_size << endl;
 }
 
 REGISTER(LayerForwardPropagationCuda, BoundingForwardPropagationCuda, "Bounding")
@@ -375,18 +331,15 @@ REGISTER(LayerForwardPropagationCuda, BoundingForwardPropagationCuda, "Bounding"
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

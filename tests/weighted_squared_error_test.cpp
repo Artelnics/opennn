@@ -29,27 +29,27 @@ TEST(WeightedSquaredErrorTest, GeneralConstructor)
 
 TEST(WeightedSquaredErrorTest, BackPropagate)
 {
-     const Index samples_number = get_random_index(2, 10);
-     const Index inputs_number = get_random_index(1, 10);
-     const Index neurons_number = get_random_index(1, 10);
-     const Index outputs_number = 1;
+    const Index samples_number = random_integer(2, 10);
+    const Index inputs_number = random_integer(1, 10);
+    const Index neurons_number = random_integer(1, 10);
+    const Index outputs_number = 1;
 
-     Dataset data_set(samples_number, { inputs_number }, { outputs_number });
-     data_set.set_data_binary_classification();
+    Dataset data_set(samples_number, { inputs_number }, { outputs_number });
+    data_set.set_data_binary_classification();
 
-     ClassificationNetwork neural_network({ inputs_number }, { neurons_number }, { outputs_number });
+    ClassificationNetwork neural_network({ inputs_number }, { neurons_number }, { outputs_number });
 
-     WeightedSquaredError weighted_squared_error(&neural_network, &data_set);
+    WeightedSquaredError weighted_squared_error(&neural_network, &data_set);
 
-     const Tensor<type, 1> analytical_gradient = weighted_squared_error.calculate_gradient();
-     const Tensor<type, 1> numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
+    const VectorR analytical_gradient = weighted_squared_error.calculate_gradient();
+    const VectorR numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
 
-     EXPECT_TRUE(are_equal(analytical_gradient, numerical_gradient, type(1.0e-2)));
+    EXPECT_TRUE(are_equal(analytical_gradient, numerical_gradient, type(1.0e-2)));
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2025 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lewser General Public

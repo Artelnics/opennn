@@ -8,10 +8,6 @@
 
 TEMPLATE = subdirs
 
-CONFIG(release, debug|release) {
-    DEFINES += NDEBUG
-}
-
 SUBDIRS += opennn
 SUBDIRS += examples
 SUBDIRS += blank

@@ -6,10 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef STOCHASTICGRADIENTDESCENT_H
-#define STOCHASTICGRADIENTDESCENT_H
+#pragma once
 
-#include "optimization_algorithm.h"
+#include "optimizer.h"
 
 namespace opennn
 {
@@ -22,37 +21,39 @@ struct SGDOptimizationDataCuda;
 #endif
 
 
-class StochasticGradientDescent final : public OptimizationAlgorithm
+class StochasticGradientDescent final : public Optimizer
 {
 
 public:
 
-    StochasticGradientDescent(const LossIndex* = nullptr);
+    StochasticGradientDescent(const Loss* = nullptr);
 
-    const type& get_initial_learning_rate() const;
-    const type& get_initial_decay() const;
-    const type& get_momentum() const;
-    const bool& get_nesterov() const;
+    type get_initial_learning_rate() const;
+    type get_initial_decay() const;
+    type get_momentum() const;
+    bool get_nesterov() const;
+    Index get_maximum_validation_failures() const;
 
-    const type& get_loss_goal() const;
+    type get_loss_goal() const;
 
     void set_default();
 
-    void set_batch_size(const Index&);
+    void set_batch_size(const Index);
 
     Index get_samples_number() const;
 
-    void set_initial_learning_rate(const type&);
-    void set_initial_decay(const type&);
-    void set_momentum(const type&);
-    void set_nesterov(const bool&);
+    void set_initial_learning_rate(const type);
+    void set_initial_decay(const type);
+    void set_momentum(const type);
+    void set_nesterov(bool);
 
-    void set_maximum_epochs_number(const Index&);
+    void set_maximum_epochs(const Index);
+    void set_maximum_validation_failures(const Index);
 
-    void set_loss_goal(const type&);
-    void set_maximum_time(const type&);
+    void set_loss_goal(const type);
+    void set_maximum_time(const type);
 
-    void update_parameters(BackPropagation& , StochasticGradientDescentData&, const type&) const;
+    void update_parameters(BackPropagation& , StochasticGradientDescentData&, type) const;
 
     TrainingResults train() override;
 
@@ -76,7 +77,7 @@ private:
 
     type training_loss_goal = type(0);
 
-    Index maximum_selection_failures = numeric_limits<Index>::max();
+    Index maximum_validation_failures = numeric_limits<Index>::max();
 
 #ifdef OPENNN_CUDA
 
@@ -84,14 +85,14 @@ public:
 
     TrainingResults train_cuda() override;
 
-    void update_parameters_cuda(BackPropagationCuda&, SGDOptimizationDataCuda&) const;
+    void update_parameters(BackPropagationCuda&, SGDOptimizationDataCuda&, type) const;
 
 #endif
 
 };
 
 
-struct StochasticGradientDescentData final : public OptimizationAlgorithmData
+struct StochasticGradientDescentData final : public OptimizerData
 {
     StochasticGradientDescentData(StochasticGradientDescent* = nullptr);
 
@@ -101,22 +102,20 @@ struct StochasticGradientDescentData final : public OptimizationAlgorithmData
 
     Index iteration = 0;
 
-    vector<vector<Tensor<type, 1>>> parameters_increment;
-    vector<vector<Tensor<type, 1>>> last_parameters_increment;
+    VectorR parameter_updates;
+    VectorR last_parameter_updates;
 };
 
 
 #ifdef OPENNN_CUDA
 
-struct SGDOptimizationDataCuda final : public OptimizationAlgorithmData
+struct SGDOptimizationDataCuda final : public OptimizerData
 {
     SGDOptimizationDataCuda(StochasticGradientDescent* = nullptr);
 
-    ~SGDOptimizationDataCuda() { free(); }
+    //~SGDOptimizationDataCuda() { free(); }
 
     void set(StochasticGradientDescent* = nullptr);
-
-    void free();
 
     void print() const;
 
@@ -124,11 +123,23 @@ struct SGDOptimizationDataCuda final : public OptimizationAlgorithmData
 
     Index iteration = 0;
 
-    vector<vector<float*>> velocity;
+    TensorCuda velocity;
 };
 
 #endif
 
 }
 
-#endif
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

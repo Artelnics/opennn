@@ -7,9 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "../opennn/opennn.h"
+#include <iostream>
 
 using namespace opennn;
-
 
 int main()
 {
@@ -17,11 +17,12 @@ int main()
     {
         cout << "OpenNN. Blank Cuda." << endl;
 
-#ifndef OPENNN_CUDA
-        cout << "Enable CUDA in pch.h" << endl;
+#ifdef OPENNN_CUDA
+
+
 #endif
 
-        cout << "Completed." << endl;
+        cout << "Bye!" << endl;
 
         return 0;
     }

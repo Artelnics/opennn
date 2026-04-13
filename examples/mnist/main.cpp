@@ -16,7 +16,7 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/optimization_algorithm.h"
+#include "../../opennn/optimizer.h"
 #include "../../opennn/adaptive_moment_estimation.h"
 
 using namespace opennn;
@@ -33,21 +33,21 @@ int main()
 
         // Neural network
 
-        ImageClassificationNetwork image_classification_network(image_dataset.get_dimensions("Input"),
+        ImageClassificationNetwork image_classification_network(image_dataset.get_shape("Input"),
             {4},
-            image_dataset.get_dimensions("Target"));
+            image_dataset.get_shape("Target"));
 
         // Training strategy
 
         TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
 
-        training_strategy.set_loss_index("CrossEntropyError2d");
+        training_strategy.set_loss("CrossEntropyError2d");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-        training_strategy.get_loss_index()->set_regularization_method("None");
+        training_strategy.get_loss()->set_regularization_method("None");
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs_number(10);
-        adam->set_display_period(1);
+        adam->set_maximum_epochs(200);
+        adam->set_display_period(10);
 
 #ifdef OPENNN_CUDA
     training_strategy.train_cuda();
@@ -60,8 +60,13 @@ int main()
         const TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
         
         cout << "Calculating confusion...." << endl;
-        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+        const MatrixI confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
+
+        // Single image classification test
+
+        const Index predicted_class = image_classification_network.calculate_image_output("../data/mnist_data/three/3_21.bmp");
+        cout << "Predicted class for image 3_21.bmp: " << predicted_class << endl;
 
         cout << "Bye!" << endl;
         
@@ -75,20 +80,16 @@ int main()
     }
 }
 
-
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2025 Artificial Intelligence Techniques SL
-//
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques SL
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

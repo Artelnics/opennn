@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef POOLINGLAYER_H
-#define POOLINGLAYER_H
+#pragma once
 
 #include "layer.h"
 
@@ -21,17 +20,22 @@ class Pooling final : public Layer
 
 public:
 
-    //enum class PoolingMethod{MaxPooling, AveragePooling};
-
-    Pooling(const dimensions& = {2, 2, 1}, // Input dimensions {height,width,channels}
-            const dimensions& = { 2, 2 },  // Pool dimensions {pool_height,pool_width}
-            const dimensions& = { 2, 2 },  // Stride dimensions {row_stride, column_stride}
-            const dimensions& = { 0, 0 },  // Padding dimensions {padding_height, padding_width}
+    Pooling(const Shape& = {2, 2, 1}, // Input shape {height,width,channels}
+            const Shape& = { 2, 2 },  // Pool shape {pool_height,pool_width}
+            const Shape& = { 2, 2 },  // Stride shape {row_stride, column_stride}
+            const Shape& = { 0, 0 },  // Padding shape {padding_height, padding_width}
             const string& = "MaxPooling",
             const string& = "pooling_layer");
 
-    dimensions get_input_dimensions() const override;
-    dimensions get_output_dimensions() const override;
+    void set(const Shape& = { 0, 0, 0 },
+             const Shape& = { 1, 1 },
+             const Shape& = { 1, 1 },
+             const Shape& = { 0, 0 },
+             const string & = "MaxPooling",
+             const string & = "pooling_layer");
+
+    Shape get_input_shape() const override;
+    Shape get_output_shape() const override;
 
     Index get_input_height() const;
     Index get_input_width() const;
@@ -52,49 +56,39 @@ public:
 
     string get_pooling_method() const;
 
-    void set(const dimensions& = {0, 0, 0},
-             const dimensions& = {1, 1},
-             const dimensions& = {1, 1},
-             const dimensions& = {0, 0},
-             const string& = "MaxPooling",
-             const string& = "pooling_layer");
+    void set_input_shape(const Shape&) override;
 
-    void set_input_dimensions(const dimensions&) override;
+    void set_padding_height(const Index);
+    void set_padding_width(const Index);
 
-    void set_padding_height(const Index&);
-    void set_padding_width(const Index&);
+    void set_row_stride(const Index);
+    void set_column_stride(const Index);
 
-    void set_row_stride(const Index&);
-    void set_column_stride(const Index&);
-
-    void set_pool_size(const Index&, const Index&);
+    void set_pool_size(const Index, Index);
 
     void set_pooling_method(const string&);
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
-                           const bool&) override;
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
+                           bool) override;
 
-    void forward_propagate_max_pooling(const Tensor<type, 4>&,
+    void forward_propagate_max_pooling(const Tensor4&,
                                        unique_ptr<LayerForwardPropagation>&,
-                                       const bool&) const;
+                                       bool) const;
 
-    void forward_propagate_average_pooling(const Tensor<type, 4>&,
+    void forward_propagate_average_pooling(const Tensor4&,
                                            unique_ptr<LayerForwardPropagation>&,
-                                           const bool&) const;
+                                           bool) const;
 
-    void back_propagate(const vector<TensorView>&,
-                        const vector<TensorView>&,
-                        unique_ptr<LayerForwardPropagation>&,
+    void back_propagate(unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
-    void back_propagate_max_pooling(const Tensor<type, 4>&,
-                                    const Tensor<type, 4>&,
+    void back_propagate_max_pooling(const Tensor4&,
+                                    const Tensor4&,
                                     unique_ptr<LayerForwardPropagation>&,
                                     unique_ptr<LayerBackPropagation>&) const;
 
-    void back_propagate_average_pooling(const Tensor<type, 4>&,
-                                        const Tensor<type, 4>&,
+    void back_propagate_average_pooling(const Tensor4&,
+                                        const Tensor4&,
                                         unique_ptr<LayerBackPropagation>&) const;
 
     void from_XML(const XMLDocument&) override;
@@ -106,20 +100,16 @@ public:
 
 public:
 
-    void forward_propagate_cuda(const vector<float*>&,
-                                unique_ptr<LayerForwardPropagationCuda>&,
-                                const bool&) override;
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
 
-    void back_propagate_cuda(const vector<float*>&,
-                             const vector<float*>&,
-                             unique_ptr<LayerForwardPropagationCuda>&,
-                             unique_ptr<LayerBackPropagationCuda>&) const override;
+    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
+                        unique_ptr<LayerBackPropagationCuda>&) const override;
 
 #endif
 
 private:
 
-    dimensions input_dimensions;
+    Shape input_shape;
 
     Index pool_height = 1;
 
@@ -148,17 +138,13 @@ private:
 
 struct PoolingForwardPropagation final : LayerForwardPropagation
 {
-    PoolingForwardPropagation(const Index& = 0, Layer* = nullptr);
-
-    TensorView get_output_pair() const override;
+    PoolingForwardPropagation(const Index = 0, Layer* = nullptr);
 
     void initialize() override;
 
+    vector<TensorView*> get_workspace_views() override;
+
     void print() const override;
-
-    Tensor<type, 4> outputs;
-
-    Tensor<type, 5> image_patches;
 
     Tensor<Index, 4> maximal_indices;
 };
@@ -166,17 +152,11 @@ struct PoolingForwardPropagation final : LayerForwardPropagation
 
 struct PoolingBackPropagation final : LayerBackPropagation
 {
-    PoolingBackPropagation(const Index& = 0, Layer* = nullptr);
-
-    vector<TensorView> get_input_derivative_views() const override;
+    PoolingBackPropagation(const Index = 0, Layer* = nullptr);
 
     void initialize() override;
 
     void print() const override;
-
-    Tensor<type, 4> deltas_by_pool_size;
-
-    Tensor<type, 4> input_deltas;
 };
 
 
@@ -184,33 +164,43 @@ struct PoolingBackPropagation final : LayerBackPropagation
 
 struct PoolingForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    PoolingForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
+    PoolingForwardPropagationCuda(const Index = 0, Layer* = nullptr);
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void initialize() override;
+
+    vector<TensorViewCuda*> get_workspace_views() override;
 
     void print() const override;
 
     void free() override;
 
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
-
-    cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
 };
 
 
 struct PoolingBackPropagationCuda : public LayerBackPropagationCuda
 {
-    PoolingBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+    PoolingBackPropagationCuda(const Index = 0, Layer* = nullptr);
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void initialize() override;
 
     void print() const override;
-
-    void free() override;
 };
 
 #endif
 
 }
 
-#endif // POOLING_LAYER_H
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

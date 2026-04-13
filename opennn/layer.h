@@ -6,13 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef LAYER_H
-#define LAYER_H
+#pragma once
 
-#include "tinyxml2.h"
-#include "tensors.h"
-
-using namespace tinyxml2;
+#include "tensor_utilities.h"
+#include "random_utilities.h"
 
 namespace opennn
 {
@@ -24,6 +21,14 @@ struct LayerBackPropagationLM;
 struct LayerForwardPropagationCuda;
 struct LayerBackPropagationCuda;
 
+#ifdef _MSC_VER
+#define FORCE_INLINE __forceinline
+#elif defined(__GNUC__) || defined(__clang__)
+#define FORCE_INLINE __attribute__((always_inline)) inline
+#else
+#define FORCE_INLINE inline
+#endif
+
 class Layer
 {
 
@@ -34,57 +39,51 @@ public:
 
     const string& get_label() const;
 
-    const bool& get_display() const;
+    bool get_display() const;
 
     const string& get_name() const;
 
-    virtual void set_input_dimensions(const dimensions&);
-    virtual void set_output_dimensions(const dimensions&);
+    virtual void set_input_shape(const Shape&);
+    virtual void set_output_shape(const Shape&);
 
     void set_label(const string&);
 
-    void set_display(const bool&);
+    void set_display(bool);
 
     virtual void set_parameters_random();
 
     virtual void set_parameters_glorot();
 
-    Index get_parameters_number() const;
+    Index get_parameters_number();
 
-    virtual vector<ParameterView> get_parameter_views() const;
+    virtual vector<TensorView*> get_parameter_views()
+    {
+        return {};
+    }
 
-    //virtual pair
-
-    virtual dimensions get_input_dimensions() const = 0;
-    virtual dimensions get_output_dimensions() const = 0;
+    virtual Shape get_input_shape() const = 0;
+    virtual Shape get_output_shape() const = 0;
 
     Index get_inputs_number() const;
 
     Index get_outputs_number() const;
 
-    void set_threads_number(const int&);
-
     // Forward propagation
 
-    virtual void forward_propagate(const vector<TensorView>&,
-                                   unique_ptr<LayerForwardPropagation>&,
-                                   const bool&) = 0;
+    virtual void forward_propagate(unique_ptr<LayerForwardPropagation>&,
+                                   bool) = 0;
 
     // Back propagation
 
-    virtual void back_propagate(const vector<TensorView>&,
-                                const vector<TensorView>&,
-                                unique_ptr<LayerForwardPropagation>&,
+    virtual void back_propagate(unique_ptr<LayerForwardPropagation>&,
                                 unique_ptr<LayerBackPropagation>&) const {}
 
-    virtual void back_propagate_lm(const vector<TensorView>&,
-                                   const vector<TensorView>&,
-                                   unique_ptr<LayerForwardPropagation>&,
-                                   unique_ptr<LayerBackPropagationLM>&) const {}
+    virtual void back_propagate(unique_ptr<LayerForwardPropagation>&,
+                                unique_ptr<LayerBackPropagationLM>&) const {}
 
     virtual void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
-                                                   const Index&,
-                                                   Tensor<type, 2>&) const {}
+                                                   Index,
+                                                   MatrixR&) const {}
 
     virtual void from_XML(const tinyxml2::XMLDocument&) {}
 
@@ -100,10 +99,9 @@ public:
 
     bool get_is_trainable() const;
 
-protected:
+    bool get_is_first_layer() const;
 
-    unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
+protected:
 
     string label = "my_layer";
 
@@ -111,38 +109,52 @@ protected:
 
     bool is_trainable = true;
 
-    Tensor<type, 2> empty_2;
-    Tensor<type, 3> empty_3;
-    Tensor<type, 4> empty_4;
+    // @todo set this
+
+    bool is_first_layer = false;
+
+    Tensor2 empty_2;
+    Tensor3 empty_3;
+    Tensor4 empty_4;
 
     bool display = true;
 
     template <int Rank>
     void calculate_activations(const string& activation_function,
-                               Tensor<type, Rank>& activations,
-                               Tensor<type, Rank>& activation_derivatives) const
+                               TensorMapR<Rank> activations,
+                               TensorMapR<Rank> activation_derivatives) const
     {
-        if (activation_function == "Linear")
+        string normalized_activation_function = activation_function;
+
+        // Compatibilidad con modelos antiguos
+        if(normalized_activation_function == "Logistic")
+            normalized_activation_function = "Sigmoid";
+
+        if (normalized_activation_function == "Linear")
             linear(activations, activation_derivatives);
-        else if (activation_function == "Logistic")
+        else if (normalized_activation_function == "Sigmoid")
             logistic(activations, activation_derivatives);
         else if (activation_function == "Softmax")
-            softmax(activations);
-        else if (activation_function == "HyperbolicTangent")
+            if constexpr (Rank == 2)
+                softmax(MatrixMap(activations.data(), activations.dimension(0), activations.dimension(1)));
+            else
+                softmax(activations);
+        else if (activation_function == "Competitive")
+            throw runtime_error("Competitive 3d not implemented");
+        else if (normalized_activation_function == "HyperbolicTangent")
             hyperbolic_tangent(activations, activation_derivatives);
-        else if (activation_function == "RectifiedLinear")
+        else if (normalized_activation_function == "RectifiedLinear")
             rectified_linear(activations, activation_derivatives);
-        else if (activation_function == "ScaledExponentialLinear")
+        else if (normalized_activation_function == "ScaledExponentialLinear")
             exponential_linear(activations, activation_derivatives);
         else
             throw runtime_error("Unknown activation: " + activation_function);
     }
 
-
     template <int Rank>
-    void binary(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx, type threshold) const
+    FORCE_INLINE void binary(TensorR<Rank>& y, TensorR<Rank>& dy_dx, type threshold) const
     {
-        y.device(*thread_pool_device) = (y < threshold).select(type(0), type(1));
+        y.device(get_device()) = (y < threshold).select(type(0), type(1));
 
         if (dy_dx.size() == 0) return;
 
@@ -151,7 +163,7 @@ protected:
 
 
     template <int Rank>
-    void linear(Tensor<type, Rank>&, Tensor<type, Rank>& dy_dx) const
+    FORCE_INLINE void linear(TensorMapR<Rank>, TensorMapR<Rank> dy_dx) const
     {
         if (dy_dx.size() == 0) return;
 
@@ -160,101 +172,170 @@ protected:
 
 
     template <int Rank>
-    void exponential_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
+    FORCE_INLINE void exponential_linear(TensorMapR<Rank> y, TensorMapR<Rank> dy_dx) const
     {
         const type alpha = type(1);
 
-        y.device(*thread_pool_device) = (y > type(0)).select(y, alpha * (y.exp() - type(1)));
+        y.device(get_device()) = (y > type(0)).select(y, alpha * (y.exp() - type(1)));
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), y + alpha);
+        dy_dx.device(get_device()) = (y > type(0)).select(dy_dx.constant(type(1)), y + alpha);
     }
 
 
     template <int Rank>
-    void hyperbolic_tangent(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
+    FORCE_INLINE void hyperbolic_tangent(TensorMapR<Rank> y, TensorMapR<Rank> dy_dx) const
     {
-        y.device(*thread_pool_device) = y.tanh();
+        y.device(get_device()) = y.tanh();
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (type(1) - y.square()).eval();
+        dy_dx.device(get_device()) = (type(1) - y.square()).eval();
     }
 
 
     template <int Rank>
-    void logistic(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
+    FORCE_INLINE void logistic(TensorMapR<Rank> y, TensorMapR<Rank> dy_dx) const
     {
-        y.device(*thread_pool_device) = (type(1) + (-y).exp()).inverse();
+        y.device(get_device()) = (type(1) + (-y).exp()).inverse();
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y * (type(1) - y)).eval();
+        dy_dx.device(get_device()) = (y * (type(1) - y)).eval();
     }
 
 
     template <int Rank>
-    void rectified_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
+    FORCE_INLINE void rectified_linear(TensorMapR<Rank> y, TensorMapR<Rank> dy_dx) const
     {
-        y.device(*thread_pool_device) = y.cwiseMax(type(0));
+        y.device(get_device()) = y.cwiseMax(type(0));
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(0)));
+        dy_dx.device(get_device()) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(0)));
     }
 
 
     template <int Rank>
-    void leaky_rectified_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx, type slope) const
+    FORCE_INLINE void leaky_rectified_linear(TensorMapR<Rank> y, TensorMapR<Rank> dy_dx, type slope) const
     {
-        y.device(*thread_pool_device) = (y > type(0)).select(y, slope * y);
+        y.device(get_device()) = (y > type(0)).select(y, slope * y);
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(slope)));
+        dy_dx.device(get_device()) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(slope)));
     }
 
 
     template <int Rank>
-    void scaled_exponential_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
+    FORCE_INLINE void scaled_exponential_linear(TensorMapR<Rank> y, TensorMapR<Rank> dy_dx) const
     {
         const type lambda = type(1.0507);
 
         const type alpha = type(1.6733);
 
-        y.device(*thread_pool_device) = (y > type(0)).select(lambda * y, lambda * alpha * (y.exp() - type(1)));
+        y.device(get_device()) = (y > type(0)).select(lambda * y, lambda * alpha * (y.exp() - type(1)));
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(lambda), y + alpha * lambda);
+        dy_dx.device(get_device()) = (y > type(0)).select(dy_dx.constant(lambda), y + alpha * lambda);
     }
 
-    void softmax(Tensor<type, 2>&) const;
-    void softmax(Tensor<type, 3>&) const;
-    void softmax(Tensor<type, 4>&) const;
+    void softmax(MatrixMap) const;
+    void softmax(TensorMap3) const;
+    void softmax(TensorMap4) const;
 
-    //void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
-    void softmax_derivatives_times_tensor(const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
+    //void softmax_derivatives_times_tensor(const TensorMap3, TensorMap3, VectorMap) const;
 
-    void add_deltas(const vector<TensorView>& delta_views) const;
+    void add_gradients(const vector<TensorView>&) const;
 
     template <int Rank>
-    void dropout(Tensor<type, Rank>& tensor, const type& dropout_rate) const
+    void normalize_batch(
+        TensorMapR<Rank> outputs,
+        TensorMapR<Rank> normalized_outputs,
+        VectorMap means,
+        VectorMap variances,
+        VectorR running_means,
+        VectorR running_variances,
+        const VectorMap gammas,
+        const VectorMap betas,
+        bool is_training,
+        const type momentum = type(0.9)) const
     {
-        const type scaling_factor = type(1) / (type(1) - dropout_rate);
+        const Index neurons = running_means.size();
+        const Index total_rows = outputs.size() / neurons;
 
-#pragma omp parallel
+        MatrixMap outputs_mat(outputs.data(), total_rows, neurons);
+        MatrixMap norm_mat(normalized_outputs.data(), total_rows, neurons);
+
+        if(is_training)
         {
-            mt19937 gen(random_device{}() + omp_get_thread_num());  // thread-local RNG
-            uniform_real_distribution<float> dis(0.0f, 1.0f);
+            means = outputs_mat.colwise().mean();
 
- #pragma omp for
+            norm_mat = outputs_mat.rowwise() - means.transpose();
 
-            for (Index i = 0; i < tensor.size(); i++)
-                tensor(i) = (dis(gen) < dropout_rate)
-                                ? 0
-                                : tensor(i) * scaling_factor;
+            variances = (norm_mat.array().square().colwise().mean() + EPSILON).sqrt();
+
+            norm_mat.array().rowwise() /= variances.transpose().array();
+
+            running_means = running_means * momentum + means * (type(1) - momentum);
+            running_variances = running_variances * momentum + variances * (type(1) - momentum);
+        }
+        else
+            norm_mat.array() = (outputs_mat.rowwise() - running_means.transpose()).array().rowwise() /
+                               (running_variances.transpose().array() + EPSILON);
+
+        outputs_mat.array() = (norm_mat.array().rowwise() * gammas.transpose().array()).rowwise() +
+                              betas.transpose().array();
+    }
+
+
+    template <int Rank>
+    void dropout(TensorMapR<Rank> tensor, type dropout_rate) const
+    {
+        const type scale = type(1) / (type(1) - dropout_rate);
+
+        tensor = tensor.unaryExpr([dropout_rate, scale](type value)
+        {
+            return (random_uniform(0, 1) < dropout_rate) ? type(0) : value * scale;
+        });
+    }
+
+    template <int Rank>
+    void calculate_combinations(const TensorMapR<Rank> inputs,
+                                const MatrixMap weights,
+                                const VectorMap biases,
+                                TensorMapR<Rank> outputs) const
+    {
+        const Index inputs_size = weights.rows();
+        const Index outputs_size = weights.cols();
+        const Index total_rows = inputs.size() / inputs_size;
+
+        if (outputs_size == 1)
+        {
+            const Map<const Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
+                inputs_matrix(inputs.data(), total_rows, inputs_size);
+
+            const Map<const VectorR, AlignedMax> weights_vector(weights.data(), inputs_size);
+
+            Map<VectorR, AlignedMax> outputs_vector(outputs.data(), total_rows);
+
+            outputs_vector.noalias() = inputs_matrix * weights_vector;
+            outputs_vector.array() += biases(0);
+        }
+        else
+        {
+            const Map<const Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
+                inputs_matrix(inputs.data(), total_rows, inputs_size);
+
+            const Map<const Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
+                weights_matrix(weights.data(), inputs_size, outputs_size);
+
+            Map<Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
+                outputs_matrix(outputs.data(), total_rows, outputs_size);
+
+            outputs_matrix.noalias() = (inputs_matrix * weights_matrix).rowwise() + biases.transpose();
         }
     }
 
@@ -262,42 +343,29 @@ protected:
 
 public:
 
-    void create_cuda();
-    void destroy_cuda();
+        // Forward propagation CUDA
 
-    cudnnHandle_t get_cudnn_handle();
-
-    virtual void forward_propagate_cuda(const vector<float*>&,
-                                        unique_ptr<LayerForwardPropagationCuda>&,
-                                        const bool&)
+    virtual void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
+                                   bool)
     {
         throw runtime_error("CUDA forward propagation not implemented for layer type: " + get_name());
     }
 
-    virtual void back_propagate_cuda(const vector<float*>&,
-                                     const vector<float*>&,
-                                     unique_ptr<LayerForwardPropagationCuda>&,
-                                     unique_ptr<LayerBackPropagationCuda>&) const {}
+    virtual void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
+                                unique_ptr<LayerBackPropagationCuda>&) const
+    {
+        throw runtime_error("CUDA back propagation not implemented for layer type: " + get_name());
+    }
 
-    virtual vector<ParameterView> get_parameter_views_device() const;
+    virtual vector<TensorViewCuda*> get_parameter_views_device() { return {}; }
 
-    virtual void copy_parameters_host() {}
+    void add_gradients(const vector<TensorViewCuda>&) const;
 
-    virtual void copy_parameters_device() {}
-
-    virtual void allocate_parameters_device() {}
-
-    virtual void free_parameters_device() {}
+    virtual void free() {}
 
     virtual void print_parameters_cuda() {}
 
 protected:
-
-    cublasHandle_t cublas_handle = nullptr;
-    cudnnHandle_t cudnn_handle = nullptr;
-
-    cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
-    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
 
     const float alpha = 1.0f;
     const float beta = 0.0f;
@@ -313,23 +381,24 @@ struct LayerForwardPropagation
     LayerForwardPropagation() {}
     virtual ~LayerForwardPropagation() = default;
 
-    void set(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
-    {
-        if (!new_layer) return;
-        batch_size = new_batch_size;
-        layer = new_layer;
-        initialize();
-    }
-
+    void set(const Index = 0, Layer* = nullptr);
     virtual void initialize() = 0;
 
-    virtual TensorView get_output_pair() const = 0;
+    virtual vector<TensorView*> get_workspace_views();
+
+    const vector<TensorView>& get_inputs() const { return inputs; }
+
+    TensorView get_outputs() const;
 
     virtual void print() const {}
 
     Index batch_size = 0;
 
     Layer* layer = nullptr;
+
+    vector<TensorView> inputs;
+
+    TensorView outputs;
 };
 
 
@@ -338,22 +407,14 @@ struct LayerBackPropagation
     LayerBackPropagation() {}
     virtual ~LayerBackPropagation() = default;
 
-    void set(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
-    {
-        if (!new_layer) return;
-        batch_size = new_batch_size;
-        layer = new_layer;
-        initialize();
-    }
-
+    void set(const Index = 0, Layer* = nullptr);
     virtual void initialize() = 0;
 
-    virtual vector<TensorView> get_input_derivative_views() const = 0;
+    virtual vector<TensorView*> get_gradient_views();
 
-    virtual vector<ParameterView> get_parameter_delta_views() const
-    {
-        return vector<ParameterView>();
-    }
+    virtual vector<TensorView*> get_workspace_views();
+
+    vector<TensorView> get_input_gradients() const;
 
     virtual void print() const {}
 
@@ -361,7 +422,8 @@ struct LayerBackPropagation
 
     Layer* layer = nullptr;
 
-    bool is_first_layer = false;
+    vector<TensorView> input_gradients;
+    vector<TensorView> output_gradients;
 };
 
 
@@ -370,9 +432,14 @@ struct LayerBackPropagationLM
     LayerBackPropagationLM() {}
     virtual ~LayerBackPropagationLM() = default;
 
-    virtual vector<TensorView> get_input_derivative_views() const = 0;
+    void set(const Index = 0, Layer* = nullptr);
+    virtual void initialize() = 0;
 
-    virtual void set(const Index& = 0, Layer* = nullptr) = 0;
+    virtual vector<TensorView*> get_gradient_views();
+
+    virtual vector<TensorView*> get_workspace_views();
+
+    vector<TensorView> get_input_gradients() const;
 
     virtual void print() const {}
 
@@ -380,7 +447,8 @@ struct LayerBackPropagationLM
 
     Layer* layer = nullptr;
 
-    bool is_first_layer = false;
+    vector<TensorView> input_gradients;
+    vector<TensorView> output_gradients;
 };
 
 
@@ -388,57 +456,91 @@ struct LayerBackPropagationLM
 
 struct LayerForwardPropagationCuda
 {
-    explicit LayerForwardPropagationCuda() {}
-    virtual ~LayerForwardPropagationCuda() {}
+    LayerForwardPropagationCuda() {}
+    virtual ~LayerForwardPropagationCuda() 
+    {
+        free();
+    }
 
-    virtual void set(const Index& = 0, Layer* = nullptr) = 0;
+    void set(const Index = 0, Layer* = nullptr);
+    virtual void initialize() = 0;
+
+    virtual void free() 
+    {
+        cudaFree(workspace);
+        workspace = nullptr;
+        workspace_size = 0;
+    }
+
+    virtual vector<TensorViewCuda*> get_workspace_views();
+
+    const vector<TensorViewCuda>& get_inputs() const { return inputs; }
+
+    TensorViewCuda get_outputs() const;
 
     virtual void print() const {}
-
-    virtual void free() {}
-
-    virtual float* get_output_device() { return outputs; }
 
     Index batch_size = 0;
 
     Layer* layer = nullptr;
 
-    float* outputs = nullptr;
+    vector<TensorViewCuda> inputs;
 
-    cudnnTensorDescriptor_t output_tensor_descriptor = nullptr;
+    TensorViewCuda outputs;
+
+    void* workspace = nullptr;
+    size_t workspace_size = 0;
 };
 
 
 struct LayerBackPropagationCuda
 {
     LayerBackPropagationCuda() {}
+    virtual ~LayerBackPropagationCuda() {}
 
-    virtual void set(const Index& = 0, Layer* = nullptr) = 0;
+    void set(const Index = 0, Layer* = nullptr);
+    virtual void initialize() = 0;
+
+    virtual vector<TensorViewCuda*> get_gradient_views();
+
+    virtual vector<TensorViewCuda*> get_workspace_views();
+
+    vector<TensorViewCuda> get_input_gradient_views() const;
 
     virtual void print() const {}
 
-    virtual void free() {}
-
-    virtual vector<float*> get_input_derivatives_device() { return {input_deltas}; }
-
-    virtual vector<ParameterView> get_parameter_delta_views_device() const
+    virtual void free()
     {
-        return vector<ParameterView>();
+        cudaFree(workspace);
+        workspace = nullptr;
+        workspace_size = 0;
     }
 
     Index batch_size = 0;
 
     Layer* layer = nullptr;
 
-    bool is_first_layer = false;
+    vector<TensorViewCuda> input_gradients;
+    vector<TensorViewCuda> output_gradients;
 
-    float* input_deltas = nullptr;
-
-    cudnnTensorDescriptor_t input_derivatives_tensor_descriptor = nullptr;
+    void* workspace = nullptr;
+    size_t workspace_size = 0;
 };
 
 #endif
 
 }
 
-#endif // LAYER_H
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

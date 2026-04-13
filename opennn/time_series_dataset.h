@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef TIMESERIESDATASET_H
-#define TIMESERIESDATASET_H
+#pragma once
 
 #include "dataset.h"
 
@@ -19,38 +18,33 @@ class TimeSeriesDataset final : public Dataset
 
 public:
 
-    TimeSeriesDataset(const Index& = 0,
-                      const dimensions& = {},
-                      const dimensions& = {});
+    TimeSeriesDataset(const Index = 0,
+                      const Shape& = {},
+                      const Shape& = {});
 
     TimeSeriesDataset(const filesystem::path&,
                       const string&,
-                      const bool& = true,
-                      const bool& = false,
+                      bool = true,
+                      bool = false,
                       const Codification& = Codification::UTF8);
-
-    struct TimeSeriesData {
-        Tensor<type, 3> inputs;
-        Tensor<type, 2> targets;
-    };
 
     void fill_gaps();
 
-    const Index& get_past_time_steps() const;
-    const Index& get_future_time_steps() const;
+    Index get_past_time_steps() const;
+    Index get_future_time_steps() const;
+    Index get_time_variable_index() const;
+    bool get_multi_target() const;
 
-    const Index& get_time_raw_variable_index() const;
+    Tensor3 get_data(const string& sample_role, const string& feature_role) const;
 
-    TimeSeriesData get_data() const;
-    Tensor<type, 3> get_data(const string& sample_use, const string& variable_use) const;
+    void set_past_time_steps(const Index);
+    void set_future_time_steps(const Index);
+    void set_time_variable_index(const Index);
+    void set_multi_target(const bool);
 
-    void set_past_time_steps(const Index&);
-    void set_future_time_steps(const Index&);
-    void set_time_raw_variable_index(const Index&);
-
-    Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
-    Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
-    Tensor<type, 3> calculate_cross_correlations_spearman(const Index& = 10) const;
+    MatrixR calculate_autocorrelations(const Index = 10) const;
+    Tensor3 calculate_cross_correlations(const Index = 10) const;
+    Tensor3 calculate_cross_correlations_spearman(const Index = 10) const;
 
     void print() const override;
 
@@ -62,16 +56,15 @@ public:
     void impute_missing_values_unuse() override;
     void impute_missing_values_interpolate() override;
 
-    void fill_input_tensor(const vector<Index>&,
+    void fill_inputs(const vector<Index>&,
                            const vector<Index>&,
-                           type*) const override;
+                           type*,
+                           bool = true) const override;
 
-    void fill_target_tensor(const vector<Index>&,
+    void fill_targets(const vector<Index>&,
                             const vector<Index>&,
-                            type*) const override;
-
-    vector<vector<Index>> get_batches(const vector<Index>&, const Index&, const bool&) const override;
-
+                            type*,
+                            bool = true) const override;
 
 private:
 
@@ -79,27 +72,23 @@ private:
 
     Index future_time_steps = 1;
 
-    Index time_raw_variable_index = 0;
+    bool multi_target = false;
+
+    Index time_variable_index = 0;
 };
 
 }
 
-#endif
-
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

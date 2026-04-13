@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef GROWINGINPUTS_H
-#define GROWINGINPUTS_H
+#pragma once
 
 #include "inputs_selection.h"
 
@@ -21,20 +20,20 @@ public:
 
     GrowingInputs(const TrainingStrategy* = nullptr);
 
-    const Index& get_minimum_inputs_number() const override;
-    const Index& get_maximum_inputs_number() const override;
+    Index get_minimum_inputs_number() const override;
+    Index get_maximum_inputs_number() const override;
 
-    const Index& get_maximum_selection_failures() const;
+    Index get_maximum_validation_failures() const;
 
     void set_default();
 
-    void set_maximum_inputs_number(const Index&);
-    void set_minimum_inputs_number(const Index&);
+    void set_maximum_inputs_number(const Index);
+    void set_minimum_inputs_number(const Index);
 
-    void set_maximum_correlation(const type&);
-    void set_minimum_correlation(const type&);
+    void set_maximum_correlation(const type);
+    void set_minimum_correlation(const type);
 
-    void set_maximum_selection_failures(const Index&);
+    void set_maximum_validation_failures(const Index);
 
     InputsSelectionResults perform_input_selection() override;
 
@@ -55,26 +54,21 @@ private:
     type minimum_correlation = 0;
     type maximum_correlation = 0;
 
-    Index maximum_selection_failures = 100;
+    Index maximum_validation_failures = 100;
 };
 
 }
 
-#endif
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

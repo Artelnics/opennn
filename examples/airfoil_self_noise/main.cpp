@@ -8,24 +8,14 @@
 
 #include <iostream>
 #include <string>
-#include <time.h>
 
-#include "../../opennn/registry.h"
 #include "../../opennn/dataset.h"
 #include "../../opennn/standard_networks.h"
-#include "../../opennn/dense_layer.h"
-#include "../../opennn/neural_network.h"
+#include "../../opennn/bounding_layer.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/model_selection.h"
-#include "../../opennn/testing_analysis.h"
-#include "../../opennn/model_expression.h"
-#include "../../opennn/optimization_algorithm.h"
-#include "../../opennn/normalized_squared_error.h"
-#include "../../opennn/mean_squared_error.h"
-#include "../../opennn/adaptive_moment_estimation.h"
-#include "../../opennn/quasi_newton_method.h"
-#include "../../opennn/levenberg_marquardt_algorithm.h"
+#include "../../opennn/optimizer.h"
 #include "../../opennn/stochastic_gradient_descent.h"
 
 using namespace opennn;
@@ -36,27 +26,31 @@ int main()
     {
         cout << "Airfoil self noise" << endl;
 
-        const Index neurons_number = 3;
-        const type regularization_weight = 0.0001;
+        const Index neurons_number = 12;
+        const type regularization_weight = type(0.001);
 
         // DataSet
 
         Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
-        dataset.split_samples_random(type(0.8), type(0), type(0.2));
+        dataset.split_samples_random(type(0.8), type(0.0), type(0.2));
 
         // Neural Network
 
-        ApproximationNetwork approximation_network(dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
+        ApproximationNetwork approximation_network(dataset.get_input_shape(), {neurons_number}, dataset.get_target_shape());
+
+        Bounding* bounding_layer = (Bounding*)approximation_network.get_first("Bounding");
+
+        if(bounding_layer)
+            bounding_layer->set_bounding_method("NoBounding");
 
         // Training strategy
 
-        NormalizedSquaredError loss(&approximation_network, &dataset);
-        loss.set_regularization_method("L1");
-        loss.set_regularization_weight(regularization_weight);
-
         TrainingStrategy training_strategy(&approximation_network, &dataset);
-        training_strategy.set_optimization_algorithm("QuasiNewtonMethod");
+
+        training_strategy.get_loss()->set_regularization_method("L2");
+        training_strategy.get_loss()->set_regularization_weight(regularization_weight);
+        training_strategy.get_optimization_algorithm()->set_display_period(50);
 
         TrainingResults training_results = training_strategy.train();
 
@@ -80,12 +74,10 @@ int main()
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) Artificial Intelligence Techniques SL.
-//
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU

@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "dataset.h"
-#include "optimization_algorithm.h"
+#include "optimizer.h"
 #include "training_strategy.h"
 #include "inputs_selection.h"
 
@@ -32,31 +32,31 @@ bool InputsSelection::has_training_strategy() const
 }
 
 
-const Index& InputsSelection::get_trials_number() const
+Index InputsSelection::get_trials_number() const
 {
     return trials_number;
 }
 
 
-const bool& InputsSelection::get_display() const
+bool InputsSelection::get_display() const
 {
     return display;
 }
 
 
-const type& InputsSelection::get_selection_error_goal() const
+type InputsSelection::get_validation_error_goal() const
 {
-    return selection_error_goal;
+    return validation_error_goal;
 }
 
 
-const Index& InputsSelection::get_maximum_iterations_number() const
+Index InputsSelection::get_maximum_iterations_number() const
 {
-    return maximum_epochs_number;
+    return maximum_epochs;
 }
 
 
-const type& InputsSelection::get_maximum_time() const
+type InputsSelection::get_maximum_time() const
 {
     return maximum_time;
 }
@@ -68,32 +68,32 @@ void InputsSelection::set(const TrainingStrategy* new_training_strategy)
 }
 
 
-void InputsSelection::set_trials_number(const Index& new_trials_number)
+void InputsSelection::set_trials_number(const Index new_trials_number)
 {
     trials_number = new_trials_number;
 }
 
 
-void InputsSelection::set_display(const bool& new_display)
+void InputsSelection::set_display(bool new_display)
 {
     display = new_display;
 }
 
 
-void InputsSelection::set_selection_error_goal(const type& new_selection_error_goal)
+void InputsSelection::set_validation_error_goal(const type new_validation_error_goal)
 {
-    selection_error_goal = new_selection_error_goal;
+    validation_error_goal = new_validation_error_goal;
 }
 
 
-void InputsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
+void InputsSelection::set_maximum_epochs(const Index new_maximum_epochs)
 {
-    maximum_epochs_number = new_maximum_epochs_number;
+    maximum_epochs = new_maximum_epochs;
     
 }
 
 
-void InputsSelection::set_maximum_time(const type& new_maximum_time)
+void InputsSelection::set_maximum_time(const type new_maximum_time)
 {
     maximum_time = new_maximum_time;
 }
@@ -112,35 +112,35 @@ void InputsSelection::check() const
 
     // Loss index
 
-    const LossIndex* loss_index = training_strategy->get_loss_index();
+    const Loss* loss = training_strategy->get_loss();
 
     // Neural network
 
-    if(!loss_index->has_neural_network())
+    if(!loss->has_neural_network())
         throw runtime_error("Pointer to neural network is nullptr.\n");
 
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
+    const NeuralNetwork* neural_network = loss->get_neural_network();
 
     if(neural_network->is_empty())
         throw runtime_error("Neural network is empty.\n");
 
     // Dataset
 
-    if(!loss_index->has_dataset())
+    if(!loss->has_dataset())
         throw runtime_error("Pointer to dataset is nullptr.\n");
 
-    const Dataset* dataset = loss_index->get_dataset();
+    const Dataset* dataset = loss->get_dataset();
 
-    const Index selection_samples_number = dataset->get_samples_number("Selection");
+    const Index validation_samples_number = dataset->get_samples_number("Validation");
 
-    if(selection_samples_number == 0)
+    if(validation_samples_number == 0)
         throw runtime_error("Number of selection samples is zero.\n");
 }
 
 
-InputsSelectionResults::InputsSelectionResults(const Index&maximum_epochs_number)
+InputsSelectionResults::InputsSelectionResults(const Index maximum_epochs)
 {
-    set(maximum_epochs_number);
+    set(maximum_epochs);
 }
 
 
@@ -150,18 +150,18 @@ Index InputsSelectionResults::get_epochs_number() const
 }
 
 
-void InputsSelectionResults::set(const Index& maximum_epochs_number)
+void InputsSelectionResults::set(const Index maximum_epochs)
 {
-    training_error_history.resize(maximum_epochs_number);
+    training_error_history.resize(maximum_epochs);
     training_error_history.setConstant(type(-1));
 
-    selection_error_history.resize(maximum_epochs_number);
-    selection_error_history.setConstant(type(-1));
+    validation_error_history.resize(maximum_epochs);
+    validation_error_history.setConstant(type(-1));
 
-    mean_selection_error_history.resize(maximum_epochs_number);
-    mean_selection_error_history.setConstant(type(-1));
+    mean_validation_error_history.resize(maximum_epochs);
+    mean_validation_error_history.setConstant(type(-1));
 
-    mean_training_error_history.resize(maximum_epochs_number);
+    mean_training_error_history.resize(maximum_epochs);
     mean_training_error_history.setConstant(type(-1));
 }
 
@@ -193,25 +193,25 @@ string InputsSelectionResults::write_stopping_condition() const
 }
 
 
-void InputsSelectionResults::resize_history(const Index& new_size)
+void InputsSelectionResults::resize_history(const Index new_size)
 {
-    const Tensor<type, 1> old_training_error_history(training_error_history);
-    const Tensor<type, 1> old_selection_error_history(selection_error_history);
+    const VectorR old_training_error_history(training_error_history);
+    const VectorR old_validation_error_history(validation_error_history);
 
-    const Tensor<type, 1> old_mean_selection_history(mean_selection_error_history);
-    const Tensor<type, 1> old_mean_training_history(mean_training_error_history);
+    const VectorR old_mean_selection_history(mean_validation_error_history);
+    const VectorR old_mean_training_history(mean_training_error_history);
 
     training_error_history.resize(new_size);
-    selection_error_history.resize(new_size);
+    validation_error_history.resize(new_size);
     mean_training_error_history.resize(new_size);
-    mean_selection_error_history.resize(new_size);
+    mean_validation_error_history.resize(new_size);
 
     for(Index i = 0; i < new_size; i++)
     {
         training_error_history(i) = old_training_error_history(i);
-        selection_error_history(i) = old_selection_error_history(i);
+        validation_error_history(i) = old_validation_error_history(i);
         mean_training_error_history(i) = old_mean_training_history(i);
-        mean_selection_error_history(i) = old_mean_selection_history(i);
+        mean_validation_error_history(i) = old_mean_selection_history(i);
     }
 }
 
@@ -219,19 +219,19 @@ void InputsSelectionResults::resize_history(const Index& new_size)
 void InputsSelectionResults::print() const
 {
     cout << endl
-         << "Inputs Selection Results" << endl
-         << "Optimal inputs number: " << optimal_input_raw_variable_names.size() << endl
+         << "Input Validation Results" << endl
+         << "Optimal inputs number: " << optimal_input_variable_names.size() << endl
          << "Inputs: " << endl;
 
-    for(size_t i = 0; i < optimal_input_raw_variable_names.size(); i++)
-        cout << "   " << optimal_input_raw_variable_names[i] << endl;
+    for(size_t i = 0; i < optimal_input_variable_names.size(); i++)
+        cout << "   " << optimal_input_variable_names[i] << endl;
 
     cout << "Optimum training error: " << optimum_training_error << endl
-         << "Optimum selection error: " << optimum_selection_error << endl;
+         << "Optimum selection error: " << optimum_validation_error << endl;
 }
 
 
-string InputsSelection::write_time(const type& time) const
+string InputsSelection::write_time(const type time) const
 {
     const int hours = int(time) / 3600;
     int seconds = int(time) % 3600;
@@ -250,20 +250,16 @@ string InputsSelection::write_time(const type& time) const
 
 }
 
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef SEQUENCE_POOLING_LAYER_H
-#define SEQUENCE_POOLING_LAYER_H
+#pragma once
 
 #include "layer.h"
 
@@ -21,26 +20,24 @@ public:
 
     enum class PoolingMethod{MaxPooling, AveragePooling};
 
-    Pooling3d(const dimensions& = {0, 0}, // Input dimensions {sequence_length, features}
+    Pooling3d(const Shape& = {0, 0}, // Input shape {sequence_length, features}
               const PoolingMethod& = PoolingMethod::MaxPooling,
               const string& = "sequence_pooling_layer");
 
-    dimensions get_input_dimensions() const override;
-    dimensions get_output_dimensions() const override;
+    Shape get_input_shape() const override;
+    Shape get_output_shape() const override;
     PoolingMethod get_pooling_method() const;
     string write_pooling_method() const;
 
-    void set(const dimensions&, const PoolingMethod&, const string&);
+    void set(const Shape&, const PoolingMethod&, const string&);
+    void set_input_shape(const Shape&) override;
     void set_pooling_method(const PoolingMethod&);
     void set_pooling_method(const string&);
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
-                           const bool&) override;
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
+                           bool) override;
 
-    void back_propagate(const vector<TensorView>&,
-                        const vector<TensorView>&,
-                        unique_ptr<LayerForwardPropagation>&,
+    void back_propagate(unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
     void from_XML(const XMLDocument&) override;
@@ -48,37 +45,74 @@ public:
 
     void print() const override;
 
+#ifdef OPENNN_CUDA
+
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
+
+    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
+                        unique_ptr<LayerBackPropagationCuda>&) const override;
+
+#endif
+
 private:
-    dimensions input_dimensions;
+    Shape input_shape;
     PoolingMethod pooling_method;
 };
 
 
 struct Pooling3dForwardPropagation final : LayerForwardPropagation
 {
-    Pooling3dForwardPropagation(const Index& = 0, Layer* = nullptr);
-
-    TensorView get_output_pair() const override;
+    Pooling3dForwardPropagation(const Index = 0, Layer* = nullptr);
 
     void initialize() override;
 
-    Tensor<type, 2> outputs;
-
-    Tensor<Index, 2> maximal_indices;
+    MatrixI maximal_indices;
 };
 
 
 struct Pooling3dBackPropagation final : LayerBackPropagation
 {
-    Pooling3dBackPropagation(const Index& = 0, Layer* = nullptr);
+    Pooling3dBackPropagation(const Index = 0, Layer* = nullptr);
 
-    vector<TensorView> get_input_derivative_views() const override;
+    void initialize() override;
+};
+
+
+#ifdef OPENNN_CUDA
+
+struct Pooling3dForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    Pooling3dForwardPropagationCuda(const Index = 0, Layer* = nullptr);
 
     void initialize() override;
 
-    Tensor<type, 3> input_derivatives;
+    void free() override;
+
+    TensorCuda maximal_indices_device;
 };
+
+
+struct Pooling3dBackPropagationCuda : public LayerBackPropagationCuda
+{
+    Pooling3dBackPropagationCuda(const Index = 0, Layer* = nullptr);
+
+    void initialize() override;
+};
+
+#endif
 
 }
 
-#endif // SEQUENCE_POOLING_LAYER_H
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

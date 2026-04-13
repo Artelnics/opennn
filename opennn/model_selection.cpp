@@ -8,7 +8,7 @@
 
 #include "registry.h"
 #include "dataset.h"
-#include "loss_index.h"
+#include "loss.h"
 #include "model_selection.h"
 #include "training_strategy.h"
 
@@ -33,7 +33,7 @@ bool ModelSelection::has_training_strategy() const
 }
 
 
-NeuronsSelection* ModelSelection::get_neurons_selection() const
+NeuronSelection* ModelSelection::get_neurons_selection() const
 {
     return neurons_selection.get();
 }
@@ -56,7 +56,7 @@ void ModelSelection::set_default()
 
 void ModelSelection::set_neurons_selection(const string& new_neurons_selection)
 {
-    neurons_selection = Registry<NeuronsSelection>::instance().create(new_neurons_selection);
+    neurons_selection = Registry<NeuronSelection>::instance().create(new_neurons_selection);
 
     neurons_selection->set(training_strategy);
 }
@@ -85,31 +85,31 @@ void ModelSelection::check() const
 
     // Loss index
 
-    const LossIndex* loss_index = training_strategy->get_loss_index();
+    const Loss* loss = training_strategy->get_loss();
 
-    if(!loss_index)
+    if(!loss)
         throw runtime_error("Pointer to loss index is nullptr.\n");
 
     // Neural network
 
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
+    const NeuralNetwork* neural_network = loss->get_neural_network();
 
     if(!neural_network)
         throw runtime_error("Pointer to neural network is nullptr.\n");
 
     if(neural_network->is_empty())
-        throw runtime_error("Multilayer Dense2d is empty.\n");
+        throw runtime_error("Multilayer Dense is empty.\n");
 
     // Dataset
 
-    const Dataset* dataset = loss_index->get_dataset();
+    const Dataset* dataset = loss->get_dataset();
 
     if(!dataset)
         throw runtime_error("Pointer to dataset is nullptr.\n");
 
-    const Index selection_samples_number = dataset->get_samples_number("Selection");
+    const Index validation_samples_number = dataset->get_samples_number("Validation");
 
-    if(selection_samples_number == 0)
+    if(validation_samples_number == 0)
         throw runtime_error("Number of selection samples is zero.\n");
 }
 
@@ -130,7 +130,7 @@ void ModelSelection::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("ModelSelection");
 
-    printer.OpenElement("NeuronsSelection");
+    printer.OpenElement("NeuronSelection");
 
     add_xml_element(printer, "NeuronsSelectionMethod", neurons_selection->get_name());
 
@@ -154,13 +154,13 @@ void ModelSelection::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = document.FirstChildElement("ModelSelection");
 
-    if (!root_element) 
-        throw runtime_error("Model Selection element is nullptr.\n");
+    if(!root_element) 
+        throw runtime_error("Model Validation element is nullptr.\n");
 
-    // Neurons Selection
+    // Neuron selection
 
-    const XMLElement* neurons_selection_element = root_element->FirstChildElement("NeuronsSelection");
-    if (!neurons_selection_element) throw runtime_error("Neurons selection element is nullptr.\n");
+    const XMLElement* neurons_selection_element = root_element->FirstChildElement("NeuronSelection");
+    if(!neurons_selection_element) throw runtime_error("Neuron selection element is nullptr.\n");
 
     const string selection_method = read_xml_string(neurons_selection_element, "NeuronsSelectionMethod");
     
@@ -178,10 +178,10 @@ void ModelSelection::from_XML(const XMLDocument& document)
     }
     else throw runtime_error(selection_method + " element is nullptr.\n");
 
-    // Inputs Selection
+    // Input Validation
 
     const XMLElement* inputs_selection_element = root_element->FirstChildElement("InputsSelection");
-    if (!inputs_selection_element) throw runtime_error("Inputs selection element is nullptr.\n");
+    if(!inputs_selection_element) throw runtime_error("Input selection element is nullptr.\n");
 
     const string inputs_method = read_xml_string(inputs_selection_element, "InputsSelectionMethod");
 
@@ -212,7 +212,7 @@ void ModelSelection::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if (!file.is_open())
+    if(!file.is_open())
         return;
 
     XMLPrinter printer;
@@ -234,18 +234,15 @@ void ModelSelection::load(const filesystem::path& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

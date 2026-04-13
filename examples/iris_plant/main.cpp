@@ -6,19 +6,10 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-#include <iostream>
-#include <string>
-
-#include "../../opennn/image_dataset.h"
-#include "../../opennn/adaptive_moment_estimation.h"
-
 #include "../../opennn/dataset.h"
-#include "../../opennn/neural_network.h"
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/normalized_squared_error.h"
-#include "../../opennn/optimization_algorithm.h"
 
 using namespace opennn;
 
@@ -32,12 +23,12 @@ int main()
 
         Dataset dataset("../data/iris_plant_original.csv", ";", true, false);
 
-        const Index inputs_number = dataset.get_variables_number("Input");
-        const Index targets_number = dataset.get_variables_number("Target");
+        const Index inputs_number = dataset.get_features_number("Input");
+        const Index targets_number = dataset.get_features_number("Target");
 
         // Neural network
 
-        const Index neurons_number = 6;
+        const Index neurons_number = 16;
 
         ClassificationNetwork classification_network({inputs_number}, {neurons_number}, {targets_number});
 
@@ -45,20 +36,26 @@ int main()
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
-        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs_number(1000);
-
         training_strategy.train();
 
         // Testing Analysis
 
-        const TestingAnalysis testing_analysis(&classification_network, &dataset);
+        TestingAnalysis testing_analysis(&classification_network, &dataset);
 
-        cout << "Confusion matrix:\n"
-             << testing_analysis.calculate_confusion() << endl;
+        cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
 
-        cout << "Bye!" << endl;
+        // Deployment
+
+        MatrixR input_vector(1, 4);
+        input_vector << 5.1, 3.5, 1.4, 0.2;
+
+        const MatrixR output_tensor = classification_network.calculate_outputs(input_vector);
+
+        cout << "Class probabilities: " << output_tensor << endl;
+
+        // Export
+
+        classification_network.save("iris_model.xml");
 
         return 0;
     }
@@ -71,18 +68,15 @@ int main()
 }  
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2025 Artificial Intelligence Techniques SL
-//
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques SL
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

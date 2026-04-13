@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef IMAGEDataset_H
-#define IMAGEDataset_H
+#pragma once
 
 #include "dataset.h"
 
@@ -19,7 +18,7 @@ class ImageDataset : public Dataset
 
 public:
 
-    ImageDataset(const Index& = 0, const dimensions& = {0, 0, 0}, const dimensions& = {0});
+    ImageDataset(const Index = 0, const Shape& = {0, 0, 0}, const Shape& = {0});
 
     ImageDataset(const filesystem::path&);
 
@@ -46,33 +45,32 @@ public:
     void set_image_height(const int&);
     void set_image_padding(const int&);
 
-    void set_augmentation(const bool&);
-    void set_random_reflection_axis_x(const bool&);
-    void set_random_reflection_axis_y(const bool&);
-    void set_random_rotation_minimum(const type&);
-    void set_random_rotation_maximum(const type&);
-    void set_random_horizontal_translation_minimum(const type&);
-    void set_random_horizontal_translation_maximum(const type&);
-    void set_random_vertical_translation_minimum(const type&);
-    void set_random_vertical_translation_maximum(const type&);
+    void set_augmentation(bool);
+    void set_random_reflection_axis_x(bool);
+    void set_random_reflection_axis_y(bool);
+    void set_random_rotation_minimum(const type);
+    void set_random_rotation_maximum(const type);
+    void set_random_horizontal_translation_minimum(const type);
+    void set_random_horizontal_translation_maximum(const type);
+    void set_random_vertical_translation_minimum(const type);
+    void set_random_vertical_translation_maximum(const type);
 
-    vector<Descriptives> scale_variables(const string&) override;
-    void unscale_variables(const string&);
+    vector<Descriptives> scale_features(const string&) override;
+    void unscale_features(const string&);
 
-    void read_bmp(const dimensions& new_input_dimensions = { 0, 0, 0 });
+    void read_bmp(const Shape& new_input_shape = { 0, 0, 0 });
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    void fill_input_tensor(const vector<Index>&,
-                           const vector<Index>&,
-                           type*) const override;
+    void print() const override;
 
-    void fill_input_tensor_row_major(const vector<Index>&,
-                                     const vector<Index>&,
-                                     type*) const override;
+    void fill_inputs(const vector<Index>&,
+                     const vector<Index>&,
+                     type*,
+                     bool = true) const override;
 
-    Tensor<type, 2> perform_augmentation(const Tensor<type, 2>& data);
+    void perform_augmentation(type*) const;
 
 private:
 
@@ -96,28 +94,22 @@ private:
 
     Index regions_number = 1000; // Number of region proposals per image
     Index region_rows = 6; // Final region width to warp
-    Index region_raw_variables = 6; // Final region height to warp
+    Index region_variables = 6; // Final region height to warp
 
 };
 
 }
 
-#endif
-
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

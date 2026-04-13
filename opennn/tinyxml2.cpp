@@ -1028,8 +1028,6 @@ XMLNode* XMLNode::InsertAfterChild(XMLNode* afterThis, XMLNode* addThis )
 }
 
 
-
-
 const XMLElement* XMLNode::FirstChildElement(const char* name ) const
 {
     for(const XMLNode* node = _firstChild; node; node = node->_next )
@@ -1043,7 +1041,7 @@ const XMLElement* XMLNode::FirstChildElement(const char* name ) const
     return 0;
 }
 
-
+/*
 const XMLElement* XMLNode::LastChildElement(const char* name ) const
 {
     for(const XMLNode* node = _lastChild; node; node = node->_prev )
@@ -1056,7 +1054,7 @@ const XMLElement* XMLNode::LastChildElement(const char* name ) const
     }
     return 0;
 }
-
+*/
 
 const XMLElement* XMLNode::NextSiblingElement(const char* name ) const
 {
@@ -1071,7 +1069,7 @@ const XMLElement* XMLNode::NextSiblingElement(const char* name ) const
     return 0;
 }
 
-
+/*
 const XMLElement* XMLNode::PreviousSiblingElement(const char* name ) const
 {
     for(const XMLNode* node = _prev; node; node = node->_prev )
@@ -1084,7 +1082,7 @@ const XMLElement* XMLNode::PreviousSiblingElement(const char* name ) const
     }
     return 0;
 }
-
+*/
 
 char* XMLNode::ParseDeep(char* p, StrPair* parentEndTag, int* curLineNumPtr )
 {
@@ -1375,7 +1373,6 @@ XMLDeclaration::XMLDeclaration(XMLDocument* doc ) : XMLNode(doc )
 
 XMLDeclaration::~XMLDeclaration()
 {
-    //printf("~XMLDeclaration\n");
 }
 
 
@@ -3070,20 +3067,13 @@ void add_xml_element_attribute(XMLPrinter& printer,
     printer.CloseElement();
 }
 
-void add_xml_document(XMLPrinter& printer, const string& name, const string& value)
-{
-//    printer.OpenElement(name.c_str());
-//    printer.PushText(value.c_str());
-//    printer.CloseElement();
-}
-
 
 type read_xml_type(const XMLElement* root, const string& element_name)
 {
     const XMLElement* element = root->FirstChildElement(element_name.c_str());
 
     if(!element)
-        throw runtime_error("Element is nullptr " + element_name);
+        throw runtime_error("(Type)Element is nullptr " + element_name);
 
     const char* text = element->GetText();
 
@@ -3099,7 +3089,7 @@ Index read_xml_index(const XMLElement* root, const string& element_name)
     const XMLElement* element = root->FirstChildElement(element_name.c_str());
 
     if(!element)
-        throw runtime_error("Element is nullptr " + element_name);
+        throw runtime_error("(Index)Element is nullptr " + element_name);
 
     const char* text = element->GetText();
 
@@ -3109,13 +3099,24 @@ Index read_xml_index(const XMLElement* root, const string& element_name)
     return Index(stoi(text));
 }
 
+bool read_xml_bool(const XMLElement* root, const string& element_name)
+{
+    const XMLElement* element = root->FirstChildElement(element_name.c_str());
+    if(!element || !element->GetText()) return false; // Default to false if missing
+    string text = element->GetText();
+    // Support both integer (1) and string (true) formats
+    if(text == "true" || text == "1")
+        return true;
+    return false;
+}
 
+/*
 bool read_xml_bool(const XMLElement* root, const string& element_name)
 {
     const XMLElement* element = root->FirstChildElement(element_name.c_str());
 
     if(!element)
-        throw runtime_error("Element is nullptr " + element_name);
+        throw runtime_error("(Bool) Element is nullptr " + element_name);
 
     const char* text = element->GetText();
 
@@ -3124,22 +3125,22 @@ bool read_xml_bool(const XMLElement* root, const string& element_name)
 
     return bool(stoi(text));
 }
-
+*/
 
 string read_xml_string(const XMLElement* root, const string& element_name)
 {
     const XMLElement* element = root->FirstChildElement(element_name.c_str());
 
     if(!element)
-        throw runtime_error("Element is nullptr " + element_name);
+        throw runtime_error("(String) Element is nullptr " + element_name);
 
     const char* text = element->GetText();
 
     if(!text)
-        throw runtime_error("Text is nullptr: " + element_name);
+        return string("");
+        //throw runtime_eror("Text is nullptr: " + element_name);
 
     return string(text);
 }
 
 }   // namespace tinyxml2
-

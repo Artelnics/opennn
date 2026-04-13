@@ -6,12 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef INPUTSSELECTION_H
-#define INPUTSSELECTION_H
+#pragma once
 
-#include "tinyxml2.h"
-
-using namespace tinyxml2;
+#include "pch.h"
 
 namespace opennn
 {
@@ -41,26 +38,26 @@ public:
 
     bool has_training_strategy() const;
 
-    const Index& get_trials_number() const;
+    Index get_trials_number() const;
 
-    const bool& get_display() const;
+    bool get_display() const;
 
-    const type& get_selection_error_goal() const;
-    const Index& get_maximum_iterations_number() const;
-    const type& get_maximum_time() const;
+    type get_validation_error_goal() const;
+    Index get_maximum_iterations_number() const;
+    type get_maximum_time() const;
 
-    virtual const Index& get_minimum_inputs_number() const = 0;
-    virtual const Index& get_maximum_inputs_number() const = 0;
+    virtual Index get_minimum_inputs_number() const = 0;
+    virtual Index get_maximum_inputs_number() const = 0;
 
     void set(const TrainingStrategy* = nullptr);
 
-    void set_trials_number(const Index&);
+    void set_trials_number(const Index);
 
-    void set_display(const bool&);
+    void set_display(bool);
 
-    void set_selection_error_goal(const type&);
-    void set_maximum_epochs_number(const Index&);
-    void set_maximum_time(const type&);
+    void set_validation_error_goal(const type);
+    void set_maximum_epochs(const Index);
+    void set_maximum_time(const type);
 
     string write_stopping_condition(const TrainingResults&) const;
 
@@ -73,7 +70,7 @@ public:
         return name;
     }
 
-    string write_time(const type&) const;
+    string write_time(const type) const;
 
     virtual Tensor<string, 2> to_string_matrix() const { return {}; }
 
@@ -93,9 +90,9 @@ protected:
    
     // Stopping criteria
 
-    type selection_error_goal;
+    type validation_error_goal;
 
-    Index maximum_epochs_number;
+    Index maximum_epochs;
 
     type maximum_time;
 
@@ -105,45 +102,45 @@ protected:
 
 struct InputsSelectionResults
 {
-    InputsSelectionResults(const Index& = 0);
+    InputsSelectionResults(const Index = 0);
 
     Index get_epochs_number() const;
 
-    void set(const Index& = 0);
+    void set(const Index = 0);
 
     string write_stopping_condition() const;
 
-    void resize_history(const Index& new_size);
+    void resize_history(const Index new_size);
 
     void print() const;
 
     // Neural network
 
-    Tensor<type, 1> optimal_parameters;
+    VectorR optimal_parameters;
 
     // Loss index
 
-    Tensor<type, 1> training_error_history;
+    VectorR training_error_history;
 
-    Tensor<type, 1> selection_error_history;
+    VectorR validation_error_history;
 
-    // Mean Selection Error of different neural networks
+    // Mean Validation Error of different neural networks
 
-    Tensor<type, 1>  mean_selection_error_history;
+    VectorR  mean_validation_error_history;
 
     // Mean Training Error of different neural networks
 
-    Tensor<type, 1> mean_training_error_history;
+    VectorR mean_training_error_history;
 
-    type optimum_training_error = numeric_limits<type>::max();
+    type optimum_training_error = MAX;
 
-    type optimum_selection_error = numeric_limits<type>::max();
+    type optimum_validation_error = MAX;
 
-    vector<string> optimal_input_raw_variable_names;
+    vector<string> optimal_input_variable_names;
 
-    vector<Index> optimal_input_raw_variables_indices;
+    vector<Index> optimal_input_variables_indices;
 
-    Tensor<bool, 1> optimal_inputs;
+    VectorB optimal_inputs;
 
     // Model selection
 
@@ -154,21 +151,16 @@ struct InputsSelectionResults
 
 }
 
-#endif
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

@@ -22,7 +22,6 @@ add_executable(run_tests test.cpp
 		cross_entropy_error_3d_test.cpp
 		cross_entropy_error_test.cpp
 		data_set_test.cpp
-		dense_layer_3d_test.cpp
 		dense_layer_test.cpp
 		embedding_layer_test.cpp
 		flatten_layer_test.cpp
@@ -64,3 +63,5 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 target_precompile_headers(run_tests PRIVATE ${PCH_HEADER})
+
+

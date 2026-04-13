@@ -1,24 +1,24 @@
-/*
+
 #include "pch.h"
 
 #include "../opennn/mean_squared_error.h"
 
 using namespace opennn;
-
+/*
 TEST(LearningRateAlgorithmTest, DefaultConstructor)
 {
     LearningRateAlgorithm learning_rate_algorithm;
 
-    EXPECT_EQ(learning_rate_algorithm.has_loss_index(), false);
+    EXPECT_EQ(learning_rate_algorithm.has_loss(), false);
 }
 
-
+/*
 TEST(LearningRateAlgorithmTest, GeneralConstructor)
 {
     MeanSquaredError mean_squared_error;
     LearningRateAlgorithm learning_rate_algorithm(&mean_squared_error);
 
-    EXPECT_EQ(learning_rate_algorithm.has_loss_index(), true);
+    EXPECT_EQ(learning_rate_algorithm.has_loss(), true);
 }
 
 
@@ -47,7 +47,7 @@ TEST(LearningRateAlgorithmTest, BracketingTriplet)
     LearningRateAlgorithm learning_rate_algorithm(&mean_squared_error);
 
     type loss = 0.0;
-    Tensor<type, 1> training_direction;
+    Tensor1 training_direction;
     type initial_learning_rate = 0.0;
 
 //    EXPECT_EQ(triplet.A.first <= triplet.U.first);
@@ -138,7 +138,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 
     dataset.set(1, 1, 1);
 
-    Tensor<Index, 1> indices(1, 1, dataset.get_samples_number()-1);
+    VectorI indices(1, 1, dataset.get_samples_number()-1);
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {1, 1});
 
@@ -146,7 +146,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 
     neural_network.set_parameters_constant(type(1));
 
-    Tensor<type, 1> training_direction = gradient*(-1.0);
+    Tensor1 training_direction = gradient*(-1.0);
     type initial_learning_rate = 0.001;
 
     type loss_tolerance = 1.0e-6;
@@ -171,7 +171,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
     dataset.set(samples_number, inputs_number, targets_number);
 
-    Tensor<Index, 1> indices(3);
+    VectorI indices(3);
 
     indices.setValues({inputs_number,targets_number,samples_number-1});
 
@@ -180,9 +180,9 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
     //loss_index.calculate_training_loss not available
 
-    Tensor<type, 1> gradient = mean_squared_error.calculate_numerical_gradient();
+    Tensor1 gradient = mean_squared_error.calculate_numerical_gradient();
 
-    Tensor<type, 1> training_direction = gradient*(type(-1.0));
+    Tensor1 training_direction = gradient*(type(-1.0));
 
     type initial_learning_rate = 0.001;
 

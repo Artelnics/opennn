@@ -1,8 +1,8 @@
 #include "pch.h"
 
 #include "../opennn/statistics.h"
-#include "../opennn/tensors.h"
-#include "../opennn/strings_utilities.h"
+#include "../opennn/string_utilities.h"
+#include "../opennn/random_utilities.h"
 
 using namespace opennn;
 
@@ -15,14 +15,14 @@ TEST(StatisticsTest, CountEmptyBins)
 
     // Test
 
-    Tensor<type, 1> centers;
-    Tensor<Index, 1> frecuencies;
+    VectorR centers;
+    VectorR frecuencies;
 
     centers.resize(3);
-    centers.setValues({ type(1),type(2),type(3) });
+    centers<< type(1),type(2),type(3);
 
     frecuencies.resize(3);
-    frecuencies.setValues({ 1,1,0 });
+    frecuencies << 1,1,0;
 
     Histogram histogram_1(centers, frecuencies);
     EXPECT_EQ(histogram_1.count_empty_bins(), 1);
@@ -41,7 +41,7 @@ TEST(StatisticsTest, CountEmptyBins)
     // Test
 
     centers.resize(3);
-    centers.setValues({ type(1),type(2),type(3) });
+    centers << type(1),type(2),type(3);
 
     frecuencies.resize(3);
     frecuencies.setZero();
@@ -61,11 +61,11 @@ TEST(StatisticsTest, CalculateMinimumFrequency)
 
     // Test
 
-    Tensor<type, 1> centers(3);
-    centers.setValues({type(1),type(2),type(3)});
+    VectorR centers(3);
+    centers << type(1),type(2),type(3);
 
-    Tensor<Index, 1> frecuencies(3);
-    frecuencies.setValues({1,1,0});
+    VectorR frecuencies(3);
+    frecuencies << 1,1,0;
 
     Histogram histogram_1(centers,frecuencies);
     EXPECT_EQ(histogram_1.calculate_minimum_frequency(), 0);
@@ -84,10 +84,10 @@ TEST(StatisticsTest, CalculateMinimumFrequency)
     // Test
 
     centers.resize(3);
-    centers.setValues({type(1),type(2),type(3)});
+    centers << type(1),type(2),type(3);
 
     frecuencies.resize(3);
-    frecuencies.setValues({5,4,10});
+    frecuencies << 5,4,10;
 
     Histogram histogram_3(centers,frecuencies);
     EXPECT_EQ(histogram_3.calculate_minimum_frequency(), 4);
@@ -105,11 +105,11 @@ TEST(StatisticsTest, CalculateMaximumFrequency)
 
     // Test
 
-    Tensor<type, 1> centers(3);
-    centers.setValues({type(1),type(2),type(3)});
+    VectorR centers(3);
+    centers << type(1),type(2),type(3);
 
-    Tensor<Index, 1> frecuencies(3);
-    frecuencies.setValues({1,0,1});
+    VectorR frecuencies(3);
+    frecuencies << 1,0,1;
 
     Histogram histogram_1(centers,frecuencies);
     EXPECT_EQ(histogram_1.calculate_maximum_frequency(), 1);
@@ -117,10 +117,10 @@ TEST(StatisticsTest, CalculateMaximumFrequency)
     // Test
 
     centers.resize(3);
-    centers.setValues({ type(1),type(3),type(5)});
+    centers <<  type(1),type(3),type(5);
 
     frecuencies.resize(3);
-    frecuencies.setValues({5,21,8});
+    frecuencies << 5,21,8;
 
     Histogram histogram_2(centers,frecuencies);
     EXPECT_EQ(histogram_2.calculate_maximum_frequency(), 21);
@@ -135,11 +135,11 @@ TEST(StatisticsTest, CalculateMostPopulatedBin)
 
     // Test
 
-    Tensor<type, 1> centers(3);
-    centers.setValues({type(1),type(2),type(3)});
+    VectorR centers(3);
+    centers << type(1),type(2),type(3);
 
-    Tensor<Index, 1> frecuencies(3);
-    frecuencies.setValues({0,0,1});
+    VectorR frecuencies(3);
+    frecuencies << 0,0,1;
 
     Histogram histogram_1(centers,frecuencies);
     EXPECT_EQ(histogram_1.calculate_most_populated_bin(),2);
@@ -158,10 +158,10 @@ TEST(StatisticsTest, CalculateMostPopulatedBin)
     // Test
 
     centers.resize(3);
-    centers.setValues({ type(1),type(5),type(9)});
+    centers <<  type(1),type(5),type(9);
 
     frecuencies.resize(3);
-    frecuencies.setValues({5,4,10});
+    frecuencies << 5,4,10;
 
     Histogram histogram_3(centers,frecuencies);
     EXPECT_EQ(histogram_3.calculate_most_populated_bin(), 2);
@@ -174,16 +174,16 @@ TEST(StatisticsTest, CalculateMinimalCenters)
 
     // Test
     
-    Tensor<type, 1> centers(7);
-    centers.setValues({ type(1),type(2),type(4),type(6),type(7),type(8), type(12) });
+    VectorR centers(7);
+    centers <<  type(1),type(2),type(4),type(6),type(7),type(8), type(12) ;
 
-    Tensor<Index, 1> frecuencies(7);
-    frecuencies.setValues({ 6,2,2,1,1,1,1 });
+    VectorR frecuencies(7);
+    frecuencies <<  6,2,2,1,1,1,1 ;
     
     Histogram histogram(centers, frecuencies);
 
-    Tensor<type, 1> solution(4);
-    solution.setValues({type(6), type(7), type(8), type(12)});
+    VectorR solution(4);
+    solution << type(6), type(7), type(8), type(12);
 
     EXPECT_EQ(Index(histogram.calculate_minimal_centers()[0]), solution[0]);
     EXPECT_EQ(Index(histogram.calculate_minimal_centers()[0]), solution[0]);
@@ -198,10 +198,10 @@ TEST(StatisticsTest, CalculateMinimalCenters)
 
     // Test
     centers.resize(3);
-    centers.setValues({ type(1),type(2),type(3) });
+    centers <<  type(1),type(2),type(3) ;
 
     frecuencies.resize(3);
-    frecuencies.setValues({ 0,0,1 });
+    frecuencies <<  0,0,1 ;
 
     Histogram histogram_1(centers,frecuencies);
 
@@ -217,21 +217,20 @@ TEST(StatisticsTest, CalculateMaximalCenters)
 
     // Test
     
-    Tensor<type, 1> vector(18);
-    vector.setValues(
-                {type(1), type(1), type(1),
-                 type(1), type(7), type(2),
-                 type(2), type(6), type(7),
-                 type(4), type(8), type(8),
-                 type(8), type(1), type(4),
-                 type(7), type(7), type(7)});
+    VectorR vector(18);
+    vector << type(1), type(1), type(1),
+              type(1), type(7), type(2),
+              type(2), type(6), type(7),
+              type(4), type(8), type(8),
+              type(8), type(1), type(4),
+              type(7), type(7), type(7);
 
     histogram = opennn::histogram(vector,6);
 
-    Tensor<type, 1> solution(2);
-    solution.setValues({ type(1), type(7)});
+    VectorR solution(2);
+    solution <<  type(1), type(7);
 
-    Tensor<type, 1> result = histogram.calculate_maximal_centers();
+    VectorR result = histogram.calculate_maximal_centers();
 
     //EXPECT_NEAR(histogram.calculate_maximal_centers()(4), solution[1], 1.0e-7);
     
@@ -242,11 +241,11 @@ TEST(StatisticsTest, CalculateMaximalCenters)
 
     // Test
 
-    Tensor<type, 1> centers(3);
-    centers.setValues({type(1),type(2),type(3)});
+    VectorR centers(3);
+    centers << type(1),type(2),type(3);
 
-    Tensor<Index, 1> frecuencies(3);
-    frecuencies.setValues({1,1,0});
+    VectorR frecuencies(3);
+    frecuencies << 1,1,0;
 
     Histogram histogram_1(centers,frecuencies);
 
@@ -264,20 +263,20 @@ TEST(StatisticsTest, CalculateBin)
 
     // Test
 
-    Tensor<type, 1> centers(3);
-    centers.setValues({ type(2),type(4),type(6)});
+    VectorR centers(3);
+    centers <<  type(2),type(4),type(6);
 
-    Tensor<Index, 1> frecuencies(3);
-    frecuencies.setValues({0,0,0});
+    VectorR frecuencies(3);
+    frecuencies << 0,0,0;
 
     Histogram histogram_1(centers,frecuencies);
     EXPECT_EQ(histogram_1.calculate_bin(type(6)), 2);
     
     // Test
 
-    Tensor<type, 1> vector(3);
+    VectorR vector(3);
 
-    vector.setValues({ type(1), type(1), type(1)});
+    vector <<  type(1), type(1), type(1);
     histogram = opennn::histogram(vector, 10);
     
     EXPECT_EQ(histogram.calculate_bin(vector[0]), 0);
@@ -295,11 +294,11 @@ TEST(StatisticsTest, CalculateFrequency)
 
     // Test
 
-    Tensor<type, 1> centers(3);
-    centers.setValues({type(1),type(2),type(3)});
+    VectorR centers(3);
+    centers << type(1),type(2),type(3);
 
-    Tensor<Index, 1> frecuencies(3);
-    frecuencies.setValues({0,1,2});
+    VectorR frecuencies(3);
+    frecuencies << 0,1,2;
 
     Histogram histogram_1(centers,frecuencies);
     EXPECT_EQ(histogram_1.calculate_frequency(type(2)) == 1, true);
@@ -317,11 +316,11 @@ TEST(StatisticsTest, CalculateFrequency)
 
     // Test
 
-    Tensor<type, 1> vector(3);
+    VectorR vector(3);
     Index frequency_3;
     Histogram histogram_3;
 
-    vector.setValues({type(0), type(1), type(9) });
+    vector << type(0), type(1), type(9) ;
     histogram_3 = opennn::histogram(vector, 10);
     frequency_3 = histogram_3.calculate_frequency(type(9));
 
@@ -332,7 +331,7 @@ TEST(StatisticsTest, CalculateFrequency)
 
 TEST(StatisticsTest, Minimum)
 {
-    Tensor<type, 1> vector;
+    VectorR vector;
 
     // Test
 
@@ -341,27 +340,27 @@ TEST(StatisticsTest, Minimum)
     // Test
 
     vector.resize(3);
-    vector.setValues({type(0), type(1), type(9)});
+    vector << type(0), type(1), type(9);
 
-    EXPECT_NEAR(minimum(vector), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(minimum(vector), type(0), EPSILON);
 
     // Test
 
     vector.resize(3);
-    vector.setValues({type(1),type(2),type(3)});
+    vector << type(1),type(2),type(3);
 
-    EXPECT_NEAR(minimum(vector), type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(minimum(vector), type(1), EPSILON);
 
     vector.resize(3);
-    vector.setValues({ type(-1),type(2),type(3)});
+    vector <<  type(-1),type(2),type(3);
 
-    EXPECT_NEAR(minimum(vector), type(-1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(minimum(vector), type(-1), EPSILON);
 }
 
 
 TEST(StatisticsTest, Maximum)
 {
-    Tensor<type, 1> vector;
+    VectorR vector;
 
     // Test
 
@@ -370,64 +369,64 @@ TEST(StatisticsTest, Maximum)
     // Test
 
     vector.resize(3);
-    vector.setValues({ type(0), type(1), type(9)});
+    vector <<  type(0), type(1), type(9);
 
-    EXPECT_NEAR(maximum(vector), type(9), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(maximum(vector), type(9), EPSILON);
 
     // Test
 
     vector.resize(3);
-    vector.setValues({type(1),type(2),type(3)});
+    vector << type(1),type(2),type(3);
 
-    EXPECT_NEAR(maximum(vector), type(3), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(maximum(vector), type(3), EPSILON);
 
     vector.resize(3);
-    vector.setValues({ type(-1),type(-2),type(-3)});
+    vector <<  type(-1),type(-2),type(-3);
 
-    EXPECT_NEAR(maximum(vector), type(-1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(maximum(vector), type(-1), EPSILON);
 }
 
 
 TEST(StatisticsTest, Mean)
 {
-    Tensor<type, 2> matrix(3,3);
+    MatrixR matrix(3,3);
     matrix.setZero();
 
-    EXPECT_NEAR(mean(matrix)(0), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(mean(matrix)(0), 0, EPSILON);
 
-    matrix.setValues({{type(0),type(1),type(-2)},
-                      {type(0),type(1),type(8)},
-                      {type(0),type(1),type(6)}});
+    matrix << type(0),type(1),type(-2),
+              type(0),type(1),type(8),
+              type(0),type(1),type(6);
 
-    EXPECT_NEAR(mean(matrix)(0), 0, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(mean(matrix)(1), type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(mean(matrix)(2), type(4), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(mean(matrix)(0), 0, EPSILON);
+    EXPECT_NEAR(mean(matrix)(1), type(1), EPSILON);
+    EXPECT_NEAR(mean(matrix)(2), type(4), EPSILON);
 
-    Tensor<type, 1> vector(2);
-    vector.setValues({ type(1), type(1)});
+    VectorR vector(2);
+    vector <<  type(1), type(1);
 
-    EXPECT_NEAR(mean(vector), type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(mean(vector), type(1), EPSILON);
 
     // Test
 
     vector.resize(2);
-    vector.setValues({ type(-1), type(1) });
+    vector <<  type(-1), type(1) ;
 
-    EXPECT_NEAR(mean(vector), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(mean(vector), type(0), EPSILON);
 
     // Test missing values
 
     vector.resize(5);
-    vector.setValues({ type(1), type(NAN), type(2.0), type(3.0), type(4.0)});
+    vector <<  type(1), type(NAN), type(2.0), type(3.0), type(4.0);
 
-    EXPECT_NEAR(mean(vector), type(2.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(mean(vector), type(2.5), EPSILON);
 
     // Test
 
     vector.resize(4);
-    vector.setValues({ type(1), type(1), type(NAN), type(1) });
+    vector <<  type(1), type(1), type(NAN), type(1) ;
 
-    EXPECT_NEAR(mean(vector), type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(mean(vector), type(1), EPSILON);
 
     // Test empty matrix
 
@@ -439,53 +438,53 @@ TEST(StatisticsTest, Mean)
 
 TEST(StatisticsTest, StandardDeviation)
 {
-    Tensor<type, 1> vector(1);
+    VectorR vector(1);
     vector.setZero();
 
     type standard_deviation;
 
     // Test
 
-    EXPECT_NEAR(opennn::standard_deviation(vector), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(opennn::standard_deviation(vector), type(0), EPSILON);
 
     // Test
 
     vector.resize(4);
-    vector.setValues({ type(2),type(4),type(8),type(10)});
+    vector <<  type(2),type(4),type(8),type(10);
 
-    EXPECT_NEAR(opennn::standard_deviation(vector), sqrt(type(40)/type(3)), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(opennn::standard_deviation(vector), sqrt(type(40)/type(3)), EPSILON);
 
     // Test
 
     vector.resize(4);
     vector.setConstant(type(-11));
 
-    EXPECT_NEAR(opennn::standard_deviation(vector), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(opennn::standard_deviation(vector), type(0), EPSILON);
 
     // Test
 
     vector.resize(3);
     vector.setZero();
 
-    EXPECT_NEAR(opennn::standard_deviation(vector), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(opennn::standard_deviation(vector), 0, EPSILON);
 
     // Test
 
     vector.resize(2);
-    vector.setValues({ type(1), type(1)});
+    vector <<  type(1), type(1);
 
     standard_deviation = opennn::standard_deviation(vector);
 
-    EXPECT_NEAR(standard_deviation, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(standard_deviation, 0, EPSILON);
 
     // Test
 
     vector.resize(2);
-    vector.setValues({ type(-1.0), type(1) });
+    vector <<  type(-1.0), type(1) ;
 
     standard_deviation = opennn::standard_deviation(vector);
 
-    EXPECT_NEAR(standard_deviation, sqrt(type(2)), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(standard_deviation, sqrt(type(2)), EPSILON);
 
     // Test
 
@@ -494,14 +493,14 @@ TEST(StatisticsTest, StandardDeviation)
 
     standard_deviation = opennn::standard_deviation(vector);
 
-    EXPECT_NEAR(standard_deviation, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(standard_deviation, 0, EPSILON);
 }
 
 
 TEST(StatisticsTest, Median)
 {
     
-    Tensor<type, 1> vector(2);
+    VectorR vector(2);
     vector.setZero();
     
     type median;
@@ -512,79 +511,79 @@ TEST(StatisticsTest, Median)
 
     median = opennn::median(vector);
     
-    EXPECT_NEAR(median, type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(median, type(0), EPSILON);
 
     // Test
 
     vector.resize(4);
-    vector.setValues({type(2),type(4),type(8),type(10)});
+    vector << type(2),type(4),type(8),type(10);
 
     median = opennn::median(vector);
 
-    EXPECT_NEAR(median, type(6), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(median, type(6), EPSILON);
 
     // Test
 
     vector.resize(4);
-    vector.setValues({type(-11),type(-11),type(-11),type(-11)});
+    vector << type(-11),type(-11),type(-11),type(-11);
 
     median = opennn::median(vector);
 
-    EXPECT_NEAR(median, type(-11), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(median, type(-11), EPSILON);
 
     // Test
 
     vector.resize(4);
-    vector.setValues({ type(1),type(2),type(3),type(4)});
+    vector <<  type(1),type(2),type(3),type(4);
 
     median = opennn::median(vector);
 
-    EXPECT_NEAR(median, type(2.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(median, type(2.5), EPSILON);
 
     // Test
 
     vector.resize(5);
-    vector.setValues({ type(1),type(2),type(3),type(4),type(5)});
+    vector <<  type(1),type(2),type(3),type(4),type(5);
 
     median = opennn::median(vector);
 
-    EXPECT_NEAR(abs(median), type(3), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(median), type(3), EPSILON);
 
     // Test
 
     vector.resize(4);
-    vector.setValues({type(3),type(NAN),type(1),type(NAN)});
+    vector << type(3),type(NAN),type(1),type(NAN);
 
     median = opennn::median(vector);
 
-    EXPECT_NEAR(abs(median), type(2), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(median), type(2), EPSILON);
     
     // Test
-    Tensor<type, 2> matrix(3,2);
+    MatrixR matrix(3,2);
 
-    matrix.setValues({{type(1),type(1)},
-                      {type(2),type(3)},
-                      {type(3),type(4)}});
+    matrix << type(1),type(1),
+              type(2),type(3),
+              type(3),type(4);
 
-    EXPECT_NEAR(abs(opennn::median(matrix, 0)), type(2), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(opennn::median(matrix, 1)), type(3), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(opennn::median(matrix, 0)), type(2), EPSILON);
+    EXPECT_NEAR(abs(opennn::median(matrix, 1)), type(3), EPSILON);
     
     // Test
 
     matrix.resize(3,2);
-    matrix.setValues({{type(1),type(NAN)},
-                      {type(NAN),type(NAN)},
-                      {type(3),type(3.5)}});
+    matrix << type(1),type(NAN),
+              type(NAN),type(NAN),
+              type(3),type(3.5);
 
-    EXPECT_NEAR(abs(opennn::median(matrix, 0)), type(2), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(opennn::median(matrix, 1)), type(3.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(opennn::median(matrix, 0)), type(2), EPSILON);
+    EXPECT_NEAR(abs(opennn::median(matrix, 1)), type(3.5), EPSILON);
 
 }
 
 
 TEST(StatisticsTest, Variance)
 {
-    Tensor<type, 1> vector;
+    VectorR vector;
 
     // Test
 
@@ -596,44 +595,44 @@ TEST(StatisticsTest, Variance)
     // Test , 2
 
     vector.resize(4);
-    vector.setValues({ type(2),type(4),type(8),type(10)});
+    vector <<  type(2),type(4),type(8),type(10);
 
-    EXPECT_NEAR(variance(vector), type(40)/type(3), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variance(vector), type(40)/type(3), EPSILON);
 
     // Test
 
     vector.resize(4);
-    vector.setValues({ type(-11),type(-11),type(-11),type(-11)});
+    vector <<  type(-11),type(-11),type(-11),type(-11);
 
-    EXPECT_NEAR(variance(vector), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variance(vector), type(0), EPSILON);
 
     // Test
 
     vector.resize(1);
     vector.setConstant(type(1));
 
-    EXPECT_NEAR(abs(variance(vector)), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(variance(vector)), type(0), EPSILON);
 
     // Test
 
     vector.resize(3);
-    vector.setValues({type(2),type(1),type(2)});
+    vector << type(2),type(1),type(2);
 
-    EXPECT_NEAR(abs(variance(vector)), type(1)/type(3), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(variance(vector)), type(1)/type(3), EPSILON);
 
     // Test
 
     vector.resize(3);
-    vector.setValues({type(1),type(NAN),type(2)});
+    vector << type(1),type(NAN),type(2);
 
-    EXPECT_NEAR(abs(variance(vector)), type(0.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(variance(vector)), type(0.5), EPSILON);
 }
 
 
 TEST(StatisticsTest, Quartiles)
 {
-    Tensor<type, 1> vector;
-    Tensor<type, 1> quartiles;
+    VectorR vector;
+    VectorR quartiles;
     
     
     // Test
@@ -643,120 +642,120 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(Index(quartiles(0)),type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(Index(quartiles(1)), type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(Index(quartiles(2)), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(Index(quartiles(0)),type(0), EPSILON);
+    EXPECT_NEAR(Index(quartiles(1)), type(0), EPSILON);
+    EXPECT_NEAR(Index(quartiles(2)), type(0), EPSILON);
         
     // Test
 
     vector.resize(2);
-    vector.setValues({type(0), type(1)});
+    vector << type(0), type(1);
 
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)) , type(0.25), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(0.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)) , type(0.25), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(0.5), EPSILON);
 
     // Test
 
     vector.resize(3);
-    vector.setValues({ type(0),type(1),type(2)});
+    vector <<  type(0),type(1),type(2);
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(0.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(1.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(0.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(1), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(1.5), EPSILON);
 
     // Test
 
     vector.resize(4);
-    vector.setValues({ type(0),type(1),type(2),type(3)});
+    vector <<  type(0),type(1),type(2),type(3);
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(0.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(1.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(2.5), NUMERIC_LIMITS_MIN);    
+    EXPECT_NEAR(abs(quartiles(0)), type(0.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(1.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(2.5), EPSILON);    
     
     // Test
 
     vector.resize(5);
-    vector.setValues({ type(0),type(1),type(2),type(3),type(4)});
+    vector <<  type(0),type(1),type(2),type(3),type(4);
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(0.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(2), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(3.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(0.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(2), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(3.5), EPSILON);
 
     // Test
 
     vector.resize(6);
-    vector.setValues({ type(0),type(1),type(2),type(3),type(4),type(5)});
+    vector <<  type(0),type(1),type(2),type(3),type(4),type(5);
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(2.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(4), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(2.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(4), EPSILON);
 
     
     // Test
 
     vector.resize(7);
-    vector.setValues({ type(0),type(1),type(2),type(3),type(4),type(5),type(6)});
+    vector <<  type(0),type(1),type(2),type(3),type(4),type(5),type(6);
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(3.0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(5.0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(3.0), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(5.0), EPSILON);
 
     // Test
 
     vector.resize(8);
-    vector.setValues({ type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(7)});
+    vector <<  type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(7);
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(3.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(5.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(3.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(5.5), EPSILON);
 
     // Test
 
     vector.resize(9);
-    vector.setValues({ type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(7),type(8)});
+    vector <<  type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(7),type(8);
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(4.0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(6.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(4.0), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(6.5), EPSILON);
 
    // Test
 
     vector.resize(9);
-    vector.setValues({ type(1),type(4),type(6),type(2),type(0),type(3),type(4),type(7),type(10)});
+    vector <<  type(1),type(4),type(6),type(2),type(0),type(3),type(4),type(7),type(10);
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(4.0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(6.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(4.0), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(6.5), EPSILON);
 
     // Test
 
     vector.resize(20);
-    vector.setValues({type(12),type(14),type(50),type(76),type(12),type(34),type(56),type(74),type(89),type(60),type(96),type(24),type(53),type(25),type(67),type(84),type(92),type(45),type(62),type(86)});
+    vector << type(12),type(14),type(50),type(76),type(12),type(34),type(56),type(74),type(89),type(60),type(96),type(24),type(53),type(25),type(67),type(84),type(92),type(45),type(62),type(86);
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(29.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(58.0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(80.0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(29.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(58.0), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(80.0), EPSILON);
     
     
     // Test missing values:
@@ -764,40 +763,39 @@ TEST(StatisticsTest, Quartiles)
     // Test
 
     vector.resize(5);
-    vector.setValues({type(1), type(2), type(3), type(NAN), type(4)});
+    vector << type(1), type(2), type(3), type(NAN), type(4);
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(2.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(3.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(2.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(3.5), EPSILON);
     
     // Test
 
     vector.resize(6);
-    vector.setValues({type(1), type(2), type(3), type(NAN), type(4), type(5)});
+    vector << type(1), type(2), type(3), type(NAN), type(4), type(5);
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(3.0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(4.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(3.0), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(4.5), EPSILON);
     
 }
 
 
 TEST(StatisticsTest, Histogram)
 {
-    
-    Tensor<type, 1> vector;
+    VectorR vector;
 
-    Tensor<type, 1> centers;
-    Tensor<Index, 1> frequencies;
+    VectorR centers;
+    VectorR frequencies;
     
     // Test
 
     vector.resize(11);
-    vector.setValues({type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(7),type(8),type(9),type(10)});
+    vector << type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(7),type(8),type(9),type(10);
     Histogram histogram(vector, 10);
     EXPECT_EQ(histogram.get_bins_number(), 10);
 
@@ -826,9 +824,9 @@ TEST(StatisticsTest, Histogram)
     EXPECT_EQ(frequencies[8], 1);
     EXPECT_EQ(frequencies[9], 2);
 
-    Tensor<Index, 0> sum_frec_1 = frequencies.sum();
+    type sum_frec_1 = frequencies.sum();
 
-    EXPECT_EQ(sum_frec_1(0), 11);
+    EXPECT_EQ(sum_frec_1, 11);
 
     // Test
 
@@ -840,11 +838,9 @@ TEST(StatisticsTest, Histogram)
     centers = histogram_2.centers;
     frequencies = histogram_2.frequencies;
 
-    Tensor<Index, 0> sum_frec_2;
-    sum_frec_2 = frequencies.sum();
+    type sum_frec_2 = frequencies.sum();
 
-    EXPECT_EQ(sum_frec_2(0), 20);
-
+    EXPECT_EQ(sum_frec_2, 20);
 }
 
 
@@ -852,12 +848,10 @@ TEST(StatisticsTest, Histograms)
 {
     
     Tensor<Histogram, 1> histograms;
-    Tensor<type, 2> matrix(3,3);
-    matrix.setValues({
-                         {type(1),type(1),type(1)},
-                         {type(2),type(2),type(2)},
-                         {type(3),type(3),type(3)}
-                     });
+    MatrixR matrix(3,3);
+    matrix << type(1),type(1),type(1),
+              type(2),type(2),type(2),
+              type(3),type(3),type(3);
 
     //histograms = opennn::histograms(matrix, 3);
 
@@ -874,14 +868,14 @@ TEST(StatisticsTest, TotalFrequencies)
 
     // Test
 
-    Tensor<type, 1> vector1_1(16);
-    vector1_1.setValues({type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(0),type(1),type(1),type(1),type(2),type(2),type(2),type(2),type(2)});
+    VectorR vector1_1(16);
+    vector1_1 << type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(0),type(1),type(1),type(1),type(2),type(2),type(2),type(2),type(2);
 
-    Tensor<type, 1> vector2_1(16);
-    vector2_1.setValues({type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(0),type(1),type(1),type(1),type(2),type(2),type(2),type(2),type(2)});
+    VectorR vector2_1(16);
+    vector2_1 << type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(0),type(1),type(1),type(1),type(2),type(2),type(2),type(2),type(2);
 
-    Tensor<type, 1> vector3_1(16);
-    vector3_1.setValues({type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(0),type(1),type(1),type(1),type(2),type(2),type(2),type(2),type(2)});
+    VectorR vector3_1(16);
+    vector3_1 << type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(0),type(1),type(1),type(1),type(2),type(2),type(2),type(2),type(2);
 
     histograms(0) = histogram(vector1_1, 7);
     histograms(1) = histogram(vector2_1, 7);
@@ -895,11 +889,11 @@ TEST(StatisticsTest, TotalFrequencies)
 
     // Test
 
-    Tensor<type, 2> matrix(3,3);
-    matrix.setValues({
+    MatrixR matrix(3,3);
+    matrix <<
         {type(1),type(1),type(NAN)},
         {type(2),type(2),type(1)},
-        {type(3),type(3),type(2)}});
+        {type(3),type(3),type(2)};
 
     histograms = opennn::histograms(matrix, 3);
 */
@@ -911,7 +905,7 @@ TEST(StatisticsTest, TotalFrequencies)
 
 TEST(StatisticsTest, MinimalIndex)
 {
-    Tensor<type, 1> vector;
+    VectorR vector;
 
     // Test
 
@@ -920,7 +914,7 @@ TEST(StatisticsTest, MinimalIndex)
     // Test
 
     vector.resize(3);
-    vector.setValues({ type(1),type(0),type(-1)});
+    vector <<  type(1),type(0),type(-1);
 
     EXPECT_EQ(minimal_index(vector), 2);
 }
@@ -930,14 +924,14 @@ TEST(StatisticsTest, MaximalIndex)
 {
     // Test
 
-    Tensor<type, 1> vector(0);
+    VectorR vector(0);
 
     EXPECT_EQ(maximal_index(vector), 0);
 
     // Test
 
     vector.resize(3);
-    vector.setValues({ type(1),type(0),type(-1)});
+    vector <<  type(1),type(0),type(-1);
 
     EXPECT_EQ(maximal_index(vector), 0);
 }
@@ -946,16 +940,16 @@ TEST(StatisticsTest, MaximalIndex)
 TEST(StatisticsTest, MinimalIndices)
 {
     
-    Tensor<type, 1> vector;
+    VectorR vector;
 
     // Test
    
-    EXPECT_EQ(minimal_indices(vector, 0).dimension(0), 0);
+    EXPECT_EQ(minimal_indices(vector, 0).rows(), 0);
 
     // Test
     
     vector.resize(3);
-    vector.setValues({ type(-1),type(0),type(1)});
+    vector <<  type(-1),type(0),type(1);
 
     EXPECT_EQ(minimal_indices(vector, 1)(0), 0);
 
@@ -966,7 +960,7 @@ TEST(StatisticsTest, MinimalIndices)
     // Test
 
     vector.resize(4);
-    vector.setValues({ type(0),type(0),type(0),type(1)});
+    vector <<  type(0),type(0),type(0),type(1);
 
     EXPECT_EQ(minimal_indices(vector, 4)(0), 0);
     EXPECT_EQ(minimal_indices(vector, 4)(1), 1);
@@ -975,7 +969,7 @@ TEST(StatisticsTest, MinimalIndices)
     // Test
   
     vector.resize(5);
-    vector.setValues({type(0),type(1),type(0),type(2),type(0)});
+    vector << type(0),type(1),type(0),type(2),type(0);
 
     EXPECT_EQ(minimal_indices(vector, 5)(0) == 0 || minimal_indices(vector, 5)(0) == 2 || minimal_indices(vector, 5)(0) == 4, true);
     EXPECT_EQ(minimal_indices(vector, 5)(1) == 0 || minimal_indices(vector, 5)(1) == 2 || minimal_indices(vector, 5)(1) == 4, true);
@@ -987,7 +981,7 @@ TEST(StatisticsTest, MinimalIndices)
     // Test
 
     vector.resize(4);
-    vector.setValues({type(-1),type(2),type(-3),type(4)});
+    vector << type(-1),type(2),type(-3),type(4);
 
     EXPECT_EQ(minimal_indices(vector, 2)(0), 2);
     EXPECT_EQ(minimal_indices(vector, 2)(1), 0);
@@ -998,23 +992,23 @@ TEST(StatisticsTest, MinimalIndices)
 TEST(StatisticsTest, MaximalIndices)
 {
     
-    Tensor<type, 1> vector;
+    VectorR vector;
 
     // Test
 
-    EXPECT_EQ(maximal_indices(vector,0).dimension(0), 0);
+    EXPECT_EQ(maximal_indices(vector,0).rows(), 0);
 
     // Test
 
     vector.resize(3);
-    vector.setValues({ type(-1),type(0),type(1) });
+    vector <<  type(-1),type(0),type(1) ;
 
     EXPECT_EQ(maximal_indices(vector, 1)[0], 2);
 
     // Test
 
     vector.resize(4);
-    vector.setValues({ type(1),type(1),type(1),type(1) });
+    vector <<  type(1),type(1),type(1),type(1) ;
 
     EXPECT_EQ(maximal_indices(vector, 4)[0], 0);
     EXPECT_EQ(maximal_indices(vector, 4)[1], 1);
@@ -1023,7 +1017,7 @@ TEST(StatisticsTest, MaximalIndices)
     // Test
 
     vector.resize(5);
-    vector.setValues({ type(1),type(5),type(6),type(7),type(2) });
+    vector <<  type(1),type(5),type(6),type(7),type(2) ;
 
     EXPECT_EQ(maximal_indices(vector, 5)[0], 3);
     EXPECT_EQ(maximal_indices(vector, 5)[1], 2);
@@ -1035,9 +1029,9 @@ TEST(StatisticsTest, MaximalIndices)
 TEST(StatisticsTest, BoxPlot)
 {
     
-    const Index size = get_random_index(1, 10);
+    const Index size = random_integer(1, 10);
 
-    Tensor<type, 1> vector(size);
+    VectorR vector(size);
 
     BoxPlot box_plot;
     BoxPlot solution;
@@ -1049,41 +1043,43 @@ TEST(StatisticsTest, BoxPlot)
     
     box_plot = opennn::box_plot(vector);
 
-    EXPECT_NEAR(box_plot.minimum, type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.first_quartile, type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.median, type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.third_quartile, type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.maximum, type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(box_plot.minimum, type(0), EPSILON);
+    EXPECT_NEAR(box_plot.first_quartile, type(0), EPSILON);
+    EXPECT_NEAR(box_plot.median, type(0), EPSILON);
+    EXPECT_NEAR(box_plot.third_quartile, type(0), EPSILON);
+    EXPECT_NEAR(box_plot.maximum, type(0), EPSILON);
     
     // Test
 
     vector.resize(8);
-    vector.setValues({ type(2.0), type(2.0), type(3.0), type(5.0), type(6.0), type(7.0), type(8.0), type(9.0) });
+    vector <<  type(2.0), type(2.0), type(3.0), type(5.0), type(6.0), type(7.0), type(8.0), type(9.0) ;
 
     box_plot = opennn::box_plot(vector);
 
     solution.set(type(2.0), type(2.5), type(5.5), type(7.5), type(9.0));
 
-    EXPECT_NEAR(box_plot.minimum, solution.minimum, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.first_quartile, solution.first_quartile, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.median, solution.median, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.third_quartile, solution.third_quartile, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.maximum, solution.maximum, NUMERIC_LIMITS_MIN);
-    
+    EXPECT_NEAR(box_plot.minimum, solution.minimum, EPSILON);
+
+    EXPECT_NEAR(box_plot.first_quartile, solution.first_quartile, EPSILON);
+    EXPECT_NEAR(box_plot.median, solution.median, EPSILON);
+    EXPECT_NEAR(box_plot.third_quartile, solution.third_quartile, EPSILON);
+    EXPECT_NEAR(box_plot.maximum, solution.maximum, EPSILON);
+
     // Test missing values
 
     vector.resize(9);
-    vector.setValues({ type(2.0), type(2.0), type(3.0), type(5.0), type(6.0), type(7.0), type(NAN), type(8.0), type(9.0)});
+    vector <<  type(2.0), type(2.0), type(3.0), type(5.0), type(6.0), type(7.0), type(NAN), type(8.0), type(9.0);
 
     box_plot = opennn::box_plot(vector);
 
     solution.set(type(2.0), type(2.5), type(5.5), type(7.5), type(9.0));
 
-    EXPECT_NEAR(box_plot.minimum, solution.minimum, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.first_quartile, solution.first_quartile, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.median, solution.median, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.third_quartile, solution.third_quartile, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.maximum, solution.maximum, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(box_plot.minimum, solution.minimum, EPSILON);
+
+    EXPECT_NEAR(box_plot.first_quartile, solution.first_quartile, EPSILON);
+    EXPECT_NEAR(box_plot.median, solution.median, EPSILON);
+    EXPECT_NEAR(box_plot.third_quartile, solution.third_quartile, EPSILON);
+    EXPECT_NEAR(box_plot.maximum, solution.maximum, EPSILON);
     
 }
 
@@ -1091,26 +1087,26 @@ TEST(StatisticsTest, BoxPlot)
 TEST(StatisticsTest, Percentiles)
 {
     
-    Tensor<type, 1> vector;
+    VectorR vector;
 
     // Test
 
-    Tensor<type, 1> empty_vector(10);
+    VectorR empty_vector(10);
     empty_vector.setConstant(NAN);
-    Tensor<type, 1> percentiles_empty = opennn::percentiles(empty_vector);
+    VectorR percentiles_empty = opennn::percentiles(empty_vector);
 
     EXPECT_EQ(isnan(percentiles_empty(0)),true);
 
     // Test
 
     vector.resize(10);
-    vector.setValues({ type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9) });
+    vector <<  type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9) ;
 
     
-    Tensor<type, 1> percentiles = opennn::percentiles(vector);
+    VectorR percentiles = opennn::percentiles(vector);
     
-    Tensor<type, 1> solution(10);
-    solution.setValues({ type(0.5), type(1.5), type(2.5), type(3.5), type(4.5), type(5.5), type(6.5), type(7.5), type(8.5), type(9) });
+    VectorR solution(10);
+    solution <<  type(0.5), type(1.5), type(2.5), type(3.5), type(4.5), type(5.5), type(6.5), type(7.5), type(8.5), type(9) ;
     
     EXPECT_NEAR(abs(percentiles(0)), solution(0), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(1)), solution(1), type(1.0e-7));
@@ -1127,12 +1123,12 @@ TEST(StatisticsTest, Percentiles)
     // Test
 
     vector.resize(21);
-    vector.setValues({ type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10), type(11), type(12), type(13), type(14), type(15), type(16), type(17), type(18), type(19), type(20) });
+    vector <<  type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10), type(11), type(12), type(13), type(14), type(15), type(16), type(17), type(18), type(19), type(20) ;
 
     percentiles = opennn::percentiles(vector);
 
     solution.resize(10);
-    solution.setValues({ type(2), type(4), type(6), type(8), type(10), type(12), type(14), type(16), type(18), type(20) });
+    solution <<  type(2), type(4), type(6), type(8), type(10), type(12), type(14), type(16), type(18), type(20) ;
     
     EXPECT_NEAR(abs(percentiles(0)), solution(0), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(1)), solution(1), type(1.0e-7));
@@ -1150,12 +1146,12 @@ TEST(StatisticsTest, Percentiles)
 
     vector.resize(14);
 
-    vector.setValues({ type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(11), type(15), type(19), type(32) });
+    vector <<  type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(11), type(15), type(19), type(32) ;
 
     percentiles = opennn::percentiles(vector);
 
     solution.resize(10);
-    solution.setValues({ type(1), type(2), type(4), type(5), type(6.5), type(8), type(9), type(15), type(19), type(32) });
+    solution <<  type(1), type(2), type(4), type(5), type(6.5), type(8), type(9), type(15), type(19), type(32) ;
     
     EXPECT_NEAR(abs(percentiles(0)), solution(0), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(1)), solution(1), type(1.0e-7));
@@ -1170,14 +1166,14 @@ TEST(StatisticsTest, Percentiles)
     
     // Test
     vector.resize(21);
-    vector.setValues({ type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10), type(11), type(12), type(13), type(14), type(15), type(16), type(17), type(18), type(19), type(20) });
+    vector <<  type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10), type(11), type(12), type(13), type(14), type(15), type(16), type(17), type(18), type(19), type(20) ;
 
     vector(20) = type(NAN);
 
     percentiles = opennn::percentiles(vector);
 
     solution.resize(10);
-    solution.setValues({ type(1.5), type(3.5), type(5.5), type(7.5), type(9.5), type(11.5), type(13.5), type(15.5), type(17.5), type(19) });
+    solution <<  type(1.5), type(3.5), type(5.5), type(7.5), type(9.5), type(11.5), type(13.5), type(15.5), type(17.5), type(19) ;
 
     EXPECT_NEAR(abs(percentiles(0)), solution(0), type(1.0e-7));
     EXPECT_NEAR(abs(percentiles(1)), solution(1), type(1.0e-7));

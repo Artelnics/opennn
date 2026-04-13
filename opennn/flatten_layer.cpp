@@ -13,7 +13,7 @@ namespace opennn
 {
 	using Flatten2d = Flatten<2>;
 	using Flatten3d = Flatten<3>;
-	using Flatten4d = Flatten<4>;
+    using Flatten4d = Flatten<4>;
 
 	using FlattenForwardPropagation2d = FlattenForwardPropagation<2>;
 	using FlattenBackPropagation2d = FlattenBackPropagation<2>;
@@ -22,7 +22,8 @@ namespace opennn
 	using FlattenBackPropagation3d = FlattenBackPropagation<3>;
 
 	using FlattenForwardPropagation4d = FlattenForwardPropagation<4>;
-	using FlattenBackPropagation4d = FlattenBackPropagation<4>;
+    using FlattenBackPropagation4d = FlattenBackPropagation<4>;
+
 
 	REGISTER(Layer, Flatten2d, "Flatten2d")
 	REGISTER(LayerForwardPropagation, FlattenForwardPropagation2d, "Flatten2d")
@@ -85,4 +86,4 @@ namespace opennn
 	// Linker fix: Ensures the static registration macros in this file are run.
 	void reference_flatten_layer() { }
 
-} // namespace opennn
+} 

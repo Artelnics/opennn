@@ -7,38 +7,34 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "recurrent_layer.h"
 
 namespace opennn
 {
 
-Recurrent::Recurrent(const dimensions& new_input_dimensions,
-                     const dimensions& new_output_dimensions) : Layer()
+Recurrent::Recurrent(const Shape& new_input_shape,
+                     const Shape& new_output_shape) : Layer()
 {
-    set(new_input_dimensions, new_output_dimensions);
+    set(new_input_shape, new_output_shape);
 }
 
 
-dimensions Recurrent::get_input_dimensions() const
+Shape Recurrent::get_input_shape() const
 {
-    return input_dimensions;
+    return input_shape;
 }
 
 
-dimensions Recurrent::get_output_dimensions() const
+Shape Recurrent::get_output_shape() const
 {
     return { biases.size() };
 }
 
 
-vector<ParameterView > Recurrent::get_parameter_views() const
-{
-    return {
-        {(type*)biases.data(), biases.size()},
-        {(type*)input_weights.data(), input_weights.size()},
-        {(type*)recurrent_weights.data(), recurrent_weights.size()}
-    };
+vector<TensorView*> Recurrent::get_parameter_views()
+{  
+    return {&biases, &input_weights, &recurrent_weights};
 }
 
 
@@ -48,203 +44,213 @@ string Recurrent::get_activation_function() const
 }
 
 
-void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
+void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 {
-    set_input_dimensions(new_input_dimensions);
-    set_output_dimensions(new_output_dimensions);
+    if(new_input_shape.size() != 2)
+        throw runtime_error("Input shape rank is not 2 for Recurrent (time_steps, inputs).");
 
-    const Index inputs_number = new_input_dimensions[1];
-    const Index outputs_number = new_output_dimensions[0];
+    input_shape = new_input_shape;
 
-    biases.resize(outputs_number);
+    const Index inputs_number = new_input_shape[1];
+    const Index outputs_number = new_output_shape[0];
 
-    input_weights.resize(inputs_number, outputs_number);
-
-    recurrent_weights.resize(outputs_number, outputs_number);
-
-    set_parameters_random();
+    biases.shape = {outputs_number};
+    input_weights.shape = {inputs_number, outputs_number};
+    recurrent_weights.shape = {outputs_number, outputs_number};
 
     label = "recurrent_layer";
-
     name = "Recurrent";
 }
 
 
-void Recurrent::set_input_dimensions(const dimensions& new_input_dimensions)
+void Recurrent::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_dimensions.size() != 2)
-        throw runtime_error("Input dimensions rank is not 2 for Recurrent (time_steps, inputs).");
+    if (new_input_shape.size() != 2)
+        throw runtime_error("Input shape rank is not 2 for Recurrent (time_steps, inputs).");
 
-    input_dimensions = new_input_dimensions;
+    input_shape = new_input_shape;
 
-    const Index inputs_number = input_dimensions[1];
+    const Index inputs_number = input_shape[1];
     const Index outputs_number = get_outputs_number();
 
-    input_weights.resize(inputs_number, outputs_number);
+    input_weights.shape = {inputs_number, outputs_number};
 }
 
 
-void Recurrent::set_output_dimensions(const dimensions& new_output_dimensions)
+void Recurrent::set_output_shape(const Shape& new_output_shape)
 {
-    const Index inputs_number = input_weights.dimension(0);
-    const Index outputs_number = new_output_dimensions[0];
+    const Index inputs_number = input_weights.shape[0];
+    const Index outputs_number = new_output_shape[0];
 
-    biases.resize(outputs_number);
-    input_weights.resize(inputs_number, outputs_number);
-    recurrent_weights.resize(outputs_number, outputs_number);
+    biases.shape = {outputs_number};
+    input_weights.shape = {inputs_number, outputs_number};
+    recurrent_weights.shape = {outputs_number, outputs_number};
 }
 
 
 void Recurrent::set_activation_function(const string& new_activation_function)
 {
-    if(new_activation_function == "Logistic"
-    || new_activation_function == "HyperbolicTangent"
-    || new_activation_function == "Linear"
-    || new_activation_function == "RectifiedLinear"
-    || new_activation_function == "ScaledExponentialLinear")
-        activation_function = new_activation_function;
+    string normalized_activation_function = new_activation_function;
+
+    if(normalized_activation_function == "Logistic")
+        normalized_activation_function = "Sigmoid";
+
+    if(normalized_activation_function == "Sigmoid"
+        || normalized_activation_function == "HyperbolicTangent"
+        || normalized_activation_function == "Linear"
+        || normalized_activation_function == "RectifiedLinear"
+        || normalized_activation_function == "ScaledExponentialLinear")
+        activation_function = normalized_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
 }
 
 
-void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
-                                       const Tensor<type, 2>& previous_hidden_states,
-                                       Tensor<type, 2>& combinations) const
+void Recurrent::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                  bool is_training)
 {
-    const Index batch_size = inputs.dimension(0);
+    RecurrentForwardPropagation* recurrent_forward_propagation = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
 
-    // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
-    combinations = inputs.contract(input_weights, axes(1,0))
-                   + previous_hidden_states.contract(recurrent_weights, axes(1,0))
-                   + biases.reshape(Eigen::DSizes<Index,2>{1, biases.dimension(0)})
-                         .broadcast(array<Index,2>{batch_size, 1});
-}
+    const Index batch_size = forward_propagation->inputs[0].shape[0];
+    const Index past_time_steps = forward_propagation->inputs[0].shape[1];
+    const Index input_size = forward_propagation->inputs[0].shape[2];
+    const Index output_size = biases.shape[0];
 
+    const VectorMap biases_map = vector_map(biases);
+    const MatrixMap input_weights_map = matrix_map(input_weights);
+    const MatrixMap recurrent_weights_map = matrix_map(recurrent_weights);
 
-void Recurrent::forward_propagate(const vector<TensorView>& input_views,
-                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                  const bool&)
-{
-    const Index batch_size = input_views[0].dims[0];
-    const Index past_time_steps = input_views[0].dims[1];
-    const Index input_size = input_views[0].dims[2];
+    TensorMap3 input_sequences = tensor_map<3>(forward_propagation->inputs[0]);
+    TensorMap3 all_hidden_states = tensor_map<3>(recurrent_forward_propagation->hidden_states);
+    TensorMap3 all_activation_derivatives = tensor_map<3>(recurrent_forward_propagation->activation_derivatives);
 
-    TensorMap<Tensor<type, 3>> inputs(input_views[0].data, batch_size, past_time_steps, input_size);
+    MatrixR current_hidden_state(batch_size, output_size);
+    current_hidden_state.setZero();
 
-    RecurrentForwardPropagation* recurrent_forward =
-        static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
+    MatrixR step_input(batch_size, input_size);
+    MatrixR previous_hidden_state(batch_size, output_size);
 
-    Tensor<type, 2>& outputs = recurrent_forward->outputs;
-    Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
-    Tensor<type, 2>& current_activation_derivatives = recurrent_forward->current_activation_derivatives;
-    Tensor<type, 3>& hidden_states = recurrent_forward->hidden_states;
-
-    const Index output_size = input_weights.dimension(1);
-
-    Tensor<type, 2> previous_hidden_states(batch_size, output_size);
-    previous_hidden_states.setZero();
-    for(Index time_step = 0; time_step < past_time_steps; time_step++)
+    for(Index t = 0; t < past_time_steps; t++)
     {
-        // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
-        outputs.device(*thread_pool_device)
-            = inputs.chip(time_step, 1).contract(input_weights, axes(1,0))
-              + previous_hidden_states.contract(recurrent_weights, axes(1,0))
-              + biases.reshape(Eigen::DSizes<Index,2>{1, output_size}).broadcast(array<Index,2>{batch_size, 1});
+        TensorMap2 step_input_tensor(step_input.data(), batch_size, input_size);
+        TensorMap2 current_hidden_tensor(current_hidden_state.data(), batch_size, output_size);
 
-        //calculate_combinations(inputs.chip(t, 1), previous_hidden_state, outputs);
+        step_input_tensor = input_sequences.chip(t, 1);
 
-        current_activation_derivatives.device(*thread_pool_device) =
-            activation_derivatives.chip(time_step, 1);
+        calculate_combinations<2>(
+            step_input_tensor,
+            input_weights_map,
+            biases_map,
+            current_hidden_tensor
+            );
 
-        calculate_activations(activation_function, outputs, current_activation_derivatives);
+        if(t > 0)
+        {
+            TensorMap2(previous_hidden_state.data(), batch_size, output_size) = all_hidden_states.chip(t - 1, 1);
 
-        activation_derivatives.chip(time_step, 1) = current_activation_derivatives;
+            current_hidden_state.noalias() += previous_hidden_state * recurrent_weights_map;
+        }
 
-        hidden_states.chip(time_step, 1) = outputs;
+        if(is_training)
+        {
+            MatrixR step_derivatives(batch_size, output_size);
+            TensorMap2 step_derivatives_tensor(step_derivatives.data(), batch_size, output_size);
 
-        previous_hidden_states = outputs;
+            calculate_activations<2>(
+                activation_function,
+                current_hidden_tensor,
+                step_derivatives_tensor
+                );
+
+            all_activation_derivatives.chip(t, 1) = step_derivatives_tensor;
+        }
+        else
+        {
+            calculate_activations<2>(
+                activation_function,
+                current_hidden_tensor,
+                TensorMap2(empty_2.data(), empty_2.dimensions())
+                );
+        }
+
+        all_hidden_states.chip(t, 1) = current_hidden_tensor;
+    }
+
+    if(recurrent_forward_propagation->outputs.data != nullptr)
+    {
+        TensorMap2 outputs_map(recurrent_forward_propagation->outputs.data, batch_size, output_size);
+        outputs_map = all_hidden_states.chip(past_time_steps - 1, 1);
     }
 }
 
 
-void Recurrent::back_propagate(const vector<TensorView>& input_views,
-                               const vector<TensorView>& delta_views,
-                               unique_ptr<LayerForwardPropagation>& forward_propagation,
+void Recurrent::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index batch_size = input_views[0].dims[0];
-    const Index past_time_steps = input_views[0].dims[1];
-    const Index input_size = input_views[0].dims[2];
-    const Index output_size = get_outputs_number();
+    const Index batch_size = forward_propagation->inputs[0].shape[0];
+    const Index past_time_steps = forward_propagation->inputs[0].shape[1];
+    const Index input_size = forward_propagation->inputs[0].shape[2];
+    const Index neurons_number = biases.shape[0];
 
-    Tensor<type, 2> initial_hidden_states(batch_size, output_size);
-    initial_hidden_states.setZero();
+    const MatrixMap W_in = matrix_map(input_weights);
+    const MatrixMap W_rec = matrix_map(recurrent_weights);
+    const MatrixMap external_output_gradients = matrix_map(back_propagation->output_gradients[0]);
 
-    Tensor<type, 2> previous_hidden_states(batch_size, output_size);
+    RecurrentBackPropagation* recurrent_bp = static_cast<RecurrentBackPropagation*>(back_propagation.get());
 
-    TensorMap<Tensor<type, 3>> inputs(input_views[0].data, batch_size, past_time_steps, input_size);
-    TensorMap<Tensor<type, 2>> deltas(delta_views[0].data, batch_size, output_size);
+    VectorMap d_biases = vector_map(recurrent_bp->bias_gradients);
+    MatrixMap dW_in = matrix_map(recurrent_bp->input_weight_gradients);
+    MatrixMap dW_rec = matrix_map(recurrent_bp->recurrent_weight_gradients);
 
-    RecurrentForwardPropagation* recurrent_forward =
-        static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
+    TensorMap3 d_input_seq = tensor_map<3>(recurrent_bp->input_gradients[0]);
 
-    RecurrentBackPropagation* recurrent_backward =
-        static_cast<RecurrentBackPropagation*>(back_propagation.get());
+    d_biases.setZero();
+    dW_in.setZero();
+    dW_rec.setZero();
 
-    Tensor<type, 3>& hidden_states = recurrent_forward->hidden_states;
+    RecurrentForwardPropagation* recurrent_fp = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
+    TensorMap3 input_sequences = tensor_map<3>(forward_propagation->inputs[0]);
+    TensorMap3 all_hidden_states = tensor_map<3>(recurrent_fp->hidden_states);
+    TensorMap3 all_activation_derivatives = tensor_map<3>(recurrent_fp->activation_derivatives);
 
-    Tensor<type, 3>& input_deltas = recurrent_backward->input_deltas;
-    Tensor<type, 2>& input_weight_deltas = recurrent_backward->input_weight_deltas;
-    Tensor<type, 2>& recurrent_weight_deltas = recurrent_backward->recurrent_weight_deltas;
-    Tensor<type, 1>& bias_deltas = recurrent_backward->bias_deltas;
-    Tensor<type, 2>& current_combination_deltas = recurrent_backward->current_combination_deltas;
+    MatrixR delta(batch_size, neurons_number);
+    MatrixR next_step_delta(batch_size, neurons_number);
+    next_step_delta.setZero();
 
-    Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
+    MatrixR step_input(batch_size, input_size);
+    MatrixR step_derivatives(batch_size, neurons_number);
+    MatrixR step_prev_hidden(batch_size, neurons_number);
 
-    input_weight_deltas.setZero();
-    recurrent_weight_deltas.setZero();
-    bias_deltas.setZero();
-    current_combination_deltas.setZero();
-
-    Tensor<type, 2> combination_deltas(batch_size, output_size);
-
-    Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
-
-    for(Index time_step = past_time_steps - 1; time_step >= 0; --time_step)
-    {             
-        if (time_step == past_time_steps - 1)
-            current_deltas = deltas;
+    for(Index t = past_time_steps - 1; t >= 0; t--)
+    {
+        if(t == past_time_steps - 1)
+            delta = external_output_gradients;
         else
-            current_deltas = current_combination_deltas;
+            delta = next_step_delta;
 
-        combination_deltas.device(*thread_pool_device) =
-            current_deltas * activation_derivatives.chip(time_step, 1);
+        TensorMap2(step_derivatives.data(), batch_size, neurons_number) = all_activation_derivatives.chip(t, 1);
+        delta.array() *= step_derivatives.array();
 
-        // Need
+        TensorMap2(step_input.data(), batch_size, input_size) = input_sequences.chip(t, 1);
+        dW_in.noalias() += step_input.transpose() * delta;
 
-        input_weight_deltas.device(*thread_pool_device) +=
-            inputs.chip(time_step, 1).contract(combination_deltas, axes(0,0));
+        if(t > 0)
+        {
+            TensorMap2(step_prev_hidden.data(), batch_size, neurons_number) = all_hidden_states.chip(t - 1, 1);
+            dW_rec.noalias() += step_prev_hidden.transpose() * delta;
+        }
 
-        if (time_step == 0)
-            previous_hidden_states.device(*thread_pool_device) = initial_hidden_states;
-        else
-            previous_hidden_states.device(*thread_pool_device) = hidden_states.chip(time_step - 1, 1);
+        d_biases.noalias() += delta.colwise().sum();
 
-        recurrent_weight_deltas.device(*thread_pool_device) +=
-            previous_hidden_states.contract(combination_deltas, axes(0,0));
+        if(!is_first_layer)
+        {
+            MatrixR d_input_step = delta * W_in.transpose();
 
-        bias_deltas.device(*thread_pool_device) +=
-            combination_deltas.sum(array<Index, 1>({ 0 }));
+            d_input_seq.chip(t, 1) = TensorMap2(d_input_step.data(), batch_size, input_size);
+        }
 
-        if(time_step == 0)
-            current_combination_deltas.setZero();
-        else
-            current_combination_deltas.device(*thread_pool_device)
-                = combination_deltas.contract(recurrent_weights.shuffle(array<Index,2>{{1,0}}), axes(1,0));
-
-        input_deltas.chip(time_step, 1).device(*thread_pool_device)
-            = combination_deltas.contract(input_weights.shuffle(array<Index,2>{{1,0}}), axes(1,0));
+        if(t > 0)
+            next_step_delta.noalias() = delta * W_rec.transpose();
     }
 }
 
@@ -252,45 +258,57 @@ void Recurrent::back_propagate(const vector<TensorView>& input_views,
 string Recurrent::get_expression(const vector<string>& feature_names,
                                  const vector<string>& output_names) const
 {
-    const Index time_steps = input_dimensions[0];
-    const Index inputs_number = input_dimensions[1];
+    const Index time_steps = input_shape[0];
+    const Index inputs_number = input_shape[1];
     const Index outputs_number = get_outputs_number();
+
+    const vector<string> final_feature_names = feature_names.empty()
+                                                   ? get_default_feature_names()
+                                                   : feature_names;
+
+    const vector<string> final_output_names = output_names.empty()
+                                                  ? get_default_output_names()
+                                                  : output_names;
+
+    VectorMap biases_map = vector_map(biases);
+    MatrixMap input_to_hidden_weights_map = matrix_map(input_weights);
+    MatrixMap hidden_to_hidden_weights_map = matrix_map(recurrent_weights);
 
     ostringstream buffer;
     buffer.precision(10);
 
-    for(Index t = 0; t < time_steps; t++)
+    for(Index time_step = 0; time_step < time_steps; time_step++)
     {
         for(Index j = 0; j < outputs_number; j++)
         {
-            string current_var_name;
+            string current_variable_name;
 
-            if(t == time_steps - 1)
+            if(time_step == time_steps - 1)
             {
-                if(j < static_cast<Index>(output_names.size()))
-                    current_var_name = output_names[j];
+                if(j < static_cast<Index>(final_output_names.size()))
+                    current_variable_name = final_output_names[j];
                 else
-                    current_var_name = "recurrent_out_" + to_string(j);
+                    current_variable_name = "recurrent_output_" + to_string(j);
             }
             else
-                current_var_name = "recurrent_hidden_t" + to_string(t) + "_" + to_string(j);
+                current_variable_name = "recurrent_hidden_step_" + to_string(time_step) + "_neuron_" + to_string(j);
 
-            buffer << current_var_name << " = " << activation_function << "( " << biases(j);
+            buffer << current_variable_name << " = " << activation_function << "( " << biases_map(j);
 
             for(Index i = 0; i < inputs_number; i++)
             {
-                Index feature_index = i * time_steps + t;
+                Index feature_index = (time_step * inputs_number) + i;
 
-                if(feature_index < static_cast<Index>(feature_names.size()))
-                    buffer << " + (" << feature_names[feature_index] << "*" << input_weights(i,j) << ")";
+                if(feature_index < static_cast<Index>(final_feature_names.size()))
+                    buffer << " + (" << final_feature_names[feature_index] << "*" << input_to_hidden_weights_map(i, j) << ")";
             }
 
-            if(t > 0)
+            if(time_step > 0)
             {
-                for(Index prev_j = 0; prev_j < outputs_number; prev_j++)
+                for(Index previous_j = 0; previous_j < outputs_number; previous_j++)
                 {
-                    string prev_var_name = "recurrent_hidden_t" + to_string(t-1) + "_" + to_string(prev_j);
-                    buffer << " + (" << prev_var_name << "*" << recurrent_weights(prev_j, j) << ")";
+                    string previous_variable_name = "recurrent_hidden_step_" + to_string(time_step - 1) + "_neuron_" + to_string(previous_j);
+                    buffer << " + (" << previous_variable_name << "*" << hidden_to_hidden_weights_map(previous_j, j) << ")";
                 }
             }
 
@@ -304,21 +322,14 @@ string Recurrent::get_expression(const vector<string>& feature_names,
 
 void Recurrent::print() const
 {
-    cout << "Recurrent layer" << endl
-         << "Time steps: " << get_input_dimensions()[0] << endl
-         << "Input dimensions: " << get_input_dimensions()[1] << endl
-         << "Output dimensions: " << get_output_dimensions()[0] << endl
-         << "Biases dimensions: " << biases.dimensions() << endl
-         << "Input weights dimensions: " << input_weights.dimensions() << endl
-         << "Recurrent weights dimensions: " << recurrent_weights.dimensions() << endl;
 
-    cout << "Biases:" << endl
-         << biases << endl
-         << "Input weights:" << endl
-         << input_weights << endl
-         << "Recurrent weights:" << endl
-         << recurrent_weights << endl
-         << "Activation function: " << activation_function << endl
+    cout << "Recurrent layer" << endl
+         << "Time steps: " << get_input_shape()[0] << endl
+         << "Input shape: " << get_input_shape()[1] << endl
+         << "Output shape: " << get_output_shape()[0] << endl
+         << "Biases shape: " << biases.shape << endl
+         << "Input weights shape: " << input_weights.shape << endl
+         << "Recurrent weights shape: " << recurrent_weights.shape << endl
          << "Total parameters: " << biases.size() + input_weights.size() + recurrent_weights.size() << endl;
 }
 
@@ -331,12 +342,9 @@ void Recurrent::from_XML(const XMLDocument& document)
         throw runtime_error("Recurrent layer element is nullptr.\n");
 
     set_label(read_xml_string(recurrent_layer_element,"Label"));
-    set_input_dimensions(string_to_dimensions(read_xml_string(recurrent_layer_element, "InputDimensions")));
-    set_output_dimensions({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
+    set_input_shape(string_to_shape(read_xml_string(recurrent_layer_element, "InputDimensions")));
+    set_output_shape({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
-    string_to_tensor<type, 1>(read_xml_string(recurrent_layer_element, "Biases"), biases);
-    string_to_tensor<type, 2>(read_xml_string(recurrent_layer_element, "InputWeights"), input_weights);
-    string_to_tensor<type, 2>(read_xml_string(recurrent_layer_element, "RecurrentWeights"), recurrent_weights);
 }
 
 
@@ -345,115 +353,88 @@ void Recurrent::to_XML(XMLPrinter& printer) const
     printer.OpenElement("Recurrent");
 
     add_xml_element(printer, "Label", get_label());
-    add_xml_element(printer, "InputDimensions", dimensions_to_string(get_input_dimensions()));
-    add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
+    add_xml_element(printer, "InputDimensions", shape_to_string(get_input_shape()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_output_shape()[0]));
     add_xml_element(printer, "Activation", activation_function);
-    add_xml_element(printer, "Biases", tensor_to_string<type, 1>(biases));
-    add_xml_element(printer, "InputWeights", tensor_to_string<type, 2>(input_weights));
-    add_xml_element(printer, "RecurrentWeights", tensor_to_string<type, 2>(recurrent_weights));
 
     printer.CloseElement();
 }
 
 
-RecurrentForwardPropagation::RecurrentForwardPropagation(const Index& new_batch_size, Layer* new_layer) : LayerForwardPropagation()
+RecurrentForwardPropagation::RecurrentForwardPropagation(const Index new_batch_size, Layer* new_layer) : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
-}
-
-
-TensorView RecurrentForwardPropagation::get_output_pair() const
-{
-    const Index outputs_number = layer->get_outputs_number();
-
-    return {(type*)outputs.data(), {{batch_size, outputs_number}}};
 }
 
 
 void RecurrentForwardPropagation::initialize()
 {
     if(layer == nullptr)
-        throw runtime_error("recurrrent layer is nullptr");
+        throw runtime_error("Recurrrent layer is nullptr");
 
-    const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[1];
-    const Index past_time_steps = layer->get_input_dimensions()[0];
+    const Index batch = batch_size;
+    const Index outputs_num = layer->get_outputs_number();
+    const Index steps = layer->get_input_shape()[0];
 
-    current_inputs.resize(batch_size, past_time_steps, inputs_number);
+    this->outputs.shape = {batch, outputs_num};
+    this->hidden_states.shape = {batch, steps, outputs_num};
+    this->activation_derivatives.shape = {batch, steps, outputs_num};
+}
 
-    current_activation_derivatives.resize(batch_size, outputs_number);
 
-    activation_derivatives.resize(batch_size, past_time_steps, outputs_number);
-
-    outputs.resize(batch_size, outputs_number);
-    outputs.setZero();
-
-    hidden_states.resize(batch_size, past_time_steps, outputs_number);
-    hidden_states.setZero();
+vector<TensorView *> RecurrentForwardPropagation::get_workspace_views()
+{
+    return {&this->outputs, &this->hidden_states, &this->activation_derivatives};
 }
 
 
 void RecurrentForwardPropagation::print() const
 {
+    cout << "Recurrent forward propagation" << endl
+         << "Batch size: " << batch_size << endl
+         << "Output shape: " << outputs.shape << endl
+         << "Hidden states shape: " << hidden_states.shape << endl
+         << "Activation derivatives shape: " << activation_derivatives.shape << endl;
 }
 
 
 void RecurrentBackPropagation::initialize()
 {
     const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[1];
-    const Index past_time_steps = layer->get_input_dimensions()[0];
+    const Index inputs_number = layer->get_input_shape()[1];
+    const Index time_steps = layer->get_input_shape()[0];
 
-    combinations_bias_deltas.resize(outputs_number, outputs_number);
-    combinations_input_weight_deltas.resize(inputs_number, outputs_number, outputs_number);
-    combinations_recurrent_weight_deltas.resize(outputs_number, outputs_number, outputs_number);
-    combination_deltas.resize(batch_size, outputs_number);
-    current_combination_deltas.resize(batch_size, outputs_number);
-    bias_deltas.resize(outputs_number);
-    input_weight_deltas.resize(inputs_number, outputs_number);
-    recurrent_weight_deltas.resize(outputs_number, outputs_number);
-    input_deltas.resize(batch_size, past_time_steps, inputs_number);
+    bias_gradients.shape = {outputs_number};
+    input_weight_gradients.shape = {inputs_number, outputs_number};
+    recurrent_weight_gradients.shape = {outputs_number, outputs_number};
 
-    input_weight_deltas.setZero();
-    recurrent_weight_deltas.setZero();
-    bias_deltas.setZero();
-    input_deltas.setZero();
-    current_combination_deltas.setZero();
-    current_deltas.setZero();
-    combination_deltas.setZero();
+    input_gradients = {{nullptr, { batch_size, time_steps, inputs_number }}};
 }
 
 
 void RecurrentBackPropagation::print() const
 {
-
+    cout << "Recurrent back propagation" << endl
+         << "Batch size: " << batch_size << endl
+         << "Input gradients number: " << input_gradients.size() << endl
+         << "Bias gradients shape: " << bias_gradients.shape << endl
+         << "Input weight gradients shape: " << input_weight_gradients.shape << endl
+         << "Recurrent weight gradients shape: " << recurrent_weight_gradients.shape << endl;
 }
 
 
-RecurrentBackPropagation::RecurrentBackPropagation(const Index& new_batch_size, Layer* new_layer)
+RecurrentBackPropagation::RecurrentBackPropagation(const Index new_batch_size, Layer* new_layer)
     : LayerBackPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-vector<TensorView> RecurrentBackPropagation::get_input_derivative_views() const
+vector<TensorView*> RecurrentBackPropagation::get_gradient_views()
 {
-    const Index past_time_steps = layer->get_input_dimensions()[0];
-    const Index inputs_number = layer->get_input_dimensions()[1];
-
-    return {{(type*)(input_deltas.data()), {batch_size, past_time_steps, inputs_number}}};
+    return {&bias_gradients, &input_weight_gradients, &recurrent_weight_gradients};
 }
 
-
-vector<ParameterView> RecurrentBackPropagation::get_parameter_delta_views() const
-{
-    return {
-        {(type*)bias_deltas.data(), bias_deltas.size()},
-        {(type*)input_weight_deltas.data(), input_weight_deltas.size()},
-        {(type*)recurrent_weight_deltas.data(), recurrent_weight_deltas.size()}
-    };
-}
 
 REGISTER(Layer, Recurrent, "Recurrent")
 REGISTER(LayerForwardPropagation, RecurrentForwardPropagation, "Recurrent")
@@ -462,18 +443,15 @@ REGISTER(LayerBackPropagation, RecurrentBackPropagation, "Recurrent")
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

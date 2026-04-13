@@ -9,144 +9,181 @@
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
-#include <variant>
+#pragma once
+
+#include "pch.h"
+#include "statistics.h"
+#include "variable.h"
+
 namespace opennn
 {
 
-class Dataset;
 class NeuralNetwork;
-
-struct ResponseOptimizationResults;
 
 class ResponseOptimization
 {
-
 public:
 
-    enum class Condition { None, Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum };
+    enum class ConditionType {None, Between, EqualTo, LessEqualTo, GreaterEqualTo, LessThan, GreaterThan, Minimize, Maximize, Past};
 
-    ResponseOptimization(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    struct Condition
+    {
+        ConditionType condition;
+        type low_bound;
+        type up_bound;
 
-   Tensor<Condition, 1> get_input_conditions() const;
+        Condition(ConditionType new_type = ConditionType::None, type low = 0.0, type up = 0.0)
+            : condition(new_type), low_bound(low), up_bound(up) {}
+    };
 
-   Tensor<Condition, 1> get_output_conditions() const;
+    struct Domain
+    {
+        Domain() = default;
+        virtual ~Domain() = default;
 
-   Index get_evaluations_number() const;
+        Domain(const vector<Variable>& variables,
+               const vector<Descriptives>& descriptives,
+               const type deformation_domain_factor = type(1))
+        {
+            set(variables, descriptives, deformation_domain_factor);
+        }
 
-   Tensor<type, 1> get_input_minimums() const;
+        void set(const vector<Variable>& variables,
+                 const vector<Descriptives>& descriptives,
+                 const type deformation_domain_factor = type(1));
 
-   Tensor<type, 1> get_input_maximums() const;
+        void bound(const vector<Variable>& variables, const vector<Condition>& conditions);
 
-   Tensor<type, 1> get_outputs_minimums() const;
+        void reshape(const type zoom_factor, const VectorR& center, const MatrixR& points_inputs, const vector<Variable>& vars);
 
-   Tensor<type, 1> get_outputs_maximums() const;
+        VectorR inferior_frontier;
+        VectorR superior_frontier;
 
-   Tensor<Condition, 1> get_conditions(const vector<string>&) const;
+        //MatrixR allowed_values;
+    };
 
-   void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    struct Objectives
+    {
+        Objectives(const ResponseOptimization& response_optimization);
 
-   void set_evaluations_number(const Index&);
+        MatrixR objective_sources; //Row 0: if is input or not, Row 1 : feature index in input or target subsets
 
-   void set_input_condition(const string&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
-   void set_output_condition(const string&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
+        MatrixR utopian_and_senses; // Row 0: Utopian point, Row 1: Senses of optimization (1 for max, -1 for min)
 
-   void set_input_condition(const Index&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
-   void set_output_condition(const Index&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
+        MatrixR objective_normalizer; // Row 0: Multipliers (1/range), Row 1: Offsets (-inferior/range)
 
+        MatrixR extract(const MatrixR& inputs, const MatrixR& output) const;
 
-   Tensor<type, 2> calculate_inputs() const;
+        void normalize(MatrixR& objective_matrix) const;
+    };
 
-   Tensor<type, 2> calculate_envelope(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+    ResponseOptimization(NeuralNetwork* = nullptr);
 
+    void set(NeuralNetwork* = nullptr);
 
-   struct ParetoResult
-   {
-       Tensor<Index, 1> pareto_indices;
-       Tensor<type, 2>  pareto_objectives;
-       Tensor<type, 2>  pareto_variables;
-       Tensor<type, 2>  pareto_inputs;
-       Tensor<type, 2>  envelope;
-   };
+    void clear_conditions();
+    void clear_conditions(const string& name);
 
-   ParetoResult perform_pareto() const;
+    Condition get_condition(const string& name) const;
 
-   Tensor<type, 1> get_nearest_point_to_utopian(const ParetoResult& pareto_result) const;
+    void set_condition(const string& name, const ConditionType condition = ConditionType::None, type low = 0.0, type up = 0.0);
 
-   Tensor<type, 1> input_minimums;
+    void set_fixed_history(const Tensor3& history);
 
-   Tensor<type, 1> input_maximums;
+    void set_iterations(const int iterations);
+    void set_zoom_factor(type new_zoom_factor);
+    void set_evaluations_number(const int new_evaluations_number);
+    void set_relative_tolerance(type new_relative_tolerance);
 
-   Tensor<type, 1> output_minimums;
+    void set_deformation_domain_factor(type new_deformation_domain_factor);
+    type get_deformation_domain_factor();
 
-   Tensor<type, 1> output_maximums;
+    vector<Descriptives> get_descriptives(const string& ) const;
 
-   using SingleOrPareto = std::variant<Tensor<type,1>, ParetoResult>;
+    pair<vector<Variable>, vector<Descriptives>> get_variables_and_descriptives(const string& role) const;
 
-   SingleOrPareto iterative_optimization(int objective_count);
+    vector<type> get_utopian_point() const;
 
-   void set_iterative_max_iterations(Index max_it)          { iterative_max_iterations = max_it; }
-   void set_iterative_zoom_factor(type z)                   { iterative_zoom_factor = z; }
-   void set_iterative_min_span_eps(type eps)                { iterative_min_span_eps = eps; }
-   void set_iterative_improvement_tolerance(type tol)       { iterative_improvement_tolerance = tol; }
+    Domain get_original_domain(const string role) const;
 
-   Index get_iterative_max_iterations() const               { return iterative_max_iterations; }
-   type  get_iterative_zoom_factor() const                  { return iterative_zoom_factor; }
-   type  get_iterative_min_span_eps() const                 { return iterative_min_span_eps; }
-   type  get_iterative_improvement_tolerance() const        { return iterative_improvement_tolerance; }
+    MatrixR calculate_random_inputs(const Domain& input_domain) const;
+
+    Tensor3 input_constructor(const MatrixR& present_random_values) const;
+
+    MatrixR calculate_outputs(const MatrixR& optimized_variables) const;
+
+    pair<MatrixR, MatrixR> filter_feasible_points(const MatrixR& inputs,
+                                                  const MatrixR& outputs,
+                                                  const Domain& output_domain) const;
+
+    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR& feasible_inputs,
+                                                    const MatrixR& feasible_outputs,
+                                                    const Objectives& objectives) const;
+
+    MatrixR assemble_results(const MatrixR& inputs, const MatrixR& outputs) const;
+
+    pair<MatrixR, MatrixR> calculate_pareto(const MatrixR& inputs, const MatrixR& outputs, const MatrixR& objective_matrix) const;
+
+    pair<type, type> calculate_quality_metrics(const MatrixR& inputs,
+                                               const MatrixR& outputs,
+                                               const Objectives& objectives) const;
+
+    MatrixR perform_single_objective_optimization() const;
+
+    MatrixR perform_multiobjective_optimization() const;
+
+    MatrixR perform_response_optimization() const;
+
+    Index get_objectives_number() const
+    {
+        Index objectives_number = 0;
+
+        for (const auto& [_, constraints] : conditions)
+            if (constraints.condition == ConditionType::Maximize || constraints.condition == ConditionType::Minimize)
+                objectives_number++;
+
+        return objectives_number;
+    }
+
 
 private:
 
     NeuralNetwork* neural_network = nullptr;
 
-    Dataset* dataset = nullptr;
+    map<string, Condition> conditions;
 
-    Tensor<Condition, 1> input_conditions;
+    Index evaluations_number = 2000;
 
-    Tensor<Condition, 1> output_conditions;
+    Index max_iterations = 10;
 
-    Index evaluations_number = 1000;
+    Index min_iterations = 4;
 
-    // ---------- helpers for Pareto ----------
-    static bool dominates_row(const Tensor<type,1>& a,
-                              const Tensor<type,1>& b,
-                              const Tensor<type,1>& sense);
+    type zoom_factor = type(0.45);
 
-    ParetoResult perform_pareto_analysis(const Tensor<type, 2>& objectives,
-                                         const Tensor<type, 1>& sense,
-                                         const Tensor<type, 2>& inputs,
-                                         const Tensor<type, 2>& envelope) const;
+    type relative_tolerance = type(0.001);
 
-    void build_objectives_from_envelope(const Tensor<type,2>& envelope,
-                                        Tensor<type,2>& objectives,
-                                        Tensor<type,1>& sense,
-                                        Tensor<Index,1>& objective_output_indices) const;
+    type deformation_domain_factor = type(1);
 
-    Index iterative_max_iterations            = 12;
-    type  iterative_zoom_factor               = type(0.45);
-    type  iterative_min_span_eps              = type(1e-9);
-    type  iterative_improvement_tolerance     = type(1e-6);
+    //minimum number of points?
 
+    Tensor3 fixed_history; //(1 matrix, time_steps,  features_dimentions )
+    //@simone @todo, forecasting start from here
+    bool is_forecasting = false;   
 };
 
 }
-
 #endif
 
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

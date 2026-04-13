@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef UNSCALINGLAYER_H
-#define UNSCALINGLAYER_H
+#pragma once
 
 #include "layer.h"
 #include "scaling.h"
@@ -20,37 +19,33 @@ class Unscaling final : public Layer
 
 public:
 
-    Unscaling(const dimensions& = {0}, const string& = "unscaling_layer");
+    Unscaling(const Shape& = {0}, const string& = "unscaling_layer");
 
-    dimensions get_input_dimensions() const override;
-    dimensions get_output_dimensions() const override;
+    Shape get_input_shape() const override;
+    Shape get_output_shape() const override;
 
     vector<Descriptives> get_descriptives() const;
 
-    Tensor<type, 1> get_minimums() const;
-    Tensor<type, 1> get_maximums() const;
+    VectorR get_minimums() const;
+    VectorR get_maximums() const;
 
     vector<string> get_scalers() const;
 
-    void set(const Index& = 0, const string& = "unscaling_layer");
+    void set(const Index = 0, const string& = "unscaling_layer");
 
-    void set_input_dimensions(const dimensions&) override;
-    void set_output_dimensions(const dimensions&) override;
+    void set_input_shape(const Shape&) override;
+    void set_output_shape(const Shape&) override;
 
     void set_descriptives(const vector<Descriptives>&);
 
-    void set_min_max_range(const type min, const type max);
+    void set_min_max_range(const type, const type);
 
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
-                           const bool&) override;
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&, bool) override;
 #ifdef OPENNN_CUDA
-    void forward_propagate_cuda(const vector<float*>&,
-                                unique_ptr<LayerForwardPropagationCuda>&,
-                                const bool&) override;
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
 #endif
 
     void print() const override;
@@ -73,15 +68,11 @@ private:
 
 struct UnscalingForwardPropagation final : LayerForwardPropagation
 {
-    UnscalingForwardPropagation(const Index& = 0, Layer* = 0);
-
-    TensorView get_output_pair() const override;
+    UnscalingForwardPropagation(const Index = 0, Layer* = nullptr);
 
     void initialize() override;
 
     void print() const override;
-
-    Tensor<type, 2> outputs;
 };
 
 
@@ -89,36 +80,27 @@ struct UnscalingForwardPropagation final : LayerForwardPropagation
 
 struct UnscalingForwardPropagationCuda final : public LayerForwardPropagationCuda
 {
-    UnscalingForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
+    UnscalingForwardPropagationCuda(const Index = 0, Layer* = nullptr);
 
-    void set(const Index & = 0, Layer* = nullptr) override;
+    void initialize() override;
 
     void print() const override;
-
-    void free() override;
 };
 
 #endif
 
 }
 
-#endif
-
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

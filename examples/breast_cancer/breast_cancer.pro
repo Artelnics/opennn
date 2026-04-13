@@ -1,7 +1,7 @@
 ###################################################################################################
 #                                                                                                 #
 #   OpenNN: Open Neural Networks Library                                                          #
-#   www.opennn.net                                                                      #
+#   www.opennn.net                                                                                #
 #                                                                                                 #
 #   B R E A S T   C A N C E R   P R O J E C T                                                     #
 #                                                                                                 #
@@ -29,10 +29,13 @@ win32 {
     DEFINES += WIN32_LEAN_AND_MEAN
 }
 
-win32-g++{
-QMAKE_LFLAGS += -static-libgcc
-QMAKE_LFLAGS += -static-libstdc++
-QMAKE_LFLAGS += -static
+win32-msvc* {
+    QMAKE_CXXFLAGS += /arch:AVX2 /O3
+}
+
+win32-g++ {
+    QMAKE_CXXFLAGS += -march=native -mstackrealign -O3
+    QMAKE_LFLAGS += -static-libgcc -static-libstdc++ -static
 }
 
 # OpenNN library

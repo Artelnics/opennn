@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "dataset.h"
 #include "neural_network.h"
 #include "minkowski_error.h"
@@ -16,7 +16,7 @@ namespace opennn
 {
 
 MinkowskiError::MinkowskiError(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
-    : LossIndex(new_neural_network, new_dataset)
+    : Loss(new_neural_network, new_dataset)
 {
     set_default();
 }
@@ -38,7 +38,7 @@ void MinkowskiError::set_default()
 }
 
 
-void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter)
+void MinkowskiError::set_Minkowski_parameter(const type new_Minkowski_parameter)
 {
     if(new_Minkowski_parameter < type(1))
         throw runtime_error("The Minkowski parameter must be greater than 1.\n");
@@ -52,46 +52,44 @@ void MinkowskiError::calculate_error(const Batch& batch,
                                      BackPropagation& back_propagation) const
 {
     // Batch
-
     const Index samples_number = batch.get_samples_number();
-
-    const TensorView targets_view = batch.get_target_pair();
-
-    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_view);
+    const MatrixMap targets = matrix_map(batch.get_targets());
 
     // Forward propagation
+    const MatrixMap outputs = matrix_map(forward_propagation.get_last_trainable_layer_outputs());
 
-    const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs_pair();
+    MatrixR& errors = back_propagation.errors;
 
-    const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(outputs_view);
+    errors = outputs - targets;
 
-    Tensor<type, 2>& errors = back_propagation.errors;
+    const type p = minkowski_parameter;
 
-    Tensor<type, 0>& error = back_propagation.error;
+    const type minkowski_sum = errors.array().unaryExpr([p](type e) {
+                                                 return pow(abs(e) + EPSILON, p);
+                                             }).sum();
 
-    errors.device(*thread_pool_device) = outputs - targets + epsilon;
+    back_propagation.error = minkowski_sum / static_cast<type>(samples_number);
 
-    error.device(*thread_pool_device) = errors.abs().pow(minkowski_parameter).sum() / type(samples_number);
-
-    if(isnan(error())) throw runtime_error("\nError is NAN.");
+    if(isnan(back_propagation.error)) throw runtime_error("\nError is NAN.");
 }
 
 
-void MinkowskiError::calculate_output_delta(const Batch& batch,
-                                            ForwardPropagation&,
-                                            BackPropagation& back_propagation) const
+void MinkowskiError::calculate_output_gradients(const Batch& batch,
+                                                ForwardPropagation&,
+                                                BackPropagation& back_propagation) const
 {
     const Index samples_number = batch.get_samples_number();
 
-    const TensorView delta_views = back_propagation.get_output_deltas_pair();
+    MatrixMap output_gradients = matrix_map(back_propagation.get_output_gradients());
 
-    TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_views);
+    const MatrixR& errors = back_propagation.errors;
 
-    const Tensor<type, 2>& errors = back_propagation.errors;
+    const type exponent = minkowski_parameter - type(2.0);
+    const type coeff = minkowski_parameter / static_cast<type>(samples_number);
 
-    const type coefficient = type(1.0 / samples_number);
-
-    deltas.device(*thread_pool_device) = errors*((errors.abs() + epsilon).pow(minkowski_parameter - type(2)))*minkowski_parameter*coefficient;
+    output_gradients.array() = coeff * errors.array() * errors.array().unaryExpr([exponent](type e) {
+        return pow(abs(e) + EPSILON, exponent);
+    });
 }
 
 
@@ -118,41 +116,37 @@ void MinkowskiError::from_XML(const XMLDocument& document)
 
 #ifdef OPENNN_CUDA
 
-void MinkowskiError::calculate_error_cuda(const BatchCuda& batch_cuda,
-                                          const ForwardPropagationCuda& forward_propagation_cuda,
-                                          BackPropagationCuda& back_propagation_cuda) const
+void MinkowskiError::calculate_error(const BatchCuda& batch,
+                                          const ForwardPropagationCuda& forward_propagation,
+                                          BackPropagationCuda& back_propagation) const
 {
-    throw runtime_error("CUDA calculate_error_cuda not implemented for loss index type: MinkowskiError");
+    throw runtime_error("CUDA calculate_error not implemented for loss index type: MinkowskiError");
 }
 
 
-void MinkowskiError::calculate_output_delta_cuda(const BatchCuda& batch_cuda,
-                                                 ForwardPropagationCuda& forward_propagation_cuda,
-                                                 BackPropagationCuda& back_propagation_cuda) const
+void MinkowskiError::calculate_output_gradients(const BatchCuda& batch,
+                                                 ForwardPropagationCuda& forward_propagation,
+                                                 BackPropagationCuda& back_propagation) const
 {
-    throw runtime_error("CUDA calculate_output_delta_cuda not implemented for loss index type: MinkowskiError");
+    throw runtime_error("CUDA calculate_output_gradients not implemented for loss index type: MinkowskiError");
 }
 
 #endif
 
-REGISTER(LossIndex, MinkowskiError, "MinkowskiError");
+REGISTER(Loss, MinkowskiError, "MinkowskiError");
 
 }
 
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

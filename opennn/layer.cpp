@@ -6,23 +6,173 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <vector>
+
 #include "layer.h"
-#include "tensors.h"
+#include "random_utilities.h"
 
 namespace opennn
 {
 
+
+void LayerForwardPropagation::set(const Index new_batch_size, Layer* new_layer)
+{
+    if(!new_layer) return;
+
+    batch_size = new_batch_size;
+    layer = new_layer;
+
+    initialize();
+}
+
+
+void LayerBackPropagation::set(const Index new_batch_size, Layer* new_layer)
+{
+    if(!new_layer) return;
+
+    batch_size = new_batch_size;
+    layer = new_layer;
+
+    initialize();
+}
+
+
+void LayerBackPropagationLM::set(const Index new_batch_size, Layer* new_layer)
+{
+    if(!new_layer) return;
+
+    batch_size = new_batch_size;
+    layer = new_layer;
+
+    initialize();
+}
+
+
+TensorView LayerForwardPropagation::get_outputs() const
+{
+    return outputs;
+}
+
+vector<TensorView*> LayerForwardPropagation::get_workspace_views()
+{
+    return {&outputs};
+}
+
+
+vector<TensorView *> LayerBackPropagation::get_gradient_views()
+{
+    return {};
+}
+
+
+vector<TensorView *> LayerBackPropagation::get_workspace_views()
+{
+    vector<TensorView*> views;
+
+    for (TensorView& view : input_gradients)
+        views.push_back(&view);
+
+    return views;
+}
+
+
+vector<TensorView> LayerBackPropagation::get_input_gradients() const
+{
+    return input_gradients;
+}
+
+
+vector<TensorView *> LayerBackPropagationLM::get_gradient_views()
+{
+    return {};
+}
+
+
+vector<TensorView *> LayerBackPropagationLM::get_workspace_views()
+{
+    vector<TensorView*> views;
+
+    for(TensorView& view : input_gradients)
+        views.push_back(&view);
+
+    return views;
+}
+
+
+vector<TensorView> LayerBackPropagationLM::get_input_gradients() const
+{
+    return input_gradients;
+}
+
+
+#ifdef OPENNN_CUDA
+
+void LayerForwardPropagationCuda::set(const Index new_batch_size, Layer* new_layer)
+{
+    if(!new_layer) return;
+
+    batch_size = new_batch_size;
+    layer = new_layer;
+
+    initialize();
+}
+
+
+void LayerBackPropagationCuda::set(const Index new_batch_size, Layer* new_layer)
+{
+    if(!new_layer) return;
+
+    batch_size = new_batch_size;
+    layer = new_layer;
+
+    initialize();
+}
+
+
+vector<TensorViewCuda *> LayerBackPropagationCuda::get_gradient_views()
+{
+    return vector<TensorViewCuda*>();
+}
+
+
+vector<TensorViewCuda *> LayerBackPropagationCuda::get_workspace_views()
+{
+    vector<TensorViewCuda*> views;
+    for (TensorViewCuda& view : input_gradients)
+        views.push_back(&view);
+    return views;
+}
+
+
+TensorViewCuda LayerForwardPropagationCuda::get_outputs() const
+{
+    return outputs;
+}
+
+
+vector<TensorViewCuda*> LayerForwardPropagationCuda::get_workspace_views()
+{
+    return { &outputs };
+}
+
+
+vector<TensorViewCuda> LayerBackPropagationCuda::get_input_gradient_views() const
+{
+    return input_gradients;
+}
+
+#endif
+
+
 Layer::Layer()
 {
-    const unsigned int threads_number = thread::hardware_concurrency();
-
-    thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 }
+
 
 Layer::~Layer() = default;
 
-const bool& Layer::get_display() const
+
+bool Layer::get_display() const
 {
     return display;
 }
@@ -46,7 +196,7 @@ void Layer::set_label(const string& new_label)
 }
 
 
-void Layer::set_display(const bool& new_display)
+void Layer::set_display(bool new_display)
 {
     display = new_display;
 }
@@ -54,14 +204,10 @@ void Layer::set_display(const bool& new_display)
 
 void Layer::set_parameters_random()
 {
-    const vector<ParameterView> parameter_views = get_parameter_views();
+    const vector<TensorView*> parameter_views = get_parameter_views();
 
-    for (const auto& view : parameter_views)
-    {
-        TensorMap<Tensor<type, 1>> this_parameters(view.data, view.size);
-
-        set_random(this_parameters);
-    }
+    for(const TensorView* view : parameter_views)
+        set_random_uniform(VectorMap(view->data, view->size()));
 }
 
 
@@ -72,47 +218,27 @@ void Layer::set_parameters_glorot()
 
     const type limit = sqrt(6.0 / (inputs_number + outputs_number));
 
-    const vector<ParameterView> parameter_views = get_parameter_views();
+    const vector<TensorView*> parameter_views = get_parameter_views();
 
-    for (const auto& view : parameter_views)
-    {
-        TensorMap<Tensor<type, 1>> this_parameters(view.data, view.size);
-
-        set_random(this_parameters, -limit, limit);
-    }
+    for(const TensorView* view : parameter_views)
+        set_random_uniform(VectorMap(view->data, view->size()), -limit, limit);
 }
 
 
-Index Layer::get_parameters_number() const
+Index Layer::get_parameters_number()
 {
-    const vector<ParameterView> parameter_views = get_parameter_views();
+    vector<TensorView*> parameter_views = get_parameter_views();
 
     Index parameters_number = 0;
 
-    for(Index i = 0; i < Index(parameter_views.size()); i++)
-        parameters_number += parameter_views[i].size;
+    for (const TensorView* view : parameter_views)
+        parameters_number += view->size();
 
     return parameters_number;
 }
 
 
-vector<ParameterView > Layer::get_parameter_views() const
-{
-    return vector<ParameterView>();
-}
-
-
-void Layer::set_threads_number(const int& new_threads_number)
-{
-    thread_pool.reset();
-    thread_pool_device.reset();
-
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
-}
-
-
-string Layer::get_expression(const vector<string> &, const vector<string> &) const
+string Layer::get_expression(const vector<string>&, const vector<string>&) const
 {
     return string();
 }
@@ -122,12 +248,12 @@ vector<string> Layer::get_default_feature_names() const
 {
     const Index inputs_number = get_inputs_number();
 
-    vector<string> feature_names(inputs_number);
+    vector<string> input_names(inputs_number);
 
     for(Index i = 0; i < inputs_number; i++)
-        feature_names[i] = "input_" + to_string(i);
+        input_names[i] = "input_" + to_string(i);
 
-    return feature_names;
+    return input_names;
 }
 
 
@@ -150,216 +276,200 @@ bool Layer::get_is_trainable() const
 }
 
 
-void Layer::add_deltas(const vector<TensorView> &delta_views) const
+bool Layer::get_is_first_layer() const
 {
-    TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_views[0]);
+    return is_first_layer;
+}
 
-    for (Index i = 1; i < Index(delta_views.size()); i++)
-        deltas.device(*thread_pool_device) += tensor_map<3>(delta_views[i]);
+
+void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
+{
+    TensorMap3 output_gradients = tensor_map<3>(output_gradient_views[0]);
+
+    for(Index i = 1; i < Index(output_gradient_views.size()); i++)
+        output_gradients.device(get_device()) += tensor_map<3>(output_gradient_views[i]);
 }
 
 
 Index Layer::get_inputs_number() const
 {
-    const dimensions input_dimensions = get_input_dimensions();
-
-    return accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
+    return get_input_shape().count();
 }
 
 
 Index Layer::get_outputs_number() const
 {
-    const dimensions output_dimensions = get_output_dimensions();
+    const Shape output_shape = get_output_shape();
 
-    return accumulate(output_dimensions.begin(), output_dimensions.end(), 1, multiplies<Index>());
+    return accumulate(output_shape.begin(), output_shape.end(), 1, multiplies<Index>());
 }
 
 
-void Layer::forward_propagate(const vector<TensorView>&,
-                              unique_ptr<LayerForwardPropagation>&, const bool&)
+void Layer::forward_propagate(unique_ptr<LayerForwardPropagation>&, bool)
 {
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }
 
 
-
-void Layer::set_input_dimensions(const dimensions&)
+void Layer::set_input_shape(const Shape&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }
 
 
-void Layer::set_output_dimensions(const dimensions&)
+void Layer::set_output_shape(const Shape&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }
 
 
-void Layer::softmax(Tensor<type, 2>& y) const
+void Layer::softmax(MatrixMap y) const
 {
-    const Index rows_number = y.dimension(0);
-    const Index columns_number = y.dimension(1);
+    VectorR max_coeffs = y.rowwise().maxCoeff();
+    y.colwise() -= max_coeffs;
 
-    y.device(*thread_pool_device) = y - y.maximum(array_1(1))
-                                            .eval()
-                                            .reshape(array<Index, 2>({rows_number, 1}))
-                                            .broadcast(array<Index, 2>({1, columns_number}));
+    y.array() = y.array().exp();
 
-    y.device(*thread_pool_device) = y.exp();
-
-    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({1}))
-                                            .eval()
-                                            .reshape(array<Index, 2>({rows_number, 1}))
-                                            .broadcast(array<Index, 2>({1, columns_number}));
+    VectorR sums = y.rowwise().sum();
+    y.array().colwise() /= sums.array();
 }
 
 
-void Layer::softmax(Tensor<type, 3>& y) const
+void Layer::softmax(TensorMap3 y) const
 {
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
     const Index channels = y.dimension(2);
 
-    y.device(*thread_pool_device) = y - y.maximum(array<Index, 1>({2}))
-                                            .eval()
-                                            .reshape(array<Index, 3>({rows_number, columns_number, 1}))
-                                            .broadcast(array<Index, 3>({1, 1, channels}));
-
-    y.device(*thread_pool_device) = y.exp();
-
-    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({2}))
-                                            .eval()
-                                            .reshape(array<Index, 3>({rows_number, columns_number, 1}))
-                                            .broadcast(array<Index, 3>({1, 1, channels}));
-}
-
-
-void Layer::softmax(Tensor<type, 4>& y) const
-{
-    const Index rows_number    = y.dimension(0);
-    const Index columns_number = y.dimension(1);
-    const Index channels       = y.dimension(2);
-    const Index blocks_number  = y.dimension(3);
-
-    y.device(*thread_pool_device) =
-        y - y.maximum(array_1(3)).eval()
-                .reshape(array_4(rows_number, columns_number, channels, 1))
-                .broadcast(array_4(1, 1, 1, blocks_number));
-
-    y.device(*thread_pool_device) = y.exp();
-
-    y.device(*thread_pool_device) =
-        y / y.sum(array_1(3)).eval()
-                .reshape(array_4(rows_number, columns_number, channels, 1))
-                .broadcast(array_4(1, 1, 1, blocks_number));
-}
-
-
-void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
-                                             TensorMap<Tensor<type, 3>>& result,
-                                             Tensor<type, 1>& aux_rows) const
-{
-    const Index rows = softmax.dimension(0);
-    const Index columns = softmax.dimension(1);
-    const Index depth = softmax.dimension(2);
-
-
-    type* softmax_data = (type*)softmax.data();
-    type* result_data = result.data();
-
-    type* softmax_vector_data = nullptr;
-    type* result_vector_data = nullptr;
-
-    Tensor<type, 0> sum;
-
-    for (Index i = 0; i < depth; i++)
+    #pragma omp parallel for collapse(2)
+    for(Index i = 0; i < rows_number; i++)
     {
-        for (Index j = 0; j < columns; j++)
+        for(Index j = 0; j < columns_number; j++)
         {
-            softmax_vector_data = softmax_data + rows * (i * columns + j);
-            result_vector_data = result_data + rows * (i * columns + j);
+            type max_value = -numeric_limits<type>::infinity();
 
-            const TensorMap<Tensor<type, 1>> softmax_vector(softmax_vector_data, rows);
-            const TensorMap<Tensor<type, 1>> tensor_vector(result_vector_data, rows);
+            for(Index k = 0; k < channels; k++)
+                if(y(i, j, k) > max_value)
+                    max_value = y(i, j, k);
 
-            TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows);
+            type sum = 0.0;
+            for(Index k = 0; k < channels; k++)
+            {
+                y(i, j, k) = exp(y(i, j, k) - max_value);
+                sum += y(i, j, k);
+            }
 
-            aux_rows.device(*thread_pool_device) = softmax_vector * tensor_vector;
+            if(sum > 0.0)
+            {
+                const type inv_sum = type(1.0) / sum;
 
-            sum.device(*thread_pool_device) = aux_rows.sum();
-
-            result_vector.device(*thread_pool_device) = aux_rows - softmax_vector * sum(0);
+                for(Index k = 0; k < channels; k++)
+                    y(i, j, k) *= inv_sum;
+            }
         }
     }
 }
 
 
+void Layer::softmax(TensorMap4 y) const
+{
+    const Index rows_number = y.dimension(0);
+    const Index columns_number = y.dimension(1);
+    const Index channels = y.dimension(2);
+    const Index blocks_number = y.dimension(3);
+
+    #pragma omp parallel for collapse(3)
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+            for(Index k = 0; k < channels; k++)
+            {
+                type max_value = -numeric_limits<type>::infinity();
+
+                for(Index l = 0; l < blocks_number; l++)
+                    if(y(i, j, k, l) > max_value)
+                        max_value = y(i, j, k, l);
+
+                type sum = 0.0;
+                for(Index l = 0; l < blocks_number; l++)
+                {
+                    y(i, j, k, l) = exp(y(i, j, k, l) - max_value);
+                    sum += y(i, j, k, l);
+                }
+
+                if(sum > 0.0)
+                {
+                    const type inv_sum = type(1.0) / sum;
+
+                    for(Index l = 0; l < blocks_number; l++)
+                        y(i, j, k, l) *= inv_sum;
+                }
+            }
+        }
+    }
+}
+
+/*
+void Layer::softmax_derivatives_times_tensor(const TensorMap3 softmax,
+                                             TensorMap3 result,
+                                             VectorMap aux_rows) const
+{
+    const Index rows = softmax.dimension(0);
+    const Index columns = softmax.dimension(1);
+    const Index depth = softmax.dimension(2);
+
+    type* softmax_data = const_cast<type*>(softmax.data());
+    type* result_data = result.data();
+
+    for(Index i = 0; i < depth; i++)
+    {
+        for(Index j = 0; j < columns; j++)
+        {
+            const Index offset = rows * (i * columns + j);
+
+            const VectorMap softmax_vector(softmax_data + offset, rows);
+            const VectorMap tensor_vector(result_data + offset, rows);
+            VectorMap result_vector(result_data + offset, rows);
+
+            aux_rows.array() = softmax_vector.array() * tensor_vector.array();
+
+            const type sum_val = aux_rows.sum();
+
+            result_vector.array() = aux_rows.array() - (softmax_vector.array() * sum_val);
+        }
+    }
+}
+*/
+
 #ifdef OPENNN_CUDA
 
-void Layer::create_cuda()
+void Layer::add_gradients(const vector<TensorViewCuda>& output_gradient_views) const
 {
-    cublasCreate(&cublas_handle);
-    cudnnCreate(&cudnn_handle);
+    if (output_gradient_views.size() <= 1) return;
+    if (!output_gradient_views[0].data) return;
 
-    // Multiplication
+    const size_t n = output_gradient_views[0].size();
 
-    cudnnCreateOpTensorDescriptor(&operator_multiplication_descriptor);
-
-    cudnnSetOpTensorDescriptor(operator_multiplication_descriptor,
-                               CUDNN_OP_TENSOR_MUL,
-                               CUDNN_DATA_FLOAT,
-                               CUDNN_NOT_PROPAGATE_NAN);
-
-    // Sum
-
-    cudnnCreateOpTensorDescriptor(&operator_sum_descriptor);
-
-    cudnnSetOpTensorDescriptor(operator_sum_descriptor,
-                               CUDNN_OP_TENSOR_ADD,
-                               CUDNN_DATA_FLOAT,
-                               CUDNN_NOT_PROPAGATE_NAN);
-}
-
-
-void Layer::destroy_cuda()
-{
-    cublasDestroy(cublas_handle);
-    cudnnDestroy(cudnn_handle);
-
-    cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
-    cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
-}
-
-
-cudnnHandle_t Layer::get_cudnn_handle()
-{
-    return cudnn_handle;
-}
-
-
-vector<ParameterView> Layer::get_parameter_views_device() const
-{
-    return vector<ParameterView>();
+    for (size_t i = 1; i < output_gradient_views.size(); i++)
+        if (output_gradient_views[i].data)
+            addition_cuda(n, output_gradient_views[0].data, output_gradient_views[i].data, output_gradient_views[0].data);
 }
 
 #endif
-
 }
 
-// namespace opennn
+
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

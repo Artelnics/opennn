@@ -7,21 +7,21 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "strings_utilities.h"
-#include "tensors.h"
+#include "string_utilities.h"
+#include "tensor_utilities.h"
 #include "unscaling_layer.h"
 
 namespace opennn
 {
 
-Unscaling::Unscaling(const dimensions& new_input_dimensions, const string& label)
+Unscaling::Unscaling(const Shape& new_input_shape, const string& label)
     : Layer()
 {
-    set(new_input_dimensions[0], label);
+    set(new_input_shape[0], label);
 }
 
 
-dimensions Unscaling::get_input_dimensions() const
+Shape Unscaling::get_input_shape() const
 {
     const Index neurons_number = descriptives.size();
 
@@ -29,7 +29,7 @@ dimensions Unscaling::get_input_dimensions() const
 }
 
 
-dimensions Unscaling::get_output_dimensions() const
+Shape Unscaling::get_output_shape() const
 {
     const Index neurons_number = descriptives.size();
 
@@ -43,11 +43,11 @@ vector<Descriptives> Unscaling::get_descriptives() const
 }
 
 
-Tensor<type, 1> Unscaling::get_minimums() const
+VectorR Unscaling::get_minimums() const
 {
     const Index outputs_number = get_outputs_number();
 
-    Tensor<type, 1> minimums(outputs_number);
+    VectorR minimums(outputs_number);
 
 #pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
@@ -57,11 +57,11 @@ Tensor<type, 1> Unscaling::get_minimums() const
 }
 
 
-Tensor<type, 1> Unscaling::get_maximums() const
+VectorR Unscaling::get_maximums() const
 {
     const Index outputs_number = get_outputs_number();
 
-    Tensor<type, 1> maximums(outputs_number);
+    VectorR maximums(outputs_number);
 
 #pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
@@ -77,16 +77,16 @@ vector<string> Unscaling::get_scalers() const
 }
 
 
-string Unscaling::get_expression(const vector<string>& new_feature_names,
+string Unscaling::get_expression(const vector<string>& new_input_names,
                                  const vector<string>& new_output_names) const
 {
-    const vector<string> feature_names = new_feature_names.empty()
-                                           ? get_default_feature_names()
-                                           : new_feature_names;
+    const vector<string> input_names = new_input_names.empty()
+        ? get_default_feature_names()
+        : new_input_names;
 
     const vector<string> output_names = new_output_names.empty()
-                                            ? get_default_output_names()
-                                            : new_output_names;
+        ? get_default_output_names()
+        : new_output_names;
 
     const Index outputs_number = get_outputs_number();
 
@@ -99,19 +99,19 @@ string Unscaling::get_expression(const vector<string>& new_feature_names,
         const string& scaler = scalers[i];
 
         if(scaler == "None")
-            buffer << output_names[i] << " = " << feature_names[i] << ";\n";
+            buffer << output_names[i] << " = " << input_names[i] << ";\n";
         else if(scaler == "MinimumMaximum")
-            if(abs(descriptives[i].minimum - descriptives[i].maximum) < NUMERIC_LIMITS_MIN)
+            if(abs(descriptives[i].minimum - descriptives[i].maximum) < EPSILON)
                 buffer << output_names[i] << "=" << descriptives[i].minimum <<";\n";
             else
-                buffer << output_names[i] << "=" << feature_names[i] << "*(" << (descriptives[i].maximum - descriptives[i].minimum)/(max_range - min_range)
+                buffer << output_names[i] << "=" << input_names[i] << "*(" << (descriptives[i].maximum - descriptives[i].minimum)/(max_range - min_range)
                 << ")+" << (descriptives[i].minimum - min_range*(descriptives[i].maximum - descriptives[i].minimum)/(max_range - min_range)) << ";\n";
         else if(scaler == "MeanStandardDeviation")
-            buffer << output_names[i] << "=" << feature_names[i] << "*" << descriptives[i].standard_deviation <<"+"<< descriptives[i].mean <<";\n";
+            buffer << output_names[i] << "=" << input_names[i] << "*" << descriptives[i].standard_deviation <<"+"<< descriptives[i].mean <<";\n";
         else if(scaler == "StandardDeviation")
-            buffer << output_names[i] << "=" <<  feature_names[i] << "*" << descriptives[i].standard_deviation <<";\n";
+            buffer << output_names[i] << "=" <<  input_names[i] << "*" << descriptives[i].standard_deviation <<";\n";
         else if(scaler == "Logarithm")
-            buffer << output_names[i] << "=" << "exp(" << feature_names[i] << ");\n";
+            buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";
         else
             throw runtime_error("Unknown inputs scaling method.\n");
     }
@@ -125,23 +125,23 @@ string Unscaling::get_expression(const vector<string>& new_feature_names,
 }
 
 
-void Unscaling::set_input_dimensions(const dimensions& new_input_dimensions)
+void Unscaling::set_input_shape(const Shape& new_input_shape)
 {
-    descriptives.resize(new_input_dimensions[0]);
+    descriptives.resize(new_input_shape[0]);
 }
 
 
-void Unscaling::set_output_dimensions(const dimensions& new_output_dimensions)
+void Unscaling::set_output_shape(const Shape& new_output_shape)
 {
-    descriptives.resize(new_output_dimensions[0]);
+    descriptives.resize(new_output_shape[0]);
 }
 
 
-void Unscaling::set(const Index& new_neurons_number, const string& new_label)
+void Unscaling::set(const Index new_neurons_number, const string& new_label)
 {
     descriptives.resize(new_neurons_number);
 
-    for (auto& descriptive : descriptives)
+    for(Descriptives& descriptive : descriptives)
         descriptive.set(type(-1.0), type(1), type(0), type(1));
 
     scalers.resize(new_neurons_number, "MinimumMaximum");
@@ -179,23 +179,19 @@ void Unscaling::set_scalers(const vector<string>& new_scaler)
 
 void Unscaling::set_scalers(const string& new_scalers)
 {
-    for (string& scaler : scalers)
+    for(string& scaler : scalers)
         scaler = new_scalers;
 }
 
 
-void Unscaling::forward_propagate(const vector<TensorView>& input_views,
-                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                  const bool&)
+void Unscaling::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                  bool)
 {
+    MatrixMap outputs = matrix_map(forward_propagation->outputs);
+
     const Index outputs_number = get_outputs_number();
 
-    UnscalingForwardPropagation* this_forward_propagation =
-        static_cast<UnscalingForwardPropagation*>(forward_propagation.get());
-
-    const TensorMap<Tensor<type,2>> inputs = tensor_map<2>(input_views[0]);
-
-    Tensor<type, 2>& outputs = this_forward_propagation->outputs;
+    const MatrixMap inputs = matrix_map(forward_propagation->inputs[0]);
 
     outputs = inputs;
 
@@ -205,8 +201,8 @@ void Unscaling::forward_propagate(const vector<TensorView>& input_views,
 
         const Descriptives& descriptive = descriptives[i];
 
-        if(abs(descriptives[i].standard_deviation) < NUMERIC_LIMITS_MIN)
-            descriptives[i].standard_deviation = NUMERIC_LIMITS_MIN;
+        if(abs(descriptives[i].standard_deviation) < EPSILON)
+            descriptives[i].standard_deviation = EPSILON;
 
         if(scaler == "None")
             continue;
@@ -246,15 +242,15 @@ void Unscaling::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Unscaling");
 
-    const dimensions output_dimensions = get_output_dimensions();
+    const Shape output_shape = get_output_shape();
 
-    add_xml_element(printer, "NeuronsNumber", to_string(output_dimensions[0]));
+    add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
 
-    for (Index i = 0; i < output_dimensions[0]; i++)
+    for(Index i = 0; i < output_shape[0]; i++)
     {
         printer.OpenElement("UnscalingNeuron");
         printer.PushAttribute("Index", int(i + 1));
-        add_xml_element(printer, "Descriptives", tensor_to_string<type, 1>(descriptives[i].to_tensor()));
+        add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
         add_xml_element(printer, "Scaler", scalers[i]);
 
         printer.CloseElement();
@@ -277,9 +273,9 @@ void Unscaling::from_XML(const XMLDocument& document)
 
     const XMLElement* start_element = root_element->FirstChildElement("NeuronsNumber");
 
-    for (Index i = 0; i < neurons_number; i++) {
+    for(Index i = 0; i < neurons_number; i++) {
         const XMLElement* unscaling_neuron_element = start_element->NextSiblingElement("UnscalingNeuron");
-        if (!unscaling_neuron_element) {
+        if(!unscaling_neuron_element) {
             throw runtime_error("Unscaling neuron " + to_string(i + 1) + " is nullptr.\n");
         }
 
@@ -308,33 +304,23 @@ void Unscaling::from_XML(const XMLDocument& document)
 }
 
 
-UnscalingForwardPropagation::UnscalingForwardPropagation(const Index& new_batch_size, Layer* new_layer)
+UnscalingForwardPropagation::UnscalingForwardPropagation(const Index new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-TensorView UnscalingForwardPropagation::get_output_pair() const
-{
-    const dimensions output_dimensions = layer->get_output_dimensions();
-
-    return { (type*)outputs.data(), { batch_size, output_dimensions[0]}};
-}
-
-
 void UnscalingForwardPropagation::initialize()
 {
-    const dimensions output_dimensions = static_cast<Unscaling*>(layer)->get_output_dimensions();
-
-    outputs.resize(batch_size, output_dimensions[0]);
+    outputs.shape = prepend(batch_size, layer->get_output_shape());
 }
 
 
 void UnscalingForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
-         << outputs << endl;
+         << outputs.shape << endl;
 }
 
 REGISTER(Layer, Unscaling, "Unscaling")
@@ -343,54 +329,33 @@ REGISTER(LayerForwardPropagation, UnscalingForwardPropagation, "Unscaling")
 
 #ifdef OPENNN_CUDA
 
-void Unscaling::forward_propagate_cuda(const vector<float*>& inputs_device,
-                                       unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
-                                       const bool&)
+void Unscaling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
 {
-    UnscalingForwardPropagationCuda* this_forward_propagation =
-        static_cast<UnscalingForwardPropagationCuda*>(forward_propagation_cuda.get());
+    // @todo: Implement unscaling in CUDA
 
-    const size_t size = get_outputs_number() * this_forward_propagation->batch_size * sizeof(float);
-
-    // @todo: implement unscaling on GPU
+    throw runtime_error("Unscaling layer not implemented in CUDA");
 }
 
 
-UnscalingForwardPropagationCuda::UnscalingForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+UnscalingForwardPropagationCuda::UnscalingForwardPropagationCuda(const Index new_batch_size, Layer* new_layer)
     : LayerForwardPropagationCuda()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void UnscalingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+void UnscalingForwardPropagationCuda::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-    batch_size = new_batch_size;
-
-    const size_t size = layer->get_outputs_number() * batch_size;
-
-    //cudaMalloc(&outputs, size * sizeof(float));
+    // @todo
 }
 
 
 void UnscalingForwardPropagationCuda::print() const
 {
-    const Index outputs_number = layer->get_outputs_number();
-
-    cout << "Unscaling CUDA Outputs (pass-through):" << endl
-        << matrix_from_device(outputs, batch_size, outputs_number) << endl;
+    cout << "Unscaling Forward Propagation CUDA:" << endl
+         << "Batch size: " << batch_size << endl
+         << "Outputs descriptor: " << outputs.get_descriptor() << endl;
 }
-
-
-void UnscalingForwardPropagationCuda::free()
-{
-    cudaFree(outputs);
-    outputs = nullptr;
-}
-
 
 REGISTER(LayerForwardPropagationCuda, UnscalingForwardPropagationCuda, "Unscaling")
 
@@ -398,20 +363,16 @@ REGISTER(LayerForwardPropagationCuda, UnscalingForwardPropagationCuda, "Unscalin
 
 }
 
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

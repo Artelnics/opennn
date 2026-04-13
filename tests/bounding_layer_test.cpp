@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "../opennn/tensors.h"
+#include "../opennn/tensor_utilities.h"
 #include "../opennn/bounding_layer.h"
 
 using namespace opennn;
@@ -11,7 +11,7 @@ TEST(BoundingTest, Constructor)
 {
     Bounding bounding_layer;
 
-    EXPECT_EQ(bounding_layer.get_output_dimensions(), dimensions{0});
+    EXPECT_EQ(bounding_layer.get_output_shape(), Shape{0});
 }
 
 
@@ -30,39 +30,35 @@ TEST(BoundingTest, ForwardPropagate)
 
     const Index rows_number = 2;
 
-    Tensor<type, 2> inputs(rows_number, columns_number);
-
-    inputs(0, 0) = -5.0;
-    inputs(0, 1) = 0.5;
-    inputs(0, 2) = 10.0;
-    inputs(1, 0) = -1.0;
-    inputs(1, 1) = 0.0;
-    inputs(1, 2) = 1.0;
+    MatrixR input_data(rows_number, columns_number);
+    input_data << type(-5.0), type(0.5), type(10.0),
+        type(-1.0), type(0.0), type(1.0);
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
         make_unique<BoundingForwardPropagation>(rows_number, &bounding_layer);
 
-    auto eigen_dimensions = inputs.dimensions();
-    dimensions dims_vector(eigen_dimensions.begin(), eigen_dimensions.end());
+    forward_propagation->initialize();
 
-    TensorView input_view(inputs.data(), dims_vector);
+    Tensor1 workspace(get_size(forward_propagation->get_workspace_views()));
+    link(workspace.data(), forward_propagation->get_workspace_views());
 
-    vector<TensorView> input_views = { input_view };
+    forward_propagation->inputs = { TensorView(input_data.data(), {rows_number, columns_number}) };
 
-    bounding_layer.forward_propagate(input_views, forward_propagation, false);
+    bounding_layer.forward_propagate(forward_propagation, false);
 
-    const TensorMap<Tensor<type, 2>> outputs =
-        tensor_map<2>(forward_propagation->get_output_pair());
+    MatrixMap outputs(forward_propagation->outputs.data,
+                      rows_number, columns_number);
 
-    EXPECT_EQ(outputs.dimension(0), rows_number);
-    EXPECT_EQ(outputs.dimension(1), columns_number);
+    EXPECT_EQ(outputs.rows(), rows_number);
+    EXPECT_EQ(outputs.cols(), columns_number);
 
-    EXPECT_NEAR(outputs(0, 0), type(-1.0), tolerance);
-    EXPECT_NEAR(outputs(0, 1), type(0.5), tolerance);
-    EXPECT_NEAR(outputs(0, 2), type(1.0), tolerance);
-    EXPECT_NEAR(outputs(1, 0), type(-1.0), tolerance);
-    EXPECT_NEAR(outputs(1, 1), type(0.0), tolerance);
-    EXPECT_NEAR(outputs(1, 2), type(1.0), tolerance);
+    MatrixR expected_output(rows_number, columns_number);
+    expected_output << type(-1.0), type(0.5), type(1.0),
+        type(-1.0), type(0.0), type(1.0);
 
-    EXPECT_EQ(bounding_layer.get_output_dimensions(), dimensions{ columns_number });
+    for(Index i = 0; i < rows_number; ++i)
+        for(Index j = 0; j < columns_number; ++j)
+            EXPECT_NEAR(outputs(i, j), expected_output(i, j), tolerance);
+
+    EXPECT_EQ(bounding_layer.get_output_shape(), Shape{ columns_number });
 }

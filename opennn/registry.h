@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef REGISTRY_H
-#define REGISTRY_H
+#pragma once
 
 #include <string>
 #include <functional>
@@ -34,12 +33,12 @@ public:
 
     void register_component(const string& name, Creator creator)
     {
-        creators[name] = std::move(creator);
+        creators[name] = move(creator);
     }
 
     unique_ptr<T> create(const string& name) const
     {
-        auto it = creators.find(name);
+        typename unordered_map<string, Creator>::const_iterator it = creators.find(name);
 
         if(it == creators.end())
             throw runtime_error("Component not found: " + name);
@@ -52,7 +51,7 @@ public:
     {
         vector<string> names;
 
-        for(const auto& pair : creators)
+        for(const typename unordered_map<string, Creator>::value_type& pair : creators)
             names.push_back(pair.first);
 
         return names;
@@ -66,7 +65,7 @@ private:
 namespace { \
     const bool CLASS##_registered = []() { \
               Registry<BASE>::instance().register_component(NAME, [](){ \
-                          return std::make_unique<CLASS>(); \
+                          return make_unique<CLASS>(); \
                   }); \
               return true; \
       }(); \
@@ -74,22 +73,16 @@ namespace { \
 
 }
 
-#endif
-
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

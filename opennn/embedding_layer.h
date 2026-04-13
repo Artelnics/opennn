@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef EMBEDDINGLAYER_H
-#define EMBEDDINGLAYER_H
+#pragma once
 
 #include "layer.h"
 
@@ -19,41 +18,36 @@ class Embedding final : public Layer
 
 public:
 
-    Embedding(const dimensions& = dimensions({0, 0}),
-              const Index& = 0,
+    Embedding(const Shape& = {0, 0},
+              Index = 0,
               const string& = "embedding_layer");
 
     Index get_vocabulary_size() const;
     Index get_sequence_length() const;
     Index get_embedding_dimension() const;
 
-    dimensions get_input_dimensions() const override;
-    dimensions get_output_dimensions() const override;
+    Shape get_input_shape() const override;
+    Shape get_output_shape() const override;
 
-    vector<ParameterView> get_parameter_views() const override;
+    vector<TensorView*> get_parameter_views() override;
 
-    void set(const Index& = 0,
-             const Index& = 0,
-             const Index& = 0,
+    void set(const Index = 0,
+             Index = 0,
+             Index = 0,
              const string & = "embedding_layer");
 
-    void set_dropout_rate(const type&);
+    void set_scale_embedding(bool);
+    void set_add_positional_encoding(bool);
+
+    void set_dropout_rate(const type);
 
     void set_parameters_random() override;
+    void set_parameters_glorot() override;
 
-    void embedding_lookup(const Tensor<type, 2>&, Tensor<type, 3>&);
-    void add_positional_encodings(Tensor<type, 3>&) const;
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
+                           bool) override;
 
-    bool scale_embedding = false;
-    bool positional_encoding_xxx = false;
-
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
-                           const bool&) override;
-
-    void back_propagate(const vector<TensorView>&,
-                        const vector<TensorView>&,
-                        unique_ptr<LayerForwardPropagation>&,
+    void back_propagate(unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
     void print() const override;
@@ -65,30 +59,20 @@ public:
 
 public:
 
-    void forward_propagate_cuda(const vector<float*>&,
-                                unique_ptr<LayerForwardPropagationCuda>&,
-                                const bool&) override;
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
 
-    void back_propagate_cuda(const vector<float*>&,
-                             const vector<float*>&,
-                             unique_ptr<LayerForwardPropagationCuda>&,
-                             unique_ptr<LayerBackPropagationCuda>&) const override;
+    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
+                        unique_ptr<LayerBackPropagationCuda>&) const override;
 
-    vector<ParameterView> get_parameter_views_device() const override;
+    vector<TensorViewCuda*> get_parameter_views_device() override;
 
-    void copy_parameters_host();
-
-    void copy_parameters_device();
-
-    void allocate_parameters_device();
-
-    void free_parameters_device();
+    void copy_positional_encoding_device();
 
 private:
 
-    float* weights_device = nullptr;
+    TensorViewCuda weights_device;
 
-    float* positional_encoding_device = nullptr;
+    TensorCuda positional_encoding_device;
 
 #endif
 
@@ -96,9 +80,13 @@ private:
 
     Index sequence_length = 0;
 
-    Tensor<type, 2> weights;
+    TensorView weights;
 
-    Tensor<type, 2> positional_encoding;
+    bool scale_embedding = false;
+    bool add_positional_encoding = false;
+
+    MatrixR positional_encoding;
+    bool pos_encoding_synced = false;
 
     type dropout_rate = type(0);
 };
@@ -106,40 +94,34 @@ private:
 
 struct EmbeddingForwardPropagation final : LayerForwardPropagation
 {
-    EmbeddingForwardPropagation(const Index& = 0, Layer* = nullptr);
-
-    TensorView get_output_pair() const override;
+    EmbeddingForwardPropagation(const Index = 0, Layer* = nullptr);
 
     void initialize() override;
 
     void print() const override;
-
-    Tensor<type, 3> outputs;
 };
 
 
 struct EmbeddingBackPropagation final : LayerBackPropagation
 {
-    EmbeddingBackPropagation(const Index& = 0, Layer* = nullptr);
-
-    vector<TensorView> get_input_derivative_views() const override;
-
-    vector<ParameterView> get_parameter_delta_views() const override;
+    EmbeddingBackPropagation(const Index = 0, Layer* = nullptr);
 
     void initialize() override;
 
+    vector<TensorView*> get_gradient_views() override;
+
     void print() const override;
 
-    Tensor<type, 2> weight_deltas;
+    TensorView weight_gradients;
 };
 
 #ifdef OPENNN_CUDA
 
 struct EmbeddingForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    EmbeddingForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
+    EmbeddingForwardPropagationCuda(const Index = 0, Layer* = nullptr);
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void initialize() override;
 
     void print() const override;
 };
@@ -147,38 +129,31 @@ struct EmbeddingForwardPropagationCuda : public LayerForwardPropagationCuda
 
 struct EmbeddingBackPropagationCuda : public LayerBackPropagationCuda
 {
-    EmbeddingBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+    EmbeddingBackPropagationCuda(const Index = 0, Layer* = nullptr);
 
-    vector<ParameterView> get_parameter_delta_views_device() const override;
+    void initialize() override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    vector<TensorViewCuda*> get_gradient_views() override;
 
     void print() const override;
 
-    type* weight_deltas_device = nullptr;
+    TensorViewCuda weight_gradients;
 };
 
 #endif
 
 }
 
-#endif // EMBEDDING_LAYER_H
-
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

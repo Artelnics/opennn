@@ -6,15 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef CROSSENTROPYERROR2D_H
-#define CROSSENTROPYERROR2D_H
+#pragma once
 
-#include "loss_index.h"
+#include "loss.h"
 
 namespace opennn
 {
 
-class CrossEntropyError2d final : public LossIndex
+class CrossEntropyError2d final : public Loss
 {
 
 public:
@@ -37,17 +36,17 @@ public:
 
     // Gradient
 
-    void calculate_output_delta(const Batch&,
-                                ForwardPropagation&,
-                                BackPropagation&) const override;
+    void calculate_output_gradients(const Batch&,
+                                    ForwardPropagation&,
+                                    BackPropagation&) const override;
 
-    void calculate_binary_output_delta(const Batch&,
-                                       ForwardPropagation&,
-                                       BackPropagation&) const;
+    void calculate_binary_output_gradients(const Batch&,
+                                           ForwardPropagation&,
+                                           BackPropagation&) const;
 
-    void calculate_multiple_output_delta(const Batch&,
-                                         ForwardPropagation&,
-                                         BackPropagation&) const;
+    void calculate_multiple_output_gradients(const Batch&,
+                                             ForwardPropagation&,
+                                             BackPropagation&) const;
 
     // Serialization
 
@@ -57,37 +56,35 @@ public:
 
 private:
 
-    const type epsilon = numeric_limits<type>::epsilon();
-
 #ifdef OPENNN_CUDA
 
 public:
 
     // Error
 
-    void calculate_error_cuda(const BatchCuda&,
+    void calculate_error(const BatchCuda&,
                               const ForwardPropagationCuda&,
                               BackPropagationCuda&) const override;
 
-    void calculate_binary_error_cuda(const BatchCuda&,
+    void calculate_binary_error(const BatchCuda&,
                                      const ForwardPropagationCuda&,
                                      BackPropagationCuda&) const;
 
-    void calculate_multiple_error_cuda(const BatchCuda&,
+    void calculate_multiple_error(const BatchCuda&,
                                        const ForwardPropagationCuda&,
                                        BackPropagationCuda&) const;
 
     // Gradient
 
-    void calculate_output_delta_cuda(const BatchCuda&,
+    void calculate_output_gradients(const BatchCuda&,
                                      ForwardPropagationCuda&,
                                      BackPropagationCuda&) const override;
 
-    void calculate_binary_output_delta_cuda(const BatchCuda&,
+    void calculate_binary_output_gradients(const BatchCuda&,
                                             ForwardPropagationCuda&,
                                             BackPropagationCuda&) const;
 
-    void calculate_multiple_output_delta_cuda(const BatchCuda&,
+    void calculate_multiple_output_gradients(const BatchCuda&,
                                               ForwardPropagationCuda&,
                                               BackPropagationCuda&) const;
 
@@ -97,22 +94,16 @@ public:
 
 }
 
-#endif
-
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

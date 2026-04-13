@@ -1,9 +1,15 @@
-#ifndef PCH_H
-#define PCH_H
-
 #pragma once
 
-#define NUMERIC_LIMITS_MIN type(0.000001)
+#ifndef EIGEN_USE_THREADS
+#define EIGEN_USE_THREADS
+#endif
+
+#ifndef NDEBUG
+#define NDEBUG
+#endif
+
+#define EIGEN_MAX_ALIGN_BYTES 32
+#define EIGEN_NO_DEBUG
 
 #define NOMINMAX
 #define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
@@ -39,10 +45,11 @@
 #include <set>
 #include <regex>
 #include <sstream>
-
 #include <omp.h>
-
-#define EIGEN_USE_THREADS
+#include <future>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
 
 #include "../eigen/Eigen/Core"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
@@ -61,15 +68,20 @@
 #include <cudnn.h>
 #include <nvtx3/nvToolsExt.h>
 
-#define CHECK_CUDA(call) do \
-{ \
-    cudaError_t err = call; \
-    if (err != cudaSuccess) \
-    { \
-        fprintf(stderr, "CUDA Error %s:%d - %s (%d)\n", \
-                __FILE__, __LINE__, cudaGetErrorString(err), err); \
-    } \
-} while(0)
+#pragma once
+
+template <typename T>
+void check_cuda_status(T status, const char* file, int line, const char* msg)
+{
+    if (status != 0)
+        throw runtime_error(string(msg) + " Error: " + to_string((int)status) +
+                            " in " + file + ":" + to_string(line));
+}
+
+
+#define CHECK_CUDA(x) check_cuda_status(x, __FILE__, __LINE__, "CUDA")
+#define CHECK_CUBLAS(x) check_cuda_status(x, __FILE__, __LINE__, "CuBLAS")
+#define CHECK_CUDNN(x) check_cuda_status(x, __FILE__, __LINE__, "cuDNN")
 
 #define CUDA_MALLOC_AND_REPORT(ptr, size)                                         \
     do {                                                                          \
@@ -88,25 +100,55 @@
         }                                                                         \
     } while (0)
 
-#define CHECK_CUDA_ERROR(message)                                       \
-    do {                                                                \
-        cudaError_t error = cudaGetLastError();                         \
-        if (error != cudaSuccess) {                                     \
-            std::cerr << "CUDA Error after " << message << ": "         \
-                      << cudaGetErrorString(error) << " (" << error     \
-                      << ")" << std::endl;                              \
-        }                                                               \
-    } while (0)
-
 #endif
 
 using namespace std;
 using namespace Eigen;
-//using namespace tinyxml2;
 
 using type = float;
 
-using dimensions = vector<Index>;
+namespace opennn {
+constexpr type EPSILON = numeric_limits<type>::epsilon();
+constexpr type MAX = numeric_limits<type>::max();
+}
+
+constexpr int Layout = Eigen::RowMajor;
+
+using MatrixR = Matrix<type, Dynamic, Dynamic, Layout>;
+using MatrixI = Matrix<Index, Dynamic, Dynamic, Layout>;
+using MatrixB = Matrix<bool, Dynamic, Dynamic, Layout>;
+
+using VectorR = Matrix<type, Dynamic, 1>;
+using VectorI = Matrix<Index, Dynamic, 1>;
+using VectorB = Matrix<bool, Dynamic, 1>;
+
+using VectorMap = Map<VectorR, AlignedMax>;
+using MatrixMap = Map<MatrixR, Layout | AlignedMax>;
+
+using Tensor0 = Tensor<type, 0, Layout | AlignedMax>;
+using Tensor1 = Tensor<type, 1, Layout | AlignedMax>;
+using Tensor2 = Tensor<type, 2, Layout | AlignedMax>;
+using Tensor3 = Tensor<type, 3, Layout | AlignedMax>;
+using Tensor4 = Tensor<type, 4, Layout | AlignedMax>;
+using Tensor5 = Tensor<type, 5, Layout | AlignedMax>;
+
+template <int Rank>
+using TensorR = Tensor<type, Rank, Layout | AlignedMax>;
+
+using TensorMap1 = TensorMap<Tensor<type, 1, Layout | AlignedMax>, AlignedMax>;
+using TensorMap2 = TensorMap<Tensor<type, 2, Layout | AlignedMax>, AlignedMax>;
+using TensorMap3 = TensorMap<Tensor<type, 3, Layout | AlignedMax>, AlignedMax>;
+using TensorMap4 = TensorMap<Tensor<type, 4, Layout | AlignedMax>, AlignedMax>;
+using TensorMap5 = TensorMap<Tensor<type, 5, Layout | AlignedMax>, AlignedMax>;
+
+template <int Rank>
+using TensorMapR = TensorMap<Tensor<type, Rank, Layout | AlignedMax>, AlignedMax>;
+
+using ConstTensorMap4 = TensorMap<const Tensor<type, 4, Layout | AlignedMax>, AlignedMax>;
+
+#include "tinyxml2.h"
+
+using namespace tinyxml2;
 
 template<typename Base, typename T>
 inline bool is_instance_of(const T* ptr)
@@ -114,4 +156,16 @@ inline bool is_instance_of(const T* ptr)
     return dynamic_cast<const Base*>(ptr);
 }
 
-#endif // PCH_H
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

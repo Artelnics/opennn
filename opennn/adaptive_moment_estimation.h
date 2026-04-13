@@ -6,10 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef ADAPTIVEMOMENTESTIMATION_H
-#define ADAPTIVEMOMENTESTIMATION_H
+#pragma once
 
-#include "optimization_algorithm.h"
+#include "optimizer.h"
 
 namespace opennn
 {
@@ -22,28 +21,28 @@ struct BackPropagationCuda;
 struct ADAMOptimizationDataCuda;
 #endif
 
-class AdaptiveMomentEstimation final : public OptimizationAlgorithm
+class AdaptiveMomentEstimation final : public Optimizer
 {
     
 public:
 
-   AdaptiveMomentEstimation(const LossIndex* = nullptr);
+   AdaptiveMomentEstimation(const Loss* = nullptr);
    
-   const type& get_learning_rate() const;
-   const type& get_beta_1() const;
-   const type& get_beta_2() const;
+   type get_learning_rate() const;
+   type get_beta_1() const;
+   type get_beta_2() const;
 
    // Stopping criteria
 
-   const type& get_loss_goal() const;
+   type get_loss_goal() const;
 
    // Set
 
-   void set_batch_size(const Index& new_batch_size);
+   void set_batch_size(const Index new_batch_size);
 
    void set_default();
 
-   void set_display(const bool&) override;
+   void set_display(bool) override;
 
    // Get
 
@@ -51,19 +50,19 @@ public:
 
    // Training operators
 
-   void set_learning_rate(const type&);
-   void set_beta_1(const type&);
-   void set_beta_2(const type&);
+   void set_learning_rate(const type);
+   void set_beta_1(const type);
+   void set_beta_2(const type);
 
    // Training parameters
 
-   void set_maximum_epochs_number(const Index&);
+   void set_maximum_epochs(const Index);
 
    // Stopping criteria
 
-   void set_loss_goal(const type&);
-   void set_accuracy_goal(const type&);
-   void set_maximum_time(const type&);
+   void set_loss_goal(const type);
+   void set_accuracy_goal(const type);
+   void set_maximum_time(const type);
 
    // Training
 
@@ -89,15 +88,13 @@ private:
 
    type beta_2 = type(0.999);
 
-   const type epsilon = numeric_limits<type>::epsilon();
-
     // Stopping criteria
 
    type training_loss_goal = type(-10);
    
    type training_accuracy_goal = type(1);
 
-   Index maximum_selection_failures = numeric_limits<Index>::max();
+   Index maximum_validation_failures = numeric_limits<Index>::max();
 
    Index batch_size = 1000;
 
@@ -107,14 +104,14 @@ private:
 
     TrainingResults train_cuda() override;
 
-    void update_parameters_cuda(BackPropagationCuda&, ADAMOptimizationDataCuda&) const;
+    void update_parameters(BackPropagationCuda&, ADAMOptimizationDataCuda&) const;
 
 #endif
 
 };
 
 
-struct AdaptiveMomentEstimationData final : public OptimizationAlgorithmData
+struct AdaptiveMomentEstimationData final : public OptimizerData
 {
     AdaptiveMomentEstimationData(AdaptiveMomentEstimation* = nullptr);
 
@@ -124,8 +121,8 @@ struct AdaptiveMomentEstimationData final : public OptimizationAlgorithmData
 
     AdaptiveMomentEstimation* adaptive_moment_estimation = nullptr;
 
-    vector<vector<Tensor<type, 1>>> gradient_exponential_decay;
-    vector<vector<Tensor<type, 1>>> square_gradient_exponential_decay;
+    VectorR gradient_exponential_decay;
+    VectorR square_gradient_exponential_decay;
 
     Index iteration = 0;
 
@@ -134,32 +131,31 @@ struct AdaptiveMomentEstimationData final : public OptimizationAlgorithmData
     Index learning_rate_iteration = 0;
 };
 
+
 #ifdef OPENNN_CUDA
 
-    struct ADAMOptimizationDataCuda final : public OptimizationAlgorithmData
+    struct ADAMOptimizationDataCuda final : public OptimizerData
     {
         ADAMOptimizationDataCuda(AdaptiveMomentEstimation* = nullptr);
 
-        ~ADAMOptimizationDataCuda() { free(); }
+        //~ADAMOptimizationDataCuda() { free(); }
 
         void set(AdaptiveMomentEstimation* = nullptr);
-
-        void free();
 
         void print() const;
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = nullptr;
 
-        vector<vector<float*>> gradient_exponential_decay;
-        vector<vector<float*>> square_gradient_exponential_decay;
+        TensorCuda gradient_exponential_decay;
+        TensorCuda square_gradient_exponential_decay;
 
         Index iteration = 0;
 
         type step = 0;
+
+        //Index learning_rate_iteration = 0;
     };
 
 #endif
 
 }
-
-#endif

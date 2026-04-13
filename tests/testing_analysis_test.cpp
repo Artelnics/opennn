@@ -17,14 +17,14 @@ TEST(TestingAnalysis, ErrorData)
 
     Dataset dataset(samples_number, { inputs_number }, { targets_number });
     dataset.set_data_constant(type(0));
-    dataset.set("Testing");
+    dataset.set_sample_roles("Testing");
 
     ApproximationNetwork neural_network({ inputs_number }, {}, { targets_number });
     neural_network.set_parameters_random();
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
 
-    Tensor<type, 3> error_data = testing_analysis.calculate_error_data();
+    Tensor3 error_data = testing_analysis.calculate_error_data();
 
     EXPECT_EQ(error_data.size(), 3);
     EXPECT_EQ(error_data.dimension(0), 1);
@@ -34,7 +34,7 @@ TEST(TestingAnalysis, ErrorData)
 
 TEST(TestingAnalysis, PercentageErrorData)
 {
-    Tensor<type, 2> error_data;
+    MatrixR error_data;
 
     // Test
 
@@ -45,7 +45,7 @@ TEST(TestingAnalysis, PercentageErrorData)
     Dataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
-    dataset.set("Testing");
+    dataset.set_sample_roles("Testing");
 
     ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
@@ -54,7 +54,7 @@ TEST(TestingAnalysis, PercentageErrorData)
     error_data = testing_analysis.calculate_percentage_error_data();
 
     EXPECT_EQ(error_data.size(), 1);
-    EXPECT_EQ(error_data.dimension(1), 1);
+    EXPECT_EQ(error_data.cols(), 1);
 }
 
 
@@ -66,12 +66,12 @@ TEST(TestingAnalysis, AbsoluteErrorDescriptives)
     const Index targets_number = 1;
 
     Dataset dataset;
-    dataset.set(samples_number, {inputs_number}, {targets_number});
+    dataset.set(samples_number, {inputs_number}, {targets_number;
     dataset.set_data_constant(type(0));
-    dataset.set("Testing");
+    dataset.set_sample_roles("Testing");
 
     NeuralNetwork neural_network;
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number;
     neural_network.set_parameters_random();
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
@@ -79,17 +79,16 @@ TEST(TestingAnalysis, AbsoluteErrorDescriptives)
     vector<Descriptives> error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
     EXPECT_EQ(error_data.size(), 1);
-    EXPECT_NEAR(error_data[0].minimum, 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(error_data[0].maximum, 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(error_data[0].mean, 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(error_data[0].standard_deviation, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(error_data[0].minimum, 1, EPSILON);
+    EXPECT_NEAR(error_data[0].maximum, 1, EPSILON);
+    EXPECT_NEAR(error_data[0].mean, 1, EPSILON);
+    EXPECT_NEAR(error_data[0].standard_deviation, 0, EPSILON);
 */
 }
 
 
 TEST(TestingAnalysis, PercentageErrorDescriptives)
 {
-
     vector<Descriptives> error_data;
 
     // Test
@@ -101,7 +100,7 @@ TEST(TestingAnalysis, PercentageErrorDescriptives)
     Dataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
-    dataset.set("Testing");
+    dataset.set_sample_roles("Testing");
 
     ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
@@ -111,7 +110,6 @@ TEST(TestingAnalysis, PercentageErrorDescriptives)
 
     EXPECT_EQ(error_data.size(), 1);
     EXPECT_EQ(static_cast<double>(error_data[0].standard_deviation), 0.0);
-
 }
 
 TEST(TestingAnalysis, ErrorDataDescriptives)
@@ -126,12 +124,12 @@ TEST(TestingAnalysis, ErrorDataDescriptives)
     const Index targets_number = 1;
 
     Dataset dataset;
-    dataset.set(samples_number, {inputs_number}, {targets_number});
+    dataset.set(samples_number, {inputs_number}, {targets_number;
     dataset.set_data_constant(type(0));
-    dataset.set("Testing");
+    dataset.set_sample_roles("Testing");
 
     NeuralNetwork neural_network;
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number;
     neural_network.set_parameters_random();
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
@@ -139,17 +137,16 @@ TEST(TestingAnalysis, ErrorDataDescriptives)
 
     EXPECT_EQ(error_data_statistics.size(), 1);
     EXPECT_EQ(error_data_statistics[0].size(), 3);
-    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].minimum), 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].maximum), 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].mean), 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].standard_deviation), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].minimum), 1, EPSILON);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].maximum), 1, EPSILON);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].mean), 1, EPSILON);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].standard_deviation), 0, EPSILON);
 */
 }
 
 
 TEST(TestingAnalysis, ErrorDataHistograms)
 {
-
     vector<Histogram> error_data_histograms;
 
     // Test
@@ -161,7 +158,7 @@ TEST(TestingAnalysis, ErrorDataHistograms)
     Dataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
-    dataset.set("Testing");
+    dataset.set_sample_roles("Testing");
 
     ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
@@ -171,14 +168,12 @@ TEST(TestingAnalysis, ErrorDataHistograms)
 
     EXPECT_EQ(error_data_histograms.size(), 1);
     EXPECT_EQ(error_data_histograms[0].get_bins_number(), 10);
-
 }
 
 
 TEST(TestingAnalysis, MaximalErrors)
 {
-
-    Tensor<Tensor<Index, 1>, 1> maximal_errors;
+    Tensor<VectorI, 1> maximal_errors;
 
     const Index samples_number = 1;
     const Index inputs_number = 1;
@@ -187,7 +182,7 @@ TEST(TestingAnalysis, MaximalErrors)
     Dataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
-    dataset.set("Testing");
+    dataset.set_sample_roles("Testing");
 
     ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
 
@@ -196,7 +191,6 @@ TEST(TestingAnalysis, MaximalErrors)
 
     EXPECT_EQ(maximal_errors.rank(), 1);
     EXPECT_EQ(maximal_errors[0](0), 0 );
-
 }
 
 
@@ -212,11 +206,11 @@ TEST(TestingAnalysis, LinearRegression)
     const Index neurons_number = 1;
     const Index targets_number = 1;
 
-    Dataset dataset(samples_number, {inputs_number}, {targets_number});
+    Dataset dataset(samples_number, {inputs_number}, {targets_number;
     dataset.set_data_random();
-    dataset.set("Testing");
+    dataset.set_sample_roles("Testing");
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number;
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
     linear_correlation = testing_analysis.linear_correlation();
@@ -235,30 +229,27 @@ TEST(TestingAnalysis, LinearRegression)
 
 TEST(TestingAnalysis, Confusion)
 {
-    Tensor<type, 2> actual(4, 3);
-    actual.setValues({
-        {type(1), type(0), type(0)},
-        {type(0), type(1), type(0)},
-        {type(0), type(1), type(0)},
-        {type(0), type(0), type(1)}
-    });
+    MatrixR actual(4, 3);
+    actual << type(1), type(0), type(0),
+        type(0), type(1), type(0),
+        type(0), type(1), type(0),
+        type(0), type(0), type(1);
 
-    Tensor<type, 2> predicted(4, 3);
-    predicted.setValues({
-        {type(1), type(0), type(0)},
-        {type(0), type(1), type(0)},
-        {type(0), type(1), type(0)},
-        {type(0), type(0), type(1)}
-    });
+    MatrixR predicted(4, 3);
+    predicted << type(1), type(0), type(0),
+        type(0), type(1), type(0),
+        type(0), type(1), type(0),
+        type(0), type(0), type(1);
+
     TestingAnalysis testing_analysis;
-    Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_multiple_classification(actual, predicted);
+    MatrixI confusion = testing_analysis.calculate_confusion_multiple_classification(actual, predicted);
 
-    Tensor<Index, 0> sum = confusion.sum();
+    type sum = confusion.sum();
 
-    EXPECT_EQ(sum(0), 4 + 12);
+    EXPECT_EQ(sum, 4 + 12);
 
-    EXPECT_EQ(confusion.dimension(0), 4);
-    EXPECT_EQ(confusion.dimension(1), 4);
+    EXPECT_EQ(confusion.rows(), 4);
+    EXPECT_EQ(confusion.cols(), 4);
     EXPECT_EQ(confusion(0,0), 1);
     EXPECT_EQ(confusion(1,1), 2);
     EXPECT_EQ(confusion(2,2), 1);
@@ -277,7 +268,6 @@ TEST(TestingAnalysis, Confusion)
 
 TEST(TestingAnalysis, BinaryClassificationTests)
 {
-
     const Index samples_number = 1;
     const Index inputs_number = 1;
     const Index targets_number= 1;
@@ -288,7 +278,7 @@ TEST(TestingAnalysis, BinaryClassificationTests)
 
     dataset.set_data_constant(type(0));
 
-    dataset.set("Testing");
+    dataset.set_sample_roles("Testing");
 
     // Neural Network
 
@@ -298,10 +288,10 @@ TEST(TestingAnalysis, BinaryClassificationTests)
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
 
-    Tensor<type, 1> binary = testing_analysis.calculate_binary_classification_tests();
+    VectorR binary = testing_analysis.calculate_binary_classification_tests();
 
     EXPECT_EQ(binary.size(), 15 );
-/*
+
     EXPECT_EQ(binary[0], 0 );
     EXPECT_EQ(binary[1], 1 );
     EXPECT_EQ(binary[2], 0 );
@@ -317,17 +307,16 @@ TEST(TestingAnalysis, BinaryClassificationTests)
     EXPECT_EQ(binary[12], 0 );
     EXPECT_EQ(binary[13], -1 );
     EXPECT_EQ(binary[14], -1 );
-*/
+
 }
 
 
 TEST(TestingAnalysis, RocCurve)
 {
+    MatrixR targets;
+    MatrixR outputs;
 
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
-
-    Tensor<type, 2> roc_curve;
+    MatrixR roc_curve;
 
     // Test
 
@@ -348,19 +337,19 @@ TEST(TestingAnalysis, RocCurve)
     TestingAnalysis testing_analysis;
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
-    EXPECT_EQ(roc_curve.dimension(1), 3);
-    EXPECT_EQ(roc_curve.dimension(0), 201);
+    EXPECT_EQ(roc_curve.cols(), 3);
+    EXPECT_EQ(roc_curve.rows(), 101);
 
-    EXPECT_LT(roc_curve(0, 0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(0, 1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(1, 0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(1, 1) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(2, 0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(2, 1) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(3, 0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(3, 1) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(4, 0) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(4, 1) - type(1), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(roc_curve(0, 0), type(EPSILON));
+    EXPECT_LT(roc_curve(0, 1), type(EPSILON));
+    EXPECT_LT(roc_curve(1, 0), type(EPSILON));
+    EXPECT_LT(roc_curve(1, 1) - type(1), type(EPSILON));
+    EXPECT_LT(roc_curve(2, 0), type(EPSILON));
+    EXPECT_LT(roc_curve(2, 1) - type(1), type(EPSILON));
+    EXPECT_LT(roc_curve(3, 0), type(EPSILON));
+    EXPECT_LT(roc_curve(3, 1) - type(1), type(EPSILON));
+    EXPECT_LT(roc_curve(4, 0) - type(1), type(EPSILON));
+    EXPECT_LT(roc_curve(4, 1) - type(1), type(EPSILON));
 
     // Test
 
@@ -380,29 +369,27 @@ TEST(TestingAnalysis, RocCurve)
 
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
-    EXPECT_EQ(roc_curve.dimension(1), 3);
-    EXPECT_EQ(roc_curve.dimension(0), 201);
+    EXPECT_EQ(roc_curve.cols(), 3);
+    EXPECT_EQ(roc_curve.rows(), 101);
 
-    EXPECT_LT(roc_curve(0, 0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(0, 1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(1, 0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(1, 1) - type(0.5), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(2, 0) - type(0.5), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(2, 1) - type(0.5), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(3, 0) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(3, 1) - type(0.5), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(4, 0) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(4, 1) - type(1), type(NUMERIC_LIMITS_MIN));
-
+    EXPECT_LT(roc_curve(0, 0), type(EPSILON));
+    EXPECT_LT(roc_curve(0, 1), type(EPSILON));
+    EXPECT_LT(roc_curve(1, 0), type(EPSILON));
+    EXPECT_LT(roc_curve(1, 1) - type(0.5), type(EPSILON));
+    EXPECT_LT(roc_curve(2, 0) - type(0.5), type(EPSILON));
+    EXPECT_LT(roc_curve(2, 1) - type(0.5), type(EPSILON));
+    EXPECT_LT(roc_curve(3, 0) - type(1), type(EPSILON));
+    EXPECT_LT(roc_curve(3, 1) - type(0.5), type(EPSILON));
+    EXPECT_LT(roc_curve(4, 0) - type(1), type(EPSILON));
+    EXPECT_LT(roc_curve(4, 1) - type(1), type(EPSILON));
 }
 
 
 TEST(TestingAnalysis, AreaUnderCurve)
 {
-
-    Tensor<type, 2> roc_curve;
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
+    MatrixR roc_curve;
+    MatrixR targets;
+    MatrixR outputs;
 
     type area_under_curve;
 
@@ -428,7 +415,7 @@ TEST(TestingAnalysis, AreaUnderCurve)
 
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-    EXPECT_LT(area_under_curve - type(1), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(area_under_curve - type(1), type(EPSILON));
 
     targets.resize(4,1);
 
@@ -448,7 +435,7 @@ TEST(TestingAnalysis, AreaUnderCurve)
 
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-    EXPECT_LT(area_under_curve - type(0.5), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(area_under_curve - type(0.5), type(EPSILON));
 
     // Test
 
@@ -470,7 +457,7 @@ TEST(TestingAnalysis, AreaUnderCurve)
 
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-    EXPECT_LT(area_under_curve - type(0.5), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(area_under_curve - type(0.5), type(EPSILON));
 
     // Test
 
@@ -492,19 +479,17 @@ TEST(TestingAnalysis, AreaUnderCurve)
 
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-    EXPECT_LT(area_under_curve, type(NUMERIC_LIMITS_MIN));
-
+    EXPECT_LT(area_under_curve, type(EPSILON));
 }
 
 
 TEST(TestingAnalysis, OptimalThreshold)
 {
-
     type optimal_threshold;
 
-    Tensor<type, 2> roc_curve;
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
+    MatrixR roc_curve;
+    MatrixR targets;
+    MatrixR outputs;
 
     // Test
 
@@ -528,7 +513,7 @@ TEST(TestingAnalysis, OptimalThreshold)
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
-    EXPECT_LT(optimal_threshold - type(1), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(optimal_threshold - type(1), type(EPSILON));
 
     // Test
 
@@ -550,7 +535,7 @@ TEST(TestingAnalysis, OptimalThreshold)
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
-    EXPECT_LT(optimal_threshold - type(1), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(optimal_threshold - type(1), type(EPSILON));
 
     // Test
 
@@ -574,16 +559,14 @@ TEST(TestingAnalysis, OptimalThreshold)
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
-    EXPECT_LT(optimal_threshold - type(0.62), type(NUMERIC_LIMITS_MIN));
-
+    EXPECT_LT(optimal_threshold - type(0.62), type(EPSILON));
 }
 
 
 TEST(TestingAnalysis, CumulativeGain)
 {
-
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
+    MatrixR targets;
+    MatrixR outputs;
 
     targets.resize(4,1);
 
@@ -601,25 +584,23 @@ TEST(TestingAnalysis, CumulativeGain)
 
     TestingAnalysis testing_analysis;
 
-    Tensor<type, 2> cumulative_gain = testing_analysis.calculate_cumulative_gain(targets, outputs);
+    MatrixR cumulative_gain = testing_analysis.calculate_cumulative_gain(targets, outputs);
 
-    EXPECT_EQ(cumulative_gain.dimension(1), 2);
-    EXPECT_EQ(cumulative_gain.dimension(0), 21);
-    EXPECT_LT(cumulative_gain(0, 0) - type(0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(cumulative_gain(0, 1) - type(0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(cumulative_gain(20, 0) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(cumulative_gain(20, 1) - type(1), type(NUMERIC_LIMITS_MIN));
-
+    EXPECT_EQ(cumulative_gain.cols(), 2);
+    EXPECT_EQ(cumulative_gain.rows(), 21);
+    EXPECT_NEAR(cumulative_gain(0, 0), type(0), type(1e-5));
+    EXPECT_NEAR(cumulative_gain(0, 1), type(0), type(1e-5));
+    EXPECT_NEAR(cumulative_gain(20, 0), type(1), type(1e-5));
+    EXPECT_NEAR(cumulative_gain(20, 1), type(1), type(1e-5));
 }
 
 
 TEST(TestingAnalysis, LiftChart)
 {
-
-    Tensor<type, 2> cumulative_gain;
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
-    Tensor<type, 2> lift_chart;
+    MatrixR cumulative_gain;
+    MatrixR targets;
+    MatrixR outputs;
+    MatrixR lift_chart;
 
     // Test
 
@@ -643,17 +624,16 @@ TEST(TestingAnalysis, LiftChart)
 
     lift_chart = testing_analysis.calculate_lift_chart(cumulative_gain);
 
-    EXPECT_EQ(lift_chart.dimension(1), cumulative_gain.dimension(1));
-    EXPECT_EQ(lift_chart.dimension(0), cumulative_gain.dimension(0));
+    EXPECT_EQ(lift_chart.cols(), cumulative_gain.cols());
+    EXPECT_EQ(lift_chart.rows(), cumulative_gain.rows());
 }
 
 
 TEST(TestingAnalysis, TruePositiveSamples)
 {
-
     vector<Index> true_positives_indices;
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
+    MatrixR targets;
+    MatrixR outputs;
 
     //Test
 
@@ -729,12 +709,12 @@ TEST(TestingAnalysis, TruePositiveSamples)
     EXPECT_EQ(true_positives_indices[3], 3);
 }
 
+
 TEST(TestingAnalysis, FalsePositiveSamples)
 {
-
     vector<Index> false_positives_indices;
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
+    MatrixR targets;
+    MatrixR outputs;
 
     // Test
 
@@ -809,15 +789,14 @@ TEST(TestingAnalysis, FalsePositiveSamples)
     EXPECT_EQ(not_empty, false);
 
     EXPECT_EQ(false_positives_indices.size(), 0);
-
 }
+
 
 TEST(TestingAnalysis, FalseNegativeSamples)
 {
-
     vector<Index> false_negatives_indices;
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
+    MatrixR targets;
+    MatrixR outputs;
 
 
     targets.resize(4, 1);
@@ -891,15 +870,14 @@ TEST(TestingAnalysis, FalseNegativeSamples)
     EXPECT_EQ(false_negatives_indices[1], 1);
     EXPECT_EQ(false_negatives_indices[2], 2);
     EXPECT_EQ(false_negatives_indices[3], 3);
-
 }
+
 
 TEST(TestingAnalysis, TrueNegativeSamples)
 {
-
     vector<Index> true_negatives_indices;
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
+    MatrixR targets;
+    MatrixR outputs;
 
     // Test
 
@@ -972,19 +950,18 @@ TEST(TestingAnalysis, TrueNegativeSamples)
 
     EXPECT_EQ(true_negatives_indices.size(), 1);
     EXPECT_EQ(true_negatives_indices[0], 0);
-
 }
+
 
 TEST(TestingAnalysis, MultipleClassificationRates)
 {
-
     vector<Index> testing_indices;
 
     Tensor<Tensor<Index,1>, 2> multiple_classification_rates;
 
     // Test
 
-    Tensor<type, 2> targets;
+    MatrixR targets;
     targets.resize(9, 3);
 
     targets(0,0) = type(1); targets(0,1) = type(0); targets(0,2) = type(0);
@@ -997,7 +974,7 @@ TEST(TestingAnalysis, MultipleClassificationRates)
     targets(7,0) = type(0); targets(7,1) = type(1); targets(7,2) = type(0);
     targets(8,0) = type(0); targets(8,1) = type(0); targets(8,2) = type(1);
 
-    Tensor<type, 2> outputs;
+    MatrixR outputs;
     outputs.resize(9, 3);
 
     outputs(0,0) = type(1); outputs(0,1) = type(0); outputs(0,2) = type(0);
@@ -1032,7 +1009,7 @@ TEST(TestingAnalysis, MultipleClassificationRates)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2025 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

@@ -13,9 +13,7 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/standard_networks.h"
-#include "../../opennn/training_strategy.h"
-#include "../../opennn/optimization_algorithm.h"
+#include "../../opennn/optimizer.h"
 #include "../../opennn/adaptive_moment_estimation.h"
 
 using namespace opennn;
@@ -34,23 +32,26 @@ int main()
 
         // Neural Network
 
-        ClassificationNetwork classification_network(dataset.get_input_dimensions(), { neurons_number}, dataset.get_target_dimensions());
-        classification_network.print();
+        ClassificationNetwork classification_network(dataset.get_input_shape(), { neurons_number}, dataset.get_target_shape());
 
         // Training Strategy
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
+        training_strategy.get_loss()->set_regularization_method("None");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs_number(1000);
+        adam->set_maximum_epochs(1000);
 
         training_strategy.train();
 
         // Testing Analysis
 
         TestingAnalysis testing_analysis(&classification_network, &dataset);
+
         testing_analysis.print_binary_classification_tests();
+
+        TestingAnalysis::RocAnalysis roc = testing_analysis.perform_roc_analysis();
 
         cout << "Good bye!" << endl;
 
@@ -66,18 +67,15 @@ int main()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2025 Artificial Intelligence Techniques SL
-//
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques SL
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

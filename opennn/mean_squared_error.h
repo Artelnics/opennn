@@ -6,15 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef MEANSQUAREDERROR_H
-#define MEANSQUAREDERROR_H
+#pragma once
 
-#include "loss_index.h"
+#include "loss.h"
 
 namespace opennn
 {
 
-class MeanSquaredError final : public LossIndex
+class MeanSquaredError final : public Loss
 {
 
 public:
@@ -25,24 +24,24 @@ public:
                          const ForwardPropagation&,
                          BackPropagation&) const override;
 
-    void calculate_output_delta(const Batch&,
+    void calculate_output_gradients(const Batch&,
                                 ForwardPropagation&,
                                 BackPropagation&) const override;
 
     // Back propagation LM
 
-    void calculate_error_lm(const Batch&,
+    void calculate_error(const Batch&,
                             const ForwardPropagation&,
                             BackPropagationLM&) const override;
 
-    void calculate_output_delta_lm(const Batch&,
+    void calculate_output_gradients(const Batch&,
                                    ForwardPropagation&,
                                    BackPropagationLM&) const override;
 
-    void calculate_error_gradient_lm(const Batch&,
+    void calculate_error_gradient(const Batch&,
                                      BackPropagationLM&) const override;
 
-    void calculate_error_hessian_lm(const Batch&,
+    void calculate_error_hessian(const Batch&,
                                     BackPropagationLM&) const override;
 
     // Serialization
@@ -53,11 +52,11 @@ public:
 
 #ifdef OPENNN_CUDA
 
-    void calculate_error_cuda(const BatchCuda&,
+    void calculate_error(const BatchCuda&,
                               const ForwardPropagationCuda&,
                               BackPropagationCuda&) const override;
 
-    void calculate_output_delta_cuda(const BatchCuda&,
+    void calculate_output_gradients(const BatchCuda&,
                                      ForwardPropagationCuda&,
                                      BackPropagationCuda&) const override;
 
@@ -67,22 +66,16 @@ public:
 
 }
 
-#endif
-
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

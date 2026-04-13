@@ -20,8 +20,7 @@
 // distribution.
 
 
-#ifndef TINYXML2_INCLUDED
-#define TINYXML2_INCLUDED
+#pragma once
 
 #if defined(ANDROID_NDK) || defined(__BORLANDC__) || defined(__QNXNTO__)
 #   include <ctype.h>
@@ -40,8 +39,6 @@
 #   include <cstring>
 #endif
 #include <stdint.h>
-
-#include "pch.h"
 
 //    TODO: intern strings instead of allocation.
 
@@ -733,7 +730,7 @@ public:
 //      Set the Value of an XML node.
 //     	@sa Value()
 
-    void SetValue(const char* val, bool staticMem=false );
+    void SetValue(const char* value, bool staticMem=false );
 
     int GetLineNum() const { return _parseLineNum; }
 
@@ -765,7 +762,7 @@ public:
     XMLElement* FirstChildElement(const char* name = nullptr )	{
         return const_cast<XMLElement*>(const_cast<const XMLNode*>(this)->FirstChildElement(name ));
     }
-
+/*
     const XMLNode*	LastChild() const						{
         return _lastChild;
     }
@@ -796,7 +793,7 @@ public:
     XMLElement*	PreviousSiblingElement(const char* name = nullptr ) {
         return const_cast<XMLElement*>(const_cast<const XMLNode*>(this)->PreviousSiblingElement(name ));
     }
-
+*/
     const XMLNode*	NextSibling() const						{
         return _next;
     }
@@ -1886,200 +1883,6 @@ inline NodeType* XMLDocument::CreateUnlinkedNode(MemPoolT<PoolElementSize>& pool
 }
 
 
-// 	A XMLHandle is a class that wraps a node pointer with null checks; this is
-// 	an incredibly useful thing. Note that XMLHandle is not part of the TinyXML-2
-// 	DOM structure. It is a separate utility class.
-//
-// 	Take an example:
-// 	@verbatim
-// 	<Document>
-// 		<Element attributeA = "valueA">
-// 			<Child attributeB = "value1" />
-// 			<Child attributeB = "value2" />
-// 		</Element>
-// 	</Document>
-// 	@endverbatim
-//
-// 	Assuming you want the value of "attributeB" in the 2nd "Child" element, it's very
-// 	easy to write a *lot* of code that looks like:
-//
-// 	@verbatim
-// 	XMLElement* root = document.FirstChildElement("Document");
-// 	if(root )
-// 	{
-// 		XMLElement* element = root->FirstChildElement("Element");
-// 		if(element )
-// 		{
-// 			XMLElement* child = element->FirstChildElement("Child");
-// 			if(child )
-// 			{
-// 				XMLElement* child2 = child->NextSiblingElement("Child");
-// 				if(child2 )
-// 				{
-// 					// Finally do something useful.
-// 	@endverbatim
-//
-// 	And that doesn't even cover "else" cases. XMLHandle addresses the verbosity
-// 	of such code. A XMLHandle checks for null pointers so it is perfectly safe
-// 	and correct to use:
-//
-// 	@verbatim
-// 	XMLHandle docHandle(&document );
-// 	XMLElement* child2 = docHandle.FirstChildElement("Document").FirstChildElement("Element").FirstChildElement().NextSiblingElement();
-// 	if(child2 )
-// 	{
-// 		// do something useful
-// 	@endverbatim
-//
-// 	Which is MUCH more concise and useful.
-//
-// 	It is also safe to copy handles - internally they are nothing more than node pointers.
-// 	@verbatim
-// 	XMLHandle handleCopy = cublas_handle;
-// 	@endverbatim
-//
-// 	See also XMLConstHandle, which is the same as XMLHandle, but operates on const objects.
-
-class TINYXML2_LIB XMLHandle
-{
-public:
-
-    XMLHandle(XMLNode* node ) : _node(node ) {
-    }
-
-    XMLHandle(XMLNode& node ) : _node(&node ) {
-    }
-
-    XMLHandle(const XMLHandle& ref ) : _node(ref._node ) {
-    }
-
-    XMLHandle& operator= (const XMLHandle& ref )							{
-        _node = ref._node;
-        return *this;
-    }
-
-    XMLHandle FirstChild() 													{
-        return XMLHandle(_node ? _node->FirstChild() : nullptr );
-    }
-
-    XMLHandle FirstChildElement(const char* name = nullptr )						{
-        return XMLHandle(_node ? _node->FirstChildElement(name ) : nullptr );
-    }
-
-    XMLHandle LastChild()													{
-        return XMLHandle(_node ? _node->LastChild() : nullptr );
-    }
-
-    XMLHandle LastChildElement(const char* name = nullptr )						{
-        return XMLHandle(_node ? _node->LastChildElement(name ) : nullptr );
-    }
-
-    XMLHandle PreviousSibling()												{
-        return XMLHandle(_node ? _node->PreviousSibling() : nullptr );
-    }
-
-    XMLHandle PreviousSiblingElement(const char* name = nullptr )				{
-        return XMLHandle(_node ? _node->PreviousSiblingElement(name ) : nullptr );
-    }
-
-    XMLHandle NextSibling()													{
-        return XMLHandle(_node ? _node->NextSibling() : nullptr );
-    }
-
-    XMLHandle NextSiblingElement(const char* name = nullptr )					{
-        return XMLHandle(_node ? _node->NextSiblingElement(name ) : nullptr );
-    }
-
-    XMLNode* ToNode()							{
-        return _node;
-    }
-
-    XMLElement* ToElement() 					{
-        return(_node ? _node->ToElement() : nullptr );
-    }
-
-    XMLText* ToText() 							{
-        return(_node ? _node->ToText() : nullptr );
-    }
-
-    XMLUnknown* ToUnknown() 					{
-        return(_node ? _node->ToUnknown() : nullptr );
-    }
-
-    XMLDeclaration* ToDeclaration() 			{
-        return(_node ? _node->ToDeclaration() : nullptr );
-    }
-
-private:
-    XMLNode* _node;
-};
-
-// 	A variant of the XMLHandle class for working with const XMLNodes and Documents. It is the
-// 	same in all regards, except for the 'const' qualifiers. See XMLHandle for API.
-
-class TINYXML2_LIB XMLConstHandle
-{
-public:
-    XMLConstHandle(const XMLNode* node ) : _node(node ) {
-    }
-    XMLConstHandle(const XMLNode& node ) : _node(&node ) {
-    }
-    XMLConstHandle(const XMLConstHandle& ref ) : _node(ref._node ) {
-    }
-
-    XMLConstHandle& operator= (const XMLConstHandle& ref )							{
-        _node = ref._node;
-        return *this;
-    }
-
-    const XMLConstHandle FirstChild() const											{
-        return XMLConstHandle(_node ? _node->FirstChild() : nullptr );
-    }
-    const XMLConstHandle FirstChildElement(const char* name = nullptr ) const				{
-        return XMLConstHandle(_node ? _node->FirstChildElement(name ) : nullptr );
-    }
-    const XMLConstHandle LastChild()	const										{
-        return XMLConstHandle(_node ? _node->LastChild() : nullptr );
-    }
-    const XMLConstHandle LastChildElement(const char* name = nullptr ) const				{
-        return XMLConstHandle(_node ? _node->LastChildElement(name ) : nullptr );
-    }
-    const XMLConstHandle PreviousSibling() const									{
-        return XMLConstHandle(_node ? _node->PreviousSibling() : nullptr );
-    }
-    const XMLConstHandle PreviousSiblingElement(const char* name = nullptr ) const		{
-        return XMLConstHandle(_node ? _node->PreviousSiblingElement(name ) : nullptr );
-    }
-    const XMLConstHandle NextSibling() const										{
-        return XMLConstHandle(_node ? _node->NextSibling() : nullptr );
-    }
-    const XMLConstHandle NextSiblingElement(const char* name = nullptr ) const			{
-        return XMLConstHandle(_node ? _node->NextSiblingElement(name ) : nullptr );
-    }
-
-
-    const XMLNode* ToNode() const				{
-        return _node;
-    }
-    const XMLElement* ToElement() const			{
-        return(_node ? _node->ToElement() : nullptr );
-    }
-    const XMLText* ToText() const				{
-        return(_node ? _node->ToText() : nullptr );
-    }
-    const XMLUnknown* ToUnknown() const			{
-        return(_node ? _node->ToUnknown() : nullptr );
-    }
-    const XMLDeclaration* ToDeclaration() const	{
-        return(_node ? _node->ToDeclaration() : nullptr );
-    }
-
-private:
-    const XMLNode* _node;
-};
-
-
-
 // 	Printing functionality. The XMLPrinter gives you more
 // 	options than the XMLDocument::Print() method.
 //
@@ -2259,5 +2062,3 @@ string read_xml_string(const XMLElement* root, const string& element_name);
 #if defined(_MSC_VER)
 #   pragma warning(pop)
 #endif
-
-#endif // TINYXML2_INCLUDED

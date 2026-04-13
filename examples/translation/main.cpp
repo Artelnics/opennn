@@ -9,22 +9,15 @@
 // System includes
 
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <string>
 #include <cstring>
-#include <time.h>
 
 // OpenNN includes
 
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/language_dataset.h"
-#include "../../opennn/embedding_layer.h"
-#include "../../opennn/flatten_layer.h"
-#include "../../opennn/multihead_attention_layer.h"
-#include "../../opennn/normalization_layer_3d.h"
-#include "../../opennn/dense_layer.h"
-#include "../../opennn/transformer.h"
+#include "../../opennn/standard_networks.h"
+#include "../../opennn/adaptive_moment_estimation.h"
 
 using namespace std;
 using namespace opennn;
@@ -35,27 +28,87 @@ int main()
     {
         cout << "OpenNN. Translation Example." << endl;
 
-        throw runtime_error("Translation Example is not yet implemented. Please check back in a future version.");
-
         // Dataset
         
-        LanguageDataset language_dataset("../data/ENtoES_dataset_reduced_6.txt");
+        LanguageDataset language_dataset("../data/ES-EN-small.txt");
 
-        // Neural Network
+        const Index input_vocabulary_size  = language_dataset.get_input_vocabulary_size();
+        const Index output_vocabulary_size = language_dataset.get_target_vocabulary_size();
 
-        const Index sequence_length = 10;
-        const Index vocabulary_size = 50;
-        const Index embedding_dimension = 32;
-        const Index heads_number = 4;
-        const dimensions outputs_number = { 1 };
+        const Index input_sequence_length   = language_dataset.get_shape("Input")[0];
+        const Index decoder_sequence_length = language_dataset.get_shape("Decoder")[0];
+        const Index target_sequence_length  = language_dataset.get_shape("Target")[0];
 
-        Transformer transformer;
+        if(decoder_sequence_length != target_sequence_length)
+            throw runtime_error("Decoder and target sequence lengths must match.");
 
-        // Training Strategy
+        // Transformer
+
+        const Index embedding_dimension = 256;
+        const Index heads_number = 8;
+        const Index feed_forward_dimension = 1024;
+        const Index layers_number = 1;
+
+        Transformer transformer(input_sequence_length,
+                                decoder_sequence_length,
+                                input_vocabulary_size,
+                                output_vocabulary_size,
+                                embedding_dimension,
+                                heads_number,
+                                feed_forward_dimension,
+                                layers_number);
+
+        transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
+        transformer.set_output_vocabulary(language_dataset.get_target_vocabulary());
+
+        // Training strategy
 
         TrainingStrategy training_strategy(&transformer, &language_dataset);
 
+        training_strategy.set_loss("CrossEntropyError3d");
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+
+        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+
+        if(!adam)
+            throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
+
+        adam->set_batch_size(16);
+        adam->set_learning_rate(0.0005);
+        adam->set_maximum_epochs(50);
+        adam->set_display_period(5);
+
+#ifdef OPENNN_CUDA
+        cout << "\nTraining on GPU..." << endl;
+        training_strategy.train_cuda();
+#else
+        cout << "\nTraining on CPU... (It might take a lot of time...)" << endl;
         training_strategy.train();
+#endif
+
+        // Predictions
+
+        cout << "\n================ TRANSFORMER PREDICTIONS ================\n";
+
+        const vector<string> test_sources =
+            {
+                "yo tengo hambre",
+                "tu estas feliz",
+                "el esta cansado",
+                "yo veo el gato"
+            };
+
+        for(Index i = 0; i < static_cast<Index>(test_sources.size()); i++)
+        {
+            const string prediction = transformer.calculate_outputs(test_sources[i]);
+
+            cout << "Sample " << i << endl;
+            cout << "  Source:    " << test_sources[i] << endl;
+            cout << "  Predicted: " << prediction << endl;
+            cout << endl;
+        }
+
+        cout << "=========================================================\n";
 
         cout << "Bye!" << endl;
 
@@ -70,18 +123,15 @@ int main()
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2025 Artificial Intelligence Techniques SL
-//
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques SL
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

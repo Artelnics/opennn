@@ -6,11 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef LANGUAGEDataset_H
-#define LANGUAGEDataset_H
+#pragma once
 
 #include "dataset.h"
-#include <iostream>
 
 namespace opennn
 {
@@ -21,7 +19,7 @@ class LanguageDataset final : public Dataset
 public:
 
     LanguageDataset(const filesystem::path& = "");
-    LanguageDataset(const Index&, const Index&, const Index&);
+    LanguageDataset(const Index, Index, Index);
 
     const vector<string>& get_input_vocabulary() const;
     const vector<string>& get_target_vocabulary() const;
@@ -29,76 +27,62 @@ public:
     Index get_input_vocabulary_size() const;
     Index get_target_vocabulary_size() const;
 
-    Index get_input_sequence_length() const;
-    Index get_target_sequence_length() const;
+    Index get_maximum_input_sequence_length() const;
+    Index get_maximum_target_sequence_length() const;
 
     void set_input_vocabulary(const vector<string>&);
     void set_target_vocabulary(const vector<string>&);
 
     void read_csv() override;
 
-    Index count_non_empty_lines() const;
-
     void create_vocabulary(const vector<vector<string>>&, vector<string>&) const;
 
-    void encode_input_data(const vector<vector<string>>&);
-    void encode_target_data(const vector<vector<string>>&);
+    void encode_input(const vector<vector<string>>&);
+    void encode_decoder_target_sequence_to_sequence(const vector<vector<string>>&);
+    void encode_target_classification(const vector<vector<string>>&);
 
     void print() const override;
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    void print_input_vocabulary() const;
-    void print_target_vocabulary() const;
-
     inline static const string PAD_TOKEN   = "[PAD]";     // 0
     inline static const string UNK_TOKEN   = "[UNK]";     // 1
     inline static const string START_TOKEN = "[START]";   // 2
     inline static const string END_TOKEN   = "[END]";     // 3
 
+    inline static const type UNK_INDEX = 1.0f;
+    inline static const type START_INDEX = 2.0f;
+    inline static const type END_INDEX = 3.0f;
+
     inline static const vector<string> reserved_tokens = {PAD_TOKEN, UNK_TOKEN, START_TOKEN, END_TOKEN};
 
-    dimensions get_input_dimensions() const
-    {
-        return dimensions({get_input_vocabulary_size(), get_input_sequence_length()});
-    }
-
-    dimensions get_target_dimensions() const
-    {
-        return dimensions({get_variables_number("Target")});
-    }
-
 private:
+
+    unordered_map<string, Index> create_vocabulary_map(const vector<string>& vocabulary);
 
     vector<string> input_vocabulary;
     vector<string> target_vocabulary;
 
-    Index maximum_input_length = 0;
-    Index maximum_target_length = 0;
+    Index maximum_input_sequence_length = 0;
+    Index maximum_target_sequence_length = 0;
 
-    Index minimum_word_frequency = 1;
-    Index maximum_vocabulary_size = 1000;
+    Index minimum_token_frequency = 1;
+    Index maximum_vocabulary_size = 20000;
 };
 
 }
 
-#endif
-
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
-//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

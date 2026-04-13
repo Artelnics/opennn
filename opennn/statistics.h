@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#ifndef STATISTICS_H
-#define STATISTICS_H
+#pragma once
 
 #include "pch.h"
 
@@ -16,11 +15,11 @@ namespace opennn
 
 struct Descriptives
 {
-    Descriptives(const type& = type(NAN), const type& = type(NAN), const type& = type(NAN), const type& = type(NAN));
+    Descriptives(const type = type(NAN), type = type(NAN), type = type(NAN), type = type(NAN));
 
-    Tensor<type, 1> to_tensor() const;
+    VectorR to_tensor() const;
 
-    void set(const type& = type(NAN), const type& = type(NAN), const type& = type(NAN), const type& = type(NAN));
+    void set(const type = type(NAN), type = type(NAN), type = type(NAN), type = type(NAN));
 
     void save(const filesystem::path&) const;
 
@@ -41,17 +40,17 @@ struct Descriptives
 
 struct BoxPlot
 {
-    BoxPlot(const type& = type(NAN),
-            const type& = type(NAN),
-            const type& = type(NAN),
-            const type& = type(NAN),
-            const type& = type(NAN));
+    BoxPlot(const type = type(NAN),
+            type = type(NAN),
+            type = type(NAN),
+            type = type(NAN),
+            type = type(NAN));
 
-    void set(const type& = type(NAN),
-             const type& = type(NAN),
-             const type& = type(NAN),
-             const type& = type(NAN),
-             const type& = type(NAN));
+    void set(const type = type(NAN),
+             type = type(NAN),
+             type = type(NAN),
+             type = type(NAN),
+             type = type(NAN));
 
     type minimum = type(NAN);
 
@@ -67,15 +66,15 @@ struct BoxPlot
 
 struct Histogram
 {
-    Histogram(const Index& = 0);
+    Histogram(const Index = 0);
 
-    Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
+    Histogram(const VectorR&, const VectorR&);
 
-    Histogram(const Tensor<Index, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+    Histogram(const VectorR&, const VectorR&, const VectorR&, const VectorR&);
 
-    Histogram(const Tensor<type, 1>&, const Index&);
+    Histogram(const VectorR&, Index);
 
-    Histogram(const Tensor<type, 1>&);
+    Histogram(const VectorR&);
 
     // Methods
 
@@ -89,111 +88,119 @@ struct Histogram
 
     Index calculate_most_populated_bin() const;
 
-    Tensor<type, 1> calculate_minimal_centers() const;
+    VectorR calculate_minimal_centers() const;
 
-    Tensor<type, 1> calculate_maximal_centers() const;
+    VectorR calculate_maximal_centers() const;
 
-    Index calculate_bin(const type&) const;
+    Index calculate_bin(const type) const;
 
-    Index calculate_frequency(const type&) const;
+    Index calculate_frequency(const type) const;
 
     void save(const filesystem::path&) const;
 
-    Tensor<type, 1> minimums;
+    VectorR minimums;
 
-    Tensor<type, 1> maximums;
+    VectorR maximums;
 
-    Tensor<type, 1> centers;
+    VectorR centers;
 
-    Tensor<Index, 1> frequencies;
+    VectorR frequencies;
 };
 
 // Minimum
+type minimum(const MatrixR&);
+type minimum(const VectorR&);
+type minimum(const VectorR&, const vector<Index>&);
+//Index minimum(const VectorI&);
+VectorR column_minimums(const Tensor2&, const vector<Index>& = vector<Index>(), const vector<Index>& = vector<Index>());
 
- type minimum(const Tensor<type, 1>&);
- type minimum(const Tensor<type, 1>&, const vector<Index>&);
- Index minimum(const Tensor<Index, 1>&);
- type minimum(const Tensor<type, 2>&);
- Tensor<type, 1> column_minimums(const Tensor<type, 2>&, const vector<Index>& = vector<Index>(), const vector<Index>& = vector<Index>());
+// Maximum
+type maximum(const MatrixR&);
+type maximum(const VectorR&);
+type maximum(const VectorR&, const vector<Index>&);
+//Index maximum(const VectorI&);
+VectorR column_maximums(const Tensor2&, const vector<Index>& = vector<Index>(), const vector<Index>& = vector<Index>());
 
- // Maximum
+// Range
+type range(const VectorR&);
 
- type maximum(const Tensor<type, 1>&);
- type maximum(const Tensor<type, 1>&, const vector<Index>&);
- Index maximum(const Tensor<Index, 1>&);
- //type maximum(const Tensor<type, 2>&);
- Tensor<type, 1> column_maximums(const Tensor<type, 2>&, 
-	                             const vector<Index>& = vector<Index>(), 
-	                             const vector<Index>& = vector<Index>());
+// Mean
+type mean(const VectorR&);
+type mean(const VectorR&, Index, Index);
+type mean(const MatrixR&, Index);
+VectorR mean(const MatrixR&);
+VectorR mean(const MatrixR&, const vector<Index>&);
+VectorR mean(const MatrixR&, const vector<Index>&, const vector<Index>&);
 
- // Range
- type range(const Tensor<type, 1>&);
+// Median
+type median(const VectorR&);
+type median(const MatrixR&, Index);
+VectorR median(const MatrixR&);
+VectorR median(const MatrixR&, const vector<Index>&);
+VectorR median(const MatrixR&, const vector<Index>&, const vector<Index>&);
 
- // Mean
- type mean(const Tensor<type, 1>&);
- type mean(const Tensor<type, 1>&, const Index&, const Index&);
- type mean(const Tensor<type, 2>&,  const Index&);
- Tensor<type, 1> mean(const Tensor<type, 2>&);
- Tensor<type, 1> mean(const Tensor<type, 2>&, const vector<Index>&);
- Tensor<type, 1> mean(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&);
+// Variance
+type variance(const VectorR&);
+type variance(const VectorR&, const VectorI&);
 
- // Median
- type median(const Tensor<type, 1>&);
- type median(const Tensor<type, 2>&, const Index&);
- Tensor<type, 1> median(const Tensor<type, 2>&);
- Tensor<type, 1> median(const Tensor<type, 2>&, const vector<Index>&);
- Tensor<type, 1> median(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&);
+// Standard deviation
+type standard_deviation(const VectorR&);
+//type standard_deviation(const VectorR&, const VectorI&);
+VectorR standard_deviation(const VectorR&, Index);
 
- // Variance
- type variance(const Tensor<type, 1>&);
- type variance(const Tensor<type, 1>&, const Tensor<Index, 1>&);
+// Assymetry
+type asymmetry(const VectorR&);
 
- // Standard deviation
- type standard_deviation(const Tensor<type, 1>&);
- //type standard_deviation(const Tensor<type, 1>&, const Tensor<Index, 1>&);
- Tensor<type, 1> standard_deviation(const Tensor<type, 1>&, const Index&);
+// Kurtosis
+type kurtosis(const VectorR&);
 
- // Assymetry
- type asymmetry(const Tensor<type, 1>&);
+// Quartiles
+VectorR quartiles(const VectorR&);
+VectorR quartiles(const VectorR&, const vector<Index>&);
 
- // Kurtosis
- type kurtosis(const Tensor<type, 1>&);
+// Box plot
+BoxPlot box_plot(const VectorR&);
+BoxPlot box_plot(const VectorR&, const vector<Index>&);
 
- // Quartiles
- Tensor<type, 1> quartiles(const Tensor<type, 1>&);
- Tensor<type, 1> quartiles(const Tensor<type, 1>&, const vector<Index>&);
+// Descriptives vector
+Descriptives vector_descriptives(const VectorR&);
 
- // Box plot
- BoxPlot box_plot(const Tensor<type, 1>&);
- BoxPlot box_plot(const Tensor<type, 1>&, const vector<Index>&);
+// Descriptives matrix
+vector<Descriptives> descriptives(const MatrixR&);
+vector<Descriptives> descriptives(const MatrixR&, const vector<Index>&, const vector<Index>&);
 
- // Descriptives vector
- Descriptives vector_descriptives(const Tensor<type, 1>&);
+// Histograms
+Histogram histogram(const VectorR&, Index  = 10);
+Histogram histogram_centered(const VectorR&, type = type(0), Index  = 10);
+Histogram histogram(const VectorB&);
+Histogram histogram(const VectorI&, Index  = 10);
+vector<Histogram> histograms(const MatrixR&, Index = 10);
+VectorI total_frequencies(const vector<Histogram>&);
 
- // Descriptives matrix
- vector<Descriptives> descriptives(const Tensor<type, 2>&);
- vector<Descriptives> descriptives(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&);
+// Minimal indices
+Index minimal_index(const VectorR&);
+VectorI minimal_indices(const VectorR&, Index);
+VectorI minimal_indices(const MatrixR&);
 
- // Histograms
- Histogram histogram(const Tensor<type, 1>&, const Index&  = 10);
- Histogram histogram_centered(const Tensor<type, 1>&, const type& = type(0), const Index&  = 10);
- Histogram histogram(const Tensor<bool, 1>&);
- Histogram histogram(const Tensor<Index, 1>&, const Index&  = 10);
- vector<Histogram> histograms(const Tensor<type, 2>&, const Index& = 10);
- Tensor<Index, 1> total_frequencies(const vector<Histogram>&);
+// Maximal indices
+Index maximal_index(const VectorR&);
+VectorI maximal_indices(const VectorR&, Index);
+VectorI maximal_indices(const MatrixR&);
 
- // Minimal indices
- Index minimal_index(const Tensor<type, 1>&);
- Tensor<Index, 1> minimal_indices(const Tensor<type, 1>&, const Index&);
- Tensor<Index, 1> minimal_indices(const Tensor<type, 2>&);
-
- // Maximal indices
- Index maximal_index(const Tensor<type, 1>&);
- Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index&);
- Tensor<Index, 1> maximal_indices(const Tensor<type, 2>&);
-
- // Percentiles
- Tensor<type, 1> percentiles(const Tensor<type, 1>&);
+// Percentiles
+VectorR percentiles(const VectorR&);
 }
 
-#endif // STATISTICS_H
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
