@@ -243,11 +243,11 @@ struct TensorView
     {
         if(!data || shape.empty())
         {
-            cout << "TensorView: Empty or Null" << endl;
+            cout << "TensorView: Empty or Null" << "\n";
             return;
         }
 
-        cout << "Shape: " << shape << endl;
+        cout << "Shape: " << shape << "\n";
 
         const Index total_size = size();
         const Index last_dim_stride = shape.back();
@@ -257,27 +257,27 @@ struct TensorView
             cout << data[i] << " ";
 
             if (shape.rank > 1 && (i + 1) % last_dim_stride == 0)
-                cout << endl;
+                cout << "\n";
         }
 
         if (shape.rank == 1 || total_size % last_dim_stride != 0)
-            cout << endl;
+            cout << "\n";
     }
 
-    inline MatrixMap as_matrix() const
+    MatrixMap as_matrix() const
     {
         assert(data && shape.rank >= 2);
         return MatrixMap(data, shape[0], shape.size() / shape[0]);
     }
 
-    inline VectorMap as_vector() const
+    VectorMap as_vector() const
     {
         assert(data);
         return VectorMap(data, shape.size());
     }
 
     template<int Rank>
-    inline TensorMapR<Rank> as_tensor() const
+    TensorMapR<Rank> as_tensor() const
     {
         assert(data && shape.rank == Rank);
         return TensorMapR<Rank>(data, shape.template get_eigen_dims<Rank>());

@@ -22,21 +22,24 @@ enum class ConvolutionType
     Same
 };
 
+inline const EnumMap<ConvolutionType>& convolution_type_map()
+{
+    static const vector<pair<ConvolutionType, string>> entries = {
+        {ConvolutionType::Valid, "Valid"},
+        {ConvolutionType::Same,  "Same"}
+    };
+    static const EnumMap<ConvolutionType> map{entries};
+    return map;
+}
+
 inline const string& convolution_type_to_string(ConvolutionType type)
 {
-    static const string valid_str = "Valid";
-    static const string same_str = "Same";
-
-    if(type == ConvolutionType::Same) return same_str;
-    return valid_str;
+    return convolution_type_map().to_string(type);
 }
 
 inline ConvolutionType string_to_convolution_type(const string& name)
 {
-    if(name == "Same") return ConvolutionType::Same;
-    if(name == "Valid") return ConvolutionType::Valid;
-
-    throw runtime_error("Unknown convolution type: " + name);
+    return convolution_type_map().from_string(name);
 }
 
 class Convolutional final : public Layer

@@ -49,7 +49,7 @@ struct NeuralNetworkBackPropagationLM
 
     const vector<unique_ptr<LayerBackPropagationLM>>& get_layers() const;
 
-    NeuralNetwork* get_neural_network() const;
+    const NeuralNetwork* get_neural_network() const;
 
     void print();
 

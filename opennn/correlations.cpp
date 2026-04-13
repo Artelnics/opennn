@@ -187,7 +187,7 @@ Correlation linear_correlation(const VectorR& x,
 
     const Index n = x_filter.size();
 
-    if(x_filter.size() == 0)
+    if(x_filter.empty())
         return Correlation();
 
     const auto x_double = x_filter.cast<double>();
@@ -412,14 +412,14 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
 
     if(y_filter.cols() > 50)
     {
-        cout << "Warning: Y variable has too many categories." << endl;
+        cout << "Warning: Y variable has too many categories." << "\n";
 
         correlation.r = type(NAN);
 
         return correlation;
     }
 
-    if(x_filter.size() == 0)
+    if(x_filter.empty())
     {
         correlation.r = type(NAN);
 
@@ -511,14 +511,14 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 
     if(x.cols() > 50 || y.cols() > 50)
     {
-        cout << "Warning: One variable has too many categories." << endl;
+        cout << "Warning: One variable has too many categories." << "\n";
 
         correlation.r = type(NAN);
 
         return correlation;
     }
 
-    if(x_filter.size() == 0 && y_filter.size() == 0)
+    if(x_filter.empty() && y_filter.empty())
     {
         correlation.r = type(NAN);
 
@@ -748,13 +748,13 @@ string Correlation::write_type() const
 
 void Correlation::print() const
 {
-    cout << "Correlation" << endl
-         << "Type: " << write_type() << endl
-         << "a: " << a << endl
-         << "b: " << b << endl
-         << "r: " << r << endl
-         << "Lower confidence: " << lower_confidence << endl
-         << "Upper confidence: " << upper_confidence << endl;
+    cout << "Correlation" << "\n"
+         << "Type: " << write_type() << "\n"
+         << "a: " << a << "\n"
+         << "b: " << b << "\n"
+         << "r: " << r << "\n"
+         << "Lower confidence: " << lower_confidence << "\n"
+         << "Upper confidence: " << upper_confidence << "\n";
 }
 
 }

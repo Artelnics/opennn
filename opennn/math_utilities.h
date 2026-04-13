@@ -19,15 +19,24 @@ enum class ActivationFunction{
     Linear, Sigmoid, HyperbolicTangent, RectifiedLinear, ScaledExponentialLinear, Softmax, Logistic
 };
 
+inline const EnumMap<ActivationFunction>& activation_function_map()
+{
+    static const vector<pair<ActivationFunction, string>> entries = {
+        {ActivationFunction::Linear,                  "Linear"},
+        {ActivationFunction::Sigmoid,                 "Sigmoid"},
+        {ActivationFunction::HyperbolicTangent,       "HyperbolicTangent"},
+        {ActivationFunction::RectifiedLinear,         "RectifiedLinear"},
+        {ActivationFunction::ScaledExponentialLinear, "ScaledExponentialLinear"},
+        {ActivationFunction::Softmax,                 "Softmax"},
+        {ActivationFunction::Logistic,                "Logistic"}
+    };
+    static const EnumMap<ActivationFunction> map{entries};
+    return map;
+}
+
 inline ActivationFunction string_to_activation(const string& name)
 {
-    if (name == "Sigmoid") return ActivationFunction::Sigmoid;
-    if (name == "HyperbolicTangent") return ActivationFunction::HyperbolicTangent;
-    if (name == "RectifiedLinear") return ActivationFunction::RectifiedLinear;
-    if (name == "ScaledExponentialLinear") return ActivationFunction::ScaledExponentialLinear;
-    if (name == "Softmax") return ActivationFunction::Softmax;
-    if (name == "Logistic") return ActivationFunction::Logistic;
-    return ActivationFunction::Linear;
+    return activation_function_map().from_string(name, ActivationFunction::Linear);
 }
 
 struct ActivationArguments

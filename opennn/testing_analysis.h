@@ -76,8 +76,8 @@ public:
 
     // Get
 
-    NeuralNetwork* get_neural_network() const { return neural_network; }
-    Dataset* get_dataset() const { return dataset; }
+    const NeuralNetwork* get_neural_network() const { return neural_network; }
+    const Dataset* get_dataset() const { return dataset; }
 
     // Set
 

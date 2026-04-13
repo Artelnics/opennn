@@ -267,7 +267,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
 
 void LanguageDataset::read_csv()
 {
-    cout << "Reading .txt file..." << endl;
+    cout << "Reading .txt file..." << "\n";
 
     const Index samples_number = count_non_empty_lines(data_path);
 
@@ -427,7 +427,7 @@ void LanguageDataset::read_csv()
     if(!variables.empty())
         variables[0].categories = input_vocabulary;
 
-    cout << "Reading finished" << endl;
+    cout << "Reading finished" << "\n";
 }
 
 unordered_map<string, Index> LanguageDataset::create_vocabulary_map(const vector<string>& vocabulary)
@@ -575,7 +575,7 @@ void LanguageDataset::from_XML(const XmlDocument& data_set_document)
     if(input_docs_tokens.size() != static_cast<size_t>(get_samples_number()))
     {
         cout << "Warning: Loaded samples count (" << get_samples_number()
-        << ") does not match file lines (" << input_docs_tokens.size() << ")." << endl;
+        << ") does not match file lines (" << input_docs_tokens.size() << ")." << "\n";
     }
 
     data.setZero();

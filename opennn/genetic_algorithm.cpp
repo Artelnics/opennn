@@ -81,7 +81,7 @@ void GeneticAlgorithm::set_maximum_inputs_number(const Index new_maximum_inputs_
 void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number)
 {
     if(!training_strategy || !training_strategy->get_dataset())
-        throw runtime_error("Training strategy or dataset is null");
+        throw runtime_error("GeneticAlgorithm error: training strategy or dataset is not set.");
 
     const Index genes_number = get_genes_number();
 
@@ -170,7 +170,7 @@ void GeneticAlgorithm::evaluate_population()
 {
     TrainingResults training_results;
 
-    const Loss* loss = training_strategy->get_loss();
+    Loss* loss = training_strategy->get_loss();
     Dataset* dataset = training_strategy->get_dataset();
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index individuals_number = get_individuals_number();
@@ -181,7 +181,7 @@ void GeneticAlgorithm::evaluate_population()
     {
         const VectorB individual = population.row(i);
 
-        if (display) cout << "\nIndividual " << i + 1 << endl;
+        if (display) cout << "\nIndividual " << i + 1 << "\n";
 
         const vector<Index> individual_variables_indices = get_true_indices(individual);
 
@@ -201,10 +201,10 @@ void GeneticAlgorithm::evaluate_population()
         validation_errors(i) = training_results.get_validation_error();
 
         if(display)
-            cout << "Training error: " << training_errors(i) << endl
-                 << "Validation error: " << validation_errors(i) << endl
-                 << "Variables number: " << input_features_number << endl
-                 << "Inputs number: " << dataset->get_variables_number("Input") << endl;
+            cout << "Training error: " << training_errors(i) << "\n"
+                 << "Validation error: " << validation_errors(i) << "\n"
+                 << "Variables number: " << input_features_number << "\n"
+                 << "Inputs number: " << dataset->get_variables_number("Input") << "\n";
 
         dataset->set_variable_indices(original_input_variable_indices, original_target_variable_indices);
     }
@@ -395,7 +395,7 @@ void GeneticAlgorithm::perform_mutation()
 
 InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 {
-    const Loss* loss = training_strategy->get_loss();
+    Loss* loss = training_strategy->get_loss();
 
     Dataset* dataset = loss->get_dataset();
 
@@ -407,7 +407,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     InputsSelectionResults input_selection_results(maximum_epochs);
 
-    if(display) cout << "Performing genetic input selection...\n" << endl;
+    if(display) cout << "Performing genetic input selection...\n" << "\n";
 
     initialize_population();
 
@@ -430,7 +430,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     for(Index epoch = 0; epoch < maximum_epochs; epoch++)
     {
-        if(display) cout << "Generation: " << epoch + 1 << endl;
+        if(display) cout << "Generation: " << epoch + 1 << "\n";
 
         input_selection_results.resize_history(input_selection_results.mean_training_error_history.size() + 1);
 
@@ -475,16 +475,16 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
         elapsed_time = type(difftime(current_time, beginning_time));
 
         if(display)
-            cout << endl
-                 << "Epoch number: " << epoch << endl
-                 << "Generation mean training error: " << training_errors.mean() << endl
-                 << "Generation mean selection error: " << input_selection_results.mean_validation_error_history(epoch) << endl
-                 << "Generation minimum training error: " << optimal_training_error << endl
-                 << "Generation minimum selection error: " << optimal_validation_error << endl
-                 << "Best ever training error: " << input_selection_results.optimum_training_error << endl
-                 << "Best ever selection error: " << input_selection_results.optimum_validation_error << endl
-                 << "Elapsed time: " << write_time(elapsed_time) << endl
-                 << "Best selection error in generation: " << best_generation << endl;
+            cout << "\n"
+                 << "Epoch number: " << epoch << "\n"
+                 << "Generation mean training error: " << training_errors.mean() << "\n"
+                 << "Generation mean selection error: " << input_selection_results.mean_validation_error_history(epoch) << "\n"
+                 << "Generation minimum training error: " << optimal_training_error << "\n"
+                 << "Generation minimum selection error: " << optimal_validation_error << "\n"
+                 << "Best ever training error: " << input_selection_results.optimum_training_error << "\n"
+                 << "Best ever selection error: " << input_selection_results.optimum_validation_error << "\n"
+                 << "Elapsed time: " << write_time(elapsed_time) << "\n"
+                 << "Best selection error in generation: " << best_generation << "\n";
 
         // Stopping criteria
 
@@ -492,19 +492,19 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         if (input_selection_results.optimum_validation_error <= validation_error_goal)
         {
-            if (display) cout << "Epoch " << epoch << "\nSelection error goal reached: " << input_selection_results.optimum_validation_error << endl;
+            if (display) cout << "Epoch " << epoch << "\nSelection error goal reached: " << input_selection_results.optimum_validation_error << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
             stop = true;
         }
         else if (elapsed_time >= maximum_time)
         {
-            if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
+            if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
             stop = true;
         }
         else if (epoch >= maximum_epochs - 1)
         {
-            if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch + 1 << endl;
+            if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch + 1 << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
             stop = true;
         }
@@ -566,7 +566,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
     if(display)
     {
         input_selection_results.print();
-        cout << "Selected generation: " << best_generation << endl;
+        cout << "Selected generation: " << best_generation << "\n";
     }
 
     return input_selection_results;

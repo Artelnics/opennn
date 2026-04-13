@@ -214,7 +214,7 @@ TrainingResults StochasticGradientDescent::train()
 
     for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
     {
-        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
+        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << "\n";
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
@@ -310,9 +310,9 @@ TrainingResults StochasticGradientDescent::train()
 
         if(display && epoch%display_period == 0)
         {
-            cout << "Training error: " << training_error << endl;
-            if(has_validation) cout << "Validation error: " << validation_error << endl<<endl;
-            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
+            cout << "Training error: " << training_error << "\n";
+            if(has_validation) cout << "Validation error: " << validation_error << "\n"<<endl;
+            cout << "Elapsed time: " << write_time(elapsed_time) << "\n";
         }
 
         // Stopping criteria
@@ -378,9 +378,9 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 
     const Loss* loss = stochastic_gradient_descent->get_loss();
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    const NeuralNetwork* neural_network = loss->get_neural_network();
 
-    const Index parameters_number = neural_network->get_parameters().size();
+    const Index parameters_number = neural_network->get_parameters_size();
 
     parameter_updates.resize(parameters_number);
     parameter_updates.setZero();
@@ -407,7 +407,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     check();
 
-    if(display) cout << "Training with stochastic gradient descent (SGD) CUDA..." << endl;
+    if(display) cout << "Training with stochastic gradient descent (SGD) CUDA..." << "\n";
 
     Dataset* dataset = loss->get_dataset();
 
@@ -506,7 +506,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
     {
-        if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << endl;
+        if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << "\n";
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
@@ -613,9 +613,9 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
         if(display && epoch % display_period == 0)
         {
-            cout << "Training error: " << training_error << endl;
-            if(has_validation) cout << "Validation error: " << validation_error << endl;
-            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
+            cout << "Training error: " << training_error << "\n";
+            if(has_validation) cout << "Validation error: " << validation_error << "\n";
+            cout << "Elapsed time: " << write_time(elapsed_time) << "\n";
         }
 
         stop_training = check_stopping_condition(results, epoch, elapsed_time,

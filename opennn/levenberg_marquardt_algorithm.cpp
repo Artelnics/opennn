@@ -80,17 +80,17 @@ void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type new_minim
 void LevenbergMarquardtAlgorithm::check() const
 {
     if(!loss)
-        throw runtime_error("Pointer to loss index is nullptr.\n");
+        throw runtime_error("LevenbergMarquardtAlgorithm error: loss is not set.");
 
     const Dataset* dataset = loss->get_dataset();
 
     if(!dataset)
-        throw runtime_error("The loss funcional has no dataset.");
+        throw runtime_error("LevenbergMarquardtAlgorithm error: dataset is not set.");
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
     if(!neural_network)
-        throw runtime_error("Pointer to neural network is nullptr.");
+        throw runtime_error("LevenbergMarquardtAlgorithm error: neural network is not set.");
 }
 
 void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
@@ -523,7 +523,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     // Start training
 
-    if(display) cout << "Training with Levenberg-Marquardt algorithm..." << endl;;
+    if(display) cout << "Training with Levenberg-Marquardt algorithm..." << "\n";;
 
     TrainingResults results(maximum_epochs+1);
 
@@ -581,7 +581,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
     {
-        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
+        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << "\n";
 
         neural_network->forward_propagate(training_batch.get_inputs(),
                                           training_forward_propagation,
@@ -617,17 +617,17 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
         if(display && epoch%display_period == 0)
         {
-            cout << "Training error: " << results.training_error_history(epoch) << endl;
-            if(has_validation) cout << "Validation error: " << results.validation_error_history(epoch) << endl;
-            cout << "Damping parameter: " << damping_parameter << endl;
-            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
+            cout << "Training error: " << results.training_error_history(epoch) << "\n";
+            if(has_validation) cout << "Validation error: " << results.validation_error_history(epoch) << "\n";
+            cout << "Damping parameter: " << damping_parameter << "\n";
+            cout << "Elapsed time: " << write_time(elapsed_time) << "\n";
         }
 
         bool stop = false;
 
         if(loss_decrease < minimum_loss_decrease)
         {
-            if(display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << endl;
+            if(display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << "\n";
             results.stopping_condition = StoppingCondition::MinimumLossDecrease;
             stop = true;
         }
@@ -779,9 +779,9 @@ void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Leven
 
     const Loss* loss = Levenberg_Marquardt_algorithm->get_loss();
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    const NeuralNetwork* neural_network = loss->get_neural_network();
 
-    const Index parameters_number = neural_network->get_parameters().size();
+    const Index parameters_number = neural_network->get_parameters_size();
 
     potential_parameters.resize(parameters_number);
     parameter_updates.resize(parameters_number);
@@ -804,7 +804,7 @@ vector<TensorView> LayerBackPropagationLM::get_input_gradients() const { return 
 NeuralNetworkBackPropagationLM::NeuralNetworkBackPropagationLM(NeuralNetwork*) {}
 void NeuralNetworkBackPropagationLM::set(const Index, NeuralNetwork*) {}
 const vector<unique_ptr<LayerBackPropagationLM>>& NeuralNetworkBackPropagationLM::get_layers() const { return layers; }
-NeuralNetwork* NeuralNetworkBackPropagationLM::get_neural_network() const { return neural_network; }
+const NeuralNetwork* NeuralNetworkBackPropagationLM::get_neural_network() const { return neural_network; }
 void NeuralNetworkBackPropagationLM::print() {}
 
 }

@@ -471,7 +471,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 
     type previous_optimal_point = 0;
 
-    cout << "> Optimization loop starting with zoom factor: " << zoom_factor << endl;
+    cout << "> Optimization loop starting with zoom factor: " << zoom_factor << "\n";
 
     for (Index i = 0; i < max_iterations; i++)
     {
@@ -481,7 +481,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 
         if (feasible_inputs.rows() == 0)
             cout << "!!! [Critical] Zero feasible points found. "
-                 << "Check if your constraints are too strict." << endl;
+                 << "Check if your constraints are too strict." << "\n";
 
         optimal_set = calculate_optimal_points(feasible_inputs, feasible_outputs, objectives);
 
@@ -491,11 +491,11 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 
         const type relative_error = abs((optimal_point - previous_optimal_point) / (objectives.utopian_and_senses(0,0) + 1e-6f));
 
-        cout <<  i << "-th " << "> loop " << "with relative error" << relative_error << endl;
+        cout <<  i << "-th " << "> loop " << "with relative error" << relative_error << "\n";
 
         if (relative_error < relative_tolerance && i > min_iterations)
         {
-            cout << "> Optimization loop stopped for reaching the relative tolerance desired: " << relative_tolerance << endl;
+            cout << "> Optimization loop stopped for reaching the relative tolerance desired: " << relative_tolerance << "\n";
             break;
         }
 
@@ -629,7 +629,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
     if (first_feasible_inputs.rows() == 0)
     {
         cout << "!!! [Critical] Zero feasible points found. "
-             << "Check if your constraints are too strict." << endl;
+             << "Check if your constraints are too strict." << "\n";
         return MatrixR();
     }
 
@@ -638,7 +638,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
 
     auto [global_pareto_inputs, global_pareto_outputs] = calculate_pareto(first_feasible_inputs, first_feasible_outputs, first_objective_matrix);
 
-    cout << "> Initial Pareto front size: " << global_pareto_inputs.rows() << " points." << endl;
+    cout << "> Initial Pareto front size: " << global_pareto_inputs.rows() << " points." << "\n";
 
     vector<Domain> local_input_domains(static_cast<size_t>(global_pareto_inputs.rows()), original_input_domain);
 
@@ -647,11 +647,11 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
     type previous_holes_magnitude = 0.0;
     type previous_area_covered = 0.0;
 
-    cout << "> Optimization loop starting with zoom factor: " << current_zoom << endl;
+    cout << "> Optimization loop starting with zoom factor: " << current_zoom << "\n";
 
     for (Index i = 0; i < max_iterations; i++)
     {
-        cout << "\n> [Iteration " << i + 1 << " / " << max_iterations << "]" << endl;
+        cout << "\n> [Iteration " << i + 1 << " / " << max_iterations << "]" << "\n";
 
         MatrixR candidate_inputs = global_pareto_inputs;
         MatrixR candidate_outputs = global_pareto_outputs;
@@ -671,7 +671,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
             candidate_outputs = append_rows(candidate_outputs, local_pareto_output);
         }
 
-        cout << "  - Aggregated local Pareto candidates: " << candidate_inputs.rows() << endl;
+        cout << "  - Aggregated local Pareto candidates: " << candidate_inputs.rows() << "\n";
 
         if (candidate_inputs.rows() == 0)
             break;
@@ -686,21 +686,21 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
         global_pareto_inputs = pareto_pair.first;
         global_pareto_outputs = pareto_pair.second;
 
-        cout << "  - New Pareto front size: " << global_pareto_inputs.rows()  << endl;
+        cout << "  - New Pareto front size: " << global_pareto_inputs.rows()  << "\n";
 
         const pair<type, type> quality = calculate_quality_metrics(global_pareto_inputs, global_pareto_outputs, objectives);
 
         const type current_hole = quality.first;
         const type current_boundary = quality.second;
 
-        cout << "  - Internal Hole: " << current_hole << " | Boundary Gap: " << current_boundary << endl;
+        cout << "  - Internal Hole: " << current_hole << " | Boundary Gap: " << current_boundary << "\n";
 
         const type delta_hole = abs(current_hole - previous_holes_magnitude);
         const type delta_boundary = abs(current_boundary - previous_area_covered);
 
         if (i > min_iterations && delta_hole < relative_tolerance && delta_boundary < relative_tolerance)
         {
-            cout << "> [Convergence] Quality metrics stabilized. Stopping at iteration " << i + 1 << endl;
+            cout << "> [Convergence] Quality metrics stabilized. Stopping at iteration " << i + 1 << "\n";
             break;
         }
 
@@ -717,7 +717,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
 
         current_zoom *= zoom_factor;
     }
-    cout << "\n> [Optimization Complete] Assembling final results..." << endl;
+    cout << "\n> [Optimization Complete] Assembling final results..." << "\n";
 
     return assemble_results(global_pareto_inputs, global_pareto_outputs);
 }

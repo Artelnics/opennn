@@ -25,30 +25,30 @@ enum class SampleRole
     None
 };
 
+inline const EnumMap<SampleRole>& sample_role_map()
+{
+    static const vector<pair<SampleRole, string>> entries = {
+        {SampleRole::Training,   "Training"},
+        {SampleRole::Validation, "Validation"},
+        {SampleRole::Testing,    "Testing"},
+        {SampleRole::None,       "None"}
+    };
+    static const EnumMap<SampleRole> map{entries};
+    return map;
+}
+
 inline const string& sample_role_to_string(SampleRole role)
 {
-    static const string training_str = "Training";
-    static const string validation_str = "Validation";
-    static const string testing_str = "Testing";
-    static const string none_str = "None";
-
-    switch(role)
-    {
-    case SampleRole::Training:   return training_str;
-    case SampleRole::Validation: return validation_str;
-    case SampleRole::Testing:    return testing_str;
-    default:                     return none_str;
-    }
+    return sample_role_map().to_string(role);
 }
 
 inline SampleRole string_to_sample_role(const string& name)
 {
-    if(name == "Training" || name == "0") return SampleRole::Training;
-    if(name == "Validation" || name == "1") return SampleRole::Validation;
-    if(name == "Testing" || name == "2") return SampleRole::Testing;
-    if(name == "None" || name == "3") return SampleRole::None;
-
-    throw runtime_error("Unknown sample role: " + name);
+    if(name == "0") return SampleRole::Training;
+    if(name == "1") return SampleRole::Validation;
+    if(name == "2") return SampleRole::Testing;
+    if(name == "3") return SampleRole::None;
+    return sample_role_map().from_string(name);
 }
 
 class Dataset
@@ -76,7 +76,7 @@ public:
 
     // Samples get
 
-    inline Index get_samples_number() const {return data.rows();}
+    Index get_samples_number() const {return data.rows();}
 
     Index get_samples_number(const string&) const;
 
@@ -92,7 +92,7 @@ public:
 
     VectorI get_sample_role_numbers() const;
 
-    inline Index get_variables_number() const { return variables.size(); }
+    Index get_variables_number() const { return variables.size(); }
     Index get_variables_number(const string&) const;
     Index get_used_variables_number() const;
 
@@ -165,7 +165,7 @@ public:
 
     bool get_display() const { return display; }
 
-    bool is_empty() const { return data.size() == 0; }
+    bool is_empty() const { return data.empty(); }
 
     Shape get_input_shape() const { return input_shape; }
     Shape get_target_shape() const { return target_shape; }
@@ -249,7 +249,7 @@ public:
     void set_codification(const Codification& c) { codification = c; }
     void set_codification(const string&);
 
-    void set_missing_values_label(const string& l) { missing_values_label = l; }
+    void set_missing_values_label(string l) { missing_values_label = std::move(l); }
     void set_missing_values_method(const MissingValuesMethod& m) { missing_values_method = m; }
     void set_missing_values_method(const string&);
 
@@ -378,7 +378,7 @@ public:
 
     // Missing values
 
-    inline Index get_missing_values_number() const { return missing_values_number; }
+    Index get_missing_values_number() const { return missing_values_number; }
 
     bool has_nan() const;
 

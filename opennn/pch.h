@@ -4,10 +4,6 @@
 #define EIGEN_USE_THREADS
 #endif
 
-#ifndef NDEBUG
-#define NDEBUG
-#endif
-
 #define EIGEN_MAX_ALIGN_BYTES 32
 #define EIGEN_NO_DEBUG
 #define NOMINMAX
@@ -103,6 +99,35 @@ using type = float;
 namespace opennn {
 constexpr type EPSILON = numeric_limits<type>::epsilon();
 constexpr type MAX = numeric_limits<type>::max();
+
+template <typename Enum>
+struct EnumMap
+{
+    using Entry = pair<Enum, string>;
+
+    const vector<Entry>& entries;
+
+    const string& to_string(Enum value) const
+    {
+        for(const auto& [e, s] : entries)
+            if(e == value) return s;
+        throw runtime_error("Unknown enum value");
+    }
+
+    Enum from_string(const string& name) const
+    {
+        for(const auto& [e, s] : entries)
+            if(s == name) return e;
+        throw runtime_error("Unknown enum string: " + name);
+    }
+
+    Enum from_string(const string& name, Enum fallback) const
+    {
+        for(const auto& [e, s] : entries)
+            if(s == name) return e;
+        return fallback;
+    }
+};
 }
 
 constexpr int Layout = Eigen::RowMajor;

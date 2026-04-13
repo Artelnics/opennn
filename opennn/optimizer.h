@@ -35,11 +35,11 @@ public:
                                  MaximumEpochsNumber,
                                  MaximumTime};
 
-    Loss* get_loss() const { return loss; }
+    const Loss* get_loss() const { return loss; }
 
     const string& get_hardware_use() const { return hardware_use; }
 
-    void set_hardware_use(const string& new_hardware_use) { hardware_use = new_hardware_use; }
+    void set_hardware_use(string new_hardware_use) { hardware_use = std::move(new_hardware_use); }
 
     bool get_display() const { return display; }
 

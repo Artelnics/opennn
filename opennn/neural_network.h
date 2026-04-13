@@ -33,10 +33,10 @@ public:
 
     vector<vector<Shape>> get_parameter_shapes() const
     {
-        const Index layers_number = get_layers_number();
+        const size_t layers_number = get_layers_number();
         vector<vector<Shape>> shapes(layers_number);
 
-        for(Index i = 0; i < layers_number; i++)
+        for(size_t i = 0; i < layers_number; i++)
             shapes[i] = layers[i]->get_parameter_shapes();
 
         return shapes;
@@ -44,10 +44,10 @@ public:
 
     vector<vector<Shape>> get_forward_shapes(Index batch_size) const
     {
-        const Index layers_number = get_layers_number();
+        const size_t layers_number = get_layers_number();
         vector<vector<Shape>> shapes(layers_number);
 
-        for(Index i = 0; i < layers_number; i++)
+        for(size_t i = 0; i < layers_number; i++)
             shapes[i] = layers[i]->get_forward_shapes(batch_size);
 
         return shapes;
@@ -55,10 +55,10 @@ public:
 
     vector<vector<Shape>> get_backward_shapes(Index batch_size) const
     {
-        const Index layers_number = get_layers_number();
+        const size_t layers_number = get_layers_number();
         vector<vector<Shape>> shapes(layers_number);
 
-        for(Index i = 0; i < layers_number; i++)
+        for(size_t i = 0; i < layers_number; i++)
             shapes[i] = layers[i]->get_backward_shapes(batch_size);
 
         return shapes;
@@ -106,7 +106,7 @@ public:
     void set_layer_input_indices(const Index i, const vector<Index>& v) { layer_input_indices[i] = v; }
 
     void set_layer_input_indices(const string&, const vector<string>&);
-    void set_layer_input_indices(const string&, const initializer_list<string>&);
+    void set_layer_input_indices(const string&, initializer_list<string>);
     void set_layer_input_indices(const string&, const string&);
 
     void set_input_variables(const vector<Variable>& v) { input_variables = v; }
@@ -121,9 +121,9 @@ public:
 
     // Layers
 
-    Index get_layers_number() const { return layers.size(); }
-    Index get_layers_number(const string&) const;
-    Index get_layers_number(LayerType) const;
+    size_t get_layers_number() const { return layers.size(); }
+    size_t get_layers_number(const string&) const;
+    size_t get_layers_number(LayerType) const;
 
     Index get_first_trainable_layer_index() const;
     Index get_last_trainable_layer_index() const;
@@ -209,7 +209,7 @@ public:
 
 private:
 
-    bool validate_type(LayerType) const;
+    void validate_type(LayerType) const;
     vector<string> get_layer_labels() const;
 
 protected:

@@ -29,10 +29,10 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, Dataset* new
 void TestingAnalysis::check() const
 {
     if(!neural_network)
-        throw runtime_error("Neural network pointer is nullptr.\n");
+        throw runtime_error("TestingAnalysis error: neural network is not set.");
 
     if(!dataset)
-        throw runtime_error("Dataset pointer is nullptr.\n");
+        throw runtime_error("TestingAnalysis error: dataset is not set.");
 }
 
 Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const MatrixR& target, const MatrixR& output) const
@@ -57,7 +57,7 @@ void TestingAnalysis::print_linear_correlations() const
     const Index targets_number = linear_correlations.size();
 
     for(Index i = 0; i < targets_number; i++)
-        cout << targets_name[i] << " correlation: " << linear_correlations[i].r << endl;
+        cout << targets_name[i] << " correlation: " << linear_correlations[i].r << "\n";
 }
 
 Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodness_of_fit_analysis() const
@@ -293,16 +293,16 @@ void TestingAnalysis::print_error_data_descriptives() const
     const vector<vector<Descriptives>> error_data_statistics = calculate_error_data_descriptives();
 
     for(Index i = 0; i < targets_number; i++)
-        cout << targets_name[i] << endl
-             << "Minimum error: " << error_data_statistics[i][0].minimum << endl
-             << "Maximum error: " << error_data_statistics[i][0].maximum << endl
-             << "Mean error: " << error_data_statistics[i][0].mean << " " << endl
-             << "Standard deviation error: " << error_data_statistics[i][0].standard_deviation << " " << endl
-             << "Minimum percentage error: " << error_data_statistics[i][2].minimum << " %" << endl
-             << "Maximum percentage error: " << error_data_statistics[i][2].maximum << " %" << endl
-             << "Mean percentage error: " << error_data_statistics[i][2].mean << " %" << endl
-             << "Standard deviation percentage error: " << error_data_statistics[i][2].standard_deviation << " %" << endl
-             << endl;
+        cout << targets_name[i] << "\n"
+             << "Minimum error: " << error_data_statistics[i][0].minimum << "\n"
+             << "Maximum error: " << error_data_statistics[i][0].maximum << "\n"
+             << "Mean error: " << error_data_statistics[i][0].mean << " " << "\n"
+             << "Standard deviation error: " << error_data_statistics[i][0].standard_deviation << " " << "\n"
+             << "Minimum percentage error: " << error_data_statistics[i][2].minimum << " %" << "\n"
+             << "Maximum percentage error: " << error_data_statistics[i][2].maximum << " %" << "\n"
+             << "Mean percentage error: " << error_data_statistics[i][2].mean << " %" << "\n"
+             << "Standard deviation percentage error: " << error_data_statistics[i][2].standard_deviation << " %" << "\n"
+             << "\n";
 }
 
 vector<Histogram> TestingAnalysis::calculate_error_data_histograms(const Index bins_number) const
@@ -1037,7 +1037,7 @@ void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
             file << ",";
     }
 
-    file << endl;
+    file << "\n";
 
     for(Index i = 0; i < classes_number; i++)
     {
@@ -1045,7 +1045,7 @@ void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
 
         for(Index j = 0; j < classes_number; j++)
             j == classes_number - 1
-                ? file << confusion(i, j) << endl
+                ? file << confusion(i, j) << "\n"
                 : file << confusion(i, j) << ",";
     }
 
@@ -1058,8 +1058,8 @@ void TestingAnalysis::save_multiple_classification_tests(const filesystem::path&
 
     ofstream file(file_name);
 
-    file << "accuracy,error" << endl;
-    file << multiple_classification_tests(0)* type(100) << "," << multiple_classification_tests(1)* type(100) << endl;
+    file << "accuracy,error" << "\n";
+    file << multiple_classification_tests(0)* type(100) << "," << multiple_classification_tests(1)* type(100) << "\n";
 
     file.close();
 }
@@ -1155,11 +1155,11 @@ void TestingAnalysis::save_classified_samples_csv(const Tensor<string, 2>& sampl
 {
     ofstream file(file_name);
 
-    file << "sample_name,actual_class,predicted_class,probability" << endl;
+    file << "sample_name,actual_class,predicted_class,probability" << "\n";
 
     for(Index i = 0; i < samples.dimension(0); i++)
         file << samples(i, 0) << "," << samples(i, 1) << ","
-             << samples(i, 2) << "," << samples(i, 3) << endl;
+             << samples(i, 2) << "," << samples(i, 3) << "\n";
 
     file.close();
 }
@@ -1170,7 +1170,7 @@ void TestingAnalysis::save_classified_samples_statistics_csv(const Tensor<string
 
     ofstream file(file_name);
 
-    file << "minimum,maximum,mean,std" << endl
+    file << "minimum,maximum,mean,std" << "\n"
          << probabilities.minCoeff() << ","
          << probabilities.maxCoeff() << ","
          << probabilities.mean() << ","
@@ -1255,7 +1255,7 @@ vector<VectorR> TestingAnalysis::calculate_inputs_errors_cross_correlation(const
 
 pair<type, type> TestingAnalysis::test_transformer() const
 {
-    cout << "Testing transformer..." << endl;
+    cout << "Testing transformer..." << "\n";
 
     const auto* transformer = dynamic_cast<Transformer*>(neural_network);
     if(!transformer) throw runtime_error("Expected Transformer neural network.");
@@ -1434,11 +1434,11 @@ void TestingAnalysis::print_binary_classification_tests() const
 {
     const VectorR binary_classification_tests = calculate_binary_classification_tests();
 
-    cout << "Binary classification tests: " << endl
-         << "Classification accuracy : " << binary_classification_tests[0] << endl
-         << "Error rate              : " << binary_classification_tests[1] << endl
-         << "Sensitivity             : " << binary_classification_tests[2] << endl
-         << "Specificity             : " << binary_classification_tests[3] << endl;
+    cout << "Binary classification tests: " << "\n"
+         << "Classification accuracy : " << binary_classification_tests[0] << "\n"
+         << "Error rate              : " << binary_classification_tests[1] << "\n"
+         << "Sensitivity             : " << binary_classification_tests[2] << "\n"
+         << "Specificity             : " << binary_classification_tests[3] << "\n";
 }
 
 MatrixR TestingAnalysis::calculate_multiple_classification_tests() const
@@ -1561,30 +1561,30 @@ void TestingAnalysis::GoodnessOfFitAnalysis::save(const filesystem::path& file_n
     ofstream file(file_name);
 
     file << "Goodness-of-fit analysis\n"
-         << "Determination: " << determination << endl;
+         << "Determination: " << determination << "\n";
 
     file.close();
 }
 
 void TestingAnalysis::GoodnessOfFitAnalysis::print() const
 {
-    cout << "Goodness-of-fit analysis" << endl
-         << "Determination: " << determination << endl;
+    cout << "Goodness-of-fit analysis" << "\n"
+         << "Determination: " << determination << "\n";
 
-    // cout << "Targets:" << endl;
-    // cout << targets << endl;
-    // cout << "Outputs:" << endl;
-    // cout << outputs << endl;
+    // cout << "Targets:" << "\n";
+    // cout << targets << "\n";
+    // cout << "Outputs:" << "\n";
+    // cout << outputs << "\n";
 }
 
 void TestingAnalysis::RocAnalysis::print() const
 {
-    cout << "ROC Curve analysis" << endl;
+    cout << "ROC Curve analysis" << "\n";
 
-//    cout << "Roc Curve:\n" << roc_curve << endl;
-    cout << "Area Under Curve: " << area_under_curve << endl;
-    cout << "Confidence Limit: " << confidence_limit << endl;
-    cout << "Optimal Threshold: " << optimal_threshold << endl;
+//    cout << "Roc Curve:\n" << roc_curve << "\n";
+    cout << "Area Under Curve: " << area_under_curve << "\n";
+    cout << "Confidence Limit: " << confidence_limit << "\n";
+    cout << "Optimal Threshold: " << optimal_threshold << "\n";
 }
 
 #ifdef CUDA

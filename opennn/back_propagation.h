@@ -26,7 +26,7 @@ struct BackPropagation
 
     void allocate_device();
 
-    NeuralNetwork* get_neural_network() const;
+    const NeuralNetwork* get_neural_network() const;
 
     NeuralNetwork* neural_network = nullptr;
 

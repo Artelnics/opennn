@@ -26,11 +26,17 @@ public:
 
     TrainingStrategy(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-    Dataset* get_dataset() const { return dataset; }
-    NeuralNetwork* get_neural_network() const { return neural_network; }
+    const Dataset* get_dataset() const { return dataset; }
+    Dataset* get_dataset() { return dataset; }
 
-    Loss* get_loss() const { return loss.get(); }
-    Optimizer* get_optimization_algorithm() const { return optimizer.get(); }
+    const NeuralNetwork* get_neural_network() const { return neural_network; }
+    NeuralNetwork* get_neural_network() { return neural_network; }
+
+    const Loss* get_loss() const { return loss.get(); }
+    Loss* get_loss() { return loss.get(); }
+
+    const Optimizer* get_optimization_algorithm() const { return optimizer.get(); }
+    Optimizer* get_optimization_algorithm() { return optimizer.get(); }
 
     // Set
 

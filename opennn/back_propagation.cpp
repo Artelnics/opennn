@@ -31,9 +31,9 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
     if(!neural_network)
-        throw runtime_error("BackPropagation error: neural network is not set in loss.");
+        throw runtime_error("BackPropagation error: neural network is not set.");
 
-    const Index layers_number = neural_network->get_layers_number();
+    const size_t layers_number = neural_network->get_layers_number();
 
     const vector<vector<Shape>> parameter_shapes = neural_network->get_parameter_shapes();
 
@@ -49,7 +49,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     gradient_views.resize(layers_number);
     type* g_ptr = (total_parameters_size > 0) ? gradient.data() : nullptr;
 
-    for(Index i = 0; i < layers_number; ++i)
+    for(size_t i = 0; i < layers_number; ++i)
     {
         const vector<Shape>& layer_param_shapes = parameter_shapes[i];
         gradient_views[i].resize(layer_param_shapes.size());
@@ -79,7 +79,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     backward_views.resize(layers_number);
     type* b_ptr = (total_backward_size > 0) ? backward.data() : nullptr;
 
-    for(Index i = 0; i < layers_number; ++i)
+    for(size_t i = 0; i < layers_number; ++i)
     {
         const vector<Shape>& shapes = backward_shapes[i];
         const size_t slots = shapes.size();
@@ -120,11 +120,11 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     const auto& layer_output_indices = neural_network->get_layer_output_indices();
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
 
-    for(Index i = 0; i < layers_number; ++i)
+    for(size_t i = 0; i < layers_number; ++i)
     {
         if(backward_views[i].empty()) continue;
 
-        if(i == last_trainable_layer_index)
+        if(static_cast<Index>(i) == last_trainable_layer_index)
         {
             backward_views[i][0][0] = TensorView(output_gradients.data(), output_gradient_dimensions);
         }
@@ -138,10 +138,10 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
                     Index port = 0;
 
-                    for(Index p = 0; p < static_cast<Index>(consumer_inputs.size()); ++p)
+                    for(size_t p = 0; p < consumer_inputs.size(); ++p)
                         if(consumer_inputs[p] == i)
                         {
-                            port = p;
+                            port = static_cast<Index>(p);
                             break;
                         }
 
@@ -158,13 +158,13 @@ void BackPropagation::allocate_device()
 {
 #ifdef CUDA
     if(!loss)
-        throw runtime_error("BackPropagation::allocate_device error: loss is not set.");
+        throw runtime_error("BackPropagation error: loss is not set.");
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
     if(!neural_network)
-        throw runtime_error("BackPropagation::allocate_device error: neural network is not set.");
+        throw runtime_error("BackPropagation error: neural network is not set.");
 
-    const Index layers_number = neural_network->get_layers_number();
+    const size_t layers_number = neural_network->get_layers_number();
     const Shape output_shape = neural_network->get_output_shape();
     const Index outputs_number = output_shape[0];
 
@@ -181,7 +181,7 @@ void BackPropagation::allocate_device()
     {
         type* dev_g_ptr = gradient.device();
 
-        for(Index i = 0; i < layers_number; ++i)
+        for(size_t i = 0; i < layers_number; ++i)
         {
             const vector<Shape>& layer_param_shapes = parameter_shapes[i];
 
@@ -207,7 +207,7 @@ void BackPropagation::allocate_device()
     {
         type* dev_b_ptr = backward.device();
 
-        for(Index i = 0; i < layers_number; ++i)
+        for(size_t i = 0; i < layers_number; ++i)
         {
             const vector<Shape>& shapes = backward_shapes[i];
 
@@ -223,11 +223,11 @@ void BackPropagation::allocate_device()
             }
         }
 
-        for(Index i = 0; i < layers_number; ++i)
+        for(size_t i = 0; i < layers_number; ++i)
         {
             if(backward_views[i].empty()) continue;
 
-            if(i == last_trainable_layer_index)
+            if(static_cast<Index>(i) == last_trainable_layer_index)
             {
                 TensorView og_view(output_gradients.device(), output_gradient_dimensions);
                 og_view.set_descriptor(output_gradient_dimensions);
@@ -272,7 +272,7 @@ void BackPropagation::free_cuda()
 #endif
 
 
-NeuralNetwork* BackPropagation::get_neural_network() const
+const NeuralNetwork* BackPropagation::get_neural_network() const
 {
     return neural_network;
 }
@@ -281,7 +281,7 @@ vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
 {
     const NeuralNetwork* neural_network_ptr = loss->get_neural_network();
 
-    const Index layers_number = neural_network_ptr->get_layers_number();
+    const size_t layers_number = neural_network_ptr->get_layers_number();
 
     vector<vector<TensorView>> layer_gradient_views(layers_number);
 
@@ -295,13 +295,13 @@ TensorView BackPropagation::get_output_gradients() const
 
 void BackPropagation::print() const
 {
-    cout << "Back-propagation" << endl
-         << "Errors:" << endl
-         << errors << endl
-         << "Error:" << endl
-         << error << endl
-         << "Loss:" << endl
-         << loss << endl;
+    cout << "Back-propagation" << "\n"
+         << "Errors:" << "\n"
+         << errors << "\n"
+         << "Error:" << "\n"
+         << error << "\n"
+         << "Loss:" << "\n"
+         << loss << "\n";
 }
 
 }

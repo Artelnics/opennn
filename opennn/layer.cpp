@@ -77,7 +77,7 @@ type *Layer::link_parameters(type *pointer)
 
     for (size_t i = 0; i < shapes.size(); ++i)
     {
-        if (shapes[i].size() == 0) continue;
+        if (shapes[i].empty()) continue;
 
         assert(is_aligned(pointer));
 

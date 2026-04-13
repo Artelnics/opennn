@@ -123,13 +123,6 @@ string ModelExpression::get_expression_c(const vector<Variable>& variables) cons
     const Index inputs_number = input_names.size();
     const Index outputs_number = output_names.size();
 
-    bool logistic = false;
-    bool relu = false;
-    bool exp_linear = false;
-    bool selu = false;
-    bool tanh = false;
-    bool softmax = false;
-
     buffer << write_comments_c();
 
     for(Index i = 0; i < inputs_number; i++)
@@ -188,12 +181,12 @@ string ModelExpression::get_expression_c(const vector<Variable>& variables) cons
         }
     }
 
-    if(expression.find("Sigmoid") != string::npos) logistic = true;
-    if(expression.find("RectifiedLinear") != string::npos) relu = true;
-    if(expression.find("ExponentialLinear") != string::npos) exp_linear = true;
-    if(expression.find("SELU") != string::npos) selu = true;
-    if(expression.find("HyperbolicTangent") != string::npos) tanh = true;
-    if(expression.find("Softmax") != string::npos) softmax = true;
+    const bool logistic = expression.find("Sigmoid") != string::npos;
+    const bool relu = expression.find("RectifiedLinear") != string::npos;
+    const bool exp_linear = expression.find("ExponentialLinear") != string::npos;
+    const bool selu = expression.find("SELU") != string::npos;
+    const bool tanh = expression.find("HyperbolicTangent") != string::npos;
+    const bool softmax = expression.find("Softmax") != string::npos;
 
     buffer << "float Linear (float x) {\n\treturn x;\n}\n\n";
     if(logistic) buffer << write_logistic_c();
@@ -371,8 +364,7 @@ string ModelExpression::get_expression_api(const vector<Variable>& variables) co
 
     string expression = neural_network->get_expression();
 
-    bool softmax = false;
-    if(expression.find("Softmax") != string::npos) softmax = true;
+    const bool softmax = expression.find("Softmax") != string::npos;
 
     if(expression.find("Linear") != string::npos)
         buffer << "function Linear($x) { return $x; }\n";
@@ -797,17 +789,11 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
     }
 
     const int maximum_output_feature_numbers = 5;
-    bool logistic     = false;
-    bool ReLU         = false;
-    bool ExpLinear    = false;
-    bool SExpLinear   = false;
-    bool Softmax      = false;
-
-    if(expression.find("Sigmoid") != string::npos) logistic = true;
-    if(expression.find("RectifiedLinear") != string::npos) ReLU = true;
-    if(expression.find("ExponentialLinear") != string::npos) ExpLinear = true;
-    if(expression.find("SELU") != string::npos) SExpLinear = true;
-    if(expression.find("Softmax") != string::npos) Softmax = true;
+    const bool logistic = expression.find("Sigmoid") != string::npos;
+    const bool ReLU = expression.find("RectifiedLinear") != string::npos;
+    const bool ExpLinear = expression.find("ExponentialLinear") != string::npos;
+    const bool SExpLinear = expression.find("SELU") != string::npos;
+    const bool Softmax = expression.find("Softmax") != string::npos;
 
     // HTML
 
@@ -888,110 +874,110 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
                 min_value = -1.0; max_value = 1.0;
             }
 
-            buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl;
-            buffer << "<tr style=\"height:3.5em\">" << endl;
-            buffer << "<td> " << input_names[i] << " </td>" << endl;
-            buffer << "<td class=\"neural-cell\">" << endl;
+            buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << "\n";
+            buffer << "<tr style=\"height:3.5em\">" << "\n";
+            buffer << "<td> " << input_names[i] << " </td>" << "\n";
+            buffer << "<td class=\"neural-cell\">" << "\n";
 
             if(min_value==0 && max_value==0)
             {
-                buffer << "<input type=\"range\" id=\"" << fixes_feature_names[i] << "\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "_text')\" />" << endl;
-                buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_feature_names[i] << "_text\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"any\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "')\">" << endl;
+                buffer << "<input type=\"range\" id=\"" << fixes_feature_names[i] << "\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "_text')\" />" << "\n";
+                buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_feature_names[i] << "_text\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"any\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "')\">" << "\n";
             }
             else
             {
-                buffer << "<input type=\"range\" id=\"" << fixes_feature_names[i] << "\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "_text')\" />" << endl;
-                buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_feature_names[i] << "_text\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"any\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "')\">" << endl;
+                buffer << "<input type=\"range\" id=\"" << fixes_feature_names[i] << "\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "_text')\" />" << "\n";
+                buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_feature_names[i] << "_text\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"any\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "')\">" << "\n";
             }
 
-            buffer << "</td>" << endl;
-            buffer << "</tr>" << endl;
-            buffer << "\n" << endl;
+            buffer << "</td>" << "\n";
+            buffer << "</tr>" << "\n";
+            buffer << "\n" << "\n";
         }
     }
     else
     {
         for(Index i = 0; i < inputs_number; i++)
-            buffer << "<!-- "<< to_string(i) <<"no scaling layer -->" << endl
-                   << "<tr style=\"height:3.5em\">" << endl
-                   << "<td> " << input_names[i] << " </td>" << endl
-                   << "<td class=\"neural-cell\">" << endl
-                   << "<input type=\"range\" id=\"" << fixes_feature_names[i] << "\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "_text')\" />" << endl
-                   << "<input type=\"number\" id=\"" << fixes_feature_names[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"any\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "')\">" << endl
-                   << "</td>" << endl
-                   << "</tr>\n" << endl;
+            buffer << "<!-- "<< to_string(i) <<"no scaling layer -->" << "\n"
+                   << "<tr style=\"height:3.5em\">" << "\n"
+                   << "<td> " << input_names[i] << " </td>" << "\n"
+                   << "<td class=\"neural-cell\">" << "\n"
+                   << "<input type=\"range\" id=\"" << fixes_feature_names[i] << "\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "_text')\" />" << "\n"
+                   << "<input type=\"number\" id=\"" << fixes_feature_names[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"any\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "')\">" << "\n"
+                   << "</td>" << "\n"
+                   << "</tr>\n" << "\n";
     }
 
-    buffer << "</table>" << endl;
+    buffer << "</table>" << "\n";
 
     if(outputs_number > maximum_output_feature_numbers)
     {
-        buffer << "<!-- HIDDEN INPUTS -->" << endl;
+        buffer << "<!-- HIDDEN INPUTS -->" << "\n";
         for(Index i = 0; i < outputs_number; i++)
-            buffer << "<input type=\"hidden\" id=\"" << fixes_output_names[i] << "\" value=\"\">" << endl;
-        buffer << "\n" << endl;
+            buffer << "<input type=\"hidden\" id=\"" << fixes_output_names[i] << "\" value=\"\">" << "\n";
+        buffer << "\n" << "\n";
     }
 
-    buffer << "<!-- BUTTON HERE -->" << endl
-           << "<button type=\"button\" class=\"btn\" onclick=\"neuralNetwork()\">calculate outputs</button>" << endl
-           << "<br/>\n" << endl
-           << "<table border=\"1px\" class=\"form-table\">" << endl
-           << "<h4> OUTPUTS </h4>" << endl;
+    buffer << "<!-- BUTTON HERE -->" << "\n"
+           << "<button type=\"button\" class=\"btn\" onclick=\"neuralNetwork()\">calculate outputs</button>" << "\n"
+           << "<br/>\n" << "\n"
+           << "<table border=\"1px\" class=\"form-table\">" << "\n"
+           << "<h4> OUTPUTS </h4>" << "\n";
 
     // Outputs
 
     if(outputs_number > maximum_output_feature_numbers)
     {
-        buffer << "<tr style=\"height:3.5em\">" << endl
-               << "<td> Target </td>" << endl
-               << "<td class=\"neural-cell\">" << endl
-               << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">" << endl;
+        buffer << "<tr style=\"height:3.5em\">" << "\n"
+               << "<td> Target </td>" << "\n"
+               << "<td class=\"neural-cell\">" << "\n"
+               << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">" << "\n";
 
         for(Index i = 0; i < outputs_number; i++)
-            buffer << "<option value=\"" << output_names[i] << "\">" << output_names[i] << "</option>" << endl;
+            buffer << "<option value=\"" << output_names[i] << "\">" << output_names[i] << "</option>" << "\n";
 
-        buffer << "</select>" << endl
-               << "</td>" << endl
-               << "</tr>\n" << endl
-               << "<tr style=\"height:3.5em\">" << endl
-               << "<td> Value </td>" << endl
-               << "<td class=\"neural-cell\">" << endl
-               << "<input style=\"text-align:right; padding-right:20px;\" id=\"selected_value\" value=\"\" type=\"text\"  disabled/>" << endl
-               << "</td>" << endl
-               << "</tr>\n" << endl;
+        buffer << "</select>" << "\n"
+               << "</td>" << "\n"
+               << "</tr>\n" << "\n"
+               << "<tr style=\"height:3.5em\">" << "\n"
+               << "<td> Value </td>" << "\n"
+               << "<td class=\"neural-cell\">" << "\n"
+               << "<input style=\"text-align:right; padding-right:20px;\" id=\"selected_value\" value=\"\" type=\"text\"  disabled/>" << "\n"
+               << "</td>" << "\n"
+               << "</tr>\n" << "\n";
     }
     else
     {
         for(Index i = 0; i < outputs_number; i++)
-            buffer << "<tr style=\"height:3.5em\">" << endl
-                   << "<td> " << output_names[i] << " </td>" << endl
-                   << "<td class=\"neural-cell\">" << endl
-                   << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << fixes_output_names[i] << "\" value=\"\" type=\"text\"  disabled/>" << endl
-                   << "</td>" << endl
-                   << "</tr>\n" << endl;
+            buffer << "<tr style=\"height:3.5em\">" << "\n"
+                   << "<td> " << output_names[i] << " </td>" << "\n"
+                   << "<td class=\"neural-cell\">" << "\n"
+                   << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << fixes_output_names[i] << "\" value=\"\" type=\"text\"  disabled/>" << "\n"
+                   << "</td>" << "\n"
+                   << "</tr>\n" << "\n";
     }
 
-    buffer << "</table>\n" << endl
-           << "</form>" << endl
-           << "</div>\n" << endl
-           << "</section>\n" << endl;
+    buffer << "</table>\n" << "\n"
+           << "</form>" << "\n"
+           << "</div>\n" << "\n"
+           << "</section>\n" << "\n";
 
     // Calculate outputs script
 
-    buffer << "<script>" << endl;
+    buffer << "<script>" << "\n";
 
     if(outputs_number > maximum_output_feature_numbers)
     {
-        buffer << "function updateSelectedCategory() {" << endl
-               << "\tvar selectedCategory = document.getElementById(\"category_select\").value;" << endl
-               << "\tvar selectedValueElement = document.getElementById(\"selected_value\");" << endl;
+        buffer << "function updateSelectedCategory() {" << "\n"
+               << "\tvar selectedCategory = document.getElementById(\"category_select\").value;" << "\n"
+               << "\tvar selectedValueElement = document.getElementById(\"selected_value\");" << "\n";
 
         for(Index i = 0; i < outputs_number; i++)
-            buffer << "\tif(selectedCategory === \"" << fixes_output_names[i] << "\") {" << endl
-                   << "\t\tselectedValueElement.value = document.getElementById(\"" << fixes_output_names[i] << "\").value;" << endl
-                   << "\t}" << endl;
+            buffer << "\tif(selectedCategory === \"" << fixes_output_names[i] << "\") {" << "\n"
+                   << "\t\tselectedValueElement.value = document.getElementById(\"" << fixes_output_names[i] << "\").value;" << "\n"
+                   << "\t}" << "\n";
 
-        buffer << "}\n" << endl;
+        buffer << "}\n" << "\n";
     }
 
     buffer << "\nfunction Linear(x) {\n"
@@ -1006,33 +992,33 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
     if(buffer.str().find("HyperbolicTangent") == string::npos) buffer << hyperbolic_tangent_javascript();
     buffer << "\n";
 
-    buffer << "function neuralNetwork()" << endl
-           << "{" << endl
-           << "\t" << "var inputs = [];" << endl;
+    buffer << "function neuralNetwork()" << "\n"
+           << "{" << "\n"
+           << "\t" << "var inputs = [];" << "\n";
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        buffer << "\t" << "var " << fixes_feature_names[i] << " = (parseFloat(document.getElementById(\"" << fixes_feature_names[i] << "_text\").value) || 0); " << endl;
-        buffer << "\t" << "inputs.push(" << fixes_feature_names[i] << ");" << endl;
+        buffer << "\t" << "var " << fixes_feature_names[i] << " = (parseFloat(document.getElementById(\"" << fixes_feature_names[i] << "_text\").value) || 0); " << "\n";
+        buffer << "\t" << "inputs.push(" << fixes_feature_names[i] << ");" << "\n";
     }
 
-    buffer << "\n" << "\t" << "var outputs = calculate_outputs(inputs); " << endl;
+    buffer << "\n" << "\t" << "var outputs = calculate_outputs(inputs); " << "\n";
 
     if(outputs_number > maximum_output_feature_numbers)
-        buffer << "\t" << "updateSelectedCategory();" << endl;
+        buffer << "\t" << "updateSelectedCategory();" << "\n";
     else
         for(Index i = 0; i < outputs_number; i++)
-            buffer << "\t" << "var " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");" << endl
-                   << "\t" << fixes_output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
+            buffer << "\t" << "var " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");" << "\n"
+                   << "\t" << fixes_output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << "\n";
 
-    buffer << "}" << endl
-           << "function calculate_outputs(inputs)" << endl
-           << "{" << endl;
+    buffer << "}" << "\n"
+           << "function calculate_outputs(inputs)" << "\n"
+           << "{" << "\n";
 
     for(Index i = 0; i < inputs_number; i++)
-        buffer << "\t" << "var " << fixes_feature_names[i] << " = " << "+inputs[" << to_string(i) << "];" << endl;
+        buffer << "\t" << "var " << fixes_feature_names[i] << " = " << "+inputs[" << to_string(i) << "];" << "\n";
 
-    buffer << endl;
+    buffer << "\n";
 
     vector<string> found_mathematical_expressions = {"exp", "tanh", "max", "min"};
     const string sufix = "Math.";
@@ -1060,39 +1046,39 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
         replace_all_appearances(line, "inf", "Infinity");
 
         line.size() <= 1
-            ? buffer << endl
-            : buffer << "\t" << "var " << line << endl;
+            ? buffer << "\n"
+            : buffer << "\t" << "var " << line << "\n";
     }
 
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::JavaScript);
 
     for(size_t i = 0; i < fixed_outputs.size(); i++)
-        buffer << fixed_outputs[i] << endl;
+        buffer << fixed_outputs[i] << "\n";
 
-    buffer << "\t" << "var out = [];" << endl;
+    buffer << "\t" << "var out = [];" << "\n";
 
     for(Index i = 0; i < outputs_number; i++)
-        buffer << "\t" << "out.push(" << fixes_output_names[i] << ");" << endl;
+        buffer << "\t" << "out.push(" << fixes_output_names[i] << ");" << "\n";
 
     if(Softmax)
     {
-        buffer << "\n\t// Softmax Normalization" << endl;
-        buffer << "\tvar sum = 0;" << endl;
-        buffer << "\tfor(var i = 0; i < out.length; i++) sum += out[i];" << endl;
-        buffer << "\tfor(var i = 0; i < out.length; i++) out[i] /= sum;" << endl;
+        buffer << "\n\t// Softmax Normalization" << "\n";
+        buffer << "\tvar sum = 0;" << "\n";
+        buffer << "\tfor(var i = 0; i < out.length; i++) sum += out[i];" << "\n";
+        buffer << "\tfor(var i = 0; i < out.length; i++) out[i] /= sum;" << "\n";
     }
 
-    buffer << "\n\t" << "return out;" << endl
-           << "}\n" << endl;
+    buffer << "\n\t" << "return out;" << "\n"
+           << "}\n" << "\n";
 
-    buffer << "function updateTextInput1(value, id)" << endl
-           << "{" << endl
-           << "\t"<< "document.getElementById(id).value = value;" << endl
-           << "}\n" << endl
-           << "</script>\n" << endl
-           << "<!--script source=\"https://www.neuraldesigner.com/app/htmlparts/footer.js\"></script-->\n" << endl
-           << "</body>\n" << endl
-           << "</html>" << endl;
+    buffer << "function updateTextInput1(value, id)" << "\n"
+           << "{" << "\n"
+           << "\t"<< "document.getElementById(id).value = value;" << "\n"
+           << "}\n" << "\n"
+           << "</script>\n" << "\n"
+           << "<!--script source=\"https://www.neuraldesigner.com/app/htmlparts/footer.js\"></script-->\n" << "\n"
+           << "</body>\n" << "\n"
+           << "</html>" << "\n";
 
     return buffer.str();
 }
@@ -1143,17 +1129,10 @@ string ModelExpression::get_expression_python(const vector<Variable>& variables)
     const Index inputs_number = input_names.size();
     const Index outputs_number = outputs.size();
 
-    bool logistic = false;
-    bool relu = false;
-    bool exp_linear = false;
-    bool selu = false;
-    bool hyper_tan = false;
-    bool softmax = false;
-
     buffer << write_header_python();
 
     for(Index i = 0; i < inputs_number; i++)
-        buffer << "\t" << i << ") " << input_names[i] << endl;
+        buffer << "\t" << i << ") " << input_names[i] << "\n";
 
     buffer << write_subheader_python();
 
@@ -1200,12 +1179,12 @@ string ModelExpression::get_expression_python(const vector<Variable>& variables)
         }
     }
 
-    if(expression.find("Sigmoid") != string::npos) logistic = true;
-    if(expression.find("RectifiedLinear") != string::npos) relu = true;
-    if(expression.find("ExponentialLinear") != string::npos) exp_linear = true;
-    if(expression.find("SELU") != string::npos) selu = true;
-    if(expression.find("HyperbolicTangent") != string::npos) hyper_tan = true;
-    if(expression.find("Softmax") != string::npos) softmax = true;
+    const bool logistic = expression.find("Sigmoid") != string::npos;
+    const bool relu = expression.find("RectifiedLinear") != string::npos;
+    const bool exp_linear = expression.find("ExponentialLinear") != string::npos;
+    const bool selu = expression.find("SELU") != string::npos;
+    const bool hyper_tan = expression.find("HyperbolicTangent") != string::npos;
+    const bool softmax = expression.find("Softmax") != string::npos;
 
     buffer << "import numpy as np\n"
            << "import pandas as pd\n\n"

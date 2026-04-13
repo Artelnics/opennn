@@ -21,21 +21,24 @@ enum class PoolingMethod
     AveragePooling
 };
 
+inline const EnumMap<PoolingMethod>& pooling_method_map()
+{
+    static const vector<pair<PoolingMethod, string>> entries = {
+        {PoolingMethod::MaxPooling,     "MaxPooling"},
+        {PoolingMethod::AveragePooling, "AveragePooling"}
+    };
+    static const EnumMap<PoolingMethod> map{entries};
+    return map;
+}
+
 inline const string& pooling_method_to_string(PoolingMethod method)
 {
-    static const string max_str = "MaxPooling";
-    static const string avg_str = "AveragePooling";
-
-    if(method == PoolingMethod::AveragePooling) return avg_str;
-    return max_str;
+    return pooling_method_map().to_string(method);
 }
 
 inline PoolingMethod string_to_pooling_method(const string& name)
 {
-    if(name == "MaxPooling") return PoolingMethod::MaxPooling;
-    if(name == "AveragePooling") return PoolingMethod::AveragePooling;
-
-    throw runtime_error("Unknown pooling method: " + name);
+    return pooling_method_map().from_string(name);
 }
 
 class Pooling final : public Layer

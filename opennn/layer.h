@@ -39,9 +39,9 @@ enum class LayerType
     Unscaling
 };
 
-inline const string& layer_type_to_string(LayerType type)
+inline const EnumMap<LayerType>& layer_type_map()
 {
-    static const vector<pair<LayerType, string>> map = {
+    static const vector<pair<LayerType, string>> entries = {
         {LayerType::Addition3d,         "Addition3d"},
         {LayerType::Addition4d,         "Addition4d"},
         {LayerType::Bounding,           "Bounding"},
@@ -62,41 +62,18 @@ inline const string& layer_type_to_string(LayerType type)
         {LayerType::Scaling4d,          "Scaling4d"},
         {LayerType::Unscaling,          "Unscaling"}
     };
+    static const EnumMap<LayerType> map{entries};
+    return map;
+}
 
-    for(const auto& [t, s] : map)
-        if(t == type) return s;
-
-    throw runtime_error("Unknown LayerType");
+inline const string& layer_type_to_string(LayerType type)
+{
+    return layer_type_map().to_string(type);
 }
 
 inline LayerType string_to_layer_type(const string& name)
 {
-    static const vector<pair<LayerType, string>> map = {
-        {LayerType::Addition3d,         "Addition3d"},
-        {LayerType::Addition4d,         "Addition4d"},
-        {LayerType::Bounding,           "Bounding"},
-        {LayerType::Convolutional,      "Convolutional"},
-        {LayerType::Dense2d,            "Dense2d"},
-        {LayerType::Dense3d,            "Dense3d"},
-        {LayerType::Embedding,          "Embedding"},
-        {LayerType::Flatten2d,          "Flatten2d"},
-        {LayerType::Flatten3d,          "Flatten3d"},
-        {LayerType::Flatten4d,          "Flatten4d"},
-        {LayerType::MultiHeadAttention, "MultiHeadAttention"},
-        {LayerType::Normalization3d,    "Normalization3d"},
-        {LayerType::Pooling,            "Pooling"},
-        {LayerType::Pooling3d,          "Pooling3d"},
-        {LayerType::Recurrent,          "Recurrent"},
-        {LayerType::Scaling2d,          "Scaling2d"},
-        {LayerType::Scaling3d,          "Scaling3d"},
-        {LayerType::Scaling4d,          "Scaling4d"},
-        {LayerType::Unscaling,          "Unscaling"}
-    };
-
-    for(const auto& [t, s] : map)
-        if(s == name) return t;
-
-    throw runtime_error("Unknown layer type name: " + name);
+    return layer_type_map().from_string(name);
 }
 
 #ifdef _MSC_VER
@@ -123,7 +100,7 @@ public:
     virtual void set_input_shape(const Shape&);
     virtual void set_output_shape(const Shape&);
 
-    void set_label(const string& new_label) { label = new_label; }
+    void set_label(string new_label) { label = std::move(new_label); }
 
     virtual void set_parameters_random();
 
