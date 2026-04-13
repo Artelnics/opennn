@@ -155,7 +155,7 @@ void TrainingStrategy::set_default()
         set_optimization_algorithm("AdaptiveMomentEstimation");
 
         AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(optimizer.get());
-        adam->set_learning_rate(0.0001);
+        adam->set_learning_rate(0.0001F);
         return;
     }
 
