@@ -8,6 +8,8 @@
 
 #include "registry.h"
 #include "dataset.h"
+#include "forward_propagation.h"
+#include "back_propagation.h"
 #include "loss.h"
 #include "batch.h"
 #include "adaptive_moment_estimation.h"

@@ -184,9 +184,10 @@ void bounding(const TensorView& input,
 
     MatrixMap output_matrix = output.as_matrix();
 
-    output_matrix.array() = input_matrix.array()
-        .rowwise().max(lower_bounds_vector.array().transpose())
-        .rowwise().min(upper_bounds_vector.array().transpose());
+    for(Index j = 0; j < features; ++j)
+        output_matrix.col(j) = input_matrix.col(j)
+                                           .cwiseMax(lower_bounds_vector(j))
+                                           .cwiseMin(upper_bounds_vector(j));
 
 #else
     // @todo CUDA bounding

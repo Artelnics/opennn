@@ -10,9 +10,10 @@
 
 #include <regex>
 #include "statistics.h"
+#include "layer.h"
+#include "variable.h"
 #include "math_utilities.h"
 #include "forward_propagation.h"
-#include "tensor_utilities.h"
 
 namespace opennn
 {

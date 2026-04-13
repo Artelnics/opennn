@@ -24,6 +24,8 @@ public:
 
     NeuralNetwork();
 
+    virtual ~NeuralNetwork() = default;
+
     NeuralNetwork(const filesystem::path&);
 
     void add_layer(unique_ptr<Layer>,

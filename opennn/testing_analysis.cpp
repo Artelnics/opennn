@@ -14,6 +14,8 @@
 #include "statistics.h"
 #include "unscaling_layer.h"
 #include "error_utilities.h"
+#include "forward_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {

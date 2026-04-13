@@ -12,6 +12,8 @@
 #include "convolutional_layer.h"
 #include "neural_network.h"
 #include "loss.h"
+#include "forward_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {
@@ -89,12 +91,15 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
 #endif
 
 #ifdef CUDA
-    cached_conv_args.algorithm_filter = algo_filter;
-    cached_conv_args.algorithm_data = algo_data;
-    cached_conv_args.workspace = cuda_workspace;
-    cached_conv_args.workspace_size = cuda_workspace_size;
-    cached_conv_args.backward_filter_workspace = cuda_backward_filter_workspace;
-    cached_conv_args.backward_filter_workspace_size = cuda_backward_filter_workspace_size;
+    ConvolutionArguments bwd_args = cached_conv_args;
+    bwd_args.algorithm_filter = algo_filter;
+    bwd_args.algorithm_data = algo_data;
+    bwd_args.workspace = cuda_workspace;
+    bwd_args.workspace_size = cuda_workspace_size;
+    bwd_args.backward_filter_workspace = cuda_backward_filter_workspace;
+    bwd_args.backward_filter_workspace_size = cuda_backward_filter_workspace_size;
+#else
+    const ConvolutionArguments& bwd_args = cached_conv_args;
 #endif
 
 #ifndef CUDA
@@ -102,14 +107,13 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                  delta,
                                  back_propagation.gradient_views[layer][Weights],
                                  back_propagation.gradient_views[layer][Biases],
-                                 cached_conv_args);
+                                 bwd_args);
 #else
-    // In CUDA, use original input (cuDNN handles padding)
     convolution_backward_weights(forward_propagation.views[layer][Inputs][0],
                                  delta,
                                  back_propagation.gradient_views[layer][Weights],
                                  back_propagation.gradient_views[layer][Biases],
-                                 cached_conv_args);
+                                 bwd_args);
 #endif
 
     if(!is_first_layer)
@@ -117,7 +121,7 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                   parameters[Weights],
                                   back_propagation.backward_views[layer][InputGradients][0],
                                   back_propagation.backward_views[layer][InputGradients][0],
-                                  cached_conv_args);
+                                  bwd_args);
 }
 
 Index Convolutional::get_output_height() const

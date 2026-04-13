@@ -1034,8 +1034,8 @@ void Dataset::set(const Index new_samples_number,
         variable.name = "variable_" + to_string(i + 1);
 
         variable.role = (i < new_inputs_number)
-                               ? "Input"
-                               : "Target";
+                               ? VariableRole::Input
+                               : VariableRole::Target;
     }
 
     sample_roles.resize(new_samples_number, SampleRole::Training);

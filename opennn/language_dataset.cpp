@@ -47,8 +47,8 @@ LanguageDataset::LanguageDataset(const Index samples_number,
         variable.name = "variable_" + to_string(i + 1);
 
         variable.role = (i < input_sequence_length)
-            ? "Input"
-            : "Target";
+            ? VariableRole::Input
+            : VariableRole::Target;
     }
 
     sample_roles.resize(samples_number);

@@ -19,6 +19,8 @@
 #include "embedding_layer.h"
 #include "variable.h"
 #include "string_utilities.h"
+#include "forward_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {

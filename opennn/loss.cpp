@@ -11,6 +11,8 @@
 #include "dataset.h"
 #include "loss.h"
 #include "error_utilities.h"
+#include "forward_propagation.h"
+#include "back_propagation.h"
 #include "../eigen/Eigen/LU"
 
 namespace opennn
@@ -228,7 +230,7 @@ void Loss::regularization_from_XML(const XmlDocument& document)
 {
     const XmlElement* root_element = get_xml_root(document, "Regularization");
 
-    const string new_regularization_method = root_element.->attribute("Type");
+    const string new_regularization_method = root_element->attribute("Type");
 
     set_regularization(new_regularization_method);
 

@@ -11,6 +11,8 @@
 #include "math_utilities.h"
 #include "pooling_layer.h"
 #include "loss.h"
+#include "forward_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {

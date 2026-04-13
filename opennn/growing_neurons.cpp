@@ -12,6 +12,8 @@
 #include "training_strategy.h"
 #include "growing_neurons.h"
 #include "string_utilities.h"
+#include "forward_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {

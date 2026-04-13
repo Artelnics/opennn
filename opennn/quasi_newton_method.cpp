@@ -11,6 +11,8 @@
 #include "loss.h"
 #include "quasi_newton_method.h"
 #include "batch.h"
+#include "forward_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {
