@@ -106,6 +106,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape({ neurons_number });
         neural_network->get_layer(last_trainable_layer_index)->set_input_shape({ neurons_number });
+        neural_network->compile();
 
         neuron_selection_results.neurons_number_history(epoch) = neurons_number;
 
@@ -137,9 +138,9 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
             if(minimum_validation_error < neuron_selection_results.optimum_validation_error)
             {
                 neuron_selection_results.optimal_neurons_number = neurons_number;
-                //neural_network->get_parameters(neuron_selection_results.optimal_parameters);
+                neuron_selection_results.optimal_parameters = neural_network->get_parameters();
                 neuron_selection_results.optimum_training_error = minimum_training_error;
-                neuron_selection_results.optimum_validation_error = minimum_validation_error;                                
+                neuron_selection_results.optimum_validation_error = minimum_validation_error;
             }
         }
 
@@ -206,7 +207,9 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape({ neuron_selection_results.optimal_neurons_number });
     neural_network->get_layer(last_trainable_layer_index)->set_input_shape({ neuron_selection_results.optimal_neurons_number });
-    neural_network->set_parameters(neuron_selection_results.optimal_parameters);
+    neural_network->compile();
+    if(neuron_selection_results.optimal_parameters.size() > 0)
+        neural_network->set_parameters(neuron_selection_results.optimal_parameters);
 
     if(display) neuron_selection_results.print();
 

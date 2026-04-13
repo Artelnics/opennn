@@ -1,0 +1,68 @@
+================================================================
+ OPENNN MODEL COMPARISON FOR PotenciaActiva PREDICTION
+ Dataset: 4144 rows, split 70% train / 30% test
+ Date: 2026-04-09
+================================================================
+
+MODEL A: Linear (no scrap composition)
+------------------------------------------------------------
+Architecture:  Scaling -> Dense(1 linear) -> Dense(1 linear) -> Unscaling
+Parameters:    11
+Elapsed time:  00:00:00
+
+  Training:   R2 = 0.649402   MSE = 5.52754e+06   RMSE = 2351.07
+  Testing:    R2 = 0.570123   MSE = 7.39881e+06   RMSE = 2720.07
+
+
+MODEL B: Linear (with scrap composition)
+------------------------------------------------------------
+Architecture:  Scaling -> Dense(1 linear) -> Dense(1 linear) -> Unscaling
+Parameters:    22
+Elapsed time:  00:00:00
+
+  Training:   R2 = 0.691899   MSE = 4.80499e+06   RMSE = 2192.03
+  Testing:    R2 = 0.683871   MSE = 5.56174e+06   RMSE = 2358.33
+
+
+MODEL C: Neural Network 4 tanh (no scrap)
+------------------------------------------------------------
+Architecture:  Scaling -> Dense(4 tanh) -> Dense(1 linear) -> Unscaling
+Parameters:    41
+Elapsed time:  00:00:00
+
+  Training:   R2 = 0.813926   MSE = 2.88138e+06   RMSE = 1697.46
+  Testing:    R2 = 0.805758   MSE = 3.4883e+06   RMSE = 1867.7
+
+
+MODEL D: Neural Network 4 tanh (with scrap)
+------------------------------------------------------------
+Architecture:  Scaling -> Dense(4 tanh) -> Dense(1 linear) -> Unscaling
+Parameters:    85
+Elapsed time:  00:00:01
+
+  Training:   R2 = 0.85627   MSE = 2.28478e+06   RMSE = 1511.55
+  Testing:    R2 = 0.791687   MSE = 3.56656e+06   RMSE = 1888.53
+
+
+================================================================
+ SUMMARY TABLE
+================================================================
+
+  Model                          Train R2    Test R2    Test RMSE
+  -----------------------------------------------------------------
+  MODEL A: Linear (no scrap compositi0.649402   0.570123   2720.07
+  MODEL B: Linear (with scrap composi0.691899   0.683871   2358.33
+  MODEL C: Neural Network 4 tanh (no 0.813926   0.805758   1867.7
+  MODEL D: Neural Network 4 tanh (wit0.85627   0.791687   1888.53
+
+
+Compare with Kohle formula (constrained, full dataset):
+  Kohle Model 1 (no scrap):  R2 = 0.5648   RMSE = 2655 kWh
+  Kohle Model 2 (+ scrap):   R2 = 0.5697   RMSE = 2640 kWh
+
+Notes:
+  - Kohle models use physically constrained coefficients
+  - OpenNN linear models are unconstrained
+  - NN models use HyperbolicTangent activation (1 hidden layer, 4 neurons)
+  - Kohle R2 is computed on full dataset; OpenNN R2 on test set (30%)
+  - R2 reported is the square of the correlation coefficient (determination)

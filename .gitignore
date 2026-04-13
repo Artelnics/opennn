@@ -288,6 +288,9 @@ tests/data/*.xml
 #SonarCloud
 .scannerwork
 
+# Large data files
+examples/wwt_optimization/data/WWTP_PO4_NH4_removal.csv
+
 # Build artifacts in source directories (qmake/MSVC generated)
 **/.qmake.stash
 **/Makefile
