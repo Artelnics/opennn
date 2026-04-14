@@ -204,8 +204,8 @@ Shape string_to_shape(const string& x, const string& separator)
     {
         try
         {
-            if(!token.empty() && result.rank < Shape::MaxRank)
-                result.shape[result.rank++] = stoi(token);
+            if(!token.empty())
+                result.push_back(stoi(token));
         }
         catch (const invalid_argument&)
         {

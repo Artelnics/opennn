@@ -30,7 +30,7 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
                                            const Shape& complexity_dimensions,
                                            const Shape& output_shape) : NeuralNetwork()
 {
-    const Index complexity_size = complexity_dimensions.rank;
+    const Index complexity_size = complexity_dimensions.rank();
 
     add_layer(make_unique<Scaling<2>>(input_shape));
 
@@ -65,7 +65,7 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                              const Shape& complexity_dimensions,
                                              const Shape& output_shape) : NeuralNetwork()
 {
-    const Index complexity_size = complexity_dimensions.rank;
+    const Index complexity_size = complexity_dimensions.rank();
 
     add_layer(make_unique<Scaling<2>>(input_shape));
 
@@ -163,7 +163,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                                        const Shape& complexity_dimensions,
                                                        const Shape& output_shape) : NeuralNetwork()
 {
-    if (input_shape.rank != 3)
+    if (input_shape.rank() != 3)
         throw runtime_error("Input shape size is not 3.");
 
     reference_all_layers();
@@ -172,7 +172,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
     scaling_layer->set_scalers("ImageMinMax");
     add_layer(std::move(scaling_layer));
 
-    const Index complexity_size = complexity_dimensions.rank;
+    const Index complexity_size = complexity_dimensions.rank();
 
     for(Index i = 0; i < complexity_size; i++)
     {
@@ -231,7 +231,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
                            const Shape& initial_filters,
                            const Shape& output_shape) : NeuralNetwork()
 {
-    if (input_shape.rank != 3)
+    if (input_shape.rank() != 3)
         throw runtime_error("Input shape size must be 3.");
     if (blocks_per_stage.size() != initial_filters.size())
         throw runtime_error("blocks_per_stage and initial_filters must have the same size.");

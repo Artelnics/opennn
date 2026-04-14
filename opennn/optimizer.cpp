@@ -91,7 +91,7 @@ void Optimizer::set_scaling()
     check();
 
     Dataset* dataset = loss->get_dataset();
-    const NeuralNetwork* neural_network = loss->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     // Scaling layer
 
@@ -136,8 +136,6 @@ void Optimizer::set_scaling()
         return;
 
     // Unscaling layer
-
-    if(!neural_network->has(LayerType::Unscaling)) return;
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");

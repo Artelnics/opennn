@@ -74,8 +74,10 @@ public:
     bool is_empty() const { return layers.empty(); }
 
     VectorR& get_parameters() { return parameters.vector; }
+    const VectorR& get_parameters() const { return parameters.vector; }
 
     type* get_parameters_data() { return parameters.data(); }
+    const type* get_parameters_data() const { return parameters.data(); }
     Index get_parameters_size() const { return parameters.size(); }
 
     const vector<Variable>& get_input_variables() const { return input_variables; }
@@ -95,8 +97,10 @@ public:
 
     Index find_input_index(const vector<Index>&, Index) const;
 
-    Layer* get_first(const string&) const;
-    Layer* get_first(LayerType) const;
+    Layer* get_first(const string&);
+    Layer* get_first(LayerType);
+    const Layer* get_first(const string&) const;
+    const Layer* get_first(LayerType) const;
 
     // Set
 
@@ -199,6 +203,7 @@ public:
 public:
 
     type* get_parameters_device() { return parameters.device(); }
+    const type* get_parameters_device() const { return parameters.device(); }
 
     void copy_parameters_device();
     void copy_parameters_host();

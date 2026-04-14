@@ -159,6 +159,7 @@ public:
     type* link_parameters(type* pointer);
 
     vector<TensorView>& get_parameter_views() { return parameters; }
+    const vector<TensorView>& get_parameter_views() const { return parameters; }
 
 protected:
 

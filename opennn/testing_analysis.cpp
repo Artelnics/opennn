@@ -156,7 +156,7 @@ Tensor3 TestingAnalysis::calculate_error_data() const
 
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
-    const auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+    const auto* unscaling_layer = dynamic_cast<const Unscaling*>(neural_network->get_first("Unscaling"));
 
     if(!unscaling_layer)
         throw runtime_error("Unscaling layer not found.\n");
@@ -201,7 +201,7 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
-    const auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+    const auto* unscaling_layer = dynamic_cast<const Unscaling*>(neural_network->get_first("Unscaling"));
 
     if(!unscaling_layer)
         throw runtime_error("Unscaling layer not found.\n");
@@ -575,9 +575,9 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
 
         MatrixR batch_outputs;
 
-        if(input_shape.rank == 1)
+        if(input_shape.rank() == 1)
             batch_outputs = neural_network->calculate_outputs(batch_inputs_flat);
-        else if(input_shape.rank == 3)
+        else if(input_shape.rank() == 3)
         {
             Tensor4 inputs_4d(current_batch_size,
                               input_shape[0],
@@ -902,7 +902,7 @@ VectorR TestingAnalysis::calculate_maximum_gain(const MatrixR& positive_cumulati
 {
     const Index points_number = positive_cumulative_gain.rows();
 
-    VectorR maximum_gain(2);
+    VectorR maximum_gain = VectorR::Zero(2);
 
     const type percentage_increment = type(0.05);
 
@@ -1376,7 +1376,7 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const type decisi
 
     type negative_likelihood;
 
-    if(Index(classification_accuracy) == 1)
+    if(abs(classification_accuracy - type(1)) < EPSILON)
         negative_likelihood = type(1);
     else if(abs(type(1) - sensitivity) < EPSILON)
         negative_likelihood = type(0);

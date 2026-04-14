@@ -170,12 +170,12 @@ Index NeuralNetwork::find_input_index(const vector<Index>& layer_inputs_indices,
     return (it != layer_inputs_indices.end()) ? distance(layer_inputs_indices.begin(), it) : -1;
 }
 
-Layer* NeuralNetwork::get_first(const string& name) const
+const Layer* NeuralNetwork::get_first(const string& name) const
 {
     return get_first(string_to_layer_type(name));
 }
 
-Layer* NeuralNetwork::get_first(LayerType type) const
+const Layer* NeuralNetwork::get_first(LayerType type) const
 {
     auto it = find_if(layers.begin(), layers.end(),
                       [type](const unique_ptr<Layer>& layer) { return layer->get_type() == type; });
@@ -184,6 +184,16 @@ Layer* NeuralNetwork::get_first(LayerType type) const
         return it->get();
 
     throw runtime_error("Layer not found in Neural Network: " + layer_type_to_string(type));
+}
+
+Layer* NeuralNetwork::get_first(const string& name)
+{
+    return const_cast<Layer*>(const_cast<const NeuralNetwork*>(this)->get_first(name));
+}
+
+Layer* NeuralNetwork::get_first(LayerType type)
+{
+    return const_cast<Layer*>(const_cast<const NeuralNetwork*>(this)->get_first(type));
 }
 
 static void set_variable_names(vector<Variable>& vars, const vector<string>& new_names)
@@ -221,11 +231,9 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
     input_variables.resize(total_inputs);
 
     if(has(LayerType::Scaling2d))
-        if(dynamic_cast<Scaling<2>*>(get_first(LayerType::Scaling2d))) 
-            scaling_layer->set_input_shape(new_input_shape);
+        get_first(LayerType::Scaling2d)->set_input_shape(new_input_shape);
     else if(has(LayerType::Scaling3d))
-        if(dynamic_cast<Scaling<3>*>(get_first(LayerType::Scaling3d))) 
-            scaling_layer->set_input_shape(new_input_shape);
+        get_first(LayerType::Scaling3d)->set_input_shape(new_input_shape);
 
     layers[get_first_trainable_layer_index()]->set_input_shape(new_input_shape);
 }
@@ -244,7 +252,7 @@ void NeuralNetwork::set_default()
 }
 
 void NeuralNetwork::set_layer_input_indices(const string& layer_label,
-                                             const vector<string>& new_layer_input_labels)
+                                            const vector<string>& new_layer_input_labels)
 {
     const Index layer_index = get_layer_index(layer_label);
 
@@ -307,7 +315,7 @@ Shape NeuralNetwork::get_output_shape() const
     if(layers.empty()) 
         return {};
 
-    return layers[layers.size() - 1]->get_output_shape();
+    return layers.back()->get_output_shape();
 }
 
 Index NeuralNetwork::get_parameters_number() const
@@ -611,7 +619,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 
     const Matrix outputs = calculate_outputs(input_data);
 
-    Index predicted_index = -1;
+    Index predicted_index = 0;
 
     if (outputs.size() > 1)
     {
@@ -828,7 +836,7 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
                 if(text)
                 {
                     Shape s = string_to_shape(text, " ");
-                    layer_input_indices[layer_idx] = vector<Index>(s.shape, s.shape + s.rank);
+                    layer_input_indices[layer_idx] = vector<Index>(s.begin(), s.end());
                 }
             }
             indices_element = indices_element->next_sibling_element("LayerInputsIndices");
