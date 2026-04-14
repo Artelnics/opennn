@@ -187,7 +187,7 @@ Correlation linear_correlation(const VectorR& x,
 
     const Index n = x_filter.size();
 
-    if(x_filter.empty())
+    if(x_filter.size() == 0)
         return Correlation();
 
     const auto x_double = x_filter.cast<double>();
@@ -419,7 +419,7 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
         return correlation;
     }
 
-    if(x_filter.empty())
+    if(x_filter.size() == 0)
     {
         correlation.r = type(NAN);
 
@@ -518,7 +518,7 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
         return correlation;
     }
 
-    if(x_filter.empty() && y_filter.empty())
+    if(x_filter.size() == 0 && y_filter.size() == 0)
     {
         correlation.r = type(NAN);
 

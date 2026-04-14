@@ -108,9 +108,18 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
 void binary_cross_entropy(const TensorView& input, const TensorView& target, type& error, float* workspace_device)
 {
 #ifndef CUDA
-    const auto y = input.as_vector().array().cwiseMax(EPSILON).cwiseMin(1.0f - EPSILON);
-    const auto t = target.as_vector().array();
-    error = -(t * y.log() + (1.0f - t) * (1.0f - y).log()).sum() / static_cast<type>(input.shape[0]);
+    const Index samples_number = input.shape[0];
+
+    const MatrixMap outputs(input.data, samples_number, input.size() / samples_number);
+    const MatrixMap targets(target.data, samples_number, target.size() / samples_number);
+
+    auto y = outputs.array().cwiseMax(EPSILON).cwiseMin(1.0f - EPSILON);
+
+    MatrixR ce = targets.array() * y.log() + (1.0f - targets.array()) * (1.0f - y).log();
+
+    error = ce.sum() / static_cast<type>(-samples_number);
+
+    if(isnan(error) || isinf(error)) error = 10.0f;
 #else
     calculate_binary_cross_entropy_cuda(input.size(), workspace_device, target.data, input.data, EPSILON);
     float sum_ce = 0.0f;
@@ -122,9 +131,14 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, typ
 void categorical_cross_entropy(const TensorView& input, const TensorView& target, type& error, float* workspace_device)
 {
 #ifndef CUDA
-    const auto y = input.as_vector().array().cwiseMax(EPSILON);
-    const auto t = target.as_vector().array();
-    error = -(t * y.log()).sum() / static_cast<type>(input.shape[0]);
+    const Index samples_number = input.shape[0];
+
+    const MatrixMap outputs(input.data, samples_number, input.size() / samples_number);
+    const MatrixMap targets(target.data, samples_number, target.size() / samples_number);
+
+    error = (targets.array() * (outputs.array() + EPSILON).log()).sum() / static_cast<type>(-samples_number);
+
+    if(isnan(error)) throw runtime_error("Error is NAN.");
 #else
     calculate_multiple_cross_entropy_cuda(input.size(), workspace_device, target.data, input.data, EPSILON);
     float sum_ce = 0.0f;
@@ -136,15 +150,19 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
 void cross_entropy_gradient(const TensorView& input, const TensorView& target, TensorView& input_gradient)
 {
 #ifndef CUDA
-    const Index n = input.shape[0];
+    const Index samples_number = input.shape[0];
     const Index num_classes = input.shape.back();
-    const auto y = input.as_vector().array().cwiseMax(EPSILON).cwiseMin(1.0f - EPSILON);
-    const auto t = target.as_vector().array();
+
+    const MatrixMap outputs(input.data, samples_number, num_classes);
+    const MatrixMap targets(target.data, samples_number, num_classes);
+    MatrixMap gradients(input_gradient.data, samples_number, num_classes);
 
     if(num_classes == 1)
-        input_gradient.as_vector().array() = (-t / (y + EPSILON) + (type(1) - t) / (type(1) - y + EPSILON)) / static_cast<type>(n);
+        gradients.array() = (-targets.array() / (outputs.array() + EPSILON)
+                             + (1.0f - targets.array()) / (1.0f - outputs.array() + EPSILON))
+                            / static_cast<type>(samples_number);
     else
-        input_gradient.as_vector().array() = (y - t) / static_cast<type>(n);
+        gradients = (outputs - targets) / static_cast<type>(samples_number);
 #else
     const Index num_classes = input.shape.back();
     const float scale = 1.0f / static_cast<float>(input.shape[0]);
@@ -174,6 +192,131 @@ void minkowski_error_gradient(const TensorView& input, const TensorView& target,
     input_gradient.as_vector().array() = (p / static_cast<type>(size)) * diff.sign() * (diff.abs() + EPSILON).pow(p - 1.0f);
 #else
     (void)input; (void)target; (void)p; (void)input_gradient;
+#endif
+}
+
+void cross_entropy_3d(const TensorView& input, const TensorView& target, type& error)
+{
+    const Index batch_size = target.shape[0];
+    const Index sequence_length = target.shape[1];
+    const Index vocabulary_size = input.size() / (batch_size * sequence_length);
+
+#ifndef CUDA
+    const TensorMap3 outputs(input.data, batch_size, sequence_length, vocabulary_size);
+    const MatrixMap targets(target.data, batch_size, sequence_length);
+
+    type total_log_loss = 0;
+    Index active_tokens = 0;
+
+    #pragma omp parallel for reduction(+:total_log_loss, active_tokens)
+    for(Index i = 0; i < batch_size; ++i)
+        for(Index j = 0; j < sequence_length; ++j)
+        {
+            const Index idx = static_cast<Index>(targets(i, j));
+            if(idx > 0 && idx < vocabulary_size)
+            {
+                total_log_loss -= log(outputs(i, j, idx) + EPSILON);
+                active_tokens++;
+            }
+        }
+
+    error = active_tokens > 0 ? total_log_loss / static_cast<type>(active_tokens) : type(0);
+#else
+    const int B = static_cast<int>(batch_size);
+    const int S = static_cast<int>(sequence_length);
+    const int V = static_cast<int>(vocabulary_size);
+    const size_t n = batch_size * sequence_length;
+
+    // Temp workspace for per-token losses
+    static float* workspace = nullptr;
+    static size_t ws_alloc = 0;
+    if(n > ws_alloc) { if(workspace) cudaFree(workspace); cudaMalloc(&workspace, n * sizeof(float)); ws_alloc = n; }
+
+    // Sync to catch any prior errors
+    CHECK_CUDA(cudaDeviceSynchronize());
+
+    cross_entropy_3d_multiple_forward_cuda(n, B, S, V, input.data, target.data, workspace, EPSILON);
+    CHECK_CUDA(cudaDeviceSynchronize());
+
+    float sum_loss = 0;
+    CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), static_cast<int>(n), workspace, 1, &sum_loss));
+
+    // Count active tokens (non-zero target indices) — need to do on CPU for now
+    // Copy targets to host to count
+    vector<float> targets_host(batch_size * sequence_length);
+    CHECK_CUDA(cudaMemcpy(targets_host.data(), target.data, targets_host.size() * sizeof(float), cudaMemcpyDeviceToHost));
+
+    Index active = 0;
+    for(size_t i = 0; i < targets_host.size(); i++)
+        if(static_cast<Index>(targets_host[i]) > 0 && static_cast<Index>(targets_host[i]) < vocabulary_size)
+            active++;
+
+    error = active > 0 ? sum_loss / static_cast<type>(active) : type(0);
+
+#endif
+}
+
+void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, TensorView& input_gradient)
+{
+    const Index batch_size = target.shape[0];
+    const Index sequence_length = target.shape[1];
+    const Index vocabulary_size = input.size() / (batch_size * sequence_length);
+
+#ifndef CUDA
+    const TensorMap3 outputs(input.data, batch_size, sequence_length, vocabulary_size);
+    const MatrixMap targets(target.data, batch_size, sequence_length);
+    TensorMap3 gradients(input_gradient.data, batch_size, sequence_length, vocabulary_size);
+
+    Index active_tokens = 0;
+
+    #pragma omp parallel for reduction(+:active_tokens)
+    for(Index i = 0; i < batch_size; ++i)
+        for(Index j = 0; j < sequence_length; ++j)
+        {
+            const Index idx = static_cast<Index>(targets(i, j));
+            if(idx > 0 && idx < vocabulary_size)
+                active_tokens++;
+        }
+
+    const type scale = active_tokens > 0 ? type(1) / static_cast<type>(active_tokens) : type(0);
+
+    #pragma omp parallel for
+    for(Index i = 0; i < batch_size; ++i)
+        for(Index j = 0; j < sequence_length; ++j)
+        {
+            const Index idx = static_cast<Index>(targets(i, j));
+
+            if(idx > 0 && idx < vocabulary_size)
+            {
+                for(Index k = 0; k < vocabulary_size; ++k)
+                    gradients(i, j, k) = (k == idx)
+                        ? (outputs(i, j, k) - type(1)) * scale
+                        : outputs(i, j, k) * scale;
+            }
+            else
+            {
+                for(Index k = 0; k < vocabulary_size; ++k)
+                    gradients(i, j, k) = type(0);
+            }
+        }
+#else
+    const int B = static_cast<int>(batch_size);
+    const int S = static_cast<int>(sequence_length);
+    const int V = static_cast<int>(vocabulary_size);
+    const size_t n = batch_size * sequence_length;
+
+    // Count active tokens on host
+    vector<float> targets_host(n);
+    CHECK_CUDA(cudaMemcpy(targets_host.data(), target.data, n * sizeof(float), cudaMemcpyDeviceToHost));
+
+    Index active = 0;
+    for(size_t i = 0; i < n; i++)
+        if(static_cast<Index>(targets_host[i]) > 0 && static_cast<Index>(targets_host[i]) < vocabulary_size)
+            active++;
+
+    const float scale = active > 0 ? 1.0f / static_cast<float>(active) : 0.0f;
+
+    cross_entropy_3d_multiple_backward_cuda(n, B, S, V, input.data, target.data, input_gradient.data, scale);
 #endif
 }
 

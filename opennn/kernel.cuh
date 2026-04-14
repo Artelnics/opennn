@@ -124,6 +124,11 @@ void sgd_update_device(const size_t, float*, float*, const float*, const float, 
  __global__ void mha_causal_mask_kernel(const int n, float* scores, const int seq_q, const int seq_k);
  void mha_causal_mask_cuda(const size_t n, float* scores, const int seq_q, const int seq_k);
 
+ void mha_fused_masks_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
+                           const int source_sequence_length, const int embedding_dimension,
+                           const float* source_input, float* attention_weights, float* padding_mask,
+                           const bool use_causal_mask);
+
  // Element-wise addition
  
  void addition_cuda(const size_t n, const float* input1, const float* input2, float* output);

@@ -48,11 +48,16 @@ public:
         const Index embedding_dimension = get_embedding_dimension();
         const Index head_dimension = get_head_dimension();
 
+        const Index max_seq = max(query_sequence_length, source_sequence_length);
+
         return {{batch_size, heads_number, query_sequence_length, head_dimension},         // Query
                 {batch_size, heads_number, source_sequence_length, head_dimension},        // Key
                 {batch_size, heads_number, query_sequence_length, source_sequence_length}, // AttentionWeights
                 {batch_size, query_sequence_length, embedding_dimension},                  // ConcatenatedAttentionOutputs
                 {batch_size, heads_number, source_sequence_length, head_dimension},        // Value
+                {batch_size, source_sequence_length},                                      // PaddingMask
+                {batch_size, max_seq, embedding_dimension},                                // TransposeScratch
+                {batch_size, heads_number, query_sequence_length, head_dimension},         // AttentionOutputTransposed
                 {batch_size, query_sequence_length, embedding_dimension}};                 // Outputs (must be last)
     }
 
@@ -65,13 +70,16 @@ public:
         const Index s_len = source_sequence_length;
         const Index h_num = heads_number;
 
-        return {{batch_size, q_len, embedding_dimension}, // Input Query Gradients
-                {batch_size, s_len, embedding_dimension}, // Input Source Gradients (dX_s)
-                {batch_size, h_num, q_len, s_len}, // Intermediate: Attention Weight Gradients: {batch, h_num, q_len, s_len}
-                {batch_size, q_len, embedding_dimension}, // Intermediate: Concatenated Output Gradients: {batch, q_len, emb_dim}
-                {batch_size, h_num, q_len, head_dimension}, // Query Gradients
-                {batch_size, h_num, s_len, head_dimension}, // Key Gradients
-                {batch_size, h_num, s_len, head_dimension}};  // Value Gradients
+        return {{batch_size, q_len, embedding_dimension},         // InputQueryGradient
+                {batch_size, s_len, embedding_dimension},         // InputSourceGradient
+                {batch_size, h_num, q_len, s_len},                // AttentionWeightGradient
+                {batch_size, q_len, embedding_dimension},         // ConcatenatedOutputGradient
+                {batch_size, h_num, q_len, head_dimension},       // QueryGradient (transposed)
+                {batch_size, h_num, s_len, head_dimension},       // KeyGradient (transposed)
+                {batch_size, h_num, s_len, head_dimension},       // ValueGradient (transposed)
+                {batch_size, h_num, q_len, s_len},                // SoftmaxGradient
+                {batch_size, q_len, embedding_dimension},         // QueryInputGradient (scratch)
+                {batch_size, s_len, embedding_dimension}};        // SourceInputGradient (scratch)
     }
 
     void set_input_shape(const Shape& new_input_shape) override
@@ -99,9 +107,6 @@ public:
 
 private:
 
-    void apply_causal_mask(Tensor4&) const;
-    void apply_key_padding_mask(const TensorMap3&, Tensor4&) const;
-
     Index embedding_dimension;
     Index heads_number = 0;
     Index query_sequence_length = 0;
@@ -109,11 +114,13 @@ private:
 
     enum Parameters {QueryWeights, QueryBiases, KeyWeights, KeyBiases, ValueWeights, ValueBiases,
                      ProjectionWeights, ProjectionBiases};
-    enum Forward {Inputs, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value};
+    enum Forward {Inputs, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value,
+                  PaddingMask, TransposeScratch, AttentionOutputTransposed};
     // Outputs is always the last forward slot (wiring convention) — access via .back()
     enum Backward {OutputGradient, InputQueryGradient, InputSourceGradient,
                    AttentionWeightGradient, ConcatenatedOutputGradient,
-                   QueryGradient, KeyGradient, ValueGradient};
+                   QueryGradient, KeyGradient, ValueGradient,
+                   SoftmaxGradient, QueryInputGradientScratch, SourceInputGradientScratch};
 
     bool use_causal_mask = false;
 

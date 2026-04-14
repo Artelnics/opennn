@@ -145,24 +145,29 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     TensorView& concatenated = forward_propagation.views[layer][ConcatenatedAttentionOutputs][0];
     TensorView& output = forward_propagation.views[layer].back()[0];
 
-    projection(query_input, parameters[QueryWeights], parameters[QueryBiases], query);
-    projection(source_input, parameters[KeyWeights], parameters[KeyBiases], key);
-    projection(source_input, parameters[ValueWeights], parameters[ValueBiases], value);
+    MultiheadAttentionArguments args;
+    args.batch_size = forward_propagation.batch_size;
+    args.heads_number = heads_number;
+    args.query_sequence_length = query_sequence_length;
+    args.source_sequence_length = source_sequence_length;
+    args.embedding_dimension = get_embedding_dimension();
+    args.head_dimension = get_head_dimension();
+    args.scaling_factor = get_scaling_factor();
+    args.use_causal_mask = use_causal_mask;
+    args.causal_mask = &causal_mask;
+    args.padding_mask = forward_propagation.views[layer][PaddingMask][0].data;
+    args.transpose_scratch = forward_propagation.views[layer][TransposeScratch][0].data;
+    args.attention_output_transposed = forward_propagation.views[layer][AttentionOutputTransposed][0].data;
+
+    projection(query_input, parameters[QueryWeights], parameters[QueryBiases], query, args);
+    projection(source_input, parameters[KeyWeights], parameters[KeyBiases], key, args);
+    projection(source_input, parameters[ValueWeights], parameters[ValueBiases], value, args);
 
     multihead_attention_forward(
         query, key, value,
         attention_weights_view, concatenated, output,
         parameters[ProjectionWeights], parameters[ProjectionBiases],
-        source_input,
-        forward_propagation.batch_size, heads_number,
-        query_sequence_length, source_sequence_length,
-        get_embedding_dimension(), get_head_dimension(),
-        get_scaling_factor(), use_causal_mask, causal_mask);
-
-
-#ifdef CUDA
-    // @todo CUDA path
-#endif
+        source_input, args);
 }
 
 void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
@@ -176,6 +181,21 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     const bool self_attention = (forward_propagation.views[layer][Inputs].size() == 1);
 
     TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradient][0];
+
+    MultiheadAttentionArguments args;
+    args.batch_size = forward_propagation.batch_size;
+    args.heads_number = heads_number;
+    args.query_sequence_length = query_sequence_length;
+    args.source_sequence_length = source_sequence_length;
+    args.embedding_dimension = get_embedding_dimension();
+    args.head_dimension = get_head_dimension();
+    args.scaling_factor = get_scaling_factor();
+    args.use_causal_mask = false;
+    args.causal_mask = nullptr;
+    args.transpose_scratch = forward_propagation.views[layer][TransposeScratch][0].data;
+    args.softmax_gradient = back_propagation.backward_views[layer][SoftmaxGradient][0].data;
+    args.query_input_gradient_scratch = back_propagation.backward_views[layer][QueryInputGradientScratch][0].data;
+    args.source_input_gradient_scratch = back_propagation.backward_views[layer][SourceInputGradientScratch][0].data;
 
     multihead_attention_backward(
         query_input, source_input, output_gradient,
@@ -200,60 +220,9 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
         back_propagation.gradient_views[layer][ValueBiases],
         back_propagation.backward_views[layer][InputQueryGradient][0],
         parameters[QueryWeights], parameters[KeyWeights], parameters[ValueWeights],
-        forward_propagation.batch_size, heads_number,
-        query_sequence_length, source_sequence_length,
-        get_embedding_dimension(), get_head_dimension(),
-        get_scaling_factor(), self_attention);
-
-#ifdef CUDA
-    // @todo CUDA path
-#endif
+        args, self_attention);
 }
 
-void MultiHeadAttention::apply_causal_mask(Tensor4& attention_scores) const
-{
-    const Index batch_size = attention_scores.dimension(0);
-    const Index query_sequence_length = attention_scores.dimension(2);
-    const Index source_sequence_length = attention_scores.dimension(3);
-
-    const Index matrix_size = query_sequence_length * source_sequence_length;
-
-    const Index total_matrices = batch_size * heads_number;
-
-    MatrixMap scores(attention_scores.data(), total_matrices, matrix_size);
-
-    const VectorMap causal_mask_map(const_cast<type*>(causal_mask.data()), matrix_size);
-
-    scores.rowwise() += causal_mask_map.transpose();
-}
-
-void MultiHeadAttention::apply_key_padding_mask(const TensorMap3& source_input,
-                                                Tensor4& attention_weights) const
-{
-    const Index batch_size = attention_weights.dimension(0);
-    const Index query_sequence_length = attention_weights.dimension(2);
-    const Index source_sequence_length = attention_weights.dimension(3);
-    const Index embedding_dimension = source_input.dimension(2);
-
-    #pragma omp parallel for
-    for(Index b = 0; b < batch_size; ++b)
-    {
-        for(Index s = 0; s < source_sequence_length; ++s)
-        {
-            const type* row_ptr = &source_input(b, s, 0);
-            const bool is_pad = Eigen::Map<const VectorR>(row_ptr, embedding_dimension)
-                                    .cwiseAbs().maxCoeff() <= padding_threshold;
-
-            if(is_pad)
-            {
-                const Index slice_size = heads_number * query_sequence_length;
-                MatrixMap att_map(attention_weights.data() + b * slice_size * source_sequence_length,
-                                  slice_size, source_sequence_length);
-                att_map.col(s).setConstant(mask_value);
-            }
-        }
-    }
-}
 
 void MultiHeadAttention::to_XML(XmlPrinter& printer) const
 {

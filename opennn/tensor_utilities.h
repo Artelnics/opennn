@@ -220,6 +220,7 @@ struct Memory
     type* data() { return vector.data(); }
     const type* data() const { return vector.data(); }
     Index size() const { return vector.size(); }
+    bool empty() const { return vector.size() == 0; }
 
     void resize(Index n) { vector.resize(n); }
     void setZero() { vector.setZero(); }
@@ -847,6 +848,20 @@ public:
     static cudnnReduceTensorDescriptor_t get_reduce_add_descriptor();
     static void* get_reduction_workspace();
     static size_t get_reduction_workspace_size();
+
+    static float* get_ones(int n)
+    {
+        auto& self = instance();
+        if(n > self.ones_size)
+        {
+            if(self.ones_device) cudaFree(self.ones_device);
+            cudaMalloc(&self.ones_device, n * sizeof(float));
+            vector<float> h(n, 1.0f);
+            cudaMemcpy(self.ones_device, h.data(), n * sizeof(float), cudaMemcpyHostToDevice);
+            self.ones_size = n;
+        }
+        return self.ones_device;
+    }
 #endif
 
 private:
@@ -864,6 +879,8 @@ private:
     cudnnReduceTensorDescriptor_t reduce_add_descriptor = nullptr;
     void* reduction_workspace = nullptr;
     size_t reduction_workspace_size = 0;
+    float* ones_device = nullptr;
+    int ones_size = 0;
 #endif
 };
 

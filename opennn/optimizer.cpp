@@ -425,7 +425,7 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
     ostringstream buffer;
     buffer.str("");
 
-    validation_error_history.empty()
+    validation_error_history.size() == 0
         ? buffer << "NAN"
         : buffer << setprecision(precision) << validation_error_history(size-1);
 

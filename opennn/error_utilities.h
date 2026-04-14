@@ -29,6 +29,9 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
 void minkowski_error(const TensorView& input, const TensorView& target, type p, type& error, float* workspace_device);
 void minkowski_error_gradient(const TensorView& input, const TensorView& target, type p, TensorView& input_gradient);
 
+void cross_entropy_3d(const TensorView& input, const TensorView& target, type& error);
+void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, TensorView& input_gradient);
+
 void l1_regularization(const TensorView& parameters, type lambda, type& penalty);
 void l1_regularization_gradient(const TensorView& parameters, type lambda, TensorView& gradient);
 

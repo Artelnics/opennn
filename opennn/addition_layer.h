@@ -32,6 +32,17 @@ public:
         return input_shape;
     }
 
+    vector<Shape> get_forward_shapes(Index batch_size) const override
+    {
+        return {Shape{batch_size}.append(input_shape)};
+    }
+
+    vector<Shape> get_backward_shapes(Index batch_size) const override
+    {
+        return {Shape{batch_size}.append(input_shape),   // InputGradient0
+                Shape{batch_size}.append(input_shape)};  // InputGradient1
+    }
+
     void set(const Shape& new_input_shape, const string& new_label)
     {
         if(!new_input_shape.empty() && new_input_shape.rank() != Rank - 1)
@@ -66,10 +77,10 @@ public:
                         BackPropagation& back_propagation,
                         size_t layer) const override
     {
-        const TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
+        const TensorView& output_gradient = back_propagation.backward_views[layer][0][0];
 
-        TensorView& input_gradient_0 = back_propagation.backward_views[layer][InputGradients][0];
-        TensorView& input_gradient_1 = back_propagation.backward_views[layer][InputGradients][1];
+        TensorView& input_gradient_0 = back_propagation.backward_views[layer][1][0];
+        TensorView& input_gradient_1 = back_propagation.backward_views[layer][2][0];
 
         copy(output_gradient, input_gradient_0);
         copy(output_gradient, input_gradient_1);
