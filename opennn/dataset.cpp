@@ -2585,7 +2585,10 @@ void Dataset::read_csv()
         for(Index variable_index = 0; variable_index < variables_number; variable_index++)
         {
             const Variable& variable = variables[variable_index];
-            const string& token = has_sample_ids ? tokens[variable_index + 1] : tokens[variable_index];
+            const size_t token_idx = has_sample_ids ? variable_index + 1 : variable_index;
+            if(token_idx >= tokens.size())
+                throw runtime_error("Row " + to_string(sample_index) + " has fewer columns than expected (" + to_string(tokens.size()) + ").");
+            const string& token = tokens[token_idx];
             const vector<Index>& feature_indices = all_feature_indices[variable_index];
 
             switch(variable.type)

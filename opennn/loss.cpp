@@ -182,7 +182,11 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
     calculate_output_gradients(batch, forward_propagation, back_propagation);
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
+    {
+        if(i != last_trainable_layer_index)
+            back_propagation.accumulate_output_gradients(static_cast<size_t>(i));
         layers[i]->back_propagate(forward_propagation, back_propagation, i);
+    }
 }
 
 static const vector<pair<Loss::Error, string>> error_map = {

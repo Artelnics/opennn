@@ -116,8 +116,36 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     output_gradients.setZero();
 
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-    const auto& layer_output_indices = neural_network->get_layer_output_indices();
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
+
+    backward_edges.assign(layers_number, {});
+    for(size_t c = 0; c < layers_number; ++c)
+    {
+        const vector<Index>& inputs = layer_input_indices[c];
+        for(size_t p = 0; p < inputs.size(); ++p)
+        {
+            const Index producer = inputs[p];
+            if(producer >= 0 && static_cast<size_t>(producer) < layers_number)
+                backward_edges[producer].push_back({c, p});
+        }
+    }
+
+    per_layer_output_gradient_shapes.assign(layers_number, Shape());
+    Index total_output_gradient_size = 0;
+    const auto& layers_ref = neural_network->get_layers();
+    for(size_t i = 0; i < layers_number; ++i)
+    {
+        if(static_cast<Index>(i) == last_trainable_layer_index) continue;
+        const Shape output_shape_i = layers_ref[i]->get_output_shape();
+        if(output_shape_i.empty()) continue;
+        per_layer_output_gradient_shapes[i] = Shape({batch_size}).append(output_shape_i);
+        total_output_gradient_size += get_aligned_size(per_layer_output_gradient_shapes[i].size());
+    }
+
+    per_layer_output_gradients.resize(total_output_gradient_size);
+    per_layer_output_gradients.setZero();
+
+    type* og_ptr = (total_output_gradient_size > 0) ? per_layer_output_gradients.data() : nullptr;
 
     for(size_t i = 0; i < layers_number; ++i)
     {
@@ -127,29 +155,40 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         {
             backward_views[i][0][0] = TensorView(output_gradients.data(), output_gradient_dimensions);
         }
-        else
+        else if(og_ptr && !per_layer_output_gradient_shapes[i].empty())
         {
-            for(const Index consumer_idx : layer_output_indices[i])
-            {
-                if(consumer_idx >= 0 && consumer_idx < layers_number)
-                {
-                    const auto& consumer_inputs = layer_input_indices[consumer_idx];
-
-                    Index port = 0;
-
-                    for(size_t p = 0; p < consumer_inputs.size(); ++p)
-                        if(consumer_inputs[p] == i)
-                        {
-                            port = static_cast<Index>(p);
-                            break;
-                        }
-
-                    if(backward_views[consumer_idx].size() > 1 && !backward_views[consumer_idx][1].empty())
-                        backward_views[i][0][0] = backward_views[consumer_idx][1][0];
-                }
-                break;
-            }
+            backward_views[i][0][0] = TensorView(og_ptr, per_layer_output_gradient_shapes[i]);
+            og_ptr += get_aligned_size(per_layer_output_gradient_shapes[i].size());
         }
+    }
+}
+
+void BackPropagation::accumulate_output_gradients(size_t layer_index)
+{
+    if(layer_index >= backward_views.size()) return;
+    if(backward_views[layer_index].empty()) return;
+
+    TensorView& output_grad = backward_views[layer_index][0][0];
+    if(!output_grad.data) return;
+
+    const Index n = output_grad.size();
+    type* out_ptr = output_grad.data;
+
+    std::fill(out_ptr, out_ptr + n, type(0));
+
+    for(const BackwardEdge& edge : backward_edges[layer_index])
+    {
+        const size_t slot = 1 + edge.port;
+        if(edge.consumer_idx >= backward_views.size()) continue;
+        const auto& consumer_views = backward_views[edge.consumer_idx];
+        if(slot >= consumer_views.size()) continue;
+        if(consumer_views[slot].empty()) continue;
+        const TensorView& src = consumer_views[slot][0];
+        if(!src.data) continue;
+        if(src.size() != n) continue;
+
+        for(Index k = 0; k < n; ++k)
+            out_ptr[k] += src.data[k];
     }
 }
 
@@ -199,8 +238,6 @@ void BackPropagation::allocate_device()
 
     const vector<vector<Shape>> backward_shapes = neural_network->get_backward_shapes(batch_size);
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-    const auto& layer_output_indices = neural_network->get_layer_output_indices();
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
 
     if(backward.size() > 0)
     {
@@ -232,16 +269,15 @@ void BackPropagation::allocate_device()
                 og_view.set_descriptor(output_gradient_dimensions);
                 backward_views[i][0][0] = og_view;
             }
-            else
+            else if(!backward_edges[i].empty())
             {
-                for(const Index consumer_idx : layer_output_indices[i])
+                const BackwardEdge& edge = backward_edges[i].front();
+                const size_t slot = 1 + edge.port;
+                if(edge.consumer_idx < backward_views.size()
+                   && slot < backward_views[edge.consumer_idx].size()
+                   && !backward_views[edge.consumer_idx][slot].empty())
                 {
-                    if(consumer_idx >= 0 && consumer_idx < layers_number)
-                    {
-                        if(backward_views[consumer_idx].size() > 1 && !backward_views[consumer_idx][1].empty())
-                            backward_views[i][0][0] = backward_views[consumer_idx][1][0];
-                    }
-                    break;
+                    backward_views[i][0][0] = backward_views[edge.consumer_idx][slot][0];
                 }
             }
         }
@@ -300,7 +336,7 @@ void BackPropagation::print() const
          << "Error:" << "\n"
          << error << "\n"
          << "Loss:" << "\n"
-         << loss << "\n";
+         << loss_value << "\n";
 }
 
 }
