@@ -63,14 +63,14 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     check();
 
-    if(display) cout << "Training with adaptive moment estimation \"Adam\" ..." << endl;
+    if(display) cout << "Training with adaptive moment estimation \"Adam\" ..." << "\n";
 
     // Dataset
 
     const Dataset* dataset = loss->get_dataset();
 
     if(!dataset)
-        throw runtime_error("Dataset is null.");
+        throw runtime_error("AdaptiveMomentEstimation error: dataset is not set.");
 
     const bool has_validation = dataset->has_validation();
 
@@ -151,7 +151,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
     {
-        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
+        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << "\n";
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
         
@@ -248,11 +248,11 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         if(display && epoch%display_period == 0)
         {
-            cout << "Training error: " << training_error << endl;
-            if(is_text_classification_model) cout << "Training accuracy: " << training_accuracy << endl;
-            if(has_validation) cout << "Validation error: " << validation_error << endl;
-            if(has_validation && is_text_classification_model) cout << "Validation accuracy: " << validation_accuracy << endl;
-            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
+            cout << "Training error: " << training_error << "\n";
+            if(is_text_classification_model) cout << "Training accuracy: " << training_accuracy << "\n";
+            if(has_validation) cout << "Validation error: " << validation_error << "\n";
+            if(has_validation && is_text_classification_model) cout << "Validation accuracy: " << validation_accuracy << "\n";
+            cout << "Elapsed time: " << write_time(elapsed_time) << "\n";
         }
 
         stop_training = check_stopping_condition(results, epoch, elapsed_time,
@@ -359,7 +359,7 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
     adaptive_moment_estimation = new_adaptive_moment_estimation;
 
     const Loss* loss = new_adaptive_moment_estimation->get_loss();
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    const NeuralNetwork* neural_network = loss->get_neural_network();
 
     const Index parameters_number = neural_network->get_parameters_size();
 
@@ -380,10 +380,10 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 
 void AdaptiveMomentEstimationData::print() const
 {
-    // cout << "Gradient exponential decay:" << endl
-    //      << gradient_exponential_decay << endl
-    //      << "Square gradient exponential decay:" << endl
-    //      << square_gradient_exponential_decay << endl;
+    // cout << "Gradient exponential decay:" << "\n"
+    //      << gradient_exponential_decay << "\n"
+    //      << "Square gradient exponential decay:" << "\n"
+    //      << square_gradient_exponential_decay << "\n";
 }
 
 
@@ -398,11 +398,11 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
     check();
 
-    if(display) cout << "Training with adaptive moment estimation \"Adam\" CUDA ..." << endl;
+    if(display) cout << "Training with adaptive moment estimation \"Adam\" CUDA ..." << "\n";
 
     Dataset* dataset = loss->get_dataset();
 
-    if(!dataset) throw runtime_error("Dataset is null.");
+    if(!dataset) throw runtime_error("AdaptiveMomentEstimation error: dataset is not set.");
 
     const bool has_validation = dataset->has_validation();
 
@@ -504,7 +504,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
     for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
     {
-        if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << endl;
+        if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << "\n";
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
         training_error = type(0);
@@ -611,9 +611,9 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
         if(display && epoch % display_period == 0)
         {
-            cout << "Training error: " << training_error << endl;
-            if(has_validation) cout << "Validation error: " << validation_error << endl;
-            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
+            cout << "Training error: " << training_error << "\n";
+            if(has_validation) cout << "Validation error: " << validation_error << "\n";
+            cout << "Elapsed time: " << write_time(elapsed_time) << "\n";
         }
 
         stop_training = check_stopping_condition(results, epoch, elapsed_time,

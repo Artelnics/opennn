@@ -1407,7 +1407,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_variable_correlations(
     Correlation (*correlation_function)(const MatrixR&, const MatrixR&),
     const string& method_name) const
 {
-    if (display) cout << "Calculating " << method_name << " correlations..." << endl;
+    if (display) cout << "Calculating " << method_name << " correlations..." << "\n";
 
     const Index input_variables_number = get_variables_number("Input");
     const Index target_variables_number = get_variables_number("Target");
@@ -1474,7 +1474,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_variable_correlations(
     Correlation::Method method,
     const string& method_name) const
 {
-    if (display) cout << "Calculating " << method_name << " inputs correlations..." << endl;
+    if (display) cout << "Calculating " << method_name << " inputs correlations..." << "\n";
 
     const vector<Index> input_variable_indices = get_variable_indices("Input");
 
@@ -1484,7 +1484,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_variable_correlations(
 
     for(Index i = 0; i < input_variables_number; i++)
     {
-        if (display) cout << "Correlation " << i + 1 << " of " << input_variables_number << endl;
+        if (display) cout << "Correlation " << i + 1 << " of " << input_variables_number << "\n";
 
         const MatrixR input_i = get_variable_data(input_variable_indices[i]);
 
@@ -1755,7 +1755,7 @@ void Dataset::samples_from_XML(const XmlElement *samples_element)
         sample_ids = get_tokens(read_xml_string(samples_element, "SamplesId"), separator_string);
     }
 
-    if (variables.size() != 0)
+    if (!variables.empty())
     {
         const vector<vector<Index>> all_feature_indices = get_feature_indices();
 
@@ -1884,7 +1884,7 @@ void Dataset::save_data() const
             file << separator_string;
     }
 
-    file << endl;
+    file << "\n";
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -1899,7 +1899,7 @@ void Dataset::save_data() const
                 file << separator_string;
         }
 
-        file << endl;
+        file << "\n";
     }
 
     file.close();

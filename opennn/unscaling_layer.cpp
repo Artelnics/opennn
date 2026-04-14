@@ -204,7 +204,7 @@ void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_
 
 void Unscaling::print() const
 {
-    cout << "Unscaling layer" << endl;
+    cout << "Unscaling layer" << "\n";
 }
 
 void Unscaling::to_XML(XmlPrinter& printer) const

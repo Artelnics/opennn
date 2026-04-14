@@ -48,21 +48,21 @@ void ModelSelection::check() const
     // Optimization algorithm
 
     if(!training_strategy)
-        throw runtime_error("Pointer to training strategy is nullptr.\n");
+        throw runtime_error("ModelSelection error: training strategy is not set.");
 
     // Loss index
 
     const Loss* loss = training_strategy->get_loss();
 
     if(!loss)
-        throw runtime_error("Pointer to loss index is nullptr.\n");
+        throw runtime_error("ModelSelection error: loss is not set.");
 
     // Neural network
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
     if(!neural_network)
-        throw runtime_error("Pointer to neural network is nullptr.\n");
+        throw runtime_error("ModelSelection error: neural network is not set.");
 
     if(neural_network->is_empty())
         throw runtime_error("Multilayer Dense is empty.\n");
@@ -72,7 +72,7 @@ void ModelSelection::check() const
     const Dataset* dataset = loss->get_dataset();
 
     if(!dataset)
-        throw runtime_error("Pointer to dataset is nullptr.\n");
+        throw runtime_error("ModelSelection error: dataset is not set.");
 
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 

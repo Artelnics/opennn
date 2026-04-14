@@ -129,9 +129,9 @@ Index Batch::get_samples_number() const
 
 void Batch::print() const
 {
-    cout << "Batch" << endl
-         << "Inputs:" << endl
-         << "Input shape:" << input_shape << endl;
+    cout << "Batch" << "\n"
+         << "Inputs:" << "\n"
+         << "Input shape:" << input_shape << "\n";
 
     if (input_shape.rank == 4)
         cout << TensorMap4(const_cast<type*>(input.data()),
@@ -149,25 +149,25 @@ void Batch::print() const
                           input_shape[0],
                           input_shape[1]);
 
-    cout << endl;
+    cout << "\n";
 
     if(!decoder_shape.empty())
     {
-        cout << "Decoder:" << endl
-             << "Decoder shape:" << decoder_shape << endl;
+        cout << "Decoder:" << "\n"
+             << "Decoder shape:" << decoder_shape << "\n";
     }
 
-    cout << "Targets:" << endl
-         << "Target shape:" << target_shape << endl;
+    cout << "Targets:" << "\n"
+         << "Target shape:" << target_shape << "\n";
 
     cout << MatrixMap(const_cast<type*>(target.data()),
                       target_shape[0],
-                      target_shape[1]) << endl;
+                      target_shape[1]) << "\n";
 }
 
 bool Batch::is_empty() const
 {
-    return input.size() == 0;
+    return input.empty();
 }
 
 vector<TensorView> Batch::get_inputs() const

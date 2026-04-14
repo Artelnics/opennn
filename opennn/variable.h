@@ -25,36 +25,28 @@ enum class ScalerMethod
     ImageMinMax
 };
 
+inline const EnumMap<ScalerMethod>& scaler_method_map()
+{
+    static const vector<pair<ScalerMethod, string>> entries = {
+        {ScalerMethod::None,                 "None"},
+        {ScalerMethod::MinimumMaximum,       "MinimumMaximum"},
+        {ScalerMethod::MeanStandardDeviation, "MeanStandardDeviation"},
+        {ScalerMethod::StandardDeviation,    "StandardDeviation"},
+        {ScalerMethod::Logarithm,            "Logarithm"},
+        {ScalerMethod::ImageMinMax,          "ImageMinMax"}
+    };
+    static const EnumMap<ScalerMethod> map{entries};
+    return map;
+}
+
 inline const string& scaler_method_to_string(ScalerMethod method)
 {
-    static const string none_str = "None";
-    static const string minmax_str = "MinimumMaximum";
-    static const string meanstd_str = "MeanStandardDeviation";
-    static const string std_str = "StandardDeviation";
-    static const string log_str = "Logarithm";
-    static const string imgminmax_str = "ImageMinMax";
-
-    switch(method)
-    {
-    case ScalerMethod::MinimumMaximum:       return minmax_str;
-    case ScalerMethod::MeanStandardDeviation: return meanstd_str;
-    case ScalerMethod::StandardDeviation:    return std_str;
-    case ScalerMethod::Logarithm:            return log_str;
-    case ScalerMethod::ImageMinMax:          return imgminmax_str;
-    default:                                 return none_str;
-    }
+    return scaler_method_map().to_string(method);
 }
 
 inline ScalerMethod string_to_scaler_method(const string& name)
 {
-    if(name == "MinimumMaximum")       return ScalerMethod::MinimumMaximum;
-    if(name == "MeanStandardDeviation") return ScalerMethod::MeanStandardDeviation;
-    if(name == "StandardDeviation")    return ScalerMethod::StandardDeviation;
-    if(name == "Logarithm")            return ScalerMethod::Logarithm;
-    if(name == "ImageMinMax")          return ScalerMethod::ImageMinMax;
-    if(name == "None")                 return ScalerMethod::None;
-
-    throw runtime_error("Unknown scaler method: " + name);
+    return scaler_method_map().from_string(name);
 }
 
 enum class VariableRole
@@ -67,44 +59,35 @@ enum class VariableRole
     Time
 };
 
+inline const EnumMap<VariableRole>& variable_role_map()
+{
+    static const vector<pair<VariableRole, string>> entries = {
+        {VariableRole::None,        "None"},
+        {VariableRole::Input,       "Input"},
+        {VariableRole::Target,      "Target"},
+        {VariableRole::Decoder,     "Decoder"},
+        {VariableRole::InputTarget, "InputTarget"},
+        {VariableRole::Time,        "Time"}
+    };
+    static const EnumMap<VariableRole> map{entries};
+    return map;
+}
+
 inline const string& variable_role_to_string(VariableRole role)
 {
-    static const string none_str = "None";
-    static const string input_str = "Input";
-    static const string target_str = "Target";
-    static const string decoder_str = "Decoder";
-    static const string input_target_str = "InputTarget";
-    static const string time_str = "Time";
-
-    switch(role)
-    {
-    case VariableRole::Input:       return input_str;
-    case VariableRole::Target:      return target_str;
-    case VariableRole::Decoder:     return decoder_str;
-    case VariableRole::InputTarget: return input_target_str;
-    case VariableRole::Time:        return time_str;
-    default:                        return none_str;
-    }
+    return variable_role_map().to_string(role);
 }
 
 inline VariableRole string_to_variable_role(const string& name)
 {
-    if(name == "Input")       return VariableRole::Input;
-    if(name == "Target")      return VariableRole::Target;
-    if(name == "Decoder")     return VariableRole::Decoder;
-    if(name == "InputTarget") return VariableRole::InputTarget;
-    if(name == "Time")        return VariableRole::Time;
-    if(name == "None" || name == "Id") return VariableRole::None;
-
-    throw runtime_error("Unknown variable role: " + name);
+    if(name == "Id") return VariableRole::None;
+    return variable_role_map().from_string(name);
 }
 
 inline bool role_matches(VariableRole actual, VariableRole query)
 {
-    if(actual == query) return true;
-    if(actual == VariableRole::InputTarget && (query == VariableRole::Input || query == VariableRole::Target))
-        return true;
-    return false;
+    return actual == query
+        || (actual == VariableRole::InputTarget && (query == VariableRole::Input || query == VariableRole::Target));
 }
 
 struct Variable

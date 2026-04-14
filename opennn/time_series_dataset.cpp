@@ -302,10 +302,8 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
 
             const Index n_missing = end_missing - start_missing;
 
-            type next_value = NAN;
-
-            if(end_missing < used_samples_number)
-                next_value = data(used_sample_indices[end_missing], feature_index);
+            const type next_value = (end_missing < used_samples_number)
+                ? data(used_sample_indices[end_missing], feature_index) : NAN;
 
             for(Index k = 0; k < n_missing; ++k)
             {
@@ -511,7 +509,7 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
             continue;
 
         input_i = get_variable_data(i);
-        cout << "Calculating " << variables[i].name << " autocorrelations" << endl;
+        cout << "Calculating " << variables[i].name << " autocorrelations" << "\n";
 
         const VectorMap current_input_i(input_i.data(), input_i.rows());
         
@@ -593,7 +591,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
         input_i = get_variable_data(i);
 
-        if (display) cout << "Calculating " << variables[i].name << " cross correlations:" << endl;
+        if (display) cout << "Calculating " << variables[i].name << " cross correlations:" << "\n";
 
         counter_j = 0;
 
@@ -605,7 +603,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
             input_j = get_variable_data(j);
 
-            if(display) cout << "  vs. " << variables[j].name << endl;
+            if(display) cout << "  vs. " << variables[j].name << "\n";
  
             const VectorMap current_input_i(input_i.data(), input_i.rows());
             const VectorMap current_input_j(input_j.data(), input_j.rows());

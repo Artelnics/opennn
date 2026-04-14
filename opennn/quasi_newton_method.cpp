@@ -157,7 +157,7 @@ TrainingResults QuasiNewtonMethod::train()
 
     TrainingResults results(maximum_epochs + 1);
 
-    if(display) cout << "Training with quasi-Newton method..." << endl;
+    if(display) cout << "Training with quasi-Newton method..." << "\n";
 
     // Dataset
 
@@ -222,7 +222,7 @@ TrainingResults QuasiNewtonMethod::train()
 
     for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
     {
-        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
+        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << "\n";
 
         neural_network->forward_propagate(training_batch.get_inputs(),
                                           training_forward_propagation,
@@ -268,10 +268,10 @@ TrainingResults QuasiNewtonMethod::train()
 
         if(display && epoch%display_period == 0)
         {
-            cout << "Training error: " << training_back_propagation.error << endl;
-            if(has_validation) cout << "Validation error: " << validation_back_propagation.error << endl;
-            cout << "Learning rate: " << optimization_data.learning_rate << endl;
-            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
+            cout << "Training error: " << training_back_propagation.error << "\n";
+            if(has_validation) cout << "Validation error: " << validation_back_propagation.error << "\n";
+            cout << "Learning rate: " << optimization_data.learning_rate << "\n";
+            cout << "Elapsed time: " << write_time(elapsed_time) << "\n";
         }
 
         if(epoch != 0) loss_decrease = old_loss_value - training_back_propagation.loss_value;
@@ -280,7 +280,7 @@ TrainingResults QuasiNewtonMethod::train()
 
         if(loss_decrease < minimum_loss_decrease)
         {
-            if(display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << endl;
+            if(display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << "\n";
             results.stopping_condition = StoppingCondition::MinimumLossDecrease;
             stop_training = true;
         }
@@ -341,9 +341,9 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 
     const Loss* loss = quasi_newton_method->get_loss();
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    const NeuralNetwork* neural_network = loss->get_neural_network();
 
-    const Index parameters_number = neural_network->get_parameters().size();
+    const Index parameters_number = neural_network->get_parameters_size();
 
     // Neural network data
 
@@ -374,10 +374,10 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 
 void QuasiNewtonMethodData::print() const
 {
-    cout << "Training Direction:" << endl
-         << training_direction << endl
-         << "Learning rate:" << endl
-         << learning_rate << endl;
+    cout << "Training Direction:" << "\n"
+         << training_direction << "\n"
+         << "Learning rate:" << "\n"
+         << learning_rate << "\n";
 }
 
 pair<type, type> QuasiNewtonMethod::calculate_directional_point(

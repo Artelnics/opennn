@@ -99,10 +99,10 @@ void TrainingStrategy::set_default()
 TrainingResults TrainingStrategy::train()
 {
     if(!get_neural_network())
-        throw runtime_error("Neural network is null.");
+        throw runtime_error("TrainingStrategy error: neural network is not set.");
 
     if(!get_dataset())
-        throw runtime_error("Dataset is null.");
+        throw runtime_error("TrainingStrategy error: dataset is not set.");
 
     if(!loss->get_neural_network() || !loss->get_dataset())
         throw runtime_error("Loss index is wrong.");
@@ -120,10 +120,10 @@ TrainingResults TrainingStrategy::train()
 TrainingResults TrainingStrategy::train_cuda()
 {
     if(!get_neural_network())
-        throw runtime_error("Neural network is null.");
+        throw runtime_error("TrainingStrategy error: neural network is not set.");
 
     if(!get_dataset())
-        throw runtime_error("Dataset is null.");
+        throw runtime_error("TrainingStrategy error: dataset is not set.");
 
     return optimizer->train_cuda();
 }
@@ -173,7 +173,7 @@ void TrainingStrategy::to_XML(XmlPrinter& printer) const
 
     loss->to_XML(printer);
 
-    loss->write_regularization_XML(printer);
+    loss->regularization_to_XML(printer);
 
     printer.close_element();
 

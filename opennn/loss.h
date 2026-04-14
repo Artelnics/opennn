@@ -19,7 +19,6 @@ class Dataset;
 struct Batch;
 struct ForwardPropagation;
 
-
 class Loss
 {
 
@@ -34,42 +33,49 @@ public:
 
     enum class Regularization{L1, L2, ElasticNet, NoRegularization};
 
+    static const EnumMap<Regularization>& regularization_map()
+    {
+        static const vector<pair<Regularization, string>> entries = {
+            {Regularization::NoRegularization, "None"},
+            {Regularization::L1,               "L1"},
+            {Regularization::L2,               "L2"},
+            {Regularization::ElasticNet,       "ElasticNet"}
+        };
+        static const EnumMap<Regularization> map{entries};
+        return map;
+    }
+
     static const string& regularization_to_string(Regularization r)
     {
-        static const string l1_str = "L1";
-        static const string l2_str = "L2";
-        static const string elastic_str = "ElasticNet";
-        static const string none_str = "None";
-
-        switch(r)
-        {
-        case Regularization::L1:        return l1_str;
-        case Regularization::L2:        return l2_str;
-        case Regularization::ElasticNet: return elastic_str;
-        default:                         return none_str;
-        }
+        return regularization_map().to_string(r);
     }
 
     static Regularization string_to_regularization(const string& name)
     {
-        if(name == "L1")         return Regularization::L1;
-        if(name == "L2")         return Regularization::L2;
-        if(name == "ElasticNet") return Regularization::ElasticNet;
-        if(name == "None" || name == "NoRegularization") return Regularization::NoRegularization;
-
-        throw runtime_error("Unknown regularization method: " + name);
+        if(name == "NoRegularization") return Regularization::NoRegularization;
+        return regularization_map().from_string(name);
     }
 
     Loss(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
     virtual ~Loss() = default;
 
-    inline NeuralNetwork* get_neural_network() const
+    const NeuralNetwork* get_neural_network() const
     {
         return neural_network;
     }
 
-    inline Dataset* get_dataset() const
+    NeuralNetwork* get_neural_network()
+    {
+        return neural_network;
+    }
+
+    const Dataset* get_dataset() const
+    {
+        return dataset;
+    }
+
+    Dataset* get_dataset()
     {
         return dataset;
     }
@@ -89,7 +95,7 @@ public:
 
     virtual void set_normalization_coefficient() {}
 
-    virtual type get_Minkowski_parameter() const { return 1.5; }
+    virtual type get_Minkowski_parameter() const { return minkowski_parameter; }
 
     // Back propagation
 
@@ -115,7 +121,7 @@ public:
     void to_XML(XmlPrinter&) const;
 
     void regularization_from_XML(const XmlDocument&);
-    void write_regularization_XML(XmlPrinter&) const;
+    void regularization_to_XML(XmlPrinter&) const;
 
     const string& get_name() const { return name; }
 

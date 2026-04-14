@@ -50,21 +50,21 @@ void NeuronSelection::check() const
     // Optimization algorithm
 
     if(!training_strategy)
-        throw runtime_error("Pointer to training strategy is nullptr.\n");
+        throw runtime_error("NeuronSelection error: training strategy is not set.");
 
     // Loss index
 
     const Loss* loss = training_strategy->get_loss();
 
     if(!loss)
-        throw runtime_error("Pointer to loss index is nullptr.\n");
+        throw runtime_error("NeuronSelection error: loss is not set.");
 
     // Neural network
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
     if(!neural_network)
-        throw runtime_error("Pointer to neural network is nullptr.\n");
+        throw runtime_error("NeuronSelection error: neural network is not set.");
 
     if(neural_network->get_layers_number() == 1)
         throw runtime_error("Number of layers in neural network must be greater than 1.\n");
@@ -74,7 +74,7 @@ void NeuronSelection::check() const
     const Dataset* dataset = loss->get_dataset();
 
     if(!dataset)
-        throw runtime_error("Pointer to dataset is nullptr.\n");
+        throw runtime_error("NeuronSelection error: dataset is not set.");
 
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
@@ -162,11 +162,11 @@ string NeuronsSelectionResults::write_stopping_condition() const
 
 void NeuronsSelectionResults::print() const
 {
-    cout << endl
-         << "Neuron Validation Results" << endl
-         << "Optimal neurons number: " << optimal_neurons_number << endl
-         << "Optimum training error: " << optimum_training_error << endl
-         << "Optimum selection error: " << optimum_validation_error << endl;
+    cout << "\n"
+         << "Neuron Validation Results" << "\n"
+         << "Optimal neurons number: " << optimal_neurons_number << "\n"
+         << "Optimum training error: " << optimum_training_error << "\n"
+         << "Optimum selection error: " << optimum_validation_error << "\n";
 }
 
 }

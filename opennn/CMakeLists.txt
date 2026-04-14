@@ -27,6 +27,11 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(opennn PRIVATE -Wno-interference-size)
 endif()
 
+target_compile_options(opennn PRIVATE
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic>
+    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4>
+)
+
 if(OPENNN_WITH_CUDA)
     target_compile_definitions(opennn PUBLIC OPENNN_WITH_CUDA)
     file(GLOB_RECURSE CUDA_SOURCES CONFIGURE_DEPENDS "*.cu" "*.cuh")

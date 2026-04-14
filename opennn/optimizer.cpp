@@ -28,7 +28,7 @@ Optimizer::Optimizer(Loss* new_loss)
 void Optimizer::check() const
 {
     if(!loss)
-        throw runtime_error("loss is nullptr.\n");
+        throw runtime_error("Optimizer error: loss is not set.");
 }
 
 void Optimizer::to_XML(XmlPrinter& printer) const
@@ -256,22 +256,22 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
 {
     if(training_error < training_loss_goal)
     {
-        if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << training_error << endl;
+        if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << training_error << "\n";
         results.stopping_condition = StoppingCondition::LossGoal;
     }
     else if(validation_failures >= maximum_validation_failures)
     {
-        if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << validation_failures << endl;
+        if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << validation_failures << "\n";
         results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
     }
     else if(epoch == maximum_epochs)
     {
-        if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
+        if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << "\n";
         results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
     }
     else if(elapsed_time >= maximum_time)
     {
-        if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
+        if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << "\n";
         results.stopping_condition = StoppingCondition::MaximumTime;
     }
     else
@@ -385,13 +385,13 @@ void TrainingResults::print(const string &message) const
 {
     const Index epochs_number = training_error_history.size();
 
-    cout << message << endl
-         << "Training results" << endl
-         << "Epochs number: " << epochs_number - 1 << endl
-         << "Training error: " << training_error_history(epochs_number - 1) << endl;
+    cout << message << "\n"
+         << "Training results" << "\n"
+         << "Epochs number: " << epochs_number - 1 << "\n"
+         << "Training error: " << training_error_history(epochs_number - 1) << "\n";
     if (validation_error_history.size() > 0)
-        cout << "Validation error: " << validation_error_history(epochs_number - 1) << endl;
-    cout << "Stopping condition: " << write_stopping_condition() << endl;
+        cout << "Validation error: " << validation_error_history(epochs_number - 1) << "\n";
+    cout << "Stopping condition: " << write_stopping_condition() << "\n";
 }
 
 Tensor<string, 2> TrainingResults::write_override_results(const Index precision) const
@@ -427,7 +427,7 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
     ostringstream buffer;
     buffer.str("");
 
-    validation_error_history.size() == 0
+    validation_error_history.empty()
         ? buffer << "NAN"
         : buffer << setprecision(precision) << validation_error_history(size-1);
 
@@ -438,12 +438,12 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
 
 void OptimizerData::print() const
 {
-    cout << "Potential parameters:" << endl
-         << potential_parameters << endl
-         << "Training direction:" << endl
-         << training_direction << endl
-         << "Initial learning rate:" << endl
-         << initial_learning_rate << endl;
+    cout << "Potential parameters:" << "\n"
+         << potential_parameters << "\n"
+         << "Training direction:" << "\n"
+         << training_direction << "\n"
+         << "Initial learning rate:" << "\n"
+         << initial_learning_rate << "\n";
 }
 
 

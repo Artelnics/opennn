@@ -23,7 +23,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     batch_size = new_batch_size;
     neural_network = new_neural_network;
 
-    if(!neural_network) throw runtime_error("There is no neural network.");
+    if(!neural_network) throw runtime_error("ForwardPropagation error: neural network is not set.");
 
     const vector<unique_ptr<Layer>>& nn_layers = neural_network->get_layers();
     const size_t layers_number = nn_layers.size();
@@ -95,7 +95,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 void ForwardPropagation::allocate_device()
 {
 #ifdef CUDA
-    if(!neural_network || data.size() == 0) return;
+    if(!neural_network || data.empty()) return;
 
     data.resize_device(data.size());
     data.setZero_device();
@@ -173,17 +173,15 @@ TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
 vector<vector<TensorView>> ForwardPropagation::get_layer_input_views(const vector<TensorView>&,
                                                                      bool) const
 {
-    const Index layers_number = neural_network->get_layers_number();
+    const size_t layers_number = neural_network->get_layers_number();
 
     if (layers_number == 0) return {};
 
     vector<vector<TensorView>> layer_input_views(layers_number);
 
-    for (Index i = 0; i < layers_number; ++i)
-    {
-        if(static_cast<size_t>(i) < views.size() && !views[i].empty())
+    for (size_t i = 0; i < layers_number; ++i)
+        if(i < views.size() && !views[i].empty())
             layer_input_views[i] = views[i][0];
-    }
 
     return layer_input_views;
 }
@@ -192,29 +190,29 @@ TensorView ForwardPropagation::get_outputs() const
 {
     if(!neural_network || views.empty()) return {};
 
-    const Index last_layer = static_cast<Index>(neural_network->get_layers_number()) - 1;
+    const size_t layers_number = neural_network->get_layers_number();
 
-    if(last_layer < 0
-       || static_cast<size_t>(last_layer) >= views.size()
-       || views[last_layer].size() < 2
-       || views[last_layer].back().empty())
+    if(layers_number == 0
+       || layers_number - 1 >= views.size()
+       || views[layers_number - 1].size() < 2
+       || views[layers_number - 1].back().empty())
     {
         return get_last_trainable_layer_outputs();
     }
 
-    return views[last_layer].back()[0];
+    return views[layers_number - 1].back()[0];
 }
 
 void ForwardPropagation::print() const
 {
-    cout << "Neural network forward propagation" << endl;
+    cout << "Neural network forward propagation" << "\n";
 
-    const Index layers_number = neural_network->get_layers_number();
+    const size_t layers_number = neural_network->get_layers_number();
 
-    cout << "Layers number: " << layers_number << endl;
+    cout << "Layers number: " << layers_number << "\n";
 
-    for(Index i = 0; i < layers_number; i++)
-        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_label() << endl;
+    for(size_t i = 0; i < layers_number; i++)
+        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_label() << "\n";
 }
 
 }

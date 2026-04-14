@@ -252,7 +252,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
     add_layer(std::move(stem_conv), { last_layer_index });
 
-    last_layer_index = get_layers_number() - 1;
+    last_layer_index = static_cast<Index>(get_layers_number()) - 1;
 
     auto stem_pool = make_unique<Pooling>(get_layer(last_layer_index)->get_output_shape(),
                                           Shape{ 3, 3 },
@@ -263,7 +263,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
     add_layer(std::move(stem_pool), { last_layer_index });
 
-    last_layer_index = get_layers_number() - 1;
+    last_layer_index = static_cast<Index>(get_layers_number()) - 1;
 
     for(size_t stage = 0; stage < blocks_per_stage.size(); ++stage)
     {
@@ -288,7 +288,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
             add_layer(std::move(conv1), { block_input_index });
 
-            Index main_path_index = get_layers_number() - 1;
+            Index main_path_index = static_cast<Index>(get_layers_number()) - 1;
 
             auto conv2 = make_unique<Convolutional>(get_layer(main_path_index)->get_output_shape(),
                                                     Shape{ 3, 3, filters, filters },
@@ -300,7 +300,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
             add_layer(std::move(conv2), { main_path_index });
 
-            main_path_index = get_layers_number() - 1;
+            main_path_index = static_cast<Index>(get_layers_number()) - 1;
 
             // Skip Connection
             Index skip_path_index = block_input_index;
@@ -317,7 +317,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
                 add_layer(std::move(skip_conv), { block_input_index });
 
-                skip_path_index = get_layers_number() - 1;
+                skip_path_index = static_cast<Index>(get_layers_number()) - 1;
             }
 
             const Shape main_out_shape = get_layer(main_path_index)->get_output_shape();
@@ -326,7 +326,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
             add_layer(std::move(addition_layer), { main_path_index, skip_path_index });
 
-            last_layer_index = get_layers_number() - 1;
+            last_layer_index = static_cast<Index>(get_layers_number()) - 1;
 
             auto activation_layer = make_unique<Convolutional>(get_layer(last_layer_index)->get_output_shape(),
                                                                Shape{ 1, 1, filters, filters },
@@ -338,7 +338,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
             add_layer(std::move(activation_layer), { last_layer_index });
 
-            last_layer_index = get_layers_number() - 1;
+            last_layer_index = static_cast<Index>(get_layers_number()) - 1;
         }
     }
 
@@ -353,13 +353,13 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
     add_layer(std::move(global_pool), { last_layer_index });
 
-    last_layer_index = get_layers_number() - 1;
+    last_layer_index = static_cast<Index>(get_layers_number()) - 1;
 
     auto flatten_layer = make_unique<Flatten<2>>(get_layer(last_layer_index)->get_output_shape());
 
     add_layer(std::move(flatten_layer), { last_layer_index });
 
-    last_layer_index = get_layers_number() - 1;
+    last_layer_index = static_cast<Index>(get_layers_number()) - 1;
 
     auto dense_layer = make_unique<Dense<2>>(get_layer(last_layer_index)->get_output_shape(),
                                             output_shape,
@@ -667,7 +667,7 @@ void Transformer::set(const Index input_sequence_length,
     decoder_embedding->set_add_positional_encoding(true);
 
     add_layer(std::move(decoder_embedding), {-1});
-    Index current_decoder_idx = get_layers_number() - 1;
+    Index current_decoder_idx = static_cast<Index>(get_layers_number()) - 1;
 
     auto encoder_embedding = make_unique<Embedding>(
         Shape{input_vocabulary_size, input_sequence_length},
@@ -678,7 +678,7 @@ void Transformer::set(const Index input_sequence_length,
     encoder_embedding->set_add_positional_encoding(true);
 
     add_layer(std::move(encoder_embedding), {-2});
-    Index current_encoder_idx = get_layers_number() - 1;
+    Index current_encoder_idx = static_cast<Index>(get_layers_number()) - 1;
 
     // -------------------------------------------------------------------------
     // Encoder stack
@@ -696,7 +696,7 @@ void Transformer::set(const Index input_sequence_length,
                 "encoder_self_attention" + suffix),
             {current_encoder_idx});
 
-        const Index encoder_self_attention_idx = get_layers_number() - 1;
+        const Index encoder_self_attention_idx = static_cast<Index>(get_layers_number()) - 1;
 
         // Residual
         add_layer(
@@ -711,7 +711,7 @@ void Transformer::set(const Index input_sequence_length,
                 Shape{input_sequence_length, embedding_dimension},
                 "encoder_self_attention_normalization" + suffix));
 
-        const Index encoder_norm_1_idx = get_layers_number() - 1;
+        const Index encoder_norm_1_idx = static_cast<Index>(get_layers_number()) - 1;
 
         // Feed-forward
         add_layer(
@@ -730,7 +730,7 @@ void Transformer::set(const Index input_sequence_length,
                 "Linear",
                 "encoder_external_dense" + suffix));
 
-        const Index encoder_ff_idx = get_layers_number() - 1;
+        const Index encoder_ff_idx = static_cast<Index>(get_layers_number()) - 1;
 
         // Residual
         add_layer(
@@ -745,7 +745,7 @@ void Transformer::set(const Index input_sequence_length,
                 Shape{input_sequence_length, embedding_dimension},
                 "encoder_dense_normalization" + suffix));
 
-        current_encoder_idx = get_layers_number() - 1;
+        current_encoder_idx = static_cast<Index>(get_layers_number()) - 1;
     }
 
     const Index encoder_final_output_idx = current_encoder_idx;
@@ -777,7 +777,7 @@ void Transformer::set(const Index input_sequence_length,
             "decoder_self_attention" + suffix);
 
         add_layer(std::move(decoder_self_attention), {current_decoder_idx});
-        const Index decoder_self_attention_idx = get_layers_number() - 1;
+        const Index decoder_self_attention_idx = static_cast<Index>(get_layers_number()) - 1;
 
         // Residual
         add_layer(
@@ -792,7 +792,7 @@ void Transformer::set(const Index input_sequence_length,
                 Shape{decoder_sequence_length, embedding_dimension},
                 "decoder_self_attention_normalization" + suffix));
 
-        const Index decoder_norm_1_idx = get_layers_number() - 1;
+        const Index decoder_norm_1_idx = static_cast<Index>(get_layers_number()) - 1;
 
         // Cross-attention: query = decoder, source = encoder output
         add_layer(
@@ -803,7 +803,7 @@ void Transformer::set(const Index input_sequence_length,
                 "cross_attention" + suffix),
             {decoder_norm_1_idx, encoder_final_output_idx});
 
-        const Index cross_attention_idx = get_layers_number() - 1;
+        const Index cross_attention_idx = static_cast<Index>(get_layers_number()) - 1;
 
         // Residual
         add_layer(
@@ -818,7 +818,7 @@ void Transformer::set(const Index input_sequence_length,
                 Shape{decoder_sequence_length, embedding_dimension},
                 "cross_attention_normalization" + suffix));
 
-        const Index decoder_norm_2_idx = get_layers_number() - 1;
+        const Index decoder_norm_2_idx = static_cast<Index>(get_layers_number()) - 1;
 
         // Feed-forward
         add_layer(
@@ -837,7 +837,7 @@ void Transformer::set(const Index input_sequence_length,
                 "Linear",
                 "decoder_external_dense" + suffix));
 
-        const Index decoder_ff_idx = get_layers_number() - 1;
+        const Index decoder_ff_idx = static_cast<Index>(get_layers_number()) - 1;
 
         // Residual
         add_layer(
@@ -852,7 +852,7 @@ void Transformer::set(const Index input_sequence_length,
                 Shape{decoder_sequence_length, embedding_dimension},
                 "decoder_dense_normalization" + suffix));
 
-        current_decoder_idx = get_layers_number() - 1;
+        current_decoder_idx = static_cast<Index>(get_layers_number()) - 1;
     }
 
     // -------------------------------------------------------------------------

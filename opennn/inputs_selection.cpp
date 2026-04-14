@@ -22,7 +22,7 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
 void InputsSelection::check() const
 {
     if(!training_strategy)
-        throw runtime_error("Pointer to training strategy is nullptr.\n");
+        throw runtime_error("InputsSelection error: training strategy is not set.");
 
     // Loss index
 
@@ -31,7 +31,7 @@ void InputsSelection::check() const
     // Neural network
 
     if(!loss->get_neural_network())
-        throw runtime_error("Pointer to neural network is nullptr.\n");
+        throw runtime_error("InputsSelection error: neural network is not set.");
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -41,7 +41,7 @@ void InputsSelection::check() const
     // Dataset
 
     if(!loss->get_dataset())
-        throw runtime_error("Pointer to dataset is nullptr.\n");
+        throw runtime_error("InputsSelection error: dataset is not set.");
 
     const Dataset* dataset = loss->get_dataset();
 
@@ -124,16 +124,16 @@ void InputsSelectionResults::resize_history(const Index new_size)
 
 void InputsSelectionResults::print() const
 {
-    cout << endl
-         << "Input Validation Results" << endl
-         << "Optimal inputs number: " << optimal_input_variable_names.size() << endl
-         << "Inputs: " << endl;
+    cout << "\n"
+         << "Input Validation Results" << "\n"
+         << "Optimal inputs number: " << optimal_input_variable_names.size() << "\n"
+         << "Inputs: " << "\n";
 
     for(size_t i = 0; i < optimal_input_variable_names.size(); i++)
-        cout << "   " << optimal_input_variable_names[i] << endl;
+        cout << "   " << optimal_input_variable_names[i] << "\n";
 
-    cout << "Optimum training error: " << optimum_training_error << endl
-         << "Optimum selection error: " << optimum_validation_error << endl;
+    cout << "Optimum training error: " << optimum_training_error << "\n"
+         << "Optimum selection error: " << optimum_validation_error << "\n";
 }
 
 void InputsSelection::save(const filesystem::path& file_name) const

@@ -16,9 +16,9 @@ namespace opennn
 
 MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
 {
-    if (starting_matrix.size() == 0)
+    if (starting_matrix.empty())
         return block;
-    if (block.size() == 0)
+    if (block.empty())
         return starting_matrix;
 
     if (starting_matrix.cols() != block.cols())

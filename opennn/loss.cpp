@@ -172,7 +172,7 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
     check_neural_network();
 
     const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
-    const Index layers_number = neural_network->get_layers_number();
+    const size_t layers_number = neural_network->get_layers_number();
 
     if(layers_number == 0) return;
 
@@ -250,7 +250,7 @@ void Loss::regularization_from_XML(const XmlDocument& document)
     }
 }
 
-void Loss::write_regularization_XML(XmlPrinter& file_stream) const
+void Loss::regularization_to_XML(XmlPrinter& file_stream) const
 {
     file_stream.open_element("Regularization");
 

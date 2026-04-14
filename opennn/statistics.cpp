@@ -42,11 +42,11 @@ void Descriptives::set(const type new_minimum, type new_maximum,
 
 void Descriptives::print(const string& title) const
 {
-    cout << title << endl
-         << "Minimum: " << minimum << endl
-         << "Maximum: " << maximum << endl
-         << "Mean: " << mean << endl
-         << "Standard deviation: " << standard_deviation << endl;
+    cout << title << "\n"
+         << "Minimum: " << minimum << "\n"
+         << "Maximum: " << maximum << "\n"
+         << "Mean: " << mean << "\n"
+         << "Standard deviation: " << standard_deviation << "\n";
 }
 
 BoxPlot::BoxPlot(type new_minimum,
@@ -82,10 +82,10 @@ void Descriptives::save(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open descriptives data file.\n");
 
-    file << "Minimum: " << minimum << endl
-         << "Maximum: " << maximum << endl
-         << "Mean: " << mean << endl
-         << "Standard deviation: " << standard_deviation << endl;
+    file << "Minimum: " << minimum << "\n"
+         << "Maximum: " << maximum << "\n"
+         << "Mean: " << mean << "\n"
+         << "Standard deviation: " << standard_deviation << "\n";
 
     file.close();
 }
@@ -199,7 +199,7 @@ Index Histogram::calculate_maximum_frequency() const
 
 Index Histogram::calculate_most_populated_bin() const 
 {
-    if (frequencies.size() == 0) 
+    if (frequencies.empty()) 
         return 0;
 
     Index max_index;
@@ -210,7 +210,7 @@ Index Histogram::calculate_most_populated_bin() const
 
 VectorR Histogram::calculate_minimal_centers() const
 {
-    if (frequencies.size() == 0)
+    if (frequencies.empty())
     {
         VectorR nan(1);
         nan << type(NAN);
@@ -232,7 +232,7 @@ VectorR Histogram::calculate_minimal_centers() const
 
 VectorR Histogram::calculate_maximal_centers() const
 {
-    if (frequencies.size() == 0)
+    if (frequencies.empty())
         return VectorR::Constant(1, type(NAN));
 
     const Index maximum_frequency = calculate_maximum_frequency();
@@ -279,36 +279,36 @@ void Histogram::save(const filesystem::path& histogram_file_name) const
     const Index bins_number = centers.size();
     ofstream histogram_file(histogram_file_name);
 
-    histogram_file << "centers,frequencies" << endl;
+    histogram_file << "centers,frequencies" << "\n";
 
     for(Index i = 0; i < bins_number; i++)
         histogram_file << centers(i) << ","
-                       << frequencies(i) << endl;
+                       << frequencies(i) << "\n";
 
     histogram_file.close();
 }
 
 type minimum(const MatrixR& matrix)
 {
-    if(matrix.size() == 0) return type(NAN);
+    if(matrix.empty()) return type(NAN);
     return matrix.minCoeff();
 }
 
 type maximum(const MatrixR& matrix)
 {
-    if(matrix.size() == 0) return type(NAN);
+    if(matrix.empty()) return type(NAN);
     return matrix.maxCoeff();
 }
 
 type minimum(const VectorR& vector)
 {
-    if(vector.size() == 0) return type(NAN);
+    if(vector.empty()) return type(NAN);
     return vector.minCoeff();
 }
 
 type maximum(const VectorR& vector)
 {
-    if(vector.size() == 0) return type(NAN);
+    if(vector.empty()) return type(NAN);
     return vector.maxCoeff();
 }
 
@@ -363,7 +363,7 @@ VectorR column_maximums(const MatrixR& matrix,
 
     vector<Index> used_column_indices;
 
-    if(column_indices.size() == 0)
+    if(column_indices.empty())
     {
         used_column_indices.resize(columns_number);
 
@@ -376,7 +376,7 @@ VectorR column_maximums(const MatrixR& matrix,
 
     vector<Index> used_row_indices;
 
-    if(row_indices.size() == 0)
+    if(row_indices.empty())
     {
         used_row_indices.resize(rows_number);
 
@@ -481,7 +481,7 @@ type variance(const VectorR& vector, const VectorI& indices)
 
 type standard_deviation(const VectorR& vector)
 {
-    if(vector.size() == 0) return type(0);
+    if(vector.empty()) return type(0);
 
     return sqrt(variance(vector));
 }
@@ -565,12 +565,12 @@ VectorR quartiles(const VectorR& data, const vector<Index>& indices)
 BoxPlot box_plot(const VectorR& vector)
 {
     BoxPlot box_plot;
-    if(vector.size() == 0)
+    if(vector.empty())
         return box_plot;
 
     const VectorR valid = filter_missing_values(vector);
 
-    if(valid.size() == 0) return box_plot;
+    if(valid.empty()) return box_plot;
 
     const VectorR quartiles = opennn::quartiles(valid);
     box_plot.minimum = minimum(valid);
@@ -585,7 +585,7 @@ BoxPlot box_plot(const VectorR& data, const vector<Index>& indices)
 {
     BoxPlot box_plot;
 
-    if(data.size() == 0 || indices.size() == 0)
+    if(data.empty() || indices.empty())
         return box_plot;
 
     const VectorR quartiles = opennn::quartiles(data, indices);
@@ -972,7 +972,7 @@ VectorR column_minimums(const MatrixR& matrix,
 
     vector<Index> used_column_indices;
 
-    if(column_indices.size() == 0)
+    if(column_indices.empty())
     {
         used_column_indices.resize(columns_number);
 
@@ -985,7 +985,7 @@ VectorR column_minimums(const MatrixR& matrix,
 
     vector<Index> used_row_indices;
 
-    if(row_indices.size() == 0)
+    if(row_indices.empty())
     {
         used_row_indices.resize(rows_number);
 
@@ -1030,7 +1030,7 @@ VectorR column_maximums(const MatrixR& matrix, const vector<Index>& column_indic
 
     vector<Index> used_column_indices;
 
-    if(column_indices.size() == 0)
+    if(column_indices.empty())
         used_column_indices.resize(columns_number);
     else
         used_column_indices = column_indices;
@@ -1120,7 +1120,7 @@ VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vect
 
 type mean(const MatrixR& matrix, Index column_index)
 {
-    if(matrix.size() == 0) return type(NAN);
+    if(matrix.empty()) return type(NAN);
 
     const VectorR col = matrix.col(column_index);
     const auto finite = col.array().isFinite();
@@ -1282,7 +1282,7 @@ VectorR median(const MatrixR& matrix,
 
 Index minimal_index(const VectorR& vector)
 {
-    if(vector.size() == 0) return 0;
+    if(vector.empty()) return 0;
 
     Index index;
     vector.minCoeff(&index);
@@ -1292,7 +1292,7 @@ Index minimal_index(const VectorR& vector)
 
 Index maximal_index(const VectorR& vector)
 {
-    if(vector.size() == 0) return 0;
+    if(vector.empty()) return 0;
 
     Index index;
     vector.maxCoeff(&index);

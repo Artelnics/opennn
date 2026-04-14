@@ -85,7 +85,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     if(dataset->has_nan())
         dataset->scrub_missing_values();
 
-    if(display) cout << "Performing growing input selection..." << endl;
+    if(display) cout << "Performing growing input selection..." << "\n";
 
     InputsSelectionResults input_selection_results(original_input_variables_number);
 
@@ -103,7 +103,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     const vector<string> variable_names = dataset->get_variable_names();
     vector<string> input_variable_names;
 
-    if(display) cout << "Calculating correlations..." << endl;
+    if(display) cout << "Calculating correlations..." << "\n";
 
     const MatrixR correlations = get_correlation_values(dataset->calculate_input_target_variable_pearson_correlations());
     const VectorR total_correlations = correlations.col(0).array().abs();
@@ -150,7 +150,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     {
         if(variable_index >= correlations_rank_descending.size())
         {
-            if (display) cout << "\nAll the variables has been used." << endl;
+            if (display) cout << "\nAll the variables has been used." << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
             stop = true;
             continue;
@@ -187,10 +187,10 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
         if(display)
         {
-            cout << endl
-                << "Epoch: " << epoch + 1 << endl
-                << "Input variables number: " << input_variables_number << endl
-                << "Inputs: " << endl;
+            cout << "\n"
+                << "Epoch: " << epoch + 1 << "\n"
+                << "Input variables number: " << input_variables_number << "\n"
+                << "Inputs: " << "\n";
 
             input_variable_names = dataset->get_variable_names("Input");
             cout << input_variable_names;
@@ -220,14 +220,14 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             }
 
             if(display)
-                cout << "Trial number: " << j + 1 << endl
-                << "   Training error: " << training_results.get_training_error() << endl
-                << "   Validation error: " << training_results.get_validation_error() << endl;
+                cout << "Trial number: " << j + 1 << "\n"
+                << "   Training error: " << training_results.get_training_error() << "\n"
+                << "   Validation error: " << training_results.get_validation_error() << "\n";
         }
 
         if(previous_training_error < minimum_training_error)
         {
-            if(display) cout << "Validation failure" << endl;
+            if(display) cout << "Validation failure" << "\n";
             validation_failures++;
 
             if(dataset->get_variables()[current_variable_index].role == VariableRole::InputTarget)
@@ -254,31 +254,31 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
         if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
             stop = true;
         }
         else if(input_selection_results.optimum_validation_error <= validation_error_goal)
         {
-            if(display) cout << "\nSelection error reached: " << input_selection_results.optimum_validation_error << endl;
+            if(display) cout << "\nSelection error reached: " << input_selection_results.optimum_validation_error << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
             stop = true;
         }
         else if(epoch >= maximum_epochs)
         {
-            if(display) cout << "\nMaximum number of epochs reached." << endl;
+            if(display) cout << "\nMaximum number of epochs reached." << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
             stop = true;
         }
         else if(validation_failures >= maximum_validation_failures)
         {
-            if(display) cout << "\nMaximum selection failures (" << validation_failures << ") reached." << endl;
+            if(display) cout << "\nMaximum selection failures (" << validation_failures << ") reached." << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumSelectionFailures;
             stop = true;
         }
         else if(dataset->get_variables_number("Input") >= maximum_inputs_number)
         {
-            if(display) cout << "\nMaximum inputs (" << dataset->get_variables_number("Input") << ") reached." << endl;
+            if(display) cout << "\nMaximum inputs (" << dataset->get_variables_number("Input") << ") reached." << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
             stop = true;
         }

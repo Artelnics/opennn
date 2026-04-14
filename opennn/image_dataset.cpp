@@ -337,7 +337,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         cout << "\nImage dataset loaded in: "
              << minutes << " minutes, "
              << seconds << " seconds, "
-             << milliseconds << " milliseconds." << endl;
+             << milliseconds << " milliseconds." << "\n";
     }
 
     shuffle_rows(data);
