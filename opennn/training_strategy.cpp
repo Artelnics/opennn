@@ -295,6 +295,8 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
 void TrainingStrategy::from_XML(const XMLDocument& document)
 {
+    cout << "[TS::from_XML] START" << endl;
+
     const XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
     if(!root_element) throw runtime_error("TrainingStrategy element is nullptr.\n");
 
@@ -306,16 +308,20 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     // Loss method
 
     const string loss_method = read_xml_string(loss_element, "LossMethod");
+    cout << "[TS::from_XML] loss_method=" << loss_method << endl;
 
     const XMLElement* loss_method_element = loss_element->FirstChildElement(loss_method.c_str());
 
     if(loss_method_element)
     {
+        cout << "[TS::from_XML] calling set_loss..." << endl;
         set_loss(loss_method);
+        cout << "[TS::from_XML] set_loss done" << endl;
 
         XMLDocument loss_method_document;
         loss_method_document.InsertFirstChild(loss_method_element->DeepClone(&loss_method_document));
         loss->from_XML(loss_method_document);
+        cout << "[TS::from_XML] loss->from_XML done" << endl;
     }
     else throw runtime_error(loss_method + " element is nullptr.\n");
 
@@ -327,20 +333,26 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     // Optimization method
 
     const string optimization_method = read_xml_string(optimization_algorithm_element, "OptimizationMethod");
+    cout << "[TS::from_XML] optimization_method=" << optimization_method << endl;
 
     const XMLElement* optimization_method_element = optimization_algorithm_element->FirstChildElement(optimization_method.c_str());
 
     if(optimization_method_element)
     {
+        cout << "[TS::from_XML] calling set_optimization_algorithm..." << endl;
         set_optimization_algorithm(optimization_method);
+        cout << "[TS::from_XML] set_optimization_algorithm done" << endl;
 
         XMLDocument optimization_method_document;
         optimization_method_document.InsertFirstChild(optimization_method_element->DeepClone(&optimization_method_document));
         optimizer->from_XML(optimization_method_document);
+        cout << "[TS::from_XML] optimizer->from_XML done" << endl;
     }
     else throw runtime_error(optimization_method + " element is nullptr.\n");
 
     // Regularization
+
+    cout << "[TS::from_XML] loading regularization..." << endl;
 
     const XMLElement* regularization_element = loss_element->FirstChildElement("Regularization");
 
@@ -350,6 +362,8 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
         regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
         loss->regularization_from_XML(regularization_document);
     }
+
+    cout << "[TS::from_XML] DONE" << endl;
 
     // Display
 

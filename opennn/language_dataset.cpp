@@ -601,6 +601,9 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 
     set_display(read_xml_bool(data_set_element, "Display"));
 
+    // Language datasets never have headers — override XML value
+    has_header = false;
+
     ifstream file(data_path);
 
     if(!file.is_open())

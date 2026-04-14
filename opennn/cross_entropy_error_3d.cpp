@@ -263,10 +263,14 @@ void CrossEntropyError3d::from_XML(const XMLDocument& document)
 
     // Regularization
 
-    XMLDocument regularization_document;
     const XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
-    regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
-    regularization_from_XML(regularization_document);
+
+    if(regularization_element)
+    {
+        XMLDocument regularization_document;
+        regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
+        regularization_from_XML(regularization_document);
+    }
 }
 
 
