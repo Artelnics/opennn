@@ -81,11 +81,13 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
         weighted_squared_error(input, target, positives_weight, negatives_weight, back_propagation.error, workspace_device);
         break;
     case Error::CrossEntropy:
-        // Math utility handles logic based on num_classes (input.shape.back())
         if (input.shape.back() == 1)
             binary_cross_entropy(input, target, back_propagation.error, workspace_device);
         else
             categorical_cross_entropy(input, target, back_propagation.error, workspace_device);
+        break;
+    case Error::CrossEntropy3d:
+        cross_entropy_3d(input, target, back_propagation.error);
         break;
     case Error::MinkowskiError:
         minkowski_error(input, target, minkowski_parameter, back_propagation.error, workspace_device);
@@ -123,6 +125,9 @@ void Loss::calculate_output_gradients(const Batch& batch, const ForwardPropagati
         break;
     case Error::CrossEntropy:
         cross_entropy_gradient(input, target, input_gradient);
+        break;
+    case Error::CrossEntropy3d:
+        cross_entropy_3d_gradient(input, target, input_gradient);
         break;
     case Error::MinkowskiError:
         minkowski_error_gradient(input, target, minkowski_parameter, input_gradient);
@@ -185,6 +190,7 @@ static const vector<pair<Loss::Error, string>> error_map = {
     {Loss::Error::NormalizedSquaredError, "NormalizedSquaredError"},
     {Loss::Error::WeightedSquaredError,   "WeightedSquaredError"},
     {Loss::Error::CrossEntropy,           "CrossEntropy"},
+    {Loss::Error::CrossEntropy3d,        "CrossEntropyError3d"},
     {Loss::Error::MinkowskiError,         "MinkowskiError"}
 };
 

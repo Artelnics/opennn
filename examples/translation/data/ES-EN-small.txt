@@ -1,0 +1,1000 @@
+yo estoy feliz	i am happy
+yo estoy triste	i am sad
+yo estoy cansado	i am tired
+yo tengo hambre	i am hungry
+yo tengo sed	i am thirsty
+yo estoy listo	i am ready
+yo estoy temprano	i am early
+yo estoy tarde	i am late
+yo soy fuerte	i am strong
+yo soy debil	i am weak
+yo estoy tranquilo	i am calm
+yo estoy enfadado	i am angry
+yo estoy ocupado	i am busy
+yo estoy libre	i am free
+yo estoy solo	i am alone
+yo tengo frio	i am cold
+yo tengo calor	i am hot
+yo estoy correcto	i am right
+yo estoy equivocado	i am wrong
+yo estoy seguro	i am sure
+yo estoy asustado	i am afraid
+yo estoy aburrido	i am bored
+yo estoy emocionado	i am excited
+yo estoy confundido	i am confused
+yo estoy serio	i am serious
+tu estas feliz	you are happy
+tu estas triste	you are sad
+tu estas cansado	you are tired
+tu tienes hambre	you are hungry
+tu tienes sed	you are thirsty
+tu estas listo	you are ready
+tu estas temprano	you are early
+tu estas tarde	you are late
+tu eres fuerte	you are strong
+tu eres debil	you are weak
+tu estas tranquilo	you are calm
+tu estas enfadado	you are angry
+tu estas ocupado	you are busy
+tu estas libre	you are free
+tu estas solo	you are alone
+tu tienes frio	you are cold
+tu tienes calor	you are hot
+tu estas correcto	you are right
+tu estas equivocado	you are wrong
+tu estas seguro	you are sure
+tu estas asustado	you are afraid
+tu estas aburrido	you are bored
+tu estas emocionado	you are excited
+tu estas confundido	you are confused
+tu estas serio	you are serious
+el esta feliz	he is happy
+el esta triste	he is sad
+el esta cansado	he is tired
+el tiene hambre	he is hungry
+el tiene sed	he is thirsty
+el esta listo	he is ready
+el es fuerte	he is strong
+el es debil	he is weak
+el esta tranquilo	he is calm
+el esta enfadado	he is angry
+el esta ocupado	he is busy
+el esta libre	he is free
+el esta solo	he is alone
+el tiene frio	he is cold
+el tiene calor	he is hot
+el esta correcto	he is right
+el esta equivocado	he is wrong
+el esta seguro	he is sure
+el esta asustado	he is afraid
+el esta aburrido	he is bored
+el esta emocionado	he is excited
+el esta confundido	he is confused
+el esta serio	he is serious
+ella esta feliz	she is happy
+ella esta triste	she is sad
+ella esta cansada	she is tired
+ella tiene hambre	she is hungry
+ella tiene sed	she is thirsty
+ella esta lista	she is ready
+ella es fuerte	she is strong
+ella es debil	she is weak
+ella esta tranquila	she is calm
+ella esta enfadada	she is angry
+ella esta ocupada	she is busy
+ella esta libre	she is free
+ella esta sola	she is alone
+ella tiene frio	she is cold
+ella tiene calor	she is hot
+ella esta correcta	she is right
+ella esta equivocada	she is wrong
+ella esta segura	she is sure
+ella esta asustada	she is afraid
+ella esta aburrida	she is bored
+ella esta emocionada	she is excited
+ella esta confundida	she is confused
+ella esta seria	she is serious
+yo veo el gato	i see the cat
+yo veo el perro	i see the dog
+yo veo el pajaro	i see the bird
+yo veo el coche	i see the car
+yo veo la casa	i see the house
+yo veo el arbol	i see the tree
+yo veo la carretera	i see the road
+yo veo el libro	i see the book
+yo veo la puerta	i see the door
+yo veo la ventana	i see the window
+tu ves el gato	you see the cat
+tu ves el perro	you see the dog
+tu ves el pajaro	you see the bird
+tu ves el coche	you see the car
+tu ves la casa	you see the house
+tu ves el arbol	you see the tree
+tu ves la carretera	you see the road
+tu ves el libro	you see the book
+tu ves la puerta	you see the door
+tu ves la ventana	you see the window
+el ve el gato	he sees the cat
+el ve el perro	he sees the dog
+el ve el pajaro	he sees the bird
+el ve el coche	he sees the car
+el ve la casa	he sees the house
+el ve el arbol	he sees the tree
+el ve la carretera	he sees the road
+el ve el libro	he sees the book
+el ve la puerta	he sees the door
+el ve la ventana	he sees the window
+ella ve el gato	she sees the cat
+ella ve el perro	she sees the dog
+ella ve el pajaro	she sees the bird
+ella ve el coche	she sees the car
+ella ve la casa	she sees the house
+ella ve el arbol	she sees the tree
+ella ve la carretera	she sees the road
+ella ve el libro	she sees the book
+ella ve la puerta	she sees the door
+ella ve la ventana	she sees the window
+me gusta el gato	i like the cat
+me gusta el perro	i like the dog
+me gusta el pajaro	i like the bird
+me gusta el coche	i like the car
+me gusta la casa	i like the house
+me gusta el arbol	i like the tree
+me gusta el libro	i like the book
+me gusta la musica	i like the music
+me gusta la comida	i like the food
+me gusta la ciudad	i like the city
+te gusta el gato	you like the cat
+te gusta el perro	you like the dog
+te gusta el pajaro	you like the bird
+te gusta el coche	you like the car
+te gusta la casa	you like the house
+te gusta el arbol	you like the tree
+te gusta el libro	you like the book
+te gusta la musica	you like the music
+te gusta la comida	you like the food
+te gusta la ciudad	you like the city
+le gusta el gato	he likes the cat
+le gusta el perro	he likes the dog
+le gusta el pajaro	he likes the bird
+le gusta el coche	he likes the car
+le gusta la casa	he likes the house
+le gusta el arbol	he likes the tree
+le gusta el libro	he likes the book
+le gusta la musica	he likes the music
+le gusta la comida	he likes the food
+le gusta la ciudad	he likes the city
+le gusta el gato	she likes the cat
+le gusta el perro	she likes the dog
+le gusta el pajaro	she likes the bird
+le gusta el coche	she likes the car
+le gusta la casa	she likes the house
+le gusta el arbol	she likes the tree
+le gusta el libro	she likes the book
+le gusta la musica	she likes the music
+le gusta la comida	she likes the food
+le gusta la ciudad	she likes the city
+yo tengo un gato	i have a cat
+yo tengo un perro	i have a dog
+yo tengo un coche	i have a car
+yo tengo una casa	i have a house
+yo tengo un libro	i have a book
+yo tengo un telefono	i have a phone
+yo tengo un ordenador	i have a computer
+yo tengo un amigo	i have a friend
+yo tengo un trabajo	i have a job
+yo tengo un problema	i have a problem
+tu tienes un gato	you have a cat
+tu tienes un perro	you have a dog
+tu tienes un coche	you have a car
+tu tienes una casa	you have a house
+tu tienes un libro	you have a book
+tu tienes un telefono	you have a phone
+tu tienes un ordenador	you have a computer
+tu tienes un amigo	you have a friend
+tu tienes un trabajo	you have a job
+tu tienes un problema	you have a problem
+el tiene un gato	he has a cat
+el tiene un perro	he has a dog
+el tiene un coche	he has a car
+el tiene una casa	he has a house
+el tiene un libro	he has a book
+el tiene un telefono	he has a phone
+el tiene un ordenador	he has a computer
+el tiene un amigo	he has a friend
+el tiene un trabajo	he has a job
+el tiene un problema	he has a problem
+ella tiene un gato	she has a cat
+ella tiene un perro	she has a dog
+ella tiene un coche	she has a car
+ella tiene una casa	she has a house
+ella tiene un libro	she has a book
+ella tiene un telefono	she has a phone
+ella tiene un ordenador	she has a computer
+ella tiene un amigo	she has a friend
+ella tiene un trabajo	she has a job
+ella tiene un problema	she has a problem
+yo quiero un gato	i want a cat
+yo quiero un perro	i want a dog
+yo quiero un coche	i want a car
+yo quiero una casa	i want a house
+yo quiero un libro	i want a book
+yo quiero un telefono	i want a phone
+yo quiero un ordenador	i want a computer
+yo quiero un amigo	i want a friend
+yo quiero un trabajo	i want a job
+yo quiero una solucion	i want a solution
+tu quieres un gato	you want a cat
+tu quieres un perro	you want a dog
+tu quieres un coche	you want a car
+tu quieres una casa	you want a house
+tu quieres un libro	you want a book
+tu quieres un telefono	you want a phone
+tu quieres un ordenador	you want a computer
+tu quieres un amigo	you want a friend
+tu quieres un trabajo	you want a job
+tu quieres una solucion	you want a solution
+el quiere un gato	he wants a cat
+el quiere un perro	he wants a dog
+el quiere un coche	he wants a car
+el quiere una casa	he wants a house
+el quiere un libro	he wants a book
+el quiere un telefono	he wants a phone
+el quiere un ordenador	he wants a computer
+el quiere un amigo	he wants a friend
+el quiere un trabajo	he wants a job
+el quiere una solucion	he wants a solution
+ella quiere un gato	she wants a cat
+ella quiere un perro	she wants a dog
+ella quiere un coche	she wants a car
+ella quiere una casa	she wants a house
+ella quiere un libro	she wants a book
+ella quiere un telefono	she wants a phone
+ella quiere un ordenador	she wants a computer
+ella quiere un amigo	she wants a friend
+ella quiere un trabajo	she wants a job
+ella quiere una solucion	she wants a solution
+yo no veo el gato	i do not see the cat
+yo no veo el perro	i do not see the dog
+yo no veo el coche	i do not see the car
+yo no veo la casa	i do not see the house
+yo no veo el libro	i do not see the book
+yo no veo el arbol	i do not see the tree
+yo no veo la carretera	i do not see the road
+yo no veo la puerta	i do not see the door
+yo no veo la ventana	i do not see the window
+yo no veo la ciudad	i do not see the city
+tu no ves el gato	you do not see the cat
+tu no ves el perro	you do not see the dog
+tu no ves el coche	you do not see the car
+tu no ves la casa	you do not see the house
+tu no ves el libro	you do not see the book
+tu no ves el arbol	you do not see the tree
+tu no ves la carretera	you do not see the road
+tu no ves la puerta	you do not see the door
+tu no ves la ventana	you do not see the window
+tu no ves la ciudad	you do not see the city
+el no ve el gato	he does not see the cat
+el no ve el perro	he does not see the dog
+el no ve el coche	he does not see the car
+el no ve la casa	he does not see the house
+el no ve el libro	he does not see the book
+el no ve el arbol	he does not see the tree
+el no ve la carretera	he does not see the road
+el no ve la puerta	he does not see the door
+el no ve la ventana	he does not see the window
+el no ve la ciudad	he does not see the city
+ella no ve el gato	she does not see the cat
+ella no ve el perro	she does not see the dog
+ella no ve el coche	she does not see the car
+ella no ve la casa	she does not see the house
+ella no ve el libro	she does not see the book
+ella no ve el arbol	she does not see the tree
+ella no ve la carretera	she does not see the road
+ella no ve la puerta	she does not see the door
+ella no ve la ventana	she does not see the window
+ella no ve la ciudad	she does not see the city
+ves tu el gato	do you see the cat
+ves tu el perro	do you see the dog
+ves tu el coche	do you see the car
+ves tu la casa	do you see the house
+ves tu el libro	do you see the book
+ves tu el arbol	do you see the tree
+ves tu la carretera	do you see the road
+ves tu la puerta	do you see the door
+ves tu la ventana	do you see the window
+ves tu la ciudad	do you see the city
+veo yo el gato	do i see the cat
+veo yo el perro	do i see the dog
+veo yo el coche	do i see the car
+veo yo la casa	do i see the house
+veo yo el libro	do i see the book
+veo yo el arbol	do i see the tree
+veo yo la carretera	do i see the road
+veo yo la puerta	do i see the door
+veo yo la ventana	do i see the window
+veo yo la ciudad	do i see the city
+ve el el gato	does he see the cat
+ve el el perro	does he see the dog
+ve el el coche	does he see the car
+ve el la casa	does he see the house
+ve el el libro	does he see the book
+ve el el arbol	does he see the tree
+ve el la carretera	does he see the road
+ve el la puerta	does he see the door
+ve el la ventana	does he see the window
+ve el la ciudad	does he see the city
+ve ella el gato	does she see the cat
+ve ella el perro	does she see the dog
+ve ella el coche	does she see the car
+ve ella la casa	does she see the house
+ve ella el libro	does she see the book
+ve ella el arbol	does she see the tree
+ve ella la carretera	does she see the road
+ve ella la puerta	does she see the door
+ve ella la ventana	does she see the window
+ve ella la ciudad	does she see the city
+yo veo los gatos	i see the cats
+yo veo los perros	i see the dogs
+yo veo los pajaros	i see the birds
+yo veo los coches	i see the cars
+yo veo las casas	i see the houses
+yo veo los arboles	i see the trees
+yo veo las carreteras	i see the roads
+yo veo los libros	i see the books
+yo veo las puertas	i see the doors
+yo veo las ventanas	i see the windows
+tu ves los gatos	you see the cats
+tu ves los perros	you see the dogs
+tu ves los pajaros	you see the birds
+tu ves los coches	you see the cars
+tu ves las casas	you see the houses
+tu ves los arboles	you see the trees
+tu ves las carreteras	you see the roads
+tu ves los libros	you see the books
+tu ves las puertas	you see the doors
+tu ves las ventanas	you see the windows
+el ve los gatos	he sees the cats
+el ve los perros	he sees the dogs
+el ve los pajaros	he sees the birds
+el ve los coches	he sees the cars
+el ve las casas	he sees the houses
+el ve los arboles	he sees the trees
+el ve las carreteras	he sees the roads
+el ve los libros	he sees the books
+el ve las puertas	he sees the doors
+el ve las ventanas	he sees the windows
+ella ve los gatos	she sees the cats
+ella ve los perros	she sees the dogs
+ella ve los pajaros	she sees the birds
+ella ve los coches	she sees the cars
+ella ve las casas	she sees the houses
+ella ve los arboles	she sees the trees
+ella ve las carreteras	she sees the roads
+ella ve los libros	she sees the books
+ella ve las puertas	she sees the doors
+ella ve las ventanas	she sees the windows
+yo tengo muchos gatos	i have many cats
+yo tengo muchos perros	i have many dogs
+yo tengo muchos libros	i have many books
+yo tengo muchos coches	i have many cars
+yo tengo muchos amigos	i have many friends
+yo tengo muchos problemas	i have many problems
+yo tengo muchas ideas	i have many ideas
+yo tengo muchas preguntas	i have many questions
+yo tengo muchas opciones	i have many options
+yo tengo muchas cosas	i have many things
+tu tienes muchos gatos	you have many cats
+tu tienes muchos perros	you have many dogs
+tu tienes muchos libros	you have many books
+tu tienes muchos coches	you have many cars
+tu tienes muchos amigos	you have many friends
+tu tienes muchos problemas	you have many problems
+tu tienes muchas ideas	you have many ideas
+tu tienes muchas preguntas	you have many questions
+tu tienes muchas opciones	you have many options
+tu tienes muchas cosas	you have many things
+el tiene muchos gatos	he has many cats
+el tiene muchos perros	he has many dogs
+el tiene muchos libros	he has many books
+el tiene muchos coches	he has many cars
+el tiene muchos amigos	he has many friends
+el tiene muchos problemas	he has many problems
+el tiene muchas ideas	he has many ideas
+el tiene muchas preguntas	he has many questions
+el tiene muchas opciones	he has many options
+el tiene muchas cosas	he has many things
+ella tiene muchos gatos	she has many cats
+ella tiene muchos perros	she has many dogs
+ella tiene muchos libros	she has many books
+ella tiene muchos coches	she has many cars
+ella tiene muchos amigos	she has many friends
+ella tiene muchos problemas	she has many problems
+ella tiene muchas ideas	she has many ideas
+ella tiene muchas preguntas	she has many questions
+ella tiene muchas opciones	she has many options
+ella tiene muchas cosas	she has many things
+yo vi el gato	i saw the cat
+yo vi el perro	i saw the dog
+yo vi el pajaro	i saw the bird
+yo vi el coche	i saw the car
+yo vi la casa	i saw the house
+yo vi el arbol	i saw the tree
+yo vi la carretera	i saw the road
+yo vi el libro	i saw the book
+yo vi la puerta	i saw the door
+yo vi la ventana	i saw the window
+tu viste el gato	you saw the cat
+tu viste el perro	you saw the dog
+tu viste el pajaro	you saw the bird
+tu viste el coche	you saw the car
+tu viste la casa	you saw the house
+tu viste el arbol	you saw the tree
+tu viste la carretera	you saw the road
+tu viste el libro	you saw the book
+tu viste la puerta	you saw the door
+tu viste la ventana	you saw the window
+el vio el gato	he saw the cat
+el vio el perro	he saw the dog
+el vio el pajaro	he saw the bird
+el vio el coche	he saw the car
+el vio la casa	he saw the house
+el vio el arbol	he saw the tree
+el vio la carretera	he saw the road
+el vio el libro	he saw the book
+el vio la puerta	he saw the door
+el vio la ventana	he saw the window
+ella vio el gato	she saw the cat
+ella vio el perro	she saw the dog
+ella vio el pajaro	she saw the bird
+ella vio el coche	she saw the car
+ella vio la casa	she saw the house
+ella vio el arbol	she saw the tree
+ella vio la carretera	she saw the road
+ella vio el libro	she saw the book
+ella vio la puerta	she saw the door
+ella vio la ventana	she saw the window
+yo tenia un gato	i had a cat
+yo tenia un perro	i had a dog
+yo tenia un coche	i had a car
+yo tenia una casa	i had a house
+yo tenia un libro	i had a book
+yo tenia un telefono	i had a phone
+yo tenia un ordenador	i had a computer
+yo tenia un amigo	i had a friend
+yo tenia un trabajo	i had a job
+yo tenia un problema	i had a problem
+tu tenias un gato	you had a cat
+tu tenias un perro	you had a dog
+tu tenias un coche	you had a car
+tu tenias una casa	you had a house
+tu tenias un libro	you had a book
+tu tenias un telefono	you had a phone
+tu tenias un ordenador	you had a computer
+tu tenias un amigo	you had a friend
+tu tenias un trabajo	you had a job
+tu tenias un problema	you had a problem
+el tenia un gato	he had a cat
+el tenia un perro	he had a dog
+el tenia un coche	he had a car
+el tenia una casa	he had a house
+el tenia un libro	he had a book
+el tenia un telefono	he had a phone
+el tenia un ordenador	he had a computer
+el tenia un amigo	he had a friend
+el tenia un trabajo	he had a job
+el tenia un problema	he had a problem
+ella tenia un gato	she had a cat
+ella tenia un perro	she had a dog
+ella tenia un coche	she had a car
+ella tenia una casa	she had a house
+ella tenia un libro	she had a book
+ella tenia un telefono	she had a phone
+ella tenia un ordenador	she had a computer
+ella tenia un amigo	she had a friend
+ella tenia un trabajo	she had a job
+ella tenia un problema	she had a problem
+yo vere el gato	i will see the cat
+yo vere el perro	i will see the dog
+yo vere el pajaro	i will see the bird
+yo vere el coche	i will see the car
+yo vere la casa	i will see the house
+yo vere el arbol	i will see the tree
+yo vere la carretera	i will see the road
+yo vere el libro	i will see the book
+yo vere la puerta	i will see the door
+yo vere la ventana	i will see the window
+tu veras el gato	you will see the cat
+tu veras el perro	you will see the dog
+tu veras el pajaro	you will see the bird
+tu veras el coche	you will see the car
+tu veras la casa	you will see the house
+tu veras el arbol	you will see the tree
+tu veras la carretera	you will see the road
+tu veras el libro	you will see the book
+tu veras la puerta	you will see the door
+tu veras la ventana	you will see the window
+el vera el gato	he will see the cat
+el vera el perro	he will see the dog
+el vera el pajaro	he will see the bird
+el vera el coche	he will see the car
+el vera la casa	he will see the house
+el vera el arbol	he will see the tree
+el vera la carretera	he will see the road
+el vera el libro	he will see the book
+el vera la puerta	he will see the door
+el vera la ventana	he will see the window
+ella vera el gato	she will see the cat
+ella vera el perro	she will see the dog
+ella vera el pajaro	she will see the bird
+ella vera el coche	she will see the car
+ella vera la casa	she will see the house
+ella vera el arbol	she will see the tree
+ella vera la carretera	she will see the road
+ella vera el libro	she will see the book
+ella vera la puerta	she will see the door
+ella vera la ventana	she will see the window
+yo tendre un gato	i will have a cat
+yo tendre un perro	i will have a dog
+yo tendre un coche	i will have a car
+yo tendre una casa	i will have a house
+yo tendre un libro	i will have a book
+yo tendre un telefono	i will have a phone
+yo tendre un ordenador	i will have a computer
+yo tendre un amigo	i will have a friend
+yo tendre un trabajo	i will have a job
+yo tendre un problema	i will have a problem
+tu tendras un gato	you will have a cat
+tu tendras un perro	you will have a dog
+tu tendras un coche	you will have a car
+tu tendras una casa	you will have a house
+tu tendras un libro	you will have a book
+tu tendras un telefono	you will have a phone
+tu tendras un ordenador	you will have a computer
+tu tendras un amigo	you will have a friend
+tu tendras un trabajo	you will have a job
+tu tendras un problema	you will have a problem
+el tendra un gato	he will have a cat
+el tendra un perro	he will have a dog
+el tendra un coche	he will have a car
+el tendra una casa	he will have a house
+el tendra un libro	he will have a book
+el tendra un telefono	he will have a phone
+el tendra un ordenador	he will have a computer
+el tendra un amigo	he will have a friend
+el tendra un trabajo	he will have a job
+el tendra un problema	he will have a problem
+ella tendra un gato	she will have a cat
+ella tendra un perro	she will have a dog
+ella tendra un coche	she will have a car
+ella tendra una casa	she will have a house
+ella tendra un libro	she will have a book
+ella tendra un telefono	she will have a phone
+ella tendra un ordenador	she will have a computer
+ella tendra un amigo	she will have a friend
+ella tendra un trabajo	she will have a job
+ella tendra un problema	she will have a problem
+yo veo el gato grande	i see the big cat
+yo veo el gato pequeno	i see the small cat
+yo veo el perro grande	i see the big dog
+yo veo el perro pequeno	i see the small dog
+yo veo el coche rojo	i see the red car
+yo veo el coche azul	i see the blue car
+yo veo la casa grande	i see the big house
+yo veo la casa pequena	i see the small house
+yo veo el arbol alto	i see the tall tree
+yo veo el arbol verde	i see the green tree
+tu ves el gato grande	you see the big cat
+tu ves el gato pequeno	you see the small cat
+tu ves el perro grande	you see the big dog
+tu ves el perro pequeno	you see the small dog
+tu ves el coche rojo	you see the red car
+tu ves el coche azul	you see the blue car
+tu ves la casa grande	you see the big house
+tu ves la casa pequena	you see the small house
+tu ves el arbol alto	you see the tall tree
+tu ves el arbol verde	you see the green tree
+el ve el gato grande	he sees the big cat
+el ve el gato pequeno	he sees the small cat
+el ve el perro grande	he sees the big dog
+el ve el perro pequeno	he sees the small dog
+el ve el coche rojo	he sees the red car
+el ve el coche azul	he sees the blue car
+el ve la casa grande	he sees the big house
+el ve la casa pequena	he sees the small house
+el ve el arbol alto	he sees the tall tree
+el ve el arbol verde	he sees the green tree
+ella ve el gato grande	she sees the big cat
+ella ve el gato pequeno	she sees the small cat
+ella ve el perro grande	she sees the big dog
+ella ve el perro pequeno	she sees the small dog
+ella ve el coche rojo	she sees the red car
+ella ve el coche azul	she sees the blue car
+ella ve la casa grande	she sees the big house
+ella ve la casa pequena	she sees the small house
+ella ve el arbol alto	she sees the tall tree
+ella ve el arbol verde	she sees the green tree
+yo veo el gato y el perro	i see the cat and the dog
+yo veo el perro y el gato	i see the dog and the cat
+yo veo el gato y el pajaro	i see the cat and the bird
+yo veo el perro y el pajaro	i see the dog and the bird
+yo veo el coche y la casa	i see the car and the house
+yo veo la casa y el coche	i see the house and the car
+yo veo el arbol y la carretera	i see the tree and the road
+yo veo el libro y la puerta	i see the book and the door
+yo veo la puerta y la ventana	i see the door and the window
+yo veo la ciudad y la carretera	i see the city and the road
+tu ves el gato y el perro	you see the cat and the dog
+tu ves el perro y el gato	you see the dog and the cat
+tu ves el gato y el pajaro	you see the cat and the bird
+tu ves el perro y el pajaro	you see the dog and the bird
+tu ves el coche y la casa	you see the car and the house
+tu ves la casa y el coche	you see the house and the car
+tu ves el arbol y la carretera	you see the tree and the road
+tu ves el libro y la puerta	you see the book and the door
+tu ves la puerta y la ventana	you see the door and the window
+tu ves la ciudad y la carretera	you see the city and the road
+el ve el gato y el perro	he sees the cat and the dog
+el ve el perro y el gato	he sees the dog and the cat
+el ve el gato y el pajaro	he sees the cat and the bird
+el ve el perro y el pajaro	he sees the dog and the bird
+el ve el coche y la casa	he sees the car and the house
+el ve la casa y el coche	he sees the house and the car
+el ve el arbol y la carretera	he sees the tree and the road
+el ve el libro y la puerta	he sees the book and the door
+el ve la puerta y la ventana	he sees the door and the window
+el ve la ciudad y la carretera	he sees the city and the road
+ella ve el gato y el perro	she sees the cat and the dog
+ella ve el perro y el gato	she sees the dog and the cat
+ella ve el gato y el pajaro	she sees the cat and the bird
+ella ve el perro y el pajaro	she sees the dog and the bird
+ella ve el coche y la casa	she sees the car and the house
+ella ve la casa y el coche	she sees the house and the car
+ella ve el arbol y la carretera	she sees the tree and the road
+ella ve el libro y la puerta	she sees the book and the door
+ella ve la puerta y la ventana	she sees the door and the window
+ella ve la ciudad y la carretera	she sees the city and the road
+me gusta el perro grande y el gato pequeno	i like the big dog and the small cat
+me gusta el perro pequeno y el gato grande	i like the small dog and the big cat
+me gusta el coche rojo y el coche azul	i like the red car and the blue car
+me gusta la casa grande y la casa pequena	i like the big house and the small house
+me gusta el arbol alto y el arbol verde	i like the tall tree and the green tree
+te gusta el perro grande y el gato pequeno	you like the big dog and the small cat
+te gusta el perro pequeno y el gato grande	you like the small dog and the big cat
+te gusta el coche rojo y el coche azul	you like the red car and the blue car
+te gusta la casa grande y la casa pequena	you like the big house and the small house
+te gusta el arbol alto y el arbol verde	you like the tall tree and the green tree
+le gusta el perro grande y el gato pequeno	he likes the big dog and the small cat
+le gusta el perro pequeno y el gato grande	he likes the small dog and the big cat
+le gusta el coche rojo y el coche azul	he likes the red car and the blue car
+le gusta la casa grande y la casa pequena	he likes the big house and the small house
+le gusta el arbol alto y el arbol verde	he likes the tall tree and the green tree
+le gusta el perro grande y el gato pequeno	she likes the big dog and the small cat
+le gusta el perro pequeno y el gato grande	she likes the small dog and the big cat
+le gusta el coche rojo y el coche azul	she likes the red car and the blue car
+le gusta la casa grande y la casa pequena	she likes the big house and the small house
+le gusta el arbol alto y el arbol verde	she likes the tall tree and the green tree
+yo veo el gato y me gusta el perro	i see the cat and i like the dog
+yo veo el perro y me gusta el gato	i see the dog and i like the cat
+yo veo el pajaro y me gusta el perro	i see the bird and i like the dog
+yo veo el coche y me gusta la casa	i see the car and i like the house
+yo veo la casa y me gusta el coche	i see the house and i like the car
+yo veo el arbol y me gusta la carretera	i see the tree and i like the road
+yo veo el libro y me gusta la puerta	i see the book and i like the door
+yo veo la puerta y me gusta la ventana	i see the door and i like the window
+yo veo la ciudad y me gusta la carretera	i see the city and i like the road
+yo veo el perro y me gusta el pajaro	i see the dog and i like the bird
+tu ves el gato y te gusta el perro	you see the cat and you like the dog
+tu ves el perro y te gusta el gato	you see the dog and you like the cat
+tu ves el pajaro y te gusta el perro	you see the bird and you like the dog
+tu ves el coche y te gusta la casa	you see the car and you like the house
+tu ves la casa y te gusta el coche	you see the house and you like the car
+tu ves el arbol y te gusta la carretera	you see the tree and you like the road
+tu ves el libro y te gusta la puerta	you see the book and you like the door
+tu ves la puerta y te gusta la ventana	you see the door and you like the window
+tu ves la ciudad y te gusta la carretera	you see the city and you like the road
+tu ves el perro y te gusta el pajaro	you see the dog and you like the bird
+el ve el gato y le gusta el perro	he sees the cat and he likes the dog
+el ve el perro y le gusta el gato	he sees the dog and he likes the cat
+el ve el pajaro y le gusta el perro	he sees the bird and he likes the dog
+el ve el coche y le gusta la casa	he sees the car and he likes the house
+el ve la casa y le gusta el coche	he sees the house and he likes the car
+el ve el arbol y le gusta la carretera	he sees the tree and he likes the road
+el ve el libro y le gusta la puerta	he sees the book and he likes the door
+el ve la puerta y le gusta la ventana	he sees the door and he likes the window
+el ve la ciudad y le gusta la carretera	he sees the city and he likes the road
+el ve el perro y le gusta el pajaro	he sees the dog and he likes the bird
+ella ve el gato y le gusta el perro	she sees the cat and she likes the dog
+ella ve el perro y le gusta el gato	she sees the dog and she likes the cat
+ella ve el pajaro y le gusta el perro	she sees the bird and she likes the dog
+ella ve el coche y le gusta la casa	she sees the car and she likes the house
+ella ve la casa y le gusta el coche	she sees the house and she likes the car
+ella ve el arbol y le gusta la carretera	she sees the tree and she likes the road
+ella ve el libro y le gusta la puerta	she sees the book and she likes the door
+ella ve la puerta y le gusta la ventana	she sees the door and she likes the window
+ella ve la ciudad y le gusta la carretera	she sees the city and she likes the road
+ella ve el perro y le gusta el pajaro	she sees the dog and she likes the bird
+yo tengo un gato y veo el perro	i have a cat and i see the dog
+yo tengo un perro y veo el gato	i have a dog and i see the cat
+yo tengo un coche y veo la casa	i have a car and i see the house
+yo tengo una casa y veo el coche	i have a house and i see the car
+yo tengo un libro y veo la puerta	i have a book and i see the door
+yo tengo un telefono y veo el ordenador	i have a phone and i see the computer
+yo tengo un amigo y veo el perro	i have a friend and i see the dog
+yo tengo un trabajo y veo la ciudad	i have a job and i see the city
+yo tengo un problema y veo la solucion	i have a problem and i see the solution
+yo tengo un gato y veo el pajaro	i have a cat and i see the bird
+tu tienes un gato y ves el perro	you have a cat and you see the dog
+tu tienes un perro y ves el gato	you have a dog and you see the cat
+tu tienes un coche y ves la casa	you have a car and you see the house
+tu tienes una casa y ves el coche	you have a house and you see the car
+tu tienes un libro y ves la puerta	you have a book and you see the door
+tu tienes un telefono y ves el ordenador	you have a phone and you see the computer
+tu tienes un amigo y ves el perro	you have a friend and you see the dog
+tu tienes un trabajo y ves la ciudad	you have a job and you see the city
+tu tienes un problema y ves la solucion	you have a problem and you see the solution
+tu tienes un gato y ves el pajaro	you have a cat and you see the bird
+el tiene un gato y ve el perro	he has a cat and he sees the dog
+el tiene un perro y ve el gato	he has a dog and he sees the cat
+el tiene un coche y ve la casa	he has a car and he sees the house
+el tiene una casa y ve el coche	he has a house and he sees the car
+el tiene un libro y ve la puerta	he has a book and he sees the door
+el tiene un telefono y ve el ordenador	he has a phone and he sees the computer
+el tiene un amigo y ve el perro	he has a friend and he sees the dog
+el tiene un trabajo y ve la ciudad	he has a job and he sees the city
+el tiene un problema y ve la solucion	he has a problem and he sees the solution
+el tiene un gato y ve el pajaro	he has a cat and he sees the bird
+ella tiene un gato y ve el perro	she has a cat and she sees the dog
+ella tiene un perro y ve el gato	she has a dog and she sees the cat
+ella tiene un coche y ve la casa	she has a car and she sees the house
+ella tiene una casa y ve el coche	she has a house and she sees the car
+ella tiene un libro y ve la puerta	she has a book and she sees the door
+ella tiene un telefono y ve el ordenador	she has a phone and she sees the computer
+ella tiene un amigo y ve el perro	she has a friend and she sees the dog
+ella tiene un trabajo y ve la ciudad	she has a job and she sees the city
+ella tiene un problema y ve la solucion	she has a problem and she sees the solution
+ella tiene un gato y ve el pajaro	she has a cat and she sees the bird
+yo veo el gato porque me gusta	i see the cat because i like it
+yo veo el perro porque me gusta	i see the dog because i like it
+yo veo el pajaro porque me gusta	i see the bird because i like it
+yo veo el coche porque lo necesito	i see the car because i need it
+yo veo la casa porque me gusta	i see the house because i like it
+yo veo el arbol porque es grande	i see the tree because it is big
+yo veo la carretera porque es larga	i see the road because it is long
+yo veo el libro porque es interesante	i see the book because it is interesting
+yo veo la puerta porque esta abierta	i see the door because it is open
+yo veo la ventana porque esta rota	i see the window because it is broken
+tu ves el gato porque te gusta	you see the cat because you like it
+tu ves el perro porque te gusta	you see the dog because you like it
+tu ves el pajaro porque te gusta	you see the bird because you like it
+tu ves el coche porque lo necesitas	you see the car because you need it
+tu ves la casa porque te gusta	you see the house because you like it
+tu ves el arbol porque es grande	you see the tree because it is big
+tu ves la carretera porque es larga	you see the road because it is long
+tu ves el libro porque es interesante	you see the book because it is interesting
+tu ves la puerta porque esta abierta	you see the door because it is open
+tu ves la ventana porque esta rota	you see the window because it is broken
+el ve el gato porque le gusta	he sees the cat because he likes it
+el ve el perro porque le gusta	he sees the dog because he likes it
+el ve el pajaro porque le gusta	he sees the bird because he likes it
+el ve el coche porque lo necesita	he sees the car because he needs it
+el ve la casa porque le gusta	he sees the house because he likes it
+el ve el arbol porque es grande	he sees the tree because it is big
+el ve la carretera porque es larga	he sees the road because it is long
+el ve el libro porque es interesante	he sees the book because it is interesting
+el ve la puerta porque esta abierta	he sees the door because it is open
+el ve la ventana porque esta rota	he sees the window because it is broken
+ella ve el gato porque le gusta	she sees the cat because she likes it
+ella ve el perro porque le gusta	she sees the dog because she likes it
+ella ve el pajaro porque le gusta	she sees the bird because she likes it
+ella ve el coche porque lo necesita	she sees the car because she needs it
+ella ve la casa porque le gusta	she sees the house because she likes it
+ella ve el arbol porque es grande	she sees the tree because it is big
+ella ve la carretera porque es larga	she sees the road because it is long
+ella ve el libro porque es interesante	she sees the book because it is interesting
+ella ve la puerta porque esta abierta	she sees the door because it is open
+ella ve la ventana porque esta rota	she sees the window because it is broken
+yo tengo un gato porque me gustan los animales	i have a cat because i like animals
+yo tengo un perro porque me gustan los animales	i have a dog because i like animals
+yo tengo un coche porque lo necesito	i have a car because i need it
+yo tengo una casa porque la quiero	i have a house because i want it
+yo tengo un libro porque me gusta leer	i have a book because i like reading
+yo tengo un telefono porque lo necesito	i have a phone because i need it
+yo tengo un ordenador porque trabajo	i have a computer because i work
+yo tengo un amigo porque confio en el	i have a friend because i trust him
+yo tengo un trabajo porque necesito dinero	i have a job because i need money
+yo tengo un problema porque es dificil	i have a problem because it is difficult
+tu tienes un gato porque te gustan los animales	you have a cat because you like animals
+tu tienes un perro porque te gustan los animales	you have a dog because you like animals
+tu tienes un coche porque lo necesitas	you have a car because you need it
+tu tienes una casa porque la quieres	you have a house because you want it
+tu tienes un libro porque te gusta leer	you have a book because you like reading
+tu tienes un telefono porque lo necesitas	you have a phone because you need it
+tu tienes un ordenador porque trabajas	you have a computer because you work
+tu tienes un amigo porque confias en el	you have a friend because you trust him
+tu tienes un trabajo porque necesitas dinero	you have a job because you need money
+tu tienes un problema porque es dificil	you have a problem because it is difficult
+el tiene un gato porque le gustan los animales	he has a cat because he likes animals
+el tiene un perro porque le gustan los animales	he has a dog because he likes animals
+el tiene un coche porque lo necesita	he has a car because he needs it
+el tiene una casa porque la quiere	he has a house because he wants it
+el tiene un libro porque le gusta leer	he has a book because he likes reading
+el tiene un telefono porque lo necesita	he has a phone because he needs it
+el tiene un ordenador porque trabaja	he has a computer because he works
+el tiene un amigo porque confia en el	he has a friend because he trusts him
+el tiene un trabajo porque necesita dinero	he has a job because he needs money
+el tiene un problema porque es dificil	he has a problem because it is difficult
+ella tiene un gato porque le gustan los animales	she has a cat because she likes animals
+ella tiene un perro porque le gustan los animales	she has a dog because she likes animals
+ella tiene un coche porque lo necesita	she has a car because she needs it
+ella tiene una casa porque la quiere	she has a house because she wants it
+ella tiene un libro porque le gusta leer	she has a book because she likes reading
+ella tiene un telefono porque lo necesita	she has a phone because she needs it
+ella tiene un ordenador porque trabaja	she has a computer because she works
+ella tiene un amigo porque confia en el	she has a friend because she trusts him
+ella tiene un trabajo porque necesita dinero	she has a job because she needs money
+ella tiene un problema porque es dificil	she has a problem because it is difficult
+si veo el gato me gusta	if i see the cat i like it
+si veo el perro me gusta	if i see the dog i like it
+si veo el pajaro me gusta	if i see the bird i like it
+si veo el coche lo uso	if i see the car i use it
+si veo la casa me gusta	if i see the house i like it
+si veo el arbol lo subo	if i see the tree i climb it
+si veo la carretera la sigo	if i see the road i follow it
+si veo el libro lo leo	if i see the book i read it
+si veo la puerta la abro	if i see the door i open it
+si veo la ventana la cierro	if i see the window i close it
+si ves el gato te gusta	if you see the cat you like it
+si ves el perro te gusta	if you see the dog you like it
+si ves el pajaro te gusta	if you see the bird you like it
+si ves el coche lo usas	if you see the car you use it
+si ves la casa te gusta	if you see the house you like it
+si ves el arbol lo subes	if you see the tree you climb it
+si ves la carretera la sigues	if you see the road you follow it
+si ves el libro lo lees	if you see the book you read it
+si ves la puerta la abres	if you see the door you open it
+si ves la ventana la cierras	if you see the window you close it
+si el ve el gato le gusta	if he sees the cat he likes it
+si el ve el perro le gusta	if he sees the dog he likes it
+si el ve el pajaro le gusta	if he sees the bird he likes it
+si el ve el coche lo usa	if he sees the car he uses it
+si el ve la casa le gusta	if he sees the house he likes it
+si el ve el arbol lo sube	if he sees the tree he climbs it
+si el ve la carretera la sigue	if he sees the road he follows it
+si el ve el libro lo lee	if he sees the book he reads it
+si el ve la puerta la abre	if he sees the door he opens it
+si el ve la ventana la cierra	if he sees the window he closes it
+si ella ve el gato le gusta	if she sees the cat she likes it
+si ella ve el perro le gusta	if she sees the dog she likes it
+si ella ve el pajaro le gusta	if she sees the bird she likes it
+si ella ve el coche lo usa	if she sees the car she uses it
+si ella ve la casa le gusta	if she sees the house she likes it
+si ella ve el arbol lo sube	if she sees the tree she climbs it
+si ella ve la carretera la sigue	if she sees the road she follows it
+si ella ve el libro lo lee	if she sees the book she reads it
+si ella ve la puerta la abre	if she sees the door she opens it
+si ella ve la ventana la cierra	if she sees the window she closes it
+si tengo un gato estoy feliz	if i have a cat i am happy
+si tengo un perro estoy feliz	if i have a dog i am happy
+si tengo un coche estoy listo	if i have a car i am ready
+si tengo una casa estoy seguro	if i have a house i am safe
+si tengo un libro estoy tranquilo	if i have a book i am calm
+si tengo un telefono estoy conectado	if i have a phone i am connected
+si tengo un ordenador trabajo	if i have a computer i work
+si tengo un amigo estoy feliz	if i have a friend i am happy
+si tengo un trabajo gano dinero	if i have a job i earn money
+si tengo un problema lo resuelvo	if i have a problem i solve it
+si tienes un gato estas feliz	if you have a cat you are happy
+si tienes un perro estas feliz	if you have a dog you are happy
+si tienes un coche estas listo	if you have a car you are ready
+si tienes una casa estas seguro	if you have a house you are safe
+si tienes un libro estas tranquilo	if you have a book you are calm
+si tienes un telefono estas conectado	if you have a phone you are connected
+si tienes un ordenador trabajas	if you have a computer you work
+si tienes un amigo estas feliz	if you have a friend you are happy
+si tienes un trabajo ganas dinero	if you have a job you earn money
+si tienes un problema lo resuelves	if you have a problem you solve it
+si el tiene un gato esta feliz	if he has a cat he is happy
+si el tiene un perro esta feliz	if he has a dog he is happy
+si el tiene un coche esta listo	if he has a car he is ready
+si el tiene una casa esta seguro	if he has a house he is safe
+si el tiene un libro esta tranquilo	if he has a book he is calm
+si el tiene un telefono esta conectado	if he has a phone he is connected
+si el tiene un ordenador trabaja	if he has a computer he works
+si el tiene un amigo esta feliz	if he has a friend he is happy
+si el tiene un trabajo gana dinero	if he has a job he earns money
+si el tiene un problema lo resuelve	if he has a problem he solves it
+si ella tiene un gato esta feliz	if she has a cat she is happy
+si ella tiene un perro esta feliz	if she has a dog she is happy
+si ella tiene un coche esta lista	if she has a car she is ready
+si ella tiene una casa esta segura	if she has a house she is safe
+si ella tiene un libro esta tranquila	if she has a book she is calm
+si ella tiene un telefono esta conectada	if she has a phone she is connected
+si ella tiene un ordenador trabaja	if she has a computer she works
+si ella tiene un amigo esta feliz	if she has a friend she is happy
+si ella tiene un trabajo gana dinero	if she has a job she earns money
+si ella tiene un problema lo resuelve	if she has a problem she solves it
+yo veo el gato y tengo un perro	i see the cat and i have a dog
+yo veo el perro y tengo un gato	i see the dog and i have a cat
+yo veo el pajaro y tengo un perro	i see the bird and i have a dog
+yo veo el coche y tengo una casa	i see the car and i have a house
+yo veo la casa y tengo un coche	i see the house and i have a car
+yo veo el arbol y tengo un libro	i see the tree and i have a book
+yo veo la carretera y tengo un coche	i see the road and i have a car
+yo veo el libro y tengo un amigo	i see the book and i have a friend
+yo veo la puerta y tengo una llave	i see the door and i have a key
+yo veo la ventana y tengo una casa	i see the window and i have a house
+tu ves el gato y tienes un perro	you see the cat and you have a dog
+tu ves el perro y tienes un gato	you see the dog and you have a cat
+tu ves el pajaro y tienes un perro	you see the bird and you have a dog
+tu ves el coche y tienes una casa	you see the car and you have a house
+tu ves la casa y tienes un coche	you see the house and you have a car
+tu ves el arbol y tienes un libro	you see the tree and you have a book
+tu ves la carretera y tienes un coche	you see the road and you have a car
+tu ves el libro y tienes un amigo	you see the book and you have a friend
+tu ves la puerta y tienes una llave	you see the door and you have a key
+tu ves la ventana y tienes una casa	you see the window and you have a house
+el ve el gato y tiene un perro	he sees the cat and he has a dog
+el ve el perro y tiene un gato	he sees the dog and he has a cat
+el ve el pajaro y tiene un perro	he sees the bird and he has a dog
+el ve el coche y tiene una casa	he sees the car and he has a house
+el ve la casa y tiene un coche	he sees the house and he has a car
+el ve el arbol y tiene un libro	he sees the tree and he has a book
+el ve la carretera y tiene un coche	he sees the road and he has a car
+el ve el libro y tiene un amigo	he sees the book and he has a friend
+el ve la puerta y tiene una llave	he sees the door and he has a key
+el ve la ventana y tiene una casa	he sees the window and he has a house
+ella ve el gato y tiene un perro	she sees the cat and she has a dog
+ella ve el perro y tiene un gato	she sees the dog and she has a cat
+ella ve el pajaro y tiene un perro	she sees the bird and she has a dog
+ella ve el coche y tiene una casa	she sees the car and she has a house
+ella ve la casa y tiene un coche	she sees the house and she has a car
+ella ve el arbol y tiene un libro	she sees the tree and she has a book
+ella ve la carretera y tiene un coche	she sees the road and she has a car
+ella ve el libro y tiene un amigo	she sees the book and she has a friend
+ella ve la puerta y tiene una llave	she sees the door and she has a key
+ella ve la ventana y tiene una casa	she sees the window and she has a house
+yo vere el gato y me gustara	i will see the cat and i will like it
+yo vere el perro y me gustara	i will see the dog and i will like it
+yo vere el coche y lo usare	i will see the car and i will use it
+yo vere la casa y la comprare	i will see the house and i will buy it
+yo vere el libro y lo leere	i will see the book and i will read it
+yo vere la puerta y la abrire	i will see the door and i will open it
+yo vere la ventana y la cerrare	i will see the window and i will close it
+yo vere la carretera y la seguire	i will see the road and i will follow it
+yo vere el arbol y lo subire	i will see the tree and i will climb it
+yo vere el pajaro y lo observare	i will see the bird and i will watch it
+tu veras el gato y te gustara	you will see the cat and you will like it
+tu veras el perro y te gustara	you will see the dog and you will like it
+tu veras el coche y lo usaras	you will see the car and you will use it
+tu veras la casa y la compraras	you will see the house and you will buy it
+tu veras el libro y lo leeras	you will see the book and you will read it
+tu veras la puerta y la abras	you will see the door and you will open it
+tu veras la ventana y la cerraras	you will see the window and you will close it
+tu veras la carretera y la seguiras	you will see the road and you will follow it
+tu veras el arbol y lo subiras	you will see the tree and you will climb it
+tu veras el pajaro y lo observaras	you will see the bird and you will watch it
+yo voy a la casa	i go to the house
+yo voy a la ciudad	i go to the city
+yo voy a la carretera	i go to the road
+yo voy al parque	i go to the park
+yo voy a la escuela	i go to the school
+yo voy a la oficina	i go to the office
+yo voy a la tienda	i go to the store
+yo voy al coche	i go to the car
+yo voy a la puerta	i go to the door
+yo voy a la ventana	i go to the window
+tu vas a la casa	you go to the house
+tu vas a la ciudad	you go to the city
+tu vas a la carretera	you go to the road
+tu vas al parque	you go to the park
+tu vas a la escuela	you go to the school
+tu vas a la oficina	you go to the office
+tu vas a la tienda	you go to the store
+tu vas al coche	you go to the car
+tu vas a la puerta	you go to the door
+tu vas a la ventana	you go to the window
+el va a la casa	he goes to the house
+el va a la ciudad	he goes to the city
+el va a la carretera	he goes to the road
+el va al parque	he goes to the park

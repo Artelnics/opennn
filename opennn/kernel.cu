@@ -811,6 +811,63 @@ void mha_causal_mask_cuda(const size_t n, float* scores, const int seq_q, const 
 }
 
 
+__global__ void compute_padding_mask_kernel(const int num_tokens, const float* source_input, float* padding_mask, const int embedding_dimension)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if(i < num_tokens)
+    {
+        const float* token = source_input + i * embedding_dimension;
+        bool is_pad = true;
+        for(int e = 0; e < embedding_dimension; ++e)
+        {
+            if(fabsf(token[e]) > 1e-7f) { is_pad = false; break; }
+        }
+        padding_mask[i] = is_pad ? 1.0f : 0.0f;
+    }
+}
+
+
+__global__ void apply_fused_masks_kernel(const int n, float* attention_weights, const float* padding_mask,
+                                         const int heads_number, const int query_sequence_length,
+                                         const int source_sequence_length, const bool use_causal_mask)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if(i < n)
+    {
+        const int sk = i % source_sequence_length;
+        const int sq = (i / source_sequence_length) % query_sequence_length;
+        const int b  = i / (source_sequence_length * query_sequence_length * heads_number);
+
+        if((use_causal_mask && sk > sq) || padding_mask[b * source_sequence_length + sk] > 0.5f)
+            attention_weights[i] = -1e9f;
+    }
+}
+
+
+void mha_fused_masks_cuda(const int batch_size, const int heads_number,
+                          const int query_sequence_length, const int source_sequence_length,
+                          const int embedding_dimension, const float* source_input,
+                          float* attention_weights, float* padding_mask, const bool use_causal_mask)
+{
+    const int num_tokens = batch_size * source_sequence_length;
+    if(num_tokens > 0)
+    {
+        const int threads = 256;
+        compute_padding_mask_kernel<<<(num_tokens + threads - 1) / threads, threads>>>(
+            num_tokens, source_input, padding_mask, embedding_dimension);
+    }
+
+    const int n = batch_size * heads_number * query_sequence_length * source_sequence_length;
+    if(n > 0)
+    {
+        const int threads = 256;
+        apply_fused_masks_kernel<<<(n + threads - 1) / threads, threads>>>(
+            n, attention_weights, padding_mask, heads_number,
+            query_sequence_length, source_sequence_length, use_causal_mask);
+    }
+}
+
+
 // Pooling 3D
 
 __global__ void pooling3d_max_forward_kernel(const int n, const float* in, float* out, float* indices, const int B, const int S, const int F)
@@ -1088,3 +1145,4 @@ void layernorm_backward_cuda(const int N, const int D, const float* dY, const fl
 
     layernorm_backward_kernel<<<N, threads>>>(N, D, dY, X, means, inv_vars, gamma, dX, dGamma, dBeta);
 }
+

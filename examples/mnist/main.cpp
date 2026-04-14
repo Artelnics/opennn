@@ -26,9 +26,9 @@ int main()
 {
     try
     {
-        cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
-
         set_seed(42);
+
+        cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
         // Dataset
 
@@ -57,13 +57,6 @@ int main()
 #else
     training_strategy.train();
 #endif
-
-        // Testing analysis (disabled with CUDA active)
-        // const TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
-        // const MatrixI confusion = testing_analysis.calculate_confusion();
-        // cout << "\nConfusion matrix:\n" << confusion << endl;
-
-        cout << "Bye!" << endl;
         
         return 0;
     }

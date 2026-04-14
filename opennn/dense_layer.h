@@ -45,28 +45,27 @@ private:
     vector<Shape> get_parameter_shapes() const override
     {
         const Index input_dimension = input_shape.back();
-        const Index output_dimension = get_outputs_number();
 
-        return {{output_dimension},                            // Biases
-                {input_dimension, output_dimension},           // Weights
-                {batch_normalization ? output_dimension : 0},  // Gammas
-                {batch_normalization ? output_dimension : 0}}; // Betas
+        return {{neurons_number},                            // Biases
+                {input_dimension, neurons_number},           // Weights
+                {batch_normalization ? neurons_number : 0},  // Gammas
+                {batch_normalization ? neurons_number : 0}}; // Betas
     }
 
     enum Forward {Input, NormalizedOutput, Output};
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        const Index output_dimension = get_outputs_number();
-
         // views[layer] slots: 0=Input (wired), 1=NormalizedOutput, 2=Output
         // shapes[k] → slot k+1, so we return 2 shapes.
+        const Shape output_shape = Shape{batch_size}.append(get_output_shape());
+
         if(batch_normalization)
-            return {{batch_size, output_dimension},   // slot 1: NormalizedOutput
-                    {batch_size, output_dimension}};  // slot 2: Output
+            return {output_shape,   // slot 1: NormalizedOutput
+                    output_shape};  // slot 2: Output
         else
-            return {Shape{},                          // slot 1: NormalizedOutput (unused, placeholder)
-                    {batch_size, output_dimension}};  // slot 2: Output
+            return {Shape{},        // slot 1: NormalizedOutput (unused, placeholder)
+                    output_shape};  // slot 2: Output
     }
 
     enum Backward {OutputGradients, InputGradients};
@@ -288,13 +287,19 @@ public:
         TensorView& bias_gradient = back_propagation.gradient_views[layer][Bias];
         TensorView& weight_gradient = back_propagation.gradient_views[layer][Weight];
 
-        multiply(input, true, delta, false, weight_gradient);
-        sum(delta, bias_gradient);
+        // Flatten to 2D for gradient computation (handles Dense3d where input/delta are 3D)
+        const Index total_rows = input.size() / input.shape[input.get_rank() - 1];
+        TensorView input_2d(input.data, {total_rows, input.shape[input.get_rank() - 1]});
+        TensorView delta_2d(delta.data, {total_rows, delta.shape[delta.get_rank() - 1]});
+
+        multiply(input_2d, true, delta_2d, false, weight_gradient);
+        sum(delta_2d, bias_gradient);
 
         if (!is_first_layer)
         {
             TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
-            multiply(delta, false, parameters[Weight], true, input_gradient);
+            TensorView ig_2d(input_gradient.data, {total_rows, input_gradient.shape[input_gradient.get_rank() - 1]});
+            multiply(delta_2d, false, parameters[Weight], true, ig_2d);
         }
     }
 

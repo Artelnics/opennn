@@ -145,7 +145,6 @@ TrainingResults AdaptiveMomentEstimation::train()
     const bool shuffle = !neural_network->has(LayerType::Recurrent);
 
     vector<vector<Index>> validation_batches;
-    dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
     // Main loop
     optimization_data.iteration = 1;
@@ -201,6 +200,8 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         if(has_validation)
         {
+            dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
+
             validation_error = type(0);
 
             if(is_text_classification_model)
@@ -289,11 +290,10 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     optimization_data.iteration++;
 
-    optimization_data.beta_1_power *= beta_1;
-    optimization_data.beta_2_power *= beta_2;
+    const type iteration = static_cast<type>(optimization_data.iteration);
 
-    const type bias_correction_1 = type(1) - optimization_data.beta_1_power;
-    const type bias_correction_2 = type(1) - optimization_data.beta_2_power;
+    const type bias_correction_1 = type(1) - pow(beta_1, iteration);
+    const type bias_correction_2 = type(1) - pow(beta_2, iteration);
 
 #ifndef CUDA
 
@@ -376,8 +376,6 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
     square_gradient_exponential_decay.setZero_device();
 #endif
     iteration = 0;
-    beta_1_power = type(1);
-    beta_2_power = type(1);
 }
 
 void AdaptiveMomentEstimationData::print() const
@@ -498,7 +496,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     const bool shuffle = !neural_network->has(LayerType::Recurrent);
 
     vector<vector<Index>> validation_batches;
-    dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
     time_t beginning_time;
     time(&beginning_time);
@@ -510,13 +507,12 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << endl;
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
-        const Index batches_number = training_batches.size();
         training_error = type(0);
 
         // Worker thread fills host pinned memory
         std::thread training_worker([&]()
         {
-            for(Index iteration = 0; iteration < batches_number; iteration++)
+            for(Index iteration = 0; iteration < training_batches_number; iteration++)
             {
                 Batch* batch = empty_training_queue.pop();
                 batch->fill_host(training_batches[iteration],
@@ -527,7 +523,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             }
         });
 
-        for(Index iteration = 0; iteration < batches_number; iteration++)
+        for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             training_back_propagation.gradient.setZero_device();
 
@@ -537,6 +533,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             cudaEventRecord(batch_ready_event, memory_stream);
             cudaStreamWaitEvent(0, batch_ready_event, 0);
 
+            try {
             neural_network->forward_propagate(current_batch->get_inputs_device(),
                                               training_forward_propagation,
                                               is_training);
@@ -544,6 +541,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             loss->back_propagate(*current_batch,
                                  training_forward_propagation,
                                  training_back_propagation);
+            } catch(const exception& e) { training_worker.join(); throw; }
 
             training_error += training_back_propagation.error;
 
@@ -556,17 +554,17 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
         training_worker.join();
 
-        training_error /= type(batches_number);
+        training_error /= type(training_batches_number);
         results.training_error_history(epoch) = training_error;
 
         if(has_validation)
         {
-            const Index val_batches_number = validation_batches.size();
+            dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
             validation_error = type(0);
 
             std::thread validation_worker([&]()
             {
-                for(Index iteration = 0; iteration < val_batches_number; iteration++)
+                for(Index iteration = 0; iteration < validation_batches_number; iteration++)
                 {
                     Batch* batch = empty_validation_queue.pop();
                     batch->fill_host(validation_batches[iteration],
@@ -577,7 +575,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
                 }
             });
 
-            for(Index iteration = 0; iteration < val_batches_number; iteration++)
+            for(Index iteration = 0; iteration < validation_batches_number; iteration++)
             {
                 Batch* current_batch = ready_validation_queue.pop();
 
@@ -602,7 +600,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
             validation_worker.join();
 
-            validation_error /= type(val_batches_number);
+            validation_error /= type(validation_batches_number);
             results.validation_error_history(epoch) = validation_error;
 
             if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
