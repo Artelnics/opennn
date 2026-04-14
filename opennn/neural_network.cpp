@@ -221,11 +221,15 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
     input_variables.resize(total_inputs);
 
     if(has(LayerType::Scaling2d))
-        if(dynamic_cast<Scaling<2>*>(get_first(LayerType::Scaling2d))) 
-            scaling_layer->set_input_shape(new_input_shape);
+    {
+        if(auto* sl = dynamic_cast<Scaling<2>*>(get_first(LayerType::Scaling2d)))
+            sl->set_input_shape(new_input_shape);
+    }
     else if(has(LayerType::Scaling3d))
-        if(dynamic_cast<Scaling<3>*>(get_first(LayerType::Scaling3d))) 
-            scaling_layer->set_input_shape(new_input_shape);
+    {
+        if(auto* sl = dynamic_cast<Scaling<3>*>(get_first(LayerType::Scaling3d)))
+            sl->set_input_shape(new_input_shape);
+    }
 
     layers[get_first_trainable_layer_index()]->set_input_shape(new_input_shape);
 }

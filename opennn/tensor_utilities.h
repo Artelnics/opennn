@@ -194,6 +194,7 @@ struct Memory
     type* data() { return vector.data(); }
     const type* data() const { return vector.data(); }
     Index size() const { return vector.size(); }
+    bool empty() const { return vector.size() == 0; }
 
     void resize(Index n) { vector.resize(n); }
     void setZero() { vector.setZero(); }

@@ -165,7 +165,7 @@ public:
 
     bool get_display() const { return display; }
 
-    bool is_empty() const { return data.empty(); }
+    bool is_empty() const { return data.size() == 0; }
 
     Shape get_input_shape() const { return input_shape; }
     Shape get_target_shape() const { return target_shape; }

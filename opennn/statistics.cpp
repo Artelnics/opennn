@@ -199,7 +199,7 @@ Index Histogram::calculate_maximum_frequency() const
 
 Index Histogram::calculate_most_populated_bin() const 
 {
-    if (frequencies.empty()) 
+    if (frequencies.size() == 0) 
         return 0;
 
     Index max_index;
@@ -210,7 +210,7 @@ Index Histogram::calculate_most_populated_bin() const
 
 VectorR Histogram::calculate_minimal_centers() const
 {
-    if (frequencies.empty())
+    if (frequencies.size() == 0)
     {
         VectorR nan(1);
         nan << type(NAN);
@@ -232,7 +232,7 @@ VectorR Histogram::calculate_minimal_centers() const
 
 VectorR Histogram::calculate_maximal_centers() const
 {
-    if (frequencies.empty())
+    if (frequencies.size() == 0)
         return VectorR::Constant(1, type(NAN));
 
     const Index maximum_frequency = calculate_maximum_frequency();
@@ -290,25 +290,25 @@ void Histogram::save(const filesystem::path& histogram_file_name) const
 
 type minimum(const MatrixR& matrix)
 {
-    if(matrix.empty()) return type(NAN);
+    if(matrix.size() == 0) return type(NAN);
     return matrix.minCoeff();
 }
 
 type maximum(const MatrixR& matrix)
 {
-    if(matrix.empty()) return type(NAN);
+    if(matrix.size() == 0) return type(NAN);
     return matrix.maxCoeff();
 }
 
 type minimum(const VectorR& vector)
 {
-    if(vector.empty()) return type(NAN);
+    if(vector.size() == 0) return type(NAN);
     return vector.minCoeff();
 }
 
 type maximum(const VectorR& vector)
 {
-    if(vector.empty()) return type(NAN);
+    if(vector.size() == 0) return type(NAN);
     return vector.maxCoeff();
 }
 
@@ -481,7 +481,7 @@ type variance(const VectorR& vector, const VectorI& indices)
 
 type standard_deviation(const VectorR& vector)
 {
-    if(vector.empty()) return type(0);
+    if(vector.size() == 0) return type(0);
 
     return sqrt(variance(vector));
 }
@@ -565,12 +565,12 @@ VectorR quartiles(const VectorR& data, const vector<Index>& indices)
 BoxPlot box_plot(const VectorR& vector)
 {
     BoxPlot box_plot;
-    if(vector.empty())
+    if(vector.size() == 0)
         return box_plot;
 
     const VectorR valid = filter_missing_values(vector);
 
-    if(valid.empty()) return box_plot;
+    if(valid.size() == 0) return box_plot;
 
     const VectorR quartiles = opennn::quartiles(valid);
     box_plot.minimum = minimum(valid);
@@ -585,7 +585,7 @@ BoxPlot box_plot(const VectorR& data, const vector<Index>& indices)
 {
     BoxPlot box_plot;
 
-    if(data.empty() || indices.empty())
+    if(data.size() == 0 || indices.size() == 0)
         return box_plot;
 
     const VectorR quartiles = opennn::quartiles(data, indices);
@@ -1120,7 +1120,7 @@ VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vect
 
 type mean(const MatrixR& matrix, Index column_index)
 {
-    if(matrix.empty()) return type(NAN);
+    if(matrix.size() == 0) return type(NAN);
 
     const VectorR col = matrix.col(column_index);
     const auto finite = col.array().isFinite();
@@ -1282,7 +1282,7 @@ VectorR median(const MatrixR& matrix,
 
 Index minimal_index(const VectorR& vector)
 {
-    if(vector.empty()) return 0;
+    if(vector.size() == 0) return 0;
 
     Index index;
     vector.minCoeff(&index);
@@ -1292,7 +1292,7 @@ Index minimal_index(const VectorR& vector)
 
 Index maximal_index(const VectorR& vector)
 {
-    if(vector.empty()) return 0;
+    if(vector.size() == 0) return 0;
 
     Index index;
     vector.maxCoeff(&index);
