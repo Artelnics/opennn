@@ -98,7 +98,7 @@ void Pooling::set(const Shape& new_input_shape,
 
     label = "pooling_layer";
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
     // Pooling descriptor
 
@@ -116,7 +116,7 @@ void Pooling::set(const Shape& new_input_shape,
     cached_pool_args.pool_dimensions = {pool_height, pool_width};
     cached_pool_args.stride_shape = {row_stride, column_stride};
     cached_pool_args.padding_shape = {padding_height, padding_width};
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     cached_pool_args.pooling_descriptor = pooling_descriptor;
 #endif
 }
@@ -140,7 +140,7 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 {
     pooling_method = string_to_pooling_method(new_pooling_method);
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     if (pooling_method == PoolingMethod::MaxPooling)
         pooling_mode = CUDNN_POOLING_MAX;
     else

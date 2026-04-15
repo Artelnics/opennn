@@ -21,13 +21,9 @@ int main()
     {
         cout << "OpenNN. Iris Plant Example." << endl;
 
-        set_seed(42);
-
         // Dataset
 
         Dataset dataset("../data/iris_plant_original.csv", ";", true, false);
-
-        dataset.split_samples_random(type(0.6), type(0.2), type(0.2));
 
         const Index inputs_number = dataset.get_features_number("Input");
         const Index targets_number = dataset.get_features_number("Target");
@@ -42,17 +38,22 @@ int main()
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
-        training_strategy.set_loss("MeanSquaredError");
-        training_strategy.get_loss()->set_regularization("None");
-        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs(100);
-
-#ifdef CUDA
-        training_strategy.train_cuda();
-#else
         training_strategy.train();
-#endif
+
+        // Testing Analysis
+
+        TestingAnalysis testing_analysis(&classification_network, &dataset);
+
+        cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
+
+        // Deployment
+
+        MatrixR input_vector(1, 4);
+        input_vector << 5.1, 3.5, 1.4, 0.2;
+
+        const MatrixR output_tensor = classification_network.calculate_outputs(input_vector);
+
+        cout << "Class probabilities: " << output_tensor << endl;
 
         return 0;
     }

@@ -47,7 +47,7 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     ActivationArguments act_args;
     act_args.activation_function = activation_function;
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     cached_conv_args.algorithm_forward = convolution_algorithm;
     cached_conv_args.workspace = cuda_workspace;
     cached_conv_args.workspace_size = cuda_workspace_size;
@@ -84,13 +84,13 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     const TensorView& output = forward_propagation.views[layer].back()[0];
     TensorView& delta = back_propagation.backward_views[layer][OutputGradients][0];
 
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
     activation_gradient(output, delta, delta, activation_function);
 #else
     activation_gradient(output, delta, delta, activation_function, activation_descriptor);
 #endif
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     ConvolutionArguments bwd_args = cached_conv_args;
     bwd_args.algorithm_filter = algo_filter;
     bwd_args.algorithm_data = algo_data;
@@ -102,7 +102,7 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     const ConvolutionArguments& bwd_args = cached_conv_args;
 #endif
 
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
     convolution_backward_weights(forward_propagation.views[layer][PaddedInputs][0],
                                  delta,
                                  back_propagation.gradient_views[layer][Weights],
@@ -217,7 +217,7 @@ void Convolutional::set(const Shape& new_input_shape,
 
     set_label(new_label);
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
     cudnnCreateActivationDescriptor(&activation_descriptor);
 
@@ -470,7 +470,7 @@ vector<Shape> Convolutional::get_forward_shapes(const Index batch_size) const
 
 REGISTER(Layer, Convolutional, "Convolutional")
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
 void Convolutional::init_cuda_workspace(Index batch_size)
 {

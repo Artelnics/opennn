@@ -52,11 +52,10 @@ int main()
         adam->set_maximum_epochs(200);
         adam->set_display_period(10);
 
-#ifdef CUDA
-    training_strategy.train_cuda();
-#else
-    training_strategy.train();
+#ifdef OPENNN_WITH_CUDA
+        Device::instance().set(DeviceType::Gpu);
 #endif
+        training_strategy.train();
         
         return 0;
     }

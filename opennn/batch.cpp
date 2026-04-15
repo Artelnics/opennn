@@ -34,7 +34,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         input_shape = Shape({samples_number}).append(dataset_input_shape);
         input.resize(input_shape.size());
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
         input.resize_device(input_shape.size());
 
         num_input_features = dataset->get_features_number("Input");
@@ -58,7 +58,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         target_shape = Shape({samples_number}).append(dataset_target_shape);
         target.resize(target_shape.size());
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
         target.resize_device(target_shape.size());
 
         num_target_features = dataset->get_features_number("Target");
@@ -82,7 +82,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         decoder_shape = Shape({samples_number}).append(dataset_decoder_shape);
         decoder.resize(decoder_shape.size());
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
         decoder.resize_device(decoder_shape.size());
 
         num_decoder_features = dataset->get_features_number("Decoder");
@@ -188,7 +188,7 @@ TensorView Batch::get_targets() const
     return TensorView(const_cast<type*>(target.data()), target_shape);
 }
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
 void Batch::fill_host(const vector<Index>& sample_indices,
                       const vector<Index>& input_indices,

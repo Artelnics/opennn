@@ -38,7 +38,7 @@ public:
 
     TrainingResults train() override;
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     TrainingResults train_cuda() override;
 #endif
 

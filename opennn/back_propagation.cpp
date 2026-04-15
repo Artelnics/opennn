@@ -175,7 +175,7 @@ void BackPropagation::accumulate_output_gradients(size_t layer_index)
     const Index n = output_grad.size();
     type* out_ptr = output_grad.data;
 
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
     std::fill(out_ptr, out_ptr + n, type(0));
 
     for(const BackwardEdge& edge : backward_edges[layer_index])
@@ -213,7 +213,7 @@ void BackPropagation::accumulate_output_gradients(size_t layer_index)
 
 void BackPropagation::allocate_device()
 {
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     if(!loss)
         throw runtime_error("BackPropagation error: loss is not set.");
 
@@ -330,7 +330,7 @@ void BackPropagation::allocate_device()
 }
 
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
 TensorView BackPropagation::get_output_gradients_device() const
 {

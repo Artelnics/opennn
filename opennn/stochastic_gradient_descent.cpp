@@ -82,7 +82,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
 
     VectorR& parameters = neural_network->get_parameters();
 
@@ -387,7 +387,7 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
     last_parameter_updates.resize(parameters_number);
     last_parameter_updates.setZero();
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     parameter_updates.resize_device(parameters_number);
     parameter_updates.setZero_device();
     last_parameter_updates.resize_device(parameters_number);
@@ -395,7 +395,7 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 #endif
 }
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
 TrainingResults StochasticGradientDescent::train_cuda()
 {

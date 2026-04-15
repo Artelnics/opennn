@@ -42,7 +42,7 @@ inline ActivationFunction string_to_activation(const string& name)
 struct ActivationArguments
 {
     ActivationFunction activation_function = ActivationFunction::Linear;
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
 #endif
 };
@@ -51,7 +51,7 @@ struct ConvolutionArguments
 {
     Shape stride_shape;
     Shape padding_shape;
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
     cudnnConvolutionFwdAlgo_t algorithm_forward = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
@@ -69,7 +69,7 @@ struct PoolingArguments
     Shape pool_dimensions;
     Shape stride_shape;
     Shape padding_shape;
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
 #endif
 };
@@ -77,7 +77,7 @@ struct PoolingArguments
 struct BatchNormalizationArguments
 {
     type momentum;
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     cudnnBatchNormMode_t batch_normalization_mode = CUDNN_BATCHNORM_PER_ACTIVATION;
     cudnnTensorDescriptor_t per_activation_descriptor = nullptr;
 #endif

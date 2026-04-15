@@ -1053,7 +1053,7 @@ vector<string> NeuralNetwork::get_names_string() const
 
 
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
 void NeuralNetwork::copy_parameters_device()
 {

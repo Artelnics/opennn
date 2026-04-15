@@ -103,7 +103,7 @@ void Pooling3d::from_XML(const XmlDocument& document)
     set_pooling_method(read_xml_string(element, "PoolingMethod"));
 }
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     // @todo CUDA path
 #endif
 

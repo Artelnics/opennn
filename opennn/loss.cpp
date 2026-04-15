@@ -57,14 +57,14 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
 
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
     const TensorView target = batch.get_targets();
 #else
     const TensorView target = batch.get_targets_device();
 #endif
 
     // workspace_device is used by CUDA to store intermediate diffs or CE values
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     float* workspace_device = back_propagation.errors_device;
 #else
     float* workspace_device = nullptr;
@@ -100,12 +100,12 @@ void Loss::calculate_output_gradients(const Batch& batch, const ForwardPropagati
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
 
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
     const TensorView target = batch.get_targets();
 #else
     const TensorView target = batch.get_targets_device();
 #endif
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
     TensorView input_gradient = back_propagation.get_output_gradients();
 #else
     TensorView input_gradient = back_propagation.get_output_gradients_device();
@@ -142,7 +142,7 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
 
     check_neural_network();
 
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
     const VectorR& params_vec = neural_network->get_parameters();
     back_propagation.loss_value += calculate_regularization(params_vec);
 #else
@@ -223,7 +223,7 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 
     const Index n = neural_network->get_parameters_size();
 
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
     const TensorView parameters(const_cast<type*>(neural_network->get_parameters().data()), { n });
     TensorView gradient(back_propagation.gradient.data(), { n });
 #else

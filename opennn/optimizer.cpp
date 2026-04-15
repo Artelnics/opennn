@@ -448,7 +448,8 @@ void OptimizerData::print() const
 
 TrainingResults Optimizer::train_cuda()
 {
-    return train();
+    throw runtime_error("train_cuda() is not implemented for " + name + ". "
+                        "Use an optimizer with GPU support (AdaptiveMomentEstimation or StochasticGradientDescent).");
 }
 
 }

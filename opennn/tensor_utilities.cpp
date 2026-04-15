@@ -445,7 +445,7 @@ Device::Device()
 
     set_threads_number(max_threads);
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     CHECK_CUBLAS(cublasCreate(&cublas_handle));
     CHECK_CUDNN(cudnnCreate(&cudnn_handle));
 
@@ -459,7 +459,7 @@ Device::Device()
 
 Device::~Device()
 {
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     if (reduce_add_descriptor) cudnnDestroyReduceTensorDescriptor(reduce_add_descriptor);
     if (reduction_workspace) cudaFree(reduction_workspace);
     if (operator_sum_descriptor) cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
@@ -495,6 +495,17 @@ ThreadPoolDevice* Device::get_thread_pool_device()
     return thread_pool_device.get();
 }
 
+void Device::set(DeviceType type)
+{
+    if(type == DeviceType::Gpu)
+    {
+#ifndef OPENNN_WITH_CUDA
+        throw runtime_error("Device error: GPU requested but OpenNN was compiled without CUDA support.");
+#endif
+    }
+    device_type = type;
+}
+
 VectorR filter_missing_values(const VectorR &input)
 {
     VectorR result(input.size());
@@ -511,7 +522,7 @@ VectorR filter_missing_values(const VectorR &input)
     return result;
 }
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 cudnnReduceTensorDescriptor_t Device::get_reduce_add_descriptor()
 {
     auto& d = instance();

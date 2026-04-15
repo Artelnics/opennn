@@ -29,6 +29,7 @@ pip-selfcheck.json
 
 .vs/
 .vscode/
+.claude/
 
 #Blank
 /blank/main.cpp

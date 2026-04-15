@@ -82,12 +82,12 @@ int main()
         adam->set_display_period(5);
 
 #ifdef OPENNN_WITH_CUDA
+        Device::instance().set(DeviceType::Gpu);
         cout << "\nTraining on GPU..." << endl;
-        training_strategy.train_cuda();
 #else
         cout << "\nTraining on CPU..." << endl;
-        training_strategy.train();
 #endif
+        training_strategy.train();
 
         // Predictions
 /*

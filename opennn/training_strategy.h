@@ -50,7 +50,6 @@ public:
     void set_optimization_algorithm(const string&);
 
     TrainingResults train();
-    TrainingResults train_cuda();
 
     // Serialization
 

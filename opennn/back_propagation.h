@@ -73,7 +73,7 @@ struct BackPropagation
     bool built_mask = false;
     type loss_value = type(0);
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
     float* errors_device = nullptr;
     float* error_device = nullptr;

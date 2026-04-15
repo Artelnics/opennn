@@ -92,7 +92,7 @@ void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
 {
     if(output_gradient_views.size() <= 1) return;
 
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
     VectorMap output_gradients = output_gradient_views[0].as_vector();
 
     for(size_t i = 1; i < output_gradient_views.size(); i++)

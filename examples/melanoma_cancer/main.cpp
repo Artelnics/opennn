@@ -27,7 +27,7 @@ int main()
     {   
         cout << "OpenNN. Melanoma Cancer CUDA Example." << endl;
 
-        #ifdef CUDA
+        #ifdef OPENNN_WITH_CUDA
 
         // Data set
 
@@ -55,7 +55,10 @@ int main()
         adam->set_batch_size(16);
         adam->set_maximum_epochs(5);
 
-        training_strategy.train_cuda();
+#ifdef OPENNN_WITH_CUDA
+        Device::instance().set(DeviceType::Gpu);
+#endif
+        training_strategy.train();
 
 
         // Testing analysis

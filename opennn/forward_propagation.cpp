@@ -94,7 +94,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
 void ForwardPropagation::allocate_device()
 {
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     if(!neural_network || data.size() == 0) return;
 
     data.resize_device(data.size());

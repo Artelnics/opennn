@@ -54,7 +54,7 @@ struct Batch
     int decoder_contiguous = -1;
     int target_contiguous = -1;
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
     void fill_host(const vector<Index>&,
                    const vector<Index>&,

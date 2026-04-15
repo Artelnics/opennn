@@ -62,7 +62,7 @@ public:
     void from_XML(const XmlDocument&) override;
     void to_XML(XmlPrinter&) const override;
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
 public:
 

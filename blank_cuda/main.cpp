@@ -100,7 +100,7 @@ int main()
     try
     {
         cout << "OpenNN. Blank Cuda." << endl;
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
         cout << "OpenNN. Transformer training on OPUS Books en-es." << endl;
 
@@ -170,7 +170,7 @@ int main()
         adam->set_maximum_epochs(10);
         adam->set_display_period(1);
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
         cout << "\nTraining on CPU..." << endl;
         training_strategy.train();
 #else

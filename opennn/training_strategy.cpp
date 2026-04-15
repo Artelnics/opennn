@@ -13,6 +13,7 @@
 #include "adaptive_moment_estimation.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "tensor_utilities.h"
 
 namespace opennn
 {
@@ -113,19 +114,10 @@ TrainingResults TrainingStrategy::train()
     if(neural_network->has(LayerType::Recurrent))
         fix_forecasting();
 
-    return optimizer->train();
-}
-
-
-TrainingResults TrainingStrategy::train_cuda()
-{
-    if(!get_neural_network())
-        throw runtime_error("TrainingStrategy error: neural network is not set.");
-
-    if(!get_dataset())
-        throw runtime_error("TrainingStrategy error: dataset is not set.");
-
-    return optimizer->train_cuda();
+    if(Device::instance().is_gpu())
+        return optimizer->train_cuda();
+    else
+        return optimizer->train();
 }
 
 

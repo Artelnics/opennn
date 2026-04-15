@@ -230,7 +230,7 @@ public:
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
     MatrixI calculate_confusion_cuda(const type = 0.50) const;
 

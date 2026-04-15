@@ -31,7 +31,7 @@ inline bool is_aligned(const void* ptr)
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
 }
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
 template <typename T>
 class ThreadSafeQueue
@@ -225,7 +225,7 @@ struct Memory
     void resize(Index n) { vector.resize(n); }
     void setZero() { vector.setZero(); }
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     float* device_data = nullptr;
     Index allocated_size = 0;
 
@@ -310,7 +310,7 @@ struct TensorView
         return TensorMapR<Rank>(data, shape.template get_eigen_dims<Rank>());
     }
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
     float* device = nullptr;
 
@@ -833,6 +833,8 @@ inline bool are_equal(const VectorR& A,
     return true;
 }
 
+enum class DeviceType { Cpu, Gpu };
+
 class Device
 {
 public:
@@ -840,7 +842,12 @@ public:
     ThreadPoolDevice* get_thread_pool_device();
     void set_threads_number(int num_threads);
 
-#ifdef CUDA
+    void set(DeviceType type);
+    DeviceType get_type() const { return device_type; }
+    bool is_gpu() const { return device_type == DeviceType::Gpu; }
+    bool is_cpu() const { return device_type == DeviceType::Cpu; }
+
+#ifdef OPENNN_WITH_CUDA
     static cublasHandle_t get_cublas_handle()                      { return instance().cublas_handle; }
     static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn_handle; }
     static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
@@ -868,10 +875,12 @@ private:
     Device();
     ~Device();
 
+    DeviceType device_type = DeviceType::Cpu;
+
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     cublasHandle_t cublas_handle = nullptr;
     cudnnHandle_t cudnn_handle = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
@@ -891,7 +900,7 @@ inline ThreadPoolDevice& get_device()
 
 void set_threads_number(int num_threads);
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
 inline const float one = 1.0f;
 inline const float zero = 0.0f;

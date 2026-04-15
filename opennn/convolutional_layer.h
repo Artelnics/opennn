@@ -55,7 +55,7 @@ public:
                   bool = false,                              // Batch Normalization)
                   const string& = "convolutional_layer");
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     ~Convolutional()
     {
         if(activation_descriptor) cudnnDestroyActivationDescriptor(activation_descriptor);
@@ -164,7 +164,7 @@ public:
     void from_XML(const XmlDocument&) override;
     void to_XML(XmlPrinter&) const override;
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
 public:
 
@@ -223,7 +223,7 @@ private:
 
     type momentum = type(0.9);
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 public:
     void init_cuda_workspace(Index batch_size);
 

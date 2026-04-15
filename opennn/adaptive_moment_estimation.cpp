@@ -295,7 +295,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const type bias_correction_1 = type(1) - pow(beta_1, iteration);
     const type bias_correction_2 = type(1) - pow(beta_2, iteration);
 
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
 
     VectorR& parameters = neural_network->get_parameters();
 
@@ -369,7 +369,7 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
     square_gradient_exponential_decay.resize(parameters_number);
     square_gradient_exponential_decay.setZero();
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     gradient_exponential_decay.resize_device(parameters_number);
     gradient_exponential_decay.setZero_device();
     square_gradient_exponential_decay.resize_device(parameters_number);
@@ -387,7 +387,7 @@ void AdaptiveMomentEstimationData::print() const
 }
 
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
 TrainingResults AdaptiveMomentEstimation::train_cuda()
 {

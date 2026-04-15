@@ -198,7 +198,7 @@ public:
 
     string get_expression() const;
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
 public:
 

@@ -53,7 +53,7 @@ public:
             const string& = "MaxPooling",
             const string& = "pooling_layer");
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
     ~Pooling()
     {
         if(pooling_descriptor) cudnnDestroyPoolingDescriptor(pooling_descriptor);
@@ -145,7 +145,7 @@ private:
 
     PoolingArguments cached_pool_args;
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
     cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
 

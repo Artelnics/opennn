@@ -14,7 +14,7 @@
 #include "loss.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 #include "kernel.cuh"
 #endif
 
@@ -67,7 +67,7 @@ void Embedding::set(const Index new_vocabulary_size,
             positional_encoding(i, j) = (j < Index(half_depth))
                 ? sin(i / divisors(j))
                 : cos(i / divisors(j));
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
     const Index pe_size = new_sequence_length * new_embedding_dimension;
     positional_encoding_device.resize(pe_size);
@@ -113,7 +113,7 @@ void Embedding::set_parameters_glorot()
 
 void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
 
     const Index batch_size = forward_propagation.batch_size;
     const Index total_tokens = batch_size * get_sequence_length();
@@ -191,7 +191,7 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
                                size_t layer) const
 {
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
 
     const TensorView& input_indices = forward_propagation.views[layer][Inputs][0];
     TensorView& output_gradient = back_propagation.backward_views[layer][0][0];

@@ -33,7 +33,7 @@ private:
 
     type dropout_rate = type(0);
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
     cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
@@ -152,7 +152,7 @@ public:
         name = "Dense" + to_string(Rank) + "d";
         layer_type = (Rank == 2) ? LayerType::Dense2d : LayerType::Dense3d;
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
         // @todo batch normalization device descriptors
 #endif
     }
@@ -198,7 +198,7 @@ public:
     {
         activation_function = string_to_activation(name);
 
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
 
         if (activation_descriptor == nullptr && activation_function != ActivationFunction::Softmax)
             cudnnCreateActivationDescriptor(&activation_descriptor);
@@ -260,7 +260,7 @@ public:
 */
         ActivationArguments act_args;
         act_args.activation_function = activation_function;
-#ifdef CUDA
+#ifdef OPENNN_WITH_CUDA
         act_args.activation_descriptor = activation_descriptor;
 #endif
         activation(output, act_args);
@@ -278,7 +278,7 @@ public:
 
         TensorView& delta = back_propagation.backward_views[layer][OutputGradients][0];
 
-#ifndef CUDA
+#ifndef OPENNN_WITH_CUDA
         activation_gradient(output, delta, delta, activation_function);
 #else
         activation_gradient(output, delta, delta, activation_function, activation_descriptor);

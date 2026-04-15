@@ -46,10 +46,6 @@
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
 
 #ifdef OPENNN_WITH_CUDA
-#define CUDA
-#endif
-
-#ifdef CUDA
 
 #include "../opennn/kernel.cuh"
 #include <cuda.h>
