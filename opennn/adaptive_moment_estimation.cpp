@@ -509,6 +509,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
         training_error = type(0);
 
+
         // Worker thread fills host pinned memory
         std::thread training_worker([&]()
         {

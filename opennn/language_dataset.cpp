@@ -416,11 +416,17 @@ void LanguageDataset::read_csv()
     split_samples_random();
     set_binary_variables();
 
-    // Restore input roles after set_binary_variables, which may mark
-    // constant columns (e.g. START token) as "None" and clear their categories
-    for(Index i = 0; i < maximum_input_sequence_length; i++)
+    // Restore all variable roles after set_binary_variables, which may mark
+    // constant columns (e.g. START token) as "None"
+    for(Index i = 0; i < static_cast<Index>(variables.size()); i++)
     {
-        variables[i].role = VariableRole::Input;
+        if(i < maximum_input_sequence_length)
+            variables[i].role = VariableRole::Input;
+        else if(!decoder_shape.empty() && i < maximum_input_sequence_length + maximum_target_sequence_length)
+            variables[i].role = VariableRole::Decoder;
+        else
+            variables[i].role = VariableRole::Target;
+
         variables[i].type = VariableType::Numeric;
     }
 

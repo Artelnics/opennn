@@ -130,25 +130,47 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         }
         else
         {
+            // Wire to first consumer's input gradient
             for(const Index consumer_idx : layer_output_indices[i])
             {
-                if(consumer_idx >= 0 && consumer_idx < layers_number)
+                if(consumer_idx < 0 || consumer_idx >= layers_number) continue;
+
+                const auto& consumer_inputs = layer_input_indices[consumer_idx];
+
+                Index port = 0;
+                for(size_t p = 0; p < consumer_inputs.size(); ++p)
+                    if(consumer_inputs[p] == static_cast<Index>(i))
+                    {
+                        port = static_cast<Index>(p);
+                        break;
+                    }
+
+                if(backward_views[consumer_idx].size() > port + 1
+                   && !backward_views[consumer_idx][port + 1].empty())
                 {
-                    const auto& consumer_inputs = layer_input_indices[consumer_idx];
-
-                    Index port = 0;
-
-                    for(size_t p = 0; p < consumer_inputs.size(); ++p)
-                        if(consumer_inputs[p] == i)
-                        {
-                            port = static_cast<Index>(p);
-                            break;
-                        }
-
-                    if(backward_views[consumer_idx].size() > 1 && !backward_views[consumer_idx][1].empty())
-                        backward_views[i][0][0] = backward_views[consumer_idx][1][0];
+                    backward_views[i][0][0] = backward_views[consumer_idx][port + 1][0];
+                    break;
                 }
-                break;
+            }
+
+            // Store additional consumer gradient sources for later accumulation
+            Index wired_count = 0;
+            for(const Index consumer_idx : layer_output_indices[i])
+            {
+                if(consumer_idx < 0 || consumer_idx >= layers_number) continue;
+
+                const auto& consumer_inputs = layer_input_indices[consumer_idx];
+                Index port = 0;
+                for(size_t p = 0; p < consumer_inputs.size(); ++p)
+                    if(consumer_inputs[p] == static_cast<Index>(i)) { port = static_cast<Index>(p); break; }
+
+                if(backward_views[consumer_idx].size() > port + 1
+                   && !backward_views[consumer_idx][port + 1].empty())
+                {
+                    if(wired_count > 0)
+                        backward_views[i][0].push_back(backward_views[consumer_idx][port + 1][0]);
+                    wired_count++;
+                }
             }
         }
     }
@@ -237,13 +259,21 @@ void BackPropagation::allocate_device()
             {
                 for(const Index consumer_idx : layer_output_indices[i])
                 {
-                    if(consumer_idx >= 0 && consumer_idx < layers_number)
+                    if(consumer_idx < 0 || consumer_idx >= layers_number) continue;
+
+                    const auto& consumer_inputs = layer_input_indices[consumer_idx];
+                    Index port = 0;
+                    for(size_t p = 0; p < consumer_inputs.size(); ++p)
+                        if(consumer_inputs[p] == static_cast<Index>(i)) { port = static_cast<Index>(p); break; }
+
+                    if(backward_views[consumer_idx].size() > port + 1
+                       && !backward_views[consumer_idx][port + 1].empty())
                     {
-                        if(backward_views[consumer_idx].size() > 1 && !backward_views[consumer_idx][1].empty())
-                            backward_views[i][0][0] = backward_views[consumer_idx][1][0];
+                        backward_views[i][0][0] = backward_views[consumer_idx][port + 1][0];
+                        break;
                     }
-                    break;
                 }
+
             }
         }
     }

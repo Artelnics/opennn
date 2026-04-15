@@ -47,6 +47,7 @@ struct BackPropagation
     Loss* loss = nullptr;
 
     type error;
+    Index active_tokens_count = 0;
     MatrixR errors;
     Memory output_gradients;
     Shape output_gradient_dimensions;

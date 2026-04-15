@@ -368,6 +368,40 @@ void cross_entropy_3d_multiple_backward_cuda(const size_t n,
 }
 
 
+__global__ void cross_entropy_3d_multiple_counts_kernel(const int total_tokens, const int vocab_size,
+                                                        const float* outputs, const float* targets, float* counts)
+{
+    const int token_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if(token_idx < total_tokens)
+    {
+        const int target_class = static_cast<int>(targets[token_idx]);
+        if(target_class > 0 && target_class < vocab_size)
+        {
+            atomicAdd(&counts[0], 1.0f);
+
+            int best_index = 0;
+            float best_value = outputs[token_idx * vocab_size];
+            for(int k = 1; k < vocab_size; ++k)
+            {
+                const float value = outputs[token_idx * vocab_size + k];
+                if(value > best_value) { best_value = value; best_index = k; }
+            }
+            if(best_index == target_class) atomicAdd(&counts[1], 1.0f);
+        }
+    }
+}
+
+void cross_entropy_3d_multiple_counts_cuda(const size_t total_tokens, const int vocab_size,
+                                           const float* outputs, const float* targets, float* counts)
+{
+    if(total_tokens == 0) return;
+    const int block_size = 256;
+    const int grid_size = (static_cast<int>(total_tokens) + block_size - 1) / block_size;
+    cross_entropy_3d_multiple_counts_kernel<<<grid_size, block_size>>>(
+        static_cast<int>(total_tokens), vocab_size, outputs, targets, counts);
+}
+
+
 __global__ void cross_entropy_3d_binary_forward_kernel(const int n,
                                                        const float* outputs,
                                                        const float* targets,

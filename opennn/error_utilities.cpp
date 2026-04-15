@@ -195,13 +195,16 @@ void minkowski_error_gradient(const TensorView& input, const TensorView& target,
 #endif
 }
 
-void cross_entropy_3d(const TensorView& input, const TensorView& target, type& error)
+void cross_entropy_3d(const TensorView& input, const TensorView& target, type& error,
+                      Index& active_tokens_out, float* errors_device)
 {
-    const Index batch_size = target.shape[0];
-    const Index sequence_length = target.shape[1];
-    const Index vocabulary_size = input.size() / (batch_size * sequence_length);
+    const Index vocabulary_size = input.shape[input.get_rank() - 1];
+    const Index sequence_length = input.shape[input.get_rank() - 2];
+    const Index batch_size = input.size() / (sequence_length * vocabulary_size);
 
 #ifndef CUDA
+    (void)errors_device;
+
     const TensorMap3 outputs(input.data, batch_size, sequence_length, vocabulary_size);
     const MatrixMap targets(target.data, batch_size, sequence_length);
 
@@ -220,65 +223,50 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, type& e
             }
         }
 
+    active_tokens_out = active_tokens;
     error = active_tokens > 0 ? total_log_loss / static_cast<type>(active_tokens) : type(0);
+
 #else
     const int B = static_cast<int>(batch_size);
     const int S = static_cast<int>(sequence_length);
     const int V = static_cast<int>(vocabulary_size);
-    const size_t n = batch_size * sequence_length;
+    const size_t token_count = batch_size * sequence_length;
 
-    // Temp workspace for per-token losses
-    static float* workspace = nullptr;
-    static size_t ws_alloc = 0;
-    if(n > ws_alloc) { if(workspace) cudaFree(workspace); cudaMalloc(&workspace, n * sizeof(float)); ws_alloc = n; }
+    // Per-token losses into errors_device (pre-allocated in BackPropagation)
+    cross_entropy_3d_multiple_forward_cuda(token_count, B, S, V, input.data, target.data, errors_device, EPSILON);
 
-    // Sync to catch any prior errors
-    CHECK_CUDA(cudaDeviceSynchronize());
-
-    cross_entropy_3d_multiple_forward_cuda(n, B, S, V, input.data, target.data, workspace, EPSILON);
-    CHECK_CUDA(cudaDeviceSynchronize());
-
+    // Sum losses with cublasSasum
     float sum_loss = 0;
-    CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), static_cast<int>(n), workspace, 1, &sum_loss));
+    CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), static_cast<int>(token_count), errors_device, 1, &sum_loss));
 
-    // Count active tokens (non-zero target indices) — need to do on CPU for now
-    // Copy targets to host to count
-    vector<float> targets_host(batch_size * sequence_length);
-    CHECK_CUDA(cudaMemcpy(targets_host.data(), target.data, targets_host.size() * sizeof(float), cudaMemcpyDeviceToHost));
+    // Count active tokens on host (small copy: only token_count floats)
+    vector<float> targets_host(token_count);
+    CHECK_CUDA(cudaMemcpy(targets_host.data(), target.data, token_count * sizeof(float), cudaMemcpyDeviceToHost));
 
     Index active = 0;
-    for(size_t i = 0; i < targets_host.size(); i++)
-        if(static_cast<Index>(targets_host[i]) > 0 && static_cast<Index>(targets_host[i]) < vocabulary_size)
+    for(size_t i = 0; i < token_count; i++)
+        if(static_cast<Index>(targets_host[i]) > 0 && static_cast<Index>(targets_host[i]) < V)
             active++;
 
-    error = active > 0 ? sum_loss / static_cast<type>(active) : type(0);
+    active_tokens_out = active;
+    error = active > 0 ? sum_loss / static_cast<float>(active) : type(0);
 
 #endif
 }
 
-void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, TensorView& input_gradient)
+void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, TensorView& input_gradient,
+                               Index active_tokens_count)
 {
-    const Index batch_size = target.shape[0];
-    const Index sequence_length = target.shape[1];
-    const Index vocabulary_size = input.size() / (batch_size * sequence_length);
+    const Index vocabulary_size = input.shape[input.get_rank() - 1];
+    const Index sequence_length = input.shape[input.get_rank() - 2];
+    const Index batch_size = input.size() / (sequence_length * vocabulary_size);
 
 #ifndef CUDA
     const TensorMap3 outputs(input.data, batch_size, sequence_length, vocabulary_size);
     const MatrixMap targets(target.data, batch_size, sequence_length);
     TensorMap3 gradients(input_gradient.data, batch_size, sequence_length, vocabulary_size);
 
-    Index active_tokens = 0;
-
-    #pragma omp parallel for reduction(+:active_tokens)
-    for(Index i = 0; i < batch_size; ++i)
-        for(Index j = 0; j < sequence_length; ++j)
-        {
-            const Index idx = static_cast<Index>(targets(i, j));
-            if(idx > 0 && idx < vocabulary_size)
-                active_tokens++;
-        }
-
-    const type scale = active_tokens > 0 ? type(1) / static_cast<type>(active_tokens) : type(0);
+    const type scale = active_tokens_count > 0 ? type(1) / static_cast<type>(active_tokens_count) : type(0);
 
     #pragma omp parallel for
     for(Index i = 0; i < batch_size; ++i)
@@ -299,24 +287,17 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
                     gradients(i, j, k) = type(0);
             }
         }
+
 #else
     const int B = static_cast<int>(batch_size);
     const int S = static_cast<int>(sequence_length);
     const int V = static_cast<int>(vocabulary_size);
-    const size_t n = batch_size * sequence_length;
 
-    // Count active tokens on host
-    vector<float> targets_host(n);
-    CHECK_CUDA(cudaMemcpy(targets_host.data(), target.data, n * sizeof(float), cudaMemcpyDeviceToHost));
+    const float scale = active_tokens_count > 0 ? 1.0f / static_cast<float>(active_tokens_count) : 0.0f;
 
-    Index active = 0;
-    for(size_t i = 0; i < n; i++)
-        if(static_cast<Index>(targets_host[i]) > 0 && static_cast<Index>(targets_host[i]) < vocabulary_size)
-            active++;
+    const size_t total = static_cast<size_t>(B) * S * V;
+    cross_entropy_3d_multiple_backward_cuda(total, B, S, V, input.data, target.data, input_gradient.data, scale);
 
-    const float scale = active > 0 ? 1.0f / static_cast<float>(active) : 0.0f;
-
-    cross_entropy_3d_multiple_backward_cuda(n, B, S, V, input.data, target.data, input_gradient.data, scale);
 #endif
 }
 

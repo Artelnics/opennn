@@ -183,6 +183,7 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
         scale_embedding,
         add_positional_encoding
     );
+
 #endif
 }
 

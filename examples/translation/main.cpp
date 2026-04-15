@@ -90,7 +90,7 @@ int main()
 #endif
 
         // Predictions
-
+/*
         cout << "\n================ TRANSFORMER PREDICTIONS ================\n";
 
         const vector<string> test_sources =
@@ -113,7 +113,7 @@ int main()
         }
 
         cout << "=========================================================\n";
-
+*/
         cout << "Bye!" << endl;
 
         return 0;

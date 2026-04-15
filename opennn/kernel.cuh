@@ -58,6 +58,8 @@ void sgd_update_device(const size_t, float*, float*, const float*, const float, 
  __global__ void cross_entropy_3d_multiple_backward_kernel(const int, const int, const float*, const float*, float*, const float);
  void cross_entropy_3d_multiple_backward_cuda(const size_t, const int, const int, const int, const float*, const float*, float*, const float);
 
+ void cross_entropy_3d_multiple_counts_cuda(const size_t, const int, const float*, const float*, float*);
+
  __global__ void cross_entropy_3d_binary_forward_kernel(const int, const float*, const float*, float*, const float);
  void cross_entropy_3d_binary_forward_cuda(const size_t, const int, const int, const float*, const float*, float*, const float);
 

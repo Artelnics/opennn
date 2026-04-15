@@ -219,6 +219,7 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
         back_propagation.gradient_views[layer][ValueWeights],
         back_propagation.gradient_views[layer][ValueBiases],
         back_propagation.backward_views[layer][InputQueryGradient][0],
+        back_propagation.backward_views[layer][InputSourceGradient][0],
         parameters[QueryWeights], parameters[KeyWeights], parameters[ValueWeights],
         args, self_attention);
 }

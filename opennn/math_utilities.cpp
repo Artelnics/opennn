@@ -649,6 +649,102 @@ void batch_normalization_backward(
 #endif
 }
 
+void layernorm_forward(const TensorView& input, const TensorView& gamma, const TensorView& beta,
+                       TensorView& means, TensorView& standard_deviations, TensorView& normalized,
+                       TensorView& output,
+                       Index batch_size, Index sequence_length, Index embedding_dimension)
+{
+#ifndef CUDA
+    const Index E = embedding_dimension;
+
+    const TensorMap3 X(input.data, batch_size, sequence_length, E);
+    TensorMap2 mu(means.data, batch_size, sequence_length);
+    TensorMap2 sigma(standard_deviations.data, batch_size, sequence_length);
+    TensorMap3 X_hat(normalized.data, batch_size, sequence_length, E);
+    TensorMap3 Y(output.data, batch_size, sequence_length, E);
+
+    const array<Index, 3> reshape_dims({batch_size, sequence_length, 1});
+    const array<Index, 3> broadcast_dims({1, 1, E});
+
+    mu = X.mean(array<Index, 1>({2}));
+
+    auto centered = X - mu.reshape(reshape_dims).broadcast(broadcast_dims);
+    auto variance = centered.square().mean(array<Index, 1>({2}));
+    sigma = (variance + EPSILON).sqrt();
+
+    X_hat = centered / sigma.reshape(reshape_dims).broadcast(broadcast_dims);
+
+    TensorMap1 g(gamma.data, E);
+    TensorMap1 b(beta.data, E);
+
+    Y = X_hat * g.reshape(array<Index, 3>({1, 1, E})).broadcast(array<Index, 3>({batch_size, sequence_length, 1}))
+      + b.reshape(array<Index, 3>({1, 1, E})).broadcast(array<Index, 3>({batch_size, sequence_length, 1}));
+
+#else
+    const int N = static_cast<int>(batch_size * sequence_length);
+    const int D = static_cast<int>(embedding_dimension);
+
+    layernorm_forward_cuda(N, D,
+        input.data, output.data,
+        means.data, standard_deviations.data,
+        gamma.data, beta.data, EPSILON);
+#endif
+}
+
+
+void layernorm_backward(const TensorView& input, const TensorView& output_gradient,
+                        const TensorView& means, const TensorView& standard_deviations,
+                        const TensorView& normalized, const TensorView& gamma,
+                        TensorView& gamma_gradient, TensorView& beta_gradient, TensorView& input_gradient,
+                        Index batch_size, Index sequence_length, Index embedding_dimension)
+{
+#ifndef CUDA
+    const Index E = embedding_dimension;
+
+    const TensorMap2 sigma(standard_deviations.data, batch_size, sequence_length);
+    const TensorMap3 X_hat(normalized.data, batch_size, sequence_length, E);
+    const TensorMap3 dY(output_gradient.data, batch_size, sequence_length, E);
+
+    TensorMap1 dGamma(gamma_gradient.data, E);
+    TensorMap1 dBeta(beta_gradient.data, E);
+
+    dGamma = (dY * X_hat).sum(array<Index, 2>({0, 1}));
+    dBeta = dY.sum(array<Index, 2>({0, 1}));
+
+    TensorMap3 dX(input_gradient.data, batch_size, sequence_length, E);
+    TensorMap1 gamma_map(gamma.data, E);
+
+    auto gamma_bcast = gamma_map.reshape(array<Index, 3>({1, 1, E}))
+                           .broadcast(array<Index, 3>({batch_size, sequence_length, 1}));
+
+    Tensor3 D = dY * gamma_bcast;
+    Tensor2 sum_D = D.sum(array<Index, 1>({2}));
+    Tensor2 sum_D_xhat = (D * X_hat).sum(array<Index, 1>({2}));
+
+    auto sum_D_bcast = sum_D.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
+                           .broadcast(array<Index, 3>({1, 1, E}));
+    auto sum_D_xhat_bcast = sum_D_xhat.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
+                                .broadcast(array<Index, 3>({1, 1, E}));
+    auto std_dev_bcast = sigma.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
+                             .broadcast(array<Index, 3>({1, 1, E}));
+
+    const type inv_E = type(1.0) / static_cast<type>(E);
+    dX = (D - sum_D_bcast * inv_E - X_hat * sum_D_xhat_bcast * inv_E) / std_dev_bcast;
+
+#else
+    const int N = static_cast<int>(batch_size * sequence_length);
+    const int D = static_cast<int>(embedding_dimension);
+
+    layernorm_backward_cuda(N, D,
+        output_gradient.data, input.data,
+        means.data, standard_deviations.data,
+        gamma.data,
+        input_gradient.data,
+        gamma_gradient.data, beta_gradient.data);
+#endif
+}
+
+
 void convolution(const TensorView& input,
                         const TensorView& kernel,
                         const TensorView& bias,
@@ -1333,40 +1429,14 @@ void projection(const TensorView& input,
 
 #else
 
-    // GPU: flat matmul + bias + transpose (same as master linear_projection_cuda)
+    // GPU: flat matmul + bias (no transpose — done in multihead_attention_forward)
 
-    const int total_rows = static_cast<int>(input.size() / embedding_dimension);
-    const int E = static_cast<int>(embedding_dimension);
-
-    CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(),
-                             CUBLAS_OP_N, CUBLAS_OP_N,
-                             E, total_rows, E,
-                             &one,
-                             weights.data, E,
-                             input.data, E,
-                             &zero,
-                             output.data, E));
-
-    // Bias broadcast: create 2D descriptor matching flat layout [total_rows, E]
-    TensorView out_flat(output.data, {(Index)total_rows, embedding_dimension});
-    out_flat.set_descriptor(out_flat.shape);
-
-    CHECK_CUDNN(cudnnAddTensor(Device::get_cudnn_handle(),
-                               &one,
-                               biases.get_descriptor(), biases.data,
-                               &one,
-                               out_flat.get_descriptor(), output.data));
-
-    // Transpose from [B, S, H, D] to [B, H, S, D]
-
-    const int B = static_cast<int>(batch_size);
-    const int S = static_cast<int>(sequence_length);
-    const int H = static_cast<int>(heads_number);
-    const int D = static_cast<int>(head_dimension);
-
-    float* scratch = args.transpose_scratch;
-    mha_transpose_qkv_cuda(B * S * H * D, output.data, scratch, S, H, D);
-    cudaMemcpy(output.data, scratch, B * S * H * D * sizeof(float), cudaMemcpyDeviceToDevice);
+    const Index total_rows = input.size() / embedding_dimension;
+    TensorView in_2d(input.data, {total_rows, embedding_dimension});
+    TensorView out_2d(output.data, {total_rows, embedding_dimension});
+    in_2d.set_descriptor(in_2d.shape);
+    out_2d.set_descriptor(out_2d.shape);
+    combination(in_2d, weights, biases, out_2d);
 
 #endif
 }
@@ -1531,7 +1601,18 @@ void multihead_attention_forward(
     const int B  = static_cast<int>(batch_size);
     const float sf = static_cast<float>(scaling_factor);
 
-    // Q, K, V already in [B, H, S, D] layout (transposed by projection())
+    // Transpose Q, K, V from [B, S, H, D] to [B, H, S, D]
+
+    float* scratch = args.transpose_scratch;
+
+    mha_transpose_qkv_cuda(B * Sq * E, query.data, scratch, Sq, H, D);
+    cudaMemcpy(query.data, scratch, B * Sq * E * sizeof(float), cudaMemcpyDeviceToDevice);
+
+    mha_transpose_qkv_cuda(B * Sk * E, key.data, scratch, Sk, H, D);
+    cudaMemcpy(key.data, scratch, B * Sk * E * sizeof(float), cudaMemcpyDeviceToDevice);
+
+    mha_transpose_qkv_cuda(B * Sk * E, value.data, scratch, Sk, H, D);
+    cudaMemcpy(value.data, scratch, B * Sk * E * sizeof(float), cudaMemcpyDeviceToDevice);
 
     // Q * K^T — attention scores
 
@@ -1603,6 +1684,7 @@ void multihead_attention_backward(
     TensorView& key_weight_grad, TensorView& key_bias_grad,
     TensorView& value_weight_grad, TensorView& value_bias_grad,
     TensorView& input_query_grad,
+    TensorView& input_source_grad,
     const TensorView& query_weights, const TensorView& key_weights, const TensorView& value_weights,
     const MultiheadAttentionArguments& args,
     bool self_attention)
@@ -1688,6 +1770,13 @@ void multihead_attention_backward(
         projection_gradient(key_grad, source_input, key_weights, key_bias_grad, key_weight_grad, input_query_grad,
                             args, source_sequence_length, true);
         projection_gradient(value_grad, source_input, value_weights, value_bias_grad, value_weight_grad, input_query_grad,
+                            args, source_sequence_length, true);
+    }
+    else
+    {
+        projection_gradient(key_grad, source_input, key_weights, key_bias_grad, key_weight_grad, input_source_grad,
+                            args, source_sequence_length, false);
+        projection_gradient(value_grad, source_input, value_weights, value_bias_grad, value_weight_grad, input_source_grad,
                             args, source_sequence_length, true);
     }
 
@@ -1853,6 +1942,30 @@ void multihead_attention_backward(
         // input_query_grad = q_input_grad + src_grad
 
         addition_cuda(B * Sq * E, input_query_grad.data, src_grad_flat, input_query_grad.data);
+    }
+    else
+    {
+        // Cross-attention: K/V gradients go to input_source_grad
+
+        CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_T,
+            E, E, B * Sk, &one, k_grad_flat, E, source_input.data, E, &zero, key_weight_grad.data, E));
+
+        CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N,
+            E, 1, B * Sk, &one, k_grad_flat, E, Device::get_ones(B * Sk), B * Sk, &zero, key_bias_grad.data, E));
+
+        CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_T, CUBLAS_OP_N,
+            E, B * Sk, E, &one, key_weights.data, E, k_grad_flat, E, &zero, input_source_grad.data, E));
+
+        mha_transpose_o_cuda(B * Sk * E, value_grad.data, k_grad_flat, Sk, H, D);
+
+        CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_T,
+            E, E, B * Sk, &one, k_grad_flat, E, source_input.data, E, &zero, value_weight_grad.data, E));
+
+        CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N,
+            E, 1, B * Sk, &one, k_grad_flat, E, Device::get_ones(B * Sk), B * Sk, &zero, value_bias_grad.data, E));
+
+        CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_T, CUBLAS_OP_N,
+            E, B * Sk, E, &one, value_weights.data, E, k_grad_flat, E, &one, input_source_grad.data, E));
     }
 
 #endif

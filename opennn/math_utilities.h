@@ -129,6 +129,19 @@ void batch_normalization_inference(const TensorView& input, const TensorView& ga
 void batch_normalization_training(const TensorView& input, const TensorView& gamma, const TensorView& beta, VectorR& running_mean, VectorR& running_variance, TensorView& mean, TensorView& inverse_variance, TensorView& output, type momentum = type(0.9));
 void batch_normalization_backward(const TensorView& input, const TensorView& output, const TensorView& output_gradient, const TensorView& mean, const TensorView& inverse_variance, const TensorView& gamma, TensorView& gamma_gradient, TensorView& beta_gradient, TensorView& input_gradient);
 
+// Layer normalization (3D)
+
+void layernorm_forward(const TensorView& input, const TensorView& gamma, const TensorView& beta,
+                       TensorView& means, TensorView& standard_deviations, TensorView& normalized,
+                       TensorView& output,
+                       Index batch_size, Index sequence_length, Index embedding_dimension);
+
+void layernorm_backward(const TensorView& input, const TensorView& output_gradient,
+                        const TensorView& means, const TensorView& standard_deviations,
+                        const TensorView& normalized, const TensorView& gamma,
+                        TensorView& gamma_gradient, TensorView& beta_gradient, TensorView& input_gradient,
+                        Index batch_size, Index sequence_length, Index embedding_dimension);
+
 // Convolution
 
 void convolution(const TensorView& input, const TensorView& kernel, const TensorView& bias, TensorView& output, const ConvolutionArguments& args = {});
@@ -188,6 +201,7 @@ void multihead_attention_backward(
     TensorView& key_weight_grad, TensorView& key_bias_grad,
     TensorView& value_weight_grad, TensorView& value_bias_grad,
     TensorView& input_query_grad,
+    TensorView& input_source_grad,
     const TensorView& query_weights, const TensorView& key_weights, const TensorView& value_weights,
     const MultiheadAttentionArguments& args,
     bool self_attention);
