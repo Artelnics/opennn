@@ -133,18 +133,18 @@ void Batch::print() const
          << "Inputs:" << "\n"
          << "Input shape:" << input_shape << "\n";
 
-    if (input_shape.rank == 4)
+    if (input_shape.rank() == 4)
         cout << TensorMap4(const_cast<type*>(input.data()),
                            input_shape[0],
                            input_shape[1],
                            input_shape[2],
                            input_shape[3]);
-    else if (input_shape.rank == 3)
+    else if (input_shape.rank() == 3)
         cout << TensorMap3(const_cast<type*>(input.data()),
                            input_shape[0],
                            input_shape[1],
                            input_shape[2]);
-    else if (input_shape.rank == 2)
+    else if (input_shape.rank() == 2)
         cout << MatrixMap(const_cast<type*>(input.data()),
                           input_shape[0],
                           input_shape[1]);

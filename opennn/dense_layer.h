@@ -126,10 +126,10 @@ public:
              bool new_batch_normalization = false,
              const string& new_label = "dense_layer")
     {
-        if (new_input_shape.rank != Rank - 1)
+        if (new_input_shape.rank() != Rank - 1)
             throw runtime_error("Input shape size must be " + to_string(Rank - 1));
 
-        if (new_output_shape.rank != 1)
+        if (new_output_shape.rank() != 1)
             throw runtime_error("Output shape size is not 1");
 
         input_shape = new_input_shape;
@@ -183,7 +183,7 @@ public:
 
     void set_input_shape(const Shape& new_input_shape) override
     {
-        if (new_input_shape.rank != Rank - 1)
+        if (new_input_shape.rank() != Rank - 1)
             throw runtime_error("Input shape size must be " + to_string(Rank - 1));
 
         input_shape = new_input_shape;

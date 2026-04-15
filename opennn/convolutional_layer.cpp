@@ -175,10 +175,10 @@ void Convolutional::set(const Shape& new_input_shape,
                         bool new_batch_normalization,
                         const string& new_label)
 {
-    if(new_kernel_shape.rank != 4)
+    if(new_kernel_shape.rank() != 4)
         throw runtime_error("Kernel shape must be 4");
 
-    if (new_stride_shape.rank != 2)
+    if (new_stride_shape.rank() != 2)
         throw runtime_error("Stride shape must be 2");
 
     if (new_kernel_shape[0] > new_input_shape[0] || new_kernel_shape[1] > new_input_shape[1])
@@ -297,8 +297,8 @@ void Convolutional::set_column_stride(const Index new_stride_column)
 
 void Convolutional::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.rank != 3)
-        throw runtime_error("Input new_input_shape.rank must be 3");
+    if (new_input_shape.rank() != 3)
+        throw runtime_error("Input new_input_shape.rank() must be 3");
 
     input_shape = new_input_shape;
 }
@@ -404,8 +404,8 @@ void Convolutional::from_XML(const XmlDocument& document)
     set_activation_function(read_xml_string(convolutional_layer_element, "Activation"));
 
     const Shape stride_shape = string_to_shape(read_xml_string(convolutional_layer_element, "StrideDimensions"));
-    set_column_stride(stride_shape[0]);
-    set_row_stride(stride_shape[1]);
+    set_row_stride(stride_shape[0]);
+    set_column_stride(stride_shape[1]);
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
 
@@ -478,8 +478,8 @@ void Convolutional::init_cuda_workspace(Index batch_size)
     cudnnTensorDescriptor_t input_desc;
     cudnnCreateTensorDescriptor(&input_desc);
 
-    const Index input_h = convolution_type == ConvolutionType::Same ? get_input_height() : get_input_height();
-    const Index input_w = convolution_type == ConvolutionType::Same ? get_input_width() : get_input_width();
+    const Index input_h = get_input_height();
+    const Index input_w = get_input_width();
 
     cudnnSetTensor4dDescriptor(input_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
                                static_cast<int>(batch_size),

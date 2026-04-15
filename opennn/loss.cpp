@@ -182,42 +182,10 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
 
     calculate_output_gradients(batch, forward_propagation, back_propagation);
 
-    const auto& layer_output_indices = neural_network->get_layer_output_indices();
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
-
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {
-        // Accumulate gradients from multiple consumers before back-propagating
-        const auto& consumers = layer_output_indices[i];
-        if(consumers.size() > 1 && !back_propagation.backward_views[i].empty()
-           && !back_propagation.backward_views[i][0].empty()
-           && back_propagation.backward_views[i][0][0].data)
-        {
-            TensorView& output_grad = back_propagation.backward_views[i][0][0];
-            bool first = true;
-
-            for(const Index consumer_idx : consumers)
-            {
-                if(consumer_idx < 0 || consumer_idx >= static_cast<Index>(layers.size())) continue;
-
-                const auto& consumer_inputs = layer_input_indices[consumer_idx];
-                Index port = 0;
-                for(size_t p = 0; p < consumer_inputs.size(); ++p)
-                    if(consumer_inputs[p] == i) { port = static_cast<Index>(p); break; }
-
-                if(back_propagation.backward_views[consumer_idx].size() > port + 1
-                   && !back_propagation.backward_views[consumer_idx][port + 1].empty()
-                   && back_propagation.backward_views[consumer_idx][port + 1][0].data)
-                {
-                    const TensorView& consumer_grad = back_propagation.backward_views[consumer_idx][port + 1][0];
-                    if(first)
-                        first = false;
-                    else
-                        addition(consumer_grad, output_grad, output_grad);
-                }
-            }
-        }
-
+        if(i != last_trainable_layer_index)
+            back_propagation.accumulate_output_gradients(static_cast<size_t>(i));
         layers[i]->back_propagate(forward_propagation, back_propagation, i);
     }
 }

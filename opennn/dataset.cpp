@@ -666,9 +666,7 @@ void Dataset::set_variable_role(const Index index, const string& new_role)
 
 void Dataset::set_variable_role(const string& name, const string& new_role)
 {
-    const Index index = get_variable_index(name);
-
-    set_variable_role(index, new_role);
+    set_variable_role(get_variable_index(name), new_role);
 }
 
 void Dataset::set_variable_type(const Index index, const VariableType& new_type)
@@ -678,9 +676,7 @@ void Dataset::set_variable_type(const Index index, const VariableType& new_type)
 
 void Dataset::set_variable_type(const string& name, const VariableType& new_type)
 {
-    const Index index = get_variable_index(name);
-
-    set_variable_type(index, new_type);
+    set_variable_type(get_variable_index(name), new_type);
 }
 
 void Dataset::set_variable_types(const VariableType& new_type)
@@ -2589,7 +2585,10 @@ void Dataset::read_csv()
         for(Index variable_index = 0; variable_index < variables_number; variable_index++)
         {
             const Variable& variable = variables[variable_index];
-            const string& token = has_sample_ids ? tokens[variable_index + 1] : tokens[variable_index];
+            const size_t token_idx = has_sample_ids ? variable_index + 1 : variable_index;
+            if(token_idx >= tokens.size())
+                throw runtime_error("Row " + to_string(sample_index) + " has fewer columns than expected (" + to_string(tokens.size()) + ").");
+            const string& token = tokens[token_idx];
             const vector<Index>& feature_indices = all_feature_indices[variable_index];
 
             switch(variable.type)
@@ -2774,33 +2773,8 @@ Index Dataset::count_nan() const
 
 vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices, Index new_batch_size) const
 {
-    const Index samples_number = sample_indices.size();
-
-    if(samples_number == 0) return {};
-
-    Index batch_size = new_batch_size;
-    Index batches_number;
-
-    if(batch_size <= 0 || samples_number < batch_size)
-    {
-        batches_number = 1;
-        batch_size = samples_number;
-    }
-    else
-        batches_number = (samples_number + batch_size - 1) / batch_size;
-
-    vector<vector<Index>> batches(batches_number);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < batches_number; i++)
-    {
-        const Index start_index = i * batch_size;
-        const Index end_index = min(start_index + batch_size, samples_number);
-
-        batches[i].assign(sample_indices.begin() + start_index,
-                          sample_indices.begin() + end_index);
-    }
-
+    vector<vector<Index>> batches;
+    get_batches(sample_indices, new_batch_size, false, batches);
     return batches;
 }
 

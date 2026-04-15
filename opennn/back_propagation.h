@@ -16,6 +16,12 @@ namespace opennn
 class Loss;
 class NeuralNetwork;
 
+struct BackwardEdge
+{
+    size_t consumer_idx;
+    size_t port;
+};
+
 struct BackPropagation
 {
     BackPropagation(const Index = 0, Loss* = nullptr);
@@ -28,6 +34,8 @@ struct BackPropagation
 
     const NeuralNetwork* get_neural_network() const;
 
+    void accumulate_output_gradients(size_t layer_index);
+
     NeuralNetwork* neural_network = nullptr;
 
     Memory gradient;
@@ -35,6 +43,10 @@ struct BackPropagation
 
     Memory backward;
     vector<vector<vector<TensorView>>> backward_views;
+
+    Memory per_layer_output_gradients;
+    vector<Shape> per_layer_output_gradient_shapes;
+    vector<vector<BackwardEdge>> backward_edges;
 
     vector<vector<TensorView>> get_layer_gradients() const;
 
@@ -46,7 +58,7 @@ struct BackPropagation
 
     Loss* loss = nullptr;
 
-    type error;
+    type error = type(0);
     Index active_tokens_count = 0;
     MatrixR errors;
     Memory output_gradients;

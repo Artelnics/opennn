@@ -71,79 +71,100 @@ public:
 
 #endif
 
-struct Shape
+class Shape
 {
+public:
+
     static constexpr size_t MaxRank = 4;
-    Index shape[MaxRank] = {0};
-    size_t rank = 0;
 
     Shape() noexcept = default;
 
     Shape(size_t n, Index value)
     {
-        rank = (n > MaxRank) ? MaxRank : n;
+        rank_ = (n > MaxRank) ? MaxRank : n;
 
-        for (size_t i = 0; i < rank; ++i)
-            shape[i] = value;
+        for (size_t i = 0; i < rank_; ++i)
+            shape_[i] = value;
     }
 
     Shape(initializer_list<Index> list)
     {
-        rank = min(list.size(), MaxRank);
+        rank_ = min(list.size(), MaxRank);
         size_t i = 0;
         for (Index d : list)
-            if (i < rank)
-                shape[i++] = d;
+            if (i < rank_)
+                shape_[i++] = d;
+    }
+
+    size_t rank() const noexcept
+    {
+        return rank_;
+    }
+
+    const Index* begin() const noexcept
+    {
+        return shape_;
+    }
+
+    const Index* end() const noexcept
+    {
+        return shape_ + rank_;
     }
 
     const Index& operator[](size_t i) const noexcept
     {
-        return shape[i];
+        return shape_[i];
     }
 
     Index& operator[](size_t i) noexcept
     {
-        return shape[i];
+        return shape_[i];
     }
 
     Index& back() noexcept
     {
-        return shape[rank - 1];
+        return shape_[rank_ - 1];
     }
 
     const Index& back() const
     {
-        return shape[rank - 1];
+        return shape_[rank_ - 1];
     }
 
     bool empty() const noexcept
     {
-        return rank == 0;
+        return rank_ == 0;
     }
 
     Index size() const noexcept
     {
-        if (rank == 0) return 0;
+        if (rank_ == 0) return 0;
 
-        Index total = shape[0];
+        Index total = shape_[0];
 
-        for (size_t i = 1; i < rank; ++i)
-            total *= shape[i];
+        for (size_t i = 1; i < rank_; ++i)
+            total *= shape_[i];
 
         return total;
     }
 
     void clear() noexcept
     {
-        rank = 0;
+        rank_ = 0;
+    }
+
+    void push_back(Index value) noexcept
+    {
+        if (rank_ < MaxRank)
+            shape_[rank_++] = value;
     }
 
     friend ostream& operator<<(ostream& os, const Shape& s)
     {
         os << "[ ";
 
-        for (size_t i = 0; i < s.rank; ++i)
-            os << s.shape[i] << (i < s.rank - 1 ? ", " : " ");
+        for (size_t i = 0; i < s.rank_; ++i)
+            os << s.shape_[i] << (i < s.rank_ - 1 ? ", " : " ");
 
         os << "]";
         return os;
@@ -151,10 +172,10 @@ struct Shape
 
     bool operator == (const Shape& other) const noexcept
     {
-        if (rank != other.rank) return false;
+        if (rank_ != other.rank_) return false;
 
-        for (size_t i = 0; i < rank; ++i)
-            if (shape[i] != other.shape[i]) return false;
+        for (size_t i = 0; i < rank_; ++i)
+            if (shape_[i] != other.shape_[i]) return false;
 
         return true;
     }
@@ -166,24 +187,29 @@ struct Shape
 
     Shape& append(const Shape& other)
     {
-        for(size_t i = 0; i < other.rank && rank < MaxRank; ++i)
-            shape[rank++] = other.shape[i];
+        for(size_t i = 0; i < other.rank_ && rank_ < MaxRank; ++i)
+            shape_[rank_++] = other.shape_[i];
 
         return *this;
     }
 
     template<int Rank>
     Eigen::array<Index, Rank> get_eigen_dims() const {
-        if (Rank != rank) {
+        if (Rank != rank_) {
             throw std::runtime_error("Shape Error: Requested Rank (" + std::to_string(Rank) +
-                                     ") does not match Shape rank (" + std::to_string(rank) + ").");
+                                     ") does not match Shape rank (" + std::to_string(rank_) + ").");
         }
         Eigen::array<Index, Rank> dims;
         for (size_t i = 0; i < Rank; ++i) {
-            dims[i] = shape[i];
+            dims[i] = shape_[i];
         }
         return dims;
     }
+
+private:
+
+    Index shape_[MaxRank] = {0};
+    size_t rank_ = 0;
 };
 
 
@@ -234,7 +260,7 @@ struct TensorView
     TensorView(type* new_data, const Shape& new_shape) noexcept
         : data(new_data), shape(new_shape) {}
 
-    Index get_rank() const noexcept { return shape.rank; }
+    Index get_rank() const noexcept { return shape.rank(); }
 
     Index size() const noexcept { return shape.size(); }
 
@@ -257,17 +283,17 @@ struct TensorView
         {
             cout << data[i] << " ";
 
-            if (shape.rank > 1 && (i + 1) % last_dim_stride == 0)
+            if (shape.rank() > 1 && (i + 1) % last_dim_stride == 0)
                 cout << "\n";
         }
 
-        if (shape.rank == 1 || total_size % last_dim_stride != 0)
+        if (shape.rank() == 1 || total_size % last_dim_stride != 0)
             cout << "\n";
     }
 
     MatrixMap as_matrix() const
     {
-        assert(data && shape.rank >= 2);
+        assert(data && shape.rank() >= 2);
         return MatrixMap(data, shape[0], shape.size() / shape[0]);
     }
 
@@ -280,7 +306,7 @@ struct TensorView
     template<int Rank>
     TensorMapR<Rank> as_tensor() const
     {
-        assert(data && shape.rank == Rank);
+        assert(data && shape.rank() == Rank);
         return TensorMapR<Rank>(data, shape.template get_eigen_dims<Rank>());
     }
 
@@ -307,22 +333,22 @@ struct TensorView
     void set_descriptor(const Shape& desc_shape)
     {
         int n = 1, c = 1, h = 1, w = 1;
-        if (desc_shape.rank == 4) {
+        if (desc_shape.rank() == 4) {
             n = static_cast<int>(desc_shape[0]);
             h = static_cast<int>(desc_shape[1]);
             w = static_cast<int>(desc_shape[2]);
             c = static_cast<int>(desc_shape[3]);
         }
-        else if (desc_shape.rank == 3) {
+        else if (desc_shape.rank() == 3) {
             n = static_cast<int>(desc_shape[0]);
             w = static_cast<int>(desc_shape[1]);
             c = static_cast<int>(desc_shape[2]);
         }
-        else if (desc_shape.rank == 2) {
+        else if (desc_shape.rank() == 2) {
             n = static_cast<int>(desc_shape[0]);
             c = static_cast<int>(desc_shape[1]);
         }
-        else if (desc_shape.rank == 1) {
+        else if (desc_shape.rank() == 1) {
             c = static_cast<int>(desc_shape[0]);
         }
 
