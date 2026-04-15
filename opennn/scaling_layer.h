@@ -14,6 +14,7 @@
 #include "variable.h"
 #include "math_utilities.h"
 #include "forward_propagation.h"
+#include "string_utilities.h"
 
 namespace opennn
 {
@@ -64,6 +65,9 @@ public:
     {
         return scalers;
     }
+
+    type get_min_range() const { return min_range; }
+    type get_max_range() const { return max_range; }
 
     void set(const Shape& new_input_shape = {})
     {
@@ -223,83 +227,33 @@ public:
         return buffer.str();
     }
 
-    string get_expression(const vector<string>& new_input_names = vector<string>(), const vector<string>& = vector<string>()) const override
-    {
-        const vector<string> input_names = new_input_names.empty()
-                                               ? get_default_feature_names()
-                                               : new_input_names;
-
-        const Index outputs_number = get_outputs_number();
-
-        ostringstream buffer;
-
-        buffer.precision(10);
-/*
-        for(Index i = 0; i < outputs_number; i++)
-        {
-            const string& scaler = scalers[i];
-
-            if(scaler == "None")
-                buffer << "scaled_" << input_names[i] << " = " << input_names[i] << ";\n";
-            else if(scaler == "MinimumMaximum")
-                buffer << "scaled_" << input_names[i]
-                       << " = " << input_names[i] << "*(" << max_range << "-" << min_range << ")/("
-                       << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))-" << descriptives[i].minimum << "*("
-                       << max_range << "-" << min_range << ")/("
-                       << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << min_range << ";\n";
-            else if(scaler == "MeanStandardDeviation")
-                buffer << "scaled_" << input_names[i] << " = (" << input_names[i] << "-" << descriptives[i].mean << ")/" << descriptives[i].standard_deviation << ";\n";
-            else if(scaler == "StandardDeviation")
-                buffer << "scaled_" << input_names[i] << " = " << input_names[i] << "/(" << descriptives[i].standard_deviation << ");\n";
-            else if(scaler == "Logarithm")
-                buffer << "scaled_" << input_names[i] << " = log(" << input_names[i] << ");\n";
-            else
-                throw runtime_error("Unknown inputs scaling method.\n");
-        }
-*/
-        string expression = buffer.str();
-
-        expression = regex_replace(expression, regex("\\+-"), "-");
-        expression = regex_replace(expression, regex("--"), "+");
-
-        return expression;
-    }
-
     void from_XML(const XmlDocument& document) override
     {
         const XmlElement* scaling_layer_element = get_xml_root(document, name);
 
         const Index neurons_number = read_xml_index(scaling_layer_element, "NeuronsNumber");
-        
+
         if constexpr (Rank == 2)
             set({ neurons_number });
         else
-            set({ neurons_number }); // @todo handle multi-dim scaling from XML
+            set({ neurons_number });
 
-        const XmlElement* start_element = scaling_layer_element->first_child_element("NeuronsNumber");
-/*
-        for(Index i = 0; i < neurons_number; i++)
-        {
-            const XmlElement* scaling_neuron_element = start_element->next_sibling_element("ScalingNeuron");
-            if(!scaling_neuron_element)
-                throw runtime_error("Scaling neuron " + to_string(i + 1) + " is nullptr.\n");
+        string_to_vector(read_xml_string(scaling_layer_element, "Means"), means);
+        string_to_vector(read_xml_string(scaling_layer_element, "StandardDeviations"), standard_deviations);
+        string_to_vector(read_xml_string(scaling_layer_element, "Minimums"), minimums);
+        string_to_vector(read_xml_string(scaling_layer_element, "Maximums"), maximums);
 
-            const XmlElement* descriptives_element = scaling_neuron_element->first_child_element("Descriptives");
-            if (descriptives_element && descriptives_element->get_text()) {
-                const vector<string> tokens = get_tokens(descriptives_element->get_text(), " ");
-                descriptives[i].set(
-                    type(stof(tokens[0])),
-                    type(stof(tokens[1])),
-                    type(stof(tokens[2])),
-                    type(stof(tokens[3]))
-                    );
+        const vector<string> scaler_names = get_tokens(read_xml_string(scaling_layer_element, "Scalers"), " ");
 
-            }
+        scalers.resize(scaler_names.size());
 
-            scalers[i] = read_xml_string(scaling_neuron_element, "Scaler");
-            start_element = scaling_neuron_element;
-        }
-*/
+        for(size_t i = 0; i < scaler_names.size(); i++)
+            scalers[i] = string_to_scaler_method(scaler_names[i]);
+
+        min_range = type(stof(read_xml_string(scaling_layer_element, "MinRange")));
+        max_range = type(stof(read_xml_string(scaling_layer_element, "MaxRange")));
+
+        calculate_coefficients();
     }
 
     void to_XML(XmlPrinter& printer) const override
@@ -309,17 +263,18 @@ public:
         const Index outputs_number = get_outputs_number();
 
         add_xml_element(printer, "NeuronsNumber", to_string(outputs_number));
+        add_xml_element(printer, "Means", vector_to_string(means));
+        add_xml_element(printer, "StandardDeviations", vector_to_string(standard_deviations));
+        add_xml_element(printer, "Minimums", vector_to_string(minimums));
+        add_xml_element(printer, "Maximums", vector_to_string(maximums));
 
-        for(Index i = 0; i < outputs_number; i++)
-        {
-/*
-            printer.open_element("ScalingNeuron");
-            printer.push_attribute("Index", int(i + 1));
-            add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
-            add_xml_element(printer, "Scaler", scalers[i]);
-            printer.close_element();
-*/
-        }
+        vector<string> scaler_names(scalers.size());
+        for(size_t i = 0; i < scalers.size(); i++)
+            scaler_names[i] = scaler_method_to_string(scalers[i]);
+        add_xml_element(printer, "Scalers", vector_to_string(scaler_names));
+
+        add_xml_element(printer, "MinRange", to_string(min_range));
+        add_xml_element(printer, "MaxRange", to_string(max_range));
 
         printer.close_element();
     }
@@ -353,20 +308,20 @@ public:
 
 private:
 
-    enum Forward {Output = 1}; // slot 0 = wired input (implicit for all layers)
+    enum Forward {Output = 1}; 
 
     VectorR means;
     VectorR standard_deviations;
     VectorR minimums;
     VectorR maximums;
 
-    VectorR multipliers;
-    VectorR offsets;
-
     vector<ScalerMethod> scalers;
 
     type min_range;
     type max_range;
+
+    VectorR multipliers;
+    VectorR offsets;
 };
 
 }

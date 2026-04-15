@@ -32,27 +32,15 @@ Shape Bounding::get_output_shape() const
     return input_shape;
 }
 
-/*
-type Bounding::get_lower_bound(const Index i) const
-{
-    return lower_bounds[i];
-}
-
 const VectorR& Bounding::get_lower_bounds() const
 {
     return lower_bounds;
-}
-
-type Bounding::get_upper_bound(const Index i) const
-{
-    return upper_bounds(i);
 }
 
 const VectorR& Bounding::get_upper_bounds() const
 {
     return upper_bounds;
 }
-*/
 
 void Bounding::set(const Shape& new_output_shape, const string& new_label)
 {
@@ -141,32 +129,6 @@ void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t
         const TensorView ub(upper_bounds.data(), {upper_bounds.size()});
         bounding(input, lb, ub, output);
     }
-}
-
-string Bounding::get_expression(const vector<string>& new_input_names, const vector<string>& new_output_names) const
-{
-    const vector<string> input_names = new_input_names.empty()
-                                           ? get_default_feature_names()
-                                           : new_input_names;
-
-    const vector<string> output_names = new_output_names.empty()
-                                            ? get_default_output_names()
-                                            : new_output_names;
-
-    if (bounding_method == BoundingMethod::NoBounding)
-        return string();
-
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    const Shape output_shape = get_output_shape();
-/*
-    for(Index i = 0; i < output_shape[0]; i++)
-        buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << input_names[i] << ")\n"
-               << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
-*/
-    return buffer.str();
 }
 
 void Bounding::to_XML(XmlPrinter& printer) const

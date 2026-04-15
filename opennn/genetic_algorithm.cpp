@@ -483,7 +483,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
                  << "Generation minimum selection error: " << optimal_validation_error << "\n"
                  << "Best ever training error: " << input_selection_results.optimum_training_error << "\n"
                  << "Best ever selection error: " << input_selection_results.optimum_validation_error << "\n"
-                 << "Elapsed time: " << write_time(elapsed_time) << "\n"
+                 << "Elapsed time: " << get_time(elapsed_time) << "\n"
                  << "Best selection error in generation: " << best_generation << "\n";
 
         // Stopping criteria
@@ -498,7 +498,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
         }
         else if (elapsed_time >= maximum_time)
         {
-            if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << "\n";
+            if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << get_time(elapsed_time) << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
             stop = true;
         }
@@ -511,7 +511,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         if (stop)
         {
-            input_selection_results.elapsed_time = write_time(elapsed_time);
+            input_selection_results.elapsed_time = get_time(elapsed_time);
             input_selection_results.resize_history(epoch + 1);
             break;
         }

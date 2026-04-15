@@ -149,8 +149,6 @@ public:
 
     virtual void to_XML(tinyxml2::XmlPrinter&) const {}
 
-    virtual string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const;
-
     virtual void print() const {}
 
     vector<string> get_default_feature_names() const;

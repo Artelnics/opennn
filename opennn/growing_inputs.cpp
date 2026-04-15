@@ -254,7 +254,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
         if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << "\n";
+            if(display) cout << "Epoch " << epoch << "\nMaximum time reached: " << get_time(elapsed_time) << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
             stop = true;
         }
@@ -284,7 +284,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         }
     }
 
-    input_selection_results.elapsed_time = write_time(elapsed_time);
+    input_selection_results.elapsed_time = get_time(elapsed_time);
     input_selection_results.resize_history(epoch);
 
     // Set dataset

@@ -311,7 +311,7 @@ TrainingResults StochasticGradientDescent::train()
         {
             cout << "Training error: " << training_error << "\n";
             if(has_validation) cout << "Validation error: " << validation_error << "\n"<<endl;
-            cout << "Elapsed time: " << write_time(elapsed_time) << "\n";
+            cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
 
         // Stopping criteria
@@ -324,7 +324,7 @@ TrainingResults StochasticGradientDescent::train()
         {
             results.loss = training_back_propagation.loss_value;
             results.validation_failures = validation_failures;
-            results.elapsed_time = write_time(elapsed_time);
+            results.elapsed_time = get_time(elapsed_time);
 
             results.resize_training_error_history(epoch+1);
             results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
@@ -469,8 +469,9 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     cudaStream_t memory_stream;
     cudaStreamCreate(&memory_stream);
-    cudaEvent_t batch_ready_event;
-    cudaEventCreate(&batch_ready_event);
+    cudaEvent_t batch_ready_event[2];
+    cudaEventCreate(&batch_ready_event[0]);
+    cudaEventCreate(&batch_ready_event[1]);
 
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
     training_forward_propagation.allocate_device();
@@ -526,13 +527,27 @@ TrainingResults StochasticGradientDescent::train_cuda()
             }
         });
 
+        Batch* next_batch = nullptr;
+        if(training_batches_number > 0)
+        {
+            next_batch = ready_training_queue.pop();
+            next_batch->copy_device_async(training_batches[0].size(), memory_stream);
+            cudaEventRecord(batch_ready_event[0], memory_stream);
+        }
+
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
-            Batch* current_batch = ready_training_queue.pop();
+            Batch* current_batch = next_batch;
+            next_batch = nullptr;
 
-            current_batch->copy_device_async(training_batches[iteration].size(), memory_stream);
-            cudaEventRecord(batch_ready_event, memory_stream);
-            cudaStreamWaitEvent(0, batch_ready_event, 0);
+            cudaStreamWaitEvent(0, batch_ready_event[iteration % 2], 0);
+
+            if(iteration + 1 < training_batches_number)
+            {
+                next_batch = ready_training_queue.pop();
+                next_batch->copy_device_async(training_batches[iteration + 1].size(), memory_stream);
+                cudaEventRecord(batch_ready_event[(iteration + 1) % 2], memory_stream);
+            }
 
             neural_network->forward_propagate(current_batch->get_inputs_device(),
                                               training_forward_propagation,
@@ -574,13 +589,27 @@ TrainingResults StochasticGradientDescent::train_cuda()
                 }
             });
 
+            Batch* next_val_batch = nullptr;
+            if(validation_batches_number > 0)
+            {
+                next_val_batch = ready_validation_queue.pop();
+                next_val_batch->copy_device_async(validation_batches[0].size(), memory_stream);
+                cudaEventRecord(batch_ready_event[0], memory_stream);
+            }
+
             for(Index iteration = 0; iteration < validation_batches_number; iteration++)
             {
-                Batch* current_batch = ready_validation_queue.pop();
+                Batch* current_batch = next_val_batch;
+                next_val_batch = nullptr;
 
-                current_batch->copy_device_async(validation_batches[iteration].size(), memory_stream);
-                cudaEventRecord(batch_ready_event, memory_stream);
-                cudaStreamWaitEvent(0, batch_ready_event, 0);
+                cudaStreamWaitEvent(0, batch_ready_event[iteration % 2], 0);
+
+                if(iteration + 1 < validation_batches_number)
+                {
+                    next_val_batch = ready_validation_queue.pop();
+                    next_val_batch->copy_device_async(validation_batches[iteration + 1].size(), memory_stream);
+                    cudaEventRecord(batch_ready_event[(iteration + 1) % 2], memory_stream);
+                }
 
                 neural_network->forward_propagate(current_batch->get_inputs_device(),
                                                   validation_forward_propagation,
@@ -612,7 +641,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
         {
             cout << "Training error: " << training_error << "\n";
             if(has_validation) cout << "Validation error: " << validation_error << "\n";
-            cout << "Elapsed time: " << write_time(elapsed_time) << "\n";
+            cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
 
         stop_training = check_stopping_condition(results, epoch, elapsed_time,
@@ -625,13 +654,14 @@ TrainingResults StochasticGradientDescent::train_cuda()
             results.validation_failures = validation_failures;
             results.resize_training_error_history(epoch + 1);
             results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
-            results.elapsed_time = write_time(elapsed_time);
+            results.elapsed_time = get_time(elapsed_time);
             break;
         }
     }
 
     cudaStreamDestroy(memory_stream);
-    cudaEventDestroy(batch_ready_event);
+    cudaEventDestroy(batch_ready_event[0]);
+    cudaEventDestroy(batch_ready_event[1]);
 
     neural_network->copy_parameters_host();
     neural_network->link_parameters_cpu();

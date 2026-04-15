@@ -111,7 +111,7 @@ int main()
         const string data_path = "/home/artelnics/Documents/opus_books_es_en_small_transformer.txt";
         LanguageDataset language_dataset(data_path);
 
-        // language_dataset.print(); // @todo
+        // language_dataset.print();
 
         const Index input_vocabulary_size  = language_dataset.get_input_vocabulary_size();
         const Index output_vocabulary_size = language_dataset.get_target_vocabulary_size();

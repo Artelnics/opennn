@@ -55,8 +55,10 @@ public:
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
-    string get_expression(const vector<string>& = vector<string>(),
-                          const vector<string>& = vector<string>()) const override;
+    const TensorView& get_biases() const { return biases; }
+    const TensorView& get_input_weights() const { return input_weights; }
+    const TensorView& get_recurrent_weights() const { return recurrent_weights; }
+    const string& get_activation_function() const { return activation_function; }
 
     void from_XML(const XmlDocument&) override;
     void to_XML(XmlPrinter&) const override;

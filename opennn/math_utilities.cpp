@@ -47,9 +47,13 @@ void bounding(const TensorView& input,
     const Index features = lower_bounds.size();
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Device::instance().is_gpu())
+    {
         // @todo CUDA bounding
-        (void)input; (void)lower_bounds; (void)upper_bounds; (void)output;
+        (void)input;
+        (void)lower_bounds;
+        (void)upper_bounds;
+        (void)output;
         return;
     }
 #endif

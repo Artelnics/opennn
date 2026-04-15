@@ -150,18 +150,15 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& batch,
 
     NeuralNetwork* nn = loss->get_neural_network();
     const auto& layers = nn->get_layers();
-    const Index batch_size = fp.batch_size;
-    const Index network_outputs = nn->get_outputs_number();
 
     bp_lm.squared_errors_jacobian.setZero();
 
-    // Mapping layer parameters to Jacobian columns
     Index parameter_offset = 0;
 
-    for (Index i = 0; i < layers.size(); ++i) {
+    for (size_t i = 0; i < layers.size(); ++i)
+    {
         if (!layers[i]->get_is_trainable()) continue;
 
-        // Directly handle Dense layers
         if (auto* dense = dynamic_cast<Dense<2>*>(layers[i].get()))
             insert_dense_jacobian(dense, fp, i, parameter_offset, bp_lm.squared_errors_jacobian);        
 
@@ -620,7 +617,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
             cout << "Training error: " << results.training_error_history(epoch) << "\n";
             if(has_validation) cout << "Validation error: " << results.validation_error_history(epoch) << "\n";
             cout << "Damping parameter: " << damping_parameter << "\n";
-            cout << "Elapsed time: " << write_time(elapsed_time) << "\n";
+            cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
 
         bool stop = false;
@@ -645,7 +642,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
             results.validation_failures = validation_failures;
             results.resize_training_error_history(epoch+1);
             results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
-            results.elapsed_time = write_time(elapsed_time);
+            results.elapsed_time = get_time(elapsed_time);
             break;
         }
 

@@ -130,7 +130,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
             cout << "Neurons number: " << neurons_number << "\n"
                  << "Training error: " << training_results.get_training_error() << "\n"
                  << "Validation error: " << training_results.get_validation_error() << "\n"
-                 << "Elapsed time: " << write_time(elapsed_time) << "\n";
+                 << "Elapsed time: " << get_time(elapsed_time) << "\n";
 
         if(neuron_selection_results.optimum_validation_error > previous_validation_error) 
             validation_failures++;
@@ -147,7 +147,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         if(elapsed_time >= maximum_time)
         {
-            if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << "\n";
+            if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << get_time(elapsed_time) << "\n";
             neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumTime;
         }
         else if(training_results.get_validation_error() <= validation_error_goal)
@@ -177,7 +177,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         if(end)
         {
-            neuron_selection_results.elapsed_time = write_time(elapsed_time);
+            neuron_selection_results.elapsed_time = get_time(elapsed_time);
 
             neuron_selection_results.resize_history(epoch+1);
 

@@ -41,11 +41,6 @@ Index Layer::get_parameters_number() const
     return get_size(get_parameter_shapes());
 }
 
-string Layer::get_expression(const vector<string>&, const vector<string>&) const
-{
-    return string();
-}
-
 vector<string> Layer::get_default_feature_names() const
 {
     const Index inputs_number = get_inputs_number();
@@ -121,7 +116,6 @@ void Layer::set_output_shape(const Shape&)
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }
 
-// @todo CUDA add_gradients using device pointers
 } 
 
 // OpenNN: Open Neural Networks Library.

@@ -14,6 +14,12 @@ namespace opennn
 {
 
 class NeuralNetwork;
+class Layer;
+class Bounding;
+class Unscaling;
+class Recurrent;
+template<int Rank> class Scaling;
+template<int Rank> class Dense;
 
 class ModelExpression
 {
@@ -23,51 +29,75 @@ public:
 
     ModelExpression(const NeuralNetwork*);
 
-    // c
-    string write_comments_c() const;
-    string write_logistic_c() const;
-    string write_relu_c() const;
-    string write_exponential_linear_c() const;
-    string write_selu_c() const;
-    string write_softmax_c() const;
-    //void auto_association_c() const;
-    string get_expression_c(const vector<Variable>&) const;
+    string build_expression() const;
 
-    // python
-    string write_header_python() const;
-    string write_subheader_python() const;
-    string get_expression_python(const vector<Variable>&) const;
+    void save(const filesystem::path&, ProgrammingLanguage) const;
 
-    // php
-    string write_header_api() const;
-    string write_subheader_api() const;
-    string get_expression_api(const vector<Variable>&) const;
+private:
 
-    // javascript
-    //string autoassociaton_javascript() const;
-    string logistic_javascript() const;
-    string relu_javascript() const;
-    string exponential_linear_javascript() const;
-    string selu_javascript() const;
-    string hyperbolic_tangent_javascript() const;
-    string softmax_javascript() const;
-    string header_javascript() const;
-    string subheader_javascript() const;
-    string get_expression_javascript(const vector<Variable>&) const;
-
-    // other functions
-    string replace_reserved_keywords(const string&) const;
-    vector<string> fix_get_expression_outputs(const string& ,const vector<string>& ,const ProgrammingLanguage&) const;
-    vector<string> fix_feature_names(const vector<string>&) const;
-    vector<string> fix_output_names(const vector<string>& ) const;
-
-    void save_python(const filesystem::path&, const vector<Variable>&) const;
-    void save_c(const filesystem::path&, const vector<Variable>&) const;
-    void save_javascript(const filesystem::path&, const vector<Variable>&) const;
-    void save_api(const filesystem::path&, const vector<Variable>&) const;
-
-protected:
     const NeuralNetwork* neural_network = nullptr;
+
+    // Language-specific generators (dispatched by save)
+    string get_expression_c() const;
+    string get_expression_python() const;
+    string get_expression_php() const;
+    string get_expression_javascript() const;
+
+    // Per-layer expression dispatch
+    static string get_layer_expression(const Layer&, const vector<string>&, const vector<string>&);
+
+    // C generator phases
+    void emit_c_prelude(ostringstream&) const;
+    void emit_c_activations(ostringstream&, const string& expression) const;
+    void emit_c_calculate_outputs(ostringstream&, const string& expression, const vector<string>& lines, bool has_softmax) const;
+    void emit_c_main(ostringstream&) const;
+
+    // PHP generator phases
+    void emit_php_prelude(ostringstream&) const;
+    void emit_php_activations(ostringstream&, const string& expression) const;
+    void emit_php_inputs_setup(ostringstream&) const;
+    void emit_php_body(ostringstream&, const vector<string>& lines, bool has_softmax) const;
+    void emit_php_response(ostringstream&) const;
+
+    // Python generator phases
+    void emit_python_prelude(ostringstream&) const;
+    void emit_python_class_header(ostringstream&) const;
+    void emit_python_activations(ostringstream&, const string& expression) const;
+    void emit_python_calculate_outputs(ostringstream&, const vector<string>& lines, bool has_softmax) const;
+    void emit_python_batch_and_main(ostringstream&) const;
+
+    // JavaScript generator phases
+    void emit_js_prelude(ostringstream&) const;
+    void emit_js_inputs_html(ostringstream&) const;
+    void emit_js_outputs_html(ostringstream&, bool use_category_select) const;
+    void emit_js_runtime(ostringstream&, const string& expression, const vector<string>& lines, bool has_softmax, bool use_category_select) const;
+
+    // Pure helpers (no neural_network dependency)
+    static vector<string> split_expression_lines(const string&);
+    static void rename_spaced_var_definitions(vector<string>&);
+    static vector<string> prepare_body_lines(const string& expression);
+    static vector<string> fix_names(const vector<string>&, const string& default_prefix);
+    static vector<string> fix_get_expression_outputs(const string&, const vector<string>&, const ProgrammingLanguage&);
+    static void apply_name_mapping(string&, const vector<string>& original, const vector<string>& mapped);
+    static string process_body_line(const string&, const vector<string>& input_names, const vector<string>& fixed_input_names);
+    static string replace_reserved_keywords(const string&);
+
+    struct ActivationBodies
+    {
+        const char* c;
+        const char* javascript;
+        const char* python;
+        const char* php;
+    };
+
+    static const vector<pair<string, ActivationBodies>>& activation_table();
+
+    // Per-layer writers (invoked by get_layer_expression)
+    static string write_bounding_expression(const Bounding&, const vector<string>& , const vector<string>&);
+    static string write_scaling_expression(const Scaling<2>&, const vector<string>&, const vector<string>&);
+    static string write_unscaling_expression(const Unscaling&, const vector<string>&, const vector<string>&);
+    static string write_recurrent_expression(const Recurrent&, const vector<string>&, const vector<string>&);
+    static string write_dense_expression(const Dense<2>&, const vector<string>&, const vector<string>&);
 };
 
 }

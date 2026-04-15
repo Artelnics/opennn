@@ -22,6 +22,22 @@ using namespace Eigen;
 
 typedef float type;
 
+#define CUDA_CHECK(call) do {                                 \
+    cudaError_t err__ = (call);                               \
+    if (err__ != cudaSuccess) {                               \
+        fprintf(stderr, "CUDA error %s at %s:%d: %s\n",       \
+                #call, __FILE__, __LINE__,                    \
+                cudaGetErrorString(err__));                   \
+        abort();                                              \
+    }                                                         \
+} while(0)
+
+#ifndef NDEBUG
+    #define CUDA_CHECK_KERNEL() CUDA_CHECK(cudaGetLastError())
+#else
+    #define CUDA_CHECK_KERNEL() ((void)0)
+#endif
+
 // ADAM
 
 __global__ void adam_update_kernel(const int, float*, float*, float*, const float*, const float, const float, const float, const float, const float, const float);
