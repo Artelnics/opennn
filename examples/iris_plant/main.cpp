@@ -37,6 +37,9 @@ int main()
         // Training Strategy
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
+        training_strategy.get_optimization_algorithm()->set_display_period(100);
+
+        Device::instance().set(DeviceType::Cpu);
 
         training_strategy.train();
 

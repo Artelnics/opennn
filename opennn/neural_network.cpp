@@ -312,10 +312,19 @@ Shape NeuralNetwork::get_input_shape() const
 
 Shape NeuralNetwork::get_output_shape() const
 {
-    if(layers.empty()) 
+    if(layers.empty())
         return {};
 
     return layers.back()->get_output_shape();
+}
+
+ActivationFunction NeuralNetwork::get_output_activation() const
+{
+    const Index last_idx = get_last_trainable_layer_index();
+    if(last_idx < 0 || static_cast<size_t>(last_idx) >= layers.size())
+        return ActivationFunction::Linear;
+
+    return layers[last_idx]->get_output_activation();
 }
 
 Index NeuralNetwork::get_parameters_number() const
@@ -502,14 +511,16 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation)
 {
     VectorR& params = get_parameters();
-    VectorR saved_parameters;
-    std::swap(params, saved_parameters);
+
+    // Save current values without changing buffer address (Layer TensorViews
+    // are bound to params.data()). Swap would relocate the buffer and break them.
+    const VectorR saved_parameters = params;
 
     params = new_parameters;
 
     forward_propagate(input_view, forward_propagation, true);
 
-    std::swap(params, saved_parameters);
+    params = saved_parameters;
 }
 
 string NeuralNetwork::get_expression() const

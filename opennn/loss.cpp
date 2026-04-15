@@ -34,6 +34,33 @@ void Loss::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 
 }
 
+void Loss::set_normalization_coefficient()
+{
+    // Defaults — overwritten below for losses that need data-derived values.
+    normalization_coefficient = type(1);
+    positives_weight = type(1);
+    negatives_weight = type(1);
+
+    if(!dataset || dataset->get_samples_number() == 0)
+        return;
+
+    if(error == Error::WeightedSquaredError)
+    {
+        const Index targets_number = dataset->get_features_number("Target");
+        if(targets_number != 1) return;  // only for single-target binary
+
+        const VectorI distribution = dataset->calculate_target_distribution();
+        const Index negatives = distribution(0);
+        const Index positives = distribution(1);
+
+        if(positives == 0 || negatives == 0) return;
+
+        negatives_weight = type(1);
+        positives_weight = type(negatives) / type(positives);
+        normalization_coefficient = type(negatives) * negatives_weight * type(0.5);
+    }
+}
+
 void Loss::back_propagate(const Batch& batch,
                           ForwardPropagation& forward_propagation,
                           BackPropagation& back_propagation) const
@@ -57,16 +84,15 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
 
-#ifndef OPENNN_WITH_CUDA
-    const TensorView target = batch.get_targets();
-#else
-    const TensorView target = batch.get_targets_device();
-#endif
-
-    // workspace_device is used by CUDA to store intermediate diffs or CE values
 #ifdef OPENNN_WITH_CUDA
-    float* workspace_device = back_propagation.errors_device;
+    const TensorView target = Device::instance().is_gpu()
+                                  ? batch.get_targets_device()
+                                  : batch.get_targets();
+    float* workspace_device = Device::instance().is_gpu()
+                                  ? back_propagation.errors_device
+                                  : nullptr;
 #else
+    const TensorView target = batch.get_targets();
     float* workspace_device = nullptr;
 #endif
 
@@ -79,8 +105,14 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
         normalized_squared_error(input, target, normalization_coefficient, back_propagation.error, workspace_device);
         break;
     case Error::WeightedSquaredError:
+    {
         weighted_squared_error(input, target, positives_weight, negatives_weight, back_propagation.error, workspace_device);
+        const Index total = dataset ? dataset->get_samples_number() : batch.get_samples_number();
+        const Index samples = batch.get_samples_number();
+        const type coefficient = type(total) / (type(samples) * (normalization_coefficient + EPSILON));
+        back_propagation.error *= coefficient;
         break;
+    }
     case Error::CrossEntropy:
         if (input.shape.back() == 1)
             binary_cross_entropy(input, target, back_propagation.error, workspace_device);
@@ -100,15 +132,16 @@ void Loss::calculate_output_gradients(const Batch& batch, const ForwardPropagati
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
 
-#ifndef OPENNN_WITH_CUDA
+#ifdef OPENNN_WITH_CUDA
+    const TensorView target = Device::instance().is_gpu()
+                                  ? batch.get_targets_device()
+                                  : batch.get_targets();
+    TensorView input_gradient = Device::instance().is_gpu()
+                                    ? back_propagation.get_output_gradients_device()
+                                    : back_propagation.get_output_gradients();
+#else
     const TensorView target = batch.get_targets();
-#else
-    const TensorView target = batch.get_targets_device();
-#endif
-#ifndef OPENNN_WITH_CUDA
     TensorView input_gradient = back_propagation.get_output_gradients();
-#else
-    TensorView input_gradient = back_propagation.get_output_gradients_device();
 #endif
 
     switch(error)
@@ -121,9 +154,13 @@ void Loss::calculate_output_gradients(const Batch& batch, const ForwardPropagati
         normalized_squared_error_gradient(input, target, normalization_coefficient, input_gradient);
         break;
     case Error::WeightedSquaredError:
-        // Passing 1.0/N as coefficient to match MSE style if required
-        weighted_squared_error_gradient(input, target, positives_weight, negatives_weight, 1.0f, input_gradient);
+    {
+        const Index total = dataset ? dataset->get_samples_number() : batch.get_samples_number();
+        const Index samples = batch.get_samples_number();
+        const type coefficient = type(total) / (type(samples) * (normalization_coefficient + EPSILON));
+        weighted_squared_error_gradient(input, target, positives_weight, negatives_weight, coefficient, input_gradient);
         break;
+    }
     case Error::CrossEntropy:
         cross_entropy_gradient(input, target, input_gradient);
         break;
@@ -142,13 +179,15 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
 
     check_neural_network();
 
-#ifndef OPENNN_WITH_CUDA
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu()) {
+        // In the master, CUDA regularization value is not computed on GPU either
+        // Just skip the loss_value update (gradient is the important part)
+        return;
+    }
+#endif
     const VectorR& params_vec = neural_network->get_parameters();
     back_propagation.loss_value += calculate_regularization(params_vec);
-#else
-    // In the master, CUDA regularization value is not computed on GPU either
-    // Just skip the loss_value update (gradient is the important part)
-#endif
 }
 
 type Loss::calculate_regularization(const VectorR& parameters_vec) const
@@ -223,12 +262,16 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 
     const Index n = neural_network->get_parameters_size();
 
-#ifndef OPENNN_WITH_CUDA
+#ifdef OPENNN_WITH_CUDA
+    const TensorView parameters = Device::instance().is_gpu()
+        ? TensorView(neural_network->get_parameters_device(), { n })
+        : TensorView(const_cast<type*>(neural_network->get_parameters().data()), { n });
+    TensorView gradient = Device::instance().is_gpu()
+        ? TensorView(back_propagation.gradient.device(), { n })
+        : TensorView(back_propagation.gradient.data(), { n });
+#else
     const TensorView parameters(const_cast<type*>(neural_network->get_parameters().data()), { n });
     TensorView gradient(back_propagation.gradient.data(), { n });
-#else
-    const TensorView parameters(neural_network->get_parameters_device(), { n });
-    TensorView gradient(back_propagation.gradient.device(), { n });
 #endif
 
     if (regularization_method == Regularization::L1)

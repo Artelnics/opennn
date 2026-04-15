@@ -60,6 +60,8 @@ int main()
         //training_strategy.get_loss()->set_regularization("L1");
         training_strategy.get_loss()->set_regularization_weight(regularization_weight);
 
+        Device::instance().set(DeviceType::Cpu);
+
         TrainingResults training_results = training_strategy.train();
 
         TestingAnalysis testing_analysis(&approximation_network, &dataset);
@@ -201,6 +203,8 @@ int main()
 
         //training_strategy.get_loss()->set_regularization("L1");
         training_strategy.get_loss()->set_regularization_weight(regularization_weight);
+
+        Device::instance().set(DeviceType::Cpu);
 
         TrainingResults training_results = training_strategy.train();
 

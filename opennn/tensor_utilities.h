@@ -475,8 +475,8 @@ inline bool is_contiguous(const vector<Index>& v)
 {
     const type first = v[0];
 
-    for (Index i = 0; i < v.size(); i++)
-        if (v[i] != first + i)
+    for (size_t i = 0; i < v.size(); i++)
+        if (v[i] != first + Index(i))
             return false;
 
     return true;

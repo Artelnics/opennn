@@ -120,6 +120,11 @@ public:
         return activation_function;
     }
 
+    ActivationFunction get_output_activation() const override
+    {
+        return activation_function;
+    }
+
     void set(const Shape& new_input_shape = {},
              const Shape& new_output_shape = {},
              const string& new_activation_function = "HyperbolicTangent",

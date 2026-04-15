@@ -155,10 +155,26 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         {
             backward_views[i][0][0] = TensorView(output_gradients.data(), output_gradient_dimensions);
         }
-        else if(og_ptr && !per_layer_output_gradient_shapes[i].empty())
+        else if(!backward_edges[i].empty())
         {
-            backward_views[i][0][0] = TensorView(og_ptr, per_layer_output_gradient_shapes[i]);
-            og_ptr += get_aligned_size(per_layer_output_gradient_shapes[i].size());
+            if(backward_edges[i].size() > 1 && og_ptr && !per_layer_output_gradient_shapes[i].empty())
+            {
+                // Multi-consumer: dedicated buffer in per_layer_output_gradients (accumulation path)
+                backward_views[i][0][0] = TensorView(og_ptr, per_layer_output_gradient_shapes[i]);
+                og_ptr += get_aligned_size(per_layer_output_gradient_shapes[i].size());
+            }
+            else
+            {
+                // Single-consumer: alias to consumer's input gradient (no accumulation needed)
+                const BackwardEdge& edge = backward_edges[i].front();
+                const size_t slot = 1 + edge.port;
+                if(edge.consumer_idx < backward_views.size()
+                   && slot < backward_views[edge.consumer_idx].size()
+                   && !backward_views[edge.consumer_idx][slot].empty())
+                {
+                    backward_views[i][0][0] = backward_views[edge.consumer_idx][slot][0];
+                }
+            }
         }
     }
 }

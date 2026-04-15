@@ -16,6 +16,10 @@ target_include_directories(opennn PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
+target_include_directories(opennn SYSTEM PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../eigen>
+)
+
 if(APPLE)
     target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
 elseif(OpenMP_FOUND)

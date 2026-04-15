@@ -93,7 +93,7 @@ public:
     void set_regularization(Regularization r) { regularization_method = r; }
     void set_regularization_weight(const type w) { regularization_weight = w; }
 
-    virtual void set_normalization_coefficient() {}
+    void set_normalization_coefficient();
 
     virtual type get_Minkowski_parameter() const { return minkowski_parameter; }
 

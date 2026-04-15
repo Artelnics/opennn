@@ -56,9 +56,8 @@ int main()
 
         training_strategy.set_loss("CrossEntropy");
 
-#ifdef OPENNN_WITH_CUDA
         Device::instance().set(DeviceType::Gpu);
-#endif
+
         cout << "Training network..." << endl;
         training_strategy.train();
 /*

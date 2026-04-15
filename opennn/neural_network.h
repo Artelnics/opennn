@@ -140,6 +140,8 @@ public:
     Shape get_input_shape() const;
     Shape get_output_shape() const;
 
+    ActivationFunction get_output_activation() const;
+
     // Parameters
 
     Index get_parameters_number() const;

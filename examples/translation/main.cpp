@@ -81,12 +81,9 @@ int main()
         adam->set_maximum_epochs(50);
         adam->set_display_period(5);
 
-#ifdef OPENNN_WITH_CUDA
         Device::instance().set(DeviceType::Gpu);
+
         cout << "\nTraining on GPU..." << endl;
-#else
-        cout << "\nTraining on CPU..." << endl;
-#endif
         training_strategy.train();
 
         // Predictions

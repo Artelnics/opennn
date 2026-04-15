@@ -9,6 +9,7 @@
 #pragma once
 
 #include "tensor_utilities.h"
+#include "math_utilities.h"
 #include "random_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -129,6 +130,8 @@ public:
     }
 
     virtual Shape get_output_shape() const = 0;
+
+    virtual ActivationFunction get_output_activation() const { return ActivationFunction::Linear; }
 
     Index get_inputs_number() const { return get_input_shape().size(); }
 

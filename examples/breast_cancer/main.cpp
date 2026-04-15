@@ -46,9 +46,8 @@ int main()
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(1000);
 
-#ifdef OPENNN_WITH_CUDA
-        Device::instance().set(DeviceType::Gpu);
-#endif
+        Device::instance().set(DeviceType::Cpu);
+
         training_strategy.train();
 
         // Testing Analysis (disabled with CUDA active — operators use GPU paths)

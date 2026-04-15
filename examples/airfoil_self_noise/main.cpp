@@ -59,9 +59,8 @@ int main()
         training_strategy.get_loss()->set_regularization_weight(regularization_weight);
         training_strategy.get_optimization_algorithm()->set_display_period(50);
 
-#ifdef OPENNN_WITH_CUDA
         Device::instance().set(DeviceType::Gpu);
-#endif
+
         TrainingResults training_results = training_strategy.train();
 
         // Testing analysis

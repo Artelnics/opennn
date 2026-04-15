@@ -55,9 +55,8 @@ int main()
         adam->set_batch_size(16);
         adam->set_maximum_epochs(5);
 
-#ifdef OPENNN_WITH_CUDA
         Device::instance().set(DeviceType::Gpu);
-#endif
+
         training_strategy.train();
 
 

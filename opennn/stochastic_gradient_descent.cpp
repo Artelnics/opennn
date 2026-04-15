@@ -82,7 +82,22 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-#ifndef OPENNN_WITH_CUDA
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu())
+    {
+        const Index parameters_number = neural_network->get_parameters_size();
+
+        sgd_update_device(
+            parameters_number,
+            neural_network->get_parameters_device(),
+            optimization_data.parameter_updates.device(),
+            back_propagation.gradient.device(),
+            current_learning_rate,
+            momentum,
+            nesterov);
+        return;
+    }
+#endif
 
     VectorR& parameters = neural_network->get_parameters();
 
@@ -102,21 +117,6 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     parameters += nesterov
         ? parameter_updates * momentum - gradient * current_learning_rate
         : parameter_updates;
-
-#else
-
-    const Index parameters_number = neural_network->get_parameters_size();
-
-    sgd_update_device(
-        parameters_number,
-        neural_network->get_parameters_device(),
-        optimization_data.parameter_updates.device(),
-        back_propagation.gradient.device(),
-        current_learning_rate,
-        momentum,
-        nesterov);
-
-#endif
 }
 
 TrainingResults StochasticGradientDescent::train()

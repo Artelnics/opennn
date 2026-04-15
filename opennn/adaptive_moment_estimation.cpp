@@ -295,7 +295,26 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const type bias_correction_1 = type(1) - pow(beta_1, iteration);
     const type bias_correction_2 = type(1) - pow(beta_2, iteration);
 
-#ifndef OPENNN_WITH_CUDA
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu())
+    {
+        const Index parameters_number = neural_network->get_parameters_size();
+
+        adam_update_device(
+            parameters_number,
+            neural_network->get_parameters_device(),
+            optimization_data.gradient_exponential_decay.device(),
+            optimization_data.square_gradient_exponential_decay.device(),
+            back_propagation.gradient.device(),
+            beta_1,
+            beta_2,
+            learning_rate,
+            EPSILON,
+            bias_correction_1,
+            bias_correction_2);
+        return;
+    }
+#endif
 
     VectorR& parameters = neural_network->get_parameters();
 
@@ -309,25 +328,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     parameters.array() -= learning_rate * (gradient_exponential_decay.array() / bias_correction_1) /
                           ((square_gradient_exponential_decay.array() / bias_correction_2).sqrt() + EPSILON);
-
-#else
-
-    const Index parameters_number = neural_network->get_parameters_size();
-
-    adam_update_device(
-        parameters_number,
-        neural_network->get_parameters_device(),
-        optimization_data.gradient_exponential_decay.device(),
-        optimization_data.square_gradient_exponential_decay.device(),
-        back_propagation.gradient.device(),
-        beta_1,
-        beta_2,
-        learning_rate,
-        EPSILON,
-        bias_correction_1,
-        bias_correction_2);
-
-#endif
 }
 
 void AdaptiveMomentEstimation::to_XML(XmlPrinter& printer) const

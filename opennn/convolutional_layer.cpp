@@ -48,25 +48,28 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     act_args.activation_function = activation_function;
 
 #ifdef OPENNN_WITH_CUDA
-    cached_conv_args.algorithm_forward = convolution_algorithm;
-    cached_conv_args.workspace = cuda_workspace;
-    cached_conv_args.workspace_size = cuda_workspace_size;
-    act_args.activation_descriptor = activation_descriptor;
+    if (Device::instance().is_gpu()) {
+        cached_conv_args.algorithm_forward = convolution_algorithm;
+        cached_conv_args.workspace = cuda_workspace;
+        cached_conv_args.workspace_size = cuda_workspace_size;
+        act_args.activation_descriptor = activation_descriptor;
 
-    const bool can_fuse = !batch_normalization
-                       && activation_function != ActivationFunction::Softmax
-                       && activation_function != ActivationFunction::Linear;
+        const bool can_fuse = !batch_normalization
+                           && activation_function != ActivationFunction::Softmax
+                           && activation_function != ActivationFunction::Linear;
 
-    if(can_fuse)
-    {
-        convolution_activation(input, parameters[Weights], parameters[Biases], output, cached_conv_args, act_args);
+        if(can_fuse)
+        {
+            convolution_activation(input, parameters[Weights], parameters[Biases], output, cached_conv_args, act_args);
+        }
+        else
+        {
+            convolution(input, parameters[Weights], parameters[Biases], output, cached_conv_args);
+            activation(output, act_args);
+        }
+        return;
     }
-    else
-    {
-        convolution(input, parameters[Weights], parameters[Biases], output, cached_conv_args);
-        activation(output, act_args);
-    }
-#else
+#endif
     if(use_padding)
         padding(input, padded_input);
     else
@@ -74,7 +77,6 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
     convolution(padded_input, parameters[Weights], parameters[Biases], output, cached_conv_args);
     activation(output, act_args);
-#endif
 }
 
 void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
@@ -84,37 +86,41 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     const TensorView& output = forward_propagation.views[layer].back()[0];
     TensorView& delta = back_propagation.backward_views[layer][OutputGradients][0];
 
-#ifndef OPENNN_WITH_CUDA
-    activation_gradient(output, delta, delta, activation_function);
-#else
-    activation_gradient(output, delta, delta, activation_function, activation_descriptor);
-#endif
+    ConvolutionArguments bwd_args = cached_conv_args;
 
 #ifdef OPENNN_WITH_CUDA
-    ConvolutionArguments bwd_args = cached_conv_args;
-    bwd_args.algorithm_filter = algo_filter;
-    bwd_args.algorithm_data = algo_data;
-    bwd_args.workspace = cuda_workspace;
-    bwd_args.workspace_size = cuda_workspace_size;
-    bwd_args.backward_filter_workspace = cuda_backward_filter_workspace;
-    bwd_args.backward_filter_workspace_size = cuda_backward_filter_workspace_size;
-#else
-    const ConvolutionArguments& bwd_args = cached_conv_args;
-#endif
+    if (Device::instance().is_gpu()) {
+        activation_gradient(output, delta, delta, activation_function, activation_descriptor);
 
-#ifndef OPENNN_WITH_CUDA
+        bwd_args.algorithm_filter = algo_filter;
+        bwd_args.algorithm_data = algo_data;
+        bwd_args.workspace = cuda_workspace;
+        bwd_args.workspace_size = cuda_workspace_size;
+        bwd_args.backward_filter_workspace = cuda_backward_filter_workspace;
+        bwd_args.backward_filter_workspace_size = cuda_backward_filter_workspace_size;
+
+        convolution_backward_weights(forward_propagation.views[layer][Inputs][0],
+                                     delta,
+                                     back_propagation.gradient_views[layer][Weights],
+                                     back_propagation.gradient_views[layer][Biases],
+                                     bwd_args);
+
+        if(!is_first_layer)
+            convolution_backward_data(delta,
+                                      parameters[Weights],
+                                      back_propagation.backward_views[layer][InputGradients][0],
+                                      back_propagation.backward_views[layer][InputGradients][0],
+                                      bwd_args);
+        return;
+    }
+#endif
+    activation_gradient(output, delta, delta, activation_function);
+
     convolution_backward_weights(forward_propagation.views[layer][PaddedInputs][0],
                                  delta,
                                  back_propagation.gradient_views[layer][Weights],
                                  back_propagation.gradient_views[layer][Biases],
                                  bwd_args);
-#else
-    convolution_backward_weights(forward_propagation.views[layer][Inputs][0],
-                                 delta,
-                                 back_propagation.gradient_views[layer][Weights],
-                                 back_propagation.gradient_views[layer][Biases],
-                                 bwd_args);
-#endif
 
     if(!is_first_layer)
         convolution_backward_data(delta,

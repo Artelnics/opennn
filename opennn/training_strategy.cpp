@@ -85,9 +85,30 @@ void TrainingStrategy::set_default()
 
     if(neural_network->has(LayerType::Embedding) || neural_network->has(LayerType::MultiHeadAttention))
     {
-        set_loss("WeightedSquaredError");
+        set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");
         dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_maximum_epochs(100);
+        return;
+    }
+
+    // Classification
+
+    const ActivationFunction output_activation = neural_network->get_output_activation();
+
+    if(output_activation == ActivationFunction::Softmax)
+    {
+        // Multi-class
+        set_loss("CrossEntropy");
+        set_optimization_algorithm("QuasiNewtonMethod");
+        return;
+    }
+
+    if(output_activation == ActivationFunction::Sigmoid
+       || output_activation == ActivationFunction::Logistic)
+    {
+        // Binary
+        set_loss("WeightedSquaredError");
+        set_optimization_algorithm("QuasiNewtonMethod");
         return;
     }
 

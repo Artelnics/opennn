@@ -1,5 +1,11 @@
 #pragma once
 
+// IntelliSense-only define so VS Code does not gray out CUDA code.
+// Real builds get OPENNN_WITH_CUDA from CMake (-DOPENNN_WITH_CUDA).
+#if defined(__INTELLISENSE__) && !defined(OPENNN_WITH_CUDA)
+#define OPENNN_WITH_CUDA
+#endif
+
 #ifndef EIGEN_USE_THREADS
 #define EIGEN_USE_THREADS
 #endif
@@ -67,23 +73,6 @@ void check_cuda_status(T status, const char* file, int line, const char* msg)
 #define CHECK_CUDA(x) check_cuda_status(x, __FILE__, __LINE__, "CUDA")
 #define CHECK_CUBLAS(x) check_cuda_status(x, __FILE__, __LINE__, "CuBLAS")
 #define CHECK_CUDNN(x) check_cuda_status(x, __FILE__, __LINE__, "cuDNN")
-
-#define CUDA_MALLOC_AND_REPORT(ptr, size)                                         \
-    do {                                                                          \
-        size_t free_before, free_after, total;                                    \
-        CHECK_CUDA(cudaMemGetInfo(&free_before, &total));                         \
-        CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&(ptr)), (size)));         \
-        CHECK_CUDA(cudaMemGetInfo(&free_after,  &total));                         \
-                                                                                  \
-        size_t bytes = free_before - free_after;                                  \
-        if (bytes == 0) {                                                         \
-            printf("cudaMalloc (%s):   reutilizado (%zu bytes solicitados)\n",    \
-                   #ptr, static_cast<size_t>(size));                                         \
-        } else {                                                                  \
-            printf("cudaMalloc (%s):   %.6f MB  (%zu bytes)\n", #ptr,             \
-                   bytes / (1024.0 * 1024.0), bytes);                             \
-        }                                                                         \
-    } while (0)
 
 #endif
 
@@ -156,7 +145,10 @@ using TensorMap4 = TensorMap<Tensor<type, 4, Layout | AlignedMax>, AlignedMax>;
 template <int Rank>
 using TensorMapR = TensorMap<Tensor<type, Rank, Layout | AlignedMax>, AlignedMax>;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "tinyxml2.h"
+#pragma GCC diagnostic pop
 
 using namespace tinyxml2;
 
