@@ -123,7 +123,7 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
 
         const vector<Index> sample_indices = time_series_dataset->get_sample_indices(sample_role);
         const vector<Index> feature_indices = time_series_dataset->get_feature_indices("Target");
-        target_data.resize(static_cast<Index>(sample_indices.size()), static_cast<Index>(feature_indices.size()));
+        target_data.resize(ssize(sample_indices), ssize(feature_indices));
         time_series_dataset->fill_targets(sample_indices, feature_indices, target_data.data());
     }
     else
@@ -547,7 +547,7 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
 
     const vector<Index> testing_indices = dataset->get_sample_indices("Testing");
 
-    const Index current_batch_size = (batch_size <= 0 || batch_size > static_cast<Index>(testing_indices.size()))
+    const Index current_batch_size = (batch_size <= 0 || batch_size > ssize(testing_indices))
                                          ? (testing_indices.empty() ? 1 : testing_indices.size())
                                          : batch_size;
 

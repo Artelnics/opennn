@@ -178,7 +178,7 @@ void Optimizer::set_scaling()
     auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
     if(!unscaling_layer) throw runtime_error("Expected Unscaling layer.");
 
-    if(static_cast<Index>(unscaling_layer_descriptives.size()) != unscaling_layer->get_outputs_number())
+    if(ssize(unscaling_layer_descriptives) != unscaling_layer->get_outputs_number())
         throw runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
 
     unscaling_layer->set_descriptives(unscaling_layer_descriptives);

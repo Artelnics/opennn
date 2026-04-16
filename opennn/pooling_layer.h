@@ -120,9 +120,9 @@ public:
 
     void set_pooling_method(const string&);
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
     void from_XML(const XmlDocument&) override;
     void to_XML(XmlPrinter&) const override;

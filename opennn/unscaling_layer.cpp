@@ -144,7 +144,7 @@ void Unscaling::calculate_coefficients()
     }
 }
 
-void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
 

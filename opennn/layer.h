@@ -129,11 +129,11 @@ public:
 
     // Forward propagation
 
-    virtual void forward_propagate(ForwardPropagation&, size_t, bool) = 0;
+    virtual void forward_propagate(ForwardPropagation&, size_t, bool) noexcept = 0;
 
     // Back propagation
 
-    virtual void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const {}
+    virtual void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept {}
 
     virtual void from_XML(const tinyxml2::XmlDocument&) {}
 

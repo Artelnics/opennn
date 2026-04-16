@@ -65,7 +65,7 @@ void Normalization3d::set_parameters_glorot()
 }
 
 
-void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
 
@@ -85,7 +85,7 @@ void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation,
 
 void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
                                      BackPropagation& back_propagation,
-                                     size_t layer) const
+                                     size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
     auto& backward_views = back_propagation.backward_views[layer];

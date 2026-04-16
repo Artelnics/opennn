@@ -255,7 +255,7 @@ void string_to_vector(const string& input, VectorR& x)
     while (stream >> value)
         buffer.push_back(value);
 
-    x.resize(static_cast<Index>(buffer.size()));
+    x.resize(ssize(buffer));
 
     for (Index i = 0; i < x.size(); ++i)
         x(i) = buffer[i];
@@ -380,7 +380,7 @@ pair<VectorR, MatrixR> filter_missing_values(const VectorR& x, const MatrixR& y)
         if(!isnan(x(i)) && !isnan(y(i)))
             valid_indices.push_back(i);
 
-    const Index new_rows_number = static_cast<Index>(valid_indices.size());
+    const Index new_rows_number = ssize(valid_indices);
     VectorR new_x(new_rows_number);
     MatrixR new_y(new_rows_number, y_columns_number);
 
@@ -414,7 +414,7 @@ pair<MatrixR, MatrixR> filter_missing_values(const MatrixR& x, const MatrixR& y)
             valid_indices.push_back(i);
     }
 
-    const Index new_rows_number = static_cast<Index>(valid_indices.size());
+    const Index new_rows_number = ssize(valid_indices);
     MatrixR new_x(new_rows_number, x_columns_number);
     MatrixR new_y(new_rows_number, y_columns_number);
 

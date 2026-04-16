@@ -160,7 +160,7 @@ public:
             scaler = method;
     }
 
-    void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
+    void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept override
     {
         auto& forward_views = forward_propagation.views[layer];
 

@@ -119,11 +119,6 @@ void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
 #endif
 }
 
-void Layer::forward_propagate(ForwardPropagation&, size_t, bool)
-{
-    throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
-}
-
 void Layer::set_input_shape(const Shape&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");

@@ -33,10 +33,10 @@ public:
 
     vector<vector<Shape>> get_parameter_shapes() const
     {
-        const size_t layers_number = get_layers_number();
+        const Index layers_number = get_layers_number();
         vector<vector<Shape>> shapes(layers_number);
 
-        for(size_t i = 0; i < layers_number; i++)
+        for(Index i = 0; i < layers_number; i++)
             shapes[i] = layers[i]->get_parameter_shapes();
 
         return shapes;
@@ -44,10 +44,10 @@ public:
 
     vector<vector<Shape>> get_forward_shapes(Index batch_size) const
     {
-        const size_t layers_number = get_layers_number();
+        const Index layers_number = get_layers_number();
         vector<vector<Shape>> shapes(layers_number);
 
-        for(size_t i = 0; i < layers_number; i++)
+        for(Index i = 0; i < layers_number; i++)
             shapes[i] = layers[i]->get_forward_shapes(batch_size);
 
         return shapes;
@@ -55,10 +55,10 @@ public:
 
     vector<vector<Shape>> get_backward_shapes(Index batch_size) const
     {
-        const size_t layers_number = get_layers_number();
+        const Index layers_number = get_layers_number();
         vector<vector<Shape>> shapes(layers_number);
 
-        for(size_t i = 0; i < layers_number; i++)
+        for(Index i = 0; i < layers_number; i++)
             shapes[i] = layers[i]->get_backward_shapes(batch_size);
 
         return shapes;
@@ -125,9 +125,9 @@ public:
 
     // Layers
 
-    size_t get_layers_number() const { return layers.size(); }
-    size_t get_layers_number(const string&) const;
-    size_t get_layers_number(LayerType) const;
+    Index get_layers_number() const { return static_cast<Index>(layers.size()); }
+    Index get_layers_number(const string&) const;
+    Index get_layers_number(LayerType) const;
 
     Index get_first_trainable_layer_index() const;
     Index get_last_trainable_layer_index() const;

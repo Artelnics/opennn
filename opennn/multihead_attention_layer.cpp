@@ -130,7 +130,7 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
 
 void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagation,
                                            size_t layer,
-                                           bool)
+                                           bool) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
 
@@ -174,7 +174,7 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
 
 void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
                                         BackPropagation& back_propagation,
-                                        size_t layer) const
+                                        size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
     auto& backward_views = back_propagation.backward_views[layer];

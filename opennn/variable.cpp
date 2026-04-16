@@ -68,7 +68,7 @@ string Variable::get_type_string() const
 
 Index Variable::get_categories_number() const
 {
-    return static_cast<Index>(categories.size());
+    return ssize(categories);
 }
 
 void Variable::from_XML(const XmlDocument& document)

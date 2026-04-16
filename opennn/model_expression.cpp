@@ -430,7 +430,7 @@ string ModelExpression::write_recurrent_expression(const Recurrent& layer,
 
             if(time_step == time_steps - 1)
             {
-                if(j < static_cast<Index>(output_names.size()))
+                if(j < ssize(output_names))
                     current_variable_name = output_names[j];
                 else
                     current_variable_name = "recurrent_output_" + to_string(j);
@@ -444,7 +444,7 @@ string ModelExpression::write_recurrent_expression(const Recurrent& layer,
             {
                 const Index feature_index = (time_step * inputs_number) + i;
 
-                if(feature_index < static_cast<Index>(feature_names.size()))
+                if(feature_index < ssize(feature_names))
                     buffer << " + (" << feature_names[feature_index] << "*" << input_to_hidden_weights_map(i, j) << ")";
             }
 
@@ -543,7 +543,7 @@ string ModelExpression::build_expression() const
 
     const auto& layers = neural_network->get_layers();
 
-    for(size_t i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         const bool is_last = (i == layers_number - 1);
         vector<string> layer_output_names;
@@ -1354,10 +1354,11 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
     };
 
     const DeclFormat& fmt = formats.at(programming_Language);
+    const size_t tokens_count = tokens.size();
 
     for(size_t i = 0; i < num_outputs; ++i)
     {
-        const string intermediate_var_name = get_first_word(tokens[tokens.size() - num_outputs + i]);
+        const string intermediate_var_name = get_first_word(tokens[tokens_count - num_outputs + i]);
         const string& final_output_name = fixed_outputs[i];
 
         if(final_output_name != intermediate_var_name)

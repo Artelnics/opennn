@@ -148,7 +148,7 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 #endif
 }
 
-void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
 
@@ -163,7 +163,7 @@ void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t 
 
 void Pooling::back_propagate(ForwardPropagation& forward_propagation,
                              BackPropagation& back_propagation,
-                             size_t layer) const
+                             size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
     auto& backward_views = back_propagation.backward_views[layer];

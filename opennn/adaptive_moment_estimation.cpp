@@ -550,7 +550,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
                 cudaEventRecord(batch_ready_event[(iteration + 1) % 2], memory_stream);
             }
 
-            try {
             neural_network->forward_propagate(current_batch->get_inputs_device(),
                                               training_forward_propagation,
                                               is_training);
@@ -558,7 +557,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             loss->back_propagate(*current_batch,
                                  training_forward_propagation,
                                  training_back_propagation);
-            } catch(const exception& e) { training_worker.join(); throw; }
 
             training_error += training_back_propagation.error;
 

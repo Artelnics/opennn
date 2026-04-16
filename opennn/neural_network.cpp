@@ -38,7 +38,7 @@ NeuralNetwork::NeuralNetwork(const filesystem::path& file_name)
 
 void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& input_indices)
 {
-    const Index old_layers_number = static_cast<Index>(get_layers_number()) - 1;
+    const Index old_layers_number = get_layers_number() - 1;
 
     if (!layers.empty()) validate_type(layers.back()->get_type());
 
@@ -51,11 +51,11 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
 
 void NeuralNetwork::compile()
 {
-    const size_t layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
     if (layers_number == 0) return;
 
-    for (size_t i = 0; i < layers_number; ++i)
+    for (Index i = 0; i < layers_number; ++i)
     {
         const vector<Index>& inputs = layer_input_indices[i];
 
@@ -162,14 +162,14 @@ Index NeuralNetwork::get_layer_index(const string& new_label) const
 
 vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
 {
-    const size_t layers_number = layer_input_indices.size();
+    const Index layers_number = ssize(layer_input_indices);
 
     vector<vector<Index>> layer_output_indices(layers_number);
 
-    for(size_t i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
         for(const Index input_index : layer_input_indices[i])
             if (input_index >= 0)
-                layer_output_indices[input_index].push_back(static_cast<Index>(i));
+                layer_output_indices[input_index].push_back(i);
 
     for(auto& outputs : layer_output_indices)
         if(outputs.empty())
@@ -345,9 +345,9 @@ Index NeuralNetwork::get_parameters_number() const
 {
     Index parameters_number = 0;
 
-    const size_t layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(size_t i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
         parameters_number += layers[i]->get_parameters_number();
 
     return parameters_number;
@@ -355,7 +355,7 @@ Index NeuralNetwork::get_parameters_number() const
 
 vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 {
-    const size_t layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
     vector<Index> layer_parameter_numbers(layers_number);
 
@@ -380,21 +380,21 @@ Index NeuralNetwork::get_first_trainable_layer_index() const
 
 Index NeuralNetwork::get_last_trainable_layer_index() const
 {
-    const size_t layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(size_t i = layers_number; i-- > 0; )
+    for(Index i = layers_number - 1; i >= 0; --i)
         if (layers[i]->get_is_trainable())
-            return static_cast<Index>(i);
+            return i;
 
     throw runtime_error("The neural network has no trainable layers: get_last_trainable_layer_index");
 }
 
-size_t NeuralNetwork::get_layers_number(const string& name) const
+Index NeuralNetwork::get_layers_number(const string& name) const
 {
     return get_layers_number(string_to_layer_type(name));
 }
 
-size_t NeuralNetwork::get_layers_number(LayerType type) const
+Index NeuralNetwork::get_layers_number(LayerType type) const
 {
     return count_if(layers.begin(), layers.end(),
                     [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
@@ -402,15 +402,15 @@ size_t NeuralNetwork::get_layers_number(LayerType type) const
 
 void NeuralNetwork::set_parameters_random()
 {
-    const size_t layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    for(size_t i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
         layers[i]->set_parameters_random();
 }
 
 void NeuralNetwork::set_parameters_glorot()
 {
-    const size_t layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
     #pragma omp parallel for
     for(int i = 0; i < layers_number; i++)
@@ -419,7 +419,7 @@ void NeuralNetwork::set_parameters_glorot()
 
 Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
 {
-    const size_t layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
     if (layers_number == 0)
         return Tensor3();
@@ -480,7 +480,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation,
                                       bool is_training) const
 {
-    const size_t layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
     const Index first_layer_index = is_training
                                         ? get_first_trainable_layer_index()
@@ -488,7 +488,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
     const Index last_layer_index = is_training
                                        ? get_last_trainable_layer_index()
-                                       : static_cast<Index>(layers_number) - 1;
+                                       : layers_number - 1;
 
     for (Index layer_index = first_layer_index; layer_index <= last_layer_index; ++layer_index)
     {
@@ -674,15 +674,15 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 void NeuralNetwork::to_XML(XmlPrinter& printer) const
 {
     const Index inputs_number = get_inputs_number();
-    const size_t layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
     const Index outputs_number = get_outputs_number();
 
     vector<string> input_names = get_input_feature_names();
-    while (input_names.size() < static_cast<size_t>(inputs_number))
+    while (ssize(input_names) < inputs_number)
         input_names.push_back("input_" + to_string(input_names.size() + 1));
 
     vector<string> output_names = get_output_feature_names();
-    while (output_names.size() < static_cast<size_t>(outputs_number))
+    while (ssize(output_names) < outputs_number)
         output_names.push_back("output_" + to_string(output_names.size() + 1));
 
     printer.open_element("NeuralNetwork");
@@ -704,7 +704,7 @@ void NeuralNetwork::to_XML(XmlPrinter& printer) const
 
     add_xml_element(printer, "LayersNumber", to_string(layers_number));
 
-    for(size_t i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
         layers[i]->to_XML(printer);
 
     // Layer input indices
@@ -809,13 +809,13 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
             int layer_idx = -1;
             indices_element->query_int_attribute("LayerIndex", &layer_idx);
 
-            if(layer_idx >= 0 && layer_idx < static_cast<int>(layers.size()))
+            if(layer_idx >= 0 && layer_idx < ssize(layers))
             {
                 const char* text = indices_element->get_text();
                 if(text)
                 {
                     Shape s = string_to_shape(text, " ");
-                    layer_input_indices[layer_idx] = vector<Index>(s.begin(), s.end());
+                    layer_input_indices[layer_idx] = vector<Index>(s.shape, s.shape + s.rank);
                 }
             }
             indices_element = indices_element->next_sibling_element("LayerInputsIndices");
@@ -1007,11 +1007,11 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
 
 vector<string> NeuralNetwork::get_layer_labels() const
 {
-    const size_t layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
     vector<string> layer_labels(layers_number);
 
-    for(size_t i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
         layer_labels[i] = layers[i]->get_label();
 
     return layer_labels;
@@ -1019,11 +1019,11 @@ vector<string> NeuralNetwork::get_layer_labels() const
 
 vector<string> NeuralNetwork::get_names_string() const
 {
-    const size_t layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();
 
     vector<string> names(layers_number);
 
-    for(size_t i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
         names[i] = layers[i]->get_name();
 
     return names;

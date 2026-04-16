@@ -194,7 +194,7 @@ type Loss::calculate_regularization(const VectorR& parameters_vec) const
 {
     if(regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return 0.0f;
 
-    const TensorView parameters(const_cast<type*>(parameters_vec.data()), { static_cast<Index>(parameters_vec.size()) });
+    const TensorView parameters(const_cast<type*>(parameters_vec.data()), { ssize(parameters_vec) });
     type penalty = 0.0f;
 
     if (regularization_method == Regularization::L1)

@@ -173,8 +173,9 @@ void Convolutional::set_column_stride(const Index new_stride_column)
 
 void Convolutional::set_parameters_glorot()
 {
-    const Index fan_in = get_kernel_height() * get_kernel_width() * get_kernel_channels();
-    const Index fan_out = get_kernel_height() * get_kernel_width() * get_kernels_number();
+    const Index kernel_area = get_kernel_height() * get_kernel_width();
+    const Index fan_in = kernel_area * get_kernel_channels();
+    const Index fan_out = kernel_area * get_kernels_number();
 
     const type limit = sqrt(6.0f / static_cast<type>(fan_in + fan_out));
 
@@ -281,7 +282,7 @@ void Convolutional::init_cuda(Index batch_size)
 
 #endif
 
-void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
 
@@ -363,7 +364,7 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
 void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                    BackPropagation& back_propagation,
-                                   size_t layer) const
+                                   size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
     auto& backward_views = back_propagation.backward_views[layer];
@@ -487,16 +488,22 @@ Shape Convolutional::get_output_shape() const
 
 Index Convolutional::get_output_height() const
 {
+    const Index input_height = get_input_height();
+    const Index stride = get_row_stride();
+
     return (convolution_type == ConvolutionType::Same)
-    ? (get_input_height() + get_row_stride() - 1) / get_row_stride()
-    : (get_input_height() - get_kernel_height()) / get_row_stride() + 1;
+        ? (input_height + stride - 1) / stride
+        : (input_height - get_kernel_height()) / stride + 1;
 }
 
 Index Convolutional::get_output_width() const
 {
+    const Index input_width = get_input_width();
+    const Index stride = get_column_stride();
+
     return (convolution_type == ConvolutionType::Same)
-    ? (get_input_width() + get_column_stride() - 1) / get_column_stride()
-    : (get_input_width() - get_kernel_width()) / get_column_stride() + 1;
+        ? (input_width + stride - 1) / stride
+        : (input_width - get_kernel_width()) / stride + 1;
 }
 
 pair<Index, Index> Convolutional::get_padding() const
@@ -509,8 +516,10 @@ Index Convolutional::get_padding_height() const
     if (convolution_type == ConvolutionType::Valid)
         return 0;
 
-    const Index output_height = (get_input_height() + get_row_stride() - 1) / get_row_stride();
-    const Index total_padding = (output_height - 1) * get_row_stride() + get_kernel_height() - get_input_height();
+    const Index input_height = get_input_height();
+    const Index stride = get_row_stride();
+    const Index output_height = (input_height + stride - 1) / stride;
+    const Index total_padding = (output_height - 1) * stride + get_kernel_height() - input_height;
 
     return total_padding / 2;
 }
@@ -520,8 +529,10 @@ Index Convolutional::get_padding_width() const
     if (convolution_type == ConvolutionType::Valid)
         return 0;
 
-    const Index output_width = (get_input_width() + get_column_stride() - 1) / get_column_stride();
-    const Index total_padding = (output_width - 1) * get_column_stride() + get_kernel_width() - get_input_width();
+    const Index input_width = get_input_width();
+    const Index stride = get_column_stride();
+    const Index output_width = (input_width + stride - 1) / stride;
+    const Index total_padding = (output_width - 1) * stride + get_kernel_width() - input_width;
 
     return total_padding / 2;
 }

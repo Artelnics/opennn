@@ -376,7 +376,7 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
 {
     if(sample_indices.empty() || target_indices.empty()) return;
 
-    const Index batch_size = static_cast<Index>(sample_indices.size());
+    const Index batch_size = ssize(sample_indices);
     const Index targets_number = get_target_shape()[0];
     const Index total_rows_in_data = data.rows();
 

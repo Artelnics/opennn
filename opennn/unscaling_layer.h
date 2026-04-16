@@ -50,7 +50,7 @@ public:
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
     void calculate_coefficients();
 

@@ -63,7 +63,7 @@ public:
         }
     }
 
-    void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
+    void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept override
     {
         auto& forward_views = forward_propagation.views[layer];
 
@@ -77,7 +77,7 @@ public:
 
     void back_propagate(ForwardPropagation&,
                         BackPropagation& back_propagation,
-                        size_t layer) const override
+                        size_t layer) const noexcept override
     {
         auto& backward_views = back_propagation.backward_views[layer];
 

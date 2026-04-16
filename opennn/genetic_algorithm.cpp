@@ -268,9 +268,11 @@ VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& pare
     descendent.setConstant(false);
 
     vector<Index> intersection, difference;
+    intersection.reserve(genes_number);
+    difference.reserve(genes_number);
 
     for(Index i = 0; i < genes_number; ++i)
-        if (parent_1(i) && parent_2(i)) 
+        if (parent_1(i) && parent_2(i))
             intersection.push_back(i);
         else if (parent_1(i) != parent_2(i))
             difference.push_back(i);
@@ -304,6 +306,7 @@ VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& pare
     if (final_count < minimum_inputs_number) 
     {
         vector<Index> never_true_indices;
+        never_true_indices.reserve(genes_number);
         for(Index i = 0; i < genes_number; ++i)
             if(!parent_1(i) && !parent_2(i))
                 never_true_indices.push_back(i);
@@ -353,8 +356,10 @@ void GeneticAlgorithm::perform_mutation()
         VectorB individual = population.row(i);
         Index current_inputs_number = individual.count();
 
-        vector<Index> to_true_mutations; 
+        vector<Index> to_true_mutations;
         vector<Index> to_false_mutations;
+        to_true_mutations.reserve(genes_number);
+        to_false_mutations.reserve(genes_number);
 
         for(Index j = 0; j < genes_number; ++j)
             if (random_uniform(0.0, 1.0) < mutation_rate)
