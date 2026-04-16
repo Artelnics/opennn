@@ -109,25 +109,15 @@ public:
 
     Index get_parameters_number() const;
 
-    virtual vector<Shape> get_parameter_shapes() const
-    {
-        return {};
-    }
+    virtual vector<Shape> get_parameter_shapes() const { return {}; }
 
-    virtual vector<Shape> get_forward_shapes(Index) const
-    {
-        return {};
-    }
+    virtual vector<Shape> get_state_shapes() const { return {}; }
 
-    virtual vector<Shape> get_backward_shapes(Index) const
-    {
-        return {};
-    }
+    virtual vector<Shape> get_forward_shapes(Index) const { return {}; }
 
-    virtual Shape get_input_shape() const
-    {
-        return input_shape;
-    }
+    virtual vector<Shape> get_backward_shapes(Index) const { return {}; }
+
+    virtual Shape get_input_shape() const { return input_shape; }
 
     virtual Shape get_output_shape() const = 0;
 
@@ -162,6 +152,11 @@ public:
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const { return parameters; }
 
+    type* link_states(type* pointer);
+
+    vector<TensorView>& get_state_views() { return states; }
+    const vector<TensorView>& get_state_views() const { return states; }
+
 protected:
 
     Layer() = default;
@@ -179,6 +174,7 @@ protected:
     bool is_first_layer = false;
 
     vector<TensorView> parameters;
+    vector<TensorView> states; // non-trainable persistent state
 
     Tensor2 empty_2;
     Tensor3 empty_3;

@@ -210,6 +210,11 @@ public:
     void link_parameters_device();
     void link_parameters_cpu();
 
+    void copy_states_device();
+    void copy_states_host();
+    void link_states_device();
+    void link_states_cpu();
+
 private:
 
     MatrixR calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&);
@@ -238,8 +243,7 @@ protected:
     Memory parameters;
     vector<vector<vector<TensorView>>> parameter_views;
 
-//    Memory states;
-//    vector<vector<vector<TensorView>>> state_views;
+    Memory states; // non-trainable persistent state
 };
 
 }

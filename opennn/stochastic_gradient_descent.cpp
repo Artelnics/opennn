@@ -441,6 +441,8 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     neural_network->copy_parameters_device();
     neural_network->link_parameters_device();
+    neural_network->copy_states_device();
+    neural_network->link_states_device();
 
     const int PREFETCH_BATCHES = 3;
 
@@ -665,6 +667,8 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     neural_network->copy_parameters_host();
     neural_network->link_parameters_cpu();
+    neural_network->copy_states_host();
+    neural_network->link_states_cpu();
 
     set_unscaling();
 

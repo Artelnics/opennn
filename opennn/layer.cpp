@@ -83,6 +83,24 @@ type *Layer::link_parameters(type *pointer)
     return pointer;
 }
 
+type *Layer::link_states(type *pointer)
+{
+    const vector<Shape> shapes = get_state_shapes();
+    states.resize(shapes.size());
+
+    for (size_t i = 0; i < shapes.size(); ++i)
+    {
+        if (shapes[i].empty()) continue;
+
+        assert(is_aligned(pointer));
+
+        states[i] = TensorView(pointer, shapes[i]);
+
+        pointer += get_aligned_size(shapes[i].size());
+    }
+    return pointer;
+}
+
 void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
 {
     if(output_gradient_views.size() <= 1) return;

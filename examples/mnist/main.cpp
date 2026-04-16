@@ -19,6 +19,7 @@
 #include "../../opennn/optimizer.h"
 #include "../../opennn/adaptive_moment_estimation.h"
 #include "../../opennn/random_utilities.h"
+#include "../../opennn/dense_layer.h"
 
 using namespace opennn;
 
@@ -49,8 +50,8 @@ int main()
         training_strategy.get_loss()->set_regularization("None");
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs(200);
-        adam->set_display_period(10);
+        adam->set_maximum_epochs(5);
+        adam->set_display_period(1);
 
         Device::instance().set(DeviceType::Gpu);
 

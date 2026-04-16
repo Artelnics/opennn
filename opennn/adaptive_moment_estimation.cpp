@@ -434,6 +434,8 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
     neural_network->copy_parameters_device();
     neural_network->link_parameters_device();
+    neural_network->copy_states_device();
+    neural_network->link_states_device();
 
     // Batch pool with prefetching
 
@@ -667,6 +669,8 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
     neural_network->copy_parameters_host();
     neural_network->link_parameters_cpu();
+    neural_network->copy_states_host();
+    neural_network->link_states_cpu();
 
     set_unscaling();
 

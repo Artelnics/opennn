@@ -9,9 +9,6 @@
 #pragma once
 
 #include "layer.h"
-#include "math_utilities.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
@@ -22,10 +19,6 @@ class Dense final : public Layer
 private:
 
     Index neurons_number;
-    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
-
-    VectorR running_means;
-    VectorR running_variances;
 
     bool batch_normalization = false;
 
@@ -33,12 +26,9 @@ private:
 
     type dropout_rate = type(0);
 
-#ifdef OPENNN_WITH_CUDA
+    DropoutArguments dropout_args;
 
-    cudnnActivationDescriptor_t activation_descriptor = nullptr;
-    cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
-
-#endif
+    ActivationArguments activation_arguments;
 
     enum Parameters {Bias, Weight, Gamma, Beta};
 
@@ -52,20 +42,31 @@ private:
                 {batch_normalization ? neurons_number : 0}}; // Betas
     }
 
-    enum Forward {Input, NormalizedOutput, Output};
+    enum States {RunningMean, RunningVariance};
+
+    vector<Shape> get_state_shapes() const override
+    {
+        if (!batch_normalization) return {};
+        return {{neurons_number},   // RunningMean
+                {neurons_number}};  // RunningVariance
+    }
+
+    enum Forward {Input, Combination, BatchNormMean, BatchNormInverseVariance, Output};
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        // views[layer] slots: 0=Input (wired), 1=NormalizedOutput, 2=Output
-        // shapes[k] → slot k+1, so we return 2 shapes.
         const Shape output_shape = Shape{batch_size}.append(get_output_shape());
 
         if(batch_normalization)
-            return {output_shape,   // slot 1: NormalizedOutput
-                    output_shape};  // slot 2: Output
+            return {output_shape,             // Combination
+                    Shape{neurons_number},    // BatchNormMean
+                    Shape{neurons_number},    // BatchNormInverseVariance
+                    output_shape};            // Output
         else
-            return {Shape{},        // slot 1: NormalizedOutput (unused, placeholder)
-                    output_shape};  // slot 2: Output
+            return {Shape{},                  // Combination (unused)
+                    Shape{},                  // BatchNormMean (unused)
+                    Shape{},                  // BatchNormInverseVariance (unused)
+                    output_shape};            // Output
     }
 
     enum Backward {OutputGradients, InputGradients};
@@ -81,22 +82,24 @@ public:
           const Shape& new_output_shape = {0},
           const string& new_activation_function = "HyperbolicTangent",
           bool new_batch_normalization = false,
-          const string& new_label = "dense2d_layer")
+          const string& new_label = "dense_layer")
     {
-        set(new_input_shape, new_output_shape, new_activation_function, new_batch_normalization, new_label);
+        set(new_input_shape,
+            new_output_shape,
+            new_activation_function,
+            new_batch_normalization,
+            new_label);
     }
 
-    Dense(const Index input_sequence_length,
-          Index embedding_dimension,
-          Index feed_forward_dimension,
-          const string& new_activation_function,
-          const string& new_label)
+    ~Dense() override
     {
-        set({input_sequence_length, embedding_dimension},
-            {feed_forward_dimension},
-            new_activation_function,
-            false,
-            new_label);
+#ifdef OPENNN_WITH_CUDA
+        if (activation_arguments.activation_descriptor)
+            cudnnDestroyActivationDescriptor(activation_arguments.activation_descriptor);
+        if (dropout_args.descriptor) cudnnDestroyDropoutDescriptor(dropout_args.descriptor);
+        if (dropout_args.states) cudaFree(dropout_args.states);
+        if (dropout_args.reserve_space) cudaFree(dropout_args.reserve_space);
+#endif
     }
 
     Shape get_output_shape() const override
@@ -117,12 +120,12 @@ public:
 
     const ActivationFunction& get_activation_function() const
     {
-        return activation_function;
+        return activation_arguments.activation_function;
     }
 
     ActivationFunction get_output_activation() const override
     {
-        return activation_function;
+        return activation_arguments.activation_function;
     }
 
     void set(const Shape& new_input_shape = {},
@@ -144,42 +147,10 @@ public:
 
         set_batch_normalization(new_batch_normalization);
 
-        const Index outputs_number = get_outputs_number();
-
-        if (batch_normalization)
-        {
-            running_means.resize(outputs_number);
-            running_variances.resize(outputs_number);
-        }
-
         set_label(new_label);
 
         name = "Dense" + to_string(Rank) + "d";
         layer_type = (Rank == 2) ? LayerType::Dense2d : LayerType::Dense3d;
-    }
-
-    void set_parameters_glorot() override
-    {
-        const type limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
-
-        VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
-
-        set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()), -limit, limit);
-
-        VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
-
-        VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
-    }
-
-    void set_parameters_random() override
-    {
-        VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
-
-        set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()));
-
-        VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
-
-        VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
     }
 
     void set_input_shape(const Shape& new_input_shape) override
@@ -195,24 +166,31 @@ public:
         neurons_number = new_output_shape.back();
     }
 
+    void set_batch_normalization(bool new_batch_normalization)
+    {
+        batch_normalization = new_batch_normalization;
+    }
+
     void set_activation_function(const string& name)
     {
-        activation_function = string_to_activation(name);
+        ActivationFunction function = string_to_activation(name);
 
-        // Softmax over a single output is degenerate (always 1, no gradient).
-        // Substitute Sigmoid automatically — same intent for binary classification.
-        if (activation_function == ActivationFunction::Softmax && get_outputs_number() == 1)
-            activation_function = ActivationFunction::Sigmoid;
+        if (function == ActivationFunction::Softmax && get_outputs_number() == 1)
+            function = ActivationFunction::Sigmoid;
+
+        activation_arguments.activation_function = function;
 
 #ifdef OPENNN_WITH_CUDA
 
-        if (activation_descriptor == nullptr && activation_function != ActivationFunction::Softmax)
-            cudnnCreateActivationDescriptor(&activation_descriptor);
+        cudnnActivationDescriptor_t& descriptor = activation_arguments.activation_descriptor;
+
+        if (descriptor == nullptr && function != ActivationFunction::Softmax)
+            cudnnCreateActivationDescriptor(&descriptor);
 
         cudnnActivationMode_t activation_mode = CUDNN_ACTIVATION_IDENTITY;
         double relu_ceiling = 0.0;
 
-        switch(activation_function)
+        switch(function)
         {
         case ActivationFunction::Linear:
             activation_mode = CUDNN_ACTIVATION_IDENTITY; break;
@@ -227,9 +205,8 @@ public:
         default: break;
         }
 
-        if (activation_function != ActivationFunction::Softmax)
-            cudnnSetActivationDescriptor(activation_descriptor, activation_mode, CUDNN_PROPAGATE_NAN, relu_ceiling);
-
+        if (function != ActivationFunction::Softmax)
+            cudnnSetActivationDescriptor(descriptor, activation_mode, CUDNN_PROPAGATE_NAN, relu_ceiling);
 #endif
     }
 
@@ -239,12 +216,84 @@ public:
             throw runtime_error("Dropout rate must be in [0,1).");
 
         dropout_rate = new_dropout_rate;
+        dropout_args.rate = new_dropout_rate;
     }
 
-    void set_batch_normalization(bool new_batch_normalization)
+    void set_parameters_glorot() override
     {
-        batch_normalization = new_batch_normalization;
+        const type limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
+
+        VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
+
+        set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()), -limit, limit);
+
+        VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
+
+        VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
+
+        if (batch_normalization)
+        {
+            VectorMap(states[RunningMean].data, states[RunningMean].size()).setZero();
+            VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
+        }
     }
+
+    void set_parameters_random() override
+    {
+        VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
+
+        set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()));
+
+        VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
+
+        VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
+
+        if (batch_normalization)
+        {
+            VectorMap(states[RunningMean].data, states[RunningMean].size()).setZero();
+            VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
+        }
+    }
+
+#ifdef OPENNN_WITH_CUDA
+
+    void init_cuda(Index batch_size)
+    {
+        // Dropout
+
+        if (dropout_rate > type(0))
+        {
+            cudnnTensorDescriptor_t temp_desc;
+            cudnnCreateTensorDescriptor(&temp_desc);
+
+            const Index output_size = get_outputs_number();
+            const Index seq_len = get_sequence_length();
+
+            cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
+                                       static_cast<int>(batch_size),
+                                       static_cast<int>(output_size),
+                                       static_cast<int>(seq_len),
+                                       1);
+
+            if (dropout_args.descriptor) { cudnnDestroyDropoutDescriptor(dropout_args.descriptor); dropout_args.descriptor = nullptr; }
+            if (dropout_args.states) { cudaFree(dropout_args.states); dropout_args.states = nullptr; }
+            if (dropout_args.reserve_space) { cudaFree(dropout_args.reserve_space); dropout_args.reserve_space = nullptr; }
+
+            CHECK_CUDNN(cudnnCreateDropoutDescriptor(&dropout_args.descriptor));
+            CHECK_CUDNN(cudnnDropoutGetStatesSize(Device::get_cudnn_handle(), &dropout_args.states_size));
+            CHECK_CUDA(cudaMalloc(&dropout_args.states, dropout_args.states_size));
+            CHECK_CUDNN(cudnnSetDropoutDescriptor(dropout_args.descriptor, Device::get_cudnn_handle(),
+                                                  dropout_rate, dropout_args.states, dropout_args.states_size,
+                                                  static_cast<unsigned long long>(random_integer(0, 1 << 30))));
+            CHECK_CUDNN(cudnnDropoutGetReserveSpaceSize(temp_desc, &dropout_args.reserve_size));
+            CHECK_CUDA(cudaMalloc(&dropout_args.reserve_space, dropout_args.reserve_size));
+
+            dropout_args.rate = dropout_rate;
+
+            cudnnDestroyTensorDescriptor(temp_desc);
+        }
+    }
+#endif
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) override
     {
@@ -257,22 +306,36 @@ public:
         const TensorView& gammas = parameters[Gamma];
         const TensorView& betas = parameters[Beta];
 
-        combination(input, weights, biases, output);
-/*
         if (batch_normalization)
-            is_training
-                ? batch_normalization_training(output, gammas, betas, running_means, running_variances)
-                : batch_normalization_inference(output, gammas, betas, running_means, running_variances);
-*/
-        ActivationArguments act_args;
-        act_args.activation_function = activation_function;
-#ifdef OPENNN_WITH_CUDA
-        act_args.activation_descriptor = activation_descriptor;
-#endif
-        activation(output, act_args);
+        {
+            TensorView& combination_output = forward_propagation.views[layer][Combination][0];
+            combination(input, weights, biases, combination_output);
 
-        if(is_training && dropout_rate > type(0))
-            dropout(output, dropout_rate);
+            if (is_training)
+            {
+                TensorView& bn_mean = forward_propagation.views[layer][BatchNormMean][0];
+                TensorView& bn_inverse_variance = forward_propagation.views[layer][BatchNormInverseVariance][0];
+                batch_normalization_training(combination_output, gammas, betas,
+                                             states[RunningMean], states[RunningVariance],
+                                             bn_mean, bn_inverse_variance,
+                                             output, momentum);
+            }
+            else
+            {
+                batch_normalization_inference(combination_output, gammas, betas,
+                                              states[RunningMean], states[RunningVariance],
+                                              output);
+            }
+        }
+        else
+        {
+            combination(input, weights, biases, output);
+        }
+
+        if (is_training && dropout_rate > type(0))
+            dropout(output, dropout_args);
+
+        activation(output, activation_arguments);
     }
 
     void back_propagate(ForwardPropagation& forward_propagation,
@@ -284,16 +347,29 @@ public:
 
         TensorView& delta = back_propagation.backward_views[layer][OutputGradients][0];
 
-#ifndef OPENNN_WITH_CUDA
-        activation_gradient(output, delta, delta, activation_function);
-#else
-        activation_gradient(output, delta, delta, activation_function, activation_descriptor);
-#endif
+        activation_gradient(output, delta, delta, activation_arguments);
+
+        if (dropout_rate > type(0))
+            dropout_gradient(delta, dropout_args, delta);
+
+        if (batch_normalization)
+        {
+            const TensorView& bn_mean = forward_propagation.views[layer][BatchNormMean][0];
+            const TensorView& bn_inverse_variance = forward_propagation.views[layer][BatchNormInverseVariance][0];
+            const TensorView& gammas = parameters[Gamma];
+            TensorView& gamma_gradient = back_propagation.gradient_views[layer][Gamma];
+            TensorView& beta_gradient = back_propagation.gradient_views[layer][Beta];
+
+            const TensorView& combination_output = forward_propagation.views[layer][Combination][0];
+            batch_normalization_backward(combination_output, output, delta,
+                                         bn_mean, bn_inverse_variance,
+                                         gammas, gamma_gradient, beta_gradient,
+                                         delta);
+        }
 
         TensorView& bias_gradient = back_propagation.gradient_views[layer][Bias];
         TensorView& weight_gradient = back_propagation.gradient_views[layer][Weight];
 
-        // Flatten to 2D for gradient computation (handles Dense3d where input/delta are 3D)
         const Index total_rows = input.size() / input.shape[input.get_rank() - 1];
         TensorView input_2d(input.data, {total_rows, input.shape[input.get_rank() - 1]});
         TensorView delta_2d(delta.data, {total_rows, delta.shape[delta.get_rank() - 1]});
@@ -311,16 +387,16 @@ public:
 
     void from_XML(const XmlDocument& document) override
     {
-        const XmlElement* dense2d_layer_element = get_xml_root(document, name);
+        const XmlElement* dense_layer_element = get_xml_root(document, name);
 
-        set_label(read_xml_string(dense2d_layer_element, "Label"));
+        set_label(read_xml_string(dense_layer_element, "Label"));
 
-        const Index inputs_number = read_xml_index(dense2d_layer_element, "InputsNumber");
-        const Index neurons_number = read_xml_index(dense2d_layer_element, "NeuronsNumber");
+        const Index inputs_number = read_xml_index(dense_layer_element, "InputsNumber");
+        const Index neurons_number = read_xml_index(dense_layer_element, "NeuronsNumber");
 
         if constexpr (Rank == 3)
         {
-            const Index input_sequence_length = read_xml_index(dense2d_layer_element, "InputSequenceLength");
+            const Index input_sequence_length = read_xml_index(dense_layer_element, "InputSequenceLength");
             set_input_shape({ input_sequence_length, inputs_number });
         }
         else
@@ -328,31 +404,31 @@ public:
 
         set_output_shape({ neurons_number });
 
-        set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
+        set_activation_function(read_xml_string(dense_layer_element, "Activation"));
 
-        bool use_batch_normalization = false;
-        const XmlElement* bn_element = dense2d_layer_element->first_child_element("BatchNormalization");
-
-        if (bn_element && bn_element->get_text())
-            use_batch_normalization = (string(bn_element->get_text()) == "true");
+        const XmlElement* bn_element = dense_layer_element->first_child_element("BatchNormalization");
+        const bool use_batch_normalization = bn_element && bn_element->get_text()
+                                          && string(bn_element->get_text()) == "true";
         set_batch_normalization(use_batch_normalization);
 
-        if (batch_normalization)
+        if (batch_normalization && states.size() > RunningVariance)
         {
-            running_means.resize(neurons_number);
-            running_variances.resize(neurons_number);
+            VectorR tmp;
 
-            string_to_vector(read_xml_string(dense2d_layer_element, "RunningMeans"), running_means);
-            string_to_vector(read_xml_string(dense2d_layer_element, "RunningStandardDeviations"), running_variances);
+            string_to_vector(read_xml_string(dense_layer_element, "RunningMeans"), tmp);
+            VectorMap(states[RunningMean].data, states[RunningMean].size()) = tmp;
+
+            string_to_vector(read_xml_string(dense_layer_element, "RunningVariances"), tmp);
+            VectorMap(states[RunningVariance].data, states[RunningVariance].size()) = tmp;
         }
     }
 
     void to_XML(XmlPrinter& printer) const override
     {
-
         printer.open_element(name.c_str());
 
         add_xml_element(printer, "Label", label);
+
         if constexpr (Rank == 3)
         {
             add_xml_element(printer, "InputSequenceLength", to_string(get_input_shape()[0]));
@@ -364,20 +440,18 @@ public:
             add_xml_element(printer, "InputsNumber", to_string(get_input_shape()[0]));
             add_xml_element(printer, "NeuronsNumber", to_string(get_output_shape()[0]));
         }
-/*
-        add_xml_element(printer, "Activation", activation_function);
+
+        add_xml_element(printer, "Activation", activation_function_map().to_string(activation_arguments.activation_function));
         add_xml_element(printer, "BatchNormalization", batch_normalization ? "true" : "false");
-*/
-        if (batch_normalization)
+
+        if (batch_normalization && states.size() > RunningVariance)
         {
-            add_xml_element(printer, "RunningMeans", vector_to_string(running_means));
-            add_xml_element(printer, "RunningStandardDeviations", vector_to_string(running_variances));
+            add_xml_element(printer, "RunningMeans", vector_to_string(states[RunningMean].as_vector()));
+            add_xml_element(printer, "RunningVariances", vector_to_string(states[RunningVariance].as_vector()));
         }
 
         printer.close_element();
     }
-
-    bool use_combinations = true;
 };
 
 }

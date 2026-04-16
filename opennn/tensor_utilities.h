@@ -626,6 +626,7 @@ string vector_to_string(const vector<T>& x, const string& separator = " ")
 
 string vector_to_string(const VectorI& x, const string& separator = " ");
 string vector_to_string(const VectorR& x, const string& separator = " ");
+string vector_to_string(const VectorMap& x, const string& separator = " ");
 
 template <typename T, size_t Rank>
 string tensor_to_string(const TensorR<Rank>& x, const string& separator = " ")
