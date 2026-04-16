@@ -201,8 +201,6 @@ private:
     enum Forward {Inputs, PaddedInputs};
     enum Backward {OutputGradients, InputGradients};
 
-    // @todo Backward: Rotated weights
-
     Index row_stride = 1;
     Index column_stride = 1;
 
@@ -211,13 +209,10 @@ private:
 
     ActivationFunction activation_function = ActivationFunction::Linear;
 
-    ConvolutionArguments cached_conv_args;
-
-    // Batch normalization
+    ConvolutionArguments convolution_arguments;
 
     bool batch_normalization = false;
 
-    // @todo here or in forward propagate?
     VectorR running_means;
     VectorR running_variances;
 

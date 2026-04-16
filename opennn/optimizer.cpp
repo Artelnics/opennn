@@ -269,7 +269,7 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
     }
     else if(elapsed_time >= maximum_time)
     {
-        if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << "\n";
+        if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << get_time(elapsed_time) << "\n";
         results.stopping_condition = StoppingCondition::MaximumTime;
     }
     else

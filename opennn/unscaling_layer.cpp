@@ -36,53 +36,6 @@ Shape Unscaling::get_output_shape() const
     return { neurons_number };
 }
 
-string Unscaling::get_expression(const vector<string>& new_input_names,
-                                 const vector<string>& new_output_names) const
-{
-    const vector<string> input_names = new_input_names.empty()
-        ? get_default_feature_names()
-        : new_input_names;
-
-    const vector<string> output_names = new_output_names.empty()
-        ? get_default_output_names()
-        : new_output_names;
-
-    const Index outputs_number = get_outputs_number();
-
-    ostringstream buffer;
-
-    buffer.precision(10);
-/*
-    for(Index i = 0; i < outputs_number; i++)
-    {
-        const string& scaler = scalers[i];
-
-        if(scaler == "None")
-            buffer << output_names[i] << " = " << input_names[i] << ";\n";
-        else if(scaler == "MinimumMaximum")
-            if(abs(descriptives[i].minimum - descriptives[i].maximum) < EPSILON)
-                buffer << output_names[i] << "=" << descriptives[i].minimum <<";\n";
-            else
-                buffer << output_names[i] << "=" << input_names[i] << "*(" << (descriptives[i].maximum - descriptives[i].minimum)/(max_range - min_range)
-                << ")+" << (descriptives[i].minimum - min_range*(descriptives[i].maximum - descriptives[i].minimum)/(max_range - min_range)) << ";\n";
-        else if(scaler == "MeanStandardDeviation")
-            buffer << output_names[i] << "=" << input_names[i] << "*" << descriptives[i].standard_deviation <<"+"<< descriptives[i].mean <<";\n";
-        else if(scaler == "StandardDeviation")
-            buffer << output_names[i] << "=" <<  input_names[i] << "*" << descriptives[i].standard_deviation <<";\n";
-        else if(scaler == "Logarithm")
-            buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";
-        else
-            throw runtime_error("Unknown inputs scaling method.\n");
-    }
-*/
-    string expression = buffer.str();
-
-    replace(expression, "+-", "-");
-    replace(expression, "--", "+");
-
-    return expression;
-}
-
 void Unscaling::set_input_shape(const Shape& new_input_shape)
 {
     means.resize(new_input_shape[0]);

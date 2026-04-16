@@ -260,15 +260,10 @@
     <ClInclude Include="model_expression.h" />
     <ClInclude Include="neuron_selection.h" />
     <ClInclude Include="normalization_layer_3d.h" />
-    <ClInclude Include="normalized_squared_error.h" />
     <ClInclude Include="convolutional_layer.h" />
     <ClCompile Include="convolutional_layer.cpp" />
     <ClInclude Include="correlations.h" />
     <ClCompile Include="correlations.cpp" />
-    <ClInclude Include="cross_entropy_error.h" />
-    <ClCompile Include="cross_entropy_error.cpp" />
-    <ClInclude Include="cross_entropy_error_3d.h" />
-    <ClCompile Include="cross_entropy_error_3d.cpp" />
     <ClInclude Include="embedding_layer.h" />
     <ClCompile Include="dataset.cpp" />
     <ClCompile Include="dense_layer.cpp" />
@@ -293,11 +288,7 @@
     <ClCompile Include="layer.cpp" />
     <ClInclude Include="levenberg_marquardt_algorithm.h" />
     <ClCompile Include="levenberg_marquardt_algorithm.cpp" />
-    <ClInclude Include="mean_squared_error.h" />
     <ClCompile Include="loss.cpp" />
-    <ClCompile Include="mean_squared_error.cpp" />
-    <ClInclude Include="minkowski_error.h" />
-    <ClCompile Include="minkowski_error.cpp" />
     <ClInclude Include="model_selection.h" />
     <ClCompile Include="model_expression.cpp" />
     <ClCompile Include="model_selection.cpp" />
@@ -308,7 +299,6 @@
     <ClInclude Include="neural_network_back_propagation.h" />
     <ClCompile Include="neuron_selection.cpp" />
     <ClCompile Include="normalization_layer_3d.cpp" />
-    <ClCompile Include="normalized_squared_error.cpp" />
     <ClInclude Include="opennn.h" />
     <ClInclude Include="optimizer.h" />
     <ClInclude Include="pch.h" />
@@ -363,9 +353,7 @@
     <ClInclude Include="unscaling_layer.h" />
     <ClCompile Include="unscaling_layer.cpp" />
     <ClInclude Include="variable.h" />
-    <ClInclude Include="weighted_squared_error.h" />
     <ClCompile Include="variable.cpp" />
-    <ClCompile Include="weighted_squared_error.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="kernel.cu" />

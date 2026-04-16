@@ -16,6 +16,7 @@ void prepare_line(string& line)
 {
     //decode(line);
     trim(line);
+    normalize_csv_line(line);
     erase(line, '"');
 }
 
@@ -69,9 +70,11 @@ vector<string> tokenize(const string& document)
 
     for(const char c : document)
     {
-        if (isalnum(c))
+        const unsigned char uc = static_cast<unsigned char>(c);
+
+        if(isalnum(uc))
         {
-            current_token += tolower(c);
+            current_token += static_cast<char>(tolower(uc));
         }
         else
         {
@@ -81,7 +84,7 @@ vector<string> tokenize(const string& document)
                 current_token.clear();
             }
 
-            if (ispunct(c))
+            if(ispunct(uc))
                 tokens.emplace_back(1, c);
         }
     }
@@ -149,21 +152,17 @@ vector<string_view> get_tokens_fast(string_view text, string_view separator)
 vector<string> convert_string_vector(const vector<vector<string>>& input_vector, const string& separator)
 {
     vector<string> vector_result;
+    vector_result.reserve(input_vector.size());
 
     for(const auto& subvec : input_vector)
     {
-        stringstream ss;
-        const size_t n = subvec.size();
-
-        for(size_t i = 0; i < n; ++i)
+        string joined;
+        for(size_t i = 0; i < subvec.size(); ++i)
         {
-            ss << subvec[i];
-
-            if (i != n - 1)
-                ss << separator;
+            if(i) joined += separator;
+            joined += subvec[i];
         }
-
-        vector_result.push_back(ss.str());
+        vector_result.push_back(std::move(joined));
     }
 
     return vector_result;
@@ -196,7 +195,7 @@ bool is_numeric_string(const string& text)
     {
         size_t index;
         //[[maybe_unused]]
-        const double value = stod(text, &index);
+        stod(text, &index);
 
         return (index == text.size() || (text.find('%') != string::npos && index + 1 == text.size()));
     }
@@ -227,11 +226,8 @@ bool is_date_time_string(const string& text)
         regex(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))") // hh:mm:ss
     };
 
-    for(const regex& r : date_regexes)
-        if(regex_match(text, r))
-            return true;
-
-    return false;
+    return any_of(date_regexes.begin(), date_regexes.end(),
+                  [&](const regex& r) { return regex_match(text, r); });
 }
 
 time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format)
@@ -246,139 +242,100 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
     static const regex re_dmy(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))");
     static const regex re_hms(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))");
 
-    struct tm time_structure = {};
-    smatch matches;
+    struct tm t = {};
+    smatch m;
 
-    // yyyy/mm/dd hh:mm:ss.sss
-    if((format == YMD || format == AUTO) && regex_match(date, matches, re_ymd_hms_ms))
-    {
-        time_structure.tm_year = stoi(matches[1].str()) - 1900;
-        time_structure.tm_mon = stoi(matches[2].str()) - 1;
-        time_structure.tm_mday = stoi(matches[3].str());
-        time_structure.tm_hour = stoi(matches[4].str()) - gmt;
-        time_structure.tm_min = stoi(matches[5].str());
-        time_structure.tm_sec = stoi(matches[6].str());
-        return mktime(&time_structure);
-    }
-    // yyyy/mm/dd hh:mm:ss
-    else if((format == YMD || format == AUTO) && regex_match(date, matches, re_ymd_hms))
-    {
-        time_structure.tm_year = stoi(matches[1].str()) - 1900;
-        time_structure.tm_mon = stoi(matches[2].str()) - 1;
-        time_structure.tm_mday = stoi(matches[3].str());
-        time_structure.tm_hour = stoi(matches[4].str()) - gmt;
-        time_structure.tm_min = stoi(matches[5].str());
-        time_structure.tm_sec = stoi(matches[6].str());
-        return mktime(&time_structure);
-    }
-    // yyyy/mm/dd hh:mm
-    else if((format == YMD || format == AUTO) && regex_match(date, matches, re_ymd_hm))
-    {
-        time_structure.tm_year = stoi(matches[1].str()) - 1900;
-        time_structure.tm_mon = stoi(matches[2].str()) - 1;
-        time_structure.tm_mday = stoi(matches[3].str());
-        time_structure.tm_hour = stoi(matches[4].str()) - gmt;
-        time_structure.tm_min = stoi(matches[5].str());
-        return mktime(&time_structure);
-    }
-    // yyyy/mm/dd
-    else if((format == YMD || format == AUTO) && regex_match(date, matches, re_ymd))
-    {
-        time_structure.tm_year = stoi(matches[1].str()) - 1900;
-        time_structure.tm_mon = stoi(matches[2].str()) - 1;
-        time_structure.tm_mday = stoi(matches[3].str());
-        return mktime(&time_structure);
-    }
-    // yyyy/mm
-    else if((format == YMD || format == AUTO) && regex_match(date, matches, re_ym))
-    {
-        time_structure.tm_year = stoi(matches[1].str()) - 1900;
-        time_structure.tm_mon = stoi(matches[2].str()) - 1;
-        time_structure.tm_mday = 1;
-        return mktime(&time_structure);
-    }
-    // dd/mm/yyyy hh:mm:ss
-    else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, re_dmy_hms))
-    {
-        const int part1 = stoi(matches[1].str()); const int part2 = stoi(matches[2].str());
+    const bool try_ymd = (format == YMD || format == AUTO);
+    const bool try_dmy = (format == DMY || format == MDY || format == AUTO);
 
-        if(format == DMY || (format == AUTO && part1 > 12))
+    auto fill_dmy = [&](int part1, int part2)
+    {
+        const bool mdy = (format == MDY) || (format == AUTO && part1 <= 12 && part2 > 12);
+        if(mdy) { t.tm_mon = part1 - 1; t.tm_mday = part2; }
+        else    { t.tm_mday = part1;    t.tm_mon = part2 - 1; }
+    };
+
+    if(try_ymd && regex_match(date, m, re_ymd_hms_ms))
+    {
+        t.tm_year = stoi(m[1]) - 1900;
+        t.tm_mon  = stoi(m[2]) - 1;
+        t.tm_mday = stoi(m[3]);
+        t.tm_hour = stoi(m[4]) - gmt;
+        t.tm_min  = stoi(m[5]);
+        t.tm_sec  = stoi(m[6]);
+        return mktime(&t);
+    }
+    if(try_ymd && regex_match(date, m, re_ymd_hms))
+    {
+        t.tm_year = stoi(m[1]) - 1900;
+        t.tm_mon  = stoi(m[2]) - 1;
+        t.tm_mday = stoi(m[3]);
+        t.tm_hour = stoi(m[4]) - gmt;
+        t.tm_min  = stoi(m[5]);
+        t.tm_sec  = stoi(m[6]);
+        return mktime(&t);
+    }
+    if(try_ymd && regex_match(date, m, re_ymd_hm))
+    {
+        t.tm_year = stoi(m[1]) - 1900;
+        t.tm_mon  = stoi(m[2]) - 1;
+        t.tm_mday = stoi(m[3]);
+        t.tm_hour = stoi(m[4]) - gmt;
+        t.tm_min  = stoi(m[5]);
+        return mktime(&t);
+    }
+    if(try_ymd && regex_match(date, m, re_ymd))
+    {
+        t.tm_year = stoi(m[1]) - 1900;
+        t.tm_mon  = stoi(m[2]) - 1;
+        t.tm_mday = stoi(m[3]);
+        return mktime(&t);
+    }
+    if(try_ymd && regex_match(date, m, re_ym))
+    {
+        t.tm_year = stoi(m[1]) - 1900;
+        t.tm_mon  = stoi(m[2]) - 1;
+        t.tm_mday = 1;
+        return mktime(&t);
+    }
+    if(try_dmy && regex_match(date, m, re_dmy_hms))
+    {
+        fill_dmy(stoi(m[1]), stoi(m[2]));
+        t.tm_year = stoi(m[3]) - 1900;
+
+        int hour = stoi(m[4]);
+        if(m[7].matched)
         {
-            time_structure.tm_mday = part1;
-            time_structure.tm_mon = part2 - 1;
-        }
-        else if(format == MDY || (format == AUTO && part2 > 12))
-        {
-            time_structure.tm_mon = part1 - 1;
-            time_structure.tm_mday = part2;
-        }
-        else
-        {
-            time_structure.tm_mday = part1;
-            time_structure.tm_mon = part2 - 1;
+            const string ampm = m[7].str();
+            if(ampm == "PM" && hour < 12) hour += 12;
+            if(ampm == "AM" && hour == 12) hour = 0;
         }
 
-        time_structure.tm_year = stoi(matches[3].str()) - 1900;
-        int hour = stoi(matches[4].str());
-
-        if(matches[7].matched)
-        {
-            const string& ampm = matches[7].str();
-            if(ampm == "PM" && hour < 12)
-                hour += 12;
-            if(ampm == "AM" && hour == 12)
-                hour = 0;
-        }
-
-        time_structure.tm_hour = hour - gmt;
-        time_structure.tm_min = stoi(matches[5].str());
-        time_structure.tm_sec = stoi(matches[6].str());
-        return mktime(&time_structure);
+        t.tm_hour = hour - gmt;
+        t.tm_min  = stoi(m[5]);
+        t.tm_sec  = stoi(m[6]);
+        return mktime(&t);
     }
-    // dd/mm/yyyy hh:mm
-    else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, re_dmy_hm))
+    if(try_dmy && regex_match(date, m, re_dmy_hm))
     {
-        const int part1 = stoi(matches[1].str()); const int part2 = stoi(matches[2].str());
-
-        if(format == DMY || (format == AUTO && part1 > 12))
-        {
-            time_structure.tm_mday = part1;
-            time_structure.tm_mon = part2 - 1;
-        }
-        else if(format == MDY || (format == AUTO && part2 > 12))
-        {
-            time_structure.tm_mon = part1 - 1;
-            time_structure.tm_mday = part2;
-        }
-        else
-        {
-            time_structure.tm_mday = part1;
-            time_structure.tm_mon = part2 - 1;
-        }
-
-        time_structure.tm_year = stoi(matches[3].str()) - 1900;
-        time_structure.tm_hour = stoi(matches[4].str()) - gmt;
-        time_structure.tm_min = stoi(matches[5].str());
-        time_structure.tm_sec = 0;
-        return mktime(&time_structure);
+        fill_dmy(stoi(m[1]), stoi(m[2]));
+        t.tm_year = stoi(m[3]) - 1900;
+        t.tm_hour = stoi(m[4]) - gmt;
+        t.tm_min  = stoi(m[5]);
+        return mktime(&t);
     }
-    // dd/mm/yyyy
-    else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, re_dmy))
+    if(try_dmy && regex_match(date, m, re_dmy))
     {
-        const int part1 = stoi(matches[1].str()); const int part2 = stoi(matches[2].str());
-        if (format == DMY || (format == AUTO && part1 > 12)) { time_structure.tm_mday = part1; time_structure.tm_mon = part2 - 1; }
-        else if (format == MDY || (format == AUTO && part2 > 12)) { time_structure.tm_mon = part1 - 1; time_structure.tm_mday = part2; }
-        else { time_structure.tm_mday = part1; time_structure.tm_mon = part2 - 1; } // Default
-        time_structure.tm_year = stoi(matches[3].str()) - 1900;
-        return mktime(&time_structure);
+        fill_dmy(stoi(m[1]), stoi(m[2]));
+        t.tm_year = stoi(m[3]) - 1900;
+        return mktime(&t);
     }
-    // hh:mm:ss
-    else if (format == AUTO && regex_match(date, matches, re_hms))
+    if(format == AUTO && regex_match(date, m, re_hms))
     {
-        time_structure.tm_hour = stoi(matches[1].str()) - gmt;
-        time_structure.tm_min = stoi(matches[2].str());
-        time_structure.tm_sec = stoi(matches[3].str());
-        return mktime(&time_structure);
+        t.tm_hour = stoi(m[1]) - gmt;
+        t.tm_min  = stoi(m[2]);
+        t.tm_sec  = stoi(m[3]);
+        return mktime(&t);
     }
 
     return -1;
@@ -428,7 +385,7 @@ void replace_all_appearances(string& text, const string& to_replace, const strin
 
         buffer.append(text, previous_position, position - previous_position);
 
-        buffer += (buffer.back() == '_') ? to_replace : replace_with;
+        buffer += (!buffer.empty() && buffer.back() == '_') ? to_replace : replace_with;
 
         position += to_replace.size();
     }
@@ -440,15 +397,12 @@ void replace_all_appearances(string& text, const string& to_replace, const strin
 
 void trim(string& text)
 {
-    // Prefixing spaces
-
     text.erase(0, text.find_first_not_of(" \t\n\r\f\v\b"));
-    // Surfixing spaces
-
     text.erase(text.find_last_not_of(" \t\n\r\f\v\b") + 1);
+}
 
-    // Special character and string modifications
-
+void normalize_csv_line(string& text)
+{
     replace_first_and_last_char_with_missing_label(text, ';', "NA", "");
     replace_first_and_last_char_with_missing_label(text, ',', "NA", "");
 
@@ -461,32 +415,18 @@ void trim(string& text)
 
 void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &first_missing_label, const string &last_missing_label)
 {
-    if (str.empty()) return;
-    
-    if(str[0] == target_char)
-    {
-        const string new_string = first_missing_label + target_char;
-        str.replace(0, 1, new_string);
-    }
+    if(str.empty()) return;
 
-    if(str[str.length() - 1] == target_char)
-    {
-        const string new_string = target_char + last_missing_label;
-        str.replace(str.length() - 1, 1, new_string);
-    }    
+    if(str.front() == target_char)
+        str.insert(0, first_missing_label);
+
+    if(str.back() == target_char)
+        str.append(last_missing_label);
 }
 
 void replace_double_char_with_label(string &str, const string &target_char, const string &missing_label)
 {
-    const string target_pattern = target_char + target_char;
-    const string new_pattern = target_char + missing_label + target_char;
-
-    size_t position = 0;
-    while((position = str.find(target_pattern, position)) != string::npos)
-    {
-        str.replace(position, target_pattern.length(), new_pattern);
-        position += new_pattern.length();
-    }
+    replace(str, target_char + target_char, target_char + missing_label + target_char);
 }
 
 void replace_substring_within_quotes(string &str, const string &target, const string &replacement)
@@ -498,19 +438,13 @@ void replace_substring_within_quotes(string &str, const string &target, const st
 
     while (regex_search(search_start, str.cend(), match, r))
     {
-        result += string(search_start, match[0].first); 
+        result += string(search_start, match[0].first);
+
         string quoted_content = match[1].str();
-
-        size_t position = 0;
-
-        while ((position = quoted_content.find(target, position)) != string::npos)
-        {
-            quoted_content.replace(position, target.length(), replacement);
-            position += replacement.length();
-        }
+        replace(quoted_content, target, replacement);
 
         result += "\"" + quoted_content + "\"";
-        search_start = match[0].second; 
+        search_start = match[0].second;
     }
 
     result += string(search_start, str.cend()); 
@@ -524,17 +458,17 @@ void erase(string& text, const char& character)
 
 string get_trimmed(const string& text)
 {
-    auto start = find_if_not(text.begin(), text.end(), ::isspace);
+    const auto is_space = [](char c) { return isspace(static_cast<unsigned char>(c)); };
 
-    auto end = find_if_not(text.rbegin(), text.rend(), ::isspace).base();
+    const auto start = find_if_not(text.begin(), text.end(), is_space);
+    const auto end = find_if_not(text.rbegin(), text.rend(), is_space).base();
 
     return (start < end) ? string(start, end) : string();
 }
 
 bool has_numbers(const vector<string>& string_list)
 {
-    return any_of(string_list.begin(), string_list.end(),
-                  [](const string& str) {return is_numeric_string(str);});
+    return any_of(string_list.begin(), string_list.end(), is_numeric_string);
 }
 
 void replace(string& source, const string& find_what, const string& replace_with)
@@ -549,20 +483,12 @@ void replace(string& source, const string& find_what, const string& replace_with
     }
 }
 
-string get_first_word(string& line)
+string get_first_word(const string& line)
 {
-    string word;
-
-    for(const char& c : line)
-        if(c != ' ' && c != '=')
-            word += c;
-        else
-            break;
-
-    return word;
+    return line.substr(0, line.find_first_of(" ="));
 }
 
-string write_time(type time)
+string get_time(type time)
 {
     const int total_seconds = static_cast<int>(time);
     const int hours = total_seconds / 3600;
@@ -611,184 +537,15 @@ void display_progress_bar(const int& completed, const int& total)
 {
     const int width = 100;
     const float progress = static_cast<float>(completed) / total;
-    const int position = width * progress;
+    const int position = min(static_cast<int>(width * progress), width);
 
-    cout << "[";
+    cout << "[" << string(position, '=');
 
-    for(int i = 0; i < width; i++)
-        if(i < position)
-            cout << "=";
-        else if(i == position)
-            cout << ">";
-        else
-            cout << " ";
-    
+    if(position < width)
+        cout << ">" << string(width - position - 1, ' ');
+
     cout << "] " << int(progress * 100.0) << " %\r";
-
     cout.flush();
-}
-
-void tokenize_whitespace(const vector<string>& context_tokens, Tensor2& context)
-{
-/*
-    bool line_ended = false;
-
-    for(Index j = 0; j < input_length - 1; j++)
-    {
-        if(j < Index(context_tokens.size()))
-        {
-            auto it = input_vocabulary.find(context_tokens[j]);
-
-            const Index word_index = (it != input_vocabulary.end()) ? it->second : 0;
-
-            context(j + 1) = type(word_index);
-        }
-        else
-        {
-            if(j == Index(context_tokens.size()) || (j == input_length - 2 && !line_ended))
-            {
-                context(j + 1) = 3; // end indicator
-                line_ended = true;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-*/
-}
-
-void tokenize_wordpiece(const vector<string>& context_tokens, Tensor2& context)
-{
-    /*
-    // unordered_map<string, type> context_vocabulary_map;
-
-    // for(Index i = 0; i < input_vocabulary.size(); i++)
-    //     context_vocabulary_map[input_vocabulary[i]] = type(i);
-
-    Index token_counter = 0;
-    //bool line_ended = false;
-
-    string word;
-    string wordpiece;
-    string rest;
-
-    auto wordpiece_entry = input_vocabulary.find("");
-    bool tokenized;
-
-    for(Index j = 0; j < input_length - 1; j++)
-    {
-        if(j < Index(context_tokens.size()) && token_counter < input_length - 1)
-        {
-            word = context_tokens[j];
-
-            wordpiece_entry = input_vocabulary.find(word);
-
-            if(wordpiece_entry != input_vocabulary.end())
-            {
-                context(token_counter++) = wordpiece_entry->second;
-                continue;
-            }
-
-            tokenized = false;
-
-            for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
-            {
-                if(token_counter == input_length - 1)
-                {
-                    tokenized = true;
-                    break;
-                }
-
-                wordpiece = word.substr(0, wordpiece_length);
-                wordpiece_entry = input_vocabulary.find(wordpiece);
-
-                if(wordpiece_entry != input_vocabulary.end())
-                {
-                    context(token_counter++) = wordpiece_entry->second;
-
-                    rest = word.substr(wordpiece_length);
-
-                    if(rest.empty())
-                    {
-                        tokenized = true;
-                        break;
-                    }
-
-                    word = "##" + rest;
-                    wordpiece_length = word.length() + 1;
-                }
-            }
-
-            if(!tokenized)
-                context(token_counter++) = 1; // unknown indicator
-        }
-        else
-        {
-            // if(j == Index(context_tokens.size())
-            // || (token_counter == input_length - 1 && !line_ended))
-            // {
-            //     context(token_counter++) = 3; // end indicator
-            //     line_ended = true;
-            // }
-            // else
-            // {
-                break;
-            // }
-        }
-    }
-*/
-}
-
-void detokenize_whitespace(Tensor2& predictions, ostringstream& output_string)
-{
-    /*
-    for(Index i = 1; i < decoder_length; i++)
-    {
-        if(predictions(i) == 2) break;
-
-        for(const auto& pair : output_vocabulary)
-        {
-            if (pair.second == Index(predictions(i)))
-            {
-                output_string << pair.first << " ";
-                break;
-            }
-        }
-    }
-*/
-}
-
-void detokenize_wordpiece(Tensor2& predictions, ostringstream& buffer)
-{
-    /*
-    for(const auto& pair : output_vocabulary) {
-        if (pair.second == Index(predictions(1))) {
-            buffer << pair.first;
-            break;
-        }
-    }
-
-    string current_prediction;
-
-    for(Index i = 2; i < decoder_length; i++)
-    {
-        if(predictions(i) == 3) // [END] token
-            break;
-
-        for(const auto& pair : output_vocabulary) {
-            if (pair.second == Index(predictions(i))) {
-                current_prediction = pair.first;
-                break;
-            }
-        }
-
-        current_prediction.substr(0, 2) == "##"
-            ? buffer << current_prediction.substr(2)
-            : buffer << " " << current_prediction;
-    }
-*/
 }
 
 }

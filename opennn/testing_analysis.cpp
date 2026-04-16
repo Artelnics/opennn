@@ -1587,10 +1587,6 @@ void TestingAnalysis::RocAnalysis::print() const
     cout << "Optimal Threshold: " << optimal_threshold << "\n";
 }
 
-#ifdef OPENNN_WITH_CUDA
-    // @todo CUDA testing analysis
-#endif
-
 }
 
 // OpenNN: Open Neural Networks Library.

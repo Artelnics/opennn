@@ -34,10 +34,7 @@ public:
     const BoundingMethod& get_bounding_method() const;
 
     const VectorR& get_lower_bounds() const;
-    type get_lower_bound(const Index) const;
-
     const VectorR& get_upper_bounds() const;
-    type get_upper_bound(const Index) const;
 
     void set(const Shape& = { 0 }, const string & = "bounding_layer");
 
@@ -56,10 +53,6 @@ public:
     // Lower and upper bounds
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
-
-    // Expression
-
-    string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
     // Serialization
 

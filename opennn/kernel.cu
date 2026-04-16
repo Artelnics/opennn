@@ -5,10 +5,10 @@
 
 __global__ void adam_update_kernel(
     const int n,
-    float* params,
-    float* m,
-    float* v,
-    const float* grads,
+    float* __restrict__ params,
+    float* __restrict__ m,
+    float* __restrict__ v,
+    const float* __restrict__ grads,
     const float beta1,
     const float beta2,
     const float learning_rate,
@@ -65,15 +65,16 @@ void adam_update_device(
         bias_correction_1,
         bias_correction_2
         );
+    CUDA_CHECK_KERNEL();
 }
 
 //SGD
 
 __global__ void sgd_update_kernel(
     const int n,
-    float* params,
-    float* velocity,
-    const float* grads,
+    float* __restrict__ params,
+    float* __restrict__ velocity,
+    const float* __restrict__ grads,
     const float learning_rate,
     const float momentum,
     const bool nesterov)
@@ -127,11 +128,12 @@ void sgd_update_device(
         learning_rate,
         momentum,
         nesterov);
+    CUDA_CHECK_KERNEL();
 }
 
 // Errors
 
-__global__ void calculate_binary_cross_entropy_kernel(const int n, float* term_results, const float* targets, const float* outputs, const float epsilon)
+__global__ void calculate_binary_cross_entropy_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const float* __restrict__ outputs, const float epsilon)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -149,10 +151,11 @@ void calculate_binary_cross_entropy_cuda(const size_t& n, type* term_results, co
     const int blocks_per_grid = (n + threads_per_block - 1) / threads_per_block;
 
     calculate_binary_cross_entropy_kernel << <blocks_per_grid, threads_per_block >> > (n, term_results, targets, outputs, epsilon);
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void calculate_binary_cross_entropy_delta_kernel(const int n, type* deltas, const type* targets, const type* outputs, const type epsilon, const type scaling_factor)
+__global__ void calculate_binary_cross_entropy_delta_kernel(const int n, type* __restrict__ deltas, const type* __restrict__ targets, const type* __restrict__ outputs, const type epsilon, const type scaling_factor)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -173,10 +176,11 @@ void calculate_binary_cross_entropy_delta_cuda(const size_t& n, type* deltas, co
     const int blocks_per_grid = (n + threads_per_block - 1) / threads_per_block;
 
     calculate_binary_cross_entropy_delta_kernel << <blocks_per_grid, threads_per_block >> > (n, deltas, targets, outputs, epsilon, scaling_factor);
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void calculate_multiple_cross_entropy_kernel(const int n, type* term_results, const type* targets, const type* outputs, const type epsilon)
+__global__ void calculate_multiple_cross_entropy_kernel(const int n, type* __restrict__ term_results, const type* __restrict__ targets, const type* __restrict__ outputs, const type epsilon)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -198,10 +202,11 @@ void calculate_multiple_cross_entropy_cuda(const size_t& n, type* term_results, 
     const int blocks_per_grid = (n + threads_per_block - 1) / threads_per_block;
 
     calculate_multiple_cross_entropy_kernel << <blocks_per_grid, threads_per_block >> > (n, term_results, targets, outputs, epsilon);
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void calculate_multiple_cross_entropy_delta_kernel(const int n, type* deltas, const type* targets, const type* outputs, const type scaling_factor)
+__global__ void calculate_multiple_cross_entropy_delta_kernel(const int n, type* __restrict__ deltas, const type* __restrict__ targets, const type* __restrict__ outputs, const type scaling_factor)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -216,10 +221,11 @@ void calculate_multiple_cross_entropy_delta_cuda(const size_t& n, type* deltas, 
     const int blocks_per_grid = (n + threads_per_block - 1) / threads_per_block;
 
     calculate_multiple_cross_entropy_delta_kernel << <blocks_per_grid, threads_per_block >> > (n, deltas, targets, outputs, scaling_factor);
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void calculate_weighted_squared_error_kernel(const int n, type* term_results, const type* targets, const type* outputs, const type positives_weight, const type negatives_weight)
+__global__ void calculate_weighted_squared_error_kernel(const int n, type* __restrict__ term_results, const type* __restrict__ targets, const type* __restrict__ outputs, const type positives_weight, const type negatives_weight)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -241,10 +247,11 @@ void calculate_weighted_squared_error_cuda(const size_t& n, type* term_results, 
     const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
 
     calculate_weighted_squared_error_kernel<<<blocks_per_grid, threads_per_block>>>(static_cast<int>(n), term_results, targets, outputs, positives_weight, negatives_weight);
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void calculate_weighted_squared_error_delta_kernel(const int n, type* deltas, const type* targets, const type* outputs, const type positives_weight, const type negatives_weight, const type scaling_factor)
+__global__ void calculate_weighted_squared_error_delta_kernel(const int n, type* __restrict__ deltas, const type* __restrict__ targets, const type* __restrict__ outputs, const type positives_weight, const type negatives_weight, const type scaling_factor)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -266,15 +273,16 @@ void calculate_weighted_squared_error_delta_cuda(const size_t& n, type* deltas, 
     const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
 
     calculate_weighted_squared_error_delta_kernel<<<blocks_per_grid, threads_per_block>>>(static_cast<int>(n), deltas, targets, outputs, positives_weight, negatives_weight, scaling_factor);
+    CUDA_CHECK_KERNEL();
 }
 
 // Cross Entropy 3D
 
 __global__ void cross_entropy_3d_multiple_forward_kernel(const int total_tokens,
                                                          const int vocab_size,
-                                                         const float* outputs,
-                                                         const float* targets,
-                                                         float* errors,
+                                                         const float* __restrict__ outputs,
+                                                         const float* __restrict__ targets,
+                                                         float* __restrict__ errors,
                                                          const float epsilon)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -314,14 +322,15 @@ void cross_entropy_3d_multiple_forward_cuda(const size_t n,
 
     cross_entropy_3d_multiple_forward_kernel<<<grid_size, block_size>>>(
         total_tokens, vocab_size, outputs, targets, errors, epsilon);
+    CUDA_CHECK_KERNEL();
 }
 
 
 __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
                                                           const int vocab_size,
-                                                          const float* outputs,
-                                                          const float* targets,
-                                                          float* output_gradients,
+                                                          const float* __restrict__ outputs,
+                                                          const float* __restrict__ targets,
+                                                          float* __restrict__ output_gradients,
                                                           const float scale_factor)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -365,11 +374,12 @@ void cross_entropy_3d_multiple_backward_cuda(const size_t n,
 
     cross_entropy_3d_multiple_backward_kernel<<<grid_size, block_size>>>(
         static_cast<int>(n), vocab_size, outputs, targets, output_gradients, scale_factor);
+    CUDA_CHECK_KERNEL();
 }
 
 
 __global__ void cross_entropy_3d_multiple_counts_kernel(const int total_tokens, const int vocab_size,
-                                                        const float* outputs, const float* targets, float* counts)
+                                                        const float* __restrict__ outputs, const float* __restrict__ targets, float* __restrict__ counts)
 {
     const int token_idx = blockIdx.x * blockDim.x + threadIdx.x;
     if(token_idx < total_tokens)
@@ -399,13 +409,14 @@ void cross_entropy_3d_multiple_counts_cuda(const size_t total_tokens, const int 
     const int grid_size = (static_cast<int>(total_tokens) + block_size - 1) / block_size;
     cross_entropy_3d_multiple_counts_kernel<<<grid_size, block_size>>>(
         static_cast<int>(total_tokens), vocab_size, outputs, targets, counts);
+    CUDA_CHECK_KERNEL();
 }
 
 
 __global__ void cross_entropy_3d_binary_forward_kernel(const int n,
-                                                       const float* outputs,
-                                                       const float* targets,
-                                                       float* errors,
+                                                       const float* __restrict__ outputs,
+                                                       const float* __restrict__ targets,
+                                                       float* __restrict__ errors,
                                                        const float epsilon)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -445,13 +456,14 @@ void cross_entropy_3d_binary_forward_cuda(const size_t n,
 
     cross_entropy_3d_binary_forward_kernel<<<grid_size, block_size>>>(
         static_cast<int>(n), outputs, targets, errors, epsilon);
+    CUDA_CHECK_KERNEL();
 }
 
 
 __global__ void cross_entropy_3d_binary_backward_kernel(const int n,
-                                                        const float* outputs,
-                                                        const float* targets,
-                                                        float* output_gradients,
+                                                        const float* __restrict__ outputs,
+                                                        const float* __restrict__ targets,
+                                                        float* __restrict__ output_gradients,
                                                         const float scale_factor)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -494,11 +506,12 @@ void cross_entropy_3d_binary_backward_cuda(const size_t n,
 
     cross_entropy_3d_binary_backward_kernel<<<grid_size, block_size>>>(
         static_cast<int>(n), outputs, targets, output_gradients, scale_factor);
+    CUDA_CHECK_KERNEL();
 }
 
 // Regularization
 
-__global__ void apply_l1_gradient_kernel(const int n, float* deltas, const float* params, const float weight)
+__global__ void apply_l1_gradient_kernel(const int n, float* __restrict__ deltas, const float* __restrict__ params, const float weight)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n)
@@ -516,10 +529,11 @@ void apply_l1_gradient_cuda(const size_t n, float* deltas, const float* params, 
     const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
 
     apply_l1_gradient_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), deltas, params, weight);
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void apply_elastic_net_gradient_kernel(const int n, float* deltas, const float* params, const float weight, const float mix_factor)
+__global__ void apply_elastic_net_gradient_kernel(const int n, float* __restrict__ deltas, const float* __restrict__ params, const float weight, const float mix_factor)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n) {
@@ -540,6 +554,7 @@ void apply_elastic_net_gradient_cuda(const size_t n, float* deltas, const float*
     const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
 
     apply_elastic_net_gradient_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), deltas, params, weight, mix_factor);
+    CUDA_CHECK_KERNEL();
 }
 
 // Scaling
@@ -547,10 +562,10 @@ void apply_elastic_net_gradient_cuda(const size_t n, float* deltas, const float*
 #define EPSILON 1e-7f
 
 __global__ void scale_2d_kernel(const int n, const int batch_size, const int outputs_number,
-    const float* inputs_device, float* outputs_device,
-    const int* scalers_device,
-    const float* minimums_device, const float* maximums_device,
-    const float* means_device, const float* std_devs_device,
+    const float* __restrict__ inputs_device, float* __restrict__ outputs_device,
+    const int* __restrict__ scalers_device,
+    const float* __restrict__ minimums_device, const float* __restrict__ maximums_device,
+    const float* __restrict__ means_device, const float* __restrict__ std_devs_device,
     const float min_range, const float max_range)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -630,11 +645,12 @@ void scale_2d_cuda(const size_t n, const int batch_size, const int outputs_numbe
         min_range,
         max_range
         );
+    CUDA_CHECK_KERNEL();
 }
 
 // Addition
 
-__global__ void addition_kernel(const int n, const float* input1, const float* input2, float* output)
+__global__ void addition_kernel(const int n, const float* __restrict__ input1, const float* __restrict__ input2, float* __restrict__ output)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -652,12 +668,13 @@ void addition_cuda(const size_t n, const float* input1, const float* input2, flo
     const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
 
     addition_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), input1, input2, output);
+    CUDA_CHECK_KERNEL();
 }
 
 
 // Embedding
 
-__global__ void embedding_forward_kernel(const int n, const float* inputs, const float* weights, const float* positional_encoding, float* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding)
+__global__ void embedding_forward_kernel(const int n, const float* __restrict__ inputs, const float* __restrict__ weights, const float* __restrict__ positional_encoding, float* __restrict__ outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -704,10 +721,11 @@ void embedding_forward_cuda(const size_t n, const float* inputs, const float* we
         static_cast<int>(n), inputs, weights, positional_encoding, outputs,
         sequence_length, embedding_dimension, vocabulary_size, scale_embedding, add_positional_encoding
         );
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void embedding_backward_kernel(const int n, const float* inputs, const float* output_gradients, float* weight_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
+__global__ void embedding_backward_kernel(const int n, const float* __restrict__ inputs, const float* __restrict__ output_gradients, float* __restrict__ weight_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -743,12 +761,13 @@ void embedding_backward_cuda(const size_t n, const float* inputs, const float* o
         static_cast<int>(n), inputs, output_gradients, weight_gradients,
         sequence_length, embedding_dimension, vocabulary_size, scale_embedding
         );
+    CUDA_CHECK_KERNEL();
 }
 
 // Multihead
 
 // [Batch, Seq, Heads, HeadDim] -> [Batch, Heads, Seq, HeadDim]
-__global__ void mha_transpose_qkv_kernel(const int n, const float* in, float* out, const int S, const int H, const int D)
+__global__ void mha_transpose_qkv_kernel(const int n, const float* __restrict__ in, float* __restrict__ out, const int S, const int H, const int D)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n)
@@ -768,10 +787,11 @@ void mha_transpose_qkv_cuda(const size_t n, const float* in, float* out, const i
     if (n == 0) return;
     const int threads = 256;
     mha_transpose_qkv_kernel<<<(n + threads - 1) / threads, threads>>>(n, in, out, S, H, D);
+    CUDA_CHECK_KERNEL();
 }
 
 // [Batch, Heads, Seq, HeadDim] -> [Batch, Seq, Heads, HeadDim]
-__global__ void mha_transpose_o_kernel(const int n, const float* in, float* out, const int S, const int H, const int D)
+__global__ void mha_transpose_o_kernel(const int n, const float* __restrict__ in, float* __restrict__ out, const int S, const int H, const int D)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n)
@@ -791,10 +811,11 @@ void mha_transpose_o_cuda(const size_t n, const float* in, float* out, const int
     if (n == 0) return;
     const int threads = 256;
     mha_transpose_o_kernel<<<(n + threads - 1) / threads, threads>>>(n, in, out, S, H, D);
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void mha_key_padding_mask_kernel(const int n, const float* source_input, float* attention_weights, const int H, const int Sq, const int Sk, const int E)
+__global__ void mha_key_padding_mask_kernel(const int n, const float* __restrict__ source_input, float* __restrict__ attention_weights, const int H, const int Sq, const int Sk, const int E)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n)
@@ -826,10 +847,11 @@ void mha_key_padding_mask_cuda(const size_t n, const float* source_input, float*
     if (n == 0) return;
     const int threads = 256;
     mha_key_padding_mask_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), source_input, attention_weights, H, Sq, Sk, E);
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void mha_causal_mask_kernel(const int n, float* scores, const int seq_q, const int seq_k) {
+__global__ void mha_causal_mask_kernel(const int n, float* __restrict__ scores, const int seq_q, const int seq_k) {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n) {
         const int c = i % seq_k;
@@ -842,10 +864,11 @@ void mha_causal_mask_cuda(const size_t n, float* scores, const int seq_q, const 
     if (n == 0) return;
     const int threads = 256;
     mha_causal_mask_kernel<<<(n + threads - 1) / threads, threads>>>(n, scores, seq_q, seq_k);
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void compute_padding_mask_kernel(const int num_tokens, const float* source_input, float* padding_mask, const int embedding_dimension)
+__global__ void compute_padding_mask_kernel(const int num_tokens, const float* __restrict__ source_input, float* __restrict__ padding_mask, const int embedding_dimension)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if(i < num_tokens)
@@ -861,7 +884,7 @@ __global__ void compute_padding_mask_kernel(const int num_tokens, const float* s
 }
 
 
-__global__ void apply_fused_masks_kernel(const int n, float* attention_weights, const float* padding_mask,
+__global__ void apply_fused_masks_kernel(const int n, float* __restrict__ attention_weights, const float* __restrict__ padding_mask,
                                          const int heads_number, const int query_sequence_length,
                                          const int source_sequence_length, const bool use_causal_mask)
 {
@@ -889,6 +912,7 @@ void mha_fused_masks_cuda(const int batch_size, const int heads_number,
         const int threads = 256;
         compute_padding_mask_kernel<<<(num_tokens + threads - 1) / threads, threads>>>(
             num_tokens, source_input, padding_mask, embedding_dimension);
+        CUDA_CHECK_KERNEL();
     }
 
     const int n = batch_size * heads_number * query_sequence_length * source_sequence_length;
@@ -898,13 +922,14 @@ void mha_fused_masks_cuda(const int batch_size, const int heads_number,
         apply_fused_masks_kernel<<<(n + threads - 1) / threads, threads>>>(
             n, attention_weights, padding_mask, heads_number,
             query_sequence_length, source_sequence_length, use_causal_mask);
+        CUDA_CHECK_KERNEL();
     }
 }
 
 
 // Pooling 3D
 
-__global__ void pooling3d_max_forward_kernel(const int n, const float* in, float* out, float* indices, const int B, const int S, const int F)
+__global__ void pooling3d_max_forward_kernel(const int n, const float* __restrict__ in, float* __restrict__ out, float* __restrict__ indices, const int B, const int S, const int F)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < n) {
@@ -931,10 +956,11 @@ void pooling3d_max_forward_cuda(const size_t n, const float* in, float* out, flo
     if (n == 0) return;
     const int threads = 256;
     pooling3d_max_forward_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), in, out, indices, B, S, F);
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void pooling3d_max_backward_kernel(const int n, const float* delta, float* in_grad, const float* indices, const int B, const int S, const int F)
+__global__ void pooling3d_max_backward_kernel(const int n, const float* __restrict__ delta, float* __restrict__ in_grad, const float* __restrict__ indices, const int B, const int S, const int F)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < n) {
@@ -951,10 +977,11 @@ void pooling3d_max_backward_cuda(const size_t n, const float* delta, float* in_g
     if (n == 0) return;
     const int threads = 256;
     pooling3d_max_backward_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), delta, in_grad, indices, B, S, F);
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void pooling3d_avg_forward_kernel(const int n, const float* in, float* out, const int B, const int S, const int F)
+__global__ void pooling3d_avg_forward_kernel(const int n, const float* __restrict__ in, float* __restrict__ out, const int B, const int S, const int F)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < n)
@@ -992,10 +1019,11 @@ void pooling3d_avg_forward_cuda(const size_t n, const float* in, float* out, con
     if (n == 0) return;
     const int threads = 256;
     pooling3d_avg_forward_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), in, out, B, S, F);
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void pooling3d_avg_backward_kernel(const int n, const float* in, const float* delta, float* in_grad, const int B, const int S, const int F)
+__global__ void pooling3d_avg_backward_kernel(const int n, const float* __restrict__ in, const float* __restrict__ delta, float* __restrict__ in_grad, const int B, const int S, const int F)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < n)
@@ -1045,12 +1073,13 @@ void pooling3d_avg_backward_cuda(const size_t n, const float* in, const float* d
     if (n == 0) return;
     const int threads = 256;
     pooling3d_avg_backward_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), in, delta, in_grad, B, S, F);
+    CUDA_CHECK_KERNEL();
 }
 
 
 // Normalization layer
 
-__global__ void layernorm_forward_kernel(const int N, const int D, const float* X, float* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
+__global__ void layernorm_forward_kernel(const int N, const int D, const float* __restrict__ X, float* __restrict__ Y, float* __restrict__ means, float* __restrict__ inv_vars, const float* __restrict__ gamma, const float* __restrict__ beta, const float eps)
 {
     const int idx = blockIdx.x;
     if (idx >= N) return;
@@ -1113,10 +1142,11 @@ void layernorm_forward_cuda(const int N, const int D, const float* X, float* Y, 
     else if (D <= 128) threads = 128;
 
     layernorm_forward_kernel<<<N, threads>>>(N, D, X, Y, means, inv_vars, gamma, beta, eps);
+    CUDA_CHECK_KERNEL();
 }
 
 
-__global__ void layernorm_backward_kernel(const int N, const int D, const float* dY, const float* X, const float* means, const float* inv_vars, const float* gamma, float* dX, float* dGamma, float* dBeta)
+__global__ void layernorm_backward_kernel(const int N, const int D, const float* __restrict__ dY, const float* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, const float* __restrict__ gamma, float* __restrict__ dX, float* __restrict__ dGamma, float* __restrict__ dBeta)
 {
     const int idx = blockIdx.x;
     if (idx >= N) return;
@@ -1178,5 +1208,6 @@ void layernorm_backward_cuda(const int N, const int D, const float* dY, const fl
     else if (D <= 128) threads = 128;
 
     layernorm_backward_kernel<<<N, threads>>>(N, D, dY, X, means, inv_vars, gamma, dX, dGamma, dBeta);
+    CUDA_CHECK_KERNEL();
 }
 

@@ -53,12 +53,6 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
 
     compile();
     set_parameters_glorot();
-
-    const Index inputs_number = get_inputs_number();
-    //input_variables.resize(inputs_number);
-
-    const Index outputs_number = get_outputs_number();
-    //output_names.resize(outputs_number);
 }
 
 ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
@@ -84,12 +78,6 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
 
     compile();
     set_parameters_random();
-
-    const Index inputs_number = get_inputs_number();
-    //input_names.resize(inputs_number);
-
-    const Index outputs_number = get_outputs_number();
-    //output_names.resize(outputs_number);
 }
 
 ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
@@ -112,12 +100,6 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
 
     compile();
     set_parameters_random();
-
-    const Index inputs_number = get_inputs_number();
-    // input_names.resize(inputs_number);
-
-    const Index outputs_number = get_outputs_number();
-    //output_names.resize(outputs_number);
 }
 
 AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
@@ -218,12 +200,6 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
 
     compile();
     set_parameters_random();
-
-    const Index inputs_number = get_inputs_number();
-    //input_names.resize(inputs_number);
-
-    const Index outputs_number = get_outputs_number();
-    //output_names.resize(outputs_number);
 }
 
 SimpleResNet::SimpleResNet(const Shape& input_shape,
@@ -636,9 +612,7 @@ void Transformer::set(const Index input_sequence_length,
         heads_number == 0 ||
         feed_forward_dimension == 0 ||
         layers_number == 0)
-    {
         return;
-    }
 
     if(embedding_dimension % heads_number != 0)
         throw runtime_error("Transformer Error: embedding_dimension must be divisible by heads_number.");
@@ -750,9 +724,7 @@ void Transformer::set(const Index input_sequence_length,
 
     const Index encoder_final_output_idx = current_encoder_idx;
 
-    // -------------------------------------------------------------------------
     // Decoder stack
-    // -------------------------------------------------------------------------
 
     for(Index i = 0; i < layers_number; ++i)
     {
@@ -855,12 +827,9 @@ void Transformer::set(const Index input_sequence_length,
         current_decoder_idx = static_cast<Index>(get_layers_number()) - 1;
     }
 
-    // -------------------------------------------------------------------------
     // Final token projection
-    // -------------------------------------------------------------------------
 
-    add_layer(
-        make_unique<Dense<3>>(
+    add_layer(make_unique<Dense<3>>(
             decoder_sequence_length,
             embedding_dimension,
             output_vocabulary_size,
@@ -982,18 +951,15 @@ string Transformer::calculate_outputs(const string& source)
     for(Index i = 1; i < decoder_sequence_length; i++)
     {
         const vector<TensorView> inputs =
-            {
-                TensorView(target_ids.data(), {batch_size, decoder_sequence_length}),
-                TensorView(source_ids.data(), {batch_size, input_sequence_length})
-            };
+        {TensorView(target_ids.data(), {batch_size, decoder_sequence_length}),
+         TensorView(source_ids.data(), {batch_size, input_sequence_length})};
 
         forward_propagate(inputs, forward_propagation, false);
 
         const TensorView output_view = forward_propagation.get_outputs();
         const Index vocabulary_size = output_view.shape[2];
 
-        const type* distribution_ptr =
-            output_view.data + ((i - 1) * vocabulary_size);
+        const type* distribution_ptr = output_view.data + (i-1)*vocabulary_size;
 
         const Map<const VectorR> current_distribution(distribution_ptr, vocabulary_size);
 

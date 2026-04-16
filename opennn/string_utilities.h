@@ -38,7 +38,8 @@ namespace opennn
     void replace_all_word_appearances(string&, const string&, const string&);
 
     void trim(string&);
-    void erase(string&, const char&);
+    void normalize_csv_line(string&);
+    void erase(string&, char);
 
     void replace_first_and_last_char_with_missing_label(string&, char, const string&, const string&);
 
@@ -53,15 +54,9 @@ namespace opennn
 
     void display_progress_bar(const int&, const int&);
 
-    string write_time(type);
+    string get_time(type);
 
-    string get_first_word(string&);
-
-    void tokenize_whitespace(const vector<string>&, Tensor2&);
-    void tokenize_wordpiece(const vector<string>&, Tensor2&);
-    void detokenize_whitespace(Tensor2&, ostringstream&);
-    void detokenize_wordpiece(Tensor2&, ostringstream&);
-
+    string get_first_word(const string&);
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -271,7 +271,7 @@ TrainingResults QuasiNewtonMethod::train()
             cout << "Training error: " << training_back_propagation.error << "\n";
             if(has_validation) cout << "Validation error: " << validation_back_propagation.error << "\n";
             cout << "Learning rate: " << optimization_data.learning_rate << "\n";
-            cout << "Elapsed time: " << write_time(elapsed_time) << "\n";
+            cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
 
         if(epoch != 0) loss_decrease = old_loss_value - training_back_propagation.loss_value;
@@ -298,7 +298,7 @@ TrainingResults QuasiNewtonMethod::train()
             results.validation_failures = validation_failures;
             results.resize_training_error_history(epoch+1);
             results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
-            results.elapsed_time = write_time(elapsed_time);
+            results.elapsed_time = get_time(elapsed_time);
 
             break;
         }

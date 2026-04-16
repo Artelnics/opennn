@@ -156,10 +156,6 @@ public:
 
         name = "Dense" + to_string(Rank) + "d";
         layer_type = (Rank == 2) ? LayerType::Dense2d : LayerType::Dense3d;
-
-#ifdef OPENNN_WITH_CUDA
-        // @todo batch normalization device descriptors
-#endif
     }
 
     void set_parameters_glorot() override
@@ -311,43 +307,6 @@ public:
             TensorView ig_2d(input_gradient.data, {total_rows, input_gradient.shape[input_gradient.get_rank() - 1]});
             multiply(delta_2d, false, parameters[Weight], true, ig_2d);
         }
-    }
-
-    string get_expression(const vector<string>& new_input_names = vector<string>(),
-                          const vector<string>& new_output_names = vector<string>()) const override
-    {
-        const vector<string> input_names = new_input_names.empty()
-        ? get_default_feature_names()
-        : new_input_names;
-
-        const vector<string> output_names = new_output_names.empty()
-                                                ? get_default_output_names()
-                                                : new_output_names;
-
-        const Index inputs_number = get_inputs_number();
-        const Index outputs_number = get_outputs_number();
-
-        if (parameters[Bias].data == nullptr || parameters[Weight].data == nullptr) return "";
-
-        ostringstream buffer;
-/*
-        for(Index j = 0; j < outputs_number; j++)
-        {
-            buffer << output_names[j] << " = " << activation_function << "( " << parameters[Bias].data[j] << " + ";
-
-            for(Index i = 0; i < inputs_number; i++)
-            {
-                const Index weight_index = i * outputs_number + j;
-
-                buffer << "(" << parameters[Weight].data[weight_index] << "*" << input_names[i] << ")";
-
-                if (i < inputs_number - 1) buffer << " + ";
-            }
-
-            buffer << " );\n";
-        }
-*/
-        return buffer.str();
     }
 
     void from_XML(const XmlDocument& document) override

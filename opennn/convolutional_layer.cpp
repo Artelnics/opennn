@@ -49,9 +49,9 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        cached_conv_args.algorithm_forward = convolution_algorithm;
-        cached_conv_args.workspace = cuda_workspace;
-        cached_conv_args.workspace_size = cuda_workspace_size;
+        convolution_arguments.algorithm_forward = convolution_algorithm;
+        convolution_arguments.workspace = cuda_workspace;
+        convolution_arguments.workspace_size = cuda_workspace_size;
         act_args.activation_descriptor = activation_descriptor;
 
         const bool can_fuse = !batch_normalization
@@ -60,11 +60,11 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
         if(can_fuse)
         {
-            convolution_activation(input, parameters[Weights], parameters[Biases], output, cached_conv_args, act_args);
+            convolution_activation(input, parameters[Weights], parameters[Biases], output, convolution_arguments, act_args);
         }
         else
         {
-            convolution(input, parameters[Weights], parameters[Biases], output, cached_conv_args);
+            convolution(input, parameters[Weights], parameters[Biases], output, convolution_arguments);
             activation(output, act_args);
         }
         return;
@@ -75,7 +75,7 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     else
         copy(input, padded_input);
 
-    convolution(padded_input, parameters[Weights], parameters[Biases], output, cached_conv_args);
+    convolution(padded_input, parameters[Weights], parameters[Biases], output, convolution_arguments);
     activation(output, act_args);
 }
 
@@ -86,7 +86,7 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     const TensorView& output = forward_propagation.views[layer].back()[0];
     TensorView& delta = back_propagation.backward_views[layer][OutputGradients][0];
 
-    ConvolutionArguments bwd_args = cached_conv_args;
+    ConvolutionArguments bwd_args = convolution_arguments;
 
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
@@ -263,8 +263,8 @@ void Convolutional::set(const Shape& new_input_shape,
         CUDNN_CROSS_CORRELATION,
         CUDNN_DATA_FLOAT);
 
-    cached_conv_args.convolution_descriptor = convolution_descriptor;
-    cached_conv_args.kernel_descriptor = kernel_descriptor;
+    convolution_arguments.convolution_descriptor = convolution_descriptor;
+    convolution_arguments.kernel_descriptor = kernel_descriptor;
 
 #endif
 }

@@ -198,8 +198,6 @@ public:
                           const VectorR&,
                           ForwardPropagation&);
 
-    string get_expression() const;
-
 #ifdef OPENNN_WITH_CUDA
 
 public:
@@ -218,10 +216,13 @@ private:
 
 #endif
 
+public:
+
+    vector<string> get_layer_labels() const;
+
 private:
 
     void validate_type(LayerType) const;
-    vector<string> get_layer_labels() const;
 
 protected:
 

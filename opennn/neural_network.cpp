@@ -21,6 +21,7 @@
 #include "string_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "model_expression.h"
 
 namespace opennn
 {
@@ -526,57 +527,6 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     forward_propagate(input_view, forward_propagation, true);
 
     params = saved_parameters;
-}
-
-string NeuralNetwork::get_expression() const
-{
-    const size_t layers_number = get_layers_number();
-    const vector<string> layer_labels = get_layer_labels();
-
-    const Index inputs_number = get_inputs_number();
-    const Index outputs_number = get_outputs_number();
-
-    vector<string> new_input_names = get_input_feature_names();
-    while (new_input_names.size() < static_cast<size_t>(inputs_number))
-        new_input_names.push_back("input_" + to_string(new_input_names.size()));
-
-    vector<string> new_output_names = get_output_feature_names();
-    while (new_output_names.size() < static_cast<size_t>(outputs_number))
-        new_output_names.push_back("output_" + to_string(new_output_names.size()));
-
-    for(Index i = 0; i < inputs_number; i++)
-        if(new_input_names[i].empty())
-            new_input_names[i] = "input_" + to_string(i);
-
-    ostringstream buffer;
-
-    for(size_t i = 0; i < layers_number; i++)
-    {
-        if (i == layers_number - 1)
-        {
-            for(Index j = 0; j < outputs_number; j++)
-                if(new_output_names[j].empty())
-                    new_output_names[j] = "output_" + to_string(j);
-
-            buffer << layers[i]->get_expression(new_input_names, new_output_names) << "\n";
-        }
-        else
-        {
-            const Index layer_neurons_number = layers[i]->get_outputs_number();
-
-            vector<string> layer_output_names(layer_neurons_number);
-
-            for(size_t j = 0; j < static_cast<size_t>(layer_neurons_number); j++)
-                layer_output_names[j] = (layer_labels[i] == "scaling_layer" && j < new_input_names.size())
-                                           ? "scaled_" + new_input_names[j]
-                                           : layer_labels[i] + "_output_" + to_string(j);
-
-            buffer << layers[i]->get_expression(new_input_names, layer_output_names) << "\n";
-            new_input_names = layer_output_names;
-        }
-    }
-
-    return buffer.str();
 }
 
 MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,

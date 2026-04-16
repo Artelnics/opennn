@@ -27,8 +27,6 @@ LanguageDataset::LanguageDataset(const Index samples_number,
                                  Index input_sequence_length,
                                  Index input_vocabulary_size) : Dataset()
 {
-    // @todo check this code
-
     maximum_input_sequence_length = input_sequence_length;
     maximum_target_sequence_length = 1;
 
@@ -398,10 +396,6 @@ void LanguageDataset::read_csv()
 
         encode_input(input_document_tokens);
 
-        // @todo This requires encode_decoder_target_sequence_to_sequence(...)
-        // to be implemented consistently with:
-        //   decoder = [START, y1, ..., yN]
-        //   target  = [y1, ..., yN, END]
         encode_decoder_target_sequence_to_sequence(target_document_tokens);
 
         input_shape = { get_maximum_input_sequence_length() };

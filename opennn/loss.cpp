@@ -581,9 +581,6 @@ void Loss::from_XML(const XmlDocument& document)
         minkowski_parameter = read_xml_type(root, "MinkowskiParameter");
 }
 
-
-
-
 MatrixR Loss::calculate_numerical_hessian()
 {
     // @todo Stub - not yet refactored

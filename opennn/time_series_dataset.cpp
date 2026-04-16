@@ -408,8 +408,6 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
     }
 }
 
-// @todo Is this finished?.
-
 void TimeSeriesDataset::fill_gaps()
 {   
     const type start_time = 50;
