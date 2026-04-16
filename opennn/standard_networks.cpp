@@ -103,16 +103,14 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                                        const Shape& output_shape) : NeuralNetwork()
 {
     this->set_default();
-    // add_layer(make_unique<Scaling<3>>(input_shape));
 
-    // add_layer(make_unique<Recurrent>(input_shape,
-    //                                  complexity_dimensions))
+    add_layer(make_unique<Scaling<3>>(input_shape));
 
     add_layer(make_unique<Recurrent>(input_shape, complexity_dimensions));
 
     add_layer(make_unique<Dense<2>>(complexity_dimensions, output_shape, "Linear", false, "dense_layer"));
 
-    // add_layer(make_unique<Unscaling>(output_shape));
+    add_layer(make_unique<Unscaling>(output_shape));
 
     // add_layer(make_unique<Bounding>(output_shape));
 

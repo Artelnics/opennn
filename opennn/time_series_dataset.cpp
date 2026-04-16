@@ -43,6 +43,8 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
     input_shape = {past_time_steps, get_features_number("Input")};
     target_shape = { get_features_number("Target") };
 
+    mark_invalid_samples();
+
     split_samples_sequential(type(0.6), type(0.2), type(0.2));
 }
 
@@ -97,15 +99,18 @@ Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& fea
 void TimeSeriesDataset::set_past_time_steps(const Index new_past_time_steps)
 {
     past_time_steps = new_past_time_steps;
-    input_shape = { past_time_steps, get_features_number("Input") };
+    update_shapes();
+    mark_invalid_samples();
+    split_samples_sequential(type(0.6), type(0.2), type(0.2));
 }
 
 
 void TimeSeriesDataset::set_future_time_steps(const Index new_future_time_steps)
 {
     future_time_steps = new_future_time_steps;
-    if(multi_target)
-        target_shape = { future_time_steps };
+    update_shapes();
+    mark_invalid_samples();
+    split_samples_sequential(type(0.6), type(0.2), type(0.2));
 }
 
 
@@ -115,9 +120,38 @@ void TimeSeriesDataset::set_time_variable_index(const Index new_time_variable_in
 }
 
 
-void TimeSeriesDataset::set_multi_target(bool new_multi_target)
+void TimeSeriesDataset::set_multi_target(const bool new_multi_target)
 {
     multi_target = new_multi_target;
+    update_shapes();
+}
+
+
+void TimeSeriesDataset::mark_invalid_samples()
+{
+    const Index samples_number = get_samples_number();
+    if(samples_number == 0) return;
+
+    const Index first_valid = past_time_steps;
+    const Index last_valid = samples_number - future_time_steps - 1;
+
+    for(Index i = 0; i < samples_number; ++i)
+    {
+        const bool usable = (i >= first_valid) && (i <= last_valid);
+        set_sample_role(i, usable ? "Training" : "None");
+    }
+}
+
+
+void TimeSeriesDataset::update_shapes()
+{
+    input_shape = { past_time_steps, get_features_number("Input") };
+
+    const Index num_target_features = get_features_number("Target");
+
+    target_shape = multi_target
+        ? Shape{ future_time_steps * num_target_features }
+        : Shape{ num_target_features };
 }
 
 
@@ -253,13 +287,7 @@ void TimeSeriesDataset::read_csv()
     input_shape = {past_time_steps, get_features_number("Input")};
     target_shape = {get_features_number("Target")};
 
-    const Index samples_number = get_samples_number();
-
-    const Index invalid_samples = past_time_steps + future_time_steps - 1;
-
-    if(samples_number > invalid_samples)
-        for(Index i = samples_number - invalid_samples; i < samples_number; i++)
-            set_sample_role(i, "None");
+    mark_invalid_samples();
 
     split_samples_sequential(type(0.6), type(0.2), type(0.2));
 }
@@ -267,38 +295,39 @@ void TimeSeriesDataset::read_csv()
 
 void TimeSeriesDataset::impute_missing_values_unuse()
 {
+    // Under the new convention, sample `i` uses rows [i - past, ..., i - 1]
+    // as input and rows [i + 1, ..., i + future] as target. A sample is
+    // invalidated if ANY row in the span [i - past, i + future] has NaN.
+
     const Index samples_number = get_samples_number();
-    const Index lags = get_past_time_steps();
+    const Index past = get_past_time_steps();
+    const Index future = get_future_time_steps();
 
     vector<bool> row_has_nan(samples_number, false);
     for(Index i = 0; i < samples_number; ++i)
         if (has_nan_row(i))
             row_has_nan[i] = true;
 
-    const Index num_sequences = samples_number - lags;
-    if (num_sequences < 0) return;
-
-    #pragma omp parallel for
-    for(Index i = 0; i < num_sequences; ++i)
+    for(Index i = 0; i < samples_number; ++i)
     {
-        bool sequence_is_invalid = false;
+        if(get_sample_role(i) == "None") continue;
 
-        for(Index j = 0; j <= lags; ++j)
+        bool invalid = false;
+        const Index first = i - past;
+        const Index last  = i + future;
+
+        if(first < 0 || last >= samples_number)
         {
-            const Index current_row = i + j;
-            if (row_has_nan[current_row])
-            {
-                sequence_is_invalid = true;
-                break;
-            }
+            invalid = true;
+        }
+        else
+        {
+            for(Index r = first; r <= last; ++r)
+                if(row_has_nan[r]) { invalid = true; break; }
         }
 
-        if (sequence_is_invalid)
-            set_sample_role(i, "None");
+        if(invalid) set_sample_role(i, "None");
     }
-
-    for(Index i = num_sequences; i < samples_number; ++i)
-        set_sample_role(i, "None");
 }
 
 
@@ -385,13 +414,13 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
     #pragma omp parallel for schedule(static) if(parallelize)
     for(Index i = 0; i < batch_size; ++i)
     {
-        const Index start_row = sample_indices[i];
+        const Index present = sample_indices[i];
 
         for(Index j = 0; j < past_time_steps; ++j)
         {
-            const Index actual_row = start_row + j;
+            const Index actual_row = present - past_time_steps + j;
 
-            if(actual_row < data_rows_number)
+            if(actual_row >= 0 && actual_row < data_rows_number)
                 for(Index k = 0; k < inputs_number; ++k)
                     inputs(i, j, k) = data(actual_row, input_indices[k]);
             else
@@ -415,28 +444,38 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
 
     MatrixMap targets(target_data, batch_size, targets_number);
 
+    const Index num_target_vars = static_cast<Index>(target_indices.size());
+
     #pragma omp parallel for schedule(static) if(parallelize)
     for(Index i = 0; i < batch_size; ++i)
     {
+        const Index present = sample_indices[i];
+
         if(multi_target)
         {
-            for(Index j = 0; j < future_time_steps; ++j)
+            for(Index step = 0; step < future_time_steps; ++step)
             {
-                const Index target_row = sample_indices[i] + past_time_steps + j;
-                if(target_row < total_rows_in_data)
-                    targets(i, j) = data(target_row, target_indices[0]);
-                else
-                    targets(i, j) = static_cast<type>(0);
+                const Index target_row = present + step + 1;
+                const bool row_ok = target_row >= 0 && target_row < total_rows_in_data;
+
+                for(Index v = 0; v < num_target_vars; ++v)
+                {
+                    const Index column = step * num_target_vars + v;
+                    targets(i, column) = row_ok
+                        ? data(target_row, target_indices[v])
+                        : static_cast<type>(0);
+                }
             }
         }
         else
         {
-            const Index target_row = sample_indices[i] + past_time_steps + (future_time_steps - 1);
+            const Index target_row = present + future_time_steps;
+            const bool row_ok = target_row >= 0 && target_row < total_rows_in_data;
 
-            if(target_row < total_rows_in_data)
-                targets(i, 0) = data(target_row, target_indices[0]);
-            else
-                targets(i, 0) = static_cast<type>(0);
+            for(Index j = 0; j < targets_number; ++j)
+                targets(i, j) = row_ok
+                    ? data(target_row, target_indices[j])
+                    : static_cast<type>(0);
         }
     }
 }

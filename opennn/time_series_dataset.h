@@ -42,6 +42,10 @@ public:
     void set_time_variable_index(const Index);
     void set_multi_target(const bool);
 
+    void update_shapes();
+
+    void mark_invalid_samples();
+
     MatrixR calculate_autocorrelations(const Index = 10) const;
     Tensor3 calculate_cross_correlations(const Index = 10) const;
     Tensor3 calculate_cross_correlations_spearman(const Index = 10) const;

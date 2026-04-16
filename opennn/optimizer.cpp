@@ -299,8 +299,26 @@ void Optimizer::set_scaling()
         input_variable_descriptives = time_series_dataset->scale_features("Input");
 
         Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(neural_network->get_first("Scaling3d"));
-        scaling_layer->set_descriptives(input_variable_descriptives);
-        scaling_layer->set_scalers(input_variable_scalers);
+
+        const Index past_time_steps = time_series_dataset->get_past_time_steps();
+
+        vector<Descriptives> scaling_layer_descriptives;
+        vector<string> scaling_layer_scalers;
+        scaling_layer_descriptives.reserve(past_time_steps * input_variable_descriptives.size());
+        scaling_layer_scalers.reserve(past_time_steps * input_variable_scalers.size());
+
+        for(Index t = 0; t < past_time_steps; ++t)
+        {
+            scaling_layer_descriptives.insert(scaling_layer_descriptives.end(),
+                                              input_variable_descriptives.begin(),
+                                              input_variable_descriptives.end());
+            scaling_layer_scalers.insert(scaling_layer_scalers.end(),
+                                         input_variable_scalers.begin(),
+                                         input_variable_scalers.end());
+        }
+
+        scaling_layer->set_descriptives(scaling_layer_descriptives);
+        scaling_layer->set_scalers(scaling_layer_scalers);
     }
     else if (neural_network->has("Scaling4d"))
     {
@@ -375,6 +393,31 @@ void Optimizer::set_scaling()
     }
 
     Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+
+    if(time_series_dataset && time_series_dataset->get_multi_target())
+    {
+        const Index future_time_steps = time_series_dataset->get_future_time_steps();
+
+        vector<Descriptives> expanded_descriptives;
+        vector<string> expanded_scalers;
+        expanded_descriptives.reserve(future_time_steps * unscaling_layer_descriptives.size());
+        expanded_scalers.reserve(future_time_steps * unscaling_layer_scalers.size());
+
+        for(Index t = 0; t < future_time_steps; ++t)
+        {
+            expanded_descriptives.insert(expanded_descriptives.end(),
+                                         unscaling_layer_descriptives.begin(),
+                                         unscaling_layer_descriptives.end());
+            expanded_scalers.insert(expanded_scalers.end(),
+                                    unscaling_layer_scalers.begin(),
+                                    unscaling_layer_scalers.end());
+        }
+
+        unscaling_layer_descriptives = std::move(expanded_descriptives);
+        unscaling_layer_scalers = std::move(expanded_scalers);
+    }
 
     if(static_cast<Index>(unscaling_layer_descriptives.size()) != unscaling_layer->get_outputs_number())
         throw runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
