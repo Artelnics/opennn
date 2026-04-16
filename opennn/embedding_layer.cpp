@@ -113,6 +113,8 @@ void Embedding::set_parameters_glorot()
 
 void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
+    auto& forward_views = forward_propagation.views[layer];
+
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
         const Index batch_size = forward_propagation.batch_size;
@@ -121,14 +123,14 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
         const Index seq_len = get_sequence_length();
         const Index total_elements = batch_size * seq_len * embedding_dim;
 
-        const float* inputs_data = forward_propagation.views[layer][Inputs][0].data;
+        const float* inputs_data = forward_views[Inputs][0].data;
         const float* weights_data = parameters[Weights].data;
 
         const float* positional_encoding_data = add_positional_encoding
             ? positional_encoding_device.device()
             : nullptr;
 
-        float* outputs_ptr = forward_propagation.views[layer][Outputs][0].data;
+        float* outputs_ptr = forward_views[Outputs][0].data;
 
         embedding_forward_cuda(
             total_elements,
@@ -149,12 +151,12 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
     const Index batch_size = forward_propagation.batch_size;
     const Index total_tokens = batch_size * get_sequence_length();
 
-    const TensorView& output_view = forward_propagation.views[layer][Outputs][0];
+    const TensorView& output_view = forward_views[Outputs][0];
     MatrixMap outputs(output_view.data, total_tokens, embedding_dimension);
 
     const MatrixMap weights(parameters[Weights].data, vocabulary_size, embedding_dimension);
 
-    const type* input_indices = forward_propagation.views[layer][Inputs][0].data;
+    const type* input_indices = forward_views[Inputs][0].data;
 
     const Index sequence_length = get_sequence_length();
 
@@ -188,6 +190,10 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
                                size_t layer) const
 {
+    auto& forward_views = forward_propagation.views[layer];
+    auto& backward_views = back_propagation.backward_views[layer];
+    auto& gradient_views = back_propagation.gradient_views[layer];
+
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
         const Index batch_size = forward_propagation.batch_size;
@@ -196,10 +202,10 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
         const Index vocab_size = get_vocabulary_size();
         const Index total_elements = batch_size * seq_len * emb_dim;
 
-        float* weight_gradients_data = back_propagation.gradient_views[layer][Weights].data;
+        float* weight_gradients_data = gradient_views[Weights].data;
 
-        const float* inputs_data = forward_propagation.views[layer][Inputs][0].data;
-        const float* output_gradients_data = back_propagation.backward_views[layer][0][0].data;
+        const float* inputs_data = forward_views[Inputs][0].data;
+        const float* output_gradients_data = backward_views[0][0].data;
 
         embedding_backward_cuda(
             total_elements,
@@ -215,9 +221,9 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
     }
 #endif
 
-    const TensorView& input_indices = forward_propagation.views[layer][Inputs][0];
-    TensorView& output_gradient = back_propagation.backward_views[layer][0][0];
-    TensorView& weight_gradient = back_propagation.gradient_views[layer][Weights];
+    const TensorView& input_indices = forward_views[Inputs][0];
+    TensorView& output_gradient = backward_views[0][0];
+    TensorView& weight_gradient = gradient_views[Weights];
 
     embedding_backward(input_indices, output_gradient, weight_gradient,
                        embedding_dimension, scale_embedding);

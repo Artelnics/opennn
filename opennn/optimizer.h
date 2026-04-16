@@ -37,10 +37,6 @@ public:
 
     const Loss* get_loss() const { return loss; }
 
-    const string& get_hardware_use() const { return hardware_use; }
-
-    void set_hardware_use(string new_hardware_use) { hardware_use = std::move(new_hardware_use); }
-
     bool get_display() const { return display; }
 
     void set(Loss* new_loss) { loss = new_loss; }
@@ -99,8 +95,6 @@ protected:
     Index maximum_epochs = 10000;
 
     type maximum_time = type(360000);
-
-    string hardware_use = "Multi-core";
 
     Index display_period = 10;
 

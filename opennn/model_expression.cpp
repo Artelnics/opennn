@@ -469,7 +469,7 @@ string ModelExpression::write_dense_expression(const Dense<2>& layer,
                                                const vector<string>& output_names)
 {
     const vector<TensorView>& params = layer.get_parameter_views();
-    if (params.size() < 2 || params[0].data == nullptr || params[1].data == nullptr) return "";
+    if (params.size() < 2 || !params[0].data || !params[1].data) return "";
 
     const Index inputs_number = layer.get_inputs_number();
     const Index outputs_number = layer.get_outputs_number();
@@ -951,7 +951,7 @@ void ModelExpression::emit_js_inputs_html(ostringstream& buffer) const
         : nullptr;
     const VectorR* scaling_minimums = scaling_layer ? &scaling_layer->get_minimums() : nullptr;
     const VectorR* scaling_maximums = scaling_layer ? &scaling_layer->get_maximums() : nullptr;
-    const bool has_scaling = scaling_layer != nullptr;
+    const bool has_scaling = scaling_layer;
 
     const Index inputs_number = input_names.size();
 

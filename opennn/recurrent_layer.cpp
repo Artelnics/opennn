@@ -157,7 +157,7 @@ void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_
         all_hidden_states.chip(t, 1) = current_hidden_tensor;
     }
 
-    if(recurrent_forward_propagation->outputs.data != nullptr)
+    if(recurrent_forward_propagation->outputs.data)
     {
         TensorMap2 outputs_map(recurrent_forward_propagation->outputs.data, batch_size, output_size);
         outputs_map = all_hidden_states.chip(past_time_steps - 1, 1);

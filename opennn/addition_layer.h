@@ -65,10 +65,12 @@ public:
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
     {
-        const TensorView& input_1 = forward_propagation.views[layer][Inputs][0];
-        const TensorView& input_2 = forward_propagation.views[layer][Inputs][1];
+        auto& forward_views = forward_propagation.views[layer];
 
-        TensorView& output = forward_propagation.views[layer][Outputs][0];
+        const TensorView& input_1 = forward_views[Inputs][0];
+        const TensorView& input_2 = forward_views[Inputs][1];
+
+        TensorView& output = forward_views[Outputs][0];
 
         addition(input_1, input_2, output);
     }
@@ -77,10 +79,12 @@ public:
                         BackPropagation& back_propagation,
                         size_t layer) const override
     {
-        const TensorView& output_gradient = back_propagation.backward_views[layer][0][0];
+        auto& backward_views = back_propagation.backward_views[layer];
 
-        TensorView& input_gradient_0 = back_propagation.backward_views[layer][1][0];
-        TensorView& input_gradient_1 = back_propagation.backward_views[layer][2][0];
+        const TensorView& output_gradient = backward_views[0][0];
+
+        TensorView& input_gradient_0 = backward_views[1][0];
+        TensorView& input_gradient_1 = backward_views[2][0];
 
         copy(output_gradient, input_gradient_0);
         copy(output_gradient, input_gradient_1);
@@ -101,8 +105,10 @@ public:
     {
         printer.open_element("Addition");
 
-        add_xml_element(printer, "Label", label);
-        add_xml_element(printer, "InputDimensions", shape_to_string(input_shape));
+        write_xml_properties(printer, {
+            {"Label", label},
+            {"InputDimensions", shape_to_string(input_shape)}
+        });
 
         printer.close_element();
     }

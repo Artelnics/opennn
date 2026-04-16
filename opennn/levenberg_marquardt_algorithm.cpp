@@ -749,8 +749,10 @@ void LevenbergMarquardtAlgorithm::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("LevenbergMarquardt");
 
-    add_xml_element(printer, "DampingParameterFactor", to_string(damping_parameter_factor));
-    add_xml_element(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
+    write_xml_properties(printer, {
+        {"DampingParameterFactor", to_string(damping_parameter_factor)},
+        {"MinimumLossDecrease", to_string(minimum_loss_decrease)}
+    });
     write_common_xml(printer);
 
     printer.close_element();

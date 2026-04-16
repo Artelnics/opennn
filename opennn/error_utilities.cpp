@@ -195,11 +195,10 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
 void minkowski_error(const TensorView& input, const TensorView& target, type p, type& error, float* workspace_device)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
-        (void)input; (void)target; (void)p; (void)error; (void)workspace_device;
-        return;
-    }
+    if (Device::instance().is_gpu())
+        throw runtime_error("minkowski_error: GPU implementation not available.");
 #endif
+    (void)workspace_device;
     const Index size = input.size();
     error = (input.as_vector() - target.as_vector()).array().abs().pow(p).sum() / static_cast<type>(size);
 }
@@ -207,10 +206,8 @@ void minkowski_error(const TensorView& input, const TensorView& target, type p, 
 void minkowski_error_gradient(const TensorView& input, const TensorView& target, type p, TensorView& input_gradient)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
-        (void)input; (void)target; (void)p; (void)input_gradient;
-        return;
-    }
+    if (Device::instance().is_gpu())
+        throw runtime_error("minkowski_error_gradient: GPU implementation not available.");
 #endif
     const Index size = input.size();
     const auto diff = input.as_vector().array() - target.as_vector().array();
@@ -220,7 +217,7 @@ void minkowski_error_gradient(const TensorView& input, const TensorView& target,
 void cross_entropy_3d(const TensorView& input, const TensorView& target, type& error,
                       Index& active_tokens_out, float* errors_device)
 {
-    const Index vocabulary_size = input.shape[input.get_rank() - 1];
+    const Index vocabulary_size = input.shape.back();
     const Index sequence_length = input.shape[input.get_rank() - 2];
     const Index batch_size = input.size() / (sequence_length * vocabulary_size);
 
@@ -279,7 +276,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, type& e
 void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, TensorView& input_gradient,
                                Index active_tokens_count)
 {
-    const Index vocabulary_size = input.shape[input.get_rank() - 1];
+    const Index vocabulary_size = input.shape.back();
     const Index sequence_length = input.shape[input.get_rank() - 2];
     const Index batch_size = input.size() / (sequence_length * vocabulary_size);
 

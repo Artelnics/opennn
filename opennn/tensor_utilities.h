@@ -355,7 +355,7 @@ struct TensorView
         if (n <= 0 || c <= 0 || h <= 0 || w <= 0)
             return;
 
-        if (descriptor_handle == nullptr)
+        if (!descriptor_handle)
         {
             cudnnTensorDescriptor_t raw_desc;
             if (cudnnCreateTensorDescriptor(&raw_desc) != CUDNN_STATUS_SUCCESS)
@@ -371,7 +371,7 @@ struct TensorView
 
     Index device_size() const
     {
-        if (descriptor_handle == nullptr) return 0;
+        if (!descriptor_handle) return 0;
 
         constexpr int REQUESTED_DIMS = CUDNN_DIM_MAX;
         cudnnDataType_t dataType;
@@ -387,7 +387,7 @@ struct TensorView
 
     void fill(float value)
     {
-        if (data == nullptr) return;
+        if (!data) return;
 
         if (value == 0.0f)
             CHECK_CUDA(cudaMemset(data, 0, device_size() * sizeof(float)));
@@ -626,6 +626,7 @@ string vector_to_string(const vector<T>& x, const string& separator = " ")
 
 string vector_to_string(const VectorI& x, const string& separator = " ");
 string vector_to_string(const VectorR& x, const string& separator = " ");
+string vector_to_string(const VectorMap& x, const string& separator = " ");
 
 template <typename T, size_t Rank>
 string tensor_to_string(const TensorR<Rank>& x, const string& separator = " ")
@@ -659,7 +660,7 @@ MatrixMap matrix_map(const Tensor4&, Index, Index);
 
 inline VectorMap vector_map(const TensorView& tensor_view)
 {
-    assert(tensor_view.data != nullptr);
+    assert(tensor_view.data);
     assert(reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES == 0);
 
     return VectorMap(tensor_view.data, tensor_view.size());
@@ -667,7 +668,7 @@ inline VectorMap vector_map(const TensorView& tensor_view)
 
 inline MatrixMap matrix_map(const TensorView& tensor_view)
 {
-    assert(tensor_view.data != nullptr);
+    assert(tensor_view.data);
     assert(reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES == 0);
 
     return MatrixMap(tensor_view.data, tensor_view.shape[0], tensor_view.size() / tensor_view.shape[0]);
@@ -676,7 +677,7 @@ inline MatrixMap matrix_map(const TensorView& tensor_view)
 template <Index rank>
 TensorMapR<rank> tensor_map(const TensorView& tensor_view)
 {
-    assert(tensor_view.data != nullptr);
+    assert(tensor_view.data);
     assert(reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES == 0);
 
     if constexpr (rank == 2) // @todo For what is this? Can we simplify?

@@ -39,6 +39,11 @@ inline ActivationFunction string_to_activation(const string& name)
     return activation_function_map().from_string(name, ActivationFunction::Linear);
 }
 
+inline const string& activation_to_string(ActivationFunction function)
+{
+    return activation_function_map().to_string(function);
+}
+
 struct ActivationArguments
 {
     ActivationFunction activation_function = ActivationFunction::Linear;
@@ -83,6 +88,21 @@ struct BatchNormalizationArguments
 #endif
 };
 
+// All buffers/descriptors must be pre-allocated; dropout()/dropout_gradient()
+// only use them, they don't create or resize anything.
+struct DropoutArguments
+{
+    type rate = type(0);
+    VectorR mask_cpu;                              // CPU: 1 for kept, 0 for dropped (size = output.size())
+#ifdef OPENNN_WITH_CUDA
+    cudnnDropoutDescriptor_t descriptor = nullptr; // cudnnSetDropoutDescriptor(...)
+    void* states = nullptr;                        // cudnnDropoutGetStatesSize
+    size_t states_size = 0;
+    void* reserve_space = nullptr;                 // cudnnDropoutGetReserveSpaceSize (saved mask)
+    size_t reserve_size = 0;
+#endif
+};
+
 struct MultiheadAttentionArguments
 {
     Index batch_size;
@@ -119,14 +139,14 @@ void softmax(TensorView& output);
 
 void combination(const TensorView& input, const TensorView& weights, const TensorView& biases, TensorView& output);
 void activation(TensorView& output, ActivationArguments arguments);
-void activation_gradient(const TensorView& outputs, const TensorView& output_gradient, TensorView& activation_derivative, const ActivationFunction func, void* act_desc = nullptr);
-void dropout(TensorView& output, type dropout_rate);
-void dropout_gradient(const TensorView& output_gradient, const TensorView& mask, type dropout_rate, TensorView& input_gradient);
+void activation_gradient(const TensorView& outputs, const TensorView& output_gradient, TensorView& activation_derivative, const ActivationArguments& arguments);
+void dropout(TensorView& output, DropoutArguments& args);
+void dropout_gradient(const TensorView& output_gradient, const DropoutArguments& args, TensorView& input_gradient);
 
 // Batch normalization
 
-void batch_normalization_inference(const TensorView& input, const TensorView& gamma, const TensorView& beta, const VectorR& running_mean, const VectorR& running_variance, TensorView& output);
-void batch_normalization_training(const TensorView& input, const TensorView& gamma, const TensorView& beta, VectorR& running_mean, VectorR& running_variance, TensorView& mean, TensorView& inverse_variance, TensorView& output, type momentum = type(0.9));
+void batch_normalization_inference(const TensorView& input, const TensorView& gamma, const TensorView& beta, const TensorView& running_mean, const TensorView& running_variance, TensorView& output);
+void batch_normalization_training(const TensorView& input, const TensorView& gamma, const TensorView& beta, TensorView& running_mean, TensorView& running_variance, TensorView& mean, TensorView& inverse_variance, TensorView& output, type momentum = type(0.9));
 void batch_normalization_backward(const TensorView& input, const TensorView& output, const TensorView& output_gradient, const TensorView& mean, const TensorView& inverse_variance, const TensorView& gamma, TensorView& gamma_gradient, TensorView& beta_gradient, TensorView& input_gradient);
 
 // Layer normalization (3D)

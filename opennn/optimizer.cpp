@@ -286,8 +286,7 @@ void Optimizer::write_common_xml(XmlPrinter& printer) const
         {"LossGoal", to_string(training_loss_goal)},
         {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
         {"MaximumEpochsNumber", to_string(maximum_epochs)},
-        {"MaximumTime", to_string(maximum_time)},
-        {"HardwareUse", hardware_use}
+        {"MaximumTime", to_string(maximum_time)}
     });
 }
 
@@ -297,7 +296,6 @@ void Optimizer::read_common_xml(const XmlElement* root_element)
     set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
     set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
-    set_hardware_use(read_xml_string(root_element, "HardwareUse"));
 }
 
 TrainingResults::TrainingResults(const Index epochs_number)

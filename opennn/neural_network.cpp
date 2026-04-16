@@ -75,6 +75,19 @@ void NeuralNetwork::compile()
 
     for (auto& layer : layers)
         pointer = layer->link_parameters(pointer);
+
+    // Non-trainable persistent state (analogous to parameters)
+    Index total_states = 0;
+    for (const auto& layer : layers)
+        for (const Shape& s : layer->get_state_shapes())
+            total_states += get_aligned_size(s.size());
+
+    states.resize(total_states);
+    states.setZero();
+
+    type* state_pointer = states.data();
+    for (auto& layer : layers)
+        state_pointer = layer->link_states(state_pointer);
 }
 
 void NeuralNetwork::validate_type(LayerType type) const
@@ -1088,12 +1101,82 @@ void NeuralNetwork::link_parameters_cpu()
     }
 }
 
+void NeuralNetwork::copy_states_device()
+{
+    if(states.empty()) return;
+
+    states.resize_device(states.size());
+
+    CHECK_CUDA(cudaMemcpy(states.device(),
+                          states.vector.data(),
+                          states.size() * sizeof(float),
+                          cudaMemcpyHostToDevice));
+}
+
+void NeuralNetwork::copy_states_host()
+{
+    if(states.empty() || !states.device()) return;
+
+    CHECK_CUDA(cudaMemcpy(states.vector.data(),
+                          states.device(),
+                          states.size() * sizeof(float),
+                          cudaMemcpyDeviceToHost));
+}
+
+void NeuralNetwork::link_states_device()
+{
+    type* dev_ptr = states.device();
+    if(!dev_ptr) return;
+
+    for(auto& layer : layers)
+    {
+        const vector<Shape> shapes = layer->get_state_shapes();
+        auto& state_views = layer->get_state_views();
+
+        for(size_t i = 0; i < shapes.size(); ++i)
+        {
+            if(shapes[i].empty()) continue;
+
+            if(i < state_views.size())
+            {
+                state_views[i].data = dev_ptr;
+                state_views[i].set_descriptor(shapes[i]);
+            }
+
+            dev_ptr += get_aligned_size(shapes[i].size());
+        }
+    }
+}
+
+void NeuralNetwork::link_states_cpu()
+{
+    type* cpu_ptr = states.data();
+
+    for(auto& layer : layers)
+    {
+        const vector<Shape> shapes = layer->get_state_shapes();
+        auto& state_views = layer->get_state_views();
+
+        for(size_t i = 0; i < shapes.size(); ++i)
+        {
+            if(shapes[i].empty()) continue;
+
+            if(i < state_views.size())
+                state_views[i] = TensorView(cpu_ptr, shapes[i]);
+
+            cpu_ptr += get_aligned_size(shapes[i].size());
+        }
+    }
+}
+
 MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
                                                 ForwardPropagation& fp)
 {
     // Parameters → device, layer views → device pointers
     copy_parameters_device();
     link_parameters_device();
+    copy_states_device();
+    link_states_device();
 
     // ForwardPropagation buffers → device, fp.views → device pointers
     fp.allocate_device();
@@ -1135,6 +1218,8 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     // Free temp input buffer and restore CPU layer views
     cudaFree(input_device);
     link_parameters_cpu();
+    link_states_cpu();
+    // (no copy_states_host: inference doesn't update running stats)
 
     return result;
 }

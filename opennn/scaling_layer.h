@@ -162,8 +162,10 @@ public:
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
     {
-        const TensorView& input = forward_propagation.views[layer][0][0];
-        TensorView& output = forward_propagation.views[layer][Output][0];
+        auto& forward_views = forward_propagation.views[layer];
+
+        const TensorView& input = forward_views[0][0];
+        TensorView& output = forward_views[Output][0];
 
         // Data is scaled in-place by Optimizer::set_scaling() before training,
         // so the scaling layer just copies input to output.
@@ -260,21 +262,20 @@ public:
     {
         printer.open_element(name.c_str());
 
-        const Index outputs_number = get_outputs_number();
-
-        add_xml_element(printer, "NeuronsNumber", to_string(outputs_number));
-        add_xml_element(printer, "Means", vector_to_string(means));
-        add_xml_element(printer, "StandardDeviations", vector_to_string(standard_deviations));
-        add_xml_element(printer, "Minimums", vector_to_string(minimums));
-        add_xml_element(printer, "Maximums", vector_to_string(maximums));
-
         vector<string> scaler_names(scalers.size());
         for(size_t i = 0; i < scalers.size(); i++)
             scaler_names[i] = scaler_method_to_string(scalers[i]);
-        add_xml_element(printer, "Scalers", vector_to_string(scaler_names));
 
-        add_xml_element(printer, "MinRange", to_string(min_range));
-        add_xml_element(printer, "MaxRange", to_string(max_range));
+        write_xml_properties(printer, {
+            {"NeuronsNumber", to_string(get_outputs_number())},
+            {"Means", vector_to_string(means)},
+            {"StandardDeviations", vector_to_string(standard_deviations)},
+            {"Minimums", vector_to_string(minimums)},
+            {"Maximums", vector_to_string(maximums)},
+            {"Scalers", vector_to_string(scaler_names)},
+            {"MinRange", to_string(min_range)},
+            {"MaxRange", to_string(max_range)}
+        });
 
         printer.close_element();
     }

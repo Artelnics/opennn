@@ -189,7 +189,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
     add_layer(make_unique<Dense<2>>(get_output_shape(),
                                    hidden_shape,
                                    "RectifiedLinear",
-                                   false,
+                                   true,                       // batch_normalization
                                    "dense_2d_layer_1"));
 
     add_layer(make_unique<Dense<2>>(get_output_shape(),
@@ -690,18 +690,18 @@ void Transformer::set(const Index input_sequence_length,
         // Feed-forward
         add_layer(
             make_unique<Dense<3>>(
-                input_sequence_length,
-                embedding_dimension,
-                feed_forward_dimension,
+                Shape{input_sequence_length, embedding_dimension},
+                Shape{feed_forward_dimension},
                 "RectifiedLinear",
+                false,
                 "encoder_internal_dense" + suffix));
 
         add_layer(
             make_unique<Dense<3>>(
-                input_sequence_length,
-                feed_forward_dimension,
-                embedding_dimension,
+                Shape{input_sequence_length, feed_forward_dimension},
+                Shape{embedding_dimension},
                 "Linear",
+                false,
                 "encoder_external_dense" + suffix));
 
         const Index encoder_ff_idx = static_cast<Index>(get_layers_number()) - 1;
@@ -795,18 +795,18 @@ void Transformer::set(const Index input_sequence_length,
         // Feed-forward
         add_layer(
             make_unique<Dense<3>>(
-                decoder_sequence_length,
-                embedding_dimension,
-                feed_forward_dimension,
+                Shape{decoder_sequence_length, embedding_dimension},
+                Shape{feed_forward_dimension},
                 "RectifiedLinear",
+                false,
                 "decoder_internal_dense" + suffix));
 
         add_layer(
             make_unique<Dense<3>>(
-                decoder_sequence_length,
-                feed_forward_dimension,
-                embedding_dimension,
+                Shape{decoder_sequence_length, feed_forward_dimension},
+                Shape{embedding_dimension},
                 "Linear",
+                false,
                 "decoder_external_dense" + suffix));
 
         const Index decoder_ff_idx = static_cast<Index>(get_layers_number()) - 1;
@@ -830,10 +830,10 @@ void Transformer::set(const Index input_sequence_length,
     // Final token projection
 
     add_layer(make_unique<Dense<3>>(
-            decoder_sequence_length,
-            embedding_dimension,
-            output_vocabulary_size,
+            Shape{decoder_sequence_length, embedding_dimension},
+            Shape{output_vocabulary_size},
             "Softmax",
+            false,
             "output_projection"));
 
     // @todo If your loss already applies softmax internally and expects logits,

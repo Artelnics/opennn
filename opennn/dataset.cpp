@@ -1678,14 +1678,16 @@ void Dataset::samples_to_XML(XmlPrinter &printer) const
 void Dataset::missing_values_to_XML(XmlPrinter &printer) const
 {
     printer.open_element("MissingValues");
-    add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
     if (missing_values_number > 0)
-    {
-        add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
-        add_xml_element(printer, "VariablesMissingValuesNumber", vector_to_string(variables_missing_values_number));
-        add_xml_element(printer, "SamplesMissingValuesNumber", to_string(rows_missing_values_number));
-    }
+        write_xml_properties(printer, {
+            {"MissingValuesNumber", to_string(missing_values_number)},
+            {"MissingValuesMethod", get_missing_values_method_string()},
+            {"VariablesMissingValuesNumber", vector_to_string(variables_missing_values_number)},
+            {"SamplesMissingValuesNumber", to_string(rows_missing_values_number)}
+        });
+    else
+        add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
     printer.close_element();
 }

@@ -236,6 +236,16 @@ string vector_to_string(const VectorR& x, const string& separator)
     return buffer.str();
 }
 
+string vector_to_string(const VectorMap& x, const string& separator)
+{
+    ostringstream buffer;
+
+    for(Index i = 0; i < x.size(); i++)
+        buffer << x(i) << separator;
+
+    return buffer.str();
+}
+
 void string_to_vector(const string& input, VectorR& x)
 {
     istringstream stream(input);

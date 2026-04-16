@@ -146,8 +146,10 @@ void Unscaling::calculate_coefficients()
 
 void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-    const TensorView& input = forward_propagation.views[layer][0][0];
-    TensorView& output = forward_propagation.views[layer][1][0];
+    auto& forward_views = forward_propagation.views[layer];
+
+    const TensorView& input = forward_views[0][0];
+    TensorView& output = forward_views[1][0];
 
     // Data targets are scaled in-place by Optimizer::set_scaling(),
     // so the unscaling layer just copies input to output.

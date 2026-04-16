@@ -548,10 +548,11 @@ void Loss::to_XML(XmlPrinter& printer) const
     if (error == Error::NormalizedSquaredError)
         add_xml_element(printer, "NormalizationCoefficient", to_string(normalization_coefficient));
 
-    if (error == Error::WeightedSquaredError) {
-        add_xml_element(printer, "PositivesWeight", to_string(positives_weight));
-        add_xml_element(printer, "NegativesWeight", to_string(negatives_weight));
-    }
+    if (error == Error::WeightedSquaredError)
+        write_xml_properties(printer, {
+            {"PositivesWeight", to_string(positives_weight)},
+            {"NegativesWeight", to_string(negatives_weight)}
+        });
 
     if (error == Error::MinkowskiError)
         add_xml_element(printer, "MinkowskiParameter", to_string(minkowski_parameter));

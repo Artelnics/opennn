@@ -132,18 +132,20 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
                                            size_t layer,
                                            bool)
 {
-    const TensorView& query_input = forward_propagation.views[layer][Inputs][0];
+    auto& forward_views = forward_propagation.views[layer];
 
-    const TensorView& source_input = (forward_propagation.views[layer][Inputs].size() == 1)
+    const TensorView& query_input = forward_views[Inputs][0];
+
+    const TensorView& source_input = (forward_views[Inputs].size() == 1)
                                         ? query_input
-                                        : forward_propagation.views[layer][Inputs][1];
+                                        : forward_views[Inputs][1];
 
-    TensorView& query = forward_propagation.views[layer][Query][0];
-    TensorView& key = forward_propagation.views[layer][Key][0];
-    TensorView& value = forward_propagation.views[layer][Value][0];
-    TensorView& attention_weights_view = forward_propagation.views[layer][AttentionWeights][0];
-    TensorView& concatenated = forward_propagation.views[layer][ConcatenatedAttentionOutputs][0];
-    TensorView& output = forward_propagation.views[layer].back()[0];
+    TensorView& query = forward_views[Query][0];
+    TensorView& key = forward_views[Key][0];
+    TensorView& value = forward_views[Value][0];
+    TensorView& attention_weights_view = forward_views[AttentionWeights][0];
+    TensorView& concatenated = forward_views[ConcatenatedAttentionOutputs][0];
+    TensorView& output = forward_views.back()[0];
 
     MultiheadAttentionArguments args;
     args.batch_size = forward_propagation.batch_size;
@@ -155,9 +157,9 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     args.scaling_factor = get_scaling_factor();
     args.use_causal_mask = use_causal_mask;
     args.causal_mask = &causal_mask;
-    args.padding_mask = forward_propagation.views[layer][PaddingMask][0].data;
-    args.transpose_scratch = forward_propagation.views[layer][TransposeScratch][0].data;
-    args.attention_output_transposed = forward_propagation.views[layer][AttentionOutputTransposed][0].data;
+    args.padding_mask = forward_views[PaddingMask][0].data;
+    args.transpose_scratch = forward_views[TransposeScratch][0].data;
+    args.attention_output_transposed = forward_views[AttentionOutputTransposed][0].data;
 
     projection(query_input, parameters[QueryWeights], parameters[QueryBiases], query, args);
     projection(source_input, parameters[KeyWeights], parameters[KeyBiases], key, args);
@@ -174,13 +176,17 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
                                         BackPropagation& back_propagation,
                                         size_t layer) const
 {
-    const TensorView& query_input = forward_propagation.views[layer][Inputs][0];
-    const TensorView& source_input = (forward_propagation.views[layer][Inputs].size() == 1)
-                                         ? query_input
-                                         : forward_propagation.views[layer][Inputs][1];
-    const bool self_attention = (forward_propagation.views[layer][Inputs].size() == 1);
+    auto& forward_views = forward_propagation.views[layer];
+    auto& backward_views = back_propagation.backward_views[layer];
+    auto& gradient_views = back_propagation.gradient_views[layer];
 
-    TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradient][0];
+    const TensorView& query_input = forward_views[Inputs][0];
+    const TensorView& source_input = (forward_views[Inputs].size() == 1)
+                                         ? query_input
+                                         : forward_views[Inputs][1];
+    const bool self_attention = (forward_views[Inputs].size() == 1);
+
+    TensorView& output_gradient = backward_views[OutputGradient][0];
 
     MultiheadAttentionArguments args;
     args.batch_size = forward_propagation.batch_size;
@@ -192,34 +198,34 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     args.scaling_factor = get_scaling_factor();
     args.use_causal_mask = false;
     args.causal_mask = nullptr;
-    args.transpose_scratch = forward_propagation.views[layer][TransposeScratch][0].data;
-    args.softmax_gradient = back_propagation.backward_views[layer][SoftmaxGradient][0].data;
-    args.query_input_gradient_scratch = back_propagation.backward_views[layer][QueryInputGradientScratch][0].data;
-    args.source_input_gradient_scratch = back_propagation.backward_views[layer][SourceInputGradientScratch][0].data;
+    args.transpose_scratch = forward_views[TransposeScratch][0].data;
+    args.softmax_gradient = backward_views[SoftmaxGradient][0].data;
+    args.query_input_gradient_scratch = backward_views[QueryInputGradientScratch][0].data;
+    args.source_input_gradient_scratch = backward_views[SourceInputGradientScratch][0].data;
 
     multihead_attention_backward(
         query_input, source_input, output_gradient,
-        forward_propagation.views[layer][Query][0],
-        forward_propagation.views[layer][Key][0],
-        forward_propagation.views[layer][Value][0],
-        forward_propagation.views[layer][AttentionWeights][0],
-        forward_propagation.views[layer][ConcatenatedAttentionOutputs][0],
+        forward_views[Query][0],
+        forward_views[Key][0],
+        forward_views[Value][0],
+        forward_views[AttentionWeights][0],
+        forward_views[ConcatenatedAttentionOutputs][0],
         parameters[ProjectionWeights],
-        back_propagation.gradient_views[layer][ProjectionWeights],
-        back_propagation.gradient_views[layer][ProjectionBiases],
-        back_propagation.backward_views[layer][ConcatenatedOutputGradient][0],
-        back_propagation.backward_views[layer][AttentionWeightGradient][0],
-        back_propagation.backward_views[layer][QueryGradient][0],
-        back_propagation.backward_views[layer][KeyGradient][0],
-        back_propagation.backward_views[layer][ValueGradient][0],
-        back_propagation.gradient_views[layer][QueryWeights],
-        back_propagation.gradient_views[layer][QueryBiases],
-        back_propagation.gradient_views[layer][KeyWeights],
-        back_propagation.gradient_views[layer][KeyBiases],
-        back_propagation.gradient_views[layer][ValueWeights],
-        back_propagation.gradient_views[layer][ValueBiases],
-        back_propagation.backward_views[layer][InputQueryGradient][0],
-        back_propagation.backward_views[layer][InputSourceGradient][0],
+        gradient_views[ProjectionWeights],
+        gradient_views[ProjectionBiases],
+        backward_views[ConcatenatedOutputGradient][0],
+        backward_views[AttentionWeightGradient][0],
+        backward_views[QueryGradient][0],
+        backward_views[KeyGradient][0],
+        backward_views[ValueGradient][0],
+        gradient_views[QueryWeights],
+        gradient_views[QueryBiases],
+        gradient_views[KeyWeights],
+        gradient_views[KeyBiases],
+        gradient_views[ValueWeights],
+        gradient_views[ValueBiases],
+        backward_views[InputQueryGradient][0],
+        backward_views[InputSourceGradient][0],
         parameters[QueryWeights], parameters[KeyWeights], parameters[ValueWeights],
         args, self_attention);
 }

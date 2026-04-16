@@ -55,14 +55,13 @@ void Pooling3d::set_pooling_method(const string& new_pooling_method)
 
 void Pooling3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    const TensorView& input = forward_propagation.views[layer][Inputs][0];
-    TensorView& output = forward_propagation.views[layer].back()[0];
+    auto& forward_views = forward_propagation.views[layer];
+
+    const TensorView& input = forward_views[Inputs][0];
+    TensorView& output = forward_views.back()[0];
 
     if(pooling_method == PoolingMethod::MaxPooling)
-    {
-        TensorView& maximal_indices = forward_propagation.views[layer][MaximalIndices][0];
-        max_pooling_3d_forward(input, output, maximal_indices, is_training);
-    }
+        max_pooling_3d_forward(input, output, forward_views[MaximalIndices][0], is_training);
     else
         average_pooling_3d_forward(input, output);
 }
@@ -72,15 +71,15 @@ void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
                                size_t layer) const
 {
-    const TensorView& input = forward_propagation.views[layer][Inputs][0];
-    TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
-    TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
+    auto& forward_views = forward_propagation.views[layer];
+    auto& backward_views = back_propagation.backward_views[layer];
+
+    const TensorView& input = forward_views[Inputs][0];
+    TensorView& output_gradient = backward_views[OutputGradients][0];
+    TensorView& input_gradient = backward_views[InputGradients][0];
 
     if(pooling_method == PoolingMethod::MaxPooling)
-    {
-        const TensorView& maximal_indices = forward_propagation.views[layer][MaximalIndices][0];
-        max_pooling_3d_backward(maximal_indices, output_gradient, input_gradient);
-    }
+        max_pooling_3d_backward(forward_views[MaximalIndices][0], output_gradient, input_gradient);
     else
         average_pooling_3d_backward(input, output_gradient, input_gradient);
 }
@@ -89,8 +88,10 @@ void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
 void Pooling3d::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Pooling3d");
-    add_xml_element(printer, "InputDimensions", shape_to_string(get_input_shape()));
-    add_xml_element(printer, "PoolingMethod", write_pooling_method());
+    write_xml_properties(printer, {
+        {"InputDimensions", shape_to_string(get_input_shape())},
+        {"PoolingMethod", write_pooling_method()}
+    });
     printer.close_element();
 }
 

@@ -9,9 +9,6 @@
 #pragma once
 
 #include "layer.h"
-#include "math_utilities.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
@@ -44,31 +41,100 @@ inline ConvolutionType string_to_convolution_type(const string& name)
 
 class Convolutional final : public Layer
 {
+private:
+
+    Index kernels_number = 0;
+    Index kernel_height = 0;
+    Index kernel_width = 0;
+    Index kernel_channels = 0;
+
+    Index row_stride = 1;
+    Index column_stride = 1;
+
+    ConvolutionType convolution_type = ConvolutionType::Valid;
+    bool use_padding = false;
+
+    bool batch_normalization = false;
+    type momentum = type(0.9);
+
+    ActivationArguments activation_arguments;
+    ConvolutionArguments convolution_arguments;
+
+#ifdef OPENNN_WITH_CUDA
+    cudnnFilterDescriptor_t kernel_descriptor = nullptr;
+    cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
+
+    cudnnConvolutionFwdAlgo_t convolution_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
+    cudnnConvolutionBwdDataAlgo_t algo_data = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
+    cudnnConvolutionBwdFilterAlgo_t algo_filter = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
+
+    void* cuda_workspace = nullptr;
+    size_t cuda_workspace_size = 0;
+    void* cuda_backward_filter_workspace = nullptr;
+    size_t cuda_backward_filter_workspace_size = 0;
+#endif
+
+    enum Parameters {Biases, Weights, Gammas, Betas};
+
+    vector<Shape> get_parameter_shapes() const override
+    {
+        return {{kernels_number},                                               // Biases
+                {kernels_number, kernel_height, kernel_width, kernel_channels}, // Weights
+                {batch_normalization ? kernels_number : 0},                     // Gammas
+                {batch_normalization ? kernels_number : 0}};                    // Betas
+    }
+
+    enum States {RunningMean, RunningVariance};
+
+    vector<Shape> get_state_shapes() const override
+    {
+        if (!batch_normalization) return {};
+        return {{kernels_number},   // RunningMean
+                {kernels_number}};  // RunningVariance
+    }
+
+    enum Forward {Inputs, PaddedInputs, Convolution, BatchNormMean, BatchNormInverseVariance, Output};
+
+    vector<Shape> get_forward_shapes(Index) const override;
+
+    enum Backward {OutputGradients, InputGradients};
+
+    vector<Shape> get_backward_shapes(Index batch_size) const override
+    {
+        const Index input_height = get_input_height();
+        const Index input_width = get_input_width();
+        const Index input_channels = get_input_channels();
+
+        return {{batch_size, input_height, input_width, input_channels},
+                {kernels_number, kernel_height, kernel_width, kernel_channels}};
+    }
 
 public:
 
-    Convolutional(const Shape& = {3, 3, 1},                    // Input shape {height,width,channels}
-                  const Shape& = {3, 3, 1, 1},                 // Kernel shape {kernel_height,kernel_width,channels,kernels_number}
+    Convolutional(const Shape& = {3, 3, 1},         // Input shape {height,width,channels}
+                  const Shape& = {3, 3, 1, 1},      // Kernel shape {kernel_height,kernel_width,channels,kernels_number}
                   const string& = "Linear",
-                  const Shape& = { 1, 1 },                     // Stride shape {row_stride,column_stride}
-                  const string& = "Valid",                          // Convolution type (Valid || Same)
-                  bool = false,                              // Batch Normalization)
+                  const Shape& = {1, 1},            // Stride shape {row_stride,column_stride}
+                  const string& = "Valid",          // Convolution type (Valid || Same)
+                  bool = false,                     // Batch Normalization
                   const string& = "convolutional_layer");
 
-#ifdef OPENNN_WITH_CUDA
-    ~Convolutional()
+    ~Convolutional() override
     {
-        if(activation_descriptor) cudnnDestroyActivationDescriptor(activation_descriptor);
-        if(kernel_descriptor) cudnnDestroyFilterDescriptor(kernel_descriptor);
-        if(convolution_descriptor) cudnnDestroyConvolutionDescriptor(convolution_descriptor);
-        if(cuda_workspace) cudaFree(cuda_workspace);
-        if(cuda_backward_filter_workspace) cudaFree(cuda_backward_filter_workspace);
-    }
+#ifdef OPENNN_WITH_CUDA
+        if (activation_arguments.activation_descriptor) cudnnDestroyActivationDescriptor(activation_arguments.activation_descriptor);
+        if (kernel_descriptor) cudnnDestroyFilterDescriptor(kernel_descriptor);
+        if (convolution_descriptor) cudnnDestroyConvolutionDescriptor(convolution_descriptor);
+        if (cuda_workspace) cudaFree(cuda_workspace);
+        if (cuda_backward_filter_workspace) cudaFree(cuda_backward_filter_workspace);
 #endif
+    }
 
     bool get_batch_normalization() const { return batch_normalization; }
 
-    ActivationFunction get_activation_function() const { return activation_function; }
+    ActivationFunction get_activation_function() const { return activation_arguments.activation_function; }
+
+    ActivationFunction get_output_activation() const override { return activation_arguments.activation_function; }
 
     Shape get_output_shape() const override;
 
@@ -80,7 +146,6 @@ public:
     ConvolutionType get_convolution_type() const { return convolution_type; }
 
     Index get_column_stride() const { return column_stride; }
-
     Index get_row_stride() const { return row_stride; }
 
     Index get_kernel_height() const { return kernel_height; }
@@ -95,40 +160,10 @@ public:
     Index get_input_height() const;
     Index get_input_width() const;
 
-    vector<Shape> get_parameter_shapes() const override
-    {
-        if (batch_normalization)
-            return {{kernels_number},
-                    {kernels_number, kernel_height, kernel_width, kernel_channels},
-                    {kernels_number}, {kernels_number} };
-
-        return {{kernels_number},
-                {kernels_number, kernel_height, kernel_width, kernel_channels}};
-    }
-
-    vector<Shape> get_forward_shapes(const Index) const override;
-
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        const Index input_height = get_input_height();
-        const Index input_width = get_input_width();
-        const Index input_channels = get_input_channels();
-
-        return {{batch_size, input_height, input_width, input_channels},
-                {kernels_number, kernel_height, kernel_width, kernel_channels}};
-    }
-
-    bool use_convolutions() const
-    {
-        /*
-        return activation_function == "ScaledExponentialLinear"
-            || activation_function == "ClippedRelu"
-            || activation_function == "Swish";
-*/
-        return false;
-    }
-
-    // Set
+#ifdef OPENNN_WITH_CUDA
+    cudnnFilterDescriptor_t get_kernel_descriptor() const { return kernel_descriptor; }
+    cudnnConvolutionDescriptor_t get_convolution_descriptor() const { return convolution_descriptor; }
+#endif
 
     void set(const Shape& = {0, 0, 0},
              const Shape& = {3, 3, 1, 1},
@@ -138,100 +173,30 @@ public:
              bool = false,
              const string& = "convolutional_layer");
 
-    void set_activation_function(const string&);
+    void set_input_shape(const Shape&) override;
 
     void set_batch_normalization(bool);
+
+    void set_activation_function(const string&);
 
     void set_convolution_type(const string&);
 
     void set_row_stride(const Index);
-
     void set_column_stride(const Index);
-
-    void set_input_shape(const Shape&) override;
 
     void set_parameters_glorot() override;
     void set_parameters_random() override;
 
-    void calculate_convolutions(const Tensor4&, TensorMap4) const;
+#ifdef OPENNN_WITH_CUDA
+    void init_cuda(Index batch_size);
+#endif
 
-    void forward_propagate(ForwardPropagation&, size_t index, bool) override;
-
-    // Back propagation
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     void from_XML(const XmlDocument&) override;
     void to_XML(XmlPrinter&) const override;
-
-#ifdef OPENNN_WITH_CUDA
-
-public:
-
-    cudnnFilterDescriptor_t get_kernel_descriptor() const
-    {
-        return kernel_descriptor;
-    }
-
-    cudnnConvolutionDescriptor_t get_convolution_descriptor() const
-    {
-        return convolution_descriptor;
-    }
-
-protected:
-
-    // Activations
-
-    cudnnActivationDescriptor_t activation_descriptor = nullptr;
-
-    cudnnFilterDescriptor_t kernel_descriptor = nullptr;
-
-    cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
-
-#endif
-
-private:
-
-    Index kernels_number = 0;
-    Index kernel_height = 0;
-    Index kernel_width = 0;
-    Index kernel_channels = 0;
-
-    enum Parameters {Biases, Weights, Gammas, Betas};
-    enum Forward {Inputs, PaddedInputs};
-    enum Backward {OutputGradients, InputGradients};
-
-    Index row_stride = 1;
-    Index column_stride = 1;
-
-    ConvolutionType convolution_type = ConvolutionType::Valid;
-    bool use_padding = false;
-
-    ActivationFunction activation_function = ActivationFunction::Linear;
-
-    ConvolutionArguments convolution_arguments;
-
-    bool batch_normalization = false;
-
-    VectorR running_means;
-    VectorR running_variances;
-
-    type momentum = type(0.9);
-
-#ifdef OPENNN_WITH_CUDA
-public:
-    void init_cuda_workspace(Index batch_size);
-
-private:
-    cudnnConvolutionFwdAlgo_t convolution_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
-    cudnnConvolutionBwdDataAlgo_t algo_data = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
-    cudnnConvolutionBwdFilterAlgo_t algo_filter = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
-
-    void* cuda_workspace = nullptr;
-    size_t cuda_workspace_size = 0;
-    void* cuda_backward_filter_workspace = nullptr;
-    size_t cuda_backward_filter_workspace_size = 0;
-#endif
 };
 
 }

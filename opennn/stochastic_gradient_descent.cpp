@@ -347,8 +347,10 @@ void StochasticGradientDescent::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("StochasticGradientDescent");
 
-    add_xml_element(printer, "BatchSize", to_string(batch_size));
-    add_xml_element(printer, "ApplyMomentum", to_string(momentum > type(0)));
+    write_xml_properties(printer, {
+        {"BatchSize", to_string(batch_size)},
+        {"ApplyMomentum", to_string(momentum > type(0))}
+    });
     write_common_xml(printer);
 
     printer.close_element();
@@ -441,6 +443,8 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     neural_network->copy_parameters_device();
     neural_network->link_parameters_device();
+    neural_network->copy_states_device();
+    neural_network->link_states_device();
 
     const int PREFETCH_BATCHES = 3;
 
@@ -665,6 +669,8 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     neural_network->copy_parameters_host();
     neural_network->link_parameters_cpu();
+    neural_network->copy_states_host();
+    neural_network->link_states_cpu();
 
     set_unscaling();
 

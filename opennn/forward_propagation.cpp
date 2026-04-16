@@ -9,6 +9,7 @@
 #include "forward_propagation.h"
 #include "neural_network.h"
 #include "convolutional_layer.h"
+#include "dense_layer.h"
 
 namespace opennn
 {
@@ -66,7 +67,6 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         }
     }
 
-    // Wire inputs (Slot 0) from upstream layer outputs
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
 
     for(size_t i = 0; i < layers_number; ++i)
@@ -123,7 +123,6 @@ void ForwardPropagation::allocate_device()
         }
     }
 
-    // Re-wire layer input links to device
     for(size_t i = 0; i < layers_number; ++i)
     {
         const vector<Index>& input_idx = layer_input_indices[i];
@@ -145,13 +144,22 @@ void ForwardPropagation::allocate_device()
         }
     }
 
-    // Initialize CUDA workspaces for convolutional layers
     for(auto& layer : neural_network->get_layers())
     {
         if(layer->get_type() == LayerType::Convolutional)
         {
             Convolutional* conv = static_cast<Convolutional*>(layer.get());
-            conv->init_cuda_workspace(batch_size);
+            conv->init_cuda(batch_size);
+        }
+        else if(layer->get_type() == LayerType::Dense2d)
+        {
+            Dense<2>* dense = static_cast<Dense<2>*>(layer.get());
+            dense->init_cuda(batch_size);
+        }
+        else if(layer->get_type() == LayerType::Dense3d)
+        {
+            Dense<3>* dense = static_cast<Dense<3>*>(layer.get());
+            dense->init_cuda(batch_size);
         }
     }
 #endif

@@ -150,14 +150,13 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 
 void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    const TensorView& input = forward_propagation.views[layer][Inputs][0];
-    TensorView& output = forward_propagation.views[layer][Outputs][0];
+    auto& forward_views = forward_propagation.views[layer];
+
+    const TensorView& input = forward_views[Inputs][0];
+    TensorView& output = forward_views[Outputs][0];
 
     if(pooling_method == PoolingMethod::MaxPooling)
-    {
-        TensorView& maximal_indices = forward_propagation.views[layer][MaximalIndices][0];
-        max_pooling(input, output, maximal_indices, cached_pool_args, is_training);
-    }
+        max_pooling(input, output, forward_views[MaximalIndices][0], cached_pool_args, is_training);
     else
         average_pooling(input, output, cached_pool_args);
 }
@@ -166,16 +165,16 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
                              BackPropagation& back_propagation,
                              size_t layer) const
 {
-    const TensorView& input = forward_propagation.views[layer][Inputs][0];
-    const TensorView& output = forward_propagation.views[layer][Outputs][0];
-    const TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
-    TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
+    auto& forward_views = forward_propagation.views[layer];
+    auto& backward_views = back_propagation.backward_views[layer];
+
+    const TensorView& input = forward_views[Inputs][0];
+    const TensorView& output = forward_views[Outputs][0];
+    const TensorView& output_gradient = backward_views[OutputGradients][0];
+    TensorView& input_gradient = backward_views[InputGradients][0];
 
     if(pooling_method == PoolingMethod::MaxPooling)
-    {
-        const TensorView& maximal_indices = forward_propagation.views[layer][MaximalIndices][0];
-        max_pooling_backward(input, output, output_gradient, maximal_indices, input_gradient, cached_pool_args);
-    }
+        max_pooling_backward(input, output, output_gradient, forward_views[MaximalIndices][0], input_gradient, cached_pool_args);
     else
         average_pooling_backward(input, output, output_gradient, input_gradient, cached_pool_args);
 }

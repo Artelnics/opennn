@@ -65,21 +65,19 @@ public:
     
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
     {
-        const TensorView& input = forward_propagation.views[layer][Inputs][0];
-        TensorView& output = forward_propagation.views[layer][Outputs][0];
+        auto& forward_views = forward_propagation.views[layer];
 
-        copy(input, output);
+        copy(forward_views[Inputs][0], forward_views[Outputs][0]);
     }
-    
-    
+
+
     void back_propagate(ForwardPropagation&,
                         BackPropagation& back_propagation,
                         size_t layer) const override
     {
-        const TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
-        TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
+        auto& backward_views = back_propagation.backward_views[layer];
 
-        copy(output_gradient, input_gradient);
+        copy(backward_views[OutputGradients][0], backward_views[InputGradients][0]);
     }
     
     // Serialization
@@ -105,10 +103,17 @@ public:
     {
         printer.open_element("Flatten");
 
-        add_xml_element(printer, "InputHeight", to_string(get_input_height()));
-        add_xml_element(printer, "InputWidth", to_string(get_input_width()));
         if constexpr (Rank == 3)
-            add_xml_element(printer, "InputChannels", to_string(get_input_channels()));
+            write_xml_properties(printer, {
+                {"InputHeight", to_string(get_input_height())},
+                {"InputWidth", to_string(get_input_width())},
+                {"InputChannels", to_string(get_input_channels())}
+            });
+        else
+            write_xml_properties(printer, {
+                {"InputHeight", to_string(get_input_height())},
+                {"InputWidth", to_string(get_input_width())}
+            });
 
         printer.close_element();
     }

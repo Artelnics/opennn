@@ -118,8 +118,10 @@ void Bounding::set_upper_bound(const Index index, type new_upper_bound)
 
 void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-    const TensorView& input = forward_propagation.views[layer][Inputs][0];
-    TensorView& output = forward_propagation.views[layer][Outputs][0];
+    auto& forward_views = forward_propagation.views[layer];
+
+    const TensorView& input = forward_views[Inputs][0];
+    TensorView& output = forward_views[Outputs][0];
 
     if(bounding_method == BoundingMethod::NoBounding)
         copy(input, output);
