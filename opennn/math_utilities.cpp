@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "math_utilities.h"
+
 #ifdef OPENNN_WITH_CUDA
 #include "kernel.cuh"
 #endif
@@ -304,7 +305,8 @@ void combination(const TensorView& input,
     const Index out_cols = weights.shape[weights.get_rank() - 1];
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Device::instance().is_gpu())
+    {
         const int m = static_cast<int>(out_cols);
         const int n = static_cast<int>(rows);
         const int k = static_cast<int>(in_cols);
@@ -326,6 +328,7 @@ void combination(const TensorView& input,
         return;
     }
 #endif
+
     const MatrixMap input_2d(input.data, rows, in_cols);
     MatrixMap output_2d(output.data, rows, out_cols);
     output_2d.noalias() = (input_2d * weights.as_matrix()).rowwise() + biases.as_vector().transpose();
@@ -831,7 +834,7 @@ void convolution_activation(const TensorView& input,
                             const TensorView& bias,
                             TensorView& output,
                             const ConvolutionArguments& conv_args,
-                            const ActivationArguments& act_args)
+                            const ActivationArguments& activation_arguments)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
@@ -846,13 +849,13 @@ void convolution_activation(const TensorView& input,
             &zero,
             output.get_descriptor(), output.data,
             bias.get_descriptor(), bias.data,
-            act_args.activation_descriptor,
+            activation_arguments.activation_descriptor,
             output.get_descriptor(), output.data));
         return;
     }
 #endif
     convolution(input, weight, bias, output, conv_args);
-    opennn::activation(output, act_args);
+    opennn::activation(output, activation_arguments);
 }
 
 void convolution_backward_weights(const TensorView& input,
@@ -1566,7 +1569,8 @@ void multihead_attention_forward(
     const Index total_rows = batch_size * query_sequence_length;
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Device::instance().is_gpu())
+    {
         const int BH = static_cast<int>(total_heads);
         const int Sq = static_cast<int>(query_sequence_length);
         const int Sk = static_cast<int>(source_sequence_length);

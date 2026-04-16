@@ -348,7 +348,7 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 
     #pragma omp parallel for
 
-    for(size_t i = 0; i < layers_number; i++)
+    for(int i = 0; i < layers_number; i++)
         layer_parameter_numbers[i] = layers[i]->get_parameters_number();
 
     return layer_parameter_numbers;
@@ -400,7 +400,7 @@ void NeuralNetwork::set_parameters_glorot()
     const size_t layers_number = get_layers_number();
 
     #pragma omp parallel for
-    for(size_t i = 0; i < layers_number; i++)
+    for(int i = 0; i < layers_number; i++)
         layers[i]->set_parameters_glorot();
 }
 

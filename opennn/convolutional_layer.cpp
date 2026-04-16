@@ -44,15 +44,15 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     TensorView& padded_input = forward_propagation.views[layer][PaddedInputs][0];
     TensorView& output = forward_propagation.views[layer].back()[0];
 
-    ActivationArguments act_args;
-    act_args.activation_function = activation_function;
+    ActivationArguments activation_arguments;
+    activation_arguments.activation_function = activation_function;
 
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
         convolution_arguments.algorithm_forward = convolution_algorithm;
         convolution_arguments.workspace = cuda_workspace;
         convolution_arguments.workspace_size = cuda_workspace_size;
-        act_args.activation_descriptor = activation_descriptor;
+        activation_arguments.activation_descriptor = activation_descriptor;
 
         const bool can_fuse = !batch_normalization
                            && activation_function != ActivationFunction::Softmax
@@ -60,12 +60,12 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
         if(can_fuse)
         {
-            convolution_activation(input, parameters[Weights], parameters[Biases], output, convolution_arguments, act_args);
+            convolution_activation(input, parameters[Weights], parameters[Biases], output, convolution_arguments, activation_arguments);
         }
         else
         {
             convolution(input, parameters[Weights], parameters[Biases], output, convolution_arguments);
-            activation(output, act_args);
+            activation(output, activation_arguments);
         }
         return;
     }
@@ -76,7 +76,7 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
         copy(input, padded_input);
 
     convolution(padded_input, parameters[Weights], parameters[Biases], output, convolution_arguments);
-    activation(output, act_args);
+    activation(output, activation_arguments);
 }
 
 void Convolutional::back_propagate(ForwardPropagation& forward_propagation,

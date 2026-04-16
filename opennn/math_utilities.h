@@ -10,7 +10,7 @@
 
 #include "pch.h"
 #include "tensor_utilities.h"
-#include "random_utilities.h"
+//#include "random_utilities.h"
 
 namespace opennn
 {
@@ -145,7 +145,7 @@ void layernorm_backward(const TensorView& input, const TensorView& output_gradie
 // Convolution
 
 void convolution(const TensorView& input, const TensorView& kernel, const TensorView& bias, TensorView& output, const ConvolutionArguments& args = {});
-void convolution_activation(const TensorView& input, const TensorView& weight, const TensorView& bias, TensorView& output, const ConvolutionArguments& conv_args = {}, const ActivationArguments& act_args = {});
+void convolution_activation(const TensorView& input, const TensorView& weight, const TensorView& bias, TensorView& output, const ConvolutionArguments& conv_args = {}, const ActivationArguments& activation_arguments = {});
 void convolution_backward_weights(const TensorView& input, const TensorView& delta, TensorView& weight_grad, TensorView& bias_grad, const ConvolutionArguments& args = {});
 void convolution_backward_data(const TensorView& delta, const TensorView& kernel, TensorView& input_grad, TensorView& padded_input_grad, const ConvolutionArguments& args = {});
 

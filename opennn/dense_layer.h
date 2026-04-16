@@ -264,12 +264,12 @@ public:
                 ? batch_normalization_training(output, gammas, betas, running_means, running_variances)
                 : batch_normalization_inference(output, gammas, betas, running_means, running_variances);
 */
-        ActivationArguments act_args;
-        act_args.activation_function = activation_function;
+        ActivationArguments activation_arguments;
+        activation_arguments.activation_function = activation_function;
 #ifdef OPENNN_WITH_CUDA
-        act_args.activation_descriptor = activation_descriptor;
+        activation_arguments.activation_descriptor = activation_descriptor;
 #endif
-        activation(output, act_args);
+        activation(output, activation_arguments);
 
         if(is_training && dropout_rate > type(0))
             dropout(output, dropout_rate);
@@ -299,6 +299,7 @@ public:
         TensorView delta_2d(delta.data, {total_rows, delta.shape[delta.get_rank() - 1]});
 
         multiply(input_2d, true, delta_2d, false, weight_gradient);
+
         sum(delta_2d, bias_gradient);
 
         if (!is_first_layer)
@@ -335,6 +336,7 @@ public:
 
         if (bn_element && bn_element->get_text())
             use_batch_normalization = (string(bn_element->get_text()) == "true");
+
         set_batch_normalization(use_batch_normalization);
 
         if (batch_normalization)
@@ -349,10 +351,10 @@ public:
 
     void to_XML(XmlPrinter& printer) const override
     {
-
         printer.open_element(name.c_str());
 
         add_xml_element(printer, "Label", label);
+
         if constexpr (Rank == 3)
         {
             add_xml_element(printer, "InputSequenceLength", to_string(get_input_shape()[0]));

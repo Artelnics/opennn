@@ -342,7 +342,6 @@ void AdaptiveMomentEstimation::to_XML(XmlPrinter& printer) const
 
 void AdaptiveMomentEstimation::from_XML(const XmlDocument& document)
 {
-
     const XmlElement* root_element = get_xml_root(document, "AdaptiveMomentEstimation");
 
     set_batch_size(read_xml_index(root_element, "BatchSize"));
