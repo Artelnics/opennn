@@ -451,7 +451,7 @@ void replace_substring_within_quotes(string &str, const string &target, const st
     str = result;
 }
 
-void erase(string& text, const char& character)
+void erase(string& text, char character)
 {
     text.erase(remove(text.begin(), text.end(), character), text.end());
 }
