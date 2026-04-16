@@ -56,9 +56,9 @@ int main()
         adam->set_learning_rate(type(0.0001));
         adam->set_display_period(20);
 
-        Device::instance().set(DeviceType::Cpu);
+        Device::instance().set(DeviceType::Gpu);
 
-        cout << "Training with CPU, it might take some time: " << endl;
+        cout << "Training with GPU, it might take some time: " << endl;
         training_strategy.train();
 
         // Testing Analysis

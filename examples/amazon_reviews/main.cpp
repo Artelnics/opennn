@@ -60,7 +60,7 @@ int main()
 
         cout << "Training network..." << endl;
         training_strategy.train();
-/*
+
         // Testing Analysis
 
         TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
@@ -72,7 +72,7 @@ int main()
         MatrixR outputs = text_classification_network.calculate_text_outputs(documents);
 
         cout << "Prediction for '" << documents[0] << "': " << outputs(0,0) << endl;
-*/
+
         cout << "Good bye!" << endl;
         return 0;
     }

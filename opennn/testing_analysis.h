@@ -83,6 +83,8 @@ public:
 
     void set_neural_network(NeuralNetwork* nn) { neural_network = nn; }
     void set_dataset(Dataset* ds) { dataset = ds; }
+    void set_batch_size(Index new_batch_size) { batch_size = new_batch_size; }
+    Index get_batch_size() const { return batch_size; }
 
     // Checking
 
@@ -229,12 +231,6 @@ public:
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
-
-#ifdef OPENNN_WITH_CUDA
-
-    MatrixI calculate_confusion_cuda(const type = 0.50) const;
-
-#endif
 
 private:
 

@@ -9,7 +9,7 @@
 #include "tensor_utilities.h"
 #include "random_utilities.h"
 
-#include "../eigen/Eigen/Dense"
+#include <Eigen/Dense>
 
 namespace opennn
 {

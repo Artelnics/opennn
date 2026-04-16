@@ -47,9 +47,9 @@
 #include <sstream>
 #include <omp.h>
 
-#include "../eigen/Eigen/Core"
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
-#include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
+#include <Eigen/Core>
+#include <unsupported/Eigen/CXX11/Tensor>
+#include <Eigen/src/Core/util/DisableStupidWarnings.h>
 
 #ifdef OPENNN_WITH_CUDA
 

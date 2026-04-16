@@ -212,6 +212,10 @@ public:
     void link_parameters_device();
     void link_parameters_cpu();
 
+private:
+
+    MatrixR calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&);
+
 #endif
 
 private:

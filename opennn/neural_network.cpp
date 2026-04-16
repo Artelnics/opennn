@@ -429,6 +429,11 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     const Index batch_size = input_views[0].shape[0];
     ForwardPropagation fp(batch_size, this);
 
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu())
+        return calculate_outputs_device(input_views, fp);
+#endif
+
     forward_propagate(input_views, fp, false);
 
     const size_t layers_count = get_layers_number();
@@ -1131,6 +1136,57 @@ void NeuralNetwork::link_parameters_cpu()
             cpu_ptr += get_aligned_size(shapes[i].size());
         }
     }
+}
+
+MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
+                                                ForwardPropagation& fp)
+{
+    // Parameters → device, layer views → device pointers
+    copy_parameters_device();
+    link_parameters_device();
+
+    // ForwardPropagation buffers → device, fp.views → device pointers
+    fp.allocate_device();
+
+    // Upload inputs CPU → GPU (allocate temp device buffer)
+    const Index input_size = input_views_cpu[0].size();
+    type* input_device = nullptr;
+    CHECK_CUDA(cudaMalloc(&input_device, input_size * sizeof(type)));
+    CHECK_CUDA(cudaMemcpy(input_device,
+                          input_views_cpu[0].data,
+                          input_size * sizeof(type),
+                          cudaMemcpyHostToDevice));
+
+    vector<TensorView> input_views_gpu = input_views_cpu;
+    input_views_gpu[0].data = input_device;
+    input_views_gpu[0].set_descriptor(input_views_cpu[0].shape);
+
+    // Forward on GPU (math_utilities dispatches via Device::is_gpu)
+    forward_propagate(input_views_gpu, fp, false);
+
+    // Pick last layer output (same logic as CPU path)
+    const size_t layers_count = get_layers_number();
+    const TensorView out_view = (layers_count > 0
+                           && layers_count - 1 < fp.views.size()
+                           && fp.views[layers_count - 1].size() > 1
+                           && !fp.views[layers_count - 1].back().empty())
+                          ? fp.views[layers_count - 1].back()[0]
+                          : fp.get_last_trainable_layer_outputs();
+
+    // Download outputs GPU → CPU
+    const Index batch_size = input_views_cpu[0].shape[0];
+    const Index out_cols = out_view.size() / batch_size;
+    MatrixR result(batch_size, out_cols);
+    CHECK_CUDA(cudaMemcpy(result.data(),
+                          out_view.data,
+                          out_view.size() * sizeof(type),
+                          cudaMemcpyDeviceToHost));
+
+    // Free temp input buffer and restore CPU layer views
+    cudaFree(input_device);
+    link_parameters_cpu();
+
+    return result;
 }
 
 #endif

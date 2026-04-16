@@ -212,7 +212,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Dense<2>>(get_output_shape(),
                                    output_shape,
-                                   "Softmax",
+                                   output_shape[0] == 1 ? "Sigmoid" : "Softmax",
                                    false,
                                    "classification_layer"));
 
@@ -974,6 +974,11 @@ string Transformer::calculate_outputs(const string& source)
 
     ForwardPropagation forward_propagation(batch_size, this);
 
+    // Autoregressive decoding: forward_propagate doesn't dispatch by Device,
+    // so run inference on CPU regardless of training device.
+    const bool was_gpu = Device::instance().is_gpu();
+    if (was_gpu) Device::instance().set(DeviceType::Cpu);
+
     for(Index i = 1; i < decoder_sequence_length; i++)
     {
         const vector<TensorView> inputs =
@@ -999,6 +1004,8 @@ string Transformer::calculate_outputs(const string& source)
         if(best_id == END)
             break;
     }
+
+    if (was_gpu) Device::instance().set(DeviceType::Gpu);
 
     string result;
 

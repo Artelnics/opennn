@@ -14,7 +14,7 @@
 #include "error_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
-#include "../eigen/Eigen/LU"
+#include <Eigen/LU>
 
 namespace opennn
 {

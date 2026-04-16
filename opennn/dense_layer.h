@@ -203,6 +203,11 @@ public:
     {
         activation_function = string_to_activation(name);
 
+        // Softmax over a single output is degenerate (always 1, no gradient).
+        // Substitute Sigmoid automatically — same intent for binary classification.
+        if (activation_function == ActivationFunction::Softmax && get_outputs_number() == 1)
+            activation_function = ActivationFunction::Sigmoid;
+
 #ifdef OPENNN_WITH_CUDA
 
         if (activation_descriptor == nullptr && activation_function != ActivationFunction::Softmax)

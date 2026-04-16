@@ -113,7 +113,38 @@ void Embedding::set_parameters_glorot()
 
 void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-#ifndef OPENNN_WITH_CUDA
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu()) {
+        const Index batch_size = forward_propagation.batch_size;
+        const Index embedding_dim = get_embedding_dimension();
+        const Index vocab_size = get_vocabulary_size();
+        const Index seq_len = get_sequence_length();
+        const Index total_elements = batch_size * seq_len * embedding_dim;
+
+        const float* inputs_data = forward_propagation.views[layer][Inputs][0].data;
+        const float* weights_data = parameters[Weights].data;
+
+        const float* positional_encoding_data = add_positional_encoding
+            ? positional_encoding_device.device()
+            : nullptr;
+
+        float* outputs_ptr = forward_propagation.views[layer][Outputs][0].data;
+
+        embedding_forward_cuda(
+            total_elements,
+            inputs_data,
+            weights_data,
+            positional_encoding_data,
+            outputs_ptr,
+            seq_len,
+            embedding_dim,
+            vocab_size,
+            scale_embedding,
+            add_positional_encoding
+        );
+        return;
+    }
+#endif
 
     const Index batch_size = forward_propagation.batch_size;
     const Index total_tokens = batch_size * get_sequence_length();
@@ -151,47 +182,38 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
             if (static_cast<Index>(input_indices[i]) > 0)
                 outputs.row(i) += positional_encoding.row(i % sequence_length);
     }
-
-    //if(is_training && dropout_rate > 0)
-    //    dropout(outputs, dropout_rate);
-
-#else
-    const Index batch_size = forward_propagation.batch_size;
-    const Index embedding_dimension = get_embedding_dimension();
-    const Index vocabulary_size = get_vocabulary_size();
-    const Index seq_len = get_sequence_length();
-    const Index total_elements = batch_size * seq_len * embedding_dimension;
-
-    const float* inputs_data = forward_propagation.views[layer][Inputs][0].data;
-    const float* weights_data = parameters[Weights].data;
-
-    const float* positional_encoding_data = add_positional_encoding
-        ? positional_encoding_device.device()
-        : nullptr;
-
-    float* outputs_ptr = forward_propagation.views[layer][Outputs][0].data;
-
-    embedding_forward_cuda(
-        total_elements,
-        inputs_data,
-        weights_data,
-        positional_encoding_data,
-        outputs_ptr,
-        seq_len,
-        embedding_dimension,
-        vocabulary_size,
-        scale_embedding,
-        add_positional_encoding
-    );
-
-#endif
 }
 
 void Embedding::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
                                size_t layer) const
 {
-#ifndef OPENNN_WITH_CUDA
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu()) {
+        const Index batch_size = forward_propagation.batch_size;
+        const Index seq_len = get_sequence_length();
+        const Index emb_dim = get_embedding_dimension();
+        const Index vocab_size = get_vocabulary_size();
+        const Index total_elements = batch_size * seq_len * emb_dim;
+
+        float* weight_gradients_data = back_propagation.gradient_views[layer][Weights].data;
+
+        const float* inputs_data = forward_propagation.views[layer][Inputs][0].data;
+        const float* output_gradients_data = back_propagation.backward_views[layer][0][0].data;
+
+        embedding_backward_cuda(
+            total_elements,
+            inputs_data,
+            output_gradients_data,
+            weight_gradients_data,
+            seq_len,
+            emb_dim,
+            vocab_size,
+            scale_embedding
+        );
+        return;
+    }
+#endif
 
     const TensorView& input_indices = forward_propagation.views[layer][Inputs][0];
     TensorView& output_gradient = back_propagation.backward_views[layer][0][0];
@@ -199,30 +221,6 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
 
     embedding_backward(input_indices, output_gradient, weight_gradient,
                        embedding_dimension, scale_embedding);
-
-#else
-    const Index batch_size = forward_propagation.batch_size;
-    const Index seq_len = get_sequence_length();
-    const Index emb_dim = get_embedding_dimension();
-    const Index vocab_size = get_vocabulary_size();
-    const Index total_elements = batch_size * seq_len * emb_dim;
-
-    float* weight_gradients_data = back_propagation.gradient_views[layer][Weights].data;
-
-    const float* inputs_data = forward_propagation.views[layer][Inputs][0].data;
-    const float* output_gradients_data = back_propagation.backward_views[layer][0][0].data;
-
-    embedding_backward_cuda(
-        total_elements,
-        inputs_data,
-        output_gradients_data,
-        weight_gradients_data,
-        seq_len,
-        emb_dim,
-        vocab_size,
-        scale_embedding
-    );
-#endif
 }
 
 void Embedding::from_XML(const XmlDocument& document)
