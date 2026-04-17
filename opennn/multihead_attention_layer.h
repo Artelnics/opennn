@@ -45,7 +45,6 @@ public:
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        const Index embedding_dimension = get_embedding_dimension();
         const Index head_dimension = get_head_dimension();
 
         const Index max_seq = max(query_sequence_length, source_sequence_length);
@@ -63,23 +62,18 @@ public:
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        const Index embedding_dimension = get_embedding_dimension();
         const Index head_dimension = get_head_dimension();
 
-        const Index q_len = query_sequence_length;
-        const Index s_len = source_sequence_length;
-        const Index h_num = heads_number;
-
-        return {{batch_size, q_len, embedding_dimension},         // InputQueryGradient
-                {batch_size, s_len, embedding_dimension},         // InputSourceGradient
-                {batch_size, h_num, q_len, s_len},                // AttentionWeightGradient
-                {batch_size, q_len, embedding_dimension},         // ConcatenatedOutputGradient
-                {batch_size, h_num, q_len, head_dimension},       // QueryGradient (transposed)
-                {batch_size, h_num, s_len, head_dimension},       // KeyGradient (transposed)
-                {batch_size, h_num, s_len, head_dimension},       // ValueGradient (transposed)
-                {batch_size, h_num, q_len, s_len},                // SoftmaxGradient
-                {batch_size, q_len, embedding_dimension},         // QueryInputGradient (scratch)
-                {batch_size, s_len, embedding_dimension}};        // SourceInputGradient (scratch)
+        return {{batch_size, query_sequence_length, embedding_dimension},                          // InputQueryGradient
+                {batch_size, source_sequence_length, embedding_dimension},                         // InputSourceGradient
+                {batch_size, heads_number, query_sequence_length, source_sequence_length},         // AttentionWeightGradient
+                {batch_size, query_sequence_length, embedding_dimension},                          // ConcatenatedOutputGradient
+                {batch_size, heads_number, query_sequence_length, head_dimension},                 // QueryGradient (transposed)
+                {batch_size, heads_number, source_sequence_length, head_dimension},                // KeyGradient (transposed)
+                {batch_size, heads_number, source_sequence_length, head_dimension},                // ValueGradient (transposed)
+                {batch_size, heads_number, query_sequence_length, source_sequence_length},         // SoftmaxGradient
+                {batch_size, query_sequence_length, embedding_dimension},                          // QueryInputGradient (scratch)
+                {batch_size, source_sequence_length, embedding_dimension}};                        // SourceInputGradient (scratch)
     }
 
     void set_input_shape(const Shape& new_input_shape) override

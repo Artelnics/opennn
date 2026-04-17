@@ -635,9 +635,12 @@ void Dataset::set_variable_indices(const vector<Index>& input_variables,
         set_variable_role(index, "Input");
 
     for(const Index index : target_variables)
-        variables[index].role == VariableRole::Input
-            ? set_variable_role(index, "InputTarget")
-            : set_variable_role(index, "Target");
+    {
+        if(variables[index].role == VariableRole::Input)
+            set_variable_role(index, "InputTarget");
+        else
+            set_variable_role(index, "Target");
+    }
 
     const Index input_dimensions_num = get_features_number("Input");
     const Index target_shape_num = get_features_number("Target");
@@ -1546,20 +1549,28 @@ void Dataset::apply_scaler(Index feature_index, const string& scaler, const Desc
     switch(method)
     {
     case ScalerMethod::MinimumMaximum:
-        unscale ? unscale_minimum_maximum(map, feature_index, desc)
-                : scale_minimum_maximum(map, feature_index, desc);
+        if(unscale)
+            unscale_minimum_maximum(map, feature_index, desc);
+        else
+            scale_minimum_maximum(map, feature_index, desc);
         break;
     case ScalerMethod::MeanStandardDeviation:
-        unscale ? unscale_mean_standard_deviation(map, feature_index, desc)
-                : scale_mean_standard_deviation(map, feature_index, desc);
+        if(unscale)
+            unscale_mean_standard_deviation(map, feature_index, desc);
+        else
+            scale_mean_standard_deviation(map, feature_index, desc);
         break;
     case ScalerMethod::StandardDeviation:
-        unscale ? unscale_standard_deviation(map, feature_index, desc)
-                : scale_standard_deviation(map, feature_index, desc);
+        if(unscale)
+            unscale_standard_deviation(map, feature_index, desc);
+        else
+            scale_standard_deviation(map, feature_index, desc);
         break;
     case ScalerMethod::Logarithm:
-        unscale ? unscale_logarithmic(map, feature_index)
-                : scale_logarithmic(map, feature_index);
+        if(unscale)
+            unscale_logarithmic(map, feature_index);
+        else
+            scale_logarithmic(map, feature_index);
         break;
     case ScalerMethod::ImageMinMax:
         if(unscale) unscale_image_minimum_maximum(map, feature_index);

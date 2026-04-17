@@ -35,68 +35,6 @@ Convolutional::Convolutional(const Shape& new_input_shape,
         new_label);
 }
 
-// Getters
-
-Shape Convolutional::get_output_shape() const
-{
-    return { get_output_height(), get_output_width(), get_kernels_number() };
-}
-
-Index Convolutional::get_output_height() const
-{
-    return (convolution_type == ConvolutionType::Same)
-    ? (get_input_height() + get_row_stride() - 1) / get_row_stride()
-    : (get_input_height() - get_kernel_height()) / get_row_stride() + 1;
-}
-
-Index Convolutional::get_output_width() const
-{
-    return (convolution_type == ConvolutionType::Same)
-    ? (get_input_width() + get_column_stride() - 1) / get_column_stride()
-    : (get_input_width() - get_kernel_width()) / get_column_stride() + 1;
-}
-
-Index Convolutional::get_input_height() const
-{
-    return input_shape[0];
-}
-
-Index Convolutional::get_input_width() const
-{
-    return input_shape[1];
-}
-
-Index Convolutional::get_input_channels() const
-{
-    return input_shape[2];
-}
-
-pair<Index, Index> Convolutional::get_padding() const
-{
-    return { get_padding_height(), get_padding_width() };
-}
-
-Index Convolutional::get_padding_height() const
-{
-    if (convolution_type == ConvolutionType::Valid)
-        return 0;
-
-    const Index output_height = (get_input_height() + get_row_stride() - 1) / get_row_stride();
-    const Index total_padding = (output_height - 1) * get_row_stride() + get_kernel_height() - get_input_height();
-
-    return total_padding / 2;
-}
-
-Index Convolutional::get_padding_width() const
-{
-    if (convolution_type == ConvolutionType::Valid)
-        return 0;
-
-    const Index output_width = (get_input_width() + get_column_stride() - 1) / get_column_stride();
-    const Index total_padding = (output_width - 1) * get_column_stride() + get_kernel_width() - get_input_width();
-
-    return total_padding / 2;
-}
 
 // Setters
 
@@ -163,7 +101,7 @@ void Convolutional::set(const Shape& new_input_shape,
 
     cudnnSetConvolution2dDescriptor(convolution_descriptor,
                                     get_padding_height(), get_padding_width(),
-                                    get_row_stride(), get_column_stride(),
+                                    row_stride, column_stride,
                                     1, 1,
                                     CUDNN_CROSS_CORRELATION,
                                     CUDNN_DATA_FLOAT);
@@ -244,9 +182,9 @@ void Convolutional::set_batch_normalization(bool new_batch_normalization)
 
 void Convolutional::set_parameters_glorot()
 {
-    const Index kernel_area = get_kernel_height() * get_kernel_width();
-    const Index fan_in = kernel_area * get_kernel_channels();
-    const Index fan_out = kernel_area * get_kernels_number();
+    const Index kernel_area = kernel_height * kernel_width;
+    const Index fan_in = kernel_area * kernel_channels;
+    const Index fan_out = kernel_area * kernels_number;
 
     const type limit = sqrt(6.0f / static_cast<type>(fan_in + fan_out));
 
@@ -294,8 +232,8 @@ void Convolutional::init_cuda(Index batch_size)
     cudnnSetTensor4dDescriptor(input_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
                                static_cast<int>(batch_size),
                                static_cast<int>(kernel_channels),
-                               static_cast<int>(get_input_height()),
-                               static_cast<int>(get_input_width()));
+                               static_cast<int>(input_height),
+                               static_cast<int>(input_width));
 
     cudnnTensorDescriptor_t output_desc;
     cudnnCreateTensorDescriptor(&output_desc);
@@ -388,7 +326,12 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 #endif
 
     if (!is_gpu)
-        use_padding ? padding(input, padded_input) : copy(input, padded_input);
+    {
+        if(use_padding)
+            padding(input, padded_input);
+        else
+            copy(input, padded_input);
+    }
 
     const TensorView& conv_input = is_gpu ? input : padded_input;
 
@@ -397,14 +340,15 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
         TensorView& combination_output = forward_views[Convolution][0];
         convolution(conv_input, weights, biases, combination_output, convolution_arguments);
 
-        is_training
-            ? batch_normalization_training(combination_output, gammas, betas,
-                                           states[RunningMean], states[RunningVariance],
-                                           forward_views[BatchNormMean][0], forward_views[BatchNormInverseVariance][0],
-                                           output, momentum)
-            : batch_normalization_inference(combination_output, gammas, betas,
-                                            states[RunningMean], states[RunningVariance],
-                                            output);
+        if(is_training)
+            batch_normalization_training(combination_output, gammas, betas,
+                                         states[RunningMean], states[RunningVariance],
+                                         forward_views[BatchNormMean][0], forward_views[BatchNormInverseVariance][0],
+                                         output, momentum);
+        else
+            batch_normalization_inference(combination_output, gammas, betas,
+                                          states[RunningMean], states[RunningVariance],
+                                          output);
 
         activation(output, activation_arguments);
     }
@@ -458,6 +402,8 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                  gradient_views[Bias],
                                  convolution_arguments);
 
+    // @todo Remove unused padded_input_grad parameter from convolution_backward_data.
+    //       Both args are InputGradient because padded_input_grad is unused in the implementation.
     if (!is_first_layer)
         convolution_backward_data(delta,
                                   parameters[Weight],
@@ -475,6 +421,11 @@ void Convolutional::from_XML(const XmlDocument& document)
     set_label(read_xml_string(convolutional_layer_element, "Label"));
 
     set_input_shape(string_to_shape(read_xml_string(convolutional_layer_element, "InputDimensions")));
+
+    kernel_height = read_xml_index(convolutional_layer_element, "KernelsHeight");
+    kernel_width = read_xml_index(convolutional_layer_element, "KernelsWidth");
+    kernel_channels = read_xml_index(convolutional_layer_element, "KernelsChannels");
+    kernels_number = read_xml_index(convolutional_layer_element, "KernelsNumber");
 
     set_activation_function(read_xml_string(convolutional_layer_element, "Activation"));
 
@@ -529,27 +480,21 @@ void Convolutional::to_XML(XmlPrinter& printer) const
 
 Shape Convolutional::get_output_shape() const
 {
-    return { get_output_height(), get_output_width(), get_kernels_number() };
+    return { get_output_height(), get_output_width(), kernels_number };
 }
 
 Index Convolutional::get_output_height() const
 {
-    const Index input_height = get_input_height();
-    const Index stride = get_row_stride();
-
     return (convolution_type == ConvolutionType::Same)
-        ? (input_height + stride - 1) / stride
-        : (input_height - get_kernel_height()) / stride + 1;
+        ? (input_height + row_stride - 1) / row_stride
+        : (input_height - kernel_height) / row_stride + 1;
 }
 
 Index Convolutional::get_output_width() const
 {
-    const Index input_width = get_input_width();
-    const Index stride = get_column_stride();
-
     return (convolution_type == ConvolutionType::Same)
-        ? (input_width + stride - 1) / stride
-        : (input_width - get_kernel_width()) / stride + 1;
+        ? (input_width + column_stride - 1) / column_stride
+        : (input_width - kernel_width) / column_stride + 1;
 }
 
 pair<Index, Index> Convolutional::get_padding() const
@@ -562,10 +507,8 @@ Index Convolutional::get_padding_height() const
     if (convolution_type == ConvolutionType::Valid)
         return 0;
 
-    const Index input_height = get_input_height();
-    const Index stride = get_row_stride();
-    const Index output_height = (input_height + stride - 1) / stride;
-    const Index total_padding = (output_height - 1) * stride + get_kernel_height() - input_height;
+    const Index output_height = (input_height + row_stride - 1) / row_stride;
+    const Index total_padding = (output_height - 1) * row_stride + kernel_height - input_height;
 
     return total_padding / 2;
 }
@@ -575,10 +518,8 @@ Index Convolutional::get_padding_width() const
     if (convolution_type == ConvolutionType::Valid)
         return 0;
 
-    const Index input_width = get_input_width();
-    const Index stride = get_column_stride();
-    const Index output_width = (input_width + stride - 1) / stride;
-    const Index total_padding = (output_width - 1) * stride + get_kernel_width() - input_width;
+    const Index output_width = (input_width + column_stride - 1) / column_stride;
+    const Index total_padding = (output_width - 1) * column_stride + kernel_width - input_width;
 
     return total_padding / 2;
 }
@@ -588,38 +529,6 @@ Index Convolutional::get_input_height() const { return input_height; }
 Index Convolutional::get_input_width() const { return input_width; }
 
 Index Convolutional::get_input_channels() const { return input_channels; }
-
-vector<Shape> Convolutional::get_forward_shapes(const Index batch_size) const
-{
-    const Index input_height = get_input_height();
-    const Index input_width = get_input_width();
-    const Index input_channels = get_input_channels();
-
-    const Index output_height = get_output_height();
-    const Index output_width = get_output_width();
-
-    const Index padding_height = get_padding_height();
-    const Index padding_width = get_padding_width();
-
-    const Shape output_shape = {batch_size, output_height, output_width, kernels_number};
-    const Shape padded_shape = {batch_size,
-                                input_height + 2 * padding_height,
-                                input_width + 2 * padding_width,
-                                input_channels};
-
-    if (batch_normalization)
-        return {padded_shape,             // PaddedInput
-                output_shape,             // Convolution
-                Shape{kernels_number},    // BatchNormMean
-                Shape{kernels_number},    // BatchNormInverseVariance
-                output_shape};            // Output
-
-    return {padded_shape,                 // PaddedInput
-            Shape{},                      // Convolution (unused)
-            Shape{},                      // BatchNormMean (unused)
-            Shape{},                      // BatchNormInverseVariance (unused)
-            output_shape};                // Output
-}
 
 REGISTER(Layer, Convolutional, "Convolutional")
 

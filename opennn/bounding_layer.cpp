@@ -120,13 +120,14 @@ void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    bounding_method == BoundingMethod::NoBounding
-        ? copy(input, 
-               output)
-        : bounding(forward_views[Input][0], 
-                   TensorView(lower_bounds.data(), {lower_bounds.size()}), 
-                   TensorView(upper_bounds.data(), {upper_bounds.size()}), 
-                   forward_views[Output][0]);
+    if(bounding_method == BoundingMethod::NoBounding)
+        copy(forward_views[Input][0],
+             forward_views[Output][0]);
+    else
+        bounding(forward_views[Input][0],
+                 TensorView(lower_bounds.data(), {lower_bounds.size()}),
+                 TensorView(upper_bounds.data(), {upper_bounds.size()}),
+                 forward_views[Output][0]);
 }
 
 void Bounding::to_XML(XmlPrinter& printer) const

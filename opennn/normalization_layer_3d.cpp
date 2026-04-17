@@ -69,17 +69,16 @@ void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation,
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    const Index batch_size = forward_propagation.batch_size;
-
-    const TensorView& input = forward_views[Input][0];
-    TensorView& means = forward_views[Means][0];
-    TensorView& stddevs = forward_views[StandardDeviations][0];
-    TensorView& normalized = forward_views[NormalizedInput][0];
-    TensorView& output = forward_views[Output][0];
-
-    layernorm_forward(input, parameters[Gamma], parameters[Beta],
-                      means, stddevs, normalized, output,
-                      batch_size, sequence_length, embedding_dimension);
+    layernorm_forward(forward_views[Input][0], 
+                      parameters[Gamma], 
+                      parameters[Beta],
+                      forward_views[Means][0], 
+                      forward_views[StandardDeviations][0], 
+                      forward_views[NormalizedInput][0], 
+                      forward_views[Output][0],
+                      forward_propagation.batch_size, 
+                      sequence_length, 
+                      embedding_dimension);
 }
 
 
@@ -91,21 +90,18 @@ void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
     auto& backward_views = back_propagation.backward_views[layer];
     auto& gradient_views = back_propagation.gradient_views[layer];
 
-    const Index batch_size = forward_propagation.batch_size;
-
-    const TensorView& input = forward_views[Input][0];
-    const TensorView& means = forward_views[Means][0];
-    const TensorView& stddevs = forward_views[StandardDeviations][0];
-    const TensorView& normalized = forward_views[NormalizedInput][0];
-    const TensorView& output_gradient = backward_views[OutputGradient][0];
-    TensorView& input_gradient = backward_views[InputGradient][0];
-
-    layernorm_backward(input, output_gradient,
-                       means, stddevs, normalized, parameters[Gamma],
+    layernorm_backward(forward_views[Input][0], 
+                       backward_views[OutputGradient][0],
+                       forward_views[Means][0], 
+                       forward_views[StandardDeviations][0], 
+                       forward_views[NormalizedInput][0], 
+                       parameters[Gamma],
                        gradient_views[Gamma],
                        gradient_views[Beta],
-                       input_gradient,
-                       batch_size, sequence_length, embedding_dimension);
+                       backward_views[InputGradient][0],
+                       forward_propagation.batch_size, 
+                       sequence_length, 
+                       embedding_dimension);
 }
 
 

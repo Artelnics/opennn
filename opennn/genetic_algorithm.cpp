@@ -98,9 +98,10 @@ void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number
 
 void GeneticAlgorithm::initialize_population()
 {
-    initialization_method == "Random"
-        ? initialize_population_random()
-        : initialize_population_correlations();
+    if(initialization_method == "Random")
+        initialize_population_random();
+    else
+        initialize_population_correlations();
 }
 
 void GeneticAlgorithm::initialize_population_random()

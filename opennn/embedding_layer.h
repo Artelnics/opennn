@@ -35,12 +35,12 @@ public:
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        return {{batch_size, get_sequence_length(), embedding_dimension}}; // Output
+        return {{batch_size, sequence_length, embedding_dimension}}; // Output
     }
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        return {{batch_size, get_sequence_length()}};
+        return {{batch_size, sequence_length}};
     }
 
     void set(const Index = 0,

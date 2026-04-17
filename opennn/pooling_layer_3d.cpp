@@ -53,19 +53,19 @@ void Pooling3d::set_pooling_method(const string& new_pooling_method)
     pooling_method = string_to_pooling_method(new_pooling_method);
 }
 
-// Forward / back propagation
 
 void Pooling3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    const TensorView& input = forward_views[Input][0];
-    TensorView& output = forward_views.back()[0];
-
     if(pooling_method == PoolingMethod::MaxPooling)
-        max_pooling_3d_forward(input, output, forward_views[MaximalIndices][0], is_training);
+        max_pooling_3d_forward(forward_views[Input][0], 
+                               forward_views[Output][0], 
+                               forward_views[MaximalIndices][0], 
+                               is_training);
     else
-        average_pooling_3d_forward(input, output);
+        average_pooling_3d_forward(forward_views[Input][0], 
+                                   forward_views[Output][0]);
 }
 
 void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
@@ -75,17 +75,15 @@ void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
     auto& forward_views = forward_propagation.views[layer];
     auto& backward_views = back_propagation.backward_views[layer];
 
-    const TensorView& input = forward_views[Input][0];
-    TensorView& output_gradient = backward_views[OutputGradient][0];
-    TensorView& input_gradient = backward_views[InputGradient][0];
-
     if(pooling_method == PoolingMethod::MaxPooling)
-        max_pooling_3d_backward(forward_views[MaximalIndices][0], output_gradient, input_gradient);
+        max_pooling_3d_backward(forward_views[MaximalIndices][0],
+                                backward_views[OutputGradient][0],
+                                backward_views[InputGradient][0]);
     else
-        average_pooling_3d_backward(input, output_gradient, input_gradient);
+        average_pooling_3d_backward(forward_views[Input][0],
+                                    backward_views[OutputGradient][0],
+                                    backward_views[InputGradient][0]);
 }
-
-// Serialization
 
 void Pooling3d::from_XML(const XmlDocument& document)
 {

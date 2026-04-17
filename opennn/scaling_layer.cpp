@@ -1,5 +1,5 @@
 //   OpenNN: Open Neural Networks Library
-//   www.opennnn.net
+//   www.opennn.net
 //
 //   S C A L I N G   L A Y E R   C L A S S
 //

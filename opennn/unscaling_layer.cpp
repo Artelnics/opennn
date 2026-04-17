@@ -148,13 +148,10 @@ void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    const TensorView& input = forward_views[Input][0];
-    TensorView& output = forward_views[Output][0];
-
     // Data targets are scaled in-place by Optimizer::set_scaling(),
     // so the unscaling layer just copies input to output.
     // The unscaling coefficients are stored for serialization/expression only.
-    copy(input, output);
+    copy(forward_views[Input][0], forward_views[Output][0]);
 }
 
 void Unscaling::print() const

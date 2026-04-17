@@ -1,5 +1,5 @@
 //   OpenNN: Open Neural Networks Library
-//   www.opennnn.net
+//   www.opennn.net
 //
 //   F L A T T E N   L A Y E R   R E G I S T R A T I O N
 //

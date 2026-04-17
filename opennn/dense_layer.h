@@ -296,12 +296,11 @@ public:
             cudnnCreateTensorDescriptor(&temp_desc);
 
             const Index output_size = get_outputs_number();
-            const Index seq_len = get_sequence_length();
 
             cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
                                        static_cast<int>(batch_size),
                                        static_cast<int>(output_size),
-                                       static_cast<int>(seq_len),
+                                       static_cast<int>(sequence_length),
                                        1);
 
             if (dropout_arguments.descriptor) { cudnnDestroyDropoutDescriptor(dropout_arguments.descriptor); dropout_arguments.descriptor = nullptr; }
@@ -337,22 +336,23 @@ public:
                         parameters[Bias],
                         forward_views[Combination][0]);
 
-            is_training
-                ? batch_normalization_training(forward_views[Combination][0],
-                                               parameters[Gamma],
-                                               parameters[Beta],
-                                               states[RunningMean],
-                                               states[RunningVariance],
-                                               forward_views[BatchNormMean][0],
-                                               forward_views[BatchNormInverseVariance][0],
-                                               output,
-                                               momentum)
-                : batch_normalization_inference(forward_views[Combination][0],
-                                                parameters[Gamma],
-                                                parameters[Beta],
-                                                states[RunningMean],
-                                                states[RunningVariance],
-                                                output);
+            if(is_training)
+                batch_normalization_training(forward_views[Combination][0],
+                                             parameters[Gamma],
+                                             parameters[Beta],
+                                             states[RunningMean],
+                                             states[RunningVariance],
+                                             forward_views[BatchNormMean][0],
+                                             forward_views[BatchNormInverseVariance][0],
+                                             forward_views[Output][0],
+                                             momentum);
+            else
+                batch_normalization_inference(forward_views[Combination][0],
+                                              parameters[Gamma],
+                                              parameters[Beta],
+                                              states[RunningMean],
+                                              states[RunningVariance],
+                                              forward_views[Output][0]);
         }
         else
             combination(forward_views[Input][0], parameters[Weight], parameters[Bias], forward_views[Output][0]);
@@ -379,7 +379,7 @@ public:
         activation_gradient(output, delta, delta, activation_arguments);
 
         if (dropout_rate > type(0))
-            dropout_gradient(delta, dropout_arguments, delta);
+            dropout_gradient(delta, delta, dropout_arguments);
 
         if (batch_normalization)
             batch_normalization_backward(forward_views[Combination][0], output, delta,

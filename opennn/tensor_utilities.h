@@ -18,6 +18,9 @@ namespace opennn
 
 static constexpr Index ALIGN_BYTES = EIGEN_MAX_ALIGN_BYTES; // usually 32
 static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(type);
+
+inline int to_int(Index value) { return static_cast<int>(value); }
+inline type to_type(Index value) { return static_cast<type>(value); }
 static constexpr Index ALIGN_MASK = ~(ALIGN_ELEMENTS - 1);
 
 inline Index get_aligned_size(Index size)
@@ -336,6 +339,14 @@ struct TensorView
         return MatrixMap(data, shape[0], shape.size() / shape[0]);
     }
 
+    MatrixMap as_matrix(Index batch_index) const
+    {
+        assert(data && shape.rank() >= 2);
+        const Index rows = shape[shape.rank() - 2];
+        const Index cols = shape[shape.rank() - 1];
+        return MatrixMap(data + batch_index * rows * cols, rows, cols);
+    }
+
     VectorMap as_vector() const
     {
         assert(data);
@@ -347,6 +358,20 @@ struct TensorView
     {
         assert(data && shape.rank() == Rank);
         return TensorMapR<Rank>(data, shape.template get_eigen_dims<Rank>());
+    }
+
+    template<int Rank>
+    TensorMapR<Rank> as_tensor(Index batch_index) const
+    {
+        assert(data && shape.rank() == Rank + 1);
+        Eigen::array<Index, Rank> dims;
+        Index slice_size = 1;
+        for(int i = 0; i < Rank; ++i)
+        {
+            dims[i] = shape[i + 1];
+            slice_size *= shape[i + 1];
+        }
+        return TensorMapR<Rank>(data + batch_index * slice_size, dims);
     }
 
 #ifdef OPENNN_WITH_CUDA

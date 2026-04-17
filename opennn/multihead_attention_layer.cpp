@@ -63,17 +63,17 @@ Index MultiHeadAttention::get_head_dimension() const
 {
     return (heads_number == 0)
         ? 0
-        : Index(get_embedding_dimension() / heads_number);
+        : Index(embedding_dimension / heads_number);
 }
 
 Shape MultiHeadAttention::get_input_shape() const
 {
-    return { query_sequence_length, get_embedding_dimension() };
+    return { query_sequence_length, embedding_dimension };
 }
 
 Shape MultiHeadAttention::get_output_shape() const
 {
-    return { query_sequence_length, get_embedding_dimension() };
+    return { query_sequence_length, embedding_dimension };
 }
 
 vector<Shape> MultiHeadAttention::get_parameter_shapes() const
@@ -139,9 +139,9 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
                                         ? query_input
                                         : forward_views[Input][1];
 
-    TensorView& query = forward_views[Query][0];
-    TensorView& key = forward_views[Key][0];
-    TensorView& value = forward_views[Value][0];
+    TensorView& query = ;
+    TensorView& key = ;
+    TensorView& value = ;
     TensorView& attention_weights_view = forward_views[AttentionWeights][0];
     TensorView& concatenated = forward_views[ConcatenatedAttentionOutputs][0];
     TensorView& output = forward_views.back()[0];
@@ -151,7 +151,7 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     args.heads_number = heads_number;
     args.query_sequence_length = query_sequence_length;
     args.source_sequence_length = source_sequence_length;
-    args.embedding_dimension = get_embedding_dimension();
+    args.embedding_dimension = embedding_dimension;
     args.head_dimension = get_head_dimension();
     args.scaling_factor = get_scaling_factor();
     args.use_causal_mask = use_causal_mask;
@@ -163,18 +163,32 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     projection(query_input, 
                parameters[QueryWeight], 
                parameters[QueryBias], 
-               query, 
+               forward_views[Query][0], 
                args);
 
-    projection(source_input, parameters[KeyWeight], parameters[KeyBias], key, args);
+    projection(source_input, 
+               parameters[KeyWeight], 
+               parameters[KeyBias], 
+               forward_views[Key][0], 
+               args);
 
-    projection(source_input, parameters[ValueWeight], parameters[ValueBias], value, args);
+    projection(source_input, 
+               parameters[ValueWeight], 
+               parameters[ValueBias], 
+               forward_views[Value][0], 
+               args);
 
     multihead_attention_forward(
-        query, key, value,
-        attention_weights_view, concatenated, output,
-        parameters[ProjectionWeight], parameters[ProjectionBias],
-        source_input, args);
+        forward_views[Query][0], 
+        forward_views[Key][0], 
+        forward_views[Value][0],
+        attention_weights_view, 
+        concatenated, 
+        output,
+        parameters[ProjectionWeight], 
+        parameters[ProjectionBias],
+        source_input, 
+        args);
 }
 
 void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
@@ -198,7 +212,7 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     args.heads_number = heads_number;
     args.query_sequence_length = query_sequence_length;
     args.source_sequence_length = source_sequence_length;
-    args.embedding_dimension = get_embedding_dimension();
+    args.embedding_dimension = embedding_dimension;
     args.head_dimension = get_head_dimension();
     args.scaling_factor = get_scaling_factor();
     args.use_causal_mask = false;
@@ -259,7 +273,7 @@ void MultiHeadAttention::to_XML(XmlPrinter& printer) const
         {"Label", label},
         {"InputSize", to_string(get_query_sequence_length())},
         {"ContextSize", to_string(get_source_sequence_length())},
-        {"Depth", to_string(get_embedding_dimension())},
+        {"Depth", to_string(embedding_dimension)},
         {"HeadDimension", to_string(get_head_dimension())},
         {"HeadsNumber", to_string(get_heads_number())},
         {"CausalMask", to_string(use_causal_mask ? 1 : 0)}

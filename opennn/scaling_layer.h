@@ -163,13 +163,10 @@ public:
     {
         auto& forward_views = forward_propagation.views[layer];
 
-        const TensorView& input = forward_views[Input][0];
-        TensorView& output = forward_views[Output][0];
-
         // Data is scaled in-place by Optimizer::set_scaling() before training,
         // so the scaling layer just copies input to output.
         // The scaling coefficients are stored for serialization/expression only.
-        copy(input, output);
+        copy(forward_views[Input][0], forward_views[Output][0]);
     }
 
     string write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const

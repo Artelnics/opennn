@@ -130,9 +130,9 @@ void padding(const TensorView& input, TensorView& output);
 void bounding(const TensorView& input, const TensorView& lower_bounds, const TensorView& upper_bounds, TensorView& output);
 void copy(const TensorView& source, TensorView& destination);
 void addition(const TensorView& input_1, const TensorView& input_2, TensorView& output);
-void multiply(const TensorView& input_A, bool transpose_A, const TensorView& input_B, bool transpose_B, TensorView& output_C, type alpha = 1.0f, type beta = 0.0f);
-void multiply_elementwise(const TensorView& A, const TensorView& B, TensorView& C);
-void sum(const TensorView& A, TensorView& B, type alpha = 1.0f, type beta = 0.0f);
+void multiply(const TensorView& input_a, bool transpose_a, const TensorView& input_b, bool transpose_b, TensorView& output, type alpha = 1.0f, type beta = 0.0f);
+void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, TensorView& output);
+void sum(const TensorView& input, TensorView& output, type alpha = 1.0f, type beta = 0.0f);
 void softmax(TensorView& output);
 
 // Dense layer
@@ -141,7 +141,7 @@ void combination(const TensorView& input, const TensorView& weights, const Tenso
 void activation(TensorView& output, ActivationArguments arguments);
 void activation_gradient(const TensorView& outputs, const TensorView& output_gradient, TensorView& activation_derivative, const ActivationArguments& arguments);
 void dropout(TensorView& output, DropoutArguments& args);
-void dropout_gradient(const TensorView& output_gradient, const DropoutArguments& args, TensorView& input_gradient);
+void dropout_gradient(const TensorView& output_gradient, TensorView& input_gradient, const DropoutArguments& args);
 
 // Batch normalization
 
