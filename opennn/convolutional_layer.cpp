@@ -232,29 +232,14 @@ void Convolutional::init_cuda(Index batch_size)
                                static_cast<int>(get_output_height()),
                                static_cast<int>(get_output_width()));
 
-    int returned_count;
-
-    cudnnConvolutionFwdAlgoPerf_t fwd_perf;
-    cudnnFindConvolutionForwardAlgorithm(Device::get_cudnn_handle(),
-                                         input_desc, kernel_descriptor, convolution_descriptor, output_desc,
-                                         1, &returned_count, &fwd_perf);
-    convolution_algorithm = fwd_perf.algo;
+    // Deterministic cuDNN algorithms for reproducibility (TEMPORARY)
+    convolution_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+    algo_data = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
+    algo_filter = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
 
     cudnnGetConvolutionForwardWorkspaceSize(Device::get_cudnn_handle(),
                                             input_desc, kernel_descriptor, convolution_descriptor, output_desc,
                                             convolution_algorithm, &cuda_workspace_size);
-
-    cudnnConvolutionBwdDataAlgoPerf_t data_perf;
-    cudnnFindConvolutionBackwardDataAlgorithm(Device::get_cudnn_handle(),
-                                              kernel_descriptor, output_desc, convolution_descriptor, input_desc,
-                                              1, &returned_count, &data_perf);
-    algo_data = data_perf.algo;
-
-    cudnnConvolutionBwdFilterAlgoPerf_t filter_perf;
-    cudnnFindConvolutionBackwardFilterAlgorithm(Device::get_cudnn_handle(),
-                                                input_desc, output_desc, convolution_descriptor, kernel_descriptor,
-                                                1, &returned_count, &filter_perf);
-    algo_filter = filter_perf.algo;
 
     size_t bwd_data_ws = 0;
     cudnnGetConvolutionBackwardDataWorkspaceSize(Device::get_cudnn_handle(),
@@ -421,65 +406,6 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                   bwd_args);
 }
 
-void Convolutional::from_XML(const XmlDocument& document)
-{
-    const XmlElement* convolutional_layer_element = get_xml_root(document, "Convolutional");
-
-    set_label(read_xml_string(convolutional_layer_element, "Label"));
-
-    set_input_shape(string_to_shape(read_xml_string(convolutional_layer_element, "InputDimensions")));
-
-    set_activation_function(read_xml_string(convolutional_layer_element, "Activation"));
-
-    const Shape stride_shape = string_to_shape(read_xml_string(convolutional_layer_element, "StrideDimensions"));
-    set_row_stride(stride_shape[0]);
-    set_column_stride(stride_shape[1]);
-
-    set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
-
-    const XmlElement* batch_normalization_element = convolutional_layer_element->first_child_element("BatchNormalization");
-    const bool use_batch_normalization = batch_normalization_element && batch_normalization_element->get_text()
-                                         && string(batch_normalization_element->get_text()) == "true";
-    set_batch_normalization(use_batch_normalization);
-
-    if (batch_normalization)
-    {
-        VectorR tmp;
-
-        string_to_vector(read_xml_string(convolutional_layer_element, "RunningMeans"), tmp);
-        VectorMap(states[RunningMean].data, states[RunningMean].size()) = tmp;
-
-        string_to_vector(read_xml_string(convolutional_layer_element, "RunningVariances"), tmp);
-        VectorMap(states[RunningVariance].data, states[RunningVariance].size()) = tmp;
-    }
-}
-
-void Convolutional::to_XML(XmlPrinter& printer) const
-{
-    printer.open_element("Convolutional");
-
-    write_xml_properties(printer, {
-        {"Label", label},
-        {"InputDimensions", shape_to_string(input_shape)},
-        {"KernelsNumber", to_string(get_kernels_number())},
-        {"KernelsHeight", to_string(get_kernel_height())},
-        {"KernelsWidth", to_string(get_kernel_width())},
-        {"KernelsChannels", to_string(get_kernel_channels())},
-        {"Activation", activation_to_string(activation_arguments.activation_function)},
-        {"StrideDimensions", shape_to_string({get_row_stride(), get_column_stride()})},
-        {"Convolution", convolution_type_to_string(convolution_type)},
-        {"BatchNormalization", batch_normalization ? "true" : "false"}
-    });
-
-    if (batch_normalization)
-        write_xml_properties(printer, {
-            {"RunningMeans", vector_to_string(states[RunningMean].as_vector())},
-            {"RunningVariances", vector_to_string(states[RunningVariance].as_vector())}
-        });
-
-    printer.close_element();
-}
-
 Shape Convolutional::get_output_shape() const
 {
     return { get_output_height(), get_output_width(), get_kernels_number() };
@@ -571,6 +497,65 @@ vector<Shape> Convolutional::get_forward_shapes(const Index batch_size) const
             Shape{},                      // BatchNormMean (unused)
             Shape{},                      // BatchNormInverseVariance (unused)
             output_shape};                // Output
+}
+
+void Convolutional::from_XML(const XmlDocument& document)
+{
+    const XmlElement* convolutional_layer_element = get_xml_root(document, "Convolutional");
+
+    set_label(read_xml_string(convolutional_layer_element, "Label"));
+
+    set_input_shape(string_to_shape(read_xml_string(convolutional_layer_element, "InputDimensions")));
+
+    set_activation_function(read_xml_string(convolutional_layer_element, "Activation"));
+
+    const Shape stride_shape = string_to_shape(read_xml_string(convolutional_layer_element, "StrideDimensions"));
+    set_row_stride(stride_shape[0]);
+    set_column_stride(stride_shape[1]);
+
+    set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
+
+    const XmlElement* batch_normalization_element = convolutional_layer_element->first_child_element("BatchNormalization");
+    const bool use_batch_normalization = batch_normalization_element && batch_normalization_element->get_text()
+                                         && string(batch_normalization_element->get_text()) == "true";
+    set_batch_normalization(use_batch_normalization);
+
+    if (batch_normalization)
+    {
+        VectorR tmp;
+
+        string_to_vector(read_xml_string(convolutional_layer_element, "RunningMeans"), tmp);
+        VectorMap(states[RunningMean].data, states[RunningMean].size()) = tmp;
+
+        string_to_vector(read_xml_string(convolutional_layer_element, "RunningVariances"), tmp);
+        VectorMap(states[RunningVariance].data, states[RunningVariance].size()) = tmp;
+    }
+}
+
+void Convolutional::to_XML(XmlPrinter& printer) const
+{
+    printer.open_element("Convolutional");
+
+    write_xml_properties(printer, {
+        {"Label", label},
+        {"InputDimensions", shape_to_string(input_shape)},
+        {"KernelsNumber", to_string(get_kernels_number())},
+        {"KernelsHeight", to_string(get_kernel_height())},
+        {"KernelsWidth", to_string(get_kernel_width())},
+        {"KernelsChannels", to_string(get_kernel_channels())},
+        {"Activation", activation_to_string(activation_arguments.activation_function)},
+        {"StrideDimensions", shape_to_string({get_row_stride(), get_column_stride()})},
+        {"Convolution", convolution_type_to_string(convolution_type)},
+        {"BatchNormalization", batch_normalization ? "true" : "false"}
+    });
+
+    if (batch_normalization)
+        write_xml_properties(printer, {
+            {"RunningMeans", vector_to_string(states[RunningMean].as_vector())},
+            {"RunningVariances", vector_to_string(states[RunningVariance].as_vector())}
+        });
+
+    printer.close_element();
 }
 
 REGISTER(Layer, Convolutional, "Convolutional")

@@ -25,7 +25,6 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-        set_seed(42);
 
         // Settings
 
@@ -50,11 +49,13 @@ int main()
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
 
+        training_strategy.set_loss("CrossEntropy");
+        training_strategy.get_loss()->set_regularization("L2");
+        training_strategy.get_loss()->set_regularization_weight(type(0.001));
+
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(50);
         adam->set_display_period(10);
-
-        training_strategy.set_loss("CrossEntropy");
 
         Device::instance().set(DeviceType::Gpu);
 

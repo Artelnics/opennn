@@ -27,7 +27,6 @@ int main()
     try
     {
 
-        set_seed(42);
 
         cout << "Airfoil self noise" << endl;
 
@@ -53,11 +52,14 @@ int main()
 
         TrainingStrategy training_strategy(&approximation_network, &dataset);
 
-        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
-
+        training_strategy.set_loss("NormalizedSquaredError");
         training_strategy.get_loss()->set_regularization("L2");
         training_strategy.get_loss()->set_regularization_weight(regularization_weight);
-        training_strategy.get_optimization_algorithm()->set_display_period(50);
+
+        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
+        StochasticGradientDescent* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
+        sgd->set_initial_learning_rate(type(0.0001));
+        sgd->set_display_period(50);
 
         Device::instance().set(DeviceType::Gpu);
 

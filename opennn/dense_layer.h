@@ -22,7 +22,7 @@ private:
 
     bool batch_normalization = false;
 
-    type momentum = type(0.9);
+    type momentum = type(0.1);
 
     type dropout_rate = type(0);
 
@@ -171,6 +171,18 @@ public:
         batch_normalization = new_batch_normalization;
     }
 
+    void set_momentum(const type new_momentum)
+    {
+        if (new_momentum < type(0) || new_momentum >= type(1))
+            throw runtime_error("Batch normalization momentum must be in [0,1).");
+
+        momentum = new_momentum;
+    }
+
+    type get_momentum() const { return momentum; }
+
+    bool get_batch_normalization() const { return batch_normalization; }
+
     void set_activation_function(const string& name)
     {
         ActivationFunction function = string_to_activation(name);
@@ -304,15 +316,15 @@ public:
             const TensorView& gammas = parameters[Gamma];
             const TensorView& betas = parameters[Beta];
 
-            TensorView& combination = forward_views[Combination][0];
-            combination(input, weights, biases, combination);
+            TensorView& combination_output = forward_views[Combination][0];
+            combination(input, weights, biases, combination_output);
 
             is_training
-                ? batch_normalization_training(combination, gammas, betas,
+                ? batch_normalization_training(combination_output, gammas, betas,
                                              states[RunningMean], states[RunningVariance],
                                              forward_views[BatchNormMean][0], forward_views[BatchNormInverseVariance][0],
                                              output, momentum)
-                : batch_normalization_inference(combination, gammas, betas,
+                : batch_normalization_inference(combination_output, gammas, betas,
                                               states[RunningMean], states[RunningVariance],
                                               output);
         }

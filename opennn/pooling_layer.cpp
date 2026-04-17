@@ -179,6 +179,20 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
         average_pooling_backward(input, output, output_gradient, input_gradient, cached_pool_args);
 }
 
+void Pooling::from_XML(const XmlDocument& document)
+{
+    const XmlElement* pooling_layer_element = get_xml_root(document, "Pooling");
+
+    set_label(read_xml_string(pooling_layer_element, "Label"));
+    set_input_shape(string_to_shape(read_xml_string(pooling_layer_element, "InputDimensions")));
+    set_pool_size(read_xml_index(pooling_layer_element, "PoolHeight"), read_xml_index(pooling_layer_element, "PoolWidth"));
+    set_pooling_method(read_xml_string(pooling_layer_element, "PoolingMethod"));
+    set_column_stride(read_xml_index(pooling_layer_element, "ColumnStride"));
+    set_row_stride(read_xml_index(pooling_layer_element, "RowStride"));
+    set_padding_height(read_xml_index(pooling_layer_element, "PaddingHeight"));
+    set_padding_width(read_xml_index(pooling_layer_element, "PaddingWidth"));
+}
+
 void Pooling::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Pooling");
@@ -196,20 +210,6 @@ void Pooling::to_XML(XmlPrinter& printer) const
     });
 
     printer.close_element();
-}
-
-void Pooling::from_XML(const XmlDocument& document)
-{
-    const XmlElement* pooling_layer_element = get_xml_root(document, "Pooling");
-
-    set_label(read_xml_string(pooling_layer_element, "Label"));
-    set_input_shape(string_to_shape(read_xml_string(pooling_layer_element, "InputDimensions")));
-    set_pool_size(read_xml_index(pooling_layer_element, "PoolHeight"), read_xml_index(pooling_layer_element, "PoolWidth"));
-    set_pooling_method(read_xml_string(pooling_layer_element, "PoolingMethod"));
-    set_column_stride(read_xml_index(pooling_layer_element, "ColumnStride"));
-    set_row_stride(read_xml_index(pooling_layer_element, "RowStride"));
-    set_padding_height(read_xml_index(pooling_layer_element, "PaddingHeight"));
-    set_padding_width(read_xml_index(pooling_layer_element, "PaddingWidth"));
 }
 
 // CUDA forward/backward handled via unified ForwardPropagation/BackPropagation views
