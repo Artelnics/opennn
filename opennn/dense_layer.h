@@ -18,7 +18,9 @@ class Dense final : public Layer
 {
 private:
 
-    Index neurons_number;
+    Index input_features = 0;
+    Index sequence_length = 0;  // only used for Rank==3
+    Index output_features;
 
     bool batch_normalization = false;
 
@@ -34,12 +36,12 @@ private:
 
     vector<Shape> get_parameter_shapes() const override
     {
-        const Index input_dimension = input_shape.back();
+        const Index input_dimension = input_features;
 
-        return {{neurons_number},                            // Biases
-                {input_dimension, neurons_number},           // Weights
-                {batch_normalization ? neurons_number : 0},  // Gammas
-                {batch_normalization ? neurons_number : 0}}; // Betas
+        return {{output_features},                            // Bias
+                {input_dimension, output_features},           // Weight
+                {batch_normalization ? output_features : 0},  // Gamma
+                {batch_normalization ? output_features : 0}}; // Beta
     }
 
     enum States {RunningMean, RunningVariance};
@@ -47,8 +49,8 @@ private:
     vector<Shape> get_state_shapes() const override
     {
         if (!batch_normalization) return {};
-        return {{neurons_number},   // RunningMean
-                {neurons_number}};  // RunningVariance
+        return {{output_features},   // RunningMean
+                {output_features}};  // RunningVariance
     }
 
     enum Forward {Input, Combination, BatchNormMean, BatchNormInverseVariance, Output};
@@ -59,8 +61,8 @@ private:
 
         if(batch_normalization)
             return {output_shape,             // Combination
-                    Shape{neurons_number},    // BatchNormMean
-                    Shape{neurons_number},    // BatchNormInverseVariance
+                    Shape{output_features},    // BatchNormMean
+                    Shape{output_features},    // BatchNormInverseVariance
                     output_shape};            // Output
         else
             return {Shape{},                  // Combination (unused)
@@ -69,7 +71,7 @@ private:
                     output_shape};            // Output
     }
 
-    enum Backward {OutputGradients, InputGradients};
+    enum Backward {OutputGradient, InputGradient};
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
@@ -102,21 +104,23 @@ public:
 #endif
     }
 
+    Shape get_input_shape() const override
+    {
+        if constexpr (Rank == 2)
+            return {input_features};
+        else
+            return {sequence_length, input_features};
+    }
+
     Shape get_output_shape() const override
     {
         if constexpr (Rank == 2)
-            return {neurons_number};
+            return {output_features};
         else
-            return {input_shape[0], neurons_number};
+            return {sequence_length, output_features};
     }
 
-    Index get_sequence_length() const
-    {
-        if constexpr (Rank == 3)
-            return input_shape[0];
-        else
-            return 1;
-    }
+    Index get_sequence_length() const { return sequence_length; }
 
     const ActivationFunction& get_activation_function() const
     {
@@ -140,8 +144,15 @@ public:
         if (new_output_shape.rank() != 1)
             throw runtime_error("Output shape size is not 1");
 
-        input_shape = new_input_shape;
-        neurons_number = new_output_shape.back();
+        if constexpr (Rank == 2)
+            input_features = new_input_shape[0];
+        else
+        {
+            sequence_length = new_input_shape[0];
+            input_features = new_input_shape[1];
+        }
+
+        output_features = new_output_shape.back();
 
         set_activation_function(new_activation_function);
 
@@ -158,12 +169,18 @@ public:
         if (new_input_shape.rank() != Rank - 1)
             throw runtime_error("Input shape size must be " + to_string(Rank - 1));
 
-        input_shape = new_input_shape;
+        if constexpr (Rank == 2)
+            input_features = new_input_shape[0];
+        else
+        {
+            sequence_length = new_input_shape[0];
+            input_features = new_input_shape[1];
+        }
     }
 
     void set_output_shape(const Shape& new_output_shape) override
     {
-        neurons_number = new_output_shape.back();
+        output_features = new_output_shape.back();
     }
 
     void set_batch_normalization(bool new_batch_normalization)
@@ -293,36 +310,37 @@ public:
     {
         auto& forward_views = forward_propagation.views[layer];
 
-        const TensorView& input = forward_views[Input][0];
-        TensorView& output = forward_views[Output][0];
-
-        const TensorView& weights = parameters[Weight];
-        const TensorView& biases = parameters[Bias];
-
         if (batch_normalization)
         {
-            const TensorView& gammas = parameters[Gamma];
-            const TensorView& betas = parameters[Beta];
-
-            TensorView& combination = forward_views[Combination][0];
-            combination(input, weights, biases, combination);
+            combination(forward_views[Input][0], 
+                        parameters[Weight], 
+                        parameters[Bias], 
+                        forward_views[Combination][0]);
 
             is_training
-                ? batch_normalization_training(combination, gammas, betas,
-                                             states[RunningMean], states[RunningVariance],
-                                             forward_views[BatchNormMean][0], forward_views[BatchNormInverseVariance][0],
-                                             output, momentum)
-                : batch_normalization_inference(combination, gammas, betas,
-                                              states[RunningMean], states[RunningVariance],
-                                              output);
+                ? batch_normalization_training(forward_views[Combination][0], 
+                                               parameters[Gamma], 
+                                               parameters[Beta],
+                                               states[RunningMean], 
+                                               states[RunningVariance],
+                                               forward_views[BatchNormMean][0], 
+                                               forward_views[BatchNormInverseVariance][0],
+                                               output, 
+                                               momentum)
+                : batch_normalization_inference(forward_views[Combination][0], 
+                                                parameters[Gamma], 
+                                                parameters[Beta],
+                                                states[RunningMean], 
+                                                states[RunningVariance],
+                                                output);
         }
         else
-            combination(input, weights, biases, output);
+            combination(forward_views[Input][0], parameters[Weight], parameters[Bias], forward_views[Output][0]);
 
         if (is_training && dropout_rate > type(0))
-            dropout(output, dropout_arguments);
+            dropout(forward_views[Output][0], dropout_arguments);
 
-        activation(output, activation_arguments);
+        activation(forward_views[Output][0], activation_arguments);
     }
 
     void back_propagate(ForwardPropagation& forward_propagation,
@@ -336,7 +354,7 @@ public:
         const TensorView& input = forward_views[Input][0];
         const TensorView& output = forward_views[Output][0];
 
-        TensorView& delta = backward_views[OutputGradients][0];
+        TensorView& delta = backward_views[OutputGradient][0];
 
         activation_gradient(output, delta, delta, activation_arguments);
 
@@ -351,18 +369,25 @@ public:
 
         const Index total_rows = input.size() / input.shape.back();
 
-        TensorView input_2d(input.data, {total_rows, input.shape.back()});
         TensorView delta_2d(delta.data, {total_rows, delta.shape.back()});
 
-        multiply(input_2d, true, delta_2d, false, gradient_views[Weight]);
+        multiply(TensorView(input.data, {total_rows, input.shape.back()}), 
+                 true, 
+                 delta_2d, 
+                 false, 
+                 gradient_views[Weight]);
 
         sum(delta_2d, gradient_views[Bias]);
 
         if (!is_first_layer)
         {
-            TensorView& input_gradient = backward_views[InputGradients][0];
+            TensorView& input_gradient = backward_views[InputGradient][0];
             TensorView input_gradient_2d(input_gradient.data, {total_rows, input_gradient.shape.back()});
-            multiply(delta_2d, false, parameters[Weight], true, input_gradient_2d);
+            multiply(delta_2d, 
+                     false, 
+                     parameters[Weight], 
+                     true, 
+                     input_gradient_2d);
         }
     }
 
@@ -373,7 +398,7 @@ public:
         set_label(read_xml_string(dense_layer_element, "Label"));
 
         const Index inputs_number = read_xml_index(dense_layer_element, "InputsNumber");
-        const Index neurons_number = read_xml_index(dense_layer_element, "NeuronsNumber");
+        const Index output_features = read_xml_index(dense_layer_element, "NeuronsNumber");
 
         if constexpr (Rank == 3)
         {
@@ -383,7 +408,7 @@ public:
         else
             set_input_shape({ inputs_number });
 
-        set_output_shape({ neurons_number });
+        set_output_shape({ output_features });
 
         set_activation_function(read_xml_string(dense_layer_element, "Activation"));
 

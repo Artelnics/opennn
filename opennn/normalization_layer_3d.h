@@ -47,7 +47,7 @@ public:
         return {{batch_size, sequence_length },                      // slot 1: Means
                 {batch_size, sequence_length },                      // slot 2: StandardDeviations
                 {batch_size, sequence_length, embedding_dimension},  // slot 3: NormalizedInputs
-                {batch_size, sequence_length, embedding_dimension}}; // slot 4: Outputs (LAST = wired downstream)
+                {batch_size, sequence_length, embedding_dimension}}; // slot 4: Output (LAST = wired downstream)
     }
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
@@ -81,12 +81,12 @@ private:
     Index embedding_dimension = 0;
     Index sequence_length = 0;
 
-    enum Parameters {Gammas, Betas};
+    enum Parameters {Gamma, Beta};
 
-    // View slots: 0=Inputs(wired), 1=Means, 2=StdDevs, 3=NormalizedInputs, 4=Outputs
-    enum Forward {Inputs = 0, Means = 1, StandardDeviations = 2, NormalizedInputs = 3, Outputs = 4};
+    // View slots: 0=Input(wired), 1=Means, 2=StdDevs, 3=NormalizedInput, 4=Output
+    enum Forward {Input = 0, Means = 1, StandardDeviations = 2, NormalizedInput = 3, Output = 4};
 
-    enum Backward {OutputGradients = 0, InputGradients = 1};
+    enum Backward {OutputGradient = 0, InputGradient = 1};
 
 };
 

@@ -62,7 +62,9 @@ void Convolutional::set(const Shape& new_input_shape,
         && (new_kernel_shape[0] % 2 == 0 || new_kernel_shape[1] % 2 == 0))
         throw runtime_error("Kernel shape (height and width) must be odd (3x3,5x5 etc) when using 'Same' padding mode to ensure symmetric padding.");
 
-    input_shape = new_input_shape;
+    input_height = new_input_shape[0];
+    input_width = new_input_shape[1];
+    input_channels = new_input_shape[2];
 
     kernel_height = new_kernel_shape[0];
     kernel_width = new_kernel_shape[1];
@@ -111,7 +113,9 @@ void Convolutional::set_input_shape(const Shape& new_input_shape)
     if (new_input_shape.rank() != 3)
         throw runtime_error("Input new_input_shape.rank() must be 3");
 
-    input_shape = new_input_shape;
+    input_height = new_input_shape[0];
+    input_width = new_input_shape[1];
+    input_channels = new_input_shape[2];
 }
 
 void Convolutional::set_batch_normalization(bool new_batch_normalization)
@@ -179,13 +183,13 @@ void Convolutional::set_parameters_glorot()
 
     const type limit = sqrt(6.0f / static_cast<type>(fan_in + fan_out));
 
-    VectorMap(parameters[Biases].data, parameters[Biases].size()).setZero();
+    VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
 
-    set_random_uniform(VectorMap(parameters[Weights].data, parameters[Weights].size()), -limit, limit);
+    set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()), -limit, limit);
 
-    VectorMap(parameters[Gammas].data, parameters[Gammas].size()).setConstant(1.0);
+    VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
 
-    VectorMap(parameters[Betas].data, parameters[Betas].size()).setZero();
+    VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
 
     if (batch_normalization)
     {
@@ -196,13 +200,13 @@ void Convolutional::set_parameters_glorot()
 
 void Convolutional::set_parameters_random()
 {
-    VectorMap(parameters[Biases].data, parameters[Biases].size()).setZero();
+    VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
 
-    set_random_uniform(VectorMap(parameters[Weights].data, parameters[Weights].size()));
+    set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()));
 
-    VectorMap(parameters[Gammas].data, parameters[Gammas].size()).setConstant(1.0);
+    VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
 
-    VectorMap(parameters[Betas].data, parameters[Betas].size()).setZero();
+    VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
 
     if (batch_normalization)
     {
@@ -286,14 +290,14 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    const TensorView& input = forward_views[Inputs][0];
-    TensorView& padded_input = forward_views[PaddedInputs][0];
+    const TensorView& input = forward_views[Input][0];
+    TensorView& padded_input = forward_views[PaddedInput][0];
     TensorView& output = forward_views[Output][0];
 
-    const TensorView& weights = parameters[Weights];
-    const TensorView& biases = parameters[Biases];
-    const TensorView& gammas = parameters[Gammas];
-    const TensorView& betas = parameters[Betas];
+    const TensorView& weights = parameters[Weight];
+    const TensorView& biases = parameters[Bias];
+    const TensorView& gammas = parameters[Gamma];
+    const TensorView& betas = parameters[Beta];
 
     const ActivationFunction func = activation_arguments.activation_function;
 
@@ -371,7 +375,7 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     auto& gradient_views = back_propagation.gradient_views[layer];
 
     const TensorView& output = forward_views[Output][0];
-    TensorView& delta = backward_views[OutputGradients][0];
+    TensorView& delta = backward_views[OutputGradient][0];
 
     ConvolutionArguments bwd_args = convolution_arguments;
 
@@ -380,7 +384,7 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     if (batch_normalization)
         batch_normalization_backward(forward_views[Convolution][0], output, delta,
                                      forward_views[BatchNormMean][0], forward_views[BatchNormInverseVariance][0],
-                                     parameters[Gammas], gradient_views[Gammas], gradient_views[Betas],
+                                     parameters[Gamma], gradient_views[Gamma], gradient_views[Beta],
                                      delta);
 
 #ifdef OPENNN_WITH_CUDA
@@ -392,33 +396,33 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
         bwd_args.backward_filter_workspace = cuda_backward_filter_workspace;
         bwd_args.backward_filter_workspace_size = cuda_backward_filter_workspace_size;
 
-        convolution_backward_weights(forward_views[Inputs][0],
+        convolution_backward_weights(forward_views[Input][0],
                                      delta,
-                                     gradient_views[Weights],
-                                     gradient_views[Biases],
+                                     gradient_views[Weight],
+                                     gradient_views[Bias],
                                      bwd_args);
 
         if (!is_first_layer)
             convolution_backward_data(delta,
-                                      parameters[Weights],
-                                      backward_views[InputGradients][0],
-                                      backward_views[InputGradients][0],
+                                      parameters[Weight],
+                                      backward_views[InputGradient][0],
+                                      backward_views[InputGradient][0],
                                       bwd_args);
         return;
     }
 #endif
 
-    convolution_backward_weights(forward_views[PaddedInputs][0],
+    convolution_backward_weights(forward_views[PaddedInput][0],
                                  delta,
-                                 gradient_views[Weights],
-                                 gradient_views[Biases],
+                                 gradient_views[Weight],
+                                 gradient_views[Bias],
                                  bwd_args);
 
     if (!is_first_layer)
         convolution_backward_data(delta,
-                                  parameters[Weights],
-                                  backward_views[InputGradients][0],
-                                  backward_views[InputGradients][0],
+                                  parameters[Weight],
+                                  backward_views[InputGradient][0],
+                                  backward_views[InputGradient][0],
                                   bwd_args);
 }
 
@@ -461,7 +465,7 @@ void Convolutional::to_XML(XmlPrinter& printer) const
 
     write_xml_properties(printer, {
         {"Label", label},
-        {"InputDimensions", shape_to_string(input_shape)},
+        {"InputDimensions", shape_to_string(get_input_shape())},
         {"KernelsNumber", to_string(get_kernels_number())},
         {"KernelsHeight", to_string(get_kernel_height())},
         {"KernelsWidth", to_string(get_kernel_width())},
@@ -537,20 +541,11 @@ Index Convolutional::get_padding_width() const
     return total_padding / 2;
 }
 
-Index Convolutional::get_input_height() const
-{
-    return input_shape[0];
-}
+Index Convolutional::get_input_height() const { return input_height; }
 
-Index Convolutional::get_input_width() const
-{
-    return input_shape[1];
-}
+Index Convolutional::get_input_width() const { return input_width; }
 
-Index Convolutional::get_input_channels() const
-{
-    return input_shape[2];
-}
+Index Convolutional::get_input_channels() const { return input_channels; }
 
 vector<Shape> Convolutional::get_forward_shapes(const Index batch_size) const
 {
@@ -571,13 +566,13 @@ vector<Shape> Convolutional::get_forward_shapes(const Index batch_size) const
                                 input_channels};
 
     if (batch_normalization)
-        return {padded_shape,             // PaddedInputs
+        return {padded_shape,             // PaddedInput
                 output_shape,             // Convolution
                 Shape{kernels_number},    // BatchNormMean
                 Shape{kernels_number},    // BatchNormInverseVariance
                 output_shape};            // Output
 
-    return {padded_shape,                 // PaddedInputs
+    return {padded_shape,                 // PaddedInput
             Shape{},                      // Convolution (unused)
             Shape{},                      // BatchNormMean (unused)
             Shape{},                      // BatchNormInverseVariance (unused)

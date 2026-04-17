@@ -1696,8 +1696,7 @@ void multihead_attention_forward(
 
     // Softmax
 
-    TensorView att_view(attention_weights.data, {total_heads * query_sequence_length, source_sequence_length});
-    softmax(att_view);
+    softmax(TensorView(attention_weights.data, {total_heads * query_sequence_length, source_sequence_length}));
 
     // W*V — attention output, scattered into concatenated
 

@@ -25,16 +25,17 @@ public:
               const string& = "embedding_layer");
 
     Index get_vocabulary_size() const { return vocabulary_size; }
-    Index get_sequence_length() const { return input_shape.empty() ? 0 : input_shape[0]; }
+    Index get_sequence_length() const { return sequence_length; }
     Index get_embedding_dimension() const { return embedding_dimension; }
 
+    Shape get_input_shape() const override { return {sequence_length}; }
     Shape get_output_shape() const override;
 
     vector<Shape> get_parameter_shapes() const override;
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        return {{batch_size, get_sequence_length(), embedding_dimension}}; // Outputs
+        return {{batch_size, get_sequence_length(), embedding_dimension}}; // Output
     }
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
@@ -76,10 +77,12 @@ private:
 
 private:
 
-    enum Parameters {Weights};
-    enum Forward {Inputs, Outputs};
+    enum Parameters {Weight};
+    enum Forward {Input, Output};
+    enum Backward {OutputGradient};
 
     Index vocabulary_size = 0;
+    Index sequence_length = 0;
     Index embedding_dimension = 0;
 
     bool scale_embedding = false;

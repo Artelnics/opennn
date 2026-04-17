@@ -61,6 +61,8 @@ public:
 
 private:
 
+    enum Forward {Input, Output};
+
     VectorR means;
     VectorR standard_deviations;
     VectorR minimums;

@@ -39,7 +39,7 @@ Shape Pooling::get_output_shape() const
 {
     const Index rows_number = get_output_height();
     const Index columns_number = get_output_width();
-    const Index channels = input_shape[2];
+    const Index channels = input_channels;
 
     return { rows_number, columns_number, channels };
 }
@@ -82,7 +82,9 @@ void Pooling::set(const Shape& new_input_shape,
     if (new_padding_dimensions[0] < 0 || new_padding_dimensions[1] < 0)
         throw runtime_error("Padding shape cannot be lower than 0");
 
-    input_shape = new_input_shape;
+    input_height = new_input_shape[0];
+    input_width = new_input_shape[1];
+    input_channels = new_input_shape[2];
 
     set_pool_size(new_pool_dimensions[0], new_pool_dimensions[1]);
 
@@ -126,7 +128,9 @@ void Pooling::set_input_shape(const Shape& new_input_shape)
     if (new_input_shape.rank() != 3)
         throw runtime_error("Input shape must be 3");
 
-    input_shape = new_input_shape;
+    input_height = new_input_shape[0];
+    input_width = new_input_shape[1];
+    input_channels = new_input_shape[2];
 }
 
 void Pooling::set_pool_size(const Index new_pool_rows_number,
@@ -152,8 +156,8 @@ void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t 
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    const TensorView& input = forward_views[Inputs][0];
-    TensorView& output = forward_views[Outputs][0];
+    const TensorView& input = forward_views[Input][0];
+    TensorView& output = forward_views[Output][0];
 
     if(pooling_method == PoolingMethod::MaxPooling)
         max_pooling(input, output, forward_views[MaximalIndices][0], cached_pool_args, is_training);
@@ -168,10 +172,10 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
     auto& forward_views = forward_propagation.views[layer];
     auto& backward_views = back_propagation.backward_views[layer];
 
-    const TensorView& input = forward_views[Inputs][0];
-    const TensorView& output = forward_views[Outputs][0];
-    const TensorView& output_gradient = backward_views[OutputGradients][0];
-    TensorView& input_gradient = backward_views[InputGradients][0];
+    const TensorView& input = forward_views[Input][0];
+    const TensorView& output = forward_views[Output][0];
+    const TensorView& output_gradient = backward_views[OutputGradient][0];
+    TensorView& input_gradient = backward_views[InputGradient][0];
 
     if(pooling_method == PoolingMethod::MaxPooling)
         max_pooling_backward(input, output, output_gradient, forward_views[MaximalIndices][0], input_gradient, cached_pool_args);

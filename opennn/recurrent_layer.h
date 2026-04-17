@@ -24,24 +24,20 @@ public:
 
     vector<Shape> get_parameter_shapes() const override;
 
+    Shape get_input_shape() const override { return {time_steps, input_features}; }
+
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
         const Index outputs_number = get_outputs_number();
-        const Index time_steps = input_shape[0];
 
-        return {{ batch_size, outputs_number },            // Final layer outputs
-            { batch_size, time_steps, outputs_number },    // All hidden_states
-            { batch_size, time_steps, outputs_number }};   // All activation_derivatives
-
+        return {{ batch_size, outputs_number },
+            { batch_size, time_steps, outputs_number },
+            { batch_size, time_steps, outputs_number }};
     }
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        const Index time_steps = input_shape[0];
-        const Index input_size = input_shape[1];
-
-        // Input Sequence Gradients (dX): {batch, time_steps, input_size}
-        return {{ batch_size, time_steps, input_size}};
+        return {{ batch_size, time_steps, input_features }};
     }
 
     void set(const Shape& = {}, const Shape& = {});
@@ -64,6 +60,9 @@ public:
     void to_XML(XmlPrinter&) const override;
 
 private:
+
+    Index time_steps = 0;
+    Index input_features = 0;
 
     TensorView biases;
     TensorView input_weights;

@@ -20,34 +20,31 @@ class Pooling3d final : public Layer
 
 public:
 
-    Pooling3d(const Shape& = {0, 0}, // Input shape {sequence_length, features}
+    Pooling3d(const Shape& = {0, 0}, // Input shape {sequence_length, input_features}
               const PoolingMethod& = PoolingMethod::MaxPooling,
               const string& = "sequence_pooling_layer");
 
+    Shape get_input_shape() const override { return {sequence_length, input_features}; }
+
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        const Index features = input_shape[1];
 
         vector<Shape> shapes;
 
         if (pooling_method == PoolingMethod::MaxPooling)
-            shapes.push_back({ batch_size, features }); // MaximalIndices
+            shapes.push_back({ batch_size, input_features }); // MaximalIndices
 
-        shapes.push_back({ batch_size, features }); // Outputs (must be last — wiring convention)
+        shapes.push_back({ batch_size, input_features }); // Output (must be last — wiring convention)
 
         return shapes;
     }
 
-    enum Forward { Inputs, MaximalIndices, Outputs };
-    enum Backward { OutputGradients, InputGradients };
+    enum Forward { Input, MaximalIndices, Output };
+    enum Backward { OutputGradient, InputGradient };
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        const Index seq_len = input_shape[0];
-        const Index features = input_shape[1];
-
-        // Input Gradients (dX): {batch, seq_len, features}
-        return {{ batch_size, seq_len, features }};
+        return {{ batch_size, sequence_length, input_features }};
     }
 
     Shape get_output_shape() const override;
@@ -55,7 +52,7 @@ public:
     string write_pooling_method() const;
 
     void set(const Shape&, const PoolingMethod&, const string&);
-    void set_input_shape(const Shape& s) override { input_shape = s; }
+    void set_input_shape(const Shape& s) override { sequence_length = s[0]; input_features = s[1]; }
     void set_pooling_method(const PoolingMethod& m) { pooling_method = m; }
     void set_pooling_method(const string&);
 
@@ -69,6 +66,9 @@ public:
     void to_XML(XmlPrinter&) const override;
 
 private:
+
+    Index sequence_length = 0;
+    Index input_features = 0;
 
     PoolingMethod pooling_method;
 };

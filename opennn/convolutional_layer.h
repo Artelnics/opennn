@@ -43,6 +43,10 @@ class Convolutional final : public Layer
 {
 private:
 
+    Index input_height = 0;
+    Index input_width = 0;
+    Index input_channels = 0;
+
     Index kernels_number = 0;
     Index kernel_height = 0;
     Index kernel_width = 0;
@@ -74,14 +78,14 @@ private:
     size_t cuda_backward_filter_workspace_size = 0;
 #endif
 
-    enum Parameters {Biases, Weights, Gammas, Betas};
+    enum Parameters {Bias, Weight, Gamma, Beta};
 
     vector<Shape> get_parameter_shapes() const override
     {
-        return {{kernels_number},                                               // Biases
-                {kernels_number, kernel_height, kernel_width, kernel_channels}, // Weights
-                {batch_normalization ? kernels_number : 0},                     // Gammas
-                {batch_normalization ? kernels_number : 0}};                    // Betas
+        return {{kernels_number},                                               // Bias
+                {kernels_number, kernel_height, kernel_width, kernel_channels}, // Weight
+                {batch_normalization ? kernels_number : 0},                     // Gamma
+                {batch_normalization ? kernels_number : 0}};                    // Beta
     }
 
     enum States {RunningMean, RunningVariance};
@@ -93,11 +97,11 @@ private:
                 {kernels_number}};  // RunningVariance
     }
 
-    enum Forward {Inputs, PaddedInputs, Convolution, BatchNormMean, BatchNormInverseVariance, Output};
+    enum Forward {Input, PaddedInput, Convolution, BatchNormMean, BatchNormInverseVariance, Output};
 
     vector<Shape> get_forward_shapes(Index) const override;
 
-    enum Backward {OutputGradients, InputGradients};
+    enum Backward {OutputGradient, InputGradient};
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
@@ -135,6 +139,8 @@ public:
     ActivationFunction get_activation_function() const { return activation_arguments.activation_function; }
 
     ActivationFunction get_output_activation() const override { return activation_arguments.activation_function; }
+
+    Shape get_input_shape() const override { return {input_height, input_width, input_channels}; }
 
     Shape get_output_shape() const override;
 

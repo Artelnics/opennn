@@ -76,7 +76,7 @@ public:
         if (pooling_method == PoolingMethod::MaxPooling)
             shapes.push_back(Shape{batch_size}.append(out_shape)); // MaximalIndices
 
-        shapes.push_back(Shape{batch_size}.append(out_shape)); // Outputs (must be last for wiring)
+        shapes.push_back(Shape{batch_size}.append(out_shape)); // Output (must be last for wiring)
 
         return shapes;
     }
@@ -86,16 +86,16 @@ public:
         return {{batch_size, get_input_height(), get_input_width(), get_channels_number()}};
     }
 
-    Shape get_input_shape() const override { return input_shape; }
+    Shape get_input_shape() const override { return {input_height, input_width, input_channels}; }
     Shape get_output_shape() const override;
 
-    Index get_input_height() const { return input_shape[0]; }
-    Index get_input_width() const { return input_shape[1]; }
+    Index get_input_height() const { return input_height; }
+    Index get_input_width() const { return input_width; }
 
     Index get_output_height() const;
     Index get_output_width() const;
 
-    Index get_channels_number() const { return input_shape[2]; }
+    Index get_channels_number() const { return input_channels; }
 
     Index get_padding_height() const { return padding_height; }
     Index get_padding_width() const { return padding_width; }
@@ -129,8 +129,12 @@ public:
 
 private:
 
-    enum Forward {Inputs, MaximalIndices, Outputs};
-    enum Backward {OutputGradients, InputGradients};
+    enum Forward {Input, MaximalIndices, Output};
+    enum Backward {OutputGradient, InputGradient};
+
+    Index input_height = 0;
+    Index input_width = 0;
+    Index input_channels = 0;
 
     Index pool_height = 1;
     Index pool_width = 1;

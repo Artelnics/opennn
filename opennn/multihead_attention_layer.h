@@ -31,7 +31,7 @@ public:
 
     Index get_query_sequence_length() const { return query_sequence_length; }
     Index get_source_sequence_length() const { return source_sequence_length; }
-    Index get_embedding_dimension() const { return input_shape.back(); }
+    Index get_embedding_dimension() const { return embedding_dimension; }
     Index get_heads_number() const { return heads_number; }
     Index get_head_dimension() const;
 
@@ -58,7 +58,7 @@ public:
                 {batch_size, source_sequence_length},                                      // PaddingMask
                 {batch_size, max_seq, embedding_dimension},                                // TransposeScratch
                 {batch_size, heads_number, query_sequence_length, head_dimension},         // AttentionOutputTransposed
-                {batch_size, query_sequence_length, embedding_dimension}};                 // Outputs (must be last)
+                {batch_size, query_sequence_length, embedding_dimension}};                 // Output (must be last)
     }
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
@@ -84,7 +84,6 @@ public:
 
     void set_input_shape(const Shape& new_input_shape) override
     {
-        input_shape = new_input_shape;
         query_sequence_length = new_input_shape[0];
         embedding_dimension = new_input_shape[1];
     }
@@ -112,11 +111,11 @@ private:
     Index query_sequence_length = 0;
     Index source_sequence_length = 0;
 
-    enum Parameters {QueryWeights, QueryBiases, KeyWeights, KeyBiases, ValueWeights, ValueBiases,
-                     ProjectionWeights, ProjectionBiases};
-    enum Forward {Inputs, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value,
+    enum Parameters {QueryWeight, QueryBias, KeyWeight, KeyBias, ValueWeight, ValueBias,
+                     ProjectionWeight, ProjectionBias};
+    enum Forward {Input, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value,
                   PaddingMask, TransposeScratch, AttentionOutputTransposed};
-    // Outputs is always the last forward slot (wiring convention) — access via .back()
+    // Output is always the last forward slot (wiring convention) — access via .back()
     enum Backward {OutputGradient, InputQueryGradient, InputSourceGradient,
                    AttentionWeightGradient, ConcatenatedOutputGradient,
                    QueryGradient, KeyGradient, ValueGradient,

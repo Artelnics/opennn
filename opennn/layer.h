@@ -117,7 +117,7 @@ public:
 
     virtual vector<Shape> get_backward_shapes(Index) const { return {}; }
 
-    virtual Shape get_input_shape() const { return input_shape; }
+    virtual Shape get_input_shape() const = 0;
 
     virtual Shape get_output_shape() const = 0;
 
@@ -160,8 +160,6 @@ public:
 protected:
 
     Layer() = default;
-
-    Shape input_shape;
 
     string label = "my_layer";
 

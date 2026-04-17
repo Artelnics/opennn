@@ -31,10 +31,9 @@ public:
         set(new_input_shape);
     }
 
-    Shape get_output_shape() const override
-    {
-        return input_shape;
-    }
+    Shape get_input_shape() const override { return input_shape; }
+
+    Shape get_output_shape() const override { return input_shape; }
 
     vector<Shape> get_forward_shapes(Index batch_size) const override
     {
@@ -164,7 +163,7 @@ public:
     {
         auto& forward_views = forward_propagation.views[layer];
 
-        const TensorView& input = forward_views[0][0];
+        const TensorView& input = forward_views[Input][0];
         TensorView& output = forward_views[Output][0];
 
         // Data is scaled in-place by Optimizer::set_scaling() before training,
@@ -309,7 +308,9 @@ public:
 
 private:
 
-    enum Forward {Output = 1}; 
+    Shape input_shape;
+
+    enum Forward {Input, Output};
 
     VectorR means;
     VectorR standard_deviations;

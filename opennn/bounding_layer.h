@@ -24,6 +24,8 @@ public:
 
     enum class BoundingMethod{NoBounding, Bounding};
 
+    Shape get_input_shape() const override { return output_shape; }
+
     Shape get_output_shape() const override;
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
@@ -62,7 +64,9 @@ public:
 
 private:
 
-    enum Forward {Inputs = 0, Outputs = 1};
+    enum Forward {Input, Output};
+
+    Shape output_shape;
 
     BoundingMethod bounding_method = BoundingMethod::Bounding;
 

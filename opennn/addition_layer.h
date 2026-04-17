@@ -27,10 +27,9 @@ public:
         set(new_input_shape, new_name);
     }
 
-    Shape get_output_shape() const override
-    {
-        return input_shape;
-    }
+    Shape get_input_shape() const override { return input_shape; }
+
+    Shape get_output_shape() const override { return input_shape; }
 
     vector<Shape> get_forward_shapes(Index batch_size) const override
     {
@@ -67,12 +66,7 @@ public:
     {
         auto& forward_views = forward_propagation.views[layer];
 
-        const TensorView& input_1 = forward_views[Inputs][0];
-        const TensorView& input_2 = forward_views[Inputs][1];
-
-        TensorView& output = forward_views[Outputs][0];
-
-        addition(input_1, input_2, output);
+        addition(forward_views[Input][0], forward_views[Input][1], forward_views[Output][0]);
     }
 
     void back_propagate(ForwardPropagation&,
@@ -81,13 +75,8 @@ public:
     {
         auto& backward_views = back_propagation.backward_views[layer];
 
-        const TensorView& output_gradient = backward_views[0][0];
-
-        TensorView& input_gradient_0 = backward_views[1][0];
-        TensorView& input_gradient_1 = backward_views[2][0];
-
-        copy(output_gradient, input_gradient_0);
-        copy(output_gradient, input_gradient_1);
+        copy(backward_views[OutputGradient][0], backward_views[InputGradient][0]);
+        copy(backward_views[OutputGradient][0], backward_views[InputGradient][1]);
     }
 
     void from_XML(const XmlDocument& document) override
@@ -113,10 +102,14 @@ public:
         printer.close_element();
     }
 
+    void set_input_shape(const Shape& s) override { input_shape = s; }
+
 private:
 
-    enum Forward {Inputs, Outputs};
-    enum Backward {OutputGradients, InputGradients};
+    Shape input_shape;
+
+    enum Forward {Input, Output};
+    enum Backward {OutputGradient, InputGradient};
 };
 
 }

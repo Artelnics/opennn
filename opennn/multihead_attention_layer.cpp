@@ -100,7 +100,6 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
     query_sequence_length = new_query_sequence_length;
     source_sequence_length = new_source_sequence_length;
     embedding_dimension = new_embedding_dimension;
-    input_shape = {new_query_sequence_length, new_embedding_dimension};
     heads_number = new_heads_number;
     label = new_label;
 
@@ -134,11 +133,11 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    const TensorView& query_input = forward_views[Inputs][0];
+    const TensorView& query_input = forward_views[Input][0];
 
-    const TensorView& source_input = (forward_views[Inputs].size() == 1)
+    const TensorView& source_input = (forward_views[Input].size() == 1)
                                         ? query_input
-                                        : forward_views[Inputs][1];
+                                        : forward_views[Input][1];
 
     TensorView& query = forward_views[Query][0];
     TensorView& key = forward_views[Key][0];
@@ -161,14 +160,20 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     args.transpose_scratch = forward_views[TransposeScratch][0].data;
     args.attention_output_transposed = forward_views[AttentionOutputTransposed][0].data;
 
-    projection(query_input, parameters[QueryWeights], parameters[QueryBiases], query, args);
-    projection(source_input, parameters[KeyWeights], parameters[KeyBiases], key, args);
-    projection(source_input, parameters[ValueWeights], parameters[ValueBiases], value, args);
+    projection(query_input, 
+               parameters[QueryWeight], 
+               parameters[QueryBias], 
+               query, 
+               args);
+
+    projection(source_input, parameters[KeyWeight], parameters[KeyBias], key, args);
+
+    projection(source_input, parameters[ValueWeight], parameters[ValueBias], value, args);
 
     multihead_attention_forward(
         query, key, value,
         attention_weights_view, concatenated, output,
-        parameters[ProjectionWeights], parameters[ProjectionBiases],
+        parameters[ProjectionWeight], parameters[ProjectionBias],
         source_input, args);
 }
 
@@ -180,11 +185,11 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     auto& backward_views = back_propagation.backward_views[layer];
     auto& gradient_views = back_propagation.gradient_views[layer];
 
-    const TensorView& query_input = forward_views[Inputs][0];
-    const TensorView& source_input = (forward_views[Inputs].size() == 1)
+    const TensorView& query_input = forward_views[Input][0];
+    const TensorView& source_input = (forward_views[Input].size() == 1)
                                          ? query_input
-                                         : forward_views[Inputs][1];
-    const bool self_attention = (forward_views[Inputs].size() == 1);
+                                         : forward_views[Input][1];
+    const bool self_attention = (forward_views[Input].size() == 1);
 
     TensorView& output_gradient = backward_views[OutputGradient][0];
 
@@ -210,23 +215,23 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
         forward_views[Value][0],
         forward_views[AttentionWeights][0],
         forward_views[ConcatenatedAttentionOutputs][0],
-        parameters[ProjectionWeights],
-        gradient_views[ProjectionWeights],
-        gradient_views[ProjectionBiases],
+        parameters[ProjectionWeight],
+        gradient_views[ProjectionWeight],
+        gradient_views[ProjectionBias],
         backward_views[ConcatenatedOutputGradient][0],
         backward_views[AttentionWeightGradient][0],
         backward_views[QueryGradient][0],
         backward_views[KeyGradient][0],
         backward_views[ValueGradient][0],
-        gradient_views[QueryWeights],
-        gradient_views[QueryBiases],
-        gradient_views[KeyWeights],
-        gradient_views[KeyBiases],
-        gradient_views[ValueWeights],
-        gradient_views[ValueBiases],
+        gradient_views[QueryWeight],
+        gradient_views[QueryBias],
+        gradient_views[KeyWeight],
+        gradient_views[KeyBias],
+        gradient_views[ValueWeight],
+        gradient_views[ValueBias],
         backward_views[InputQueryGradient][0],
         backward_views[InputSourceGradient][0],
-        parameters[QueryWeights], parameters[KeyWeights], parameters[ValueWeights],
+        parameters[QueryWeight], parameters[KeyWeight], parameters[ValueWeight],
         args, self_attention);
 }
 

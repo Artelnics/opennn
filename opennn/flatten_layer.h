@@ -27,10 +27,9 @@ public:
         set(new_input_shape);
     }
 
-    Shape get_output_shape() const override
-    {
-        return { input_shape.size() };
-    }
+    Shape get_input_shape() const override { return input_shape; }
+
+    Shape get_output_shape() const override { return { input_shape.size() }; }
 
     void set(const Shape& new_input_shape)
     {
@@ -67,7 +66,7 @@ public:
     {
         auto& forward_views = forward_propagation.views[layer];
 
-        copy(forward_views[Inputs][0], forward_views[Outputs][0]);
+        copy(forward_views[Input][0], forward_views[Output][0]);
     }
 
 
@@ -77,7 +76,7 @@ public:
     {
         auto& backward_views = back_propagation.backward_views[layer];
 
-        copy(backward_views[OutputGradients][0], backward_views[InputGradients][0]);
+        copy(backward_views[OutputGradient][0], backward_views[InputGradient][0]);
     }
     
     // Serialization
@@ -141,8 +140,10 @@ private:
         return input_shape[2];
     }
 
-    enum Forward {Inputs, Outputs};
-    enum Backward {OutputGradients, InputGradients};
+    Shape input_shape;
+
+    enum Forward {Input, Output};
+    enum Backward {OutputGradient, InputGradient};
 };
 
 }
