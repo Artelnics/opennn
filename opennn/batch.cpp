@@ -96,6 +96,32 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         }
 #endif
     }
+
+#ifdef OPENNN_WITH_CUDA
+    // Prebuild cached TensorViews with cuDNN descriptors (shape is fixed per Batch)
+    if(!input_shape.empty() && input.device())
+    {
+        TensorView in_view(input.device(), input_shape);
+        in_view.set_descriptor(input_shape);
+
+        if(!decoder_shape.empty() && decoder.device())
+        {
+            TensorView dec_view(decoder.device(), decoder_shape);
+            dec_view.set_descriptor(decoder_shape);
+            input_views_cache = { dec_view, in_view };
+        }
+        else
+        {
+            input_views_cache = { in_view };
+        }
+    }
+
+    if(!target_shape.empty() && target.device())
+    {
+        target_view_cache = TensorView(target.device(), target_shape);
+        target_view_cache.set_descriptor(target_shape);
+    }
+#endif
 }
 
 void Batch::fill(const vector<Index>& sample_indices,
@@ -235,27 +261,14 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
     CHECK_CUDA(cudaMemcpyAsync(target.device(), targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice, stream));
 }
 
-vector<TensorView> Batch::get_inputs_device() const
+const vector<TensorView>& Batch::get_inputs_device() const
 {
-    if(!decoder_shape.empty())
-    {
-        TensorView dec_view(const_cast<type*>(decoder.device()), decoder_shape);
-        dec_view.set_descriptor(decoder_shape);
-        TensorView in_view(const_cast<type*>(input.device()), input_shape);
-        in_view.set_descriptor(input_shape);
-        return { dec_view, in_view };
-    }
-
-    TensorView in_view(const_cast<type*>(input.device()), input_shape);
-    in_view.set_descriptor(input_shape);
-    return { in_view };
+    return input_views_cache;
 }
 
-TensorView Batch::get_targets_device() const
+const TensorView& Batch::get_targets_device() const
 {
-    TensorView tv(const_cast<type*>(target.device()), target_shape);
-    tv.set_descriptor(target_shape);
-    return tv;
+    return target_view_cache;
 }
 
 #endif

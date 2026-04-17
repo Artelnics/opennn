@@ -43,6 +43,48 @@ inline PoolingMethod string_to_pooling_method(const string& name)
 
 class Pooling final : public Layer
 {
+private:
+
+    Index pool_height = 1;
+    Index pool_width = 1;
+
+    Index padding_height = 0;
+    Index padding_width = 0;
+
+    Index row_stride = 1;
+    Index column_stride = 1;
+
+    PoolingMethod pooling_method = PoolingMethod::MaxPooling;
+
+    PoolingArguments cached_pool_args;
+
+#ifdef OPENNN_WITH_CUDA
+    cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
+    cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
+#endif
+
+    enum Forward {Inputs, MaximalIndices, Outputs};
+
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    {
+        const Shape out_shape = get_output_shape(); // {out_h, out_w, channels}
+
+        vector<Shape> shapes;
+
+        if (pooling_method == PoolingMethod::MaxPooling)
+            shapes.push_back(Shape{batch_size}.append(out_shape)); // MaximalIndices
+
+        shapes.push_back(Shape{batch_size}.append(out_shape)); // Outputs (must be last for wiring)
+
+        return shapes;
+    }
+
+    enum Backward {OutputGradients, InputGradients};
+
+    vector<Shape> get_backward_shapes(Index batch_size) const override
+    {
+        return {{batch_size, get_input_height(), get_input_width(), get_channels_number()}};
+    }
 
 public:
 
@@ -60,6 +102,31 @@ public:
     }
 #endif
 
+    // Getters
+
+    Shape get_input_shape() const override { return input_shape; }
+    Shape get_output_shape() const override;
+
+    Index get_input_height() const { return input_shape[0]; }
+    Index get_input_width() const { return input_shape[1]; }
+    Index get_channels_number() const { return input_shape[2]; }
+
+    Index get_output_height() const;
+    Index get_output_width() const;
+
+    Index get_pool_height() const { return pool_height; }
+    Index get_pool_width() const { return pool_width; }
+
+    Index get_row_stride() const { return row_stride; }
+    Index get_column_stride() const { return column_stride; }
+
+    Index get_padding_height() const { return padding_height; }
+    Index get_padding_width() const { return padding_width; }
+
+    PoolingMethod get_pooling_method() const { return pooling_method; }
+
+    // Setters
+
     void set(const Shape& = { 0, 0, 0 },
              const Shape& = { 1, 1 },
              const Shape& = { 1, 1 },
@@ -67,92 +134,28 @@ public:
              const string & = "MaxPooling",
              const string & = "pooling_layer");
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
-    {
-        const Shape out_shape = get_output_shape(); // {out_h, out_w, channels}
-
-        vector<Shape> shapes;
-
-        if (pooling_method == PoolingMethod::MaxPooling)
-            shapes.push_back(Shape{batch_size}.append(out_shape)); // MaximalIndices
-
-        shapes.push_back(Shape{batch_size}.append(out_shape)); // Outputs (must be last for wiring)
-
-        return shapes;
-    }
-
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        return {{batch_size, get_input_height(), get_input_width(), get_channels_number()}};
-    }
-
-    Shape get_input_shape() const override { return input_shape; }
-    Shape get_output_shape() const override;
-
-    Index get_input_height() const { return input_shape[0]; }
-    Index get_input_width() const { return input_shape[1]; }
-
-    Index get_output_height() const;
-    Index get_output_width() const;
-
-    Index get_channels_number() const { return input_shape[2]; }
-
-    Index get_padding_height() const { return padding_height; }
-    Index get_padding_width() const { return padding_width; }
-
-    Index get_row_stride() const { return row_stride; }
-    Index get_column_stride() const { return column_stride; }
-
-    Index get_pool_height() const { return pool_height; }
-    Index get_pool_width() const { return pool_width; }
-
-    PoolingMethod get_pooling_method() const { return pooling_method; }
-
     void set_input_shape(const Shape&) override;
 
-    void set_padding_height(const Index h) { padding_height = h; }
-    void set_padding_width(const Index w) { padding_width = w; }
+    void set_pool_size(const Index, Index);
 
     void set_row_stride(const Index s) { row_stride = s; }
     void set_column_stride(const Index s) { column_stride = s; }
 
-    void set_pool_size(const Index, Index);
+    void set_padding_height(const Index h) { padding_height = h; }
+    void set_padding_width(const Index w) { padding_width = w; }
 
     void set_pooling_method(const string&);
+
+    // Forward / back propagation
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
+    // Serialization
+
     void from_XML(const XmlDocument&) override;
     void to_XML(XmlPrinter&) const override;
-
-private:
-
-    enum Forward {Inputs, MaximalIndices, Outputs};
-    enum Backward {OutputGradients, InputGradients};
-
-    Index pool_height = 1;
-    Index pool_width = 1;
-
-    Index padding_height = 0;
-    Index padding_width = 0;
-
-    Index row_stride = 1;
-    Index column_stride = 1;
-
-    PoolingMethod pooling_method = PoolingMethod::MaxPooling;
-
-    PoolingArguments cached_pool_args;
-
-#ifdef OPENNN_WITH_CUDA
-
-    cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
-
-    cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
-
-#endif
-
 };
 
 }

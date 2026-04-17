@@ -35,6 +35,8 @@ Pooling::Pooling(const Shape& new_input_shape,
         new_name);
 }
 
+// Getters
+
 Shape Pooling::get_output_shape() const
 {
     const Index rows_number = get_output_height();
@@ -53,6 +55,8 @@ Index Pooling::get_output_width() const
 {
     return (get_input_width() - pool_width + 2 * padding_width) / column_stride + 1;
 }
+
+// Setters
 
 void Pooling::set(const Shape& new_input_shape,
                   const Shape& new_pool_dimensions,
@@ -100,8 +104,6 @@ void Pooling::set(const Shape& new_input_shape,
 
 #ifdef OPENNN_WITH_CUDA
 
-    // Pooling descriptor
-
     cudnnCreatePoolingDescriptor(&pooling_descriptor);
 
     cudnnSetPooling2dDescriptor(pooling_descriptor,
@@ -148,6 +150,8 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 #endif
 }
 
+// Forward / back propagation
+
 void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
     auto& forward_views = forward_propagation.views[layer];
@@ -178,6 +182,8 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
     else
         average_pooling_backward(input, output, output_gradient, input_gradient, cached_pool_args);
 }
+
+// Serialization
 
 void Pooling::from_XML(const XmlDocument& document)
 {
@@ -211,9 +217,6 @@ void Pooling::to_XML(XmlPrinter& printer) const
 
     printer.close_element();
 }
-
-// CUDA forward/backward handled via unified ForwardPropagation/BackPropagation views
-// and operators in math_utilities.h
 
 REGISTER(Layer, Pooling, "Pooling")
 

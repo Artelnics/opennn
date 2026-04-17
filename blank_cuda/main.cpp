@@ -75,15 +75,6 @@ int main()
         const auto t1 = steady_clock::now();
 
         const double training_seconds = duration_cast<milliseconds>(t1 - t0).count() / 1000.0;
-
-        // Testing analysis
-
-        TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
-        testing_analysis.set_batch_size(16);
-
-        cout << "\nConfusion matrix (CPU test):\n" << testing_analysis.calculate_confusion() << endl;
-        testing_analysis.print_binary_classification_tests();
-
         cout << "\nTotal training time (refactor): " << training_seconds << " s" << endl;
 
 #endif

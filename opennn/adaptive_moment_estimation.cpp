@@ -481,7 +481,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
     ForwardPropagation validation_forward_propagation(validation_batch_size, neural_network);
     validation_forward_propagation.allocate_device();
-
     BackPropagation validation_back_propagation(validation_batch_size, loss);
     validation_back_propagation.allocate_device();
 

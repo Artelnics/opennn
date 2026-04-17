@@ -102,6 +102,8 @@ public:
 #endif
     }
 
+    // Getters
+
     Shape get_output_shape() const override
     {
         if constexpr (Rank == 2)
@@ -127,6 +129,12 @@ public:
     {
         return activation_arguments.activation_function;
     }
+
+    bool get_batch_normalization() const { return batch_normalization; }
+
+    type get_momentum() const { return momentum; }
+
+    // Setters
 
     void set(const Shape& new_input_shape = {},
              const Shape& new_output_shape = {},
@@ -166,23 +174,6 @@ public:
         neurons_number = new_output_shape.back();
     }
 
-    void set_batch_normalization(bool new_batch_normalization)
-    {
-        batch_normalization = new_batch_normalization;
-    }
-
-    void set_momentum(const type new_momentum)
-    {
-        if (new_momentum < type(0) || new_momentum >= type(1))
-            throw runtime_error("Batch normalization momentum must be in [0,1).");
-
-        momentum = new_momentum;
-    }
-
-    type get_momentum() const { return momentum; }
-
-    bool get_batch_normalization() const { return batch_normalization; }
-
     void set_activation_function(const string& name)
     {
         ActivationFunction function = string_to_activation(name);
@@ -216,6 +207,11 @@ public:
 #endif
     }
 
+    void set_batch_normalization(bool new_batch_normalization)
+    {
+        batch_normalization = new_batch_normalization;
+    }
+
     void set_dropout_rate(const type new_dropout_rate)
     {
         if (new_dropout_rate < type(0) || new_dropout_rate >= type(1))
@@ -224,6 +220,16 @@ public:
         dropout_rate = new_dropout_rate;
         dropout_arguments.rate = new_dropout_rate;
     }
+
+    void set_momentum(const type new_momentum)
+    {
+        if (new_momentum < type(0) || new_momentum >= type(1))
+            throw runtime_error("Batch normalization momentum must be in [0,1).");
+
+        momentum = new_momentum;
+    }
+
+    // Parameter initialization
 
     void set_parameters_glorot() override
     {
@@ -260,6 +266,8 @@ public:
             VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
         }
     }
+
+    // Device setup
 
 #ifdef OPENNN_WITH_CUDA
 
@@ -300,6 +308,8 @@ public:
         }
     }
 #endif
+
+    // Forward / back propagation
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) override
     {
@@ -377,6 +387,8 @@ public:
             multiply(delta_2d, false, parameters[Weight], true, input_gradient_2d);
         }
     }
+
+    // Serialization
 
     void from_XML(const XmlDocument& document) override
     {

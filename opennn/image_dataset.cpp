@@ -185,7 +185,13 @@ void ImageDataset::from_XML(const XmlDocument& data_set_document)
 
 vector<Descriptives> ImageDataset::scale_features(const string&)
 {
-    data.leftCols(get_features_number("Input")) /= type(255);
+    const Index samples_number = get_samples_number();
+    const Index input_features_number = get_features_number("Input");
+
+    #pragma omp parallel for
+    for(Index i = 0; i < samples_number; i++)
+        for(Index j = 0; j < input_features_number; j++)
+            data(i, j) /= type(255);
 
     return {};
 }

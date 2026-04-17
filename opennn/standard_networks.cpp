@@ -189,7 +189,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
     add_layer(make_unique<Dense<2>>(get_output_shape(),
                                    hidden_shape,
                                    "RectifiedLinear",
-                                   true,                      // batch_normalization
+                                   false,                     // batch_normalization
                                    "dense_2d_layer_1"));
 
     add_layer(make_unique<Dense<2>>(get_output_shape(),

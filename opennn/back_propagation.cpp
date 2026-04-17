@@ -230,8 +230,8 @@ void BackPropagation::accumulate_output_gradients(size_t layer_index)
 void BackPropagation::allocate_device()
 {
 #ifdef OPENNN_WITH_CUDA
-    if(!loss)
-        throw runtime_error("BackPropagation error: loss is not set.");
+    if(!loss || batch_size <= 0)
+        return;
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
     if(!neural_network)
@@ -342,17 +342,18 @@ void BackPropagation::allocate_device()
 
     CHECK_CUDA(cudaMalloc(&errors_device, batch_size * outputs_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&error_device, 2 * sizeof(float)));
+
+    output_gradients_view_device = TensorView(output_gradients.device(), output_gradient_dimensions);
+    output_gradients_view_device.set_descriptor(output_gradient_dimensions);
 #endif
 }
 
 
 #ifdef OPENNN_WITH_CUDA
 
-TensorView BackPropagation::get_output_gradients_device() const
+const TensorView& BackPropagation::get_output_gradients_device() const
 {
-    TensorView tv(const_cast<type*>(output_gradients.device()), output_gradient_dimensions);
-    tv.set_descriptor(output_gradient_dimensions);
-    return tv;
+    return output_gradients_view_device;
 }
 
 void BackPropagation::free_cuda()

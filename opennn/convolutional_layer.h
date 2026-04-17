@@ -95,7 +95,27 @@ private:
 
     enum Forward {Inputs, PaddedInputs, Convolution, BatchNormMean, BatchNormInverseVariance, Output};
 
-    vector<Shape> get_forward_shapes(Index) const override;
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    {
+        const Shape output_shape = {batch_size, get_output_height(), get_output_width(), kernels_number};
+        const Shape padded_shape = {batch_size,
+                                    get_input_height() + 2 * get_padding_height(),
+                                    get_input_width() + 2 * get_padding_width(),
+                                    get_input_channels()};
+
+        if (batch_normalization)
+            return {padded_shape,             // PaddedInputs
+                    output_shape,             // Convolution
+                    Shape{kernels_number},    // BatchNormMean
+                    Shape{kernels_number},    // BatchNormInverseVariance
+                    output_shape};            // Output
+
+        return {padded_shape,                 // PaddedInputs
+                Shape{},                      // Convolution (unused)
+                Shape{},                      // BatchNormMean (unused)
+                Shape{},                      // BatchNormInverseVariance (unused)
+                output_shape};                // Output
+    }
 
     enum Backward {OutputGradients, InputGradients};
 
@@ -130,40 +150,41 @@ public:
 #endif
     }
 
-    bool get_batch_normalization() const { return batch_normalization; }
-
-    ActivationFunction get_activation_function() const { return activation_arguments.activation_function; }
-
-    ActivationFunction get_output_activation() const override { return activation_arguments.activation_function; }
+    // Getters
 
     Shape get_output_shape() const override;
-
-    pair<Index, Index> get_padding() const;
-
     Index get_output_height() const;
     Index get_output_width() const;
 
-    ConvolutionType get_convolution_type() const { return convolution_type; }
-
-    Index get_column_stride() const { return column_stride; }
-    Index get_row_stride() const { return row_stride; }
+    Index get_input_height() const;
+    Index get_input_width() const;
+    Index get_input_channels() const;
 
     Index get_kernel_height() const { return kernel_height; }
     Index get_kernel_width() const { return kernel_width; }
     Index get_kernel_channels() const { return kernel_channels; }
     Index get_kernels_number() const { return kernels_number; }
 
+    Index get_row_stride() const { return row_stride; }
+    Index get_column_stride() const { return column_stride; }
+
+    pair<Index, Index> get_padding() const;
     Index get_padding_height() const;
     Index get_padding_width() const;
 
-    Index get_input_channels() const;
-    Index get_input_height() const;
-    Index get_input_width() const;
+    ConvolutionType get_convolution_type() const { return convolution_type; }
+
+    ActivationFunction get_activation_function() const { return activation_arguments.activation_function; }
+    ActivationFunction get_output_activation() const override { return activation_arguments.activation_function; }
+
+    bool get_batch_normalization() const { return batch_normalization; }
 
 #ifdef OPENNN_WITH_CUDA
     cudnnFilterDescriptor_t get_kernel_descriptor() const { return kernel_descriptor; }
     cudnnConvolutionDescriptor_t get_convolution_descriptor() const { return convolution_descriptor; }
 #endif
+
+    // Setters
 
     void set(const Shape& = {0, 0, 0},
              const Shape& = {3, 3, 1, 1},
@@ -175,25 +196,33 @@ public:
 
     void set_input_shape(const Shape&) override;
 
-    void set_batch_normalization(bool);
-
-    void set_activation_function(const string&);
-
-    void set_convolution_type(const string&);
-
     void set_row_stride(const Index);
     void set_column_stride(const Index);
 
+    void set_convolution_type(const string&);
+
+    void set_activation_function(const string&);
+
+    void set_batch_normalization(bool);
+
+    // Parameter initialization
+
     void set_parameters_glorot() override;
     void set_parameters_random() override;
+
+    // Device setup
 
 #ifdef OPENNN_WITH_CUDA
     void init_cuda(Index batch_size);
 #endif
 
+    // Forward / back propagation
+
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+
+    // Serialization
 
     void from_XML(const XmlDocument&) override;
     void to_XML(XmlPrinter&) const override;
