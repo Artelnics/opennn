@@ -158,7 +158,7 @@ void LanguageDataset::encode_decoder_target_sequence_to_sequence(const vector<ve
     for(Index sample = 0; sample < samples_number; sample++)
     {
         const vector<string>& target_tokens = target_document_tokens[sample];
-        const Index target_tokens_number = static_cast<Index>(target_tokens.size());
+        const Index target_tokens_number = ssize(target_tokens);
 
         data(sample, decoder_offset) = START_INDEX;
 
@@ -412,7 +412,7 @@ void LanguageDataset::read_csv()
 
     // Restore all variable roles after set_binary_variables, which may mark
     // constant columns (e.g. START token) as "None"
-    for(Index i = 0; i < static_cast<Index>(variables.size()); i++)
+    for(Index i = 0; i < ssize(variables); i++)
     {
         if(i < maximum_input_sequence_length)
             variables[i].role = VariableRole::Input;

@@ -276,11 +276,16 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumSelectionFailures;
             stop = true;
         }
-        else if(dataset->get_variables_number("Input") >= maximum_inputs_number)
+        else
         {
-            if(display) cout << "\nMaximum inputs (" << dataset->get_variables_number("Input") << ") reached." << "\n";
-            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
-            stop = true;
+            const Index current_inputs = dataset->get_variables_number("Input");
+
+            if(current_inputs >= maximum_inputs_number)
+            {
+                if(display) cout << "\nMaximum inputs (" << current_inputs << ") reached." << "\n";
+                input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
+                stop = true;
+            }
         }
     }
 

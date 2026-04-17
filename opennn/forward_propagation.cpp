@@ -46,7 +46,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     views.resize(layers_number);
     type* pointer = (total_size > 0) ? data.data() : nullptr;
 
-    for(size_t i = 0; i < layers_number; ++i)
+    for(Index i = 0; i < layers_number; ++i)
     {
         const vector<Shape>& shapes = forward_shapes[i];
         const size_t slots = shapes.size();
@@ -69,12 +69,13 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
 
-    for(size_t i = 0; i < layers_number; ++i)
+    for(Index i = 0; i < layers_number; ++i)
     {
         const vector<Index>& input_indices = layer_input_indices[i];
-        views[i][0].resize(input_indices.size());
+        const size_t input_indices_size = input_indices.size();
+        views[i][0].resize(input_indices_size);
 
-        for(size_t k = 0; k < input_indices.size(); ++k)
+        for(size_t k = 0; k < input_indices_size; ++k)
         {
             const Index j = input_indices[k];
 
@@ -82,7 +83,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             {
                 const size_t output_slot = forward_shapes[j].size();
 
-                if(output_slot > 0 && j < static_cast<Index>(views.size())
+                if(output_slot > 0 && j < ssize(views)
                     && !views[j][output_slot].empty())
                 {
                     views[i][0][k] = views[j][output_slot][0];
@@ -106,7 +107,7 @@ void ForwardPropagation::allocate_device()
 
     type* dev_pointer = data.device();
 
-    for(size_t i = 0; i < layers_number; ++i)
+    for(Index i = 0; i < layers_number; ++i)
     {
         const vector<Shape>& shapes = forward_shapes[i];
 
@@ -123,7 +124,7 @@ void ForwardPropagation::allocate_device()
         }
     }
 
-    for(size_t i = 0; i < layers_number; ++i)
+    for(Index i = 0; i < layers_number; ++i)
     {
         const vector<Index>& input_idx = layer_input_indices[i];
 
@@ -135,7 +136,7 @@ void ForwardPropagation::allocate_device()
             {
                 const size_t output_slot = forward_shapes[j].size();
 
-                if(output_slot > 0 && j < static_cast<Index>(views.size())
+                if(output_slot > 0 && j < ssize(views)
                     && !views[j][output_slot].empty())
                 {
                     views[i][0][k] = views[j][output_slot][0];
@@ -187,7 +188,7 @@ vector<vector<TensorView>> ForwardPropagation::get_layer_input_views(const vecto
 
     vector<vector<TensorView>> layer_input_views(layers_number);
 
-    for (size_t i = 0; i < layers_number; ++i)
+    for (Index i = 0; i < layers_number; ++i)
         if(i < views.size() && !views[i].empty())
             layer_input_views[i] = views[i][0];
 
@@ -219,7 +220,7 @@ void ForwardPropagation::print() const
 
     cout << "Layers number: " << layers_number << "\n";
 
-    for(size_t i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
         cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_label() << "\n";
 }
 

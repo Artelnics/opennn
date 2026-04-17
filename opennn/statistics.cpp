@@ -626,12 +626,12 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
                 unique_values.push_back(value);
                 unique_set.insert(value);
 
-                if (static_cast<Index>(unique_values.size()) > bins_number)
+                if (ssize(unique_values) > bins_number)
                     break;
             }
     }
 
-    const Index unique_values_number = static_cast<Index>(unique_values.size());
+    const Index unique_values_number = ssize(unique_values);
     if(unique_values_number <= bins_number)
     {
         sort(unique_values.data(), unique_values.data() + unique_values.size(), less<type>());
@@ -882,8 +882,8 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
                                   const vector<Index>& row_indices,
                                   const vector<Index>& column_indices)
 {
-    const Index row_indices_size = static_cast<Index>(row_indices.size());
-    const Index column_indices_size = static_cast<Index>(column_indices.size());
+    const Index row_indices_size = ssize(row_indices);
+    const Index column_indices_size = ssize(column_indices);
 
     vector<Descriptives> descriptives_results(column_indices_size);
 
@@ -1305,7 +1305,7 @@ VectorI minimal_indices(const VectorR& data, Index k)
     vector<Index> indices(data.size());
     iota(indices.begin(), indices.end(), 0);
 
-    k = min(k, static_cast<Index>(data.size()));
+    k = min(k, ssize(data));
 
     partial_sort(indices.begin(),
                  indices.begin() + k,
@@ -1329,7 +1329,7 @@ VectorI maximal_indices(const VectorR& data, Index k)
     vector<Index> indices(data.size());
     iota(indices.begin(), indices.end(), 0);
 
-    k = min(k, static_cast<Index>(data.size()));
+    k = min(k, ssize(data));
 
     partial_sort(indices.begin(), indices.begin() + k, indices.end(),
                  [&data](Index i, Index j) {

@@ -54,7 +54,7 @@ void Pooling3d::set_pooling_method(const string& new_pooling_method)
 
 // Forward / back propagation
 
-void Pooling3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void Pooling3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
 
@@ -69,7 +69,7 @@ void Pooling3d::forward_propagate(ForwardPropagation& forward_propagation, size_
 
 void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
-                               size_t layer) const
+                               size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
     auto& backward_views = back_propagation.backward_views[layer];

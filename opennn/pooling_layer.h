@@ -148,9 +148,9 @@ public:
 
     // Forward / back propagation
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
     // Serialization
 

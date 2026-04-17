@@ -8,6 +8,8 @@
 
 #include "string_utilities.h"
 #include <regex>
+#include <cerrno>
+#include <cstdlib>
 
 namespace opennn
 {
@@ -177,32 +179,36 @@ VectorR to_type_vector(const string& text, const string& separator)
     VectorR type_vector(tokens_size);
 
     for(Index i = 0; i < tokens_size; i++)
-        try
-        {
-            type_vector(i) = type(stof(tokens[i]));
-        }
-        catch(const exception&)
-        {
-            type_vector(i) = type(nan(""));
-        }
+    {
+        const char* begin = tokens[i].c_str();
+        char* end = nullptr;
+        errno = 0;
+        const float value = strtof(begin, &end);
+
+        // NaN if parse failed, overflow, or trailing garbage.
+        type_vector(i) = (end == begin || errno == ERANGE || *end != '\0')
+            ? type(nan(""))
+            : type(value);
+    }
 
     return type_vector;
 }
 
 bool is_numeric_string(const string& text)
 {
-    try
-    {
-        size_t index;
-        //[[maybe_unused]]
-        stod(text, &index);
+    if(text.empty()) return false;
 
-        return (index == text.size() || (text.find('%') != string::npos && index + 1 == text.size()));
-    }
-    catch (const exception&)
-    {
-        return false;
-    }
+    const char* begin = text.c_str();
+    char* end = nullptr;
+    errno = 0;
+    strtod(begin, &end);
+
+    if(end == begin || errno == ERANGE) return false;
+
+    const size_t consumed = static_cast<size_t>(end - begin);
+
+    return consumed == text.size()
+        || (text.find('%') != string::npos && consumed + 1 == text.size());
 }
 
 bool is_date_time_string(const string& text)

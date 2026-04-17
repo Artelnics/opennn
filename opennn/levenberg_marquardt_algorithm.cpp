@@ -702,16 +702,10 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         calculate_error(batch, forward_propagation, back_propagation_lm);
 
-        type new_loss_value;
+        type new_loss_value = error + loss->calculate_regularization(potential_parameters);
 
-        try
-        {
-            new_loss_value = error + loss->calculate_regularization(potential_parameters);
-
-        }catch(const exception&)
-        {
+        if(!isfinite(new_loss_value))
             new_loss_value = loss_value;
-        }
 
         if(new_loss_value < loss_value) // succesfull step
         {

@@ -240,8 +240,9 @@ void Convolutional::set_batch_normalization(bool new_batch_normalization)
 
 void Convolutional::set_parameters_glorot()
 {
-    const Index fan_in = get_kernel_height() * get_kernel_width() * get_kernel_channels();
-    const Index fan_out = get_kernel_height() * get_kernel_width() * get_kernels_number();
+    const Index kernel_area = get_kernel_height() * get_kernel_width();
+    const Index fan_in = kernel_area * get_kernel_channels();
+    const Index fan_out = kernel_area * get_kernels_number();
 
     const type limit = sqrt(6.0f / static_cast<type>(fan_in + fan_out));
 
@@ -361,7 +362,7 @@ void Convolutional::init_cuda(Index batch_size)
 
 // Forward / back propagation
 
-void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
 
@@ -422,7 +423,7 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
 void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                    BackPropagation& back_propagation,
-                                   size_t layer) const
+                                   size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
     auto& backward_views = back_propagation.backward_views[layer];

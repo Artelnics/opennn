@@ -89,7 +89,7 @@ void Recurrent::set_activation_function(const string& new_activation_function)
         throw runtime_error("Unknown activation function: " + new_activation_function);
 }
 
-void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_t index, bool is_training)
+void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_t index, bool is_training) noexcept
 {
 /*
     const Index batch_size = forward_propagation->inputs[0].shape[0];
@@ -171,7 +171,7 @@ void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_
 
 void Recurrent::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
-                               size_t index) const
+                               size_t index) const noexcept
 {
 /*
     const Index batch_size = forward_propagation->inputs[0].shape[0];

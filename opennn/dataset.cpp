@@ -113,7 +113,7 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
 
     const Index batches_number = (samples_number + batch_size - 1) / batch_size;
 
-    if(static_cast<Index>(batches.size()) != batches_number)
+    if(ssize(batches) != batches_number)
         batches.resize(batches_number);
 
     vector<Index> shuffled_indices;
@@ -2561,7 +2561,7 @@ void Dataset::read_csv()
     vector<unordered_map<string, Index>> category_maps(variables_number);
     for(Index v = 0; v < variables_number; v++)
         if(variables[v].type == VariableType::Categorical)
-            for(Index c = 0; c < static_cast<Index>(variables[v].categories.size()); c++)
+            for(Index c = 0; c < ssize(variables[v].categories); c++)
                 category_maps[v][variables[v].categories[c]] = c;
 
     for(Index sample_index = 0; sample_index < samples_number; ++sample_index)

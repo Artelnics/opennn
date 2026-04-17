@@ -116,7 +116,7 @@ void Bounding::set_upper_bound(const Index index, type new_upper_bound)
     upper_bounds[index] = new_upper_bound;
 }
 
-void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
 

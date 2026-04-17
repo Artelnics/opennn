@@ -51,9 +51,9 @@ public:
 
     void set_activation_function(const string&);
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
     const TensorView& get_biases() const { return biases; }
     const TensorView& get_input_weights() const { return input_weights; }

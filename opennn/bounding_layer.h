@@ -52,7 +52,7 @@ public:
 
     // Lower and upper bounds
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
     // Serialization
 

@@ -26,6 +26,13 @@ inline Index get_aligned_size(Index size)
     return (size + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
 }
 
+// Signed size helper: returns STL container .size() as Index (avoids static_cast<Index>(x.size()) noise).
+template<typename Container>
+inline Index ssize(const Container& c) noexcept
+{
+    return static_cast<Index>(c.size());
+}
+
 inline bool is_aligned(const void* ptr)
 {
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
