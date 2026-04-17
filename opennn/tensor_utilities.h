@@ -236,6 +236,38 @@ struct Memory
     float* device_data = nullptr;
     Index allocated_size = 0;
 
+    Memory() = default;
+    Memory(const Memory&) = delete;
+    Memory& operator=(const Memory&) = delete;
+
+    Memory(Memory&& other) noexcept
+        : vector(std::move(other.vector)),
+          device_data(other.device_data),
+          allocated_size(other.allocated_size)
+    {
+        other.device_data = nullptr;
+        other.allocated_size = 0;
+    }
+
+    Memory& operator=(Memory&& other) noexcept
+    {
+        if(this != &other)
+        {
+            if(device_data) cudaFree(device_data);
+            vector = std::move(other.vector);
+            device_data = other.device_data;
+            allocated_size = other.allocated_size;
+            other.device_data = nullptr;
+            other.allocated_size = 0;
+        }
+        return *this;
+    }
+
+    ~Memory()
+    {
+        if(device_data) cudaFree(device_data);
+    }
+
     void resize_device(Index n)
     {
         if(n == allocated_size) return;

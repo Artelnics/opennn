@@ -18,7 +18,6 @@
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/optimizer.h"
 #include "../../opennn/adaptive_moment_estimation.h"
-#include "../../opennn/stochastic_gradient_descent.h"
 
 using namespace opennn;
 
@@ -28,7 +27,6 @@ int main()
     {   
         cout << "OpenNN. Melanoma Cancer CUDA Example." << endl;
 
-        set_seed(42);
 
         #ifdef OPENNN_WITH_CUDA
 
@@ -54,9 +52,9 @@ int main()
         training_strategy.get_loss()->set_regularization("None");
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_display_period(1);
+        adam->set_display_period(5);
         adam->set_batch_size(16);
-        adam->set_maximum_epochs(25);
+        adam->set_maximum_epochs(15);
 
         Device::instance().set(DeviceType::Gpu);
 

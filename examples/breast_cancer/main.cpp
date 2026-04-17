@@ -14,7 +14,7 @@
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/optimizer.h"
-#include "../../opennn/adaptive_moment_estimation.h"
+#include "../../opennn/stochastic_gradient_descent.h"
 #include "../../opennn/random_utilities.h"
 
 using namespace opennn;
@@ -25,7 +25,6 @@ int main()
     {
         cout << "OpenNN. Breast Cancer Example." << endl;
 
-        set_seed(42);
 
         // Dataset
 
@@ -41,12 +40,15 @@ int main()
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
-        training_strategy.get_loss()->set_regularization("None");
-        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs(1000);
+        training_strategy.set_loss("WeightedSquaredError");
+        training_strategy.get_loss()->set_regularization("L1");
+        training_strategy.get_loss()->set_regularization_weight(type(0.001));
 
-        Device::instance().set(DeviceType::Gpu);
+        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
+        StochasticGradientDescent* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
+        sgd->set_maximum_epochs(1000);
+
+        Device::instance().set(DeviceType::Cpu);
 
         training_strategy.train();
 

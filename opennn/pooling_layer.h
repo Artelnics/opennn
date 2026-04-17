@@ -60,6 +60,31 @@ public:
     }
 #endif
 
+    // Getters
+
+    Shape get_input_shape() const override { return {input_height, input_width, input_channels}; }
+    Shape get_output_shape() const override;
+
+    Index get_input_height() const { return input_height; }
+    Index get_input_width() const { return input_width; }
+    Index get_channels_number() const { return input_channels; }
+
+    Index get_output_height() const;
+    Index get_output_width() const;
+
+    Index get_pool_height() const { return pool_height; }
+    Index get_pool_width() const { return pool_width; }
+
+    Index get_row_stride() const { return row_stride; }
+    Index get_column_stride() const { return column_stride; }
+
+    Index get_padding_height() const { return padding_height; }
+    Index get_padding_width() const { return padding_width; }
+
+    PoolingMethod get_pooling_method() const { return pooling_method; }
+
+    // Setters
+
     void set(const Shape& = { 0, 0, 0 },
              const Shape& = { 1, 1 },
              const Shape& = { 1, 1 },
@@ -67,9 +92,37 @@ public:
              const string & = "MaxPooling",
              const string & = "pooling_layer");
 
+    void set_input_shape(const Shape&) override;
+
+    void set_pool_size(const Index, Index);
+
+    void set_row_stride(const Index s) { row_stride = s; }
+    void set_column_stride(const Index s) { column_stride = s; }
+
+    void set_padding_height(const Index h) { padding_height = h; }
+    void set_padding_width(const Index w) { padding_width = w; }
+
+    void set_pooling_method(const string&);
+
+    // Forward / back propagation
+
+    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
+
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
+
+    // Serialization
+
+    void from_XML(const XmlDocument&) override;
+    void to_XML(XmlPrinter&) const override;
+
+private:
+
+    enum Forward {Input, MaximalIndices, Output};
+    enum Backward {OutputGradient, InputGradient};
+
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        const Shape out_shape = get_output_shape(); // {out_h, out_w, channels}
+        const Shape out_shape = get_output_shape();
 
         vector<Shape> shapes;
 
@@ -83,54 +136,8 @@ public:
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        return {{batch_size, get_input_height(), get_input_width(), get_channels_number()}};
+        return {{batch_size, input_height, input_width, input_channels}};
     }
-
-    Shape get_input_shape() const override { return {input_height, input_width, input_channels}; }
-    Shape get_output_shape() const override;
-
-    Index get_input_height() const { return input_height; }
-    Index get_input_width() const { return input_width; }
-
-    Index get_output_height() const;
-    Index get_output_width() const;
-
-    Index get_channels_number() const { return input_channels; }
-
-    Index get_padding_height() const { return padding_height; }
-    Index get_padding_width() const { return padding_width; }
-
-    Index get_row_stride() const { return row_stride; }
-    Index get_column_stride() const { return column_stride; }
-
-    Index get_pool_height() const { return pool_height; }
-    Index get_pool_width() const { return pool_width; }
-
-    PoolingMethod get_pooling_method() const { return pooling_method; }
-
-    void set_input_shape(const Shape&) override;
-
-    void set_padding_height(const Index h) { padding_height = h; }
-    void set_padding_width(const Index w) { padding_width = w; }
-
-    void set_row_stride(const Index s) { row_stride = s; }
-    void set_column_stride(const Index s) { column_stride = s; }
-
-    void set_pool_size(const Index, Index);
-
-    void set_pooling_method(const string&);
-
-    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
-
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
-
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
-
-private:
-
-    enum Forward {Input, MaximalIndices, Output};
-    enum Backward {OutputGradient, InputGradient};
 
     Index input_height = 0;
     Index input_width = 0;
@@ -150,13 +157,9 @@ private:
     PoolingArguments cached_pool_args;
 
 #ifdef OPENNN_WITH_CUDA
-
     cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
-
     cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
-
 #endif
-
 };
 
 }

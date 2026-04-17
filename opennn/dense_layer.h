@@ -24,7 +24,7 @@ private:
 
     bool batch_normalization = false;
 
-    type momentum = type(0.9);
+    type momentum = type(0.1);
 
     type dropout_rate = type(0);
 
@@ -132,6 +132,12 @@ public:
         return activation_arguments.activation_function;
     }
 
+    bool get_batch_normalization() const { return batch_normalization; }
+
+    type get_momentum() const { return momentum; }
+
+    // Setters
+
     void set(const Shape& new_input_shape = {},
              const Shape& new_output_shape = {},
              const string& new_activation_function = "HyperbolicTangent",
@@ -183,11 +189,6 @@ public:
         output_features = new_output_shape.back();
     }
 
-    void set_batch_normalization(bool new_batch_normalization)
-    {
-        batch_normalization = new_batch_normalization;
-    }
-
     void set_activation_function(const string& name)
     {
         ActivationFunction function = string_to_activation(name);
@@ -221,6 +222,11 @@ public:
 #endif
     }
 
+    void set_batch_normalization(bool new_batch_normalization)
+    {
+        batch_normalization = new_batch_normalization;
+    }
+
     void set_dropout_rate(const type new_dropout_rate)
     {
         if (new_dropout_rate < type(0) || new_dropout_rate >= type(1))
@@ -229,6 +235,16 @@ public:
         dropout_rate = new_dropout_rate;
         dropout_arguments.rate = new_dropout_rate;
     }
+
+    void set_momentum(const type new_momentum)
+    {
+        if (new_momentum < type(0) || new_momentum >= type(1))
+            throw runtime_error("Batch normalization momentum must be in [0,1).");
+
+        momentum = new_momentum;
+    }
+
+    // Parameter initialization
 
     void set_parameters_glorot() override
     {
@@ -265,6 +281,8 @@ public:
             VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
         }
     }
+
+    // Device setup
 
 #ifdef OPENNN_WITH_CUDA
 
@@ -306,31 +324,33 @@ public:
     }
 #endif
 
+    // Forward / back propagation
+
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept override
     {
         auto& forward_views = forward_propagation.views[layer];
 
         if (batch_normalization)
         {
-            combination(forward_views[Input][0], 
-                        parameters[Weight], 
-                        parameters[Bias], 
+            combination(forward_views[Input][0],
+                        parameters[Weight],
+                        parameters[Bias],
                         forward_views[Combination][0]);
 
             is_training
-                ? batch_normalization_training(forward_views[Combination][0], 
-                                               parameters[Gamma], 
+                ? batch_normalization_training(forward_views[Combination][0],
+                                               parameters[Gamma],
                                                parameters[Beta],
-                                               states[RunningMean], 
+                                               states[RunningMean],
                                                states[RunningVariance],
-                                               forward_views[BatchNormMean][0], 
+                                               forward_views[BatchNormMean][0],
                                                forward_views[BatchNormInverseVariance][0],
-                                               output, 
+                                               output,
                                                momentum)
-                : batch_normalization_inference(forward_views[Combination][0], 
-                                                parameters[Gamma], 
+                : batch_normalization_inference(forward_views[Combination][0],
+                                                parameters[Gamma],
                                                 parameters[Beta],
-                                                states[RunningMean], 
+                                                states[RunningMean],
                                                 states[RunningVariance],
                                                 output);
         }
@@ -390,6 +410,8 @@ public:
                      input_gradient_2d);
         }
     }
+
+    // Serialization
 
     void from_XML(const XmlDocument& document) override
     {

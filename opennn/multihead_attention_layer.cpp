@@ -236,21 +236,6 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 }
 
 
-void MultiHeadAttention::to_XML(XmlPrinter& printer) const
-{
-    printer.open_element("MultiHeadAttention");
-    write_xml_properties(printer, {
-        {"Label", label},
-        {"InputSize", to_string(get_query_sequence_length())},
-        {"ContextSize", to_string(get_source_sequence_length())},
-        {"Depth", to_string(get_embedding_dimension())},
-        {"HeadDimension", to_string(get_head_dimension())},
-        {"HeadsNumber", to_string(get_heads_number())},
-        {"CausalMask", to_string(use_causal_mask ? 1 : 0)}
-    });
-    printer.close_element();
-}
-
 void MultiHeadAttention::from_XML(const XmlDocument& document)
 {
     // @todo update notation
@@ -265,6 +250,21 @@ void MultiHeadAttention::from_XML(const XmlDocument& document)
     const Index new_use_causal_mask = read_xml_bool(multihead_attention_layer_element, "CausalMask");
 
     set(new_input_size, new_context_size, new_depth, new_heads_number, new_use_causal_mask, new_label);
+}
+
+void MultiHeadAttention::to_XML(XmlPrinter& printer) const
+{
+    printer.open_element("MultiHeadAttention");
+    write_xml_properties(printer, {
+        {"Label", label},
+        {"InputSize", to_string(get_query_sequence_length())},
+        {"ContextSize", to_string(get_source_sequence_length())},
+        {"Depth", to_string(get_embedding_dimension())},
+        {"HeadDimension", to_string(get_head_dimension())},
+        {"HeadsNumber", to_string(get_heads_number())},
+        {"CausalMask", to_string(use_causal_mask ? 1 : 0)}
+    });
+    printer.close_element();
 }
 
 REGISTER(Layer, MultiHeadAttention, "MultiHeadAttention")

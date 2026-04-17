@@ -35,6 +35,71 @@ Convolutional::Convolutional(const Shape& new_input_shape,
         new_label);
 }
 
+// Getters
+
+Shape Convolutional::get_output_shape() const
+{
+    return { get_output_height(), get_output_width(), get_kernels_number() };
+}
+
+Index Convolutional::get_output_height() const
+{
+    return (convolution_type == ConvolutionType::Same)
+    ? (get_input_height() + get_row_stride() - 1) / get_row_stride()
+    : (get_input_height() - get_kernel_height()) / get_row_stride() + 1;
+}
+
+Index Convolutional::get_output_width() const
+{
+    return (convolution_type == ConvolutionType::Same)
+    ? (get_input_width() + get_column_stride() - 1) / get_column_stride()
+    : (get_input_width() - get_kernel_width()) / get_column_stride() + 1;
+}
+
+Index Convolutional::get_input_height() const
+{
+    return input_shape[0];
+}
+
+Index Convolutional::get_input_width() const
+{
+    return input_shape[1];
+}
+
+Index Convolutional::get_input_channels() const
+{
+    return input_shape[2];
+}
+
+pair<Index, Index> Convolutional::get_padding() const
+{
+    return { get_padding_height(), get_padding_width() };
+}
+
+Index Convolutional::get_padding_height() const
+{
+    if (convolution_type == ConvolutionType::Valid)
+        return 0;
+
+    const Index output_height = (get_input_height() + get_row_stride() - 1) / get_row_stride();
+    const Index total_padding = (output_height - 1) * get_row_stride() + get_kernel_height() - get_input_height();
+
+    return total_padding / 2;
+}
+
+Index Convolutional::get_padding_width() const
+{
+    if (convolution_type == ConvolutionType::Valid)
+        return 0;
+
+    const Index output_width = (get_input_width() + get_column_stride() - 1) / get_column_stride();
+    const Index total_padding = (output_width - 1) * get_column_stride() + get_kernel_width() - get_input_width();
+
+    return total_padding / 2;
+}
+
+// Setters
+
 void Convolutional::set(const Shape& new_input_shape,
                         const Shape& new_kernel_shape,
                         const string& new_activation_function,
@@ -118,9 +183,26 @@ void Convolutional::set_input_shape(const Shape& new_input_shape)
     input_channels = new_input_shape[2];
 }
 
-void Convolutional::set_batch_normalization(bool new_batch_normalization)
+void Convolutional::set_row_stride(const Index new_stride_row)
 {
-    batch_normalization = new_batch_normalization;
+    if (new_stride_row <= 0)
+        throw runtime_error("EXCEPTION: new_stride_row must be a positive number");
+
+    row_stride = new_stride_row;
+}
+
+void Convolutional::set_column_stride(const Index new_stride_column)
+{
+    if (new_stride_column <= 0)
+        throw runtime_error("EXCEPTION: new_stride_column must be a positive number");
+
+    column_stride = new_stride_column;
+}
+
+void Convolutional::set_convolution_type(const string& new_convolution_type)
+{
+    convolution_type = string_to_convolution_type(new_convolution_type);
+    use_padding = (convolution_type == ConvolutionType::Same);
 }
 
 void Convolutional::set_activation_function(const string& new_activation_function)
@@ -153,27 +235,12 @@ void Convolutional::set_activation_function(const string& new_activation_functio
 #endif
 }
 
-void Convolutional::set_convolution_type(const string& new_convolution_type)
+void Convolutional::set_batch_normalization(bool new_batch_normalization)
 {
-    convolution_type = string_to_convolution_type(new_convolution_type);
-    use_padding = (convolution_type == ConvolutionType::Same);
+    batch_normalization = new_batch_normalization;
 }
 
-void Convolutional::set_row_stride(const Index new_stride_row)
-{
-    if (new_stride_row <= 0)
-        throw runtime_error("EXCEPTION: new_stride_row must be a positive number");
-
-    row_stride = new_stride_row;
-}
-
-void Convolutional::set_column_stride(const Index new_stride_column)
-{
-    if (new_stride_column <= 0)
-        throw runtime_error("EXCEPTION: new_stride_column must be a positive number");
-
-    column_stride = new_stride_column;
-}
+// Parameter initialization
 
 void Convolutional::set_parameters_glorot()
 {
@@ -214,6 +281,8 @@ void Convolutional::set_parameters_random()
         VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
     }
 }
+
+// Device setup
 
 #ifdef OPENNN_WITH_CUDA
 
@@ -280,11 +349,22 @@ void Convolutional::init_cuda(Index batch_size)
     if (cuda_backward_filter_workspace_size > 0)
         CHECK_CUDA(cudaMalloc(&cuda_backward_filter_workspace, cuda_backward_filter_workspace_size));
 
+    // Populate ConvolutionArguments so forward/backward don't need to reassign each call
+    convolution_arguments.algorithm_forward = convolution_algorithm;
+    convolution_arguments.algorithm_data = algo_data;
+    convolution_arguments.algorithm_filter = algo_filter;
+    convolution_arguments.workspace = cuda_workspace;
+    convolution_arguments.workspace_size = cuda_workspace_size;
+    convolution_arguments.backward_filter_workspace = cuda_backward_filter_workspace;
+    convolution_arguments.backward_filter_workspace_size = cuda_backward_filter_workspace_size;
+
     cudnnDestroyTensorDescriptor(input_desc);
     cudnnDestroyTensorDescriptor(output_desc);
 }
 
 #endif
+
+// Forward / back propagation
 
 void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
@@ -299,71 +379,50 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     const TensorView& gammas = parameters[Gamma];
     const TensorView& betas = parameters[Beta];
 
-    const ActivationFunction func = activation_arguments.activation_function;
-
+    // cuDNN convolution uses unpadded input (padding is in convolution_descriptor).
+    // CPU convolution expects pre-padded input.
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
-        convolution_arguments.algorithm_forward = convolution_algorithm;
-        convolution_arguments.workspace = cuda_workspace;
-        convolution_arguments.workspace_size = cuda_workspace_size;
-
-        if (batch_normalization)
-        {
-            TensorView& combination_output = forward_views[Convolution][0];
-            convolution(input, weights, biases, combination_output, convolution_arguments);
-
-            if (is_training)
-                batch_normalization_training(combination_output, gammas, betas,
-                                             states[RunningMean], states[RunningVariance],
-                                             forward_views[BatchNormMean][0], forward_views[BatchNormInverseVariance][0],
-                                             output, momentum);
-            else
-                batch_normalization_inference(combination_output, gammas, betas,
-                                              states[RunningMean], states[RunningVariance],
-                                              output);
-
-            activation(output, activation_arguments);
-        }
-        else
-        {
-            if (func != ActivationFunction::Linear)
-            {
-                convolution_activation(input, weights, biases, output, convolution_arguments, activation_arguments);
-            }
-            else
-            {
-                convolution(input, weights, biases, output, convolution_arguments);
-                activation(output, activation_arguments);
-            }
-        }
-        return;
-    }
+    const bool is_gpu = Device::instance().is_gpu();
+#else
+    constexpr bool is_gpu = false;
 #endif
 
-    use_padding
-        ? padding(input, padded_input)
-        : copy(input, padded_input);
+    if (!is_gpu)
+        use_padding ? padding(input, padded_input) : copy(input, padded_input);
+
+    const TensorView& conv_input = is_gpu ? input : padded_input;
 
     if (batch_normalization)
     {
         TensorView& combination_output = forward_views[Convolution][0];
-        convolution(padded_input, weights, biases, combination_output, convolution_arguments);
+        convolution(conv_input, weights, biases, combination_output, convolution_arguments);
 
         is_training
             ? batch_normalization_training(combination_output, gammas, betas,
                                            states[RunningMean], states[RunningVariance],
                                            forward_views[BatchNormMean][0], forward_views[BatchNormInverseVariance][0],
-                                           output, momentum)        
+                                           output, momentum)
             : batch_normalization_inference(combination_output, gammas, betas,
-                                          states[RunningMean], states[RunningVariance],
-                                          output);
+                                            states[RunningMean], states[RunningVariance],
+                                            output);
+
+        activation(output, activation_arguments);
     }
     else
     {
-        convolution(padded_input, weights, biases, output, convolution_arguments);
-    }
+        const ActivationFunction func = activation_arguments.activation_function;
+        const bool can_fuse_gpu = is_gpu && func != ActivationFunction::Linear;
 
-    activation(output, activation_arguments);
+        if (can_fuse_gpu)
+        {
+            convolution_activation(conv_input, weights, biases, output, convolution_arguments, activation_arguments);
+        }
+        else
+        {
+            convolution(conv_input, weights, biases, output, convolution_arguments);
+            activation(output, activation_arguments);
+        }
+    }
 }
 
 void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
@@ -377,7 +436,11 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     const TensorView& output = forward_views[Output][0];
     TensorView& delta = backward_views[OutputGradient][0];
 
-    ConvolutionArguments bwd_args = convolution_arguments;
+#ifdef OPENNN_WITH_CUDA
+    const bool is_gpu = Device::instance().is_gpu();
+#else
+    constexpr bool is_gpu = false;
+#endif
 
     activation_gradient(output, delta, delta, activation_arguments);
 
@@ -387,44 +450,23 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                      parameters[Gamma], gradient_views[Gamma], gradient_views[Beta],
                                      delta);
 
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
-        bwd_args.algorithm_filter = algo_filter;
-        bwd_args.algorithm_data = algo_data;
-        bwd_args.workspace = cuda_workspace;
-        bwd_args.workspace_size = cuda_workspace_size;
-        bwd_args.backward_filter_workspace = cuda_backward_filter_workspace;
-        bwd_args.backward_filter_workspace_size = cuda_backward_filter_workspace_size;
+    const TensorView& conv_input = is_gpu ? forward_views[Input][0] : forward_views[PaddedInput][0];
 
-        convolution_backward_weights(forward_views[Input][0],
-                                     delta,
-                                     gradient_views[Weight],
-                                     gradient_views[Bias],
-                                     bwd_args);
-
-        if (!is_first_layer)
-            convolution_backward_data(delta,
-                                      parameters[Weight],
-                                      backward_views[InputGradient][0],
-                                      backward_views[InputGradient][0],
-                                      bwd_args);
-        return;
-    }
-#endif
-
-    convolution_backward_weights(forward_views[PaddedInput][0],
+    convolution_backward_weights(conv_input,
                                  delta,
                                  gradient_views[Weight],
                                  gradient_views[Bias],
-                                 bwd_args);
+                                 convolution_arguments);
 
     if (!is_first_layer)
         convolution_backward_data(delta,
                                   parameters[Weight],
                                   backward_views[InputGradient][0],
                                   backward_views[InputGradient][0],
-                                  bwd_args);
+                                  convolution_arguments);
 }
+
+// Serialization
 
 void Convolutional::from_XML(const XmlDocument& document)
 {

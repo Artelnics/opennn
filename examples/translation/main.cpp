@@ -29,7 +29,6 @@ int main()
     {
         cout << "OpenNN. Translation Example." << endl;
 
-        set_seed(42);
 
         // Dataset
         

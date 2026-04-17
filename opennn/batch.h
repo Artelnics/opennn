@@ -64,8 +64,11 @@ struct Batch
     void copy_device(const Index);
     void copy_device_async(const Index, cudaStream_t);
 
-    vector<TensorView> get_inputs_device() const;
-    TensorView get_targets_device() const;
+    const vector<TensorView>& get_inputs_device() const;
+    const TensorView& get_targets_device() const;
+
+    vector<TensorView> input_views_cache;
+    TensorView target_view_cache;
 
     Index num_input_features = 0;
     Index num_decoder_features = 0;

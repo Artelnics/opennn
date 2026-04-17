@@ -162,27 +162,6 @@ void Unscaling::print() const
     cout << "Unscaling layer" << "\n";
 }
 
-void Unscaling::to_XML(XmlPrinter& printer) const
-{
-    printer.open_element("Unscaling");
-
-    const Shape output_shape = get_output_shape();
-
-    add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
-
-    for(Index i = 0; i < output_shape[0]; i++)
-    {
-        printer.open_element("UnscalingNeuron");
-        printer.push_attribute("Index", int(i + 1));
-        //add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
-        add_xml_element(printer, "Scaler", scaler_method_to_string(scalers[i]));
-
-        printer.close_element();
-    }
-
-    printer.close_element();
-}
-
 void Unscaling::from_XML(const XmlDocument& document)
 {
     const XmlElement* root_element = get_xml_root(document, "Unscaling");
@@ -221,6 +200,27 @@ void Unscaling::from_XML(const XmlDocument& document)
 
         start_element = unscaling_neuron_element;
     }
+}
+
+void Unscaling::to_XML(XmlPrinter& printer) const
+{
+    printer.open_element("Unscaling");
+
+    const Shape output_shape = get_output_shape();
+
+    add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
+
+    for(Index i = 0; i < output_shape[0]; i++)
+    {
+        printer.open_element("UnscalingNeuron");
+        printer.push_attribute("Index", int(i + 1));
+        //add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
+        add_xml_element(printer, "Scaler", scaler_method_to_string(scalers[i]));
+
+        printer.close_element();
+    }
+
+    printer.close_element();
 }
 
 REGISTER(Layer, Unscaling, "Unscaling")

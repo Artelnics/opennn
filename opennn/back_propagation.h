@@ -78,7 +78,9 @@ struct BackPropagation
     float* errors_device = nullptr;
     float* error_device = nullptr;
 
-    TensorView get_output_gradients_device() const;
+    TensorView output_gradients_view_device;
+
+    const TensorView& get_output_gradients_device() const;
 
     void free_cuda();
 

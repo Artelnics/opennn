@@ -27,7 +27,6 @@ int main()
 {
     try
     {
-        set_seed(42);
 
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
@@ -41,6 +40,9 @@ int main()
             {4},
             image_dataset.get_shape("Target"));
 
+        opennn::Dense<2>* hidden_dense = dynamic_cast<opennn::Dense<2>*>(image_classification_network.get_first("Dense2d"));
+        if (hidden_dense) hidden_dense->set_dropout_rate(type(0.2));
+
         // Training strategy
 
         TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
@@ -50,8 +52,8 @@ int main()
         training_strategy.get_loss()->set_regularization("None");
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs(5);
-        adam->set_display_period(1);
+        adam->set_maximum_epochs(20);
+        adam->set_display_period(5);
 
         Device::instance().set(DeviceType::Gpu);
 

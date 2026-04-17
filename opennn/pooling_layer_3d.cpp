@@ -24,18 +24,19 @@ Pooling3d::Pooling3d(const Shape& new_input_shape,
     set(new_input_shape, new_pooling_method, new_name);
 }
 
+// Getters
 
 Shape Pooling3d::get_output_shape() const
 {
     return {input_features};
 }
 
-
 string Pooling3d::write_pooling_method() const
 {
     return pooling_method_to_string(pooling_method);
 }
 
+// Setters
 
 void Pooling3d::set(const Shape& new_input_shape, const PoolingMethod& new_pooling_method, const string& new_label)
 {
@@ -47,12 +48,12 @@ void Pooling3d::set(const Shape& new_input_shape, const PoolingMethod& new_pooli
     set_label(new_label);
 }
 
-
 void Pooling3d::set_pooling_method(const string& new_pooling_method)
 {
     pooling_method = string_to_pooling_method(new_pooling_method);
 }
 
+// Forward / back propagation
 
 void Pooling3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
@@ -66,7 +67,6 @@ void Pooling3d::forward_propagate(ForwardPropagation& forward_propagation, size_
     else
         average_pooling_3d_forward(input, output);
 }
-
 
 void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
@@ -85,6 +85,15 @@ void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
         average_pooling_3d_backward(input, output_gradient, input_gradient);
 }
 
+// Serialization
+
+void Pooling3d::from_XML(const XmlDocument& document)
+{
+    const XmlElement* element = get_xml_root(document, "Pooling3d");
+
+    set_input_shape(string_to_shape(read_xml_string(element, "InputDimensions")));
+    set_pooling_method(read_xml_string(element, "PoolingMethod"));
+}
 
 void Pooling3d::to_XML(XmlPrinter& printer) const
 {
@@ -95,19 +104,6 @@ void Pooling3d::to_XML(XmlPrinter& printer) const
     });
     printer.close_element();
 }
-
-
-void Pooling3d::from_XML(const XmlDocument& document)
-{
-    const XmlElement* element = get_xml_root(document, "Pooling3d");
-
-    set_input_shape(string_to_shape(read_xml_string(element, "InputDimensions")));
-    set_pooling_method(read_xml_string(element, "PoolingMethod"));
-}
-
-#ifdef OPENNN_WITH_CUDA
-    // @todo CUDA path
-#endif
 
 REGISTER(Layer, Pooling3d, "Pooling3d")
 
