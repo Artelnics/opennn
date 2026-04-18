@@ -391,8 +391,6 @@ struct TensorView
         return MatrixMap(data + batch_index * rows * cols, rows, cols);
     }
 
-    // Whole-tensor matrix view: all dims except the last are flattened into rows.
-    // For shape {d0, d1, ..., dk, C} returns (d0*d1*...*dk, C).
     MatrixMap as_flat_matrix() const
     {
         assert(data && shape.rank() >= 1);
@@ -400,8 +398,6 @@ struct TensorView
         return MatrixMap(data, shape.size() / cols, cols);
     }
 
-    // Per-outer-batch matrix view: the outermost dim is the batch index, all intermediate dims are flattened into rows,
-    // and the innermost dim becomes cols. For shape {B, d1, ..., dk, C} returns (d1*...*dk, C) at batch_index.
     MatrixMap as_flat_matrix(Index batch_index) const
     {
         assert(data && shape.rank() >= 2);
@@ -812,11 +808,7 @@ ostream& operator << (ostream& os, const vector<T>& vec)
 template<class T, int n>
 VectorI get_shape(const Tensor<T, n, AlignedMax>& tensor)
 {
-    VectorI shape(n);
-
-    memcpy(shape.data(), tensor.dimensions().data(), static_cast<size_t>(n)*sizeof(Index));
-
-    return shape;
+    return Eigen::Map<const VectorI>(tensor.dimensions().data(), n);
 }
 
 template <typename T, typename Value>
@@ -828,17 +820,13 @@ inline bool is_equal(const T& tensor,
     const Index size = tensor.size();
 
     if constexpr (is_same_v<Value, bool>)
-    {
         for(Index i = 0; i < size; ++i)
             if (data[i] != value)
                 return false;
-    }
     else
-    {
         for(Index i = 0; i < size; ++i)
             if(std::abs(data[i] - value) > tolerance)
                 return false;
-    }
 
     return true;
 }
@@ -986,11 +974,6 @@ inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_
                                             CUBLAS_COMPUTE_DTYPE,
                                             CUBLAS_GEMM_DEFAULT));
 }
-
-VectorR vector_from_device(const type*, size_t);
-MatrixR matrix_from_device(const type*, size_t, size_t);
-Tensor3 tensor3_from_device(const type*, size_t, size_t, size_t);
-Tensor4 tensor4_from_device(const type*, size_t, size_t, size_t, size_t);
 
 #endif
 

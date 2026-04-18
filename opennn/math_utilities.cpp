@@ -16,6 +16,10 @@
 namespace opennn
 {
 
+// SELU (Self-Normalizing ELU) constants.
+static constexpr float SELU_ALPHA  = 1.6732632423543772848170429916717f;
+static constexpr float SELU_LAMBDA = 1.0507009873554804934193349852946f;
+
 void padding(const TensorView& input, TensorView& output)
 {
 #ifdef OPENNN_WITH_CUDA
@@ -327,12 +331,8 @@ void activation(TensorView& output, ActivationArguments arguments)
         return;
 
     case ActivationFunction::ScaledExponentialLinear:
-    {
-        const float alpha = 1.6732632423543772848170429916717f;
-        const float lambda = 1.0507009873554804934193349852946f;
-        arr = lambda * (arr > 0.0f).select(arr, alpha * (arr.exp() - 1.0f));
+        arr = SELU_LAMBDA * (arr > 0.0f).select(arr, SELU_ALPHA * (arr.exp() - 1.0f));
         return;
-    }
 
     default:
         return;
@@ -378,10 +378,9 @@ void activation_gradient(const TensorView& outputs,
     switch (activation_function)
     {
     case ActivationFunction::Linear:
-    {
+    case ActivationFunction::Softmax:
         derivative_array = output_gradient_array;
         return;
-    }
 
     case ActivationFunction::Sigmoid:
     case ActivationFunction::Logistic:
@@ -403,19 +402,9 @@ void activation_gradient(const TensorView& outputs,
     }
 
     case ActivationFunction::ScaledExponentialLinear:
-    {
-        const float alpha = 1.6732632423543772848170429916717f;
-        const float lambda = 1.0507009873554804934193349852946f;
-
-        derivative_array = (outputs_array > 0.0f).select(lambda * output_gradient_array, (outputs_array + (alpha * lambda)) * output_gradient_array);
+        derivative_array = (outputs_array > 0.0f).select(SELU_LAMBDA * output_gradient_array,
+                                                         (outputs_array + (SELU_ALPHA * SELU_LAMBDA)) * output_gradient_array);
         return;
-    }
-
-    case ActivationFunction::Softmax:
-    {
-        derivative_array = output_gradient_array;
-        return;
-    }
 
     default:
         throw runtime_error("Math Error: Unknown activation function in activation_gradient.");
@@ -951,6 +940,9 @@ void convolution_backward_data(const TensorView& output_gradient,
     const Index output_height = output_gradients.dimension(1);
     const Index output_width = output_gradients.dimension(2);
     const Index kernels_number = kernel.shape[0];
+    const Index kernel_height = kernel.shape[1];
+    const Index kernel_width = kernel.shape[2];
+    const Index kernel_channels = kernel.shape[3];
     const Index input_height = in_grad.dimension(1);
     const Index input_width = in_grad.dimension(2);
 
@@ -1178,7 +1170,7 @@ void max_pooling_backward(const TensorView& input,
         return;
     }
 #endif
-    (void)output; (void)args;
+    (void)output;
 
     const TensorMap4 out_grads = output_gradient.as_tensor<4>();
     const TensorMap4 max_indices = maximal_indices.as_tensor<4>();
@@ -1463,6 +1455,22 @@ void embedding_backward(const TensorView& input_indices,
     weight_gradients.row(0).setZero();
 }
 
+// Transpose the middle two axes of a 4D tensor.
+// src: [batch_size, src_m1, src_m2, D]
+// dst: [batch_size, src_m2, src_m1, D]
+static void transpose_middle_axes(const type* src, type* dst,
+                                  Index batch_size, Index src_m1, Index src_m2, Index D)
+{
+    // Iterate in dst-sequential order for cache-friendly writes.
+    #pragma omp parallel for collapse(3)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index i = 0; i < src_m2; ++i)
+            for (Index j = 0; j < src_m1; ++j)
+                memcpy(dst + ((b * src_m2 + i) * src_m1 + j) * D,
+                       src + ((b * src_m1 + j) * src_m2 + i) * D,
+                       D * sizeof(type));
+}
+
 // Transpose [B, S, H, D] -> [B, H, S, D]. Dispatches CPU/GPU.
 void split_heads(const TensorView& source, TensorView& destination)
 {
@@ -1479,14 +1487,8 @@ void split_heads(const TensorView& source, TensorView& destination)
         return;
     }
 #endif
-
-    #pragma omp parallel for collapse(3)
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for(Index head_index = 0; head_index < heads_number; ++head_index)
-            for(Index sequence_index = 0; sequence_index < sequence_length; ++sequence_index)
-                memcpy(destination.data + ((batch_index * heads_number + head_index) * sequence_length + sequence_index) * head_dimension,
-                       source.data + ((batch_index * sequence_length + sequence_index) * heads_number + head_index) * head_dimension,
-                       head_dimension * sizeof(type));
+    transpose_middle_axes(source.data, destination.data,
+                          batch_size, sequence_length, heads_number, head_dimension);
 }
 
 // Transpose [B, H, S, D] -> [B, S, H, D]. Dispatches CPU/GPU.
@@ -1505,14 +1507,8 @@ void merge_heads(const TensorView& source, TensorView& destination)
         return;
     }
 #endif
-
-    #pragma omp parallel for collapse(3)
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for(Index sequence_index = 0; sequence_index < sequence_length; ++sequence_index)
-            for(Index head_index = 0; head_index < heads_number; ++head_index)
-                memcpy(destination.data + ((batch_index * sequence_length + sequence_index) * heads_number + head_index) * head_dimension,
-                       source.data + ((batch_index * heads_number + head_index) * sequence_length + sequence_index) * head_dimension,
-                       head_dimension * sizeof(type));
+    transpose_middle_axes(source.data, destination.data,
+                          batch_size, heads_number, sequence_length, head_dimension);
 }
 
 void projection(const TensorView& input,
