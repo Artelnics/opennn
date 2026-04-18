@@ -159,17 +159,12 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
         }
 
         outputs.row(i).noalias() = weights.row(token_id);
-    }
 
-    if(scale_embedding)
-        outputs *= embedding_scale;
+        if(scale_embedding)
+            outputs.row(i) *= embedding_scale;
 
-    if(add_positional_encoding)
-    {
-        #pragma omp parallel for
-        for(Index i = 0; i < total_tokens; ++i)
-            if (static_cast<Index>(input_indices[i]) > 0)
-                outputs.row(i) += positional_encoding.row(i % sequence_length);
+        if(add_positional_encoding && token_id > 0)
+            outputs.row(i) += positional_encoding.row(i % sequence_length);
     }
 }
 

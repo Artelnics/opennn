@@ -238,10 +238,17 @@ void softmax(TensorView& output)
         return;
     }
 #endif
+
     MatrixMap output_matrix = output.as_flat_matrix();
-    output_matrix.colwise() -= output_matrix.rowwise().maxCoeff();
-    output_matrix.array() = output_matrix.array().exp();
-    output_matrix.array().colwise() /= output_matrix.rowwise().sum().array();
+    const Index rows = output_matrix.rows();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < rows; ++i)
+    {
+        const type max_val = output_matrix.row(i).maxCoeff();
+        output_matrix.row(i).array() = (output_matrix.row(i).array() - max_val).exp();
+        output_matrix.row(i) /= output_matrix.row(i).sum();
+    }
 }
 
 void combination(const TensorView& input,
@@ -620,6 +627,8 @@ void batch_normalization_backward(
 #endif
     (void)output;// to avoid unused parameter warning
     const Index effective_batch_size = input.size() / gamma.size();
+    const type inv_N = type(1) / to_type(effective_batch_size);
+    const type N = to_type(effective_batch_size);
 
     const MatrixMap input_matrix = input.as_flat_matrix();
     const MatrixMap output_gradients = output_gradient.as_flat_matrix();
@@ -632,19 +641,25 @@ void batch_normalization_backward(
     VectorMap beta_gradients = beta_gradient.as_vector();
     MatrixMap input_gradients = input_gradient.as_flat_matrix();
 
+    // Inline x_hat in both reductions to avoid materializing a full normalized matrix.
     beta_gradients.noalias() = output_gradients.colwise().sum();
 
-    const MatrixR normalized = (input_matrix.rowwise() - means.transpose()).array().rowwise()
-                               * inverse_variances.transpose().array();
+    gamma_gradients.noalias() = (output_gradients.array()
+                                 * (input_matrix.rowwise() - means.transpose()).array().rowwise()
+                                   * inverse_variances.transpose().array()
+                                ).matrix().colwise().sum();
 
-    gamma_gradients.noalias() = (output_gradients.array() * normalized.array()).matrix().colwise().sum();
+    const VectorR scale = (gammas.array() * inverse_variances.array() * inv_N).matrix();
+    const Index cols = gammas.size();
 
-    const Eigen::Array<type, 1, Eigen::Dynamic> scale =
-        (gammas.array() * inverse_variances.array() / to_type(effective_batch_size)).transpose();
-
-    input_gradients.array() = ((to_type(effective_batch_size) * output_gradients.array()).rowwise() - beta_gradients.transpose().array()
-                               - normalized.array().rowwise() * gamma_gradients.transpose().array())
-                              .rowwise() * scale;
+    #pragma omp parallel for
+    for (Index i = 0; i < effective_batch_size; ++i)
+        for (Index c = 0; c < cols; ++c)
+        {
+            const type x_hat = (input_matrix(i, c) - means(c)) * inverse_variances(c);
+            input_gradients(i, c) =
+                scale(c) * (N * output_gradients(i, c) - beta_gradients(c) - x_hat * gamma_gradients(c));
+        }
 }
 
 void layernorm_forward(const TensorView& input, const TensorView& gamma, const TensorView& beta,
@@ -661,28 +676,48 @@ void layernorm_forward(const TensorView& input, const TensorView& gamma, const T
         return;
     }
 #endif
-    const TensorMap3 input_map = input.as_tensor<3>();
-    TensorMap2 means_map = means.as_tensor<2>();
-    TensorMap2 standard_deviations_map = standard_deviations.as_tensor<2>();
-    TensorMap3 normalized_map = normalized.as_tensor<3>();
-    TensorMap3 output_map = output.as_tensor<3>();
+    const type* input_data = input.data;
+    type* means_data = means.data;
+    type* stds_data = standard_deviations.data;
+    type* normalized_data = normalized.data;
+    type* output_data = output.data;
+    const type* gamma_data = gamma.data;
+    const type* beta_data = beta.data;
 
-    const array<Index, 3> reshape_dims({batch_size, sequence_length, 1});
-    const array<Index, 3> broadcast_dims({1, 1, embedding_dimension});
+    const Index total_rows = batch_size * sequence_length;
+    const type inv_D = type(1) / to_type(embedding_dimension);
 
-    means_map = input_map.mean(array<Index, 1>({2}));
+    #pragma omp parallel for
+    for (Index row = 0; row < total_rows; ++row)
+    {
+        const type* x = input_data + row * embedding_dimension;
+        type* norm_row = normalized_data + row * embedding_dimension;
+        type* out_row = output_data + row * embedding_dimension;
 
-    const auto centered = input_map - means_map.reshape(reshape_dims).broadcast(broadcast_dims);
-    const auto variance = centered.square().mean(array<Index, 1>({2}));
-    standard_deviations_map = (variance + EPSILON).sqrt();
+        type sum = 0;
+        type sum_sq = 0;
+        for (Index d = 0; d < embedding_dimension; ++d)
+        {
+            const type v = x[d];
+            sum += v;
+            sum_sq += v * v;
+        }
 
-    normalized_map = centered / standard_deviations_map.reshape(reshape_dims).broadcast(broadcast_dims);
+        const type mean = sum * inv_D;
+        const type variance = sum_sq * inv_D - mean * mean;
+        const type std_val = std::sqrt(variance + EPSILON);
+        const type inv_std = type(1) / std_val;
 
-    const TensorMap1 gamma_map = gamma.as_tensor<1>();
-    const TensorMap1 beta_map = beta.as_tensor<1>();
+        means_data[row] = mean;
+        stds_data[row] = std_val;
 
-    output_map = normalized_map * gamma_map.reshape(array<Index, 3>({1, 1, embedding_dimension})).broadcast(array<Index, 3>({batch_size, sequence_length, 1}))
-               + beta_map.reshape(array<Index, 3>({1, 1, embedding_dimension})).broadcast(array<Index, 3>({batch_size, sequence_length, 1}));
+        for (Index d = 0; d < embedding_dimension; ++d)
+        {
+            const type x_hat = (x[d] - mean) * inv_std;
+            norm_row[d] = x_hat;
+            out_row[d] = gamma_data[d] * x_hat + beta_data[d];
+        }
+    }
 }
 
 
@@ -1803,15 +1838,37 @@ void multihead_attention_backward(
 
     // Projection gradients for Q, K, V
 
-    projection_gradient(query_grad, query_input, query_weights, query_bias_grad, query_weight_grad, input_query_grad,
-                        args, query_sequence_length, false);
+    projection_gradient(query_grad, 
+                        query_input, 
+                        query_weights, 
+                        query_bias_grad, 
+                        query_weight_grad, 
+                        input_query_grad,
+                        args, 
+                        query_sequence_length, 
+                        false);
 
     if(self_attention)
     {
-        projection_gradient(key_grad, source_input, key_weights, key_bias_grad, key_weight_grad, input_query_grad,
-                            args, source_sequence_length, true);
-        projection_gradient(value_grad, source_input, value_weights, value_bias_grad, value_weight_grad, input_query_grad,
-                            args, source_sequence_length, true);
+        projection_gradient(key_grad, 
+                            source_input, 
+                            key_weights, 
+                            key_bias_grad, 
+                            key_weight_grad, 
+                            input_query_grad,
+                            args, 
+                            source_sequence_length, 
+                            true);
+
+        projection_gradient(value_grad, 
+                            source_input, 
+                            value_weights, 
+                            value_bias_grad, 
+                            value_weight_grad, 
+                            input_query_grad,
+                            args, 
+                            source_sequence_length, 
+                            true);
     }
     else
     {

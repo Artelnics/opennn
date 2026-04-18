@@ -404,9 +404,12 @@ public:
             input_gradient_2d = TensorView(input_gradient.data, {total_rows, input_gradient.shape.back()});
         }
 
-        combination_gradient(output_gradient_2d, input_2d, parameters[Weight],
+        combination_gradient(output_gradient_2d, 
+                             input_2d, 
+                             parameters[Weight],
                              input_gradient_2d,
-                             gradient_views[Weight], gradient_views[Bias],
+                             gradient_views[Weight], 
+                             gradient_views[Bias],
                              false);
     }
 
