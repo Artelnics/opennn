@@ -88,45 +88,6 @@ constexpr type MAX = numeric_limits<type>::max();
 constexpr type NEG_INFINITY = -numeric_limits<type>::infinity();
 constexpr type QUIET_NAN = numeric_limits<type>::quiet_NaN();
 constexpr type SOFTMAX_MASK_VALUE = type(-1e9f);
-
-#ifdef OPENNN_WITH_CUDA
-// Centralized GPU I/O and compute dtypes. Switch here to move the codebase to BF16 / FP16.
-constexpr cudnnDataType_t CUDNN_IO_DTYPE = CUDNN_DATA_FLOAT;
-constexpr cudaDataType_t CUDA_IO_DTYPE = CUDA_R_32F;
-constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE = CUBLAS_COMPUTE_32F_FAST_16BF;
-#endif
-
-template <typename Enum>
-struct EnumMap
-{
-    using Entry = pair<Enum, string>;
-
-    const vector<Entry>& entries;
-
-    const string& to_string(Enum value) const
-    {
-        for(const auto& [e, s] : entries)
-            if(e == value) 
-                return s;
-        throw runtime_error("Unknown enum value");
-    }
-
-    Enum from_string(const string& name) const
-    {
-        for(const auto& [e, s] : entries)
-            if(s == name) 
-                return e;
-        throw runtime_error("Unknown enum string: " + name);
-    }
-
-    Enum from_string(const string& name, Enum fallback) const
-    {
-        for(const auto& [e, s] : entries)
-            if(s == name) 
-                return e;
-        return fallback;
-    }
-};
 }
 
 constexpr int Layout = Eigen::RowMajor;
@@ -165,12 +126,6 @@ using TensorMapR = TensorMap<Tensor<type, Rank, Layout | AlignedMax>, AlignedMax
 #pragma GCC diagnostic pop
 
 using namespace tinyxml2;
-
-template<typename Base, typename T>
-inline bool is_instance_of(const T* ptr)
-{
-    return dynamic_cast<const Base*>(ptr);
-}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

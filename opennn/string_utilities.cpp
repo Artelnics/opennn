@@ -554,6 +554,56 @@ void display_progress_bar(const int& completed, const int& total)
     cout.flush();
 }
 
+string vector_to_string(const VectorI& x, const string& separator)
+{
+    ostringstream buffer;
+
+    for(Index i = 0; i < x.size(); ++i)
+        buffer << x(i) << separator;
+
+    return buffer.str();
+}
+
+string vector_to_string(const VectorR& x, const string& separator)
+{
+    ostringstream buffer;
+
+    for(Index i = 0; i < x.size(); ++i)
+        buffer << x(i) << separator;
+
+    return buffer.str();
+}
+
+string vector_to_string(const VectorMap& x, const string& separator)
+{
+    ostringstream buffer;
+
+    for(Index i = 0; i < x.size(); ++i)
+        buffer << x(i) << separator;
+
+    return buffer.str();
+}
+
+void string_to_vector(const string& input, VectorR& x)
+{
+    istringstream stream(input);
+    type value;
+    vector<type> buffer;
+
+    while (stream >> value)
+        buffer.push_back(value);
+
+    x.resize(static_cast<Index>(buffer.size()));
+
+    for (Index i = 0; i < x.size(); ++i)
+        x(i) = buffer[i];
+}
+
+bool contains(const vector<string>& data, const string& value)
+{
+    return find(data.begin(), data.end(), value) != data.end();
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

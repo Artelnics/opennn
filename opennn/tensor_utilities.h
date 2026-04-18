@@ -41,7 +41,50 @@ inline bool is_aligned(const void* ptr)
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
 }
 
+template<typename Base, typename T>
+inline bool is_instance_of(const T* ptr)
+{
+    return dynamic_cast<const Base*>(ptr);
+}
+
+template <typename Enum>
+struct EnumMap
+{
+    using Entry = pair<Enum, string>;
+
+    const vector<Entry>& entries;
+
+    const string& to_string(Enum value) const
+    {
+        for(const auto& [e, s] : entries)
+            if(e == value)
+                return s;
+        throw runtime_error("Unknown enum value");
+    }
+
+    Enum from_string(const string& name) const
+    {
+        for(const auto& [e, s] : entries)
+            if(s == name)
+                return e;
+        throw runtime_error("Unknown enum string: " + name);
+    }
+
+    Enum from_string(const string& name, Enum fallback) const
+    {
+        for(const auto& [e, s] : entries)
+            if(s == name)
+                return e;
+        return fallback;
+    }
+};
+
 #ifdef OPENNN_WITH_CUDA
+
+// Centralized GPU I/O and compute dtypes. Switch here to move the codebase to BF16 / FP16.
+constexpr cudnnDataType_t     CUDNN_IO_DTYPE       = CUDNN_DATA_FLOAT;
+constexpr cudaDataType_t      CUDA_IO_DTYPE        = CUDA_R_32F;
+constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE = CUBLAS_COMPUTE_32F_FAST_16BF;
 
 template <typename T>
 class ThreadSafeQueue
@@ -487,11 +530,40 @@ struct TensorView
 
 };
 
-VectorR filter_missing_values(const VectorR& input);
+inline bool row_finite(const VectorR& v, Index i) { return isfinite(v(i)); }
+inline bool row_finite(const MatrixR& m, Index i) { return m.row(i).array().isFinite().all(); }
 
-pair<VectorR, VectorR> filter_missing_values(const VectorR&, const VectorR&);
-pair<VectorR, MatrixR> filter_missing_values(const VectorR&, const MatrixR&);
-pair<MatrixR, MatrixR> filter_missing_values(const MatrixR&, const MatrixR&);
+inline VectorR slice_rows(const VectorR& v, const vector<Index>& idx)
+{
+    VectorR r(idx.size());
+    for (Index i = 0; i < Index(idx.size()); ++i) r(i) = v(idx[i]);
+    return r;
+}
+
+inline MatrixR slice_rows(const MatrixR& m, const vector<Index>& idx)
+{
+    MatrixR r(idx.size(), m.cols());
+    for (Index i = 0; i < Index(idx.size()); ++i) r.row(i) = m.row(idx[i]);
+    return r;
+}
+
+VectorR filter_missing_values(const VectorR&);
+
+template<typename X, typename Y>
+pair<X, Y> filter_missing_values(const X& x, const Y& y)
+{
+    if (x.rows() != y.rows())
+        throw runtime_error("filter_missing_values: row count mismatch");
+
+    vector<Index> valid;
+    valid.reserve(x.rows());
+
+    for (Index i = 0; i < x.rows(); ++i)
+        if (row_finite(x, i) && row_finite(y, i))
+            valid.push_back(i);
+
+    return { slice_rows(x, valid), slice_rows(y, valid) };
+}
 
 void shuffle_rows(MatrixR& matrix);
 
@@ -571,14 +643,8 @@ inline bool is_contiguous(const vector<Index>& v)
     return true;
 }
 
-inline bool is_binary(const VectorR& tensor)
-{
-    return all_of(tensor.data(), tensor.data() + tensor.size(),
-                  [](type v) { return v == type(0) || v == type(1) || isnan(v); });
-}
-
-template <int Rank>
-bool is_binary(const TensorR<Rank>& tensor)
+template <typename T>
+inline bool is_binary(const T& tensor)
 {
     return all_of(tensor.data(), tensor.data() + tensor.size(),
                   [](type v) { return v == type(0) || v == type(1) || isnan(v); });
@@ -600,24 +666,8 @@ vector<T> gather_by_index(const vector<T>& data, const vector<Index>& indices)
 
 vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums);
 
-inline bool is_constant(const VectorR& tensor)
-{
-    const type* data = tensor.data();
-    const type* end = data + tensor.size();
-
-    const type* first = find_if(data, end, [](type v) { return !isnan(v); });
-
-    if (first == end)
-        return true;
-
-    const type val = *first;
-
-    return all_of(first + 1, end,
-                  [val](type v) { return isnan(v) || abs(val - v) <= numeric_limits<float>::min(); });
-}
-
-template <int Rank>
-bool is_constant(const TensorR<Rank>& tensor)
+template <typename T>
+inline bool is_constant(const T& tensor)
 {
     const type* data = tensor.data();
     const type* end = data + tensor.size();
@@ -677,7 +727,6 @@ bool contains(const Eigen::MatrixBase<Derived>& vector, const T& value)
     return find(begin, end, value) != end;
 }
 
-bool contains(const vector<string>&, const string&);
 
 VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
 
@@ -697,49 +746,6 @@ void push_back(Tensor<T, 1, AlignedMax>& tensor, const T& value)
 
 string shape_to_string(const Shape&, const string& = " ");
 Shape string_to_shape(const string&, const string& = " ");
-
-template <typename T>
-string vector_to_string(const vector<T>& x, const string& separator = " ")
-{
-    ostringstream buffer;
-
-    for(size_t i = 0; i < x.size(); ++i)
-    {
-        buffer << x[i];
-        if (i < x.size() - 1)
-            buffer << separator;
-    }
-
-    return buffer.str();
-}
-
-string vector_to_string(const VectorI& x, const string& separator = " ");
-string vector_to_string(const VectorR& x, const string& separator = " ");
-string vector_to_string(const VectorMap& x, const string& separator = " ");
-
-template <typename T, size_t Rank>
-string tensor_to_string(const TensorR<Rank>& x, const string& separator = " ")
-{
-    ostringstream buffer;
-
-    for(Index i = 0; i < x.size(); ++i)
-        buffer << x(i) << separator;
-
-    return buffer.str();
-}
-
-template <typename T, size_t Rank>
-void string_to_tensor(const string& input, TensorR<Rank>& x)
-{
-    istringstream stream(input);
-    T value;
-    Index i = 0;
-
-    while (stream >> value)
-        x(i++) = value;
-}
-
-void string_to_vector(const string& input, VectorR& x);
 
 VectorMap vector_map(const MatrixR&, Index);
 
@@ -768,12 +774,6 @@ TensorMapR<rank> tensor_map(const TensorView& tensor_view)
 {
     assert(tensor_view.data);
     assert(reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES == 0);
-
-    if constexpr (rank == 2) // @todo For what is this? Can we simplify?
-        if (tensor_view.get_rank() == 4)
-            return TensorMap2(tensor_view.data,
-                              tensor_view.shape[0],
-                              tensor_view.size() / tensor_view.shape[0]);
 
     if (tensor_view.get_rank() != rank)
         throw runtime_error("Dimensions is " + to_string(tensor_view.get_rank()) + " and must be " + to_string(rank));
@@ -819,99 +819,35 @@ VectorI get_shape(const Tensor<T, n, AlignedMax>& tensor)
     return shape;
 }
 
-template <typename Type, int Rank>
-bool is_equal(const Tensor<Type, Rank, AlignedMax>& tensor,
-              const Type& value,
-              const Type& tolerance = 0.001)
+template <typename T, typename Value>
+inline bool is_equal(const T& tensor,
+                     const Value& value,
+                     const Value& tolerance = Value(1.0e-3))
 {
+    const auto* data = tensor.data();
     const Index size = tensor.size();
 
-    for(Index i = 0; i < size; ++i)
+    if constexpr (is_same_v<Value, bool>)
     {
-        if constexpr (is_same_v<Type, bool>)
-        {
-            if (tensor(i) != value)
+        for(Index i = 0; i < size; ++i)
+            if (data[i] != value)
                 return false;
-        }
-        else
-        {
-            if (std::abs(tensor(i) - value) > tolerance)
+    }
+    else
+    {
+        for(Index i = 0; i < size; ++i)
+            if(std::abs(data[i] - value) > tolerance)
                 return false;
-        }
     }
 
     return true;
 }
 
-inline bool is_equal(const MatrixR& matrix,
-                     const type& value,
-                     const type& tolerance = type(1.0e-3))
-{
-    const type* data = matrix.data();
-    const Index size = matrix.size();
-
-    for(Index i = 0; i < size; ++i)
-        if(std::abs(data[i] - value) > tolerance)
-            return false;
-
-    return true;
-}
-
-inline bool is_equal(const VectorR& vector,
-                     const type& value,
-                     const type& tolerance = type(1.0e-3))
-{
-    const type* data = vector.data();
-    const Index size = vector.size();
-
-    for(Index i = 0; i < size; ++i)
-        if(std::abs(data[i] - value) > tolerance)
-            return false;
-
-    return true;
-}
-
-template <int Rank>
-bool are_equal(const TensorR<Rank>& A,
-               const TensorR<Rank>& B,
-               type tolerance = type(1.0e-3))
+template <typename T, typename U>
+inline bool are_equal(const T& A, const U& B, type tolerance = type(1.0e-3))
 {
     if(A.size() != B.size())
-        throw runtime_error("are_equal: Tensor sizes are different.");
-
-    const type* a = A.data();
-    const type* b = B.data();
-
-    for(Index i = 0; i < A.size(); ++i)
-        if(abs(a[i] - b[i]) > tolerance)
-            return false;
-
-    return true;
-}
-
-inline bool are_equal(const MatrixR& A,
-                      const MatrixR& B,
-                      type tolerance = type(1.0e-3))
-{
-    if(A.rows() != B.rows() || A.cols() != B.cols())
-        throw runtime_error("are_equal: Matrix sizes are different.");
-
-    const type* a = A.data();
-    const type* b = B.data();
-
-    for(Index i = 0; i < A.size(); ++i)
-        if(abs(a[i] - b[i]) > tolerance)
-            return false;
-
-    return true;
-}
-
-inline bool are_equal(const VectorR& A,
-                      const VectorR& B,
-                      type tolerance = type(1.0e-3))
-{
-    if(A.size() != B.size())
-        throw runtime_error("are_equal: Vector sizes are different.");
+        throw runtime_error("are_equal: sizes are different.");
 
     const type* a = A.data();
     const type* b = B.data();
@@ -944,9 +880,6 @@ public:
     static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
     static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
     static cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor() { return instance().operator_multiplication_descriptor; }
-    static cudnnReduceTensorDescriptor_t get_reduce_add_descriptor();
-    static void* get_reduction_workspace();
-    static size_t get_reduction_workspace_size();
 
     static float* get_ones(int n)
     {
@@ -979,9 +912,6 @@ private:
     cudaStream_t compute_stream = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
     cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
-    cudnnReduceTensorDescriptor_t reduce_add_descriptor = nullptr;
-    void* reduction_workspace = nullptr;
-    size_t reduction_workspace_size = 0;
     float* ones_device = nullptr;
     int ones_size = 0;
 #endif
