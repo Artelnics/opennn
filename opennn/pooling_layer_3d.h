@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "pooling_layer.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 

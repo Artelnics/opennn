@@ -412,20 +412,12 @@ VectorR column_maximums(const MatrixR& matrix,
     return maximums;
 }
 
-type mean(const VectorR& v, Index begin, Index end)
-{
-    if(end == begin) return NAN;
-
-    return v.segment(begin, end - begin + 1).mean();
-}
-
 type mean(const VectorR& vector)
 {
-    auto is_finite = vector.array().isFinite();
-
+    const auto is_finite = vector.array().isFinite();
     const Index count = is_finite.count();
 
-    if (count == 0) return type(0);
+    if (count == 0) return type(NAN);
 
     return is_finite.select(vector.array(), 0.0f).sum() / static_cast<type>(count);
 }
@@ -1057,19 +1049,11 @@ type range(const VectorR& vector)
 
 VectorR mean(const MatrixR& matrix)
 {
-    return matrix.array().isFinite().select(matrix.array(), 0.0f).colwise().sum() / type(matrix.rows());
-}
+    const auto finite = matrix.array().isFinite();
+    const VectorR sums   = finite.select(matrix.array(), 0.0f).colwise().sum();
+    const VectorR counts = finite.cast<type>().colwise().sum();
 
-VectorR mean(const MatrixR& matrix, const VectorI& column_indices)
-{
-    const Index n = column_indices.size();
-
-    VectorR result(n);
-
-    for(Index j = 0; j < n; ++j)
-        result(j) = matrix.col(column_indices(j)).mean();
-
-    return result;
+    return (counts.array() > 0.0f).select(sums.array() / counts.array(), type(NAN));
 }
 
 VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vector<Index>& column_indices)
@@ -1079,35 +1063,27 @@ VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vect
 
     if(row_indices_size == 0 || column_indices_size == 0) return {};
 
-    Index row_index;
-    Index column_index;
+    VectorR means(column_indices_size);
 
-    Index count = 0;
-
-    // Mean
-
-    VectorR mean = VectorR::Zero(column_indices_size);
-    
     for(Index j = 0; j < column_indices_size; ++j)
     {
-        column_index = column_indices[j];
+        const Index column_index = column_indices[j];
 
-        count = 0;
+        type sum = 0;
+        Index count = 0;
 
         for(Index i = 0; i < row_indices_size; ++i)
         {
-            row_index = row_indices[i];
-
-            if (isnan(matrix(row_index, column_index))) continue;
-
-            mean(j) += matrix(row_index,column_index);
-            ++count;            
+            const type value = matrix(row_indices[i], column_index);
+            if (isnan(value)) continue;
+            sum += value;
+            ++count;
         }
 
-        mean(j) /= type(count);
+        means(j) = (count > 0) ? sum / type(count) : type(NAN);
     }
-    
-    return mean;
+
+    return means;
 }
 
 type mean(const MatrixR& matrix, Index column_index)
@@ -1151,10 +1127,9 @@ VectorR median(const MatrixR& matrix)
 
         sort(valid_values.data(), valid_values.data() + n);
 
-        (n % 2 == 0)
-            ? medians(j) = (valid_values(n / 2 - 1) + valid_values(n / 2)) / 2.0f
-            : medians(j) = valid_values(n / 2);
-
+        medians(j) = (n % 2 == 0)
+            ? (valid_values(n / 2 - 1) + valid_values(n / 2)) / 2.0f
+            : valid_values(n / 2);
     }
 
     return medians;
@@ -1162,37 +1137,23 @@ VectorR median(const MatrixR& matrix)
 
 type median(const MatrixR& matrix, Index column_index)
 {
-    const type median = type(0);
-
     vector<type> sorted_column;
-
-    Index rows_number = 0;
+    sorted_column.reserve(matrix.rows());
 
     for(Index i = 0; i < matrix.rows(); ++i)
-    {
-        if(isnan(matrix(i,column_index)))
-            continue;
+        if(!isnan(matrix(i, column_index)))
+            sorted_column.push_back(matrix(i, column_index));
 
-        sorted_column.push_back(matrix(i, column_index));
-        ++rows_number;
-    }
+    if(sorted_column.empty()) return type(NAN);
 
-    Index median_index;
+    sort(sorted_column.begin(), sorted_column.end());
 
-    if (rows_number % 2 == 0)
-    {
-        median_index = type(rows_number / 2);
+    const Index n = static_cast<Index>(sorted_column.size());
+    const Index median_index = n / 2;
 
-        return (sorted_column[median_index - 1] + sorted_column[median_index]) / type(2.0);
-    }
-    else
-    {
-        median_index = Index(rows_number / 2);
-
-        return sorted_column[median_index];
-    }
-
-    return median;
+    return (n % 2 == 0)
+        ? (sorted_column[median_index - 1] + sorted_column[median_index]) / type(2.0)
+        : sorted_column[median_index];
 }
 
 VectorR median(const MatrixR& matrix, const VectorI& column_indices)
@@ -1277,21 +1238,17 @@ VectorR median(const MatrixR& matrix,
 
 Index minimal_index(const VectorR& vector)
 {
-    if(vector.size() == 0) return 0;
-
-    Index index;
-    vector.minCoeff(&index);
-
+    Index index = 0;
+    if(vector.size() > 0) 
+        vector.minCoeff(&index);
     return index;
 }
 
 Index maximal_index(const VectorR& vector)
 {
-    if(vector.size() == 0) return 0;
-
-    Index index;
-    vector.maxCoeff(&index);
-
+    Index index = 0;
+    if(vector.size() > 0) 
+        vector.maxCoeff(&index);
     return index;
 }
 

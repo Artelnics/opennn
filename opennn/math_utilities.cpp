@@ -546,7 +546,7 @@ void batch_normalization_training(
     output_matrix.noalias() = input_matrix.rowwise() - means.transpose();
 
     // Batch variance (reuses the centered output)
-    inverse_variances.noalias() = output_matrix.array().square().colwise().mean();
+    inverse_variances.noalias() = output_matrix.array().square().colwise().mean().matrix();
 
     // Running stats EMA
     running_means = running_means * momentum + means * (type(1) - momentum);
@@ -612,8 +612,8 @@ void batch_normalization_backward(
     beta_gradients.noalias() = output_gradients.colwise().sum();
 
     gamma_gradients.noalias() = (output_gradients.array()
-                                 * (input_matrix.rowwise() - means.transpose()).array().rowwise()
-                                   * inverse_variances.transpose().array()
+                                 * ((input_matrix.rowwise() - means.transpose()).array().rowwise()
+                                    * inverse_variances.transpose().array())
                                 ).matrix().colwise().sum();
 
     const VectorR scale = (gammas.array() * inverse_variances.array() * inv_N).matrix();

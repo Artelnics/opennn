@@ -194,11 +194,14 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     merge_heads(attention_out_scratch, concatenated_4d);
 
     // Output projection
-    
-    combination(TensorView(concatenated.data, {total_rows, embedding_dimension}), 
-                parameters[ProjectionWeight], 
-                parameters[ProjectionBias], 
-                TensorView(output.data, {total_rows, embedding_dimension}));
+
+    TensorView concatenated_2d(concatenated.data, {total_rows, embedding_dimension});
+    TensorView output_2d(output.data, {total_rows, embedding_dimension});
+
+    combination(concatenated_2d,
+                parameters[ProjectionWeight],
+                parameters[ProjectionBias],
+                output_2d);
 }
 
 void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
