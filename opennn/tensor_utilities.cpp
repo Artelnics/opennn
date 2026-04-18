@@ -457,6 +457,7 @@ Device::Device()
 
 #ifdef OPENNN_WITH_CUDA
     CHECK_CUBLAS(cublasCreate(&cublas_handle));
+    CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
     CHECK_CUDNN(cudnnCreate(&cudnn_handle));
 
     CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));

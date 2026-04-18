@@ -106,6 +106,8 @@ void Convolutional::set(const Shape& new_input_shape,
                                     CUDNN_CROSS_CORRELATION,
                                     CUDNN_DATA_FLOAT);
 
+    cudnnSetConvolutionMathType(convolution_descriptor, CUDNN_TENSOR_OP_MATH);
+
     convolution_arguments.convolution_descriptor = convolution_descriptor;
     convolution_arguments.kernel_descriptor = kernel_descriptor;
 #endif

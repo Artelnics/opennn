@@ -191,7 +191,8 @@ void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, 
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(), Device::get_operator_multiplication_descriptor(),
+        CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(), 
+                                  Device::get_operator_multiplication_descriptor(),
                                   &one, input_a.get_descriptor(), input_a.data,
                                   &one, input_b.get_descriptor(), input_b.data,
                                   &zero, output.get_descriptor(), output.data));
@@ -738,26 +739,50 @@ void layernorm_backward(const TensorView& input, const TensorView& output_gradie
         return;
     }
 #endif
-    const TensorMap2 standard_deviations_map = standard_deviations.as_tensor<2>();
-    const TensorMap3 normalized_map = normalized.as_tensor<3>();
-    const TensorMap3 output_gradient_map = output_gradient.as_tensor<3>();
+    // Pass 1: gamma_gradient and beta_gradient — reductions over all (batch, sequence) rows per dim.
+    // Use Eigen colwise on the flat matrix view; no full-tensor temporaries.
+    const MatrixMap dy_flat = output_gradient.as_flat_matrix();
+    const MatrixMap norm_flat = normalized.as_flat_matrix();
 
-    gamma_gradient.as_tensor<1>() = (output_gradient_map * normalized_map).sum(array<Index, 2>({0, 1}));
-    beta_gradient.as_tensor<1>() = output_gradient_map.sum(array<Index, 2>({0, 1}));
+    beta_gradient.as_vector().noalias() = dy_flat.colwise().sum();
+    gamma_gradient.as_vector().noalias() = (dy_flat.array() * norm_flat.array()).matrix().colwise().sum();
 
-    const array<Index, 3> reshape_3d({batch_size, sequence_length, 1});
-    const array<Index, 3> broadcast_3d({1, 1, embedding_dimension});
+    // Pass 2: per-row OMP loop mirroring the GPU layernorm_backward_kernel.
+    // Inlines scaled_gradient = gamma * dy to avoid the Tensor3 materialization.
+    const type* dy_data = output_gradient.data;
+    const type* norm_data = normalized.data;
+    const type* std_data = standard_deviations.data;
+    const type* gamma_data = gamma.data;
+    type* dx_data = input_gradient.data;
 
-    const Tensor3 scaled_gradient = output_gradient_map * gamma.as_tensor<1>().reshape(array<Index, 3>({1, 1, embedding_dimension})).broadcast(array<Index, 3>({batch_size, sequence_length, 1}));
-    const Tensor2 sum_scaled_gradient = scaled_gradient.sum(array<Index, 1>({2}));
-    const Tensor2 sum_scaled_gradient_normalized = (scaled_gradient * normalized_map).sum(array<Index, 1>({2}));
+    const Index total_rows = batch_size * sequence_length;
+    const type inv_D = type(1) / to_type(embedding_dimension);
 
-    const type inverse_embedding_dimension = type(1.0) / to_type(embedding_dimension);
+    #pragma omp parallel for
+    for (Index row = 0; row < total_rows; ++row)
+    {
+        const type* dy = dy_data + row * embedding_dimension;
+        const type* norm = norm_data + row * embedding_dimension;
+        type* dx = dx_data + row * embedding_dimension;
+        const type inv_std = type(1) / std_data[row];
 
-    input_gradient.as_tensor<3>() = (scaled_gradient
-                                     - sum_scaled_gradient.reshape(reshape_3d).broadcast(broadcast_3d) * inverse_embedding_dimension
-                                     - normalized_map * sum_scaled_gradient_normalized.reshape(reshape_3d).broadcast(broadcast_3d) * inverse_embedding_dimension)
-                                    / standard_deviations_map.reshape(reshape_3d).broadcast(broadcast_3d);
+        type sum_sg = 0;
+        type sum_sg_norm = 0;
+        for (Index d = 0; d < embedding_dimension; ++d)
+        {
+            const type sg = gamma_data[d] * dy[d];
+            sum_sg += sg;
+            sum_sg_norm += sg * norm[d];
+        }
+        sum_sg *= inv_D;
+        sum_sg_norm *= inv_D;
+
+        for (Index d = 0; d < embedding_dimension; ++d)
+        {
+            const type sg = gamma_data[d] * dy[d];
+            dx[d] = (sg - sum_sg - norm[d] * sum_sg_norm) * inv_std;
+        }
+    }
 }
 
 

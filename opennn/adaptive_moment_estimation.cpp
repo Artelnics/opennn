@@ -323,11 +323,28 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     const VectorR& gradient = back_propagation.gradient.vector;
 
-    gradient_exponential_decay.array() = beta_1 * gradient_exponential_decay.array() + (type(1) - beta_1) * gradient.array();
-    square_gradient_exponential_decay.array() = beta_2 * square_gradient_exponential_decay.array() + (type(1) - beta_2) * gradient.array().square();
+    const Index n = parameters.size();
+    const type one_minus_beta_1 = type(1) - beta_1;
+    const type one_minus_beta_2 = type(1) - beta_2;
 
-    parameters.array() -= learning_rate * (gradient_exponential_decay.array() / bias_correction_1) /
-                          ((square_gradient_exponential_decay.array() / bias_correction_2).sqrt() + EPSILON);
+    // Factor sqrt(bc_2) out of the element-wise division to avoid two divisions per element.
+    const type s = std::sqrt(bias_correction_2);
+    const type effective_learning_rate = learning_rate * s / bias_correction_1;
+    const type effective_epsilon = EPSILON * s;
+
+    #pragma omp parallel for
+    for (Index i = 0; i < n; ++i)
+    {
+        const type g = gradient(i);
+
+        const type m_new = beta_1 * gradient_exponential_decay(i) + one_minus_beta_1 * g;
+        gradient_exponential_decay(i) = m_new;
+
+        const type v_new = beta_2 * square_gradient_exponential_decay(i) + one_minus_beta_2 * g * g;
+        square_gradient_exponential_decay(i) = v_new;
+
+        parameters(i) -= effective_learning_rate * m_new / (std::sqrt(v_new) + effective_epsilon);
+    }
 }
 
 void AdaptiveMomentEstimation::to_XML(XmlPrinter& printer) const

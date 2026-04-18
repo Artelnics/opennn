@@ -106,17 +106,30 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     VectorR& parameter_updates = optimization_data.parameter_updates.vector;
     VectorR& last_parameter_updates = optimization_data.last_parameter_updates.vector;
 
-    parameter_updates = gradient * (-current_learning_rate);
+    const Index n = parameters.size();
 
-    if (momentum > type(0))
+    if (momentum <= type(0))
     {
-        parameter_updates += momentum * last_parameter_updates;
-        last_parameter_updates = parameter_updates;
+        #pragma omp parallel for
+        for (Index i = 0; i < n; ++i)
+        {
+            const type lr_g = current_learning_rate * gradient(i);
+            parameter_updates(i) = -lr_g;
+            parameters(i) -= lr_g;
+        }
     }
-
-    parameters += nesterov
-        ? parameter_updates * momentum - gradient * current_learning_rate
-        : parameter_updates;
+    else
+    {
+        #pragma omp parallel for
+        for (Index i = 0; i < n; ++i)
+        {
+            const type lr_g = current_learning_rate * gradient(i);
+            const type v_new = momentum * last_parameter_updates(i) - lr_g;
+            parameter_updates(i) = v_new;
+            last_parameter_updates(i) = v_new;
+            parameters(i) += nesterov ? momentum * v_new - lr_g : v_new;
+        }
+    }
 }
 
 TrainingResults StochasticGradientDescent::train()
