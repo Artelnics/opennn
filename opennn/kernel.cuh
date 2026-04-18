@@ -68,8 +68,8 @@ void sgd_update_cuda(const Index, float*, float*, const float*, const float, con
  __global__ void weighted_squared_error_gradient_kernel(const int, type*, const type*, const type*, const type, const type, const type);
  void weighted_squared_error_gradient_cuda(const Index, type*, const type*, const type*, const type, const type, const type);
 
- __global__ void cross_entropy_3d_multiple_forward_kernel(const int, const int, const float*, const float*, float*, const float);
- void cross_entropy_3d_multiple_forward_cuda(const Index, const int, const float*, const float*, float*, const float);
+ __global__ void cross_entropy_3d_multiple_forward_kernel(const int, const int, const float*, const float*, float*, float*, const float);
+ void cross_entropy_3d_multiple_forward_cuda(const Index, const int, const float*, const float*, float*, float*, const float);
 
  __global__ void cross_entropy_3d_multiple_backward_kernel(const int, const int, const float*, const float*, float*, const float);
  void cross_entropy_3d_multiple_backward_cuda(const Index, const int, const float*, const float*, float*, const float);

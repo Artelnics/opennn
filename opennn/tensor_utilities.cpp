@@ -306,11 +306,7 @@ void shuffle_rows(MatrixR& matrix)
 
 Device::Device()
 {
-    int max_threads = std::thread::hardware_concurrency();
-    if (max_threads <= 0) max_threads = omp_get_max_threads();
-    if (max_threads <= 0) max_threads = 1;
-
-    set_threads_number(max_threads);
+    set_threads_number(0);  // 0 triggers hardware_concurrency auto-detection
 
 #ifdef OPENNN_WITH_CUDA
     CHECK_CUDA(cudaStreamCreate(&compute_stream));

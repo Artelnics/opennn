@@ -147,8 +147,6 @@ void multiply(const TensorView& input_a, bool transpose_a,
         return;
     }
 #endif
-    const bool simple = (alpha == 1.0f && beta == 0.0f);
-
     const Index batch_count = input_a.size() / (input_a.shape[rank - 2] * input_a.shape[rank - 1]);
 
     #pragma omp parallel for
@@ -158,28 +156,18 @@ void multiply(const TensorView& input_a, bool transpose_a,
         const MatrixMap matrix_b = input_b.as_matrix(batch_index);
         MatrixMap matrix_output = output.as_matrix(batch_index);
 
-        if(simple)
+        auto gemm_like = [&](auto A, auto B)
         {
-            if (!transpose_a && !transpose_b)
-                matrix_output.noalias() = matrix_a * matrix_b;
-            else if (transpose_a && !transpose_b)
-                matrix_output.noalias() = matrix_a.transpose() * matrix_b;
-            else if (!transpose_a && transpose_b)
-                matrix_output.noalias() = matrix_a * matrix_b.transpose();
+            if (beta == 0.0f)
+                matrix_output.noalias() = alpha * (A * B);
             else
-                matrix_output.noalias() = matrix_a.transpose() * matrix_b.transpose();
-        }
-        else
-        {
-            if (!transpose_a && !transpose_b)
-                matrix_output.noalias() = alpha * (matrix_a * matrix_b) + beta * matrix_output;
-            else if (transpose_a && !transpose_b)
-                matrix_output.noalias() = alpha * (matrix_a.transpose() * matrix_b) + beta * matrix_output;
-            else if (!transpose_a && transpose_b)
-                matrix_output.noalias() = alpha * (matrix_a * matrix_b.transpose()) + beta * matrix_output;
-            else
-                matrix_output.noalias() = alpha * (matrix_a.transpose() * matrix_b.transpose()) + beta * matrix_output;
-        }
+                matrix_output.noalias() = alpha * (A * B) + beta * matrix_output;
+        };
+
+        if (!transpose_a && !transpose_b)       gemm_like(matrix_a,             matrix_b);
+        else if (transpose_a && !transpose_b)   gemm_like(matrix_a.transpose(), matrix_b);
+        else if (!transpose_a && transpose_b)   gemm_like(matrix_a,             matrix_b.transpose());
+        else                                    gemm_like(matrix_a.transpose(), matrix_b.transpose());
     }
 }
 

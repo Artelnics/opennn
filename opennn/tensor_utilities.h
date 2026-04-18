@@ -922,8 +922,6 @@ inline ThreadPoolDevice& get_device()
     return *Device::instance().get_thread_pool_device();
 }
 
-void set_threads_number(int num_threads);
-
 #ifdef OPENNN_WITH_CUDA
 
 inline const float one = 1.0f;
