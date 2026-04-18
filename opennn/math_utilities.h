@@ -103,26 +103,6 @@ struct DropoutArguments
 #endif
 };
 
-struct MultiheadAttentionArguments
-{
-    Index batch_size;
-    Index heads_number;
-    Index query_sequence_length;
-    Index source_sequence_length;
-    Index embedding_dimension;
-    Index head_dimension;
-    type scaling_factor;
-    bool use_causal_mask;
-    const MatrixR* causal_mask;
-
-    // GPU scratch buffers (views into ForwardPropagation/BackPropagation memory)
-    float* padding_mask = nullptr;
-    float* transpose_scratch = nullptr;
-    float* attention_output_transposed = nullptr;
-    float* softmax_gradient = nullptr;
-    float* query_input_gradient_scratch = nullptr;
-    float* source_input_gradient_scratch = nullptr;
-};
 
 // Generic
 
@@ -134,6 +114,7 @@ void multiply(const TensorView& input_a, bool transpose_a, const TensorView& inp
 void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, TensorView& output);
 void sum(const TensorView& input, TensorView& output, type alpha = 1.0f, type beta = 0.0f);
 void softmax(TensorView& output);
+void softmax_backward(const TensorView& softmax_out, TensorView& output_gradient);
 
 // Dense layer
 
@@ -190,7 +171,7 @@ void embedding_backward(const TensorView& input_indices, const TensorView& outpu
 
 // Multi-head attention
 
-void projection(const TensorView& input, const TensorView& weights, const TensorView& biases, TensorView& output, const MultiheadAttentionArguments& args);
+void projection(const TensorView& input, const TensorView& weights, const TensorView& biases, TensorView& output, float* transpose_scratch);
 
 void split_heads(const TensorView& source, TensorView& destination);
 void merge_heads(const TensorView& source, TensorView& destination);
@@ -201,29 +182,10 @@ void projection_gradient(const TensorView& head_gradient,
                          TensorView& bias_gradient,
                          TensorView& weight_gradient,
                          TensorView& input_gradient,
-                         const MultiheadAttentionArguments& args,
-                         Index sequence_length,
+                         float* transpose_scratch,
                          bool accumulate);
 
 void attention_masks(const TensorView& source_input, TensorView& attention_weights, const MatrixR& causal_mask, bool use_causal_mask, float* padding_mask_scratch);
-
-void multihead_attention_backward(
-    const TensorView& query_input, const TensorView& source_input,
-    TensorView& output_gradient,
-    const TensorView& query, const TensorView& key, const TensorView& value,
-    const TensorView& attention_weights, const TensorView& concatenated,
-    const TensorView& projection_weights,
-    TensorView& proj_weight_grad, TensorView& proj_bias_grad,
-    TensorView& concat_grad, TensorView& att_weight_grad,
-    TensorView& query_grad, TensorView& key_grad, TensorView& value_grad,
-    TensorView& query_weight_grad, TensorView& query_bias_grad,
-    TensorView& key_weight_grad, TensorView& key_bias_grad,
-    TensorView& value_weight_grad, TensorView& value_bias_grad,
-    TensorView& input_query_grad,
-    TensorView& input_source_grad,
-    const TensorView& query_weights, const TensorView& key_weights, const TensorView& value_weights,
-    const MultiheadAttentionArguments& args,
-    bool self_attention);
 
 }
 

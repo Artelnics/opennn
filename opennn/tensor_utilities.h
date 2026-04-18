@@ -248,14 +248,15 @@ public:
 
     template<int Rank>
     Eigen::array<Index, Rank> get_eigen_dims() const {
-        if (Rank != rank_) {
+        if (Rank != rank_) 
             throw std::runtime_error("Shape Error: Requested Rank (" + std::to_string(Rank) +
                                      ") does not match Shape rank (" + std::to_string(rank_) + ").");
-        }
+        
         Eigen::array<Index, Rank> dims;
-        for (size_t i = 0; i < Rank; ++i) {
+
+        for (size_t i = 0; i < Rank; ++i) 
             dims[i] = shape_[i];
-        }
+        
         return dims;
     }
 
@@ -334,7 +335,6 @@ struct Memory
 #endif
 };
 
-
 struct TensorView
 {
     TensorView() noexcept = default;
@@ -351,6 +351,8 @@ struct TensorView
     Index size() const noexcept { return shape.size(); }
 
     bool empty() const noexcept { return shape.empty(); }
+
+    TensorView reshape(const Shape& new_shape) const { return TensorView(data, new_shape); }
 
     void print() const
     {

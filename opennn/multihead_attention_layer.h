@@ -35,6 +35,18 @@ public:
     Index get_heads_number() const { return heads_number; }
     Index get_head_dimension() const;
 
+    // Per-head-split layout used by attention GEMMs: [B, H, Sq, D].
+    Shape heads_shape(Index batch_size) const
+    {
+        return {batch_size, heads_number, query_sequence_length, get_head_dimension()};
+    }
+
+    // Concatenated-heads layout after merge_heads: [B, Sq, H, D].
+    Shape concat_shape(Index batch_size) const
+    {
+        return {batch_size, query_sequence_length, heads_number, get_head_dimension()};
+    }
+
     type get_scaling_factor() const;
 
     Shape get_input_shape() const override;
@@ -70,10 +82,7 @@ public:
                 {batch_size, query_sequence_length, embedding_dimension},                          // ConcatenatedOutputGradient
                 {batch_size, heads_number, query_sequence_length, head_dimension},                 // QueryGradient (transposed)
                 {batch_size, heads_number, source_sequence_length, head_dimension},                // KeyGradient (transposed)
-                {batch_size, heads_number, source_sequence_length, head_dimension},                // ValueGradient (transposed)
-                {batch_size, heads_number, query_sequence_length, source_sequence_length},         // SoftmaxGradient
-                {batch_size, query_sequence_length, embedding_dimension},                          // QueryInputGradient (scratch)
-                {batch_size, source_sequence_length, embedding_dimension}};                        // SourceInputGradient (scratch)
+                {batch_size, heads_number, source_sequence_length, head_dimension}};               // ValueGradient (transposed)
     }
 
     void set_input_shape(const Shape& new_input_shape) override
@@ -82,7 +91,7 @@ public:
         embedding_dimension = new_input_shape[1];
     }
 
-    void set(const Index = 0,
+    void set(Index = 0,
              Index = 0,
              Index = 0,
              Index = 0,
@@ -112,8 +121,7 @@ private:
     // Output is always the last forward slot (wiring convention) — access via .back()
     enum Backward {OutputGradient, InputQueryGradient, InputSourceGradient,
                    AttentionWeightGradient, ConcatenatedOutputGradient,
-                   QueryGradient, KeyGradient, ValueGradient,
-                   SoftmaxGradient, QueryInputGradientScratch, SourceInputGradientScratch};
+                   QueryGradient, KeyGradient, ValueGradient};
 
     // True when the layer is invoked with a single input (query == source).
     static bool is_self_attention(const vector<vector<TensorView>>& forward_views)

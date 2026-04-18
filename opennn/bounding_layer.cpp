@@ -138,16 +138,8 @@ void Bounding::to_XML(XmlPrinter& printer) const
 
     add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
 
-    for(Index i = 0; i < output_shape[0]; ++i)
-    {
-        printer.open_element("Item");
-        printer.push_attribute("Index", unsigned(i + 1));
-/*
-        add_xml_element(printer, "LowerBound", to_string(lower_bounds[i]));
-        add_xml_element(printer, "UpperBound", to_string(upper_bounds[i]));
-*/
-        printer.close_element();
-    }
+    add_xml_element(printer, "LowerBounds", vector_to_string(lower_bounds));
+    add_xml_element(printer, "UpperBounds", vector_to_string(upper_bounds));
 
     add_xml_element(printer, "BoundingMethod",
                      bounding_method == BoundingMethod::Bounding ? "Bounding" : "NoBounding");
@@ -163,21 +155,8 @@ void Bounding::from_XML(const XmlDocument& document)
 
     set({ neurons_number });
 
-    const auto* item_element = root_element->first_child_element("Item");
-
-    for(Index i = 0; i < neurons_number && item_element; ++i)
-    {
-        unsigned index = 0;
-        item_element->query_unsigned_attribute("Index", &index);
-
-        if (index != i + 1)
-            throw runtime_error("Index " + to_string(index) + " is incorrect.\n");
-/*
-        lower_bounds[index - 1] = read_xml_type(item_element, "LowerBound");
-        upper_bounds[index - 1] = read_xml_type(item_element, "UpperBound");
-*/
-        item_element = item_element->next_sibling_element("Item");
-    }
+    string_to_vector(read_xml_string(root_element, "LowerBounds"), lower_bounds);
+    string_to_vector(read_xml_string(root_element, "UpperBounds"), upper_bounds);
 
     set_bounding_method(read_xml_string(root_element, "BoundingMethod"));
 }

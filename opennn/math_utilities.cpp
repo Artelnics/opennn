@@ -238,6 +238,30 @@ void softmax(TensorView& output)
     }
 }
 
+void softmax_backward(const TensorView& softmax_out, TensorView& output_gradient)
+{
+    if (output_gradient.empty()) return;
+
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu()) {
+        CHECK_CUDNN(cudnnSoftmaxBackward(Device::get_cudnn_handle(),
+                                         CUDNN_SOFTMAX_ACCURATE,
+                                         CUDNN_SOFTMAX_MODE_CHANNEL,
+                                         &one,
+                                         softmax_out.get_descriptor(),     softmax_out.data,
+                                         output_gradient.get_descriptor(), output_gradient.data,
+                                         &zero,
+                                         output_gradient.get_descriptor(), output_gradient.data));
+        return;
+    }
+#endif
+    const MatrixMap y = softmax_out.as_flat_matrix();
+    MatrixMap dY = output_gradient.as_flat_matrix();
+
+    const VectorR dot = (y.array() * dY.array()).rowwise().sum();
+    dY.array() = y.array() * (dY.colwise() - dot).array();
+}
+
 void combination(const TensorView& input,
                  const TensorView& weights,
                  const TensorView& biases,
@@ -1515,17 +1539,22 @@ void projection(const TensorView& input,
                 const TensorView& weights,
                 const TensorView& biases,
                 TensorView& output,
-                const MultiheadAttentionArguments& args)
+                float* transpose_scratch)
 {
-    const Index total_rows = output.size() / args.embedding_dimension;
-    const Index sequence_length = total_rows / args.batch_size;
+    const Index batch_size       = output.shape[0];
+    const Index heads_number     = output.shape[1];
+    const Index sequence_length  = output.shape[2];
+    const Index head_dimension   = output.shape[3];
+    const Index embedding_dim    = heads_number * head_dimension;
+    const Index total_rows       = batch_size * sequence_length;
 
-    TensorView input_2d(input.data, {total_rows, args.embedding_dimension});
-    TensorView scratch_2d(args.transpose_scratch, {total_rows, args.embedding_dimension});
+    TensorView input_2d = input.reshape({total_rows, embedding_dim});
+    TensorView scratch_2d(transpose_scratch, {total_rows, embedding_dim});
 
     combination(input_2d, weights, biases, scratch_2d);
 
-    TensorView scratch_4d(args.transpose_scratch, {args.batch_size, sequence_length, args.heads_number, args.head_dimension});
+    TensorView scratch_4d(transpose_scratch,
+                          {batch_size, sequence_length, heads_number, head_dimension});
     split_heads(scratch_4d, output);
 }
 
@@ -1535,20 +1564,26 @@ void projection_gradient(const TensorView& head_gradient,
                          TensorView& bias_gradient,
                          TensorView& weight_gradient,
                          TensorView& input_gradient,
-                         const MultiheadAttentionArguments& args,
-                         Index sequence_length,
+                         float* transpose_scratch,
                          bool accumulate)
 {
-    const Index total_rows = args.batch_size * sequence_length;
+    const Index batch_size       = head_gradient.shape[0];
+    const Index heads_number     = head_gradient.shape[1];
+    const Index sequence_length  = head_gradient.shape[2];
+    const Index head_dimension   = head_gradient.shape[3];
+    const Index embedding_dim    = heads_number * head_dimension;
+    const Index total_rows       = batch_size * sequence_length;
 
-    TensorView scratch_4d(args.transpose_scratch, {args.batch_size, sequence_length, args.heads_number, args.head_dimension});
+    TensorView scratch_4d(transpose_scratch,
+                          {batch_size, sequence_length, heads_number, head_dimension});
     merge_heads(head_gradient, scratch_4d);
 
-    TensorView head_gradient_flat(args.transpose_scratch, {total_rows, args.embedding_dimension});
-    TensorView input_flat(input.data, {total_rows, args.embedding_dimension});
-    TensorView input_gradient_flat(input_gradient.data, {total_rows, args.embedding_dimension});
+    TensorView head_gradient_flat(transpose_scratch, {total_rows, embedding_dim});
+    TensorView input_flat          = input.reshape({total_rows, embedding_dim});
+    TensorView input_gradient_flat = input_gradient.reshape({total_rows, embedding_dim});
 
-    combination_gradient(head_gradient_flat, input_flat, weights, input_gradient_flat, weight_gradient, bias_gradient, accumulate);
+    combination_gradient(head_gradient_flat, input_flat, weights,
+                         input_gradient_flat, weight_gradient, bias_gradient, accumulate);
 }
 
 void attention_masks(const TensorView& source_input,
@@ -1597,307 +1632,6 @@ void attention_masks(const TensorView& source_input,
         attention_weights.as_matrix(head_index) += causal_mask;
 }
 
-
-void multihead_attention_backward(
-    const TensorView& query_input, const TensorView& source_input,
-    TensorView& output_gradient,
-    const TensorView& query, const TensorView& key, const TensorView& value,
-    const TensorView& attention_weights, const TensorView& concatenated,
-    const TensorView& projection_weights,
-    TensorView& proj_weight_grad, TensorView& proj_bias_grad,
-    TensorView& concat_grad, TensorView& att_weight_grad,
-    TensorView& query_grad, TensorView& key_grad, TensorView& value_grad,
-    TensorView& query_weight_grad, TensorView& query_bias_grad,
-    TensorView& key_weight_grad, TensorView& key_bias_grad,
-    TensorView& value_weight_grad, TensorView& value_bias_grad,
-    TensorView& input_query_grad,
-    TensorView& input_source_grad,
-    const TensorView& query_weights, const TensorView& key_weights, const TensorView& value_weights,
-    const MultiheadAttentionArguments& args,
-    bool self_attention)
-{
-    const Index batch_size = args.batch_size;
-    const Index heads_number = args.heads_number;
-    const Index query_sequence_length = args.query_sequence_length;
-    const Index source_sequence_length = args.source_sequence_length;
-    const Index embedding_dimension = args.embedding_dimension;
-    const Index head_dimension = args.head_dimension;
-    const type scaling_factor = args.scaling_factor;
-
-    const Index total_rows = batch_size * query_sequence_length;
-    const Index total_heads = batch_size * heads_number;
-
-    // Output projection gradient (unified CPU/GPU via combination_gradient)
-    {
-        TensorView concatenated_2d(concatenated.data, {total_rows, embedding_dimension});
-        TensorView concat_grad_2d(concat_grad.data, {total_rows, embedding_dimension});
-        TensorView output_gradient_2d(output_gradient.data, {total_rows, embedding_dimension});
-        combination_gradient(output_gradient_2d, concatenated_2d, projection_weights,
-                             concat_grad_2d, proj_weight_grad, proj_bias_grad,
-                             /*accumulate_input_gradient*/ false);
-    }
-
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
-        const int total_heads_int = to_int(total_heads);
-        const int query_length_int = to_int(query_sequence_length);
-        const int source_length_int = to_int(source_sequence_length);
-        const int embedding_int = to_int(embedding_dimension);
-        const int head_dim_int = to_int(head_dimension);
-        const int heads_int = to_int(heads_number);
-        const int batch_int = to_int(batch_size);
-        const float scaling_factor_float = static_cast<float>(scaling_factor);
-
-        float* scratch = args.transpose_scratch;
-
-        // Transpose concat_gradient from [B, Sq, H, D] to [B, H, Sq, D]
-
-        split_heads_cuda(batch_int * query_length_int * embedding_int, concat_grad.data, scratch, query_length_int, heads_int, head_dim_int);
-
-        // value_gradient = attention_weights^T * concat_gradient (transposed)
-
-        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
-            head_dim_int, source_length_int, query_length_int,
-            scratch, head_dim_int, query_length_int * head_dim_int,
-            attention_weights.data, source_length_int, query_length_int * source_length_int,
-            value_grad.data, head_dim_int, source_length_int * head_dim_int,
-            total_heads_int);
-
-        // attention_weight_gradient = concat_gradient * V^T
-
-        gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
-            source_length_int, query_length_int, head_dim_int,
-            value.data, head_dim_int, source_length_int * head_dim_int,
-            scratch, head_dim_int, query_length_int * head_dim_int,
-            att_weight_grad.data, source_length_int, query_length_int * source_length_int,
-            total_heads_int);
-
-        // Softmax backward
-
-        TensorView att_view(attention_weights.data, {(Index)(total_heads_int * query_length_int), (Index)source_length_int});
-        TensorView datt_view(att_weight_grad.data, {(Index)(total_heads_int * query_length_int), (Index)source_length_int});
-        TensorView sgrad_view(args.softmax_gradient, {(Index)(total_heads_int * query_length_int), (Index)source_length_int});
-
-        CHECK_CUDNN(cudnnSoftmaxBackward(Device::get_cudnn_handle(),
-            CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_CHANNEL,
-            &one, att_view.get_descriptor(), attention_weights.data,
-            datt_view.get_descriptor(), att_weight_grad.data,
-            &zero, sgrad_view.get_descriptor(), args.softmax_gradient));
-
-        // query_gradient = softmax_gradient * K^T * scaling_factor
-
-        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-            head_dim_int, query_length_int, source_length_int,
-            key.data, head_dim_int, source_length_int * head_dim_int,
-            args.softmax_gradient, source_length_int, query_length_int * source_length_int,
-            query_grad.data, head_dim_int, query_length_int * head_dim_int,
-            total_heads_int,
-            scaling_factor_float);
-
-        // key_gradient = softmax_gradient^T * Q * scaling_factor
-
-        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
-            head_dim_int, source_length_int, query_length_int,
-            query.data, head_dim_int, query_length_int * head_dim_int,
-            args.softmax_gradient, source_length_int, query_length_int * source_length_int,
-            key_grad.data, head_dim_int, source_length_int * head_dim_int,
-            total_heads_int,
-            scaling_factor_float);
-
-        // Transpose query/key/value gradients from [B, H, S, D] to [B, S, H, D]
-
-        float* q_grad_flat = args.query_input_gradient_scratch;
-        float* src_grad_flat = args.source_input_gradient_scratch;
-
-        merge_heads_cuda(batch_int * query_length_int * embedding_int, query_grad.data, q_grad_flat, query_length_int, heads_int, head_dim_int);
-        merge_heads_cuda(batch_int * source_length_int * embedding_int, key_grad.data, scratch, source_length_int, heads_int, head_dim_int);
-        float* k_grad_flat = scratch; // reuse scratch for K grad flat
-
-        // Query weight/bias/input gradients
-
-        gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
-            embedding_int, embedding_int, batch_int * query_length_int,
-            q_grad_flat, embedding_int, query_input.data, embedding_int,
-            query_weight_grad.data, embedding_int);
-
-        gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-            embedding_int, 1, batch_int * query_length_int,
-            q_grad_flat, embedding_int, Device::get_ones(batch_int * query_length_int), batch_int * query_length_int,
-            query_bias_grad.data, embedding_int);
-
-        gemm_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
-            embedding_int, batch_int * query_length_int, embedding_int,
-            query_weights.data, embedding_int, q_grad_flat, embedding_int,
-            input_query_grad.data, embedding_int);
-
-        if(self_attention)
-        {
-            // Key weight/bias/source gradients
-
-            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
-                embedding_int, embedding_int, batch_int * source_length_int,
-                k_grad_flat, embedding_int, source_input.data, embedding_int,
-                key_weight_grad.data, embedding_int);
-
-            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-                embedding_int, 1, batch_int * source_length_int,
-                k_grad_flat, embedding_int, Device::get_ones(batch_int * source_length_int), batch_int * source_length_int,
-                key_bias_grad.data, embedding_int);
-
-            gemm_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
-                embedding_int, batch_int * source_length_int, embedding_int,
-                key_weights.data, embedding_int, k_grad_flat, embedding_int,
-                src_grad_flat, embedding_int);
-
-            // Value weight/bias/source gradients (accumulate on src_grad_flat)
-
-            merge_heads_cuda(batch_int * source_length_int * embedding_int, value_grad.data, k_grad_flat, source_length_int, heads_int, head_dim_int);
-
-            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
-                embedding_int, embedding_int, batch_int * source_length_int,
-                k_grad_flat, embedding_int, source_input.data, embedding_int,
-                value_weight_grad.data, embedding_int);
-
-            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-                embedding_int, 1, batch_int * source_length_int,
-                k_grad_flat, embedding_int, Device::get_ones(batch_int * source_length_int), batch_int * source_length_int,
-                value_bias_grad.data, embedding_int);
-
-            gemm_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
-                embedding_int, batch_int * source_length_int, embedding_int,
-                value_weights.data, embedding_int, k_grad_flat, embedding_int,
-                src_grad_flat, embedding_int,
-                1.0f, 1.0f);
-
-            // input_query_grad = q_input_grad + src_grad
-
-            addition_cuda(batch_int * query_length_int * embedding_int, input_query_grad.data, src_grad_flat, input_query_grad.data);
-        }
-        else
-        {
-            // Cross-attention: K/V gradients go to input_source_grad
-
-            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
-                embedding_int, embedding_int, batch_int * source_length_int,
-                k_grad_flat, embedding_int, source_input.data, embedding_int,
-                key_weight_grad.data, embedding_int);
-
-            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-                embedding_int, 1, batch_int * source_length_int,
-                k_grad_flat, embedding_int, Device::get_ones(batch_int * source_length_int), batch_int * source_length_int,
-                key_bias_grad.data, embedding_int);
-
-            gemm_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
-                embedding_int, batch_int * source_length_int, embedding_int,
-                key_weights.data, embedding_int, k_grad_flat, embedding_int,
-                input_source_grad.data, embedding_int);
-
-            merge_heads_cuda(batch_int * source_length_int * embedding_int, value_grad.data, k_grad_flat, source_length_int, heads_int, head_dim_int);
-
-            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
-                embedding_int, embedding_int, batch_int * source_length_int,
-                k_grad_flat, embedding_int, source_input.data, embedding_int,
-                value_weight_grad.data, embedding_int);
-
-            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-                embedding_int, 1, batch_int * source_length_int,
-                k_grad_flat, embedding_int, Device::get_ones(batch_int * source_length_int), batch_int * source_length_int,
-                value_bias_grad.data, embedding_int);
-
-            gemm_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
-                embedding_int, batch_int * source_length_int, embedding_int,
-                value_weights.data, embedding_int, k_grad_flat, embedding_int,
-                input_source_grad.data, embedding_int,
-                1.0f, 1.0f);
-        }
-        return;
-    }
-#endif
-    // Output projection gradient already computed above (see combination_gradient call).
-
-    // value_gradient and attention_weight_gradient from concat_grad
-
-    #pragma omp parallel for collapse(2)
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for(Index head_index = 0; head_index < heads_number; ++head_index)
-        {
-            const Index linear_head_index = batch_index * heads_number + head_index;
-
-            const MatrixMap attention_map = attention_weights.as_matrix(linear_head_index);
-            const MatrixMap value_map = value.as_matrix(linear_head_index);
-            MatrixMap value_gradient_map = value_grad.as_matrix(linear_head_index);
-            MatrixMap attention_gradient_map = att_weight_grad.as_matrix(linear_head_index);
-
-            type* output_gradient_ptr = concat_grad.data + batch_index * (query_sequence_length * embedding_dimension) + head_index * head_dimension;
-            using StrideType = Eigen::OuterStride<Eigen::Dynamic>;
-            Eigen::Map<const MatrixR, 0, StrideType> concat_output_gradient(output_gradient_ptr, query_sequence_length, head_dimension, StrideType(embedding_dimension));
-
-            value_gradient_map.noalias() = attention_map.transpose() * concat_output_gradient;
-            attention_gradient_map.noalias() = concat_output_gradient * value_map.transpose();
-        }
-
-    // Softmax gradient + query/key gradients
-
-    #pragma omp parallel for
-    for(Index head_index = 0; head_index < total_heads; ++head_index)
-    {
-        const MatrixMap attention_map = attention_weights.as_matrix(head_index);
-        MatrixMap attention_gradient_map = att_weight_grad.as_matrix(head_index);
-
-        const VectorR dot_product = (attention_map.array() * attention_gradient_map.array()).rowwise().sum();
-        attention_gradient_map.array() = attention_map.array() * (attention_gradient_map.colwise() - dot_product).array();
-
-        const MatrixMap query_map = query.as_matrix(head_index);
-        const MatrixMap key_map = key.as_matrix(head_index);
-        MatrixMap query_gradient_map = query_grad.as_matrix(head_index);
-        MatrixMap key_gradient_map = key_grad.as_matrix(head_index);
-
-        query_gradient_map.noalias() = (attention_gradient_map * key_map) * scaling_factor;
-        key_gradient_map.noalias() = (attention_gradient_map.transpose() * query_map) * scaling_factor;
-    }
-
-    // Projection gradients for Q, K, V
-
-    projection_gradient(query_grad, 
-                        query_input, 
-                        query_weights, 
-                        query_bias_grad, 
-                        query_weight_grad, 
-                        input_query_grad,
-                        args, 
-                        query_sequence_length, 
-                        false);
-
-    if(self_attention)
-    {
-        projection_gradient(key_grad, 
-                            source_input, 
-                            key_weights, 
-                            key_bias_grad, 
-                            key_weight_grad, 
-                            input_query_grad,
-                            args, 
-                            source_sequence_length, 
-                            true);
-
-        projection_gradient(value_grad, 
-                            source_input, 
-                            value_weights, 
-                            value_bias_grad, 
-                            value_weight_grad, 
-                            input_query_grad,
-                            args, 
-                            source_sequence_length, 
-                            true);
-    }
-    else
-    {
-        projection_gradient(key_grad, source_input, key_weights, key_bias_grad, key_weight_grad, input_source_grad,
-                            args, source_sequence_length, false);
-        projection_gradient(value_grad, source_input, value_weights, value_bias_grad, value_weight_grad, input_source_grad,
-                            args, source_sequence_length, true);
-    }
-}
 
 }
 

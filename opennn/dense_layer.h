@@ -394,14 +394,14 @@ public:
 
         const Index total_rows = input.size() / input.shape.back();
 
-        TensorView output_gradient_2d(output_gradient.data, {total_rows, output_gradient.shape.back()});
-        TensorView input_2d(input.data, {total_rows, input.shape.back()});
+        TensorView output_gradient_2d = output_gradient.reshape({total_rows, output_gradient.shape.back()});
+        TensorView input_2d           = input.reshape({total_rows, input.shape.back()});
 
         TensorView input_gradient_2d;
         if (!is_first_layer)
         {
             TensorView& input_gradient = backward_views[InputGradient][0];
-            input_gradient_2d = TensorView(input_gradient.data, {total_rows, input_gradient.shape.back()});
+            input_gradient_2d = input_gradient.reshape({total_rows, input_gradient.shape.back()});
         }
 
         combination_gradient(output_gradient_2d, 
