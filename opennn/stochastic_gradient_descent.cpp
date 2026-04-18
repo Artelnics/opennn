@@ -383,11 +383,8 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 
     const Index parameters_number = neural_network->get_parameters_size();
 
-    parameter_updates.resize(parameters_number);
-    parameter_updates.setZero();
-
-    last_parameter_updates.resize(parameters_number);
-    last_parameter_updates.setZero();
+    parameter_updates.setZero(parameters_number);
+    last_parameter_updates.setZero(parameters_number);
 
 #ifdef OPENNN_WITH_CUDA
     parameter_updates.resize_device(parameters_number);

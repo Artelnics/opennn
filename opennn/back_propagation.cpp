@@ -42,8 +42,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         for(const Shape& s : layer_shapes)
             total_parameters_size += get_aligned_size(s.size());
 
-    gradient.resize(total_parameters_size);
-    gradient.setZero();
+    gradient.setZero(total_parameters_size);
 
     gradient_views.resize(layers_number);
     type* g_ptr = (total_parameters_size > 0) ? gradient.data() : nullptr;
@@ -72,8 +71,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         for(const Shape& s : layer_shapes)
             total_backward_size += get_aligned_size(s.size());
 
-    backward.resize(total_backward_size);
-    backward.setZero();
+    backward.setZero(total_backward_size);
 
     backward_views.resize(layers_number);
     type* b_ptr = (total_backward_size > 0) ? backward.data() : nullptr;
@@ -112,8 +110,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     output_gradient_dimensions = Shape({batch_size}).append(output_shape);
 
     const Index total_output_elements = output_shape.size() * batch_size;
-    output_gradients.resize(total_output_elements);
-    output_gradients.setZero();
+    output_gradients.setZero(total_output_elements);
 
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
@@ -142,8 +139,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         total_output_gradient_size += get_aligned_size(per_layer_output_gradient_shapes[i].size());
     }
 
-    per_layer_output_gradients.resize(total_output_gradient_size);
-    per_layer_output_gradients.setZero();
+    per_layer_output_gradients.setZero(total_output_gradient_size);
 
     type* og_ptr = (total_output_gradient_size > 0) ? per_layer_output_gradients.data() : nullptr;
 

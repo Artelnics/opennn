@@ -123,8 +123,7 @@ Histogram::Histogram(const VectorR& data, Index bins_number)
 
     const VectorR new_centers = VectorR::LinSpaced(bins_number, data_minimum + type(0.5) * step, data_maximum - type(0.5) * step);
 
-    VectorR new_frequencies(bins_number);
-    new_frequencies.setZero();
+    VectorR new_frequencies = VectorR::Zero(bins_number);
 
     type value;
     Index corresponding_bin;
@@ -159,8 +158,7 @@ Histogram::Histogram(const VectorR& probability_data)
 
     const VectorR new_centers = VectorR::LinSpaced(bins_number, data_minimum + type(0.5) * step, data_maximum - type(0.5) * step);
 
-    VectorR new_frequencies(bins_number);
-    new_frequencies.setZero();
+    VectorR new_frequencies = VectorR::Zero(bins_number);
 
     type value;
     Index corresponding_bin;
@@ -606,8 +604,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     VectorR maximums(bins_number);
 
     VectorR centers(bins_number);
-    VectorR frequencies(bins_number);
-    frequencies.setZero();
+    VectorR frequencies = VectorR::Zero(bins_number);
 
     vector<type> unique_values;
     unordered_set<type> unique_set;
@@ -645,8 +642,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
         minimums = tensor_unique;
         maximums = std::move(tensor_unique);
 
-        frequencies.resize(unique_values_number);
-        frequencies.setZero();
+        frequencies = VectorR::Zero(unique_values_number);
 
         for(Index i = 0; i < size; ++i)
         {
@@ -724,8 +720,7 @@ Histogram histogram_centered(const VectorR& vector, type center, Index bins_numb
     VectorR maximums(bins_number);
 
     VectorR centers(bins_number);
-    VectorR frequencies(bins_number);
-    frequencies.setZero();
+    VectorR frequencies = VectorR::Zero(bins_number);
 
     const type min = minimum(vector);
     const type max = maximum(vector);
@@ -779,8 +774,7 @@ Histogram histogram_centered(const VectorR& vector, type center, Index bins_numb
 
 Histogram histogram(const VectorB& v)
 {
-    VectorR minimums(2);
-    minimums.setZero();
+    VectorR minimums = VectorR::Zero(2);
 
     VectorR maximums(2);
     maximums.setConstant(type(1));
@@ -788,8 +782,7 @@ Histogram histogram(const VectorB& v)
     VectorR centers(2);
     centers << type(0), type(1);
 
-    VectorR frequencies(2);
-    frequencies.setZero();
+    VectorR frequencies = VectorR::Zero(2);
 
     // Calculate bins frequency
 
@@ -1093,8 +1086,7 @@ VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vect
 
     // Mean
 
-    VectorR mean(column_indices_size);
-    mean.setZero();
+    VectorR mean = VectorR::Zero(column_indices_size);
     
     for(Index j = 0; j < column_indices_size; ++j)
     {

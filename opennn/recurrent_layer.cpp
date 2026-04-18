@@ -107,8 +107,7 @@ void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_
     TensorMap3 all_hidden_states = tensor_map<3>(recurrent_forward_propagation->hidden_states);
     TensorMap3 all_activation_derivatives = tensor_map<3>(recurrent_forward_propagation->activation_derivatives);
 
-    MatrixR current_hidden_state(batch_size, output_size);
-    current_hidden_state.setZero();
+    MatrixR current_hidden_state = MatrixR::Zero(batch_size, output_size);
 
     MatrixR step_input(batch_size, input_features);
     MatrixR previous_hidden_state(batch_size, output_size);
@@ -185,24 +184,23 @@ void Recurrent::back_propagate(ForwardPropagation& forward_propagation,
     const MatrixMap W_rec = matrix_map(recurrent_weights);
     const MatrixMap external_output_gradients = matrix_map(back_propagation->output_gradients[0]);
 
-    VectorMap d_biases = vector_map(recurrent_bp->bias_gradients);
-    MatrixMap dW_in = matrix_map(recurrent_bp->input_weight_gradients);
-    MatrixMap dW_rec = matrix_map(recurrent_bp->recurrent_weight_gradients);
+    VectorMap bias_gradients = vector_map(recurrent_bp->bias_gradients);
+    MatrixMap input_weight_gradients = matrix_map(recurrent_bp->input_weight_gradients);
+    MatrixMap recurrent_weight_gradients = matrix_map(recurrent_bp->recurrent_weight_gradients);
 
-    TensorMap3 d_input_seq = tensor_map<3>(recurrent_bp->input_gradients[0]);
+    TensorMap3 input_sequence_gradient = tensor_map<3>(recurrent_bp->input_gradients[0]);
 
-    d_biases.setZero();
-    dW_in.setZero();
-    dW_rec.setZero();
+    bias_gradients.setZero();
+    input_weight_gradients.setZero();
+    recurrent_weight_gradients.setZero();
 
     RecurrentForwardPropagation* recurrent_fp = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
     TensorMap3 input_sequences = tensor_map<3>(forward_propagation->inputs[0]);
     TensorMap3 all_hidden_states = tensor_map<3>(recurrent_fp->hidden_states);
     TensorMap3 all_activation_derivatives = tensor_map<3>(recurrent_fp->activation_derivatives);
 
-    MatrixR delta(batch_size, output_features);
-    MatrixR next_step_delta(batch_size, output_features);
-    next_step_delta.setZero();
+    MatrixR output_gradient(batch_size, output_features);
+    MatrixR next_step_gradient = MatrixR::Zero(batch_size, output_features);
 
     MatrixR step_input(batch_size, input_features);
     MatrixR step_derivatives(batch_size, output_features);
@@ -211,33 +209,33 @@ void Recurrent::back_propagate(ForwardPropagation& forward_propagation,
     for(Index t = past_time_steps - 1; t >= 0; t--)
     {
         if(t == past_time_steps - 1)
-            delta = external_output_gradients;
+            output_gradient = external_output_gradients;
         else
-            delta = next_step_delta;
+            output_gradient = next_step_gradient;
 
         TensorMap2(step_derivatives.data(), batch_size, output_features) = all_activation_derivatives.chip(t, 1);
-        delta.array() *= step_derivatives.array();
+        output_gradient.array() *= step_derivatives.array();
 
         TensorMap2(step_input.data(), batch_size, input_features) = input_sequences.chip(t, 1);
-        dW_in.noalias() += step_input.transpose() * delta;
+        input_weight_gradients.noalias() += step_input.transpose() * output_gradient;
 
         if(t > 0)
         {
             TensorMap2(step_prev_hidden.data(), batch_size, output_features) = all_hidden_states.chip(t - 1, 1);
-            dW_rec.noalias() += step_prev_hidden.transpose() * delta;
+            recurrent_weight_gradients.noalias() += step_prev_hidden.transpose() * output_gradient;
         }
 
-        d_biases.noalias() += delta.colwise().sum();
+        bias_gradients.noalias() += output_gradient.colwise().sum();
 
         if(!is_first_layer)
         {
-            MatrixR d_input_step = delta * W_in.transpose();
+            MatrixR input_step_gradient = output_gradient * W_in.transpose();
 
-            d_input_seq.chip(t, 1) = TensorMap2(d_input_step.data(), batch_size, input_features);
+            input_sequence_gradient.chip(t, 1) = TensorMap2(input_step_gradient.data(), batch_size, input_features);
         }
 
         if(t > 0)
-            next_step_delta.noalias() = delta * W_rec.transpose();
+            next_step_gradient.noalias() = output_gradient * W_rec.transpose();
     }
 */
 }

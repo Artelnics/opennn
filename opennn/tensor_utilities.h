@@ -234,6 +234,7 @@ struct Memory
 
     void resize(Index n) { vector.resize(n); }
     void setZero() { vector.setZero(); }
+    void setZero(Index n) { vector = VectorR::Zero(n); }
 
 #ifdef OPENNN_WITH_CUDA
     float* device_data = nullptr;

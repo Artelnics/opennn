@@ -195,8 +195,7 @@ VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient()
     type error_forward = 0;
     type error_backward = 0;
 
-    VectorR numerical_gradient_lm(parameters_number);
-    numerical_gradient_lm.setZero();
+    VectorR numerical_gradient_lm = VectorR::Zero(parameters_number);
 
     for(Index i = 0; i < parameters_number; ++i)
     {
@@ -326,8 +325,7 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
     const type y = back_propagation_lm.error;
 
-    MatrixR H(parameters_number, parameters_number);
-    H.setZero();
+    MatrixR H = MatrixR::Zero(parameters_number, parameters_number);
 
     type h_i;
     type h_j;

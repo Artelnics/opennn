@@ -324,8 +324,7 @@ void LanguageDataset::read_csv()
 
         const Index features_number = maximum_input_sequence_length + maximum_target_sequence_length;
 
-        data.resize(samples_number, features_number);
-        data.setZero();
+        data = MatrixR::Zero(samples_number, features_number);
 
         variables.resize(features_number);
 
@@ -365,8 +364,7 @@ void LanguageDataset::read_csv()
                                       + maximum_target_sequence_length
                                       + maximum_target_sequence_length;
 
-        data.resize(samples_number, features_number);
-        data.setZero();
+        data = MatrixR::Zero(samples_number, features_number);
 
         variables.resize(features_number);
 

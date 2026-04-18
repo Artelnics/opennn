@@ -68,8 +68,7 @@ void NeuralNetwork::compile()
         for (const Shape& s : layer->get_parameter_shapes())
             total_parameters += get_aligned_size(s.size());
 
-    parameters.resize(total_parameters);
-    parameters.setZero();
+    parameters.setZero(total_parameters);
 
     type* pointer = parameters.data();
 
@@ -82,8 +81,7 @@ void NeuralNetwork::compile()
         for (const Shape& s : layer->get_state_shapes())
             total_states += get_aligned_size(s.size());
 
-    states.resize(total_states);
-    states.setZero();
+    states.setZero(total_states);
 
     type* state_pointer = states.data();
     for (auto& layer : layers)

@@ -38,10 +38,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             total_size += get_aligned_size(s.size());
 
     if(total_size > 0)
-    {
-        data.resize(total_size);
-        data.setZero();
-    }
+        data.setZero(total_size);
 
     views.resize(layers_number);
     type* pointer = (total_size > 0) ? data.data() : nullptr;

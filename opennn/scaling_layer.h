@@ -83,8 +83,7 @@ public:
 
         const Index new_inputs_number = new_input_shape.size();
 
-        means.resize(new_inputs_number);
-        means.setZero();
+        means = VectorR::Zero(new_inputs_number);
         standard_deviations.resize(new_inputs_number);
         standard_deviations.setOnes();
         minimums.resize(new_inputs_number);

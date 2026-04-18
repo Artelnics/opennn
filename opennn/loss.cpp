@@ -405,8 +405,7 @@ VectorR Loss::calculate_numerical_gradient()
     type error_forward = 0;
     type error_backward = 0;
 
-    VectorR numerical_gradient(parameters_number);
-    numerical_gradient.setZero();
+    VectorR numerical_gradient = VectorR::Zero(parameters_number);
 
     for(Index i = 0; i < parameters_number; ++i)
     {
@@ -465,8 +464,7 @@ VectorR Loss::calculate_numerical_input_gradients()
     type error_forward;
     type error_backward;
 
-    VectorR numerical_inputs_gradients(values_number);
-    numerical_inputs_gradients.setZero();
+    VectorR numerical_inputs_gradients = VectorR::Zero(values_number);
 
     const vector<TensorView>& input_views = batch.get_inputs();
 

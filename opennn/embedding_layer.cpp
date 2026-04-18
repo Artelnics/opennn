@@ -52,8 +52,7 @@ void Embedding::set(const Index new_vocabulary_size,
     embedding_scale = sqrt(static_cast<type>(new_embedding_dimension));
     label = new_label;
 
-    positional_encoding.resize(new_sequence_length, new_embedding_dimension);
-    positional_encoding.setZero();
+    positional_encoding = MatrixR::Zero(new_sequence_length, new_embedding_dimension);
 
     const type half_depth = type(new_embedding_dimension) / 2;
 

@@ -50,8 +50,7 @@ void Unscaling::set_output_shape(const Shape& new_output_shape)
 
 void Unscaling::set(const Index new_neurons_number, const string& new_label)
 {
-    means.resize(new_neurons_number);
-    means.setZero();
+    means = VectorR::Zero(new_neurons_number);
     standard_deviations.resize(new_neurons_number);
     standard_deviations.setOnes();
     minimums.resize(new_neurons_number);

@@ -378,7 +378,7 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     auto& gradient_views = back_propagation.gradient_views[layer];
 
     const TensorView& output = forward_views[Output][0];
-    TensorView& delta = backward_views[OutputGradient][0];
+    TensorView& output_gradient = backward_views[OutputGradient][0];
 
 #ifdef OPENNN_WITH_CUDA
     const bool is_gpu = Device::instance().is_gpu();
@@ -386,18 +386,18 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     constexpr bool is_gpu = false;
 #endif
 
-    activation_gradient(output, delta, delta, activation_arguments);
+    activation_gradient(output, output_gradient, output_gradient, activation_arguments);
 
     if (batch_normalization)
-        batch_normalization_backward(forward_views[Convolution][0], output, delta,
+        batch_normalization_backward(forward_views[Convolution][0], output, output_gradient,
                                      forward_views[BatchNormMean][0], forward_views[BatchNormInverseVariance][0],
                                      parameters[Gamma], gradient_views[Gamma], gradient_views[Beta],
-                                     delta);
+                                     output_gradient);
 
     const TensorView& conv_input = is_gpu ? forward_views[Input][0] : forward_views[PaddedInput][0];
 
     convolution_backward_weights(conv_input,
-                                 delta,
+                                 output_gradient,
                                  gradient_views[Weight],
                                  gradient_views[Bias],
                                  convolution_arguments);
@@ -405,7 +405,7 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     // @todo Remove unused padded_input_grad parameter from convolution_backward_data.
     //       Both args are InputGradient because padded_input_grad is unused in the implementation.
     if (!is_first_layer)
-        convolution_backward_data(delta,
+        convolution_backward_data(output_gradient,
                                   parameters[Weight],
                                   backward_views[InputGradient][0],
                                   backward_views[InputGradient][0],

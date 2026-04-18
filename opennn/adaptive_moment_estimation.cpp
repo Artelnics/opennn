@@ -362,11 +362,8 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 
     const Index parameters_number = neural_network->get_parameters_size();
 
-    gradient_exponential_decay.resize(parameters_number);
-    gradient_exponential_decay.setZero();
-
-    square_gradient_exponential_decay.resize(parameters_number);
-    square_gradient_exponential_decay.setZero();
+    gradient_exponential_decay.setZero(parameters_number);
+    square_gradient_exponential_decay.setZero(parameters_number);
 
 #ifdef OPENNN_WITH_CUDA
     gradient_exponential_decay.resize_device(parameters_number);

@@ -609,8 +609,7 @@ MatrixI TestingAnalysis::calculate_confusion(const MatrixR& targets,
     const Index outputs_number = outputs.cols();
     const Index num_classes = (outputs_number == 1) ? 2 : outputs_number;
 
-    MatrixI confusion(num_classes + 1, num_classes + 1);
-    confusion.setZero();
+    MatrixI confusion = MatrixI::Zero(num_classes + 1, num_classes + 1);
 
     for(Index i = 0; i < samples; ++i)
     {
@@ -671,8 +670,7 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
     if(outputs.cols() != 1)
         throw runtime_error("Number of of output variables (" + to_string(outputs.cols()) + ") must be one.\n");
 
-    MatrixR roc_curve(points_number + 1, 3);
-    roc_curve.setZero();
+    MatrixR roc_curve = MatrixR::Zero(points_number + 1, 3);
 
 #pragma omp parallel for schedule(dynamic)
 
@@ -1092,7 +1090,6 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates(cons
     // Save indices
 
     MatrixI indices = MatrixI::Zero(targets_number, targets_number);
-    indices.setZero();
 
     for(Index i = 0; i < samples_number; ++i)
     {

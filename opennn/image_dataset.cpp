@@ -213,8 +213,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     const Index folders_number = directory_path.size();
 
-    VectorI images_number(folders_number + 1);
-    images_number.setZero();
+    VectorI images_number = VectorI::Zero(folders_number + 1);
     
     Index samples_number = 0;
 

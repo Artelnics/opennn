@@ -289,6 +289,24 @@ void combination(const TensorView& input,
     output_matrix.noalias() = (input_matrix * weights.as_matrix()).rowwise() + biases.as_vector().transpose();
 }
 
+void combination_gradient(const TensorView& output_gradient,
+                          const TensorView& input,
+                          const TensorView& weights,
+                          TensorView& input_gradient,
+                          TensorView& weight_gradient,
+                          TensorView& bias_gradient,
+                          bool accumulate_input_gradient)
+{
+    multiply(input, true, output_gradient, false, weight_gradient);
+    sum(output_gradient, bias_gradient);
+
+    if(input_gradient.data && input_gradient.size() > 0)
+    {
+        const type beta = accumulate_input_gradient ? type(1) : type(0);
+        multiply(output_gradient, false, weights, true, input_gradient, type(1), beta);
+    }
+}
+
 void activation(TensorView& output, ActivationArguments arguments)
 {
     if (output.empty() || arguments.activation_function == ActivationFunction::Linear)
@@ -802,7 +820,7 @@ void convolution_activation(const TensorView& input,
 }
 
 void convolution_backward_weights(const TensorView& input,
-                                  const TensorView& delta,
+                                  const TensorView& output_gradient,
                                   TensorView& weight_grad,
                                   TensorView& bias_grad,
                                   const ConvolutionArguments& args)
@@ -812,7 +830,7 @@ void convolution_backward_weights(const TensorView& input,
         CHECK_CUDNN(cudnnConvolutionBackwardFilter(Device::get_cudnn_handle(),
             &one,
             input.get_descriptor(), input.data,
-            delta.get_descriptor(), delta.data,
+            output_gradient.get_descriptor(), output_gradient.data,
             args.convolution_descriptor,
             args.algorithm_filter,
             args.backward_filter_workspace, args.backward_filter_workspace_size,
@@ -821,7 +839,7 @@ void convolution_backward_weights(const TensorView& input,
 
         CHECK_CUDNN(cudnnConvolutionBackwardBias(Device::get_cudnn_handle(),
             &one,
-            delta.get_descriptor(), delta.data,
+            output_gradient.get_descriptor(), output_gradient.data,
             &zero,
             bias_grad.get_descriptor(), bias_grad.data));
         return;
@@ -830,7 +848,7 @@ void convolution_backward_weights(const TensorView& input,
     (void)args;
 
     const TensorMap4 inputs = input.as_tensor<4>();
-    const TensorMap4 deltas = delta.as_tensor<4>();
+    const TensorMap4 output_gradients = output_gradient.as_tensor<4>();
 
     const Index batch_size = inputs.dimension(0);
     const Index kernels_number = weight_grad.shape[0];
@@ -838,8 +856,8 @@ void convolution_backward_weights(const TensorView& input,
     const Index kernel_width = weight_grad.shape[2];
     const Index kernel_channels = weight_grad.shape[3];
 
-    const Index output_height = deltas.dimension(1);
-    const Index output_width = deltas.dimension(2);
+    const Index output_height = output_gradients.dimension(1);
+    const Index output_width = output_gradients.dimension(2);
     const Index input_height = inputs.dimension(1);
     const Index input_width = inputs.dimension(2);
 
@@ -860,8 +878,8 @@ void convolution_backward_weights(const TensorView& input,
 
                 for(Index output_column = 0; output_column < output_width; ++output_column)
                 {
-                    const type delta = deltas(batch_index, output_row, output_column, kernel_index);
-                    bias_gradients(kernel_index) += delta;
+                    const type output_gradient_value = output_gradients(batch_index, output_row, output_column, kernel_index);
+                    bias_gradients(kernel_index) += output_gradient_value;
 
                     const Index col_limit = min(kernel_width, input_width - output_column);
 
@@ -874,7 +892,7 @@ void convolution_backward_weights(const TensorView& input,
                             const Index input_column = output_column + kernel_column;
 
                             for(Index channel_index = 0; channel_index < kernel_channels; ++channel_index)
-                                weight_gradient_map(kernel_row, kernel_column, channel_index) += delta * inputs(batch_index, input_row, input_column, channel_index);
+                                weight_gradient_map(kernel_row, kernel_column, channel_index) += output_gradient_value * inputs(batch_index, input_row, input_column, channel_index);
                         }
                     }
                 }
@@ -883,7 +901,7 @@ void convolution_backward_weights(const TensorView& input,
     }
 }
 
-void convolution_backward_data(const TensorView& delta,
+void convolution_backward_data(const TensorView& output_gradient,
                                const TensorView& kernel,
                                TensorView& input_grad,
                                TensorView& /*padded_input_grad*/,
@@ -894,7 +912,7 @@ void convolution_backward_data(const TensorView& delta,
         CHECK_CUDNN(cudnnConvolutionBackwardData(Device::get_cudnn_handle(),
             &one,
             args.kernel_descriptor, kernel.data,
-            delta.get_descriptor(), delta.data,
+            output_gradient.get_descriptor(), output_gradient.data,
             args.convolution_descriptor,
             args.algorithm_data,
             args.workspace, args.workspace_size,
@@ -905,12 +923,12 @@ void convolution_backward_data(const TensorView& delta,
 #endif
     (void)args;
 
-    const TensorMap4 deltas = delta.as_tensor<4>();
+    const TensorMap4 output_gradients = output_gradient.as_tensor<4>();
     TensorMap4 in_grad = input_grad.as_tensor<4>().setZero();
 
-    const Index batch_size = deltas.dimension(0);
-    const Index output_height = deltas.dimension(1);
-    const Index output_width = deltas.dimension(2);
+    const Index batch_size = output_gradients.dimension(0);
+    const Index output_height = output_gradients.dimension(1);
+    const Index output_width = output_gradients.dimension(2);
     const Index kernels_number = kernel.shape[0];
     const Index input_height = in_grad.dimension(1);
     const Index input_width = in_grad.dimension(2);
@@ -927,7 +945,7 @@ void convolution_backward_data(const TensorView& delta,
 
                 for(Index output_column = 0; output_column < output_width; ++output_column)
                 {
-                    const type delta_value = deltas(batch_index, output_row, output_column, kernel_index);
+                    const type output_gradient_value = output_gradients(batch_index, output_row, output_column, kernel_index);
 
                     const Index col_limit = min(kernel_width, input_width - output_column);
 
@@ -940,7 +958,7 @@ void convolution_backward_data(const TensorView& delta,
                             const Index input_column = output_column + kernel_column;
 
                             for(Index channel_index = 0; channel_index < kernel_channels; ++channel_index)
-                                in_grad(batch_index, input_row, input_column, channel_index) += delta_value * kernel_map(kernel_row, kernel_column, channel_index);
+                                in_grad(batch_index, input_row, input_column, channel_index) += output_gradient_value * kernel_map(kernel_row, kernel_column, channel_index);
                         }
                     }
                 }
@@ -1357,7 +1375,9 @@ void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView
         }
 }
 
-void average_pooling_3d_backward(const TensorView& input, const TensorView& output_gradient, TensorView& input_gradient)
+void average_pooling_3d_backward(const TensorView& input, 
+                                 const TensorView& output_gradient, 
+                                 TensorView& input_gradient)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
@@ -1424,107 +1444,98 @@ void embedding_backward(const TensorView& input_indices,
     weight_gradients.row(0).setZero();
 }
 
+// Transpose [B, S, H, D] -> [B, H, S, D]. Dispatches CPU/GPU.
+static void transpose_heads_forward(const TensorView& source, TensorView& destination)
+{
+    const Index batch_size = source.shape[0];
+    const Index sequence_length = source.shape[1];
+    const Index heads_number = source.shape[2];
+    const Index head_dimension = source.shape[3];
+
+#ifdef OPENNN_WITH_CUDA
+    if(Device::instance().is_gpu())
+    {
+        mha_transpose_qkv_cuda(size_t(source.size()), source.data, destination.data,
+                               to_int(sequence_length), to_int(heads_number), to_int(head_dimension));
+        return;
+    }
+#endif
+
+    #pragma omp parallel for collapse(3)
+    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
+        for(Index head_index = 0; head_index < heads_number; ++head_index)
+            for(Index sequence_index = 0; sequence_index < sequence_length; ++sequence_index)
+                memcpy(destination.data + ((batch_index * heads_number + head_index) * sequence_length + sequence_index) * head_dimension,
+                       source.data + ((batch_index * sequence_length + sequence_index) * heads_number + head_index) * head_dimension,
+                       head_dimension * sizeof(type));
+}
+
+// Transpose [B, H, S, D] -> [B, S, H, D]. Dispatches CPU/GPU.
+static void transpose_heads_backward(const TensorView& source, TensorView& destination)
+{
+    const Index batch_size = source.shape[0];
+    const Index heads_number = source.shape[1];
+    const Index sequence_length = source.shape[2];
+    const Index head_dimension = source.shape[3];
+
+#ifdef OPENNN_WITH_CUDA
+    if(Device::instance().is_gpu())
+    {
+        mha_transpose_o_cuda(size_t(source.size()), source.data, destination.data,
+                             to_int(sequence_length), to_int(heads_number), to_int(head_dimension));
+        return;
+    }
+#endif
+
+    #pragma omp parallel for collapse(3)
+    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
+        for(Index sequence_index = 0; sequence_index < sequence_length; ++sequence_index)
+            for(Index head_index = 0; head_index < heads_number; ++head_index)
+                memcpy(destination.data + ((batch_index * sequence_length + sequence_index) * heads_number + head_index) * head_dimension,
+                       source.data + ((batch_index * heads_number + head_index) * sequence_length + sequence_index) * head_dimension,
+                       head_dimension * sizeof(type));
+}
+
 void projection(const TensorView& input,
                 const TensorView& weights,
                 const TensorView& biases,
                 TensorView& output,
                 const MultiheadAttentionArguments& args)
 {
-    const Index batch_size = args.batch_size;
-    const Index heads_number = args.heads_number;
-    const Index embedding_dimension = args.embedding_dimension;
-    const Index head_dimension = args.head_dimension;
-    const Index sequence_length = output.size() / (batch_size * heads_number * head_dimension);
+    const Index total_rows = output.size() / args.embedding_dimension;
+    const Index sequence_length = total_rows / args.batch_size;
 
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) 
-    {
-        const Index total_rows = input.size() / embedding_dimension;
-        TensorView in_2d(input.data, {total_rows, embedding_dimension});
-        TensorView out_2d(output.data, {total_rows, embedding_dimension});
-        in_2d.set_descriptor(in_2d.shape);
+    TensorView in_2d(input.data, {total_rows, args.embedding_dimension});
+    TensorView scratch_2d(args.transpose_scratch, {total_rows, args.embedding_dimension});
+    in_2d.set_descriptor(in_2d.shape);
+    scratch_2d.set_descriptor(scratch_2d.shape);
 
-        out_2d.set_descriptor(out_2d.shape);
-        
-        combination(in_2d, weights, biases, out_2d);
-        return;
-    }
-#endif
-    const MatrixMap weight_matrix = weights.as_matrix();
-    const VectorMap bias_vector = biases.as_vector();
+    combination(in_2d, weights, biases, scratch_2d);
 
-    #pragma omp parallel for collapse(2)
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-    {
-        for(Index head_index = 0; head_index < heads_number; ++head_index)
-        {
-            const MatrixMap input_batch(input.data + batch_index * sequence_length * embedding_dimension, sequence_length, embedding_dimension);
-
-            MatrixMap output_batch_head(output.data + batch_index * (heads_number * sequence_length * head_dimension)
-                             + head_index * (sequence_length * head_dimension),
-                             sequence_length, head_dimension);
-
-            const auto weight_head = weight_matrix.block(0, head_index * head_dimension, embedding_dimension, head_dimension);
-            const auto bias_head = bias_vector.segment(head_index * head_dimension, head_dimension);
-
-            output_batch_head.noalias() = (input_batch * weight_head).rowwise() + bias_head.transpose();
-        }
-    }
+    TensorView scratch_4d(args.transpose_scratch, {args.batch_size, sequence_length, args.heads_number, args.head_dimension});
+    transpose_heads_forward(scratch_4d, output);
 }
 
-void projection_gradient(const TensorView& d_head,
+void projection_gradient(const TensorView& head_gradient,
                          const TensorView& input,
                          const TensorView& weights,
-                         TensorView& d_bias,
-                         TensorView& d_weights,
-                         TensorView& d_input,
+                         TensorView& bias_gradient,
+                         TensorView& weight_gradient,
+                         TensorView& input_gradient,
                          const MultiheadAttentionArguments& args,
                          Index sequence_length,
                          bool accumulate)
 {
-    const Index batch_size = args.batch_size;
-    const Index heads_number = args.heads_number;
-    const Index embedding_dimension = args.embedding_dimension;
-    const Index head_dimension = args.head_dimension;
+    const Index total_rows = args.batch_size * sequence_length;
 
-    const MatrixMap weight_matrix = weights.as_matrix();
+    TensorView scratch_4d(args.transpose_scratch, {args.batch_size, sequence_length, args.heads_number, args.head_dimension});
+    transpose_heads_backward(head_gradient, scratch_4d);
 
-    #pragma omp parallel for
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-    {
-        MatrixMap input_gradient_batch(d_input.data + batch_index * sequence_length * embedding_dimension, sequence_length, embedding_dimension);
+    TensorView head_gradient_flat(args.transpose_scratch, {total_rows, args.embedding_dimension});
+    TensorView input_flat(input.data, {total_rows, args.embedding_dimension});
+    TensorView input_gradient_flat(input_gradient.data, {total_rows, args.embedding_dimension});
 
-        if(!accumulate) input_gradient_batch.setZero();
-
-        for(Index head_index = 0; head_index < heads_number; ++head_index)
-        {
-            const MatrixMap delta_head(d_head.data + batch_index * (heads_number * sequence_length * head_dimension) + head_index * (sequence_length * head_dimension),
-                                       sequence_length, head_dimension);
-            const auto weight_head = weight_matrix.block(0, head_index * head_dimension, embedding_dimension, head_dimension);
-            input_gradient_batch.noalias() += delta_head * weight_head.transpose();
-        }
-    }
-
-    MatrixMap weight_gradient_matrix = d_weights.as_matrix();
-    VectorMap bias_gradient_vector = d_bias.as_vector();
-
-    #pragma omp parallel for
-    for(Index head_index = 0; head_index < heads_number; ++head_index)
-    {
-        auto weight_gradient_head = weight_gradient_matrix.block(0, head_index * head_dimension, embedding_dimension, head_dimension).setZero();
-        auto bias_gradient_head = bias_gradient_vector.segment(head_index * head_dimension, head_dimension).setZero();
-
-        for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        {
-            const MatrixMap delta_head(d_head.data + batch_index * (heads_number * sequence_length * head_dimension) + head_index * (sequence_length * head_dimension),
-                                       sequence_length, head_dimension);
-
-            const MatrixMap input_batch(input.data + batch_index * sequence_length * embedding_dimension, sequence_length, embedding_dimension);
-
-            weight_gradient_head.noalias() += input_batch.transpose() * delta_head;
-            bias_gradient_head.noalias() += delta_head.colwise().sum().transpose();
-        }
-    }
+    combination_gradient(head_gradient_flat, input_flat, weights, input_gradient_flat, weight_gradient, bias_gradient, accumulate);
 }
 
 void multihead_attention_forward(
@@ -1558,18 +1569,7 @@ void multihead_attention_forward(
         const int batch_int = to_int(batch_size);
         const float scaling_factor_float = static_cast<float>(scaling_factor);
 
-        // Transpose Q, K, V from [B, S, H, D] to [B, H, S, D]
-
-        float* scratch = args.transpose_scratch;
-
-        mha_transpose_qkv_cuda(batch_int * query_length_int * embedding_int, query.data, scratch, query_length_int, heads_int, head_dim_int);
-        cudaMemcpy(query.data, scratch, batch_int * query_length_int * embedding_int * sizeof(float), cudaMemcpyDeviceToDevice);
-
-        mha_transpose_qkv_cuda(batch_int * source_length_int * embedding_int, key.data, scratch, source_length_int, heads_int, head_dim_int);
-        cudaMemcpy(key.data, scratch, batch_int * source_length_int * embedding_int * sizeof(float), cudaMemcpyDeviceToDevice);
-
-        mha_transpose_qkv_cuda(batch_int * source_length_int * embedding_int, value.data, scratch, source_length_int, heads_int, head_dim_int);
-        cudaMemcpy(value.data, scratch, batch_int * source_length_int * embedding_int * sizeof(float), cudaMemcpyDeviceToDevice);
+        // Q, K, V are already in [B, H, S, D] layout after projection.
 
         // Q * K^T — attention scores
 
@@ -1723,6 +1723,16 @@ void multihead_attention_backward(
     const Index total_rows = batch_size * query_sequence_length;
     const Index total_heads = batch_size * heads_number;
 
+    // Output projection gradient (unified CPU/GPU via combination_gradient)
+    {
+        TensorView concatenated_2d(concatenated.data, {total_rows, embedding_dimension});
+        TensorView concat_grad_2d(concat_grad.data, {total_rows, embedding_dimension});
+        TensorView output_gradient_2d(output_gradient.data, {total_rows, embedding_dimension});
+        combination_gradient(output_gradient_2d, concatenated_2d, projection_weights,
+                             concat_grad_2d, proj_weight_grad, proj_bias_grad,
+                             /*accumulate_input_gradient*/ false);
+    }
+
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
         const int total_heads_int = to_int(total_heads);
@@ -1736,44 +1746,11 @@ void multihead_attention_backward(
 
         float* scratch = args.transpose_scratch;
 
-        // Projection weight gradients: dW_proj = concat^T * dY
-
-        CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(),
-            CUBLAS_OP_N, CUBLAS_OP_T,
-            embedding_int, embedding_int, batch_int * query_length_int,
-            &one,
-            output_gradient.data, embedding_int,
-            concatenated.data, embedding_int,
-            &zero,
-            proj_weight_grad.data, embedding_int));
-
-        // Projection bias gradients: db_proj = sum(dY)
-
-        CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(),
-            CUBLAS_OP_N, CUBLAS_OP_N,
-            embedding_int, 1, batch_int * query_length_int,
-            &one,
-            output_gradient.data, embedding_int,
-            Device::get_ones(batch_int * query_length_int), batch_int * query_length_int,
-            &zero,
-            proj_bias_grad.data, embedding_int));
-
-        // Concatenated output gradients: d_concat = dY * W_proj^T
-
-        CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(),
-            CUBLAS_OP_T, CUBLAS_OP_N,
-            embedding_int, batch_int * query_length_int, embedding_int,
-            &one,
-            projection_weights.data, embedding_int,
-            output_gradient.data, embedding_int,
-            &zero,
-            concat_grad.data, embedding_int));
-
-        // Transpose d_concat from [B, Sq, H, D] to [B, H, Sq, D]
+        // Transpose concat_gradient from [B, Sq, H, D] to [B, H, Sq, D]
 
         mha_transpose_qkv_cuda(batch_int * query_length_int * embedding_int, concat_grad.data, scratch, query_length_int, heads_int, head_dim_int);
 
-        // dV = P^T * dO (transposed)
+        // value_gradient = attention_weights^T * concat_gradient (transposed)
 
         CHECK_CUBLAS(cublasSgemmStridedBatched(Device::get_cublas_handle(),
             CUBLAS_OP_N, CUBLAS_OP_T,
@@ -1785,7 +1762,7 @@ void multihead_attention_backward(
             value_grad.data, head_dim_int, source_length_int * head_dim_int,
             total_heads_int));
 
-        // dP = dO * V^T
+        // attention_weight_gradient = concat_gradient * V^T
 
         CHECK_CUBLAS(cublasSgemmStridedBatched(Device::get_cublas_handle(),
             CUBLAS_OP_T, CUBLAS_OP_N,
@@ -1812,7 +1789,7 @@ void multihead_attention_backward(
             datt_view.get_descriptor(), att_weight_grad.data,
             &zero, sgrad_view.get_descriptor(), args.softmax_gradient));
 
-        // dQ = softmax_grad * K^T * scaling_factor
+        // query_gradient = softmax_gradient * K^T * scaling_factor
 
         CHECK_CUBLAS(cublasSgemmStridedBatched(Device::get_cublas_handle(),
             CUBLAS_OP_N, CUBLAS_OP_N,
@@ -1824,7 +1801,7 @@ void multihead_attention_backward(
             query_grad.data, head_dim_int, query_length_int * head_dim_int,
             total_heads_int));
 
-        // dK = softmax_grad^T * Q * scaling_factor
+        // key_gradient = softmax_gradient^T * Q * scaling_factor
 
         CHECK_CUBLAS(cublasSgemmStridedBatched(Device::get_cublas_handle(),
             CUBLAS_OP_N, CUBLAS_OP_T,
@@ -1836,7 +1813,7 @@ void multihead_attention_backward(
             key_grad.data, head_dim_int, source_length_int * head_dim_int,
             total_heads_int));
 
-        // Transpose dQ, dK, dV from [B, H, S, D] to [B, S, H, D]
+        // Transpose query/key/value gradients from [B, H, S, D] to [B, S, H, D]
 
         float* q_grad_flat = args.query_input_gradient_scratch;
         float* src_grad_flat = args.source_input_gradient_scratch;
@@ -1913,19 +1890,9 @@ void multihead_attention_backward(
         return;
     }
 #endif
-    // Projection gradients
+    // Output projection gradient already computed above (see combination_gradient call).
 
-    const MatrixMap concatenated_matrix(concatenated.data, total_rows, embedding_dimension);
-    const MatrixMap output_gradient_matrix(output_gradient.data, total_rows, embedding_dimension);
-
-    MatrixMap(proj_weight_grad.data, embedding_dimension, embedding_dimension).noalias() = concatenated_matrix.transpose() * output_gradient_matrix;
-    VectorMap(proj_bias_grad.data, embedding_dimension).noalias() = output_gradient_matrix.colwise().sum();
-
-    MatrixMap concat_gradient_matrix(concat_grad.data, total_rows, embedding_dimension);
-    const MatrixMap projection_weight_matrix = projection_weights.as_matrix();
-    concat_gradient_matrix.noalias() = output_gradient_matrix * projection_weight_matrix.transpose();
-
-    // dV and dP from concat_grad
+    // value_gradient and attention_weight_gradient from concat_grad
 
     #pragma omp parallel for collapse(2)
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
@@ -1946,7 +1913,7 @@ void multihead_attention_backward(
             attention_gradient_map.noalias() = concat_output_gradient * value_map.transpose();
         }
 
-    // Softmax gradient + dQ/dK
+    // Softmax gradient + query/key gradients
 
     #pragma omp parallel for
     for(Index head_index = 0; head_index < total_heads; ++head_index)

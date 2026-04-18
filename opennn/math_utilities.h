@@ -138,6 +138,7 @@ void softmax(TensorView& output);
 // Dense layer
 
 void combination(const TensorView& input, const TensorView& weights, const TensorView& biases, TensorView& output);
+void combination_gradient(const TensorView& output_gradient, const TensorView& input, const TensorView& weights, TensorView& input_gradient, TensorView& weight_gradient, TensorView& bias_gradient, bool accumulate_input_gradient);
 void activation(TensorView& output, ActivationArguments arguments);
 void activation_gradient(const TensorView& outputs, const TensorView& output_gradient, TensorView& activation_derivative, const ActivationArguments& arguments);
 void dropout(TensorView& output, DropoutArguments& args);
@@ -166,8 +167,8 @@ void layernorm_backward(const TensorView& input, const TensorView& output_gradie
 
 void convolution(const TensorView& input, const TensorView& kernel, const TensorView& bias, TensorView& output, const ConvolutionArguments& args = {});
 void convolution_activation(const TensorView& input, const TensorView& weight, const TensorView& bias, TensorView& output, const ConvolutionArguments& conv_args = {}, const ActivationArguments& activation_arguments = {});
-void convolution_backward_weights(const TensorView& input, const TensorView& delta, TensorView& weight_grad, TensorView& bias_grad, const ConvolutionArguments& args = {});
-void convolution_backward_data(const TensorView& delta, const TensorView& kernel, TensorView& input_grad, TensorView& padded_input_grad, const ConvolutionArguments& args = {});
+void convolution_backward_weights(const TensorView& input, const TensorView& output_gradient, TensorView& weight_grad, TensorView& bias_grad, const ConvolutionArguments& args = {});
+void convolution_backward_data(const TensorView& output_gradient, const TensorView& kernel, TensorView& input_grad, TensorView& padded_input_grad, const ConvolutionArguments& args = {});
 
 // Pooling 4D
 
@@ -191,12 +192,12 @@ void embedding_backward(const TensorView& input_indices, const TensorView& outpu
 
 void projection(const TensorView& input, const TensorView& weights, const TensorView& biases, TensorView& output, const MultiheadAttentionArguments& args);
 
-void projection_gradient(const TensorView& d_head,
+void projection_gradient(const TensorView& head_gradient,
                          const TensorView& input,
                          const TensorView& weights,
-                         TensorView& d_bias,
-                         TensorView& d_weights,
-                         TensorView& d_input,
+                         TensorView& bias_gradient,
+                         TensorView& weight_gradient,
+                         TensorView& input_gradient,
                          const MultiheadAttentionArguments& args,
                          Index sequence_length,
                          bool accumulate);
