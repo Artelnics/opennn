@@ -203,8 +203,6 @@ public:
         activation_arguments.activation_function = function;
 
 #ifdef OPENNN_WITH_CUDA
-        // If init_cuda has already run, keep the GPU descriptor in sync with the new mode.
-        // Otherwise init_cuda will create it with the current enum later.
         if (activation_arguments.activation_descriptor && function != ActivationFunction::Softmax)
             cudnnSetActivationDescriptor(activation_arguments.activation_descriptor,
                                          to_cudnn_activation_mode(function),
