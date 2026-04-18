@@ -98,14 +98,18 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     }
 
 #ifdef OPENNN_WITH_CUDA
-    // Prebuild cached TensorViews with cuDNN descriptors (shape is fixed per Batch)
+    // Prebuild cached TensorViews with cuDNN descriptors (shape is fixed per Batch).
+    // Batch data crosses the host→device boundary as FP32 and stays FP32 through the
+    // GPU pipeline; the flip to activation dtype (BF16/FP16) happens at the first
+    // layer boundary (first GEMM can consume FP32 inputs with BF16 weights via cuBLAS
+    // mixed-dtype GEMM — wired in Phase 6).
     if(!input_shape.empty() && input.device())
     {
-        TensorView in_view(input.device(), input_shape);
+        TensorView in_view(input.device(), input_shape, CUDNN_DATA_FLOAT);
 
         if(!decoder_shape.empty() && decoder.device())
         {
-            TensorView dec_view(decoder.device(), decoder_shape);
+            TensorView dec_view(decoder.device(), decoder_shape, CUDNN_DATA_FLOAT);
             input_views_cache = { dec_view, in_view };
         }
         else
@@ -115,7 +119,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     }
 
     if(!target_shape.empty() && target.device())
-        target_view_cache = TensorView(target.device(), target_shape);
+        target_view_cache = TensorView(target.device(), target_shape, CUDNN_DATA_FLOAT);
 #endif
 }
 

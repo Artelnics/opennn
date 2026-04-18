@@ -187,10 +187,12 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     float* transpose_scratch = forward_views[TransposeScratch][0].data;
     const type scaling_factor = get_scaling_factor();
 
+    TensorView concat_grad_flat = backward_views[ConcatenatedOutputGradient][0].reshape(flat_shape);
+
     combination_gradient(output_gradient.reshape(flat_shape),
                          forward_views[ConcatenatedAttentionOutputs][0].reshape(flat_shape),
                          parameters[ProjectionWeight],
-                         backward_views[ConcatenatedOutputGradient][0].reshape(flat_shape),
+                         concat_grad_flat,
                          gradient_views[ProjectionWeight],
                          gradient_views[ProjectionBias],
                          false);

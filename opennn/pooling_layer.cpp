@@ -120,6 +120,15 @@ void Pooling::set(const Shape& new_input_shape,
 #endif
 }
 
+#ifdef OPENNN_WITH_CUDA
+
+void Pooling::destroy_cuda()
+{
+    if(pooling_descriptor) cudnnDestroyPoolingDescriptor(pooling_descriptor);
+}
+
+#endif
+
 void Pooling::set_input_shape(const Shape& new_input_shape)
 {
     if (new_input_shape.rank() != 3)

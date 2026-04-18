@@ -14,9 +14,6 @@
 #include "loss.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
-#ifdef OPENNN_WITH_CUDA
-#include "kernel.cuh"
-#endif
 
 namespace opennn
 {
@@ -123,17 +120,18 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
             ? positional_encoding_device.device()
             : nullptr;
 
-        embedding_forward_cuda(
-            total_elements,
-            forward_views[Input][0].data,
-            parameters[Weight].data,
-            positional_encoding_data,
-            forward_views[Output][0].data,
-            sequence_length,
-            embedding_dimension,
-            vocabulary_size,
-            scale_embedding,
-            add_positional_encoding);
+        TensorView& output_view = forward_views[Output][0];
+        output_view.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            embedding_forward_cuda<T>(
+                total_elements,
+                forward_views[Input][0].as<float>(),
+                parameters[Weight].as<float>(),
+                positional_encoding_data,
+                output_view.as<T>(),
+                sequence_length, embedding_dimension, vocabulary_size,
+                scale_embedding, add_positional_encoding);
+        });
         return;
     }
 #endif
@@ -180,14 +178,16 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
     if (Device::instance().is_gpu()) {
         const Index total_elements = forward_propagation.batch_size * sequence_length * embedding_dimension;
 
-        embedding_backward_cuda(
-            total_elements,
-            forward_views[Input][0].data,
-            backward_views[OutputGradient][0].data,
-            gradient_views[Weight].data,
-            embedding_dimension,
-            vocabulary_size,
-            scale_embedding);
+        const TensorView& og = backward_views[OutputGradient][0];
+        og.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            embedding_backward_cuda<T>(
+                total_elements,
+                forward_views[Input][0].as<float>(),
+                og.as<T>(),
+                gradient_views[Weight].as<float>(),
+                embedding_dimension, vocabulary_size, scale_embedding);
+        });
 
         return;
     }

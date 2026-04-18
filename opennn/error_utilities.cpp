@@ -7,9 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "error_utilities.h"
-#ifdef OPENNN_WITH_CUDA
-#include "kernel.cuh"
-#endif
 
 namespace opennn
 {
@@ -26,7 +23,11 @@ static float sum_squared_diff_cuda(const TensorView& input, const TensorView& ta
                               &minus_one, target.get_descriptor(), target.data,
                               &zero, input.get_descriptor(), workspace));
     float sum_squared = 0.0f;
-    CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(), total_size, workspace, 1, workspace, 1, &sum_squared));
+    CHECK_CUBLAS(cublasDotEx(Device::get_cublas_handle(), total_size,
+                             workspace, CUDA_ACTIVATION_DTYPE, 1,
+                             workspace, CUDA_ACTIVATION_DTYPE, 1,
+                             &sum_squared, CUDA_REDUCTION_DTYPE,
+                             CUDA_REDUCTION_DTYPE));
     return sum_squared;
 }
 
@@ -38,11 +39,16 @@ static void scaled_diff_cuda(const TensorView& input, const TensorView& target, 
                               &one, input.get_descriptor(), input.data,
                               &minus_one, target.get_descriptor(), target.data,
                               &zero, output.get_descriptor(), output.data));
-    CHECK_CUBLAS(cublasSscal(Device::get_cublas_handle(), total_size, &scale, output.data, 1));
+    CHECK_CUBLAS(cublasScalEx(Device::get_cublas_handle(), total_size,
+                              &scale, CUDA_REDUCTION_DTYPE,
+                              output.data, CUDA_ACTIVATION_DTYPE, 1,
+                              CUDA_REDUCTION_DTYPE));
 }
 
 // Sum of absolute values. For inputs known to be non-negative (per-element losses,
 // validity masks, L1 norms) this equals the plain sum.
+// Note: cuBLAS has no AsumEx; this stays FP32-pinned until a custom reduction
+// or an explicit cast-to-FP32 path is added when CUDA_ACTIVATION_DTYPE is flipped.
 static float sum_abs_cuda(const float* data, Index n)
 {
     float sum = 0.0f;
@@ -54,7 +60,11 @@ static float sum_abs_cuda(const float* data, Index n)
 static float squared_norm_cuda(const float* data, Index n)
 {
     float dot = 0.0f;
-    CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(), to_int(n), data, 1, data, 1, &dot));
+    CHECK_CUBLAS(cublasDotEx(Device::get_cublas_handle(), to_int(n),
+                             data, CUDA_ACTIVATION_DTYPE, 1,
+                             data, CUDA_ACTIVATION_DTYPE, 1,
+                             &dot, CUDA_REDUCTION_DTYPE,
+                             CUDA_REDUCTION_DTYPE));
     return dot;
 }
 
@@ -108,7 +118,11 @@ void weighted_squared_error(const TensorView& input, const TensorView& target, t
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        weighted_squared_error_cuda(input.size(), workspace_device, target.data, input.data, pos_w, neg_w);
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            weighted_squared_error_cuda<T>(input.size(),
+                workspace_device, target.as<T>(), input.as<T>(), pos_w, neg_w);
+        });
         error = sum_abs_cuda(workspace_device, input.size());
         return;
     }
@@ -123,7 +137,11 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        weighted_squared_error_gradient_cuda(input.size(), input_gradient.data, target.data, input.data, pos_w, neg_w, coefficient);
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            weighted_squared_error_gradient_cuda<T>(input.size(),
+                input_gradient.as<T>(), target.as<T>(), input.as<T>(), pos_w, neg_w, coefficient);
+        });
         return;
     }
 #endif
@@ -137,7 +155,11 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, typ
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        binary_cross_entropy_cuda(input.size(), workspace_device, target.data, input.data, EPSILON);
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            binary_cross_entropy_cuda<T>(input.size(),
+                workspace_device, target.as<T>(), input.as<T>(), EPSILON);
+        });
         error = sum_abs_cuda(workspace_device, input.size()) / input.shape[0];
         return;
     }
@@ -159,7 +181,11 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        multiple_cross_entropy_cuda(input.size(), workspace_device, target.data, input.data, EPSILON);
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            multiple_cross_entropy_cuda<T>(input.size(),
+                workspace_device, target.as<T>(), input.as<T>(), EPSILON);
+        });
         error = sum_abs_cuda(workspace_device, input.size()) / input.shape[0];
         return;
     }
@@ -181,10 +207,15 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
         const Index num_classes = input.shape.back();
         const float scale = 1.0f / static_cast<float>(input.shape[0]);
 
-        if(num_classes == 1)
-            binary_cross_entropy_gradient_cuda(input.size(), input_gradient.data, target.data, input.data, EPSILON, scale);
-        else
-            multiple_cross_entropy_gradient_cuda(input.size(), input_gradient.data, target.data, input.data, scale);
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            if (num_classes == 1)
+                binary_cross_entropy_gradient_cuda<T>(input.size(),
+                    input_gradient.as<T>(), target.as<T>(), input.as<T>(), EPSILON, scale);
+            else
+                multiple_cross_entropy_gradient_cuda<T>(input.size(),
+                    input_gradient.as<T>(), target.as<T>(), input.as<T>(), scale);
+        });
         return;
     }
 #endif
@@ -205,10 +236,9 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
 
 void minkowski_error(const TensorView& input, const TensorView& target, type p, type& error, float* workspace_device)
 {
-#ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu())
         throw runtime_error("minkowski_error: GPU implementation not available.");
-#endif
+
     (void)workspace_device;
     const Index total_size = input.size();
     error = (input.as_vector() - target.as_vector()).array().abs().pow(p).sum() / to_type(total_size);
@@ -216,10 +246,9 @@ void minkowski_error(const TensorView& input, const TensorView& target, type p, 
 
 void minkowski_error_gradient(const TensorView& input, const TensorView& target, type p, TensorView& input_gradient)
 {
-#ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu())
         throw runtime_error("minkowski_error_gradient: GPU implementation not available.");
-#endif
+
     const Index total_size = input.size();
     const auto difference = (input.as_vector() - target.as_vector()).array();
     input_gradient.as_vector().array() = (p / to_type(total_size)) * difference.sign() * (difference.abs() + EPSILON).pow(p - 1.0f);
@@ -241,9 +270,12 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, type& e
         // we only need 2 * token_count here (errors + mask), and vocabulary_size >= 2 in any real use.
         float* valid_mask_device = errors_device + token_count;
 
-        cross_entropy_3d_multiple_forward_cuda(token_count, to_int(vocabulary_size),
-                                               input.data, target.data,
-                                               errors_device, valid_mask_device, EPSILON);
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            cross_entropy_3d_multiple_forward_cuda<T>(token_count, to_int(vocabulary_size),
+                input.as<T>(), target.as<float>(),
+                errors_device, valid_mask_device, EPSILON);
+        });
 
         const float sum_loss    = sum_abs_cuda(errors_device,     token_count);
         const float active_count = sum_abs_cuda(valid_mask_device, token_count);
@@ -289,7 +321,11 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
         const float scale = active_tokens_count > 0 ? 1.0f / static_cast<float>(active_tokens_count) : 0.0f;
 
         const size_t total = static_cast<size_t>(batch_size) * sequence_length * vocabulary_size;
-        cross_entropy_3d_multiple_backward_cuda(total, to_int(vocabulary_size), input.data, target.data, input_gradient.data, scale);
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            cross_entropy_3d_multiple_backward_cuda<T>(total, to_int(vocabulary_size),
+                input.as<T>(), target.as<float>(), input_gradient.as<T>(), scale);
+        });
         return;
     }
 #endif
@@ -331,7 +367,8 @@ void l1_regularization_gradient(const TensorView& parameters, type lambda, Tenso
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        l1_gradient_cuda(parameters.size(), gradient.data, parameters.data, lambda);
+        // Weights and weight-gradients are always FP32 (AMP master).
+        l1_gradient_cuda<float>(parameters.size(), gradient.as<float>(), parameters.as<float>(), lambda);
         return;
     }
 #endif
@@ -354,7 +391,11 @@ void l2_regularization_gradient(const TensorView& parameters, type lambda, Tenso
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
         const int total_size = to_int(parameters.size());
-        CHECK_CUBLAS(cublasSaxpy(Device::get_cublas_handle(), total_size, &lambda, parameters.data, 1, gradient.data, 1));
+        CHECK_CUBLAS(cublasAxpyEx(Device::get_cublas_handle(), total_size,
+                                  &lambda, CUDA_REDUCTION_DTYPE,
+                                  parameters.data, CUDA_ACTIVATION_DTYPE, 1,
+                                  gradient.data,   CUDA_ACTIVATION_DTYPE, 1,
+                                  CUDA_REDUCTION_DTYPE));
         return;
     }
 #endif

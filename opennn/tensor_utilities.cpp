@@ -319,10 +319,10 @@ Device::Device()
     CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
 
     CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
-    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor, CUDNN_OP_TENSOR_ADD, CUDNN_IO_DTYPE, CUDNN_NOT_PROPAGATE_NAN));
+    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor, CUDNN_OP_TENSOR_ADD, CUDNN_ACTIVATION_DTYPE, CUDNN_NOT_PROPAGATE_NAN));
 
     CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_multiplication_descriptor));
-    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_multiplication_descriptor, CUDNN_OP_TENSOR_MUL, CUDNN_IO_DTYPE, CUDNN_NOT_PROPAGATE_NAN));
+    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_multiplication_descriptor, CUDNN_OP_TENSOR_MUL, CUDNN_ACTIVATION_DTYPE, CUDNN_NOT_PROPAGATE_NAN));
 #endif
 }
 

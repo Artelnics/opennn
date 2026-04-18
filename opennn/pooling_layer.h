@@ -53,12 +53,14 @@ public:
             const string& = "MaxPooling",
             const string& = "pooling_layer");
 
-#ifdef OPENNN_WITH_CUDA
     ~Pooling()
     {
-        if(pooling_descriptor) cudnnDestroyPoolingDescriptor(pooling_descriptor);
-    }
+#ifdef OPENNN_WITH_CUDA
+        destroy_cuda();
 #endif
+    }
+
+    void destroy_cuda();
 
     // Getters
 
@@ -156,10 +158,8 @@ private:
 
     PoolingArguments cached_pool_args;
 
-#ifdef OPENNN_WITH_CUDA
     cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
     cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
-#endif
 };
 
 }

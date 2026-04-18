@@ -69,6 +69,14 @@ private:
         return shapes;
     }
 
+    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
+    {
+        if (pooling_method == PoolingMethod::MaxPooling)
+            return {CUDNN_DATA_FLOAT,        // MaximalIndices — integer metadata, stays FP32
+                    CUDNN_ACTIVATION_DTYPE}; // Output
+        return {CUDNN_ACTIVATION_DTYPE};     // Output only
+    }
+
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
         return {{ batch_size, sequence_length, input_features }};

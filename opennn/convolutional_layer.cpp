@@ -84,33 +84,6 @@ void Convolutional::set(const Shape& new_input_shape,
     set_batch_normalization(new_batch_normalization);
 
     set_label(new_label);
-
-#ifdef OPENNN_WITH_CUDA
-
-    cudnnCreateFilterDescriptor(&kernel_descriptor);
-
-    cudnnSetFilter4dDescriptor(kernel_descriptor,
-                               CUDNN_IO_DTYPE,
-                               CUDNN_TENSOR_NHWC,
-                               kernels_number,
-                               kernel_channels,
-                               kernel_height,
-                               kernel_width);
-
-    cudnnCreateConvolutionDescriptor(&convolution_descriptor);
-
-    cudnnSetConvolution2dDescriptor(convolution_descriptor,
-                                    get_padding_height(), get_padding_width(),
-                                    row_stride, column_stride,
-                                    1, 1,
-                                    CUDNN_CROSS_CORRELATION,
-                                    CUDNN_IO_DTYPE);
-
-    cudnnSetConvolutionMathType(convolution_descriptor, CUDNN_TENSOR_OP_MATH);
-
-    convolution_arguments.convolution_descriptor = convolution_descriptor;
-    convolution_arguments.kernel_descriptor = kernel_descriptor;
-#endif
 }
 
 void Convolutional::set_input_shape(const Shape& new_input_shape)
@@ -155,23 +128,11 @@ void Convolutional::set_activation_function(const string& new_activation_functio
     activation_arguments.activation_function = function;
 
 #ifdef OPENNN_WITH_CUDA
-    cudnnActivationDescriptor_t& descriptor = activation_arguments.activation_descriptor;
-
-    if (!descriptor)
-        cudnnCreateActivationDescriptor(&descriptor);
-
-    cudnnActivationMode_t activation_mode = CUDNN_ACTIVATION_IDENTITY;
-
-    switch (function)
-    {
-    case ActivationFunction::Sigmoid:                 activation_mode = CUDNN_ACTIVATION_SIGMOID; break;
-    case ActivationFunction::HyperbolicTangent:       activation_mode = CUDNN_ACTIVATION_TANH;    break;
-    case ActivationFunction::RectifiedLinear:         activation_mode = CUDNN_ACTIVATION_RELU;    break;
-    case ActivationFunction::ScaledExponentialLinear: activation_mode = CUDNN_ACTIVATION_ELU;     break;
-    default: break;
-    }
-
-    cudnnSetActivationDescriptor(descriptor, activation_mode, CUDNN_PROPAGATE_NAN, 0.0);
+    // If init_cuda has already run, keep the GPU descriptor in sync with the new mode.
+    if (activation_arguments.activation_descriptor)
+        cudnnSetActivationDescriptor(activation_arguments.activation_descriptor,
+                                     to_cudnn_activation_mode(function),
+                                     CUDNN_PROPAGATE_NAN, 0.0);
 #endif
 }
 
@@ -222,16 +183,50 @@ void Convolutional::set_parameters_random()
     }
 }
 
-// Device setup
-
 #ifdef OPENNN_WITH_CUDA
 
 void Convolutional::init_cuda(Index batch_size)
 {
+    // Filter + convolution descriptors (built from the current configuration)
+
+    if (!kernel_descriptor)
+        cudnnCreateFilterDescriptor(&kernel_descriptor);
+
+    cudnnSetFilter4dDescriptor(kernel_descriptor,
+                               CUDNN_ACTIVATION_DTYPE,
+                               CUDNN_TENSOR_NHWC,
+                               kernels_number, kernel_channels, kernel_height, kernel_width);
+
+    if (!convolution_descriptor)
+        cudnnCreateConvolutionDescriptor(&convolution_descriptor);
+
+    cudnnSetConvolution2dDescriptor(convolution_descriptor,
+                                    get_padding_height(), get_padding_width(),
+                                    row_stride, column_stride,
+                                    1, 1,
+                                    CUDNN_CROSS_CORRELATION,
+                                    CUDNN_ACTIVATION_DTYPE);
+
+    cudnnSetConvolutionMathType(convolution_descriptor, CUDNN_TENSOR_OP_MATH);
+
+    convolution_arguments.convolution_descriptor = convolution_descriptor;
+    convolution_arguments.kernel_descriptor = kernel_descriptor;
+
+    // Activation descriptor
+
+    cudnnActivationDescriptor_t& activation_descriptor = activation_arguments.activation_descriptor;
+    if (!activation_descriptor)
+        cudnnCreateActivationDescriptor(&activation_descriptor);
+    cudnnSetActivationDescriptor(activation_descriptor,
+                                 to_cudnn_activation_mode(activation_arguments.activation_function),
+                                 CUDNN_PROPAGATE_NAN, 0.0);
+
+    // Input/output tensor descriptors (scratch — destroyed at end of this call)
+
     cudnnTensorDescriptor_t input_desc;
     cudnnCreateTensorDescriptor(&input_desc);
 
-    cudnnSetTensor4dDescriptor(input_desc, CUDNN_TENSOR_NHWC, CUDNN_IO_DTYPE,
+    cudnnSetTensor4dDescriptor(input_desc, CUDNN_TENSOR_NHWC, CUDNN_ACTIVATION_DTYPE,
                                static_cast<int>(batch_size),
                                static_cast<int>(kernel_channels),
                                static_cast<int>(input_height),
@@ -240,7 +235,7 @@ void Convolutional::init_cuda(Index batch_size)
     cudnnTensorDescriptor_t output_desc;
     cudnnCreateTensorDescriptor(&output_desc);
 
-    cudnnSetTensor4dDescriptor(output_desc, CUDNN_TENSOR_NHWC, CUDNN_IO_DTYPE,
+    cudnnSetTensor4dDescriptor(output_desc, CUDNN_TENSOR_NHWC, CUDNN_ACTIVATION_DTYPE,
                                static_cast<int>(batch_size),
                                static_cast<int>(kernels_number),
                                static_cast<int>(get_output_height()),
@@ -289,7 +284,6 @@ void Convolutional::init_cuda(Index batch_size)
     if (cuda_backward_filter_workspace_size > 0)
         CHECK_CUDA(cudaMalloc(&cuda_backward_filter_workspace, cuda_backward_filter_workspace_size));
 
-    // Populate ConvolutionArguments so forward/backward don't need to reassign each call
     convolution_arguments.algorithm_forward = convolution_algorithm;
     convolution_arguments.algorithm_data = algo_data;
     convolution_arguments.algorithm_filter = algo_filter;
@@ -300,6 +294,15 @@ void Convolutional::init_cuda(Index batch_size)
 
     cudnnDestroyTensorDescriptor(input_desc);
     cudnnDestroyTensorDescriptor(output_desc);
+}
+
+void Convolutional::destroy_cuda()
+{
+    if (activation_arguments.activation_descriptor) cudnnDestroyActivationDescriptor(activation_arguments.activation_descriptor);
+    if (kernel_descriptor) cudnnDestroyFilterDescriptor(kernel_descriptor);
+    if (convolution_descriptor) cudnnDestroyConvolutionDescriptor(convolution_descriptor);
+    if (cuda_workspace) cudaFree(cuda_workspace);
+    if (cuda_backward_filter_workspace) cudaFree(cuda_backward_filter_workspace);
 }
 
 #endif

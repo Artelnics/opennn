@@ -51,9 +51,13 @@
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <Eigen/src/Core/util/DisableStupidWarnings.h>
 
+// CUDA type layer: real CUDA headers when OPENNN_WITH_CUDA is on, stubs otherwise.
+// Types and enum values are available unconditionally so struct members and
+// function signatures don't need #ifdef guards. Actual CUDA function calls
+// still require OPENNN_WITH_CUDA and are gated at runtime by Device::is_gpu().
+
 #ifdef OPENNN_WITH_CUDA
 
-#include "../opennn/kernel.cuh"
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
@@ -61,7 +65,47 @@
 #include <cublasLt.h>
 #include <curand.h>
 #include <cudnn.h>
+#include <cuda_bf16.h>
 #include <nvtx3/nvToolsExt.h>
+
+#else
+
+// CPU-only stubs. Values don't matter; GPU code paths never execute (Device::is_gpu() == false).
+// Enums (not type aliases) so that scoped references like `cudnnPoolingMode_t::CUDNN_POOLING_MAX`
+// continue to compile.
+using cudaStream_t     = void*;
+using cublasHandle_t   = void*;
+using cublasLtHandle_t = void*;
+using cudnnHandle_t    = void*;
+
+enum cudaDataType_t                     { CUDA_R_32F = 0, CUDA_R_16F = 2, CUDA_R_16BF = 14 };
+enum cublasComputeType_t                { CUBLAS_COMPUTE_32F = 0, CUBLAS_COMPUTE_32F_FAST_16BF = 65 };
+enum cublasOperation_t                  { CUBLAS_OP_N = 0, CUBLAS_OP_T = 1 };
+enum cudnnDataType_t                    { CUDNN_DATA_FLOAT = 0, CUDNN_DATA_HALF = 2, CUDNN_DATA_BFLOAT16 = 14 };
+enum cudnnActivationMode_t              { CUDNN_ACTIVATION_IDENTITY = 0, CUDNN_ACTIVATION_SIGMOID = 1, CUDNN_ACTIVATION_RELU = 2, CUDNN_ACTIVATION_TANH = 3, CUDNN_ACTIVATION_ELU = 4 };
+enum cudnnPoolingMode_t                 { CUDNN_POOLING_MAX = 0 };
+enum cudnnBatchNormMode_t               { CUDNN_BATCHNORM_PER_ACTIVATION = 0 };
+enum cudnnConvolutionFwdAlgo_t          { CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM = 0 };
+enum cudnnConvolutionBwdDataAlgo_t      { CUDNN_CONVOLUTION_BWD_DATA_ALGO_0 = 0 };
+enum cudnnConvolutionBwdFilterAlgo_t    { CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0 = 0 };
+
+struct cudnnTensorStruct {};
+using cudnnTensorDescriptor_t      = cudnnTensorStruct*;
+using cudnnFilterDescriptor_t      = void*;
+using cudnnConvolutionDescriptor_t = void*;
+using cudnnPoolingDescriptor_t     = void*;
+using cudnnActivationDescriptor_t  = void*;
+using cudnnDropoutDescriptor_t     = void*;
+using cudnnOpTensorDescriptor_t    = void*;
+
+struct __nv_bfloat16 {};   // opaque placeholder
+
+#endif
+
+// CUDA-only machinery — functions, kernel declarations, error-check macros.
+#ifdef OPENNN_WITH_CUDA
+
+#include "../opennn/kernel.cuh"
 
 template <typename T>
 void check_cuda_status(T status, const char* file, int line, const char* msg)

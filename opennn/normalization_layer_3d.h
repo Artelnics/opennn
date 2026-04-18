@@ -50,6 +50,14 @@ public:
                 {batch_size, sequence_length, embedding_dimension}}; // slot 4: Output (LAST = wired downstream)
     }
 
+    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
+    {
+        return {CUDNN_DATA_FLOAT,        // Means — running stat, stays FP32
+                CUDNN_DATA_FLOAT,        // StandardDeviations — running stat, stays FP32
+                CUDNN_ACTIVATION_DTYPE,  // NormalizedInputs
+                CUDNN_ACTIVATION_DTYPE}; // Output
+    }
+
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
         return {{ batch_size, sequence_length, embedding_dimension}};
@@ -67,14 +75,10 @@ public:
     void from_XML(const XmlDocument&) override;
     void to_XML(XmlPrinter&) const override;
 
-#ifdef OPENNN_WITH_CUDA
-
 protected:
 
     TensorView gammas_device;
     TensorView betas_device;
-
-#endif
 
 private:
 

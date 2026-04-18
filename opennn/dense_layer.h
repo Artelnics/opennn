@@ -71,6 +71,14 @@ private:
                     output_shape};            // Output
     }
 
+    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
+    {
+        return {CUDNN_ACTIVATION_DTYPE,  // Combination
+                CUDNN_DATA_FLOAT,        // BatchNormMean — stat, stays FP32
+                CUDNN_DATA_FLOAT,        // BatchNormInverseVariance — stat, stays FP32
+                CUDNN_ACTIVATION_DTYPE}; // Output
+    }
+
     enum Backward {OutputGradient, InputGradient};
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
@@ -96,11 +104,7 @@ public:
     ~Dense() override
     {
 #ifdef OPENNN_WITH_CUDA
-        if (activation_arguments.activation_descriptor)
-            cudnnDestroyActivationDescriptor(activation_arguments.activation_descriptor);
-        if (dropout_arguments.descriptor) cudnnDestroyDropoutDescriptor(dropout_arguments.descriptor);
-        if (dropout_arguments.states) cudaFree(dropout_arguments.states);
-        if (dropout_arguments.reserve_space) cudaFree(dropout_arguments.reserve_space);
+        destroy_cuda();
 #endif
     }
 
@@ -199,26 +203,12 @@ public:
         activation_arguments.activation_function = function;
 
 #ifdef OPENNN_WITH_CUDA
-        if (function == ActivationFunction::Softmax)
-            return;
-
-        cudnnActivationDescriptor_t& descriptor = activation_arguments.activation_descriptor;
-
-        if (!descriptor)
-            cudnnCreateActivationDescriptor(&descriptor);
-
-        cudnnActivationMode_t activation_mode = CUDNN_ACTIVATION_IDENTITY;
-
-        switch(function)
-        {
-        case ActivationFunction::Sigmoid:                 activation_mode = CUDNN_ACTIVATION_SIGMOID; break;
-        case ActivationFunction::HyperbolicTangent:       activation_mode = CUDNN_ACTIVATION_TANH;    break;
-        case ActivationFunction::RectifiedLinear:         activation_mode = CUDNN_ACTIVATION_RELU;    break;
-        case ActivationFunction::ScaledExponentialLinear: activation_mode = CUDNN_ACTIVATION_ELU;     break;
-        default: break;
-        }
-
-        cudnnSetActivationDescriptor(descriptor, activation_mode, CUDNN_PROPAGATE_NAN, 0.0);
+        // If init_cuda has already run, keep the GPU descriptor in sync with the new mode.
+        // Otherwise init_cuda will create it with the current enum later.
+        if (activation_arguments.activation_descriptor && function != ActivationFunction::Softmax)
+            cudnnSetActivationDescriptor(activation_arguments.activation_descriptor,
+                                         to_cudnn_activation_mode(function),
+                                         CUDNN_PROPAGATE_NAN, 0.0);
 #endif
     }
 
@@ -282,12 +272,21 @@ public:
         }
     }
 
-    // Device setup
-
 #ifdef OPENNN_WITH_CUDA
 
     void init_cuda(Index batch_size)
     {
+        // Activation descriptor
+
+        const ActivationFunction function = activation_arguments.activation_function;
+        if (function != ActivationFunction::Softmax)
+        {
+            cudnnActivationDescriptor_t& descriptor = activation_arguments.activation_descriptor;
+            if (!descriptor)
+                cudnnCreateActivationDescriptor(&descriptor);
+            cudnnSetActivationDescriptor(descriptor, to_cudnn_activation_mode(function), CUDNN_PROPAGATE_NAN, 0.0);
+        }
+
         // Dropout
 
         if (dropout_rate > type(0))
@@ -297,7 +296,7 @@ public:
 
             const Index output_size = get_outputs_number();
 
-            cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_IO_DTYPE,
+            cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_ACTIVATION_DTYPE,
                                        static_cast<int>(batch_size),
                                        static_cast<int>(output_size),
                                        static_cast<int>(sequence_length),
@@ -320,6 +319,15 @@ public:
 
             cudnnDestroyTensorDescriptor(temp_desc);
         }
+    }
+
+    void destroy_cuda()
+    {
+        if (activation_arguments.activation_descriptor)
+            cudnnDestroyActivationDescriptor(activation_arguments.activation_descriptor);
+        if (dropout_arguments.descriptor) cudnnDestroyDropoutDescriptor(dropout_arguments.descriptor);
+        if (dropout_arguments.states) cudaFree(dropout_arguments.states);
+        if (dropout_arguments.reserve_space) cudaFree(dropout_arguments.reserve_space);
     }
 #endif
 

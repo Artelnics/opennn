@@ -9,10 +9,6 @@
 #include "math_utilities.h"
 #include "random_utilities.h"
 
-#ifdef OPENNN_WITH_CUDA
-#include "kernel.cuh"
-#endif
-
 namespace opennn
 {
 
@@ -22,10 +18,8 @@ static constexpr float SELU_LAMBDA = 1.0507009873554804934193349852946f;
 
 void padding(const TensorView& input, TensorView& output)
 {
-#ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu())
         throw runtime_error("padding: GPU implementation not available.");
-#endif
 
     const TensorMap4 input_map = input.as_tensor<4>();
     TensorMap4 output_map = output.as_tensor<4>();
@@ -50,12 +44,9 @@ void bounding(const TensorView& input,
 {
     const Index features = lower_bounds.size();
 
-#ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu())
-    {
         throw runtime_error("bounding: GPU implementation not available.");
-    }
-#endif
+
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap lower_bounds_vector = lower_bounds.as_vector();
     const VectorMap upper_bounds_vector = upper_bounds.as_vector();
@@ -77,7 +68,7 @@ void copy(const TensorView& source, TensorView& destination)
     if (Device::instance().is_gpu()) {
         CHECK_CUDA(cudaMemcpy(destination.data,
                               source.data,
-                              source.size() * sizeof(type),
+                              source.byte_size(),
                               cudaMemcpyDeviceToDevice));
         return;
     }
@@ -95,7 +86,11 @@ void addition(const TensorView& input_1,
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu())
     {
-        addition_cuda(input_1.size(), input_1.data, input_2.data, output.data);
+        const Index n = input_1.size();
+        output.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            addition_cuda<T>(n, input_1.as<T>(), input_2.as<T>(), output.as<T>());
+        });
         return;
     }
 #endif
@@ -111,7 +106,7 @@ void multiply(const TensorView& input_a, bool transpose_a,
     const size_t rank = input_a.get_rank();
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) 
+    if (Device::instance().is_gpu())
     {
         const int rows_a = to_int(input_a.shape[rank - 2]);
         const int cols_a = to_int(input_a.shape[rank - 1]);
@@ -134,13 +129,17 @@ void multiply(const TensorView& input_a, bool transpose_a,
         const long long stride_output = output.shape[rank - 2] * output.shape[rank - 1];
 
         if(batch_count == 1)
+            // Per-operand dtypes — supports boundary GEMMs (e.g. weight-gradient
+            // accumulation: activation-dtype × activation-dtype → FP32 weight grad).
             gemm_cuda(operation_b, operation_a,
                       output_columns, output_rows, inner_dimension,
-                      input_b.data, leading_dimension_b,
-                      input_a.data, leading_dimension_a,
-                      output.data, leading_dimension_output,
+                      input_b.data, input_b.cuda_dtype(), leading_dimension_b,
+                      input_a.data, input_a.cuda_dtype(), leading_dimension_a,
+                      output.data,  output.cuda_dtype(),  leading_dimension_output,
                       alpha, beta);
         else
+            // Batched GEMMs are used for attention internal ops — homogeneous
+            // activation dtype across all three operands.
             gemm_strided_batched_cuda(operation_b, operation_a,
                                       output_columns, output_rows, inner_dimension,
                                       input_b.data, leading_dimension_b, stride_b,
@@ -197,11 +196,13 @@ void sum(const TensorView& input, TensorView& output, type alpha, type beta)
         const int total_rows = to_int(input.shape[0]);
         const int total_columns = to_int(input.shape.size() / input.shape[0]);
 
+        // Per-operand dtypes — supports boundary reduction (e.g. bias-gradient:
+        // activation-dtype input × activation-dtype ones → FP32 bias output).
         gemv_cuda(CUBLAS_OP_N,
                   total_columns, total_rows,
-                  input.data, total_columns,
-                  Device::get_ones(total_rows), 1,
-                  output.data, 1,
+                  input.data, input.cuda_dtype(), total_columns,
+                  Device::get_ones(total_rows), CUDA_ACTIVATION_DTYPE,
+                  output.data, output.cuda_dtype(),
                   alpha, beta);
         return;
     }
@@ -276,17 +277,21 @@ void combination(const TensorView& input,
 
     if (Device::instance().is_gpu())
     {
+        // Per-operand dtypes — supports boundary GEMMs (first-layer FP32 inputs
+        // + FP32 weights → activation-dtype output).
         gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
                   to_int(output_columns), to_int(total_rows), to_int(input_columns),
-                  weights.data, to_int(output_columns),
-                  input.data, to_int(input_columns),
-                  output.data, to_int(output_columns));
+                  weights.data, weights.cuda_dtype(), to_int(output_columns),
+                  input.data,   input.cuda_dtype(),   to_int(input_columns),
+                  output.data,  output.cuda_dtype(),  to_int(output_columns));
 
-        CHECK_CUDNN(cudnnAddTensor(Device::get_cudnn_handle(),
-                                   &one,
-                                   biases.get_descriptor(), biases.data,
-                                   &one,
-                                   output.get_descriptor(), output.data));
+        // Bias add — FP32 bias broadcast onto activation-dtype output.
+        // cudnnAddTensor requires matching operand dtypes; our custom kernel
+        // handles the FP32+T mix (bias is AMP master FP32, output is T).
+        output.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            add_bias_cuda<T>(output.size(), output.as<T>(), biases.as<float>(), to_int(output_columns));
+        });
         return;
     }
 #endif
@@ -364,9 +369,9 @@ void activation(TensorView& output, ActivationArguments arguments)
 }
 
 void activation_gradient(const TensorView& outputs,
-                                const TensorView& output_gradient,
-                                TensorView& activation_derivative,
-                                const ActivationArguments& arguments)
+                         const TensorView& output_gradient,
+                         TensorView& activation_derivative,
+                         const ActivationArguments& arguments)
 {
     if (outputs.empty()) return;
 
@@ -379,7 +384,7 @@ void activation_gradient(const TensorView& outputs,
         {
             if(activation_derivative.data != output_gradient.data)
                 CHECK_CUDA(cudaMemcpy(activation_derivative.data, output_gradient.data,
-                                      output_gradient.size() * sizeof(float), cudaMemcpyDeviceToDevice));
+                                      output_gradient.byte_size(), cudaMemcpyDeviceToDevice));
             return;
         }
 
@@ -660,10 +665,13 @@ void layernorm_forward(const TensorView& input, const TensorView& gamma, const T
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        layernorm_forward_cuda(to_int(batch_size * sequence_length), to_int(embedding_dimension),
-            input.data, output.data,
-            means.data, standard_deviations.data,
-            gamma.data, beta.data, EPSILON);
+        const int N = to_int(batch_size * sequence_length), D = to_int(embedding_dimension);
+        output.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            layernorm_forward_cuda<T>(N, D, input.as<T>(), output.as<T>(),
+                means.as<float>(), standard_deviations.as<float>(),
+                gamma.as<float>(), beta.as<float>(), EPSILON);
+        });
         return;
     }
 #endif
@@ -720,12 +728,16 @@ void layernorm_backward(const TensorView& input, const TensorView& output_gradie
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        layernorm_backward_cuda(to_int(batch_size * sequence_length), to_int(embedding_dimension),
-            output_gradient.data, input.data,
-            means.data, standard_deviations.data,
-            gamma.data,
-            input_gradient.data,
-            gamma_gradient.data, beta_gradient.data);
+        const int N = to_int(batch_size * sequence_length), D = to_int(embedding_dimension);
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            layernorm_backward_cuda<T>(N, D,
+                output_gradient.as<T>(), input.as<T>(),
+                means.as<float>(), standard_deviations.as<float>(),
+                gamma.as<float>(),
+                input_gradient.as<T>(),
+                gamma_gradient.as<float>(), beta_gradient.as<float>());
+        });
         return;
     }
 #endif
@@ -1312,9 +1324,12 @@ void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorV
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
         (void)is_training;
-        max_pooling_3d_forward_cuda(to_int(input.shape[0]) * to_int(input.shape[2]),
-            input.data, output.data, maximal_indices.data,
-            to_int(input.shape[1]), to_int(input.shape[2]));
+        const Index n = to_int(input.shape[0]) * to_int(input.shape[2]);
+        const int S = to_int(input.shape[1]), F = to_int(input.shape[2]);
+        output.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            max_pooling_3d_forward_cuda<T>(n, input.as<T>(), output.as<T>(), maximal_indices.as<float>(), S, F);
+        });
         return;
     }
 #endif
@@ -1349,11 +1364,12 @@ void average_pooling_3d_forward(const TensorView& input, TensorView& output)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        average_pooling_3d_forward_cuda(to_int(input.shape[0]) * to_int(input.shape[2]),
-                                          input.data,
-                                          output.data,
-                                          to_int(input.shape[1]),
-                                          to_int(input.shape[2]));
+        const Index n = to_int(input.shape[0]) * to_int(input.shape[2]);
+        const int S = to_int(input.shape[1]), F = to_int(input.shape[2]);
+        output.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            average_pooling_3d_forward_cuda<T>(n, input.as<T>(), output.as<T>(), S, F);
+        });
         return;
     }
 #endif
@@ -1382,15 +1398,14 @@ void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        CHECK_CUDA(cudaMemset(input_gradient.data, 0, input_gradient.size() * sizeof(float)));
+        CHECK_CUDA(cudaMemset(input_gradient.data, 0, input_gradient.byte_size()));
 
-        max_pooling_3d_backward_cuda(to_int(output_gradient.shape[0]) * to_int(output_gradient.shape[1]),
-                                    output_gradient.data,
-                                    input_gradient.data,
-                                    maximal_indices.data,
-                                    to_int(input_gradient.shape[1]),
-                                    to_int(output_gradient.shape[1]));
-        
+        const Index n = to_int(output_gradient.shape[0]) * to_int(output_gradient.shape[1]);
+        const int S = to_int(input_gradient.shape[1]), F = to_int(output_gradient.shape[1]);
+        input_gradient.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            max_pooling_3d_backward_cuda<T>(n, output_gradient.as<T>(), input_gradient.as<T>(), maximal_indices.as<float>(), S, F);
+        });
         return;
     }
 #endif
@@ -1416,11 +1431,14 @@ void average_pooling_3d_backward(const TensorView& input,
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        CHECK_CUDA(cudaMemset(input_gradient.data, 0, input_gradient.size() * sizeof(float)));
+        CHECK_CUDA(cudaMemset(input_gradient.data, 0, input_gradient.byte_size()));
 
-        average_pooling_3d_backward_cuda(to_int(input.shape[0]) * to_int(input.shape[2]),
-            input.data, output_gradient.data, input_gradient.data,
-            to_int(input.shape[1]), to_int(input.shape[2]));
+        const Index n = to_int(input.shape[0]) * to_int(input.shape[2]);
+        const int S = to_int(input.shape[1]), F = to_int(input.shape[2]);
+        input_gradient.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            average_pooling_3d_backward_cuda<T>(n, input.as<T>(), output_gradient.as<T>(), input_gradient.as<T>(), S, F);
+        });
         return;
     }
 #endif
@@ -1506,8 +1524,11 @@ void split_heads(const TensorView& source, TensorView& destination)
 #ifdef OPENNN_WITH_CUDA
     if(Device::instance().is_gpu())
     {
-        split_heads_cuda(source.size(), source.data, destination.data,
-                               to_int(sequence_length), to_int(heads_number), to_int(head_dimension));
+        const int S = to_int(sequence_length), H = to_int(heads_number), D = to_int(head_dimension);
+        destination.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            split_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(), S, H, D);
+        });
         return;
     }
 #endif
@@ -1526,8 +1547,11 @@ void merge_heads(const TensorView& source, TensorView& destination)
 #ifdef OPENNN_WITH_CUDA
     if(Device::instance().is_gpu())
     {
-        merge_heads_cuda(source.size(), source.data, destination.data,
-                             to_int(sequence_length), to_int(heads_number), to_int(head_dimension));
+        const int S = to_int(sequence_length), H = to_int(heads_number), D = to_int(head_dimension);
+        destination.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            merge_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(), S, H, D);
+        });
         return;
     }
 #endif
@@ -1601,15 +1625,16 @@ void attention_masks(const TensorView& source_input,
 #ifdef OPENNN_WITH_CUDA
     if(Device::instance().is_gpu())
     {
-        attention_masks_cuda(to_int(batch_size),
-                             to_int(heads_number),
-                             to_int(query_sequence_length),
-                             to_int(source_sequence_length),
-                             to_int(embedding_dimension),
-                             source_input.data,
-                             attention_weights.data,
-                             padding_mask_scratch,
-                             use_causal_mask);
+        const int B = to_int(batch_size), H = to_int(heads_number);
+        const int Sq = to_int(query_sequence_length), Sk = to_int(source_sequence_length);
+        const int E = to_int(embedding_dimension);
+        attention_weights.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            attention_masks_cuda<T>(B, H, Sq, Sk, E,
+                                     source_input.as<T>(), attention_weights.as<T>(),
+                                     reinterpret_cast<T*>(padding_mask_scratch),
+                                     use_causal_mask);
+        });
         return;
     }
 #endif

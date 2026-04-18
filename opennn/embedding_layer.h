@@ -63,8 +63,6 @@ public:
     void from_XML(const XmlDocument&) override;
     void to_XML(XmlPrinter&) const override;
 
-#ifdef OPENNN_WITH_CUDA
-
 public:
 
     void copy_positional_encoding_device();
@@ -72,10 +70,6 @@ public:
 private:
 
     Memory positional_encoding_device;
-
-#endif
-
-private:
 
     enum Parameters {Weight};
     enum Forward {Input, Output};

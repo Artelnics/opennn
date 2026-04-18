@@ -44,19 +44,28 @@ inline const string& activation_to_string(ActivationFunction function)
     return activation_function_map().to_string(function);
 }
 
+inline cudnnActivationMode_t to_cudnn_activation_mode(ActivationFunction function)
+{
+    switch(function)
+    {
+    case ActivationFunction::Sigmoid:                 return CUDNN_ACTIVATION_SIGMOID;
+    case ActivationFunction::HyperbolicTangent:       return CUDNN_ACTIVATION_TANH;
+    case ActivationFunction::RectifiedLinear:         return CUDNN_ACTIVATION_RELU;
+    case ActivationFunction::ScaledExponentialLinear: return CUDNN_ACTIVATION_ELU;
+    default:                                          return CUDNN_ACTIVATION_IDENTITY;
+    }
+}
+
 struct ActivationArguments
 {
     ActivationFunction activation_function = ActivationFunction::Linear;
-#ifdef OPENNN_WITH_CUDA
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
-#endif
 };
 
 struct ConvolutionArguments
 {
     Shape stride_shape;
     Shape padding_shape;
-#ifdef OPENNN_WITH_CUDA
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
     cudnnConvolutionFwdAlgo_t algorithm_forward = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
@@ -66,7 +75,6 @@ struct ConvolutionArguments
     size_t workspace_size = 0;
     void* backward_filter_workspace = nullptr;
     size_t backward_filter_workspace_size = 0;
-#endif
 };
 
 struct PoolingArguments
@@ -74,18 +82,14 @@ struct PoolingArguments
     Shape pool_dimensions;
     Shape stride_shape;
     Shape padding_shape;
-#ifdef OPENNN_WITH_CUDA
     cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
-#endif
 };
 
 struct BatchNormalizationArguments
 {
     type momentum;
-#ifdef OPENNN_WITH_CUDA
     cudnnBatchNormMode_t batch_normalization_mode = CUDNN_BATCHNORM_PER_ACTIVATION;
     cudnnTensorDescriptor_t per_activation_descriptor = nullptr;
-#endif
 };
 
 // All buffers/descriptors must be pre-allocated; dropout()/dropout_gradient()
@@ -94,13 +98,11 @@ struct DropoutArguments
 {
     type rate = type(0);
     VectorR mask_cpu;                              // CPU: 1 for kept, 0 for dropped (size = output.size())
-#ifdef OPENNN_WITH_CUDA
     cudnnDropoutDescriptor_t descriptor = nullptr; // cudnnSetDropoutDescriptor(...)
     void* states = nullptr;                        // cudnnDropoutGetStatesSize
     size_t states_size = 0;
     void* reserve_space = nullptr;                 // cudnnDropoutGetReserveSpaceSize (saved mask)
     size_t reserve_size = 0;
-#endif
 };
 
 

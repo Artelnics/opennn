@@ -64,7 +64,6 @@ private:
     ActivationArguments activation_arguments;
     ConvolutionArguments convolution_arguments;
 
-#ifdef OPENNN_WITH_CUDA
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
 
@@ -76,7 +75,6 @@ private:
     size_t cuda_workspace_size = 0;
     void* cuda_backward_filter_workspace = nullptr;
     size_t cuda_backward_filter_workspace_size = 0;
-#endif
 
     enum Parameters {Bias, Weight, Gamma, Beta};
 
@@ -121,6 +119,15 @@ private:
                 output_shape};                // Output
     }
 
+    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
+    {
+        return {CUDNN_ACTIVATION_DTYPE,  // PaddedInputs
+                CUDNN_ACTIVATION_DTYPE,  // Convolution
+                CUDNN_DATA_FLOAT,        // BatchNormMean — stat, stays FP32
+                CUDNN_DATA_FLOAT,        // BatchNormInverseVariance — stat, stays FP32
+                CUDNN_ACTIVATION_DTYPE}; // Output
+    }
+
     enum Backward {OutputGradient, InputGradient};
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
@@ -142,11 +149,7 @@ public:
     ~Convolutional() override
     {
 #ifdef OPENNN_WITH_CUDA
-        if (activation_arguments.activation_descriptor) cudnnDestroyActivationDescriptor(activation_arguments.activation_descriptor);
-        if (kernel_descriptor) cudnnDestroyFilterDescriptor(kernel_descriptor);
-        if (convolution_descriptor) cudnnDestroyConvolutionDescriptor(convolution_descriptor);
-        if (cuda_workspace) cudaFree(cuda_workspace);
-        if (cuda_backward_filter_workspace) cudaFree(cuda_backward_filter_workspace);
+        destroy_cuda();
 #endif
     }
 
@@ -181,10 +184,8 @@ public:
 
     bool get_batch_normalization() const { return batch_normalization; }
 
-#ifdef OPENNN_WITH_CUDA
     cudnnFilterDescriptor_t get_kernel_descriptor() const { return kernel_descriptor; }
     cudnnConvolutionDescriptor_t get_convolution_descriptor() const { return convolution_descriptor; }
-#endif
 
     // Setters
 
@@ -214,9 +215,8 @@ public:
 
     // Device setup
 
-#ifdef OPENNN_WITH_CUDA
-    void init_cuda(Index batch_size);
-#endif
+    void init_cuda(Index);
+    void destroy_cuda();
 
     // Forward / back propagation
 

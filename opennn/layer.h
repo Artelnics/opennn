@@ -118,6 +118,19 @@ public:
 
     virtual vector<Shape> get_backward_shapes(Index) const { return {}; }
 
+    // Per-slot dtype for forward/backward TensorViews. Defaults to all ACTIVATION_DTYPE
+    // (the flip target). Layers with FP32 tenants (layernorm stats, pooling indices,
+    // valid masks, etc.) override to mark those slots as CUDNN_DATA_FLOAT.
+    virtual vector<cudnnDataType_t> get_forward_dtypes(Index batch_size) const
+    {
+        return vector<cudnnDataType_t>(get_forward_shapes(batch_size).size(), CUDNN_ACTIVATION_DTYPE);
+    }
+
+    virtual vector<cudnnDataType_t> get_backward_dtypes(Index batch_size) const
+    {
+        return vector<cudnnDataType_t>(get_backward_shapes(batch_size).size(), CUDNN_ACTIVATION_DTYPE);
+    }
+
     virtual Shape get_input_shape() const = 0;
 
     virtual Shape get_output_shape() const = 0;

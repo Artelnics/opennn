@@ -64,8 +64,6 @@ struct Batch
     int decoder_contiguous = -1;
     int target_contiguous = -1;
 
-#ifdef OPENNN_WITH_CUDA
-
     void fill_host(const vector<Index>&,
                    const vector<Index>&,
                    const vector<Index>&,
@@ -90,8 +88,6 @@ struct Batch
     Index inputs_host_allocated_size = 0;
     Index decoder_host_allocated_size = 0;
     Index targets_host_allocated_size = 0;
-
-#endif
 };
 
 }

@@ -76,7 +76,8 @@ type *Layer::link_parameters(type *pointer)
 
         assert(is_aligned(pointer));
 
-        parameters[i] = TensorView(pointer, shapes[i]);
+        // Parameters are FP32 master copies (AMP recipe).
+        parameters[i] = TensorView(pointer, shapes[i], CUDNN_DATA_FLOAT);
 
         pointer += get_aligned_size(shapes[i].size());
     }
@@ -94,7 +95,8 @@ type *Layer::link_states(type *pointer)
 
         assert(is_aligned(pointer));
 
-        states[i] = TensorView(pointer, shapes[i]);
+        // States (running mean/variance) are FP32 stats.
+        states[i] = TensorView(pointer, shapes[i], CUDNN_DATA_FLOAT);
 
         pointer += get_aligned_size(shapes[i].size());
     }
