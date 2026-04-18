@@ -122,6 +122,14 @@ inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t t)
     }
 }
 
+// Compile-time cuDNN dtype → C++ type mapping. Enables templated code to derive
+// the C++ type from the dtype constant:
+//   using T = typename MapDtype<CUDNN_DATA_BFLOAT16>::type;   // __nv_bfloat16
+// Add a specialization here when introducing a new supported dtype.
+template<cudnnDataType_t D> struct MapDtype;
+template<> struct MapDtype<CUDNN_DATA_FLOAT>    { using type = float; };
+template<> struct MapDtype<CUDNN_DATA_BFLOAT16> { using type = __nv_bfloat16; };
+
 #ifdef OPENNN_WITH_CUDA
 
 template <typename T>

@@ -121,8 +121,6 @@ __global__ void binary_cross_entropy_kernel(const int n, float* __restrict__ ter
     }
 }
 
-template __global__ void binary_cross_entropy_kernel<float>        (const int, float*, const float*,         const float*,         const float);
-template __global__ void binary_cross_entropy_kernel<__nv_bfloat16>(const int, float*, const __nv_bfloat16*, const __nv_bfloat16*, const float);
 
 template<typename T>
 void binary_cross_entropy_cuda(const Index n, float* term_results, const T* targets, const T* outputs, const float epsilon)
@@ -153,8 +151,6 @@ __global__ void binary_cross_entropy_gradient_kernel(const int n, T* __restrict_
     }
 }
 
-template __global__ void binary_cross_entropy_gradient_kernel<float>        (const int, float*,         const float*,         const float*,         const float, const float);
-template __global__ void binary_cross_entropy_gradient_kernel<__nv_bfloat16>(const int, __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, const float, const float);
 
 template<typename T>
 void binary_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targets, const T* outputs, const float epsilon, const float scaling_factor)
@@ -183,8 +179,6 @@ __global__ void multiple_cross_entropy_kernel(const int n, float* __restrict__ t
     }
 }
 
-template __global__ void multiple_cross_entropy_kernel<float>        (const int, float*, const float*,         const float*,         const float);
-template __global__ void multiple_cross_entropy_kernel<__nv_bfloat16>(const int, float*, const __nv_bfloat16*, const __nv_bfloat16*, const float);
 
 template<typename T>
 void multiple_cross_entropy_cuda(const Index n, float* term_results, const T* targets, const T* outputs, const float epsilon)
@@ -210,8 +204,6 @@ __global__ void multiple_cross_entropy_gradient_kernel(const int n, T* __restric
         deltas[i] = static_cast<T>((static_cast<float>(outputs[i]) - static_cast<float>(targets[i])) * scaling_factor);
 }
 
-template __global__ void multiple_cross_entropy_gradient_kernel<float>        (const int, float*,         const float*,         const float*,         const float);
-template __global__ void multiple_cross_entropy_gradient_kernel<__nv_bfloat16>(const int, __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, const float);
 
 template<typename T>
 void multiple_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targets, const T* outputs, const float scaling_factor)
@@ -243,8 +235,6 @@ __global__ void weighted_squared_error_kernel(const int n, float* __restrict__ t
     }
 }
 
-template __global__ void weighted_squared_error_kernel<float>        (const int, float*, const float*,         const float*,         const float, const float);
-template __global__ void weighted_squared_error_kernel<__nv_bfloat16>(const int, float*, const __nv_bfloat16*, const __nv_bfloat16*, const float, const float);
 
 template<typename T>
 void weighted_squared_error_cuda(const Index n, float* term_results, const T* targets, const T* outputs, const float positives_weight, const float negatives_weight)
@@ -276,8 +266,6 @@ __global__ void weighted_squared_error_gradient_kernel(const int n, T* __restric
     }
 }
 
-template __global__ void weighted_squared_error_gradient_kernel<float>        (const int, float*,         const float*,         const float*,         const float, const float, const float);
-template __global__ void weighted_squared_error_gradient_kernel<__nv_bfloat16>(const int, __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, const float, const float, const float);
 
 template<typename T>
 void weighted_squared_error_gradient_cuda(const Index n, T* deltas, const T* targets, const T* outputs, const float positives_weight, const float negatives_weight, const float scaling_factor)
@@ -318,8 +306,6 @@ __global__ void cross_entropy_3d_multiple_forward_kernel(const int total_tokens,
     }
 }
 
-template __global__ void cross_entropy_3d_multiple_forward_kernel<float>        (const int, const int, const float*,         const float*, float*, float*, const float);
-template __global__ void cross_entropy_3d_multiple_forward_kernel<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const float*, float*, float*, const float);
 
 template<typename T>
 void cross_entropy_3d_multiple_forward_cuda(const Index n,
@@ -368,8 +354,6 @@ __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
     }
 }
 
-template __global__ void cross_entropy_3d_multiple_backward_kernel<float>        (const int, const int, const float*,         const float*, float*,         const float);
-template __global__ void cross_entropy_3d_multiple_backward_kernel<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const float*, __nv_bfloat16*, const float);
 
 template<typename T>
 void cross_entropy_3d_multiple_backward_cuda(const Index n,
@@ -405,8 +389,6 @@ __global__ void l1_gradient_kernel(const int n, T* __restrict__ deltas, const T*
 }
 
 // Explicit instantiations — compile-check the BF16 path even though no caller uses it yet.
-template __global__ void l1_gradient_kernel<float>        (const int, float*,         const float*,         const float);
-template __global__ void l1_gradient_kernel<__nv_bfloat16>(const int, __nv_bfloat16*, const __nv_bfloat16*, const float);
 
 template<typename T>
 void l1_gradient_cuda(const Index n, T* deltas, const T* parameters, const float weight)
@@ -438,8 +420,6 @@ __global__ void add_bias_kernel(const int total_elements, T* __restrict__ output
     }
 }
 
-template __global__ void add_bias_kernel<float>        (const int, float*,         const float*, const int);
-template __global__ void add_bias_kernel<__nv_bfloat16>(const int, __nv_bfloat16*, const float*, const int);
 
 template<typename T>
 void add_bias_cuda(const Index n, T* output, const float* bias, const int bias_dim)
@@ -455,6 +435,54 @@ void add_bias_cuda(const Index n, T* output, const float* bias, const int bias_d
 template void add_bias_cuda<float>        (const Index, float*,         const float*, const int);
 template void add_bias_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const float*, const int);
 
+// Dtype-agnostic sum-of-absolutes. Reads dtype-T data, accumulates in FP32,
+// returns FP32 scalar via atomicAdd across blocks. Needed for BF16/FP16 paths
+// where cuBLAS has no asum variant. (FP32 callers stay on cublasSasum for perf.)
+template<typename T>
+__global__ void sum_abs_kernel(const int n, const T* __restrict__ data, float* __restrict__ result)
+{
+    __shared__ float shared[256];
+    float acc = 0.0f;
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+        acc += fabsf(static_cast<float>(data[i]));
+
+    shared[threadIdx.x] = acc;
+    __syncthreads();
+
+    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1)
+    {
+        if (threadIdx.x < stride) shared[threadIdx.x] += shared[threadIdx.x + stride];
+        __syncthreads();
+    }
+
+    if (threadIdx.x == 0) atomicAdd(result, shared[0]);
+}
+
+template<typename T>
+float sum_abs_cuda(const T* data, Index n)
+{
+    if (n == 0) return 0.0f;
+
+    // Persistent scratch scalar — one cudaMalloc per process.
+    static float* d_result = nullptr;
+    if (!d_result) CHECK_CUDA(cudaMalloc(&d_result, sizeof(float)));
+    CHECK_CUDA(cudaMemset(d_result, 0, sizeof(float)));
+
+    const int block_size = 256;
+    const int total = static_cast<int>(n);
+    const int grid_size = (total + block_size - 1) / block_size;
+
+    sum_abs_kernel<T><<<grid_size, block_size>>>(total, data, d_result);
+    CUDA_CHECK_KERNEL();
+
+    float h_result = 0.0f;
+    CHECK_CUDA(cudaMemcpy(&h_result, d_result, sizeof(float), cudaMemcpyDeviceToHost));
+    return h_result;
+}
+
+template float sum_abs_cuda<__nv_bfloat16>(const __nv_bfloat16*, Index);
+
 template<typename T>
 __global__ void addition_kernel(const int n, const T* __restrict__ input1, const T* __restrict__ input2, T* __restrict__ output)
 {
@@ -462,8 +490,6 @@ __global__ void addition_kernel(const int n, const T* __restrict__ input1, const
         output[i] = static_cast<T>(static_cast<float>(input1[i]) + static_cast<float>(input2[i]));
 }
 
-template __global__ void addition_kernel<float>        (const int, const float*,         const float*,         float*);
-template __global__ void addition_kernel<__nv_bfloat16>(const int, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*);
 
 template<typename T>
 void addition_cuda(const Index n, const T* input1, const T* input2, T* output)
@@ -508,8 +534,6 @@ __global__ void embedding_forward_kernel(const int n, const float* __restrict__ 
     }
 }
 
-template __global__ void embedding_forward_kernel<float>        (const int, const float*, const float*, const float*, float*,         const int, const int, const int, const bool, const bool);
-template __global__ void embedding_forward_kernel<__nv_bfloat16>(const int, const float*, const float*, const float*, __nv_bfloat16*, const int, const int, const int, const bool, const bool);
 
 template<typename T>
 void embedding_forward_cuda(const Index n, const float* inputs, const float* weights, const float* positional_encoding, T* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding)
@@ -548,8 +572,6 @@ __global__ void embedding_backward_kernel(const int n, const float* __restrict__
     }
 }
 
-template __global__ void embedding_backward_kernel<float>        (const int, const float*, const float*,         float*, const int, const int, const bool);
-template __global__ void embedding_backward_kernel<__nv_bfloat16>(const int, const float*, const __nv_bfloat16*, float*, const int, const int, const bool);
 
 template<typename T>
 void embedding_backward_cuda(const Index n, const float* inputs, const T* output_gradients, float* weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
@@ -585,8 +607,6 @@ __global__ void split_heads_kernel(const int n, const T* __restrict__ in, T* __r
     }
 }
 
-template __global__ void split_heads_kernel<float>        (const int, const float*,         float*,         const int, const int, const int);
-template __global__ void split_heads_kernel<__nv_bfloat16>(const int, const __nv_bfloat16*, __nv_bfloat16*, const int, const int, const int);
 
 template<typename T>
 void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D)
@@ -620,8 +640,6 @@ __global__ void merge_heads_kernel(const int n, const T* __restrict__ in, T* __r
     }
 }
 
-template __global__ void merge_heads_kernel<float>        (const int, const float*,         float*,         const int, const int, const int);
-template __global__ void merge_heads_kernel<__nv_bfloat16>(const int, const __nv_bfloat16*, __nv_bfloat16*, const int, const int, const int);
 
 template<typename T>
 void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D)
@@ -652,8 +670,6 @@ __global__ void padding_mask_kernel(const int num_tokens, const T* __restrict__ 
     }
 }
 
-template __global__ void padding_mask_kernel<float>        (const int, const float*,         float*,         const int);
-template __global__ void padding_mask_kernel<__nv_bfloat16>(const int, const __nv_bfloat16*, __nv_bfloat16*, const int);
 
 template<typename T>
 __global__ void fused_masks_kernel(const int n, T* __restrict__ attention_weights, const T* __restrict__ padding_mask,
@@ -671,8 +687,6 @@ __global__ void fused_masks_kernel(const int n, T* __restrict__ attention_weight
     }
 }
 
-template __global__ void fused_masks_kernel<float>        (const int, float*,         const float*,         const int, const int, const int, const bool);
-template __global__ void fused_masks_kernel<__nv_bfloat16>(const int, __nv_bfloat16*, const __nv_bfloat16*, const int, const int, const int, const bool);
 
 template<typename T>
 void attention_masks_cuda(const int batch_size, const int heads_number,
@@ -728,8 +742,6 @@ __global__ void max_pooling_3d_forward_kernel(const int n, const T* __restrict__
     }
 }
 
-template __global__ void max_pooling_3d_forward_kernel<float>        (const int, const float*,         float*,         float*, const int, const int);
-template __global__ void max_pooling_3d_forward_kernel<__nv_bfloat16>(const int, const __nv_bfloat16*, __nv_bfloat16*, float*, const int, const int);
 
 template<typename T>
 void max_pooling_3d_forward_cuda(const Index n, const T* in, T* out, float* indices, const int S, const int F)
@@ -760,8 +772,6 @@ __global__ void max_pooling_3d_backward_kernel(const int n, const T* __restrict_
     }
 }
 
-template __global__ void max_pooling_3d_backward_kernel<float>        (const int, const float*,         float*,         const float*, const int, const int);
-template __global__ void max_pooling_3d_backward_kernel<__nv_bfloat16>(const int, const __nv_bfloat16*, __nv_bfloat16*, const float*, const int, const int);
 
 template<typename T>
 void max_pooling_3d_backward_cuda(const Index n, const T* delta, T* in_gradient, const float* indices, const int S, const int F)
@@ -811,8 +821,6 @@ __global__ void average_pooling_3d_forward_kernel(const int n, const T* __restri
     }
 }
 
-template __global__ void average_pooling_3d_forward_kernel<float>        (const int, const float*,         float*,         const int, const int);
-template __global__ void average_pooling_3d_forward_kernel<__nv_bfloat16>(const int, const __nv_bfloat16*, __nv_bfloat16*, const int, const int);
 
 template<typename T>
 void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const int S, const int F)
@@ -866,8 +874,6 @@ __global__ void average_pooling_3d_backward_kernel(const int n, const T* __restr
     }
 }
 
-template __global__ void average_pooling_3d_backward_kernel<float>        (const int, const float*,         const float*,         float*,         const int, const int);
-template __global__ void average_pooling_3d_backward_kernel<__nv_bfloat16>(const int, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, const int, const int);
 
 template<typename T>
 void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta, T* in_gradient, const int S, const int F)
@@ -938,8 +944,6 @@ __global__ void layernorm_forward_kernel(const int N, const int D, const T* __re
     }
 }
 
-template __global__ void layernorm_forward_kernel<float>        (const int, const int, const float*,         float*,         float*, float*, const float*, const float*, const float);
-template __global__ void layernorm_forward_kernel<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, __nv_bfloat16*, float*, float*, const float*, const float*, const float);
 
 template<typename T>
 void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
@@ -1011,8 +1015,6 @@ __global__ void layernorm_backward_kernel(const int N, const int D, const T* __r
     }
 }
 
-template __global__ void layernorm_backward_kernel<float>        (const int, const int, const float*,         const float*,         const float*, const float*, const float*, float*);
-template __global__ void layernorm_backward_kernel<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, const float*, __nv_bfloat16*);
 
 template<typename T>
 __global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, float* __restrict__ dGamma, float* __restrict__ dBeta)
@@ -1057,8 +1059,6 @@ __global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, c
     }
 }
 
-template __global__ void layernorm_gamma_beta_gradient_kernel<float>        (const int, const int, const float*,         const float*,         const float*, const float*, float*, float*);
-template __global__ void layernorm_gamma_beta_gradient_kernel<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, float*, float*);
 
 template<typename T>
 void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, float* dGamma, float* dBeta)

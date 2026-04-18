@@ -86,6 +86,11 @@ void l1_gradient_cuda(const Index, T*, const T*, const float);
 template<typename T>
 void add_bias_cuda(const Index, T*, const float*, const int);
 
+// Dtype-agnostic sum-of-absolutes (used for BF16/FP16 workspaces; FP32 callers
+// stay on cublasSasum in error_utilities.cpp).
+template<typename T>
+float sum_abs_cuda(const T*, Index);
+
 // Addition
 
 template<typename T>
