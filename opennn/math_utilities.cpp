@@ -763,7 +763,7 @@ void convolution(const TensorView& input,
 
     TensorMap4 outputs = output.as_tensor<4>();
 
-    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    for(Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
     {
         const TensorMap3 kernel_map = kernel.as_tensor<3>(kernel_index);
         
@@ -848,32 +848,37 @@ void convolution_backward_weights(const TensorView& input,
     weight_grad.as_vector().setZero();
 
     #pragma omp parallel for
-    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    for(Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
     {
         TensorMap3 weight_gradient_map = weight_grad.as_tensor<3>(kernel_index);
 
-        for(Index batch_index = 0; batch_index < batch_size; batch_index++)
+        for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
         {
-            for(Index output_row = 0; output_row < output_height; output_row++)
-                for(Index output_column = 0; output_column < output_width; output_column++)
+            for(Index output_row = 0; output_row < output_height; ++output_row)
+            {
+                const Index row_limit = min(kernel_height, input_height - output_row);
+
+                for(Index output_column = 0; output_column < output_width; ++output_column)
                 {
                     const type delta = deltas(batch_index, output_row, output_column, kernel_index);
                     bias_gradients(kernel_index) += delta;
 
-                    for(Index kernel_row = 0; kernel_row < kernel_height; kernel_row++)
+                    const Index col_limit = min(kernel_width, input_width - output_column);
+
+                    for(Index kernel_row = 0; kernel_row < row_limit; ++kernel_row)
                     {
                         const Index input_row = output_row + kernel_row;
 
-                        for(Index kernel_column = 0; kernel_column < kernel_width; kernel_column++)
+                        for(Index kernel_column = 0; kernel_column < col_limit; ++kernel_column)
                         {
                             const Index input_column = output_column + kernel_column;
 
-                            if(input_row < input_height && input_column < input_width)
-                                for(Index channel_index = 0; channel_index < kernel_channels; channel_index++)
-                                    weight_gradient_map(kernel_row, kernel_column, channel_index) += delta * inputs(batch_index, input_row, input_column, channel_index);
+                            for(Index channel_index = 0; channel_index < kernel_channels; ++channel_index)
+                                weight_gradient_map(kernel_row, kernel_column, channel_index) += delta * inputs(batch_index, input_row, input_column, channel_index);
                         }
                     }
                 }
+            }
         }
     }
 }
@@ -911,31 +916,113 @@ void convolution_backward_data(const TensorView& delta,
     const Index input_width = in_grad.dimension(2);
 
     #pragma omp parallel for
-    for(Index batch_index = 0; batch_index < batch_size; batch_index++)
-        for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
+        for(Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
         {
             const TensorMap3 kernel_map = kernel.as_tensor<3>(kernel_index);
 
-            for(Index output_row = 0; output_row < output_height; output_row++)
-                for(Index output_column = 0; output_column < output_width; output_column++)
+            for(Index output_row = 0; output_row < output_height; ++output_row)
+            {
+                const Index row_limit = min(kernel_height, input_height - output_row);
+
+                for(Index output_column = 0; output_column < output_width; ++output_column)
                 {
                     const type delta_value = deltas(batch_index, output_row, output_column, kernel_index);
 
-                    for(Index kernel_row = 0; kernel_row < kernel_height; kernel_row++)
+                    const Index col_limit = min(kernel_width, input_width - output_column);
+
+                    for(Index kernel_row = 0; kernel_row < row_limit; ++kernel_row)
                     {
                         const Index input_row = output_row + kernel_row;
 
-                        for(Index kernel_column = 0; kernel_column < kernel_width; kernel_column++)
+                        for(Index kernel_column = 0; kernel_column < col_limit; ++kernel_column)
                         {
                             const Index input_column = output_column + kernel_column;
 
-                            if(input_row < input_height && input_column < input_width)
-                                for(Index channel_index = 0; channel_index < kernel_channels; channel_index++)
-                                    in_grad(batch_index, input_row, input_column, channel_index) += delta_value * kernel_map(kernel_row, kernel_column, channel_index);
+                            for(Index channel_index = 0; channel_index < kernel_channels; ++channel_index)
+                                in_grad(batch_index, input_row, input_column, channel_index) += delta_value * kernel_map(kernel_row, kernel_column, channel_index);
                         }
                     }
                 }
+            }
         }
+}
+
+template <bool IsTraining>
+static void max_pooling_cpu(const TensorView& input,
+                            TensorView& output,
+                            TensorView& maximal_indices,
+                            const PoolingArguments& arguments)
+{
+    const TensorMap4 inputs = input.as_tensor<4>();
+    TensorMap4 outputs = output.as_tensor<4>();
+
+    TensorMap4 maximal_indices_map = [&]() -> TensorMap4 {
+        if constexpr (IsTraining)
+            return maximal_indices.as_tensor<4>();
+        else
+            return TensorMap4(nullptr, 0, 0, 0, 0);
+    }();
+
+    const Index batch_size = inputs.dimension(0);
+    const Index input_height = inputs.dimension(1);
+    const Index input_width = inputs.dimension(2);
+    const Index channels = inputs.dimension(3);
+
+    const Index output_height = outputs.dimension(1);
+    const Index output_width = outputs.dimension(2);
+
+    const Index pool_height = arguments.pool_dimensions[0];
+    const Index pool_width = arguments.pool_dimensions[1];
+    const Index row_stride = arguments.stride_shape[0];
+    const Index column_stride = arguments.stride_shape[1];
+    const Index padding_height = arguments.padding_shape[0];
+    const Index padding_width = arguments.padding_shape[1];
+
+#pragma omp parallel for collapse(2)
+    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
+        for(Index channel_index = 0; channel_index < channels; ++channel_index)
+            for(Index output_row = 0; output_row < output_height; ++output_row)
+            {
+                const Index input_row_start = output_row * row_stride - padding_height;
+                const Index pool_row_start = max(Index(0), -input_row_start);
+                const Index pool_row_end   = min(pool_height, input_height - input_row_start);
+
+                for(Index output_column = 0; output_column < output_width; ++output_column)
+                {
+                    const Index input_column_start = output_column * column_stride - padding_width;
+
+                    const Index pool_col_start = max(Index(0), -input_column_start);
+                    const Index pool_col_end   = min(pool_width, input_width - input_column_start);
+
+                    type maximum_value = NEG_INFINITY;
+                    [[maybe_unused]] Index maximal_index = 0;
+
+                    for(Index pool_row = pool_row_start; pool_row < pool_row_end; ++pool_row)
+                    {
+                        const Index input_row = input_row_start + pool_row;
+
+                        for(Index pool_column = pool_col_start; pool_column < pool_col_end; ++pool_column)
+                        {
+                            const Index input_column = input_column_start + pool_column;
+
+                            const type current_value = inputs(batch_index, input_row, input_column, channel_index);
+
+                            if(current_value > maximum_value)
+                            {
+                                maximum_value = current_value;
+                                if constexpr (IsTraining)
+                                    maximal_index = pool_row * pool_width + pool_column;
+                            }
+                        }
+                    }
+
+                    outputs(batch_index, output_row, output_column, channel_index) = maximum_value;
+
+                    if constexpr (IsTraining)
+                        maximal_indices_map(batch_index, output_row, output_column, channel_index) = maximal_index;
+                }
+            }
 }
 
 void max_pooling(const TensorView& input,
@@ -957,63 +1044,10 @@ void max_pooling(const TensorView& input,
         return;
     }
 #endif
-    const TensorMap4 inputs = input.as_tensor<4>();
-    TensorMap4 outputs = output.as_tensor<4>();
-
-    const Index batch_size = inputs.dimension(0);
-    const Index input_height = inputs.dimension(1);
-    const Index input_width = inputs.dimension(2);
-    const Index channels = inputs.dimension(3);
-
-    const Index output_height = outputs.dimension(1);
-    const Index output_width = outputs.dimension(2);
-
-    const Index pool_height = arguments.pool_dimensions[0];
-    const Index pool_width = arguments.pool_dimensions[1];
-    const Index row_stride = arguments.stride_shape[0];
-    const Index column_stride = arguments.stride_shape[1];
-    const Index padding_height = arguments.padding_shape[0];
-    const Index padding_width = arguments.padding_shape[1];
-
-#pragma omp parallel for collapse(2)
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for(Index channel_index = 0; channel_index < channels; ++channel_index)
-            for(Index output_row = 0; output_row < output_height; ++output_row)
-                for(Index output_column = 0; output_column < output_width; ++output_column)
-                {
-                    const Index input_row_start = output_row * row_stride - padding_height;
-                    const Index input_column_start = output_column * column_stride - padding_width;
-
-                    type maximum_value = -numeric_limits<type>::infinity();
-                    Index maximum_index = 0;
-
-                    for(Index pool_row = 0; pool_row < pool_height; ++pool_row)
-                        for(Index pool_column = 0; pool_column < pool_width; ++pool_column)
-                        {
-                            const Index input_row = input_row_start + pool_row;
-                            const Index input_column = input_column_start + pool_column;
-
-                            if(input_row >= 0 && input_row < input_height && input_column >= 0 && input_column < input_width)
-                            {
-                                const type current_value = inputs(batch_index, input_row, input_column, channel_index);
-
-                                if(current_value > maximum_value)
-                                {
-                                    maximum_value = current_value;
-                                    maximum_index = pool_row * pool_width + pool_column;
-                                }
-                            }
-                        }
-
-                    outputs(batch_index, output_row, output_column, channel_index) =
-                        (maximum_value == -numeric_limits<type>::infinity()) ? type(0) : maximum_value;
-
-                    if(is_training)
-                    {
-                        TensorMap4 maximal_indices_map = maximal_indices.as_tensor<4>();
-                        maximal_indices_map(batch_index, output_row, output_column, channel_index) = maximum_index;
-                    }
-                }
+    if(is_training)
+        max_pooling_cpu<true>(input, output, maximal_indices, arguments);
+    else
+        max_pooling_cpu<false>(input, output, maximal_indices, arguments);
 }
 
 void average_pooling(const TensorView& input,
@@ -1054,33 +1088,43 @@ void average_pooling(const TensorView& input,
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
         for(Index channel_index = 0; channel_index < channels; ++channel_index)
             for(Index output_row = 0; output_row < output_height; ++output_row)
+            {
+                const Index input_row_start = output_row * row_stride - padding_height;
+
+                const Index pool_row_start = max(Index(0), -input_row_start);
+                const Index pool_row_end   = min(pool_height, input_height - input_row_start);
+
                 for(Index output_column = 0; output_column < output_width; ++output_column)
                 {
-                    const Index input_row_start = output_row * row_stride - padding_height;
                     const Index input_column_start = output_column * column_stride - padding_width;
+
+                    const Index pool_col_start = max(Index(0), -input_column_start);
+                    const Index pool_col_end   = min(pool_width, input_width - input_column_start);
 
                     type sum = 0;
 
-                    for(Index pool_row = 0; pool_row < pool_height; ++pool_row)
-                        for(Index pool_column = 0; pool_column < pool_width; ++pool_column)
+                    for(Index pool_row = pool_row_start; pool_row < pool_row_end; ++pool_row)
+                    {
+                        const Index input_row = input_row_start + pool_row;
+
+                        for(Index pool_column = pool_col_start; pool_column < pool_col_end; ++pool_column)
                         {
-                            const Index input_row = input_row_start + pool_row;
                             const Index input_column = input_column_start + pool_column;
 
-                            if(input_row >= 0 && input_row < input_height && input_column >= 0 && input_column < input_width)
-                                sum += inputs(batch_index, input_row, input_column, channel_index);
+                            sum += inputs(batch_index, input_row, input_column, channel_index);
                         }
-
+                    }
                     outputs(batch_index, output_row, output_column, channel_index) = sum * inv_pool_size;
                 }
+            }    
 }
 
 void max_pooling_backward(const TensorView& input,
-                                 const TensorView& output,
-                                 const TensorView& output_gradient,
-                                 const TensorView& maximal_indices,
-                                 TensorView& input_gradient,
-                                 const PoolingArguments& args)
+                          const TensorView& output,
+                          const TensorView& output_gradient,
+                          const TensorView& maximal_indices,
+                          TensorView& input_gradient,
+                          const PoolingArguments& args)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
@@ -1106,7 +1150,6 @@ void max_pooling_backward(const TensorView& input,
     const Index output_width = out_grads.dimension(2);
     const Index channels = out_grads.dimension(3);
 
-    const Index pool_height = args.pool_dimensions[0];
     const Index pool_width = args.pool_dimensions[1];
     const Index row_stride = args.stride_shape[0];
     const Index column_stride = args.stride_shape[1];
@@ -1114,20 +1157,27 @@ void max_pooling_backward(const TensorView& input,
     const Index padding_width = args.padding_shape[1];
 
     #pragma omp parallel for collapse(2)
-    for(Index batch_index = 0; batch_index < batch_size; batch_index++)
-        for(Index channel_index = 0; channel_index < channels; channel_index++)
-            for(Index output_row = 0; output_row < output_height; output_row++)
-                for(Index output_column = 0; output_column < output_width; output_column++)
-                {
-                    const Index max_idx = static_cast<Index>(max_indices(batch_index, output_row, output_column, channel_index));
-                    const Index pool_row = max_idx / pool_width;
-                    const Index pool_column = max_idx % pool_width;
-                    const Index input_row = output_row * row_stride - padding_height + pool_row;
-                    const Index input_column = output_column * column_stride - padding_width + pool_column;
+    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
+        for(Index channel_index = 0; channel_index < channels; ++channel_index)
+            for(Index output_row = 0; output_row < output_height; ++output_row)
+            {
+                const Index input_row_start = output_row * row_stride - padding_height;
 
-                    if(input_row >= 0 && input_row < in_grads.dimension(1) && input_column >= 0 && input_column < in_grads.dimension(2))
-                        in_grads(batch_index, input_row, input_column, channel_index) += out_grads(batch_index, output_row, output_column, channel_index);
+                for(Index output_column = 0; output_column < output_width; ++output_column)
+                {
+                    const Index input_column_start = output_column * column_stride - padding_width;
+
+                    const Index maximal_index = static_cast<Index>(max_indices(batch_index, output_row, output_column, channel_index));
+                    const Index pool_row = maximal_index / pool_width;
+                    const Index pool_column = maximal_index % pool_width;
+
+                    const Index input_row    = input_row_start    + pool_row;
+                    const Index input_column = input_column_start + pool_column;
+
+                    in_grads(batch_index, input_row, input_column, channel_index)
+                        += out_grads(batch_index, output_row, output_column, channel_index);
                 }
+            }
 }
 
 void average_pooling_backward(const TensorView& input,
@@ -1149,16 +1199,15 @@ void average_pooling_backward(const TensorView& input,
         return;
     }
 #endif
-    (void)output;
+    (void)input; (void)output;
 
-    const TensorMap4 inputs = input.as_tensor<4>();
     const TensorMap4 out_grads = output_gradient.as_tensor<4>();
     TensorMap4 in_grads = input_gradient.as_tensor<4>().setZero();
 
-    const Index batch_size = inputs.dimension(0);
-    const Index input_height = inputs.dimension(1);
-    const Index input_width = inputs.dimension(2);
-    const Index channels = inputs.dimension(3);
+    const Index batch_size = in_grads.dimension(0);
+    const Index input_height = in_grads.dimension(1);
+    const Index input_width = in_grads.dimension(2);
+    const Index channels = in_grads.dimension(3);
     const Index output_height = out_grads.dimension(1);
     const Index output_width = out_grads.dimension(2);
 
@@ -1172,26 +1221,35 @@ void average_pooling_backward(const TensorView& input,
     const type inv_pool_size = type(1) / (pool_height * pool_width);
 
     #pragma omp parallel for collapse(2)
-    for(Index batch_index = 0; batch_index < batch_size; batch_index++)
-        for(Index channel_index = 0; channel_index < channels; channel_index++)
-            for(Index output_row = 0; output_row < output_height; output_row++)
-                for(Index output_column = 0; output_column < output_width; output_column++)
+    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
+        for(Index channel_index = 0; channel_index < channels; ++channel_index)
+            for(Index output_row = 0; output_row < output_height; ++output_row)
+            {
+                const Index input_row_start = output_row * row_stride - padding_height;
+                const Index pool_row_start = max(Index(0), -input_row_start);
+                const Index pool_row_end   = min(pool_height, input_height - input_row_start);
+
+                for(Index output_column = 0; output_column < output_width; ++output_column)
                 {
                     const type average_gradient = out_grads(batch_index, output_row, output_column, channel_index) * inv_pool_size;
 
-                    const Index input_row_start = output_row * row_stride - padding_height;
                     const Index input_column_start = output_column * column_stride - padding_width;
+                    const Index pool_col_start = max(Index(0), -input_column_start);
+                    const Index pool_col_end   = min(pool_width, input_width - input_column_start);
 
-                    for(Index pool_row = 0; pool_row < pool_height; pool_row++)
-                        for(Index pool_column = 0; pool_column < pool_width; pool_column++)
+                    for(Index pool_row = pool_row_start; pool_row < pool_row_end; ++pool_row)
+                    {
+                        const Index input_row = input_row_start + pool_row;
+
+                        for(Index pool_column = pool_col_start; pool_column < pool_col_end; ++pool_column)
                         {
-                            const Index input_row = input_row_start + pool_row;
                             const Index input_column = input_column_start + pool_column;
 
-                            if(input_row >= 0 && input_row < input_height && input_column >= 0 && input_column < input_width)
-                                in_grads(batch_index, input_row, input_column, channel_index) += average_gradient;
+                            in_grads(batch_index, input_row, input_column, channel_index) += average_gradient;
                         }
+                    }
                 }
+            }
 }
 
 void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training)
@@ -1217,7 +1275,7 @@ void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorV
     #pragma omp parallel for
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
-        outputs.row(batch_index).setConstant(-numeric_limits<type>::infinity());
+        outputs.row(batch_index).setConstant(NEG_INFINITY);
 
         for(Index step = 0; step < sequence_length; ++step)
             for(Index feature_index = 0; feature_index < features; ++feature_index)
@@ -1237,8 +1295,11 @@ void average_pooling_3d_forward(const TensorView& input, TensorView& output)
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
         pooling3d_avg_forward_cuda(to_int(input.shape[0]) * to_int(input.shape[2]),
-            input.data, output.data,
-            to_int(input.shape[0]), to_int(input.shape[1]), to_int(input.shape[2]));
+                                          input.data, 
+                                          output.data,
+                                          to_int(input.shape[0]), 
+                                          to_int(input.shape[1]), 
+                                          to_int(input.shape[2]));
         return;
     }
 #endif
@@ -1252,25 +1313,14 @@ void average_pooling_3d_forward(const TensorView& input, TensorView& output)
     #pragma omp parallel for
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
-        outputs.row(batch_index).setZero();
-        Index valid_count = 0;
+        const Map<const MatrixR> seq_matrix(&inputs(batch_index, 0, 0), sequence_length, features);
 
-        for(Index step = 0; step < sequence_length; ++step)
-        {
-            bool is_padding = true;
-            for(Index feature_index = 0; feature_index < features; ++feature_index)
-                if(inputs(batch_index, step, feature_index) != type(0)) { is_padding = false; break; }
-
-            if(!is_padding)
-            {
-                for(Index feature_index = 0; feature_index < features; ++feature_index)
-                    outputs(batch_index, feature_index) += inputs(batch_index, step, feature_index);
-                ++valid_count;
-            }
-        }
+        const Index valid_count = ((seq_matrix.array() != type(0)).rowwise().any()).count();
 
         if(valid_count > 0)
-            outputs.row(batch_index) /= to_type(valid_count);
+            outputs.row(batch_index) = seq_matrix.colwise().sum() / to_type(valid_count);
+        else
+            outputs.row(batch_index).setZero();
     }
 }
 
@@ -1281,8 +1331,12 @@ void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView
         CHECK_CUDA(cudaMemset(input_gradient.data, 0, input_gradient.size() * sizeof(float)));
 
         pooling3d_max_backward_cuda(to_int(output_gradient.shape[0]) * to_int(output_gradient.shape[1]),
-            output_gradient.data, input_gradient.data, maximal_indices.data,
-            to_int(output_gradient.shape[0]), to_int(input_gradient.shape[1]), to_int(output_gradient.shape[1]));
+                                    output_gradient.data, 
+                                    input_gradient.data, 
+                                    maximal_indices.data,
+                                    to_int(output_gradient.shape[0]), 
+                                    to_int(input_gradient.shape[1]), 
+                                    to_int(output_gradient.shape[1]));
         
         return;
     }
@@ -1326,28 +1380,19 @@ void average_pooling_3d_backward(const TensorView& input, const TensorView& outp
     #pragma omp parallel for
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
-        Index valid_count = 0;
-        for(Index step = 0; step < sequence_length; ++step)
-        {
-            bool is_padding = true;
-            for(Index feature_index = 0; feature_index < features; ++feature_index)
-                if(inputs(batch_index, step, feature_index) != type(0)) { is_padding = false; break; }
-            if(!is_padding) ++valid_count;
-        }
+        const Map<const MatrixR> seq_matrix(&inputs(batch_index, 0, 0), sequence_length, features);
+        const auto non_padding = (seq_matrix.array() != type(0)).rowwise().any().eval();
+        const Index valid_count = non_padding.count();
 
         if(valid_count == 0) continue;
+
         const type inverse_valid_count = type(1) / to_type(valid_count);
+        Map<MatrixR> grad_matrix(&input_gradient_map(batch_index, 0, 0), sequence_length, features);
+        const auto output_row = output_gradient_matrix.row(batch_index);
 
         for(Index step = 0; step < sequence_length; ++step)
-        {
-            bool is_padding = true;
-            for(Index feature_index = 0; feature_index < features; ++feature_index)
-                if(inputs(batch_index, step, feature_index) != type(0)) { is_padding = false; break; }
-
-            if(!is_padding)
-                for(Index feature_index = 0; feature_index < features; ++feature_index)
-                    input_gradient_map(batch_index, step, feature_index) = output_gradient_matrix(batch_index, feature_index) * inverse_valid_count;
-        }
+            if(non_padding(step))
+                grad_matrix.row(step) = output_row * inverse_valid_count;
     }
 }
 
@@ -1366,7 +1411,7 @@ void embedding_backward(const TensorView& input_indices,
 
     MatrixMap weight_gradients = weight_gradient.as_matrix().setZero();
 
-    for(Index token_index = 0; token_index < total_elements; token_index++)
+    for(Index token_index = 0; token_index < total_elements; ++token_index)
     {
         const Index vocabulary_index = static_cast<Index>(input_indices.data[token_index]);
 

@@ -114,7 +114,7 @@ void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_
     MatrixR previous_hidden_state(batch_size, output_size);
     MatrixR step_derivatives(batch_size, output_size);
 
-    for(Index t = 0; t < past_time_steps; t++)
+    for(Index t = 0; t < past_time_steps; ++t)
     {
         TensorMap2 step_input_tensor(step_input.data(), batch_size, input_features);
         TensorMap2 current_hidden_tensor(current_hidden_state.data(), batch_size, output_size);

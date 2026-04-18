@@ -36,7 +36,7 @@ public:
         const Index layers_number = get_layers_number();
         vector<vector<Shape>> shapes(layers_number);
 
-        for(Index i = 0; i < layers_number; i++)
+        for(Index i = 0; i < layers_number; ++i)
             shapes[i] = layers[i]->get_parameter_shapes();
 
         return shapes;
@@ -47,7 +47,7 @@ public:
         const Index layers_number = get_layers_number();
         vector<vector<Shape>> shapes(layers_number);
 
-        for(Index i = 0; i < layers_number; i++)
+        for(Index i = 0; i < layers_number; ++i)
             shapes[i] = layers[i]->get_forward_shapes(batch_size);
 
         return shapes;
@@ -58,7 +58,7 @@ public:
         const Index layers_number = get_layers_number();
         vector<vector<Shape>> shapes(layers_number);
 
-        for(Index i = 0; i < layers_number; i++)
+        for(Index i = 0; i < layers_number; ++i)
             shapes[i] = layers[i]->get_backward_shapes(batch_size);
 
         return shapes;

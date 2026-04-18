@@ -107,7 +107,7 @@ void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 void Unscaling::set_scalers(const vector<string>& new_scaler)
 {
     scalers.resize(new_scaler.size());
-    for(size_t i = 0; i < new_scaler.size(); i++)
+    for(size_t i = 0; i < new_scaler.size(); ++i)
         scalers[i] = string_to_scaler_method(new_scaler[i]);
 }
 
@@ -169,7 +169,7 @@ void Unscaling::from_XML(const XmlDocument& document)
 
     const XmlElement* start_element = root_element->first_child_element("NeuronsNumber");
 
-    for(Index i = 0; i < neurons_number; i++) {
+    for(Index i = 0; i < neurons_number; ++i) {
         const XmlElement* unscaling_neuron_element = start_element->next_sibling_element("UnscalingNeuron");
         if(!unscaling_neuron_element) {
             throw runtime_error("Unscaling neuron " + to_string(i + 1) + " is nullptr.\n");
@@ -207,7 +207,7 @@ void Unscaling::to_XML(XmlPrinter& printer) const
 
     add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
 
-    for(Index i = 0; i < output_shape[0]; i++)
+    for(Index i = 0; i < output_shape[0]; ++i)
     {
         printer.open_element("UnscalingNeuron");
         printer.push_attribute("Index", int(i + 1));

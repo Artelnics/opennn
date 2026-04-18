@@ -123,7 +123,7 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
 
         for(Index row = 0; row < query_sequence_length; ++row)
             for(Index column = 0; column < source_sequence_length; ++column)
-                causal_mask(row, column) = (column > row) ? minus_inf : type(0);
+                causal_mask(row, column) = (column > row) ? NEG_INFINITY : type(0);
     }
 }
 

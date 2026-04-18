@@ -111,7 +111,7 @@ Tensor3 load_image(const filesystem::path& path)
     
     auto* img_data = image.data();
 
-    for(Index y = 0; y < height; y++)
+    for(Index y = 0; y < height; ++y)
     {
         const Index tensor_y = top_down ? y : (height - 1 - y);
         const uint8_t* row_ptr = pixel_data + y * row_stride;
@@ -243,9 +243,9 @@ void rotate_image(const Tensor3& input, Tensor3& output, type angle_degree)
 
     #pragma omp parallel for collapse(2)
 
-    for(Index y = 0; y < height; y++)
+    for(Index y = 0; y < height; ++y)
     {
-        for(Index x = 0; x < width; x++)
+        for(Index x = 0; x < width; ++x)
         {
             Vector3T coordinates;
             coordinates << static_cast<type>(x), static_cast<type>(y), 1.0f;
@@ -254,12 +254,12 @@ void rotate_image(const Tensor3& input, Tensor3& output, type angle_degree)
 
             if(transformed[0] >= 0 && transformed[0] < width
             && transformed[1] >= 0 && transformed[1] < height)
-                for(Index c = 0; c < channels; c++)
+                for(Index c = 0; c < channels; ++c)
                     output(y, x, c) = input(int(transformed[1]),
                                             int(transformed[0]),
                                             c);
             else
-                for(Index c = 0; c < channels; c++)
+                for(Index c = 0; c < channels; ++c)
                     output(y, x, c) = type(0);
         }
     }

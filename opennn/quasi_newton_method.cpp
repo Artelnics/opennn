@@ -220,7 +220,7 @@ TrainingResults QuasiNewtonMethod::train()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << "\n";
 
@@ -261,7 +261,7 @@ TrainingResults QuasiNewtonMethod::train()
 
             if(epoch != 0
                 && results.validation_error_history(epoch) > results.validation_error_history(epoch-1))
-                validation_failures++;
+                ++validation_failures;
         }
 
         elapsed_time = get_elapsed_time(beginning_time);
@@ -357,8 +357,7 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 
     // old_gradient is read before being written on epoch 0; zero-init keeps
     // the gradient_difference well-defined (the identity branch fires anyway).
-    old_gradient.resize(parameters_number);
-    old_gradient.setZero();
+    old_gradient = VectorR::Zero(parameters_number);
 
     gradient_difference.resize(parameters_number);
 

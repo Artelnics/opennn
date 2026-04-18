@@ -125,7 +125,7 @@ VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n)
 
     VectorI result(n);
 
-    for(int i = 0; i < n; i++)
+    for(int i = 0; i < n; ++i)
         result(i) = pairs[i].second;
 
     return result;
@@ -184,7 +184,7 @@ string shape_to_string(const Shape& x, const string& separator)
     if(size == 0)
         throw runtime_error("Error: Dimensions size must be greater than 0.\n");
 
-    for(Index i = 0; i < size; i++)
+    for(Index i = 0; i < size; ++i)
         buffer << x[i] << separator;
 
     return buffer.str();
@@ -220,7 +220,7 @@ string vector_to_string(const VectorI& x, const string& separator)
 {
     ostringstream buffer;
 
-    for(Index i = 0; i < x.size(); i++)
+    for(Index i = 0; i < x.size(); ++i)
         buffer << x(i) << separator;
 
     return buffer.str();
@@ -230,7 +230,7 @@ string vector_to_string(const VectorR& x, const string& separator)
 {
     ostringstream buffer;
 
-    for(Index i = 0; i < x.size(); i++)
+    for(Index i = 0; i < x.size(); ++i)
         buffer << x(i) << separator;
 
     return buffer.str();
@@ -240,7 +240,7 @@ string vector_to_string(const VectorMap& x, const string& separator)
 {
     ostringstream buffer;
 
-    for(Index i = 0; i < x.size(); i++)
+    for(Index i = 0; i < x.size(); ++i)
         buffer << x(i) << separator;
 
     return buffer.str();
@@ -309,7 +309,7 @@ type* link(type *pointer, const vector<TensorView*>& views)
 
 void link(type *pointer, const vector<vector<TensorView*>>& views)
 {
-    for(size_t i = 0; i < views.size(); i++)
+    for(size_t i = 0; i < views.size(); ++i)
         pointer = link(pointer, views[i]);
 }
 
@@ -332,7 +332,7 @@ Index get_size(const vector<vector<TensorView*>>& views)
 {
     Index total_size = 0;
 
-    for(size_t i = 0; i < views.size(); i++)
+    for(size_t i = 0; i < views.size(); ++i)
         total_size += get_size(views[i]);
 
     return total_size;
@@ -342,9 +342,9 @@ pair<VectorR, VectorR> filter_missing_values(const VectorR& x, const VectorR& y)
 {
     Index new_size = 0;
 
-    for(Index i = 0; i < x.size(); i++)
+    for(Index i = 0; i < x.size(); ++i)
         if(!isnan(x(i)) && !isnan(y(i)))
-            new_size++;
+            ++new_size;
 
     if(new_size == x.size())
         return make_pair(x, y);
@@ -354,14 +354,14 @@ pair<VectorR, VectorR> filter_missing_values(const VectorR& x, const VectorR& y)
 
     Index index = 0;
 
-    for(Index i = 0; i < x.size(); i++)
+    for(Index i = 0; i < x.size(); ++i)
     {
         if(!isnan(x(i)) && !isnan(y(i)))
         {
             new_x(index) = x(i);
             new_y(index) = y(i);
 
-            index++;
+            ++index;
         }
     }
 
@@ -376,7 +376,7 @@ pair<VectorR, MatrixR> filter_missing_values(const VectorR& x, const MatrixR& y)
     vector<Index> valid_indices;
     valid_indices.reserve(rows_number);
 
-    for(Index i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; ++i)
         if(!isnan(x(i)) && !isnan(y(i)))
             valid_indices.push_back(i);
 
@@ -384,7 +384,7 @@ pair<VectorR, MatrixR> filter_missing_values(const VectorR& x, const MatrixR& y)
     VectorR new_x(new_rows_number);
     MatrixR new_y(new_rows_number, y_columns_number);
 
-    for(Index i = 0; i < new_rows_number; i++)
+    for(Index i = 0; i < new_rows_number; ++i)
     {
         new_x(i) = x(valid_indices[i]);
         new_y.row(i) = y.row(valid_indices[i]);
@@ -405,7 +405,7 @@ pair<MatrixR, MatrixR> filter_missing_values(const MatrixR& x, const MatrixR& y)
     vector<Index> valid_indices;
     valid_indices.reserve(rows_number);
 
-    for(Index i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; ++i)
     {
         const bool x_row_ok = x.row(i).array().isFinite().all();
         const bool y_row_ok = y.row(i).array().isFinite().all();
@@ -418,7 +418,7 @@ pair<MatrixR, MatrixR> filter_missing_values(const MatrixR& x, const MatrixR& y)
     MatrixR new_x(new_rows_number, x_columns_number);
     MatrixR new_y(new_rows_number, y_columns_number);
 
-    for(Index i = 0; i < new_rows_number; i++)
+    for(Index i = 0; i < new_rows_number; ++i)
     {
         const Index original_index = valid_indices[i];
         new_x.row(i) = x.row(original_index);

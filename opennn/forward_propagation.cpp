@@ -220,7 +220,7 @@ void ForwardPropagation::print() const
 
     cout << "Layers number: " << layers_number << "\n";
 
-    for(Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; ++i)
         cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_label() << "\n";
 }
 

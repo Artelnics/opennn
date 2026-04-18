@@ -38,7 +38,7 @@ Index count_non_empty_lines(const filesystem::path& data_path)
         prepare_line(line);
 
         if(!line.empty())
-            count++;
+            ++count;
     }
 
     return count;
@@ -52,7 +52,7 @@ Index count_tokens(const string& text, const string& separator)
 
     while((position = text.find(separator, position)) != string::npos)
     {
-        tokens_number++;
+        ++tokens_number;
         position += separator.length();
     }
 
@@ -178,7 +178,7 @@ VectorR to_type_vector(const string& text, const string& separator)
 
     VectorR type_vector(tokens_size);
 
-    for(Index i = 0; i < tokens_size; i++)
+    for(Index i = 0; i < tokens_size; ++i)
     {
         const char* begin = tokens[i].c_str();
         char* end = nullptr;

@@ -84,6 +84,8 @@ using type = float;
 namespace opennn {
 constexpr type EPSILON = numeric_limits<type>::epsilon();
 constexpr type MAX = numeric_limits<type>::max();
+constexpr type NEG_INFINITY = -numeric_limits<type>::infinity();
+constexpr type QUIET_NAN = numeric_limits<type>::quiet_NaN();
 
 template <typename Enum>
 struct EnumMap
@@ -95,21 +97,24 @@ struct EnumMap
     const string& to_string(Enum value) const
     {
         for(const auto& [e, s] : entries)
-            if(e == value) return s;
+            if(e == value) 
+                return s;
         throw runtime_error("Unknown enum value");
     }
 
     Enum from_string(const string& name) const
     {
         for(const auto& [e, s] : entries)
-            if(s == name) return e;
+            if(s == name) 
+                return e;
         throw runtime_error("Unknown enum string: " + name);
     }
 
     Enum from_string(const string& name, Enum fallback) const
     {
         for(const auto& [e, s] : entries)
-            if(s == name) return e;
+            if(s == name) 
+                return e;
         return fallback;
     }
 };

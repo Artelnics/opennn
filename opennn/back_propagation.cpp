@@ -318,7 +318,7 @@ void BackPropagation::allocate_device()
                 {
                     // Multi-consumer: use dedicated device buffer for accumulation
                     type* dev_og = per_layer_output_gradients.device();
-                    for(size_t k = 0; k < i; k++)
+                    for(size_t k = 0; k < i; ++k)
                         if(!per_layer_output_gradient_shapes[k].empty())
                             dev_og += get_aligned_size(per_layer_output_gradient_shapes[k].size());
 

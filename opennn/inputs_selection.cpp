@@ -113,7 +113,7 @@ void InputsSelectionResults::resize_history(const Index new_size)
     mean_training_error_history.resize(new_size);
     mean_validation_error_history.resize(new_size);
 
-    for(Index i = 0; i < new_size; i++)
+    for(Index i = 0; i < new_size; ++i)
     {
         training_error_history(i) = old_training_error_history(i);
         validation_error_history(i) = old_validation_error_history(i);
@@ -129,7 +129,7 @@ void InputsSelectionResults::print() const
          << "Optimal inputs number: " << optimal_input_variable_names.size() << "\n"
          << "Inputs: " << "\n";
 
-    for(size_t i = 0; i < optimal_input_variable_names.size(); i++)
+    for(size_t i = 0; i < optimal_input_variable_names.size(); ++i)
         cout << "   " << optimal_input_variable_names[i] << "\n";
 
     cout << "Optimum training error: " << optimum_training_error << "\n"

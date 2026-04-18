@@ -371,7 +371,7 @@ void TrainingResults::save(const filesystem::path& file_name) const
 
     if(!file) return;
 
-    for(Index i = 0; i < override_results.dimension(0); i++)
+    for(Index i = 0; i < override_results.dimension(0); ++i)
         file << override_results(i,0) << "; " << override_results(i,1) << "\n";
 
     file.close();

@@ -56,7 +56,7 @@ void ImageDataset::set_data_random()
     Index remainder = samples_number % targets_number;
 
     VectorI images_number(targets_number);
-    for(Index i = 0; i < targets_number; i++)
+    for(Index i = 0; i < targets_number; ++i)
     {
         images_number[i] = images_per_category + (remainder > 0 ? 1 : 0);
         if (remainder > 0) remainder--;
@@ -64,16 +64,16 @@ void ImageDataset::set_data_random()
 
     Index current_sample = 0;
 
-    for(Index k = 0; k < targets_number; k++)
+    for(Index k = 0; k < targets_number; ++k)
     {
-        for(Index i = 0; i < images_number[k]; i++)
+        for(Index i = 0; i < images_number[k]; ++i)
         {
-            for(Index j = 0; j < inputs_number; j++)
+            for(Index j = 0; j < inputs_number; ++j)
                 data(current_sample, j) = random_integer(0, 255);
 
             data(current_sample, k + inputs_number) = 1;
 
-            current_sample++;
+            ++current_sample;
         }
     }
 }
@@ -128,7 +128,7 @@ void ImageDataset::augment_inputs(type* input_data, Index batch_size) const
                       width,
                       channels);
 
-    for(Index i = 0; i < batch_size; i++)
+    for(Index i = 0; i < batch_size; ++i)
     {
         Tensor3 image = inputs.chip(i, 0);
 
@@ -189,8 +189,8 @@ vector<Descriptives> ImageDataset::scale_features(const string&)
     const Index input_features_number = get_features_number("Input");
 
     #pragma omp parallel for
-    for(Index i = 0; i < samples_number; i++)
-        for(Index j = 0; j < input_features_number; j++)
+    for(Index i = 0; i < samples_number; ++i)
+        for(Index j = 0; j < input_features_number; ++j)
             data(i, j) /= type(255);
 
     return {};
@@ -220,14 +220,14 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     vector<string> image_path;
 
-    for(Index i = 0; i < folders_number; i++)
+    for(Index i = 0; i < folders_number; ++i)
     {
         for(const filesystem::directory_entry& current_directory : filesystem::directory_iterator(directory_path[i]))
         {
             if(current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
             {
                 image_path.emplace_back(current_directory.path().string());
-                samples_number++;
+                ++samples_number;
             }
         }
 
@@ -261,7 +261,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     set(samples_number, { height, width, channels }, { targets_number });
 
     vector<string> categories(folders_number);
-    for(Index i = 0; i < folders_number; i++)
+    for(Index i = 0; i < folders_number; ++i)
         categories[i] = directory_path[i].filename().string();
 
     if(targets_number == 1)
@@ -288,7 +288,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     string omp_error;
 
     #pragma omp parallel for
-    for(Index i = 0; i < samples_number; i++)
+    for(Index i = 0; i < samples_number; ++i)
     {
         Tensor3 image = load_image(image_path[i]);
 
@@ -308,7 +308,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
         copy(image.data(), image.data() + pixels_number, &data(i, 0));
 
-        for(Index k = 0; k < folders_number; k++)
+        for(Index k = 0; k < folders_number; ++k)
         {
             if (i >= images_number(k) && i < images_number(k + 1))
             {
@@ -321,7 +321,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         }
 
         #pragma omp atomic
-        progress_counter++;
+        ++progress_counter;
 
         if (omp_get_thread_num() == 0)
             display_progress_bar(progress_counter, samples_number);

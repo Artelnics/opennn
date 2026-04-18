@@ -124,7 +124,6 @@ private:
 
     static constexpr type padding_threshold = type(1e-7f);
     static constexpr type mask_value = type(-1e9f);
-    static constexpr type minus_inf = -numeric_limits<float>::infinity();
 };
 
 } 

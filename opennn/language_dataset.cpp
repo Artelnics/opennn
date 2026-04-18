@@ -37,7 +37,7 @@ LanguageDataset::LanguageDataset(const Index samples_number,
 
     set_default();
 
-    for(Index i = 0; i < features_number; i++)
+    for(Index i = 0; i < features_number; ++i)
     {
         Variable& variable = variables[i];
 
@@ -123,14 +123,14 @@ void LanguageDataset::encode_input(const vector<vector<string>>& input_document_
 
     #pragma omp parallel for
 
-    for(Index sample = 0; sample < samples_number; sample++)
+    for(Index sample = 0; sample < samples_number; ++sample)
     {
         data(sample, 0) = START_INDEX;
 
         const vector<string>& input_tokens = input_document_tokens[sample];
         const size_t input_tokens_number = input_tokens.size();
 
-        for(size_t i = 0; i < input_tokens_number; i++)
+        for(size_t i = 0; i < input_tokens_number; ++i)
         {
             if (1 + i >= static_cast<size_t>(maximum_input_sequence_length)) break;
 
@@ -155,14 +155,14 @@ void LanguageDataset::encode_decoder_target_sequence_to_sequence(const vector<ve
     const Index target_offset = maximum_input_sequence_length + maximum_target_sequence_length;
 
 #pragma omp parallel for
-    for(Index sample = 0; sample < samples_number; sample++)
+    for(Index sample = 0; sample < samples_number; ++sample)
     {
         const vector<string>& target_tokens = target_document_tokens[sample];
         const Index target_tokens_number = ssize(target_tokens);
 
         data(sample, decoder_offset) = START_INDEX;
 
-        for(Index i = 0; i < target_tokens_number; i++)
+        for(Index i = 0; i < target_tokens_number; ++i)
         {
             if(i >= maximum_target_sequence_length) break;
 
@@ -194,7 +194,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
 
     if(maximum_target_sequence_length == 1 && target_vocabulary.size() == 6)
     {
-        for(size_t sample_index = 0; sample_index < target_document_tokens_number; sample_index++)
+        for(size_t sample_index = 0; sample_index < target_document_tokens_number; ++sample_index)
         {
             const string& token = target_document_tokens[sample_index][0];
 
@@ -215,7 +215,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
     {
         const unordered_map<string, Index> target_vocab_map = create_vocabulary_map(target_vocabulary);
 
-        for(size_t sample_index = 0; sample_index < target_document_tokens_number; sample_index++)
+        for(size_t sample_index = 0; sample_index < target_document_tokens_number; ++sample_index)
         {
             const string& token = target_document_tokens[sample_index][0];
 
@@ -239,7 +239,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
         const Index samples_number = get_samples_number();
 
         #pragma omp parallel for
-        for(Index sample = 0; sample < samples_number; sample++)
+        for(Index sample = 0; sample < samples_number; ++sample)
         {
             data(sample, maximum_input_sequence_length) = 2; // start;
 
@@ -247,7 +247,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
 
             for(Index variable = maximum_input_sequence_length + 1;
                 variable < maximum_input_sequence_length + 1 + Index(target_tokens.size());
-                variable++)
+                ++variable)
             {
                 const Index token_index = variable - (maximum_input_sequence_length + 1);
 
@@ -294,7 +294,7 @@ void LanguageDataset::read_csv()
         input_document_tokens[sample_index] = tokenize(tokens[0]);
         target_document_tokens[sample_index] = tokenize(tokens[1]);
 
-        sample_index++;
+        ++sample_index;
     }
 
     if(sample_index != samples_number)
@@ -340,7 +340,7 @@ void LanguageDataset::read_csv()
         if(!variables.empty())
             variables[0].categories = input_vocabulary;
 
-        for(Index i = 0; i < maximum_input_sequence_length; i++)
+        for(Index i = 0; i < maximum_input_sequence_length; ++i)
             variables[i].name = "token_" + to_string(i + 1);
 
         encode_input(input_document_tokens);
@@ -385,13 +385,13 @@ void LanguageDataset::read_csv()
         if(!variables.empty())
             variables[0].categories = input_vocabulary;
 
-        for(Index i = 0; i < maximum_input_sequence_length; i++)
+        for(Index i = 0; i < maximum_input_sequence_length; ++i)
             variables[i].name = "input_token_" + to_string(i + 1);
 
-        for(Index i = 0; i < maximum_target_sequence_length; i++)
+        for(Index i = 0; i < maximum_target_sequence_length; ++i)
             variables[decoder_offset + i].name = "decoder_token_" + to_string(i + 1);
 
-        for(Index i = 0; i < maximum_target_sequence_length; i++)
+        for(Index i = 0; i < maximum_target_sequence_length; ++i)
             variables[target_offset + i].name = "target_token_" + to_string(i + 1);
 
         encode_input(input_document_tokens);
@@ -412,7 +412,7 @@ void LanguageDataset::read_csv()
 
     // Restore all variable roles after set_binary_variables, which may mark
     // constant columns (e.g. START token) as "None"
-    for(Index i = 0; i < ssize(variables); i++)
+    for(Index i = 0; i < ssize(variables); ++i)
     {
         if(i < maximum_input_sequence_length)
             variables[i].role = VariableRole::Input;

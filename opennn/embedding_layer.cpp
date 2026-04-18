@@ -58,12 +58,12 @@ void Embedding::set(const Index new_vocabulary_size,
     const type half_depth = type(new_embedding_dimension) / 2;
 
     VectorR divisors(new_embedding_dimension);
-    for(Index j = 0; j < new_embedding_dimension; j++)
+    for(Index j = 0; j < new_embedding_dimension; ++j)
         divisors(j) = pow(type(10000), (j < Index(half_depth) ? j : j - Index(half_depth)) / half_depth);
 
     #pragma omp parallel for collapse(2)
-    for(Index i = 0; i < new_sequence_length; i++)
-        for(Index j = 0; j < new_embedding_dimension; j++)
+    for(Index i = 0; i < new_sequence_length; ++i)
+        for(Index j = 0; j < new_embedding_dimension; ++j)
             positional_encoding(i, j) = (j < Index(half_depth))
                 ? sin(i / divisors(j))
                 : cos(i / divisors(j));
@@ -149,7 +149,7 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
     const type* input_indices = forward_views[Input][0].data;
 
     #pragma omp parallel for
-    for(Index i = 0; i < total_tokens; i++)
+    for(Index i = 0; i < total_tokens; ++i)
     {
         const Index token_id = static_cast<Index>(input_indices[i]);
 
@@ -168,7 +168,7 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
     if(add_positional_encoding)
     {
         #pragma omp parallel for
-        for(Index i = 0; i < total_tokens; i++)
+        for(Index i = 0; i < total_tokens; ++i)
             if (static_cast<Index>(input_indices[i]) > 0)
                 outputs.row(i) += positional_encoding.row(i % sequence_length);
     }

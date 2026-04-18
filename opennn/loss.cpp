@@ -408,7 +408,7 @@ VectorR Loss::calculate_numerical_gradient()
     VectorR numerical_gradient(parameters_number);
     numerical_gradient.setZero();
 
-    for(Index i = 0; i < parameters_number; i++)
+    for(Index i = 0; i < parameters_number; ++i)
     {
         h = calculate_h(parameters(i));
 
@@ -472,7 +472,7 @@ VectorR Loss::calculate_numerical_input_gradients()
 
     TensorMap4 inputs_vector = tensor_map<4>(input_views[0]);
 
-    for(Index i = 0; i < values_number; i++)
+    for(Index i = 0; i < values_number; ++i)
     {
         h = calculate_h(inputs_vector(i));
 

@@ -34,7 +34,7 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Scaling<2>>(input_shape));
 
-    for(Index i = 0; i < complexity_size; i++)
+    for(Index i = 0; i < complexity_size; ++i)
         add_layer(make_unique<Dense<2>>(get_output_shape(),
                                        Shape{ complexity_dimensions[i] },
                                        "HyperbolicTangent",
@@ -63,7 +63,7 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Scaling<2>>(input_shape));
 
-    for(Index i = 0; i < complexity_size; i++)
+    for(Index i = 0; i < complexity_size; ++i)
         add_layer(make_unique<Dense<2>>(get_output_shape(),
                                        Shape{complexity_dimensions[i]},
                                        "HyperbolicTangent",
@@ -156,7 +156,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
 
     const Index complexity_size = complexity_dimensions.rank();
 
-    for(Index i = 0; i < complexity_size; i++)
+    for(Index i = 0; i < complexity_size; ++i)
     {
         const Shape kernel_shape = { 3, 3, get_output_shape()[2], complexity_dimensions[i] };
         const Shape stride_shape = { 1, 1 };
@@ -862,7 +862,7 @@ void Transformer::set_input_vocabulary(const vector<string>& new_input_vocabular
 
     input_vocabulary_map.clear();
 
-    for(size_t i = 0; i < input_vocabulary.size(); i++)
+    for(size_t i = 0; i < input_vocabulary.size(); ++i)
         input_vocabulary_map[input_vocabulary[i]] = i;
 }
 
@@ -872,7 +872,7 @@ void Transformer::set_output_vocabulary(const vector<string>& new_output_vocabul
 
     output_inverse_vocabulary_map.clear();
 
-    for(size_t i = 0; i < output_vocabulary.size(); i++)
+    for(size_t i = 0; i < output_vocabulary.size(); ++i)
         output_inverse_vocabulary_map[i] = output_vocabulary[i];
 }
 
@@ -925,7 +925,7 @@ string Transformer::calculate_outputs(const string& source)
 
     Index write_index = 1;
 
-    for(size_t i = 0; i < source_tokens.size() && write_index < input_sequence_length; i++, write_index++)
+    for(size_t i = 0; i < source_tokens.size() && write_index < input_sequence_length; ++i, ++write_index)
     {
         const auto it = input_vocabulary_map.find(source_tokens[i]);
 
@@ -948,7 +948,7 @@ string Transformer::calculate_outputs(const string& source)
     const bool was_gpu = Device::instance().is_gpu();
     if (was_gpu) Device::instance().set(DeviceType::Cpu);
 
-    for(Index i = 1; i < decoder_sequence_length; i++)
+    for(Index i = 1; i < decoder_sequence_length; ++i)
     {
         const vector<TensorView> inputs =
         {TensorView(target_ids.data(), {batch_size, decoder_sequence_length}),
@@ -975,7 +975,7 @@ string Transformer::calculate_outputs(const string& source)
 
     string result;
 
-    for(Index i = 1; i < decoder_sequence_length; i++)
+    for(Index i = 1; i < decoder_sequence_length; ++i)
     {
         const Index id = static_cast<Index>(target_ids(0, i));
 

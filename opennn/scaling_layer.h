@@ -148,7 +148,7 @@ public:
     void set_scalers(const vector<string>& new_scalers)
     {
         scalers.resize(new_scalers.size());
-        for(size_t i = 0; i < new_scalers.size(); i++)
+        for(size_t i = 0; i < new_scalers.size(); ++i)
             scalers[i] = string_to_scaler_method(new_scalers[i]);
     }
 
@@ -177,7 +177,7 @@ public:
 
         buffer.precision(10);
 
-        for(Index i = 0; i < inputs_number; i++)
+        for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = " << input_names[i] << ";\n";
 
         return buffer.str();
@@ -191,7 +191,7 @@ public:
 
         buffer.precision(10);
 /*
-        for(Index i = 0; i < inputs_number; i++)
+        for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = 2*(" << input_names[i] << "-(" << descriptives[i].minimum << "))/(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))-1;\n";
 */
         return buffer.str();
@@ -205,7 +205,7 @@ public:
 
         buffer.precision(10);
 /*
-        for(Index i = 0; i < inputs_number; i++)
+        for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = (" << input_names[i] << "-(" << descriptives[i].mean << "))/" << descriptives[i].standard_deviation << ";\n";
 */
         return buffer.str();
@@ -219,7 +219,7 @@ public:
 
         buffer.precision(10);
 /*
-        for(Index i = 0; i < inputs_number; i++)
+        for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = " << input_names[i] << "/(" << descriptives[i].standard_deviation << ");\n";
 */
         return buffer.str();
@@ -245,7 +245,7 @@ public:
 
         scalers.resize(scaler_names.size());
 
-        for(size_t i = 0; i < scaler_names.size(); i++)
+        for(size_t i = 0; i < scaler_names.size(); ++i)
             scalers[i] = string_to_scaler_method(scaler_names[i]);
 
         min_range = type(stof(read_xml_string(scaling_layer_element, "MinRange")));
@@ -259,7 +259,7 @@ public:
         printer.open_element(name.c_str());
 
         vector<string> scaler_names(scalers.size());
-        for(size_t i = 0; i < scalers.size(); i++)
+        for(size_t i = 0; i < scalers.size(); ++i)
             scaler_names[i] = scaler_method_to_string(scalers[i]);
 
         write_xml_properties(printer, {

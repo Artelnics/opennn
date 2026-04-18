@@ -198,7 +198,7 @@ VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient()
     VectorR numerical_gradient_lm(parameters_number);
     numerical_gradient_lm.setZero();
 
-    for(Index i = 0; i < parameters_number; i++)
+    for(Index i = 0; i < parameters_number; ++i)
     {
         h = Loss::calculate_h(parameters(i));
 
@@ -267,7 +267,7 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_jacobian()
 
     MatrixR jacobian(total_error_terms, parameters_number);
 
-    for(Index j = 0; j < parameters_number; j++)
+    for(Index j = 0; j < parameters_number; ++j)
     {
         perturbation = Loss::calculate_h(parameters(j));
 
@@ -285,7 +285,7 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_jacobian()
 
         parameters(j) -= perturbation;
 
-        for(Index i = 0; i < total_error_terms; i++)
+        for(Index i = 0; i < total_error_terms; ++i)
             jacobian(i, j) = (error_terms_forward(i) - error_terms_backward(i)) / (type(2.0) * perturbation);
     }
 
@@ -344,7 +344,7 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
     type y_backward_i_forward_j;
     type y_forward_i_backward_j;
 
-    for(Index i = 0; i < parameters_number; i++)
+    for(Index i = 0; i < parameters_number; ++i)
     {
         h_i = Loss::calculate_h(parameters(i));
 
@@ -405,7 +405,7 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
         H(i, i) = (-y_forward_2i + type(16.0) * y_forward_i - type(30.0) * y + type(16.0) * y_backward_i - y_backward_2i) / (type(12.0) * h_i * h_i);
 
-        for(Index j = i; j < parameters_number; j++)
+        for(Index j = i; j < parameters_number; ++j)
         {
             h_j = Loss::calculate_h(parameters(j));
 
@@ -472,8 +472,8 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
         }
     }
 
-    for(Index i = 0; i < parameters_number; i++)
-        for(Index j = 0; j < i; j++)
+    for(Index i = 0; i < parameters_number; ++i)
+        for(Index j = 0; j < i; ++j)
             H(i, j) = H(j, i);
 
     return H;
@@ -576,7 +576,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << "\n";
 
@@ -603,7 +603,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
             results.validation_error_history(epoch) = validation_back_propagation_lm.error;
 
             if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch-1))
-                validation_failures++;
+                ++validation_failures;
         }
 
         elapsed_time = get_elapsed_time(beginning_time);

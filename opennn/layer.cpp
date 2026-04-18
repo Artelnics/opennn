@@ -47,7 +47,7 @@ vector<string> Layer::get_default_feature_names() const
 
     vector<string> input_names(inputs_number);
 
-    for(Index i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; ++i)
         input_names[i] = "input_" + to_string(i);
 
     return input_names;
@@ -59,7 +59,7 @@ vector<string> Layer::get_default_output_names() const
 
     vector<string> output_names(outputs_number);
 
-    for(Index i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; ++i)
         output_names[i] = "output_" + to_string(i);
 
     return output_names;
@@ -108,12 +108,12 @@ void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
 #ifndef OPENNN_WITH_CUDA
     VectorMap output_gradients = output_gradient_views[0].as_vector();
 
-    for(size_t i = 1; i < output_gradient_views.size(); i++)
+    for(size_t i = 1; i < output_gradient_views.size(); ++i)
         output_gradients.noalias() += output_gradient_views[i].as_vector();
 #else
     const size_t n = output_gradient_views[0].size();
 
-    for(size_t i = 1; i < output_gradient_views.size(); i++)
+    for(size_t i = 1; i < output_gradient_views.size(); ++i)
         if(output_gradient_views[i].data)
             addition_cuda(n, output_gradient_views[0].data, output_gradient_views[i].data, output_gradient_views[0].data);
 #endif

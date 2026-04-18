@@ -149,7 +149,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     // Main loop
     optimization_data.iteration = 1;
 
-    for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << "\n";
 
@@ -159,7 +159,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         if(is_text_classification_model) training_accuracy = type(0);
 
-        for(Index iteration = 0; iteration < training_batches_number; iteration++)
+        for(Index iteration = 0; iteration < training_batches_number; ++iteration)
         {
             training_back_propagation.gradient.setZero();
 
@@ -207,7 +207,7 @@ TrainingResults AdaptiveMomentEstimation::train()
             if(is_text_classification_model)
                 validation_accuracy = type(0);
 
-            for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+            for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
             {
                 // Dataset
 
@@ -444,7 +444,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     ThreadSafeQueue<Batch*> ready_training_queue;
     vector<unique_ptr<Batch>> training_batch_pool;
 
-    for(int i = 0; i < PREFETCH_BATCHES; i++)
+    for(int i = 0; i < PREFETCH_BATCHES; ++i)
     {
         training_batch_pool.push_back(make_unique<Batch>(training_batch_size, dataset));
         empty_training_queue.push(training_batch_pool.back().get());
@@ -456,7 +456,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
     if(has_validation)
     {
-        for(int i = 0; i < PREFETCH_BATCHES; i++)
+        for(int i = 0; i < PREFETCH_BATCHES; ++i)
         {
             validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
             empty_validation_queue.push(validation_batch_pool.back().get());
@@ -503,7 +503,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     type elapsed_time = type(0);
     optimization_data.iteration = 1;
 
-    for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
         if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << "\n";
 
@@ -514,7 +514,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         // Worker thread fills host pinned memory
         std::thread training_worker([&]()
         {
-            for(Index iteration = 0; iteration < training_batches_number; iteration++)
+            for(Index iteration = 0; iteration < training_batches_number; ++iteration)
             {
                 Batch* batch = empty_training_queue.pop();
                 batch->fill_host(training_batches[iteration],
@@ -533,7 +533,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             cudaEventRecord(batch_ready_event[0], memory_stream);
         }
 
-        for(Index iteration = 0; iteration < training_batches_number; iteration++)
+        for(Index iteration = 0; iteration < training_batches_number; ++iteration)
         {
             training_back_propagation.gradient.setZero_device();
 
@@ -578,7 +578,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
             std::thread validation_worker([&]()
             {
-                for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+                for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
                 {
                     Batch* batch = empty_validation_queue.pop();
                     batch->fill_host(validation_batches[iteration],
@@ -597,7 +597,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
                 cudaEventRecord(batch_ready_event[0], memory_stream);
             }
 
-            for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+            for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
             {
                 Batch* current_batch = next_val_batch;
                 next_val_batch = nullptr;
@@ -632,7 +632,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             results.validation_error_history(epoch) = validation_error;
 
             if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
-                validation_failures++;
+                ++validation_failures;
         }
 
         elapsed_time = get_elapsed_time(beginning_time);

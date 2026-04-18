@@ -87,7 +87,7 @@ void Bounding::set_lower_bound(const Index index, type new_lower_bound)
     if(lower_bounds.size() != output_shape[0])
     {
         lower_bounds.resize(output_shape[0]);
-        lower_bounds.setConstant(-numeric_limits<type>::max());
+        lower_bounds.setConstant(-MAX);
     }
 
     lower_bounds[index] = new_lower_bound;
@@ -110,7 +110,7 @@ void Bounding::set_upper_bound(const Index index, type new_upper_bound)
     if(upper_bounds.size() != output_shape[0])
     {
         upper_bounds.resize(output_shape[0]);
-        upper_bounds.setConstant(numeric_limits<type>::max());
+        upper_bounds.setConstant(MAX);
     }
 
     upper_bounds[index] = new_upper_bound;
@@ -138,7 +138,7 @@ void Bounding::to_XML(XmlPrinter& printer) const
 
     add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
 
-    for(Index i = 0; i < output_shape[0]; i++)
+    for(Index i = 0; i < output_shape[0]; ++i)
     {
         printer.open_element("Item");
         printer.push_attribute("Index", unsigned(i + 1));
@@ -165,7 +165,7 @@ void Bounding::from_XML(const XmlDocument& document)
 
     const auto* item_element = root_element->first_child_element("Item");
 
-    for(Index i = 0; i < neurons_number && item_element; i++)
+    for(Index i = 0; i < neurons_number && item_element; ++i)
     {
         unsigned index = 0;
         item_element->query_unsigned_attribute("Index", &index);

@@ -233,9 +233,9 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, type& e
         CHECK_CUDA(cudaMemcpy(targets_host.data(), target.data, token_count * sizeof(float), cudaMemcpyDeviceToHost));
 
         Index active = 0;
-        for(size_t token_index = 0; token_index < token_count; token_index++)
+        for(size_t token_index = 0; token_index < token_count; ++token_index)
             if(static_cast<Index>(targets_host[token_index]) > 0 && static_cast<Index>(targets_host[token_index]) < vocabulary_size)
-                active++;
+                ++active;
 
         active_tokens_out = active;
         error = active > 0 ? sum_loss / static_cast<float>(active) : type(0);
@@ -258,7 +258,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, type& e
             if(target_index > 0 && target_index < vocabulary_size)
             {
                 total_log_loss -= log(outputs(batch_index, step_index, target_index) + EPSILON);
-                active_tokens++;
+                ++active_tokens;
             }
         }
 

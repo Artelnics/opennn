@@ -539,7 +539,7 @@ inline bool is_contiguous(const vector<Index>& v)
 {
     const type first = v[0];
 
-    for (size_t i = 0; i < v.size(); i++)
+    for (size_t i = 0; i < v.size(); ++i)
         if (v[i] != first + Index(i))
             return false;
 
@@ -678,7 +678,7 @@ string vector_to_string(const vector<T>& x, const string& separator = " ")
 {
     ostringstream buffer;
 
-    for(size_t i = 0; i < x.size(); i++)
+    for(size_t i = 0; i < x.size(); ++i)
     {
         buffer << x[i];
         if (i < x.size() - 1)
@@ -697,7 +697,7 @@ string tensor_to_string(const TensorR<Rank>& x, const string& separator = " ")
 {
     ostringstream buffer;
 
-    for(Index i = 0; i < x.size(); i++)
+    for(Index i = 0; i < x.size(); ++i)
         buffer << x(i) << separator;
 
     return buffer.str();
@@ -801,7 +801,7 @@ bool is_equal(const Tensor<Type, Rank, AlignedMax>& tensor,
 {
     const Index size = tensor.size();
 
-    for(Index i = 0; i < size; i++)
+    for(Index i = 0; i < size; ++i)
     {
         if constexpr (is_same_v<Type, bool>)
         {
