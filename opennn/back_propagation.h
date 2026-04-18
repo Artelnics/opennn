@@ -76,7 +76,6 @@ struct BackPropagation
 #ifdef OPENNN_WITH_CUDA
 
     float* errors_device = nullptr;
-    float* error_device = nullptr;
 
     TensorView output_gradients_view_device;
 

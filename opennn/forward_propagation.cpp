@@ -115,7 +115,6 @@ void ForwardPropagation::allocate_device()
             if(s.size() > 0)
             {
                 views[i][j + 1][0].data = dev_pointer;
-                views[i][j + 1][0].set_descriptor(s);
                 dev_pointer += get_aligned_size(s.size());
             }
         }

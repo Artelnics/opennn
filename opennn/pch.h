@@ -86,6 +86,8 @@ constexpr type EPSILON = numeric_limits<type>::epsilon();
 constexpr type MAX = numeric_limits<type>::max();
 constexpr type NEG_INFINITY = -numeric_limits<type>::infinity();
 constexpr type QUIET_NAN = numeric_limits<type>::quiet_NaN();
+// Large negative finite value for masking softmax inputs. Not -inf because 0 * -inf = NaN in softmax scaling.
+constexpr type SOFTMAX_MASK_VALUE = type(-1e9f);
 
 template <typename Enum>
 struct EnumMap

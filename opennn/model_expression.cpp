@@ -468,14 +468,14 @@ string ModelExpression::write_dense_expression(const Dense<2>& layer,
                                                const vector<string>& input_names,
                                                const vector<string>& output_names)
 {
-    const vector<TensorView>& params = layer.get_parameter_views();
-    if (params.size() < 2 || !params[0].data || !params[1].data) return "";
+    const vector<TensorView>& parameters = layer.get_parameter_views();
+    if (parameters.size() < 2 || !parameters[0].data || !parameters[1].data) return "";
 
     const Index inputs_number = layer.get_inputs_number();
     const Index outputs_number = layer.get_outputs_number();
 
-    const type* bias_data = params[0].data;
-    const type* weight_data = params[1].data;
+    const type* bias_data = parameters[0].data;
+    const type* weight_data = parameters[1].data;
 
     const string& activation_function = activation_function_map().to_string(layer.get_activation_function());
 

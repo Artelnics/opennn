@@ -102,12 +102,10 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if(!input_shape.empty() && input.device())
     {
         TensorView in_view(input.device(), input_shape);
-        in_view.set_descriptor(input_shape);
 
         if(!decoder_shape.empty() && decoder.device())
         {
             TensorView dec_view(decoder.device(), decoder_shape);
-            dec_view.set_descriptor(decoder_shape);
             input_views_cache = { dec_view, in_view };
         }
         else
@@ -117,10 +115,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     }
 
     if(!target_shape.empty() && target.device())
-    {
         target_view_cache = TensorView(target.device(), target_shape);
-        target_view_cache.set_descriptor(target_shape);
-    }
 #endif
 }
 

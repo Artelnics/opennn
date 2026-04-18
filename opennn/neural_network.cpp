@@ -527,17 +527,17 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       const VectorR& new_parameters,
                                       ForwardPropagation& forward_propagation)
 {
-    VectorR& params = get_parameters();
+    VectorR& parameters_vector = get_parameters();
 
     // Save current values without changing buffer address (Layer TensorViews
-    // are bound to params.data()). Swap would relocate the buffer and break them.
-    const VectorR saved_parameters = params;
+    // are bound to parameters_vector.data()). Swap would relocate the buffer and break them.
+    const VectorR saved_parameters = parameters_vector;
 
-    params = new_parameters;
+    parameters_vector = new_parameters;
 
     forward_propagate(input_view, forward_propagation, true);
 
-    params = saved_parameters;
+    parameters_vector = saved_parameters;
 }
 
 MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
@@ -1068,10 +1068,7 @@ void NeuralNetwork::link_parameters_device()
             if(shapes[i].empty()) continue;
 
             if(i < param_views.size())
-            {
                 param_views[i].data = dev_ptr;
-                param_views[i].set_descriptor(shapes[i]);
-            }
 
             dev_ptr += get_aligned_size(shapes[i].size());
         }
@@ -1136,10 +1133,7 @@ void NeuralNetwork::link_states_device()
             if(shapes[i].empty()) continue;
 
             if(i < state_views.size())
-            {
                 state_views[i].data = dev_ptr;
-                state_views[i].set_descriptor(shapes[i]);
-            }
 
             dev_ptr += get_aligned_size(shapes[i].size());
         }
@@ -1190,7 +1184,6 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
 
     vector<TensorView> input_views_gpu = input_views_cpu;
     input_views_gpu[0].data = input_device;
-    input_views_gpu[0].set_descriptor(input_views_cpu[0].shape);
 
     // Forward on GPU (math_utilities dispatches via Device::is_gpu)
     forward_propagate(input_views_gpu, fp, false);
@@ -1214,7 +1207,7 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
                           cudaMemcpyDeviceToHost));
 
     // Free temp input buffer and restore CPU layer views
-    cudaFree(input_device);
+    CHECK_CUDA(cudaFree(input_device));
     link_parameters_cpu();
     link_states_cpu();
     // (no copy_states_host: inference doesn't update running stats)

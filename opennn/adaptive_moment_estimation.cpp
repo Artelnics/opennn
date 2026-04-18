@@ -300,7 +300,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     {
         const Index parameters_number = neural_network->get_parameters_size();
 
-        adam_update_device(
+        adam_update_cuda(
             parameters_number,
             neural_network->get_parameters_device(),
             optimization_data.gradient_exponential_decay.device(),

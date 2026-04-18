@@ -192,6 +192,9 @@ void embedding_backward(const TensorView& input_indices, const TensorView& outpu
 
 void projection(const TensorView& input, const TensorView& weights, const TensorView& biases, TensorView& output, const MultiheadAttentionArguments& args);
 
+void split_heads(const TensorView& source, TensorView& destination);
+void merge_heads(const TensorView& source, TensorView& destination);
+
 void projection_gradient(const TensorView& head_gradient,
                          const TensorView& input,
                          const TensorView& weights,
@@ -202,12 +205,7 @@ void projection_gradient(const TensorView& head_gradient,
                          Index sequence_length,
                          bool accumulate);
 
-void multihead_attention_forward(
-    const TensorView& query, const TensorView& key, const TensorView& value,
-    TensorView& attention_weights, TensorView& concatenated, TensorView& output,
-    const TensorView& projection_weights, const TensorView& projection_biases,
-    const TensorView& source_input,
-    const MultiheadAttentionArguments& args);
+void attention_masks(const TensorView& source_input, TensorView& attention_weights, const MatrixR& causal_mask, bool use_causal_mask, float* padding_mask_scratch);
 
 void multihead_attention_backward(
     const TensorView& query_input, const TensorView& source_input,

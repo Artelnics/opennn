@@ -90,7 +90,7 @@ void weighted_squared_error(const TensorView& input, const TensorView& target, t
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        calculate_weighted_squared_error_cuda(input.size(), workspace_device, target.data, input.data, pos_w, neg_w);
+        weighted_squared_error_cuda(input.size(), workspace_device, target.data, input.data, pos_w, neg_w);
         float result = 0.0f;
         CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), to_int(input.size()), workspace_device, 1, &result));
         error = result;
@@ -107,7 +107,7 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        calculate_weighted_squared_error_delta_cuda(input.size(), input_gradient.data, target.data, input.data, pos_w, neg_w, coefficient);
+        weighted_squared_error_gradient_cuda(input.size(), input_gradient.data, target.data, input.data, pos_w, neg_w, coefficient);
         return;
     }
 #endif
@@ -121,7 +121,7 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, typ
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        calculate_binary_cross_entropy_cuda(input.size(), workspace_device, target.data, input.data, EPSILON);
+        binary_cross_entropy_cuda(input.size(), workspace_device, target.data, input.data, EPSILON);
         float sum_cross_entropy = 0.0f;
         CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), to_int(input.size()), workspace_device, 1, &sum_cross_entropy));
         error = sum_cross_entropy / input.shape[0];
@@ -145,7 +145,7 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        calculate_multiple_cross_entropy_cuda(input.size(), workspace_device, target.data, input.data, EPSILON);
+        multiple_cross_entropy_cuda(input.size(), workspace_device, target.data, input.data, EPSILON);
         float sum_cross_entropy = 0.0f;
         CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), to_int(input.size()), workspace_device, 1, &sum_cross_entropy));
         error = sum_cross_entropy / input.shape[0];
@@ -170,9 +170,9 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
         const float scale = 1.0f / static_cast<float>(input.shape[0]);
 
         if(num_classes == 1)
-            calculate_binary_cross_entropy_delta_cuda(input.size(), input_gradient.data, target.data, input.data, EPSILON, scale);
+            binary_cross_entropy_gradient_cuda(input.size(), input_gradient.data, target.data, input.data, EPSILON, scale);
         else
-            calculate_multiple_cross_entropy_delta_cuda(input.size(), input_gradient.data, target.data, input.data, scale);
+            multiple_cross_entropy_gradient_cuda(input.size(), input_gradient.data, target.data, input.data, scale);
         return;
     }
 #endif
@@ -224,7 +224,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, type& e
     if (Device::instance().is_gpu()) {
         const size_t token_count = batch_size * sequence_length;
 
-        cross_entropy_3d_multiple_forward_cuda(token_count, to_int(batch_size), to_int(sequence_length), to_int(vocabulary_size), input.data, target.data, errors_device, EPSILON);
+        cross_entropy_3d_multiple_forward_cuda(token_count, to_int(vocabulary_size), input.data, target.data, errors_device, EPSILON);
 
         float sum_loss = 0;
         CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), to_int(token_count), errors_device, 1, &sum_loss));
@@ -278,7 +278,7 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
         const float scale = active_tokens_count > 0 ? 1.0f / static_cast<float>(active_tokens_count) : 0.0f;
 
         const size_t total = static_cast<size_t>(batch_size) * sequence_length * vocabulary_size;
-        cross_entropy_3d_multiple_backward_cuda(total, to_int(batch_size), to_int(sequence_length), to_int(vocabulary_size), input.data, target.data, input_gradient.data, scale);
+        cross_entropy_3d_multiple_backward_cuda(total, to_int(vocabulary_size), input.data, target.data, input_gradient.data, scale);
         return;
     }
 #endif
@@ -325,7 +325,7 @@ void l1_regularization_gradient(const TensorView& parameters, type lambda, Tenso
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        apply_l1_gradient_cuda(parameters.size(), gradient.data, parameters.data, lambda);
+        l1_gradient_cuda(parameters.size(), gradient.data, parameters.data, lambda);
         return;
     }
 #endif

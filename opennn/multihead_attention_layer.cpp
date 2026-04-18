@@ -133,26 +133,28 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    const TensorView& query_input = forward_views[Input][0];
+    const TensorView& query_input = get_query_input(forward_views);
+    const TensorView& source_input = get_source_input(forward_views);
 
-    const TensorView& source_input = (forward_views[Input].size() == 1)
-                                        ? query_input
-                                        : forward_views[Input][1];
-
-    TensorView& query = ;
-    TensorView& key = ;
-    TensorView& value = ;
-    TensorView& attention_weights_view = forward_views[AttentionWeights][0];
+    TensorView& query = forward_views[Query][0];
+    TensorView& key = forward_views[Key][0];
+    TensorView& value = forward_views[Value][0];
+    TensorView& attention_weights = forward_views[AttentionWeights][0];
     TensorView& concatenated = forward_views[ConcatenatedAttentionOutputs][0];
     TensorView& output = forward_views.back()[0];
 
+    const Index batch_size = forward_propagation.batch_size;
+    const Index head_dimension = get_head_dimension();
+    const Index total_heads = batch_size * heads_number;
+    const Index total_rows = batch_size * query_sequence_length;
+
     MultiheadAttentionArguments args;
-    args.batch_size = forward_propagation.batch_size;
+    args.batch_size = batch_size;
     args.heads_number = heads_number;
     args.query_sequence_length = query_sequence_length;
     args.source_sequence_length = source_sequence_length;
     args.embedding_dimension = embedding_dimension;
-    args.head_dimension = get_head_dimension();
+    args.head_dimension = head_dimension;
     args.scaling_factor = get_scaling_factor();
     args.use_causal_mask = use_causal_mask;
     args.causal_mask = &causal_mask;
@@ -160,35 +162,43 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     args.transpose_scratch = forward_views[TransposeScratch][0].data;
     args.attention_output_transposed = forward_views[AttentionOutputTransposed][0].data;
 
-    projection(query_input, 
-               parameters[QueryWeight], 
-               parameters[QueryBias], 
-               forward_views[Query][0], 
-               args);
+    // Q, K, V projections
+    projection(query_input,  parameters[QueryWeight], parameters[QueryBias], query, args);
+    projection(source_input, parameters[KeyWeight],   parameters[KeyBias],   key,   args);
+    projection(source_input, parameters[ValueWeight], parameters[ValueBias], value, args);
 
-    projection(source_input, 
-               parameters[KeyWeight], 
-               parameters[KeyBias], 
-               forward_views[Key][0], 
-               args);
+    // Q * K^T — attention scores
+    multiply(query, false, key, true, attention_weights, args.scaling_factor, type(0));
 
-    projection(source_input, 
-               parameters[ValueWeight], 
-               parameters[ValueBias], 
-               forward_views[Value][0], 
-               args);
+    // Masks (dispatches CPU/GPU)
+    attention_masks(source_input, attention_weights, causal_mask, use_causal_mask, forward_views[PaddingMask][0].data);
 
-    multihead_attention_forward(
-        forward_views[Query][0], 
-        forward_views[Key][0], 
-        forward_views[Value][0],
-        attention_weights_view, 
-        concatenated, 
-        output,
-        parameters[ProjectionWeight], 
-        parameters[ProjectionBias],
-        source_input, 
-        args);
+    // Softmax
+    TensorView attention_view(attention_weights.data,
+                              {total_heads * query_sequence_length, source_sequence_length});
+    
+    softmax(attention_view);
+
+    // Attention * V -> [B, H, Sq, D] scratch
+
+    TensorView attention_out_scratch(args.attention_output_transposed,
+                                     {batch_size, heads_number, query_sequence_length, head_dimension});
+    
+    multiply(attention_weights, false, value, false, attention_out_scratch);
+
+    // Transpose [B, H, Sq, D] -> [B, Sq, H, D] into concatenated
+    
+    TensorView concatenated_4d(concatenated.data,
+                               {batch_size, heads_number, query_sequence_length, head_dimension});
+
+    merge_heads(attention_out_scratch, concatenated_4d);
+
+    // Output projection
+    
+    combination(TensorView(concatenated.data, {total_rows, embedding_dimension}), 
+                parameters[ProjectionWeight], 
+                parameters[ProjectionBias], 
+                TensorView(output.data, {total_rows, embedding_dimension}));
 }
 
 void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
@@ -199,11 +209,9 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     auto& backward_views = back_propagation.backward_views[layer];
     auto& gradient_views = back_propagation.gradient_views[layer];
 
-    const TensorView& query_input = forward_views[Input][0];
-    const TensorView& source_input = (forward_views[Input].size() == 1)
-                                         ? query_input
-                                         : forward_views[Input][1];
-    const bool self_attention = (forward_views[Input].size() == 1);
+    const TensorView& query_input = get_query_input(forward_views);
+    const TensorView& source_input = get_source_input(forward_views);
+    const bool self_attention = is_self_attention(forward_views);
 
     TensorView& output_gradient = backward_views[OutputGradient][0];
 

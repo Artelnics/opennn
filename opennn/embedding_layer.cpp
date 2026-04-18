@@ -190,7 +190,6 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
             forward_views[Input][0].data,
             backward_views[OutputGradient][0].data,
             gradient_views[Weight].data,
-            sequence_length,
             embedding_dimension,
             vocabulary_size,
             scale_embedding);

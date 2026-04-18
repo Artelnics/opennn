@@ -348,6 +348,27 @@ struct TensorView
         return MatrixMap(data + batch_index * rows * cols, rows, cols);
     }
 
+    // Whole-tensor matrix view: all dims except the last are flattened into rows.
+    // For shape {d0, d1, ..., dk, C} returns (d0*d1*...*dk, C).
+    MatrixMap as_flat_matrix() const
+    {
+        assert(data && shape.rank() >= 1);
+        const Index cols = shape[shape.rank() - 1];
+        return MatrixMap(data, shape.size() / cols, cols);
+    }
+
+    // Per-outer-batch matrix view: the outermost dim is the batch index, all intermediate dims are flattened into rows,
+    // and the innermost dim becomes cols. For shape {B, d1, ..., dk, C} returns (d1*...*dk, C) at batch_index.
+    MatrixMap as_flat_matrix(Index batch_index) const
+    {
+        assert(data && shape.rank() >= 2);
+        const Index cols = shape[shape.rank() - 1];
+        Index rows = 1;
+        for (size_t i = 1; i + 1 < shape.rank(); ++i)
+            rows *= shape[i];
+        return MatrixMap(data + batch_index * rows * cols, rows, cols);
+    }
+
     VectorMap as_vector() const
     {
         assert(data);
@@ -379,7 +400,7 @@ struct TensorView
 
     float* device = nullptr;
 
-    shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
+    mutable shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
 
     TensorView(float* new_data, std::shared_ptr<cudnnTensorStruct> handle)
         : data(new_data), descriptor_handle(handle) {}
@@ -390,12 +411,15 @@ struct TensorView
         set_descriptor(new_shape);
     }
 
+    // Lazily creates the cuDNN descriptor from `shape` on first call.
     cudnnTensorDescriptor_t get_descriptor() const
     {
+        if (!descriptor_handle && !shape.empty())
+            set_descriptor(shape);
         return descriptor_handle ? descriptor_handle.get() : nullptr;
     }
 
-    void set_descriptor(const Shape& desc_shape)
+    void set_descriptor(const Shape& desc_shape) const
     {
         int n = 1, c = 1, h = 1, w = 1;
         if (desc_shape.rank() == 4) {
@@ -927,10 +951,10 @@ public:
         auto& self = instance();
         if(n > self.ones_size)
         {
-            if(self.ones_device) cudaFree(self.ones_device);
-            cudaMalloc(&self.ones_device, n * sizeof(float));
+            if(self.ones_device) CHECK_CUDA(cudaFree(self.ones_device));
+            CHECK_CUDA(cudaMalloc(&self.ones_device, n * sizeof(float)));
             vector<float> h(n, 1.0f);
-            cudaMemcpy(self.ones_device, h.data(), n * sizeof(float), cudaMemcpyHostToDevice);
+            CHECK_CUDA(cudaMemcpy(self.ones_device, h.data(), n * sizeof(float), cudaMemcpyHostToDevice));
             self.ones_size = n;
         }
         return self.ones_device;

@@ -41,136 +41,95 @@ typedef float type;
 // ADAM
 
 __global__ void adam_update_kernel(const int, float*, float*, float*, const float*, const float, const float, const float, const float, const float, const float);
-void adam_update_device(const size_t, float*, float*, float*, const float*, const float, const float, const float, const float, const float, const float);
+void adam_update_cuda(const Index, float*, float*, float*, const float*, const float, const float, const float, const float, const float, const float);
 
 // SGD
 
 __global__ void sgd_update_kernel(const int, float*, float*, const float*, const float, const float, const bool);
-void sgd_update_device(const size_t, float*, float*, const float*, const float, const float, const bool);
+void sgd_update_cuda(const Index, float*, float*, const float*, const float, const float, const bool);
 
  // Errors
 
- __global__ void calculate_binary_cross_entropy_kernel(const int, type*, const type*, const type*, const type);
- void calculate_binary_cross_entropy_cuda(const size_t&, type*, const type*, const type*, const type);
+ __global__ void binary_cross_entropy_kernel(const int, type*, const type*, const type*, const type);
+ void binary_cross_entropy_cuda(const Index, type*, const type*, const type*, const type);
 
- __global__ void calculate_binary_cross_entropy_delta_kernel(const int, type*, const type*, const type*, const type, const type);
- void calculate_binary_cross_entropy_delta_cuda(const size_t&, type*, const type*, const type*, const type, const type);
+ __global__ void binary_cross_entropy_gradient_kernel(const int, type*, const type*, const type*, const type, const type);
+ void binary_cross_entropy_gradient_cuda(const Index, type*, const type*, const type*, const type, const type);
 
- __global__ void calculate_multiple_cross_entropy_kernel(const int, type*, const type*, const type*, const type);
- void calculate_multiple_cross_entropy_cuda(const size_t&, type*, const type*, const type*, const type);
+ __global__ void multiple_cross_entropy_kernel(const int, type*, const type*, const type*, const type);
+ void multiple_cross_entropy_cuda(const Index, type*, const type*, const type*, const type);
 
- __global__ void calculate_multiple_cross_entropy_delta_kernel(const int, type*, const type*, const type*, const type);
- void calculate_multiple_cross_entropy_delta_cuda(const size_t&, type*, const type*, const type*, const type);
+ __global__ void multiple_cross_entropy_gradient_kernel(const int, type*, const type*, const type*, const type);
+ void multiple_cross_entropy_gradient_cuda(const Index, type*, const type*, const type*, const type);
 
- __global__ void calculate_weighted_squared_error_kernel(const int, type*, const type*, const type*, const type, const type);
- void calculate_weighted_squared_error_cuda(const size_t&, type*, const type*, const type*, const type, const type);
+ __global__ void weighted_squared_error_kernel(const int, type*, const type*, const type*, const type, const type);
+ void weighted_squared_error_cuda(const Index, type*, const type*, const type*, const type, const type);
 
- __global__ void calculate_weighted_squared_error_delta_kernel(const int, type*, const type*, const type*, const type, const type, const type);
- void calculate_weighted_squared_error_delta_cuda(const size_t&, type*, const type*, const type*, const type, const type, const type);
+ __global__ void weighted_squared_error_gradient_kernel(const int, type*, const type*, const type*, const type, const type, const type);
+ void weighted_squared_error_gradient_cuda(const Index, type*, const type*, const type*, const type, const type, const type);
 
  __global__ void cross_entropy_3d_multiple_forward_kernel(const int, const int, const float*, const float*, float*, const float);
- void cross_entropy_3d_multiple_forward_cuda(const size_t, const int, const int, const int, const float*, const float*, float*, const float);
+ void cross_entropy_3d_multiple_forward_cuda(const Index, const int, const float*, const float*, float*, const float);
 
  __global__ void cross_entropy_3d_multiple_backward_kernel(const int, const int, const float*, const float*, float*, const float);
- void cross_entropy_3d_multiple_backward_cuda(const size_t, const int, const int, const int, const float*, const float*, float*, const float);
-
- void cross_entropy_3d_multiple_counts_cuda(const size_t, const int, const float*, const float*, float*);
-
- __global__ void cross_entropy_3d_binary_forward_kernel(const int, const float*, const float*, float*, const float);
- void cross_entropy_3d_binary_forward_cuda(const size_t, const int, const int, const float*, const float*, float*, const float);
-
- __global__ void cross_entropy_3d_binary_backward_kernel(const int, const float*, const float*, float*, const float);
- void cross_entropy_3d_binary_backward_cuda(const size_t, const int, const int, const float*, const float*, float*, const float);
+ void cross_entropy_3d_multiple_backward_cuda(const Index, const int, const float*, const float*, float*, const float);
 
  // Regularization
 
- __global__ void apply_l1_gradient_kernel(const int, float*, const float*, const float);
- void apply_l1_gradient_cuda(const size_t, float*, const float*, const float);
-
- __global__ void apply_elastic_net_gradient_kernel(const int, float*, const float*, const float, const float);
- void apply_elastic_net_gradient_cuda(const size_t, float*, const float*, const float, const float);
+ __global__ void l1_gradient_kernel(const int, float*, const float*, const float);
+ void l1_gradient_cuda(const Index, float*, const float*, const float);
 
  // Addition
 
- void addition_cuda(const size_t, const float*, const float*, float*);
+ void addition_cuda(const Index, const float*, const float*, float*);
  __global__ void addition_kernel(const int, const float*, const float*, float*);
-
- // Scaling
-
- enum CudaScaler {
-     CudaScalerNone = 0,
-     CudaScalerMinimumMaximum,
-     CudaScalerMeanStandardDeviation,
-     CudaScalerStandardDeviation,
-     CudaScalerLogarithm,
-     CudaScalerImageMinMax
- };
-
- __global__ void scale_2d_kernel(const int n, const int batch_size, const int outputs_number,
-                                 const float* inputs_device, float* outputs_device,
-                                 const int* scalers_device,
-                                 const float* minimums_device, const float* maximums_device,
-                                 const float* means_device, const float* std_devs_device,
-                                 const float min_range, const float max_range);
-
- void scale_2d_cuda(const size_t n, const int batch_size, const int outputs_number,
-                    const float* inputs_device, float* outputs_device,
-                    const int* scalers_device,
-                    const float* minimums_device, const float* maximums_device,
-                    const float* means_device, const float* std_devs_device,
-                    const float min_range, const float max_range);
 
  // Embedding
 
  __global__ void embedding_forward_kernel(const int n, const float* inputs, const float* weights, const float* positional_encoding, float* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding);
- void embedding_forward_cuda(const size_t n, const float* inputs, const float* weights, const float* positional_encoding, float* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding);
+ void embedding_forward_cuda(const Index n, const float* inputs, const float* weights, const float* positional_encoding, float* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding);
 
- __global__ void embedding_backward_kernel(const int n, const float* inputs, const float* output_gradients, float* weight_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding);
- void embedding_backward_cuda(const size_t n, const float* inputs, const float* output_gradients, float* weight_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding);
+ __global__ void embedding_backward_kernel(const int n, const float* inputs, const float* output_gradients, float* weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding);
+ void embedding_backward_cuda(const Index n, const float* inputs, const float* output_gradients, float* weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding);
 
  // MultiHead Attention
 
- __global__ void mha_transpose_qkv_kernel(const int n, const float* in, float* out, const int S, const int H, const int D);
- void mha_transpose_qkv_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D);
+ __global__ void split_heads_kernel(const int n, const float* in, float* out, const int S, const int H, const int D);
+ void split_heads_cuda(const Index n, const float* in, float* out, const int S, const int H, const int D);
 
- __global__ void mha_transpose_o_kernel(const int n, const float* in, float* out, const int S, const int H, const int D);
- void mha_transpose_o_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D);
+ __global__ void merge_heads_kernel(const int n, const float* in, float* out, const int S, const int H, const int D);
+ void merge_heads_cuda(const Index n, const float* in, float* out, const int S, const int H, const int D);
 
- __global__ void mha_key_padding_mask_kernel(const int n, const float* source_input, float* attention_weights, const int H, const int Sq, const int Sk, const int E);
- void mha_key_padding_mask_cuda(const size_t n, const float* source_input, float* attention_weights, const int H, const int Sq, const int Sk, const int E);
-
- __global__ void mha_causal_mask_kernel(const int n, float* scores, const int seq_q, const int seq_k);
- void mha_causal_mask_cuda(const size_t n, float* scores, const int seq_q, const int seq_k);
-
- void mha_fused_masks_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
+ void attention_masks_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
                            const int source_sequence_length, const int embedding_dimension,
                            const float* source_input, float* attention_weights, float* padding_mask,
                            const bool use_causal_mask);
 
  // Element-wise addition
  
- void addition_cuda(const size_t n, const float* input1, const float* input2, float* output);
+ void addition_cuda(const Index n, const float* input1, const float* input2, float* output);
 
  // Pooling 3D
 
- __global__ void pooling3d_max_forward_kernel(const int n, const float* in, float* out, float* indices, const int B, const int S, const int F);
- void pooling3d_max_forward_cuda(const size_t n, const float* in, float* out, float* indices, const int B, const int S, const int F);
+ __global__ void max_pooling_3d_forward_kernel(const int n, const float* in, float* out, float* indices, const int S, const int F);
+ void max_pooling_3d_forward_cuda(const Index n, const float* in, float* out, float* indices, const int S, const int F);
 
- __global__ void pooling3d_max_backward_kernel(const int n, const float* delta, float* in_grad, const float* indices, const int B, const int S, const int F);
- void pooling3d_max_backward_cuda(const size_t n, const float* delta, float* in_grad, const float* indices, const int B, const int S, const int F);
+ __global__ void max_pooling_3d_backward_kernel(const int n, const float* delta, float* in_grad, const float* indices, const int S, const int F);
+ void max_pooling_3d_backward_cuda(const Index n, const float* delta, float* in_grad, const float* indices, const int S, const int F);
 
- __global__ void pooling3d_avg_forward_kernel(const int n, const float* in, float* out, const int B, const int S, const int F);
- void pooling3d_avg_forward_cuda(const size_t n, const float* in, float* out, const int B, const int S, const int F);
+ __global__ void average_pooling_3d_forward_kernel(const int n, const float* in, float* out, const int S, const int F);
+ void average_pooling_3d_forward_cuda(const Index n, const float* in, float* out, const int S, const int F);
 
- __global__ void pooling3d_avg_backward_kernel(const int n, const float* in, const float* delta, float* in_grad, const int B, const int S, const int F);
- void pooling3d_avg_backward_cuda(const size_t n, const float* in, const float* delta, float* in_grad, const int B, const int S, const int F);
+ __global__ void average_pooling_3d_backward_kernel(const int n, const float* in, const float* delta, float* in_grad, const int S, const int F);
+ void average_pooling_3d_backward_cuda(const Index n, const float* in, const float* delta, float* in_grad, const int S, const int F);
 
  // Normalization Layer
 
  __global__ void layernorm_forward_kernel(const int N, const int D, const float* X, float* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps);
  void layernorm_forward_cuda(const int N, const int D, const float* X, float* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps);
 
- __global__ void layernorm_backward_kernel(const int N, const int D, const float* dY, const float* X, const float* means, const float* inv_vars, const float* gamma, float* dX, float* dGamma, float* dBeta);
+ __global__ void layernorm_backward_kernel(const int N, const int D, const float* dY, const float* X, const float* means, const float* inv_vars, const float* gamma, float* dX);
+ __global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, const float* dY, const float* X, const float* means, const float* inv_vars, float* dGamma, float* dBeta);
  void layernorm_backward_cuda(const int N, const int D, const float* dY, const float* X, const float* means, const float* inv_vars, const float* gamma, float* dX, float* dGamma, float* dBeta);
 
 #endif // KERNEL_CUH

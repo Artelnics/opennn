@@ -115,15 +115,30 @@ private:
                    QueryGradient, KeyGradient, ValueGradient,
                    SoftmaxGradient, QueryInputGradientScratch, SourceInputGradientScratch};
 
+    // True when the layer is invoked with a single input (query == source).
+    static bool is_self_attention(const vector<vector<TensorView>>& forward_views)
+    {
+        return forward_views[Input].size() == 1;
+    }
+
+    // Query input for the attention (first input).
+    static const TensorView& get_query_input(const vector<vector<TensorView>>& forward_views)
+    {
+        return forward_views[Input][0];
+    }
+
+    // Source input for the attention: the second input when cross-attention, otherwise the (only) query input.
+    static const TensorView& get_source_input(const vector<vector<TensorView>>& forward_views)
+    {
+        return is_self_attention(forward_views) ? forward_views[Input][0] : forward_views[Input][1];
+    }
+
     bool use_causal_mask = false;
 
     MatrixR causal_mask;
     MatrixB key_mask; // Starting to implement (should be used before softmax so that the probability of the padding is zero)
 
     type dropout_rate = type(0);
-
-    static constexpr type padding_threshold = type(1e-7f);
-    static constexpr type mask_value = type(-1e9f);
 };
 
 } 
