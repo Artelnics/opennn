@@ -26,7 +26,12 @@ struct BackPropagation
 {
     BackPropagation(const Index = 0, Loss* = nullptr);
 
-    virtual ~BackPropagation() = default;
+    virtual ~BackPropagation()
+    {
+#ifdef OPENNN_WITH_CUDA
+        if(errors_device) { cudaFree(errors_device); errors_device = nullptr; }
+#endif
+    }
 
     void set(const Index = 0, Loss* = nullptr);
 
@@ -51,6 +56,16 @@ struct BackPropagation
     vector<vector<TensorView>> get_layer_gradients() const;
 
     TensorView get_output_gradients() const;
+
+    // Returns the output-gradient view for the currently active device.
+    TensorView get_output_gradients_active() const
+    {
+#ifdef OPENNN_WITH_CUDA
+        return Device::instance().is_gpu() ? get_output_gradients_device() : get_output_gradients();
+#else
+        return get_output_gradients();
+#endif
+    }
 
     void print() const;
 
@@ -80,8 +95,6 @@ struct BackPropagation
     TensorView output_gradients_view_device;
 
     const TensorView& get_output_gradients_device() const;
-
-    void free_cuda();
 
 #endif
 };

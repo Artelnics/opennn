@@ -224,22 +224,6 @@ void Batch::fill_host(const vector<Index>& sample_indices,
     dataset->fill_targets(sample_indices, target_indices, targets_host, false);
 }
 
-void Batch::copy_device(const Index current_batch_size)
-{
-    const Index input_size = current_batch_size * num_input_features;
-    const Index target_size = current_batch_size * num_target_features;
-
-    CHECK_CUDA(cudaMemcpy(input.device(), inputs_host, input_size * sizeof(float), cudaMemcpyHostToDevice));
-
-    if(!decoder_shape.empty())
-    {
-        const Index decoder_size = current_batch_size * num_decoder_features;
-        CHECK_CUDA(cudaMemcpy(decoder.device(), decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice));
-    }
-
-    CHECK_CUDA(cudaMemcpy(target.device(), targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice));
-}
-
 void Batch::copy_device_async(const Index current_batch_size, cudaStream_t stream)
 {
     const Index input_size = current_batch_size * num_input_features;

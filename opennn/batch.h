@@ -31,6 +31,16 @@ struct Batch
 
     TensorView get_targets() const;
 
+    // Returns the target view for the currently active device (GPU if enabled, else host).
+    TensorView get_targets_active() const
+    {
+#ifdef OPENNN_WITH_CUDA
+        return Device::instance().is_gpu() ? get_targets_device() : get_targets();
+#else
+        return get_targets();
+#endif
+    }
+
     Index get_samples_number() const;
 
     void print() const;
@@ -61,7 +71,6 @@ struct Batch
                    const vector<Index>&,
                    const vector<Index>&);
 
-    void copy_device(const Index);
     void copy_device_async(const Index, cudaStream_t);
 
     const vector<TensorView>& get_inputs_device() const;

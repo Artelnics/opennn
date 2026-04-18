@@ -1224,8 +1224,8 @@ VectorR median(const MatrixR& matrix, const VectorI& column_indices)
         sort(valid_values.data(), valid_values.data() + n);
 
         medians(j) = (n % 2 == 0)
-                         ? (valid_values(n / 2 - 1) + valid_values(n / 2)) / 2.0f
-                         : valid_values(n / 2);
+            ? (valid_values(n / 2 - 1) + valid_values(n / 2)) / 2.0f
+            : valid_values(n / 2);
     }
 
     return medians;
@@ -1239,14 +1239,14 @@ VectorR median(const MatrixR& matrix,
     const Index column_indices_size = column_indices.size();
 
     VectorR medians(column_indices_size);
-/*
+
     for(Index j = 0; j < column_indices_size; ++j)
     {
         const Index column_index = column_indices[j];
-        Index n = 0;
 
+        Index n = 0;
         for(Index k = 0; k < row_indices_size; ++k)
-            if(isfinite(matrix(row_indices, column_index)))
+            if(isfinite(matrix(row_indices[k], column_index)))
                 ++n;
 
         if (n == 0)
@@ -1258,9 +1258,12 @@ VectorR median(const MatrixR& matrix,
         VectorR valid_values(n);
         Index idx = 0;
 
-        for(Index row_index = 0; row_index < row_indices_size; ++row_index)
-            if(isfinite(matrix(row_indices, column_index)))
-                valid_values(idx++) = matrix(row_index, column_index);
+        for(Index k = 0; k < row_indices_size; ++k)
+        {
+            const type value = matrix(row_indices[k], column_index);
+            if(isfinite(value))
+                valid_values(idx++) = value;
+        }
 
         sort(valid_values.data(), valid_values.data() + n);
 
@@ -1268,7 +1271,7 @@ VectorR median(const MatrixR& matrix,
             ? (valid_values(n / 2 - 1) + valid_values(n / 2)) / 2.0f
             : valid_values(n / 2);
     }
-*/
+
     return medians;
 }
 
@@ -1307,12 +1310,6 @@ VectorI minimal_indices(const VectorR& data, Index k)
                      return data(i) < data(j);
                  });
 
-    sort(indices.begin(), indices.begin() + k,
-         [&data](Index i, Index j) {
-             if (data(i) == data(j)) return i < j;
-             return data(i) < data(j);
-         });
-
     return Map<VectorI>(indices.data(), k);
 }
 
@@ -1328,12 +1325,6 @@ VectorI maximal_indices(const VectorR& data, Index k)
                      if (data(i) == data(j)) return i < j;
                      return data(i) > data(j);
                  });
-
-    sort(indices.begin(), indices.begin() + k,
-         [&data](Index i, Index j) {
-             if (data(i) == data(j)) return i < j;
-             return data(i) > data(j);
-         });
 
     return Map<VectorI>(indices.data(), k);
 }

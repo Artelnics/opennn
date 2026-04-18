@@ -332,6 +332,7 @@ void BackPropagation::allocate_device()
         }
     }
 
+    if(errors_device) { cudaFree(errors_device); errors_device = nullptr; }
     CHECK_CUDA(cudaMalloc(&errors_device, batch_size * outputs_number * sizeof(float)));
 
     output_gradients_view_device = TensorView(output_gradients.device(), output_gradient_dimensions);
@@ -344,11 +345,6 @@ void BackPropagation::allocate_device()
 const TensorView& BackPropagation::get_output_gradients_device() const
 {
     return output_gradients_view_device;
-}
-
-void BackPropagation::free_cuda()
-{
-    if(errors_device) { CHECK_CUDA(cudaFree(errors_device)); errors_device = nullptr; }
 }
 
 #endif
