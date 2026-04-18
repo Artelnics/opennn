@@ -456,15 +456,20 @@ Device::Device()
     set_threads_number(max_threads);
 
 #ifdef OPENNN_WITH_CUDA
+    CHECK_CUDA(cudaStreamCreate(&compute_stream));
+
     CHECK_CUBLAS(cublasCreate(&cublas_handle));
     CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
+    CHECK_CUBLAS(cublasSetStream(cublas_handle, compute_stream));
+    CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
     CHECK_CUDNN(cudnnCreate(&cudnn_handle));
+    CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
 
     CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
-    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
+    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor, CUDNN_OP_TENSOR_ADD, CUDNN_IO_DTYPE, CUDNN_NOT_PROPAGATE_NAN));
 
     CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_multiplication_descriptor));
-    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_multiplication_descriptor, CUDNN_OP_TENSOR_MUL, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
+    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_multiplication_descriptor, CUDNN_OP_TENSOR_MUL, CUDNN_IO_DTYPE, CUDNN_NOT_PROPAGATE_NAN));
 #endif
 }
 
@@ -475,8 +480,10 @@ Device::~Device()
     if (reduction_workspace) cudaFree(reduction_workspace);
     if (operator_sum_descriptor) cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
     if (operator_multiplication_descriptor) cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
+    if (cublas_lt_handle) cublasLtDestroy(cublas_lt_handle);
     if (cublas_handle) cublasDestroy(cublas_handle);
     if (cudnn_handle) cudnnDestroy(cudnn_handle);
+    if (compute_stream) cudaStreamDestroy(compute_stream);
 #endif
 }
 
@@ -542,7 +549,7 @@ cudnnReduceTensorDescriptor_t Device::get_reduce_add_descriptor()
         cudnnCreateReduceTensorDescriptor(&d.reduce_add_descriptor);
         cudnnSetReduceTensorDescriptor(d.reduce_add_descriptor,
                                        CUDNN_REDUCE_TENSOR_ADD,
-                                       CUDNN_DATA_FLOAT,
+                                       CUDNN_IO_DTYPE,
                                        CUDNN_NOT_PROPAGATE_NAN,
                                        CUDNN_REDUCE_TENSOR_NO_INDICES,
                                        CUDNN_32BIT_INDICES);

@@ -58,6 +58,7 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 #include <cublasXt.h>
+#include <cublasLt.h>
 #include <curand.h>
 #include <cudnn.h>
 #include <nvtx3/nvToolsExt.h>
@@ -86,8 +87,14 @@ constexpr type EPSILON = numeric_limits<type>::epsilon();
 constexpr type MAX = numeric_limits<type>::max();
 constexpr type NEG_INFINITY = -numeric_limits<type>::infinity();
 constexpr type QUIET_NAN = numeric_limits<type>::quiet_NaN();
-// Large negative finite value for masking softmax inputs. Not -inf because 0 * -inf = NaN in softmax scaling.
 constexpr type SOFTMAX_MASK_VALUE = type(-1e9f);
+
+#ifdef OPENNN_WITH_CUDA
+// Centralized GPU I/O and compute dtypes. Switch here to move the codebase to BF16 / FP16.
+constexpr cudnnDataType_t CUDNN_IO_DTYPE = CUDNN_DATA_FLOAT;
+constexpr cudaDataType_t CUDA_IO_DTYPE = CUDA_R_32F;
+constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE = CUBLAS_COMPUTE_32F_FAST_16BF;
+#endif
 
 template <typename Enum>
 struct EnumMap

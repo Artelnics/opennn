@@ -297,7 +297,7 @@ public:
 
             const Index output_size = get_outputs_number();
 
-            cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
+            cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_IO_DTYPE,
                                        static_cast<int>(batch_size),
                                        static_cast<int>(output_size),
                                        static_cast<int>(sequence_length),

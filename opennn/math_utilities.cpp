@@ -130,24 +130,20 @@ void multiply(const TensorView& input_a, bool transpose_a,
         const long long stride_output = output.shape[rank - 2] * output.shape[rank - 1];
 
         if(batch_count == 1)
-            CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(),
-                                     operation_b, operation_a,
-                                     output_columns, output_rows, inner_dimension,
-                                     &alpha,
-                                     input_b.data, leading_dimension_b,
-                                     input_a.data, leading_dimension_a,
-                                     &beta,
-                                     output.data, leading_dimension_output));
+            gemm_cuda(operation_b, operation_a,
+                      output_columns, output_rows, inner_dimension,
+                      input_b.data, leading_dimension_b,
+                      input_a.data, leading_dimension_a,
+                      output.data, leading_dimension_output,
+                      alpha, beta);
         else
-            CHECK_CUBLAS(cublasSgemmStridedBatched(Device::get_cublas_handle(),
-                                                   operation_b, operation_a,
-                                                   output_columns, output_rows, inner_dimension,
-                                                   &alpha,
-                                                   input_b.data, leading_dimension_b, stride_b,
-                                                   input_a.data, leading_dimension_a, stride_a,
-                                                   &beta,
-                                                   output.data, leading_dimension_output, stride_output,
-                                                   batch_count));
+            gemm_strided_batched_cuda(operation_b, operation_a,
+                                      output_columns, output_rows, inner_dimension,
+                                      input_b.data, leading_dimension_b, stride_b,
+                                      input_a.data, leading_dimension_a, stride_a,
+                                      output.data, leading_dimension_output, stride_output,
+                                      batch_count,
+                                      alpha, beta);
         return;
     }
 #endif
@@ -209,14 +205,12 @@ void sum(const TensorView& input, TensorView& output, type alpha, type beta)
         const int total_rows = to_int(input.shape[0]);
         const int total_columns = to_int(input.shape.size() / input.shape[0]);
 
-        CHECK_CUBLAS(cublasSgemv(Device::get_cublas_handle(),
-                                 CUBLAS_OP_N,
-                                 total_columns, total_rows,
-                                 &alpha,
-                                 input.data, total_columns,
-                                 Device::get_ones(total_rows), 1,
-                                 &beta,
-                                 output.data, 1));
+        gemv_cuda(CUBLAS_OP_N,
+                  total_columns, total_rows,
+                  input.data, total_columns,
+                  Device::get_ones(total_rows), 1,
+                  output.data, 1,
+                  alpha, beta);
         return;
     }
 #endif
@@ -266,16 +260,11 @@ void combination(const TensorView& input,
 
     if (Device::instance().is_gpu())
     {
-        CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(),
-                                 CUBLAS_OP_N, CUBLAS_OP_N,
-                                 to_int(output_columns),
-                                 to_int(total_rows),
-                                 to_int(input_columns),
-                                 &one,
-                                 weights.data, to_int(output_columns),
-                                 input.data, to_int(input_columns),
-                                 &zero,
-                                 output.data, to_int(output_columns)));
+        gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                  to_int(output_columns), to_int(total_rows), to_int(input_columns),
+                  weights.data, to_int(output_columns),
+                  input.data, to_int(input_columns),
+                  output.data, to_int(output_columns));
 
         CHECK_CUDNN(cudnnAddTensor(Device::get_cudnn_handle(),
                                    &one,
@@ -1683,27 +1672,21 @@ void multihead_attention_backward(
 
         // value_gradient = attention_weights^T * concat_gradient (transposed)
 
-        CHECK_CUBLAS(cublasSgemmStridedBatched(Device::get_cublas_handle(),
-            CUBLAS_OP_N, CUBLAS_OP_T,
+        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             head_dim_int, source_length_int, query_length_int,
-            &one,
             scratch, head_dim_int, query_length_int * head_dim_int,
             attention_weights.data, source_length_int, query_length_int * source_length_int,
-            &zero,
             value_grad.data, head_dim_int, source_length_int * head_dim_int,
-            total_heads_int));
+            total_heads_int);
 
         // attention_weight_gradient = concat_gradient * V^T
 
-        CHECK_CUBLAS(cublasSgemmStridedBatched(Device::get_cublas_handle(),
-            CUBLAS_OP_T, CUBLAS_OP_N,
+        gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
             source_length_int, query_length_int, head_dim_int,
-            &one,
             value.data, head_dim_int, source_length_int * head_dim_int,
             scratch, head_dim_int, query_length_int * head_dim_int,
-            &zero,
             att_weight_grad.data, source_length_int, query_length_int * source_length_int,
-            total_heads_int));
+            total_heads_int);
 
         // Softmax backward
 
@@ -1719,27 +1702,23 @@ void multihead_attention_backward(
 
         // query_gradient = softmax_gradient * K^T * scaling_factor
 
-        CHECK_CUBLAS(cublasSgemmStridedBatched(Device::get_cublas_handle(),
-            CUBLAS_OP_N, CUBLAS_OP_N,
+        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             head_dim_int, query_length_int, source_length_int,
-            &scaling_factor_float,
             key.data, head_dim_int, source_length_int * head_dim_int,
             args.softmax_gradient, source_length_int, query_length_int * source_length_int,
-            &zero,
             query_grad.data, head_dim_int, query_length_int * head_dim_int,
-            total_heads_int));
+            total_heads_int,
+            scaling_factor_float);
 
         // key_gradient = softmax_gradient^T * Q * scaling_factor
 
-        CHECK_CUBLAS(cublasSgemmStridedBatched(Device::get_cublas_handle(),
-            CUBLAS_OP_N, CUBLAS_OP_T,
+        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             head_dim_int, source_length_int, query_length_int,
-            &scaling_factor_float,
             query.data, head_dim_int, query_length_int * head_dim_int,
             args.softmax_gradient, source_length_int, query_length_int * source_length_int,
-            &zero,
             key_grad.data, head_dim_int, source_length_int * head_dim_int,
-            total_heads_int));
+            total_heads_int,
+            scaling_factor_float);
 
         // Transpose query/key/value gradients from [B, H, S, D] to [B, S, H, D]
 
@@ -1752,40 +1731,59 @@ void multihead_attention_backward(
 
         // Query weight/bias/input gradients
 
-        CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_T,
-            embedding_int, embedding_int, batch_int * query_length_int, &one, q_grad_flat, embedding_int, query_input.data, embedding_int, &zero, query_weight_grad.data, embedding_int));
+        gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
+            embedding_int, embedding_int, batch_int * query_length_int,
+            q_grad_flat, embedding_int, query_input.data, embedding_int,
+            query_weight_grad.data, embedding_int);
 
-        CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N,
-            embedding_int, 1, batch_int * query_length_int, &one, q_grad_flat, embedding_int, Device::get_ones(batch_int * query_length_int), batch_int * query_length_int, &zero, query_bias_grad.data, embedding_int));
+        gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+            embedding_int, 1, batch_int * query_length_int,
+            q_grad_flat, embedding_int, Device::get_ones(batch_int * query_length_int), batch_int * query_length_int,
+            query_bias_grad.data, embedding_int);
 
-        CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_T, CUBLAS_OP_N,
-            embedding_int, batch_int * query_length_int, embedding_int, &one, query_weights.data, embedding_int, q_grad_flat, embedding_int, &zero, input_query_grad.data, embedding_int));
+        gemm_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
+            embedding_int, batch_int * query_length_int, embedding_int,
+            query_weights.data, embedding_int, q_grad_flat, embedding_int,
+            input_query_grad.data, embedding_int);
 
         if(self_attention)
         {
             // Key weight/bias/source gradients
 
-            CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_T,
-                embedding_int, embedding_int, batch_int * source_length_int, &one, k_grad_flat, embedding_int, source_input.data, embedding_int, &zero, key_weight_grad.data, embedding_int));
+            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
+                embedding_int, embedding_int, batch_int * source_length_int,
+                k_grad_flat, embedding_int, source_input.data, embedding_int,
+                key_weight_grad.data, embedding_int);
 
-            CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N,
-                embedding_int, 1, batch_int * source_length_int, &one, k_grad_flat, embedding_int, Device::get_ones(batch_int * source_length_int), batch_int * source_length_int, &zero, key_bias_grad.data, embedding_int));
+            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                embedding_int, 1, batch_int * source_length_int,
+                k_grad_flat, embedding_int, Device::get_ones(batch_int * source_length_int), batch_int * source_length_int,
+                key_bias_grad.data, embedding_int);
 
-            CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_T, CUBLAS_OP_N,
-                embedding_int, batch_int * source_length_int, embedding_int, &one, key_weights.data, embedding_int, k_grad_flat, embedding_int, &zero, src_grad_flat, embedding_int));
+            gemm_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
+                embedding_int, batch_int * source_length_int, embedding_int,
+                key_weights.data, embedding_int, k_grad_flat, embedding_int,
+                src_grad_flat, embedding_int);
 
             // Value weight/bias/source gradients (accumulate on src_grad_flat)
 
             merge_heads_cuda(batch_int * source_length_int * embedding_int, value_grad.data, k_grad_flat, source_length_int, heads_int, head_dim_int);
 
-            CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_T,
-                embedding_int, embedding_int, batch_int * source_length_int, &one, k_grad_flat, embedding_int, source_input.data, embedding_int, &zero, value_weight_grad.data, embedding_int));
+            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
+                embedding_int, embedding_int, batch_int * source_length_int,
+                k_grad_flat, embedding_int, source_input.data, embedding_int,
+                value_weight_grad.data, embedding_int);
 
-            CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N,
-                embedding_int, 1, batch_int * source_length_int, &one, k_grad_flat, embedding_int, Device::get_ones(batch_int * source_length_int), batch_int * source_length_int, &zero, value_bias_grad.data, embedding_int));
+            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                embedding_int, 1, batch_int * source_length_int,
+                k_grad_flat, embedding_int, Device::get_ones(batch_int * source_length_int), batch_int * source_length_int,
+                value_bias_grad.data, embedding_int);
 
-            CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_T, CUBLAS_OP_N,
-                embedding_int, batch_int * source_length_int, embedding_int, &one, value_weights.data, embedding_int, k_grad_flat, embedding_int, &one, src_grad_flat, embedding_int));
+            gemm_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
+                embedding_int, batch_int * source_length_int, embedding_int,
+                value_weights.data, embedding_int, k_grad_flat, embedding_int,
+                src_grad_flat, embedding_int,
+                1.0f, 1.0f);
 
             // input_query_grad = q_input_grad + src_grad
 
@@ -1795,25 +1793,38 @@ void multihead_attention_backward(
         {
             // Cross-attention: K/V gradients go to input_source_grad
 
-            CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_T,
-                embedding_int, embedding_int, batch_int * source_length_int, &one, k_grad_flat, embedding_int, source_input.data, embedding_int, &zero, key_weight_grad.data, embedding_int));
+            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
+                embedding_int, embedding_int, batch_int * source_length_int,
+                k_grad_flat, embedding_int, source_input.data, embedding_int,
+                key_weight_grad.data, embedding_int);
 
-            CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N,
-                embedding_int, 1, batch_int * source_length_int, &one, k_grad_flat, embedding_int, Device::get_ones(batch_int * source_length_int), batch_int * source_length_int, &zero, key_bias_grad.data, embedding_int));
+            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                embedding_int, 1, batch_int * source_length_int,
+                k_grad_flat, embedding_int, Device::get_ones(batch_int * source_length_int), batch_int * source_length_int,
+                key_bias_grad.data, embedding_int);
 
-            CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_T, CUBLAS_OP_N,
-                embedding_int, batch_int * source_length_int, embedding_int, &one, key_weights.data, embedding_int, k_grad_flat, embedding_int, &zero, input_source_grad.data, embedding_int));
+            gemm_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
+                embedding_int, batch_int * source_length_int, embedding_int,
+                key_weights.data, embedding_int, k_grad_flat, embedding_int,
+                input_source_grad.data, embedding_int);
 
             merge_heads_cuda(batch_int * source_length_int * embedding_int, value_grad.data, k_grad_flat, source_length_int, heads_int, head_dim_int);
 
-            CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_T,
-                embedding_int, embedding_int, batch_int * source_length_int, &one, k_grad_flat, embedding_int, source_input.data, embedding_int, &zero, value_weight_grad.data, embedding_int));
+            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
+                embedding_int, embedding_int, batch_int * source_length_int,
+                k_grad_flat, embedding_int, source_input.data, embedding_int,
+                value_weight_grad.data, embedding_int);
 
-            CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N,
-                embedding_int, 1, batch_int * source_length_int, &one, k_grad_flat, embedding_int, Device::get_ones(batch_int * source_length_int), batch_int * source_length_int, &zero, value_bias_grad.data, embedding_int));
+            gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                embedding_int, 1, batch_int * source_length_int,
+                k_grad_flat, embedding_int, Device::get_ones(batch_int * source_length_int), batch_int * source_length_int,
+                value_bias_grad.data, embedding_int);
 
-            CHECK_CUBLAS(cublasSgemm(Device::get_cublas_handle(), CUBLAS_OP_T, CUBLAS_OP_N,
-                embedding_int, batch_int * source_length_int, embedding_int, &one, value_weights.data, embedding_int, k_grad_flat, embedding_int, &one, input_source_grad.data, embedding_int));
+            gemm_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
+                embedding_int, batch_int * source_length_int, embedding_int,
+                value_weights.data, embedding_int, k_grad_flat, embedding_int,
+                input_source_grad.data, embedding_int,
+                1.0f, 1.0f);
         }
         return;
     }

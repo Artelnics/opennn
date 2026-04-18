@@ -90,7 +90,7 @@ void Convolutional::set(const Shape& new_input_shape,
     cudnnCreateFilterDescriptor(&kernel_descriptor);
 
     cudnnSetFilter4dDescriptor(kernel_descriptor,
-                               CUDNN_DATA_FLOAT,
+                               CUDNN_IO_DTYPE,
                                CUDNN_TENSOR_NHWC,
                                kernels_number,
                                kernel_channels,
@@ -104,7 +104,7 @@ void Convolutional::set(const Shape& new_input_shape,
                                     row_stride, column_stride,
                                     1, 1,
                                     CUDNN_CROSS_CORRELATION,
-                                    CUDNN_DATA_FLOAT);
+                                    CUDNN_IO_DTYPE);
 
     cudnnSetConvolutionMathType(convolution_descriptor, CUDNN_TENSOR_OP_MATH);
 
@@ -231,7 +231,7 @@ void Convolutional::init_cuda(Index batch_size)
     cudnnTensorDescriptor_t input_desc;
     cudnnCreateTensorDescriptor(&input_desc);
 
-    cudnnSetTensor4dDescriptor(input_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
+    cudnnSetTensor4dDescriptor(input_desc, CUDNN_TENSOR_NHWC, CUDNN_IO_DTYPE,
                                static_cast<int>(batch_size),
                                static_cast<int>(kernel_channels),
                                static_cast<int>(input_height),
@@ -240,7 +240,7 @@ void Convolutional::init_cuda(Index batch_size)
     cudnnTensorDescriptor_t output_desc;
     cudnnCreateTensorDescriptor(&output_desc);
 
-    cudnnSetTensor4dDescriptor(output_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
+    cudnnSetTensor4dDescriptor(output_desc, CUDNN_TENSOR_NHWC, CUDNN_IO_DTYPE,
                                static_cast<int>(batch_size),
                                static_cast<int>(kernels_number),
                                static_cast<int>(get_output_height()),

@@ -455,7 +455,7 @@ struct TensorView
             });
         }
 
-        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, n, c, h, w));
+        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, CUDNN_IO_DTYPE, n, c, h, w));
     }
 
     Index device_size() const
@@ -939,7 +939,9 @@ public:
 
 #ifdef OPENNN_WITH_CUDA
     static cublasHandle_t get_cublas_handle()                      { return instance().cublas_handle; }
+    static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
     static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn_handle; }
+    static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
     static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
     static cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor() { return instance().operator_multiplication_descriptor; }
     static cudnnReduceTensorDescriptor_t get_reduce_add_descriptor();
@@ -972,7 +974,9 @@ private:
 
 #ifdef OPENNN_WITH_CUDA
     cublasHandle_t cublas_handle = nullptr;
+    cublasLtHandle_t cublas_lt_handle = nullptr;
     cudnnHandle_t cudnn_handle = nullptr;
+    cudaStream_t compute_stream = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
     cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
     cudnnReduceTensorDescriptor_t reduce_add_descriptor = nullptr;
@@ -995,6 +999,65 @@ void set_threads_number(int num_threads);
 inline const float one = 1.0f;
 inline const float zero = 0.0f;
 inline const float minus_one = -1.0f;
+
+// GEMM wrappers: single entry point for all matrix multiplications.
+// Future BF16 / cublasLt / CUDA-Graph swaps live here, not at every call site.
+inline void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
+                      int m, int n, int k,
+                      const float* A, int lda,
+                      const float* B, int ldb,
+                      float* C, int ldc,
+                      float alpha = 1.0f, float beta = 0.0f)
+{
+    CHECK_CUBLAS(cublasGemmEx(Device::get_cublas_handle(),
+                              transa, transb,
+                              m, n, k,
+                              &alpha,
+                              A, CUDA_IO_DTYPE, lda,
+                              B, CUDA_IO_DTYPE, ldb,
+                              &beta,
+                              C, CUDA_IO_DTYPE, ldc,
+                              CUBLAS_COMPUTE_DTYPE,
+                              CUBLAS_GEMM_DEFAULT));
+}
+
+inline void gemv_cuda(cublasOperation_t transa,
+                      int m, int n,
+                      const float* A, int lda,
+                      const float* x, int incx,
+                      float* y, int incy,
+                      float alpha = 1.0f, float beta = 0.0f)
+{
+    CHECK_CUBLAS(cublasSgemv(Device::get_cublas_handle(),
+                             transa,
+                             m, n,
+                             &alpha,
+                             A, lda,
+                             x, incx,
+                             &beta,
+                             y, incy));
+}
+
+inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
+                                      int m, int n, int k,
+                                      const float* A, int lda, long long stride_a,
+                                      const float* B, int ldb, long long stride_b,
+                                      float* C, int ldc, long long stride_c,
+                                      int batch_count,
+                                      float alpha = 1.0f, float beta = 0.0f)
+{
+    CHECK_CUBLAS(cublasGemmStridedBatchedEx(Device::get_cublas_handle(),
+                                            transa, transb,
+                                            m, n, k,
+                                            &alpha,
+                                            A, CUDA_IO_DTYPE, lda, stride_a,
+                                            B, CUDA_IO_DTYPE, ldb, stride_b,
+                                            &beta,
+                                            C, CUDA_IO_DTYPE, ldc, stride_c,
+                                            batch_count,
+                                            CUBLAS_COMPUTE_DTYPE,
+                                            CUBLAS_GEMM_DEFAULT));
+}
 
 VectorR vector_from_device(const type*, size_t);
 MatrixR matrix_from_device(const type*, size_t, size_t);
