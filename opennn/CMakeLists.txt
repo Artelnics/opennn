@@ -48,7 +48,21 @@ if(OPENNN_WITH_CUDA)
     endif()
 endif()
 
-target_compile_options(opennn PRIVATE
-    $<$<CONFIG:DEBUG>:-O0 -g>
-    $<$<NOT:$<CONFIG:DEBUG>>:-O2>
-)
+# Optimization & SIMD. Without host-native ISA flags Eigen falls back to the x86-64
+# baseline (SSE2), costing 2-4x on matmul-heavy workloads. Mirrors opennn.pro.
+# Guarded to CXX so nvcc is unaffected — it forwards its own host flags separately.
+if(MSVC)
+    target_compile_options(opennn PRIVATE
+        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:/arch:AVX2>
+    )
+elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
+    target_compile_options(opennn PRIVATE
+        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:DEBUG>>:-O0 -g>
+        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:-O3 -mcpu=apple-m1>
+    )
+else()
+    target_compile_options(opennn PRIVATE
+        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:DEBUG>>:-O0 -g>
+        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:-O3 -march=native>
+    )
+endif()

@@ -1,7 +1,7 @@
 ﻿#include "kernel.cuh"
 #include <cuda_bf16.h>
 
-__global__ void adam_update_kernel(
+__global__ void adam_update_scalar_kernel(
     const int n,
     float* __restrict__ parameters,
     float* __restrict__ m,
@@ -28,6 +28,46 @@ __global__ void adam_update_kernel(
     }
 }
 
+__global__ void adam_update_vec_kernel(
+    const int n_vec,
+    float4* __restrict__ parameters,
+    float4* __restrict__ m,
+    float4* __restrict__ v,
+    const float4* __restrict__ gradients,
+    const float beta_1,
+    const float one_minus_beta_1,
+    const float beta_2,
+    const float one_minus_beta_2,
+    const float effective_learning_rate,
+    const float effective_epsilon)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
+    {
+        float4 g  = gradients[i];
+        float4 mi = m[i];
+        float4 vi = v[i];
+        float4 p  = parameters[i];
+
+        float* gp  = reinterpret_cast<float*>(&g);
+        float* mip = reinterpret_cast<float*>(&mi);
+        float* vip = reinterpret_cast<float*>(&vi);
+        float* pp  = reinterpret_cast<float*>(&p);
+
+        #pragma unroll
+        for (int k = 0; k < 4; ++k)
+        {
+            const float gk = gp[k];
+            mip[k] = fmaf(beta_1, mip[k], one_minus_beta_1 * gk);
+            vip[k] = fmaf(beta_2, vip[k], one_minus_beta_2 * gk * gk);
+            pp[k] -= effective_learning_rate * mip[k] / (sqrtf(vip[k]) + effective_epsilon);
+        }
+
+        m[i]          = mi;
+        v[i]          = vi;
+        parameters[i] = p;
+    }
+}
+
 void adam_update_cuda(
     const Index n,
     float* parameters,
@@ -45,20 +85,38 @@ void adam_update_cuda(
 
     const int block_size = 256;
     const int total = static_cast<int>(n);
-    const int grid_size = (total + block_size - 1) / block_size;
 
     const float s = sqrtf(bias_correction_2);
+    const float effective_lr  = learning_rate * s / bias_correction_1;
+    const float effective_eps = epsilon * s;
 
-    adam_update_kernel << <grid_size, block_size >> > (
-        total, parameters, m, v, gradients,
-        beta_1, 1.0f - beta_1,
-        beta_2, 1.0f - beta_2,
-        learning_rate * s / bias_correction_1,
-        epsilon * s);
+    if ((total & 3) == 0)
+    {
+        const int n_vec = total / 4;
+        const int grid_size = (n_vec + block_size - 1) / block_size;
+        adam_update_vec_kernel<<<grid_size, block_size>>>(
+            n_vec,
+            reinterpret_cast<float4*>(parameters),
+            reinterpret_cast<float4*>(m),
+            reinterpret_cast<float4*>(v),
+            reinterpret_cast<const float4*>(gradients),
+            beta_1, 1.0f - beta_1,
+            beta_2, 1.0f - beta_2,
+            effective_lr, effective_eps);
+    }
+    else
+    {
+        const int grid_size = (total + block_size - 1) / block_size;
+        adam_update_scalar_kernel<<<grid_size, block_size>>>(
+            total, parameters, m, v, gradients,
+            beta_1, 1.0f - beta_1,
+            beta_2, 1.0f - beta_2,
+            effective_lr, effective_eps);
+    }
     CUDA_CHECK_KERNEL();
 }
 
-__global__ void sgd_update_kernel(
+__global__ void sgd_update_scalar_kernel(
     const int n,
     float* __restrict__ parameters,
     float* __restrict__ velocity,
@@ -83,6 +141,46 @@ __global__ void sgd_update_kernel(
     }
 }
 
+__global__ void sgd_update_vec_kernel(
+    const int n_vec,
+    float4* __restrict__ parameters,
+    float4* __restrict__ velocity,
+    const float4* __restrict__ gradients,
+    const float learning_rate,
+    const float momentum,
+    const bool nesterov)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
+    {
+        float4 g    = gradients[i];
+        float4 velv = velocity[i];
+        float4 p    = parameters[i];
+
+        float* gp  = reinterpret_cast<float*>(&g);
+        float* vp  = reinterpret_cast<float*>(&velv);
+        float* pp  = reinterpret_cast<float*>(&p);
+
+        #pragma unroll
+        for (int k = 0; k < 4; ++k)
+        {
+            const float lr_g = learning_rate * gp[k];
+            if (momentum <= 0.0f)
+            {
+                pp[k] -= lr_g;
+            }
+            else
+            {
+                const float v_new = fmaf(momentum, vp[k], -lr_g);
+                vp[k] = v_new;
+                pp[k] += nesterov ? fmaf(momentum, v_new, -lr_g) : v_new;
+            }
+        }
+
+        if (momentum > 0.0f) velocity[i] = velv;
+        parameters[i] = p;
+    }
+}
+
 void sgd_update_cuda(
     const Index n,
     float* parameters,
@@ -96,11 +194,25 @@ void sgd_update_cuda(
 
     const int block_size = 256;
     const int total = static_cast<int>(n);
-    const int grid_size = (total + block_size - 1) / block_size;
 
-    sgd_update_kernel << <grid_size, block_size >> > (
-        total, parameters, velocity, gradients,
-        learning_rate, momentum, nesterov);
+    if ((total & 3) == 0)
+    {
+        const int n_vec = total / 4;
+        const int grid_size = (n_vec + block_size - 1) / block_size;
+        sgd_update_vec_kernel<<<grid_size, block_size>>>(
+            n_vec,
+            reinterpret_cast<float4*>(parameters),
+            reinterpret_cast<float4*>(velocity),
+            reinterpret_cast<const float4*>(gradients),
+            learning_rate, momentum, nesterov);
+    }
+    else
+    {
+        const int grid_size = (total + block_size - 1) / block_size;
+        sgd_update_scalar_kernel<<<grid_size, block_size>>>(
+            total, parameters, velocity, gradients,
+            learning_rate, momentum, nesterov);
+    }
     CUDA_CHECK_KERNEL();
 }
 
@@ -140,7 +252,7 @@ template void binary_cross_entropy_cuda<float>        (const Index, float*, cons
 template void binary_cross_entropy_cuda<__nv_bfloat16>(const Index, float*, const __nv_bfloat16*, const __nv_bfloat16*, const float);
 
 template<typename T>
-__global__ void binary_cross_entropy_gradient_kernel(const int n, T* __restrict__ deltas, const T* __restrict__ targets, const T* __restrict__ outputs, const float epsilon, const float scaling_factor)
+__global__ void binary_cross_entropy_gradient_scalar_kernel(const int n, T* __restrict__ deltas, const T* __restrict__ targets, const T* __restrict__ outputs, const float epsilon, const float scaling_factor)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
@@ -148,6 +260,35 @@ __global__ void binary_cross_entropy_gradient_kernel(const int n, T* __restrict_
         const float tgt = static_cast<float>(targets[i]);
 
         deltas[i] = static_cast<T>(((1.0f - tgt) / (1.0f - out + epsilon) - tgt / (out + epsilon)) * scaling_factor);
+    }
+}
+
+template<typename T>
+__global__ void binary_cross_entropy_gradient_vec_kernel(const int n_vec, T* __restrict__ deltas, const T* __restrict__ targets, const T* __restrict__ outputs, const float epsilon, const float scaling_factor)
+{
+    constexpr int vec_width = 16 / sizeof(T);
+    float4*       d_v = reinterpret_cast<float4*>(deltas);
+    const float4* t_v = reinterpret_cast<const float4*>(targets);
+    const float4* o_v = reinterpret_cast<const float4*>(outputs);
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
+    {
+        float4 d_chunk;
+        float4 t_chunk = t_v[i];
+        float4 o_chunk = o_v[i];
+        T* d_lanes = reinterpret_cast<T*>(&d_chunk);
+        const T* t_lanes = reinterpret_cast<const T*>(&t_chunk);
+        const T* o_lanes = reinterpret_cast<const T*>(&o_chunk);
+
+        #pragma unroll
+        for (int k = 0; k < vec_width; ++k)
+        {
+            const float out = static_cast<float>(o_lanes[k]);
+            const float tgt = static_cast<float>(t_lanes[k]);
+            d_lanes[k] = static_cast<T>(((1.0f - tgt) / (1.0f - out + epsilon) - tgt / (out + epsilon)) * scaling_factor);
+        }
+
+        d_v[i] = d_chunk;
     }
 }
 
@@ -159,10 +300,21 @@ void binary_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targe
 
     const int block_size = 256;
     const int total = static_cast<int>(n);
-    const int grid_size = (total + block_size - 1) / block_size;
 
-    binary_cross_entropy_gradient_kernel<T><<<grid_size, block_size>>>(
-        total, deltas, targets, outputs, epsilon, scaling_factor);
+    if ((static_cast<size_t>(total) * sizeof(T)) % 16 == 0)
+    {
+        const int vec_width = static_cast<int>(16 / sizeof(T));
+        const int n_vec     = total / vec_width;
+        const int grid_size = (n_vec + block_size - 1) / block_size;
+        binary_cross_entropy_gradient_vec_kernel<T><<<grid_size, block_size>>>(
+            n_vec, deltas, targets, outputs, epsilon, scaling_factor);
+    }
+    else
+    {
+        const int grid_size = (total + block_size - 1) / block_size;
+        binary_cross_entropy_gradient_scalar_kernel<T><<<grid_size, block_size>>>(
+            total, deltas, targets, outputs, epsilon, scaling_factor);
+    }
     CUDA_CHECK_KERNEL();
 }
 
@@ -198,10 +350,35 @@ template void multiple_cross_entropy_cuda<float>        (const Index, float*, co
 template void multiple_cross_entropy_cuda<__nv_bfloat16>(const Index, float*, const __nv_bfloat16*, const __nv_bfloat16*, const float);
 
 template<typename T>
-__global__ void multiple_cross_entropy_gradient_kernel(const int n, T* __restrict__ deltas, const T* __restrict__ targets, const T* __restrict__ outputs, const float scaling_factor)
+__global__ void multiple_cross_entropy_gradient_scalar_kernel(const int n, T* __restrict__ deltas, const T* __restrict__ targets, const T* __restrict__ outputs, const float scaling_factor)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
         deltas[i] = static_cast<T>((static_cast<float>(outputs[i]) - static_cast<float>(targets[i])) * scaling_factor);
+}
+
+template<typename T>
+__global__ void multiple_cross_entropy_gradient_vec_kernel(const int n_vec, T* __restrict__ deltas, const T* __restrict__ targets, const T* __restrict__ outputs, const float scaling_factor)
+{
+    constexpr int vec_width = 16 / sizeof(T);
+    float4*       d_v = reinterpret_cast<float4*>(deltas);
+    const float4* t_v = reinterpret_cast<const float4*>(targets);
+    const float4* o_v = reinterpret_cast<const float4*>(outputs);
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
+    {
+        float4 d_chunk;
+        float4 t_chunk = t_v[i];
+        float4 o_chunk = o_v[i];
+        T* d_lanes = reinterpret_cast<T*>(&d_chunk);
+        const T* t_lanes = reinterpret_cast<const T*>(&t_chunk);
+        const T* o_lanes = reinterpret_cast<const T*>(&o_chunk);
+
+        #pragma unroll
+        for (int k = 0; k < vec_width; ++k)
+            d_lanes[k] = static_cast<T>((static_cast<float>(o_lanes[k]) - static_cast<float>(t_lanes[k])) * scaling_factor);
+
+        d_v[i] = d_chunk;
+    }
 }
 
 
@@ -212,10 +389,21 @@ void multiple_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* tar
 
     const int block_size = 256;
     const int total = static_cast<int>(n);
-    const int grid_size = (total + block_size - 1) / block_size;
 
-    multiple_cross_entropy_gradient_kernel<T><<<grid_size, block_size>>>(
-        total, deltas, targets, outputs, scaling_factor);
+    if ((static_cast<size_t>(total) * sizeof(T)) % 16 == 0)
+    {
+        const int vec_width = static_cast<int>(16 / sizeof(T));
+        const int n_vec     = total / vec_width;
+        const int grid_size = (n_vec + block_size - 1) / block_size;
+        multiple_cross_entropy_gradient_vec_kernel<T><<<grid_size, block_size>>>(
+            n_vec, deltas, targets, outputs, scaling_factor);
+    }
+    else
+    {
+        const int grid_size = (total + block_size - 1) / block_size;
+        multiple_cross_entropy_gradient_scalar_kernel<T><<<grid_size, block_size>>>(
+            total, deltas, targets, outputs, scaling_factor);
+    }
     CUDA_CHECK_KERNEL();
 }
 
@@ -254,7 +442,7 @@ template void weighted_squared_error_cuda<float>        (const Index, float*, co
 template void weighted_squared_error_cuda<__nv_bfloat16>(const Index, float*, const __nv_bfloat16*, const __nv_bfloat16*, const float, const float);
 
 template<typename T>
-__global__ void weighted_squared_error_gradient_kernel(const int n, T* __restrict__ deltas, const T* __restrict__ targets, const T* __restrict__ outputs, const float positives_weight, const float negatives_weight, const float scaling_factor)
+__global__ void weighted_squared_error_gradient_scalar_kernel(const int n, T* __restrict__ deltas, const T* __restrict__ targets, const T* __restrict__ outputs, const float positives_weight, const float negatives_weight, const float scaling_factor)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
@@ -266,6 +454,36 @@ __global__ void weighted_squared_error_gradient_kernel(const int n, T* __restric
     }
 }
 
+template<typename T>
+__global__ void weighted_squared_error_gradient_vec_kernel(const int n_vec, T* __restrict__ deltas, const T* __restrict__ targets, const T* __restrict__ outputs, const float positives_weight, const float negatives_weight, const float scaling_factor)
+{
+    constexpr int vec_width = 16 / sizeof(T);
+    float4*       d_v = reinterpret_cast<float4*>(deltas);
+    const float4* t_v = reinterpret_cast<const float4*>(targets);
+    const float4* o_v = reinterpret_cast<const float4*>(outputs);
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
+    {
+        float4 d_chunk;
+        float4 t_chunk = t_v[i];
+        float4 o_chunk = o_v[i];
+        T* d_lanes = reinterpret_cast<T*>(&d_chunk);
+        const T* t_lanes = reinterpret_cast<const T*>(&t_chunk);
+        const T* o_lanes = reinterpret_cast<const T*>(&o_chunk);
+
+        #pragma unroll
+        for (int k = 0; k < vec_width; ++k)
+        {
+            const float tgt = static_cast<float>(t_lanes[k]);
+            const float diff = static_cast<float>(o_lanes[k]) - tgt;
+            const float weight = (tgt == 0.0f) ? negatives_weight : positives_weight;
+            d_lanes[k] = static_cast<T>(diff * weight * scaling_factor);
+        }
+
+        d_v[i] = d_chunk;
+    }
+}
+
 
 template<typename T>
 void weighted_squared_error_gradient_cuda(const Index n, T* deltas, const T* targets, const T* outputs, const float positives_weight, const float negatives_weight, const float scaling_factor)
@@ -274,10 +492,21 @@ void weighted_squared_error_gradient_cuda(const Index n, T* deltas, const T* tar
 
     const int block_size = 256;
     const int total = static_cast<int>(n);
-    const int grid_size = (total + block_size - 1) / block_size;
 
-    weighted_squared_error_gradient_kernel<T><<<grid_size, block_size>>>(
-        total, deltas, targets, outputs, positives_weight, negatives_weight, scaling_factor);
+    if ((static_cast<size_t>(total) * sizeof(T)) % 16 == 0)
+    {
+        const int vec_width = static_cast<int>(16 / sizeof(T));
+        const int n_vec     = total / vec_width;
+        const int grid_size = (n_vec + block_size - 1) / block_size;
+        weighted_squared_error_gradient_vec_kernel<T><<<grid_size, block_size>>>(
+            n_vec, deltas, targets, outputs, positives_weight, negatives_weight, scaling_factor);
+    }
+    else
+    {
+        const int grid_size = (total + block_size - 1) / block_size;
+        weighted_squared_error_gradient_scalar_kernel<T><<<grid_size, block_size>>>(
+            total, deltas, targets, outputs, positives_weight, negatives_weight, scaling_factor);
+    }
     CUDA_CHECK_KERNEL();
 }
 
@@ -378,7 +607,7 @@ template void cross_entropy_3d_multiple_backward_cuda<float>        (const Index
 template void cross_entropy_3d_multiple_backward_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, __nv_bfloat16*, const float);
 
 template<typename T>
-__global__ void l1_gradient_kernel(const int n, T* __restrict__ deltas, const T* __restrict__ parameters, const float weight)
+__global__ void l1_gradient_scalar_kernel(const int n, T* __restrict__ deltas, const T* __restrict__ parameters, const float weight)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
@@ -388,7 +617,31 @@ __global__ void l1_gradient_kernel(const int n, T* __restrict__ deltas, const T*
     }
 }
 
-// Explicit instantiations — compile-check the BF16 path even though no caller uses it yet.
+template<typename T>
+__global__ void l1_gradient_vec_kernel(const int n_vec, T* __restrict__ deltas, const T* __restrict__ parameters, const float weight)
+{
+    constexpr int vec_width = 16 / sizeof(T);
+    float4*       d_v = reinterpret_cast<float4*>(deltas);
+    const float4* p_v = reinterpret_cast<const float4*>(parameters);
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
+    {
+        float4 d_chunk = d_v[i];
+        float4 p_chunk = p_v[i];
+        T* d_lanes = reinterpret_cast<T*>(&d_chunk);
+        T* p_lanes = reinterpret_cast<T*>(&p_chunk);
+
+        #pragma unroll
+        for (int k = 0; k < vec_width; ++k)
+        {
+            const float p = static_cast<float>(p_lanes[k]);
+            const float s = (p > 0.0f) ? 1.0f : ((p < 0.0f) ? -1.0f : 0.0f);
+            d_lanes[k] = static_cast<T>(static_cast<float>(d_lanes[k]) + weight * s);
+        }
+
+        d_v[i] = d_chunk;
+    }
+}
 
 template<typename T>
 void l1_gradient_cuda(const Index n, T* deltas, const T* parameters, const float weight)
@@ -397,9 +650,19 @@ void l1_gradient_cuda(const Index n, T* deltas, const T* parameters, const float
 
     const int block_size = 256;
     const int total = static_cast<int>(n);
-    const int grid_size = (total + block_size - 1) / block_size;
 
-    l1_gradient_kernel<T><<<grid_size, block_size>>>(total, deltas, parameters, weight);
+    if ((static_cast<size_t>(total) * sizeof(T)) % 16 == 0)
+    {
+        const int vec_width = static_cast<int>(16 / sizeof(T));
+        const int n_vec     = total / vec_width;
+        const int grid_size = (n_vec + block_size - 1) / block_size;
+        l1_gradient_vec_kernel<T><<<grid_size, block_size>>>(n_vec, deltas, parameters, weight);
+    }
+    else
+    {
+        const int grid_size = (total + block_size - 1) / block_size;
+        l1_gradient_scalar_kernel<T><<<grid_size, block_size>>>(total, deltas, parameters, weight);
+    }
     CUDA_CHECK_KERNEL();
 }
 
@@ -410,13 +673,37 @@ template void l1_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const
 // dtype T (activation dtype). Used by Dense's combination — replaces cudnnAddTensor
 // so FP32 biases can be added to BF16 outputs (AMP recipe).
 template<typename T>
-__global__ void add_bias_kernel(const int total_elements, T* __restrict__ output, const float* __restrict__ bias, const int bias_dim)
+__global__ void add_bias_scalar_kernel(const int total_elements, T* __restrict__ output, const float* __restrict__ bias, const int bias_dim)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < total_elements; i += blockDim.x * gridDim.x)
     {
         const int bias_idx = i % bias_dim;
         const float val = static_cast<float>(output[i]) + bias[bias_idx];
         output[i] = static_cast<T>(val);
+    }
+}
+
+// Vec path is only safe when bias_dim is a multiple of vec_width — that keeps every
+// 16-byte output chunk entirely inside one row, so the bias broadcast is still just
+// vec_width consecutive FP32 loads starting at (linear_index % bias_dim).
+template<typename T>
+__global__ void add_bias_vec_kernel(const int n_vec, T* __restrict__ output, const float* __restrict__ bias, const int bias_dim)
+{
+    constexpr int vec_width = 16 / sizeof(T);
+    float4* out_v = reinterpret_cast<float4*>(output);
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
+    {
+        const int bias_start = (i * vec_width) % bias_dim;
+
+        float4 chunk = out_v[i];
+        T* lanes = reinterpret_cast<T*>(&chunk);
+
+        #pragma unroll
+        for (int k = 0; k < vec_width; ++k)
+            lanes[k] = static_cast<T>(static_cast<float>(lanes[k]) + bias[bias_start + k]);
+
+        out_v[i] = chunk;
     }
 }
 
@@ -427,8 +714,19 @@ void add_bias_cuda(const Index n, T* output, const float* bias, const int bias_d
     if (n == 0) return;
     const int block_size = 256;
     const int total = static_cast<int>(n);
-    const int grid_size = (total + block_size - 1) / block_size;
-    add_bias_kernel<T><<<grid_size, block_size>>>(total, output, bias, bias_dim);
+    constexpr int vec_width = 16 / sizeof(T);
+
+    if ((bias_dim % vec_width) == 0)
+    {
+        const int n_vec = total / vec_width;
+        const int grid_size = (n_vec + block_size - 1) / block_size;
+        add_bias_vec_kernel<T><<<grid_size, block_size>>>(n_vec, output, bias, bias_dim);
+    }
+    else
+    {
+        const int grid_size = (total + block_size - 1) / block_size;
+        add_bias_scalar_kernel<T><<<grid_size, block_size>>>(total, output, bias, bias_dim);
+    }
     CUDA_CHECK_KERNEL();
 }
 
@@ -439,13 +737,45 @@ template void add_bias_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const fl
 // returns FP32 scalar via atomicAdd across blocks. Needed for BF16/FP16 paths
 // where cuBLAS has no asum variant. (FP32 callers stay on cublasSasum for perf.)
 template<typename T>
-__global__ void sum_abs_kernel(const int n, const T* __restrict__ data, float* __restrict__ result)
+__global__ void sum_abs_scalar_kernel(const int n, const T* __restrict__ data, float* __restrict__ result)
 {
     __shared__ float shared[256];
     float acc = 0.0f;
 
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
         acc += fabsf(static_cast<float>(data[i]));
+
+    shared[threadIdx.x] = acc;
+    __syncthreads();
+
+    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1)
+    {
+        if (threadIdx.x < stride) shared[threadIdx.x] += shared[threadIdx.x + stride];
+        __syncthreads();
+    }
+
+    if (threadIdx.x == 0) atomicAdd(result, shared[0]);
+}
+
+// Vectorized read: each thread absorbs a 16-byte chunk (4 FP32 or 8 BF16),
+// accumulates in FP32, then participates in the same block-level reduction.
+template<typename T>
+__global__ void sum_abs_vec_kernel(const int n_vec, const T* __restrict__ data, float* __restrict__ result)
+{
+    __shared__ float shared[256];
+    float acc = 0.0f;
+
+    constexpr int vec_width = 16 / sizeof(T);
+    const float4* data_v = reinterpret_cast<const float4*>(data);
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
+    {
+        float4 chunk = data_v[i];
+        const T* lanes = reinterpret_cast<const T*>(&chunk);
+        #pragma unroll
+        for (int k = 0; k < vec_width; ++k)
+            acc += fabsf(static_cast<float>(lanes[k]));
+    }
 
     shared[threadIdx.x] = acc;
     __syncthreads();
@@ -471,9 +801,19 @@ float sum_abs_cuda(const T* data, Index n)
 
     const int block_size = 256;
     const int total = static_cast<int>(n);
-    const int grid_size = (total + block_size - 1) / block_size;
+    constexpr int vec_width = 16 / sizeof(T);
 
-    sum_abs_kernel<T><<<grid_size, block_size>>>(total, data, d_result);
+    if ((total % vec_width) == 0)
+    {
+        const int n_vec = total / vec_width;
+        const int grid_size = (n_vec + block_size - 1) / block_size;
+        sum_abs_vec_kernel<T><<<grid_size, block_size>>>(n_vec, data, d_result);
+    }
+    else
+    {
+        const int grid_size = (total + block_size - 1) / block_size;
+        sum_abs_scalar_kernel<T><<<grid_size, block_size>>>(total, data, d_result);
+    }
     CUDA_CHECK_KERNEL();
 
     float h_result = 0.0f;
@@ -484,10 +824,35 @@ float sum_abs_cuda(const T* data, Index n)
 template float sum_abs_cuda<__nv_bfloat16>(const __nv_bfloat16*, Index);
 
 template<typename T>
-__global__ void addition_kernel(const int n, const T* __restrict__ input1, const T* __restrict__ input2, T* __restrict__ output)
+__global__ void addition_scalar_kernel(const int n, const T* __restrict__ input1, const T* __restrict__ input2, T* __restrict__ output)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
         output[i] = static_cast<T>(static_cast<float>(input1[i]) + static_cast<float>(input2[i]));
+}
+
+template<typename T>
+__global__ void addition_vec_kernel(const int n_vec, const T* __restrict__ input1, const T* __restrict__ input2, T* __restrict__ output)
+{
+    constexpr int vec_width = 16 / sizeof(T);
+    const float4* in1_v = reinterpret_cast<const float4*>(input1);
+    const float4* in2_v = reinterpret_cast<const float4*>(input2);
+    float4*       out_v = reinterpret_cast<float4*>(output);
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
+    {
+        float4 c1 = in1_v[i];
+        float4 c2 = in2_v[i];
+        float4 co;
+        const T* c1_lanes = reinterpret_cast<const T*>(&c1);
+        const T* c2_lanes = reinterpret_cast<const T*>(&c2);
+        T*       co_lanes = reinterpret_cast<T*>(&co);
+
+        #pragma unroll
+        for (int k = 0; k < vec_width; ++k)
+            co_lanes[k] = static_cast<T>(static_cast<float>(c1_lanes[k]) + static_cast<float>(c2_lanes[k]));
+
+        out_v[i] = co;
+    }
 }
 
 
@@ -498,9 +863,19 @@ void addition_cuda(const Index n, const T* input1, const T* input2, T* output)
 
     const int block_size = 256;
     const int total = static_cast<int>(n);
-    const int grid_size = (total + block_size - 1) / block_size;
 
-    addition_kernel<T><<<grid_size, block_size>>>(total, input1, input2, output);
+    if ((static_cast<size_t>(total) * sizeof(T)) % 16 == 0)
+    {
+        const int vec_width = static_cast<int>(16 / sizeof(T));
+        const int n_vec     = total / vec_width;
+        const int grid_size = (n_vec + block_size - 1) / block_size;
+        addition_vec_kernel<T><<<grid_size, block_size>>>(n_vec, input1, input2, output);
+    }
+    else
+    {
+        const int grid_size = (total + block_size - 1) / block_size;
+        addition_scalar_kernel<T><<<grid_size, block_size>>>(total, input1, input2, output);
+    }
     CUDA_CHECK_KERNEL();
 }
 
@@ -591,11 +966,14 @@ void embedding_backward_cuda(const Index n, const float* inputs, const T* output
 template void embedding_backward_cuda<float>        (const Index, const float*, const float*,         float*, const int, const int, const bool);
 template void embedding_backward_cuda<__nv_bfloat16>(const Index, const float*, const __nv_bfloat16*, float*, const int, const int, const bool);
 
+// Vectorized split/merge use 16-byte (float4) loads/stores when D·sizeof(T) is
+// 16-aligned — standard head_dims (32/64/128) satisfy this for both FP32 and BF16.
+// Falls back to scalar for non-aligned D.
+
 template<typename T>
-__global__ void split_heads_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D)
+__global__ void split_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D)
 {
     // [Batch, Seq, Heads, HeadDim] -> [Batch, Heads, Seq, HeadDim]
-
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
         const int d = i % D;
@@ -607,6 +985,23 @@ __global__ void split_heads_kernel(const int n, const T* __restrict__ in, T* __r
     }
 }
 
+template<typename T>
+__global__ void split_heads_vec_kernel(const int n_vec, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D_vec)
+{
+    const float4* in_v  = reinterpret_cast<const float4*>(in);
+    float4*       out_v = reinterpret_cast<float4*>(out);
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
+    {
+        const int d = i % D_vec;
+        const int h = (i / D_vec) % H;
+        const int s = (i / (D_vec * H)) % S;
+        const int b = i / (D_vec * H * S);
+
+        out_v[((b * H + h) * S + s) * D_vec + d] = in_v[i];
+    }
+}
+
 
 template<typename T>
 void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D)
@@ -614,10 +1009,21 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
     if (n == 0) return;
 
     const int block_size = 256;
-    const int total = static_cast<int>(n);
-    const int grid_size = (total + block_size - 1) / block_size;
 
-    split_heads_kernel<T><<<grid_size, block_size>>>(total, in, out, S, H, D);
+    if ((static_cast<size_t>(D) * sizeof(T)) % 16 == 0)
+    {
+        const int vec_width = static_cast<int>(16 / sizeof(T));
+        const int D_vec     = D / vec_width;
+        const int n_vec     = static_cast<int>(n) / vec_width;
+        const int grid_size = (n_vec + block_size - 1) / block_size;
+        split_heads_vec_kernel<T><<<grid_size, block_size>>>(n_vec, in, out, S, H, D_vec);
+    }
+    else
+    {
+        const int total     = static_cast<int>(n);
+        const int grid_size = (total + block_size - 1) / block_size;
+        split_heads_scalar_kernel<T><<<grid_size, block_size>>>(total, in, out, S, H, D);
+    }
     CUDA_CHECK_KERNEL();
 }
 
@@ -625,10 +1031,9 @@ template void split_heads_cuda<float>        (const Index, const float*,        
 template void split_heads_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int, const int, const int);
 
 template<typename T>
-__global__ void merge_heads_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D)
+__global__ void merge_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D)
 {
     // [Batch, Heads, Seq, HeadDim] -> [Batch, Seq, Heads, HeadDim]
-
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
         const int d = i % D;
@@ -640,6 +1045,23 @@ __global__ void merge_heads_kernel(const int n, const T* __restrict__ in, T* __r
     }
 }
 
+template<typename T>
+__global__ void merge_heads_vec_kernel(const int n_vec, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D_vec)
+{
+    const float4* in_v  = reinterpret_cast<const float4*>(in);
+    float4*       out_v = reinterpret_cast<float4*>(out);
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
+    {
+        const int d = i % D_vec;
+        const int s = (i / D_vec) % S;
+        const int h = (i / (D_vec * S)) % H;
+        const int b = i / (D_vec * S * H);
+
+        out_v[((b * S + s) * H + h) * D_vec + d] = in_v[i];
+    }
+}
+
 
 template<typename T>
 void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D)
@@ -647,10 +1069,21 @@ void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int
     if (n == 0) return;
 
     const int block_size = 256;
-    const int total = static_cast<int>(n);
-    const int grid_size = (total + block_size - 1) / block_size;
 
-    merge_heads_kernel<T><<<grid_size, block_size>>>(total, in, out, S, H, D);
+    if ((static_cast<size_t>(D) * sizeof(T)) % 16 == 0)
+    {
+        const int vec_width = static_cast<int>(16 / sizeof(T));
+        const int D_vec     = D / vec_width;
+        const int n_vec     = static_cast<int>(n) / vec_width;
+        const int grid_size = (n_vec + block_size - 1) / block_size;
+        merge_heads_vec_kernel<T><<<grid_size, block_size>>>(n_vec, in, out, S, H, D_vec);
+    }
+    else
+    {
+        const int total     = static_cast<int>(n);
+        const int grid_size = (total + block_size - 1) / block_size;
+        merge_heads_scalar_kernel<T><<<grid_size, block_size>>>(total, in, out, S, H, D);
+    }
     CUDA_CHECK_KERNEL();
 }
 
@@ -789,35 +1222,67 @@ void max_pooling_3d_backward_cuda(const Index n, const T* delta, T* in_gradient,
 template void max_pooling_3d_backward_cuda<float>        (const Index, const float*,         float*,         const float*, const int, const int);
 template void max_pooling_3d_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const float*, const int, const int);
 
+// Scratch pool for average-pooling: valid_mask[B*S] + counts[B] packed as floats.
+// Persistent across calls, grown on demand — matches the pattern used by sum_abs_cuda.
+namespace { float* pooling_scratch_ = nullptr; size_t pooling_scratch_size_ = 0; }
+
+static float* get_pooling_scratch(size_t floats_needed)
+{
+    if (floats_needed > pooling_scratch_size_)
+    {
+        if (pooling_scratch_) cudaFree(pooling_scratch_);
+        CHECK_CUDA(cudaMalloc(&pooling_scratch_, floats_needed * sizeof(float)));
+        pooling_scratch_size_ = floats_needed;
+    }
+    return pooling_scratch_;
+}
+
+// Stage 1: per-token validity. valid[b, s] = 1.0 if any |in[b, s, f]| > eps, else 0.0.
+// Also writes per-batch counts via atomicAdd (caller must zero counts first).
+// Previously this scan was duplicated inside the inner loop of both forward and backward,
+// giving O(B·S·F²) total work; now it runs once at O(B·S·F).
 template<typename T>
-__global__ void average_pooling_3d_forward_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int S, const int F)
+__global__ void pooling_3d_valid_mask_kernel(const int BS, const int S, const int F,
+                                             const T* __restrict__ in,
+                                             float* __restrict__ valid_mask,
+                                             float* __restrict__ counts)
+{
+    const int bs = blockIdx.x * blockDim.x + threadIdx.x;
+    if (bs >= BS) return;
+
+    const T* token = in + bs * F;
+    bool valid = false;
+    for (int f = 0; f < F; ++f)
+        if (fabsf(static_cast<float>(token[f])) > 1e-7f) { valid = true; break; }
+
+    valid_mask[bs] = valid ? 1.0f : 0.0f;
+    if (valid) atomicAdd(&counts[bs / S], 1.0f);
+}
+
+// Stage 2 forward: out[b, f] = Σ_s valid_mask[b, s] · in[b, s, f] / counts[b].
+// Inner loop is O(S); padding detection is already baked into valid_mask.
+template<typename T>
+__global__ void average_pooling_3d_forward_kernel(const int n, const T* __restrict__ in, T* __restrict__ out,
+                                                  const int S, const int F,
+                                                  const float* __restrict__ valid_mask,
+                                                  const float* __restrict__ counts)
 {
     for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
     {
         const int f = idx % F;
         const int b = idx / F;
 
-        float sum = 0.0f;
-        int valid_count = 0;
+        const float count = counts[b];
+        if (count == 0.0f) { out[idx] = static_cast<T>(0.0f); continue; }
 
+        float sum = 0.0f;
         for (int s = 0; s < S; ++s)
         {
-            bool is_padding = true;
-            for (int check_f = 0; check_f < F; ++check_f)
-                if (fabsf(static_cast<float>(in[(b * S + s) * F + check_f])) > 1e-7f)
-                {
-                    is_padding = false;
-                    break;
-                }
-
-            if (!is_padding)
-            {
-                sum += static_cast<float>(in[(b * S + s) * F + f]);
-                ++valid_count;
-            }
+            const int bs = b * S + s;
+            sum += valid_mask[bs] * static_cast<float>(in[bs * F + f]);
         }
 
-        out[idx] = static_cast<T>((valid_count > 0) ? (sum / static_cast<float>(valid_count)) : 0.0f);
+        out[idx] = static_cast<T>(sum / count);
     }
 }
 
@@ -827,49 +1292,53 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
 {
     if (n == 0) return;
 
-    const int block_size = 256;
-    const int total = static_cast<int>(n);
-    const int grid_size = (total + block_size - 1) / block_size;
+    const int B  = static_cast<int>(n) / F;
+    const int BS = B * S;
 
-    average_pooling_3d_forward_kernel<T><<<grid_size, block_size>>>(total, in, out, S, F);
+    float* scratch    = get_pooling_scratch(static_cast<size_t>(BS) + B);
+    float* valid_mask = scratch;
+    float* counts     = scratch + BS;
+    CHECK_CUDA(cudaMemset(counts, 0, B * sizeof(float)));
+
+    const int block_size = 256;
+    {
+        const int grid = (BS + block_size - 1) / block_size;
+        pooling_3d_valid_mask_kernel<T><<<grid, block_size>>>(BS, S, F, in, valid_mask, counts);
+    }
+    {
+        const int total = static_cast<int>(n);
+        const int grid = (total + block_size - 1) / block_size;
+        average_pooling_3d_forward_kernel<T><<<grid, block_size>>>(total, in, out, S, F, valid_mask, counts);
+    }
     CUDA_CHECK_KERNEL();
 }
 
 template void average_pooling_3d_forward_cuda<float>        (const Index, const float*,         float*,         const int, const int);
 template void average_pooling_3d_forward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int, const int);
 
+// Stage 2 backward: in_gradient[b, s, f] = valid_mask[b, s] · delta[b, f] / counts[b].
+// Writing the masked value (zero at padding positions) lets us drop the branch vs the
+// original "check padding per element" pattern; in_gradient was zeroed by the caller so
+// we can also skip the whole batch when counts[b] == 0.
 template<typename T>
-__global__ void average_pooling_3d_backward_kernel(const int n, const T* __restrict__ in, const T* __restrict__ delta, T* __restrict__ in_gradient, const int S, const int F)
+__global__ void average_pooling_3d_backward_kernel(const int n, const T* __restrict__ delta, T* __restrict__ in_gradient,
+                                                   const int S, const int F,
+                                                   const float* __restrict__ valid_mask,
+                                                   const float* __restrict__ counts)
 {
     for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
     {
         const int f = idx % F;
         const int b = idx / F;
 
-        int valid_count = 0;
+        const float count = counts[b];
+        if (count == 0.0f) continue;
+
+        const float gradient_val = static_cast<float>(delta[idx]) / count;
         for (int s = 0; s < S; ++s)
         {
-            bool is_padding = true;
-            for (int check_f = 0; check_f < F; ++check_f)
-                if (fabsf(static_cast<float>(in[(b * S + s) * F + check_f])) > 1e-7f)
-                {
-                    is_padding = false;
-                    break;
-                }
-
-            if (!is_padding)
-                ++valid_count;
-        }
-
-        if (valid_count == 0) continue;
-
-        const float gradient_val = static_cast<float>(delta[idx]) / static_cast<float>(valid_count);
-        for (int s = 0; s < S; ++s)
-        {
-            bool is_padding = true;
-            for (int check_f = 0; check_f < F; ++check_f)
-                if (fabsf(static_cast<float>(in[(b * S + s) * F + check_f])) > 1e-7f) { is_padding = false; break; }
-            if (!is_padding) in_gradient[(b * S + s) * F + f] = static_cast<T>(gradient_val);
+            const int bs = b * S + s;
+            in_gradient[bs * F + f] = static_cast<T>(valid_mask[bs] * gradient_val);
         }
     }
 }
@@ -880,16 +1349,41 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
 {
     if (n == 0) return;
 
-    const int block_size = 256;
-    const int total = static_cast<int>(n);
-    const int grid_size = (total + block_size - 1) / block_size;
+    const int B  = static_cast<int>(n) / F;
+    const int BS = B * S;
 
-    average_pooling_3d_backward_kernel<T><<<grid_size, block_size>>>(total, in, delta, in_gradient, S, F);
+    float* scratch    = get_pooling_scratch(static_cast<size_t>(BS) + B);
+    float* valid_mask = scratch;
+    float* counts     = scratch + BS;
+    CHECK_CUDA(cudaMemset(counts, 0, B * sizeof(float)));
+
+    const int block_size = 256;
+    {
+        const int grid = (BS + block_size - 1) / block_size;
+        pooling_3d_valid_mask_kernel<T><<<grid, block_size>>>(BS, S, F, in, valid_mask, counts);
+    }
+    {
+        const int total = static_cast<int>(n);
+        const int grid = (total + block_size - 1) / block_size;
+        average_pooling_3d_backward_kernel<T><<<grid, block_size>>>(total, delta, in_gradient, S, F, valid_mask, counts);
+    }
     CUDA_CHECK_KERNEL();
 }
 
 template void average_pooling_3d_backward_cuda<float>        (const Index, const float*,         const float*,         float*,         const int, const int);
 template void average_pooling_3d_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, const int, const int);
+
+// Reduce two floats across the 32 lanes of a warp via shuffle — no shared mem.
+// After the loop, lane 0 holds (a + b) summed over all lanes; other lanes hold partial sums.
+__device__ __forceinline__ void warp_reduce_sum2(float& a, float& b)
+{
+    #pragma unroll
+    for (int offset = 16; offset > 0; offset >>= 1)
+    {
+        a += __shfl_down_sync(0xffffffff, a, offset);
+        b += __shfl_down_sync(0xffffffff, b, offset);
+    }
+}
 
 template<typename T>
 __global__ void layernorm_forward_kernel(const int N, const int D, const T* __restrict__ X, T* __restrict__ Y, float* __restrict__ means, float* __restrict__ inv_vars, const float* __restrict__ gamma, const float* __restrict__ beta, const float eps)
@@ -900,42 +1394,56 @@ __global__ void layernorm_forward_kernel(const int N, const int D, const T* __re
     const T* x_row = X + idx * D;
     T* y_row = Y + idx * D;
 
-    // Single-pass accumulate sum and sum-of-squares, then derive variance as E[X^2] - E[X]^2.
-    float sum = 0.0f;
-    float sum_sq = 0.0f;
+    // Per-thread accumulation. Variance derived as E[X^2] - E[X]^2 after the block reduction.
+    float local_sum = 0.0f;
+    float local_sum_sq = 0.0f;
     for (int i = threadIdx.x; i < D; i += blockDim.x)
     {
         const float x = static_cast<float>(x_row[i]);
-        sum += x;
-        sum_sq += x * x;
+        local_sum    += x;
+        local_sum_sq += x * x;
     }
 
-    __shared__ float shared_sum[256];
-    __shared__ float shared_sum_sq[256];
-    shared_sum[threadIdx.x] = sum;
-    shared_sum_sq[threadIdx.x] = sum_sq;
+    warp_reduce_sum2(local_sum, local_sum_sq);
+
+    __shared__ float warp_sum[32];
+    __shared__ float warp_sum_sq[32];
+    __shared__ float s_mean;
+    __shared__ float s_inv_var;
+
+    const int lane    = threadIdx.x & 31;
+    const int warp_id = threadIdx.x >> 5;
+
+    if (lane == 0)
+    {
+        warp_sum[warp_id]    = local_sum;
+        warp_sum_sq[warp_id] = local_sum_sq;
+    }
     __syncthreads();
 
-    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1)
+    const int num_warps = (blockDim.x + 31) >> 5;
+    if (warp_id == 0)
     {
-        if (threadIdx.x < stride)
+        float s    = (threadIdx.x < num_warps) ? warp_sum[threadIdx.x]    : 0.0f;
+        float s_sq = (threadIdx.x < num_warps) ? warp_sum_sq[threadIdx.x] : 0.0f;
+        warp_reduce_sum2(s, s_sq);
+
+        if (threadIdx.x == 0)
         {
-            shared_sum[threadIdx.x]    += shared_sum[threadIdx.x + stride];
-            shared_sum_sq[threadIdx.x] += shared_sum_sq[threadIdx.x + stride];
+            const float inv_D = 1.0f / static_cast<float>(D);
+            const float mean = s * inv_D;
+            const float variance = s_sq * inv_D - mean * mean;
+            const float inv_var = rsqrtf(variance + eps);
+            s_mean    = mean;
+            s_inv_var = inv_var;
+            means[idx]    = mean;
+            inv_vars[idx] = inv_var;
         }
-        __syncthreads();
     }
+    __syncthreads();
 
-    const float inv_D = 1.0f / static_cast<float>(D);
-    const float mean = shared_sum[0] * inv_D;
-    const float variance = shared_sum_sq[0] * inv_D - mean * mean;
-    const float inv_var = rsqrtf(variance + eps);
-
-    if (threadIdx.x == 0)
-    {
-        means[idx]    = mean;
-        inv_vars[idx] = inv_var;
-    }
+    const float mean    = s_mean;
+    const float inv_var = s_inv_var;
 
     for (int i = threadIdx.x; i < D; i += blockDim.x)
     {
@@ -962,7 +1470,7 @@ void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* m
 template void layernorm_forward_cuda<float>        (const int, const int, const float*,         float*,         float*, float*, const float*, const float*, const float);
 template void layernorm_forward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, __nv_bfloat16*, float*, float*, const float*, const float*, const float);
 
-// Computes dX only. One block per row; shared-memory reduction for per-row sums.
+// Computes dX only. One block per row; warp-shuffle reduction for per-row sums.
 template<typename T>
 __global__ void layernorm_backward_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, const float* __restrict__ gamma, T* __restrict__ dX)
 {
@@ -976,40 +1484,56 @@ __global__ void layernorm_backward_kernel(const int N, const int D, const T* __r
     const float mean = means[idx];
     const float inv_var = inv_vars[idx];
 
-    float sum_D = 0.0f;
-    float sum_D_xhat = 0.0f;
+    float local_sum_D      = 0.0f;
+    float local_sum_D_xhat = 0.0f;
 
     for (int i = threadIdx.x; i < D; i += blockDim.x)
     {
-        const float d = static_cast<float>(dy_row[i]) * gamma[i];
+        const float d     = static_cast<float>(dy_row[i]) * gamma[i];
         const float x_hat = (static_cast<float>(x_row[i]) - mean) * inv_var;
-        sum_D += d;
-        sum_D_xhat += d * x_hat;
+        local_sum_D      += d;
+        local_sum_D_xhat += d * x_hat;
     }
 
-    __shared__ float s_sum_D[256];
-    __shared__ float s_sum_D_xhat[256];
+    warp_reduce_sum2(local_sum_D, local_sum_D_xhat);
 
-    s_sum_D[threadIdx.x] = sum_D;
-    s_sum_D_xhat[threadIdx.x] = sum_D_xhat;
+    __shared__ float warp_sum_D[32];
+    __shared__ float warp_sum_D_xhat[32];
+    __shared__ float s_mean_D;
+    __shared__ float s_mean_D_xhat;
+
+    const int lane    = threadIdx.x & 31;
+    const int warp_id = threadIdx.x >> 5;
+
+    if (lane == 0)
+    {
+        warp_sum_D[warp_id]      = local_sum_D;
+        warp_sum_D_xhat[warp_id] = local_sum_D_xhat;
+    }
     __syncthreads();
 
-    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1)
+    const int num_warps = (blockDim.x + 31) >> 5;
+    if (warp_id == 0)
     {
-        if (threadIdx.x < stride)
-        {
-            s_sum_D[threadIdx.x] += s_sum_D[threadIdx.x + stride];
-            s_sum_D_xhat[threadIdx.x] += s_sum_D_xhat[threadIdx.x + stride];
-        }
-        __syncthreads();
-    }
+        float s  = (threadIdx.x < num_warps) ? warp_sum_D[threadIdx.x]      : 0.0f;
+        float sx = (threadIdx.x < num_warps) ? warp_sum_D_xhat[threadIdx.x] : 0.0f;
+        warp_reduce_sum2(s, sx);
 
-    const float mean_D = s_sum_D[0] / static_cast<float>(D);
-    const float mean_D_xhat = s_sum_D_xhat[0] / static_cast<float>(D);
+        if (threadIdx.x == 0)
+        {
+            const float inv_D = 1.0f / static_cast<float>(D);
+            s_mean_D      = s  * inv_D;
+            s_mean_D_xhat = sx * inv_D;
+        }
+    }
+    __syncthreads();
+
+    const float mean_D      = s_mean_D;
+    const float mean_D_xhat = s_mean_D_xhat;
 
     for (int i = threadIdx.x; i < D; i += blockDim.x)
     {
-        const float d = static_cast<float>(dy_row[i]) * gamma[i];
+        const float d     = static_cast<float>(dy_row[i]) * gamma[i];
         const float x_hat = (static_cast<float>(x_row[i]) - mean) * inv_var;
         dx_row[i] = static_cast<T>((d - mean_D - x_hat * mean_D_xhat) * inv_var);
     }
@@ -1019,43 +1543,49 @@ __global__ void layernorm_backward_kernel(const int N, const int D, const T* __r
 template<typename T>
 __global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, float* __restrict__ dGamma, float* __restrict__ dBeta)
 {
-    // Computes dGamma and dBeta. One block per dim; reduces across all N rows in shared memory, no atomics.
+    // Computes dGamma and dBeta. One block per dim; reduces across all N rows via warp shuffles.
 
     const int d = blockIdx.x;
     if (d >= D) return;
 
     float local_gamma = 0.0f;
-    float local_beta = 0.0f;
+    float local_beta  = 0.0f;
 
     for (int n = threadIdx.x; n < N; n += blockDim.x)
     {
-        const float dy = static_cast<float>(dY[n * D + d]);
+        const float dy    = static_cast<float>(dY[n * D + d]);
         const float x_hat = (static_cast<float>(X[n * D + d]) - means[n]) * inv_vars[n];
         local_gamma += dy * x_hat;
-        local_beta += dy;
+        local_beta  += dy;
     }
 
-    __shared__ float s_gamma[256];
-    __shared__ float s_beta[256];
+    warp_reduce_sum2(local_gamma, local_beta);
 
-    s_gamma[threadIdx.x] = local_gamma;
-    s_beta[threadIdx.x] = local_beta;
+    __shared__ float warp_gamma[32];
+    __shared__ float warp_beta[32];
+
+    const int lane    = threadIdx.x & 31;
+    const int warp_id = threadIdx.x >> 5;
+
+    if (lane == 0)
+    {
+        warp_gamma[warp_id] = local_gamma;
+        warp_beta[warp_id]  = local_beta;
+    }
     __syncthreads();
 
-    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1)
+    const int num_warps = (blockDim.x + 31) >> 5;
+    if (warp_id == 0)
     {
-        if (threadIdx.x < stride)
-        {
-            s_gamma[threadIdx.x] += s_gamma[threadIdx.x + stride];
-            s_beta[threadIdx.x]  += s_beta[threadIdx.x + stride];
-        }
-        __syncthreads();
-    }
+        float g = (threadIdx.x < num_warps) ? warp_gamma[threadIdx.x] : 0.0f;
+        float b = (threadIdx.x < num_warps) ? warp_beta[threadIdx.x]  : 0.0f;
+        warp_reduce_sum2(g, b);
 
-    if (threadIdx.x == 0)
-    {
-        dGamma[d] = s_gamma[0];
-        dBeta[d]  = s_beta[0];
+        if (threadIdx.x == 0)
+        {
+            dGamma[d] = g;
+            dBeta[d]  = b;
+        }
     }
 }
 
