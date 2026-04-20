@@ -98,16 +98,18 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     }
 
 #ifdef OPENNN_WITH_CUDA
-    // Prebuild cached TensorViews with cuDNN descriptors (shape is fixed per Batch)
+    // Prebuild cached TensorViews with cuDNN descriptors (shape is fixed per Batch).
+    // Batch data crosses the host→device boundary as FP32 and stays FP32 through the
+    // GPU pipeline; the flip to activation dtype (BF16/FP16) happens at the first
+    // layer boundary (first GEMM can consume FP32 inputs with BF16 weights via cuBLAS
+    // mixed-dtype GEMM — wired in Phase 6).
     if(!input_shape.empty() && input.device())
     {
-        TensorView in_view(input.device(), input_shape);
-        in_view.set_descriptor(input_shape);
+        TensorView in_view(input.device(), input_shape, CUDNN_DATA_FLOAT);
 
         if(!decoder_shape.empty() && decoder.device())
         {
-            TensorView dec_view(decoder.device(), decoder_shape);
-            dec_view.set_descriptor(decoder_shape);
+            TensorView dec_view(decoder.device(), decoder_shape, CUDNN_DATA_FLOAT);
             input_views_cache = { dec_view, in_view };
         }
         else
@@ -117,10 +119,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     }
 
     if(!target_shape.empty() && target.device())
-    {
-        target_view_cache = TensorView(target.device(), target_shape);
-        target_view_cache.set_descriptor(target_shape);
-    }
+        target_view_cache = TensorView(target.device(), target_shape, CUDNN_DATA_FLOAT);
 #endif
 }
 
@@ -227,22 +226,6 @@ void Batch::fill_host(const vector<Index>& sample_indices,
         dataset->fill_decoder(sample_indices, decoder_indices, decoder_host, false);
 
     dataset->fill_targets(sample_indices, target_indices, targets_host, false);
-}
-
-void Batch::copy_device(const Index current_batch_size)
-{
-    const Index input_size = current_batch_size * num_input_features;
-    const Index target_size = current_batch_size * num_target_features;
-
-    CHECK_CUDA(cudaMemcpy(input.device(), inputs_host, input_size * sizeof(float), cudaMemcpyHostToDevice));
-
-    if(!decoder_shape.empty())
-    {
-        const Index decoder_size = current_batch_size * num_decoder_features;
-        CHECK_CUDA(cudaMemcpy(decoder.device(), decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice));
-    }
-
-    CHECK_CUDA(cudaMemcpy(target.device(), targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 void Batch::copy_device_async(const Index current_batch_size, cudaStream_t stream)

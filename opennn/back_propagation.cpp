@@ -42,8 +42,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         for(const Shape& s : layer_shapes)
             total_parameters_size += get_aligned_size(s.size());
 
-    gradient.resize(total_parameters_size);
-    gradient.setZero();
+    gradient.setZero(total_parameters_size);
 
     gradient_views.resize(layers_number);
     type* g_ptr = (total_parameters_size > 0) ? gradient.data() : nullptr;
@@ -58,7 +57,8 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             const Shape& s = layer_param_shapes[j];
             if(s.size() > 0 && g_ptr)
             {
-                gradient_views[i][j] = TensorView(g_ptr, s);
+                // Weight gradients are FP32 master (AMP recipe).
+                gradient_views[i][j] = TensorView(g_ptr, s, CUDNN_DATA_FLOAT);
                 g_ptr += get_aligned_size(s.size());
             }
         }
@@ -72,8 +72,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         for(const Shape& s : layer_shapes)
             total_backward_size += get_aligned_size(s.size());
 
-    backward.resize(total_backward_size);
-    backward.setZero();
+    backward.setZero(total_backward_size);
 
     backward_views.resize(layers_number);
     type* b_ptr = (total_backward_size > 0) ? backward.data() : nullptr;
@@ -112,8 +111,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     output_gradient_dimensions = Shape({batch_size}).append(output_shape);
 
     const Index total_output_elements = output_shape.size() * batch_size;
-    output_gradients.resize(total_output_elements);
-    output_gradients.setZero();
+    output_gradients.setZero(total_output_elements);
 
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
@@ -142,8 +140,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         total_output_gradient_size += get_aligned_size(per_layer_output_gradient_shapes[i].size());
     }
 
-    per_layer_output_gradients.resize(total_output_gradient_size);
-    per_layer_output_gradients.setZero();
+    per_layer_output_gradients.setZero(total_output_gradient_size);
 
     type* og_ptr = (total_output_gradient_size > 0) ? per_layer_output_gradients.data() : nullptr;
 
@@ -209,7 +206,7 @@ void BackPropagation::accumulate_output_gradients(size_t layer_index)
             out_ptr[k] += src.data[k];
     }
 #else
-    cudaMemset(out_ptr, 0, n * sizeof(float));
+    CHECK_CUDA(cudaMemset(out_ptr, 0, output_grad.byte_size()));
 
     for(const BackwardEdge& edge : backward_edges[layer_index])
     {
@@ -222,7 +219,10 @@ void BackPropagation::accumulate_output_gradients(size_t layer_index)
         if(!src.data) continue;
         if(src.size() != n) continue;
 
-        addition_cuda(n, out_ptr, src.data, out_ptr);
+        output_grad.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            addition_cuda<T>(n, output_grad.as<T>(), src.as<T>(), output_grad.as<T>());
+        });
     }
 #endif
 }
@@ -241,11 +241,28 @@ void BackPropagation::allocate_device()
     const Shape output_shape = neural_network->get_output_shape();
     const Index outputs_number = output_shape[0];
 
-    gradient.resize_device(gradient.size());
+    gradient.resize_device(gradient.size());   // weight gradients — FP32 master
     gradient.setZero_device();
-    backward.resize_device(backward.size());
-    backward.setZero_device();
-    output_gradients.resize_device(output_gradients.size());
+
+    // Activation-gradient pool (backward): size in bytes from per-layer dtypes.
+    {
+        const auto& nn_layers_for_sizing = neural_network->get_layers();
+        const vector<vector<Shape>> backward_shapes_for_sizing = neural_network->get_backward_shapes(batch_size);
+        Index total_backward_bytes = 0;
+        for(Index i = 0; i < layers_number; ++i)
+        {
+            const vector<Shape>& shapes = backward_shapes_for_sizing[i];
+            const vector<cudnnDataType_t> dtypes = nn_layers_for_sizing[i]->get_backward_dtypes(batch_size);
+            for(size_t j = 0; j < shapes.size(); ++j)
+                if(shapes[j].size() > 0)
+                    total_backward_bytes += get_aligned_bytes(shapes[j].size() * dtype_bytes(dtypes[j]));
+        }
+        backward.resize_device_bytes(total_backward_bytes);
+        backward.setZero_device();
+    }
+
+    // output_gradients is activation-dtype (single tensor — loss gradient).
+    output_gradients.resize_device_bytes(output_gradients.size() * Index(dtype_bytes(CUDNN_ACTIVATION_DTYPE)));
     output_gradients.setZero_device();
 
     const vector<vector<Shape>> parameter_shapes = neural_network->get_parameter_shapes();
@@ -264,7 +281,6 @@ void BackPropagation::allocate_device()
                 if(s.size() > 0 && j < gradient_views[i].size())
                 {
                     gradient_views[i][j].data = dev_g_ptr;
-                    gradient_views[i][j].set_descriptor(s);
                     dev_g_ptr += get_aligned_size(s.size());
                 }
             }
@@ -274,29 +290,37 @@ void BackPropagation::allocate_device()
     const vector<vector<Shape>> backward_shapes = neural_network->get_backward_shapes(batch_size);
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    // Allocate per-layer output gradient buffers on device (for multi-consumer gradient accumulation)
+    // Allocate per-layer output gradient buffers on device (multi-consumer accumulation).
+    // Each per-layer buffer is activation-dtype.
     if(per_layer_output_gradients.size() > 0)
     {
-        per_layer_output_gradients.resize_device(per_layer_output_gradients.size());
+        Index total_og_bytes = 0;
+        for(Index i = 0; i < layers_number; ++i)
+            if(!per_layer_output_gradient_shapes[i].empty())
+                total_og_bytes += get_aligned_bytes(per_layer_output_gradient_shapes[i].size()
+                                                    * dtype_bytes(CUDNN_ACTIVATION_DTYPE));
+
+        per_layer_output_gradients.resize_device_bytes(total_og_bytes);
         per_layer_output_gradients.setZero_device();
     }
 
     if(backward.size() > 0)
     {
-        type* dev_b_ptr = backward.device();
+        uint8_t* dev_b_cursor = backward.device_bytes();
 
         for(Index i = 0; i < layers_number; ++i)
         {
             const vector<Shape>& shapes = backward_shapes[i];
+            const vector<cudnnDataType_t> dtypes = neural_network->get_layers()[i]->get_backward_dtypes(batch_size);
 
             for(size_t j = 0; j < shapes.size(); ++j)
             {
                 const Shape& s = shapes[j];
                 if(s.size() > 0)
                 {
-                    backward_views[i][j + 1][0].data = dev_b_ptr;
-                    backward_views[i][j + 1][0].set_descriptor(s);
-                    dev_b_ptr += get_aligned_size(s.size());
+                    backward_views[i][j + 1][0].data  = reinterpret_cast<type*>(dev_b_cursor);
+                    backward_views[i][j + 1][0].dtype = dtypes[j];
+                    dev_b_cursor += get_aligned_bytes(s.size() * dtype_bytes(dtypes[j]));
                 }
             }
         }
@@ -307,23 +331,23 @@ void BackPropagation::allocate_device()
 
             if(i == last_trainable_layer_index)
             {
-                TensorView og_view(output_gradients.device(), output_gradient_dimensions);
-                og_view.set_descriptor(output_gradient_dimensions);
-                backward_views[i][0][0] = og_view;
+                backward_views[i][0][0] = TensorView(output_gradients.device(), output_gradient_dimensions);
             }
             else if(!backward_edges[i].empty())
             {
                 if(backward_edges[i].size() > 1 && !per_layer_output_gradient_shapes[i].empty()
-                   && per_layer_output_gradients.device())
+                   && per_layer_output_gradients.device_bytes())
                 {
                     // Multi-consumer: use dedicated device buffer for accumulation
-                    type* dev_og = per_layer_output_gradients.device();
-                    for(size_t k = 0; k < i; k++)
+                    uint8_t* og_cursor = per_layer_output_gradients.device_bytes();
+                    for(size_t k = 0; k < i; ++k)
                         if(!per_layer_output_gradient_shapes[k].empty())
-                            dev_og += get_aligned_size(per_layer_output_gradient_shapes[k].size());
+                            og_cursor += get_aligned_bytes(per_layer_output_gradient_shapes[k].size()
+                                                           * dtype_bytes(CUDNN_ACTIVATION_DTYPE));
 
-                    backward_views[i][0][0].data = dev_og;
-                    backward_views[i][0][0].set_descriptor(per_layer_output_gradient_shapes[i]);
+                    backward_views[i][0][0].data  = reinterpret_cast<type*>(og_cursor);
+                    backward_views[i][0][0].shape = per_layer_output_gradient_shapes[i];
+                    backward_views[i][0][0].dtype = CUDNN_ACTIVATION_DTYPE;
                 }
                 else
                 {
@@ -340,11 +364,10 @@ void BackPropagation::allocate_device()
         }
     }
 
+    if(errors_device) { cudaFree(errors_device); errors_device = nullptr; }
     CHECK_CUDA(cudaMalloc(&errors_device, batch_size * outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&error_device, 2 * sizeof(float)));
 
     output_gradients_view_device = TensorView(output_gradients.device(), output_gradient_dimensions);
-    output_gradients_view_device.set_descriptor(output_gradient_dimensions);
 #endif
 }
 
@@ -354,12 +377,6 @@ void BackPropagation::allocate_device()
 const TensorView& BackPropagation::get_output_gradients_device() const
 {
     return output_gradients_view_device;
-}
-
-void BackPropagation::free_cuda()
-{
-    if(errors_device) { cudaFree(errors_device); errors_device = nullptr; }
-    if(error_device) { cudaFree(error_device); error_device = nullptr; }
 }
 
 #endif

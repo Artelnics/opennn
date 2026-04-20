@@ -19,42 +19,6 @@ namespace opennn
 template<int Rank>
 class Flatten final : public Layer
 {
-private:
-
-    Index get_input_height() const
-    {
-        if constexpr (Rank < 2)
-            throw logic_error("get_input_height() requires Rank ≥ 2.");
-        return input_shape[0];
-    }
-
-    Index get_input_width() const
-    {
-        if constexpr (Rank < 2)
-            throw logic_error("get_input_width() requires Rank >= 2.");
-        return input_shape[1];
-    }
-
-    Index get_input_channels() const
-    {
-        if constexpr (Rank < 3)
-            throw logic_error("get_input_channels() requires Rank >= 3.");
-        return input_shape[2];
-    }
-
-    enum Forward {Inputs, Outputs};
-
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
-    {
-        return {Shape{batch_size}.append(get_output_shape())}; // {batch, total_count}
-    }
-
-    enum Backward {OutputGradients, InputGradients};
-
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        return {Shape{batch_size}.append(input_shape)};
-    }
 
 public:
 
@@ -63,14 +27,9 @@ public:
         set(new_input_shape);
     }
 
-    // Getters
+    Shape get_input_shape() const override { return input_shape; }
 
-    Shape get_output_shape() const override
-    {
-        return { input_shape.size() };
-    }
-
-    // Setters
+    Shape get_output_shape() const override { return { input_shape.size() }; }
 
     void set(const Shape& new_input_shape)
     {
@@ -92,14 +51,24 @@ public:
         input_shape = new_input_shape;
     }
 
-    // Forward / back propagation
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    {
+        return {Shape{batch_size}.append(get_output_shape())}; // {batch, total_count}
+    }
 
+    vector<Shape> get_backward_shapes(Index batch_size) const override
+    {
+        return {Shape{batch_size}.append(input_shape)};
+    }
+
+    
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept override
     {
         auto& forward_views = forward_propagation.views[layer];
 
-        copy(forward_views[Inputs][0], forward_views[Outputs][0]);
+        copy(forward_views[Input][0], forward_views[Output][0]);
     }
+
 
     void back_propagate(ForwardPropagation&,
                         BackPropagation& back_propagation,
@@ -107,9 +76,9 @@ public:
     {
         auto& backward_views = back_propagation.backward_views[layer];
 
-        copy(backward_views[OutputGradients][0], backward_views[InputGradients][0]);
+        copy(backward_views[OutputGradient][0], backward_views[InputGradient][0]);
     }
-
+    
     // Serialization
 
     void from_XML(const XmlDocument& document) override
@@ -147,6 +116,34 @@ public:
 
         printer.close_element();
     }
+
+private:
+
+    Index get_input_height() const
+    {
+        if constexpr (Rank < 2)
+            throw logic_error("get_input_height() requires Rank ≥ 2.");
+        return input_shape[0];
+    }
+
+    Index get_input_width() const
+    {
+        if constexpr (Rank < 2)
+            throw logic_error("get_input_width() requires Rank >= 2.");
+        return input_shape[1];
+    }
+
+    Index get_input_channels() const
+    {
+        if constexpr (Rank < 3)
+            throw logic_error("get_input_channels() requires Rank >= 3.");
+        return input_shape[2];
+    }
+
+    Shape input_shape;
+
+    enum Forward {Input, Output};
+    enum Backward {OutputGradient, InputGradient};
 };
 
 }

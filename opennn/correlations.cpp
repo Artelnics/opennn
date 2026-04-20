@@ -24,7 +24,7 @@ VectorR autocorrelations(const VectorR& x, Index past_time_steps)
     VectorR autocorrelation(past_time_steps);
     const Index this_size = x.size();
 
-    for(Index i = 0; i < past_time_steps; i++)
+    for(Index i = 0; i < past_time_steps; ++i)
         autocorrelation(i) = linear_correlation(x.head(this_size - i), x.tail(this_size - i)).r;
 
     return autocorrelation;
@@ -137,7 +137,7 @@ VectorR cross_correlations(const VectorR& x,
 
     const Index this_size = x.size();
 
-    for(Index i = 0; i < maximum_past_time_steps; i++)
+    for(Index i = 0; i < maximum_past_time_steps; ++i)
         cross_correlation[i] = linear_correlation(x.head(this_size - i), y.segment(i, this_size - i)).r;
 
     return cross_correlation;
@@ -167,8 +167,8 @@ MatrixR get_correlation_values(const Tensor<Correlation, 2>& correlations)
 
     MatrixR values(rows_number, columns_number);
 
-    for(Index i = 0; i < rows_number; i++)
-        for(Index j = 0; j < columns_number; j++)
+    for(Index i = 0; i < rows_number; ++i)
+        for(Index j = 0; j < columns_number; ++j)
             values(i, j) = correlations(i, j).r;
 
     return values;
@@ -260,11 +260,11 @@ VectorR calculate_spearman_ranks(const VectorR& x)
     {
         Index j = i;
         while (j + 1 < n && x(sorted_indices(j + 1)) == x(sorted_indices(i)))
-            j++;
+            ++j;
 
         const type average_rank = (static_cast<type>(i + 1) + static_cast<type>(j + 1)) / type(2.0);
 
-        for(Index k = i; k <= j; k++)
+        for(Index k = i; k <= j; ++k)
             ranks(sorted_indices(k)) = average_rank;
 
         i = j + 1;
@@ -679,7 +679,7 @@ Correlation eta_squared_correlation(const VectorR& continuous,
 
     double ss_between = 0;
 
-    for(Index cat = 0; cat < n_cats; cat++)
+    for(Index cat = 0; cat < n_cats; ++cat)
     {
         const auto mask = (y_filter.col(cat).array() > type(0.5));
         const double group_sum = mask.select(x_filter.cast<double>().array(), 0.0).sum();

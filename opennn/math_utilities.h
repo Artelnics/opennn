@@ -44,19 +44,28 @@ inline const string& activation_to_string(ActivationFunction function)
     return activation_function_map().to_string(function);
 }
 
+inline cudnnActivationMode_t to_cudnn_activation_mode(ActivationFunction function)
+{
+    switch(function)
+    {
+    case ActivationFunction::Sigmoid:                 return CUDNN_ACTIVATION_SIGMOID;
+    case ActivationFunction::HyperbolicTangent:       return CUDNN_ACTIVATION_TANH;
+    case ActivationFunction::RectifiedLinear:         return CUDNN_ACTIVATION_RELU;
+    case ActivationFunction::ScaledExponentialLinear: return CUDNN_ACTIVATION_ELU;
+    default:                                          return CUDNN_ACTIVATION_IDENTITY;
+    }
+}
+
 struct ActivationArguments
 {
     ActivationFunction activation_function = ActivationFunction::Linear;
-#ifdef OPENNN_WITH_CUDA
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
-#endif
 };
 
 struct ConvolutionArguments
 {
     Shape stride_shape;
     Shape padding_shape;
-#ifdef OPENNN_WITH_CUDA
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
     cudnnConvolutionFwdAlgo_t algorithm_forward = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
@@ -66,7 +75,6 @@ struct ConvolutionArguments
     size_t workspace_size = 0;
     void* backward_filter_workspace = nullptr;
     size_t backward_filter_workspace_size = 0;
-#endif
 };
 
 struct PoolingArguments
@@ -74,18 +82,14 @@ struct PoolingArguments
     Shape pool_dimensions;
     Shape stride_shape;
     Shape padding_shape;
-#ifdef OPENNN_WITH_CUDA
     cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
-#endif
 };
 
 struct BatchNormalizationArguments
 {
     type momentum;
-#ifdef OPENNN_WITH_CUDA
     cudnnBatchNormMode_t batch_normalization_mode = CUDNN_BATCHNORM_PER_ACTIVATION;
     cudnnTensorDescriptor_t per_activation_descriptor = nullptr;
-#endif
 };
 
 // All buffers/descriptors must be pre-allocated; dropout()/dropout_gradient()
@@ -94,35 +98,13 @@ struct DropoutArguments
 {
     type rate = type(0);
     VectorR mask_cpu;                              // CPU: 1 for kept, 0 for dropped (size = output.size())
-#ifdef OPENNN_WITH_CUDA
     cudnnDropoutDescriptor_t descriptor = nullptr; // cudnnSetDropoutDescriptor(...)
     void* states = nullptr;                        // cudnnDropoutGetStatesSize
     size_t states_size = 0;
     void* reserve_space = nullptr;                 // cudnnDropoutGetReserveSpaceSize (saved mask)
     size_t reserve_size = 0;
-#endif
 };
 
-struct MultiheadAttentionArguments
-{
-    Index batch_size;
-    Index heads_number;
-    Index query_sequence_length;
-    Index source_sequence_length;
-    Index embedding_dimension;
-    Index head_dimension;
-    type scaling_factor;
-    bool use_causal_mask;
-    const MatrixR* causal_mask;
-
-    // GPU scratch buffers (views into ForwardPropagation/BackPropagation memory)
-    float* padding_mask = nullptr;
-    float* transpose_scratch = nullptr;
-    float* attention_output_transposed = nullptr;
-    float* softmax_gradient = nullptr;
-    float* query_input_gradient_scratch = nullptr;
-    float* source_input_gradient_scratch = nullptr;
-};
 
 // Generic
 
@@ -130,18 +112,20 @@ void padding(const TensorView& input, TensorView& output);
 void bounding(const TensorView& input, const TensorView& lower_bounds, const TensorView& upper_bounds, TensorView& output);
 void copy(const TensorView& source, TensorView& destination);
 void addition(const TensorView& input_1, const TensorView& input_2, TensorView& output);
-void multiply(const TensorView& input_A, bool transpose_A, const TensorView& input_B, bool transpose_B, TensorView& output_C, type alpha = 1.0f, type beta = 0.0f);
-void multiply_elementwise(const TensorView& A, const TensorView& B, TensorView& C);
-void sum(const TensorView& A, TensorView& B, type alpha = 1.0f, type beta = 0.0f);
+void multiply(const TensorView& input_a, bool transpose_a, const TensorView& input_b, bool transpose_b, TensorView& output, type alpha = 1.0f, type beta = 0.0f);
+void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, TensorView& output);
+void sum(const TensorView& input, TensorView& output, type alpha = 1.0f, type beta = 0.0f);
 void softmax(TensorView& output);
+void softmax_backward(const TensorView& softmax_out, TensorView& output_gradient);
 
 // Dense layer
 
 void combination(const TensorView& input, const TensorView& weights, const TensorView& biases, TensorView& output);
+void combination_gradient(const TensorView& output_gradient, const TensorView& input, const TensorView& weights, TensorView& input_gradient, TensorView& weight_gradient, TensorView& bias_gradient, bool accumulate_input_gradient);
 void activation(TensorView& output, ActivationArguments arguments);
 void activation_gradient(const TensorView& outputs, const TensorView& output_gradient, TensorView& activation_derivative, const ActivationArguments& arguments);
 void dropout(TensorView& output, DropoutArguments& args);
-void dropout_gradient(const TensorView& output_gradient, const DropoutArguments& args, TensorView& input_gradient);
+void dropout_gradient(const TensorView& output_gradient, TensorView& input_gradient, const DropoutArguments& args);
 
 // Batch normalization
 
@@ -166,8 +150,8 @@ void layernorm_backward(const TensorView& input, const TensorView& output_gradie
 
 void convolution(const TensorView& input, const TensorView& kernel, const TensorView& bias, TensorView& output, const ConvolutionArguments& args = {});
 void convolution_activation(const TensorView& input, const TensorView& weight, const TensorView& bias, TensorView& output, const ConvolutionArguments& conv_args = {}, const ActivationArguments& activation_arguments = {});
-void convolution_backward_weights(const TensorView& input, const TensorView& delta, TensorView& weight_grad, TensorView& bias_grad, const ConvolutionArguments& args = {});
-void convolution_backward_data(const TensorView& delta, const TensorView& kernel, TensorView& input_grad, TensorView& padded_input_grad, const ConvolutionArguments& args = {});
+void convolution_backward_weights(const TensorView& input, const TensorView& output_gradient, TensorView& weight_grad, TensorView& bias_grad, const ConvolutionArguments& args = {});
+void convolution_backward_data(const TensorView& output_gradient, const TensorView& kernel, TensorView& input_grad, TensorView& padded_input_grad, const ConvolutionArguments& args = {});
 
 // Pooling 4D
 
@@ -189,42 +173,21 @@ void embedding_backward(const TensorView& input_indices, const TensorView& outpu
 
 // Multi-head attention
 
-void projection(const TensorView& input, const TensorView& weights, const TensorView& biases, TensorView& output, const MultiheadAttentionArguments& args);
+void projection(const TensorView& input, const TensorView& weights, const TensorView& biases, TensorView& output, float* transpose_scratch);
 
-void projection_gradient(const TensorView& d_head,
+void split_heads(const TensorView& source, TensorView& destination);
+void merge_heads(const TensorView& source, TensorView& destination);
+
+void projection_gradient(const TensorView& head_gradient,
                          const TensorView& input,
                          const TensorView& weights,
-                         TensorView& d_bias,
-                         TensorView& d_weights,
-                         TensorView& d_input,
-                         const MultiheadAttentionArguments& args,
-                         Index sequence_length,
+                         TensorView& bias_gradient,
+                         TensorView& weight_gradient,
+                         TensorView& input_gradient,
+                         float* transpose_scratch,
                          bool accumulate);
 
-void multihead_attention_forward(
-    const TensorView& query, const TensorView& key, const TensorView& value,
-    TensorView& attention_weights, TensorView& concatenated, TensorView& output,
-    const TensorView& projection_weights, const TensorView& projection_biases,
-    const TensorView& source_input,
-    const MultiheadAttentionArguments& args);
-
-void multihead_attention_backward(
-    const TensorView& query_input, const TensorView& source_input,
-    TensorView& output_gradient,
-    const TensorView& query, const TensorView& key, const TensorView& value,
-    const TensorView& attention_weights, const TensorView& concatenated,
-    const TensorView& projection_weights,
-    TensorView& proj_weight_grad, TensorView& proj_bias_grad,
-    TensorView& concat_grad, TensorView& att_weight_grad,
-    TensorView& query_grad, TensorView& key_grad, TensorView& value_grad,
-    TensorView& query_weight_grad, TensorView& query_bias_grad,
-    TensorView& key_weight_grad, TensorView& key_bias_grad,
-    TensorView& value_weight_grad, TensorView& value_bias_grad,
-    TensorView& input_query_grad,
-    TensorView& input_source_grad,
-    const TensorView& query_weights, const TensorView& key_weights, const TensorView& value_weights,
-    const MultiheadAttentionArguments& args,
-    bool self_attention);
+void attention_masks(const TensorView& source_input, TensorView& attention_weights, const MatrixR& causal_mask, bool use_causal_mask, float* padding_mask_scratch);
 
 }
 

@@ -68,8 +68,7 @@ void NeuralNetwork::compile()
         for (const Shape& s : layer->get_parameter_shapes())
             total_parameters += get_aligned_size(s.size());
 
-    parameters.resize(total_parameters);
-    parameters.setZero();
+    parameters.setZero(total_parameters);
 
     type* pointer = parameters.data();
 
@@ -82,8 +81,7 @@ void NeuralNetwork::compile()
         for (const Shape& s : layer->get_state_shapes())
             total_states += get_aligned_size(s.size());
 
-    states.resize(total_states);
-    states.setZero();
+    states.setZero(total_states);
 
     type* state_pointer = states.data();
     for (auto& layer : layers)
@@ -166,7 +164,7 @@ vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
 
     vector<vector<Index>> layer_output_indices(layers_number);
 
-    for(Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; ++i)
         for(const Index input_index : layer_input_indices[i])
             if (input_index >= 0)
                 layer_output_indices[input_index].push_back(i);
@@ -224,7 +222,7 @@ static void set_variable_names(vector<Variable>& vars, const vector<string>& new
         else
         {
             vars[i].name = new_names[j];
-            j++;
+            ++j;
         }
     }
 }
@@ -274,7 +272,7 @@ void NeuralNetwork::set_layer_input_indices(const string& layer_label,
 
     vector<Index> new_layer_input_indices(size);
 
-    for(Index i = 0; i < size; i++)
+    for(Index i = 0; i < size; ++i)
         new_layer_input_indices[i] = get_layer_index(new_layer_input_labels[i]);
 
     layer_input_indices[layer_index] = new_layer_input_indices;
@@ -347,7 +345,7 @@ Index NeuralNetwork::get_parameters_number() const
 
     const Index layers_number = get_layers_number();
 
-    for(Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; ++i)
         parameters_number += layers[i]->get_parameters_number();
 
     return parameters_number;
@@ -361,7 +359,7 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 
     #pragma omp parallel for
 
-    for(int i = 0; i < layers_number; i++)
+    for(int i = 0; i < layers_number; ++i)
         layer_parameter_numbers[i] = layers[i]->get_parameters_number();
 
     return layer_parameter_numbers;
@@ -404,7 +402,7 @@ void NeuralNetwork::set_parameters_random()
 {
     const Index layers_number = get_layers_number();
 
-    for(Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; ++i)
         layers[i]->set_parameters_random();
 }
 
@@ -413,7 +411,7 @@ void NeuralNetwork::set_parameters_glorot()
     const Index layers_number = get_layers_number();
 
     #pragma omp parallel for
-    for(int i = 0; i < layers_number; i++)
+    for(int i = 0; i < layers_number; ++i)
         layers[i]->set_parameters_glorot();
 }
 
@@ -521,7 +519,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         }
     }
 
-    for(Index i = first_layer_index; i <= last_layer_index; i++)
+    for(Index i = first_layer_index; i <= last_layer_index; ++i)
         layers[i]->forward_propagate(forward_propagation, i, is_training);
 }
 
@@ -529,17 +527,17 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       const VectorR& new_parameters,
                                       ForwardPropagation& forward_propagation)
 {
-    VectorR& params = get_parameters();
+    VectorR& parameters_vector = get_parameters();
 
     // Save current values without changing buffer address (Layer TensorViews
-    // are bound to params.data()). Swap would relocate the buffer and break them.
-    const VectorR saved_parameters = params;
+    // are bound to parameters_vector.data()). Swap would relocate the buffer and break them.
+    const VectorR saved_parameters = parameters_vector;
 
-    params = new_parameters;
+    parameters_vector = new_parameters;
 
     forward_propagate(input_view, forward_propagation, true);
 
-    params = saved_parameters;
+    parameters_vector = saved_parameters;
 }
 
 MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
@@ -556,11 +554,11 @@ MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
 
     inputs = point;
 
-    for(Index i = 0; i < points_number; i++)
+    for(Index i = 0; i < points_number; ++i)
     {
         inputs(direction) = minimum + (maximum - minimum)*type(i)/type(points_number-1);
 
-        for(Index j = 0; j < inputs_number; j++)
+        for(Index j = 0; j < inputs_number; ++j)
             directional_inputs(i, j) = inputs(j);
     }
 
@@ -593,7 +591,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     const Index pixels_number = height * width * channels;
 
     #pragma omp parallel for
-    for(Index j = 0; j < pixels_number; j++)
+    for(Index j = 0; j < pixels_number; ++j)
         input_data(j) = image(j);
 
     const Matrix outputs = calculate_outputs(input_data);
@@ -651,7 +649,7 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
         if (sequence_length > 0)
             inputs(i, 0) = 2.0f; // START_INDEX
 
-        for(size_t j = 0; j < tokens_number; j++)
+        for(size_t j = 0; j < tokens_number; ++j)
         {
             if (1 + j >= static_cast<size_t>(sequence_length)) break;
 
@@ -693,7 +691,7 @@ void NeuralNetwork::to_XML(XmlPrinter& printer) const
 
     add_xml_element(printer, "InputsNumber", to_string(inputs_number));
 
-    for(Index i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; ++i)
         add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
 
     printer.close_element();
@@ -704,14 +702,14 @@ void NeuralNetwork::to_XML(XmlPrinter& printer) const
 
     add_xml_element(printer, "LayersNumber", to_string(layers_number));
 
-    for(Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; ++i)
         layers[i]->to_XML(printer);
 
     // Layer input indices
 
     printer.open_element("LayerInputIndices");
 
-    for(size_t i = 0; i < layer_input_indices.size(); i++)
+    for(size_t i = 0; i < layer_input_indices.size(); ++i)
         add_xml_element_attribute(printer, "LayerInputsIndices", vector_to_string(layer_input_indices[i]), "LayerIndex", to_string(i));
 
     printer.close_element();
@@ -725,7 +723,7 @@ void NeuralNetwork::to_XML(XmlPrinter& printer) const
     const Index outputs_count = has(LayerType::Embedding) ? outputs_number : output_names.size();
     add_xml_element(printer, "OutputsNumber", to_string(outputs_count));
 
-    for(Index i = 0; i < outputs_count; i++)
+    for(Index i = 0; i < outputs_count; ++i)
         add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
 
     printer.close_element();
@@ -930,7 +928,7 @@ void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_n
     const Index outputs_number = get_outputs_number();
     const Index batch_size = inputs.rows();
 
-    for(size_t i = 0; i < size_t(outputs_number); i++)
+    for(size_t i = 0; i < size_t(outputs_number); ++i)
     {
         file << output_names[i];
 
@@ -940,9 +938,9 @@ void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_n
 
     file << "\n";
 
-    for(Index i = 0; i < batch_size; i++)
+    for(Index i = 0; i < batch_size; ++i)
     {
-        for(Index j = 0; j < outputs_number; j++)
+        for(Index j = 0; j < outputs_number; ++j)
         {
             file << outputs(i, j);
 
@@ -1011,7 +1009,7 @@ vector<string> NeuralNetwork::get_layer_labels() const
 
     vector<string> layer_labels(layers_number);
 
-    for(Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; ++i)
         layer_labels[i] = layers[i]->get_label();
 
     return layer_labels;
@@ -1023,7 +1021,7 @@ vector<string> NeuralNetwork::get_names_string() const
 
     vector<string> names(layers_number);
 
-    for(Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; ++i)
         names[i] = layers[i]->get_name();
 
     return names;
@@ -1070,10 +1068,7 @@ void NeuralNetwork::link_parameters_device()
             if(shapes[i].empty()) continue;
 
             if(i < param_views.size())
-            {
                 param_views[i].data = dev_ptr;
-                param_views[i].set_descriptor(shapes[i]);
-            }
 
             dev_ptr += get_aligned_size(shapes[i].size());
         }
@@ -1138,10 +1133,7 @@ void NeuralNetwork::link_states_device()
             if(shapes[i].empty()) continue;
 
             if(i < state_views.size())
-            {
                 state_views[i].data = dev_ptr;
-                state_views[i].set_descriptor(shapes[i]);
-            }
 
             dev_ptr += get_aligned_size(shapes[i].size());
         }
@@ -1192,7 +1184,6 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
 
     vector<TensorView> input_views_gpu = input_views_cpu;
     input_views_gpu[0].data = input_device;
-    input_views_gpu[0].set_descriptor(input_views_cpu[0].shape);
 
     // Forward on GPU (math_utilities dispatches via Device::is_gpu)
     forward_propagate(input_views_gpu, fp, false);
@@ -1216,7 +1207,7 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
                           cudaMemcpyDeviceToHost));
 
     // Free temp input buffer and restore CPU layer views
-    cudaFree(input_device);
+    CHECK_CUDA(cudaFree(input_device));
     link_parameters_cpu();
     link_states_cpu();
     // (no copy_states_host: inference doesn't update running stats)

@@ -134,7 +134,7 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 
     for (const auto& constraints : response_optimization.conditions)
         if (constraints.condition == ConditionType::Maximize || constraints.condition == ConditionType::Minimize)
-            objectives_number++;
+            ++objectives_number;
 
     if (objectives_number == 0)
         throw runtime_error("No Objectives found, make sure to set Minimize or Maximize to any variable");
@@ -188,7 +188,7 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
                     utopian_and_senses(1, current_objective_index) = -1.0;
                 }
 
-                current_objective_index++;
+                ++current_objective_index;
             }
             feature_pointer += feature_dimensions_by_role[i];
         }
@@ -285,7 +285,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
                 random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array() * range + inf;
             }
-            current_feature_index++;
+            ++current_feature_index;
         }
         else
         {
@@ -474,7 +474,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 
     cout << "> Optimization loop starting with zoom factor: " << zoom_factor << "\n";
 
-    for (Index i = 0; i < max_iterations; i++)
+    for (Index i = 0; i < max_iterations; ++i)
     {
         const MatrixR random_inputs = calculate_random_inputs(input_domain_to_iterate);
 
@@ -650,14 +650,14 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
 
     cout << "> Optimization loop starting with zoom factor: " << current_zoom << "\n";
 
-    for (Index i = 0; i < max_iterations; i++)
+    for (Index i = 0; i < max_iterations; ++i)
     {
         cout << "\n> [Iteration " << i + 1 << " / " << max_iterations << "]" << "\n";
 
         MatrixR candidate_inputs = global_pareto_inputs;
         MatrixR candidate_outputs = global_pareto_outputs;
 
-        for (Index j = 0; j < global_pareto_inputs.rows(); j++)
+        for (Index j = 0; j < global_pareto_inputs.rows(); ++j)
         {
             const MatrixR local_random_inputs = calculate_random_inputs(local_input_domains[j]);
 
@@ -713,7 +713,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
 
         const MatrixR best_and_pareto = append_rows(optimal_set.first,global_pareto_inputs);
 
-        for (Index j = 0; j < global_pareto_inputs.rows(); j++)
+        for (Index j = 0; j < global_pareto_inputs.rows(); ++j)
             local_input_domains[j].reshape(current_zoom, global_pareto_inputs.row(j),best_and_pareto , input_feature_dimensions, input_variable_types);
 
         current_zoom *= zoom_factor;

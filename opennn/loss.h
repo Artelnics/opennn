@@ -156,6 +156,8 @@ private:
 
     void add_regularization(BackPropagation&) const;
 
+    type get_weighted_coefficient(const Batch&) const;
+
     void calculate_layers_error_gradient(const Batch&,
                                          ForwardPropagation&,
                                          BackPropagation&) const;

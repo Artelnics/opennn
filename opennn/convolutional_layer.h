@@ -43,6 +43,10 @@ class Convolutional final : public Layer
 {
 private:
 
+    Index input_height = 0;
+    Index input_width = 0;
+    Index input_channels = 0;
+
     Index kernels_number = 0;
     Index kernel_height = 0;
     Index kernel_width = 0;
@@ -60,7 +64,6 @@ private:
     ActivationArguments activation_arguments;
     ConvolutionArguments convolution_arguments;
 
-#ifdef OPENNN_WITH_CUDA
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
 
@@ -72,16 +75,15 @@ private:
     size_t cuda_workspace_size = 0;
     void* cuda_backward_filter_workspace = nullptr;
     size_t cuda_backward_filter_workspace_size = 0;
-#endif
 
-    enum Parameters {Biases, Weights, Gammas, Betas};
+    enum Parameters {Bias, Weight, Gamma, Beta};
 
     vector<Shape> get_parameter_shapes() const override
     {
-        return {{kernels_number},                                               // Biases
-                {kernels_number, kernel_height, kernel_width, kernel_channels}, // Weights
-                {batch_normalization ? kernels_number : 0},                     // Gammas
-                {batch_normalization ? kernels_number : 0}};                    // Betas
+        return {{kernels_number},                                               // Bias
+                {kernels_number, kernel_height, kernel_width, kernel_channels}, // Weight
+                {batch_normalization ? kernels_number : 0},                     // Gamma
+                {batch_normalization ? kernels_number : 0}};                    // Beta
     }
 
     enum States {RunningMean, RunningVariance};
@@ -93,15 +95,15 @@ private:
                 {kernels_number}};  // RunningVariance
     }
 
-    enum Forward {Inputs, PaddedInputs, Convolution, BatchNormMean, BatchNormInverseVariance, Output};
+    enum Forward {Input, PaddedInput, Convolution, BatchNormMean, BatchNormInverseVariance, Output};
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
         const Shape output_shape = {batch_size, get_output_height(), get_output_width(), kernels_number};
         const Shape padded_shape = {batch_size,
-                                    get_input_height() + 2 * get_padding_height(),
-                                    get_input_width() + 2 * get_padding_width(),
-                                    get_input_channels()};
+                                    input_height + 2 * get_padding_height(),
+                                    input_width + 2 * get_padding_width(),
+                                    input_channels};
 
         if (batch_normalization)
             return {padded_shape,             // PaddedInputs
@@ -117,14 +119,19 @@ private:
                 output_shape};                // Output
     }
 
-    enum Backward {OutputGradients, InputGradients};
+    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
+    {
+        return {CUDNN_ACTIVATION_DTYPE,  // PaddedInputs
+                CUDNN_ACTIVATION_DTYPE,  // Convolution
+                CUDNN_DATA_FLOAT,        // BatchNormMean — stat, stays FP32
+                CUDNN_DATA_FLOAT,        // BatchNormInverseVariance — stat, stays FP32
+                CUDNN_ACTIVATION_DTYPE}; // Output
+    }
+
+    enum Backward {OutputGradient, InputGradient};
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        const Index input_height = get_input_height();
-        const Index input_width = get_input_width();
-        const Index input_channels = get_input_channels();
-
         return {{batch_size, input_height, input_width, input_channels},
                 {kernels_number, kernel_height, kernel_width, kernel_channels}};
     }
@@ -142,15 +149,13 @@ public:
     ~Convolutional() override
     {
 #ifdef OPENNN_WITH_CUDA
-        if (activation_arguments.activation_descriptor) cudnnDestroyActivationDescriptor(activation_arguments.activation_descriptor);
-        if (kernel_descriptor) cudnnDestroyFilterDescriptor(kernel_descriptor);
-        if (convolution_descriptor) cudnnDestroyConvolutionDescriptor(convolution_descriptor);
-        if (cuda_workspace) cudaFree(cuda_workspace);
-        if (cuda_backward_filter_workspace) cudaFree(cuda_backward_filter_workspace);
+        destroy_cuda();
 #endif
     }
 
     // Getters
+
+    Shape get_input_shape() const override { return {input_height, input_width, input_channels}; }
 
     Shape get_output_shape() const override;
     Index get_output_height() const;
@@ -179,10 +184,8 @@ public:
 
     bool get_batch_normalization() const { return batch_normalization; }
 
-#ifdef OPENNN_WITH_CUDA
     cudnnFilterDescriptor_t get_kernel_descriptor() const { return kernel_descriptor; }
     cudnnConvolutionDescriptor_t get_convolution_descriptor() const { return convolution_descriptor; }
-#endif
 
     // Setters
 
@@ -212,9 +215,8 @@ public:
 
     // Device setup
 
-#ifdef OPENNN_WITH_CUDA
-    void init_cuda(Index batch_size);
-#endif
+    void init_cuda(Index);
+    void destroy_cuda();
 
     // Forward / back propagation
 

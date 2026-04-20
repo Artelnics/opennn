@@ -159,7 +159,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     // Main loop
     optimization_data.iteration = 1;
 
-    for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << "\n";
 
@@ -169,7 +169,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         if(is_text_classification_model) training_accuracy = type(0);
 
-        for(Index iteration = 0; iteration < training_batches_number; iteration++)
+        for(Index iteration = 0; iteration < training_batches_number; ++iteration)
         {
             training_back_propagation.gradient.setZero();
 
@@ -217,7 +217,7 @@ TrainingResults AdaptiveMomentEstimation::train()
             if(is_text_classification_model)
                 validation_accuracy = type(0);
 
-            for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+            for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
             {
                 // Dataset
 
@@ -310,7 +310,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     {
         const Index parameters_number = neural_network->get_parameters_size();
 
-        adam_update_device(
+        adam_update_cuda(
             parameters_number,
             neural_network->get_parameters_device(),
             optimization_data.gradient_exponential_decay.device(),
@@ -333,11 +333,28 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     const VectorR& gradient = back_propagation.gradient.vector;
 
-    gradient_exponential_decay.array() = beta_1 * gradient_exponential_decay.array() + (type(1) - beta_1) * gradient.array();
-    square_gradient_exponential_decay.array() = beta_2 * square_gradient_exponential_decay.array() + (type(1) - beta_2) * gradient.array().square();
+    const Index n = parameters.size();
+    const type one_minus_beta_1 = type(1) - beta_1;
+    const type one_minus_beta_2 = type(1) - beta_2;
 
-    parameters.array() -= learning_rate * (gradient_exponential_decay.array() / bias_correction_1) /
-                          ((square_gradient_exponential_decay.array() / bias_correction_2).sqrt() + EPSILON);
+    // Factor sqrt(bc_2) out of the element-wise division to avoid two divisions per element.
+    const type s = std::sqrt(bias_correction_2);
+    const type effective_learning_rate = learning_rate * s / bias_correction_1;
+    const type effective_epsilon = EPSILON * s;
+
+    #pragma omp parallel for
+    for (Index i = 0; i < n; ++i)
+    {
+        const type g = gradient(i);
+
+        const type m_new = beta_1 * gradient_exponential_decay(i) + one_minus_beta_1 * g;
+        gradient_exponential_decay(i) = m_new;
+
+        const type v_new = beta_2 * square_gradient_exponential_decay(i) + one_minus_beta_2 * g * g;
+        square_gradient_exponential_decay(i) = v_new;
+
+        parameters(i) -= effective_learning_rate * m_new / (std::sqrt(v_new) + effective_epsilon);
+    }
 }
 
 void AdaptiveMomentEstimation::to_XML(XmlPrinter& printer) const
@@ -372,11 +389,8 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 
     const Index parameters_number = neural_network->get_parameters_size();
 
-    gradient_exponential_decay.resize(parameters_number);
-    gradient_exponential_decay.setZero();
-
-    square_gradient_exponential_decay.resize(parameters_number);
-    square_gradient_exponential_decay.setZero();
+    gradient_exponential_decay.setZero(parameters_number);
+    square_gradient_exponential_decay.setZero(parameters_number);
 
 #ifdef OPENNN_WITH_CUDA
     gradient_exponential_decay.resize_device(parameters_number);
@@ -454,7 +468,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     ThreadSafeQueue<Batch*> ready_training_queue;
     vector<unique_ptr<Batch>> training_batch_pool;
 
-    for(int i = 0; i < PREFETCH_BATCHES; i++)
+    for(int i = 0; i < PREFETCH_BATCHES; ++i)
     {
         training_batch_pool.push_back(make_unique<Batch>(training_batch_size, dataset));
         empty_training_queue.push(training_batch_pool.back().get());
@@ -466,7 +480,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
     if(has_validation)
     {
-        for(int i = 0; i < PREFETCH_BATCHES; i++)
+        for(int i = 0; i < PREFETCH_BATCHES; ++i)
         {
             validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
             empty_validation_queue.push(validation_batch_pool.back().get());
@@ -521,7 +535,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     type elapsed_time = type(0);
     optimization_data.iteration = 1;
 
-    for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
         if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << "\n";
 
@@ -532,7 +546,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         // Worker thread fills host pinned memory
         std::thread training_worker([&]()
         {
-            for(Index iteration = 0; iteration < training_batches_number; iteration++)
+            for(Index iteration = 0; iteration < training_batches_number; ++iteration)
             {
                 Batch* batch = empty_training_queue.pop();
                 batch->fill_host(training_batches[iteration],
@@ -551,7 +565,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             cudaEventRecord(batch_ready_event[0], memory_stream);
         }
 
-        for(Index iteration = 0; iteration < training_batches_number; iteration++)
+        for(Index iteration = 0; iteration < training_batches_number; ++iteration)
         {
             training_back_propagation.gradient.setZero_device();
 
@@ -596,7 +610,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
             std::thread validation_worker([&]()
             {
-                for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+                for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
                 {
                     Batch* batch = empty_validation_queue.pop();
                     batch->fill_host(validation_batches[iteration],
@@ -615,7 +629,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
                 cudaEventRecord(batch_ready_event[0], memory_stream);
             }
 
-            for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+            for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
             {
                 Batch* current_batch = next_val_batch;
                 next_val_batch = nullptr;
@@ -650,7 +664,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             results.validation_error_history(epoch) = validation_error;
 
             if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
-                validation_failures++;
+                ++validation_failures;
         }
 
         elapsed_time = get_elapsed_time(beginning_time);

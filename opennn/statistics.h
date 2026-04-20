@@ -124,10 +124,8 @@ type range(const VectorR&);
 
 // Mean
 type mean(const VectorR&);
-type mean(const VectorR&, Index, Index);
 type mean(const MatrixR&, Index);
 VectorR mean(const MatrixR&);
-VectorR mean(const MatrixR&, const vector<Index>&);
 VectorR mean(const MatrixR&, const vector<Index>&, const vector<Index>&);
 
 // Median

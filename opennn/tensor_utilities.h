@@ -18,12 +18,24 @@ namespace opennn
 
 static constexpr Index ALIGN_BYTES = EIGEN_MAX_ALIGN_BYTES; // usually 32
 static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(type);
+
+inline int to_int(Index value) { return static_cast<int>(value); }
+inline type to_type(Index value) { return static_cast<type>(value); }
 static constexpr Index ALIGN_MASK = ~(ALIGN_ELEMENTS - 1);
 
 inline Index get_aligned_size(Index size)
 {
     if (size == 0) return 0;
     return (size + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
+}
+
+// Byte-sized alignment — pads a byte count up to the same physical boundary
+// that get_aligned_size enforces on float counts. Used by the device pool
+// when tensors may have mixed dtypes (FP32 / BF16 / FP16).
+inline Index get_aligned_bytes(Index n_bytes)
+{
+    if (n_bytes == 0) return 0;
+    return (n_bytes + ALIGN_BYTES - 1) & ~(ALIGN_BYTES - 1);
 }
 
 // Signed size helper: returns STL container .size() as Index (avoids static_cast<Index>(x.size()) noise).
@@ -37,6 +49,86 @@ inline bool is_aligned(const void* ptr)
 {
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
 }
+
+template<typename Base, typename T>
+inline bool is_instance_of(const T* ptr)
+{
+    return dynamic_cast<const Base*>(ptr);
+}
+
+template <typename Enum>
+struct EnumMap
+{
+    using Entry = pair<Enum, string>;
+
+    const vector<Entry>& entries;
+
+    const string& to_string(Enum value) const
+    {
+        for(const auto& [e, s] : entries)
+            if(e == value)
+                return s;
+        throw runtime_error("Unknown enum value");
+    }
+
+    Enum from_string(const string& name) const
+    {
+        for(const auto& [e, s] : entries)
+            if(s == name)
+                return e;
+        throw runtime_error("Unknown enum string: " + name);
+    }
+
+    Enum from_string(const string& name, Enum fallback) const
+    {
+        for(const auto& [e, s] : entries)
+            if(s == name)
+                return e;
+        return fallback;
+    }
+};
+
+// AMP-style dtype split. Weights are kept as an FP32 master copy (WEIGHT_DTYPE),
+// activations & gradients move to BF16/FP16 by flipping ACTIVATION_DTYPE, and
+// reductions / scalar coefficients stay FP32 (REDUCTION_DTYPE) for numerical
+// stability. In the forward/backward GEMMs the master FP32 weights are cast
+// to ACTIVATION_DTYPE before the call, so cuBLAS sees all operands in the same
+// dtype.
+constexpr cudnnDataType_t     CUDNN_WEIGHT_DTYPE     = CUDNN_DATA_FLOAT;
+constexpr cudnnDataType_t     CUDNN_ACTIVATION_DTYPE = CUDNN_DATA_BFLOAT16;
+constexpr cudaDataType_t      CUDA_WEIGHT_DTYPE      = CUDA_R_32F;
+constexpr cudaDataType_t      CUDA_ACTIVATION_DTYPE  = CUDA_R_16BF;
+constexpr cudaDataType_t      CUDA_REDUCTION_DTYPE   = CUDA_R_32F;
+constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_16BF;
+
+inline Index dtype_bytes(cudnnDataType_t t)
+{
+    switch (t) {
+        case CUDNN_DATA_FLOAT:    return 4;
+        case CUDNN_DATA_BFLOAT16: return 2;
+        case CUDNN_DATA_HALF:     return 2;
+        default:                  return 4;
+    }
+}
+
+// Bridge cuDNN dtype → cuBLAS/CUDA dtype (same physical layout, different tag).
+inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t t)
+{
+    switch (t) {
+        case CUDNN_DATA_FLOAT:    return CUDA_R_32F;
+        case CUDNN_DATA_BFLOAT16: return CUDA_R_16BF;
+        case CUDNN_DATA_HALF:     return CUDA_R_16F;
+        default:                  return CUDA_R_32F;
+    }
+}
+
+// Compile-time cuDNN dtype → C++ type mapping. Enables templated code to derive
+// the C++ type from the dtype constant:
+//   using T = typename MapDtype<CUDNN_DATA_BFLOAT16>::type;   // __nv_bfloat16
+// Add a specialization here when introducing a new supported dtype.
+template<cudnnDataType_t D> struct MapDtype;
+template<> struct MapDtype<CUDNN_DATA_FLOAT>    { using type = float; };
+template<> struct MapDtype<CUDNN_DATA_BFLOAT16> { using type = __nv_bfloat16; };
 
 #ifdef OPENNN_WITH_CUDA
 
@@ -202,14 +294,15 @@ public:
 
     template<int Rank>
     Eigen::array<Index, Rank> get_eigen_dims() const {
-        if (Rank != rank_) {
+        if (Rank != rank_) 
             throw std::runtime_error("Shape Error: Requested Rank (" + std::to_string(Rank) +
                                      ") does not match Shape rank (" + std::to_string(rank_) + ").");
-        }
+        
         Eigen::array<Index, Rank> dims;
-        for (size_t i = 0; i < Rank; ++i) {
+
+        for (size_t i = 0; i < Rank; ++i) 
             dims[i] = shape_[i];
-        }
+        
         return dims;
     }
 
@@ -219,9 +312,11 @@ private:
     size_t rank_ = 0;
 };
 
-
+// Single pool that can back either a CPU (Eigen VectorR) or GPU (byte buffer) buffer.
+// Typical use: a Memory instance is used for ONE side — the other stays empty/null.
 struct Memory
 {
+    // -- CPU side -----------------------------------------------------------
     VectorR vector;
 
     type* data() { return vector.data(); }
@@ -231,62 +326,74 @@ struct Memory
 
     void resize(Index n) { vector.resize(n); }
     void setZero() { vector.setZero(); }
+    void setZero(Index n) { vector = VectorR::Zero(n); }
 
-#ifdef OPENNN_WITH_CUDA
-    float* device_data = nullptr;
-    Index allocated_size = 0;
+    // -- GPU side (byte-typed pool; may hold mixed-dtype tensors) ----------
+    uint8_t* device_data = nullptr;
+    Index    allocated_bytes = 0;
 
     Memory() = default;
     Memory(const Memory&) = delete;
     Memory& operator=(const Memory&) = delete;
 
     Memory(Memory&& other) noexcept
-        : vector(std::move(other.vector)),
-          device_data(other.device_data),
-          allocated_size(other.allocated_size)
+        : vector(std::move(other.vector))
+        , device_data(other.device_data)
+        , allocated_bytes(other.allocated_bytes)
     {
         other.device_data = nullptr;
-        other.allocated_size = 0;
+        other.allocated_bytes = 0;
     }
 
     Memory& operator=(Memory&& other) noexcept
     {
         if(this != &other)
         {
-            if(device_data) cudaFree(device_data);
+            free_device();
             vector = std::move(other.vector);
             device_data = other.device_data;
-            allocated_size = other.allocated_size;
+            allocated_bytes = other.allocated_bytes;
             other.device_data = nullptr;
-            other.allocated_size = 0;
+            other.allocated_bytes = 0;
         }
         return *this;
     }
 
-    ~Memory()
-    {
-        if(device_data) cudaFree(device_data);
-    }
+    ~Memory() { free_device(); }
 
-    void resize_device(Index n)
+    // Backward-compatible accessor (pool is byte-backed but aligned to sizeof(float)).
+    type*          device()             { return reinterpret_cast<type*>(device_data); }
+    const type*    device()       const { return reinterpret_cast<const type*>(device_data); }
+    uint8_t*       device_bytes()       { return device_data; }
+    const uint8_t* device_bytes() const { return device_data; }
+
+#ifdef OPENNN_WITH_CUDA
+    void resize_device(Index n_floats) { resize_device_bytes(n_floats * Index(sizeof(float))); }
+
+    void resize_device_bytes(Index n_bytes)
     {
-        if(n == allocated_size) return;
-        if(device_data) cudaFree(device_data);
-        allocated_size = n;
-        if(n > 0) CHECK_CUDA(cudaMalloc(&device_data, n * sizeof(float)));
+        if(n_bytes == allocated_bytes) return;
+        free_device();
+        allocated_bytes = n_bytes;
+        if(n_bytes > 0) CHECK_CUDA(cudaMalloc(&device_data, n_bytes));
     }
 
     void setZero_device()
     {
-        if(device_data && allocated_size > 0)
-            CHECK_CUDA(cudaMemset(device_data, 0, allocated_size * sizeof(float)));
+        if(device_data && allocated_bytes > 0)
+            CHECK_CUDA(cudaMemset(device_data, 0, allocated_bytes));
     }
 
-    type* device() { return device_data; }
-    const type* device() const { return device_data; }
+private:
+    void free_device()
+    {
+        if(device_data) { cudaFree(device_data); device_data = nullptr; allocated_bytes = 0; }
+    }
+#else
+private:
+    void free_device() {}   // no-op in CPU-only builds (device_data is always null)
 #endif
 };
-
 
 struct TensorView
 {
@@ -296,14 +403,40 @@ struct TensorView
 
     Shape shape;
 
-    TensorView(type* new_data, const Shape& new_shape) noexcept
-        : data(new_data), shape(new_shape) {}
+    cudnnDataType_t dtype = CUDNN_ACTIVATION_DTYPE;
+
+    TensorView(type* new_data, const Shape& new_shape,
+               cudnnDataType_t new_dtype = CUDNN_ACTIVATION_DTYPE) noexcept
+        : data(new_data), shape(new_shape), dtype(new_dtype) {}
 
     Index get_rank() const noexcept { return shape.rank(); }
 
     Index size() const noexcept { return shape.size(); }
 
+    Index byte_size() const noexcept { return size() * dtype_bytes(dtype); }
+
     bool empty() const noexcept { return shape.empty(); }
+
+    // Typed accessor — checks dtype matches, reinterprets underlying bytes.
+    // Kernels / cuBLAS / cuDNN calls should go through this, not read `data` directly.
+    // Specialized below for T = float and T = __nv_bfloat16.
+    template<typename T>       T* as()       noexcept;
+    template<typename T> const T* as() const noexcept;
+
+    // cuBLAS/CUDA dtype tag for this view (for cublasGemmEx / cublasGemvEx).
+    cudaDataType_t cuda_dtype() const noexcept { return cudnn_to_cuda_dtype(dtype); }
+
+    // Runtime dtype dispatch — invokes `fn` with a tag of the active type.
+    // Usage:  view.dispatch([&](auto tag) { using T = decltype(tag); ... });
+    template<typename F>
+    void dispatch(F&& fn) const
+    {
+        if (dtype == CUDNN_DATA_BFLOAT16) fn(__nv_bfloat16{});
+        else                              fn(float{});
+    }
+
+    TensorView reshape(const Shape& new_shape) const
+    { return TensorView(data, new_shape, dtype); }
 
     void print() const
     {
@@ -336,6 +469,31 @@ struct TensorView
         return MatrixMap(data, shape[0], shape.size() / shape[0]);
     }
 
+    MatrixMap as_matrix(Index batch_index) const
+    {
+        assert(data && shape.rank() >= 2);
+        const Index rows = shape[shape.rank() - 2];
+        const Index cols = shape[shape.rank() - 1];
+        return MatrixMap(data + batch_index * rows * cols, rows, cols);
+    }
+
+    MatrixMap as_flat_matrix() const
+    {
+        assert(data && shape.rank() >= 1);
+        const Index cols = shape[shape.rank() - 1];
+        return MatrixMap(data, shape.size() / cols, cols);
+    }
+
+    MatrixMap as_flat_matrix(Index batch_index) const
+    {
+        assert(data && shape.rank() >= 2);
+        const Index cols = shape[shape.rank() - 1];
+        Index rows = 1;
+        for (size_t i = 1; i + 1 < shape.rank(); ++i)
+            rows *= shape[i];
+        return MatrixMap(data + batch_index * rows * cols, rows, cols);
+    }
+
     VectorMap as_vector() const
     {
         assert(data);
@@ -349,11 +507,25 @@ struct TensorView
         return TensorMapR<Rank>(data, shape.template get_eigen_dims<Rank>());
     }
 
+    template<int Rank>
+    TensorMapR<Rank> as_tensor(Index batch_index) const
+    {
+        assert(data && shape.rank() == Rank + 1);
+        Eigen::array<Index, Rank> dims;
+        Index slice_size = 1;
+        for(int i = 0; i < Rank; ++i)
+        {
+            dims[i] = shape[i + 1];
+            slice_size *= shape[i + 1];
+        }
+        return TensorMapR<Rank>(data + batch_index * slice_size, dims);
+    }
+
 #ifdef OPENNN_WITH_CUDA
 
     float* device = nullptr;
 
-    shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
+    mutable shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
 
     TensorView(float* new_data, std::shared_ptr<cudnnTensorStruct> handle)
         : data(new_data), descriptor_handle(handle) {}
@@ -364,12 +536,15 @@ struct TensorView
         set_descriptor(new_shape);
     }
 
+    // Lazily creates the cuDNN descriptor from `shape` on first call.
     cudnnTensorDescriptor_t get_descriptor() const
     {
+        if (!descriptor_handle && !shape.empty())
+            set_descriptor(shape);
         return descriptor_handle ? descriptor_handle.get() : nullptr;
     }
 
-    void set_descriptor(const Shape& desc_shape)
+    void set_descriptor(const Shape& desc_shape) const
     {
         int n = 1, c = 1, h = 1, w = 1;
         if (desc_shape.rank() == 4) {
@@ -405,7 +580,7 @@ struct TensorView
             });
         }
 
-        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, n, c, h, w));
+        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, dtype, n, c, h, w));
     }
 
     Index device_size() const
@@ -429,7 +604,7 @@ struct TensorView
         if (!data) return;
 
         if (value == 0.0f)
-            CHECK_CUDA(cudaMemset(data, 0, device_size() * sizeof(float)));
+            CHECK_CUDA(cudaMemset(data, 0, byte_size()));
         // @todo non-zero fill needs get_cudnn_handle()
     }
 
@@ -437,11 +612,46 @@ struct TensorView
 
 };
 
-VectorR filter_missing_values(const VectorR& input);
+// Typed accessor specializations.
+template<> inline       float*         TensorView::as<float>()               noexcept { assert(dtype == CUDNN_DATA_FLOAT);    return reinterpret_cast<float*>(data); }
+template<> inline const float*         TensorView::as<float>()         const noexcept { assert(dtype == CUDNN_DATA_FLOAT);    return reinterpret_cast<const float*>(data); }
+template<> inline       __nv_bfloat16* TensorView::as<__nv_bfloat16>()       noexcept { assert(dtype == CUDNN_DATA_BFLOAT16); return reinterpret_cast<__nv_bfloat16*>(data); }
+template<> inline const __nv_bfloat16* TensorView::as<__nv_bfloat16>() const noexcept { assert(dtype == CUDNN_DATA_BFLOAT16); return reinterpret_cast<const __nv_bfloat16*>(data); }
 
-pair<VectorR, VectorR> filter_missing_values(const VectorR&, const VectorR&);
-pair<VectorR, MatrixR> filter_missing_values(const VectorR&, const MatrixR&);
-pair<MatrixR, MatrixR> filter_missing_values(const MatrixR&, const MatrixR&);
+inline bool row_finite(const VectorR& v, Index i) { return isfinite(v(i)); }
+inline bool row_finite(const MatrixR& m, Index i) { return m.row(i).array().isFinite().all(); }
+
+inline VectorR slice_rows(const VectorR& v, const vector<Index>& idx)
+{
+    VectorR r(idx.size());
+    for (Index i = 0; i < Index(idx.size()); ++i) r(i) = v(idx[i]);
+    return r;
+}
+
+inline MatrixR slice_rows(const MatrixR& m, const vector<Index>& idx)
+{
+    MatrixR r(idx.size(), m.cols());
+    for (Index i = 0; i < Index(idx.size()); ++i) r.row(i) = m.row(idx[i]);
+    return r;
+}
+
+VectorR filter_missing_values(const VectorR&);
+
+template<typename X, typename Y>
+pair<X, Y> filter_missing_values(const X& x, const Y& y)
+{
+    if (x.rows() != y.rows())
+        throw runtime_error("filter_missing_values: row count mismatch");
+
+    vector<Index> valid;
+    valid.reserve(x.rows());
+
+    for (Index i = 0; i < x.rows(); ++i)
+        if (row_finite(x, i) && row_finite(y, i))
+            valid.push_back(i);
+
+    return { slice_rows(x, valid), slice_rows(y, valid) };
+}
 
 void shuffle_rows(MatrixR& matrix);
 
@@ -514,21 +724,15 @@ inline bool is_contiguous(const vector<Index>& v)
 {
     const type first = v[0];
 
-    for (size_t i = 0; i < v.size(); i++)
+    for (size_t i = 0; i < v.size(); ++i)
         if (v[i] != first + Index(i))
             return false;
 
     return true;
 }
 
-inline bool is_binary(const VectorR& tensor)
-{
-    return all_of(tensor.data(), tensor.data() + tensor.size(),
-                  [](type v) { return v == type(0) || v == type(1) || isnan(v); });
-}
-
-template <int Rank>
-bool is_binary(const TensorR<Rank>& tensor)
+template <typename T>
+inline bool is_binary(const T& tensor)
 {
     return all_of(tensor.data(), tensor.data() + tensor.size(),
                   [](type v) { return v == type(0) || v == type(1) || isnan(v); });
@@ -550,24 +754,8 @@ vector<T> gather_by_index(const vector<T>& data, const vector<Index>& indices)
 
 vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums);
 
-inline bool is_constant(const VectorR& tensor)
-{
-    const type* data = tensor.data();
-    const type* end = data + tensor.size();
-
-    const type* first = find_if(data, end, [](type v) { return !isnan(v); });
-
-    if (first == end)
-        return true;
-
-    const type val = *first;
-
-    return all_of(first + 1, end,
-                  [val](type v) { return isnan(v) || abs(val - v) <= numeric_limits<float>::min(); });
-}
-
-template <int Rank>
-bool is_constant(const TensorR<Rank>& tensor)
+template <typename T>
+inline bool is_constant(const T& tensor)
 {
     const type* data = tensor.data();
     const type* end = data + tensor.size();
@@ -627,7 +815,6 @@ bool contains(const Eigen::MatrixBase<Derived>& vector, const T& value)
     return find(begin, end, value) != end;
 }
 
-bool contains(const vector<string>&, const string&);
 
 VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
 
@@ -647,49 +834,6 @@ void push_back(Tensor<T, 1, AlignedMax>& tensor, const T& value)
 
 string shape_to_string(const Shape&, const string& = " ");
 Shape string_to_shape(const string&, const string& = " ");
-
-template <typename T>
-string vector_to_string(const vector<T>& x, const string& separator = " ")
-{
-    ostringstream buffer;
-
-    for(size_t i = 0; i < x.size(); i++)
-    {
-        buffer << x[i];
-        if (i < x.size() - 1)
-            buffer << separator;
-    }
-
-    return buffer.str();
-}
-
-string vector_to_string(const VectorI& x, const string& separator = " ");
-string vector_to_string(const VectorR& x, const string& separator = " ");
-string vector_to_string(const VectorMap& x, const string& separator = " ");
-
-template <typename T, size_t Rank>
-string tensor_to_string(const TensorR<Rank>& x, const string& separator = " ")
-{
-    ostringstream buffer;
-
-    for(Index i = 0; i < x.size(); i++)
-        buffer << x(i) << separator;
-
-    return buffer.str();
-}
-
-template <typename T, size_t Rank>
-void string_to_tensor(const string& input, TensorR<Rank>& x)
-{
-    istringstream stream(input);
-    T value;
-    Index i = 0;
-
-    while (stream >> value)
-        x(i++) = value;
-}
-
-void string_to_vector(const string& input, VectorR& x);
 
 VectorMap vector_map(const MatrixR&, Index);
 
@@ -718,12 +862,6 @@ TensorMapR<rank> tensor_map(const TensorView& tensor_view)
 {
     assert(tensor_view.data);
     assert(reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES == 0);
-
-    if constexpr (rank == 2) // @todo For what is this? Can we simplify?
-        if (tensor_view.get_rank() == 4)
-            return TensorMap2(tensor_view.data,
-                              tensor_view.shape[0],
-                              tensor_view.size() / tensor_view.shape[0]);
 
     if (tensor_view.get_rank() != rank)
         throw runtime_error("Dimensions is " + to_string(tensor_view.get_rank()) + " and must be " + to_string(rank));
@@ -762,106 +900,34 @@ ostream& operator << (ostream& os, const vector<T>& vec)
 template<class T, int n>
 VectorI get_shape(const Tensor<T, n, AlignedMax>& tensor)
 {
-    VectorI shape(n);
-
-    memcpy(shape.data(), tensor.dimensions().data(), static_cast<size_t>(n)*sizeof(Index));
-
-    return shape;
+    return Eigen::Map<const VectorI>(tensor.dimensions().data(), n);
 }
 
-template <typename Type, int Rank>
-bool is_equal(const Tensor<Type, Rank, AlignedMax>& tensor,
-              const Type& value,
-              const Type& tolerance = 0.001)
+template <typename T, typename Value>
+inline bool is_equal(const T& tensor,
+                     const Value& value,
+                     const Value& tolerance = Value(1.0e-3))
 {
+    const auto* data = tensor.data();
     const Index size = tensor.size();
 
-    for(Index i = 0; i < size; i++)
-    {
-        if constexpr (is_same_v<Type, bool>)
-        {
-            if (tensor(i) != value)
+    if constexpr (is_same_v<Value, bool>)
+        for(Index i = 0; i < size; ++i)
+            if (data[i] != value)
                 return false;
-        }
-        else
-        {
-            if (std::abs(tensor(i) - value) > tolerance)
+    else
+        for(Index i = 0; i < size; ++i)
+            if(std::abs(data[i] - value) > tolerance)
                 return false;
-        }
-    }
 
     return true;
 }
 
-inline bool is_equal(const MatrixR& matrix,
-                     const type& value,
-                     const type& tolerance = type(1.0e-3))
-{
-    const type* data = matrix.data();
-    const Index size = matrix.size();
-
-    for(Index i = 0; i < size; ++i)
-        if(std::abs(data[i] - value) > tolerance)
-            return false;
-
-    return true;
-}
-
-inline bool is_equal(const VectorR& vector,
-                     const type& value,
-                     const type& tolerance = type(1.0e-3))
-{
-    const type* data = vector.data();
-    const Index size = vector.size();
-
-    for(Index i = 0; i < size; ++i)
-        if(std::abs(data[i] - value) > tolerance)
-            return false;
-
-    return true;
-}
-
-template <int Rank>
-bool are_equal(const TensorR<Rank>& A,
-               const TensorR<Rank>& B,
-               type tolerance = type(1.0e-3))
+template <typename T, typename U>
+inline bool are_equal(const T& A, const U& B, type tolerance = type(1.0e-3))
 {
     if(A.size() != B.size())
-        throw runtime_error("are_equal: Tensor sizes are different.");
-
-    const type* a = A.data();
-    const type* b = B.data();
-
-    for(Index i = 0; i < A.size(); ++i)
-        if(abs(a[i] - b[i]) > tolerance)
-            return false;
-
-    return true;
-}
-
-inline bool are_equal(const MatrixR& A,
-                      const MatrixR& B,
-                      type tolerance = type(1.0e-3))
-{
-    if(A.rows() != B.rows() || A.cols() != B.cols())
-        throw runtime_error("are_equal: Matrix sizes are different.");
-
-    const type* a = A.data();
-    const type* b = B.data();
-
-    for(Index i = 0; i < A.size(); ++i)
-        if(abs(a[i] - b[i]) > tolerance)
-            return false;
-
-    return true;
-}
-
-inline bool are_equal(const VectorR& A,
-                      const VectorR& B,
-                      type tolerance = type(1.0e-3))
-{
-    if(A.size() != B.size())
-        throw runtime_error("are_equal: Vector sizes are different.");
+        throw runtime_error("are_equal: sizes are different.");
 
     const type* a = A.data();
     const type* b = B.data();
@@ -887,24 +953,33 @@ public:
     bool is_gpu() const { return device_type == DeviceType::Gpu; }
     bool is_cpu() const { return device_type == DeviceType::Cpu; }
 
-#ifdef OPENNN_WITH_CUDA
     static cublasHandle_t get_cublas_handle()                      { return instance().cublas_handle; }
+    static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
     static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn_handle; }
+    static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
     static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
     static cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor() { return instance().operator_multiplication_descriptor; }
-    static cudnnReduceTensorDescriptor_t get_reduce_add_descriptor();
-    static void* get_reduction_workspace();
-    static size_t get_reduction_workspace_size();
 
+#ifdef OPENNN_WITH_CUDA
+    // Cached buffer of ones, sized and filled in CUDNN_ACTIVATION_DTYPE so that
+    // gemv_cuda (which uses CUDA_ACTIVATION_DTYPE) reads it as the right dtype.
     static float* get_ones(int n)
     {
         auto& self = instance();
         if(n > self.ones_size)
         {
-            if(self.ones_device) cudaFree(self.ones_device);
-            cudaMalloc(&self.ones_device, n * sizeof(float));
-            vector<float> h(n, 1.0f);
-            cudaMemcpy(self.ones_device, h.data(), n * sizeof(float), cudaMemcpyHostToDevice);
+            if(self.ones_device) CHECK_CUDA(cudaFree(self.ones_device));
+            const size_t elem_bytes = dtype_bytes(CUDNN_ACTIVATION_DTYPE);
+            CHECK_CUDA(cudaMalloc(&self.ones_device, n * elem_bytes));
+
+            if (CUDNN_ACTIVATION_DTYPE == CUDNN_DATA_FLOAT) {
+                vector<float> h(n, 1.0f);
+                CHECK_CUDA(cudaMemcpy(self.ones_device, h.data(), n * sizeof(float), cudaMemcpyHostToDevice));
+            } else {
+                // BF16 (or other 2-byte) activation dtype — fill via conversion.
+                vector<__nv_bfloat16> h(n, __float2bfloat16(1.0f));
+                CHECK_CUDA(cudaMemcpy(self.ones_device, h.data(), n * sizeof(__nv_bfloat16), cudaMemcpyHostToDevice));
+            }
             self.ones_size = n;
         }
         return self.ones_device;
@@ -920,17 +995,14 @@ private:
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
 
-#ifdef OPENNN_WITH_CUDA
     cublasHandle_t cublas_handle = nullptr;
+    cublasLtHandle_t cublas_lt_handle = nullptr;
     cudnnHandle_t cudnn_handle = nullptr;
+    cudaStream_t compute_stream = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
     cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
-    cudnnReduceTensorDescriptor_t reduce_add_descriptor = nullptr;
-    void* reduction_workspace = nullptr;
-    size_t reduction_workspace_size = 0;
     float* ones_device = nullptr;
     int ones_size = 0;
-#endif
 };
 
 inline ThreadPoolDevice& get_device()
@@ -938,18 +1010,78 @@ inline ThreadPoolDevice& get_device()
     return *Device::instance().get_thread_pool_device();
 }
 
-void set_threads_number(int num_threads);
-
 #ifdef OPENNN_WITH_CUDA
 
 inline const float one = 1.0f;
 inline const float zero = 0.0f;
 inline const float minus_one = -1.0f;
 
-VectorR vector_from_device(const type*, size_t);
-MatrixR matrix_from_device(const type*, size_t, size_t);
-Tensor3 tensor3_from_device(const type*, size_t, size_t, size_t);
-Tensor4 tensor4_from_device(const type*, size_t, size_t, size_t, size_t);
+// GEMM wrappers: single entry point for all matrix multiplications.
+// Future BF16 / cublasLt / CUDA-Graph swaps live here, not at every call site.
+
+// Per-operand-dtype GEMM. Compute precision is always CUBLAS_COMPUTE_DTYPE
+// (typically FP32-fast-via-BF16 Tensor Cores). Callers pass each operand's
+// dtype explicitly — supports boundary GEMMs (FP32 weights × BF16 activations,
+// etc.) and homogeneous cases alike.
+inline void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
+                      int m, int n, int k,
+                      const void* A, cudaDataType_t Atype, int lda,
+                      const void* B, cudaDataType_t Btype, int ldb,
+                      void* C, cudaDataType_t Ctype, int ldc,
+                      float alpha = 1.0f, float beta = 0.0f)
+{
+    CHECK_CUBLAS(cublasGemmEx(Device::get_cublas_handle(),
+                              transa, transb,
+                              m, n, k,
+                              &alpha,
+                              A, Atype, lda,
+                              B, Btype, ldb,
+                              &beta,
+                              C, Ctype, ldc,
+                              CUBLAS_COMPUTE_DTYPE,
+                              CUBLAS_GEMM_DEFAULT));
+}
+
+// Matrix-vector product routed through cublasGemmEx (x treated as a k×1 matrix).
+// Vectors must be contiguous — GemmEx has no stride/inc for its operands.
+inline void gemv_cuda(cublasOperation_t transa,
+                      int m, int n,
+                      const void* A, cudaDataType_t Atype, int lda,
+                      const void* x, cudaDataType_t Xtype,
+                      void* y, cudaDataType_t Ytype,
+                      float alpha = 1.0f, float beta = 0.0f)
+{
+    const int m_out = (transa == CUBLAS_OP_N) ? m : n;
+    const int k_dim = (transa == CUBLAS_OP_N) ? n : m;
+
+    gemm_cuda(transa, CUBLAS_OP_N,
+              m_out, 1, k_dim,
+              A, Atype, lda,
+              x, Xtype, k_dim,
+              y, Ytype, m_out,
+              alpha, beta);
+}
+
+inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
+                                      int m, int n, int k,
+                                      const float* A, int lda, long long stride_a,
+                                      const float* B, int ldb, long long stride_b,
+                                      float* C, int ldc, long long stride_c,
+                                      int batch_count,
+                                      float alpha = 1.0f, float beta = 0.0f)
+{
+    CHECK_CUBLAS(cublasGemmStridedBatchedEx(Device::get_cublas_handle(),
+                                            transa, transb,
+                                            m, n, k,
+                                            &alpha,
+                                            A, CUDA_ACTIVATION_DTYPE, lda, stride_a,
+                                            B, CUDA_ACTIVATION_DTYPE, ldb, stride_b,
+                                            &beta,
+                                            C, CUDA_ACTIVATION_DTYPE, ldc, stride_c,
+                                            batch_count,
+                                            CUBLAS_COMPUTE_DTYPE,
+                                            CUBLAS_GEMM_DEFAULT));
+}
 
 #endif
 

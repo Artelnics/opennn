@@ -19,22 +19,6 @@ namespace opennn
 template<int Rank>
 class Addition final : public Layer
 {
-private:
-
-    enum Forward {Inputs, Outputs};
-
-    vector<Shape> get_forward_shapes(Index batch_size) const override
-    {
-        return {Shape{batch_size}.append(input_shape)};
-    }
-
-    enum Backward {OutputGradients, InputGradients};
-
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        return {Shape{batch_size}.append(input_shape),   // InputGradient0
-                Shape{batch_size}.append(input_shape)};  // InputGradient1
-    }
 
 public:
 
@@ -43,14 +27,20 @@ public:
         set(new_input_shape, new_name);
     }
 
-    // Getters
+    Shape get_input_shape() const override { return input_shape; }
 
-    Shape get_output_shape() const override
+    Shape get_output_shape() const override { return input_shape; }
+
+    vector<Shape> get_forward_shapes(Index batch_size) const override
     {
-        return input_shape;
+        return {Shape{batch_size}.append(input_shape)};
     }
 
-    // Setters
+    vector<Shape> get_backward_shapes(Index batch_size) const override
+    {
+        return {Shape{batch_size}.append(input_shape),   // InputGradient0
+                Shape{batch_size}.append(input_shape)};  // InputGradient1
+    }
 
     void set(const Shape& new_input_shape, const string& new_label)
     {
@@ -72,18 +62,11 @@ public:
         }
     }
 
-    // Forward / back propagation
-
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept override
     {
         auto& forward_views = forward_propagation.views[layer];
 
-        const TensorView& input_1 = forward_views[Inputs][0];
-        const TensorView& input_2 = forward_views[Inputs][1];
-
-        TensorView& output = forward_views[Outputs][0];
-
-        addition(input_1, input_2, output);
+        addition(forward_views[Input][0], forward_views[Input][1], forward_views[Output][0]);
     }
 
     void back_propagate(ForwardPropagation&,
@@ -92,16 +75,9 @@ public:
     {
         auto& backward_views = back_propagation.backward_views[layer];
 
-        const TensorView& output_gradient = backward_views[0][0];
-
-        TensorView& input_gradient_0 = backward_views[1][0];
-        TensorView& input_gradient_1 = backward_views[2][0];
-
-        copy(output_gradient, input_gradient_0);
-        copy(output_gradient, input_gradient_1);
+        copy(backward_views[OutputGradient][0], backward_views[InputGradient][0]);
+        copy(backward_views[OutputGradient][0], backward_views[InputGradient][1]);
     }
-
-    // Serialization
 
     void from_XML(const XmlDocument& document) override
     {
@@ -125,6 +101,15 @@ public:
 
         printer.close_element();
     }
+
+    void set_input_shape(const Shape& s) override { input_shape = s; }
+
+private:
+
+    Shape input_shape;
+
+    enum Forward {Input, Output};
+    enum Backward {OutputGradient, InputGradient};
 };
 
 }

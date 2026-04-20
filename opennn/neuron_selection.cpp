@@ -101,8 +101,7 @@ void NeuronSelection::load(const filesystem::path& file_name)
 
 NeuronsSelectionResults::NeuronsSelectionResults(const Index maximum_epochs)
 {
-    neurons_number_history.resize(maximum_epochs);
-    neurons_number_history.setZero();
+    neurons_number_history = VectorI::Zero(maximum_epochs);
 
     training_error_history.resize(maximum_epochs);
     training_error_history.setConstant(type(-1));
@@ -128,7 +127,7 @@ void NeuronsSelectionResults::resize_history(const Index new_size)
 
     const Index copy_size = min(old_size, new_size);
 
-    for(Index i = 0; i < copy_size; i++)
+    for(Index i = 0; i < copy_size; ++i)
     {
         neurons_number_history(i) = old_neurons_number_history(i);
         training_error_history(i) = old_training_error_history(i);

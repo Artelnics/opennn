@@ -23,27 +23,6 @@ namespace opennn
 template<int Rank>
 class Scaling final : public Layer
 {
-private:
-
-    VectorR means;
-    VectorR standard_deviations;
-    VectorR minimums;
-    VectorR maximums;
-
-    vector<ScalerMethod> scalers;
-
-    type min_range;
-    type max_range;
-
-    VectorR multipliers;
-    VectorR offsets;
-
-    enum Forward {Output = 1};
-
-    vector<Shape> get_forward_shapes(Index batch_size) const override
-    {
-        return {Shape{batch_size}.append(input_shape)}; // slot 1: Output
-    }
 
 public:
 
@@ -52,11 +31,13 @@ public:
         set(new_input_shape);
     }
 
-    // Getters
+    Shape get_input_shape() const override { return input_shape; }
 
-    Shape get_output_shape() const override
+    Shape get_output_shape() const override { return input_shape; }
+
+    vector<Shape> get_forward_shapes(Index batch_size) const override
     {
-        return input_shape;
+        return {Shape{batch_size}.append(input_shape)}; // slot 1: Output
     }
 
     const VectorR& get_minimums() const
@@ -87,8 +68,6 @@ public:
     type get_min_range() const { return min_range; }
     type get_max_range() const { return max_range; }
 
-    // Setters
-
     void set(const Shape& new_input_shape = {})
     {
         if (new_input_shape.rank() != Rank -1)
@@ -104,8 +83,7 @@ public:
 
         const Index new_inputs_number = new_input_shape.size();
 
-        means.resize(new_inputs_number);
-        means.setZero();
+        means = VectorR::Zero(new_inputs_number);
         standard_deviations.resize(new_inputs_number);
         standard_deviations.setOnes();
         minimums.resize(new_inputs_number);
@@ -169,7 +147,7 @@ public:
     void set_scalers(const vector<string>& new_scalers)
     {
         scalers.resize(new_scalers.size());
-        for(size_t i = 0; i < new_scalers.size(); i++)
+        for(size_t i = 0; i < new_scalers.size(); ++i)
             scalers[i] = string_to_scaler_method(new_scalers[i]);
     }
 
@@ -178,6 +156,123 @@ public:
         const ScalerMethod method = string_to_scaler_method(new_scaler);
         for(auto& scaler : scalers)
             scaler = method;
+    }
+
+    void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept override
+    {
+        auto& forward_views = forward_propagation.views[layer];
+
+        // Data is scaled in-place by Optimizer::set_scaling() before training,
+        // so the scaling layer just copies input to output.
+        // The scaling coefficients are stored for serialization/expression only.
+        copy(forward_views[Input][0], forward_views[Output][0]);
+    }
+
+    string write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
+    {
+        const Index inputs_number = get_output_shape().size();
+
+        ostringstream buffer;
+
+        buffer.precision(10);
+
+        for(Index i = 0; i < inputs_number; ++i)
+            buffer << output_names[i] << " = " << input_names[i] << ";\n";
+
+        return buffer.str();
+    }
+
+    string write_minimum_maximum_expression(const vector<string>& input_names, const vector<string>& output_names) const
+    {
+        const Index inputs_number = get_output_shape().size();
+
+        ostringstream buffer;
+
+        buffer.precision(10);
+/*
+        for(Index i = 0; i < inputs_number; ++i)
+            buffer << output_names[i] << " = 2*(" << input_names[i] << "-(" << descriptives[i].minimum << "))/(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))-1;\n";
+*/
+        return buffer.str();
+    }
+
+    string write_mean_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
+    {
+        const Index inputs_number = get_inputs_number();
+
+        ostringstream buffer;
+
+        buffer.precision(10);
+/*
+        for(Index i = 0; i < inputs_number; ++i)
+            buffer << output_names[i] << " = (" << input_names[i] << "-(" << descriptives[i].mean << "))/" << descriptives[i].standard_deviation << ";\n";
+*/
+        return buffer.str();
+    }
+
+    string write_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
+    {
+        const Index inputs_number = get_output_shape().size();
+
+        ostringstream buffer;
+
+        buffer.precision(10);
+/*
+        for(Index i = 0; i < inputs_number; ++i)
+            buffer << output_names[i] << " = " << input_names[i] << "/(" << descriptives[i].standard_deviation << ");\n";
+*/
+        return buffer.str();
+    }
+
+    void from_XML(const XmlDocument& document) override
+    {
+        const XmlElement* scaling_layer_element = get_xml_root(document, name);
+
+        const Index neurons_number = read_xml_index(scaling_layer_element, "NeuronsNumber");
+
+        if constexpr (Rank == 2)
+            set({ neurons_number });
+        else
+            set({ neurons_number });
+
+        string_to_vector(read_xml_string(scaling_layer_element, "Means"), means);
+        string_to_vector(read_xml_string(scaling_layer_element, "StandardDeviations"), standard_deviations);
+        string_to_vector(read_xml_string(scaling_layer_element, "Minimums"), minimums);
+        string_to_vector(read_xml_string(scaling_layer_element, "Maximums"), maximums);
+
+        const vector<string> scaler_names = get_tokens(read_xml_string(scaling_layer_element, "Scalers"), " ");
+
+        scalers.resize(scaler_names.size());
+
+        for(size_t i = 0; i < scaler_names.size(); ++i)
+            scalers[i] = string_to_scaler_method(scaler_names[i]);
+
+        min_range = type(stof(read_xml_string(scaling_layer_element, "MinRange")));
+        max_range = type(stof(read_xml_string(scaling_layer_element, "MaxRange")));
+
+        calculate_coefficients();
+    }
+
+    void to_XML(XmlPrinter& printer) const override
+    {
+        printer.open_element(name.c_str());
+
+        vector<string> scaler_names(scalers.size());
+        for(size_t i = 0; i < scalers.size(); ++i)
+            scaler_names[i] = scaler_method_to_string(scalers[i]);
+
+        write_xml_properties(printer, {
+            {"NeuronsNumber", to_string(get_outputs_number())},
+            {"Means", vector_to_string(means)},
+            {"StandardDeviations", vector_to_string(standard_deviations)},
+            {"Minimums", vector_to_string(minimums)},
+            {"Maximums", vector_to_string(maximums)},
+            {"Scalers", vector_to_string(scaler_names)},
+            {"MinRange", to_string(min_range)},
+            {"MaxRange", to_string(max_range)}
+        });
+
+        printer.close_element();
     }
 
     void calculate_coefficients()
@@ -207,131 +302,24 @@ public:
         }
     }
 
-    // Forward propagation
+private:
 
-    void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept override
-    {
-        auto& forward_views = forward_propagation.views[layer];
+    Shape input_shape;
 
-        const TensorView& input = forward_views[0][0];
-        TensorView& output = forward_views[Output][0];
+    enum Forward {Input, Output};
 
-        // Data is scaled in-place by Optimizer::set_scaling() before training,
-        // so the scaling layer just copies input to output.
-        // The scaling coefficients are stored for serialization/expression only.
-        copy(input, output);
-    }
+    VectorR means;
+    VectorR standard_deviations;
+    VectorR minimums;
+    VectorR maximums;
 
-    // Expression
+    vector<ScalerMethod> scalers;
 
-    string write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
-    {
-        const Index inputs_number = get_output_shape().size();
+    type min_range;
+    type max_range;
 
-        ostringstream buffer;
-
-        buffer.precision(10);
-
-        for(Index i = 0; i < inputs_number; i++)
-            buffer << output_names[i] << " = " << input_names[i] << ";\n";
-
-        return buffer.str();
-    }
-
-    string write_minimum_maximum_expression(const vector<string>& input_names, const vector<string>& output_names) const
-    {
-        const Index inputs_number = get_output_shape().size();
-
-        ostringstream buffer;
-
-        buffer.precision(10);
-/*
-        for(Index i = 0; i < inputs_number; i++)
-            buffer << output_names[i] << " = 2*(" << input_names[i] << "-(" << descriptives[i].minimum << "))/(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))-1;\n";
-*/
-        return buffer.str();
-    }
-
-    string write_mean_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
-    {
-        const Index inputs_number = get_inputs_number();
-
-        ostringstream buffer;
-
-        buffer.precision(10);
-/*
-        for(Index i = 0; i < inputs_number; i++)
-            buffer << output_names[i] << " = (" << input_names[i] << "-(" << descriptives[i].mean << "))/" << descriptives[i].standard_deviation << ";\n";
-*/
-        return buffer.str();
-    }
-
-    string write_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
-    {
-        const Index inputs_number = get_output_shape().size();
-
-        ostringstream buffer;
-
-        buffer.precision(10);
-/*
-        for(Index i = 0; i < inputs_number; i++)
-            buffer << output_names[i] << " = " << input_names[i] << "/(" << descriptives[i].standard_deviation << ");\n";
-*/
-        return buffer.str();
-    }
-
-    // Serialization
-
-    void from_XML(const XmlDocument& document) override
-    {
-        const XmlElement* scaling_layer_element = get_xml_root(document, name);
-
-        const Index neurons_number = read_xml_index(scaling_layer_element, "NeuronsNumber");
-
-        if constexpr (Rank == 2)
-            set({ neurons_number });
-        else
-            set({ neurons_number });
-
-        string_to_vector(read_xml_string(scaling_layer_element, "Means"), means);
-        string_to_vector(read_xml_string(scaling_layer_element, "StandardDeviations"), standard_deviations);
-        string_to_vector(read_xml_string(scaling_layer_element, "Minimums"), minimums);
-        string_to_vector(read_xml_string(scaling_layer_element, "Maximums"), maximums);
-
-        const vector<string> scaler_names = get_tokens(read_xml_string(scaling_layer_element, "Scalers"), " ");
-
-        scalers.resize(scaler_names.size());
-
-        for(size_t i = 0; i < scaler_names.size(); i++)
-            scalers[i] = string_to_scaler_method(scaler_names[i]);
-
-        min_range = type(stof(read_xml_string(scaling_layer_element, "MinRange")));
-        max_range = type(stof(read_xml_string(scaling_layer_element, "MaxRange")));
-
-        calculate_coefficients();
-    }
-
-    void to_XML(XmlPrinter& printer) const override
-    {
-        printer.open_element(name.c_str());
-
-        vector<string> scaler_names(scalers.size());
-        for(size_t i = 0; i < scalers.size(); i++)
-            scaler_names[i] = scaler_method_to_string(scalers[i]);
-
-        write_xml_properties(printer, {
-            {"NeuronsNumber", to_string(get_outputs_number())},
-            {"Means", vector_to_string(means)},
-            {"StandardDeviations", vector_to_string(standard_deviations)},
-            {"Minimums", vector_to_string(minimums)},
-            {"Maximums", vector_to_string(maximums)},
-            {"Scalers", vector_to_string(scaler_names)},
-            {"MinRange", to_string(min_range)},
-            {"MaxRange", to_string(max_range)}
-        });
-
-        printer.close_element();
-    }
+    VectorR multipliers;
+    VectorR offsets;
 };
 
 }

@@ -60,9 +60,9 @@ void Normalization3d::set(const Index new_sequence_length,
 
 void Normalization3d::set_parameters_random()
 {
-    VectorMap(parameters[Gammas].data, parameters[Gammas].size()).setOnes();
+    VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setOnes();
 
-    VectorMap(parameters[Betas].data, parameters[Betas].size()).setZero();
+    VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
 }
 
 void Normalization3d::set_parameters_glorot()
@@ -76,17 +76,16 @@ void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation,
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    const Index batch_size = forward_propagation.batch_size;
-
-    const TensorView& input = forward_views[Inputs][0];
-    TensorView& means = forward_views[Means][0];
-    TensorView& stddevs = forward_views[StandardDeviations][0];
-    TensorView& normalized = forward_views[NormalizedInputs][0];
-    TensorView& output = forward_views[Outputs][0];
-
-    layernorm_forward(input, parameters[Gammas], parameters[Betas],
-                      means, stddevs, normalized, output,
-                      batch_size, sequence_length, embedding_dimension);
+    layernorm_forward(forward_views[Input][0], 
+                      parameters[Gamma], 
+                      parameters[Beta],
+                      forward_views[Means][0], 
+                      forward_views[StandardDeviations][0], 
+                      forward_views[NormalizedInput][0], 
+                      forward_views[Output][0],
+                      forward_propagation.batch_size, 
+                      sequence_length, 
+                      embedding_dimension);
 }
 
 void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
@@ -97,21 +96,18 @@ void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
     auto& backward_views = back_propagation.backward_views[layer];
     auto& gradient_views = back_propagation.gradient_views[layer];
 
-    const Index batch_size = forward_propagation.batch_size;
-
-    const TensorView& input = forward_views[Inputs][0];
-    const TensorView& means = forward_views[Means][0];
-    const TensorView& stddevs = forward_views[StandardDeviations][0];
-    const TensorView& normalized = forward_views[NormalizedInputs][0];
-    const TensorView& output_gradient = backward_views[OutputGradients][0];
-    TensorView& input_gradient = backward_views[InputGradients][0];
-
-    layernorm_backward(input, output_gradient,
-                       means, stddevs, normalized, parameters[Gammas],
-                       gradient_views[Gammas],
-                       gradient_views[Betas],
-                       input_gradient,
-                       batch_size, sequence_length, embedding_dimension);
+    layernorm_backward(forward_views[Input][0], 
+                       backward_views[OutputGradient][0],
+                       forward_views[Means][0], 
+                       forward_views[StandardDeviations][0], 
+                       forward_views[NormalizedInput][0], 
+                       parameters[Gamma],
+                       gradient_views[Gamma],
+                       gradient_views[Beta],
+                       backward_views[InputGradient][0],
+                       forward_propagation.batch_size, 
+                       sequence_length, 
+                       embedding_dimension);
 }
 
 // Serialization

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
+#include "tensor_utilities.h"
 
 #pragma once
 

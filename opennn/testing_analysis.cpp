@@ -41,7 +41,7 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const MatrixR& target
 
     Tensor<Correlation, 1> linear_correlation(outputs_number);
 
-    for(Index i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; ++i)
         linear_correlation(i) = opennn::linear_correlation(output.col(i), target.col(i));
 
     return linear_correlation;
@@ -56,7 +56,7 @@ void TestingAnalysis::print_linear_correlations() const
 
     const Index targets_number = linear_correlations.size();
 
-    for(Index i = 0; i < targets_number; i++)
+    for(Index i = 0; i < targets_number; ++i)
         cout << targets_name[i] << " correlation: " << linear_correlations[i].r << "\n";
 }
 
@@ -81,7 +81,7 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_results(outputs_number);
 
-    for(Index i = 0;  i < outputs_number; i++)
+    for(Index i = 0;  i < outputs_number; ++i)
     {
         const VectorMap targets = vector_map(targets_outputs.first, i);
         const VectorMap outputs = vector_map(targets_outputs.second, i);
@@ -98,7 +98,7 @@ void TestingAnalysis::print_goodness_of_fit_analysis() const
 {
     const Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_analysis = perform_goodness_of_fit_analysis();
 
-    for(Index i = 0; i < goodness_of_fit_analysis.size(); i++)
+    for(Index i = 0; i < goodness_of_fit_analysis.size(); ++i)
         goodness_of_fit_analysis(i).print();
 }
 
@@ -169,11 +169,11 @@ Tensor3 TestingAnalysis::calculate_error_data() const
     const MatrixR absolute_errors = (targets - outputs).array().abs();
 
 #pragma omp parallel for
-    for(Index i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; ++i)
     {
         const type range = abs(output_maximums(i) - output_minimums(i));
 
-        for(Index j = 0; j < testing_samples_number; j++)
+        for(Index j = 0; j < testing_samples_number; ++j)
         {
             error_data(j, 0, i) = absolute_errors(j,i);
             error_data(j, 1, i) = absolute_errors(j,i) / range;
@@ -217,8 +217,8 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 
 #pragma omp parallel for
 
-    for(Index i = 0; i < testing_samples_number; i++)
-        for(Index j = 0; j < outputs_number; j++)
+    for(Index i = 0; i < testing_samples_number; ++i)
+        for(Index j = 0; j < outputs_number; ++j)
             error_data(i, j) = errors(i, j)*type(100.0)/abs(output_maximums(j) - output_minimums(j));
 
     return error_data;
@@ -270,7 +270,7 @@ vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives(
 
     Index index = 0;
 
-    for(Index i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; ++i)
     {
         const MatrixMap matrix_error(error_data.data() + index, testing_samples_number, 3);
 
@@ -292,7 +292,7 @@ void TestingAnalysis::print_error_data_descriptives() const
 
     const vector<vector<Descriptives>> error_data_statistics = calculate_error_data_descriptives();
 
-    for(Index i = 0; i < targets_number; i++)
+    for(Index i = 0; i < targets_number; ++i)
         cout << targets_name[i] << "\n"
              << "Minimum error: " << error_data_statistics[i][0].minimum << "\n"
              << "Maximum error: " << error_data_statistics[i][0].maximum << "\n"
@@ -313,7 +313,7 @@ vector<Histogram> TestingAnalysis::calculate_error_data_histograms(const Index b
 
     vector<Histogram> histograms(outputs_number);
 
-    for(Index i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; ++i)
         histograms[i] = histogram_centered(error_data.col(i), type(0), bins_number);
 
     return histograms;
@@ -330,7 +330,7 @@ Tensor<VectorI, 1> TestingAnalysis::calculate_maximal_errors(const Index samples
 
     Index index = 0;
 
-    for(Index i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; ++i)
     {
         const MatrixMap matrix_error(error_data.data()+index, testing_samples_number, 3);
 
@@ -523,7 +523,7 @@ vector<MatrixI> TestingAnalysis::calculate_multilabel_confusion(const type decis
 
     vector<MatrixI> confusion_matrices(static_cast<size_t>(outputs_number));
 
-    for(Index j = 0; j < outputs_number; j++)
+    for(Index j = 0; j < outputs_number; ++j)
         confusion_matrices[static_cast<size_t>(j)] = calculate_confusion(targets.col(j), outputs.col(j), decision_threshold);
 
     return confusion_matrices;
@@ -562,8 +562,7 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
     const Index outputs_number = neural_network->get_outputs_number();
     const Index confusion_matrix_size = (outputs_number == 1) ? 3 : (outputs_number + 1);
 
-    MatrixI total_confusion_matrix(confusion_matrix_size, confusion_matrix_size);
-    total_confusion_matrix.setZero();
+    MatrixI total_confusion_matrix = MatrixI::Zero(confusion_matrix_size, confusion_matrix_size);
 
     for(const vector<Index>& current_batch_indices : testing_batches)
     {
@@ -610,10 +609,9 @@ MatrixI TestingAnalysis::calculate_confusion(const MatrixR& targets,
     const Index outputs_number = outputs.cols();
     const Index num_classes = (outputs_number == 1) ? 2 : outputs_number;
 
-    MatrixI confusion(num_classes + 1, num_classes + 1);
-    confusion.setZero();
+    MatrixI confusion = MatrixI::Zero(num_classes + 1, num_classes + 1);
 
-    for(Index i = 0; i < samples; i++)
+    for(Index i = 0; i < samples; ++i)
     {
         Index target_class, output_class;
 
@@ -672,12 +670,11 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
     if(outputs.cols() != 1)
         throw runtime_error("Number of of output variables (" + to_string(outputs.cols()) + ") must be one.\n");
 
-    MatrixR roc_curve(points_number + 1, 3);
-    roc_curve.setZero();
+    MatrixR roc_curve = MatrixR::Zero(points_number + 1, 3);
 
 #pragma omp parallel for schedule(dynamic)
 
-    for(Index i = 1; i < Index(points_number); i++)
+    for(Index i = 1; i < Index(points_number); ++i)
     {
         const type threshold = type(i) * (type(1)/type(points_number));
 
@@ -689,19 +686,19 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
         type target;
         type output;
 
-        for(Index j = 0; j < targets.size(); j++)
+        for(Index j = 0; j < targets.size(); ++j)
         {
             target = targets(j, 0);
             output = outputs(j, 0);
 
             if(target >= threshold && output >= threshold)
-                true_positive++;
+                ++true_positive;
             else if(target >= threshold && output < threshold)
-                false_negative++;
+                ++false_negative;
             else if(target < threshold && output >= threshold)
-                false_positive++;
+                ++false_positive;
             else if(target < threshold && output < threshold)
-                true_negative++;
+                ++true_negative;
         }
 
         roc_curve(i,0) = type(1) - type(true_positive)/type(true_positive + false_negative);
@@ -730,7 +727,7 @@ type TestingAnalysis::calculate_area_under_curve(const MatrixR& roc_curve) const
 {
     type area_under_curve = type(0);
 
-    for(Index i = 1; i < roc_curve.rows(); i++)
+    for(Index i = 1; i < roc_curve.rows(); ++i)
         area_under_curve += (roc_curve(i,0) - roc_curve(i-1,0))*(roc_curve(i,1) + roc_curve(i-1,1));
 
     return area_under_curve/ type(2);
@@ -771,7 +768,7 @@ type TestingAnalysis::calculate_optimal_threshold(const MatrixR& roc_curve) cons
 
     type minimun_distance = MAX;
 
-    for(Index i = 0; i < points_number; i++)
+    for(Index i = 0; i < points_number; ++i)
     {
         const type distance = hypot(roc_curve(i, 0), roc_curve(i, 1) - type(1));
 
@@ -813,7 +810,7 @@ MatrixR TestingAnalysis::calculate_cumulative_gain_impl(const MatrixR& targets, 
 
     VectorR sorted_targets(testing_samples_number);
 
-    for(Index i = 0; i < testing_samples_number; i++)
+    for(Index i = 0; i < testing_samples_number; ++i)
         sorted_targets(i) = targets(sorted_indices(i), 0);
 
     const Index points_number = 21;
@@ -825,16 +822,16 @@ MatrixR TestingAnalysis::calculate_cumulative_gain_impl(const MatrixR& targets, 
 
     type percentage = type(0);
 
-    for(Index i = 0; i < points_number - 1; i++)
+    for(Index i = 0; i < points_number - 1; ++i)
     {
         percentage += percentage_increment;
 
         Index count = 0;
         const Index maximum_index = Index(percentage * type(testing_samples_number));
 
-        for(Index j = 0; j < maximum_index; j++)
+        for(Index j = 0; j < maximum_index; ++j)
             if(positive ? double(sorted_targets(j)) == 1.0 : sorted_targets(j) < EPSILON)
-                count++;
+                ++count;
 
         cumulative_gain(i + 1, 0) = percentage;
         cumulative_gain(i + 1, 1) = type(count) / type(total);
@@ -874,7 +871,7 @@ MatrixR TestingAnalysis::calculate_lift_chart(const MatrixR& cumulative_gain) co
 
 #pragma omp parallel for
 
-    for(Index i = 1; i < rows_number; i++)
+    for(Index i = 1; i < rows_number; ++i)
     {
         lift_chart(i, 0) = type(cumulative_gain(i, 0));
         lift_chart(i, 1) = type(cumulative_gain(i, 1))/type(cumulative_gain(i, 0));
@@ -908,7 +905,7 @@ VectorR TestingAnalysis::calculate_maximum_gain(const MatrixR& positive_cumulati
 
     type percentage = type(0);
 
-    for(Index i = 0; i < points_number - 1; i++)
+    for(Index i = 0; i < points_number - 1; ++i)
     {
         percentage += percentage_increment;
 
@@ -962,7 +959,7 @@ vector<Index> TestingAnalysis::filter_classification_samples(const MatrixR& targ
     vector<Index> result;
     result.reserve(rows_number);
 
-    for(Index i = 0; i < rows_number; i++)
+    for(Index i = 0; i < rows_number; ++i)
     {
         const bool t_pos = targets(i, 0) >= decision_threshold;
         const bool o_pos = outputs(i, 0) >= decision_threshold;
@@ -1029,7 +1026,7 @@ void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
 
     file << ",";
 
-    for(Index i = 0; i < classes_number; i++)
+    for(Index i = 0; i < classes_number; ++i)
     {
         file << target_variable_names[i];
 
@@ -1039,11 +1036,11 @@ void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
 
     file << "\n";
 
-    for(Index i = 0; i < classes_number; i++)
+    for(Index i = 0; i < classes_number; ++i)
     {
         file << target_variable_names[i] << ",";
 
-        for(Index j = 0; j < classes_number; j++)
+        for(Index j = 0; j < classes_number; ++j)
             j == classes_number - 1
                 ? file << confusion(i, j) << "\n"
                 : file << confusion(i, j) << ",";
@@ -1086,16 +1083,15 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates(cons
 
     const MatrixI confusion = calculate_confusion(targets, outputs);
 
-    for(Index i = 0; i < targets_number; i++)
-        for(Index j = 0; j < targets_number; j++)
+    for(Index i = 0; i < targets_number; ++i)
+        for(Index j = 0; j < targets_number; ++j)
             multiple_classification_rates(i, j).resize(confusion(i, j));
 
     // Save indices
 
     MatrixI indices = MatrixI::Zero(targets_number, targets_number);
-    indices.setZero();
 
-    for(Index i = 0; i < samples_number; i++)
+    for(Index i = 0; i < samples_number; ++i)
     {
         const Index target_index = maximal_index(targets.row(i));
         const Index output_index = maximal_index(outputs.row(i));
@@ -1120,7 +1116,7 @@ Tensor<string, 2> TestingAnalysis::classify_samples(const MatrixR& targets,
     Tensor<string, 2> result(samples_number, 4);
     Index count = 0;
 
-    for(Index i = 0; i < samples_number; i++)
+    for(Index i = 0; i < samples_number; ++i)
     {
         const Index actual = maximal_index(targets.row(i));
         const Index predicted = maximal_index(outputs.row(i));
@@ -1131,7 +1127,7 @@ Tensor<string, 2> TestingAnalysis::classify_samples(const MatrixR& targets,
         result(count, 1) = target_names[actual];
         result(count, 2) = target_names[predicted];
         result(count, 3) = to_string(double(outputs(i, predicted)));
-        count++;
+        ++count;
     }
 
     return result.slice(array_2(0, 0), array_2(count, 4));
@@ -1157,7 +1153,7 @@ void TestingAnalysis::save_classified_samples_csv(const Tensor<string, 2>& sampl
 
     file << "sample_name,actual_class,predicted_class,probability" << "\n";
 
-    for(Index i = 0; i < samples.dimension(0); i++)
+    for(Index i = 0; i < samples.dimension(0); ++i)
         file << samples(i, 0) << "," << samples(i, 1) << ","
              << samples(i, 2) << "," << samples(i, 3) << "\n";
 
@@ -1187,7 +1183,7 @@ VectorR TestingAnalysis::extract_probabilities(const Tensor<string, 2>& samples)
 {
     VectorR probabilities(samples.dimension(0));
 
-    for(Index i = 0; i < probabilities.size(); i++)
+    for(Index i = 0; i < probabilities.size(); ++i)
         probabilities(i) = type(::atof(samples(i, 3).c_str()));
 
     return probabilities;
@@ -1227,7 +1223,7 @@ vector<VectorR> TestingAnalysis::calculate_error_autocorrelation(const Index max
 
     vector<VectorR> error_autocorrelations(targets_number);
 
-    for(Index i = 0; i < targets_number; i++)
+    for(Index i = 0; i < targets_number; ++i)
         error_autocorrelations[i] = autocorrelations(error.col(i), maximum_past_time_steps);
 
     return error_autocorrelations;
@@ -1247,7 +1243,7 @@ vector<VectorR> TestingAnalysis::calculate_inputs_errors_cross_correlation(const
 
     vector<VectorR> inputs_errors_cross_correlation(targets_number);
 
-    for(Index i = 0; i < targets_number; i++)
+    for(Index i = 0; i < targets_number; ++i)
         inputs_errors_cross_correlation[i] = cross_correlations(inputs.col(i), errors.col(i), past_time_steps);
 
     return inputs_errors_cross_correlation;
@@ -1276,22 +1272,22 @@ pair<type, type> TestingAnalysis::test_transformer() const
 
     // cout<<"English:"<<endl;
     // cout<<testing_context.chip(10,0)<<endl;
-    // for(Index i = 0; i < testing_context.dimension(1); i++)
+    // for(Index i = 0; i < testing_context.dimension(1); ++i)
     //     cout<<language_dataset->get_context_vocabulary()[Index(testing_context(10,i))]<<" ";
     // cout<<endl;
     // cout<<endl;
     // cout<<"Spanish:"<<endl;
     // cout<<testing_input.chip(10,0)<<endl;
-    // for(Index i = 0; i < testing_input.dimension(1); i++)
+    // for(Index i = 0; i < testing_input.dimension(1); ++i)
     //     cout<<language_dataset->get_completion_vocabulary()[Index(testing_input(10,i))]<<" ";
     // cout<<endl;
     // cout<<endl;
     // cout<<"Prediction:"<<endl;
 
-    // for(Index j = 0; j < outputs.dimension(1); j++){
+    // for(Index j = 0; j < outputs.dimension(1); ++j){
     //     type max = outputs(10, j, 0);
     //     Index index = 0;
-    //     for(Index i = 1; i < outputs.dimension(2); i++){
+    //     for(Index i = 1; i < outputs.dimension(2); ++i){
     //         if(max < outputs(10,j,i)){
     //             index = i;
     //             max = outputs(10,j,i);
@@ -1300,10 +1296,10 @@ pair<type, type> TestingAnalysis::test_transformer() const
     //     cout<<index<<" ";
     // }
     // cout<<endl;
-    // for(Index j = 0; j < outputs.dimension(1); j++){
+    // for(Index j = 0; j < outputs.dimension(1); ++j){
     //     type max = outputs(10, j, 0);
     //     Index index = 0;
-    //     for(Index i = 1; i < outputs.dimension(2); i++){
+    //     for(Index i = 1; i < outputs.dimension(2); ++i){
     //         if(max < outputs(10,j,i)){
     //             index = i;
     //             max = outputs(10,j,i);
@@ -1459,7 +1455,7 @@ MatrixR TestingAnalysis::calculate_multiple_classification_tests() const
 
     Index total_samples = 0;
 
-    for(Index target_index = 0; target_index < targets_number; target_index++)
+    for(Index target_index = 0; target_index < targets_number; ++target_index)
     {
         const Index true_positives = confusion(target_index, target_index);
 

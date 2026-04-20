@@ -76,7 +76,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     // Main loop
 
-    for(Index epoch = 0; epoch < maximum_epochs; epoch++)
+    for(Index epoch = 0; epoch < maximum_epochs; ++epoch)
     {
         if(display) cout << "\nGrowing neurons epoch: " << epoch << "\n";
 
@@ -97,7 +97,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         type minimum_training_error = MAX;
         type minimum_validation_error = MAX;
 
-        for(Index trial = 0; trial < trials_number; trial++)
+        for(Index trial = 0; trial < trials_number; ++trial)
         {
             neural_network->set_parameters_random();
 
@@ -133,7 +133,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
                  << "Elapsed time: " << get_time(elapsed_time) << "\n";
 
         if(neuron_selection_results.optimum_validation_error > previous_validation_error) 
-            validation_failures++;
+            ++validation_failures;
 
         previous_validation_error = neuron_selection_results.optimum_validation_error;
 

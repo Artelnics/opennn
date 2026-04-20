@@ -57,6 +57,53 @@ namespace opennn
     string get_time(type);
 
     string get_first_word(const string&);
+
+    // Vector/tensor string conversion
+
+    template <typename T>
+    string vector_to_string(const vector<T>& x, const string& separator = " ")
+    {
+        ostringstream buffer;
+
+        for(size_t i = 0; i < x.size(); ++i)
+        {
+            buffer << x[i];
+            if (i < x.size() - 1)
+                buffer << separator;
+        }
+
+        return buffer.str();
+    }
+
+    string vector_to_string(const VectorI& x, const string& separator = " ");
+    string vector_to_string(const VectorR& x, const string& separator = " ");
+    string vector_to_string(const VectorMap& x, const string& separator = " ");
+
+    void string_to_vector(const string& input, VectorR& x);
+
+    template <typename T, size_t Rank>
+    string tensor_to_string(const TensorR<Rank>& x, const string& separator = " ")
+    {
+        ostringstream buffer;
+
+        for(Index i = 0; i < x.size(); ++i)
+            buffer << x(i) << separator;
+
+        return buffer.str();
+    }
+
+    template <typename T, size_t Rank>
+    void string_to_tensor(const string& input, TensorR<Rank>& x)
+    {
+        istringstream stream(input);
+        T value;
+        Index i = 0;
+
+        while (stream >> value)
+            x(i++) = value;
+    }
+
+    bool contains(const vector<string>&, const string&);
 }
 
 // OpenNN: Open Neural Networks Library.

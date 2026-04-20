@@ -10,7 +10,7 @@
 #define EIGEN_USE_THREADS
 #endif
 
-#define EIGEN_MAX_ALIGN_BYTES 32
+#define EIGEN_MAX_ALIGN_BYTES 64
 #define EIGEN_NO_DEBUG
 #define NOMINMAX
 #define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
@@ -51,16 +51,61 @@
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <Eigen/src/Core/util/DisableStupidWarnings.h>
 
+// CUDA type layer: real CUDA headers when OPENNN_WITH_CUDA is on, stubs otherwise.
+// Types and enum values are available unconditionally so struct members and
+// function signatures don't need #ifdef guards. Actual CUDA function calls
+// still require OPENNN_WITH_CUDA and are gated at runtime by Device::is_gpu().
+
 #ifdef OPENNN_WITH_CUDA
 
-#include "../opennn/kernel.cuh"
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 #include <cublasXt.h>
+#include <cublasLt.h>
 #include <curand.h>
 #include <cudnn.h>
+#include <cuda_bf16.h>
 #include <nvtx3/nvToolsExt.h>
+
+#else
+
+// CPU-only stubs. Values don't matter; GPU code paths never execute (Device::is_gpu() == false).
+// Enums (not type aliases) so that scoped references like `cudnnPoolingMode_t::CUDNN_POOLING_MAX`
+// continue to compile.
+using cudaStream_t     = void*;
+using cublasHandle_t   = void*;
+using cublasLtHandle_t = void*;
+using cudnnHandle_t    = void*;
+
+enum cudaDataType_t                     { CUDA_R_32F = 0, CUDA_R_16F = 2, CUDA_R_16BF = 14 };
+enum cublasComputeType_t                { CUBLAS_COMPUTE_32F = 0, CUBLAS_COMPUTE_32F_FAST_16BF = 65 };
+enum cublasOperation_t                  { CUBLAS_OP_N = 0, CUBLAS_OP_T = 1 };
+enum cudnnDataType_t                    { CUDNN_DATA_FLOAT = 0, CUDNN_DATA_HALF = 2, CUDNN_DATA_BFLOAT16 = 14 };
+enum cudnnActivationMode_t              { CUDNN_ACTIVATION_IDENTITY = 0, CUDNN_ACTIVATION_SIGMOID = 1, CUDNN_ACTIVATION_RELU = 2, CUDNN_ACTIVATION_TANH = 3, CUDNN_ACTIVATION_ELU = 4 };
+enum cudnnPoolingMode_t                 { CUDNN_POOLING_MAX = 0 };
+enum cudnnBatchNormMode_t               { CUDNN_BATCHNORM_PER_ACTIVATION = 0 };
+enum cudnnConvolutionFwdAlgo_t          { CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM = 0 };
+enum cudnnConvolutionBwdDataAlgo_t      { CUDNN_CONVOLUTION_BWD_DATA_ALGO_0 = 0 };
+enum cudnnConvolutionBwdFilterAlgo_t    { CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0 = 0 };
+
+struct cudnnTensorStruct {};
+using cudnnTensorDescriptor_t      = cudnnTensorStruct*;
+using cudnnFilterDescriptor_t      = void*;
+using cudnnConvolutionDescriptor_t = void*;
+using cudnnPoolingDescriptor_t     = void*;
+using cudnnActivationDescriptor_t  = void*;
+using cudnnDropoutDescriptor_t     = void*;
+using cudnnOpTensorDescriptor_t    = void*;
+
+struct __nv_bfloat16 {};   // opaque placeholder
+
+#endif
+
+// CUDA-only machinery — functions, kernel declarations, error-check macros.
+#ifdef OPENNN_WITH_CUDA
+
+#include "../opennn/kernel.cuh"
 
 template <typename T>
 void check_cuda_status(T status, const char* file, int line, const char* msg)
@@ -84,35 +129,9 @@ using type = float;
 namespace opennn {
 constexpr type EPSILON = numeric_limits<type>::epsilon();
 constexpr type MAX = numeric_limits<type>::max();
-
-template <typename Enum>
-struct EnumMap
-{
-    using Entry = pair<Enum, string>;
-
-    const vector<Entry>& entries;
-
-    const string& to_string(Enum value) const
-    {
-        for(const auto& [e, s] : entries)
-            if(e == value) return s;
-        throw runtime_error("Unknown enum value");
-    }
-
-    Enum from_string(const string& name) const
-    {
-        for(const auto& [e, s] : entries)
-            if(s == name) return e;
-        throw runtime_error("Unknown enum string: " + name);
-    }
-
-    Enum from_string(const string& name, Enum fallback) const
-    {
-        for(const auto& [e, s] : entries)
-            if(s == name) return e;
-        return fallback;
-    }
-};
+constexpr type NEG_INFINITY = -numeric_limits<type>::infinity();
+constexpr type QUIET_NAN = numeric_limits<type>::quiet_NaN();
+constexpr type SOFTMAX_MASK_VALUE = type(-1e9f);
 }
 
 constexpr int Layout = Eigen::RowMajor;
@@ -151,12 +170,6 @@ using TensorMapR = TensorMap<Tensor<type, Rank, Layout | AlignedMax>, AlignedMax
 #pragma GCC diagnostic pop
 
 using namespace tinyxml2;
-
-template<typename Base, typename T>
-inline bool is_instance_of(const T* ptr)
-{
-    return dynamic_cast<const Base*>(ptr);
-}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

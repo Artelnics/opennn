@@ -17,40 +17,28 @@ namespace opennn
 
 class Bounding final : public Layer
 {
+
 public:
 
-    enum class BoundingMethod {NoBounding, Bounding};
+    Bounding(const Shape& = {0}, const string& = "bounding_layer");
 
-private:
+    enum class BoundingMethod{NoBounding, Bounding};
 
-    BoundingMethod bounding_method = BoundingMethod::Bounding;
+    Shape get_input_shape() const override { return output_shape; }
 
-    VectorR lower_bounds;
-    VectorR upper_bounds;
-
-    enum Forward {Inputs = 0, Outputs = 1};
+    Shape get_output_shape() const override;
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
         return {Shape{batch_size}.append(get_output_shape())};
     }
 
-public:
-
-    Bounding(const Shape& = {0}, const string& = "bounding_layer");
-
-    // Getters
-
-    Shape get_output_shape() const override;
-
     const BoundingMethod& get_bounding_method() const;
 
     const VectorR& get_lower_bounds() const;
     const VectorR& get_upper_bounds() const;
 
-    // Setters
-
-    void set(const Shape& = {0}, const string& = "bounding_layer");
+    void set(const Shape& = { 0 }, const string & = "bounding_layer");
 
     void set_input_shape(const Shape&) override;
     void set_output_shape(const Shape&) override;
@@ -64,14 +52,27 @@ public:
     void set_upper_bounds(const VectorR&);
     void set_upper_bound(const Index, type);
 
-    // Forward propagation
+    // Lower and upper bounds
 
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
     // Serialization
 
     void from_XML(const XmlDocument&) override;
+
     void to_XML(XmlPrinter&) const override;
+
+private:
+
+    enum Forward {Input, Output};
+
+    Shape output_shape;
+
+    BoundingMethod bounding_method = BoundingMethod::Bounding;
+
+    VectorR lower_bounds;
+
+    VectorR upper_bounds;
 };
 
 }

@@ -221,7 +221,7 @@ void TimeSeriesDataset::read_csv()
     const Index invalid_samples = past_time_steps + future_time_steps - 1;
 
     if(samples_number > invalid_samples)
-        for(Index i = samples_number - invalid_samples; i < samples_number; i++)
+        for(Index i = samples_number - invalid_samples; i < samples_number; ++i)
             set_sample_role(i, "None");
 
     split_samples_sequential(type(0.6), type(0.2), type(0.2));
@@ -277,9 +277,9 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
     string omp_error;
 
     #pragma omp parallel for
-    for(Index feature_index = 0; feature_index < get_features_number(); feature_index++)
+    for(Index feature_index = 0; feature_index < get_features_number(); ++feature_index)
     {
-        for(Index i = 0; i < used_samples_number; i++)
+        for(Index i = 0; i < used_samples_number; ++i)
         {
             const Index current_sample_index = used_sample_indices[i];
 
@@ -298,7 +298,7 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
             Index end_missing = i;
 
             while(end_missing < used_samples_number && isnan(data(used_sample_indices[end_missing], feature_index)))
-                end_missing++;
+                ++end_missing;
 
             const Index n_missing = end_missing - start_missing;
 
@@ -427,7 +427,7 @@ void TimeSeriesDataset::fill_gaps()
     Index row_index = 0;
     const Index column_index = 0;
 
-    for(Index i = 0; i < new_samples_number; i++)
+    for(Index i = 0; i < new_samples_number; ++i)
     {
         new_timestamp = start_time + i*period;
         timestamp = new_data(row_index, column_index);
@@ -436,7 +436,7 @@ void TimeSeriesDataset::fill_gaps()
         {
             data.row(i) = data.row(row_index);
 
-            row_index++;
+            ++row_index;
         }
     }
 }
@@ -459,15 +459,15 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
     const vector<Index> input_variable_indices = get_variable_indices("Input");
     const vector<Index> target_variable_indices = get_variable_indices("Target");
 
-    for(Index i = 0; i < target_variables_number; i++)
+    for(Index i = 0; i < target_variables_number; ++i)
         if(variables[target_variable_indices[i]].role != VariableRole::InputTarget)
-            input_target_variables_number++;
+            ++input_target_variables_number;
 
     Index input_target_numeric_variables_number = 0;
 
     int count = 0;
 
-    for(Index i = 0; i < input_target_variables_number; i++)
+    for(Index i = 0; i < input_target_variables_number; ++i)
     {
         if(i < input_variables_number)
         {
@@ -476,7 +476,7 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
             const VariableType input_variable_type = variables[variable_index].type;
 
             if(input_variable_type == VariableType::Numeric)
-                input_target_numeric_variables_number++;
+                ++input_target_numeric_variables_number;
         }
         else
         {
@@ -485,9 +485,9 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
             const VariableType& target_variable_type = variables[variable_index].type;
 
             if(target_variable_type == VariableType::Numeric)
-                input_target_numeric_variables_number++;
+                ++input_target_numeric_variables_number;
 
-            count++;
+            ++count;
         }
     }
 
@@ -501,7 +501,7 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
     MatrixR input_i;
     Index counter_i = 0;
 
-    for(Index i = 0; i < variables_number; i++)
+    for(Index i = 0; i < variables_number; ++i)
     {
         if(variables[i].role == VariableRole::None || variables[i].type != VariableType::Numeric)
             continue;
@@ -513,10 +513,10 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
         
         autocorrelations_vector = opennn::autocorrelations(current_input_i, new_past_time_steps);
 
-        for(Index j = 0; j < new_past_time_steps; j++)
+        for(Index j = 0; j < new_past_time_steps; ++j)
             autocorrelations (counter_i, j) = autocorrelations_vector(j) ;
 
-        counter_i++;
+        ++counter_i;
     }
 
     return autocorrelations;
@@ -542,7 +542,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
     Index input_target_numeric_variables_number = 0;
     int count = 0;
 
-    for(Index i = 0; i < input_target_variables_number; i++)
+    for(Index i = 0; i < input_target_variables_number; ++i)
     {
         if(i < input_variables_number)
         {
@@ -551,7 +551,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
             const VariableType input_variable_type = variables[variable_index].type;
 
             if(input_variable_type == VariableType::Numeric)
-                input_target_numeric_variables_number++;
+                ++input_target_numeric_variables_number;
         }
         else
         {
@@ -560,9 +560,9 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
             const VariableType target_variable_type = variables[variable_index].type;
 
             if(target_variable_type == VariableType::Numeric && variables[variable_index].role != VariableRole::InputTarget)
-                input_target_numeric_variables_number++;
+                ++input_target_numeric_variables_number;
 
-            count++;
+            ++count;
         }
     }
 
@@ -582,7 +582,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
     Index counter_i = 0;
     Index counter_j = 0;
 
-    for(Index i = 0; i < variables_number; i++)
+    for(Index i = 0; i < variables_number; ++i)
     {
         if(variables[i].role == VariableRole::None || variables[i].type != VariableType::Numeric)
             continue;
@@ -593,7 +593,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
         counter_j = 0;
 
-        for(Index j = 0; j < variables_number; j++)
+        for(Index j = 0; j < variables_number; ++j)
         {
             if(variables[j].role == VariableRole::None
             || variables[j].type != VariableType::Numeric)
@@ -608,13 +608,13 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
             cross_correlations_vector = opennn::cross_correlations(current_input_i, current_input_j, new_past_time_steps);
 
-            for(Index k = 0; k < new_past_time_steps; k++)
+            for(Index k = 0; k < new_past_time_steps; ++k)
                 cross_correlations(counter_i, counter_j, k) = cross_correlations_vector(k);
 
-            counter_j++;
+            ++counter_j;
         }
 
-        counter_i++;
+        ++counter_i;
     }
 
     return cross_correlations;

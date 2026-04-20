@@ -14,9 +14,6 @@
 #include "loss.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
-#ifdef OPENNN_WITH_CUDA
-#include "kernel.cuh"
-#endif
 
 namespace opennn
 {
@@ -35,12 +32,12 @@ Embedding::Embedding(const Shape& new_input_shape,
 
 Shape Embedding::get_output_shape() const
 {
-    return {get_sequence_length(), embedding_dimension};
+    return {sequence_length, embedding_dimension};
 }
 
 vector<Shape> Embedding::get_parameter_shapes() const
 {
-    return {{get_vocabulary_size(), embedding_dimension}}; // weights
+    return {{vocabulary_size, embedding_dimension}}; // weights
 }
 
 // Setters
@@ -50,24 +47,23 @@ void Embedding::set(const Index new_vocabulary_size,
                     Index new_embedding_dimension,
                     const string& new_label)
 {
-    input_shape = {new_sequence_length};
+    sequence_length = new_sequence_length;
     vocabulary_size = new_vocabulary_size;
     embedding_dimension = new_embedding_dimension;
     embedding_scale = sqrt(static_cast<type>(new_embedding_dimension));
     label = new_label;
 
-    positional_encoding.resize(new_sequence_length, new_embedding_dimension);
-    positional_encoding.setZero();
+    positional_encoding = MatrixR::Zero(new_sequence_length, new_embedding_dimension);
 
     const type half_depth = type(new_embedding_dimension) / 2;
 
     VectorR divisors(new_embedding_dimension);
-    for(Index j = 0; j < new_embedding_dimension; j++)
+    for(Index j = 0; j < new_embedding_dimension; ++j)
         divisors(j) = pow(type(10000), (j < Index(half_depth) ? j : j - Index(half_depth)) / half_depth);
 
     #pragma omp parallel for collapse(2)
-    for(Index i = 0; i < new_sequence_length; i++)
-        for(Index j = 0; j < new_embedding_dimension; j++)
+    for(Index i = 0; i < new_sequence_length; ++i)
+        for(Index j = 0; j < new_embedding_dimension; ++j)
             positional_encoding(i, j) = (j < Index(half_depth))
                 ? sin(i / divisors(j))
                 : cos(i / divisors(j));
@@ -88,11 +84,11 @@ void Embedding::set(const Index new_vocabulary_size,
 
 void Embedding::set_parameters_random()
 {
-    if(parameters[Weights].empty()) return;
+    if(parameters[Weight].empty()) return;
 
     const type scale = type(0.05);
 
-    MatrixMap weights = matrix_map(parameters[Weights]);
+    MatrixMap weights = matrix_map(parameters[Weight]);
 
     weights.setRandom();
     weights *= scale;
@@ -102,14 +98,14 @@ void Embedding::set_parameters_random()
 
 void Embedding::set_parameters_glorot()
 {
-    if(parameters[Weights].empty()) return;
+    if(parameters[Weight].empty()) return;
 
 //    const Index vocabulary_size = weights.shape[0];
 //    const Index embedding_dimension = weights.shape[1];
 
-    const type limit = sqrt(type(6.0) / (get_vocabulary_size() + embedding_dimension));
+    const type limit = sqrt(type(6.0) / (vocabulary_size + embedding_dimension));
 
-    MatrixMap weights = matrix_map(parameters[Weights]);
+    MatrixMap weights = matrix_map(parameters[Weight]);
 
     weights.setRandom();
     weights *= limit;
@@ -122,54 +118,43 @@ void Embedding::set_parameters_glorot()
 void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
+    const Index batch_size = forward_propagation.batch_size;
 
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        const Index batch_size = forward_propagation.batch_size;
-        const Index embedding_dim = get_embedding_dimension();
-        const Index vocab_size = get_vocabulary_size();
-        const Index seq_len = get_sequence_length();
-        const Index total_elements = batch_size * seq_len * embedding_dim;
-
-        const float* inputs_data = forward_views[Inputs][0].data;
-        const float* weights_data = parameters[Weights].data;
+        const Index total_elements = batch_size * sequence_length * embedding_dimension;
 
         const float* positional_encoding_data = add_positional_encoding
             ? positional_encoding_device.device()
             : nullptr;
 
-        float* outputs_ptr = forward_views[Outputs][0].data;
-
-        embedding_forward_cuda(
-            total_elements,
-            inputs_data,
-            weights_data,
-            positional_encoding_data,
-            outputs_ptr,
-            seq_len,
-            embedding_dim,
-            vocab_size,
-            scale_embedding,
-            add_positional_encoding
-        );
+        TensorView& output_view = forward_views[Output][0];
+        output_view.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            embedding_forward_cuda<T>(
+                total_elements,
+                forward_views[Input][0].as<float>(),
+                parameters[Weight].as<float>(),
+                positional_encoding_data,
+                output_view.as<T>(),
+                sequence_length, embedding_dimension, vocabulary_size,
+                scale_embedding, add_positional_encoding);
+        });
         return;
     }
 #endif
 
-    const Index batch_size = forward_propagation.batch_size;
-    const Index total_tokens = batch_size * get_sequence_length();
+    const Index total_tokens = batch_size * sequence_length;
 
-    const TensorView& output_view = forward_views[Outputs][0];
+    const TensorView& output_view = forward_views[Output][0];
     MatrixMap outputs(output_view.data, total_tokens, embedding_dimension);
 
-    const MatrixMap weights(parameters[Weights].data, vocabulary_size, embedding_dimension);
+    const MatrixMap weights(parameters[Weight].data, vocabulary_size, embedding_dimension);
 
-    const type* input_indices = forward_views[Inputs][0].data;
-
-    const Index sequence_length = get_sequence_length();
+    const type* input_indices = forward_views[Input][0].data;
 
     #pragma omp parallel for
-    for(Index i = 0; i < total_tokens; i++)
+    for(Index i = 0; i < total_tokens; ++i)
     {
         const Index token_id = static_cast<Index>(input_indices[i]);
 
@@ -180,17 +165,12 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
         }
 
         outputs.row(i).noalias() = weights.row(token_id);
-    }
 
-    if(scale_embedding)
-        outputs *= embedding_scale;
+        if(scale_embedding)
+            outputs.row(i) *= embedding_scale;
 
-    if(add_positional_encoding)
-    {
-        #pragma omp parallel for
-        for(Index i = 0; i < total_tokens; i++)
-            if (static_cast<Index>(input_indices[i]) > 0)
-                outputs.row(i) += positional_encoding.row(i % sequence_length);
+        if(add_positional_encoding && token_id > 0)
+            outputs.row(i) += positional_encoding.row(i % sequence_length);
     }
 }
 
@@ -204,37 +184,29 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
 
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        const Index batch_size = forward_propagation.batch_size;
-        const Index seq_len = get_sequence_length();
-        const Index emb_dim = get_embedding_dimension();
-        const Index vocab_size = get_vocabulary_size();
-        const Index total_elements = batch_size * seq_len * emb_dim;
+        const Index total_elements = forward_propagation.batch_size * sequence_length * embedding_dimension;
 
-        float* weight_gradients_data = gradient_views[Weights].data;
+        const TensorView& og = backward_views[OutputGradient][0];
+        og.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            embedding_backward_cuda<T>(
+                total_elements,
+                forward_views[Input][0].as<float>(),
+                og.as<T>(),
+                gradient_views[Weight].as<float>(),
+                embedding_dimension, vocabulary_size, scale_embedding);
+        });
 
-        const float* inputs_data = forward_views[Inputs][0].data;
-        const float* output_gradients_data = backward_views[0][0].data;
-
-        embedding_backward_cuda(
-            total_elements,
-            inputs_data,
-            output_gradients_data,
-            weight_gradients_data,
-            seq_len,
-            emb_dim,
-            vocab_size,
-            scale_embedding
-        );
         return;
     }
 #endif
 
-    const TensorView& input_indices = forward_views[Inputs][0];
-    TensorView& output_gradient = backward_views[0][0];
-    TensorView& weight_gradient = gradient_views[Weights];
+    embedding_backward(forward_views[Input][0],
+                       backward_views[OutputGradient][0],
+                       gradient_views[Weight],
+                       embedding_dimension,
+                       scale_embedding);
 
-    embedding_backward(input_indices, output_gradient, weight_gradient,
-                       embedding_dimension, scale_embedding);
 }
 
 // Serialization

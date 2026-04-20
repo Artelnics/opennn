@@ -169,7 +169,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
         if(input_variables_number < minimum_inputs_number)
         {
-            variable_index++;
+            ++variable_index;
             continue;
         }
 
@@ -199,7 +199,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         type minimum_training_error = MAX;
         type minimum_validation_error = MAX;
 
-        for(Index j = 0; j < trials_number; j++)
+        for(Index j = 0; j < trials_number; ++j)
         {
             neural_network->set_parameters_random();
             training_results = training_strategy->train();
@@ -228,7 +228,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         if(previous_training_error < minimum_training_error)
         {
             if(display) cout << "Validation failure" << "\n";
-            validation_failures++;
+            ++validation_failures;
 
             if(dataset->get_variables()[current_variable_index].role == VariableRole::InputTarget)
                 dataset->set_variable_role(current_variable_index, "Target");
@@ -243,10 +243,10 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             input_selection_results.training_error_history(epoch) = minimum_training_error;
             input_selection_results.validation_error_history(epoch) = minimum_validation_error;
 
-            epoch++;
+            ++epoch;
         }
 
-        variable_index++;
+        ++variable_index;
         time(&current_time);
         elapsed_time = type(difftime(current_time, beginning_time));
 
@@ -331,7 +331,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         final_feature_names.reserve(base_names.size() * time_steps);
         for(const string& base_name : base_names)
         {
-            for(Index j = 0; j < time_steps; j++)
+            for(Index j = 0; j < time_steps; ++j)
             {
                 string name = (base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j);
                 final_feature_names.push_back(name);

@@ -17,56 +17,17 @@ namespace opennn
 
 class Normalization3d final : public Layer
 {
-private:
-
-    Index embedding_dimension = 0;
-    Index sequence_length = 0;
-
-#ifdef OPENNN_WITH_CUDA
-    TensorView gammas_device;
-    TensorView betas_device;
-#endif
-
-    enum Parameters {Gammas, Betas};
-
-    vector<Shape> get_parameter_shapes() const override;
-
-    // View slots: 0=Inputs(wired), 1=Means, 2=StdDevs, 3=NormalizedInputs, 4=Outputs
-    enum Forward {Inputs = 0, Means = 1, StandardDeviations = 2, NormalizedInputs = 3, Outputs = 4};
-
-    // Forward shapes: intermediate buffers first, output last.
-    // The last shape is the one wired to the downstream layer.
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
-    {
-        return {{batch_size, sequence_length },                      // slot 1: Means
-                {batch_size, sequence_length },                      // slot 2: StandardDeviations
-                {batch_size, sequence_length, embedding_dimension},  // slot 3: NormalizedInputs
-                {batch_size, sequence_length, embedding_dimension}}; // slot 4: Outputs (LAST = wired downstream)
-    }
-
-    enum Backward {OutputGradients = 0, InputGradients = 1};
-
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        return {{ batch_size, sequence_length, embedding_dimension}};
-    }
 
 public:
 
     Normalization3d(const Shape& = Shape({0,0}),
                     const string& = "normalization_layer_3d");
 
-    // Getters
-
     Index get_sequence_length() const { return sequence_length; }
     Index get_embedding_dimension() const { return embedding_dimension; }
 
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;
-
-    // Setters
-
-    void set(const Index = 0, Index = 0, const string& = "normalization_layer_3d");
 
     void set_input_shape(const Shape& new_input_shape) override
     {
@@ -77,21 +38,60 @@ public:
         }
     }
 
-    // Parameter initialization
+    vector<Shape> get_parameter_shapes() const override;
+
+    // Forward shapes: intermediate buffers first, output last.
+    // The last shape is the one wired to the downstream layer.
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    {
+        return {{batch_size, sequence_length },                      // slot 1: Means
+                {batch_size, sequence_length },                      // slot 2: StandardDeviations
+                {batch_size, sequence_length, embedding_dimension},  // slot 3: NormalizedInputs
+                {batch_size, sequence_length, embedding_dimension}}; // slot 4: Output (LAST = wired downstream)
+    }
+
+    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
+    {
+        return {CUDNN_DATA_FLOAT,        // Means — running stat, stays FP32
+                CUDNN_DATA_FLOAT,        // StandardDeviations — running stat, stays FP32
+                CUDNN_ACTIVATION_DTYPE,  // NormalizedInputs
+                CUDNN_ACTIVATION_DTYPE}; // Output
+    }
+
+    vector<Shape> get_backward_shapes(Index batch_size) const override
+    {
+        return {{ batch_size, sequence_length, embedding_dimension}};
+    }
+
+    void set(const Index = 0, Index = 0, const string& = "normalization_layer_3d");
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;
-
-    // Forward / back propagation
 
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
-    // Serialization
-
     void from_XML(const XmlDocument&) override;
     void to_XML(XmlPrinter&) const override;
+
+protected:
+
+    TensorView gammas_device;
+    TensorView betas_device;
+
+private:
+
+    Index embedding_dimension = 0;
+    Index sequence_length = 0;
+
+    enum Parameters {Gamma, Beta};
+
+    // View slots: 0=Input(wired), 1=Means, 2=StdDevs, 3=NormalizedInput, 4=Output
+    enum Forward {Input = 0, Means = 1, StandardDeviations = 2, NormalizedInput = 3, Output = 4};
+
+    enum Backward {OutputGradient = 0, InputGradient = 1};
+
 };
 
 }

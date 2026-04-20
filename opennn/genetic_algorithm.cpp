@@ -98,9 +98,10 @@ void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number
 
 void GeneticAlgorithm::initialize_population()
 {
-    initialization_method == "Random"
-        ? initialize_population_random()
-        : initialize_population_correlations();
+    if(initialization_method == "Random")
+        initialize_population_random();
+    else
+        initialize_population_correlations();
 }
 
 void GeneticAlgorithm::initialize_population_random()
@@ -112,7 +113,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     VectorB individual_genes(genes_number);
 
-    for(Index i = 0; i < individuals_number; i++)
+    for(Index i = 0; i < individuals_number; ++i)
     {
         individual_genes.setConstant(false);
 
@@ -147,7 +148,7 @@ void GeneticAlgorithm::initialize_population_correlations()
     const type* begin = correlations_cumsum.data();
     const type* end   = begin + genes_number;
 
-    for(Index i = 0; i < individuals_number; i++)
+    for(Index i = 0; i < individuals_number; ++i)
     {        
         individual_genes.setConstant(false);
 
@@ -177,7 +178,7 @@ void GeneticAlgorithm::evaluate_population()
 
     training_strategy->get_optimization_algorithm()->set_display(false);
 
-    for(Index i = 0; i < individuals_number; i++)
+    for(Index i = 0; i < individuals_number; ++i)
     {
         const VectorB individual = population.row(i);
 
@@ -243,7 +244,7 @@ void GeneticAlgorithm::perform_selection()
         if(!selected(i))
         {
             selected(i) = true;
-            selected_count++;
+            ++selected_count;
         }
     }
 }
@@ -253,7 +254,7 @@ vector<Index> GeneticAlgorithm::get_selected_indices() const
     vector<Index> selection_indices;
     selection_indices.reserve(selected.count());
 
-    for(Index i = 0; i < selected.size(); i++)
+    for(Index i = 0; i < selected.size(); ++i)
         if(selected(i))
             selection_indices.push_back(i);
 
@@ -330,7 +331,7 @@ void GeneticAlgorithm::perform_crossover()
 
     MatrixB new_population(individuals_number, get_genes_number());
 
-    for(Index i = 0; i < individuals_number; i++)
+    for(Index i = 0; i < individuals_number; ++i)
     {
         const Index p1 = get_random_element(selected_individual_indices);
         Index p2 = get_random_element(selected_individual_indices);
@@ -381,7 +382,7 @@ void GeneticAlgorithm::perform_mutation()
             if (current_inputs_number < maximum_inputs_number)
             {
                 individual(to_true_mutations[k]) = true;
-                current_inputs_number++;
+                ++current_inputs_number;
             }
         }
 
@@ -433,7 +434,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     time(&beginning_time);
 
-    for(Index epoch = 0; epoch < maximum_epochs; epoch++)
+    for(Index epoch = 0; epoch < maximum_epochs; ++epoch)
     {
         if(display) cout << "Generation: " << epoch + 1 << "\n";
 
@@ -592,7 +593,7 @@ void GeneticAlgorithm::configure_neural_network_inputs(NeuralNetwork* neural_net
         final_feature_names.reserve(base_names.size() * past_time_steps);
 
         for(const string& base_name : base_names)
-            for(Index j = 0; j < past_time_steps; j++)
+            for(Index j = 0; j < past_time_steps; ++j)
                 final_feature_names.push_back((base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j));
 
         neural_network->set_input_names(final_feature_names);

@@ -80,19 +80,21 @@ void Loss::back_propagate(const Batch& batch,
     add_regularization_gradient(back_propagation);
 }
 
+type Loss::get_weighted_coefficient(const Batch& batch) const
+{
+    const Index total = dataset ? dataset->get_samples_number() : batch.get_samples_number();
+    const Index samples = batch.get_samples_number();
+    return type(total) / (type(samples) * (normalization_coefficient + EPSILON));
+}
+
 void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
+    const TensorView target = batch.get_targets_active();
 
 #ifdef OPENNN_WITH_CUDA
-    const TensorView target = Device::instance().is_gpu()
-                                  ? batch.get_targets_device()
-                                  : batch.get_targets();
-    float* workspace_device = Device::instance().is_gpu()
-                                  ? back_propagation.errors_device
-                                  : nullptr;
+    float* workspace_device = Device::instance().is_gpu() ? back_propagation.errors_device : nullptr;
 #else
-    const TensorView target = batch.get_targets();
     float* workspace_device = nullptr;
 #endif
 
@@ -105,14 +107,9 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
         normalized_squared_error(input, target, normalization_coefficient, back_propagation.error, workspace_device);
         break;
     case Error::WeightedSquaredError:
-    {
         weighted_squared_error(input, target, positives_weight, negatives_weight, back_propagation.error, workspace_device);
-        const Index total = dataset ? dataset->get_samples_number() : batch.get_samples_number();
-        const Index samples = batch.get_samples_number();
-        const type coefficient = type(total) / (type(samples) * (normalization_coefficient + EPSILON));
-        back_propagation.error *= coefficient;
+        back_propagation.error *= get_weighted_coefficient(batch);
         break;
-    }
     case Error::CrossEntropy:
         if (input.shape.back() == 1)
             binary_cross_entropy(input, target, back_propagation.error, workspace_device);
@@ -131,18 +128,8 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
 void Loss::calculate_output_gradients(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
-
-#ifdef OPENNN_WITH_CUDA
-    const TensorView target = Device::instance().is_gpu()
-                                  ? batch.get_targets_device()
-                                  : batch.get_targets();
-    TensorView input_gradient = Device::instance().is_gpu()
-                                    ? back_propagation.get_output_gradients_device()
-                                    : back_propagation.get_output_gradients();
-#else
-    const TensorView target = batch.get_targets();
-    TensorView input_gradient = back_propagation.get_output_gradients();
-#endif
+    const TensorView target = batch.get_targets_active();
+    TensorView input_gradient = back_propagation.get_output_gradients_active();
 
     switch(error)
     {
@@ -154,13 +141,8 @@ void Loss::calculate_output_gradients(const Batch& batch, const ForwardPropagati
         normalized_squared_error_gradient(input, target, normalization_coefficient, input_gradient);
         break;
     case Error::WeightedSquaredError:
-    {
-        const Index total = dataset ? dataset->get_samples_number() : batch.get_samples_number();
-        const Index samples = batch.get_samples_number();
-        const type coefficient = type(total) / (type(samples) * (normalization_coefficient + EPSILON));
-        weighted_squared_error_gradient(input, target, positives_weight, negatives_weight, coefficient, input_gradient);
+        weighted_squared_error_gradient(input, target, positives_weight, negatives_weight, get_weighted_coefficient(batch), input_gradient);
         break;
-    }
     case Error::CrossEntropy:
         cross_entropy_gradient(input, target, input_gradient);
         break;
@@ -405,10 +387,9 @@ VectorR Loss::calculate_numerical_gradient()
     type error_forward = 0;
     type error_backward = 0;
 
-    VectorR numerical_gradient(parameters_number);
-    numerical_gradient.setZero();
+    VectorR numerical_gradient = VectorR::Zero(parameters_number);
 
-    for(Index i = 0; i < parameters_number; i++)
+    for(Index i = 0; i < parameters_number; ++i)
     {
         h = calculate_h(parameters(i));
 
@@ -465,14 +446,13 @@ VectorR Loss::calculate_numerical_input_gradients()
     type error_forward;
     type error_backward;
 
-    VectorR numerical_inputs_gradients(values_number);
-    numerical_inputs_gradients.setZero();
+    VectorR numerical_inputs_gradients = VectorR::Zero(values_number);
 
     const vector<TensorView>& input_views = batch.get_inputs();
 
     TensorMap4 inputs_vector = tensor_map<4>(input_views[0]);
 
-    for(Index i = 0; i < values_number; i++)
+    for(Index i = 0; i < values_number; ++i)
     {
         h = calculate_h(inputs_vector(i));
 

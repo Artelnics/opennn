@@ -42,8 +42,7 @@ Shape Unscaling::get_output_shape() const
 
 void Unscaling::set(const Index new_neurons_number, const string& new_label)
 {
-    means.resize(new_neurons_number);
-    means.setZero();
+    means = VectorR::Zero(new_neurons_number);
     standard_deviations.resize(new_neurons_number);
     standard_deviations.setOnes();
     minimums.resize(new_neurons_number);
@@ -111,7 +110,7 @@ void Unscaling::set_min_max_range(const type min, const type max)
 void Unscaling::set_scalers(const vector<string>& new_scaler)
 {
     scalers.resize(new_scaler.size());
-    for(size_t i = 0; i < new_scaler.size(); i++)
+    for(size_t i = 0; i < new_scaler.size(); ++i)
         scalers[i] = string_to_scaler_method(new_scaler[i]);
 }
 
@@ -154,13 +153,10 @@ void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    const TensorView& input = forward_views[0][0];
-    TensorView& output = forward_views[1][0];
-
     // Data targets are scaled in-place by Optimizer::set_scaling(),
     // so the unscaling layer just copies input to output.
     // The unscaling coefficients are stored for serialization/expression only.
-    copy(input, output);
+    copy(forward_views[Input][0], forward_views[Output][0]);
 }
 
 // Serialization
@@ -180,7 +176,7 @@ void Unscaling::from_XML(const XmlDocument& document)
 
     const XmlElement* start_element = root_element->first_child_element("NeuronsNumber");
 
-    for(Index i = 0; i < neurons_number; i++) {
+    for(Index i = 0; i < neurons_number; ++i) {
         const XmlElement* unscaling_neuron_element = start_element->next_sibling_element("UnscalingNeuron");
         if(!unscaling_neuron_element) {
             throw runtime_error("Unscaling neuron " + to_string(i + 1) + " is nullptr.\n");
@@ -218,7 +214,7 @@ void Unscaling::to_XML(XmlPrinter& printer) const
 
     add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
 
-    for(Index i = 0; i < output_shape[0]; i++)
+    for(Index i = 0; i < output_shape[0]; ++i)
     {
         printer.open_element("UnscalingNeuron");
         printer.push_attribute("Index", int(i + 1));

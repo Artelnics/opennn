@@ -38,7 +38,7 @@ Index count_non_empty_lines(const filesystem::path& data_path)
         prepare_line(line);
 
         if(!line.empty())
-            count++;
+            ++count;
     }
 
     return count;
@@ -52,7 +52,7 @@ Index count_tokens(const string& text, const string& separator)
 
     while((position = text.find(separator, position)) != string::npos)
     {
-        tokens_number++;
+        ++tokens_number;
         position += separator.length();
     }
 
@@ -178,7 +178,7 @@ VectorR to_type_vector(const string& text, const string& separator)
 
     VectorR type_vector(tokens_size);
 
-    for(Index i = 0; i < tokens_size; i++)
+    for(Index i = 0; i < tokens_size; ++i)
     {
         const char* begin = tokens[i].c_str();
         char* end = nullptr;
@@ -552,6 +552,56 @@ void display_progress_bar(const int& completed, const int& total)
 
     cout << "] " << int(progress * 100.0) << " %\r";
     cout.flush();
+}
+
+string vector_to_string(const VectorI& x, const string& separator)
+{
+    ostringstream buffer;
+
+    for(Index i = 0; i < x.size(); ++i)
+        buffer << x(i) << separator;
+
+    return buffer.str();
+}
+
+string vector_to_string(const VectorR& x, const string& separator)
+{
+    ostringstream buffer;
+
+    for(Index i = 0; i < x.size(); ++i)
+        buffer << x(i) << separator;
+
+    return buffer.str();
+}
+
+string vector_to_string(const VectorMap& x, const string& separator)
+{
+    ostringstream buffer;
+
+    for(Index i = 0; i < x.size(); ++i)
+        buffer << x(i) << separator;
+
+    return buffer.str();
+}
+
+void string_to_vector(const string& input, VectorR& x)
+{
+    istringstream stream(input);
+    type value;
+    vector<type> buffer;
+
+    while (stream >> value)
+        buffer.push_back(value);
+
+    x.resize(static_cast<Index>(buffer.size()));
+
+    for (Index i = 0; i < x.size(); ++i)
+        x(i) = buffer[i];
+}
+
+bool contains(const vector<string>& data, const string& value)
+{
+    return find(data.begin(), data.end(), value) != data.end();
 }
 
 }

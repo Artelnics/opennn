@@ -87,7 +87,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     {
         const Index parameters_number = neural_network->get_parameters_size();
 
-        sgd_update_device(
+        sgd_update_cuda(
             parameters_number,
             neural_network->get_parameters_device(),
             optimization_data.parameter_updates.device(),
@@ -106,17 +106,30 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     VectorR& parameter_updates = optimization_data.parameter_updates.vector;
     VectorR& last_parameter_updates = optimization_data.last_parameter_updates.vector;
 
-    parameter_updates = gradient * (-current_learning_rate);
+    const Index n = parameters.size();
 
-    if (momentum > type(0))
+    if (momentum <= type(0))
     {
-        parameter_updates += momentum * last_parameter_updates;
-        last_parameter_updates = parameter_updates;
+        #pragma omp parallel for
+        for (Index i = 0; i < n; ++i)
+        {
+            const type lr_g = current_learning_rate * gradient(i);
+            parameter_updates(i) = -lr_g;
+            parameters(i) -= lr_g;
+        }
     }
-
-    parameters += nesterov
-        ? parameter_updates * momentum - gradient * current_learning_rate
-        : parameter_updates;
+    else
+    {
+        #pragma omp parallel for
+        for (Index i = 0; i < n; ++i)
+        {
+            const type lr_g = current_learning_rate * gradient(i);
+            const type v_new = momentum * last_parameter_updates(i) - lr_g;
+            parameter_updates(i) = v_new;
+            last_parameter_updates(i) = v_new;
+            parameters(i) += nesterov ? momentum * v_new - lr_g : v_new;
+        }
+    }
 }
 
 TrainingResults StochasticGradientDescent::train()
@@ -211,7 +224,7 @@ TrainingResults StochasticGradientDescent::train()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << "\n";
 
@@ -224,7 +237,7 @@ TrainingResults StochasticGradientDescent::train()
 
         optimization_data.iteration = 0;
 
-        for(Index iteration = 0; iteration < training_batches_number; iteration++)
+        for(Index iteration = 0; iteration < training_batches_number; ++iteration)
         {
             optimization_data.iteration++;
 
@@ -272,7 +285,7 @@ TrainingResults StochasticGradientDescent::train()
 
             validation_error = type(0);
 
-            for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+            for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
             {
                 // Dataset
 
@@ -383,11 +396,8 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 
     const Index parameters_number = neural_network->get_parameters_size();
 
-    parameter_updates.resize(parameters_number);
-    parameter_updates.setZero();
-
-    last_parameter_updates.resize(parameters_number);
-    last_parameter_updates.setZero();
+    parameter_updates.setZero(parameters_number);
+    last_parameter_updates.setZero(parameters_number);
 
 #ifdef OPENNN_WITH_CUDA
     parameter_updates.resize_device(parameters_number);
@@ -452,7 +462,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
     ThreadSafeQueue<Batch*> ready_training_queue;
     vector<unique_ptr<Batch>> training_batch_pool;
 
-    for(int i = 0; i < PREFETCH_BATCHES; i++)
+    for(int i = 0; i < PREFETCH_BATCHES; ++i)
     {
         training_batch_pool.push_back(make_unique<Batch>(training_batch_size, dataset));
         empty_training_queue.push(training_batch_pool.back().get());
@@ -464,7 +474,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     if(has_validation)
     {
-        for(int i = 0; i < PREFETCH_BATCHES; i++)
+        for(int i = 0; i < PREFETCH_BATCHES; ++i)
         {
             validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
             empty_validation_queue.push(validation_batch_pool.back().get());
@@ -508,7 +518,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
     type elapsed_time = type(0);
     optimization_data.iteration = 1;
 
-    for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
         if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << "\n";
 
@@ -520,7 +530,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
         std::thread training_worker([&]()
         {
-            for(Index iteration = 0; iteration < training_batches_number; iteration++)
+            for(Index iteration = 0; iteration < training_batches_number; ++iteration)
             {
                 Batch* batch = empty_training_queue.pop();
                 batch->fill_host(training_batches[iteration],
@@ -539,7 +549,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
             cudaEventRecord(batch_ready_event[0], memory_stream);
         }
 
-        for(Index iteration = 0; iteration < training_batches_number; iteration++)
+        for(Index iteration = 0; iteration < training_batches_number; ++iteration)
         {
             Batch* current_batch = next_batch;
             next_batch = nullptr;
@@ -582,7 +592,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
             std::thread validation_worker([&]()
             {
-                for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+                for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
                 {
                     Batch* batch = empty_validation_queue.pop();
                     batch->fill_host(validation_batches[iteration],
@@ -601,7 +611,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
                 cudaEventRecord(batch_ready_event[0], memory_stream);
             }
 
-            for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+            for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
             {
                 Batch* current_batch = next_val_batch;
                 next_val_batch = nullptr;
@@ -636,7 +646,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
             results.validation_error_history(epoch) = validation_error;
 
             if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
-                validation_failures++;
+                ++validation_failures;
         }
 
         elapsed_time = get_elapsed_time(beginning_time);

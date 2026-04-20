@@ -38,10 +38,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             total_size += get_aligned_size(s.size());
 
     if(total_size > 0)
-    {
-        data.resize(total_size);
-        data.setZero();
-    }
+        data.setZero(total_size);
 
     views.resize(layers_number);
     type* pointer = (total_size > 0) ? data.data() : nullptr;
@@ -98,14 +95,31 @@ void ForwardPropagation::allocate_device()
 #ifdef OPENNN_WITH_CUDA
     if(!neural_network || batch_size <= 0 || data.size() == 0) return;
 
-    data.resize_device(data.size());
+    const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
+    const auto& nn_layers = neural_network->get_layers();
+    const auto& layer_input_indices = neural_network->get_layer_input_indices();
+    const size_t layers_number = nn_layers.size();
+
+    // Per-layer dtypes (parallel to forward_shapes).
+    vector<vector<cudnnDataType_t>> forward_dtypes(layers_number);
+    for(Index i = 0; i < layers_number; ++i)
+        forward_dtypes[i] = nn_layers[i]->get_forward_dtypes(batch_size);
+
+    // Size the device pool in bytes: Σ aligned(shape.size() × dtype_bytes).
+    Index total_bytes = 0;
+    for(Index i = 0; i < layers_number; ++i)
+    {
+        const vector<Shape>& shapes = forward_shapes[i];
+        for(size_t j = 0; j < shapes.size(); ++j)
+            if(shapes[j].size() > 0)
+                total_bytes += get_aligned_bytes(shapes[j].size() * dtype_bytes(forward_dtypes[i][j]));
+    }
+
+    data.resize_device_bytes(total_bytes);
     data.setZero_device();
 
-    const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
-    const size_t layers_number = neural_network->get_layers().size();
-
-    type* dev_pointer = data.device();
+    // Walk a byte cursor; each view gets its dtype + pointer into the pool.
+    uint8_t* cursor = data.device_bytes();
 
     for(Index i = 0; i < layers_number; ++i)
     {
@@ -117,9 +131,9 @@ void ForwardPropagation::allocate_device()
 
             if(s.size() > 0)
             {
-                views[i][j + 1][0].data = dev_pointer;
-                views[i][j + 1][0].set_descriptor(s);
-                dev_pointer += get_aligned_size(s.size());
+                views[i][j + 1][0].data  = reinterpret_cast<type*>(cursor);
+                views[i][j + 1][0].dtype = forward_dtypes[i][j];
+                cursor += get_aligned_bytes(s.size() * dtype_bytes(forward_dtypes[i][j]));
             }
         }
     }
@@ -220,7 +234,7 @@ void ForwardPropagation::print() const
 
     cout << "Layers number: " << layers_number << "\n";
 
-    for(Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; ++i)
         cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_label() << "\n";
 }
 
