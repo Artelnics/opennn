@@ -24,6 +24,8 @@ Normalization3d::Normalization3d(const Shape& new_input_shape,
     set(new_input_shape[0], new_input_shape[1], new_name);
 }
 
+// Getters
+
 Shape Normalization3d::get_input_shape() const
 {
     return { sequence_length, embedding_dimension };
@@ -40,6 +42,8 @@ vector<Shape> Normalization3d::get_parameter_shapes() const
             {embedding_dimension}};
 }
 
+// Setters
+
 void Normalization3d::set(const Index new_sequence_length,
                           Index new_embedding_dimension,
                           const string& new_label)
@@ -51,6 +55,8 @@ void Normalization3d::set(const Index new_sequence_length,
     name = "Normalization3d";
     layer_type = LayerType::Normalization3d;
 }
+
+// Parameter initialization
 
 void Normalization3d::set_parameters_random()
 {
@@ -64,6 +70,7 @@ void Normalization3d::set_parameters_glorot()
     set_parameters_random();
 }
 
+// Forward / back propagation
 
 void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
 {
@@ -81,7 +88,6 @@ void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation,
                       means, stddevs, normalized, output,
                       batch_size, sequence_length, embedding_dimension);
 }
-
 
 void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
                                      BackPropagation& back_propagation,
@@ -108,6 +114,7 @@ void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
                        batch_size, sequence_length, embedding_dimension);
 }
 
+// Serialization
 
 void Normalization3d::from_XML(const XmlDocument& document)
 {

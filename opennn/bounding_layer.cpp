@@ -22,14 +22,16 @@ Bounding::Bounding(const Shape& output_shape, const string& new_name) : Layer()
     set(output_shape, new_name);
 }
 
-const Bounding::BoundingMethod& Bounding::get_bounding_method() const
-{
-    return bounding_method;
-}
+// Getters
 
 Shape Bounding::get_output_shape() const
 {
     return input_shape;
+}
+
+const Bounding::BoundingMethod& Bounding::get_bounding_method() const
+{
+    return bounding_method;
 }
 
 const VectorR& Bounding::get_lower_bounds() const
@@ -41,6 +43,8 @@ const VectorR& Bounding::get_upper_bounds() const
 {
     return upper_bounds;
 }
+
+// Setters
 
 void Bounding::set(const Shape& new_output_shape, const string& new_label)
 {
@@ -54,6 +58,15 @@ void Bounding::set(const Shape& new_output_shape, const string& new_label)
     layer_type = LayerType::Bounding;
 
     is_trainable = false;
+}
+
+void Bounding::set_input_shape(const Shape& new_input_shape)
+{
+}
+
+void Bounding::set_output_shape(const Shape& new_output_shape)
+{
+    input_shape = new_output_shape;
 }
 
 void Bounding::set_bounding_method(const BoundingMethod& new_method)
@@ -71,13 +84,9 @@ void Bounding::set_bounding_method(const string& new_method_string)
         throw runtime_error("Unknown bounding method: " + new_method_string + ".\n");
 }
 
-void Bounding::set_input_shape(const Shape& new_input_shape)
+void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
 {
-}
-
-void Bounding::set_output_shape(const Shape& new_output_shape)
-{
-    input_shape = new_output_shape;
+    lower_bounds = new_lower_bounds;
 }
 
 void Bounding::set_lower_bound(const Index index, type new_lower_bound)
@@ -91,11 +100,6 @@ void Bounding::set_lower_bound(const Index index, type new_lower_bound)
     }
 
     lower_bounds[index] = new_lower_bound;
-}
-
-void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
-{
-    lower_bounds = new_lower_bounds;
 }
 
 void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
@@ -116,6 +120,8 @@ void Bounding::set_upper_bound(const Index index, type new_upper_bound)
     upper_bounds[index] = new_upper_bound;
 }
 
+// Forward propagation
+
 void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
@@ -133,30 +139,7 @@ void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t
     }
 }
 
-void Bounding::to_XML(XmlPrinter& printer) const
-{
-    printer.open_element("Bounding");
-
-    const Shape output_shape = get_input_shape();
-
-    add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
-
-    for(Index i = 0; i < output_shape[0]; i++)
-    {
-        printer.open_element("Item");
-        printer.push_attribute("Index", unsigned(i + 1));
-/*
-        add_xml_element(printer, "LowerBound", to_string(lower_bounds[i]));
-        add_xml_element(printer, "UpperBound", to_string(upper_bounds[i]));
-*/
-        printer.close_element();
-    }
-
-    add_xml_element(printer, "BoundingMethod",
-                     bounding_method == BoundingMethod::Bounding ? "Bounding" : "NoBounding");
-
-    printer.close_element();
-}
+// Serialization
 
 void Bounding::from_XML(const XmlDocument& document)
 {
@@ -183,6 +166,31 @@ void Bounding::from_XML(const XmlDocument& document)
     }
 
     set_bounding_method(read_xml_string(root_element, "BoundingMethod"));
+}
+
+void Bounding::to_XML(XmlPrinter& printer) const
+{
+    printer.open_element("Bounding");
+
+    const Shape output_shape = get_input_shape();
+
+    add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
+
+    for(Index i = 0; i < output_shape[0]; i++)
+    {
+        printer.open_element("Item");
+        printer.push_attribute("Index", unsigned(i + 1));
+/*
+        add_xml_element(printer, "LowerBound", to_string(lower_bounds[i]));
+        add_xml_element(printer, "UpperBound", to_string(upper_bounds[i]));
+*/
+        printer.close_element();
+    }
+
+    add_xml_element(printer, "BoundingMethod",
+                     bounding_method == BoundingMethod::Bounding ? "Bounding" : "NoBounding");
+
+    printer.close_element();
 }
 
 REGISTER(Layer, Bounding, "Bounding")

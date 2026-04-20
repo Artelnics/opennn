@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   B L A N K   C U D A
+//   B L A N K   C U D A   —   Translation benchmark (refactor)
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -9,12 +9,9 @@
 #include <iostream>
 #include <chrono>
 
-#include "../opennn/image_dataset.h"
-#include "../opennn/neural_network.h"
+#include "../opennn/language_dataset.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/training_strategy.h"
-#include "../opennn/testing_analysis.h"
-#include "../opennn/optimizer.h"
 #include "../opennn/adaptive_moment_estimation.h"
 #include "../opennn/random_utilities.h"
 
@@ -25,50 +22,65 @@ int main()
 {
     try
     {
-        cout << "OpenNN. Melanoma Cancer benchmark (refactor)." << endl;
+        cout << "OpenNN. Translation benchmark (refactor)." << endl;
 
         set_seed(42);
 
 #ifdef OPENNN_WITH_CUDA
 
-        // Data set
+        LanguageDataset dataset("/home/artelnics/Documents/openNN/opennn/temp/translation_en_es.txt");
+        dataset.split_samples_random(0.8, 0.1, 0.1);
 
-        ImageDataset image_dataset("/home/artelnics/Documents/melanoma_dataset_bmp");
+        const Index input_vocab  = dataset.get_input_vocabulary_size();
+        const Index output_vocab = dataset.get_target_vocabulary_size();
+        const Index input_seq    = dataset.get_shape("Input")[0];
+        const Index decoder_seq  = dataset.get_shape("Decoder")[0];
+        const Index target_seq   = dataset.get_shape("Target")[0];
 
-        cout << "[PARITY] samples=" << image_dataset.get_samples_number()
-             << " input_shape=" << image_dataset.get_shape("Input")
-             << " target_shape=" << image_dataset.get_shape("Target") << endl;
+        if(decoder_seq != target_seq)
+            throw runtime_error("Decoder and target sequence lengths must match.");
 
-        image_dataset.split_samples_random(0.8, 0.0, 0.2);
+        const Index embedding_dimension     = 128;
+        const Index heads_number            = 4;
+        const Index feed_forward_dimension  = 256;
+        const Index layers_number           = 3;
 
-        cout << "[PARITY] train_samples=" << image_dataset.get_samples_number("Training")
-             << " test_samples=" << image_dataset.get_samples_number("Testing") << endl;
+        Transformer transformer(input_seq,
+                                decoder_seq,
+                                input_vocab,
+                                output_vocab,
+                                embedding_dimension,
+                                heads_number,
+                                feed_forward_dimension,
+                                layers_number);
 
-        // Neural network
+        transformer.set_input_vocabulary(dataset.get_input_vocabulary());
+        transformer.set_output_vocabulary(dataset.get_target_vocabulary());
+        transformer.set_dropout_rate(type(0.1));
 
-        ImageClassificationNetwork image_classification_network(
-            image_dataset.get_shape("Input"),
-            {32, 64, 16},
-            image_dataset.get_shape("Target"));
+        TrainingStrategy training_strategy(&transformer, &dataset);
 
-        cout << "[PARITY] layers=" << image_classification_network.get_layers_number()
-             << " params_size=" << image_classification_network.get_parameters_size()
-             << " params_sum=" << image_classification_network.get_parameters().sum() << endl;
-
-        // Training strategy
-
-        TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
-
-        training_strategy.set_loss("CrossEntropy");
+        training_strategy.set_loss("CrossEntropyError3d");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-        training_strategy.get_loss()->set_regularization("None");
 
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_batch_size(16);
+        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        if(!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
+
+        adam->set_batch_size(64);
+        adam->set_learning_rate(type(5e-4));
         adam->set_maximum_epochs(5);
         adam->set_display_period(1);
 
         Device::instance().set(DeviceType::Gpu);
+
+        cout << "[PARITY] train="  << dataset.get_samples_number("Training")
+             << " val="            << dataset.get_samples_number("Validation")
+             << " test="           << dataset.get_samples_number("Testing")
+             << " input_vocab="    << input_vocab
+             << " target_vocab="   << output_vocab
+             << " input_seq="      << input_seq
+             << " decoder_seq="    << decoder_seq
+             << " params="         << transformer.get_parameters_size() << endl;
 
         const auto t0 = steady_clock::now();
         training_strategy.train();
@@ -80,10 +92,9 @@ int main()
 #endif
 
         cout << "Bye!" << endl;
-
         return 0;
     }
-    catch (const exception& e)
+    catch(const exception& e)
     {
         cerr << "Error: " << e.what() << endl;
         return 1;

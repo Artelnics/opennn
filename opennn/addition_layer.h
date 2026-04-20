@@ -19,6 +19,22 @@ namespace opennn
 template<int Rank>
 class Addition final : public Layer
 {
+private:
+
+    enum Forward {Inputs, Outputs};
+
+    vector<Shape> get_forward_shapes(Index batch_size) const override
+    {
+        return {Shape{batch_size}.append(input_shape)};
+    }
+
+    enum Backward {OutputGradients, InputGradients};
+
+    vector<Shape> get_backward_shapes(Index batch_size) const override
+    {
+        return {Shape{batch_size}.append(input_shape),   // InputGradient0
+                Shape{batch_size}.append(input_shape)};  // InputGradient1
+    }
 
 public:
 
@@ -27,21 +43,14 @@ public:
         set(new_input_shape, new_name);
     }
 
+    // Getters
+
     Shape get_output_shape() const override
     {
         return input_shape;
     }
 
-    vector<Shape> get_forward_shapes(Index batch_size) const override
-    {
-        return {Shape{batch_size}.append(input_shape)};
-    }
-
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        return {Shape{batch_size}.append(input_shape),   // InputGradient0
-                Shape{batch_size}.append(input_shape)};  // InputGradient1
-    }
+    // Setters
 
     void set(const Shape& new_input_shape, const string& new_label)
     {
@@ -62,6 +71,8 @@ public:
             throw runtime_error("Addition layer not implemented for rank: " + to_string(Rank));
         }
     }
+
+    // Forward / back propagation
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept override
     {
@@ -90,6 +101,8 @@ public:
         copy(output_gradient, input_gradient_1);
     }
 
+    // Serialization
+
     void from_XML(const XmlDocument& document) override
     {
         const XmlElement* element = document.first_child_element("Addition");
@@ -112,11 +125,6 @@ public:
 
         printer.close_element();
     }
-
-private:
-
-    enum Forward {Inputs, Outputs};
-    enum Backward {OutputGradients, InputGradients};
 };
 
 }

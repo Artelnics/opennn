@@ -15,12 +15,13 @@ namespace opennn
 
 class Recurrent final : public Layer
 {
+private:
 
-public:
+    TensorView biases;
+    TensorView input_weights;
+    TensorView recurrent_weights;
 
-    Recurrent(const Shape& = {0, 0}, const Shape& = {0});
-
-    Shape get_output_shape() const override;
+    string activation_function = "HyperbolicTangent";
 
     vector<Shape> get_parameter_shapes() const override;
 
@@ -44,6 +45,21 @@ public:
         return {{ batch_size, time_steps, input_size}};
     }
 
+public:
+
+    Recurrent(const Shape& = {0, 0}, const Shape& = {0});
+
+    // Getters
+
+    Shape get_output_shape() const override;
+
+    const TensorView& get_biases() const { return biases; }
+    const TensorView& get_input_weights() const { return input_weights; }
+    const TensorView& get_recurrent_weights() const { return recurrent_weights; }
+    const string& get_activation_function() const { return activation_function; }
+
+    // Setters
+
     void set(const Shape& = {}, const Shape& = {});
 
     void set_input_shape(const Shape&) override;
@@ -51,25 +67,16 @@ public:
 
     void set_activation_function(const string&);
 
+    // Forward / back propagation
+
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
-    const TensorView& get_biases() const { return biases; }
-    const TensorView& get_input_weights() const { return input_weights; }
-    const TensorView& get_recurrent_weights() const { return recurrent_weights; }
-    const string& get_activation_function() const { return activation_function; }
+    // Serialization
 
     void from_XML(const XmlDocument&) override;
     void to_XML(XmlPrinter&) const override;
-
-private:
-
-    TensorView biases;
-    TensorView input_weights;
-    TensorView recurrent_weights;
-
-    string activation_function = "HyperbolicTangent";
 };
 
 }

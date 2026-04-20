@@ -22,6 +22,8 @@ Unscaling::Unscaling(const Shape& new_input_shape, const string& label)
     set(new_input_shape[0], label);
 }
 
+// Getters
+
 Shape Unscaling::get_input_shape() const
 {
     const Index neurons_number = means.size();
@@ -36,17 +38,7 @@ Shape Unscaling::get_output_shape() const
     return { neurons_number };
 }
 
-void Unscaling::set_input_shape(const Shape& new_input_shape)
-{
-    means.resize(new_input_shape[0]);
-    standard_deviations.resize(new_input_shape[0]);
-    minimums.resize(new_input_shape[0]);
-    maximums.resize(new_input_shape[0]);
-}
-
-void Unscaling::set_output_shape(const Shape& new_output_shape)
-{
-}
+// Setters
 
 void Unscaling::set(const Index new_neurons_number, const string& new_label)
 {
@@ -77,10 +69,16 @@ void Unscaling::set(const Index new_neurons_number, const string& new_label)
     is_trainable = false;
 }
 
-void Unscaling::set_min_max_range(const type min, const type max)
+void Unscaling::set_input_shape(const Shape& new_input_shape)
 {
-    min_range = min;
-    max_range = max;
+    means.resize(new_input_shape[0]);
+    standard_deviations.resize(new_input_shape[0]);
+    minimums.resize(new_input_shape[0]);
+    maximums.resize(new_input_shape[0]);
+}
+
+void Unscaling::set_output_shape(const Shape& new_output_shape)
+{
 }
 
 void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
@@ -102,6 +100,12 @@ void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
     }
 
     calculate_coefficients();
+}
+
+void Unscaling::set_min_max_range(const type min, const type max)
+{
+    min_range = min;
+    max_range = max;
 }
 
 void Unscaling::set_scalers(const vector<string>& new_scaler)
@@ -144,6 +148,8 @@ void Unscaling::calculate_coefficients()
     }
 }
 
+// Forward propagation
+
 void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
@@ -156,6 +162,8 @@ void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_
     // The unscaling coefficients are stored for serialization/expression only.
     copy(input, output);
 }
+
+// Serialization
 
 void Unscaling::print() const
 {

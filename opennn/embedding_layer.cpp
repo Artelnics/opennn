@@ -31,6 +31,8 @@ Embedding::Embedding(const Shape& new_input_shape,
     layer_type = LayerType::Embedding;
 }
 
+// Getters
+
 Shape Embedding::get_output_shape() const
 {
     return {get_sequence_length(), embedding_dimension};
@@ -40,6 +42,8 @@ vector<Shape> Embedding::get_parameter_shapes() const
 {
     return {{get_vocabulary_size(), embedding_dimension}}; // weights
 }
+
+// Setters
 
 void Embedding::set(const Index new_vocabulary_size,
                     Index new_sequence_length,
@@ -80,6 +84,8 @@ void Embedding::set(const Index new_vocabulary_size,
 #endif
 }
 
+// Parameter initialization
+
 void Embedding::set_parameters_random()
 {
     if(parameters[Weights].empty()) return;
@@ -110,6 +116,8 @@ void Embedding::set_parameters_glorot()
 
     weights.row(0).setZero();
 }
+
+// Forward / back propagation
 
 void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
 {
@@ -228,6 +236,8 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
     embedding_backward(input_indices, output_gradient, weight_gradient,
                        embedding_dimension, scale_embedding);
 }
+
+// Serialization
 
 void Embedding::from_XML(const XmlDocument& document)
 {

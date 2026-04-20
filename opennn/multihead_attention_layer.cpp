@@ -50,6 +50,15 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
         new_name);
 }
 
+// Getters
+
+Index MultiHeadAttention::get_head_dimension() const
+{
+    return (heads_number == 0)
+        ? 0
+        : Index(get_embedding_dimension() / heads_number);
+}
+
 type MultiHeadAttention::get_scaling_factor() const
 {
     const Index head_dimension = get_head_dimension();
@@ -57,13 +66,6 @@ type MultiHeadAttention::get_scaling_factor() const
     return (head_dimension == 0)
         ? 0.25
         : type(1) / type(sqrt(head_dimension));
-}
-
-Index MultiHeadAttention::get_head_dimension() const
-{
-    return (heads_number == 0)
-        ? 0
-        : Index(get_embedding_dimension() / heads_number);
 }
 
 Shape MultiHeadAttention::get_input_shape() const
@@ -87,6 +89,8 @@ vector<Shape> MultiHeadAttention::get_parameter_shapes() const
             {embedding_dimension, embedding_dimension},
             {embedding_dimension}};
 }
+
+// Setters
 
 void MultiHeadAttention::set(const Index new_query_sequence_length,
                              Index new_source_sequence_length,
@@ -127,6 +131,8 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
                 causal_mask(row, column) = (column > row) ? minus_inf : type(0);
     }
 }
+
+// Forward / back propagation
 
 void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagation,
                                            size_t layer,
@@ -199,6 +205,7 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     args.use_causal_mask = false;
     args.causal_mask = nullptr;
     args.transpose_scratch = forward_views[TransposeScratch][0].data;
+    args.attention_output_transposed = forward_views[AttentionOutputTransposed][0].data;
     args.softmax_gradient = backward_views[SoftmaxGradient][0].data;
     args.query_input_gradient_scratch = backward_views[QueryInputGradientScratch][0].data;
     args.source_input_gradient_scratch = backward_views[SourceInputGradientScratch][0].data;
@@ -230,6 +237,7 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
         args, self_attention);
 }
 
+// Serialization
 
 void MultiHeadAttention::from_XML(const XmlDocument& document)
 {

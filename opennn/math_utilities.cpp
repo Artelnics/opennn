@@ -11,10 +11,37 @@
 
 #ifdef OPENNN_WITH_CUDA
 #include "kernel.cuh"
+#include <unordered_map>
 #endif
 
 namespace opennn
 {
+
+#ifdef OPENNN_WITH_CUDA
+
+// Thread-local cache of cuDNN tensor descriptors keyed by 2D shape.
+// Callers that rely on a reshape of an existing buffer (e.g. attention weights viewed as
+// [BH*Sq, Sk]) would otherwise call cudnnCreateTensorDescriptor on every invocation. The
+// descriptor only depends on the shape, so we memoize it once per (rows, cols) pair and
+// reuse the shared_ptr across forward/backward calls within the same thread.
+
+static std::shared_ptr<cudnnTensorStruct> get_cached_2d_descriptor(Index rows, Index cols)
+{
+    thread_local std::unordered_map<uint64_t, std::shared_ptr<cudnnTensorStruct>> cache;
+
+    const uint64_t key = (static_cast<uint64_t>(rows) << 32) | static_cast<uint32_t>(cols);
+
+    auto it = cache.find(key);
+    if (it != cache.end()) return it->second;
+
+    TensorView helper(nullptr, Shape{rows, cols});
+    helper.set_descriptor(helper.shape);
+
+    cache.emplace(key, helper.descriptor_handle);
+    return helper.descriptor_handle;
+}
+
+#endif
 
 void padding(const TensorView& input,
              TensorView& output)
@@ -1470,10 +1497,11 @@ void projection(const TensorView& input,
     if (Device::instance().is_gpu()) 
     {
         const Index total_rows = input.size() / embedding_dimension;
-        TensorView in_2d(input.data, {total_rows, embedding_dimension});
+        TensorView in_2d (input.data,  {total_rows, embedding_dimension});
         TensorView out_2d(output.data, {total_rows, embedding_dimension});
-        in_2d.set_descriptor(in_2d.shape);
-        out_2d.set_descriptor(out_2d.shape);
+        const auto shared_desc = get_cached_2d_descriptor(total_rows, embedding_dimension);
+        in_2d.descriptor_handle  = shared_desc;
+        out_2d.descriptor_handle = shared_desc;
         combination(in_2d, weights, biases, out_2d);
         return;
     }
@@ -1588,18 +1616,17 @@ void multihead_attention_forward(
         const int B  = static_cast<int>(batch_size);
         const float sf = static_cast<float>(scaling_factor);
 
-        // Transpose Q, K, V from [B, S, H, D] to [B, H, S, D]
+        // Transpose Q, K, V from [B, S, H, D] to [B, H, S, D].
+        // TransposeScratch is partitioned into 3 non-overlapping regions so the cuBLAS GEMMs
+        // can read the transposed tensors directly without copying them back into Query/Key/Value.
 
-        float* scratch = args.transpose_scratch;
+        float* scratch_q = args.transpose_scratch;
+        float* scratch_k = scratch_q + B * Sq * E;
+        float* scratch_v = scratch_k + B * Sk * E;
 
-        mha_transpose_qkv_cuda(B * Sq * E, query.data, scratch, Sq, H, D);
-        cudaMemcpy(query.data, scratch, B * Sq * E * sizeof(float), cudaMemcpyDeviceToDevice);
-
-        mha_transpose_qkv_cuda(B * Sk * E, key.data, scratch, Sk, H, D);
-        cudaMemcpy(key.data, scratch, B * Sk * E * sizeof(float), cudaMemcpyDeviceToDevice);
-
-        mha_transpose_qkv_cuda(B * Sk * E, value.data, scratch, Sk, H, D);
-        cudaMemcpy(value.data, scratch, B * Sk * E * sizeof(float), cudaMemcpyDeviceToDevice);
+        mha_transpose_qkv_cuda(B * Sq * E, query.data, scratch_q, Sq, H, D);
+        mha_transpose_qkv_cuda(B * Sk * E, key.data,   scratch_k, Sk, H, D);
+        mha_transpose_qkv_cuda(B * Sk * E, value.data, scratch_v, Sk, H, D);
 
         // Q * K^T — attention scores
 
@@ -1607,8 +1634,8 @@ void multihead_attention_forward(
             CUBLAS_OP_T, CUBLAS_OP_N,
             Sk, Sq, D,
             &sf,
-            key.data, D, Sk * D,
-            query.data, D, Sq * D,
+            scratch_k, D, Sk * D,
+            scratch_q, D, Sq * D,
             &zero,
             attention_weights.data, Sk, Sq * Sk,
             BH));
@@ -1621,7 +1648,7 @@ void multihead_attention_forward(
         // Softmax
 
         TensorView att_view(attention_weights.data, {(Index)(BH * Sq), (Index)Sk});
-        att_view.set_descriptor(att_view.shape);
+        att_view.descriptor_handle = get_cached_2d_descriptor(BH * Sq, Sk);
         softmax(att_view);
 
         // Attention * V
@@ -1632,7 +1659,7 @@ void multihead_attention_forward(
             CUBLAS_OP_N, CUBLAS_OP_N,
             D, Sq, Sk,
             &one,
-            value.data, D, Sk * D,
+            scratch_v, D, Sk * D,
             attention_weights.data, Sk, Sq * Sk,
             &zero,
             att_out, D, Sq * D,
@@ -1645,9 +1672,9 @@ void multihead_attention_forward(
         // Output projection
 
         TensorView concat_2d(concatenated.data, {(Index)(B * Sq), (Index)E});
-        TensorView output_2d(output.data, {(Index)(B * Sq), (Index)E});
-        concat_2d.set_descriptor(concat_2d.shape);
-        output_2d.set_descriptor(output_2d.shape);
+        TensorView output_2d(output.data,        {(Index)(B * Sq), (Index)E});
+        concat_2d.descriptor_handle = get_cached_2d_descriptor(B * Sq, E);
+        output_2d.descriptor_handle = concat_2d.descriptor_handle;
         combination(concat_2d, projection_weights, projection_biases, output_2d);
         return;
     }
@@ -1765,7 +1792,17 @@ void multihead_attention_backward(
         const int B  = static_cast<int>(batch_size);
         const float sf = static_cast<float>(scaling_factor);
 
-        float* scratch = args.transpose_scratch;
+        // Transposed Q/K/V stored by the forward pass (persistent across forward→backward).
+        // Layout matches the forward partitioning: [scratch_q | scratch_k | scratch_v].
+
+        float* scratch_q = args.transpose_scratch;
+        float* scratch_k = scratch_q + B * Sq * E;
+        float* scratch_v = scratch_k + B * Sk * E;
+
+        // attention_output_transposed is unused in the backward — reuse it as the temp
+        // for the transposed concat_grad (same size, B*Sq*E).
+
+        float* dO_transposed = args.attention_output_transposed;
 
         // Projection weight gradients: dW_proj = concat^T * dY
 
@@ -1802,7 +1839,7 @@ void multihead_attention_backward(
 
         // Transpose d_concat from [B, Sq, H, D] to [B, H, Sq, D]
 
-        mha_transpose_qkv_cuda(B * Sq * E, concat_grad.data, scratch, Sq, H, D);
+        mha_transpose_qkv_cuda(B * Sq * E, concat_grad.data, dO_transposed, Sq, H, D);
 
         // dV = P^T * dO (transposed)
 
@@ -1810,32 +1847,33 @@ void multihead_attention_backward(
             CUBLAS_OP_N, CUBLAS_OP_T,
             D, Sk, Sq,
             &one,
-            scratch, D, Sq * D,
+            dO_transposed, D, Sq * D,
             attention_weights.data, Sk, Sq * Sk,
             &zero,
             value_grad.data, D, Sk * D,
             BH));
 
-        // dP = dO * V^T
+        // dP = dO * V^T  (V comes from scratch_v — the transposed V stored by the forward)
 
         CHECK_CUBLAS(cublasSgemmStridedBatched(Device::get_cublas_handle(),
             CUBLAS_OP_T, CUBLAS_OP_N,
             Sk, Sq, D,
             &one,
-            value.data, D, Sk * D,
-            scratch, D, Sq * D,
+            scratch_v, D, Sk * D,
+            dO_transposed, D, Sq * D,
             &zero,
             att_weight_grad.data, Sk, Sq * Sk,
             BH));
 
         // Softmax backward
 
-        TensorView att_view(attention_weights.data, {(Index)(BH * Sq), (Index)Sk});
-        att_view.set_descriptor(att_view.shape);
-        TensorView datt_view(att_weight_grad.data, {(Index)(BH * Sq), (Index)Sk});
-        datt_view.set_descriptor(datt_view.shape);
-        TensorView sgrad_view(args.softmax_gradient, {(Index)(BH * Sq), (Index)Sk});
-        sgrad_view.set_descriptor(sgrad_view.shape);
+        const auto softmax_desc = get_cached_2d_descriptor(BH * Sq, Sk);
+        TensorView att_view  (attention_weights.data, {(Index)(BH * Sq), (Index)Sk});
+        TensorView datt_view (att_weight_grad.data,   {(Index)(BH * Sq), (Index)Sk});
+        TensorView sgrad_view(args.softmax_gradient,  {(Index)(BH * Sq), (Index)Sk});
+        att_view.descriptor_handle   = softmax_desc;
+        datt_view.descriptor_handle  = softmax_desc;
+        sgrad_view.descriptor_handle = softmax_desc;
 
         CHECK_CUDNN(cudnnSoftmaxBackward(Device::get_cudnn_handle(),
             CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_CHANNEL,
@@ -1843,38 +1881,39 @@ void multihead_attention_backward(
             datt_view.get_descriptor(), att_weight_grad.data,
             &zero, sgrad_view.get_descriptor(), args.softmax_gradient));
 
-        // dQ = softmax_grad * K^T * scaling_factor
+        // dQ = softmax_grad * K^T * scaling_factor  (K from scratch_k)
 
         CHECK_CUBLAS(cublasSgemmStridedBatched(Device::get_cublas_handle(),
             CUBLAS_OP_N, CUBLAS_OP_N,
             D, Sq, Sk,
             &sf,
-            key.data, D, Sk * D,
+            scratch_k, D, Sk * D,
             args.softmax_gradient, Sk, Sq * Sk,
             &zero,
             query_grad.data, D, Sq * D,
             BH));
 
-        // dK = softmax_grad^T * Q * scaling_factor
+        // dK = softmax_grad^T * Q * scaling_factor  (Q from scratch_q)
 
         CHECK_CUBLAS(cublasSgemmStridedBatched(Device::get_cublas_handle(),
             CUBLAS_OP_N, CUBLAS_OP_T,
             D, Sk, Sq,
             &sf,
-            query.data, D, Sq * D,
+            scratch_q, D, Sq * D,
             args.softmax_gradient, Sk, Sq * Sk,
             &zero,
             key_grad.data, D, Sk * D,
             BH));
 
-        // Transpose dQ, dK, dV from [B, H, S, D] to [B, S, H, D]
+        // Transpose dQ, dK, dV from [B, H, S, D] to [B, S, H, D].
+        // Transposed Q/K/V in scratch_* are no longer needed → reuse scratch_k as k_grad_flat.
 
         float* q_grad_flat = args.query_input_gradient_scratch;
         float* src_grad_flat = args.source_input_gradient_scratch;
 
         mha_transpose_o_cuda(B * Sq * E, query_grad.data, q_grad_flat, Sq, H, D);
-        mha_transpose_o_cuda(B * Sk * E, key_grad.data, scratch, Sk, H, D);
-        float* k_grad_flat = scratch; // reuse scratch for K grad flat
+        mha_transpose_o_cuda(B * Sk * E, key_grad.data,   scratch_k,   Sk, H, D);
+        float* k_grad_flat = scratch_k; // reuse region that held transposed K
 
         // Query weight/bias/input gradients
 

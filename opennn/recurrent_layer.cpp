@@ -20,6 +20,8 @@ Recurrent::Recurrent(const Shape& new_input_shape,
     set(new_input_shape, new_output_shape);
 }
 
+// Getters
+
 Shape Recurrent::get_output_shape() const
 {
     return { biases.size() };
@@ -29,6 +31,8 @@ vector<Shape> Recurrent::get_parameter_shapes() const
 {
     return {biases.shape, input_weights.shape, recurrent_weights.shape};
 }
+
+// Setters
 
 void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 {
@@ -88,6 +92,8 @@ void Recurrent::set_activation_function(const string& new_activation_function)
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
 }
+
+// Forward / back propagation
 
 void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_t index, bool is_training) noexcept
 {
@@ -239,6 +245,8 @@ void Recurrent::back_propagate(ForwardPropagation& forward_propagation,
     }
 */
 }
+
+// Serialization
 
 void Recurrent::from_XML(const XmlDocument& document)
 {

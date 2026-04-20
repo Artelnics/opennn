@@ -296,3 +296,6 @@ tests/data/*.xml
 **/release/
 **/*.dir/
 **/vc*.pdb
+
+# Local benchmark scratch (datasets, scripts, generated TSV)
+/temp/

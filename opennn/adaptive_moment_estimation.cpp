@@ -110,17 +110,27 @@ TrainingResults AdaptiveMomentEstimation::train()
     set_scaling();
 
     Batch training_batch(training_batch_size, dataset);
-    Batch validation_batch(validation_batch_size, dataset);
 
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
-    ForwardPropagation validation_forward_propagation(validation_batch_size, neural_network);
 
     // Loss index
 
     loss->set_normalization_coefficient();
 
     BackPropagation training_back_propagation(training_batch_size, loss);
-    BackPropagation validation_back_propagation(validation_batch_size, loss);
+
+    // Validation structures allocated lazily only if there is validation data.
+
+    unique_ptr<Batch> validation_batch;
+    unique_ptr<ForwardPropagation> validation_forward_propagation;
+    unique_ptr<BackPropagation> validation_back_propagation;
+
+    if(has_validation)
+    {
+        validation_batch = make_unique<Batch>(validation_batch_size, dataset);
+        validation_forward_propagation = make_unique<ForwardPropagation>(validation_batch_size, neural_network);
+        validation_back_propagation = make_unique<BackPropagation>(validation_batch_size, loss);
+    }
 
     type training_error = type(0);
     type training_accuracy = type(0);
@@ -211,27 +221,27 @@ TrainingResults AdaptiveMomentEstimation::train()
             {
                 // Dataset
 
-                validation_batch.fill(validation_batches[iteration],
+                validation_batch->fill(validation_batches[iteration],
                                      input_feature_indices,
                                      decoder_feature_indices,
                                      target_feature_indices);
 
                 // Neural network
 
-                neural_network->forward_propagate(validation_batch.get_inputs(),
-                                                  validation_forward_propagation,
+                neural_network->forward_propagate(validation_batch->get_inputs(),
+                                                  *validation_forward_propagation,
                                                   false);
 
                 // Loss
 
-                loss->calculate_error(validation_batch,
-                                            validation_forward_propagation,
-                                            validation_back_propagation);
+                loss->calculate_error(*validation_batch,
+                                            *validation_forward_propagation,
+                                            *validation_back_propagation);
 
-                validation_error += validation_back_propagation.error;
+                validation_error += validation_back_propagation->error;
 
                 if(is_text_classification_model)
-                    validation_accuracy += validation_back_propagation.accuracy(0);
+                    validation_accuracy += validation_back_propagation->accuracy(0);
             }
 
             validation_error /= type(validation_batches_number);
@@ -479,10 +489,18 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     BackPropagation training_back_propagation(training_batch_size, loss);
     training_back_propagation.allocate_device();
 
-    ForwardPropagation validation_forward_propagation(validation_batch_size, neural_network);
-    validation_forward_propagation.allocate_device();
-    BackPropagation validation_back_propagation(validation_batch_size, loss);
-    validation_back_propagation.allocate_device();
+    // Validation structures allocated lazily only if there is validation data.
+
+    unique_ptr<ForwardPropagation> validation_forward_propagation;
+    unique_ptr<BackPropagation> validation_back_propagation;
+
+    if(has_validation)
+    {
+        validation_forward_propagation = make_unique<ForwardPropagation>(validation_batch_size, neural_network);
+        validation_forward_propagation->allocate_device();
+        validation_back_propagation = make_unique<BackPropagation>(validation_batch_size, loss);
+        validation_back_propagation->allocate_device();
+    }
 
     // Optimizer data (unified, Memory allocates on GPU)
 
@@ -612,14 +630,14 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
                 }
 
                 neural_network->forward_propagate(current_batch->get_inputs_device(),
-                                                  validation_forward_propagation,
+                                                  *validation_forward_propagation,
                                                   false);
 
                 loss->calculate_error(*current_batch,
-                                      validation_forward_propagation,
-                                      validation_back_propagation);
+                                      *validation_forward_propagation,
+                                      *validation_back_propagation);
 
-                validation_error += validation_back_propagation.error;
+                validation_error += validation_back_propagation->error;
 
                 cudaStreamSynchronize(0);
 

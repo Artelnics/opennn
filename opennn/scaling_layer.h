@@ -23,6 +23,27 @@ namespace opennn
 template<int Rank>
 class Scaling final : public Layer
 {
+private:
+
+    VectorR means;
+    VectorR standard_deviations;
+    VectorR minimums;
+    VectorR maximums;
+
+    vector<ScalerMethod> scalers;
+
+    type min_range;
+    type max_range;
+
+    VectorR multipliers;
+    VectorR offsets;
+
+    enum Forward {Output = 1};
+
+    vector<Shape> get_forward_shapes(Index batch_size) const override
+    {
+        return {Shape{batch_size}.append(input_shape)}; // slot 1: Output
+    }
 
 public:
 
@@ -31,14 +52,11 @@ public:
         set(new_input_shape);
     }
 
+    // Getters
+
     Shape get_output_shape() const override
     {
         return input_shape;
-    }
-
-    vector<Shape> get_forward_shapes(Index batch_size) const override
-    {
-        return {Shape{batch_size}.append(input_shape)}; // slot 1: Output
     }
 
     const VectorR& get_minimums() const
@@ -68,6 +86,8 @@ public:
 
     type get_min_range() const { return min_range; }
     type get_max_range() const { return max_range; }
+
+    // Setters
 
     void set(const Shape& new_input_shape = {})
     {
@@ -160,6 +180,35 @@ public:
             scaler = method;
     }
 
+    void calculate_coefficients()
+    {
+        const Index n = scalers.size();
+        for(Index i = 0; i < n; ++i)
+        {
+            switch(scalers[i])
+            {
+            case ScalerMethod::MeanStandardDeviation:
+                multipliers[i] = 1.0f / (standard_deviations[i] + EPSILON);
+                offsets[i] = -means[i] * multipliers[i];
+                break;
+            case ScalerMethod::MinimumMaximum:
+                multipliers[i] = (max_range - min_range) / ((maximums[i] - minimums[i]) + EPSILON);
+                offsets[i] = min_range - (minimums[i] * multipliers[i]);
+                break;
+            case ScalerMethod::ImageMinMax:
+                multipliers[i] = 1.0f / 255.0f;
+                offsets[i] = 0.0f;
+                break;
+            default: // None
+                multipliers[i] = 1.0f;
+                offsets[i] = 0.0f;
+                break;
+            }
+        }
+    }
+
+    // Forward propagation
+
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept override
     {
         auto& forward_views = forward_propagation.views[layer];
@@ -172,6 +221,8 @@ public:
         // The scaling coefficients are stored for serialization/expression only.
         copy(input, output);
     }
+
+    // Expression
 
     string write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
@@ -229,6 +280,8 @@ public:
         return buffer.str();
     }
 
+    // Serialization
+
     void from_XML(const XmlDocument& document) override
     {
         const XmlElement* scaling_layer_element = get_xml_root(document, name);
@@ -279,50 +332,6 @@ public:
 
         printer.close_element();
     }
-
-    void calculate_coefficients()
-    {
-        const Index n = scalers.size();
-        for(Index i = 0; i < n; ++i)
-        {
-            switch(scalers[i])
-            {
-            case ScalerMethod::MeanStandardDeviation:
-                multipliers[i] = 1.0f / (standard_deviations[i] + EPSILON);
-                offsets[i] = -means[i] * multipliers[i];
-                break;
-            case ScalerMethod::MinimumMaximum:
-                multipliers[i] = (max_range - min_range) / ((maximums[i] - minimums[i]) + EPSILON);
-                offsets[i] = min_range - (minimums[i] * multipliers[i]);
-                break;
-            case ScalerMethod::ImageMinMax:
-                multipliers[i] = 1.0f / 255.0f;
-                offsets[i] = 0.0f;
-                break;
-            default: // None
-                multipliers[i] = 1.0f;
-                offsets[i] = 0.0f;
-                break;
-            }
-        }
-    }
-
-private:
-
-    enum Forward {Output = 1}; 
-
-    VectorR means;
-    VectorR standard_deviations;
-    VectorR minimums;
-    VectorR maximums;
-
-    vector<ScalerMethod> scalers;
-
-    type min_range;
-    type max_range;
-
-    VectorR multipliers;
-    VectorR offsets;
 };
 
 }

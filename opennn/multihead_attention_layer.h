@@ -17,38 +17,42 @@ namespace opennn
 
 class MultiHeadAttention final : public Layer
 {
+private:
 
-public:
+    Index embedding_dimension;
+    Index heads_number = 0;
+    Index query_sequence_length = 0;
+    Index source_sequence_length = 0;
 
-    MultiHeadAttention(const Shape& = Shape({0,0}),
-                       Index = 0,
-                       const string& = string());
+    bool use_causal_mask = false;
 
-    MultiHeadAttention(const Shape&,
-                       const Shape&,
-                       Index = 0,
-                       const string& = string());
+    MatrixR causal_mask;
+    MatrixB key_mask; // Starting to implement (should be used before softmax so that the probability of the padding is zero)
 
-    Index get_query_sequence_length() const { return query_sequence_length; }
-    Index get_source_sequence_length() const { return source_sequence_length; }
-    Index get_embedding_dimension() const { return input_shape.back(); }
-    Index get_heads_number() const { return heads_number; }
-    Index get_head_dimension() const;
+    type dropout_rate = type(0);
 
-    type get_scaling_factor() const;
+    static constexpr type padding_threshold = type(1e-7f);
+    static constexpr type mask_value = type(-1e9f);
+    static constexpr type minus_inf = -numeric_limits<float>::infinity();
 
-    Shape get_input_shape() const override;
-
-    Shape get_output_shape() const override;
+    enum Parameters {QueryWeights, QueryBiases, KeyWeights, KeyBiases, ValueWeights, ValueBiases,
+                     ProjectionWeights, ProjectionBiases};
 
     vector<Shape> get_parameter_shapes() const override;
+
+    enum Forward {Inputs, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value,
+                  PaddingMask, TransposeScratch, AttentionOutputTransposed};
+    // Outputs is always the last forward slot (wiring convention) — access via .back()
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
         const Index embedding_dimension = get_embedding_dimension();
         const Index head_dimension = get_head_dimension();
 
-        const Index max_seq = max(query_sequence_length, source_sequence_length);
+        // TransposeScratch partitioned into 3 regions: scratch_q (B*Sq*E) + scratch_k (B*Sk*E) + scratch_v (B*Sk*E).
+        // The forward stores transposed [B,H,S,D] Q/K/V here (no memcpy back to Query/Key/Value slots),
+        // and the backward reuses these stored transposed versions.
+        const Index scratch_length = query_sequence_length + 2 * source_sequence_length;
 
         return {{batch_size, heads_number, query_sequence_length, head_dimension},         // Query
                 {batch_size, heads_number, source_sequence_length, head_dimension},        // Key
@@ -56,10 +60,15 @@ public:
                 {batch_size, query_sequence_length, embedding_dimension},                  // ConcatenatedAttentionOutputs
                 {batch_size, heads_number, source_sequence_length, head_dimension},        // Value
                 {batch_size, source_sequence_length},                                      // PaddingMask
-                {batch_size, max_seq, embedding_dimension},                                // TransposeScratch
+                {batch_size, scratch_length, embedding_dimension},                         // TransposeScratch (Q|K|V)
                 {batch_size, heads_number, query_sequence_length, head_dimension},         // AttentionOutputTransposed
                 {batch_size, query_sequence_length, embedding_dimension}};                 // Outputs (must be last)
     }
+
+    enum Backward {OutputGradient, InputQueryGradient, InputSourceGradient,
+                   AttentionWeightGradient, ConcatenatedOutputGradient,
+                   QueryGradient, KeyGradient, ValueGradient,
+                   SoftmaxGradient, QueryInputGradientScratch, SourceInputGradientScratch};
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
@@ -82,12 +91,31 @@ public:
                 {batch_size, s_len, embedding_dimension}};        // SourceInputGradient (scratch)
     }
 
-    void set_input_shape(const Shape& new_input_shape) override
-    {
-        input_shape = new_input_shape;
-        query_sequence_length = new_input_shape[0];
-        embedding_dimension = new_input_shape[1];
-    }
+public:
+
+    MultiHeadAttention(const Shape& = Shape({0,0}),
+                       Index = 0,
+                       const string& = string());
+
+    MultiHeadAttention(const Shape&,
+                       const Shape&,
+                       Index = 0,
+                       const string& = string());
+
+    // Getters
+
+    Index get_query_sequence_length() const { return query_sequence_length; }
+    Index get_source_sequence_length() const { return source_sequence_length; }
+    Index get_embedding_dimension() const { return input_shape.back(); }
+    Index get_heads_number() const { return heads_number; }
+    Index get_head_dimension() const;
+
+    type get_scaling_factor() const;
+
+    Shape get_input_shape() const override;
+    Shape get_output_shape() const override;
+
+    // Setters
 
     void set(const Index = 0,
              Index = 0,
@@ -96,45 +124,28 @@ public:
              bool = false,
              const string& = "multihead_attention_layer");
 
+    void set_input_shape(const Shape& new_input_shape) override
+    {
+        input_shape = new_input_shape;
+        query_sequence_length = new_input_shape[0];
+        embedding_dimension = new_input_shape[1];
+    }
+
     void set_dropout_rate(const type r) { dropout_rate = r; }
+
+    // Forward / back propagation
 
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
-    void to_XML(XmlPrinter&) const override;
+    // Serialization
+
     void from_XML(const XmlDocument&) override;
-
-private:
-
-    Index embedding_dimension;
-    Index heads_number = 0;
-    Index query_sequence_length = 0;
-    Index source_sequence_length = 0;
-
-    enum Parameters {QueryWeights, QueryBiases, KeyWeights, KeyBiases, ValueWeights, ValueBiases,
-                     ProjectionWeights, ProjectionBiases};
-    enum Forward {Inputs, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value,
-                  PaddingMask, TransposeScratch, AttentionOutputTransposed};
-    // Outputs is always the last forward slot (wiring convention) — access via .back()
-    enum Backward {OutputGradient, InputQueryGradient, InputSourceGradient,
-                   AttentionWeightGradient, ConcatenatedOutputGradient,
-                   QueryGradient, KeyGradient, ValueGradient,
-                   SoftmaxGradient, QueryInputGradientScratch, SourceInputGradientScratch};
-
-    bool use_causal_mask = false;
-
-    MatrixR causal_mask;
-    MatrixB key_mask; // Starting to implement (should be used before softmax so that the probability of the padding is zero)
-
-    type dropout_rate = type(0);
-
-    static constexpr type padding_threshold = type(1e-7f);
-    static constexpr type mask_value = type(-1e9f);
-    static constexpr type minus_inf = -numeric_limits<float>::infinity();
+    void to_XML(XmlPrinter&) const override;
 };
 
-} 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
