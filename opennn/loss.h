@@ -106,6 +106,8 @@ public:
     void set_error(const Error&);
     void set_error(const string&);
 
+    Error get_error() const { return error; }
+
     void back_propagate(const Batch&,
                         ForwardPropagation&,
                         BackPropagation&) const;

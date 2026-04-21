@@ -78,12 +78,6 @@ namespace { \
       }(); \
 }
 
-void reference_dense_layer();
-void reference_scaling_layer();
-void reference_flatten_layer();
-void reference_addition_layer();
-void reference_all_layers();
-
 void register_classes();
 
 }

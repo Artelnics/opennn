@@ -23,9 +23,7 @@ namespace opennn
 	template class Scaling<3>;
 	template class Scaling<4>;
 
-	void reference_scaling_layer() { }
-
-} 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

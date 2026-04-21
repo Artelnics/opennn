@@ -31,6 +31,15 @@ struct Batch
 
     TensorView get_targets() const;
 
+    vector<TensorView> get_inputs_active() const
+    {
+#ifdef OPENNN_WITH_CUDA
+        return Device::instance().is_gpu() ? get_inputs_device() : get_inputs();
+#else
+        return get_inputs();
+#endif
+    }
+
     TensorView get_targets_active() const
     {
 #ifdef OPENNN_WITH_CUDA
@@ -62,11 +71,6 @@ struct Batch
     int input_contiguous = -1;
     int decoder_contiguous = -1;
     int target_contiguous = -1;
-
-    void fill_host(const vector<Index>&,
-                   const vector<Index>&,
-                   const vector<Index>&,
-                   const vector<Index>&);
 
     void copy_device_async(const Index, cudaStream_t);
 

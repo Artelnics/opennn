@@ -250,8 +250,6 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 
 void NeuralNetwork::set_default()
 {
-    reference_all_layers();
-
     layers.clear();
 
     layer_input_indices.clear();
@@ -737,6 +735,9 @@ void NeuralNetwork::to_XML(XmlPrinter& printer) const
 
 void NeuralNetwork::from_XML(const XmlDocument& document)
 {
+    static const bool _layers_registered = []() { register_classes(); return true; }();
+    (void)_layers_registered;
+
     const XmlElement* neural_network_element = get_xml_root(document, "NeuralNetwork");
 
     const XmlElement* inputs_element = neural_network_element->first_child_element("Inputs");

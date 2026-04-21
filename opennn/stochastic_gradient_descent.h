@@ -38,10 +38,6 @@ public:
 
     TrainingResults train() override;
 
-#ifdef OPENNN_WITH_CUDA
-    TrainingResults train_cuda() override;
-#endif
-
     void from_XML(const XmlDocument&) override;
 
     void to_XML(XmlPrinter&) const override;

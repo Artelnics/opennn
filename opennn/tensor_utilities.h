@@ -115,8 +115,6 @@ template<cudnnDataType_t D> struct MapDtype;
 template<> struct MapDtype<CUDNN_DATA_FLOAT>    { using type = float; };
 template<> struct MapDtype<CUDNN_DATA_BFLOAT16> { using type = __nv_bfloat16; };
 
-#ifdef OPENNN_WITH_CUDA
-
 template <typename T>
 class ThreadSafeQueue
 {
@@ -152,8 +150,6 @@ public:
         return queue_.empty();
     }
 };
-
-#endif
 
 class Shape
 {
@@ -309,6 +305,10 @@ struct Memory
     void resize(Index n) { vector.resize(n); }
     void setZero() { vector.setZero(); }
     void setZero(Index n) { vector = VectorR::Zero(n); }
+
+    // Device-aware: zeroes host or device storage depending on Device::is_gpu().
+    // Defined out-of-class below because Device is declared later in this header.
+    void setZero_active();
 
     uint8_t* device_data = nullptr;
     Index    allocated_bytes = 0;
@@ -981,6 +981,14 @@ private:
 inline ThreadPoolDevice& get_device()
 {
     return *Device::instance().get_thread_pool_device();
+}
+
+inline void Memory::setZero_active()
+{
+#ifdef OPENNN_WITH_CUDA
+    if(Device::instance().is_gpu()) { setZero_device(); return; }
+#endif
+    vector.setZero();
 }
 
 #ifdef OPENNN_WITH_CUDA

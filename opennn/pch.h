@@ -74,6 +74,7 @@
 // Enums (not type aliases) so that scoped references like `cudnnPoolingMode_t::CUDNN_POOLING_MAX`
 // continue to compile.
 using cudaStream_t     = void*;
+using cudaEvent_t      = void*;
 using cublasHandle_t   = void*;
 using cublasLtHandle_t = void*;
 using cudnnHandle_t    = void*;

@@ -140,8 +140,6 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
     if (input_shape.rank() != 3)
         throw runtime_error("Input shape size is not 3.");
 
-    reference_all_layers();
-
     auto scaling_layer = make_unique<Scaling<4>>(input_shape);
     scaling_layer->set_scalers("ImageMinMax");
     add_layer(std::move(scaling_layer));
@@ -203,8 +201,6 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
         throw runtime_error("Input shape size must be 3.");
     if (Index(blocks_per_stage.size()) != initial_filters.size())
         throw runtime_error("blocks_per_stage and initial_filters must have the same size.");
-
-    reference_all_layers();
 
     add_layer(make_unique<Scaling<4>>(input_shape));
 
@@ -349,8 +345,6 @@ VGG16::VGG16(const Shape& new_input_shape, const Shape& new_target_shape)
 
 void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
 {
-    reference_all_layers();
-
     // Scaling 4D
     add_layer(make_unique<Scaling<4>>(new_input_shape));
 
@@ -526,8 +520,6 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                      const Shape& complexity_dimensions,
                                                      const Shape& output_shape) : NeuralNetwork()
 {
-    reference_all_layers();
-
     const Index vocabulary_size = input_shape[0];
     const Index sequence_length = input_shape[1];
     const Index embedding_dimension = input_shape[2];
@@ -583,8 +575,6 @@ void Transformer::set(const Index input_sequence_length,
                       Index feed_forward_dimension,
                       Index layers_number)
 {
-    reference_all_layers();
-
     name = "transformer";
 
     layers.clear();
@@ -602,9 +592,6 @@ void Transformer::set(const Index input_sequence_length,
 
     if(embedding_dimension % heads_number != 0)
         throw runtime_error("Transformer Error: embedding_dimension must be divisible by heads_number.");
-
-    // @todo If you want the opposite convention, swap {-1} and {-2} here
-    // and keep the same order everywhere you call forward propagation.
 
     // Input embeddings
 
@@ -805,18 +792,6 @@ void Transformer::set(const Index input_sequence_length,
             "Softmax",
             false,
             "output_projection"));
-
-    // @todo If your loss already applies softmax internally and expects logits,
-    // change the activation above from "Softmax" to "Linear".
-
-    // @todo This transformer assumes Dense<3> is already fixed so that it
-    // projects the last dimension (embedding/features) and preserves the
-    // sequence dimension. If Dense<3> still uses input_shape[0] as the weight
-    // input size, the FFN/output projection will be wrong.
-
-    // @todo If you want to serialize/deserialize this model through XML/registry,
-    // make sure reference_all_layers() registers every layer used here:
-    // Embedding, MultiHeadAttention, Normalization3d, Addition<3>, Dense<3>.
 
     compile();
     set_parameters_random();

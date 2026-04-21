@@ -19,8 +19,6 @@ namespace opennn
 
     template class Dense<2>;
     template class Dense<3>;
-
-    void reference_dense_layer() { }
 }
 
 // OpenNN: Open Neural Networks Library.

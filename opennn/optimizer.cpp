@@ -16,6 +16,8 @@
 #include "variable.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "batch.h"
+#include "neural_network.h"
 
 namespace opennn
 {
@@ -442,12 +444,112 @@ void OptimizerData::print() const
          << initial_learning_rate << "\n";
 }
 
-
-
-TrainingResults Optimizer::train_cuda()
+void Optimizer::setup_device_training(ForwardPropagation& training_fp,
+                                      BackPropagation& training_bp,
+                                      ForwardPropagation* validation_fp,
+                                      BackPropagation* validation_bp)
 {
-    throw runtime_error("train_cuda() is not implemented for " + name + ". "
-                        "Use an optimizer with GPU support (AdaptiveMomentEstimation or StochasticGradientDescent).");
+#ifdef OPENNN_WITH_CUDA
+    if(!Device::instance().is_gpu()) return;
+
+    NeuralNetwork* neural_network = loss->get_neural_network();
+
+    neural_network->copy_parameters_device();
+    neural_network->link_parameters_device();
+    neural_network->copy_states_device();
+    neural_network->link_states_device();
+
+    training_fp.allocate_device();
+    training_bp.allocate_device();
+
+    if(validation_fp) validation_fp->allocate_device();
+    if(validation_bp) validation_bp->allocate_device();
+
+    cudaStreamCreate(&memory_stream);
+    cudaEventCreate(&batch_ready_event[0]);
+    cudaEventCreate(&batch_ready_event[1]);
+#else
+    (void)training_fp; (void)training_bp; (void)validation_fp; (void)validation_bp;
+#endif
+}
+
+void Optimizer::teardown_device_training()
+{
+#ifdef OPENNN_WITH_CUDA
+    if(!Device::instance().is_gpu()) return;
+
+    cudaStreamDestroy(memory_stream);
+    cudaEventDestroy(batch_ready_event[0]);
+    cudaEventDestroy(batch_ready_event[1]);
+    memory_stream = nullptr;
+    batch_ready_event[0] = nullptr;
+    batch_ready_event[1] = nullptr;
+
+    NeuralNetwork* neural_network = loss->get_neural_network();
+    neural_network->copy_parameters_host();
+    neural_network->link_parameters_cpu();
+    neural_network->copy_states_host();
+    neural_network->link_states_cpu();
+#endif
+}
+
+void Optimizer::prefetch_batch(Batch& batch, Index sample_count, int slot)
+{
+#ifdef OPENNN_WITH_CUDA
+    if(!Device::instance().is_gpu()) return;
+    batch.copy_device_async(sample_count, memory_stream);
+    cudaEventRecord(batch_ready_event[slot], memory_stream);
+#else
+    (void)batch; (void)sample_count; (void)slot;
+#endif
+}
+
+void Optimizer::wait_prefetch(int slot)
+{
+#ifdef OPENNN_WITH_CUDA
+    if(!Device::instance().is_gpu()) return;
+    cudaStreamWaitEvent(0, batch_ready_event[slot], 0);
+#else
+    (void)slot;
+#endif
+}
+
+void Optimizer::sync_device()
+{
+#ifdef OPENNN_WITH_CUDA
+    if(Device::instance().is_gpu()) cudaStreamSynchronize(0);
+#endif
+}
+
+void Optimizer::clip_gradient_norm(Memory& gradient, type max_norm)
+{
+    const Index gradient_size = gradient.size();
+    if(gradient_size <= 0) return;
+
+#ifdef OPENNN_WITH_CUDA
+    if(Device::instance().is_gpu())
+    {
+        float squared_norm = 0.0f;
+        CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(),
+                                to_int(gradient_size),
+                                gradient.device(), 1,
+                                gradient.device(), 1,
+                                &squared_norm));
+        const float gradient_norm = std::sqrt(squared_norm);
+        if(gradient_norm > float(max_norm))
+        {
+            const float scale = float(max_norm) / (gradient_norm + 1e-6f);
+            CHECK_CUBLAS(cublasSscal(Device::get_cublas_handle(),
+                                     to_int(gradient_size), &scale,
+                                     gradient.device(), 1));
+        }
+        return;
+    }
+#endif
+
+    const type gradient_norm = gradient.vector.norm();
+    if(gradient_norm > max_norm)
+        gradient.vector *= max_norm / (gradient_norm + type(1e-6));
 }
 
 }

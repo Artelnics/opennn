@@ -410,11 +410,11 @@ public:
             input_gradient_2d = input_gradient.reshape({total_rows, input_gradient.shape.back()});
         }
 
-        combination_gradient(output_gradient_2d, 
-                             input_2d, 
+        combination_gradient(output_gradient_2d,
+                             input_2d,
                              parameters[Weight],
                              input_gradient_2d,
-                             gradient_views[Weight], 
+                             gradient_views[Weight],
                              gradient_views[Bias],
                              false);
     }

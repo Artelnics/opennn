@@ -515,6 +515,7 @@ __global__ void cross_entropy_3d_multiple_forward_kernel(const int total_tokens,
                                                          const float* __restrict__ targets,
                                                          float* __restrict__ errors,
                                                          float* __restrict__ valid_mask,
+                                                         float* __restrict__ correct_mask,
                                                          const float epsilon)
 {
     for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < total_tokens; idx += blockDim.x * gridDim.x)
@@ -524,6 +525,24 @@ __global__ void cross_entropy_3d_multiple_forward_kernel(const int total_tokens,
 
         errors[idx] = valid ? -logf(static_cast<float>(outputs[idx * vocab_size + target_class]) + epsilon) : 0.0f;
         if (valid_mask) valid_mask[idx] = valid ? 1.0f : 0.0f;
+
+        if (correct_mask)
+        {
+            float best_match = 0.0f;
+            if (valid)
+            {
+                const T* row = outputs + idx * vocab_size;
+                float best_value = static_cast<float>(row[0]);
+                int best_index = 0;
+                for (int k = 1; k < vocab_size; ++k)
+                {
+                    const float value = static_cast<float>(row[k]);
+                    if (value > best_value) { best_value = value; best_index = k; }
+                }
+                best_match = (best_index == target_class) ? 1.0f : 0.0f;
+            }
+            correct_mask[idx] = best_match;
+        }
     }
 }
 
@@ -535,6 +554,7 @@ void cross_entropy_3d_multiple_forward_cuda(const Index n,
                                             const float* targets,
                                             float* errors,
                                             float* valid_mask,
+                                            float* correct_mask,
                                             const float epsilon)
 {
     if(n == 0) return;
@@ -544,11 +564,11 @@ void cross_entropy_3d_multiple_forward_cuda(const Index n,
     const int grid_size = (total + block_size - 1) / block_size;
 
     cross_entropy_3d_multiple_forward_kernel<T><<<grid_size, block_size>>>(
-        total, vocab_size, outputs, targets, errors, valid_mask, epsilon);
+        total, vocab_size, outputs, targets, errors, valid_mask, correct_mask, epsilon);
 }
 
-template void cross_entropy_3d_multiple_forward_cuda<float>        (const Index, const int, const float*,         const float*, float*, float*, const float);
-template void cross_entropy_3d_multiple_forward_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, float*, float*, const float);
+template void cross_entropy_3d_multiple_forward_cuda<float>        (const Index, const int, const float*,         const float*, float*, float*, float*, const float);
+template void cross_entropy_3d_multiple_forward_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, float*, float*, float*, const float);
 
 template<typename T>
 __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,

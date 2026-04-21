@@ -124,6 +124,19 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& target_indices,
                  bool augment)
 {
+    const bool is_gpu = Device::instance().is_gpu();
+
+    // GPU path writes into pinned host buffers (pre-allocated in set()) so that
+    // copy_device_async can DMA them straight to device memory. CPU path writes
+    // into Memory's Eigen-backed storage.
+    type* input_dst   = is_gpu ? inputs_host   : input.data();
+    type* decoder_dst = is_gpu ? decoder_host  : decoder.data();
+    type* target_dst  = is_gpu ? targets_host  : target.data();
+
+    // Serial fill on the GPU worker thread (leaves CPU cores for the GPU driver);
+    // OMP parallel fill on CPU-only runs.
+    const bool parallelize = !is_gpu;
+
     if(input_contiguous < 0 && !input_indices.empty())
         input_contiguous = is_contiguous(input_indices) ? 1 : 0;
     if(decoder_contiguous < 0 && !decoder_indices.empty())
@@ -131,15 +144,15 @@ void Batch::fill(const vector<Index>& sample_indices,
     if(target_contiguous < 0 && !target_indices.empty())
         target_contiguous = is_contiguous(target_indices) ? 1 : 0;
 
-    dataset->fill_inputs(sample_indices, input_indices, input.data(), true, input_contiguous);
+    dataset->fill_inputs(sample_indices, input_indices, input_dst, parallelize, input_contiguous);
 
     if(augment)
-        dataset->augment_inputs(input.data(), sample_indices.size());
+        dataset->augment_inputs(input_dst, sample_indices.size());
 
     if(!decoder_shape.empty())
-        dataset->fill_decoder(sample_indices, decoder_indices, decoder.data(), true, decoder_contiguous);
+        dataset->fill_decoder(sample_indices, decoder_indices, decoder_dst, parallelize, decoder_contiguous);
 
-    dataset->fill_targets(sample_indices, target_indices, target.data(), true, target_contiguous);
+    dataset->fill_targets(sample_indices, target_indices, target_dst, parallelize, target_contiguous);
 }
 
 Index Batch::get_samples_number() const
@@ -209,19 +222,6 @@ TensorView Batch::get_targets() const
 }
 
 #ifdef OPENNN_WITH_CUDA
-
-void Batch::fill_host(const vector<Index>& sample_indices,
-                      const vector<Index>& input_indices,
-                      const vector<Index>& decoder_indices,
-                      const vector<Index>& target_indices)
-{
-    dataset->fill_inputs(sample_indices, input_indices, inputs_host, false);
-
-    if(!decoder_shape.empty())
-        dataset->fill_decoder(sample_indices, decoder_indices, decoder_host, false);
-
-    dataset->fill_targets(sample_indices, target_indices, targets_host, false);
-}
 
 void Batch::copy_device_async(const Index current_batch_size, cudaStream_t stream)
 {

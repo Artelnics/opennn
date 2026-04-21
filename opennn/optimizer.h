@@ -16,6 +16,10 @@ namespace opennn
 {
 
 class Loss;
+struct Batch;
+struct Memory;
+struct ForwardPropagation;
+struct BackPropagation;
 
 struct TrainingResults;
 
@@ -58,8 +62,6 @@ public:
 
     virtual TrainingResults train() = 0;
 
-    virtual TrainingResults train_cuda();
-
     const string& get_name() const { return name; }
 
     virtual void print() const {}
@@ -85,6 +87,20 @@ protected:
     void write_common_xml(XmlPrinter&) const;
     void read_common_xml(const XmlElement*);
 
+    void setup_device_training(ForwardPropagation& training_fp,
+                               BackPropagation& training_bp,
+                               ForwardPropagation* validation_fp,
+                               BackPropagation* validation_bp);
+    void teardown_device_training();
+
+    void prefetch_batch(Batch& batch, Index sample_count, int slot);
+
+    void wait_prefetch(int slot);
+
+    void sync_device();
+
+    static void clip_gradient_norm(Memory& gradient, type max_norm);
+
     Loss* loss = nullptr;
 
     type training_loss_goal = type(0);
@@ -100,6 +116,9 @@ protected:
     bool display = true;
 
     string name;
+
+    cudaStream_t memory_stream = nullptr;
+    cudaEvent_t batch_ready_event[2] = {nullptr, nullptr};
 };
 
 struct OptimizerData

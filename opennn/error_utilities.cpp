@@ -247,7 +247,7 @@ void minkowski_error_gradient(const TensorView& input, const TensorView& target,
 }
 
 void cross_entropy_3d(const TensorView& input, const TensorView& target, type& error,
-                      Index& active_tokens_out, float* errors_device)
+                      Index& active_tokens_out, Index& correct_tokens_out, float* errors_device)
 {
     const Index vocabulary_size = input.shape.back();
     const Index sequence_length = input.shape[input.get_rank() - 2];
@@ -257,19 +257,22 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, type& e
     if (Device::instance().is_gpu()) {
         const size_t token_count = batch_size * sequence_length;
 
-        float* valid_mask_device = errors_device + token_count;
+        float* valid_mask_device   = errors_device + token_count;
+        float* correct_mask_device = errors_device + 2 * token_count;
 
         input.dispatch([&](auto tag) {
             using T = decltype(tag);
             cross_entropy_3d_multiple_forward_cuda<T>(token_count, to_int(vocabulary_size),
                 input.as<T>(), target.as<float>(),
-                errors_device, valid_mask_device, EPSILON);
+                errors_device, valid_mask_device, correct_mask_device, EPSILON);
         });
 
-        const float sum_loss    = sum_abs_cuda(errors_device,     token_count);
-        const float active_count = sum_abs_cuda(valid_mask_device, token_count);
+        const float sum_loss     = sum_abs_cuda(errors_device,       token_count);
+        const float active_count = sum_abs_cuda(valid_mask_device,   token_count);
+        const float correct_count = sum_abs_cuda(correct_mask_device, token_count);
 
         active_tokens_out = static_cast<Index>(active_count);
+        correct_tokens_out = static_cast<Index>(correct_count);
         error = active_count > 0 ? sum_loss / active_count : type(0);
         return;
     }
@@ -282,8 +285,9 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, type& e
 
     type total_log_loss = 0;
     Index active_tokens = 0;
+    Index correct_tokens = 0;
 
-    #pragma omp parallel for reduction(+:total_log_loss, active_tokens)
+    #pragma omp parallel for reduction(+:total_log_loss, active_tokens, correct_tokens)
     for(Index t = 0; t < token_count; ++t)
     {
         const Index target_index = static_cast<Index>(targets_flat(t));
@@ -291,10 +295,23 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, type& e
         {
             total_log_loss -= log(outputs_flat(t, target_index) + EPSILON);
             ++active_tokens;
+
+            Index best_index = 0;
+            type best_value = outputs_flat(t, 0);
+            for(Index k = 1; k < vocabulary_size; ++k)
+            {
+                if(outputs_flat(t, k) > best_value)
+                {
+                    best_value = outputs_flat(t, k);
+                    best_index = k;
+                }
+            }
+            if(best_index == target_index) ++correct_tokens;
         }
     }
 
     active_tokens_out = active_tokens;
+    correct_tokens_out = correct_tokens;
     error = active_tokens > 0 ? total_log_loss / to_type(active_tokens) : type(0);
 }
 

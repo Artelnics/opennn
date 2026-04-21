@@ -80,9 +80,9 @@ int main()
         adam->set_maximum_epochs(50);
         adam->set_display_period(5);
 
-        Device::instance().set(DeviceType::Gpu);
+        Device::instance().set(DeviceType::Cpu);
 
-        cout << "\nTraining on GPU..." << endl;
+        cout << "\nTraining on CPU..." << endl;
         training_strategy.train();
 
         // Predictions

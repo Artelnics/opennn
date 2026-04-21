@@ -137,17 +137,21 @@ TrainingResults StochasticGradientDescent::train()
     if(!loss || !loss->get_neural_network() || !loss->get_dataset())
         return TrainingResults();
 
-    TrainingResults results(maximum_epochs+1);
+    TrainingResults results(maximum_epochs + 1);
 
     check();
 
-    // Start training
+    const bool is_gpu = Device::instance().is_gpu();
 
-    if(display) cout << "Training with stochastic gradient descent (SGD)...\n";
+    if(display) cout << "Training with stochastic gradient descent (SGD)"
+                     << (is_gpu ? " CUDA" : "") << "...\n";
 
     // Dataset
 
-    const Dataset* dataset = loss->get_dataset();
+    Dataset* dataset = loss->get_dataset();
+
+    if(!dataset)
+        throw runtime_error("StochasticGradientDescent error: dataset is not set.");
 
     const bool has_validation = dataset->has_validation();
 
@@ -164,166 +168,244 @@ TrainingResults StochasticGradientDescent::train()
     const Index training_batch_size = min(training_samples_number, batch_size);
 
     const Index validation_batch_size = (validation_samples_number != 0)
-                                                     ? min(validation_samples_number, batch_size)
-                                                     : 0;
-
-    Batch training_batch(training_batch_size, dataset);
-    Batch validation_batch(validation_batch_size, dataset);
+        ? min(validation_samples_number, batch_size)
+        : 0;
 
     const Index training_batches_number = (training_batch_size != 0)
-                                              ? training_samples_number / training_batch_size
-                                              : 0;
+        ? training_samples_number / training_batch_size
+        : 0;
 
     const Index validation_batches_number = (validation_batch_size != 0)
-                                               ? validation_samples_number / validation_batch_size
-                                               : 0;
+        ? validation_samples_number / validation_batch_size
+        : 0;
 
     vector<vector<Index>> training_batches(training_batches_number);
-
-    vector<Index> const training_batch_indices(training_batch_size);
-    vector<Index> const selection_batch_indices(training_batch_size);
+    vector<vector<Index>> validation_batches;
 
     // Neural network
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     set_names();
-
     set_scaling();
 
-    ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
-    ForwardPropagation validation_forward_propagation(validation_batch_size, neural_network);
+    // Batch pool: minimum 2 for producer/consumer double-buffer (avoids worker-main
+    // deadlock on prefetch_before_loop + pop_next). GPU uses 3 for triple-buffer H2D.
 
-    // Loss index
+    const int pool_size = is_gpu ? 3 : 2;
+
+    ThreadSafeQueue<Batch*> empty_training_queue;
+    ThreadSafeQueue<Batch*> ready_training_queue;
+    vector<unique_ptr<Batch>> training_batch_pool;
+
+    for(int i = 0; i < pool_size; ++i)
+    {
+        training_batch_pool.push_back(make_unique<Batch>(training_batch_size, dataset));
+        empty_training_queue.push(training_batch_pool.back().get());
+    }
+
+    ThreadSafeQueue<Batch*> empty_validation_queue;
+    ThreadSafeQueue<Batch*> ready_validation_queue;
+    vector<unique_ptr<Batch>> validation_batch_pool;
+
+    if(has_validation)
+    {
+        for(int i = 0; i < pool_size; ++i)
+        {
+            validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
+            empty_validation_queue.push(validation_batch_pool.back().get());
+        }
+    }
+
+    // Forward / back propagation
+
+    ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
 
     loss->set_normalization_coefficient();
 
     BackPropagation training_back_propagation(training_batch_size, loss);
-    BackPropagation validation_back_propagation(validation_batch_size, loss);
 
-    type training_error = type(0);
-    type validation_error = type(0);
+    unique_ptr<ForwardPropagation> validation_forward_propagation;
+    unique_ptr<BackPropagation> validation_back_propagation;
 
-    Index validation_failures = 0;
+    if(has_validation)
+    {
+        validation_forward_propagation = make_unique<ForwardPropagation>(validation_batch_size, neural_network);
+        validation_back_propagation = make_unique<BackPropagation>(validation_batch_size, loss);
+    }
 
-    // Optimization algorithm
+    setup_device_training(training_forward_propagation,
+                          training_back_propagation,
+                          validation_forward_propagation.get(),
+                          validation_back_propagation.get());
+
+    // Optimization data
 
     StochasticGradientDescentData optimization_data(this);
+    optimization_data.iteration = 1;
+
+    type training_error = type(0);
+    type training_accuracy = type(0);
+    type validation_error = type(0);
+    type validation_accuracy = type(0);
+    Index validation_failures = 0;
+
+    const bool is_classification_model = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
     bool stop_training = false;
     constexpr bool is_training = true;
+    const bool shuffle = !neural_network->has(LayerType::Recurrent);
 
     time_t beginning_time;
     time(&beginning_time);
     type elapsed_time = type(0);
 
-    const bool shuffle = !neural_network->has(LayerType::Recurrent);
-
-    vector<vector<Index>> validation_batches;
-
     // Main loop
 
     for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
-        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << "\n";
+        if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << "\n";
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
         const type current_learning_rate = initial_learning_rate / (type(1) + type(epoch) * initial_decay);
 
         training_error = type(0);
+        if(is_classification_model) training_accuracy = type(0);
 
-        optimization_data.iteration = 0;
+        std::thread training_worker([&]()
+        {
+            for(Index iteration = 0; iteration < training_batches_number; ++iteration)
+            {
+                Batch* batch = empty_training_queue.pop();
+                batch->fill(training_batches[iteration],
+                            input_feature_indices,
+                            decoder_feature_indices,
+                            target_feature_indices,
+                            true);
+                ready_training_queue.push(batch);
+            }
+        });
+
+        Batch* next_batch = nullptr;
+        if(training_batches_number > 0)
+        {
+            next_batch = ready_training_queue.pop();
+            prefetch_batch(*next_batch, training_batches[0].size(), 0);
+        }
 
         for(Index iteration = 0; iteration < training_batches_number; ++iteration)
         {
-            optimization_data.iteration++;
+            Batch* current_batch = next_batch;
+            next_batch = nullptr;
 
-            // Dataset
+            wait_prefetch(iteration % 2);
 
-            training_batch.fill(training_batches[iteration],
-                                input_feature_indices,
-                                decoder_feature_indices,
-                                target_feature_indices,
-                                true);
+            if(iteration + 1 < training_batches_number)
+            {
+                next_batch = ready_training_queue.pop();
+                prefetch_batch(*next_batch, training_batches[iteration + 1].size(), (iteration + 1) % 2);
+            }
 
-            // Neural network
-
-            neural_network->forward_propagate(training_batch.get_inputs(),
+            neural_network->forward_propagate(current_batch->get_inputs_active(),
                                               training_forward_propagation,
                                               is_training);
 
-            // Loss index
-
-            loss->back_propagate(training_batch,
-                                       training_forward_propagation,
-                                       training_back_propagation);
-
-            results.training_error_history(epoch) = training_back_propagation.error;
+            loss->back_propagate(*current_batch,
+                                 training_forward_propagation,
+                                 training_back_propagation);
 
             training_error += training_back_propagation.error;
-
-            // Gradient
+            if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
 
             update_parameters(training_back_propagation, optimization_data, current_learning_rate);
 
+            sync_device();
+
+            empty_training_queue.push(current_batch);
         }
 
-        // Loss
+        training_worker.join();
 
         training_error /= type(training_batches_number);
-
+        if(is_classification_model) training_accuracy /= type(training_batches_number);
         results.training_error_history(epoch) = training_error;
 
         if(has_validation)
         {
             dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
-
             validation_error = type(0);
+            if(is_classification_model) validation_accuracy = type(0);
+
+            std::thread validation_worker([&]()
+            {
+                for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
+                {
+                    Batch* batch = empty_validation_queue.pop();
+                    batch->fill(validation_batches[iteration],
+                                input_feature_indices,
+                                decoder_feature_indices,
+                                target_feature_indices);
+                    ready_validation_queue.push(batch);
+                }
+            });
+
+            Batch* next_val_batch = nullptr;
+            if(validation_batches_number > 0)
+            {
+                next_val_batch = ready_validation_queue.pop();
+                prefetch_batch(*next_val_batch, validation_batches[0].size(), 0);
+            }
 
             for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
             {
-                // Dataset
+                Batch* current_batch = next_val_batch;
+                next_val_batch = nullptr;
 
-                validation_batch.fill(validation_batches[iteration],
-                                     input_feature_indices,
-                                     decoder_feature_indices,
-                                     target_feature_indices);
+                wait_prefetch(iteration % 2);
 
-                // Neural network
+                if(iteration + 1 < validation_batches_number)
+                {
+                    next_val_batch = ready_validation_queue.pop();
+                    prefetch_batch(*next_val_batch, validation_batches[iteration + 1].size(), (iteration + 1) % 2);
+                }
 
-                neural_network->forward_propagate(validation_batch.get_inputs(),
-                                                  validation_forward_propagation,
+                neural_network->forward_propagate(current_batch->get_inputs_active(),
+                                                  *validation_forward_propagation,
                                                   false);
 
-                // Loss
+                loss->calculate_error(*current_batch,
+                                      *validation_forward_propagation,
+                                      *validation_back_propagation);
 
-                loss->calculate_error(validation_batch,
-                                            validation_forward_propagation,
-                                            validation_back_propagation);
+                validation_error += validation_back_propagation->error;
+                if(is_classification_model) validation_accuracy += validation_back_propagation->accuracy(0);
 
-                validation_error += validation_back_propagation.error;
+                sync_device();
+
+                empty_validation_queue.push(current_batch);
             }
 
-            validation_error /= type(validation_batches_number);
+            validation_worker.join();
 
+            validation_error /= type(validation_batches_number);
+            if(is_classification_model) validation_accuracy /= type(validation_batches_number);
             results.validation_error_history(epoch) = validation_error;
 
-            if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch-1)) validation_failures++;
+            if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
+                ++validation_failures;
         }
-
-        // Elapsed time
 
         elapsed_time = get_elapsed_time(beginning_time);
 
-        if(display && epoch%display_period == 0)
+        if(display && epoch % display_period == 0)
         {
             cout << "Training error: " << training_error << "\n";
-            if(has_validation) cout << "Validation error: " << validation_error << "\n"<<endl;
+            if(is_classification_model) cout << "Training accuracy: " << training_accuracy << "\n";
+            if(has_validation) cout << "Validation error: " << validation_error << "\n";
+            if(has_validation && is_classification_model) cout << "Validation accuracy: " << validation_accuracy << "\n";
             cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
-
-        // Stopping criteria
 
         stop_training = check_stopping_condition(results, epoch, elapsed_time,
                                                   results.training_error_history(epoch),
@@ -333,15 +415,14 @@ TrainingResults StochasticGradientDescent::train()
         {
             results.loss = training_back_propagation.loss_value;
             results.validation_failures = validation_failures;
-            results.elapsed_time = get_time(elapsed_time);
-
-            results.resize_training_error_history(epoch+1);
+            results.resize_training_error_history(epoch + 1);
             results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
-
+            results.elapsed_time = get_time(elapsed_time);
             break;
         }
-
     }
+
+    teardown_device_training();
 
     set_unscaling();
 
@@ -401,289 +482,6 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 #endif
 }
 
-#ifdef OPENNN_WITH_CUDA
-
-TrainingResults StochasticGradientDescent::train_cuda()
-{
-    if(!loss || !loss->get_neural_network() || !loss->get_dataset())
-        return TrainingResults();
-
-    TrainingResults results(maximum_epochs + 1);
-
-    check();
-
-    if(display) cout << "Training with stochastic gradient descent (SGD) CUDA..." << "\n";
-
-    Dataset* dataset = loss->get_dataset();
-
-    const bool has_validation = dataset->has_validation();
-
-    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
-
-    const vector<Index> training_sample_indices = dataset->get_sample_indices("Training");
-    const vector<Index> validation_sample_indices = dataset->get_sample_indices("Validation");
-
-    const Index training_samples_number = dataset->get_samples_number("Training");
-    const Index validation_samples_number = dataset->get_samples_number("Validation");
-
-    const Index training_batch_size = min(training_samples_number, batch_size);
-    const Index validation_batch_size = (validation_samples_number != 0)
-        ? min(validation_samples_number, batch_size) : 0;
-
-    const Index training_batches_number = (training_batch_size != 0)
-        ? training_samples_number / training_batch_size : 0;
-    const Index validation_batches_number = (validation_batch_size != 0)
-        ? validation_samples_number / validation_batch_size : 0;
-
-    vector<vector<Index>> training_batches(training_batches_number);
-
-    NeuralNetwork* neural_network = loss->get_neural_network();
-
-    set_names();
-    set_scaling();
-
-
-    neural_network->copy_parameters_device();
-    neural_network->link_parameters_device();
-    neural_network->copy_states_device();
-    neural_network->link_states_device();
-
-    const int PREFETCH_BATCHES = 3;
-
-    ThreadSafeQueue<Batch*> empty_training_queue;
-    ThreadSafeQueue<Batch*> ready_training_queue;
-    vector<unique_ptr<Batch>> training_batch_pool;
-
-    for(int i = 0; i < PREFETCH_BATCHES; ++i)
-    {
-        training_batch_pool.push_back(make_unique<Batch>(training_batch_size, dataset));
-        empty_training_queue.push(training_batch_pool.back().get());
-    }
-
-    ThreadSafeQueue<Batch*> empty_validation_queue;
-    ThreadSafeQueue<Batch*> ready_validation_queue;
-    vector<unique_ptr<Batch>> validation_batch_pool;
-
-    if(has_validation)
-    {
-        for(int i = 0; i < PREFETCH_BATCHES; ++i)
-        {
-            validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
-            empty_validation_queue.push(validation_batch_pool.back().get());
-        }
-    }
-
-    cudaStream_t memory_stream;
-    cudaStreamCreate(&memory_stream);
-    cudaEvent_t batch_ready_event[2];
-    cudaEventCreate(&batch_ready_event[0]);
-    cudaEventCreate(&batch_ready_event[1]);
-
-    ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
-    training_forward_propagation.allocate_device();
-
-    loss->set_normalization_coefficient();
-
-    BackPropagation training_back_propagation(training_batch_size, loss);
-    training_back_propagation.allocate_device();
-
-    ForwardPropagation validation_forward_propagation(validation_batch_size, neural_network);
-    validation_forward_propagation.allocate_device();
-
-    BackPropagation validation_back_propagation(validation_batch_size, loss);
-    validation_back_propagation.allocate_device();
-
-    StochasticGradientDescentData optimization_data(this);
-
-    type training_error = type(0);
-    type validation_error = type(0);
-    Index validation_failures = 0;
-
-    bool stop_training = false;
-    constexpr bool is_training = true;
-    const bool shuffle = !neural_network->has(LayerType::Recurrent);
-
-    vector<vector<Index>> validation_batches;
-
-    time_t beginning_time;
-    time(&beginning_time);
-    type elapsed_time = type(0);
-    optimization_data.iteration = 1;
-
-    for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
-    {
-        if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << "\n";
-
-        dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
-
-        const type current_learning_rate = initial_learning_rate / (type(1) + type(epoch) * initial_decay);
-
-        training_error = type(0);
-
-        std::thread training_worker([&]()
-        {
-            for(Index iteration = 0; iteration < training_batches_number; ++iteration)
-            {
-                Batch* batch = empty_training_queue.pop();
-                batch->fill_host(training_batches[iteration],
-                                 input_feature_indices,
-                                 decoder_feature_indices,
-                                 target_feature_indices);
-                ready_training_queue.push(batch);
-            }
-        });
-
-        Batch* next_batch = nullptr;
-        if(training_batches_number > 0)
-        {
-            next_batch = ready_training_queue.pop();
-            next_batch->copy_device_async(training_batches[0].size(), memory_stream);
-            cudaEventRecord(batch_ready_event[0], memory_stream);
-        }
-
-        for(Index iteration = 0; iteration < training_batches_number; ++iteration)
-        {
-            Batch* current_batch = next_batch;
-            next_batch = nullptr;
-
-            cudaStreamWaitEvent(0, batch_ready_event[iteration % 2], 0);
-
-            if(iteration + 1 < training_batches_number)
-            {
-                next_batch = ready_training_queue.pop();
-                next_batch->copy_device_async(training_batches[iteration + 1].size(), memory_stream);
-                cudaEventRecord(batch_ready_event[(iteration + 1) % 2], memory_stream);
-            }
-
-            neural_network->forward_propagate(current_batch->get_inputs_device(),
-                                              training_forward_propagation,
-                                              is_training);
-
-            loss->back_propagate(*current_batch,
-                                 training_forward_propagation,
-                                 training_back_propagation);
-
-            training_error += training_back_propagation.error;
-
-            update_parameters(training_back_propagation, optimization_data, current_learning_rate);
-
-            cudaStreamSynchronize(0);
-
-            empty_training_queue.push(current_batch);
-        }
-
-        training_worker.join();
-
-        training_error /= type(training_batches_number);
-        results.training_error_history(epoch) = training_error;
-
-        if(has_validation)
-        {
-            dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
-            validation_error = type(0);
-
-            std::thread validation_worker([&]()
-            {
-                for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
-                {
-                    Batch* batch = empty_validation_queue.pop();
-                    batch->fill_host(validation_batches[iteration],
-                                     input_feature_indices,
-                                     decoder_feature_indices,
-                                     target_feature_indices);
-                    ready_validation_queue.push(batch);
-                }
-            });
-
-            Batch* next_val_batch = nullptr;
-            if(validation_batches_number > 0)
-            {
-                next_val_batch = ready_validation_queue.pop();
-                next_val_batch->copy_device_async(validation_batches[0].size(), memory_stream);
-                cudaEventRecord(batch_ready_event[0], memory_stream);
-            }
-
-            for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
-            {
-                Batch* current_batch = next_val_batch;
-                next_val_batch = nullptr;
-
-                cudaStreamWaitEvent(0, batch_ready_event[iteration % 2], 0);
-
-                if(iteration + 1 < validation_batches_number)
-                {
-                    next_val_batch = ready_validation_queue.pop();
-                    next_val_batch->copy_device_async(validation_batches[iteration + 1].size(), memory_stream);
-                    cudaEventRecord(batch_ready_event[(iteration + 1) % 2], memory_stream);
-                }
-
-                neural_network->forward_propagate(current_batch->get_inputs_device(),
-                                                  validation_forward_propagation,
-                                                  false);
-
-                loss->calculate_error(*current_batch,
-                                      validation_forward_propagation,
-                                      validation_back_propagation);
-
-                validation_error += validation_back_propagation.error;
-
-                cudaStreamSynchronize(0);
-
-                empty_validation_queue.push(current_batch);
-            }
-
-            validation_worker.join();
-
-            validation_error /= type(validation_batches_number);
-            results.validation_error_history(epoch) = validation_error;
-
-            if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
-                ++validation_failures;
-        }
-
-        elapsed_time = get_elapsed_time(beginning_time);
-
-        if(display && epoch % display_period == 0)
-        {
-            cout << "Training error: " << training_error << "\n";
-            if(has_validation) cout << "Validation error: " << validation_error << "\n";
-            cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
-        }
-
-        stop_training = check_stopping_condition(results, epoch, elapsed_time,
-                                                  results.training_error_history(epoch),
-                                                  validation_failures);
-
-        if(stop_training)
-        {
-            results.loss = training_back_propagation.loss_value;
-            results.validation_failures = validation_failures;
-            results.resize_training_error_history(epoch + 1);
-            results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
-            results.elapsed_time = get_time(elapsed_time);
-            break;
-        }
-    }
-
-    cudaStreamDestroy(memory_stream);
-    cudaEventDestroy(batch_ready_event[0]);
-    cudaEventDestroy(batch_ready_event[1]);
-
-    neural_network->copy_parameters_host();
-    neural_network->link_parameters_cpu();
-    neural_network->copy_states_host();
-    neural_network->link_states_cpu();
-
-    set_unscaling();
-
-    if(display) results.print();
-
-    return results;
-}
-
-#endif
 
 REGISTER(Optimizer, StochasticGradientDescent, "StochasticGradientDescent");
 

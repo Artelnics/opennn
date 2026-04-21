@@ -135,10 +135,7 @@ TrainingResults TrainingStrategy::train()
     if(neural_network->has(LayerType::Recurrent))
         fix_forecasting();
 
-    if(Device::instance().is_gpu())
-        return optimizer->train_cuda();
-    else
-        return optimizer->train();
+    return optimizer->train();
 }
 
 
