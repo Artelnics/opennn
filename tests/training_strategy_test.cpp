@@ -2,6 +2,7 @@
 
 #include "../opennn/dataset.h"
 #include "../opennn/neural_network.h"
+#include "../opennn/standard_networks.h"
 #include "../opennn/training_strategy.h"
 
 using namespace opennn;
@@ -17,8 +18,10 @@ TEST(TrainingStrategy, DefaultConstructor)
 
 TEST(TrainingStrategy, GeneralConstructor)
 {
-    Dataset dataset;
-    NeuralNetwork neural_network;
+    Dataset dataset(10, {2}, {1});
+    dataset.set_data_random();
+
+    ApproximationNetwork neural_network({2}, {3}, {1});
 
     TrainingStrategy training_strategy_1(&neural_network, &dataset);
 

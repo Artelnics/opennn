@@ -6,7 +6,7 @@
 #define PCH_TESTS_H
 
 #define NDEBUG
-#define EIGEN_MAX_ALIGN_BYTES 32
+#define EIGEN_MAX_ALIGN_BYTES 64
 #define EIGEN_NO_DEBUG
 #define EIGEN_USE_THREADS
 

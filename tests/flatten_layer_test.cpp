@@ -47,7 +47,7 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
     TensorView output_view = forward_propagation.get_outputs();
     const Shape& output_dims = output_view.shape;
 
-    ASSERT_EQ(output_dims.rank, 2);
+    ASSERT_EQ(output_dims.rank(), 2);
     EXPECT_EQ(output_dims[0], batch_size);
     EXPECT_EQ(output_dims[1], height * width * channels);
 
@@ -73,7 +73,7 @@ TEST_F(FlattenLayerTest, BackPropagate)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 2);
+    ASSERT_EQ(output_view.shape.rank(), 2);
     EXPECT_EQ(output_view.shape[0], batch_size);
     EXPECT_EQ(output_view.shape[1], height * width * channels);
 

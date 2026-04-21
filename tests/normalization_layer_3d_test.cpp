@@ -29,9 +29,9 @@ TEST(Normalization3dTest, DefaultConstructor)
 {
     Normalization3d normalization_3d;
 
-    EXPECT_EQ(normalization_3d.get_input_shape().rank, 2);
+    EXPECT_EQ(normalization_3d.get_input_shape().rank(), 2);
     EXPECT_EQ(normalization_3d.get_input_shape()[0], 0);
-    EXPECT_EQ(normalization_3d.get_output_shape().rank, 2);
+    EXPECT_EQ(normalization_3d.get_output_shape().rank(), 2);
     EXPECT_EQ(normalization_3d.get_output_shape()[0], 0);
 }
 
