@@ -161,23 +161,23 @@ void ForwardPropagation::allocate_device()
     {
         if(layer->get_type() == LayerType::Convolutional)
         {
-            Convolutional* conv = static_cast<Convolutional*>(layer.get());
-            conv->init_cuda(batch_size);
+            if(auto* conv = dynamic_cast<Convolutional*>(layer.get()))
+                conv->init_cuda(batch_size);
         }
         else if(layer->get_type() == LayerType::Dense2d)
         {
-            Dense<2>* dense = static_cast<Dense<2>*>(layer.get());
-            dense->init_cuda(batch_size);
+            if(auto* dense = dynamic_cast<Dense<2>*>(layer.get()))
+                dense->init_cuda(batch_size);
         }
         else if(layer->get_type() == LayerType::Dense3d)
         {
-            Dense<3>* dense = static_cast<Dense<3>*>(layer.get());
-            dense->init_cuda(batch_size);
+            if(auto* dense = dynamic_cast<Dense<3>*>(layer.get()))
+                dense->init_cuda(batch_size);
         }
         else if(layer->get_type() == LayerType::MultiHeadAttention)
         {
-            MultiHeadAttention* mha = static_cast<MultiHeadAttention*>(layer.get());
-            mha->init_cuda(batch_size);
+            if(auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
+                mha->init_cuda(batch_size);
         }
     }
 #endif

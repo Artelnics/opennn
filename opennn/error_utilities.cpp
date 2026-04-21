@@ -189,7 +189,7 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
 
     error = (targets.array() * (outputs.array() + EPSILON).log()).sum() / to_type(-samples_number);
 
-    if(isnan(error)) throw runtime_error("Error is NAN.");
+    if(isnan(error) || isinf(error)) error = type(10);
 }
 
 void cross_entropy_gradient(const TensorView& input, const TensorView& target, TensorView& input_gradient)

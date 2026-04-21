@@ -93,13 +93,6 @@ vector<string> tokenize(const string& document)
     if(!current_token.empty())
         tokens.emplace_back(std::move(current_token));
 
-    // @todo -> this is only for encoder-decoder
-    // if(!tokens.empty())
-    // {
-    //     tokens.insert(tokens.begin(), START_TOKEN);
-    //     tokens.emplace_back(END_TOKEN);
-    // }
-
     return tokens;
 }
 

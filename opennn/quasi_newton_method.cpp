@@ -133,7 +133,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     optimization_data.learning_rate = directional_point.first;
     back_propagation.loss_value = directional_point.second;
 
-    if(abs(optimization_data.learning_rate) > type(0))
+    if(std::abs(optimization_data.learning_rate) > type(0))
     {
         parameter_updates = training_direction * optimization_data.learning_rate;
         parameters += parameter_updates;

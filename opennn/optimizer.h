@@ -8,7 +8,9 @@
 
 #pragma once
 
+#include <functional>
 #include "tinyxml2.h"
+#include "tensor_utilities.h"   // for ThreadSafeQueue
 
 using namespace tinyxml2;
 
@@ -22,6 +24,12 @@ struct ForwardPropagation;
 struct BackPropagation;
 
 struct TrainingResults;
+
+struct EpochStats
+{
+    type error = type(0);
+    type accuracy = type(0);
+};
 
 class Optimizer
 {
@@ -100,6 +108,20 @@ protected:
     void sync_device();
 
     static void clip_gradient_norm(Memory& gradient, type max_norm);
+
+    // Runs one training or validation epoch. Shared by Adam/SGD. `update` is invoked per batch
+    // after back_propagate (training phase only); pass a no-op lambda for validation.
+    EpochStats run_epoch(bool is_training_phase,
+                         bool is_classification,
+                         ForwardPropagation& fp,
+                         BackPropagation& bp,
+                         ThreadSafeQueue<Batch*>& empty_queue,
+                         ThreadSafeQueue<Batch*>& ready_queue,
+                         const vector<vector<Index>>& batches,
+                         const vector<Index>& input_feature_indices,
+                         const vector<Index>& decoder_feature_indices,
+                         const vector<Index>& target_feature_indices,
+                         const std::function<void(BackPropagation&)>& update);
 
     Loss* loss = nullptr;
 

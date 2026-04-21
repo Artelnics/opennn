@@ -179,42 +179,41 @@ public:
         return buffer.str();
     }
 
-    string write_minimum_maximum_expression(const vector<string>& /*input_names*/, const vector<string>& /*output_names*/) const
+    string write_minimum_maximum_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
         ostringstream buffer;
-
         buffer.precision(10);
-/*
+
         const Index inputs_number = get_output_shape().size();
         for(Index i = 0; i < inputs_number; ++i)
-            buffer << output_names[i] << " = 2*(" << input_names[i] << "-(" << descriptives[i].minimum << "))/(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))-1;\n";
-*/
+            buffer << output_names[i] << " = 2*(" << input_names[i] << "-(" << minimums[i]
+                   << "))/(" << maximums[i] << "-(" << minimums[i] << "))-1;\n";
+
         return buffer.str();
     }
 
-    string write_mean_standard_deviation_expression(const vector<string>& /*input_names*/, const vector<string>& /*output_names*/) const
+    string write_mean_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
         ostringstream buffer;
-
         buffer.precision(10);
-/*
-        const Index inputs_number = get_inputs_number();
+
+        const Index inputs_number = get_output_shape().size();
         for(Index i = 0; i < inputs_number; ++i)
-            buffer << output_names[i] << " = (" << input_names[i] << "-(" << descriptives[i].mean << "))/" << descriptives[i].standard_deviation << ";\n";
-*/
+            buffer << output_names[i] << " = (" << input_names[i] << "-(" << means[i]
+                   << "))/" << standard_deviations[i] << ";\n";
+
         return buffer.str();
     }
 
-    string write_standard_deviation_expression(const vector<string>& /*input_names*/, const vector<string>& /*output_names*/) const
+    string write_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
         ostringstream buffer;
-
         buffer.precision(10);
-/*
+
         const Index inputs_number = get_output_shape().size();
         for(Index i = 0; i < inputs_number; ++i)
-            buffer << output_names[i] << " = " << input_names[i] << "/(" << descriptives[i].standard_deviation << ");\n";
-*/
+            buffer << output_names[i] << " = " << input_names[i] << "/(" << standard_deviations[i] << ");\n";
+
         return buffer.str();
     }
 

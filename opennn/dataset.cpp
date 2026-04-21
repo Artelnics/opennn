@@ -128,10 +128,10 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
     #pragma omp parallel for if(batches_number > 64)
     for(Index i = 0; i < batches_number; ++i)
     {
-        const auto start_it = indices.begin() + (i * batch_size);
-        const auto end_it = indices.begin() + min((i + 1) * batch_size, samples_number);
+        const Index start = i * batch_size;
+        const Index end = min(start + batch_size, samples_number);
 
-        batches[i].assign(start_it, end_it);
+        batches[i].assign(indices.begin() + start, indices.begin() + end);
     }
 }
 

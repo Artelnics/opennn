@@ -201,13 +201,15 @@ public:
         return shape_[i];
     }
 
-    Index& back() noexcept
+    Index& back()
     {
+        if(rank_ == 0) throw runtime_error("Shape::back() on empty shape");
         return shape_[rank_ - 1];
     }
 
     const Index& back() const
     {
+        if(rank_ == 0) throw runtime_error("Shape::back() on empty shape");
         return shape_[rank_ - 1];
     }
 
@@ -572,14 +574,7 @@ struct TensorView
         return total_elements;
     }
 
-    void fill(float value)
-    {
-        if (!data) return;
-
-        if (value == 0.0f)
-            CHECK_CUDA(cudaMemset(data, 0, byte_size()));
-        // @todo non-zero fill needs get_cudnn_handle()
-    }
+    void fill(float value);
 
 #endif
 
@@ -990,6 +985,24 @@ inline void Memory::setZero_active()
 #endif
     vector.setZero();
 }
+
+#ifdef OPENNN_WITH_CUDA
+
+inline void TensorView::fill(float value)
+{
+    if(!data) return;
+
+    if(value == 0.0f)
+    {
+        CHECK_CUDA(cudaMemset(data, 0, byte_size()));
+        return;
+    }
+
+    CHECK_CUDNN(cudnnSetTensor(Device::get_cudnn_handle(),
+                               get_descriptor(), data, &value));
+}
+
+#endif
 
 #ifdef OPENNN_WITH_CUDA
 

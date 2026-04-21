@@ -147,6 +147,8 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
 
     const type* input_indices = forward_views[Input][0].data;
 
+    static std::atomic<bool> out_of_range_warned{false};
+
     #pragma omp parallel for
     for(Index i = 0; i < total_tokens; ++i)
     {
@@ -154,6 +156,10 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
 
         if(token_id < 0 || token_id >= weights.rows())
         {
+            if(!out_of_range_warned.exchange(true))
+                std::cerr << "Embedding warning: token id " << token_id
+                          << " out of range [0, " << weights.rows()
+                          << "); zeroing row. Further warnings suppressed.\n";
             outputs.row(i).setZero();
             continue;
         }

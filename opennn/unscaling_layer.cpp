@@ -185,18 +185,19 @@ void Unscaling::from_XML(const XmlDocument& document)
             throw runtime_error("Index " + to_string(index) + " is not correct.\n");
         }
 
-/*
         const XmlElement* descriptives_element = unscaling_neuron_element->first_child_element("Descriptives");
-        if (descriptives_element->get_text())
+        if(descriptives_element && descriptives_element->get_text())
         {
-            const vector<string> splitted_descriptives = get_tokens(descriptives_element->get_text(), " ");
-            descriptives[i].set(
-                type(stof(splitted_descriptives[0])),
-                type(stof(splitted_descriptives[1])),
-                type(stof(splitted_descriptives[2])),
-                type(stof(splitted_descriptives[3])));
+            const vector<string> tokens = get_tokens(descriptives_element->get_text(), " ");
+            if(tokens.size() >= 4)
+            {
+                minimums(i)            = type(stof(tokens[0]));
+                maximums(i)            = type(stof(tokens[1]));
+                means(i)               = type(stof(tokens[2]));
+                standard_deviations(i) = type(stof(tokens[3]));
+            }
         }
-*/
+
         scalers[i] = string_to_scaler_method(read_xml_string(unscaling_neuron_element, "Scaler"));
 
         start_element = unscaling_neuron_element;
@@ -215,7 +216,15 @@ void Unscaling::to_XML(XmlPrinter& printer) const
     {
         printer.open_element("UnscalingNeuron");
         printer.push_attribute("Index", int(i + 1));
-        //add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
+
+        ostringstream descriptives_stream;
+        descriptives_stream.precision(10);
+        descriptives_stream << minimums(i) << ' '
+                            << maximums(i) << ' '
+                            << means(i) << ' '
+                            << standard_deviations(i);
+        add_xml_element(printer, "Descriptives", descriptives_stream.str());
+
         add_xml_element(printer, "Scaler", scaler_method_to_string(scalers[i]));
 
         printer.close_element();
