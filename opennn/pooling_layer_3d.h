@@ -21,7 +21,7 @@ class Pooling3d final : public Layer
 
 public:
 
-    Pooling3d(const Shape& = {0, 0}, // Input shape {sequence_length, input_features}
+    Pooling3d(const Shape& = {0, 0},
               const PoolingMethod& = PoolingMethod::MaxPooling,
               const string& = "sequence_pooling_layer");
 
@@ -59,22 +59,16 @@ private:
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        vector<Shape> shapes;
-
-        if (pooling_method == PoolingMethod::MaxPooling)
-            shapes.push_back({ batch_size, input_features }); // MaximalIndices
-
-        shapes.push_back({ batch_size, input_features }); // Output (must be last — wiring convention)
-
-        return shapes;
+        return {(pooling_method == PoolingMethod::MaxPooling)
+                    ? Shape{batch_size, input_features}   // MaximalIndices
+                    : Shape{},
+                { batch_size, input_features }};          // Output (must be last)
     }
 
     vector<cudnnDataType_t> get_forward_dtypes(Index) const override
     {
-        if (pooling_method == PoolingMethod::MaxPooling)
-            return {CUDNN_DATA_FLOAT,        // MaximalIndices — integer metadata, stays FP32
-                    CUDNN_ACTIVATION_DTYPE}; // Output
-        return {CUDNN_ACTIVATION_DTYPE};     // Output only
+        return {CUDNN_DATA_FLOAT,        // MaximalIndices
+                CUDNN_ACTIVATION_DTYPE}; // Output
     }
 
     vector<Shape> get_backward_shapes(Index batch_size) const override

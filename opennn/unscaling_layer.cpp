@@ -56,7 +56,7 @@ void Unscaling::set(const Index new_neurons_number, const string& new_label)
 
     label = new_label;
 
-    set_scalers("MinimumMaximum"); // string overload converts internally
+    set_scalers("MinimumMaximum");
 
     set_min_max_range(type(-1), type(1));
 
@@ -76,7 +76,7 @@ void Unscaling::set_input_shape(const Shape& new_input_shape)
     maximums.resize(new_input_shape[0]);
 }
 
-void Unscaling::set_output_shape(const Shape& new_output_shape)
+void Unscaling::set_output_shape(const Shape& /*new_output_shape*/)
 {
 }
 
@@ -153,9 +153,6 @@ void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    // Data targets are scaled in-place by Optimizer::set_scaling(),
-    // so the unscaling layer just copies input to output.
-    // The unscaling coefficients are stored for serialization/expression only.
     copy(forward_views[Input][0], forward_views[Output][0]);
 }
 
@@ -188,8 +185,8 @@ void Unscaling::from_XML(const XmlDocument& document)
             throw runtime_error("Index " + to_string(index) + " is not correct.\n");
         }
 
-        const XmlElement* descriptives_element = unscaling_neuron_element->first_child_element("Descriptives");
 /*
+        const XmlElement* descriptives_element = unscaling_neuron_element->first_child_element("Descriptives");
         if (descriptives_element->get_text())
         {
             const vector<string> splitted_descriptives = get_tokens(descriptives_element->get_text(), " ");

@@ -189,9 +189,9 @@ void Optimizer::set_unscaling()
 {
     check();
 
+/*
     const Dataset* dataset = loss->get_dataset();
     const NeuralNetwork* neural_network = loss->get_neural_network();
-/*
     // Scaling layer
 
     if(neural_network->has("Scaling2d"))

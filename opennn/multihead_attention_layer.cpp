@@ -14,6 +14,7 @@
 #include "loss.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "random_utilities.h"
 
 namespace opennn
 {
@@ -79,6 +80,28 @@ vector<Shape> MultiHeadAttention::get_parameter_shapes() const
             {embedding_dimension}};
 }
 
+void MultiHeadAttention::set_parameters_random()
+{
+    if(embedding_dimension == 0) return;
+
+    const type weight_limit = sqrt(type(6) / type(2 * embedding_dimension));
+
+    const int weight_slots[] = {QueryWeight, KeyWeight, ValueWeight, ProjectionWeight};
+    for(const int slot : weight_slots)
+    {
+        if(parameters[slot].empty()) continue;
+        set_random_uniform(VectorMap(parameters[slot].data, parameters[slot].size()),
+                           -weight_limit, weight_limit);
+    }
+
+    const int bias_slots[] = {QueryBias, KeyBias, ValueBias, ProjectionBias};
+    for(const int slot : bias_slots)
+    {
+        if(parameters[slot].empty()) continue;
+        VectorMap(parameters[slot].data, parameters[slot].size()).setZero();
+    }
+}
+
 void MultiHeadAttention::set(Index new_query_sequence_length,
                              Index new_source_sequence_length,
                              Index new_embedding_dimension,
@@ -118,9 +141,45 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     }
 }
 
+#ifdef OPENNN_WITH_CUDA
+
+void MultiHeadAttention::init_cuda(Index batch_size)
+{
+    if(dropout_rate <= type(0)) return;
+    if(heads_number == 0 || embedding_dimension == 0) return;
+
+    if(dropout_arguments.descriptor)    { cudnnDestroyDropoutDescriptor(dropout_arguments.descriptor); dropout_arguments.descriptor = nullptr; }
+    if(dropout_arguments.states)        { cudaFree(dropout_arguments.states);        dropout_arguments.states = nullptr; }
+    if(dropout_arguments.reserve_space) { cudaFree(dropout_arguments.reserve_space); dropout_arguments.reserve_space = nullptr; }
+
+    cudnnTensorDescriptor_t temp_desc = nullptr;
+    cudnnCreateTensorDescriptor(&temp_desc);
+    cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_ACTIVATION_DTYPE,
+                               static_cast<int>(batch_size),
+                               static_cast<int>(source_sequence_length),
+                               static_cast<int>(heads_number),
+                               static_cast<int>(query_sequence_length));
+
+    CHECK_CUDNN(cudnnCreateDropoutDescriptor(&dropout_arguments.descriptor));
+    CHECK_CUDNN(cudnnDropoutGetStatesSize(Device::get_cudnn_handle(), &dropout_arguments.states_size));
+    CHECK_CUDA(cudaMalloc(&dropout_arguments.states, dropout_arguments.states_size));
+    CHECK_CUDNN(cudnnSetDropoutDescriptor(dropout_arguments.descriptor, Device::get_cudnn_handle(),
+                                          static_cast<float>(dropout_rate),
+                                          dropout_arguments.states, dropout_arguments.states_size,
+                                          static_cast<unsigned long long>(random_integer(0, 1 << 30))));
+    CHECK_CUDNN(cudnnDropoutGetReserveSpaceSize(temp_desc, &dropout_arguments.reserve_size));
+    CHECK_CUDA(cudaMalloc(&dropout_arguments.reserve_space, dropout_arguments.reserve_size));
+
+    dropout_arguments.rate = dropout_rate;
+
+    cudnnDestroyTensorDescriptor(temp_desc);
+}
+
+#endif
+
 void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagation,
                                            size_t layer,
-                                           bool) noexcept
+                                           bool is_training) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
 
@@ -149,11 +208,21 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
 
     softmax(attention_weights);
 
-    // Attention · V into [B, H, Sq, D] scratch, then transpose to [B, Sq, H, D]
+    const bool apply_dropout = is_training && dropout_rate > type(0);
+    TensorView& attention_used = apply_dropout
+        ? forward_views[AttentionWeightsDropped][0]
+        : attention_weights;
+
+    if(apply_dropout)
+    {
+        copy(attention_weights, attention_used);
+        dropout(attention_used, dropout_arguments);
+    }
+
     TensorView attention_out_scratch = forward_views[AttentionOutputTransposed][0].reshape(heads_shape(batch_size));
     TensorView concatenated_4d       = concatenated.reshape(concat_shape(batch_size));
 
-    multiply(attention_weights, false, value, false, attention_out_scratch);
+    multiply(attention_used, false, value, false, attention_out_scratch);
     merge_heads(attention_out_scratch, concatenated_4d);
 
     const Shape flat_shape = {total_rows, embedding_dimension};
@@ -204,24 +273,27 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     TensorView& key_grad        = backward_views[KeyGradient][0];
     TensorView& value_grad      = backward_views[ValueGradient][0];
 
-    // Transpose concat_grad [B, Sq, H, D] -> scratch [B, H, Sq, D]
     TensorView concat_grad_4d = concat_grad.reshape(concat_shape(batch_size));
     TensorView scratch_4d     = forward_views[TransposeScratch][0].reshape(heads_shape(batch_size));
 
     split_heads(concat_grad_4d, scratch_4d);
 
-    // value_grad = attention_weights^T · scratch
-    multiply(attention_weights, true,  scratch_4d, false, value_grad);
+    const bool dropout_active = dropout_rate > type(0);
+    const TensorView& attention_forward_output = dropout_active
+        ? forward_views[AttentionWeightsDropped][0]
+        : attention_weights;
 
-    // att_weight_grad = scratch · value^T
+    multiply(attention_forward_output, true, scratch_4d, false, value_grad);
+
     multiply(scratch_4d, false, forward_views[Value][0], true, att_weight_grad);
+
+    if(dropout_active)
+        dropout_gradient(att_weight_grad, att_weight_grad, dropout_arguments);
 
     softmax_backward(attention_weights, att_weight_grad);
 
-    // query_grad = att_weight_grad · key  (scaling folded into alpha)
     multiply(att_weight_grad, false, forward_views[Key][0],   false, query_grad, scaling_factor, type(0));
 
-    // key_grad = att_weight_grad^T · query
     multiply(att_weight_grad, true,  forward_views[Query][0], false, key_grad,   scaling_factor, type(0));
 
     projection_gradient(query_grad, query_input, parameters[QueryWeight],

@@ -36,7 +36,6 @@ void Loss::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 
 void Loss::set_normalization_coefficient()
 {
-    // Defaults — overwritten below for losses that need data-derived values.
     normalization_coefficient = type(1);
     positives_weight = type(1);
     negatives_weight = type(1);
@@ -47,7 +46,7 @@ void Loss::set_normalization_coefficient()
     if(error == Error::WeightedSquaredError)
     {
         const Index targets_number = dataset->get_features_number("Target");
-        if(targets_number != 1) return;  // only for single-target binary
+        if(targets_number != 1) return;
 
         const VectorI distribution = dataset->calculate_target_distribution();
         const Index negatives = distribution(0);
@@ -163,8 +162,6 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
 
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        // In the master, CUDA regularization value is not computed on GPU either
-        // Just skip the loss_value update (gradient is the important part)
         return;
     }
 #endif
@@ -511,7 +508,7 @@ MatrixR Loss::calculate_inverse_hessian()
 
 type Loss::calculate_h(const type x)
 {
-    static const type sqrt_eta = type(1e-3); // sqrt(1e-6)
+    static const type sqrt_eta = type(1e-3);
 
     return sqrt_eta * (type(1) + abs(x));
 }

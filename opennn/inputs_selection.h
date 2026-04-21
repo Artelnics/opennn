@@ -116,11 +116,7 @@ struct InputsSelectionResults
 
     VectorR validation_error_history;
 
-    // Mean Validation Error of different neural networks
-
     VectorR  mean_validation_error_history;
-
-    // Mean Training Error of different neural networks
 
     VectorR mean_training_error_history;
 

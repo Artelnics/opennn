@@ -201,7 +201,6 @@ TrainingResults StochasticGradientDescent::train()
     BackPropagation training_back_propagation(training_batch_size, loss);
     BackPropagation validation_back_propagation(validation_batch_size, loss);
 
-    //type training_loss = type(0);
     type training_error = type(0);
     type validation_error = type(0);
 
@@ -232,7 +231,6 @@ TrainingResults StochasticGradientDescent::train()
 
         const type current_learning_rate = initial_learning_rate / (type(1) + type(epoch) * initial_decay);
 
-        //training_loss = type(0);
         training_error = type(0);
 
         optimization_data.iteration = 0;
@@ -264,13 +262,11 @@ TrainingResults StochasticGradientDescent::train()
             results.training_error_history(epoch) = training_back_propagation.error;
 
             training_error += training_back_propagation.error;
-            //training_loss += training_back_propagation.loss;
 
             // Gradient
 
             update_parameters(training_back_propagation, optimization_data, current_learning_rate);
 
-            //if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
         }
 
         // Loss
@@ -344,8 +340,6 @@ TrainingResults StochasticGradientDescent::train()
 
             break;
         }
-
-        // Update stuff
 
     }
 

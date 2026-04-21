@@ -75,8 +75,8 @@ public:
     {
         auto& backward_views = back_propagation.backward_views[layer];
 
-        copy(backward_views[OutputGradient][0], backward_views[InputGradient][0]);
-        copy(backward_views[OutputGradient][0], backward_views[InputGradient][1]);
+        copy(backward_views[OutputGradient][0], backward_views[InputGradient0][0]);
+        copy(backward_views[OutputGradient][0], backward_views[InputGradient1][0]);
     }
 
     void from_XML(const XmlDocument& document) override
@@ -109,7 +109,7 @@ private:
     Shape input_shape;
 
     enum Forward {Input, Output};
-    enum Backward {OutputGradient, InputGradient};
+    enum Backward {OutputGradient, InputGradient0, InputGradient1};
 };
 
 }

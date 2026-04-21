@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-//#include "string_utilities.h"
 #include "tensor_utilities.h"
 #include "neural_network.h"
 #include "dense_layer.h"
@@ -75,7 +74,6 @@ void NeuralNetwork::compile()
     for (auto& layer : layers)
         pointer = layer->link_parameters(pointer);
 
-    // Non-trainable persistent state (analogous to parameters)
     Index total_states = 0;
     for (const auto& layer : layers)
         for (const Shape& s : layer->get_state_shapes())
@@ -515,7 +513,6 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                 const size_t input_view_index = (k < input_view.size()) ? k : 0;
                 input_slot[k] = input_view[input_view_index];
             }
-            // else: already wired in ForwardPropagation::set() to upstream output
         }
     }
 
@@ -529,8 +526,6 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 {
     VectorR& parameters_vector = get_parameters();
 
-    // Save current values without changing buffer address (Layer TensorViews
-    // are bound to parameters_vector.data()). Swap would relocate the buffer and break them.
     const VectorR saved_parameters = parameters_vector;
 
     parameters_vector = new_parameters;
@@ -744,7 +739,6 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
 {
     const XmlElement* neural_network_element = get_xml_root(document, "NeuralNetwork");
 
-    // 1. Load Input Variables
     const XmlElement* inputs_element = neural_network_element->first_child_element("Inputs");
     if(inputs_element)
     {
@@ -757,7 +751,6 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
         });
     }
 
-    // 2. Load Layers Topology
     const XmlElement* layers_container = neural_network_element->first_child_element("Layers");
     if(!layers_container)
         throw runtime_error("NeuralNetwork error: layers container is nullptr.");
@@ -766,38 +759,31 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
 
     layers.clear();
     layer_input_indices.clear();
-    // Pre-reserve to avoid frequent reallocations during add_layer
     layers.reserve(layers_number);
     layer_input_indices.resize(layers_number);
 
-    // Iterate through children of <Layers>, skipping the <LayersNumber> tag
     const XmlElement* layer_element = layers_container->first_child_element();
     while(layer_element)
     {
         string tag_name = layer_element->name();
 
-        // Skip metadata tags, only process actual Layer types
         if(tag_name != "LayersNumber" && tag_name != "LayerInputIndices")
         {
-            // Use the Registry to create the specific layer type (Dense, Scaling, etc.)
             unique_ptr<Layer> layer = Registry<Layer>::instance().create(tag_name);
 
             if (!layer)
                 throw runtime_error("Layer type '" + tag_name + "' not found in Registry. "
                                                                 "Ensure the layer file is linked and REGISTER macro is used.");
 
-            // Create a temporary sub-document for the layer to parse its own data
             XmlDocument layer_doc;
             layer_doc.insert_first_child(layer_element->deep_clone(&layer_doc));
             layer->from_XML(layer_doc);
 
-            // Add to the network
             layers.push_back(std::move(layer));
         }
         layer_element = layer_element->next_sibling_element();
     }
 
-    // 3. Load Connectivity (Layer Input Indices)
     const XmlElement* connectivity_element = layers_container->first_child_element("LayerInputIndices");
     if(connectivity_element)
     {
@@ -820,7 +806,6 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
         }
     }
 
-    // 4. Load Output Variables
     const XmlElement* outputs_element = neural_network_element->first_child_element("Outputs");
     if(outputs_element)
     {
@@ -833,14 +818,8 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
         });
     }
 
-    // 5. Global Settings
-
-    // 6. COMPILE Topology
-    // This establishes input/output shapes and allocates the 'parameters' vector
-    // with correct ALIGN_BYTES alignment for vectorized operations.
     compile();
 
-    // 7. Load Flattened Parameters
     const XmlElement* parameters_element = neural_network_element->first_child_element("Parameters");
     if(parameters_element && parameters_element->get_text())
     {
@@ -851,14 +830,11 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
         {
             if(xml_parameters.size() != parameters.size())
             {
-                // This usually happens if the XML was generated with a different architecture
                 cout << "Warning: XML parameter size (" << xml_parameters.size()
                      << ") differs from Compiled size (" << parameters.size() << ").\n";
             }
 
             const Index elements_to_copy = min(parameters.size(), xml_parameters.size());
-            // Since 'parameters' is already linked to layer views via compile(),
-            // copying into 'parameters' updates all layers simultaneously.
             std::copy(xml_parameters.data(), xml_parameters.data() + elements_to_copy, parameters.data());
         }
     }
@@ -904,14 +880,11 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 
     const Index parameters_number = parameters.size();
 
-//    VectorR new_parameters(parameters_number);
-
     file.read(reinterpret_cast<char*>(parameters.data()), parameters_number * sizeof(type));
 
     if(!file)
         throw runtime_error("Error reading binary file: " + file_name.string());
 
-//    set_parameters(new_parameters);
 }
 
 void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_name)
@@ -1164,16 +1137,13 @@ void NeuralNetwork::link_states_cpu()
 MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
                                                 ForwardPropagation& fp)
 {
-    // Parameters → device, layer views → device pointers
     copy_parameters_device();
     link_parameters_device();
     copy_states_device();
     link_states_device();
 
-    // ForwardPropagation buffers → device, fp.views → device pointers
     fp.allocate_device();
 
-    // Upload inputs CPU → GPU (allocate temp device buffer)
     const Index input_size = input_views_cpu[0].size();
     type* input_device = nullptr;
     CHECK_CUDA(cudaMalloc(&input_device, input_size * sizeof(type)));
@@ -1185,10 +1155,8 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     vector<TensorView> input_views_gpu = input_views_cpu;
     input_views_gpu[0].data = input_device;
 
-    // Forward on GPU (math_utilities dispatches via Device::is_gpu)
     forward_propagate(input_views_gpu, fp, false);
 
-    // Pick last layer output (same logic as CPU path)
     const size_t layers_count = get_layers_number();
     const TensorView out_view = (layers_count > 0
                            && layers_count - 1 < fp.views.size()
@@ -1197,7 +1165,6 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
                           ? fp.views[layers_count - 1].back()[0]
                           : fp.get_last_trainable_layer_outputs();
 
-    // Download outputs GPU → CPU
     const Index batch_size = input_views_cpu[0].shape[0];
     const Index out_cols = out_view.size() / batch_size;
     MatrixR result(batch_size, out_cols);
@@ -1206,11 +1173,9 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
                           out_view.size() * sizeof(type),
                           cudaMemcpyDeviceToHost));
 
-    // Free temp input buffer and restore CPU layer views
     CHECK_CUDA(cudaFree(input_device));
     link_parameters_cpu();
     link_states_cpu();
-    // (no copy_states_host: inference doesn't update running stats)
 
     return result;
 }

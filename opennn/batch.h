@@ -31,7 +31,6 @@ struct Batch
 
     TensorView get_targets() const;
 
-    // Returns the target view for the currently active device (GPU if enabled, else host).
     TensorView get_targets_active() const
     {
 #ifdef OPENNN_WITH_CUDA

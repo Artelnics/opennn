@@ -40,20 +40,18 @@ public:
 
     vector<Shape> get_parameter_shapes() const override;
 
-    // Forward shapes: intermediate buffers first, output last.
-    // The last shape is the one wired to the downstream layer.
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        return {{batch_size, sequence_length },                      // slot 1: Means
-                {batch_size, sequence_length },                      // slot 2: StandardDeviations
-                {batch_size, sequence_length, embedding_dimension},  // slot 3: NormalizedInputs
-                {batch_size, sequence_length, embedding_dimension}}; // slot 4: Output (LAST = wired downstream)
+        return {{batch_size, sequence_length },                      // Means
+                {batch_size, sequence_length },                      // StandardDeviations
+                {batch_size, sequence_length, embedding_dimension},  // NormalizedInputs
+                {batch_size, sequence_length, embedding_dimension}}; // Output
     }
 
     vector<cudnnDataType_t> get_forward_dtypes(Index) const override
     {
-        return {CUDNN_DATA_FLOAT,        // Means — running stat, stays FP32
-                CUDNN_DATA_FLOAT,        // StandardDeviations — running stat, stays FP32
+        return {CUDNN_DATA_FLOAT,        // Means
+                CUDNN_DATA_FLOAT,        // StandardDeviations
                 CUDNN_ACTIVATION_DTYPE,  // NormalizedInputs
                 CUDNN_ACTIVATION_DTYPE}; // Output
     }
@@ -87,7 +85,6 @@ private:
 
     enum Parameters {Gamma, Beta};
 
-    // View slots: 0=Input(wired), 1=Means, 2=StdDevs, 3=NormalizedInput, 4=Output
     enum Forward {Input = 0, Means = 1, StandardDeviations = 2, NormalizedInput = 3, Output = 4};
 
     enum Backward {OutputGradient = 0, InputGradient = 1};

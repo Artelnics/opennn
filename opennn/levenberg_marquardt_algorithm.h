@@ -96,9 +96,6 @@ struct BackPropagationLM
 
     VectorR gradient;
     MatrixR hessian;
-
-    //VectorR regularization_gradient;
-    //MatrixR regularization_hessian;
 };
 
 class LevenbergMarquardtAlgorithm final : public Optimizer

@@ -66,9 +66,9 @@ private:
 
     Index width_no_padding = 0;
 
-    Index regions_number = 1000; // Number of region proposals per image
-    Index region_rows = 6; // Final region width to warp
-    Index region_variables = 6; // Final region height to warp
+    Index regions_number = 1000;
+    Index region_rows = 6;
+    Index region_variables = 6;
 
 };
 

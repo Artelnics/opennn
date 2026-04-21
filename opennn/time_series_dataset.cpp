@@ -151,7 +151,7 @@ void TimeSeriesDataset::from_XML(const XmlDocument& data_set_document)
 
     const XmlElement* data_source_element = require_xml_element(data_set_element, "DataSource");
 
-    const XmlElement* file_type_element = require_xml_element(data_source_element, "FileType");
+    (void)require_xml_element(data_source_element, "FileType");
 
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_separator_name(read_xml_string(data_source_element, "Separator"));

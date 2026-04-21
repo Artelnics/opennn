@@ -243,7 +243,7 @@ protected:
     Memory parameters;
     vector<vector<vector<TensorView>>> parameter_views;
 
-    Memory states; // non-trainable persistent state
+    Memory states;
 };
 
 }

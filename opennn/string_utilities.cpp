@@ -16,7 +16,6 @@ namespace opennn
 
 void prepare_line(string& line)
 {
-    //decode(line);
     trim(line);
     normalize_csv_line(line);
     erase(line, '"');
@@ -185,7 +184,6 @@ VectorR to_type_vector(const string& text, const string& separator)
         errno = 0;
         const float value = strtof(begin, &end);
 
-        // NaN if parse failed, overflow, or trailing garbage.
         type_vector(i) = (end == begin || errno == ERANGE || *end != '\0')
             ? type(nan(""))
             : type(value);
@@ -353,11 +351,7 @@ void replace_all_word_appearances(string& text, const string& to_replace, const 
 
     while((start_pos = text.find(to_replace, start_pos)) != string::npos)
     {
-        // Verify that there are no letters or underscores before to_replace
-
         const bool is_prefix_valid = (start_pos == 0) || (!isalnum(text[start_pos - 1]) && text[start_pos - 1] != '_');
-
-        // Verify that there are no letters or underscores after to_replace
 
         const size_t end_pos = start_pos + to_replace.length();
         const bool is_suffix_valid = (end_pos == text.length()) || (!isalnum(text[end_pos]) && text[end_pos] != '_');
@@ -378,7 +372,6 @@ void replace_all_appearances(string& text, const string& to_replace, const strin
     size_t position = 0;
     size_t previous_position;
 
-    // Reserves rough estimate of override size of string
     buffer.reserve(text.size());
 
     while(true)
@@ -516,8 +509,6 @@ void replace_substring_in_string (vector<string>& tokens, string& expression, co
 
     for(const string& token : tokens)
     {
-        //const string to_replace(token);
-
         const string new_word = keyword + " " + token;
 
         string::size_type position = 0;

@@ -46,10 +46,10 @@ class Pooling final : public Layer
 
 public:
 
-    Pooling(const Shape& = {2, 2, 1}, // Input shape {height,width,channels}
-            const Shape& = { 2, 2 },  // Pool shape {pool_height,pool_width}
-            const Shape& = { 2, 2 },  // Stride shape {row_stride, column_stride}
-            const Shape& = { 0, 0 },  // Padding shape {padding_height, padding_width}
+    Pooling(const Shape& = {2, 2, 1},
+            const Shape& = { 2, 2 },
+            const Shape& = { 2, 2 },
+            const Shape& = { 0, 0 },
             const string& = "MaxPooling",
             const string& = "pooling_layer");
 
@@ -131,7 +131,7 @@ private:
         if (pooling_method == PoolingMethod::MaxPooling)
             shapes.push_back(Shape{batch_size}.append(out_shape)); // MaximalIndices
 
-        shapes.push_back(Shape{batch_size}.append(out_shape)); // Output (must be last for wiring)
+        shapes.push_back(Shape{batch_size}.append(out_shape)); // Output (must be last)
 
         return shapes;
     }

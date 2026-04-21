@@ -20,7 +20,6 @@ namespace opennn
     template class Addition<3>;
     template class Addition<4>;
 
-    // Linker fix: Ensures the static registration macros in this file are run.
     void reference_addition_layer() { }
 
 }

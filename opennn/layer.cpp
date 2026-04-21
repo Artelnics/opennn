@@ -38,7 +38,10 @@ void Layer::set_parameters_glorot()
 
 Index Layer::get_parameters_number() const
 {
-    return get_size(get_parameter_shapes());
+    Index total = 0;
+    for(const Shape& s : get_parameter_shapes())
+        total += s.size();
+    return total;
 }
 
 vector<string> Layer::get_default_feature_names() const
@@ -76,7 +79,6 @@ type *Layer::link_parameters(type *pointer)
 
         assert(is_aligned(pointer));
 
-        // Parameters are FP32 master copies (AMP recipe).
         parameters[i] = TensorView(pointer, shapes[i], CUDNN_DATA_FLOAT);
 
         pointer += get_aligned_size(shapes[i].size());
@@ -95,7 +97,6 @@ type *Layer::link_states(type *pointer)
 
         assert(is_aligned(pointer));
 
-        // States (running mean/variance) are FP32 stats.
         states[i] = TensorView(pointer, shapes[i], CUDNN_DATA_FLOAT);
 
         pointer += get_aligned_size(shapes[i].size());

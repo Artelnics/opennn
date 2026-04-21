@@ -41,7 +41,6 @@ void set_seed(Index seed)
     global_seed.store(seed);
     seed_generation.fetch_add(1);
 
-    // Re-initialize the calling thread immediately
     initialize_generator();
 }
 
@@ -112,6 +111,42 @@ void set_random_uniform(VectorMap tensor, type min, type max)
 void set_random_uniform(MatrixMap tensor, type min, type max)
 {
     uniform_real_distribution<type> distribution(min, max);
+
+    #pragma omp parallel for
+    for(Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = distribution(get_generator());
+}
+
+void set_random_normal(VectorR& tensor, type mean, type std_dev)
+{
+    normal_distribution<type> distribution(mean, std_dev);
+
+    #pragma omp parallel for
+    for(Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = distribution(get_generator());
+}
+
+void set_random_normal(MatrixR& tensor, type mean, type std_dev)
+{
+    normal_distribution<type> distribution(mean, std_dev);
+
+    #pragma omp parallel for
+    for(Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = distribution(get_generator());
+}
+
+void set_random_normal(VectorMap tensor, type mean, type std_dev)
+{
+    normal_distribution<type> distribution(mean, std_dev);
+
+    #pragma omp parallel for
+    for(Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = distribution(get_generator());
+}
+
+void set_random_normal(MatrixMap tensor, type mean, type std_dev)
+{
+    normal_distribution<type> distribution(mean, std_dev);
 
     #pragma omp parallel for
     for(Index i = 0; i < tensor.size(); ++i)

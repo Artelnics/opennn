@@ -10,7 +10,6 @@
 
 #include "pch.h"
 #include "tensor_utilities.h"
-//#include "random_utilities.h"
 
 namespace opennn
 {
@@ -92,16 +91,14 @@ struct BatchNormalizationArguments
     cudnnTensorDescriptor_t per_activation_descriptor = nullptr;
 };
 
-// All buffers/descriptors must be pre-allocated; dropout()/dropout_gradient()
-// only use them, they don't create or resize anything.
 struct DropoutArguments
 {
     type rate = type(0);
-    VectorR mask_cpu;                              // CPU: 1 for kept, 0 for dropped (size = output.size())
-    cudnnDropoutDescriptor_t descriptor = nullptr; // cudnnSetDropoutDescriptor(...)
-    void* states = nullptr;                        // cudnnDropoutGetStatesSize
+    VectorR mask_cpu;
+    cudnnDropoutDescriptor_t descriptor = nullptr;
+    void* states = nullptr;
     size_t states_size = 0;
-    void* reserve_space = nullptr;                 // cudnnDropoutGetReserveSpaceSize (saved mask)
+    void* reserve_space = nullptr;
     size_t reserve_size = 0;
 };
 

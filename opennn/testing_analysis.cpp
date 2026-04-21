@@ -405,7 +405,7 @@ VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
     const type normalization_coefficient = (targets.rowwise() - targets_mean.transpose()).squaredNorm();
     normalized_squared_error(outputs_view, targets_view, normalization_coefficient, errors(3), nullptr);
 
-    // 4. Minkowski Error (defaulting to 1.5)
+    // 4. Minkowski Error
     minkowski_error(outputs_view, targets_view, 1.5f, errors(4), nullptr);
 
     return errors;
@@ -427,7 +427,6 @@ VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sa
 
     VectorR errors(6);
 
-    // Standard errors (SSE, MSE, RMSE, NSE)
     const VectorR std_errors = calculate_errors(targets, outputs);
     errors.head(4) = std_errors.head(4);
 
@@ -455,7 +454,6 @@ VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& 
 
     VectorR errors(5);
 
-    // Standard errors (SSE, MSE, RMSE, NSE)
     const VectorR std_errors = calculate_errors(targets, outputs);
     errors.head(4) = std_errors.head(4);
 
@@ -465,7 +463,7 @@ VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& 
     return errors;
 }
 
-type TestingAnalysis::calculate_masked_accuracy(const Tensor3& outputs, const MatrixR& targets) const
+type TestingAnalysis::calculate_masked_accuracy(const Tensor3& /*outputs*/, const MatrixR& /*targets*/) const
 {
 /*
     const Index batch_size = outputs.rows();
@@ -1079,8 +1077,6 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates(cons
 
     Tensor< VectorI, 2> multiple_classification_rates(targets_number, targets_number);
 
-    // Count instances per class
-
     const MatrixI confusion = calculate_confusion(targets, outputs);
 
     for(Index i = 0; i < targets_number; ++i)
@@ -1317,7 +1313,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
     return {};
 }
 
-string TestingAnalysis::test_transformer(const vector<string>& context_string, bool imported_vocabulary) const
+string TestingAnalysis::test_transformer(const vector<string>& /*context_string*/, bool /*imported_vocabulary*/) const
 {
     cout<<"Testing transformer..."<<endl;
 /*
@@ -1518,10 +1514,8 @@ void TestingAnalysis::to_XML(XmlPrinter& printer) const
     printer.close_element();
 }
 
-void TestingAnalysis::from_XML(const XmlDocument& document)
+void TestingAnalysis::from_XML(const XmlDocument& /*document*/)
 {
-    const XmlElement* root_element = get_xml_root(document, "TestingAnalysis");
-
 }
 
 void TestingAnalysis::save(const filesystem::path& file_name) const

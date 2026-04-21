@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "math_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
@@ -29,19 +30,26 @@ public:
                        Index = 0,
                        const string& = string());
 
+    ~MultiHeadAttention() override
+    {
+#ifdef OPENNN_WITH_CUDA
+        if(dropout_arguments.descriptor)    cudnnDestroyDropoutDescriptor(dropout_arguments.descriptor);
+        if(dropout_arguments.states)        cudaFree(dropout_arguments.states);
+        if(dropout_arguments.reserve_space) cudaFree(dropout_arguments.reserve_space);
+#endif
+    }
+
     Index get_query_sequence_length() const { return query_sequence_length; }
     Index get_source_sequence_length() const { return source_sequence_length; }
     Index get_embedding_dimension() const { return embedding_dimension; }
     Index get_heads_number() const { return heads_number; }
     Index get_head_dimension() const;
 
-    // Per-head-split layout used by attention GEMMs: [B, H, Sq, D].
     Shape heads_shape(Index batch_size) const
     {
         return {batch_size, heads_number, query_sequence_length, get_head_dimension()};
     }
 
-    // Concatenated-heads layout after merge_heads: [B, Sq, H, D].
     Shape concat_shape(Index batch_size) const
     {
         return {batch_size, query_sequence_length, heads_number, get_head_dimension()};
@@ -61,9 +69,14 @@ public:
 
         const Index max_seq = max(query_sequence_length, source_sequence_length);
 
+        const Shape attn_drop_shape = (dropout_rate > type(0))
+            ? Shape{batch_size, heads_number, query_sequence_length, source_sequence_length}
+            : Shape{};
+
         return {{batch_size, heads_number, query_sequence_length, head_dimension},         // Query
                 {batch_size, heads_number, source_sequence_length, head_dimension},        // Key
                 {batch_size, heads_number, query_sequence_length, source_sequence_length}, // AttentionWeights
+                attn_drop_shape,                                                           // AttentionWeightsDropped
                 {batch_size, query_sequence_length, embedding_dimension},                  // ConcatenatedAttentionOutputs
                 {batch_size, heads_number, source_sequence_length, head_dimension},        // Value
                 {batch_size, source_sequence_length},                                      // PaddingMask
@@ -100,6 +113,12 @@ public:
 
     void set_dropout_rate(const type r) { dropout_rate = r; }
 
+    void set_parameters_random() override;
+
+#ifdef OPENNN_WITH_CUDA
+    void init_cuda(Index batch_size);
+#endif
+
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
@@ -116,26 +135,23 @@ private:
 
     enum Parameters {QueryWeight, QueryBias, KeyWeight, KeyBias, ValueWeight, ValueBias,
                      ProjectionWeight, ProjectionBias};
-    enum Forward {Input, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value,
+    enum Forward {Input, Query, Key, AttentionWeights, AttentionWeightsDropped,
+                  ConcatenatedAttentionOutputs, Value,
                   PaddingMask, TransposeScratch, AttentionOutputTransposed};
-    // Output is always the last forward slot (wiring convention) — access via .back()
     enum Backward {OutputGradient, InputQueryGradient, InputSourceGradient,
                    AttentionWeightGradient, ConcatenatedOutputGradient,
                    QueryGradient, KeyGradient, ValueGradient};
 
-    // True when the layer is invoked with a single input (query == source).
     static bool is_self_attention(const vector<vector<TensorView>>& forward_views)
     {
         return forward_views[Input].size() == 1;
     }
 
-    // Query input for the attention (first input).
     static const TensorView& get_query_input(const vector<vector<TensorView>>& forward_views)
     {
         return forward_views[Input][0];
     }
 
-    // Source input for the attention: the second input when cross-attention, otherwise the (only) query input.
     static const TensorView& get_source_input(const vector<vector<TensorView>>& forward_views)
     {
         return is_self_attention(forward_views) ? forward_views[Input][0] : forward_views[Input][1];
@@ -144,9 +160,10 @@ private:
     bool use_causal_mask = false;
 
     MatrixR causal_mask;
-    MatrixB key_mask; // Starting to implement (should be used before softmax so that the probability of the padding is zero)
+    MatrixB key_mask;
 
     type dropout_rate = type(0);
+    DropoutArguments dropout_arguments;
 };
 
 } 

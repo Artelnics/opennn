@@ -15,7 +15,9 @@ target_link_libraries(blank_cuda PRIVATE
 )
 
 target_compile_options(blank_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
-add_compile_options(-Wno-interference-size)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
+    add_compile_options(-Wno-interference-size)
+endif()
 
 if(HAVE_CUDNN)
     target_link_libraries(blank_cuda PRIVATE ${CUDNN_LIBRARY})

@@ -107,10 +107,10 @@ Histogram::Histogram(const VectorR& new_frequencies,
                      const VectorR& new_centers,
                      const VectorR& new_minimums,
                      const VectorR& new_maximums)
-    : centers(new_centers),
-      frequencies(new_frequencies),
-      minimums(new_minimums),
-      maximums(new_maximums)
+    : minimums(new_minimums),
+      maximums(new_maximums),
+      centers(new_centers),
+      frequencies(new_frequencies)
 {
 }
 
@@ -872,15 +872,12 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
 
     vector<Descriptives> descriptives_results(column_indices_size);
 
-    // Using VectorR (Matrix API) instead of VectorR
     VectorR minimums = VectorR::Zero(column_indices_size);
     VectorR maximums = VectorR::Zero(column_indices_size);
 
-    // Use double precision for intermediate accumulation
     VectorXd sums = VectorXd::Zero(column_indices_size);
     VectorXd squared_sums = VectorXd::Zero(column_indices_size);
 
-    // Count remains VectorI (assuming Matrix<Index, Dynamic, 1>)
     VectorI count = VectorI::Zero(column_indices_size);
 
 #pragma omp parallel for
@@ -938,7 +935,6 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
             standard_deviation(i) = sqrt(max(0.0, variance));
         }
 
-        // Populate the results vector
         descriptives_results[i].set(minimums(i),
                                     maximums(i),
                                     static_cast<type>(mean(i)),

@@ -123,8 +123,8 @@ private:
     {
         return {CUDNN_ACTIVATION_DTYPE,  // PaddedInputs
                 CUDNN_ACTIVATION_DTYPE,  // Convolution
-                CUDNN_DATA_FLOAT,        // BatchNormMean — stat, stays FP32
-                CUDNN_DATA_FLOAT,        // BatchNormInverseVariance — stat, stays FP32
+                CUDNN_DATA_FLOAT,        // BatchNormMean
+                CUDNN_DATA_FLOAT,        // BatchNormInverseVariance
                 CUDNN_ACTIVATION_DTYPE}; // Output
     }
 
@@ -138,12 +138,12 @@ private:
 
 public:
 
-    Convolutional(const Shape& = {3, 3, 1},         // Input shape {height,width,channels}
-                  const Shape& = {3, 3, 1, 1},      // Kernel shape {kernel_height,kernel_width,channels,kernels_number}
+    Convolutional(const Shape& = {3, 3, 1},
+                  const Shape& = {3, 3, 1, 1},
                   const string& = "Linear",
-                  const Shape& = {1, 1},            // Stride shape {row_stride,column_stride}
-                  const string& = "Valid",          // Convolution type (Valid || Same)
-                  bool = false,                     // Batch Normalization
+                  const Shape& = {1, 1},
+                  const string& = "Valid",
+                  bool = false,
                   const string& = "convolutional_layer");
 
     ~Convolutional() override

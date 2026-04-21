@@ -346,7 +346,6 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
     {
         h_i = Loss::calculate_h(parameters(i));
 
-        // parameters(i) - 2*h_i
         parameters(i) -= type(2) * h_i;
 
         neural_network->forward_propagate(batch.get_inputs(),
@@ -359,7 +358,6 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
         y_backward_2i = back_propagation_lm.error;
 
-        // parameters(i) - h_i
         parameters(i) += h_i;
 
         neural_network->forward_propagate(batch.get_inputs(),
@@ -372,7 +370,6 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
         y_backward_i = back_propagation_lm.error;
 
-        // parameters(i) + h_i
         parameters(i) += type(2) * h_i;
 
         neural_network->forward_propagate(batch.get_inputs(),
@@ -385,7 +382,6 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
         y_forward_i = back_propagation_lm.error;
 
-        // parameters(i) + 2*h_i
         parameters(i) += h_i;
 
         neural_network->forward_propagate(batch.get_inputs(),
@@ -398,7 +394,6 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
         y_forward_2i = back_propagation_lm.error;
 
-        // restore parameters(i)
         parameters(i) -= type(2) * h_i;
 
         H(i, i) = (-y_forward_2i + type(16.0) * y_forward_i - type(30.0) * y + type(16.0) * y_backward_i - y_backward_2i) / (type(12.0) * h_i * h_i);
@@ -407,7 +402,6 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
         {
             h_j = Loss::calculate_h(parameters(j));
 
-            // parameters(i) - h_i, parameters(j) - h_j
             parameters(i) -= h_i;
             parameters(j) -= h_j;
 
@@ -421,7 +415,6 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
             y_backward_ij = back_propagation_lm.error;
 
-            // parameters(i) + h_i, parameters(j) + h_j
             parameters(i) += type(2) * h_i;
             parameters(j) += type(2) * h_j;
 
@@ -435,7 +428,6 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
             y_forward_ij = back_propagation_lm.error;
 
-            // parameters(i) - h_i, parameters(j) + h_j
             parameters(i) -= type(2) * h_i;
 
             neural_network->forward_propagate(batch.get_inputs(),
@@ -448,7 +440,6 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
             y_backward_i_forward_j = back_propagation_lm.error;
 
-            // parameters(i) + h_i, parameters(j) - h_j
             parameters(i) += type(2) * h_i;
             parameters(j) -= type(2) * h_j;
 
@@ -462,7 +453,6 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
             y_forward_i_backward_j = back_propagation_lm.error;
 
-            // restore parameters(i) and parameters(j)
             parameters(i) -= h_i;
             parameters(j) += h_j;
 
@@ -489,12 +479,10 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
 
     const MatrixMap inputs = fp.views[layer_index][0][0].as_matrix();
 
-    // Biases: identity pattern repeated for each sample
     for(Index j = 0; j < num_neurons; ++j)
         for(Index s = 0; s < batch_size; ++s)
             jacobian(s * num_neurons + j, parameter_offset + j) = type(1);
 
-    // Weights: column-oriented fill for better cache locality
     for(Index k = 0; k < num_inputs; ++k)
         for(Index j = 0; j < num_neurons; ++j)
         {
@@ -705,7 +693,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
         if(!isfinite(new_loss_value))
             new_loss_value = loss_value;
 
-        if(new_loss_value < loss_value) // succesfull step
+        if(new_loss_value < loss_value)
         {
             set_damping_parameter(damping_parameter/damping_parameter_factor);
 

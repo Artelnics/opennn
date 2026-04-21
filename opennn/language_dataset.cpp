@@ -76,7 +76,6 @@ LanguageDataset::LanguageDataset(const Index samples_number,
     set_default_variable_names();
     set_binary_variables();
 
-    // Restore roles after set_binary_variables, which may mark constant columns (e.g. START token) as "None"
     for_each(variables.begin(),
              variables.begin() + maximum_input_sequence_length,
              [](Variable& variable) { variable.role = VariableRole::Input; });
@@ -190,8 +189,6 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
 
     const size_t target_document_tokens_number = target_document_tokens.size();
 
-    // Binary classification
-
     if(maximum_target_sequence_length == 1 && target_vocabulary.size() == 6)
     {
         for(size_t sample_index = 0; sample_index < target_document_tokens_number; ++sample_index)
@@ -208,8 +205,6 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
 
         return;
     }
-
-    // Multiple classification
 
     if(maximum_target_sequence_length == 6 && target_vocabulary.size() >= 6)
     {
@@ -231,8 +226,6 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
         return;
     }
 
-    // Other
-
     {
         const unordered_map<string, Index> target_vocabulary_map = create_vocabulary_map(target_vocabulary);
 
@@ -241,7 +234,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
         #pragma omp parallel for
         for(Index sample = 0; sample < samples_number; ++sample)
         {
-            data(sample, maximum_input_sequence_length) = 2; // start;
+            data(sample, maximum_input_sequence_length) = 2;
 
             const vector<string>& target_tokens = target_document_tokens[sample];
 
@@ -258,7 +251,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
                 data(sample, variable) = (iterator != target_vocabulary_map.end()) ? iterator->second : 1;
             }
 
-            data(sample, maximum_input_sequence_length + target_tokens.size() + 1) = 3; // end;
+            data(sample, maximum_input_sequence_length + target_tokens.size() + 1) = 3;
         }
     }
 }
@@ -310,12 +303,6 @@ void LanguageDataset::read_csv()
 
     const bool is_single_token_target = (maximum_target_document_tokens == 1);
 
-    // Keep current behaviour for the cases that already work:
-    // - binary classification
-    // - one-token multiclass classification
-    //
-    // New behaviour:
-    // - multi-token target => seq2seq / transformer
     if(is_single_token_target)
     {
         maximum_target_sequence_length = (target_vocabulary_size == 6)
@@ -351,11 +338,6 @@ void LanguageDataset::read_csv()
     }
     else
     {
-        // Seq2seq / Transformer case.
-        // Assumes:
-        //   decoder = [START, y1, ..., yN]
-        //   target  = [y1, ..., yN, END]
-        // so each sequence needs max_target_tokens + 1 positions.
         maximum_target_sequence_length = maximum_target_document_tokens + 1;
 
         const Index decoder_offset = maximum_input_sequence_length;
@@ -408,8 +390,6 @@ void LanguageDataset::read_csv()
     split_samples_random();
     set_binary_variables();
 
-    // Restore all variable roles after set_binary_variables, which may mark
-    // constant columns (e.g. START token) as "None"
     for(Index i = 0; i < ssize(variables); ++i)
     {
         if(i < maximum_input_sequence_length)

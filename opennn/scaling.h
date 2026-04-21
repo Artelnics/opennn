@@ -12,8 +12,6 @@
 
 namespace opennn
 {
-    //enum class string{None, MinimumMaximum, MeanStandardDeviation, StandardDeviation, Logarithm, ImageMinMax};
-
     void scale_mean_standard_deviation(MatrixMap, Index, const Descriptives&);
     void scale_standard_deviation(MatrixMap, Index, const Descriptives&);
     void scale_minimum_maximum(MatrixMap, Index, const Descriptives&, type = type(-1), type = type(1));

@@ -74,7 +74,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     const bool has_validation = dataset->has_validation();
 
-    const bool is_text_classification_model = false/*is_instance_of<CrossEntropyError3d>(loss)*/;
+    const bool is_text_classification_model = false;
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
@@ -119,8 +119,6 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     BackPropagation training_back_propagation(training_batch_size, loss);
 
-    // Validation structures allocated lazily only if there is validation data.
-
     unique_ptr<Batch> validation_batch;
     unique_ptr<ForwardPropagation> validation_forward_propagation;
     unique_ptr<BackPropagation> validation_back_propagation;
@@ -156,7 +154,6 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     vector<vector<Index>> validation_batches;
 
-    // Main loop
     optimization_data.iteration = 1;
 
     for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
@@ -300,6 +297,36 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     optimization_data.iteration++;
 
+    const type gradient_clip_max_norm = type(1);
+    const Index gradient_size = back_propagation.gradient.size();
+
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu() && gradient_size > 0)
+    {
+        float squared_norm = 0.0f;
+        CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(),
+                                to_int(gradient_size),
+                                back_propagation.gradient.device(), 1,
+                                back_propagation.gradient.device(), 1,
+                                &squared_norm));
+        const float gradient_norm = std::sqrt(squared_norm);
+        if (gradient_norm > float(gradient_clip_max_norm))
+        {
+            const float scale = float(gradient_clip_max_norm) / (gradient_norm + 1e-6f);
+            CHECK_CUBLAS(cublasSscal(Device::get_cublas_handle(),
+                                     to_int(gradient_size), &scale,
+                                     back_propagation.gradient.device(), 1));
+        }
+    }
+    else
+#endif
+    if (gradient_size > 0)
+    {
+        const type gradient_norm = back_propagation.gradient.vector.norm();
+        if (gradient_norm > gradient_clip_max_norm)
+            back_propagation.gradient.vector *= gradient_clip_max_norm / (gradient_norm + type(1e-6));
+    }
+
     const type iteration = static_cast<type>(optimization_data.iteration);
 
     const type bias_correction_1 = type(1) - pow(beta_1, iteration);
@@ -337,7 +364,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const type one_minus_beta_1 = type(1) - beta_1;
     const type one_minus_beta_2 = type(1) - beta_2;
 
-    // Factor sqrt(bc_2) out of the element-wise division to avoid two divisions per element.
     const type s = std::sqrt(bias_correction_2);
     const type effective_learning_rate = learning_rate * s / bias_correction_1;
     const type effective_epsilon = EPSILON * s;
@@ -403,10 +429,6 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 
 void AdaptiveMomentEstimationData::print() const
 {
-    // cout << "Gradient exponential decay:" << "\n"
-    //      << gradient_exponential_decay << "\n"
-    //      << "Square gradient exponential decay:" << "\n"
-    //      << square_gradient_exponential_decay << "\n";
 }
 
 
@@ -460,8 +482,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     neural_network->copy_states_device();
     neural_network->link_states_device();
 
-    // Batch pool with prefetching
-
     const int PREFETCH_BATCHES = 3;
 
     ThreadSafeQueue<Batch*> empty_training_queue;
@@ -493,8 +513,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     cudaEventCreate(&batch_ready_event[0]);
     cudaEventCreate(&batch_ready_event[1]);
 
-    // Forward / backward propagation (unified structs, Memory allocates on GPU)
-
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
     training_forward_propagation.allocate_device();
 
@@ -502,8 +520,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
     BackPropagation training_back_propagation(training_batch_size, loss);
     training_back_propagation.allocate_device();
-
-    // Validation structures allocated lazily only if there is validation data.
 
     unique_ptr<ForwardPropagation> validation_forward_propagation;
     unique_ptr<BackPropagation> validation_back_propagation;
@@ -515,8 +531,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         validation_back_propagation = make_unique<BackPropagation>(validation_batch_size, loss);
         validation_back_propagation->allocate_device();
     }
-
-    // Optimizer data (unified, Memory allocates on GPU)
 
     AdaptiveMomentEstimationData optimization_data(this);
 
@@ -543,7 +557,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         training_error = type(0);
 
 
-        // Worker thread fills host pinned memory
         std::thread training_worker([&]()
         {
             for(Index iteration = 0; iteration < training_batches_number; ++iteration)

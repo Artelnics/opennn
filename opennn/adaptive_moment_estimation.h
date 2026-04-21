@@ -63,7 +63,7 @@ private:
 
    type beta_1 = type(0.9);
 
-   type beta_2 = type(0.999);
+   type beta_2 = type(0.98);
 
    Index batch_size = 1000;
 };

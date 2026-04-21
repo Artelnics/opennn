@@ -37,42 +37,35 @@ private:
 
     const NeuralNetwork* neural_network = nullptr;
 
-    // Language-specific generators (dispatched by save)
     string get_expression_c() const;
     string get_expression_python() const;
     string get_expression_php() const;
     string get_expression_javascript() const;
 
-    // Per-layer expression dispatch
     static string get_layer_expression(const Layer&, const vector<string>&, const vector<string>&);
 
-    // C generator phases
     void emit_c_prelude(ostringstream&) const;
     void emit_c_activations(ostringstream&, const string& expression) const;
     void emit_c_calculate_outputs(ostringstream&, const string& expression, const vector<string>& lines, bool has_softmax) const;
     void emit_c_main(ostringstream&) const;
 
-    // PHP generator phases
     void emit_php_prelude(ostringstream&) const;
     void emit_php_activations(ostringstream&, const string& expression) const;
     void emit_php_inputs_setup(ostringstream&) const;
     void emit_php_body(ostringstream&, const vector<string>& lines, bool has_softmax) const;
     void emit_php_response(ostringstream&) const;
 
-    // Python generator phases
     void emit_python_prelude(ostringstream&) const;
     void emit_python_class_header(ostringstream&) const;
     void emit_python_activations(ostringstream&, const string& expression) const;
     void emit_python_calculate_outputs(ostringstream&, const vector<string>& lines, bool has_softmax) const;
     void emit_python_batch_and_main(ostringstream&) const;
 
-    // JavaScript generator phases
     void emit_js_prelude(ostringstream&) const;
     void emit_js_inputs_html(ostringstream&) const;
     void emit_js_outputs_html(ostringstream&, bool use_category_select) const;
     void emit_js_runtime(ostringstream&, const string& expression, const vector<string>& lines, bool has_softmax, bool use_category_select) const;
 
-    // Pure helpers (no neural_network dependency)
     static vector<string> split_expression_lines(const string&);
     static void rename_spaced_var_definitions(vector<string>&);
     static vector<string> prepare_body_lines(const string& expression);
@@ -92,7 +85,6 @@ private:
 
     static const vector<pair<string, ActivationBodies>>& activation_table();
 
-    // Per-layer writers (invoked by get_layer_expression)
     static string write_bounding_expression(const Bounding&, const vector<string>& , const vector<string>&);
     static string write_scaling_expression(const Scaling<2>&, const vector<string>&, const vector<string>&);
     static string write_unscaling_expression(const Unscaling&, const vector<string>&, const vector<string>&);

@@ -543,7 +543,7 @@ string ModelExpression::build_expression() const
 
     const auto& layers = neural_network->get_layers();
 
-    for(Index i = 0; i < layers_number; ++i)
+    for(size_t i = 0; i < layers_number; ++i)
     {
         const bool is_last = (i == layers_number - 1);
         vector<string> layer_output_names;
@@ -798,7 +798,6 @@ string ModelExpression::get_expression_php() const
 
     string expression = build_expression();
 
-    // PHP-specific: prefix all variable names with $
     vector<string> all_possible_vars = fixed_output_names;
     all_possible_vars.insert(all_possible_vars.end(), fixed_input_names.begin(), fixed_input_names.end());
     sort(all_possible_vars.begin(), all_possible_vars.end(), [](const string& a, const string& b){ return a.length() > b.length(); });

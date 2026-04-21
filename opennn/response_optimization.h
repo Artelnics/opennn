@@ -65,11 +65,11 @@ public:
     {
         Objectives(const ResponseOptimization& response_optimization);
 
-        MatrixR objective_sources; //Row 0: if is input or not, Row 1 : feature index in input or target subsets
+        MatrixR objective_sources;
 
-        MatrixR utopian_and_senses; // Row 0: Utopian point, Row 1: Senses of optimization (1 for max, -1 for min)
+        MatrixR utopian_and_senses;
 
-        MatrixR objective_normalizer; // Row 0: Multipliers (1/range), Row 1: Offsets (-inferior/range)
+        MatrixR objective_normalizer;
 
         MatrixR extract(const MatrixR& inputs, const MatrixR& output) const;
 
@@ -136,7 +136,6 @@ private:
 
     type relative_tolerance = type(0.001);
 
-    //minimum number of points?
 };
 
 }

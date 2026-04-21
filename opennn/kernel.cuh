@@ -22,34 +22,13 @@ using namespace Eigen;
 
 typedef float type;
 
-#define CUDA_CHECK(call) do {                                 \
-    cudaError_t err__ = (call);                               \
-    if (err__ != cudaSuccess) {                               \
-        fprintf(stderr, "CUDA error %s at %s:%d: %s\n",       \
-                #call, __FILE__, __LINE__,                    \
-                cudaGetErrorString(err__));                   \
-        abort();                                              \
-    }                                                         \
-} while(0)
-
-#ifndef NDEBUG
-    #define CUDA_CHECK_KERNEL() CUDA_CHECK(cudaGetLastError())
-#else
-    #define CUDA_CHECK_KERNEL() ((void)0)
-#endif
-
-// Host-side wrappers only. __global__ kernel declarations live in kernel.cu
-// alongside their definitions and explicit instantiations — they don't need
-// to be visible to other translation units.
-
 // Optimizer
 
 void adam_update_cuda(const Index, float*, float*, float*, const float*, const float, const float, const float, const float, const float, const float);
 
 void sgd_update_cuda(const Index, float*, float*, const float*, const float, const float, const bool);
 
-// Errors — forward loss wrappers output per-element errors as FP32 (reduction
-// scratch); inputs are activation-dtype T.
+// Errors
 
 template<typename T>
 void binary_cross_entropy_cuda(const Index, float*, const T*, const T*, const float);
@@ -85,11 +64,6 @@ void l1_gradient_cuda(const Index, T*, const T*, const float);
 
 template<typename T>
 void add_bias_cuda(const Index, T*, const float*, const int);
-
-// Dtype-agnostic sum-of-absolutes (used for BF16/FP16 workspaces; FP32 callers
-// stay on cublasSasum in error_utilities.cpp).
-template<typename T>
-float sum_abs_cuda(const T*, Index);
 
 // Addition
 

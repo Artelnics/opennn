@@ -128,7 +128,6 @@ void Convolutional::set_activation_function(const string& new_activation_functio
     activation_arguments.activation_function = function;
 
 #ifdef OPENNN_WITH_CUDA
-    // If init_cuda has already run, keep the GPU descriptor in sync with the new mode.
     if (activation_arguments.activation_descriptor)
         cudnnSetActivationDescriptor(activation_arguments.activation_descriptor,
                                      to_cudnn_activation_mode(function),
@@ -187,7 +186,7 @@ void Convolutional::set_parameters_random()
 
 void Convolutional::init_cuda(Index batch_size)
 {
-    // Filter + convolution descriptors (built from the current configuration)
+    // Filter + convolution descriptors
 
     if (!kernel_descriptor)
         cudnnCreateFilterDescriptor(&kernel_descriptor);
@@ -220,8 +219,6 @@ void Convolutional::init_cuda(Index batch_size)
     cudnnSetActivationDescriptor(activation_descriptor,
                                  to_cudnn_activation_mode(activation_arguments.activation_function),
                                  CUDNN_PROPAGATE_NAN, 0.0);
-
-    // Input/output tensor descriptors (scratch — destroyed at end of this call)
 
     cudnnTensorDescriptor_t input_desc;
     cudnnCreateTensorDescriptor(&input_desc);
@@ -322,8 +319,6 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     const TensorView& gammas = parameters[Gamma];
     const TensorView& betas = parameters[Beta];
 
-    // cuDNN convolution uses unpadded input (padding is in convolution_descriptor).
-    // CPU convolution expects pre-padded input.
 #ifdef OPENNN_WITH_CUDA
     const bool is_gpu = Device::instance().is_gpu();
 #else

@@ -14,6 +14,7 @@
 #include "loss.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "random_utilities.h"
 
 namespace opennn
 {
@@ -86,12 +87,8 @@ void Embedding::set_parameters_random()
 {
     if(parameters[Weight].empty()) return;
 
-    const type scale = type(0.05);
-
     MatrixMap weights = matrix_map(parameters[Weight]);
-
-    weights.setRandom();
-    weights *= scale;
+    set_random_normal(weights, type(0), type(1));
 
     weights.row(0).setZero();
 }
@@ -99,9 +96,6 @@ void Embedding::set_parameters_random()
 void Embedding::set_parameters_glorot()
 {
     if(parameters[Weight].empty()) return;
-
-//    const Index vocabulary_size = weights.shape[0];
-//    const Index embedding_dimension = weights.shape[1];
 
     const type limit = sqrt(type(6.0) / (vocabulary_size + embedding_dimension));
 

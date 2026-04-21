@@ -13,8 +13,6 @@ namespace opennn
 
 #ifdef OPENNN_WITH_CUDA
 
-// (input - target), sum of squares of the result, returned as a scalar.
-// Stores the diff in `workspace`.
 static float sum_squared_diff_cuda(const TensorView& input, const TensorView& target, float* workspace)
 {
     const int total_size = to_int(input.size());
@@ -31,7 +29,6 @@ static float sum_squared_diff_cuda(const TensorView& input, const TensorView& ta
     return sum_squared;
 }
 
-// output = scale * (input - target)
 static void scaled_diff_cuda(const TensorView& input, const TensorView& target, float scale, TensorView& output)
 {
     const int total_size = to_int(input.size());
@@ -45,10 +42,6 @@ static void scaled_diff_cuda(const TensorView& input, const TensorView& target, 
                               CUDA_REDUCTION_DTYPE));
 }
 
-// Sum of absolute values. For inputs known to be non-negative (per-element losses,
-// validity masks, L1 norms) this equals the plain sum.
-// Note: cuBLAS has no AsumEx; this stays FP32-pinned until a custom reduction
-// or an explicit cast-to-FP32 path is added when CUDA_ACTIVATION_DTYPE is flipped.
 static float sum_abs_cuda(const float* data, Index n)
 {
     float sum = 0.0f;
@@ -56,7 +49,6 @@ static float sum_abs_cuda(const float* data, Index n)
     return sum;
 }
 
-// Sum of squares (equivalently, squared L2-norm).
 static float squared_norm_cuda(const float* data, Index n)
 {
     float dot = 0.0f;
@@ -265,9 +257,6 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, type& e
     if (Device::instance().is_gpu()) {
         const size_t token_count = batch_size * sequence_length;
 
-        // Reuse the tail of errors_device as the valid-token mask buffer.
-        // errors_device is sized for batch_size * sequence_length * vocabulary_size floats;
-        // we only need 2 * token_count here (errors + mask), and vocabulary_size >= 2 in any real use.
         float* valid_mask_device = errors_device + token_count;
 
         input.dispatch([&](auto tag) {
@@ -367,7 +356,6 @@ void l1_regularization_gradient(const TensorView& parameters, type lambda, Tenso
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        // Weights and weight-gradients are always FP32 (AMP master).
         l1_gradient_cuda<float>(parameters.size(), gradient.as<float>(), parameters.as<float>(), lambda);
         return;
     }

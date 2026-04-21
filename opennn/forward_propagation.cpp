@@ -10,6 +10,7 @@
 #include "neural_network.h"
 #include "convolutional_layer.h"
 #include "dense_layer.h"
+#include "multihead_attention_layer.h"
 
 namespace opennn
 {
@@ -100,12 +101,10 @@ void ForwardPropagation::allocate_device()
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
     const size_t layers_number = nn_layers.size();
 
-    // Per-layer dtypes (parallel to forward_shapes).
     vector<vector<cudnnDataType_t>> forward_dtypes(layers_number);
     for(Index i = 0; i < layers_number; ++i)
         forward_dtypes[i] = nn_layers[i]->get_forward_dtypes(batch_size);
 
-    // Size the device pool in bytes: Σ aligned(shape.size() × dtype_bytes).
     Index total_bytes = 0;
     for(Index i = 0; i < layers_number; ++i)
     {
@@ -118,7 +117,6 @@ void ForwardPropagation::allocate_device()
     data.resize_device_bytes(total_bytes);
     data.setZero_device();
 
-    // Walk a byte cursor; each view gets its dtype + pointer into the pool.
     uint8_t* cursor = data.device_bytes();
 
     for(Index i = 0; i < layers_number; ++i)
@@ -175,6 +173,11 @@ void ForwardPropagation::allocate_device()
         {
             Dense<3>* dense = static_cast<Dense<3>*>(layer.get());
             dense->init_cuda(batch_size);
+        }
+        else if(layer->get_type() == LayerType::MultiHeadAttention)
+        {
+            MultiHeadAttention* mha = static_cast<MultiHeadAttention*>(layer.get());
+            mha->init_cuda(batch_size);
         }
     }
 #endif

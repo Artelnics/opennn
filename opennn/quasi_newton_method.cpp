@@ -347,22 +347,15 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 
     // Neural network data
 
-    // Initialize old_parameters to current parameters so first epoch
-    // has parameter_differences == 0 → triggers identity inverse_hessian path.
-    // Other vectors are overwritten on first use → resize() is enough.
     old_parameters = neural_network->get_parameters();
     parameter_differences.resize(parameters_number);
     potential_parameters.resize(parameters_number);
     parameter_updates.resize(parameters_number);
 
-    // old_gradient is read before being written on epoch 0; zero-init keeps
-    // the gradient_difference well-defined (the identity branch fires anyway).
     old_gradient = VectorR::Zero(parameters_number);
 
     gradient_difference.resize(parameters_number);
 
-    // Inverse Hessian must start as identity (used by calculate_inverse_hessian
-    // on epoch 1 via the swap at the end of each update).
     inverse_hessian.resize(parameters_number, parameters_number);
     inverse_hessian.setIdentity();
 

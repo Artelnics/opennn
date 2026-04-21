@@ -19,7 +19,7 @@ class Dense final : public Layer
 private:
 
     Index input_features = 0;
-    Index sequence_length = 0;  // only used for Rank==3
+    Index sequence_length = 0;
     Index output_features;
 
     bool batch_normalization = false;
@@ -74,8 +74,8 @@ private:
     vector<cudnnDataType_t> get_forward_dtypes(Index) const override
     {
         return {CUDNN_ACTIVATION_DTYPE,  // Combination
-                CUDNN_DATA_FLOAT,        // BatchNormMean — stat, stays FP32
-                CUDNN_DATA_FLOAT,        // BatchNormInverseVariance — stat, stays FP32
+                CUDNN_DATA_FLOAT,        // BatchNormMean
+                CUDNN_DATA_FLOAT,        // BatchNormInverseVariance
                 CUDNN_ACTIVATION_DTYPE}; // Output
     }
 
@@ -297,7 +297,7 @@ public:
             cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_ACTIVATION_DTYPE,
                                        static_cast<int>(batch_size),
                                        static_cast<int>(output_size),
-                                       static_cast<int>(sequence_length),
+                                       static_cast<int>(Rank == 3 ? sequence_length : 1),
                                        1);
 
             if (dropout_arguments.descriptor) { cudnnDestroyDropoutDescriptor(dropout_arguments.descriptor); dropout_arguments.descriptor = nullptr; }

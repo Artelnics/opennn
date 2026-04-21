@@ -1,12 +1,6 @@
 ﻿#include "kernel.cuh"
 #include <cuda_bf16.h>
 
-// CHECK_CUDA lives in pch.h which transitively includes this file — define a local
-// alias so we don't pull in the precompiled header.
-#ifndef CHECK_CUDA
-#define CHECK_CUDA(x) CUDA_CHECK(x)
-#endif
-
 __global__ void adam_update_scalar_kernel(
     const int n,
     float* __restrict__ parameters,
@@ -119,7 +113,6 @@ void adam_update_cuda(
             beta_2, 1.0f - beta_2,
             effective_lr, effective_eps);
     }
-    CUDA_CHECK_KERNEL();
 }
 
 __global__ void sgd_update_scalar_kernel(
@@ -219,7 +212,6 @@ void sgd_update_cuda(
             total, parameters, velocity, gradients,
             learning_rate, momentum, nesterov);
     }
-    CUDA_CHECK_KERNEL();
 }
 
 // term_results is always FP32 (reduction scratch); only inputs are dtype T.
@@ -251,7 +243,6 @@ void binary_cross_entropy_cuda(const Index n, float* term_results, const T* targ
 
     binary_cross_entropy_kernel<T><<<grid_size, block_size>>>(
         total, term_results, targets, outputs, epsilon);
-    CUDA_CHECK_KERNEL();
 }
 
 template void binary_cross_entropy_cuda<float>        (const Index, float*, const float*,         const float*,         const float);
@@ -321,7 +312,6 @@ void binary_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targe
         binary_cross_entropy_gradient_scalar_kernel<T><<<grid_size, block_size>>>(
             total, deltas, targets, outputs, epsilon, scaling_factor);
     }
-    CUDA_CHECK_KERNEL();
 }
 
 template void binary_cross_entropy_gradient_cuda<float>        (const Index, float*,         const float*,         const float*,         const float, const float);
@@ -349,7 +339,6 @@ void multiple_cross_entropy_cuda(const Index n, float* term_results, const T* ta
 
     multiple_cross_entropy_kernel<T><<<grid_size, block_size>>>(
         total, term_results, targets, outputs, epsilon);
-    CUDA_CHECK_KERNEL();
 }
 
 template void multiple_cross_entropy_cuda<float>        (const Index, float*, const float*,         const float*,         const float);
@@ -410,7 +399,6 @@ void multiple_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* tar
         multiple_cross_entropy_gradient_scalar_kernel<T><<<grid_size, block_size>>>(
             total, deltas, targets, outputs, scaling_factor);
     }
-    CUDA_CHECK_KERNEL();
 }
 
 template void multiple_cross_entropy_gradient_cuda<float>        (const Index, float*,         const float*,         const float*,         const float);
@@ -441,7 +429,6 @@ void weighted_squared_error_cuda(const Index n, float* term_results, const T* ta
 
     weighted_squared_error_kernel<T><<<grid_size, block_size>>>(
         total, term_results, targets, outputs, positives_weight, negatives_weight);
-    CUDA_CHECK_KERNEL();
 }
 
 template void weighted_squared_error_cuda<float>        (const Index, float*, const float*,         const float*,         const float, const float);
@@ -513,7 +500,6 @@ void weighted_squared_error_gradient_cuda(const Index n, T* deltas, const T* tar
         weighted_squared_error_gradient_scalar_kernel<T><<<grid_size, block_size>>>(
             total, deltas, targets, outputs, positives_weight, negatives_weight, scaling_factor);
     }
-    CUDA_CHECK_KERNEL();
 }
 
 template void weighted_squared_error_gradient_cuda<float>        (const Index, float*,         const float*,         const float*,         const float, const float, const float);
@@ -559,7 +545,6 @@ void cross_entropy_3d_multiple_forward_cuda(const Index n,
 
     cross_entropy_3d_multiple_forward_kernel<T><<<grid_size, block_size>>>(
         total, vocab_size, outputs, targets, errors, valid_mask, epsilon);
-    CUDA_CHECK_KERNEL();
 }
 
 template void cross_entropy_3d_multiple_forward_cuda<float>        (const Index, const int, const float*,         const float*, float*, float*, const float);
@@ -606,7 +591,6 @@ void cross_entropy_3d_multiple_backward_cuda(const Index n,
 
     cross_entropy_3d_multiple_backward_kernel<T><<<grid_size, block_size>>>(
         total, vocab_size, outputs, targets, output_gradients, scale_factor);
-    CUDA_CHECK_KERNEL();
 }
 
 template void cross_entropy_3d_multiple_backward_cuda<float>        (const Index, const int, const float*,         const float*, float*,         const float);
@@ -669,7 +653,6 @@ void l1_gradient_cuda(const Index n, T* deltas, const T* parameters, const float
         const int grid_size = (total + block_size - 1) / block_size;
         l1_gradient_scalar_kernel<T><<<grid_size, block_size>>>(total, deltas, parameters, weight);
     }
-    CUDA_CHECK_KERNEL();
 }
 
 template void l1_gradient_cuda<float>        (const Index, float*,         const float*,         const float);
@@ -733,101 +716,10 @@ void add_bias_cuda(const Index n, T* output, const float* bias, const int bias_d
         const int grid_size = (total + block_size - 1) / block_size;
         add_bias_scalar_kernel<T><<<grid_size, block_size>>>(total, output, bias, bias_dim);
     }
-    CUDA_CHECK_KERNEL();
 }
 
 template void add_bias_cuda<float>        (const Index, float*,         const float*, const int);
 template void add_bias_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const float*, const int);
-
-// Dtype-agnostic sum-of-absolutes. Reads dtype-T data, accumulates in FP32,
-// returns FP32 scalar via atomicAdd across blocks. Needed for BF16/FP16 paths
-// where cuBLAS has no asum variant. (FP32 callers stay on cublasSasum for perf.)
-template<typename T>
-__global__ void sum_abs_scalar_kernel(const int n, const T* __restrict__ data, float* __restrict__ result)
-{
-    __shared__ float shared[256];
-    float acc = 0.0f;
-
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
-        acc += fabsf(static_cast<float>(data[i]));
-
-    shared[threadIdx.x] = acc;
-    __syncthreads();
-
-    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1)
-    {
-        if (threadIdx.x < stride) shared[threadIdx.x] += shared[threadIdx.x + stride];
-        __syncthreads();
-    }
-
-    if (threadIdx.x == 0) atomicAdd(result, shared[0]);
-}
-
-// Vectorized read: each thread absorbs a 16-byte chunk (4 FP32 or 8 BF16),
-// accumulates in FP32, then participates in the same block-level reduction.
-template<typename T>
-__global__ void sum_abs_vec_kernel(const int n_vec, const T* __restrict__ data, float* __restrict__ result)
-{
-    __shared__ float shared[256];
-    float acc = 0.0f;
-
-    constexpr int vec_width = 16 / sizeof(T);
-    const float4* data_v = reinterpret_cast<const float4*>(data);
-
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
-    {
-        float4 chunk = data_v[i];
-        const T* lanes = reinterpret_cast<const T*>(&chunk);
-        #pragma unroll
-        for (int k = 0; k < vec_width; ++k)
-            acc += fabsf(static_cast<float>(lanes[k]));
-    }
-
-    shared[threadIdx.x] = acc;
-    __syncthreads();
-
-    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1)
-    {
-        if (threadIdx.x < stride) shared[threadIdx.x] += shared[threadIdx.x + stride];
-        __syncthreads();
-    }
-
-    if (threadIdx.x == 0) atomicAdd(result, shared[0]);
-}
-
-template<typename T>
-float sum_abs_cuda(const T* data, Index n)
-{
-    if (n == 0) return 0.0f;
-
-    // Persistent scratch scalar — one cudaMalloc per process.
-    static float* d_result = nullptr;
-    if (!d_result) CHECK_CUDA(cudaMalloc(&d_result, sizeof(float)));
-    CHECK_CUDA(cudaMemset(d_result, 0, sizeof(float)));
-
-    const int block_size = 256;
-    const int total = static_cast<int>(n);
-    constexpr int vec_width = 16 / sizeof(T);
-
-    if ((total % vec_width) == 0)
-    {
-        const int n_vec = total / vec_width;
-        const int grid_size = (n_vec + block_size - 1) / block_size;
-        sum_abs_vec_kernel<T><<<grid_size, block_size>>>(n_vec, data, d_result);
-    }
-    else
-    {
-        const int grid_size = (total + block_size - 1) / block_size;
-        sum_abs_scalar_kernel<T><<<grid_size, block_size>>>(total, data, d_result);
-    }
-    CUDA_CHECK_KERNEL();
-
-    float h_result = 0.0f;
-    CHECK_CUDA(cudaMemcpy(&h_result, d_result, sizeof(float), cudaMemcpyDeviceToHost));
-    return h_result;
-}
-
-template float sum_abs_cuda<__nv_bfloat16>(const __nv_bfloat16*, Index);
 
 template<typename T>
 __global__ void addition_scalar_kernel(const int n, const T* __restrict__ input1, const T* __restrict__ input2, T* __restrict__ output)
@@ -882,7 +774,6 @@ void addition_cuda(const Index n, const T* input1, const T* input2, T* output)
         const int grid_size = (total + block_size - 1) / block_size;
         addition_scalar_kernel<T><<<grid_size, block_size>>>(total, input1, input2, output);
     }
-    CUDA_CHECK_KERNEL();
 }
 
 template void addition_cuda<float>        (const Index, const float*,         const float*,         float*);
@@ -928,7 +819,6 @@ void embedding_forward_cuda(const Index n, const float* inputs, const float* wei
     embedding_forward_kernel<T> << <grid_size, block_size >> > (
         total, inputs, weights, positional_encoding, outputs,
         sequence_length, embedding_dimension, vocabulary_size, scale_embedding, add_positional_encoding);
-    CUDA_CHECK_KERNEL();
 }
 
 template void embedding_forward_cuda<float>        (const Index, const float*, const float*, const float*, float*,         const int, const int, const int, const bool, const bool);
@@ -966,7 +856,6 @@ void embedding_backward_cuda(const Index n, const float* inputs, const T* output
     embedding_backward_kernel<T> << <grid_size, block_size >> > (
         total, inputs, output_gradients, weight_gradients,
         embedding_dimension, vocabulary_size, scale_embedding);
-    CUDA_CHECK_KERNEL();
 }
 
 template void embedding_backward_cuda<float>        (const Index, const float*, const float*,         float*, const int, const int, const bool);
@@ -1030,7 +919,6 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
         const int grid_size = (total + block_size - 1) / block_size;
         split_heads_scalar_kernel<T><<<grid_size, block_size>>>(total, in, out, S, H, D);
     }
-    CUDA_CHECK_KERNEL();
 }
 
 template void split_heads_cuda<float>        (const Index, const float*,         float*,         const int, const int, const int);
@@ -1090,7 +978,6 @@ void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int
         const int grid_size = (total + block_size - 1) / block_size;
         merge_heads_scalar_kernel<T><<<grid_size, block_size>>>(total, in, out, S, H, D);
     }
-    CUDA_CHECK_KERNEL();
 }
 
 template void merge_heads_cuda<float>        (const Index, const float*,         float*,         const int, const int, const int);
@@ -1141,7 +1028,6 @@ void attention_masks_cuda(const int batch_size, const int heads_number,
         const int grid_size = (num_tokens + block_size - 1) / block_size;
         padding_mask_kernel<T><<<grid_size, block_size>>>(
             num_tokens, source_input, padding_mask, embedding_dimension);
-        CUDA_CHECK_KERNEL();
     }
 
     const int n = batch_size * heads_number * query_sequence_length * source_sequence_length;
@@ -1152,7 +1038,6 @@ void attention_masks_cuda(const int batch_size, const int heads_number,
         fused_masks_kernel<T><<<grid_size, block_size>>>(
             n, attention_weights, padding_mask, heads_number,
             query_sequence_length, source_sequence_length, use_causal_mask);
-        CUDA_CHECK_KERNEL();
     }
 }
 
@@ -1192,7 +1077,6 @@ void max_pooling_3d_forward_cuda(const Index n, const T* in, T* out, float* indi
     const int grid_size = (total + block_size - 1) / block_size;
 
     max_pooling_3d_forward_kernel<T><<<grid_size, block_size>>>(total, in, out, indices, S, F);
-    CUDA_CHECK_KERNEL();
 }
 
 template void max_pooling_3d_forward_cuda<float>        (const Index, const float*,         float*,         float*, const int, const int);
@@ -1222,7 +1106,6 @@ void max_pooling_3d_backward_cuda(const Index n, const T* delta, T* in_gradient,
     const int grid_size = (total + block_size - 1) / block_size;
 
     max_pooling_3d_backward_kernel<T><<<grid_size, block_size>>>(total, delta, in_gradient, indices, S, F);
-    CUDA_CHECK_KERNEL();
 }
 
 template void max_pooling_3d_backward_cuda<float>        (const Index, const float*,         float*,         const float*, const int, const int);
@@ -1237,7 +1120,7 @@ static float* get_pooling_scratch(size_t floats_needed)
     if (floats_needed > pooling_scratch_size_)
     {
         if (pooling_scratch_) cudaFree(pooling_scratch_);
-        CHECK_CUDA(cudaMalloc(&pooling_scratch_, floats_needed * sizeof(float)));
+        cudaMalloc(&pooling_scratch_, floats_needed * sizeof(float));
         pooling_scratch_size_ = floats_needed;
     }
     return pooling_scratch_;
@@ -1304,7 +1187,7 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
     float* scratch    = get_pooling_scratch(static_cast<size_t>(BS) + B);
     float* valid_mask = scratch;
     float* counts     = scratch + BS;
-    CHECK_CUDA(cudaMemset(counts, 0, B * sizeof(float)));
+    cudaMemset(counts, 0, B * sizeof(float));
 
     const int block_size = 256;
     {
@@ -1316,7 +1199,6 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
         const int grid = (total + block_size - 1) / block_size;
         average_pooling_3d_forward_kernel<T><<<grid, block_size>>>(total, in, out, S, F, valid_mask, counts);
     }
-    CUDA_CHECK_KERNEL();
 }
 
 template void average_pooling_3d_forward_cuda<float>        (const Index, const float*,         float*,         const int, const int);
@@ -1361,7 +1243,7 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
     float* scratch    = get_pooling_scratch(static_cast<size_t>(BS) + B);
     float* valid_mask = scratch;
     float* counts     = scratch + BS;
-    CHECK_CUDA(cudaMemset(counts, 0, B * sizeof(float)));
+    cudaMemset(counts, 0, B * sizeof(float));
 
     const int block_size = 256;
     {
@@ -1373,7 +1255,6 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
         const int grid = (total + block_size - 1) / block_size;
         average_pooling_3d_backward_kernel<T><<<grid, block_size>>>(total, delta, in_gradient, S, F, valid_mask, counts);
     }
-    CUDA_CHECK_KERNEL();
 }
 
 template void average_pooling_3d_backward_cuda<float>        (const Index, const float*,         const float*,         float*,         const int, const int);
@@ -1470,7 +1351,6 @@ void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* m
     else if (D <= 128) threads = 128;
 
     layernorm_forward_kernel<T><<<N, threads>>>(N, D, X, Y, means, inv_vars, gamma, beta, eps);
-    CUDA_CHECK_KERNEL();
 }
 
 template void layernorm_forward_cuda<float>        (const int, const int, const float*,         float*,         float*, float*, const float*, const float*, const float);
@@ -1607,11 +1487,9 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
     else if (D <= 128) dx_threads = 128;
 
     layernorm_backward_kernel<T> << <N, dx_threads >> > (N, D, dY, X, means, inv_vars, gamma, dX);
-    CUDA_CHECK_KERNEL();
 
     const int gb_threads = 256;
     layernorm_gamma_beta_gradient_kernel<T> << <D, gb_threads >> > (N, D, dY, X, means, inv_vars, dGamma, dBeta);
-    CUDA_CHECK_KERNEL();
 }
 
 template void layernorm_backward_cuda<float>        (const int, const int, const float*,         const float*,         const float*, const float*, const float*, float*,         float*, float*);

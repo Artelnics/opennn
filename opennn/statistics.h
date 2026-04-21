@@ -109,14 +109,12 @@ struct Histogram
 type minimum(const MatrixR&);
 type minimum(const VectorR&);
 type minimum(const VectorR&, const vector<Index>&);
-//Index minimum(const VectorI&);
 VectorR column_minimums(const Tensor2&, const vector<Index>& = vector<Index>(), const vector<Index>& = vector<Index>());
 
 // Maximum
 type maximum(const MatrixR&);
 type maximum(const VectorR&);
 type maximum(const VectorR&, const vector<Index>&);
-//Index maximum(const VectorI&);
 VectorR column_maximums(const Tensor2&, const vector<Index>& = vector<Index>(), const vector<Index>& = vector<Index>());
 
 // Range
@@ -141,7 +139,6 @@ type variance(const VectorR&, const VectorI&);
 
 // Standard deviation
 type standard_deviation(const VectorR&);
-//type standard_deviation(const VectorR&, const VectorI&);
 VectorR standard_deviation(const VectorR&, Index);
 
 // Quartiles

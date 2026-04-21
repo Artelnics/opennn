@@ -57,7 +57,6 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             const Shape& s = layer_param_shapes[j];
             if(s.size() > 0 && g_ptr)
             {
-                // Weight gradients are FP32 master (AMP recipe).
                 gradient_views[i][j] = TensorView(g_ptr, s, CUDNN_DATA_FLOAT);
                 g_ptr += get_aligned_size(s.size());
             }
@@ -156,13 +155,11 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         {
             if(backward_edges[i].size() > 1 && og_ptr && !per_layer_output_gradient_shapes[i].empty())
             {
-                // Multi-consumer: dedicated buffer in per_layer_output_gradients (accumulation path)
                 backward_views[i][0][0] = TensorView(og_ptr, per_layer_output_gradient_shapes[i]);
                 og_ptr += get_aligned_size(per_layer_output_gradient_shapes[i].size());
             }
             else
             {
-                // Single-consumer: alias to consumer's input gradient (no accumulation needed)
                 const BackwardEdge& edge = backward_edges[i].front();
                 const size_t slot = 1 + edge.port;
                 if(edge.consumer_idx < backward_views.size()
@@ -180,7 +177,7 @@ void BackPropagation::accumulate_output_gradients(size_t layer_index)
 {
     if(layer_index >= backward_views.size()) return;
     if(backward_views[layer_index].empty()) return;
-    if(backward_edges[layer_index].size() <= 1) return;  // Single consumer: already wired, no accumulation needed
+    if(backward_edges[layer_index].size() <= 1) return;
 
     TensorView& output_grad = backward_views[layer_index][0][0];
     if(!output_grad.data) return;
@@ -241,10 +238,9 @@ void BackPropagation::allocate_device()
     const Shape output_shape = neural_network->get_output_shape();
     const Index outputs_number = output_shape[0];
 
-    gradient.resize_device(gradient.size());   // weight gradients — FP32 master
+    gradient.resize_device(gradient.size());
     gradient.setZero_device();
 
-    // Activation-gradient pool (backward): size in bytes from per-layer dtypes.
     {
         const auto& nn_layers_for_sizing = neural_network->get_layers();
         const vector<vector<Shape>> backward_shapes_for_sizing = neural_network->get_backward_shapes(batch_size);
@@ -261,7 +257,6 @@ void BackPropagation::allocate_device()
         backward.setZero_device();
     }
 
-    // output_gradients is activation-dtype (single tensor — loss gradient).
     output_gradients.resize_device_bytes(output_gradients.size() * Index(dtype_bytes(CUDNN_ACTIVATION_DTYPE)));
     output_gradients.setZero_device();
 
@@ -290,8 +285,6 @@ void BackPropagation::allocate_device()
     const vector<vector<Shape>> backward_shapes = neural_network->get_backward_shapes(batch_size);
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    // Allocate per-layer output gradient buffers on device (multi-consumer accumulation).
-    // Each per-layer buffer is activation-dtype.
     if(per_layer_output_gradients.size() > 0)
     {
         Index total_og_bytes = 0;
@@ -338,7 +331,6 @@ void BackPropagation::allocate_device()
                 if(backward_edges[i].size() > 1 && !per_layer_output_gradient_shapes[i].empty()
                    && per_layer_output_gradients.device_bytes())
                 {
-                    // Multi-consumer: use dedicated device buffer for accumulation
                     uint8_t* og_cursor = per_layer_output_gradients.device_bytes();
                     for(size_t k = 0; k < i; ++k)
                         if(!per_layer_output_gradient_shapes[k].empty())

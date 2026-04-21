@@ -1917,8 +1917,6 @@ void Dataset::save_data_binary(const filesystem::path& binary_data_file_name) co
     if(!file.is_open())
         throw runtime_error("Cannot open data binary file.");
 
-    // Write data
-
     streamsize size = sizeof(Index);
 
     Index columns_number = data.cols();
@@ -1989,7 +1987,7 @@ VectorI Dataset::calculate_target_distribution() const
         class_distribution(0) = negatives;
         class_distribution(1) = positives;
     }
-    else // More than two classes
+    else
     {
         class_distribution = VectorI::Zero(targets_number);
 
@@ -2059,7 +2057,7 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_para
             ++used_feature_index;
             continue;
         }
-        else // Numeric
+        else
         {
             const type interquartile_range = box_plots[i].third_quartile - box_plots[i].first_quartile;
 
@@ -2560,7 +2558,6 @@ void Dataset::read_csv()
 
     variables_missing_values_number = VectorI::Zero(variables_number);
 
-    // Build category lookup maps for O(1) access during data loading
     vector<unordered_map<string, Index>> category_maps(variables_number);
     for(Index v = 0; v < variables_number; ++v)
         if(variables[v].type == VariableType::Categorical)
@@ -2639,7 +2636,6 @@ void Dataset::read_csv()
                     else if(categories.size() > 1 && token == categories[1])
                         data(sample_index, feature_indices[0]) = 1;
                     else
-                        //from_chars(token.data(), token.data() + token.size(), data(sample_index, feature_indices[0])); // AFTER
                         data(sample_index, feature_indices[0]) = stof(token);
                 }
                 break;

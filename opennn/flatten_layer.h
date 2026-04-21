@@ -53,7 +53,7 @@ public:
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        return {Shape{batch_size}.append(get_output_shape())}; // {batch, total_count}
+        return {Shape{batch_size}.append(get_output_shape())};
     }
 
     vector<Shape> get_backward_shapes(Index batch_size) const override

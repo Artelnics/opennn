@@ -33,7 +33,7 @@ if(NOT APPLE)
     find_package(OpenMP)
 endif()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
     add_compile_options(-Wno-interference-size)
 endif()
 

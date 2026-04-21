@@ -37,7 +37,7 @@ public:
 
     vector<Shape> get_forward_shapes(Index batch_size) const override
     {
-        return {Shape{batch_size}.append(input_shape)}; // slot 1: Output
+        return {Shape{batch_size}.append(input_shape)}; // Output
     }
 
     const VectorR& get_minimums() const
@@ -162,9 +162,6 @@ public:
     {
         auto& forward_views = forward_propagation.views[layer];
 
-        // Data is scaled in-place by Optimizer::set_scaling() before training,
-        // so the scaling layer just copies input to output.
-        // The scaling coefficients are stored for serialization/expression only.
         copy(forward_views[Input][0], forward_views[Output][0]);
     }
 
@@ -182,42 +179,39 @@ public:
         return buffer.str();
     }
 
-    string write_minimum_maximum_expression(const vector<string>& input_names, const vector<string>& output_names) const
+    string write_minimum_maximum_expression(const vector<string>& /*input_names*/, const vector<string>& /*output_names*/) const
     {
-        const Index inputs_number = get_output_shape().size();
-
         ostringstream buffer;
 
         buffer.precision(10);
 /*
+        const Index inputs_number = get_output_shape().size();
         for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = 2*(" << input_names[i] << "-(" << descriptives[i].minimum << "))/(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))-1;\n";
 */
         return buffer.str();
     }
 
-    string write_mean_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
+    string write_mean_standard_deviation_expression(const vector<string>& /*input_names*/, const vector<string>& /*output_names*/) const
     {
-        const Index inputs_number = get_inputs_number();
-
         ostringstream buffer;
 
         buffer.precision(10);
 /*
+        const Index inputs_number = get_inputs_number();
         for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = (" << input_names[i] << "-(" << descriptives[i].mean << "))/" << descriptives[i].standard_deviation << ";\n";
 */
         return buffer.str();
     }
 
-    string write_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
+    string write_standard_deviation_expression(const vector<string>& /*input_names*/, const vector<string>& /*output_names*/) const
     {
-        const Index inputs_number = get_output_shape().size();
-
         ostringstream buffer;
 
         buffer.precision(10);
 /*
+        const Index inputs_number = get_output_shape().size();
         for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = " << input_names[i] << "/(" << descriptives[i].standard_deviation << ");\n";
 */

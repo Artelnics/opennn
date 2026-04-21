@@ -85,18 +85,10 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                                        const Shape& output_shape) : NeuralNetwork()
 {
     set_default();
-    // add_layer(make_unique<Scaling<3>>(input_shape));
-
-    // add_layer(make_unique<Recurrent>(input_shape,
-    //                                  complexity_dimensions))
 
     add_layer(make_unique<Recurrent>(input_shape, complexity_dimensions));
 
     add_layer(make_unique<Dense<2>>(complexity_dimensions, output_shape, "Linear", false, "dense_layer"));
-
-    // add_layer(make_unique<Unscaling>(output_shape));
-
-    // add_layer(make_unique<Bounding>(output_shape));
 
     compile();
     set_parameters_random();
@@ -209,7 +201,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 {
     if (input_shape.rank() != 3)
         throw runtime_error("Input shape size must be 3.");
-    if (blocks_per_stage.size() != initial_filters.size())
+    if (Index(blocks_per_stage.size()) != initial_filters.size())
         throw runtime_error("blocks_per_stage and initial_filters must have the same size.");
 
     reference_all_layers();
@@ -362,7 +354,6 @@ void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
     // Scaling 4D
     add_layer(make_unique<Scaling<4>>(new_input_shape));
 
-    // --- Conv 3×3, 64 kernels, ReLU x2 -> Pooling 2×2 stride 2 ---
     {
         add_layer(make_unique<Convolutional>(
             get_output_shape(),
@@ -387,7 +378,6 @@ void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
             "pool1"));
     }
 
-    // --- Conv 3×3, 128 kernels, ReLU x2 -> Pooling 2×2 stride 2 ---
     {
         add_layer(make_unique<Convolutional>(
             get_output_shape(),
@@ -412,7 +402,6 @@ void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
             "pool2"));
     }
 
-    // --- Conv 3×3, 256 kernels, ReLU x3 -> Pooling 2×2 stride 2 ---
     {
         add_layer(make_unique<Convolutional>(
             get_output_shape(),
@@ -443,7 +432,6 @@ void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
             "MaxPooling", "pool3"));
     }
 
-    // --- Conv 3×3, 512 kernels, ReLU x3 -> Pooling 2×2 stride 2 ---
     {
         add_layer(make_unique<Convolutional>(
             get_output_shape(),
@@ -474,7 +462,6 @@ void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
             "MaxPooling", "pool4"));
     }
 
-    // --- Conv 3×3, 512 kernels, ReLU x3 -> Pooling 2×2 stride 2 ---
     {
         add_layer(make_unique<Convolutional>(
             get_output_shape(),
@@ -559,7 +546,6 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
         "multihead_attention_layer"));
 
     add_layer(make_unique<Pooling3d>(get_output_shape(), PoolingMethod::AveragePooling));
-    //add_layer(make_unique<Flatten<3>>(get_output_shape()));
 
     add_layer(make_unique<Dense<2>>(get_output_shape(), Shape({16}), "RectifiedLinear", false, "hidden_layer"));
 
@@ -617,20 +603,10 @@ void Transformer::set(const Index input_sequence_length,
     if(embedding_dimension % heads_number != 0)
         throw runtime_error("Transformer Error: embedding_dimension must be divisible by heads_number.");
 
-    // External input convention in NeuralNetwork:
-    //   -1 -> first external input
-    //   -2 -> second external input
-    //
-    // This transformer uses:
-    //   -1 -> decoder token ids
-    //   -2 -> encoder/input token ids
-    //
     // @todo If you want the opposite convention, swap {-1} and {-2} here
     // and keep the same order everywhere you call forward propagation.
 
-    // -------------------------------------------------------------------------
     // Input embeddings
-    // -------------------------------------------------------------------------
 
     auto decoder_embedding = make_unique<Embedding>(
         Shape{output_vocabulary_size, decoder_sequence_length},
@@ -654,9 +630,7 @@ void Transformer::set(const Index input_sequence_length,
     add_layer(std::move(encoder_embedding), {-2});
     Index current_encoder_idx = get_layers_number() - 1;
 
-    // -------------------------------------------------------------------------
     // Encoder stack
-    // -------------------------------------------------------------------------
 
     for(Index i = 0; i < layers_number; ++i)
     {
@@ -731,10 +705,6 @@ void Transformer::set(const Index input_sequence_length,
         const string suffix = "_" + to_string(i + 1);
 
         // Masked self-attention
-        //
-        // Important:
-        // The current MultiHeadAttention constructors default to use_causal_mask=false,
-        // so we must call set(...) explicitly to enable the decoder causal mask.
         auto decoder_self_attention = make_unique<MultiHeadAttention>(
             Shape{decoder_sequence_length, embedding_dimension},
             heads_number,
@@ -766,7 +736,7 @@ void Transformer::set(const Index input_sequence_length,
 
         const Index decoder_norm_1_idx = get_layers_number() - 1;
 
-        // Cross-attention: query = decoder, source = encoder output
+        // Cross-attention
         add_layer(
             make_unique<MultiHeadAttention>(
                 Shape{decoder_sequence_length, embedding_dimension},
@@ -854,6 +824,27 @@ void Transformer::set(const Index input_sequence_length,
 
 void Transformer::set_dropout_rate(const type new_dropout_rate)
 {
+    for(auto& layer : get_layers())
+    {
+        if(!layer) continue;
+
+        const string& label = layer->get_label();
+        const bool is_ffn_dense =
+               label.rfind("encoder_internal_dense", 0) == 0
+            || label.rfind("encoder_external_dense", 0) == 0
+            || label.rfind("decoder_internal_dense", 0) == 0
+            || label.rfind("decoder_external_dense", 0) == 0;
+
+        if(is_ffn_dense)
+        {
+            if(auto* dense = dynamic_cast<Dense<3>*>(layer.get()))
+                dense->set_dropout_rate(new_dropout_rate);
+        }
+        else if(auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
+        {
+            mha->set_dropout_rate(new_dropout_rate);
+        }
+    }
 }
 
 void Transformer::set_input_vocabulary(const vector<string>& new_input_vocabulary)
@@ -919,8 +910,6 @@ string Transformer::calculate_outputs(const string& source)
     Tensor2 source_ids(batch_size, input_sequence_length);
     source_ids.setConstant(PAD);
 
-    // Encode source exactly like training:
-    // [START] token_1 token_2 ... token_n [END] [PAD] ...
     source_ids(0, 0) = START;
 
     Index write_index = 1;
@@ -943,8 +932,6 @@ string Transformer::calculate_outputs(const string& source)
 
     ForwardPropagation forward_propagation(batch_size, this);
 
-    // Autoregressive decoding: forward_propagate doesn't dispatch by Device,
-    // so run inference on CPU regardless of training device.
     const bool was_gpu = Device::instance().is_gpu();
     if (was_gpu) Device::instance().set(DeviceType::Cpu);
 

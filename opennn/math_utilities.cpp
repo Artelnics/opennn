@@ -12,7 +12,6 @@
 namespace opennn
 {
 
-// SELU (Self-Normalizing ELU) constants.
 static constexpr float SELU_ALPHA  = 1.6732632423543772848170429916717f;
 static constexpr float SELU_LAMBDA = 1.0507009873554804934193349852946f;
 
@@ -129,8 +128,6 @@ void multiply(const TensorView& input_a, bool transpose_a,
         const long long stride_output = output.shape[rank - 2] * output.shape[rank - 1];
 
         if(batch_count == 1)
-            // Per-operand dtypes — supports boundary GEMMs (e.g. weight-gradient
-            // accumulation: activation-dtype × activation-dtype → FP32 weight grad).
             gemm_cuda(operation_b, operation_a,
                       output_columns, output_rows, inner_dimension,
                       input_b.data, input_b.cuda_dtype(), leading_dimension_b,
@@ -138,8 +135,6 @@ void multiply(const TensorView& input_a, bool transpose_a,
                       output.data,  output.cuda_dtype(),  leading_dimension_output,
                       alpha, beta);
         else
-            // Batched GEMMs are used for attention internal ops — homogeneous
-            // activation dtype across all three operands.
             gemm_strided_batched_cuda(operation_b, operation_a,
                                       output_columns, output_rows, inner_dimension,
                                       input_b.data, leading_dimension_b, stride_b,
@@ -196,8 +191,6 @@ void sum(const TensorView& input, TensorView& output, type alpha, type beta)
         const int total_rows = to_int(input.shape[0]);
         const int total_columns = to_int(input.shape.size() / input.shape[0]);
 
-        // Per-operand dtypes — supports boundary reduction (e.g. bias-gradient:
-        // activation-dtype input × activation-dtype ones → FP32 bias output).
         gemv_cuda(CUBLAS_OP_N,
                   total_columns, total_rows,
                   input.data, input.cuda_dtype(), total_columns,
@@ -277,17 +270,12 @@ void combination(const TensorView& input,
 
     if (Device::instance().is_gpu())
     {
-        // Per-operand dtypes — supports boundary GEMMs (first-layer FP32 inputs
-        // + FP32 weights → activation-dtype output).
         gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
                   to_int(output_columns), to_int(total_rows), to_int(input_columns),
                   weights.data, weights.cuda_dtype(), to_int(output_columns),
                   input.data,   input.cuda_dtype(),   to_int(input_columns),
                   output.data,  output.cuda_dtype(),  to_int(output_columns));
 
-        // Bias add — FP32 bias broadcast onto activation-dtype output.
-        // cudnnAddTensor requires matching operand dtypes; our custom kernel
-        // handles the FP32+T mix (bias is AMP master FP32, output is T).
         output.dispatch([&](auto tag) {
             using T = decltype(tag);
             add_bias_cuda<T>(output.size(), output.as<T>(), biases.as<float>(), to_int(output_columns));
@@ -517,9 +505,6 @@ void batch_normalization_inference(
         return;
     }
 #endif
-    // Inference batch norm as a single affine transform:
-    //   output = scale * input + shift
-    //   scale = gamma / sqrt(var + eps),  shift = beta - scale * mean
     const VectorR scale = gamma.as_vector().array() / (running_variance.as_vector().array() + EPSILON).sqrt();
     const VectorR shift = beta.as_vector().array() - scale.array() * running_mean.as_vector().array();
 
@@ -570,18 +555,14 @@ void batch_normalization_training(
     VectorMap running_means = running_mean.as_vector();
     VectorMap running_variances = running_variance.as_vector();
 
-    // Batch mean and centered output
     means.noalias() = input_matrix.colwise().mean();
     output_matrix.noalias() = input_matrix.rowwise() - means.transpose();
 
-    // Batch variance (reuses the centered output)
     inverse_variances.noalias() = output_matrix.array().square().colwise().mean().matrix();
 
-    // Running stats EMA
     running_means = running_means * momentum + means * (type(1) - momentum);
     running_variances = running_variances * momentum + inverse_variances * (type(1) - momentum);
 
-    // Normalize + affine in a single fused pass: output = scale * centered + beta
     inverse_variances.array() = type(1) / (inverse_variances.array() + EPSILON).sqrt();
     const VectorR scale = inverse_variances.array() * gamma.as_vector().array();
     const VectorMap betas = beta.as_vector();
@@ -609,8 +590,8 @@ void batch_normalization_backward(
         CHECK_CUDNN(cudnnBatchNormalizationBackward(
             Device::get_cudnn_handle(),
             mode,
-            &one, &zero,                        // alpha/beta for dx
-            &one, &zero,                        // alpha/beta for dgamma/dbeta
+            &one, &zero,
+            &one, &zero,
             input.get_descriptor(), input.data,
             output_gradient.get_descriptor(), output_gradient.data,
             input_gradient.get_descriptor(), input_gradient.data,
@@ -621,7 +602,7 @@ void batch_normalization_backward(
         return;
     }
 #endif
-    (void)output;// to avoid unused parameter warning
+    (void)output;
     const Index effective_batch_size = input.size() / gamma.size();
     const type inv_N = type(1) / to_type(effective_batch_size);
     const type N = to_type(effective_batch_size);
@@ -637,7 +618,6 @@ void batch_normalization_backward(
     VectorMap beta_gradients = beta_gradient.as_vector();
     MatrixMap input_gradients = input_gradient.as_flat_matrix();
 
-    // Inline x_hat in both reductions to avoid materializing a full normalized matrix.
     beta_gradients.noalias() = output_gradients.colwise().sum();
 
     gamma_gradients.noalias() = (output_gradients.array()
@@ -741,16 +721,12 @@ void layernorm_backward(const TensorView& input, const TensorView& output_gradie
         return;
     }
 #endif
-    // Pass 1: gamma_gradient and beta_gradient — reductions over all (batch, sequence) rows per dim.
-    // Use Eigen colwise on the flat matrix view; no full-tensor temporaries.
     const MatrixMap dy_flat = output_gradient.as_flat_matrix();
     const MatrixMap norm_flat = normalized.as_flat_matrix();
 
     beta_gradient.as_vector().noalias() = dy_flat.colwise().sum();
     gamma_gradient.as_vector().noalias() = (dy_flat.array() * norm_flat.array()).matrix().colwise().sum();
 
-    // Pass 2: per-row OMP loop mirroring the GPU layernorm_backward_kernel.
-    // Inlines scaled_gradient = gamma * dy to avoid the Tensor3 materialization.
     const type* dy_data = output_gradient.data;
     const type* norm_data = normalized.data;
     const type* std_data = standard_deviations.data;
@@ -1497,13 +1473,9 @@ void embedding_backward(const TensorView& input_indices,
     weight_gradients.row(0).setZero();
 }
 
-// Transpose the middle two axes of a 4D tensor.
-// src: [batch_size, src_m1, src_m2, D]
-// dst: [batch_size, src_m2, src_m1, D]
 static void transpose_middle_axes(const type* src, type* dst,
                                   Index batch_size, Index src_m1, Index src_m2, Index D)
 {
-    // Iterate in dst-sequential order for cache-friendly writes.
     #pragma omp parallel for collapse(3)
     for (Index b = 0; b < batch_size; ++b)
         for (Index i = 0; i < src_m2; ++i)
@@ -1513,7 +1485,6 @@ static void transpose_middle_axes(const type* src, type* dst,
                        D * sizeof(type));
 }
 
-// Transpose [B, S, H, D] -> [B, H, S, D]. Dispatches CPU/GPU.
 void split_heads(const TensorView& source, TensorView& destination)
 {
     const Index batch_size = source.shape[0];
@@ -1536,7 +1507,6 @@ void split_heads(const TensorView& source, TensorView& destination)
                           batch_size, sequence_length, heads_number, head_dimension);
 }
 
-// Transpose [B, H, S, D] -> [B, S, H, D]. Dispatches CPU/GPU.
 void merge_heads(const TensorView& source, TensorView& destination)
 {
     const Index batch_size = source.shape[0];
@@ -1639,22 +1609,35 @@ void attention_masks(const TensorView& source_input,
     }
 #endif
 
-    // Key padding mask
+    const Index att_rows_per_batch = heads_number * query_sequence_length;
+
     #pragma omp parallel for
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
-        const MatrixMap source_batch = source_input.as_matrix(batch_index);
-        MatrixMap attention_batch = attention_weights.as_flat_matrix(batch_index);
+        const type* src = source_input.data + batch_index * source_sequence_length * embedding_dimension;
+        type*       att = attention_weights.data + batch_index * att_rows_per_batch * source_sequence_length;
 
-        for(Index source_index = 0; source_index < source_sequence_length; ++source_index)
-            if(source_batch.row(source_index).cwiseAbs().maxCoeff() <= EPSILON)
-                attention_batch.col(source_index).setConstant(SOFTMAX_MASK_VALUE);
+        for(Index s = 0; s < source_sequence_length; ++s)
+        {
+            const type* src_row = src + s * embedding_dimension;
+            type max_abs = type(0);
+            for(Index k = 0; k < embedding_dimension; ++k)
+            {
+                const type a = std::abs(src_row[k]);
+                if(a > max_abs) max_abs = a;
+            }
+            if(max_abs > EPSILON) continue;
+
+            for(Index r = 0; r < att_rows_per_batch; ++r)
+                att[r * source_sequence_length + s] = SOFTMAX_MASK_VALUE;
+        }
     }
 
     if(!use_causal_mask) return;
 
-    for(Index head_index = 0; head_index < batch_size * heads_number; ++head_index)
-        attention_weights.as_matrix(head_index) += causal_mask;
+    const Index bh = batch_size * heads_number;
+    MatrixMap attention_flat(attention_weights.data, bh * query_sequence_length, source_sequence_length);
+    attention_flat += causal_mask.replicate(bh, 1);
 }
 
 

@@ -155,8 +155,6 @@ void ImageDataset::from_XML(const XmlDocument& data_set_document)
 {
     const XmlElement* image_dataset_element = get_xml_root(data_set_document, "ImageDataset");
 
-    // Data Source
-
     const XmlElement* data_source_element = require_xml_element(image_dataset_element, "DataSource");
 
     set_data_path(read_xml_string(data_source_element, "Path"));
@@ -348,7 +346,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     shuffle_rows(data);
 }
 
-} // opennn namespace
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

@@ -57,7 +57,6 @@ struct BackPropagation
 
     TensorView get_output_gradients() const;
 
-    // Returns the output-gradient view for the currently active device.
     TensorView get_output_gradients_active() const
     {
 #ifdef OPENNN_WITH_CUDA

@@ -306,7 +306,7 @@ void shuffle_rows(MatrixR& matrix)
 
 Device::Device()
 {
-    set_threads_number(0);  // 0 triggers hardware_concurrency auto-detection
+    set_threads_number(0);
 
 #ifdef OPENNN_WITH_CUDA
     CHECK_CUDA(cudaStreamCreate(&compute_stream));

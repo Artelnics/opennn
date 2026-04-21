@@ -24,8 +24,6 @@ int main()
     {
         cout << "OpenNN. Translation benchmark (refactor)." << endl;
 
-        set_seed(42);
-
 #ifdef OPENNN_WITH_CUDA
 
         LanguageDataset dataset("/home/artelnics/Documents/openNN/opennn/temp/translation_en_es.txt");
@@ -56,7 +54,7 @@ int main()
 
         transformer.set_input_vocabulary(dataset.get_input_vocabulary());
         transformer.set_output_vocabulary(dataset.get_target_vocabulary());
-        transformer.set_dropout_rate(type(0.1));
+        transformer.set_dropout_rate(type(0));
 
         TrainingStrategy training_strategy(&transformer, &dataset);
 
@@ -68,7 +66,7 @@ int main()
 
         adam->set_batch_size(64);
         adam->set_learning_rate(type(5e-4));
-        adam->set_maximum_epochs(5);
+        adam->set_maximum_epochs(2);
         adam->set_display_period(1);
 
         Device::instance().set(DeviceType::Gpu);
@@ -80,7 +78,8 @@ int main()
              << " target_vocab="   << output_vocab
              << " input_seq="      << input_seq
              << " decoder_seq="    << decoder_seq
-             << " params="         << transformer.get_parameters_size() << endl;
+             << " params="         << transformer.get_parameters_number()
+             << " (buffer="        << transformer.get_parameters_size() << ")" << endl;
 
         const auto t0 = steady_clock::now();
         training_strategy.train();
@@ -88,6 +87,30 @@ int main()
 
         const double training_seconds = duration_cast<milliseconds>(t1 - t0).count() / 1000.0;
         cout << "\nTotal training time (refactor): " << training_seconds << " s" << endl;
+
+        // Predictions
+
+        cout << "\n================ TRANSFORMER PREDICTIONS ================\n";
+
+        const vector<string> test_sources =
+        {
+            "the cat eats an apple",
+            "a boy sings happily",
+            "my friend writes a book",
+            "the teacher speaks loudly"
+        };
+
+        for(Index i = 0; i < Index(test_sources.size()); ++i)
+        {
+            const string prediction = transformer.calculate_outputs(test_sources[i]);
+
+            cout << "Sample " << i << endl;
+            cout << "  Source:    " << test_sources[i] << endl;
+            cout << "  Predicted: " << prediction << endl;
+            cout << endl;
+        }
+
+        cout << "=========================================================\n";
 
 #endif
 
