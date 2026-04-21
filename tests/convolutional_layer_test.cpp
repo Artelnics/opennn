@@ -65,7 +65,7 @@ TEST_P(ConvolutionalLayerTest, Constructor) {
     EXPECT_EQ(convolutional_layer.get_column_stride(), parameters.stride_shape[1]);
     EXPECT_EQ(convolutional_layer.get_activation_function(), string_to_activation(parameters.activation_function));
     EXPECT_EQ(convolutional_layer.get_batch_normalization(), parameters.batch_normalization);
-    EXPECT_EQ(convolutional_layer.get_convolution_type(), parameters.convolution_type);
+    EXPECT_EQ(convolutional_layer.get_convolution_type(), string_to_convolution_type(parameters.convolution_type));
 }
 
 
@@ -108,7 +108,7 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
     TensorView output_view = forward_propagation.get_outputs();
     const Shape expected_output_dims = neural_network.get_layer(0)->get_output_shape();
 
-    ASSERT_EQ(output_view.shape.rank, 4);
+    ASSERT_EQ(output_view.shape.rank(), 4);
     EXPECT_EQ(output_view.shape[0], batch_size);
     EXPECT_EQ(output_view.shape[1], expected_output_dims[0]);
     EXPECT_EQ(output_view.shape[2], expected_output_dims[1]);
@@ -162,6 +162,6 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 4);
+    ASSERT_EQ(output_view.shape.rank(), 4);
     EXPECT_EQ(output_view.shape[0], batch_size);
 }

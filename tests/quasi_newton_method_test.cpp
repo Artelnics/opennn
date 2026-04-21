@@ -42,7 +42,7 @@ TEST(QuasiNewtonMethodTest, BFGS_Update)
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
     QuasiNewtonMethod quasi_newton_method(&loss);
-    quasi_newton_method.set_scaling();
+    // set_scaling() is now called internally
 
     neural_network.set_parameters_random();
 
@@ -78,7 +78,7 @@ TEST(QuasiNewtonMethodTest, Train)
     loss_ptr->set_error(Loss::Error::MeanSquaredError);
     quasi_newton_method.set_loss(loss_ptr);
 
-    quasi_newton_method.set_scaling();
+    // set_scaling() is now called internally
 
     quasi_newton_method.set_maximum_epochs(1);
     quasi_newton_method.set_display(false);
@@ -92,7 +92,7 @@ TEST(QuasiNewtonMethodTest, Train)
 
     dataset.set_data_random();
 
-    quasi_newton_method.set_scaling();
+    // set_scaling() is now called internally
 
     neural_network.set_parameters_random();
 

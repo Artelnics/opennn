@@ -112,7 +112,7 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 4);
+    ASSERT_EQ(output_view.shape.rank(), 4);
     EXPECT_EQ(output_view.shape[0], batch_size);
 }
 
@@ -139,7 +139,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 4);
+    ASSERT_EQ(output_view.shape.rank(), 4);
     EXPECT_EQ(output_view.shape[0], batch_size);
 }
 
@@ -147,15 +147,15 @@ TEST_P(PoolingLayerTest, BackPropagate) {
 
 struct Pooling3dConfig {
     Shape input_shape; // {seq, features}
-    Pooling3d::PoolingMethod method;
+    PoolingMethod method;
     string test_name;
 };
 
 class Pooling3dLayerTest : public ::testing::TestWithParam<Pooling3dConfig> {};
 
 INSTANTIATE_TEST_SUITE_P(Pooling3dLayerTests, Pooling3dLayerTest, ::testing::Values(
-                                                                      Pooling3dConfig{{3, 4}, Pooling3d::PoolingMethod::MaxPooling, "MaxPooling3d"},
-                                                                      Pooling3dConfig{{3, 4}, Pooling3d::PoolingMethod::AveragePooling, "AveragePooling3d"}
+                                                                      Pooling3dConfig{{3, 4}, PoolingMethod::MaxPooling, "MaxPooling3d"},
+                                                                      Pooling3dConfig{{3, 4}, PoolingMethod::AveragePooling, "AveragePooling3d"}
                                                                       ));
 
 TEST_P(Pooling3dLayerTest, ForwardPropagate)
