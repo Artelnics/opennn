@@ -265,19 +265,19 @@ int main()
 
         // --- Scenario 2: single target variable (NO2), multiple steps ahead ----
         //     multi_target=true with 1 variable -> outputs t+1..t+future for NO2
-        run_scenario("Scenario 4 | single target = NO2 | future = 5 | multi_target = true", { "NO2" }, 10, 5, true, 18, 3000);
-        run_scenario("Scenario 5 | single target = Average temperature | future = 5 | multi_target = true", { "Average temperature" }, 10, 5, true, 18, 3000);
+        run_scenario("Scenario 4 | single target = NO2 | future = 5 | multi_target = true", { "NO2" }, 20, 5, true, 18, 3000);
+        run_scenario("Scenario 5 | single target = Average temperature | future = 5 | multi_target = true", { "Average temperature" }, 20, 5, true, 18, 3000);
 
         // --- Scenario 3: multiple target variables (NO2, O3), one step ahead ---
-        run_scenario("Scenario 6 | targets = {NO2, O3} | future = 1 | multi_target = false", { "NO2", "O3" }, 10, 1, false, 20, 5000);
-        run_scenario("Scenario 7 | targets = {NO2, O3, Average temperature} | future = 1 | multi_target = false", { "NO2", "O3","Average temperature" }, 15, 1, false, 20, 5000);
+        run_scenario("Scenario 6 | targets = {NO2, O3} | future = 1 | multi_target = false", { "NO2", "O3" }, 20, 1, false, 30, 5000);
+        run_scenario("Scenario 7 | targets = {NO2, O3, Average temperature} | future = 1 | multi_target = false", {"Average temperature","NO2", "O3", }, 20, 1, false, 30, 5000);
 
         // --- Scenario 4: multiple target variables AND multiple steps ahead ----
         //     multi_target=true with N variables and F future steps ->
         //     the same network outputs N*F values at once (step-major layout):
         //     [NO2_t1, O3_t1, NO2_t2, O3_t2, NO2_t3, O3_t3]
-        run_scenario("Scenario 8 | targets = {NO2, O3} | future = 3 | multi_target = true", { "NO2", "O3" }, 10, 4, true, 30, 8000);
-        run_scenario("Scenario 9 | targets = {NO2, O3, Average temperature} | future = 3 | multi_target = true", { "NO2", "O3", "Average temperature" }, 20, 4, true, 30, 10000);
+        run_scenario("Scenario 8 | targets = {NO2, O3} | future = 4 | multi_target = true", { "NO2", "O3" }, 30, 4, true, 50, 8000);
+        run_scenario("Scenario 9 | targets = {NO2, O3, Average temperature} | future = 4 | multi_target = true", {"Average temperature", "NO2", "O3", }, 30, 4, true, 60, 10000);
 
         cout << "\nGood bye!" << endl;
 

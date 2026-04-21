@@ -139,8 +139,8 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     for(Index i = 0;  i < outputs_number; i++)
     {
-        const VectorMap targets = vector_map(targets_outputs.first, i);
-        const VectorMap outputs = vector_map(targets_outputs.second, i);
+        const VectorR targets = targets_outputs.first.col(i);
+        const VectorR outputs = targets_outputs.second.col(i);
 
         const type determination = calculate_determination(outputs, targets);
 
@@ -181,7 +181,8 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
 
         const vector<Index> sample_indices = time_series_dataset->get_sample_indices(sample_role);
         const vector<Index> feature_indices = time_series_dataset->get_feature_indices("Target");
-        target_data.resize(static_cast<Index>(sample_indices.size()), static_cast<Index>(feature_indices.size()));
+        const Index target_columns = static_cast<Index>(time_series_dataset->get_target_shape()[0]);
+        target_data.resize(static_cast<Index>(sample_indices.size()), target_columns);
         time_series_dataset->fill_targets(sample_indices, feature_indices, target_data.data());
     }
     else
@@ -320,29 +321,22 @@ vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives(c
 
 vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives() const
 {
-    // Neural network
-
     const Index outputs_number = neural_network->get_outputs_number();
 
     const Index testing_samples_number = dataset->get_samples_number("Testing");
-
-    // Testing analysis stuff
 
     vector<vector<Descriptives>> descriptives(outputs_number);
 
     Tensor3 error_data = calculate_error_data();
 
-    Index index = 0;
-
     for(Index i = 0; i < outputs_number; i++)
     {
-        const MatrixMap matrix_error(error_data.data() + index, testing_samples_number, 3);
-
-        const MatrixR matrix(matrix_error);
+        MatrixR matrix(testing_samples_number, 3);
+        for(Index j = 0; j < testing_samples_number; j++)
+            for(Index d = 0; d < 3; d++)
+                matrix(j, d) = error_data(j, d, i);
 
         descriptives[i] = opennn::descriptives(matrix);
-
-        index += testing_samples_number*3;
     }
 
     return descriptives;

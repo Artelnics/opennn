@@ -256,6 +256,9 @@ void NeuralNetwork::set(const filesystem::path& file_name)
 
 void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
 {
+    if(input_variables.empty() && !new_input_names.empty())
+        input_variables.resize(new_input_names.size());
+
     Index j = 0;
     for(size_t i = 0; i < input_variables.size(); ++i)
     {
@@ -278,6 +281,9 @@ void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
 
 void NeuralNetwork::set_output_names(const vector<string>& new_output_namess)
 {
+    if(output_variables.empty() && !new_output_namess.empty())
+        output_variables.resize(new_output_namess.size());
+
     Index j = 0;
     for(size_t i = 0; i < output_variables.size(); ++i)
     {
@@ -975,19 +981,21 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     const Index outputs_number = get_outputs_number();
 
     vector<string> input_names = get_input_feature_names();
-    while (input_names.size() < static_cast<size_t>(inputs_number))
+    const Index input_names_count = max(Index(input_names.size()), inputs_number);
+    while (input_names.size() < static_cast<size_t>(input_names_count))
         input_names.push_back("input_" + to_string(input_names.size() + 1));
 
     vector<string> output_names = get_output_feature_names();
-    while (output_names.size() < static_cast<size_t>(outputs_number))
+    const Index output_names_count = max(Index(output_names.size()), outputs_number);
+    while (output_names.size() < static_cast<size_t>(output_names_count))
         output_names.push_back("output_" + to_string(output_names.size() + 1));
 
     printer.OpenElement("NeuralNetwork");
 
     // Inputs
     printer.OpenElement("Inputs");
-    add_xml_element(printer, "InputsNumber", to_string(inputs_number));
-    for(Index i = 0; i < inputs_number; i++)
+    add_xml_element(printer, "InputsNumber", to_string(input_names_count));
+    for(Index i = 0; i < input_names_count; i++)
         add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
     printer.CloseElement();
 
@@ -1009,7 +1017,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     // Outputs
     printer.OpenElement("Outputs");
-    const Index outputs_count = has("Embedding") ? outputs_number : output_names.size();
+    const Index outputs_count = has("Embedding") ? outputs_number : output_names_count;
     add_xml_element(printer, "OutputsNumber", to_string(outputs_count));
     for(Index i = 0; i < outputs_count; i++)
         add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));

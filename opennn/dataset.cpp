@@ -603,7 +603,6 @@ vector<Index> Dataset::get_used_variables_indices() const
     for(Index i = 0; i < variables_number; i++)
         if (variables[i].role == "Input"
             || variables[i].role == "Target"
-            || variables[i].role == "Time"
             || variables[i].role == "InputTarget")
             used_indices[index++] = i;
 
@@ -3107,13 +3106,13 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_para
     {
         const Variable& variable = variables[i];
 
-        if (variable.role == "None"
+        if ((variable.role == "None" || variable.role == "Time")
         && variable.type == VariableType::Categorical)
         {
             feature_index += variable.get_categories_number();
             continue;
         }
-        else if (variable.role == "None") // Numeric, Binary or DateTime
+        else if (variable.role == "None" || variable.role == "Time")
         {
             feature_index++;
             continue;
@@ -3188,19 +3187,17 @@ vector<vector<Index>> Dataset::replace_Tukey_outliers_with_NaN(const type cleani
     Index feature_index = 0;
     Index used_feature_index = 0;
 
-#pragma omp parallel for
-
     for(Index i = 0; i < variables_number; i++)
     {
         const Variable& variable = variables[i];
 
-        if (variable.role == "None"
+        if ((variable.role == "None" || variable.role == "Time")
         && variable.type == VariableType::Categorical)
         {
             feature_index += variable.get_categories_number();
             continue;
         }
-        else if (variable.role == "None") // Numeric, Binary or DateTime
+        else if (variable.role == "None" || variable.role == "Time")
         {
             feature_index++;
             continue;
