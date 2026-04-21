@@ -116,8 +116,14 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
             categorical_cross_entropy(input, target, back_propagation.error, workspace_device);
         break;
     case Error::CrossEntropy3d:
-        cross_entropy_3d(input, target, back_propagation.error, back_propagation.active_tokens_count, workspace_device);
+    {
+        Index correct_tokens = 0;
+        cross_entropy_3d(input, target, back_propagation.error, back_propagation.active_tokens_count, correct_tokens, workspace_device);
+        const Index active = back_propagation.active_tokens_count;
+        back_propagation.accuracy.setValues(
+            {active > 0 ? type(correct_tokens) / type(active) : type(0)});
         break;
+    }
     case Error::MinkowskiError:
         minkowski_error(input, target, minkowski_parameter, back_propagation.error, workspace_device);
         break;

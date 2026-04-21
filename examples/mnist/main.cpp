@@ -55,7 +55,7 @@ int main()
         adam->set_maximum_epochs(20);
         adam->set_display_period(5);
 
-        Device::instance().set(DeviceType::Gpu);
+        Device::instance().set(DeviceType::Cpu);
 
         training_strategy.train();
 

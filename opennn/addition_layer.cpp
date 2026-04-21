@@ -19,9 +19,6 @@ namespace opennn
 
     template class Addition<3>;
     template class Addition<4>;
-
-    void reference_addition_layer() { }
-
 }
 
 // OpenNN: Open Neural Networks Library.

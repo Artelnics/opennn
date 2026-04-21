@@ -872,54 +872,35 @@ void convolution_backward_weights(const TensorView& input,
     const TensorMap4 inputs = input.as_tensor<4>();
     const TensorMap4 output_gradients = output_gradient.as_tensor<4>();
 
-    const Index batch_size = inputs.dimension(0);
     const Index kernels_number = weight_grad.shape[0];
     const Index kernel_height = weight_grad.shape[1];
     const Index kernel_width = weight_grad.shape[2];
     const Index kernel_channels = weight_grad.shape[3];
+    const Index kernel_size = kernel_height * kernel_width * kernel_channels;
 
-    const Index output_height = output_gradients.dimension(1);
-    const Index output_width = output_gradients.dimension(2);
-    const Index input_height = inputs.dimension(1);
-    const Index input_width = inputs.dimension(2);
+    // Bias gradients: sum output_gradients over (batch, height, width), leaving [kernels].
+    const Index grads_per_kernel = output_gradients.dimension(0)
+                                 * output_gradients.dimension(1)
+                                 * output_gradients.dimension(2);
 
-    VectorMap bias_gradients = bias_grad.as_vector().setZero();
+    MatrixMap output_grads_mat(output_gradient.data, grads_per_kernel, kernels_number);
+    VectorMap(bias_grad.data, kernels_number).noalias() = output_grads_mat.colwise().sum();
 
-    weight_grad.as_vector().setZero();
+    // Weight gradients: for each kernel, convolve padded input with output-gradient slice
+    // along (batch, H, W). Eigen's Tensor::convolve is SIMD-vectorized — much faster than
+    // the naive 6-nested loop it replaced.
+    type* weight_data = weight_grad.data;
 
     #pragma omp parallel for
     for(Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
     {
-        TensorMap3 weight_gradient_map = weight_grad.as_tensor<3>(kernel_index);
+        const auto kernel_convolution_gradients = output_gradients.chip(kernel_index, 3);
 
-        for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        {
-            for(Index output_row = 0; output_row < output_height; ++output_row)
-            {
-                const Index row_limit = min(kernel_height, input_height - output_row);
+        TensorMap4 kernel_weight_gradients(weight_data + kernel_index * kernel_size,
+                                           1, kernel_height, kernel_width, kernel_channels);
 
-                for(Index output_column = 0; output_column < output_width; ++output_column)
-                {
-                    const type output_gradient_value = output_gradients(batch_index, output_row, output_column, kernel_index);
-                    bias_gradients(kernel_index) += output_gradient_value;
-
-                    const Index col_limit = min(kernel_width, input_width - output_column);
-
-                    for(Index kernel_row = 0; kernel_row < row_limit; ++kernel_row)
-                    {
-                        const Index input_row = output_row + kernel_row;
-
-                        for(Index kernel_column = 0; kernel_column < col_limit; ++kernel_column)
-                        {
-                            const Index input_column = output_column + kernel_column;
-
-                            for(Index channel_index = 0; channel_index < kernel_channels; ++channel_index)
-                                weight_gradient_map(kernel_row, kernel_column, channel_index) += output_gradient_value * inputs(batch_index, input_row, input_column, channel_index);
-                        }
-                    }
-                }
-            }
-        }
+        kernel_weight_gradients.device(get_device()) =
+            inputs.convolve(kernel_convolution_gradients, array<Index, 3>({0, 1, 2}));
     }
 }
 
@@ -949,46 +930,63 @@ void convolution_backward_data(const TensorView& output_gradient,
     TensorMap4 in_grad = input_grad.as_tensor<4>().setZero();
 
     const Index batch_size = output_gradients.dimension(0);
-    const Index output_height = output_gradients.dimension(1);
-    const Index output_width = output_gradients.dimension(2);
     const Index kernels_number = kernel.shape[0];
     const Index kernel_height = kernel.shape[1];
     const Index kernel_width = kernel.shape[2];
     const Index kernel_channels = kernel.shape[3];
     const Index input_height = in_grad.dimension(1);
     const Index input_width = in_grad.dimension(2);
+    const Index output_height = output_gradients.dimension(1);
+    const Index output_width = output_gradients.dimension(2);
+
+    // Pad output_gradient so full-convolution with rotated kernel produces input-sized output.
+    const Index pad_height = (input_height + kernel_height - 1) - output_height;
+    const Index pad_width  = (input_width  + kernel_width  - 1) - output_width;
+    const Index pad_top = pad_height / 2;
+    const Index pad_bottom = pad_height - pad_top;
+    const Index pad_left = pad_width / 2;
+    const Index pad_right = pad_width - pad_left;
+    const array<pair<Index, Index>, 2> paddings = {
+        make_pair(pad_top, pad_bottom),
+        make_pair(pad_left, pad_right)
+    };
+
+    const TensorMap4 kernels_4d = kernel.as_tensor<4>();
+    const Tensor4 rotated_weights = kernels_4d.reverse(array<bool, 4>({false, true, true, false}));
+
+    vector<vector<Tensor2>> precomputed_rotated_slices(kernels_number, vector<Tensor2>(kernel_channels));
 
     #pragma omp parallel for
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for(Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
+    for(Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
+    {
+        auto kernel_rotated_weights = rotated_weights.chip(kernel_index, 0);
+
+        for(Index channel_index = 0; channel_index < kernel_channels; ++channel_index)
+            precomputed_rotated_slices[kernel_index][channel_index] = kernel_rotated_weights.chip(channel_index, 2);
+    }
+
+    const array<Index, 2> convolution_dimensions_2d = {0, 1};
+
+    for(Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
+    {
+        auto kernel_convolution_gradients = output_gradients.chip(kernel_index, 3);
+
+        #pragma omp parallel for
+        for(Index image_index = 0; image_index < batch_size; ++image_index)
         {
-            const TensorMap3 kernel_map = kernel.as_tensor<3>(kernel_index);
+            const Tensor2 image_kernel_grads_padded = kernel_convolution_gradients.chip(image_index, 0).pad(paddings);
 
-            for(Index output_row = 0; output_row < output_height; ++output_row)
+            for(Index channel_index = 0; channel_index < kernel_channels; ++channel_index)
             {
-                const Index row_limit = min(kernel_height, input_height - output_row);
+                const Tensor2 convolution_result = image_kernel_grads_padded
+                    .convolve(precomputed_rotated_slices[kernel_index][channel_index], convolution_dimensions_2d);
 
-                for(Index output_column = 0; output_column < output_width; ++output_column)
-                {
-                    const type output_gradient_value = output_gradients(batch_index, output_row, output_column, kernel_index);
-
-                    const Index col_limit = min(kernel_width, input_width - output_column);
-
-                    for(Index kernel_row = 0; kernel_row < row_limit; ++kernel_row)
-                    {
-                        const Index input_row = output_row + kernel_row;
-
-                        for(Index kernel_column = 0; kernel_column < col_limit; ++kernel_column)
-                        {
-                            const Index input_column = output_column + kernel_column;
-
-                            for(Index channel_index = 0; channel_index < kernel_channels; ++channel_index)
-                                in_grad(batch_index, input_row, input_column, channel_index) += output_gradient_value * kernel_map(kernel_row, kernel_column, channel_index);
-                        }
-                    }
-                }
+                for(Index h = 0; h < input_height; ++h)
+                    for(Index w = 0; w < input_width; ++w)
+                        in_grad(image_index, h, w, channel_index) += convolution_result(h, w);
             }
         }
+    }
 }
 
 template <bool IsTraining>

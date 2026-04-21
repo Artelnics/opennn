@@ -22,6 +22,5 @@ namespace opennn
 	template class Flatten<2>;
 	template class Flatten<3>;
 	template class Flatten<4>;
+}
 
-	void reference_flatten_layer() { }
-} 

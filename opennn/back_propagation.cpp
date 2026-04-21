@@ -185,7 +185,31 @@ void BackPropagation::accumulate_output_gradients(size_t layer_index)
     const Index n = output_grad.size();
     type* out_ptr = output_grad.data;
 
-#ifndef OPENNN_WITH_CUDA
+#ifdef OPENNN_WITH_CUDA
+    if(Device::instance().is_gpu())
+    {
+        CHECK_CUDA(cudaMemset(out_ptr, 0, output_grad.byte_size()));
+
+        for(const BackwardEdge& edge : backward_edges[layer_index])
+        {
+            const size_t slot = 1 + edge.port;
+            if(edge.consumer_idx >= backward_views.size()) continue;
+            const auto& consumer_views = backward_views[edge.consumer_idx];
+            if(slot >= consumer_views.size()) continue;
+            if(consumer_views[slot].empty()) continue;
+            const TensorView& src = consumer_views[slot][0];
+            if(!src.data) continue;
+            if(src.size() != n) continue;
+
+            output_grad.dispatch([&](auto tag) {
+                using T = decltype(tag);
+                addition_cuda<T>(n, output_grad.as<T>(), src.as<T>(), output_grad.as<T>());
+            });
+        }
+        return;
+    }
+#endif
+
     std::fill(out_ptr, out_ptr + n, type(0));
 
     for(const BackwardEdge& edge : backward_edges[layer_index])
@@ -202,26 +226,6 @@ void BackPropagation::accumulate_output_gradients(size_t layer_index)
         for(Index k = 0; k < n; ++k)
             out_ptr[k] += src.data[k];
     }
-#else
-    CHECK_CUDA(cudaMemset(out_ptr, 0, output_grad.byte_size()));
-
-    for(const BackwardEdge& edge : backward_edges[layer_index])
-    {
-        const size_t slot = 1 + edge.port;
-        if(edge.consumer_idx >= backward_views.size()) continue;
-        const auto& consumer_views = backward_views[edge.consumer_idx];
-        if(slot >= consumer_views.size()) continue;
-        if(consumer_views[slot].empty()) continue;
-        const TensorView& src = consumer_views[slot][0];
-        if(!src.data) continue;
-        if(src.size() != n) continue;
-
-        output_grad.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            addition_cuda<T>(n, output_grad.as<T>(), src.as<T>(), output_grad.as<T>());
-        });
-    }
-#endif
 }
 
 void BackPropagation::allocate_device()

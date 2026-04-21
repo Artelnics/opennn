@@ -51,12 +51,6 @@ public:
 
    void to_XML(XmlPrinter&) const override;
 
-#ifdef OPENNN_WITH_CUDA
-
-   TrainingResults train_cuda() override;
-
-#endif
-
 private:
 
    type learning_rate = type(0.001);
