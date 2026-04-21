@@ -78,6 +78,14 @@ void Bounding::set_input_shape(const Shape&)
 void Bounding::set_output_shape(const Shape& new_output_shape)
 {
     output_shape = new_output_shape;
+
+    const Index n = new_output_shape[0];
+
+    lower_bounds.resize(n);
+    lower_bounds.setConstant(-numeric_limits<type>::max());
+
+    upper_bounds.resize(n);
+    upper_bounds.setConstant(numeric_limits<type>::max());
 }
 
 void Bounding::set_lower_bound(const Index index, type new_lower_bound)

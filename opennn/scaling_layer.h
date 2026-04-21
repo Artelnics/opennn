@@ -162,7 +162,21 @@ public:
     {
         auto& forward_views = forward_propagation.views[layer];
 
-        copy(forward_views[Input][0], forward_views[Output][0]);
+        const TensorView& input = forward_views[Input][0];
+        TensorView& output = forward_views[Output][0];
+
+        const Index batch_size = forward_propagation.batch_size;
+        const Index features = input.size() / batch_size;
+
+        // output[i,:] = input[i,:] .* multipliers + offsets   (vectorized row-wise)
+
+        const auto in_matrix  = MatrixMap(input.data, batch_size, features).array();
+        auto       out_matrix = MatrixMap(output.data, batch_size, features).array();
+
+        const auto mul_row = VectorMap(multipliers.data(), features).transpose().array();
+        const auto off_row = VectorMap(offsets.data(), features).transpose().array();
+
+        out_matrix = (in_matrix.rowwise() * mul_row).rowwise() + off_row;
     }
 
     string write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const

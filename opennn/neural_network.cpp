@@ -459,17 +459,17 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
 
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs) 
 {
-    return calculate_outputs({TensorView(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()})});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()})});
 }
 
-MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs) 
+MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 {
-    return calculate_outputs({TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)})});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)})});
 }
 
-MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs) 
+MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
 {
-    return calculate_outputs({TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)})});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)})});
 }
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
