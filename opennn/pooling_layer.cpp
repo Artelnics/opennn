@@ -215,7 +215,7 @@ void Pooling::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Pooling");
 
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"Label", label},
         {"InputDimensions", shape_to_string(get_input_shape())},
         {"PoolHeight", to_string(get_pool_height())},

@@ -230,7 +230,7 @@ void Embedding::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Embedding");
 
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"Label", label},
         {"VocabularySize", to_string(get_vocabulary_size())},
         {"SequenceLength", to_string(get_sequence_length())},

@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "tensor_utilities.h"
-#include "math_utilities.h"
 #include "batch.h"
 #include "dataset.h"
 #include "loss.h"
@@ -141,7 +140,6 @@ void Loss::calculate_output_gradients(const Batch& batch, const ForwardPropagati
     case Error::MeanSquaredError:
         mean_squared_error_gradient(input, target, input_gradient);
         break;
-
     case Error::NormalizedSquaredError:
         normalized_squared_error_gradient(input, target, normalization_coefficient, input_gradient);
         break;
@@ -522,7 +520,7 @@ type Loss::calculate_h(const type x)
 void Loss::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Loss");
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"Method", get_name()},
         {"Regularization", regularization_to_string(regularization_method)},
         {"RegularizationWeight", to_string(regularization_weight)}
@@ -532,7 +530,7 @@ void Loss::to_XML(XmlPrinter& printer) const
         add_xml_element(printer, "NormalizationCoefficient", to_string(normalization_coefficient));
 
     if (error == Error::WeightedSquaredError)
-        write_xml_properties(printer, {
+        write_xml(printer, {
             {"PositivesWeight", to_string(positives_weight)},
             {"NegativesWeight", to_string(negatives_weight)}
         });

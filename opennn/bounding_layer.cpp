@@ -32,14 +32,16 @@ Shape Bounding::get_output_shape() const
     return output_shape;
 }
 
-const VectorR& Bounding::get_lower_bounds() const
+VectorR Bounding::get_lower_bounds() const
 {
-    return lower_bounds;
+    if(ssize(states) <= Lower || !states[Lower].data) return VectorR();
+    return states[Lower].as_vector();
 }
 
-const VectorR& Bounding::get_upper_bounds() const
+VectorR Bounding::get_upper_bounds() const
 {
-    return upper_bounds;
+    if(ssize(states) <= Upper || !states[Upper].data) return VectorR();
+    return states[Upper].as_vector();
 }
 
 void Bounding::set(const Shape& new_output_shape, const string& new_label)
@@ -80,65 +82,55 @@ void Bounding::set_input_shape(const Shape& new_input_shape)
 void Bounding::set_output_shape(const Shape& new_output_shape)
 {
     output_shape = new_output_shape;
-
-    const Index n = new_output_shape[0];
-
-    lower_bounds.resize(n);
-    lower_bounds.setConstant(-numeric_limits<type>::max());
-
-    upper_bounds.resize(n);
-    upper_bounds.setConstant(numeric_limits<type>::max());
 }
 
-void Bounding::set_lower_bound(const Index index, type new_lower_bound)
-{
-    const Shape output_shape = get_output_shape();
-
-    if(lower_bounds.size() != output_shape[0])
-    {
-        lower_bounds.resize(output_shape[0]);
-        lower_bounds.setConstant(-MAX);
-    }
-
-    lower_bounds[index] = new_lower_bound;
-}
-
-void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
-{
-    lower_bounds = new_lower_bounds;
-}
-
-void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
-{
-    upper_bounds = new_upper_bounds;
-}
-
-void Bounding::set_upper_bound(const Index index, type new_upper_bound)
-{
-    const Shape output_shape = get_output_shape();
-
-    if(upper_bounds.size() != output_shape[0])
-    {
-        upper_bounds.resize(output_shape[0]);
-        upper_bounds.setConstant(MAX);
-    }
-
-    upper_bounds[index] = new_upper_bound;
-}
-
+// States[] is allocated by NN::compile() → Layer::link_states(). This override initializes
+// the arena slots to defaults (±max) since they're zero-initialized by the base.
 type* Bounding::link_states(type* pointer)
 {
     type* next = Layer::link_states(pointer);
 
     if(bounding_method == BoundingMethod::NoBounding) return next;
 
-    if(lower_bounds.size() == states[Lower].size() && states[Lower].data)
-        VectorMap(states[Lower].data, states[Lower].size()) = lower_bounds;
+    if(states[Lower].data)
+        VectorMap(states[Lower].data, states[Lower].size()).setConstant(-numeric_limits<type>::max());
 
-    if(upper_bounds.size() == states[Upper].size() && states[Upper].data)
-        VectorMap(states[Upper].data, states[Upper].size()) = upper_bounds;
+    if(states[Upper].data)
+        VectorMap(states[Upper].data, states[Upper].size()).setConstant(numeric_limits<type>::max());
 
     return next;
+}
+
+void Bounding::set_lower_bound(const Index index, type new_lower_bound)
+{
+    if(ssize(states) <= Lower || !states[Lower].data)
+        throw runtime_error("Bounding::set_lower_bound: layer not compiled yet (call NeuralNetwork::compile() first).");
+
+    states[Lower].data[index] = new_lower_bound;
+}
+
+void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
+{
+    if(ssize(states) <= Lower || !states[Lower].data)
+        throw runtime_error("Bounding::set_lower_bounds: layer not compiled yet (call NeuralNetwork::compile() first).");
+
+    VectorMap(states[Lower].data, states[Lower].size()) = new_lower_bounds;
+}
+
+void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
+{
+    if(ssize(states) <= Upper || !states[Upper].data)
+        throw runtime_error("Bounding::set_upper_bounds: layer not compiled yet (call NeuralNetwork::compile() first).");
+
+    VectorMap(states[Upper].data, states[Upper].size()) = new_upper_bounds;
+}
+
+void Bounding::set_upper_bound(const Index index, type new_upper_bound)
+{
+    if(ssize(states) <= Upper || !states[Upper].data)
+        throw runtime_error("Bounding::set_upper_bound: layer not compiled yet (call NeuralNetwork::compile() first).");
+
+    states[Upper].data[index] = new_upper_bound;
 }
 
 void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer_index, bool) noexcept
@@ -161,12 +153,13 @@ void Bounding::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Bounding");
 
-    const Shape output_shape = get_output_shape();
-
     add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
 
-    add_xml_element(printer, "LowerBounds", vector_to_string(lower_bounds));
-    add_xml_element(printer, "UpperBounds", vector_to_string(upper_bounds));
+    if(bounding_method == BoundingMethod::Bounding && ssize(states) > Upper && states[Lower].data)
+    {
+        add_xml_element(printer, "LowerBounds", vector_to_string(states[Lower].as_vector()));
+        add_xml_element(printer, "UpperBounds", vector_to_string(states[Upper].as_vector()));
+    }
 
     add_xml_element(printer, "BoundingMethod",
                      bounding_method == BoundingMethod::Bounding ? "Bounding" : "NoBounding");
@@ -174,6 +167,7 @@ void Bounding::to_XML(XmlPrinter& printer) const
     printer.close_element();
 }
 
+// Phase 1: parse config only; states[] isn't allocated yet.
 void Bounding::from_XML(const XmlDocument& document)
 {
     const XmlElement* root_element = get_xml_root(document, "Bounding");
@@ -182,10 +176,25 @@ void Bounding::from_XML(const XmlDocument& document)
 
     set({ neurons_number });
 
-    string_to_vector(read_xml_string(root_element, "LowerBounds"), lower_bounds);
-    string_to_vector(read_xml_string(root_element, "UpperBounds"), upper_bounds);
-
     set_bounding_method(read_xml_string(root_element, "BoundingMethod"));
+}
+
+// Phase 2: states[] is allocated; parse bounds directly into arena.
+void Bounding::load_state_from_XML(const XmlDocument& document)
+{
+    if(bounding_method == BoundingMethod::NoBounding) return;
+    if(ssize(states) <= Upper || !states[Lower].data) return;
+
+    const XmlElement* root_element = get_xml_root(document, "Bounding");
+
+    VectorR tmp;
+    string_to_vector(read_xml_string(root_element, "LowerBounds"), tmp);
+    if(tmp.size() == states[Lower].size())
+        VectorMap(states[Lower].data, states[Lower].size()) = tmp;
+
+    string_to_vector(read_xml_string(root_element, "UpperBounds"), tmp);
+    if(tmp.size() == states[Upper].size())
+        VectorMap(states[Upper].data, states[Upper].size()) = tmp;
 }
 
 REGISTER(Layer, Bounding, "Bounding")

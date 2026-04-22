@@ -199,6 +199,8 @@ public:
 
     void set_input_shape(const Shape&) override;
 
+    void load_state_from_XML(const XmlDocument&) override;
+
     void set_row_stride(const Index);
     void set_column_stride(const Index);
 

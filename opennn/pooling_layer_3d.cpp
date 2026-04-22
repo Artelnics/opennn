@@ -96,7 +96,7 @@ void Pooling3d::from_XML(const XmlDocument& document)
 void Pooling3d::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Pooling3d");
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"InputDimensions", shape_to_string(get_input_shape())},
         {"PoolingMethod", write_pooling_method()}
     });

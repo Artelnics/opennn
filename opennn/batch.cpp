@@ -97,6 +97,19 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 #endif
     }
 
+    // Host view caches (populated once per batch size change — zero allocations per forward pass)
+    input_views_host_cache.clear();
+    input_views_host_cache.reserve(decoder_shape.empty() ? 1 : 2);
+
+    if(!decoder_shape.empty())
+        input_views_host_cache.push_back(TensorView(const_cast<type*>(decoder.data()), decoder_shape));
+
+    if(!input_shape.empty())
+        input_views_host_cache.push_back(TensorView(const_cast<type*>(input.data()), input_shape));
+
+    if(!target_shape.empty())
+        target_view_host_cache = TensorView(const_cast<type*>(target.data()), target_shape);
+
 #ifdef OPENNN_WITH_CUDA
     if(!input_shape.empty() && input.device())
     {
@@ -201,24 +214,6 @@ void Batch::print() const
 bool Batch::is_empty() const
 {
     return input.empty();
-}
-
-vector<TensorView> Batch::get_inputs() const
-{
-    vector<TensorView> input_views;
-    input_views.reserve(decoder_shape.empty() ? 1 : 2);
-
-    if(!decoder_shape.empty())
-        input_views.push_back(TensorView(const_cast<type*>(decoder.data()), decoder_shape));
-
-    input_views.push_back(TensorView(const_cast<type*>(input.data()), input_shape));
-
-    return input_views;
-}
-
-TensorView Batch::get_targets() const
-{
-    return TensorView(const_cast<type*>(target.data()), target_shape);
 }
 
 #ifdef OPENNN_WITH_CUDA

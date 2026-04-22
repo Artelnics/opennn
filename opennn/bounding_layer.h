@@ -35,8 +35,10 @@ public:
 
     const BoundingMethod& get_bounding_method() const;
 
-    const VectorR& get_lower_bounds() const;
-    const VectorR& get_upper_bounds() const;
+    // Return by value — zero-copy would require VectorMap; VectorR copy is cheap here
+    // (bounds are output-sized, typically small) and lets const& callers bind safely.
+    VectorR get_lower_bounds() const;
+    VectorR get_upper_bounds() const;
 
     enum States {Lower, Upper};
 
@@ -57,6 +59,7 @@ public:
     void set_bounding_method(const BoundingMethod&);
     void set_bounding_method(const string&);
 
+    // Setters require the layer to be compiled first (states arena must be allocated).
     void set_lower_bounds(const VectorR&);
     void set_lower_bound(const Index, type);
 
@@ -67,9 +70,11 @@ public:
 
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
-    // Serialization
+    // Serialization (two-phase: from_XML parses config; load_state_from_XML parses bounds after compile)
 
     void from_XML(const XmlDocument&) override;
+
+    void load_state_from_XML(const XmlDocument&) override;
 
     void to_XML(XmlPrinter&) const override;
 
@@ -80,15 +85,6 @@ private:
     Shape output_shape;
 
     BoundingMethod bounding_method = BoundingMethod::Bounding;
-
-    // @todo Remove these VectorR. They exist only as pre-compile staging: NN::from_XML
-    // calls Bounding::from_XML before NN::compile() runs link_states(), so states[]
-    // is still empty when bounds are parsed. link_states() flushes these into
-    // states[Lower]/states[Upper] and they become dead weight afterwards. To remove
-    // them, NN::from_XML needs a two-phase parse (collect raw values, run compile(),
-    // then let layers populate their states via a post-compile hook).
-    VectorR lower_bounds;
-    VectorR upper_bounds;
 };
 
 }

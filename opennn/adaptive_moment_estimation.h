@@ -14,12 +14,13 @@ namespace opennn
 {
 
 struct BackPropagation;
-struct AdaptiveMomentEstimationData;
 
 class AdaptiveMomentEstimation final : public Optimizer
 {
 
 public:
+
+   enum DataSlot { GradientMoment, SquareGradientMoment };
 
    AdaptiveMomentEstimation(Loss* = nullptr);
 
@@ -43,7 +44,7 @@ public:
 
    TrainingResults train() override;
 
-   void update_parameters(BackPropagation&, AdaptiveMomentEstimationData&) const;
+   void update_parameters(BackPropagation&, OptimizerData&) const;
 
    // Serialization
 
@@ -60,26 +61,6 @@ private:
    type beta_2 = type(0.98);
 
    Index batch_size = 1000;
-};
-
-struct AdaptiveMomentEstimationData final : public OptimizerData
-{
-    AdaptiveMomentEstimationData(AdaptiveMomentEstimation* = nullptr);
-
-    void set(AdaptiveMomentEstimation* = nullptr);
-
-    void print() const override;
-
-    AdaptiveMomentEstimation* adaptive_moment_estimation = nullptr;
-
-    Memory gradient_exponential_decay;
-    Memory square_gradient_exponential_decay;
-
-    Index iteration = 0;
-
-    type step = 0;
-
-    Index learning_rate_iteration = 0;
 };
 
 }

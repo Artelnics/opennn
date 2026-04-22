@@ -42,17 +42,20 @@ void QuasiNewtonMethod::set_default()
     display_period = 10;
 }
 
-void QuasiNewtonMethod::calculate_inverse_hessian(QuasiNewtonMethodData& optimization_data) const
+void QuasiNewtonMethod::calculate_inverse_hessian(OptimizerData& optimization_data) const
 {
-    const VectorR& parameter_differences = optimization_data.parameter_differences;
-    const VectorR& gradient_difference = optimization_data.gradient_difference;
+    const Index n = optimization_data.views[ParameterDifferences].size();
 
-    VectorR& old_inverse_hessian_dot_gradient_difference = optimization_data.old_inverse_hessian_dot_gradient_difference;
+    VectorMap parameter_differences(optimization_data.views[ParameterDifferences].data, n);
+    VectorMap gradient_difference(optimization_data.views[GradientDifference].data, n);
 
-    const MatrixR& old_inverse_hessian = optimization_data.old_inverse_hessian;
-    MatrixR& inverse_hessian = optimization_data.inverse_hessian;
+    VectorMap old_inverse_hessian_dot_gradient_difference(
+        optimization_data.views[OldInverseHessianDotGradientDifference].data, n);
 
-    VectorR& BFGS = optimization_data.BFGS;
+    MatrixMap old_inverse_hessian(optimization_data.views[OldInverseHessian].data, n, n);
+    MatrixMap inverse_hessian(optimization_data.views[InverseHessian].data, n, n);
+
+    VectorMap bfgs(optimization_data.views[BFGS].data, n);
 
     const type parameters_difference_dot_gradient_difference = parameter_differences.dot(gradient_difference);
 
@@ -60,7 +63,7 @@ void QuasiNewtonMethod::calculate_inverse_hessian(QuasiNewtonMethodData& optimiz
 
     const type gradient_dot_hessian_dot_gradient = gradient_difference.dot(old_inverse_hessian_dot_gradient_difference);
 
-    BFGS = (parameter_differences / parameters_difference_dot_gradient_difference)
+    bfgs = (parameter_differences / parameters_difference_dot_gradient_difference)
            - (old_inverse_hessian_dot_gradient_difference / gradient_dot_hessian_dot_gradient);
 
     inverse_hessian = old_inverse_hessian;
@@ -72,7 +75,7 @@ void QuasiNewtonMethod::calculate_inverse_hessian(QuasiNewtonMethodData& optimiz
         old_inverse_hessian_dot_gradient_difference, type(-1) / gradient_dot_hessian_dot_gradient);
 
     inverse_hessian.selfadjointView<Lower>().rankUpdate(
-        BFGS, gradient_dot_hessian_dot_gradient);
+        bfgs, gradient_dot_hessian_dot_gradient);
 
     inverse_hessian.triangularView<Upper>() = inverse_hessian.triangularView<Lower>().transpose();
 }
@@ -80,22 +83,24 @@ void QuasiNewtonMethod::calculate_inverse_hessian(QuasiNewtonMethodData& optimiz
 void QuasiNewtonMethod::update_parameters(const Batch& batch,
                                           ForwardPropagation& forward_propagation,
                                           BackPropagation& back_propagation,
-                                          QuasiNewtonMethodData& optimization_data)
+                                          OptimizerData& optimization_data)
 {
     NeuralNetwork* neural_network = forward_propagation.neural_network;
 
     VectorR& parameters = neural_network->get_parameters();
     const VectorR& gradient = back_propagation.gradient.vector;
 
-    VectorR& old_parameters = optimization_data.old_parameters;
-    VectorR& parameter_differences = optimization_data.parameter_differences;
-    VectorR& parameter_updates = optimization_data.parameter_updates;
+    const Index n = parameters.size();
 
-    VectorR& old_gradient = optimization_data.old_gradient;
-    VectorR& gradient_difference = optimization_data.gradient_difference;
+    VectorMap old_parameters(optimization_data.views[OldParameters].data, n);
+    VectorMap parameter_differences(optimization_data.views[ParameterDifferences].data, n);
+    VectorMap parameter_updates(optimization_data.views[ParameterUpdates].data, n);
+
+    VectorMap old_gradient(optimization_data.views[OldGradient].data, n);
+    VectorMap gradient_difference(optimization_data.views[GradientDifference].data, n);
 
     VectorR& training_direction = optimization_data.training_direction;
-    MatrixR& inverse_hessian = optimization_data.inverse_hessian;
+    MatrixMap inverse_hessian(optimization_data.views[InverseHessian].data, n, n);
 
     parameter_differences = parameters - old_parameters;
     gradient_difference = gradient - old_gradient;
@@ -110,15 +115,15 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     training_direction.noalias() = -(inverse_hessian.selfadjointView<Lower>() * gradient);
 
     const type slope_value = gradient.dot(training_direction);
-    optimization_data.training_slope = slope_value;
+    training_slope = slope_value;
 
     if(slope_value >= type(0))
     {
         training_direction = -gradient;
     }
 
-    optimization_data.initial_learning_rate = (optimization_data.old_learning_rate > type(0))
-        ? optimization_data.old_learning_rate
+    optimization_data.initial_learning_rate = (old_learning_rate > type(0))
+        ? old_learning_rate
         : first_learning_rate;
 
     const type current_loss_value = back_propagation.loss_value;
@@ -130,12 +135,12 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
         optimization_data,
         current_loss_value);
 
-    optimization_data.learning_rate = directional_point.first;
+    learning_rate = directional_point.first;
     back_propagation.loss_value = directional_point.second;
 
-    if(std::abs(optimization_data.learning_rate) > type(0))
+    if(std::abs(learning_rate) > type(0))
     {
-        parameter_updates = training_direction * optimization_data.learning_rate;
+        parameter_updates = training_direction * learning_rate;
         parameters += parameter_updates;
     }
     else
@@ -143,12 +148,12 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
         parameter_updates = (gradient.array().abs() >= type(EPSILON))
                                 .select(-gradient.array().sign() * type(EPSILON), type(0));
         parameters += parameter_updates;
-        optimization_data.learning_rate = optimization_data.initial_learning_rate;
+        learning_rate = optimization_data.initial_learning_rate;
     }
 
     old_gradient = gradient;
-    inverse_hessian.swap(optimization_data.old_inverse_hessian);
-    optimization_data.old_learning_rate = optimization_data.learning_rate;
+    std::swap(optimization_data.views[InverseHessian], optimization_data.views[OldInverseHessian]);
+    old_learning_rate = learning_rate;
 }
 
 TrainingResults QuasiNewtonMethod::train()
@@ -216,7 +221,30 @@ TrainingResults QuasiNewtonMethod::train()
     time(&beginning_time);
     type elapsed_time;
 
-    QuasiNewtonMethodData optimization_data(this);
+    const Index parameters_number = neural_network->get_parameters_size();
+
+    OptimizerData optimization_data;
+    optimization_data.set({
+        Shape{parameters_number},                 // OldParameters
+        Shape{parameters_number},                 // ParameterDifferences
+        Shape{parameters_number},                 // ParameterUpdates
+        Shape{parameters_number},                 // OldGradient
+        Shape{parameters_number},                 // GradientDifference
+        Shape{parameters_number},                 // OldInverseHessianDotGradientDifference
+        Shape{parameters_number},                 // BFGS
+        Shape{parameters_number, parameters_number},  // InverseHessian
+        Shape{parameters_number, parameters_number}   // OldInverseHessian
+    });
+
+    optimization_data.potential_parameters.resize(parameters_number);
+    optimization_data.training_direction.resize(parameters_number);
+
+    // Initialize OldParameters <- current parameters
+    VectorMap(optimization_data.views[OldParameters].data, parameters_number) = neural_network->get_parameters();
+
+    // Initialize InverseHessian and OldInverseHessian to identity
+    MatrixMap(optimization_data.views[InverseHessian].data, parameters_number, parameters_number).setIdentity();
+    MatrixMap(optimization_data.views[OldInverseHessian].data, parameters_number, parameters_number).setIdentity();
 
     // Main loop
 
@@ -270,7 +298,7 @@ TrainingResults QuasiNewtonMethod::train()
         {
             cout << "Training error: " << training_back_propagation.error << "\n";
             if(has_validation) cout << "Validation error: " << validation_back_propagation.error << "\n";
-            cout << "Learning rate: " << optimization_data.learning_rate << "\n";
+            cout << "Learning rate: " << learning_rate << "\n";
             cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
 
@@ -330,56 +358,11 @@ void QuasiNewtonMethod::from_XML(const XmlDocument& document)
     read_common_xml(root_element);
 }
 
-QuasiNewtonMethodData::QuasiNewtonMethodData(QuasiNewtonMethod* new_quasi_newton_method)
-{
-    set(new_quasi_newton_method);
-}
-
-void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
-{
-    quasi_newton_method = new_quasi_newton_method;
-
-    const Loss* loss = quasi_newton_method->get_loss();
-
-    const NeuralNetwork* neural_network = loss->get_neural_network();
-
-    const Index parameters_number = neural_network->get_parameters_size();
-
-    // Neural network data
-
-    old_parameters = neural_network->get_parameters();
-    parameter_differences.resize(parameters_number);
-    potential_parameters.resize(parameters_number);
-    parameter_updates.resize(parameters_number);
-
-    old_gradient = VectorR::Zero(parameters_number);
-
-    gradient_difference.resize(parameters_number);
-
-    inverse_hessian.resize(parameters_number, parameters_number);
-    inverse_hessian.setIdentity();
-
-    old_inverse_hessian.resize(parameters_number, parameters_number);
-    old_inverse_hessian.setIdentity();
-
-    BFGS.resize(parameters_number);
-    training_direction.resize(parameters_number);
-    old_inverse_hessian_dot_gradient_difference.resize(parameters_number);
-}
-
-void QuasiNewtonMethodData::print() const
-{
-    cout << "Training Direction:" << "\n"
-         << training_direction << "\n"
-         << "Learning rate:" << "\n"
-         << learning_rate << "\n";
-}
-
 pair<type, type> QuasiNewtonMethod::calculate_directional_point(
     const Batch& batch,
     ForwardPropagation& forward_propagation,
     BackPropagation& back_propagation,
-    QuasiNewtonMethodData& optimization_data,
+    OptimizerData& optimization_data,
     type current_loss)
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
@@ -392,7 +375,7 @@ pair<type, type> QuasiNewtonMethod::calculate_directional_point(
     const VectorR& training_direction = optimization_data.training_direction;
     VectorR& potential_parameters = optimization_data.potential_parameters;
 
-    const type slope = optimization_data.training_slope;
+    const type slope = training_slope;
 
     for(int i = 0; i < 20; ++i)
     {

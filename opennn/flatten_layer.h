@@ -103,13 +103,13 @@ public:
         printer.open_element("Flatten");
 
         if constexpr (Rank == 3)
-            write_xml_properties(printer, {
+            write_xml(printer, {
                 {"InputHeight", to_string(get_input_height())},
                 {"InputWidth", to_string(get_input_width())},
                 {"InputChannels", to_string(get_input_channels())}
             });
         else
-            write_xml_properties(printer, {
+            write_xml(printer, {
                 {"InputHeight", to_string(get_input_height())},
                 {"InputWidth", to_string(get_input_width())}
             });

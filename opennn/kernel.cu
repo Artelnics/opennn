@@ -289,7 +289,6 @@ __global__ void binary_cross_entropy_gradient_vec_kernel(const int n_vec, T* __r
     }
 }
 
-
 template<typename T>
 void binary_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targets, const T* outputs, const float epsilon, const float scaling_factor)
 {
@@ -375,7 +374,6 @@ __global__ void multiple_cross_entropy_gradient_vec_kernel(const int n_vec, T* _
         d_v[i] = d_chunk;
     }
 }
-
 
 template<typename T>
 void multiple_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targets, const T* outputs, const float scaling_factor)

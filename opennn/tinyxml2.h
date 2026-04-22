@@ -138,7 +138,7 @@ private:
 void add_xml_element(XmlPrinter& printer, const std::string& name, const std::string& value);
 void add_xml_element_attribute(XmlPrinter& printer, const std::string& element_name, const std::string& element_value, const std::string& attribute_name, const std::string& attribute_value);
 
-void write_xml_properties(XmlPrinter& printer, std::initializer_list<std::pair<const char*, std::string>> props);
+void write_xml(XmlPrinter& printer, std::initializer_list<std::pair<const char*, std::string>> props);
 
 // OpenNN helper wrappers — reading
 

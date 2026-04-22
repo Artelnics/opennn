@@ -558,7 +558,11 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
     time(&beginning_time);
     type elapsed_time = type(0);
 
-    LevenbergMarquardtAlgorithmData optimization_data(this);
+    const Index parameters_number = neural_network->get_parameters_size();
+
+    OptimizerData optimization_data;
+    optimization_data.set({Shape{parameters_number}});
+    optimization_data.potential_parameters.resize(parameters_number);
 
     // Main loop
 
@@ -648,7 +652,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     ForwardPropagation& forward_propagation,
                                                     BackPropagationLM& back_propagation_lm,
-                                                    LevenbergMarquardtAlgorithmData& optimization_data)
+                                                    OptimizerData& optimization_data)
 {
 
     NeuralNetwork* neural_network = loss->get_neural_network();
@@ -662,7 +666,8 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     MatrixR& hessian = back_propagation_lm.hessian;
 
     VectorR& potential_parameters = optimization_data.potential_parameters;
-    VectorR& parameter_updates = optimization_data.parameter_updates;
+    VectorMap parameter_updates(optimization_data.views[ParameterUpdate].data,
+                                optimization_data.views[ParameterUpdate].size());
 
     const Index parameters_number = parameters.size();
 
@@ -729,7 +734,7 @@ void LevenbergMarquardtAlgorithm::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("LevenbergMarquardt");
 
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"DampingParameterFactor", to_string(damping_parameter_factor)},
         {"MinimumLossDecrease", to_string(minimum_loss_decrease)}
     });
@@ -745,25 +750,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const XmlDocument& document)
     set_damping_parameter_factor(read_xml_type(root_element, "DampingParameterFactor"));
     set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
     read_common_xml(root_element);
-}
-
-LevenbergMarquardtAlgorithmData::LevenbergMarquardtAlgorithmData(LevenbergMarquardtAlgorithm *new_Levenberg_Marquardt_method)
-{
-    set(new_Levenberg_Marquardt_method);
-}
-
-void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method)
-{
-    Levenberg_Marquardt_algorithm = new_Levenberg_Marquardt_method;
-
-    const Loss* loss = Levenberg_Marquardt_algorithm->get_loss();
-
-    const NeuralNetwork* neural_network = loss->get_neural_network();
-
-    const Index parameters_number = neural_network->get_parameters_size();
-
-    potential_parameters.resize(parameters_number);
-    parameter_updates.resize(parameters_number);
 }
 
 REGISTER(Optimizer, LevenbergMarquardtAlgorithm, "LevenbergMarquardt");
@@ -787,7 +773,6 @@ const NeuralNetwork* NeuralNetworkBackPropagationLM::get_neural_network() const 
 void NeuralNetworkBackPropagationLM::print() {}
 
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

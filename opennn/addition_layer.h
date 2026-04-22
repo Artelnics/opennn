@@ -94,7 +94,7 @@ public:
     {
         printer.open_element("Addition");
 
-        write_xml_properties(printer, {
+        write_xml(printer, {
             {"Label", label},
             {"InputDimensions", shape_to_string(input_shape)}
         });

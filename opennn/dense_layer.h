@@ -246,7 +246,7 @@ public:
 
         VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
 
-        if (batch_normalization)
+        if (batch_normalization && ssize(states) > RunningVariance)
         {
             VectorMap(states[RunningMean].data, states[RunningMean].size()).setZero();
             VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
@@ -263,7 +263,7 @@ public:
 
         VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
 
-        if (batch_normalization)
+        if (batch_normalization && ssize(states) > RunningVariance)
         {
             VectorMap(states[RunningMean].data, states[RunningMean].size()).setZero();
             VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
@@ -446,17 +446,24 @@ public:
         const bool use_batch_normalization = bn_element && bn_element->get_text()
                                              && string(bn_element->get_text()) == "true";
         set_batch_normalization(use_batch_normalization);
+    }
 
-        if (batch_normalization)
-        {
-            VectorR tmp;
+    // Phase 2: runs after NN::compile(), so states[] is allocated. Parses BN running
+    // statistics directly into the arena — no staging required.
+    void load_state_from_XML(const XmlDocument& document) override
+    {
+        if(!batch_normalization) return;
 
-            string_to_vector(read_xml_string(dense_layer_element, "RunningMeans"), tmp);
+        const XmlElement* dense_layer_element = get_xml_root(document, name);
+
+        VectorR tmp;
+        string_to_vector(read_xml_string(dense_layer_element, "RunningMeans"), tmp);
+        if(tmp.size() == states[RunningMean].size() && states[RunningMean].data)
             VectorMap(states[RunningMean].data, states[RunningMean].size()) = tmp;
 
-            string_to_vector(read_xml_string(dense_layer_element, "RunningVariances"), tmp);
+        string_to_vector(read_xml_string(dense_layer_element, "RunningVariances"), tmp);
+        if(tmp.size() == states[RunningVariance].size() && states[RunningVariance].data)
             VectorMap(states[RunningVariance].data, states[RunningVariance].size()) = tmp;
-        }
     }
 
     void to_XML(XmlPrinter& printer) const override
@@ -464,7 +471,7 @@ public:
         printer.open_element(name.c_str());
 
         if constexpr (Rank == 3)
-            write_xml_properties(printer, {
+            write_xml(printer, {
                 {"Label", label},
                 {"InputSequenceLength", to_string(get_input_shape()[0])},
                 {"InputsNumber", to_string(get_input_shape()[1])},
@@ -473,7 +480,7 @@ public:
                 {"BatchNormalization", batch_normalization ? "true" : "false"}
             });
         else
-            write_xml_properties(printer, {
+            write_xml(printer, {
                 {"Label", label},
                 {"InputsNumber", to_string(get_input_shape()[0])},
                 {"NeuronsNumber", to_string(get_output_shape()[0])},
@@ -482,7 +489,7 @@ public:
             });
 
         if (batch_normalization)
-            write_xml_properties(printer, {
+            write_xml(printer, {
                 {"RunningMeans", vector_to_string(states[RunningMean].as_vector())},
                 {"RunningVariances", vector_to_string(states[RunningVariance].as_vector())}
             });

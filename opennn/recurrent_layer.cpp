@@ -262,7 +262,7 @@ void Recurrent::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Recurrent");
 
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"Label", get_label()},
         {"InputDimensions", shape_to_string(get_input_shape())},
         {"NeuronsNumber", to_string(get_output_shape()[0])},

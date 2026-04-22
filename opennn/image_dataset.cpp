@@ -84,7 +84,7 @@ void ImageDataset::to_XML(XmlPrinter& printer) const
 
     printer.open_element("DataSource");
 
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"FileType", "bmp"},
         {"Path", data_path.string()},
         {"HasSamplesId", to_string(has_sample_ids)},

@@ -14,12 +14,13 @@ namespace opennn
 {
 
 struct BackPropagation;
-struct StochasticGradientDescentData;
 
 class StochasticGradientDescent final : public Optimizer
 {
 
 public:
+
+    enum DataSlot { ParameterUpdate, LastParameterUpdate };
 
     StochasticGradientDescent(Loss* = nullptr);
 
@@ -34,7 +35,7 @@ public:
     void set_momentum(const type);
     void set_nesterov(bool);
 
-    void update_parameters(BackPropagation&, StochasticGradientDescentData&, type) const;
+    void update_parameters(BackPropagation&, OptimizerData&, type) const;
 
     TrainingResults train() override;
 
@@ -53,20 +54,6 @@ private:
     bool nesterov = false;
 
     Index batch_size = 1000;
-};
-
-struct StochasticGradientDescentData final : public OptimizerData
-{
-    StochasticGradientDescentData(StochasticGradientDescent* = nullptr);
-
-    void set(StochasticGradientDescent* = nullptr);
-
-    StochasticGradientDescent* stochastic_gradient_descent = nullptr;
-
-    Index iteration = 0;
-
-    Memory parameter_updates;
-    Memory last_parameter_updates;
 };
 
 }

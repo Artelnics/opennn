@@ -26,35 +26,43 @@ Unscaling::Unscaling(const Shape& new_input_shape, const string& label)
 
 Shape Unscaling::get_input_shape() const
 {
-    const Index neurons_number = means.size();
-
-    return {neurons_number};
+    return { ssize(scalers) };
 }
 
 Shape Unscaling::get_output_shape() const
 {
-    const Index neurons_number = means.size();
+    return { ssize(scalers) };
+}
 
-    return { neurons_number };
+VectorR Unscaling::get_minimums() const
+{
+    return (ssize(states) > Minimums && states[Minimums].data) ? states[Minimums].as_vector() : VectorR();
+}
+
+VectorR Unscaling::get_maximums() const
+{
+    return (ssize(states) > Maximums && states[Maximums].data) ? states[Maximums].as_vector() : VectorR();
+}
+
+VectorR Unscaling::get_means() const
+{
+    return (ssize(states) > Means && states[Means].data) ? states[Means].as_vector() : VectorR();
+}
+
+VectorR Unscaling::get_standard_deviations() const
+{
+    return (ssize(states) > StandardDeviations && states[StandardDeviations].data) ? states[StandardDeviations].as_vector() : VectorR();
 }
 
 // Setters
 
 void Unscaling::set(const Index new_neurons_number, const string& new_label)
 {
-    means = VectorR::Zero(new_neurons_number);
-    standard_deviations.resize(new_neurons_number);
-    standard_deviations.setOnes();
-    minimums.resize(new_neurons_number);
-    minimums.setConstant(type(-1.0));
-    maximums.resize(new_neurons_number);
-    maximums.setOnes();
-
-    scalers.resize(new_neurons_number, ScalerMethod::MinimumMaximum);
+    // Scaler methods are enum-valued, not float, so they can't live solely in the arena.
+    // Keep as member; link_states() will write-through the float cast into states[Scalers].
+    scalers.assign(new_neurons_number, ScalerMethod::MinimumMaximum);
 
     label = new_label;
-
-    set_scalers("MinimumMaximum");
 
     set_min_max_range(type(-1), type(1));
 
@@ -66,33 +74,30 @@ void Unscaling::set(const Index new_neurons_number, const string& new_label)
 
 void Unscaling::set_input_shape(const Shape& new_input_shape)
 {
-    means.resize(new_input_shape[0]);
-    standard_deviations.resize(new_input_shape[0]);
-    minimums.resize(new_input_shape[0]);
-    maximums.resize(new_input_shape[0]);
+    set(new_input_shape[0]);
 }
 
 void Unscaling::set_output_shape(const Shape& /*new_output_shape*/)
 {
 }
 
+// Requires NN::compile() first — writes directly into the states arena.
 void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
+    if(ssize(states) < 5 || !states[Means].data)
+        throw runtime_error("Unscaling::set_descriptives: layer not compiled yet.");
+
     const Index n = new_descriptives.size();
-    means.resize(n);
-    standard_deviations.resize(n);
-    minimums.resize(n);
-    maximums.resize(n);
+    if(n != states[Means].size())
+        throw runtime_error("Unscaling::set_descriptives: size mismatch.");
 
     for(Index i = 0; i < n; ++i)
     {
-        means[i] = new_descriptives[i].mean;
-        standard_deviations[i] = new_descriptives[i].standard_deviation;
-        minimums[i] = new_descriptives[i].minimum;
-        maximums[i] = new_descriptives[i].maximum;
+        states[Means].data[i]              = new_descriptives[i].mean;
+        states[StandardDeviations].data[i] = new_descriptives[i].standard_deviation;
+        states[Minimums].data[i]           = new_descriptives[i].minimum;
+        states[Maximums].data[i]           = new_descriptives[i].maximum;
     }
-
-    write_states();
 }
 
 void Unscaling::set_min_max_range(const type min, const type max)
@@ -106,7 +111,7 @@ void Unscaling::set_scalers(const vector<string>& new_scaler)
     scalers.resize(new_scaler.size());
     for(size_t i = 0; i < new_scaler.size(); ++i)
         scalers[i] = string_to_scaler_method(new_scaler[i]);
-    write_states();
+    flush_scalers_to_states();
 }
 
 void Unscaling::set_scalers(const string& new_scalers)
@@ -114,31 +119,41 @@ void Unscaling::set_scalers(const string& new_scalers)
     const ScalerMethod method = string_to_scaler_method(new_scalers);
     for(auto& scaler : scalers)
         scaler = method;
-    write_states();
+    flush_scalers_to_states();
 }
 
+// Runs after NN::compile() allocates the states arena. Initializes descriptive
+// defaults (means=0, std=1, min=-1, max=1) and writes scaler enums as float.
 type* Unscaling::link_states(type* pointer)
 {
     type* next = Layer::link_states(pointer);
-    write_states();
+
+    if(ssize(states) < 5) return next;
+
+    if(states[Means].data)
+        VectorMap(states[Means].data, states[Means].size()).setZero();
+    if(states[StandardDeviations].data)
+        VectorMap(states[StandardDeviations].data, states[StandardDeviations].size()).setOnes();
+    if(states[Minimums].data)
+        VectorMap(states[Minimums].data, states[Minimums].size()).setConstant(type(-1));
+    if(states[Maximums].data)
+        VectorMap(states[Maximums].data, states[Maximums].size()).setOnes();
+    if(states[Scalers].data && ssize(scalers) == states[Scalers].size())
+        for(size_t i = 0; i < scalers.size(); ++i)
+            states[Scalers].data[i] = static_cast<type>(scalers[i]);
+
     return next;
 }
 
-void Unscaling::write_states()
+// Helper: writes the current scaler enum values into the arena (as floats).
+// Needed because ScalerMethod is non-float; setters maintain the enum member
+// and mirror it into states[Scalers] for the forward kernel.
+void Unscaling::flush_scalers_to_states()
 {
-    if (states.size() < 5) return;
-
-    if (means.size() == states[Means].size() && states[Means].data)
-        VectorMap(states[Means].data, states[Means].size()) = means;
-    if (standard_deviations.size() == states[StandardDeviations].size() && states[StandardDeviations].data)
-        VectorMap(states[StandardDeviations].data, states[StandardDeviations].size()) = standard_deviations;
-    if (minimums.size() == states[Minimums].size() && states[Minimums].data)
-        VectorMap(states[Minimums].data, states[Minimums].size()) = minimums;
-    if (maximums.size() == states[Maximums].size() && states[Maximums].data)
-        VectorMap(states[Maximums].data, states[Maximums].size()) = maximums;
-    if (ssize(scalers) == states[Scalers].size() && states[Scalers].data)
-        for (size_t i = 0; i < scalers.size(); ++i)
-            states[Scalers].data[i] = static_cast<type>(scalers[i]);
+    if(ssize(states) <= Scalers || !states[Scalers].data) return;
+    if(ssize(scalers) != states[Scalers].size()) return;
+    for(size_t i = 0; i < scalers.size(); ++i)
+        states[Scalers].data[i] = static_cast<type>(scalers[i]);
 }
 
 // Forward propagation
@@ -171,6 +186,7 @@ void Unscaling::print() const
     cout << "Unscaling layer" << "\n";
 }
 
+// Phase 1: config only (neurons_number, scalers).
 void Unscaling::from_XML(const XmlDocument& document)
 {
     const XmlElement* root_element = get_xml_root(document, "Unscaling");
@@ -193,20 +209,39 @@ void Unscaling::from_XML(const XmlDocument& document)
             throw runtime_error("Index " + to_string(index) + " is not correct.\n");
         }
 
+        scalers[i] = string_to_scaler_method(read_xml_string(unscaling_neuron_element, "Scaler"));
+
+        start_element = unscaling_neuron_element;
+    }
+}
+
+// Phase 2: descriptives parsed directly into the states arena.
+void Unscaling::load_state_from_XML(const XmlDocument& document)
+{
+    if(ssize(states) < 5 || !states[Means].data) return;
+
+    const XmlElement* root_element = get_xml_root(document, "Unscaling");
+
+    const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
+
+    const XmlElement* start_element = root_element->first_child_element("NeuronsNumber");
+
+    for(Index i = 0; i < neurons_number; ++i) {
+        const XmlElement* unscaling_neuron_element = start_element->next_sibling_element("UnscalingNeuron");
+        if(!unscaling_neuron_element) break;
+
         const XmlElement* descriptives_element = unscaling_neuron_element->first_child_element("Descriptives");
         if(descriptives_element && descriptives_element->get_text())
         {
             const vector<string> tokens = get_tokens(descriptives_element->get_text(), " ");
-            if(tokens.size() >= 4)
+            if(tokens.size() >= 4 && i < states[Minimums].size())
             {
-                minimums(i)            = type(stof(tokens[0]));
-                maximums(i)            = type(stof(tokens[1]));
-                means(i)               = type(stof(tokens[2]));
-                standard_deviations(i) = type(stof(tokens[3]));
+                states[Minimums].data[i]           = type(stof(tokens[0]));
+                states[Maximums].data[i]           = type(stof(tokens[1]));
+                states[Means].data[i]              = type(stof(tokens[2]));
+                states[StandardDeviations].data[i] = type(stof(tokens[3]));
             }
         }
-
-        scalers[i] = string_to_scaler_method(read_xml_string(unscaling_neuron_element, "Scaler"));
 
         start_element = unscaling_neuron_element;
     }
@@ -220,6 +255,12 @@ void Unscaling::to_XML(XmlPrinter& printer) const
 
     add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
 
+    const bool have_state = (ssize(states) > StandardDeviations && states[Means].data);
+    const type* mins = have_state ? states[Minimums].data           : nullptr;
+    const type* maxs = have_state ? states[Maximums].data           : nullptr;
+    const type* mns  = have_state ? states[Means].data              : nullptr;
+    const type* sds  = have_state ? states[StandardDeviations].data : nullptr;
+
     for(Index i = 0; i < output_shape[0]; ++i)
     {
         printer.open_element("UnscalingNeuron");
@@ -227,10 +268,10 @@ void Unscaling::to_XML(XmlPrinter& printer) const
 
         ostringstream descriptives_stream;
         descriptives_stream.precision(10);
-        descriptives_stream << minimums(i) << ' '
-                            << maximums(i) << ' '
-                            << means(i) << ' '
-                            << standard_deviations(i);
+        descriptives_stream << (mins ? mins[i] : type(-1)) << ' '
+                            << (maxs ? maxs[i] : type(1))  << ' '
+                            << (mns  ? mns[i]  : type(0))  << ' '
+                            << (sds  ? sds[i]  : type(1));
         add_xml_element(printer, "Descriptives", descriptives_stream.str());
 
         add_xml_element(printer, "Scaler", scaler_method_to_string(scalers[i]));

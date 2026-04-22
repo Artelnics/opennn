@@ -77,7 +77,7 @@ void StochasticGradientDescent::set_nesterov(bool new_nesterov_momentum)
 }
 
 void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
-                                                  StochasticGradientDescentData& optimization_data,
+                                                  OptimizerData& optimization_data,
                                                   type current_learning_rate) const
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
@@ -90,7 +90,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         sgd_update_cuda(
             parameters_number,
             neural_network->get_parameters_device(),
-            optimization_data.parameter_updates.device(),
+            optimization_data.views[ParameterUpdate].data,
             back_propagation.gradient.device(),
             current_learning_rate,
             momentum,
@@ -103,8 +103,10 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
     const VectorR& gradient = back_propagation.gradient.vector;
 
-    VectorR& parameter_updates = optimization_data.parameter_updates.vector;
-    VectorR& last_parameter_updates = optimization_data.last_parameter_updates.vector;
+    VectorMap parameter_updates(optimization_data.views[ParameterUpdate].data,
+                                optimization_data.views[ParameterUpdate].size());
+    VectorMap last_parameter_updates(optimization_data.views[LastParameterUpdate].data,
+                                     optimization_data.views[LastParameterUpdate].size());
 
     const Index n = parameters.size();
 
@@ -237,7 +239,15 @@ TrainingResults StochasticGradientDescent::train()
 
     // Optimization data
 
-    StochasticGradientDescentData optimization_data(this);
+    const Index parameters_number = loss->get_neural_network()->get_parameters_size();
+
+    OptimizerData optimization_data;
+    optimization_data.set({Shape{parameters_number}, Shape{parameters_number}});
+
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu()) optimization_data.allocate_device();
+#endif
+
     optimization_data.iteration = 1;
 
     type training_error = type(0);
@@ -349,7 +359,7 @@ void StochasticGradientDescent::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("StochasticGradientDescent");
 
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"BatchSize", to_string(batch_size)},
         {"ApplyMomentum", to_string(momentum > type(0))}
     });
@@ -369,33 +379,6 @@ void StochasticGradientDescent::from_XML(const XmlDocument& document)
 
     read_common_xml(root_element);
 }
-
-StochasticGradientDescentData::StochasticGradientDescentData(StochasticGradientDescent* new_stochastic_gradient_descent)
-{
-    set(new_stochastic_gradient_descent);
-}
-
-void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochastic_gradient_descent)
-{
-    stochastic_gradient_descent = new_stochastic_gradient_descent;
-
-    const Loss* loss = stochastic_gradient_descent->get_loss();
-
-    const NeuralNetwork* neural_network = loss->get_neural_network();
-
-    const Index parameters_number = neural_network->get_parameters_size();
-
-    parameter_updates.setZero(parameters_number);
-    last_parameter_updates.setZero(parameters_number);
-
-#ifdef OPENNN_WITH_CUDA
-    parameter_updates.resize_device(parameters_number);
-    parameter_updates.setZero_device();
-    last_parameter_updates.resize_device(parameters_number);
-    last_parameter_updates.setZero_device();
-#endif
-}
-
 
 REGISTER(Optimizer, StochasticGradientDescent, "StochasticGradientDescent");
 
