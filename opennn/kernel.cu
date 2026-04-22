@@ -1613,7 +1613,6 @@ __global__ void layernorm_backward_kernel(const int N, const int D, const T* __r
     }
 }
 
-
 template<typename T>
 __global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, float* __restrict__ dGamma, float* __restrict__ dBeta)
 {
@@ -1662,7 +1661,6 @@ __global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, c
         }
     }
 }
-
 
 template<typename T>
 void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, float* dGamma, float* dBeta)
