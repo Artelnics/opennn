@@ -907,7 +907,6 @@ void convolution_backward_weights(const TensorView& input,
 void convolution_backward_data(const TensorView& output_gradient,
                                const TensorView& kernel,
                                TensorView& input_grad,
-                               TensorView& /*padded_input_grad*/,
                                const ConvolutionArguments& args)
 {
 #ifdef OPENNN_WITH_CUDA

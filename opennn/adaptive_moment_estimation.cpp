@@ -97,10 +97,6 @@ TrainingResults AdaptiveMomentEstimation::train()
         ? training_samples_number / training_batch_size
         : 0;
 
-    const Index validation_batches_number = (validation_batch_size != 0)
-       ? validation_samples_number / validation_batch_size
-       : 0;
-
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> validation_batches;
 
@@ -175,7 +171,6 @@ TrainingResults AdaptiveMomentEstimation::train()
     const bool is_classification_model = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
     bool stop_training = false;
-    constexpr bool is_training = true;
     const bool shuffle = !neural_network->has(LayerType::Recurrent);
 
     time_t beginning_time;
@@ -184,133 +179,50 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     // Main loop
 
+    const auto training_update = [&](BackPropagation& bp) {
+        update_parameters(bp, optimization_data);
+    };
+
     for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
         if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << "\n";
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
-        training_error = type(0);
-        if(is_classification_model) training_accuracy = type(0);
 
-        std::thread training_worker([&]()
-        {
-            for(Index iteration = 0; iteration < training_batches_number; ++iteration)
-            {
-                Batch* batch = empty_training_queue.pop();
-                batch->fill(training_batches[iteration],
-                            input_feature_indices,
-                            decoder_feature_indices,
-                            target_feature_indices,
-                            true);
-                ready_training_queue.push(batch);
-            }
-        });
+        const EpochStats train_stats = run_epoch(true,
+                                                 is_classification_model,
+                                                 training_forward_propagation,
+                                                 training_back_propagation,
+                                                 empty_training_queue,
+                                                 ready_training_queue,
+                                                 training_batches,
+                                                 input_feature_indices,
+                                                 decoder_feature_indices,
+                                                 target_feature_indices,
+                                                 training_update);
 
-        Batch* next_batch = nullptr;
-        if(training_batches_number > 0)
-        {
-            next_batch = ready_training_queue.pop();
-            prefetch_batch(*next_batch, training_batches[0].size(), 0);
-        }
-
-        for(Index iteration = 0; iteration < training_batches_number; ++iteration)
-        {
-            training_back_propagation.gradient.setZero_active();
-
-            Batch* current_batch = next_batch;
-            next_batch = nullptr;
-
-            wait_prefetch(iteration % 2);
-
-            if(iteration + 1 < training_batches_number)
-            {
-                next_batch = ready_training_queue.pop();
-                prefetch_batch(*next_batch, training_batches[iteration + 1].size(), (iteration + 1) % 2);
-            }
-
-            neural_network->forward_propagate(current_batch->get_inputs_active(),
-                                              training_forward_propagation,
-                                              is_training);
-
-            loss->back_propagate(*current_batch,
-                                 training_forward_propagation,
-                                 training_back_propagation);
-
-            training_error += training_back_propagation.error;
-            if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
-
-            update_parameters(training_back_propagation, optimization_data);
-
-            sync_device();
-
-            empty_training_queue.push(current_batch);
-        }
-
-        training_worker.join();
-
-        training_error /= type(training_batches_number);
-        if(is_classification_model) training_accuracy /= type(training_batches_number);
+        training_error = train_stats.error;
+        training_accuracy = train_stats.accuracy;
         results.training_error_history(epoch) = training_error;
 
         if(has_validation)
         {
             dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
-            validation_error = type(0);
-            if(is_classification_model) validation_accuracy = type(0);
 
-            std::thread validation_worker([&]()
-            {
-                for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
-                {
-                    Batch* batch = empty_validation_queue.pop();
-                    batch->fill(validation_batches[iteration],
-                                input_feature_indices,
-                                decoder_feature_indices,
-                                target_feature_indices);
-                    ready_validation_queue.push(batch);
-                }
-            });
+            const EpochStats val_stats = run_epoch(false,
+                                                   is_classification_model,
+                                                   *validation_forward_propagation,
+                                                   *validation_back_propagation,
+                                                   empty_validation_queue,
+                                                   ready_validation_queue,
+                                                   validation_batches,
+                                                   input_feature_indices,
+                                                   decoder_feature_indices,
+                                                   target_feature_indices,
+                                                   [](BackPropagation&){});
 
-            Batch* next_val_batch = nullptr;
-            if(validation_batches_number > 0)
-            {
-                next_val_batch = ready_validation_queue.pop();
-                prefetch_batch(*next_val_batch, validation_batches[0].size(), 0);
-            }
-
-            for(Index iteration = 0; iteration < validation_batches_number; ++iteration)
-            {
-                Batch* current_batch = next_val_batch;
-                next_val_batch = nullptr;
-
-                wait_prefetch(iteration % 2);
-
-                if(iteration + 1 < validation_batches_number)
-                {
-                    next_val_batch = ready_validation_queue.pop();
-                    prefetch_batch(*next_val_batch, validation_batches[iteration + 1].size(), (iteration + 1) % 2);
-                }
-
-                neural_network->forward_propagate(current_batch->get_inputs_active(),
-                                                  *validation_forward_propagation,
-                                                  false);
-
-                loss->calculate_error(*current_batch,
-                                      *validation_forward_propagation,
-                                      *validation_back_propagation);
-
-                validation_error += validation_back_propagation->error;
-                if(is_classification_model) validation_accuracy += validation_back_propagation->accuracy(0);
-
-                sync_device();
-
-                empty_validation_queue.push(current_batch);
-            }
-
-            validation_worker.join();
-
-            validation_error /= type(validation_batches_number);
-            if(is_classification_model) validation_accuracy /= type(validation_batches_number);
+            validation_error = val_stats.error;
+            validation_accuracy = val_stats.accuracy;
             results.validation_error_history(epoch) = validation_error;
 
             if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))

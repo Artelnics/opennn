@@ -148,7 +148,7 @@ void layernorm_backward(const TensorView& input, const TensorView& output_gradie
 void convolution(const TensorView& input, const TensorView& kernel, const TensorView& bias, TensorView& output, const ConvolutionArguments& args = {});
 void convolution_activation(const TensorView& input, const TensorView& weight, const TensorView& bias, TensorView& output, const ConvolutionArguments& conv_args = {}, const ActivationArguments& activation_arguments = {});
 void convolution_backward_weights(const TensorView& input, const TensorView& output_gradient, TensorView& weight_grad, TensorView& bias_grad, const ConvolutionArguments& args = {});
-void convolution_backward_data(const TensorView& output_gradient, const TensorView& kernel, TensorView& input_grad, TensorView& padded_input_grad, const ConvolutionArguments& args = {});
+void convolution_backward_data(const TensorView& output_gradient, const TensorView& kernel, TensorView& input_grad, const ConvolutionArguments& args = {});
 
 // Pooling 4D
 

@@ -20,7 +20,7 @@ thread_local unsigned int local_generation = 0;
 
 void initialize_generator()
 {
-    const long long seed = global_seed.load();
+    const long long seed = global_seed.load(memory_order_relaxed);
 
     if (seed == -1)
     {
@@ -33,25 +33,25 @@ void initialize_generator()
         generator.seed(static_cast<unsigned int>(seed + thread_id * 5489u));
     }
 
-    local_generation = seed_generation.load();
+    local_generation = seed_generation.load(memory_order_acquire);
 }
 
 void set_seed(Index seed)
 {
-    global_seed.store(seed);
-    seed_generation.fetch_add(1);
+    global_seed.store(seed, memory_order_relaxed);
+    seed_generation.fetch_add(1, memory_order_release);
 
     initialize_generator();
 }
 
 long long get_seed()
 {
-    return global_seed.load();
+    return global_seed.load(memory_order_relaxed);
 }
 
 inline mt19937& get_generator()
 {
-    if(local_generation != seed_generation.load())
+    if(local_generation != seed_generation.load(memory_order_acquire))
         initialize_generator();
 
     return generator;
@@ -83,74 +83,90 @@ bool random_bool(type probability)
 
 void set_random_uniform(VectorR& tensor, type min, type max)
 {
-    uniform_real_distribution<type> distribution(min, max);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(get_generator());
+    #pragma omp parallel
+    {
+        uniform_real_distribution<type> distribution(min, max);
+        #pragma omp for
+        for(Index i = 0; i < tensor.size(); ++i)
+            tensor(i) = distribution(get_generator());
+    }
 }
 
 void set_random_uniform(MatrixR& tensor, type min, type max)
 {
-    uniform_real_distribution<type> distribution(min, max);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(get_generator());
+    #pragma omp parallel
+    {
+        uniform_real_distribution<type> distribution(min, max);
+        #pragma omp for
+        for(Index i = 0; i < tensor.size(); ++i)
+            tensor(i) = distribution(get_generator());
+    }
 }
 
 void set_random_uniform(VectorMap tensor, type min, type max)
 {
-    uniform_real_distribution<type> distribution(min, max);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(get_generator());
+    #pragma omp parallel
+    {
+        uniform_real_distribution<type> distribution(min, max);
+        #pragma omp for
+        for(Index i = 0; i < tensor.size(); ++i)
+            tensor(i) = distribution(get_generator());
+    }
 }
 
 void set_random_uniform(MatrixMap tensor, type min, type max)
 {
-    uniform_real_distribution<type> distribution(min, max);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(get_generator());
+    #pragma omp parallel
+    {
+        uniform_real_distribution<type> distribution(min, max);
+        #pragma omp for
+        for(Index i = 0; i < tensor.size(); ++i)
+            tensor(i) = distribution(get_generator());
+    }
 }
 
 void set_random_normal(VectorR& tensor, type mean, type std_dev)
 {
-    normal_distribution<type> distribution(mean, std_dev);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(get_generator());
+    #pragma omp parallel
+    {
+        normal_distribution<type> distribution(mean, std_dev);
+        #pragma omp for
+        for(Index i = 0; i < tensor.size(); ++i)
+            tensor(i) = distribution(get_generator());
+    }
 }
 
 void set_random_normal(MatrixR& tensor, type mean, type std_dev)
 {
-    normal_distribution<type> distribution(mean, std_dev);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(get_generator());
+    #pragma omp parallel
+    {
+        normal_distribution<type> distribution(mean, std_dev);
+        #pragma omp for
+        for(Index i = 0; i < tensor.size(); ++i)
+            tensor(i) = distribution(get_generator());
+    }
 }
 
 void set_random_normal(VectorMap tensor, type mean, type std_dev)
 {
-    normal_distribution<type> distribution(mean, std_dev);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(get_generator());
+    #pragma omp parallel
+    {
+        normal_distribution<type> distribution(mean, std_dev);
+        #pragma omp for
+        for(Index i = 0; i < tensor.size(); ++i)
+            tensor(i) = distribution(get_generator());
+    }
 }
 
 void set_random_normal(MatrixMap tensor, type mean, type std_dev)
 {
-    normal_distribution<type> distribution(mean, std_dev);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(get_generator());
+    #pragma omp parallel
+    {
+        normal_distribution<type> distribution(mean, std_dev);
+        #pragma omp for
+        for(Index i = 0; i < tensor.size(); ++i)
+            tensor(i) = distribution(get_generator());
+    }
 }
 
 template<typename T>
@@ -203,11 +219,13 @@ Index get_random_element(const vector<Index>&values)
 
 void set_random_integer(MatrixR &tensor, Index min, Index max)
 {
-    uniform_int_distribution<Index> distribution(min, max);
-
-#pragma omp parallel for
-    for(Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(get_generator());
+    #pragma omp parallel
+    {
+        uniform_int_distribution<Index> distribution(min, max);
+        #pragma omp for
+        for(Index i = 0; i < tensor.size(); ++i)
+            tensor(i) = distribution(get_generator());
+    }
 }
 
 }

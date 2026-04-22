@@ -77,7 +77,8 @@ type *Layer::link_parameters(type *pointer)
     {
         if (shapes[i].empty()) continue;
 
-        assert(is_aligned(pointer));
+        if(!is_aligned(pointer))
+            throw runtime_error("Layer::link_parameters: unaligned memory in layer \"" + name + "\"");
 
         parameters[i] = TensorView(pointer, shapes[i], CUDNN_DATA_FLOAT);
 
@@ -95,7 +96,8 @@ type *Layer::link_states(type *pointer)
     {
         if (shapes[i].empty()) continue;
 
-        assert(is_aligned(pointer));
+        if(!is_aligned(pointer))
+            throw runtime_error("Layer::link_states: unaligned memory in layer \"" + name + "\"");
 
         states[i] = TensorView(pointer, shapes[i], CUDNN_DATA_FLOAT);
 

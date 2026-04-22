@@ -552,6 +552,82 @@ void Optimizer::clip_gradient_norm(Memory& gradient, type max_norm)
         gradient.vector *= max_norm / (gradient_norm + type(1e-6));
 }
 
+EpochStats Optimizer::run_epoch(bool is_training_phase,
+                                bool is_classification,
+                                ForwardPropagation& fp,
+                                BackPropagation& bp,
+                                ThreadSafeQueue<Batch*>& empty_queue,
+                                ThreadSafeQueue<Batch*>& ready_queue,
+                                const vector<vector<Index>>& batches,
+                                const vector<Index>& input_feature_indices,
+                                const vector<Index>& decoder_feature_indices,
+                                const vector<Index>& target_feature_indices,
+                                const std::function<void(BackPropagation&)>& update)
+{
+    EpochStats stats;
+
+    NeuralNetwork* neural_network = loss->get_neural_network();
+    const Index batches_number = Index(batches.size());
+    if(batches_number == 0) return stats;
+
+    std::thread worker([&]()
+    {
+        for(Index iteration = 0; iteration < batches_number; ++iteration)
+        {
+            Batch* batch = empty_queue.pop();
+            batch->fill(batches[iteration],
+                        input_feature_indices,
+                        decoder_feature_indices,
+                        target_feature_indices,
+                        is_training_phase);   // augment only in training
+            ready_queue.push(batch);
+        }
+    });
+
+    Batch* next_batch = ready_queue.pop();
+    prefetch_batch(*next_batch, batches[0].size(), 0);
+
+    for(Index iteration = 0; iteration < batches_number; ++iteration)
+    {
+        if(is_training_phase)
+            bp.gradient.setZero_active();
+
+        Batch* current_batch = next_batch;
+        next_batch = nullptr;
+
+        wait_prefetch(iteration % 2);
+
+        if(iteration + 1 < batches_number)
+        {
+            next_batch = ready_queue.pop();
+            prefetch_batch(*next_batch, batches[iteration + 1].size(), (iteration + 1) % 2);
+        }
+
+        neural_network->forward_propagate(current_batch->get_inputs_active(), fp, is_training_phase);
+
+        if(is_training_phase)
+            loss->back_propagate(*current_batch, fp, bp);
+        else
+            loss->calculate_error(*current_batch, fp, bp);
+
+        stats.error += bp.error;
+        if(is_classification) stats.accuracy += bp.accuracy(0);
+
+        update(bp);
+
+        sync_device();
+
+        empty_queue.push(current_batch);
+    }
+
+    worker.join();
+
+    stats.error /= type(batches_number);
+    if(is_classification) stats.accuracy /= type(batches_number);
+
+    return stats;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -402,12 +402,9 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                  gradient_views[Bias],
                                  convolution_arguments);
 
-    // @todo Remove unused padded_input_grad parameter from convolution_backward_data.
-    //       Both args are InputGradient because padded_input_grad is unused in the implementation.
     if (!is_first_layer)
         convolution_backward_data(output_gradient,
                                   parameters[Weight],
-                                  backward_views[InputGradient][0],
                                   backward_views[InputGradient][0],
                                   convolution_arguments);
 }
