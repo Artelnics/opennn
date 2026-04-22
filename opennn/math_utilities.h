@@ -107,6 +107,18 @@ struct DropoutArguments
 
 void padding(const TensorView& input, TensorView& output);
 void bounding(const TensorView& input, const TensorView& lower_bounds, const TensorView& upper_bounds, TensorView& output);
+void scale(const TensorView& input,
+           const TensorView& minimums, const TensorView& maximums,
+           const TensorView& means, const TensorView& standard_deviations,
+           const TensorView& scalers,
+           type min_range, type max_range,
+           TensorView& output);
+void unscale(const TensorView& input,
+             const TensorView& minimums, const TensorView& maximums,
+             const TensorView& means, const TensorView& standard_deviations,
+             const TensorView& scalers,
+             type min_range, type max_range,
+             TensorView& output);
 void copy(const TensorView& source, TensorView& destination);
 void addition(const TensorView& input_1, const TensorView& input_2, TensorView& output);
 void multiply(const TensorView& input_a, bool transpose_a, const TensorView& input_b, bool transpose_b, TensorView& output, type alpha = 1.0f, type beta = 0.0f);

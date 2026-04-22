@@ -10,6 +10,7 @@
 #include "loss.h"
 #include "neural_network.h"
 #include "forward_propagation.h"
+#include "math_utilities.h"
 
 namespace opennn
 {
@@ -133,6 +134,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     for(Index i = 0; i < layers_number; ++i)
     {
         if(i == last_trainable_layer_index) continue;
+        if(backward_edges[i].size() <= 1) continue;
         const Shape output_shape_i = layers_ref[i]->get_output_shape();
         if(output_shape_i.empty()) continue;
         per_layer_output_gradient_shapes[i] = Shape({batch_size}).append(output_shape_i);
@@ -179,52 +181,23 @@ void BackPropagation::accumulate_output_gradients(size_t layer_index)
     if(backward_views[layer_index].empty()) return;
     if(backward_edges[layer_index].size() <= 1) return;
 
-    TensorView& output_grad = backward_views[layer_index][0][0];
-    if(!output_grad.data) return;
+    TensorView& destination = backward_views[layer_index][0][0];
+    if(!destination.data) return;
 
-    const Index n = output_grad.size();
-    type* out_ptr = output_grad.data;
-
-#ifdef OPENNN_WITH_CUDA
-    if(Device::instance().is_gpu())
-    {
-        CHECK_CUDA(cudaMemset(out_ptr, 0, output_grad.byte_size()));
-
-        for(const BackwardEdge& edge : backward_edges[layer_index])
-        {
-            const size_t slot = 1 + edge.port;
-            if(edge.consumer_idx >= backward_views.size()) continue;
-            const auto& consumer_views = backward_views[edge.consumer_idx];
-            if(slot >= consumer_views.size()) continue;
-            if(consumer_views[slot].empty()) continue;
-            const TensorView& src = consumer_views[slot][0];
-            if(!src.data) continue;
-            if(src.size() != n) continue;
-
-            output_grad.dispatch([&](auto tag) {
-                using T = decltype(tag);
-                addition_cuda<T>(n, output_grad.as<T>(), src.as<T>(), output_grad.as<T>());
-            });
-        }
-        return;
-    }
-#endif
-
-    std::fill(out_ptr, out_ptr + n, type(0));
+    destination.fill(0.0f);
 
     for(const BackwardEdge& edge : backward_edges[layer_index])
     {
         const size_t slot = 1 + edge.port;
+
         if(edge.consumer_idx >= backward_views.size()) continue;
         const auto& consumer_views = backward_views[edge.consumer_idx];
-        if(slot >= consumer_views.size()) continue;
-        if(consumer_views[slot].empty()) continue;
-        const TensorView& src = consumer_views[slot][0];
-        if(!src.data) continue;
-        if(src.size() != n) continue;
+        if(slot >= consumer_views.size() || consumer_views[slot].empty()) continue;
 
-        for(Index k = 0; k < n; ++k)
-            out_ptr[k] += src.data[k];
+        const TensorView& source = consumer_views[slot][0];
+        if(!source.data || source.size() != destination.size()) continue;
+
+        addition(destination, source, destination);
     }
 }
 

@@ -146,8 +146,6 @@ public:
 
     virtual void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept
     {
-        // throw inside noexcept -> terminate with message; prevents a layer that forgot
-        // to override back_propagate from silently no-op'ing during training.
         throw runtime_error("back_propagate not implemented for layer type: " + name);
     }
 
@@ -168,7 +166,7 @@ public:
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const { return parameters; }
 
-    type* link_states(type* pointer);
+    virtual type* link_states(type* pointer);
 
     vector<TensorView>& get_state_views() { return states; }
     const vector<TensorView>& get_state_views() const { return states; }

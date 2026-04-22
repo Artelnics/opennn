@@ -43,8 +43,21 @@ void bounding(const TensorView& input,
 {
     const Index features = lower_bounds.size();
 
+#ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu())
-        throw runtime_error("bounding: GPU implementation not available.");
+    {
+        output.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            bounding_cuda<T>(output.size(),
+                             to_int(features),
+                             input.as<T>(),
+                             reinterpret_cast<const float*>(lower_bounds.data),
+                             reinterpret_cast<const float*>(upper_bounds.data),
+                             output.as<T>());
+        });
+        return;
+    }
+#endif
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap lower_bounds_vector = lower_bounds.as_vector();
@@ -58,6 +71,142 @@ void bounding(const TensorView& input,
                                                         .cwiseMin(upper_bounds_vector(feature_index));
 }
 
+void scale(const TensorView& input,
+           const TensorView& minimums, const TensorView& maximums,
+           const TensorView& means, const TensorView& standard_deviations,
+           const TensorView& scalers,
+           type min_range, type max_range,
+           TensorView& output)
+{
+    const Index features = scalers.size();
+
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu())
+    {
+        output.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            scale_cuda<T>(output.size(), to_int(features),
+                          input.as<T>(),
+                          reinterpret_cast<const float*>(minimums.data),
+                          reinterpret_cast<const float*>(maximums.data),
+                          reinterpret_cast<const float*>(means.data),
+                          reinterpret_cast<const float*>(standard_deviations.data),
+                          reinterpret_cast<const float*>(scalers.data),
+                          min_range, max_range,
+                          output.as<T>());
+        });
+        return;
+    }
+#endif
+
+    const MatrixMap input_matrix = input.as_matrix();
+    const VectorMap mins = minimums.as_vector();
+    const VectorMap maxs = maximums.as_vector();
+    const VectorMap mus  = means.as_vector();
+    const VectorMap sds  = standard_deviations.as_vector();
+    const VectorMap sc   = scalers.as_vector();
+
+    MatrixMap output_matrix = output.as_matrix();
+
+    output_matrix.noalias() = input_matrix;
+
+    for(Index f = 0; f < features; ++f)
+    {
+        const int code = static_cast<int>(sc(f));
+        auto col = output_matrix.col(f).array();
+
+        switch(code)
+        {
+        case 1: // MinimumMaximum
+            col = (col - mins(f)) / ((maxs(f) - mins(f)) + EPSILON)
+                   * (max_range - min_range) + min_range;
+            break;
+        case 2: // MeanStandardDeviation
+            col = (col - mus(f)) / (sds(f) + EPSILON);
+            break;
+        case 3: // StandardDeviation
+            col /= (sds(f) + EPSILON);
+            break;
+        case 4: // Logarithm
+            col = col.log();
+            break;
+        case 5: // ImageMinMax
+            col /= type(255);
+            break;
+        default: // None
+            break;
+        }
+    }
+}
+
+void unscale(const TensorView& input,
+             const TensorView& minimums, const TensorView& maximums,
+             const TensorView& means, const TensorView& standard_deviations,
+             const TensorView& scalers,
+             type min_range, type max_range,
+             TensorView& output)
+{
+    const Index features = scalers.size();
+
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu())
+    {
+        output.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            unscale_cuda<T>(output.size(), to_int(features),
+                            input.as<T>(),
+                            reinterpret_cast<const float*>(minimums.data),
+                            reinterpret_cast<const float*>(maximums.data),
+                            reinterpret_cast<const float*>(means.data),
+                            reinterpret_cast<const float*>(standard_deviations.data),
+                            reinterpret_cast<const float*>(scalers.data),
+                            min_range, max_range,
+                            output.as<T>());
+        });
+        return;
+    }
+#endif
+
+    const MatrixMap input_matrix = input.as_matrix();
+    const VectorMap mins = minimums.as_vector();
+    const VectorMap maxs = maximums.as_vector();
+    const VectorMap mus  = means.as_vector();
+    const VectorMap sds  = standard_deviations.as_vector();
+    const VectorMap sc   = scalers.as_vector();
+
+    MatrixMap output_matrix = output.as_matrix();
+
+    output_matrix.noalias() = input_matrix;
+
+    for(Index f = 0; f < features; ++f)
+    {
+        const int code = static_cast<int>(sc(f));
+        auto col = output_matrix.col(f).array();
+
+        switch(code)
+        {
+        case 1: // MinimumMaximum
+            col = (col - min_range) / (max_range - min_range)
+                   * (maxs(f) - mins(f)) + mins(f);
+            break;
+        case 2: // MeanStandardDeviation
+            col = mus(f) + col * sds(f);
+            break;
+        case 3: // StandardDeviation
+            col *= sds(f);
+            break;
+        case 4: // Logarithm
+            col = col.exp();
+            break;
+        case 5: // ImageMinMax
+            col *= type(255);
+            break;
+        default: // None
+            break;
+        }
+    }
+}
+
 void copy(const TensorView& source, TensorView& destination)
 {
     if(source.size() != destination.size())
@@ -65,10 +214,7 @@ void copy(const TensorView& source, TensorView& destination)
 
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        CHECK_CUDA(cudaMemcpy(destination.data,
-                              source.data,
-                              source.byte_size(),
-                              cudaMemcpyDeviceToDevice));
+        CHECK_CUDA(cudaMemcpy(destination.data, source.data, source.byte_size(), cudaMemcpyDeviceToDevice));
         return;
     }
 #endif

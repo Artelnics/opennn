@@ -21,13 +21,12 @@ private:
 
     enum Forward {Input, Output};
 
+    // @todo See bounding_layer.h: staging buffers exist because from_XML runs
+    // before NN::compile() wires state_views. A post-compile hook would let us drop these.
     VectorR means;
     VectorR standard_deviations;
     VectorR minimums;
     VectorR maximums;
-
-    VectorR multipliers;
-    VectorR offsets;
 
     vector<ScalerMethod> scalers;
 
@@ -38,6 +37,8 @@ private:
     {
         return {Shape{batch_size}.append(get_output_shape())};
     }
+
+    void write_states();
 
 public:
 
@@ -56,6 +57,17 @@ public:
     type get_min_range() const { return min_range; }
     type get_max_range() const { return max_range; }
 
+    enum States {Minimums, Maximums, Means, StandardDeviations, Scalers};
+
+    vector<Shape> get_state_shapes() const override
+    {
+        const Index features = means.size();
+        if (features == 0) return {};
+        return {Shape{features}, Shape{features}, Shape{features}, Shape{features}, Shape{features}};
+    }
+
+    type* link_states(type* pointer) override;
+
     // Setters
 
     void set(const Index = 0, const string& = "unscaling_layer");
@@ -69,8 +81,6 @@ public:
 
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
-
-    void calculate_coefficients();
 
     // Forward propagation
 
