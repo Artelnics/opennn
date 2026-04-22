@@ -497,6 +497,8 @@ struct TensorView
         return TensorMapR<Rank>(data + batch_index * slice_size, dims);
     }
 
+    void fill(float value);
+
 #ifdef OPENNN_WITH_CUDA
 
     float* device = nullptr;
@@ -573,8 +575,6 @@ struct TensorView
             total_elements *= static_cast<Index>(dimA[i]);
         return total_elements;
     }
-
-    void fill(float value);
 
 #endif
 
@@ -986,23 +986,28 @@ inline void Memory::setZero_active()
     vector.setZero();
 }
 
-#ifdef OPENNN_WITH_CUDA
-
 inline void TensorView::fill(float value)
 {
     if(!data) return;
 
-    if(value == 0.0f)
+#ifdef OPENNN_WITH_CUDA
+    if(Device::instance().is_gpu())
     {
-        CHECK_CUDA(cudaMemset(data, 0, byte_size()));
+        if(value == 0.0f)
+        {
+            CHECK_CUDA(cudaMemset(data, 0, byte_size()));
+            return;
+        }
+
+        CHECK_CUDNN(cudnnSetTensor(Device::get_cudnn_handle(),
+                                   get_descriptor(), data, &value));
         return;
     }
-
-    CHECK_CUDNN(cudnnSetTensor(Device::get_cudnn_handle(),
-                               get_descriptor(), data, &value));
-}
-
 #endif
+
+    assert(dtype == CUDNN_DATA_FLOAT);
+    std::fill(data, data + size(), value);
+}
 
 #ifdef OPENNN_WITH_CUDA
 

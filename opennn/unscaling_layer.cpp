@@ -49,8 +49,6 @@ void Unscaling::set(const Index new_neurons_number, const string& new_label)
     minimums.setConstant(type(-1.0));
     maximums.resize(new_neurons_number);
     maximums.setOnes();
-    multipliers.resize(new_neurons_number);
-    offsets.resize(new_neurons_number);
 
     scalers.resize(new_neurons_number, ScalerMethod::MinimumMaximum);
 
@@ -59,8 +57,6 @@ void Unscaling::set(const Index new_neurons_number, const string& new_label)
     set_scalers("MinimumMaximum");
 
     set_min_max_range(type(-1), type(1));
-
-    calculate_coefficients();
 
     name = "Unscaling";
     layer_type = LayerType::Unscaling;
@@ -87,8 +83,6 @@ void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
     standard_deviations.resize(n);
     minimums.resize(n);
     maximums.resize(n);
-    multipliers.resize(n);
-    offsets.resize(n);
 
     for(Index i = 0; i < n; ++i)
     {
@@ -98,7 +92,7 @@ void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
         maximums[i] = new_descriptives[i].maximum;
     }
 
-    calculate_coefficients();
+    write_states();
 }
 
 void Unscaling::set_min_max_range(const type min, const type max)
@@ -112,6 +106,7 @@ void Unscaling::set_scalers(const vector<string>& new_scaler)
     scalers.resize(new_scaler.size());
     for(size_t i = 0; i < new_scaler.size(); ++i)
         scalers[i] = string_to_scaler_method(new_scaler[i]);
+    write_states();
 }
 
 void Unscaling::set_scalers(const string& new_scalers)
@@ -119,32 +114,31 @@ void Unscaling::set_scalers(const string& new_scalers)
     const ScalerMethod method = string_to_scaler_method(new_scalers);
     for(auto& scaler : scalers)
         scaler = method;
+    write_states();
 }
 
-void Unscaling::calculate_coefficients()
+type* Unscaling::link_states(type* pointer)
 {
-    const Index n = scalers.size();
-    for(Index i = 0; i < n; ++i)
-    {
-        switch(scalers[i])
-        {
-        case ScalerMethod::MeanStandardDeviation:
-            multipliers[i] = standard_deviations[i] + EPSILON;
-            offsets[i] = means[i];
-            break;
-        case ScalerMethod::MinimumMaximum:
-        {
-            const type range = (maximums[i] - minimums[i]) + EPSILON;
-            multipliers[i] = range / (max_range - min_range);
-            offsets[i] = minimums[i] - min_range * multipliers[i];
-            break;
-        }
-        default: // None
-            multipliers[i] = 1.0f;
-            offsets[i] = 0.0f;
-            break;
-        }
-    }
+    type* next = Layer::link_states(pointer);
+    write_states();
+    return next;
+}
+
+void Unscaling::write_states()
+{
+    if (states.size() < 5) return;
+
+    if (means.size() == states[Means].size() && states[Means].data)
+        VectorMap(states[Means].data, states[Means].size()) = means;
+    if (standard_deviations.size() == states[StandardDeviations].size() && states[StandardDeviations].data)
+        VectorMap(states[StandardDeviations].data, states[StandardDeviations].size()) = standard_deviations;
+    if (minimums.size() == states[Minimums].size() && states[Minimums].data)
+        VectorMap(states[Minimums].data, states[Minimums].size()) = minimums;
+    if (maximums.size() == states[Maximums].size() && states[Maximums].data)
+        VectorMap(states[Maximums].data, states[Maximums].size()) = maximums;
+    if (ssize(scalers) == states[Scalers].size() && states[Scalers].data)
+        for (size_t i = 0; i < scalers.size(); ++i)
+            states[Scalers].data[i] = static_cast<type>(scalers[i]);
 }
 
 // Forward propagation
@@ -153,21 +147,21 @@ void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    const TensorView& input = forward_views[Input][0];
-    TensorView& output = forward_views[Output][0];
+    // Unscaling has is_trainable=false and sits after the last trainable layer, so
+    // NeuralNetwork::forward_propagate skips it entirely during training. This path
+    // runs only for validation during training and for inference.
+    if (states.size() < 5)
+    {
+        copy(forward_views[Input][0], forward_views[Output][0]);
+        return;
+    }
 
-    const Index batch_size = forward_propagation.batch_size;
-    const Index features = input.size() / batch_size;
-
-    // output[i,:] = input[i,:] .* multipliers + offsets   (vectorized row-wise)
-
-    const auto in_matrix  = MatrixMap(input.data, batch_size, features).array();
-    auto       out_matrix = MatrixMap(output.data, batch_size, features).array();
-
-    const auto mul_row = VectorMap(multipliers.data(), features).transpose().array();
-    const auto off_row = VectorMap(offsets.data(), features).transpose().array();
-
-    out_matrix = (in_matrix.rowwise() * mul_row).rowwise() + off_row;
+    unscale(forward_views[Input][0],
+            states[Minimums], states[Maximums],
+            states[Means], states[StandardDeviations],
+            states[Scalers],
+            min_range, max_range,
+            forward_views[Output][0]);
 }
 
 // Serialization

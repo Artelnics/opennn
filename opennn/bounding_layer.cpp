@@ -71,8 +71,10 @@ void Bounding::set_bounding_method(const string& new_method_string)
         throw runtime_error("Unknown bounding method: " + new_method_string + ".\n");
 }
 
-void Bounding::set_input_shape(const Shape&)
+void Bounding::set_input_shape(const Shape& new_input_shape)
 {
+    if(!output_shape.empty() && new_input_shape != output_shape)
+        throw runtime_error("Bounding: input shape mismatch with output shape.");
 }
 
 void Bounding::set_output_shape(const Shape& new_output_shape)
@@ -124,18 +126,35 @@ void Bounding::set_upper_bound(const Index index, type new_upper_bound)
     upper_bounds[index] = new_upper_bound;
 }
 
-void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
+type* Bounding::link_states(type* pointer)
 {
-    auto& forward_views = forward_propagation.views[layer];
+    type* next = Layer::link_states(pointer);
+
+    if(bounding_method == BoundingMethod::NoBounding) return next;
+
+    if(lower_bounds.size() == states[Lower].size() && states[Lower].data)
+        VectorMap(states[Lower].data, states[Lower].size()) = lower_bounds;
+
+    if(upper_bounds.size() == states[Upper].size() && states[Upper].data)
+        VectorMap(states[Upper].data, states[Upper].size()) = upper_bounds;
+
+    return next;
+}
+
+void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer_index, bool) noexcept
+{
+    auto& forward_views = forward_propagation.views[layer_index];
 
     if(bounding_method == BoundingMethod::NoBounding)
-        copy(forward_views[Input][0],
+    {
+        copy(forward_views[Input][0], forward_views[Output][0]);
+        return;
+    }
+
+    bounding(forward_views[Input][0],
+             states[Lower],
+             states[Upper],
              forward_views[Output][0]);
-    else
-        bounding(forward_views[Input][0],
-                 TensorView(lower_bounds.data(), {lower_bounds.size()}),
-                 TensorView(upper_bounds.data(), {upper_bounds.size()}),
-                 forward_views[Output][0]);
 }
 
 void Bounding::to_XML(XmlPrinter& printer) const

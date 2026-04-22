@@ -70,6 +70,31 @@ void add_bias_cuda(const Index, T*, const float*, const int);
 template<typename T>
 void addition_cuda(const Index, const T*, const T*, T*);
 
+// Bounding
+
+template<typename T>
+void bounding_cuda(const Index n, const int features, const T* input, const float* lower, const float* upper, T* output);
+
+// Scaling / Unscaling
+
+template<typename T>
+void scale_cuda(const Index n, const int features,
+                const T* input,
+                const float* minimums, const float* maximums,
+                const float* means, const float* standard_deviations,
+                const float* scalers,
+                float min_range, float max_range,
+                T* output);
+
+template<typename T>
+void unscale_cuda(const Index n, const int features,
+                  const T* input,
+                  const float* minimums, const float* maximums,
+                  const float* means, const float* standard_deviations,
+                  const float* scalers,
+                  float min_range, float max_range,
+                  T* output);
+
 // Embedding
 
 template<typename T>

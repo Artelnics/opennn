@@ -40,6 +40,22 @@ public:
         return {Shape{batch_size}.append(input_shape)}; // Output
     }
 
+    enum States {Minimums, Maximums, Means, StandardDeviations, Scalers};
+
+    vector<Shape> get_state_shapes() const override
+    {
+        const Index features = input_shape.size();
+        if (features == 0) return {};
+        return {Shape{features}, Shape{features}, Shape{features}, Shape{features}, Shape{features}};
+    }
+
+    type* link_states(type* pointer) override
+    {
+        type* next = Layer::link_states(pointer);
+        write_states();
+        return next;
+    }
+
     const VectorR& get_minimums() const
     {
         return minimums;
@@ -90,16 +106,12 @@ public:
         minimums.setConstant(type(-1.0));
         maximums.resize(new_inputs_number);
         maximums.setOnes();
-        multipliers.resize(new_inputs_number);
-        offsets.resize(new_inputs_number);
 
         scalers.resize(new_inputs_number, ScalerMethod::MeanStandardDeviation);
 
         label = "scaling_layer";
 
         set_min_max_range(type(-1), type(1));
-
-        calculate_coefficients();
 
         name = "Scaling" + to_string(Rank) + "d";
         if constexpr (Rank == 2) layer_type = LayerType::Scaling2d;
@@ -126,8 +138,6 @@ public:
         standard_deviations.resize(n);
         minimums.resize(n);
         maximums.resize(n);
-        multipliers.resize(n);
-        offsets.resize(n);
 
         for(Index i = 0; i < n; ++i) {
             means[i] = desc[i].mean;
@@ -135,7 +145,8 @@ public:
             minimums[i] = desc[i].minimum;
             maximums[i] = desc[i].maximum;
         }
-        calculate_coefficients();
+
+        write_states();
     }
 
     void set_min_max_range(const type min, type max)
@@ -149,6 +160,7 @@ public:
         scalers.resize(new_scalers.size());
         for(size_t i = 0; i < new_scalers.size(); ++i)
             scalers[i] = string_to_scaler_method(new_scalers[i]);
+        write_states();
     }
 
     void set_scalers(const string& new_scaler)
@@ -156,27 +168,25 @@ public:
         const ScalerMethod method = string_to_scaler_method(new_scaler);
         for(auto& scaler : scalers)
             scaler = method;
+        write_states();
     }
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept override
     {
         auto& forward_views = forward_propagation.views[layer];
 
-        const TensorView& input = forward_views[Input][0];
-        TensorView& output = forward_views[Output][0];
+        if (states.size() < 5)
+        {
+            copy(forward_views[Input][0], forward_views[Output][0]);
+            return;
+        }
 
-        const Index batch_size = forward_propagation.batch_size;
-        const Index features = input.size() / batch_size;
-
-        // output[i,:] = input[i,:] .* multipliers + offsets   (vectorized row-wise)
-
-        const auto in_matrix  = MatrixMap(input.data, batch_size, features).array();
-        auto       out_matrix = MatrixMap(output.data, batch_size, features).array();
-
-        const auto mul_row = VectorMap(multipliers.data(), features).transpose().array();
-        const auto off_row = VectorMap(offsets.data(), features).transpose().array();
-
-        out_matrix = (in_matrix.rowwise() * mul_row).rowwise() + off_row;
+        scale(forward_views[Input][0],
+              states[Minimums], states[Maximums],
+              states[Means], states[StandardDeviations],
+              states[Scalers],
+              min_range, max_range,
+              forward_views[Output][0]);
     }
 
     string write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
@@ -256,8 +266,6 @@ public:
 
         min_range = type(stof(read_xml_string(scaling_layer_element, "MinRange")));
         max_range = type(stof(read_xml_string(scaling_layer_element, "MaxRange")));
-
-        calculate_coefficients();
     }
 
     void to_XML(XmlPrinter& printer) const override
@@ -282,39 +290,31 @@ public:
         printer.close_element();
     }
 
-    void calculate_coefficients()
-    {
-        const Index n = scalers.size();
-        for(Index i = 0; i < n; ++i)
-        {
-            switch(scalers[i])
-            {
-            case ScalerMethod::MeanStandardDeviation:
-                multipliers[i] = 1.0f / (standard_deviations[i] + EPSILON);
-                offsets[i] = -means[i] * multipliers[i];
-                break;
-            case ScalerMethod::MinimumMaximum:
-                multipliers[i] = (max_range - min_range) / ((maximums[i] - minimums[i]) + EPSILON);
-                offsets[i] = min_range - (minimums[i] * multipliers[i]);
-                break;
-            case ScalerMethod::ImageMinMax:
-                multipliers[i] = 1.0f / 255.0f;
-                offsets[i] = 0.0f;
-                break;
-            default: // None
-                multipliers[i] = 1.0f;
-                offsets[i] = 0.0f;
-                break;
-            }
-        }
-    }
-
 private:
+
+    void write_states()
+    {
+        if (states.size() < 5) return;
+
+        if (means.size() == states[Means].size() && states[Means].data)
+            VectorMap(states[Means].data, states[Means].size()) = means;
+        if (standard_deviations.size() == states[StandardDeviations].size() && states[StandardDeviations].data)
+            VectorMap(states[StandardDeviations].data, states[StandardDeviations].size()) = standard_deviations;
+        if (minimums.size() == states[Minimums].size() && states[Minimums].data)
+            VectorMap(states[Minimums].data, states[Minimums].size()) = minimums;
+        if (maximums.size() == states[Maximums].size() && states[Maximums].data)
+            VectorMap(states[Maximums].data, states[Maximums].size()) = maximums;
+        if (ssize(scalers) == states[Scalers].size() && states[Scalers].data)
+            for (size_t i = 0; i < scalers.size(); ++i)
+                states[Scalers].data[i] = static_cast<type>(scalers[i]);
+    }
 
     Shape input_shape;
 
     enum Forward {Input, Output};
 
+    // @todo See bounding_layer.h: staging buffers exist because from_XML runs
+    // before NN::compile() wires state_views. A post-compile hook would let us drop these.
     VectorR means;
     VectorR standard_deviations;
     VectorR minimums;
@@ -324,9 +324,6 @@ private:
 
     type min_range;
     type max_range;
-
-    VectorR multipliers;
-    VectorR offsets;
 };
 
 }
