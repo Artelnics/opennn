@@ -136,7 +136,7 @@ public:
     VectorR calculate_gradient();
 
     VectorR calculate_numerical_gradient();
-    VectorR calculate_numerical_input_gradients();
+    VectorR calculate_numerical_input_deltas();
     MatrixR calculate_numerical_hessian();
     MatrixR calculate_inverse_hessian();
 
@@ -166,7 +166,7 @@ private:
 
     void add_regularization_gradient(BackPropagation&) const;
 
-    void calculate_output_gradients(const Batch&,
+    void calculate_output_deltas(const Batch&,
                                     const ForwardPropagation&,
                                     BackPropagation&) const;
 

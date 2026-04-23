@@ -87,7 +87,7 @@ private:
 
     enum Forward {Input = 0, Means = 1, StandardDeviations = 2, NormalizedInput = 3, Output = 4};
 
-    enum Backward {OutputGradient = 0, InputGradient = 1};
+    enum Backward {OutputDelta = 0, InputDelta = 1};
 
 };
 

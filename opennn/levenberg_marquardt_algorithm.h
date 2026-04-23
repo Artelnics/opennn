@@ -30,14 +30,14 @@ struct LayerBackPropagationLM
 
     virtual vector<TensorView*> get_workspace_views();
 
-    vector<TensorView> get_input_gradients() const;
+    vector<TensorView> get_input_deltas() const;
 
     Index batch_size = 0;
 
     Layer* layer = nullptr;
 
-    vector<TensorView> input_gradients;
-    vector<TensorView> output_gradients;
+    vector<TensorView> input_deltas;
+    vector<TensorView> output_deltas;
 };
 
 struct NeuralNetworkBackPropagationLM
@@ -72,14 +72,14 @@ struct BackPropagationLM
 
     void print() const;
 
-    TensorView get_output_gradients() const;
+    TensorView get_output_deltas() const;
 
     vector<vector<TensorView>> get_layer_gradients() const;
 
     Index samples_number = 0;
 
-    VectorR output_gradients;
-    Shape output_gradient_dimensions;
+    VectorR output_deltas;
+    Shape output_delta_dimensions;
 
     Loss* loss = nullptr;
 

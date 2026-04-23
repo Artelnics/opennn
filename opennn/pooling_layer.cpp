@@ -178,20 +178,20 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
                              size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
-    auto& backward_views = back_propagation.backward_views[layer];
+    auto& delta_views = back_propagation.delta_views[layer];
 
     if(pooling_method == PoolingMethod::MaxPooling)
         max_pooling_backward(forward_views[Input][0], 
                              forward_views[Output][0], 
-                             backward_views[OutputGradient][0], 
+                             delta_views[OutputDelta][0], 
                              forward_views[MaximalIndices][0], 
-                             backward_views[InputGradient][0], 
+                             delta_views[InputDelta][0], 
                              cached_pool_args);
     else
         average_pooling_backward(forward_views[Input][0], 
                                  forward_views[Output][0], 
-                                 backward_views[OutputGradient][0], 
-                                 backward_views[InputGradient][0], 
+                                 delta_views[OutputDelta][0], 
+                                 delta_views[InputDelta][0], 
                                  cached_pool_args);
 }
 

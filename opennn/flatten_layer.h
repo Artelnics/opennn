@@ -74,9 +74,9 @@ public:
                         BackPropagation& back_propagation,
                         size_t layer) const noexcept override
     {
-        auto& backward_views = back_propagation.backward_views[layer];
+        auto& delta_views = back_propagation.delta_views[layer];
 
-        copy(backward_views[OutputGradient][0], backward_views[InputGradient][0]);
+        copy(delta_views[OutputDelta][0], delta_views[InputDelta][0]);
     }
     
     // Serialization
@@ -143,7 +143,7 @@ private:
     Shape input_shape;
 
     enum Forward {Input, Output};
-    enum Backward {OutputGradient, InputGradient};
+    enum Backward {OutputDelta, InputDelta};
 };
 
 }

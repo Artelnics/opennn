@@ -93,18 +93,18 @@ void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
                                      size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
-    auto& backward_views = back_propagation.backward_views[layer];
+    auto& delta_views = back_propagation.delta_views[layer];
     auto& gradient_views = back_propagation.gradient_views[layer];
 
     layernorm_backward(forward_views[Input][0], 
-                       backward_views[OutputGradient][0],
+                       delta_views[OutputDelta][0],
                        forward_views[Means][0], 
                        forward_views[StandardDeviations][0], 
                        forward_views[NormalizedInput][0], 
                        parameters[Gamma],
                        gradient_views[Gamma],
                        gradient_views[Beta],
-                       backward_views[InputGradient][0],
+                       delta_views[InputDelta][0],
                        forward_propagation.batch_size, 
                        sequence_length, 
                        embedding_dimension);

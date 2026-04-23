@@ -374,11 +374,11 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                    size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
-    auto& backward_views = back_propagation.backward_views[layer];
+    auto& delta_views = back_propagation.delta_views[layer];
     auto& gradient_views = back_propagation.gradient_views[layer];
 
     const TensorView& output = forward_views[Output][0];
-    TensorView& output_gradient = backward_views[OutputGradient][0];
+    TensorView& output_delta = delta_views[OutputDelta][0];
 
 #ifdef OPENNN_WITH_CUDA
     const bool is_gpu = Device::instance().is_gpu();
@@ -386,26 +386,26 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     constexpr bool is_gpu = false;
 #endif
 
-    activation_gradient(output, output_gradient, output_gradient, activation_arguments);
+    activation_delta(output, output_delta, output_delta, activation_arguments);
 
     if (batch_normalization)
-        batch_normalization_backward(forward_views[Convolution][0], output, output_gradient,
+        batch_normalization_backward(forward_views[Convolution][0], output, output_delta,
                                      forward_views[BatchNormMean][0], forward_views[BatchNormInverseVariance][0],
                                      parameters[Gamma], gradient_views[Gamma], gradient_views[Beta],
-                                     output_gradient);
+                                     output_delta);
 
     const TensorView& conv_input = is_gpu ? forward_views[Input][0] : forward_views[PaddedInput][0];
 
     convolution_backward_weights(conv_input,
-                                 output_gradient,
+                                 output_delta,
                                  gradient_views[Weight],
                                  gradient_views[Bias],
                                  convolution_arguments);
 
     if (!is_first_layer)
-        convolution_backward_data(output_gradient,
+        convolution_backward_data(output_delta,
                                   parameters[Weight],
-                                  backward_views[InputGradient][0],
+                                  delta_views[InputDelta][0],
                                   convolution_arguments);
 }
 

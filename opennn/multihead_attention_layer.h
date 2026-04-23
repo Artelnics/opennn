@@ -89,13 +89,13 @@ public:
     {
         const Index head_dimension = get_head_dimension();
 
-        return {{batch_size, query_sequence_length, embedding_dimension},                          // InputQueryGradient
-                {batch_size, source_sequence_length, embedding_dimension},                         // InputSourceGradient
-                {batch_size, heads_number, query_sequence_length, source_sequence_length},         // AttentionWeightGradient
-                {batch_size, query_sequence_length, embedding_dimension},                          // ConcatenatedOutputGradient
-                {batch_size, heads_number, query_sequence_length, head_dimension},                 // QueryGradient (transposed)
-                {batch_size, heads_number, source_sequence_length, head_dimension},                // KeyGradient (transposed)
-                {batch_size, heads_number, source_sequence_length, head_dimension}};               // ValueGradient (transposed)
+        return {{batch_size, query_sequence_length, embedding_dimension},                          // InputQueryDelta
+                {batch_size, source_sequence_length, embedding_dimension},                         // InputSourceDelta
+                {batch_size, heads_number, query_sequence_length, source_sequence_length},         // AttentionWeightDelta
+                {batch_size, query_sequence_length, embedding_dimension},                          // ConcatenatedOutputDelta
+                {batch_size, heads_number, query_sequence_length, head_dimension},                 // QueryDelta (transposed)
+                {batch_size, heads_number, source_sequence_length, head_dimension},                // KeyDelta (transposed)
+                {batch_size, heads_number, source_sequence_length, head_dimension}};               // ValueDelta (transposed)
     }
 
     void set_input_shape(const Shape& new_input_shape) override
@@ -138,9 +138,9 @@ private:
     enum Forward {Input, Query, Key, AttentionWeights, AttentionWeightsDropped,
                   ConcatenatedAttentionOutputs, Value,
                   PaddingMask, TransposeScratch, AttentionOutputTransposed};
-    enum Backward {OutputGradient, InputQueryGradient, InputSourceGradient,
-                   AttentionWeightGradient, ConcatenatedOutputGradient,
-                   QueryGradient, KeyGradient, ValueGradient};
+    enum Backward {OutputDelta, InputQueryDelta, InputSourceDelta,
+                   AttentionWeightDelta, ConcatenatedOutputDelta,
+                   QueryDelta, KeyDelta, ValueDelta};
 
     static bool is_self_attention(const vector<vector<TensorView>>& forward_views)
     {

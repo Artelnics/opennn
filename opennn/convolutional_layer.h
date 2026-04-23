@@ -128,7 +128,7 @@ private:
                 CUDNN_ACTIVATION_DTYPE}; // Output
     }
 
-    enum Backward {OutputGradient, InputGradient};
+    enum Backward {OutputDelta, InputDelta};
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {

@@ -80,7 +80,7 @@ private:
 
     enum Parameters {Weight};
     enum Forward {Input, Output};
-    enum Backward {OutputGradient};
+    enum Backward {OutputDelta};
 
     Index vocabulary_size = 0;
     Index sequence_length = 0;

@@ -759,12 +759,12 @@ REGISTER(Optimizer, LevenbergMarquardtAlgorithm, "LevenbergMarquardt");
 BackPropagationLM::BackPropagationLM(const Index, Loss*) {}
 void BackPropagationLM::set(const Index, Loss*) {}
 void BackPropagationLM::print() const {}
-TensorView BackPropagationLM::get_output_gradients() const { return {}; }
+TensorView BackPropagationLM::get_output_deltas() const { return {}; }
 vector<vector<TensorView>> BackPropagationLM::get_layer_gradients() const { return {}; }
 
 vector<TensorView*> LayerBackPropagationLM::get_gradient_views() { return {}; }
 vector<TensorView*> LayerBackPropagationLM::get_workspace_views() { return {}; }
-vector<TensorView> LayerBackPropagationLM::get_input_gradients() const { return input_gradients; }
+vector<TensorView> LayerBackPropagationLM::get_input_deltas() const { return input_deltas; }
 
 NeuralNetworkBackPropagationLM::NeuralNetworkBackPropagationLM(NeuralNetwork*) {}
 void NeuralNetworkBackPropagationLM::set(const Index, NeuralNetwork*) {}

@@ -219,24 +219,24 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
                                size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
-    auto& backward_views = back_propagation.backward_views[layer];
+    auto& delta_views = back_propagation.delta_views[layer];
     auto& gradient_views = back_propagation.gradient_views[layer];
 
-    TensorView& output_gradient = backward_views[OutputGradient][0];
+    TensorView& output_delta = delta_views[OutputDelta][0];
 
     if (dropout_rate > type(0))
-        dropout_gradient(output_gradient, output_gradient, dropout_arguments);
+        dropout_delta(output_delta, output_delta, dropout_arguments);
 
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
         const Index total_elements = forward_propagation.batch_size * sequence_length * embedding_dimension;
 
-        output_gradient.dispatch([&](auto tag) {
+        output_delta.dispatch([&](auto tag) {
             using T = decltype(tag);
             embedding_backward_cuda<T>(
                 total_elements,
                 forward_views[Input][0].as<float>(),
-                output_gradient.as<T>(),
+                output_delta.as<T>(),
                 gradient_views[Weight].as<float>(),
                 embedding_dimension, vocabulary_size, scale_embedding);
         });
@@ -246,7 +246,7 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
 #endif
 
     embedding_backward(forward_views[Input][0],
-                       output_gradient,
+                       output_delta,
                        gradient_views[Weight],
                        embedding_dimension,
                        scale_embedding);
