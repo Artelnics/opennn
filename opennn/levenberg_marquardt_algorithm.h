@@ -21,7 +21,6 @@ namespace opennn
 class NeuralNetwork;
 struct ForwardPropagation;
 struct BackPropagationLM;
-struct LevenbergMarquardtAlgorithmData;
 
 struct LayerBackPropagationLM
 {
@@ -125,11 +124,13 @@ public:
 
    TrainingResults train() override;
 
+   enum DataSlot { ParameterUpdate };
+
    void update_parameters(
            const Batch&,
            ForwardPropagation&,
            BackPropagationLM&,
-           LevenbergMarquardtAlgorithmData&);
+           OptimizerData&);
 
    // Serialization
 
@@ -170,18 +171,6 @@ private:
 
    type minimum_loss_decrease = type(0);
 
-};
-
-struct LevenbergMarquardtAlgorithmData final : public OptimizerData
-{
-
-    LevenbergMarquardtAlgorithmData(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method = nullptr);
-
-    void set(LevenbergMarquardtAlgorithm* = nullptr);
-
-    LevenbergMarquardtAlgorithm* Levenberg_Marquardt_algorithm = nullptr;
-
-    VectorR parameter_updates;
 };
 
 }

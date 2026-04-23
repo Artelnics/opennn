@@ -91,7 +91,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     // Loss index
 
-    const Loss* loss = training_strategy->get_loss();
+//    const Loss* loss = training_strategy->get_loss();
     training_strategy->get_optimization_algorithm()->set_display(false);
 
     type previous_validation_error = MAX;
@@ -368,7 +368,7 @@ void GrowingInputs::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("GrowingInputs");
 
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"TrialsNumber", to_string(trials_number)},
         {"SelectionErrorGoal", to_string(validation_error_goal)},
         {"MaximumSelectionFailures", to_string(maximum_validation_failures)},

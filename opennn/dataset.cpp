@@ -1631,7 +1631,7 @@ void Dataset::to_XML(XmlPrinter& printer) const
     printer.open_element("Dataset");
 
     printer.open_element("DataSource");
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"FileType", "csv"},
         {"Path", data_path.string()},
         {"Separator", get_separator_name()},
@@ -1688,7 +1688,7 @@ void Dataset::missing_values_to_XML(XmlPrinter &printer) const
     printer.open_element("MissingValues");
 
     if (missing_values_number > 0)
-        write_xml_properties(printer, {
+        write_xml(printer, {
             {"MissingValuesNumber", to_string(missing_values_number)},
             {"MissingValuesMethod", get_missing_values_method_string()},
             {"VariablesMissingValuesNumber", vector_to_string(variables_missing_values_number)},

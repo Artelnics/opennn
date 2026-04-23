@@ -8,7 +8,6 @@
 
 #include "image_dataset.h"
 #include "time_series_dataset.h"
-#include "language_dataset.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
 #include "loss.h"
@@ -191,35 +190,62 @@ void Optimizer::set_unscaling()
 {
     check();
 
-/*
-    const Dataset* dataset = loss->get_dataset();
-    const NeuralNetwork* neural_network = loss->get_neural_network();
-    // Scaling layer
+    Dataset* dataset = loss->get_dataset();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
-    if(neural_network->has("Scaling2d"))
-    {
-        Scaling<2>* layer = static_cast<Scaling<2>*>(neural_network->get_first("Scaling2d"));
-        dataset->unscale_features("Input", layer->get_descriptives());
-    }
-    else if(neural_network->has("Scaling3d"))
-    {
-        Scaling<3>* layer = static_cast<Scaling<3>*>(neural_network->get_first("Scaling3d"));
-        dataset->unscale_features("Input", layer->get_descriptives());
+    // Scaling layer: restore dataset inputs to raw scale so that post-training
+    // inference (e.g. TestingAnalysis) receives unscaled inputs and the Scaling
+    // layer's forward can apply the transformation.
 
-    }
-    else if(neural_network->has("Scaling4d"))
+    auto reconstruct_descriptives = [](const VectorR& minimums, const VectorR& maximums,
+                                       const VectorR& means, const VectorR& std_devs)
     {
-        ImageDataset* image_dataset = static_cast<ImageDataset*>(dataset);
-        image_dataset->unscale_features("Input");
+        const Index n = minimums.size();
+        vector<Descriptives> descriptives(n);
+        for (Index i = 0; i < n; ++i)
+        {
+            descriptives[i].minimum = minimums[i];
+            descriptives[i].maximum = maximums[i];
+            descriptives[i].mean = means[i];
+            descriptives[i].standard_deviation = std_devs[i];
+        }
+        return descriptives;
+    };
+
+    if(neural_network->has(LayerType::Scaling2d))
+    {
+        auto* layer = dynamic_cast<Scaling<2>*>(neural_network->get_first(LayerType::Scaling2d));
+        if(layer)
+            dataset->unscale_features("Input",
+                reconstruct_descriptives(layer->get_minimums(), layer->get_maximums(),
+                                          layer->get_means(), layer->get_standard_deviations()));
+    }
+    else if(neural_network->has(LayerType::Scaling3d))
+    {
+        auto* layer = dynamic_cast<Scaling<3>*>(neural_network->get_first(LayerType::Scaling3d));
+        if(layer)
+            dataset->unscale_features("Input",
+                reconstruct_descriptives(layer->get_minimums(), layer->get_maximums(),
+                                          layer->get_means(), layer->get_standard_deviations()));
+    }
+    else if(neural_network->has(LayerType::Scaling4d))
+    {
+        auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
+        if(image_dataset) image_dataset->unscale_features("Input");
     }
 
-    if(!neural_network->has("Unscaling"))
+    if(!neural_network->has(LayerType::Unscaling))
         return;
 
-    // Unscaling layer
+    auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
+    if(!unscaling_layer) return;
 
-    const Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
-    const vector<Descriptives>& all_target_descriptives = unscaling_layer->get_descriptives();
+    const VectorR& u_mins = unscaling_layer->get_minimums();
+    const VectorR& u_maxs = unscaling_layer->get_maximums();
+    const VectorR& u_means = unscaling_layer->get_means();
+    const VectorR& u_stds  = unscaling_layer->get_standard_deviations();
+    const vector<Descriptives> all_target_descriptives =
+        reconstruct_descriptives(u_mins, u_maxs, u_means, u_stds);
 
     const vector<Index> input_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_indices = dataset->get_feature_indices("Target");
@@ -228,24 +254,14 @@ void Optimizer::set_unscaling()
 
     for(size_t i = 0; i < target_indices.size(); ++i)
     {
-        bool is_input = false;
+        const bool is_input = find(input_indices.begin(), input_indices.end(), target_indices[i]) != input_indices.end();
 
-        for(const Index input_idx : input_indices)
-        {
-            if(target_indices[i] == input_idx)
-            {
-                is_input = true;
-                break;
-            }
-        }
-
-        if(!is_input)
+        if(!is_input && i < all_target_descriptives.size())
             unscaled_targets_descriptives.push_back(all_target_descriptives[i]);
     }
 
     if(!unscaled_targets_descriptives.empty())
         dataset->unscale_features("Target", unscaled_targets_descriptives);
-*/
 }
 
 bool Optimizer::check_stopping_condition(TrainingResults& results,
@@ -284,7 +300,7 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
 
 void Optimizer::write_common_xml(XmlPrinter& printer) const
 {
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"LossGoal", to_string(training_loss_goal)},
         {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
         {"MaximumEpochsNumber", to_string(maximum_epochs)},
@@ -443,6 +459,57 @@ void OptimizerData::print() const
          << "Initial learning rate:" << "\n"
          << initial_learning_rate << "\n";
 }
+
+void OptimizerData::set(const vector<Shape>& slot_shapes)
+{
+    Index total_size = 0;
+    for(const Shape& s : slot_shapes)
+        total_size += get_aligned_size(s.size());
+
+    data.resize(total_size);
+    data.setZero();
+
+    views.clear();
+    views.reserve(slot_shapes.size());
+
+    type* pointer = (total_size > 0) ? data.data() : nullptr;
+
+    for(const Shape& s : slot_shapes)
+    {
+        if(s.size() > 0 && pointer)
+        {
+            views.emplace_back(pointer, s);
+            pointer += get_aligned_size(s.size());
+        }
+        else
+        {
+            views.emplace_back();  // empty view placeholder
+        }
+    }
+}
+
+#ifdef OPENNN_WITH_CUDA
+
+void OptimizerData::allocate_device()
+{
+    if(data.size() == 0) return;
+
+    data.resize_device(data.size());
+    data.setZero_device();
+
+    type* dev_pointer = data.device();
+
+    for(TensorView& view : views)
+    {
+        if(view.shape.size() > 0 && dev_pointer)
+        {
+            view.data = dev_pointer;
+            dev_pointer += get_aligned_size(view.shape.size());
+        }
+    }
+}
+
+#endif
 
 void Optimizer::setup_device_training(ForwardPropagation& training_fp,
                                       BackPropagation& training_bp,

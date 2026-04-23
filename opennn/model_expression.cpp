@@ -948,8 +948,8 @@ void ModelExpression::emit_js_inputs_html(ostringstream& buffer) const
     const Scaling<2>* scaling_layer = neural_network->has(LayerType::Scaling2d)
         ? static_cast<const Scaling<2>*>(neural_network->get_first("Scaling2d"))
         : nullptr;
-    const VectorR* scaling_minimums = scaling_layer ? &scaling_layer->get_minimums() : nullptr;
-    const VectorR* scaling_maximums = scaling_layer ? &scaling_layer->get_maximums() : nullptr;
+    const VectorR scaling_minimums = scaling_layer ? scaling_layer->get_minimums() : VectorR();
+    const VectorR scaling_maximums = scaling_layer ? scaling_layer->get_maximums() : VectorR();
     const bool has_scaling = scaling_layer;
 
     const Index inputs_number = input_names.size();
@@ -959,11 +959,11 @@ void ModelExpression::emit_js_inputs_html(ostringstream& buffer) const
         float min_value = -1.0f;
         float max_value =  1.0f;
         if(has_scaling
-           && i < static_cast<Index>(scaling_minimums->size())
-           && i < static_cast<Index>(scaling_maximums->size()))
+           && i < static_cast<Index>(scaling_minimums.size())
+           && i < static_cast<Index>(scaling_maximums.size()))
         {
-            min_value = (*scaling_minimums)[i];
-            max_value = (*scaling_maximums)[i];
+            min_value = scaling_minimums[i];
+            max_value = scaling_maximums[i];
         }
 
         const float initial_value = (min_value == 0 && max_value == 0)

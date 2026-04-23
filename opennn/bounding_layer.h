@@ -35,8 +35,21 @@ public:
 
     const BoundingMethod& get_bounding_method() const;
 
-    const VectorR& get_lower_bounds() const;
-    const VectorR& get_upper_bounds() const;
+    // Return by value — zero-copy would require VectorMap; VectorR copy is cheap here
+    // (bounds are output-sized, typically small) and lets const& callers bind safely.
+    VectorR get_lower_bounds() const;
+    VectorR get_upper_bounds() const;
+
+    enum States {Lower, Upper};
+
+    vector<Shape> get_state_shapes() const override
+    {
+        if(bounding_method == BoundingMethod::NoBounding || output_shape.empty() || output_shape[0] == 0)
+            return {};
+        return {Shape{output_shape[0]}, Shape{output_shape[0]}};
+    }
+
+    type* link_states(type* pointer) override;
 
     void set(const Shape& = { 0 }, const string & = "bounding_layer");
 
@@ -46,19 +59,22 @@ public:
     void set_bounding_method(const BoundingMethod&);
     void set_bounding_method(const string&);
 
+    // Setters require the layer to be compiled first (states arena must be allocated).
     void set_lower_bounds(const VectorR&);
     void set_lower_bound(const Index, type);
 
     void set_upper_bounds(const VectorR&);
     void set_upper_bound(const Index, type);
 
-    // Lower and upper bounds
+    // Forward
 
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
-    // Serialization
+    // Serialization (two-phase: from_XML parses config; load_state_from_XML parses bounds after compile)
 
     void from_XML(const XmlDocument&) override;
+
+    void load_state_from_XML(const XmlDocument&) override;
 
     void to_XML(XmlPrinter&) const override;
 
@@ -69,10 +85,6 @@ private:
     Shape output_shape;
 
     BoundingMethod bounding_method = BoundingMethod::Bounding;
-
-    VectorR lower_bounds;
-
-    VectorR upper_bounds;
 };
 
 }

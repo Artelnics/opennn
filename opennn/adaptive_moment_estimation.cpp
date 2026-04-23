@@ -159,7 +159,15 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     // Optimization data
 
-    AdaptiveMomentEstimationData optimization_data(this);
+    const Index parameters_number = loss->get_neural_network()->get_parameters_size();
+
+    OptimizerData optimization_data;
+    optimization_data.set({Shape{parameters_number}, Shape{parameters_number}});
+
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu()) optimization_data.allocate_device();
+#endif
+
     optimization_data.iteration = 1;
 
     type training_error = type(0);
@@ -265,7 +273,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 }
 
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
-                                                 AdaptiveMomentEstimationData& optimization_data) const
+                                                 OptimizerData& optimization_data) const
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -286,8 +294,8 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         adam_update_cuda(
             parameters_number,
             neural_network->get_parameters_device(),
-            optimization_data.gradient_exponential_decay.device(),
-            optimization_data.square_gradient_exponential_decay.device(),
+            optimization_data.views[GradientMoment].data,
+            optimization_data.views[SquareGradientMoment].data,
             back_propagation.gradient.device(),
             beta_1,
             beta_2,
@@ -301,8 +309,10 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     VectorR& parameters = neural_network->get_parameters();
 
-    VectorR& gradient_exponential_decay = optimization_data.gradient_exponential_decay.vector;
-    VectorR& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay.vector;
+    VectorMap gradient_exponential_decay(optimization_data.views[GradientMoment].data,
+                                         optimization_data.views[GradientMoment].size());
+    VectorMap square_gradient_exponential_decay(optimization_data.views[SquareGradientMoment].data,
+                                                optimization_data.views[SquareGradientMoment].size());
 
     const VectorR& gradient = back_propagation.gradient.vector;
 
@@ -346,41 +356,6 @@ void AdaptiveMomentEstimation::from_XML(const XmlDocument& document)
     set_batch_size(read_xml_index(root_element, "BatchSize"));
     read_common_xml(root_element);
 }
-
-AdaptiveMomentEstimationData::AdaptiveMomentEstimationData(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
-{
-    set(new_adaptive_moment_estimation);
-}
-
-void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
-{
-    adaptive_moment_estimation = new_adaptive_moment_estimation;
-
-    const Loss* loss = new_adaptive_moment_estimation->get_loss();
-    const NeuralNetwork* neural_network = loss->get_neural_network();
-
-    const Index parameters_number = neural_network->get_parameters_size();
-
-    gradient_exponential_decay.setZero(parameters_number);
-    square_gradient_exponential_decay.setZero(parameters_number);
-
-#ifdef OPENNN_WITH_CUDA
-    gradient_exponential_decay.resize_device(parameters_number);
-    gradient_exponential_decay.setZero_device();
-    square_gradient_exponential_decay.resize_device(parameters_number);
-    square_gradient_exponential_decay.setZero_device();
-#endif
-    iteration = 0;
-}
-
-void AdaptiveMomentEstimationData::print() const
-{
-    cout << "Adaptive moment estimation data\n"
-         << "Iteration: " << iteration << "\n"
-         << "First moment (m) size: " << gradient_exponential_decay.size() << "\n"
-         << "Second moment (v) size: " << square_gradient_exponential_decay.size() << "\n";
-}
-
 
 REGISTER(Optimizer, AdaptiveMomentEstimation, "AdaptiveMomentEstimation");
 

@@ -27,11 +27,11 @@ struct Batch
               const vector<Index>&,
               bool augment = false);
 
-    vector<TensorView> get_inputs() const;
+    const vector<TensorView>& get_inputs() const { return input_views_host_cache; }
 
-    TensorView get_targets() const;
+    const TensorView& get_targets() const { return target_view_host_cache; }
 
-    vector<TensorView> get_inputs_active() const
+    const vector<TensorView>& get_inputs_active() const
     {
 #ifdef OPENNN_WITH_CUDA
         return Device::instance().is_gpu() ? get_inputs_device() : get_inputs();
@@ -40,7 +40,7 @@ struct Batch
 #endif
     }
 
-    TensorView get_targets_active() const
+    const TensorView& get_targets_active() const
     {
 #ifdef OPENNN_WITH_CUDA
         return Device::instance().is_gpu() ? get_targets_device() : get_targets();
@@ -76,6 +76,9 @@ struct Batch
 
     const vector<TensorView>& get_inputs_device() const;
     const TensorView& get_targets_device() const;
+
+    vector<TensorView> input_views_host_cache;
+    TensorView target_view_host_cache;
 
     vector<TensorView> input_views_cache;
     TensorView target_view_cache;

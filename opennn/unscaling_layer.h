@@ -21,14 +21,7 @@ private:
 
     enum Forward {Input, Output};
 
-    VectorR means;
-    VectorR standard_deviations;
-    VectorR minimums;
-    VectorR maximums;
-
-    VectorR multipliers;
-    VectorR offsets;
-
+    // Scaler method is enum, not float — can't live in the arena directly.
     vector<ScalerMethod> scalers;
 
     type min_range = -1.0f;
@@ -39,6 +32,8 @@ private:
         return {Shape{batch_size}.append(get_output_shape())};
     }
 
+    void flush_scalers_to_states();
+
 public:
 
     Unscaling(const Shape& = {0}, const string& = "unscaling_layer");
@@ -48,13 +43,25 @@ public:
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;
 
-    const VectorR& get_minimums() const { return minimums; }
-    const VectorR& get_maximums() const { return maximums; }
-    const VectorR& get_means() const { return means; }
-    const VectorR& get_standard_deviations() const { return standard_deviations; }
+    // Return by value — zero-copy via states[].as_vector() + Eigen move on return.
+    VectorR get_minimums() const;
+    VectorR get_maximums() const;
+    VectorR get_means() const;
+    VectorR get_standard_deviations() const;
     const vector<ScalerMethod>& get_scalers() const { return scalers; }
     type get_min_range() const { return min_range; }
     type get_max_range() const { return max_range; }
+
+    enum States {Minimums, Maximums, Means, StandardDeviations, Scalers};
+
+    vector<Shape> get_state_shapes() const override
+    {
+        const Index features = ssize(scalers);
+        if (features == 0) return {};
+        return {Shape{features}, Shape{features}, Shape{features}, Shape{features}, Shape{features}};
+    }
+
+    type* link_states(type* pointer) override;
 
     // Setters
 
@@ -63,6 +70,7 @@ public:
     void set_input_shape(const Shape&) override;
     void set_output_shape(const Shape&) override;
 
+    // Requires NN::compile() first — writes directly into the states arena.
     void set_descriptives(const vector<Descriptives>&);
 
     void set_min_max_range(const type, const type);
@@ -70,17 +78,16 @@ public:
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
 
-    void calculate_coefficients();
-
     // Forward propagation
 
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
-    // Serialization
+    // Serialization (two-phase: from_XML parses config; load_state_from_XML parses descriptives after compile)
 
     void print() const override;
 
     void from_XML(const XmlDocument&) override;
+    void load_state_from_XML(const XmlDocument&) override;
     void to_XML(XmlPrinter&) const override;
 };
 

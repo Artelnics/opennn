@@ -87,7 +87,7 @@ void Variable::from_XML(const XmlDocument& document)
 
 void Variable::to_XML(XmlPrinter& printer) const
 {
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"Name", name},
         {"Scaler", get_scaler()},
         {"Role", get_role()},

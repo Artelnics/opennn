@@ -10,7 +10,6 @@
 #include "tensor_utilities.h"
 #include "math_utilities.h"
 #include "multihead_attention_layer.h"
-#include "neural_network.h"
 #include "loss.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -334,7 +333,7 @@ void MultiHeadAttention::from_XML(const XmlDocument& document)
 void MultiHeadAttention::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("MultiHeadAttention");
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"Label", label},
         {"QuerySequenceLength", to_string(query_sequence_length)},
         {"SourceSequenceLength", to_string(source_sequence_length)},

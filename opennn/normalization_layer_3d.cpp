@@ -126,7 +126,7 @@ void Normalization3d::from_XML(const XmlDocument& document)
 void Normalization3d::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Normalization3d");
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"Label", label},
         {"SequenceLength", to_string(get_sequence_length())},
         {"EmbeddingDimension", to_string(get_embedding_dimension())}

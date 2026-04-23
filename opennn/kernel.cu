@@ -289,7 +289,6 @@ __global__ void binary_cross_entropy_gradient_vec_kernel(const int n_vec, T* __r
     }
 }
 
-
 template<typename T>
 void binary_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targets, const T* outputs, const float epsilon, const float scaling_factor)
 {
@@ -375,7 +374,6 @@ __global__ void multiple_cross_entropy_gradient_vec_kernel(const int n_vec, T* _
         d_v[i] = d_chunk;
     }
 }
-
 
 template<typename T>
 void multiple_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targets, const T* outputs, const float scaling_factor)
@@ -798,6 +796,176 @@ void addition_cuda(const Index n, const T* input1, const T* input2, T* output)
 
 template void addition_cuda<float>        (const Index, const float*,         const float*,         float*);
 template void addition_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*);
+
+template<typename T>
+__global__ void bounding_kernel(const int n, const int features,
+                                const T* __restrict__ input,
+                                const float* __restrict__ lower,
+                                const float* __restrict__ upper,
+                                T* __restrict__ output)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int f = i % features;
+        const float x = static_cast<float>(input[i]);
+        output[i] = static_cast<T>(fminf(fmaxf(x, lower[f]), upper[f]));
+    }
+}
+
+template<typename T>
+void bounding_cuda(const Index n, const int features,
+                   const T* input, const float* lower, const float* upper,
+                   T* output)
+{
+    if (n == 0) return;
+
+    const int block_size = 256;
+    const int total      = static_cast<int>(n);
+    const int grid_size  = (total + block_size - 1) / block_size;
+
+    bounding_kernel<T><<<grid_size, block_size>>>(total, features, input, lower, upper, output);
+}
+
+template void bounding_cuda<float>        (const Index, const int, const float*,         const float*, const float*, float*);
+template void bounding_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, __nv_bfloat16*);
+
+// Scaler method codes must match ScalerMethod enum order in variable.h:
+//   0=None, 1=MinimumMaximum, 2=MeanStandardDeviation, 3=StandardDeviation, 4=Logarithm, 5=ImageMinMax
+#define SCALER_EPSILON 1e-7f
+
+template<typename T>
+__global__ void scale_kernel(const int n, const int features,
+                             const T* __restrict__ input,
+                             const float* __restrict__ minimums,
+                             const float* __restrict__ maximums,
+                             const float* __restrict__ means,
+                             const float* __restrict__ stds,
+                             const float* __restrict__ scalers,
+                             const float min_range, const float max_range,
+                             T* __restrict__ output)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int f = i % features;
+        const int code = static_cast<int>(scalers[f]);
+        const float x = static_cast<float>(input[i]);
+        float y = x;
+
+        switch(code)
+        {
+        case 1: // MinimumMaximum
+            y = (x - minimums[f]) / ((maximums[f] - minimums[f]) + SCALER_EPSILON)
+                * (max_range - min_range) + min_range;
+            break;
+        case 2: // MeanStandardDeviation
+            y = (x - means[f]) / (stds[f] + SCALER_EPSILON);
+            break;
+        case 3: // StandardDeviation
+            y = x / (stds[f] + SCALER_EPSILON);
+            break;
+        case 4: // Logarithm
+            y = logf(x);
+            break;
+        case 5: // ImageMinMax
+            y = x / 255.0f;
+            break;
+        default:
+            break;
+        }
+
+        output[i] = static_cast<T>(y);
+    }
+}
+
+template<typename T>
+void scale_cuda(const Index n, const int features,
+                const T* input,
+                const float* minimums, const float* maximums,
+                const float* means, const float* stds,
+                const float* scalers,
+                float min_range, float max_range,
+                T* output)
+{
+    if (n == 0) return;
+
+    const int block_size = 256;
+    const int total      = static_cast<int>(n);
+    const int grid_size  = (total + block_size - 1) / block_size;
+
+    scale_kernel<T><<<grid_size, block_size>>>(total, features,
+                                               input, minimums, maximums, means, stds, scalers,
+                                               min_range, max_range, output);
+}
+
+template void scale_cuda<float>        (const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, float*);
+template void scale_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
+
+template<typename T>
+__global__ void unscale_kernel(const int n, const int features,
+                               const T* __restrict__ input,
+                               const float* __restrict__ minimums,
+                               const float* __restrict__ maximums,
+                               const float* __restrict__ means,
+                               const float* __restrict__ stds,
+                               const float* __restrict__ scalers,
+                               const float min_range, const float max_range,
+                               T* __restrict__ output)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int f = i % features;
+        const int code = static_cast<int>(scalers[f]);
+        const float x = static_cast<float>(input[i]);
+        float y = x;
+
+        switch(code)
+        {
+        case 1: // MinimumMaximum
+            y = (x - min_range) / (max_range - min_range)
+                * (maximums[f] - minimums[f]) + minimums[f];
+            break;
+        case 2: // MeanStandardDeviation
+            y = means[f] + x * stds[f];
+            break;
+        case 3: // StandardDeviation
+            y = x * stds[f];
+            break;
+        case 4: // Logarithm
+            y = expf(x);
+            break;
+        case 5: // ImageMinMax
+            y = x * 255.0f;
+            break;
+        default:
+            break;
+        }
+
+        output[i] = static_cast<T>(y);
+    }
+}
+
+template<typename T>
+void unscale_cuda(const Index n, const int features,
+                  const T* input,
+                  const float* minimums, const float* maximums,
+                  const float* means, const float* stds,
+                  const float* scalers,
+                  float min_range, float max_range,
+                  T* output)
+{
+    if (n == 0) return;
+
+    const int block_size = 256;
+    const int total      = static_cast<int>(n);
+    const int grid_size  = (total + block_size - 1) / block_size;
+
+    unscale_kernel<T><<<grid_size, block_size>>>(total, features,
+                                                 input, minimums, maximums, means, stds, scalers,
+                                                 min_range, max_range, output);
+}
+
+template void unscale_cuda<float>        (const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, float*);
+template void unscale_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
 
 // Template parameter T applies only to the `outputs` activation buffer. Inputs (token IDs),
 // weights, and positional encoding stay FP32 (see get_forward_dtypes for Embedding).
@@ -1445,7 +1613,6 @@ __global__ void layernorm_backward_kernel(const int N, const int D, const T* __r
     }
 }
 
-
 template<typename T>
 __global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, float* __restrict__ dGamma, float* __restrict__ dBeta)
 {
@@ -1494,7 +1661,6 @@ __global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, c
         }
     }
 }
-
 
 template<typename T>
 void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, float* dGamma, float* dBeta)

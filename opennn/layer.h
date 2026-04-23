@@ -146,12 +146,17 @@ public:
 
     virtual void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept
     {
-        // throw inside noexcept -> terminate with message; prevents a layer that forgot
-        // to override back_propagate from silently no-op'ing during training.
         throw runtime_error("back_propagate not implemented for layer type: " + name);
     }
 
+    // Two-phase XML deserialization:
+    //   Phase 1 (from_XML): parses layer config. Runs BEFORE NeuralNetwork::compile(),
+    //                       so it MUST NOT touch parameters[] or states[] (arenas not allocated).
+    //   Phase 2 (load_state_from_XML): parses persistent state into the arenas. Runs AFTER
+    //                                  compile(). Only layers with state-in-XML need to override.
     virtual void from_XML(const tinyxml2::XmlDocument&) {}
+
+    virtual void load_state_from_XML(const tinyxml2::XmlDocument&) {}
 
     virtual void to_XML(tinyxml2::XmlPrinter&) const {}
 
@@ -168,7 +173,7 @@ public:
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const { return parameters; }
 
-    type* link_states(type* pointer);
+    virtual type* link_states(type* pointer);
 
     vector<TensorView>& get_state_views() { return states; }
     const vector<TensorView>& get_state_views() const { return states; }
