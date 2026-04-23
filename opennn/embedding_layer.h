@@ -95,6 +95,7 @@ private:
     type embedding_scale = type(1);
 
     type dropout_rate = type(0);
+    DropoutArguments dropout_arguments;
 };
 
 }
