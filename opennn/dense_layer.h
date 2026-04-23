@@ -53,21 +53,28 @@ private:
                 {output_features}};  // RunningVariance
     }
 
-    enum Forward {Input, Combination, BatchNormMean, BatchNormInverseVariance, Output};
+    enum Forward {Input, Combination, BatchNormMean, BatchNormInverseVariance, Activation, Output};
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
         const Shape output_shape = Shape{batch_size}.append(get_output_shape());
 
+        // Activation view stores the post-activation, pre-dropout value so that
+        // back-propagation can compute the activation derivative after dropout
+        // has overwritten the output tensor. Allocated only when dropout is in use.
+        const Shape activation_shape = (dropout_rate > type(0)) ? output_shape : Shape{};
+
         if(batch_normalization)
             return {output_shape,             // Combination
-                    Shape{output_features},    // BatchNormMean
-                    Shape{output_features},    // BatchNormInverseVariance
+                    Shape{output_features},   // BatchNormMean
+                    Shape{output_features},   // BatchNormInverseVariance
+                    activation_shape,         // Activation
                     output_shape};            // Output
         else
             return {Shape{},                  // Combination (unused)
                     Shape{},                  // BatchNormMean (unused)
                     Shape{},                  // BatchNormInverseVariance (unused)
+                    activation_shape,         // Activation
                     output_shape};            // Output
     }
 
@@ -76,6 +83,7 @@ private:
         return {CUDNN_ACTIVATION_DTYPE,  // Combination
                 CUDNN_DATA_FLOAT,        // BatchNormMean
                 CUDNN_DATA_FLOAT,        // BatchNormInverseVariance
+                CUDNN_ACTIVATION_DTYPE,  // Activation
                 CUDNN_ACTIVATION_DTYPE}; // Output
     }
 
@@ -363,10 +371,14 @@ public:
         else
             combination(forward_views[Input][0], parameters[Weight], parameters[Bias], forward_views[Output][0]);
 
-        if (is_training && dropout_rate > type(0))
-            dropout(forward_views[Output][0], dropout_arguments);
-
         activation(forward_views[Output][0], activation_arguments);
+
+        if (is_training && dropout_rate > type(0))
+        {
+            // Save post-activation, pre-dropout value for use by back-propagation.
+            copy(forward_views[Output][0], forward_views[Activation][0]);
+            dropout(forward_views[Output][0], dropout_arguments);
+        }
     }
 
     void back_propagate(ForwardPropagation& forward_propagation,
@@ -382,10 +394,18 @@ public:
 
         TensorView& output_gradient = backward_views[OutputGradient][0];
 
-        activation_gradient(output, output_gradient, output_gradient, activation_arguments);
-
         if (dropout_rate > type(0))
+        {
             dropout_gradient(output_gradient, output_gradient, dropout_arguments);
+            // When dropout is active, `output` holds the post-dropout value;
+            // the post-activation (needed by activation_gradient) was saved here.
+            activation_gradient(forward_views[Activation][0], output_gradient, output_gradient, activation_arguments);
+        }
+        else
+        {
+            // No dropout: `output` still holds the post-activation value.
+            activation_gradient(output, output_gradient, output_gradient, activation_arguments);
+        }
 
         if (batch_normalization)
             batch_normalization_backward(forward_views[Combination][0],

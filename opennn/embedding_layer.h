@@ -51,7 +51,14 @@ public:
     void set_scale_embedding(bool v) { scale_embedding = v; }
     void set_add_positional_encoding(bool v) { add_positional_encoding = v; }
 
-    void set_dropout_rate(const type r) { dropout_rate = r; }
+    void set_dropout_rate(const type r)
+    {
+        if (r < type(0) || r >= type(1))
+            throw runtime_error("Dropout rate must be in [0,1).");
+
+        dropout_rate = r;
+        dropout_arguments.rate = r;
+    }
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;
