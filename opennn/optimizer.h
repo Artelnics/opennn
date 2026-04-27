@@ -109,8 +109,7 @@ protected:
 
     static void clip_gradient_norm(Memory& gradient, type max_norm);
 
-    // Runs one training or validation epoch. Shared by Adam/SGD. `update` is invoked per batch
-    // after back_propagate (training phase only); pass a no-op lambda for validation.
+
     EpochStats run_epoch(bool is_training_phase,
                          bool is_classification,
                          ForwardPropagation& fp,

@@ -66,7 +66,7 @@ int main()
 
         adam->set_batch_size(64);
         adam->set_learning_rate(type(5e-4));
-        adam->set_maximum_epochs(2);
+        adam->set_maximum_epochs(4);
         adam->set_display_period(1);
 
         Device::instance().set(DeviceType::Gpu);
