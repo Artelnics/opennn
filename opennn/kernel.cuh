@@ -65,11 +65,6 @@ void l1_gradient_cuda(const Index, T*, const T*, const float);
 template<typename T>
 void add_bias_cuda(const Index, T*, const float*, const int);
 
-// Addition
-
-template<typename T>
-void addition_cuda(const Index, const T*, const T*, T*);
-
 // Bounding
 
 template<typename T>

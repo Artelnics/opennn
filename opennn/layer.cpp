@@ -116,11 +116,19 @@ void Layer::add_gradients(const vector<TensorView>& output_delta_views) const
     for(size_t i = 1; i < output_delta_views.size(); ++i)
         output_deltas.noalias() += output_delta_views[i].as_vector();
 #else
-    const size_t n = output_delta_views[0].size();
+    const TensorView& accumulator = output_delta_views[0];
 
     for(size_t i = 1; i < output_delta_views.size(); ++i)
-        if(output_delta_views[i].data)
-            addition_cuda(n, output_delta_views[0].data, output_delta_views[i].data, output_delta_views[0].data);
+    {
+        if(!output_delta_views[i].data) continue;
+
+        // operator_sum_descriptor is configured with CUDNN_OP_TENSOR_ADD.
+        CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(),
+                                  Device::get_operator_sum_descriptor(),
+                                  &one,  accumulator.get_descriptor(),           accumulator.data,
+                                  &one,  output_delta_views[i].get_descriptor(), output_delta_views[i].data,
+                                  &zero, accumulator.get_descriptor(),           accumulator.data));
+    }
 #endif
 }
 

@@ -72,6 +72,10 @@ public:
 
 public:
 
+#ifdef OPENNN_WITH_CUDA
+    void init_cuda(Index);
+#endif
+
     void copy_positional_encoding_device();
 
 private:

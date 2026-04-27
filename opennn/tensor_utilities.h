@@ -402,6 +402,12 @@ struct TensorView
     template<typename T>       T* as()       noexcept;
     template<typename T> const T* as() const noexcept;
 
+    // Float-typed view of `data`. Used at CUDA dispatch sites where kernels expect
+    // raw float* regardless of the project's `type` alias (e.g. descriptive stats,
+    // scaler tables, masks). Mirrors as<T>() but skips the dtype check.
+    float*       as_float()       noexcept { return reinterpret_cast<float*>(data); }
+    const float* as_float() const noexcept { return reinterpret_cast<const float*>(data); }
+
     cudaDataType_t cuda_dtype() const noexcept { return cudnn_to_cuda_dtype(dtype); }
 
     template<typename F>
