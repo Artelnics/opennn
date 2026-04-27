@@ -53,21 +53,28 @@ private:
                 {output_features}};  // RunningVariance
     }
 
-    enum Forward {Input, Combination, BatchNormMean, BatchNormInverseVariance, Output};
+    enum Forward {Input, Combination, BatchNormMean, BatchNormInverseVariance, Activation, Output};
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
         const Shape output_shape = Shape{batch_size}.append(get_output_shape());
 
+        // Activation view stores the post-activation, pre-dropout value so that
+        // back-propagation can compute the activation derivative after dropout
+        // has overwritten the output tensor. Allocated only when dropout is in use.
+        const Shape activation_shape = (dropout_rate > type(0)) ? output_shape : Shape{};
+
         if(batch_normalization)
             return {output_shape,             // Combination
-                    Shape{output_features},    // BatchNormMean
-                    Shape{output_features},    // BatchNormInverseVariance
+                    Shape{output_features},   // BatchNormMean
+                    Shape{output_features},   // BatchNormInverseVariance
+                    activation_shape,         // Activation
                     output_shape};            // Output
         else
             return {Shape{},                  // Combination (unused)
                     Shape{},                  // BatchNormMean (unused)
                     Shape{},                  // BatchNormInverseVariance (unused)
+                    activation_shape,         // Activation
                     output_shape};            // Output
     }
 
@@ -76,10 +83,11 @@ private:
         return {CUDNN_ACTIVATION_DTYPE,  // Combination
                 CUDNN_DATA_FLOAT,        // BatchNormMean
                 CUDNN_DATA_FLOAT,        // BatchNormInverseVariance
+                CUDNN_ACTIVATION_DTYPE,  // Activation
                 CUDNN_ACTIVATION_DTYPE}; // Output
     }
 
-    enum Backward {OutputGradient, InputGradient};
+    enum Backward {OutputDelta, InputDelta};
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
@@ -246,7 +254,7 @@ public:
 
         VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
 
-        if (batch_normalization)
+        if (batch_normalization && ssize(states) > RunningVariance)
         {
             VectorMap(states[RunningMean].data, states[RunningMean].size()).setZero();
             VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
@@ -263,7 +271,7 @@ public:
 
         VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
 
-        if (batch_normalization)
+        if (batch_normalization && ssize(states) > RunningVariance)
         {
             VectorMap(states[RunningMean].data, states[RunningMean].size()).setZero();
             VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
@@ -363,10 +371,14 @@ public:
         else
             combination(forward_views[Input][0], parameters[Weight], parameters[Bias], forward_views[Output][0]);
 
-        if (is_training && dropout_rate > type(0))
-            dropout(forward_views[Output][0], dropout_arguments);
-
         activation(forward_views[Output][0], activation_arguments);
+
+        if (is_training && dropout_rate > type(0))
+        {
+            // Save post-activation, pre-dropout value for use by back-propagation.
+            copy(forward_views[Output][0], forward_views[Activation][0]);
+            dropout(forward_views[Output][0], dropout_arguments);
+        }
     }
 
     void back_propagate(ForwardPropagation& forward_propagation,
@@ -374,46 +386,54 @@ public:
                         size_t layer) const noexcept override
     {
         auto& forward_views = forward_propagation.views[layer];
-        auto& backward_views = back_propagation.backward_views[layer];
+        auto& delta_views = back_propagation.delta_views[layer];
         auto& gradient_views = back_propagation.gradient_views[layer];
 
         const TensorView& input = forward_views[Input][0];
         const TensorView& output = forward_views[Output][0];
 
-        TensorView& output_gradient = backward_views[OutputGradient][0];
-
-        activation_gradient(output, output_gradient, output_gradient, activation_arguments);
+        TensorView& output_delta = delta_views[OutputDelta][0];
 
         if (dropout_rate > type(0))
-            dropout_gradient(output_gradient, output_gradient, dropout_arguments);
+        {
+            dropout_delta(output_delta, output_delta, dropout_arguments);
+            // When dropout is active, `output` holds the post-dropout value;
+            // the post-activation (needed by activation_delta) was saved here.
+            activation_delta(forward_views[Activation][0], output_delta, output_delta, activation_arguments);
+        }
+        else
+        {
+            // No dropout: `output` still holds the post-activation value.
+            activation_delta(output, output_delta, output_delta, activation_arguments);
+        }
 
         if (batch_normalization)
             batch_normalization_backward(forward_views[Combination][0],
                                          output,
-                                         output_gradient,
+                                         output_delta,
                                          forward_views[BatchNormMean][0],
                                          forward_views[BatchNormInverseVariance][0],
                                          parameters[Gamma],
                                          gradient_views[Gamma],
                                          gradient_views[Beta],
-                                         output_gradient);
+                                         output_delta);
 
         const Index total_rows = input.size() / input.shape.back();
 
-        TensorView output_gradient_2d = output_gradient.reshape({total_rows, output_gradient.shape.back()});
+        TensorView output_delta_2d = output_delta.reshape({total_rows, output_delta.shape.back()});
         TensorView input_2d           = input.reshape({total_rows, input.shape.back()});
 
-        TensorView input_gradient_2d;
+        TensorView input_delta_2d;
         if (!is_first_layer)
         {
-            TensorView& input_gradient = backward_views[InputGradient][0];
-            input_gradient_2d = input_gradient.reshape({total_rows, input_gradient.shape.back()});
+            TensorView& input_delta = delta_views[InputDelta][0];
+            input_delta_2d = input_delta.reshape({total_rows, input_delta.shape.back()});
         }
 
-        combination_gradient(output_gradient_2d,
+        combination_gradient(output_delta_2d,
                              input_2d,
                              parameters[Weight],
-                             input_gradient_2d,
+                             input_delta_2d,
                              gradient_views[Weight],
                              gradient_views[Bias],
                              false);
@@ -446,17 +466,24 @@ public:
         const bool use_batch_normalization = bn_element && bn_element->get_text()
                                              && string(bn_element->get_text()) == "true";
         set_batch_normalization(use_batch_normalization);
+    }
 
-        if (batch_normalization)
-        {
-            VectorR tmp;
+    // Phase 2: runs after NN::compile(), so states[] is allocated. Parses BN running
+    // statistics directly into the arena — no staging required.
+    void load_state_from_XML(const XmlDocument& document) override
+    {
+        if(!batch_normalization) return;
 
-            string_to_vector(read_xml_string(dense_layer_element, "RunningMeans"), tmp);
+        const XmlElement* dense_layer_element = get_xml_root(document, name);
+
+        VectorR tmp;
+        string_to_vector(read_xml_string(dense_layer_element, "RunningMeans"), tmp);
+        if(tmp.size() == states[RunningMean].size() && states[RunningMean].data)
             VectorMap(states[RunningMean].data, states[RunningMean].size()) = tmp;
 
-            string_to_vector(read_xml_string(dense_layer_element, "RunningVariances"), tmp);
+        string_to_vector(read_xml_string(dense_layer_element, "RunningVariances"), tmp);
+        if(tmp.size() == states[RunningVariance].size() && states[RunningVariance].data)
             VectorMap(states[RunningVariance].data, states[RunningVariance].size()) = tmp;
-        }
     }
 
     void to_XML(XmlPrinter& printer) const override
@@ -464,7 +491,7 @@ public:
         printer.open_element(name.c_str());
 
         if constexpr (Rank == 3)
-            write_xml_properties(printer, {
+            write_xml(printer, {
                 {"Label", label},
                 {"InputSequenceLength", to_string(get_input_shape()[0])},
                 {"InputsNumber", to_string(get_input_shape()[1])},
@@ -473,7 +500,7 @@ public:
                 {"BatchNormalization", batch_normalization ? "true" : "false"}
             });
         else
-            write_xml_properties(printer, {
+            write_xml(printer, {
                 {"Label", label},
                 {"InputsNumber", to_string(get_input_shape()[0])},
                 {"NeuronsNumber", to_string(get_output_shape()[0])},
@@ -482,7 +509,7 @@ public:
             });
 
         if (batch_normalization)
-            write_xml_properties(printer, {
+            write_xml(printer, {
                 {"RunningMeans", vector_to_string(states[RunningMean].as_vector())},
                 {"RunningVariances", vector_to_string(states[RunningVariance].as_vector())}
             });

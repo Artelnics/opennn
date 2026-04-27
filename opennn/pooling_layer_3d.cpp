@@ -73,16 +73,16 @@ void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
                                size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
-    auto& backward_views = back_propagation.backward_views[layer];
+    auto& delta_views = back_propagation.delta_views[layer];
 
     if(pooling_method == PoolingMethod::MaxPooling)
         max_pooling_3d_backward(forward_views[MaximalIndices][0],
-                                backward_views[OutputGradient][0],
-                                backward_views[InputGradient][0]);
+                                delta_views[OutputDelta][0],
+                                delta_views[InputDelta][0]);
     else
         average_pooling_3d_backward(forward_views[Input][0],
-                                    backward_views[OutputGradient][0],
-                                    backward_views[InputGradient][0]);
+                                    delta_views[OutputDelta][0],
+                                    delta_views[InputDelta][0]);
 }
 
 void Pooling3d::from_XML(const XmlDocument& document)
@@ -96,7 +96,7 @@ void Pooling3d::from_XML(const XmlDocument& document)
 void Pooling3d::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Pooling3d");
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"InputDimensions", shape_to_string(get_input_shape())},
         {"PoolingMethod", write_pooling_method()}
     });

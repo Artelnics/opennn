@@ -158,7 +158,7 @@ void Convolutional::set_parameters_glorot()
 
     VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
 
-    if (batch_normalization)
+    if (batch_normalization && ssize(states) > RunningVariance)
     {
         VectorMap(states[RunningMean].data, states[RunningMean].size()).setZero();
         VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
@@ -175,7 +175,7 @@ void Convolutional::set_parameters_random()
 
     VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
 
-    if (batch_normalization)
+    if (batch_normalization && ssize(states) > RunningVariance)
     {
         VectorMap(states[RunningMean].data, states[RunningMean].size()).setZero();
         VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
@@ -374,11 +374,11 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                    size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
-    auto& backward_views = back_propagation.backward_views[layer];
+    auto& delta_views = back_propagation.delta_views[layer];
     auto& gradient_views = back_propagation.gradient_views[layer];
 
     const TensorView& output = forward_views[Output][0];
-    TensorView& output_gradient = backward_views[OutputGradient][0];
+    TensorView& output_delta = delta_views[OutputDelta][0];
 
 #ifdef OPENNN_WITH_CUDA
     const bool is_gpu = Device::instance().is_gpu();
@@ -386,26 +386,26 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     constexpr bool is_gpu = false;
 #endif
 
-    activation_gradient(output, output_gradient, output_gradient, activation_arguments);
+    activation_delta(output, output_delta, output_delta, activation_arguments);
 
     if (batch_normalization)
-        batch_normalization_backward(forward_views[Convolution][0], output, output_gradient,
+        batch_normalization_backward(forward_views[Convolution][0], output, output_delta,
                                      forward_views[BatchNormMean][0], forward_views[BatchNormInverseVariance][0],
                                      parameters[Gamma], gradient_views[Gamma], gradient_views[Beta],
-                                     output_gradient);
+                                     output_delta);
 
     const TensorView& conv_input = is_gpu ? forward_views[Input][0] : forward_views[PaddedInput][0];
 
     convolution_backward_weights(conv_input,
-                                 output_gradient,
+                                 output_delta,
                                  gradient_views[Weight],
                                  gradient_views[Bias],
                                  convolution_arguments);
 
     if (!is_first_layer)
-        convolution_backward_data(output_gradient,
+        convolution_backward_data(output_delta,
                                   parameters[Weight],
-                                  backward_views[InputGradient][0],
+                                  delta_views[InputDelta][0],
                                   convolution_arguments);
 }
 
@@ -437,23 +437,31 @@ void Convolutional::from_XML(const XmlDocument& document)
                                          && string(batch_normalization_element->get_text()) == "true";
     set_batch_normalization(use_batch_normalization);
 
-    if (batch_normalization)
-    {
-        VectorR tmp;
+}
 
-        string_to_vector(read_xml_string(convolutional_layer_element, "RunningMeans"), tmp);
+// Phase 2: runs after NN::compile(), so states[] is allocated. Parses BN running
+// statistics directly into the arena — no staging required.
+void Convolutional::load_state_from_XML(const XmlDocument& document)
+{
+    if(!batch_normalization) return;
+
+    const XmlElement* convolutional_layer_element = get_xml_root(document, "Convolutional");
+
+    VectorR tmp;
+    string_to_vector(read_xml_string(convolutional_layer_element, "RunningMeans"), tmp);
+    if(tmp.size() == states[RunningMean].size() && states[RunningMean].data)
         VectorMap(states[RunningMean].data, states[RunningMean].size()) = tmp;
 
-        string_to_vector(read_xml_string(convolutional_layer_element, "RunningVariances"), tmp);
+    string_to_vector(read_xml_string(convolutional_layer_element, "RunningVariances"), tmp);
+    if(tmp.size() == states[RunningVariance].size() && states[RunningVariance].data)
         VectorMap(states[RunningVariance].data, states[RunningVariance].size()) = tmp;
-    }
 }
 
 void Convolutional::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Convolutional");
 
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"Label", label},
         {"InputDimensions", shape_to_string(get_input_shape())},
         {"KernelsNumber", to_string(get_kernels_number())},
@@ -467,7 +475,7 @@ void Convolutional::to_XML(XmlPrinter& printer) const
     });
 
     if (batch_normalization)
-        write_xml_properties(printer, {
+        write_xml(printer, {
             {"RunningMeans", vector_to_string(states[RunningMean].as_vector())},
             {"RunningVariances", vector_to_string(states[RunningVariance].as_vector())}
         });

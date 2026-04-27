@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "tensor_utilities.h"
-#include "math_utilities.h"
 #include "batch.h"
 #include "dataset.h"
 #include "loss.h"
@@ -130,32 +129,31 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
     }
 }
 
-void Loss::calculate_output_gradients(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
+void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
     const TensorView target = batch.get_targets_active();
-    TensorView input_gradient = back_propagation.get_output_gradients_active();
+    TensorView input_delta = back_propagation.get_output_deltas_active();
 
     switch(error)
     {
     case Error::MeanSquaredError:
-        mean_squared_error_gradient(input, target, input_gradient);
+        mean_squared_error_gradient(input, target, input_delta);
         break;
-
     case Error::NormalizedSquaredError:
-        normalized_squared_error_gradient(input, target, normalization_coefficient, input_gradient);
+        normalized_squared_error_gradient(input, target, normalization_coefficient, input_delta);
         break;
     case Error::WeightedSquaredError:
-        weighted_squared_error_gradient(input, target, positives_weight, negatives_weight, get_weighted_coefficient(batch), input_gradient);
+        weighted_squared_error_gradient(input, target, positives_weight, negatives_weight, get_weighted_coefficient(batch), input_delta);
         break;
     case Error::CrossEntropy:
-        cross_entropy_gradient(input, target, input_gradient);
+        cross_entropy_gradient(input, target, input_delta);
         break;
     case Error::CrossEntropy3d:
-        cross_entropy_3d_gradient(input, target, input_gradient, back_propagation.active_tokens_count);
+        cross_entropy_3d_gradient(input, target, input_delta, back_propagation.active_tokens_count);
         break;
     case Error::MinkowskiError:
-        minkowski_error_gradient(input, target, minkowski_parameter, input_gradient);
+        minkowski_error_gradient(input, target, minkowski_parameter, input_delta);
         break;
     }
 }
@@ -204,12 +202,12 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    calculate_output_gradients(batch, forward_propagation, back_propagation);
+    calculate_output_deltas(batch, forward_propagation, back_propagation);
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {
         if(i != last_trainable_layer_index)
-            back_propagation.accumulate_output_gradients(static_cast<size_t>(i));
+            back_propagation.accumulate_output_deltas(static_cast<size_t>(i));
         layers[i]->back_propagate(forward_propagation, back_propagation, i);
     }
 }
@@ -424,7 +422,7 @@ VectorR Loss::calculate_numerical_gradient()
     return numerical_gradient;
 }
 
-VectorR Loss::calculate_numerical_input_gradients()
+VectorR Loss::calculate_numerical_input_deltas()
 {
     check_neural_network();
     check_dataset();
@@ -522,7 +520,7 @@ type Loss::calculate_h(const type x)
 void Loss::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Loss");
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"Method", get_name()},
         {"Regularization", regularization_to_string(regularization_method)},
         {"RegularizationWeight", to_string(regularization_weight)}
@@ -532,7 +530,7 @@ void Loss::to_XML(XmlPrinter& printer) const
         add_xml_element(printer, "NormalizationCoefficient", to_string(normalization_coefficient));
 
     if (error == Error::WeightedSquaredError)
-        write_xml_properties(printer, {
+        write_xml(printer, {
             {"PositivesWeight", to_string(positives_weight)},
             {"NegativesWeight", to_string(negatives_weight)}
         });

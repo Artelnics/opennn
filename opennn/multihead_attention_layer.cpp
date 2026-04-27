@@ -10,7 +10,6 @@
 #include "tensor_utilities.h"
 #include "math_utilities.h"
 #include "multihead_attention_layer.h"
-#include "neural_network.h"
 #include "loss.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -240,14 +239,14 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
                                         size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
-    auto& backward_views = back_propagation.backward_views[layer];
+    auto& delta_views = back_propagation.delta_views[layer];
     auto& gradient_views = back_propagation.gradient_views[layer];
 
     const TensorView& query_input = get_query_input(forward_views);
     const TensorView& source_input = get_source_input(forward_views);
     const bool self_attention = is_self_attention(forward_views);
 
-    TensorView& output_gradient = backward_views[OutputGradient][0];
+    TensorView& output_delta = delta_views[OutputDelta][0];
 
     const Index batch_size = forward_propagation.batch_size;
     const Index total_rows = batch_size * query_sequence_length;
@@ -256,9 +255,9 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     float* transpose_scratch = forward_views[TransposeScratch][0].data;
     const type scaling_factor = get_scaling_factor();
 
-    TensorView concat_grad_flat = backward_views[ConcatenatedOutputGradient][0].reshape(flat_shape);
+    TensorView concat_grad_flat = delta_views[ConcatenatedOutputDelta][0].reshape(flat_shape);
 
-    combination_gradient(output_gradient.reshape(flat_shape),
+    combination_gradient(output_delta.reshape(flat_shape),
                          forward_views[ConcatenatedAttentionOutputs][0].reshape(flat_shape),
                          parameters[ProjectionWeight],
                          concat_grad_flat,
@@ -267,11 +266,11 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
                          false);
 
     const TensorView& attention_weights = forward_views[AttentionWeights][0];
-    TensorView& concat_grad     = backward_views[ConcatenatedOutputGradient][0];
-    TensorView& att_weight_grad = backward_views[AttentionWeightGradient][0];
-    TensorView& query_grad      = backward_views[QueryGradient][0];
-    TensorView& key_grad        = backward_views[KeyGradient][0];
-    TensorView& value_grad      = backward_views[ValueGradient][0];
+    TensorView& concat_grad     = delta_views[ConcatenatedOutputDelta][0];
+    TensorView& att_weight_grad = delta_views[AttentionWeightDelta][0];
+    TensorView& query_grad      = delta_views[QueryDelta][0];
+    TensorView& key_grad        = delta_views[KeyDelta][0];
+    TensorView& value_grad      = delta_views[ValueDelta][0];
 
     TensorView concat_grad_4d = concat_grad.reshape(concat_shape(batch_size));
     TensorView scratch_4d     = forward_views[TransposeScratch][0].reshape(heads_shape(batch_size));
@@ -288,7 +287,7 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     multiply(scratch_4d, false, forward_views[Value][0], true, att_weight_grad);
 
     if(dropout_active)
-        dropout_gradient(att_weight_grad, att_weight_grad, dropout_arguments);
+        dropout_delta(att_weight_grad, att_weight_grad, dropout_arguments);
 
     softmax_backward(attention_weights, att_weight_grad);
 
@@ -298,12 +297,12 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 
     projection_gradient(query_grad, query_input, parameters[QueryWeight],
                         gradient_views[QueryBias], gradient_views[QueryWeight],
-                        backward_views[InputQueryGradient][0],
+                        delta_views[InputQueryDelta][0],
                         transpose_scratch, /*accumulate*/ false);
 
     TensorView& kv_input_grad = self_attention
-        ? backward_views[InputQueryGradient][0]
-        : backward_views[InputSourceGradient][0];
+        ? delta_views[InputQueryDelta][0]
+        : delta_views[InputSourceDelta][0];
 
     projection_gradient(key_grad, source_input, parameters[KeyWeight],
                         gradient_views[KeyBias], gradient_views[KeyWeight],
@@ -334,7 +333,7 @@ void MultiHeadAttention::from_XML(const XmlDocument& document)
 void MultiHeadAttention::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("MultiHeadAttention");
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"Label", label},
         {"QuerySequenceLength", to_string(query_sequence_length)},
         {"SourceSequenceLength", to_string(source_sequence_length)},

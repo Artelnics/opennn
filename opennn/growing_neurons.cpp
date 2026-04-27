@@ -202,7 +202,7 @@ void GrowingNeurons::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("GrowingNeurons");
 
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"MinimumNeurons", to_string(minimum_neurons)},
         {"MaximumNeurons", to_string(maximum_neurons)},
         {"NeuronsIncrement", to_string(neurons_increment)},

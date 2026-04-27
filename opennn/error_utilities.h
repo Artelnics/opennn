@@ -14,23 +14,23 @@ namespace opennn
 {
 
 void mean_squared_error(const TensorView& input, const TensorView& target, type& error, float* workspace_device);
-void mean_squared_error_gradient(const TensorView& input, const TensorView& target, TensorView& input_gradient);
+void mean_squared_error_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta);
 
 void normalized_squared_error(const TensorView& input, const TensorView& target, type coefficient, type& error, float* workspace_device);
-void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, type coefficient, TensorView& input_gradient);
+void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, type coefficient, TensorView& input_delta);
 
 void weighted_squared_error(const TensorView& input, const TensorView& target, type pos_w, type neg_w, type& error, float* workspace_device);
-void weighted_squared_error_gradient(const TensorView& input, const TensorView& target, type pos_w, type neg_w, type coefficient, TensorView& input_gradient);
+void weighted_squared_error_gradient(const TensorView& input, const TensorView& target, type pos_w, type neg_w, type coefficient, TensorView& input_delta);
 
 void binary_cross_entropy(const TensorView& input, const TensorView& target, type& error, float* workspace_device);
 void categorical_cross_entropy(const TensorView& input, const TensorView& target, type& error, float* workspace_device);
-void cross_entropy_gradient(const TensorView& input, const TensorView& target, TensorView& input_gradient);
+void cross_entropy_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta);
 
 void minkowski_error(const TensorView& input, const TensorView& target, type p, type& error, float* workspace_device);
-void minkowski_error_gradient(const TensorView& input, const TensorView& target, type p, TensorView& input_gradient);
+void minkowski_error_gradient(const TensorView& input, const TensorView& target, type p, TensorView& input_delta);
 
 void cross_entropy_3d(const TensorView& input, const TensorView& target, type& error, Index& active_tokens_out, Index& correct_tokens_out, float* errors_device = nullptr);
-void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, TensorView& input_gradient, Index active_tokens_count);
+void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta, Index active_tokens_count);
 
 void l1_regularization(const TensorView& parameters, type lambda, type& penalty);
 void l1_regularization_gradient(const TensorView& parameters, type lambda, TensorView& gradient);

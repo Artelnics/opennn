@@ -38,8 +38,8 @@ public:
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        return {Shape{batch_size}.append(input_shape),   // InputGradient0
-                Shape{batch_size}.append(input_shape)};  // InputGradient1
+        return {Shape{batch_size}.append(input_shape),   // InputDelta0
+                Shape{batch_size}.append(input_shape)};  // InputDelta1
     }
 
     void set(const Shape& new_input_shape, const string& new_label)
@@ -73,10 +73,10 @@ public:
                         BackPropagation& back_propagation,
                         size_t layer) const noexcept override
     {
-        auto& backward_views = back_propagation.backward_views[layer];
+        auto& delta_views = back_propagation.delta_views[layer];
 
-        copy(backward_views[OutputGradient][0], backward_views[InputGradient0][0]);
-        copy(backward_views[OutputGradient][0], backward_views[InputGradient1][0]);
+        copy(delta_views[OutputDelta][0], delta_views[InputDelta0][0]);
+        copy(delta_views[OutputDelta][0], delta_views[InputDelta1][0]);
     }
 
     void from_XML(const XmlDocument& document) override
@@ -94,7 +94,7 @@ public:
     {
         printer.open_element("Addition");
 
-        write_xml_properties(printer, {
+        write_xml(printer, {
             {"Label", label},
             {"InputDimensions", shape_to_string(input_shape)}
         });
@@ -109,7 +109,7 @@ private:
     Shape input_shape;
 
     enum Forward {Input, Output};
-    enum Backward {OutputGradient, InputGradient0, InputGradient1};
+    enum Backward {OutputDelta, InputDelta0, InputDelta1};
 };
 
 }

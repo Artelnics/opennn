@@ -125,22 +125,22 @@ void multiply(const TensorView& input_a, bool transpose_a, const TensorView& inp
 void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, TensorView& output);
 void sum(const TensorView& input, TensorView& output, type alpha = 1.0f, type beta = 0.0f);
 void softmax(TensorView& output);
-void softmax_backward(const TensorView& softmax_out, TensorView& output_gradient);
+void softmax_backward(const TensorView& softmax_out, TensorView& output_delta);
 
 // Dense layer
 
 void combination(const TensorView& input, const TensorView& weights, const TensorView& biases, TensorView& output);
-void combination_gradient(const TensorView& output_gradient, const TensorView& input, const TensorView& weights, TensorView& input_gradient, TensorView& weight_gradient, TensorView& bias_gradient, bool accumulate_input_gradient);
+void combination_gradient(const TensorView& output_delta, const TensorView& input, const TensorView& weights, TensorView& input_delta, TensorView& weight_gradient, TensorView& bias_gradient, bool accumulate_input_delta);
 void activation(TensorView& output, ActivationArguments arguments);
-void activation_gradient(const TensorView& outputs, const TensorView& output_gradient, TensorView& activation_derivative, const ActivationArguments& arguments);
+void activation_delta(const TensorView& outputs, const TensorView& output_delta, TensorView& input_delta, const ActivationArguments& arguments);
 void dropout(TensorView& output, DropoutArguments& args);
-void dropout_gradient(const TensorView& output_gradient, TensorView& input_gradient, const DropoutArguments& args);
+void dropout_delta(const TensorView& output_delta, TensorView& input_delta, const DropoutArguments& args);
 
 // Batch normalization
 
 void batch_normalization_inference(const TensorView& input, const TensorView& gamma, const TensorView& beta, const TensorView& running_mean, const TensorView& running_variance, TensorView& output);
 void batch_normalization_training(const TensorView& input, const TensorView& gamma, const TensorView& beta, TensorView& running_mean, TensorView& running_variance, TensorView& mean, TensorView& inverse_variance, TensorView& output, type momentum = type(0.9));
-void batch_normalization_backward(const TensorView& input, const TensorView& output, const TensorView& output_gradient, const TensorView& mean, const TensorView& inverse_variance, const TensorView& gamma, TensorView& gamma_gradient, TensorView& beta_gradient, TensorView& input_gradient);
+void batch_normalization_backward(const TensorView& input, const TensorView& output, const TensorView& output_delta, const TensorView& mean, const TensorView& inverse_variance, const TensorView& gamma, TensorView& gamma_gradient, TensorView& beta_gradient, TensorView& input_delta);
 
 // Layer normalization (3D)
 
@@ -149,36 +149,36 @@ void layernorm_forward(const TensorView& input, const TensorView& gamma, const T
                        TensorView& output,
                        Index batch_size, Index sequence_length, Index embedding_dimension);
 
-void layernorm_backward(const TensorView& input, const TensorView& output_gradient,
+void layernorm_backward(const TensorView& input, const TensorView& output_delta,
                         const TensorView& means, const TensorView& standard_deviations,
                         const TensorView& normalized, const TensorView& gamma,
-                        TensorView& gamma_gradient, TensorView& beta_gradient, TensorView& input_gradient,
+                        TensorView& gamma_gradient, TensorView& beta_gradient, TensorView& input_delta,
                         Index batch_size, Index sequence_length, Index embedding_dimension);
 
 // Convolution
 
 void convolution(const TensorView& input, const TensorView& kernel, const TensorView& bias, TensorView& output, const ConvolutionArguments& args = {});
 void convolution_activation(const TensorView& input, const TensorView& weight, const TensorView& bias, TensorView& output, const ConvolutionArguments& conv_args = {}, const ActivationArguments& activation_arguments = {});
-void convolution_backward_weights(const TensorView& input, const TensorView& output_gradient, TensorView& weight_grad, TensorView& bias_grad, const ConvolutionArguments& args = {});
-void convolution_backward_data(const TensorView& output_gradient, const TensorView& kernel, TensorView& input_grad, const ConvolutionArguments& args = {});
+void convolution_backward_weights(const TensorView& input, const TensorView& output_delta, TensorView& weight_grad, TensorView& bias_grad, const ConvolutionArguments& args = {});
+void convolution_backward_data(const TensorView& output_delta, const TensorView& kernel, TensorView& input_grad, const ConvolutionArguments& args = {});
 
 // Pooling 4D
 
 void max_pooling(const TensorView& input, TensorView& output, TensorView& maximal_indices, const PoolingArguments& arguments, bool is_training = false);
 void average_pooling(const TensorView& input, TensorView& output, const PoolingArguments& arguments);
-void max_pooling_backward(const TensorView& input, const TensorView& output, const TensorView& output_gradient, const TensorView& maximal_indices, TensorView& input_gradient, const PoolingArguments& args);
-void average_pooling_backward(const TensorView& input, const TensorView& output, const TensorView& output_gradient, TensorView& input_gradient, const PoolingArguments& args);
+void max_pooling_backward(const TensorView& input, const TensorView& output, const TensorView& output_delta, const TensorView& maximal_indices, TensorView& input_delta, const PoolingArguments& args);
+void average_pooling_backward(const TensorView& input, const TensorView& output, const TensorView& output_delta, TensorView& input_delta, const PoolingArguments& args);
 
 // Pooling 3D
 
 void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training);
 void average_pooling_3d_forward(const TensorView& input, TensorView& output);
-void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView& output_gradient, TensorView& input_gradient);
-void average_pooling_3d_backward(const TensorView& input, const TensorView& output_gradient, TensorView& input_gradient);
+void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta);
+void average_pooling_3d_backward(const TensorView& input, const TensorView& output_delta, TensorView& input_delta);
 
 // Embedding
 
-void embedding_backward(const TensorView& input_indices, const TensorView& output_gradient, TensorView& weight_gradient, Index embedding_dimension, bool scale_embedding);
+void embedding_backward(const TensorView& input_indices, const TensorView& output_delta, TensorView& weight_gradient, Index embedding_dimension, bool scale_embedding);
 
 // Multi-head attention
 
@@ -192,7 +192,7 @@ void projection_gradient(const TensorView& head_gradient,
                          const TensorView& weights,
                          TensorView& bias_gradient,
                          TensorView& weight_gradient,
-                         TensorView& input_gradient,
+                         TensorView& input_delta,
                          float* transpose_scratch,
                          bool accumulate);
 

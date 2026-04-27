@@ -106,21 +106,21 @@ type *Layer::link_states(type *pointer)
     return pointer;
 }
 
-void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
+void Layer::add_gradients(const vector<TensorView>& output_delta_views) const
 {
-    if(output_gradient_views.size() <= 1) return;
+    if(output_delta_views.size() <= 1) return;
 
 #ifndef OPENNN_WITH_CUDA
-    VectorMap output_gradients = output_gradient_views[0].as_vector();
+    VectorMap output_deltas = output_delta_views[0].as_vector();
 
-    for(size_t i = 1; i < output_gradient_views.size(); ++i)
-        output_gradients.noalias() += output_gradient_views[i].as_vector();
+    for(size_t i = 1; i < output_delta_views.size(); ++i)
+        output_deltas.noalias() += output_delta_views[i].as_vector();
 #else
-    const size_t n = output_gradient_views[0].size();
+    const size_t n = output_delta_views[0].size();
 
-    for(size_t i = 1; i < output_gradient_views.size(); ++i)
-        if(output_gradient_views[i].data)
-            addition_cuda(n, output_gradient_views[0].data, output_gradient_views[i].data, output_gradient_views[0].data);
+    for(size_t i = 1; i < output_delta_views.size(); ++i)
+        if(output_delta_views[i].data)
+            addition_cuda(n, output_delta_views[0].data, output_delta_views[i].data, output_delta_views[0].data);
 #endif
 }
 

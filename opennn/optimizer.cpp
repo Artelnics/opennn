@@ -8,7 +8,6 @@
 
 #include "image_dataset.h"
 #include "time_series_dataset.h"
-#include "language_dataset.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
 #include "loss.h"
@@ -301,7 +300,7 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
 
 void Optimizer::write_common_xml(XmlPrinter& printer) const
 {
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"LossGoal", to_string(training_loss_goal)},
         {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
         {"MaximumEpochsNumber", to_string(maximum_epochs)},
@@ -460,6 +459,57 @@ void OptimizerData::print() const
          << "Initial learning rate:" << "\n"
          << initial_learning_rate << "\n";
 }
+
+void OptimizerData::set(const vector<Shape>& slot_shapes)
+{
+    Index total_size = 0;
+    for(const Shape& s : slot_shapes)
+        total_size += get_aligned_size(s.size());
+
+    data.resize(total_size);
+    data.setZero();
+
+    views.clear();
+    views.reserve(slot_shapes.size());
+
+    type* pointer = (total_size > 0) ? data.data() : nullptr;
+
+    for(const Shape& s : slot_shapes)
+    {
+        if(s.size() > 0 && pointer)
+        {
+            views.emplace_back(pointer, s);
+            pointer += get_aligned_size(s.size());
+        }
+        else
+        {
+            views.emplace_back();  // empty view placeholder
+        }
+    }
+}
+
+#ifdef OPENNN_WITH_CUDA
+
+void OptimizerData::allocate_device()
+{
+    if(data.size() == 0) return;
+
+    data.resize_device(data.size());
+    data.setZero_device();
+
+    type* dev_pointer = data.device();
+
+    for(TensorView& view : views)
+    {
+        if(view.shape.size() > 0 && dev_pointer)
+        {
+            view.data = dev_pointer;
+            dev_pointer += get_aligned_size(view.shape.size());
+        }
+    }
+}
+
+#endif
 
 void Optimizer::setup_device_training(ForwardPropagation& training_fp,
                                       BackPropagation& training_bp,

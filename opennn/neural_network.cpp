@@ -457,17 +457,17 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
 
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs) 
 {
-    return calculate_outputs({TensorView(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()})});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()})});
 }
 
-MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs) 
+MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 {
-    return calculate_outputs({TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)})});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)})});
 }
 
-MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs) 
+MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
 {
-    return calculate_outputs({TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)})});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)})});
 }
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
@@ -820,6 +820,27 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
     }
 
     compile();
+
+    // Phase 2: now that the state arena is allocated, let each layer parse its
+    // persistent state directly into states[]. Iterate the layer elements again.
+    {
+        Index layer_idx = 0;
+        const XmlElement* phase2_element = layers_container->first_child_element();
+        while(phase2_element)
+        {
+            const string tag_name = phase2_element->name();
+
+            if(tag_name != "LayersNumber" && tag_name != "LayerInputIndices"
+               && layer_idx < ssize(layers))
+            {
+                XmlDocument layer_doc;
+                layer_doc.insert_first_child(phase2_element->deep_clone(&layer_doc));
+                layers[layer_idx]->load_state_from_XML(layer_doc);
+                ++layer_idx;
+            }
+            phase2_element = phase2_element->next_sibling_element();
+        }
+    }
 
     const XmlElement* parameters_element = neural_network_element->first_child_element("Parameters");
     if(parameters_element && parameters_element->get_text())

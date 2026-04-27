@@ -149,9 +149,23 @@ struct OptimizerData
 
     virtual void print() const;
 
+    // Arena-based buffer storage (analogous to ForwardPropagation / BackPropagation).
+    // Call set(slot_shapes) once; each optimizer defines its own local enum to index `views`.
+    void set(const vector<Shape>& slot_shapes);
+
+#ifdef OPENNN_WITH_CUDA
+    // After set(), call this on GPU to allocate device memory and rewrite view pointers to device.
+    void allocate_device();
+#endif
+
+    Memory data;
+    vector<TensorView> views;
+
+    // Shared state across all optimizers
     VectorR potential_parameters;
     VectorR training_direction;
     type initial_learning_rate = type(0);
+    Index iteration = 0;
 };
 
 struct TrainingResults

@@ -289,7 +289,6 @@ __global__ void binary_cross_entropy_gradient_vec_kernel(const int n_vec, T* __r
     }
 }
 
-
 template<typename T>
 void binary_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targets, const T* outputs, const float epsilon, const float scaling_factor)
 {
@@ -375,7 +374,6 @@ __global__ void multiple_cross_entropy_gradient_vec_kernel(const int n_vec, T* _
         d_v[i] = d_chunk;
     }
 }
-
 
 template<typename T>
 void multiple_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targets, const T* outputs, const float scaling_factor)
@@ -575,7 +573,7 @@ __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
                                                           const int vocab_size,
                                                           const T* __restrict__ outputs,
                                                           const float* __restrict__ targets,
-                                                          T* __restrict__ output_gradients,
+                                                          T* __restrict__ output_deltas,
                                                           const float scale_factor)
 {
     for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
@@ -586,11 +584,11 @@ __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
 
         if (target_class <= 0 || target_class >= vocab_size)
         {
-            output_gradients[idx] = static_cast<T>(0.0f);
+            output_deltas[idx] = static_cast<T>(0.0f);
             continue;
         }
 
-        output_gradients[idx] = static_cast<T>((static_cast<float>(outputs[idx]) - (class_idx == target_class ? 1.0f : 0.0f)) * scale_factor);
+        output_deltas[idx] = static_cast<T>((static_cast<float>(outputs[idx]) - (class_idx == target_class ? 1.0f : 0.0f)) * scale_factor);
     }
 }
 
@@ -600,7 +598,7 @@ void cross_entropy_3d_multiple_backward_cuda(const Index n,
                                              const int vocab_size,
                                              const T* outputs,
                                              const float* targets,
-                                             T* output_gradients,
+                                             T* output_deltas,
                                              const float scale_factor)
 {
     if(n == 0) return;
@@ -610,7 +608,7 @@ void cross_entropy_3d_multiple_backward_cuda(const Index n,
     const int grid_size = (total + block_size - 1) / block_size;
 
     cross_entropy_3d_multiple_backward_kernel<T><<<grid_size, block_size>>>(
-        total, vocab_size, outputs, targets, output_gradients, scale_factor);
+        total, vocab_size, outputs, targets, output_deltas, scale_factor);
 }
 
 template void cross_entropy_3d_multiple_backward_cuda<float>        (const Index, const int, const float*,         const float*, float*,         const float);
@@ -1014,10 +1012,10 @@ void embedding_forward_cuda(const Index n, const float* inputs, const float* wei
 template void embedding_forward_cuda<float>        (const Index, const float*, const float*, const float*, float*,         const int, const int, const int, const bool, const bool);
 template void embedding_forward_cuda<__nv_bfloat16>(const Index, const float*, const float*, const float*, __nv_bfloat16*, const int, const int, const int, const bool, const bool);
 
-// Template parameter T applies only to `output_gradients`. Inputs (IDs) and weight_gradients stay FP32
+// Template parameter T applies only to `output_deltas`. Inputs (IDs) and weight_gradients stay FP32
 // — weight gradients are FP32 master and atomicAdd is safest on float.
 template<typename T>
-__global__ void embedding_backward_kernel(const int n, const float* __restrict__ inputs, const T* __restrict__ output_gradients, float* __restrict__ weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
+__global__ void embedding_backward_kernel(const int n, const float* __restrict__ inputs, const T* __restrict__ output_deltas, float* __restrict__ weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
 {
     const float scale = scale_embedding ? sqrtf(static_cast<float>(embedding_dimension)) : 1.0f;
 
@@ -1029,13 +1027,13 @@ __global__ void embedding_backward_kernel(const int n, const float* __restrict__
 
         if (token_id <= 0 || token_id >= vocabulary_size) continue;
 
-        atomicAdd(&weight_gradients[token_id * embedding_dimension + dim_idx], scale * static_cast<float>(output_gradients[i]));
+        atomicAdd(&weight_gradients[token_id * embedding_dimension + dim_idx], scale * static_cast<float>(output_deltas[i]));
     }
 }
 
 
 template<typename T>
-void embedding_backward_cuda(const Index n, const float* inputs, const T* output_gradients, float* weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
+void embedding_backward_cuda(const Index n, const float* inputs, const T* output_deltas, float* weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
 {
     if (n == 0) return;
 
@@ -1044,7 +1042,7 @@ void embedding_backward_cuda(const Index n, const float* inputs, const T* output
     const int grid_size = (total + block_size - 1) / block_size;
 
     embedding_backward_kernel<T> << <grid_size, block_size >> > (
-        total, inputs, output_gradients, weight_gradients,
+        total, inputs, output_deltas, weight_gradients,
         embedding_dimension, vocabulary_size, scale_embedding);
 }
 
@@ -1615,7 +1613,6 @@ __global__ void layernorm_backward_kernel(const int N, const int D, const T* __r
     }
 }
 
-
 template<typename T>
 __global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, float* __restrict__ dGamma, float* __restrict__ dBeta)
 {
@@ -1664,7 +1661,6 @@ __global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, c
         }
     }
 }
-
 
 template<typename T>
 void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, float* dGamma, float* dBeta)

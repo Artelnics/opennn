@@ -606,12 +606,11 @@ void GeneticAlgorithm::configure_neural_network_inputs(NeuralNetwork* neural_net
     }
 }
 
-
 void GeneticAlgorithm::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("GeneticAlgorithm");
 
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"PopulationSize", to_string(get_individuals_number())},
         {"ElitismSize", to_string(elitism_size)},
         {"MutationRate", to_string(mutation_rate)},

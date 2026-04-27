@@ -39,7 +39,7 @@ struct BackPropagation
 
     const NeuralNetwork* get_neural_network() const;
 
-    void accumulate_output_gradients(size_t layer_index);
+    void accumulate_output_deltas(size_t layer_index);
 
     NeuralNetwork* neural_network = nullptr;
 
@@ -47,22 +47,22 @@ struct BackPropagation
     vector<vector<TensorView>> gradient_views;
 
     Memory backward;
-    vector<vector<vector<TensorView>>> backward_views;
+    vector<vector<vector<TensorView>>> delta_views;
 
-    Memory per_layer_output_gradients;
-    vector<Shape> per_layer_output_gradient_shapes;
+    Memory per_layer_output_deltas;
+    vector<Shape> per_layer_output_delta_shapes;
     vector<vector<BackwardEdge>> backward_edges;
 
     vector<vector<TensorView>> get_layer_gradients() const;
 
-    TensorView get_output_gradients() const;
+    TensorView get_output_deltas() const;
 
-    TensorView get_output_gradients_active() const
+    TensorView get_output_deltas_active() const
     {
 #ifdef OPENNN_WITH_CUDA
-        return Device::instance().is_gpu() ? get_output_gradients_device() : get_output_gradients();
+        return Device::instance().is_gpu() ? get_output_deltas_device() : get_output_deltas();
 #else
-        return get_output_gradients();
+        return get_output_deltas();
 #endif
     }
 
@@ -75,8 +75,8 @@ struct BackPropagation
     type error = type(0);
     Index active_tokens_count = 0;
     MatrixR errors;
-    Memory output_gradients;
-    Shape output_gradient_dimensions;
+    Memory output_deltas;
+    Shape output_delta_dimensions;
 
     Tensor0 accuracy;
     MatrixR predictions;
@@ -91,9 +91,9 @@ struct BackPropagation
 
     float* errors_device = nullptr;
 
-    TensorView output_gradients_view_device;
+    TensorView output_deltas_view_device;
 
-    const TensorView& get_output_gradients_device() const;
+    const TensorView& get_output_deltas_device() const;
 
 #endif
 };

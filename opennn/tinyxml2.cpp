@@ -76,7 +76,7 @@ void add_xml_element_attribute(XmlPrinter& printer, const std::string& element_n
     printer.close_element();
 }
 
-void write_xml_properties(XmlPrinter& printer, std::initializer_list<std::pair<const char*, std::string>> props) {
+void write_xml(XmlPrinter& printer, std::initializer_list<std::pair<const char*, std::string>> props) {
     for(const auto& [name, value] : props)
         add_xml_element(printer, name, value);
 }

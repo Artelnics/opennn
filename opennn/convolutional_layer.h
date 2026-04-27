@@ -128,7 +128,7 @@ private:
                 CUDNN_ACTIVATION_DTYPE}; // Output
     }
 
-    enum Backward {OutputGradient, InputGradient};
+    enum Backward {OutputDelta, InputDelta};
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
@@ -198,6 +198,8 @@ public:
              const string& = "convolutional_layer");
 
     void set_input_shape(const Shape&) override;
+
+    void load_state_from_XML(const XmlDocument&) override;
 
     void set_row_stride(const Index);
     void set_column_stride(const Index);

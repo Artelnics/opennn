@@ -19,27 +19,16 @@ TEST(BoundingTest, Constructor)
 TEST(BoundingTest, ForwardPropagate)
 {
     const Index columns_number = 3;
-
-    Bounding bounding_layer({ columns_number });
-
-    bounding_layer.set_bounding_method(Bounding::BoundingMethod::Bounding);
-    for (Index j = 0; j < columns_number; ++j)
-    {
-        bounding_layer.set_lower_bound(j, type(-1.0));
-        bounding_layer.set_upper_bound(j, type(1.0));
-    }
-
     const Index rows_number = 2;
 
     MatrixR input_data(rows_number, columns_number);
     input_data << type(-5.0), type(0.5), type(10.0),
         type(-1.0), type(0.0), type(1.0);
-/*
+
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Bounding>(Shape{columns_number}));
     neural_network.compile();
 
-    // Set bounding on the layer inside the network
     Bounding* layer = static_cast<Bounding*>(neural_network.get_layer(0).get());
     layer->set_bounding_method(Bounding::BoundingMethod::Bounding);
     for (Index j = 0; j < columns_number; ++j)
@@ -67,5 +56,4 @@ TEST(BoundingTest, ForwardPropagate)
             EXPECT_NEAR(outputs(i, j), expected_output(i, j), tolerance);
 
     EXPECT_EQ(layer->get_output_shape(), Shape{ columns_number });
-*/
 }

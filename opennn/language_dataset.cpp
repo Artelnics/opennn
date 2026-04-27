@@ -424,7 +424,7 @@ void LanguageDataset::to_XML(XmlPrinter& printer) const
 
     printer.open_element("DataSource");
 
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"FileType", "csv"},
         {"Path", data_path.string()},
         {"Separator", get_separator_name()},
@@ -445,7 +445,7 @@ void LanguageDataset::to_XML(XmlPrinter& printer) const
 
     const string separator_string = get_separator_string();
 
-    write_xml_properties(printer, {
+    write_xml(printer, {
         {"InputVocabulary", vector_to_string(input_vocabulary, separator_string)},
         {"TargetVocabulary", vector_to_string(target_vocabulary, separator_string)},
         {"MaximumInputSequenceLength", to_string(maximum_input_sequence_length)},

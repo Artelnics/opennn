@@ -16,12 +16,22 @@
 namespace opennn
 {
 
-struct QuasiNewtonMethodData;
-
 class QuasiNewtonMethod final : public Optimizer
 {
 
 public:
+
+    enum DataSlot {
+        OldParameters,
+        ParameterDifferences,
+        ParameterUpdates,
+        OldGradient,
+        GradientDifference,
+        OldInverseHessianDotGradientDifference,
+        BFGS,
+        InverseHessian,
+        OldInverseHessian
+    };
 
     QuasiNewtonMethod(Loss* = nullptr);
 
@@ -35,7 +45,7 @@ public:
 
     // Training
 
-    void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMethodData&);
+    void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , OptimizerData&);
 
     TrainingResults train() override;
 
@@ -47,12 +57,12 @@ public:
 
 private:
 
-    void calculate_inverse_hessian(QuasiNewtonMethodData&) const;
+    void calculate_inverse_hessian(OptimizerData&) const;
 
     pair<type, type> calculate_directional_point(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagation&,
-                                                 QuasiNewtonMethodData&,
+                                                 OptimizerData&,
                                                  type);
 
     type first_learning_rate = type(0.01);
@@ -61,41 +71,9 @@ private:
 
     type minimum_loss_decrease = EPSILON;
 
-};
-
-struct QuasiNewtonMethodData final : public OptimizerData
-{
-    QuasiNewtonMethodData(QuasiNewtonMethod* new_quasi_newton_method = nullptr);
-
-    void set(QuasiNewtonMethod* = nullptr);
-
-    void print() const override;
-
-    QuasiNewtonMethod* quasi_newton_method = nullptr;
-
-    // Neural network data
-
-    VectorR old_parameters;
-    VectorR parameter_differences;
-
-    VectorR parameter_updates;
-
-    // Loss index data
-
-    VectorR old_gradient;
-    VectorR gradient_difference;
-
-    MatrixR inverse_hessian;
-    MatrixR old_inverse_hessian;
-
-    VectorR old_inverse_hessian_dot_gradient_difference;
-
-    // Optimization algorithm data
-
-    VectorR BFGS;
+    // Optimizer-specific state (not shared across optimizers, so not in OptimizerData)
 
     type training_slope = type(0);
-
     type learning_rate = type(0);
     type old_learning_rate = type(0);
 };

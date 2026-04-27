@@ -55,7 +55,7 @@ public:
 private:
 
     enum Forward { Input, MaximalIndices, Output };
-    enum Backward { OutputGradient, InputGradient };
+    enum Backward { OutputDelta, InputDelta };
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
