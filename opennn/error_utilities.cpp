@@ -65,60 +65,76 @@ static float squared_norm_cuda(const float* data, Index n)
 
 void mean_squared_error(const TensorView& input, const TensorView& target, type& error, float* workspace_device)
 {
+    const Index batch_size = input.shape[0];
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        error = sum_squared_diff_cuda(input, target, workspace_device) / to_int(input.size());
+        error = sum_squared_diff_cuda(input, target, workspace_device) / to_int(2 * batch_size);
         return;
     }
 #endif
-    error = (input.as_vector() - target.as_vector()).squaredNorm() / to_type(input.size());
+    error = (input.as_vector() - target.as_vector()).squaredNorm() / to_type(2 * batch_size);
 }
 
 void mean_squared_error_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta)
 {
+    const Index batch_size = input.shape[0];
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        scaled_diff_cuda(input, target, 2.0f / to_int(input.size()), input_delta);
+        scaled_diff_cuda(input, target, 1.0f / to_int(batch_size), input_delta);
         return;
     }
 #endif
-    input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) * (2.0f / to_type(input.size()));
+    input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) / to_type(batch_size);
 }
 
 void normalized_squared_error(const TensorView& input, const TensorView& target, type coefficient, type& error, float* workspace_device)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        error = sum_squared_diff_cuda(input, target, workspace_device) / (coefficient + EPSILON);
+        error = sum_squared_diff_cuda(input, target, workspace_device) / (2.0f * (coefficient + EPSILON));
         return;
     }
 #endif
-    error = (input.as_vector() - target.as_vector()).squaredNorm() / (coefficient + EPSILON);
+    error = (input.as_vector() - target.as_vector()).squaredNorm() / (2.0f * (coefficient + EPSILON));
 }
 
 void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, type coefficient, TensorView& input_delta)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        scaled_diff_cuda(input, target, 2.0f / (static_cast<float>(coefficient) + EPSILON), input_delta);
+        scaled_diff_cuda(input, target, 1.0f / (static_cast<float>(coefficient) + EPSILON), input_delta);
         return;
     }
 #endif
-    input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) * (2.0f / (coefficient + EPSILON));
+    input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) / (coefficient + EPSILON);
 }
 
 void weighted_squared_error(const TensorView& input, const TensorView& target, type pos_w, type neg_w, type& error, float* workspace_device)
 {
+<<<<<<< HEAD
     if (TRY_GPU_DISPATCH(input, [&](auto tag) {
         using T = decltype(tag);
         weighted_squared_error_cuda<T>(input.size(),
             workspace_device, target.as<T>(), input.as<T>(), pos_w, neg_w);
         error = sum_abs_cuda(workspace_device, input.size());
     })) return;
+=======
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu()) {
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            weighted_squared_error_cuda<T>(input.size(),
+                workspace_device, target.as<T>(), input.as<T>(), pos_w, neg_w);
+        });
+        error = 0.5f * sum_abs_cuda(workspace_device, input.size());
+        return;
+    }
+#endif
+>>>>>>> 034d3de168c576a8914d0e3750f2850c75013e28
     const auto inputs = input.as_vector().array();
     const auto targets = target.as_vector().array();
     const auto squared_error = (inputs - targets).square();
-    error = (targets == 1.0f).select(squared_error * pos_w, squared_error * neg_w).sum();
+    error = 0.5f * (targets == 1.0f).select(squared_error * pos_w, squared_error * neg_w).sum();
 }
 
 void weighted_squared_error_gradient(const TensorView& input, const TensorView& target, type pos_w, type neg_w, type coefficient, TensorView& input_delta)
@@ -131,7 +147,7 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
     const auto inputs = input.as_vector().array();
     const auto targets = target.as_vector().array();
     input_delta.as_vector().array()
-        = (targets == 1.0f).select(2.0f * pos_w * (inputs - targets), 2.0f * neg_w * (inputs - targets)) * coefficient;
+        = (targets == 1.0f).select(pos_w * (inputs - targets), neg_w * (inputs - targets)) * coefficient;
 }
 
 void binary_cross_entropy(const TensorView& input, const TensorView& target, type& error, float* workspace_device)
@@ -207,8 +223,8 @@ void minkowski_error(const TensorView& input, const TensorView& target, type p, 
         throw runtime_error("minkowski_error: GPU implementation not available.");
 
     (void)workspace_device;
-    const Index total_size = input.size();
-    error = (input.as_vector() - target.as_vector()).array().abs().pow(p).sum() / to_type(total_size);
+    const Index batch_size = input.shape[0];
+    error = (input.as_vector() - target.as_vector()).array().abs().pow(p).sum() / to_type(p * batch_size);
 }
 
 void minkowski_error_gradient(const TensorView& input, const TensorView& target, type p, TensorView& input_delta)
@@ -216,9 +232,9 @@ void minkowski_error_gradient(const TensorView& input, const TensorView& target,
     if (Device::instance().is_gpu())
         throw runtime_error("minkowski_error_gradient: GPU implementation not available.");
 
-    const Index total_size = input.size();
+    const Index batch_size = input.shape[0];
     const auto difference = (input.as_vector() - target.as_vector()).array();
-    input_delta.as_vector().array() = (p / to_type(total_size)) * difference.sign() * (difference.abs() + EPSILON).pow(p - 1.0f);
+    input_delta.as_vector().array() = (1.0f / to_type(batch_size)) * difference.sign() * (difference.abs() + EPSILON).pow(p - 1.0f);
 }
 
 void cross_entropy_3d(const TensorView& input, const TensorView& target, type& error,

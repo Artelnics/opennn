@@ -59,12 +59,6 @@ void cross_entropy_3d_multiple_backward_cuda(const Index, const int, const T*, c
 template<typename T>
 void l1_gradient_cuda(const Index, T*, const T*, const float);
 
-// Bias add — FP32 bias broadcast onto dtype-T output (replaces cudnnAddTensor
-// when bias and output dtypes differ, e.g. FP32 bias + BF16 activation output).
-
-template<typename T>
-void add_bias_cuda(const Index, T*, const float*, const int);
-
 // Bounding
 
 template<typename T>

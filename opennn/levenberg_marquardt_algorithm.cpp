@@ -475,18 +475,25 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
 {
     const Index batch_size = fp.batch_size;
     const Index num_neurons = layer->get_outputs_number();
-    const Index num_inputs = layer->get_input_shape().size();
+    const Index num_inputs = layer->get_input_shape()[0];
 
     const MatrixMap inputs = fp.views[layer_index][0][0].as_matrix();
 
+    // Parameter layout (aligned): [bias(aligned) | weights(aligned) | gamma | beta]
+    // Bias shape: {num_neurons}, Weight shape: {num_inputs, num_neurons}
+    const Index bias_aligned = get_aligned_size(num_neurons);
+    const Index weight_offset = parameter_offset + bias_aligned;
+
+    // Bias derivatives: dE/db_j = 1 for each sample
     for(Index j = 0; j < num_neurons; ++j)
         for(Index s = 0; s < batch_size; ++s)
             jacobian(s * num_neurons + j, parameter_offset + j) = type(1);
 
+    // Weight derivatives: dE/dw_{k,j} = input_k for each sample
     for(Index k = 0; k < num_inputs; ++k)
         for(Index j = 0; j < num_neurons; ++j)
         {
-            const Index col = parameter_offset + num_neurons + k * num_neurons + j;
+            const Index col = weight_offset + k * num_neurons + j;
             for(Index s = 0; s < batch_size; ++s)
                 jacobian(s * num_neurons + j, col) = inputs(s, k);
         }
@@ -754,10 +761,39 @@ void LevenbergMarquardtAlgorithm::from_XML(const XmlDocument& document)
 
 REGISTER(Optimizer, LevenbergMarquardtAlgorithm, "LevenbergMarquardt");
 
-// @todo Stub implementations for LM backpropagation (not yet refactored)
+BackPropagationLM::BackPropagationLM(const Index new_samples_number, Loss* new_loss)
+{
+    set(new_samples_number, new_loss);
+}
 
-BackPropagationLM::BackPropagationLM(const Index, Loss*) {}
-void BackPropagationLM::set(const Index, Loss*) {}
+void BackPropagationLM::set(const Index new_samples_number, Loss* new_loss)
+{
+    loss = new_loss;
+    samples_number = new_samples_number;
+
+    if(!new_loss || !new_loss->get_neural_network() || new_samples_number == 0) return;
+
+    const NeuralNetwork* nn = new_loss->get_neural_network();
+
+    const Index outputs_number = nn->get_outputs_number();
+    const Index parameters_number = nn->get_parameters_size();
+    const Index total_error_terms = new_samples_number * outputs_number;
+
+    errors.resize(total_error_terms);
+    errors.setZero();
+
+    squared_errors.resize(total_error_terms);
+    squared_errors.setZero();
+
+    squared_errors_jacobian.resize(total_error_terms, parameters_number);
+    squared_errors_jacobian.setZero();
+
+    gradient.resize(parameters_number);
+    gradient.setZero();
+
+    hessian.resize(parameters_number, parameters_number);
+    hessian.setZero();
+}
 void BackPropagationLM::print() const {}
 TensorView BackPropagationLM::get_output_deltas() const { return {}; }
 vector<vector<TensorView>> BackPropagationLM::get_layer_gradients() const { return {}; }

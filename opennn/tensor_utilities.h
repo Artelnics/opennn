@@ -918,6 +918,79 @@ inline bool are_equal(const T& A, const U& B, type tolerance = type(1.0e-3))
 
 enum class DeviceType { Cpu, Gpu };
 
+#ifdef OPENNN_WITH_CUDA
+
+// Cached cuBLASLt plan: 1 op desc + 4 layout descs + a heuristic-selected algo.
+// Built once per (m, n, k, transA, transB) shape; bias *pointer* is set per call
+// because it varies per layer/iteration.
+struct LtMatmulPlan
+{
+    cublasLtMatmulDesc_t   op_desc = nullptr;
+    cublasLtMatrixLayout_t a_desc  = nullptr;
+    cublasLtMatrixLayout_t b_desc  = nullptr;
+    cublasLtMatrixLayout_t c_desc  = nullptr;
+    cublasLtMatrixLayout_t d_desc  = nullptr;
+    cublasLtMatmulAlgo_t   algo{};
+    bool                   algo_valid = false;
+
+    LtMatmulPlan() = default;
+    LtMatmulPlan(const LtMatmulPlan&) = delete;
+    LtMatmulPlan& operator=(const LtMatmulPlan&) = delete;
+    LtMatmulPlan(LtMatmulPlan&& o) noexcept { *this = std::move(o); }
+    LtMatmulPlan& operator=(LtMatmulPlan&& o) noexcept
+    {
+        std::swap(op_desc, o.op_desc);
+        std::swap(a_desc,  o.a_desc);
+        std::swap(b_desc,  o.b_desc);
+        std::swap(c_desc,  o.c_desc);
+        std::swap(d_desc,  o.d_desc);
+        std::swap(algo,    o.algo);
+        std::swap(algo_valid, o.algo_valid);
+        return *this;
+    }
+    ~LtMatmulPlan()
+    {
+        if(d_desc)  cublasLtMatrixLayoutDestroy(d_desc);
+        if(c_desc)  cublasLtMatrixLayoutDestroy(c_desc);
+        if(b_desc)  cublasLtMatrixLayoutDestroy(b_desc);
+        if(a_desc)  cublasLtMatrixLayoutDestroy(a_desc);
+        if(op_desc) cublasLtMatmulDescDestroy(op_desc);
+    }
+};
+
+struct LtMatmulPlanKey
+{
+    int m;
+    int n;
+    int k;
+    int transA;
+    int transB;
+
+    bool operator==(const LtMatmulPlanKey& o) const noexcept
+    {
+        return m == o.m && n == o.n && k == o.k && transA == o.transA && transB == o.transB;
+    }
+};
+
+struct LtMatmulPlanKeyHash
+{
+    size_t operator()(const LtMatmulPlanKey& k) const noexcept
+    {
+        // Standard mix; keys are int-tuples, modest cardinality.
+        size_t h = std::hash<int>{}(k.m);
+        const auto mix = [](size_t& acc, int v) {
+            acc ^= std::hash<int>{}(v) + 0x9e3779b9 + (acc << 6) + (acc >> 2);
+        };
+        mix(h, k.n);
+        mix(h, k.k);
+        mix(h, k.transA);
+        mix(h, k.transB);
+        return h;
+    }
+};
+
+#endif // OPENNN_WITH_CUDA
+
 class Device
 {
 public:
@@ -958,6 +1031,27 @@ public:
         }
         return self.ones_device;
     }
+
+    // 32 MB matches NVIDIA's cuBLASLt sample default. Lazy-allocated on first use,
+    // shared across all cublasLtMatmul call sites.
+    static constexpr size_t cublas_lt_workspace_bytes() { return 32ull * 1024 * 1024; }
+
+    static void* get_cublas_lt_workspace()
+    {
+        auto& self = instance();
+        if(!self.cublas_lt_workspace)
+            CHECK_CUDA(cudaMalloc(&self.cublas_lt_workspace, cublas_lt_workspace_bytes()));
+        return self.cublas_lt_workspace;
+    }
+
+    // Returns a cached cuBLASLt plan for a GEMM with bias-add epilogue. The plan
+    // is built (descriptors + heuristic algo) once per unique shape and reused
+    // thereafter. Per-call bias pointer is set on the returned op_desc by the
+    // caller — it is intentionally not part of the cache key.
+    static const LtMatmulPlan& get_lt_gemm_bias_plan(
+        int m, int n, int k,
+        cublasOperation_t transA,
+        cublasOperation_t transB);
 #endif
 
 private:
@@ -977,6 +1071,11 @@ private:
     cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
     float* ones_device = nullptr;
     int ones_size = 0;
+    void* cublas_lt_workspace = nullptr;
+
+#ifdef OPENNN_WITH_CUDA
+    std::unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_bias_plans;
+#endif
 };
 
 inline ThreadPoolDevice& get_device()
@@ -1077,6 +1176,48 @@ inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_
                                             batch_count,
                                             CUBLAS_COMPUTE_DTYPE,
                                             CUBLAS_GEMM_DEFAULT));
+}
+
+// Fused GEMM + bias-add via cuBLASLt epilogue: one launch, no intermediate
+// write-then-read of the output tensor.
+//
+// Layout assumptions (encoded in the cached plan):
+//   - All operands use CUDA_ACTIVATION_DTYPE.
+//   - Bias is FP32, length = m, broadcast along D's columns
+//     (i.e. one bias element per output feature row).
+//   - Tightly packed: lda = (transa==N ? m : k), ldb = (transb==N ? k : n), ldc = ldd = m.
+//     If a caller needs different strides, it should not use this wrapper.
+//
+// Not thread-safe: the bias pointer is set on the cached op_desc per call, so concurrent
+// invocations on the same shape would race. Matches the rest of this codebase's
+// single-stream GPU usage assumption.
+inline void gemm_bias_cuda(cublasOperation_t transa, cublasOperation_t transb,
+                           int m, int n, int k,
+                           const void* A,
+                           const void* B,
+                           void* C,
+                           const float* bias,
+                           float alpha = 1.0f, float beta = 0.0f)
+{
+    const LtMatmulPlan& plan = Device::get_lt_gemm_bias_plan(m, n, k, transa, transb);
+
+    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
+        CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias, sizeof(bias)));
+
+    void* workspace = Device::get_cublas_lt_workspace();
+    const size_t workspace_size = Device::cublas_lt_workspace_bytes();
+
+    CHECK_CUBLAS(cublasLtMatmul(Device::get_cublas_lt_handle(),
+                                plan.op_desc,
+                                &alpha,
+                                A, plan.a_desc,
+                                B, plan.b_desc,
+                                &beta,
+                                C, plan.c_desc,   // C (read when beta != 0)
+                                C, plan.d_desc,   // D (write); aliasing C is supported
+                                plan.algo_valid ? &plan.algo : nullptr,
+                                workspace, workspace_size,
+                                Device::get_compute_stream()));
 }
 
 #endif

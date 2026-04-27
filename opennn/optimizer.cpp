@@ -363,6 +363,8 @@ type TrainingResults::get_validation_error() const
 {
     const Index size = validation_error_history.size();
 
+    if(size == 0) return type(0);
+
     return validation_error_history(size - 1);
 }
 

@@ -326,12 +326,35 @@ VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& pare
 void GeneticAlgorithm::perform_crossover()
 {
     const Index individuals_number = get_individuals_number();
+    const Index genes_number = get_genes_number();
 
     const vector<Index> selected_individual_indices = get_selected_indices();
 
-    MatrixB new_population(individuals_number, get_genes_number());
+    MatrixB new_population(individuals_number, genes_number);
 
-    for(Index i = 0; i < individuals_number; ++i)
+    // Copy elite individuals unchanged (sorted by fitness, highest first)
+    vector<Index> elite_indices;
+    if(elitism_size > 0)
+    {
+        // Find the top elitism_size individuals by fitness
+        vector<pair<type, Index>> fitness_indexed(individuals_number);
+        for(Index i = 0; i < individuals_number; ++i)
+            fitness_indexed[i] = {fitness(i), i};
+
+        partial_sort(fitness_indexed.begin(),
+                     fitness_indexed.begin() + min(elitism_size, individuals_number),
+                     fitness_indexed.end(),
+                     [](const auto& a, const auto& b){ return a.first > b.first; });
+
+        for(Index i = 0; i < min(elitism_size, individuals_number); ++i)
+        {
+            new_population.row(i) = population.row(fitness_indexed[i].second);
+            elite_indices.push_back(fitness_indexed[i].second);
+        }
+    }
+
+    // Fill remaining slots with crossover children
+    for(Index i = elitism_size; i < individuals_number; ++i)
     {
         const Index p1 = get_random_element(selected_individual_indices);
         Index p2 = get_random_element(selected_individual_indices);
@@ -410,6 +433,10 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
     original_input_variable_indices = dataset->get_variable_indices("Input");
     original_target_variable_indices = dataset->get_variable_indices("Target");
     const vector<Index> time_variable_indices = dataset->get_variable_indices("Time");
+
+    if(!dataset->has_validation())
+        throw runtime_error("GeneticAlgorithm error: dataset has no validation samples. "
+                            "The genetic algorithm uses validation error to rank individuals.");
 
     InputsSelectionResults input_selection_results(maximum_epochs);
 
@@ -567,7 +594,17 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
         scaling_layer->set_scalers(input_variable_scalers);
     }
 
-    neural_network->set_parameters(input_selection_results.optimal_parameters);
+    if(input_selection_results.optimal_parameters.size() == neural_network->get_parameters().size())
+    {
+        neural_network->set_parameters(input_selection_results.optimal_parameters);
+    }
+    else
+    {
+        // Parameter count changed after recompile (alignment). Retrain with optimal features.
+        if(display) cout << "Retraining with optimal features (parameter layout changed after recompile).\n";
+        neural_network->set_parameters_random();
+        training_strategy->train();
+    }
 
     if(display)
     {
@@ -604,6 +641,8 @@ void GeneticAlgorithm::configure_neural_network_inputs(NeuralNetwork* neural_net
         dataset->set_shape("Input", { input_features_number });
         neural_network->set_input_names(dataset->get_feature_names("Input"));
     }
+
+    neural_network->compile();
 }
 
 void GeneticAlgorithm::to_XML(XmlPrinter& printer) const

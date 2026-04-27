@@ -677,59 +677,6 @@ template void l1_gradient_cuda<float>        (const Index, float*,         const
 template void l1_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const __nv_bfloat16*, const float);
 
 template<typename T>
-__global__ void add_bias_scalar_kernel(const int total_elements, T* __restrict__ output, const float* __restrict__ bias, const int bias_dim)
-{
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < total_elements; i += blockDim.x * gridDim.x)
-    {
-        const int bias_idx = i % bias_dim;
-        const float val = static_cast<float>(output[i]) + bias[bias_idx];
-        output[i] = static_cast<T>(val);
-    }
-}
-
-template<typename T>
-__global__ void add_bias_vec_kernel(const int n_vec, T* __restrict__ output, const float* __restrict__ bias, const int bias_dim)
-{
-    constexpr int vec_width = 16 / sizeof(T);
-    float4* const out_v = reinterpret_cast<float4*>(output);
-
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
-    {
-        const int bias_start = (i * vec_width) % bias_dim;
-
-        float4 chunk = out_v[i];
-        T* lanes = reinterpret_cast<T*>(&chunk);
-
-        #pragma unroll
-        for (int k = 0; k < vec_width; ++k)
-            lanes[k] = static_cast<T>(static_cast<float>(lanes[k]) + bias[bias_start + k]);
-
-        out_v[i] = chunk;
-    }
-}
-
-template<typename T>
-void add_bias_cuda(const Index n, T* output, const float* bias, const int bias_dim)
-{
-    if (n == 0) return;
-    const int total = static_cast<int>(n);
-    constexpr int vec_width = 16 / sizeof(T);
-
-    if ((bias_dim % vec_width) == 0)
-    {
-        const int n_vec = total / vec_width;
-        add_bias_vec_kernel<T><<<grid_size_for(n_vec), block_size>>>(n_vec, output, bias, bias_dim);
-    }
-    else
-    {
-        add_bias_scalar_kernel<T><<<grid_size_for(total), block_size>>>(total, output, bias, bias_dim);
-    }
-}
-
-template void add_bias_cuda<float>        (const Index, float*,         const float*, const int);
-template void add_bias_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const float*, const int);
-
-template<typename T>
 __global__ void bounding_kernel(const int n, const int features,
                                 const T* __restrict__ input,
                                 const float* __restrict__ lower,

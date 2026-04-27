@@ -385,30 +385,25 @@ void combination(const TensorView& input,
                  const TensorView& biases,
                  TensorView& output)
 {
-
 #ifdef OPENNN_WITH_CUDA
-
-    const Index input_columns = input.shape.back();
-    const Index total_rows = input.size() / input_columns;
-    const Index output_columns = weights.shape.back();
-
     if (Device::instance().is_gpu())
     {
-        gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-                  to_int(output_columns), to_int(total_rows), to_int(input_columns),
-                  weights.data, weights.cuda_dtype(), to_int(output_columns),
-                  input.data,   input.cuda_dtype(),   to_int(input_columns),
-                  output.data,  output.cuda_dtype(),  to_int(output_columns));
+        const int input_columns  = to_int(input.shape.back());
+        const int output_columns = to_int(weights.shape.back());
+        const int total_rows     = to_int(input.size() / input.shape.back());
 
-        output.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            add_bias_cuda<T>(output.size(), output.as<T>(), biases.as<float>(), to_int(output_columns));
-        });
+        // Fused GEMM + bias-add via cuBLASLt epilogue (one launch instead of two).
+        gemm_bias_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                       output_columns, total_rows, input_columns,
+                       weights.data,
+                       input.data,
+                       output.data,
+                       biases.as<float>());
         return;
     }
 #endif
 
-    output.as_flat_matrix().noalias() = (input.as_flat_matrix() * weights.as_matrix()).rowwise() 
+    output.as_flat_matrix().noalias() = (input.as_flat_matrix() * weights.as_matrix()).rowwise()
                                       + biases.as_vector().transpose();
 }
 
