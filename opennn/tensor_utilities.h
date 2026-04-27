@@ -84,9 +84,7 @@ struct EnumMap
     }
 };
 
-constexpr cudnnDataType_t     CUDNN_WEIGHT_DTYPE     = CUDNN_DATA_FLOAT;
 constexpr cudnnDataType_t     CUDNN_ACTIVATION_DTYPE = CUDNN_DATA_FLOAT;
-constexpr cudaDataType_t      CUDA_WEIGHT_DTYPE      = CUDA_R_32F;
 constexpr cudaDataType_t      CUDA_ACTIVATION_DTYPE  = CUDA_R_32F;
 constexpr cudaDataType_t      CUDA_REDUCTION_DTYPE   = CUDA_R_32F;
 constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F;

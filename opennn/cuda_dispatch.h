@@ -33,6 +33,28 @@
     #define TRY_GPU_DISPATCH(view, ...) (false)
 #endif
 
+// IF_GPU(...) wraps the body in `if (Device::is_gpu()) { ... }` when CUDA is on,
+// and discards it entirely when CUDA is off. Use for GPU branches that call
+// cuDNN / cuBLAS / cuBLASLt directly (i.e. not the templated *_cuda<T> dispatch
+// pattern that TRY_GPU_DISPATCH covers).
+//
+// Like TRY_GPU_DISPATCH, this is a macro — not a function — because the body
+// often references types/functions that only exist when OPENNN_WITH_CUDA is
+// defined (cudnnOpTensor, cublasLtMatmul, etc.). The macro form lets the
+// preprocessor drop the body before the compiler ever sees those names.
+//
+// Usage:
+//   IF_GPU({
+//       CHECK_CUDNN(cudnnSomething(...));
+//       return;
+//   });
+//   // CPU body follows.
+#ifdef OPENNN_WITH_CUDA
+    #define IF_GPU(body) do { if (::opennn::Device::instance().is_gpu()) body } while (0)
+#else
+    #define IF_GPU(body) ((void)0)
+#endif
+
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -193,12 +193,10 @@ void copy(const TensorView& source, TensorView& destination)
     if(source.size() != destination.size())
         throw runtime_error("Math Error: Tensor sizes mismatch in copy operation.");
 
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    IF_GPU({
         CHECK_CUDA(cudaMemcpy(destination.data, source.data, source.byte_size(), cudaMemcpyDeviceToDevice));
         return;
-    }
-#endif
+    });
     memcpy(destination.data, source.data, source.size() * sizeof(type));
 }
 
@@ -295,16 +293,14 @@ void multiply(const TensorView& input_a, bool transpose_a,
 
 void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, TensorView& output)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
-        CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(), 
+    IF_GPU({
+        CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(),
                                   Device::get_operator_multiplication_descriptor(),
                                   &one, input_a.get_descriptor(), input_a.data,
                                   &one, input_b.get_descriptor(), input_b.data,
                                   &zero, output.get_descriptor(), output.data));
         return;
-    }
-#endif
+    });
     output.as_vector().noalias() = input_a.as_vector().cwiseProduct(input_b.as_vector());
 }
 
