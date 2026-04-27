@@ -36,7 +36,7 @@ void bounding_cuda(const Index n, const int features,
 template void bounding_cuda<float>        (const Index, const int, const float*,         const float*, const float*, float*);
 template void bounding_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, __nv_bfloat16*);
 
-#define SCALER_EPSILON 1e-7f
+static constexpr float SCALER_EPSILON = 1e-7f;
 
 // Per-feature input scaling. Method per feature is encoded in `scalers` (cast from
 // ScalerMethod enum stored as float): MinMax, MeanStd, StdDev, Logarithm, ImageMinMax.

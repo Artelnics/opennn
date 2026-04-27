@@ -111,26 +111,19 @@ void normalized_squared_error_gradient(const TensorView& input, const TensorView
 
 void weighted_squared_error(const TensorView& input, const TensorView& target, type pos_w, type neg_w, type& error, float* workspace_device)
 {
-<<<<<<< HEAD
     if (TRY_GPU_DISPATCH(input, [&](auto tag) {
         using T = decltype(tag);
         weighted_squared_error_cuda<T>(input.size(),
-            workspace_device, target.as<T>(), input.as<T>(), pos_w, neg_w);
-        error = sum_abs_cuda(workspace_device, input.size());
-    })) return;
-=======
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
-        input.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            weighted_squared_error_cuda<T>(input.size(),
-                workspace_device, target.as<T>(), input.as<T>(), pos_w, neg_w);
-        });
+                                       workspace_device,
+                                       target.as<T>(),
+                                       input.as<T>(),
+                                       pos_w,
+                                       neg_w);
+
+        // 0.5 factor to match the CPU path's textbook MSE formulation: loss = 0.5·Σ(out-tgt)²·w.
         error = 0.5f * sum_abs_cuda(workspace_device, input.size());
-        return;
-    }
-#endif
->>>>>>> 034d3de168c576a8914d0e3750f2850c75013e28
+    })) return;
+
     const auto inputs = input.as_vector().array();
     const auto targets = target.as_vector().array();
     const auto squared_error = (inputs - targets).square();
@@ -144,6 +137,7 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
         weighted_squared_error_gradient_cuda<T>(input.size(),
             input_delta.as<T>(), target.as<T>(), input.as<T>(), pos_w, neg_w, coefficient);
     })) return;
+    
     const auto inputs = input.as_vector().array();
     const auto targets = target.as_vector().array();
     input_delta.as_vector().array()

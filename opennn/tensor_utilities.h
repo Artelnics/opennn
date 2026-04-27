@@ -109,10 +109,6 @@ inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t t)
     }
 }
 
-template<cudnnDataType_t D> struct MapDtype;
-template<> struct MapDtype<CUDNN_DATA_FLOAT>    { using type = float; };
-template<> struct MapDtype<CUDNN_DATA_BFLOAT16> { using type = __nv_bfloat16; };
-
 template <typename T>
 class ThreadSafeQueue
 {
@@ -1151,24 +1147,6 @@ inline void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
                               CUBLAS_GEMM_DEFAULT));
 }
 
-inline void gemv_cuda(cublasOperation_t transa,
-                      int m, int n,
-                      const void* A, cudaDataType_t Atype, int lda,
-                      const void* x, cudaDataType_t Xtype,
-                      void* y, cudaDataType_t Ytype,
-                      float alpha = 1.0f, float beta = 0.0f)
-{
-    const int m_out = (transa == CUBLAS_OP_N) ? m : n;
-    const int k_dim = (transa == CUBLAS_OP_N) ? n : m;
-
-    gemm_cuda(transa, CUBLAS_OP_N,
-              m_out, 1, k_dim,
-              A, Atype, lda,
-              x, Xtype, k_dim,
-              y, Ytype, m_out,
-              alpha, beta);
-}
-
 inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
                                       int m, int n, int k,
                                       const float* A, int lda, long long stride_a,
@@ -1233,6 +1211,44 @@ inline void gemm_bias_cuda(cublasOperation_t transa, cublasOperation_t transb,
                                 &beta,
                                 C, plan.c_desc,   // C (read when beta != 0)
                                 C, plan.d_desc,   // D (write); aliasing C is supported
+                                plan.algo_valid ? &plan.algo : nullptr,
+                                workspace, workspace_size,
+                                Device::get_compute_stream()));
+}
+
+// Fused matmul + bias-gradient via cuBLASLt's BGRADA epilogue. Computes the
+// matmul C = α(A·B) + βC and, as a side product, writes the row-wise reduction
+// of A (in cuBLAS column-major view) into `bias_grad`. For Dense backward,
+// pass A = output_delta with transA = N to get bias_grad = sum_rows(dY) — i.e.
+// the bias gradient — for free, replacing a separate sum() reduction kernel.
+//
+// `bias_grad` length must be m (the matmul's M dim, == D rows in column-major).
+// Same threading caveat as gemm_bias_cuda.
+inline void gemm_bgrad_cuda(cublasOperation_t transa, cublasOperation_t transb,
+                            int m, int n, int k,
+                            const void* A,
+                            const void* B,
+                            void* C,
+                            float* bias_grad,
+                            float alpha = 1.0f, float beta = 0.0f)
+{
+    const LtMatmulPlan& plan = Device::get_lt_gemm_plan(m, n, k, transa, transb,
+                                                        CUBLASLT_EPILOGUE_BGRADA);
+
+    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
+        CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_grad, sizeof(bias_grad)));
+
+    void* workspace = Device::get_cublas_lt_workspace();
+    const size_t workspace_size = Device::cublas_lt_workspace_bytes();
+
+    CHECK_CUBLAS(cublasLtMatmul(Device::get_cublas_lt_handle(),
+                                plan.op_desc,
+                                &alpha,
+                                A, plan.a_desc,
+                                B, plan.b_desc,
+                                &beta,
+                                C, plan.c_desc,
+                                C, plan.d_desc,
                                 plan.algo_valid ? &plan.algo : nullptr,
                                 workspace, workspace_size,
                                 Device::get_compute_stream()));

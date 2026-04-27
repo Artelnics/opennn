@@ -308,14 +308,16 @@ void sum(const TensorView& input, TensorView& output, type alpha, type beta)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        const int total_rows = to_int(input.shape[0]);
+        const int total_rows    = to_int(input.shape[0]);
         const int total_columns = to_int(input.shape.size() / input.shape[0]);
 
-        gemv_cuda(CUBLAS_OP_N,
-                  total_columns, total_rows,
+        // Column-wise reduction expressed as matrix * ones-vector via GEMM
+        // (m × k) * (k × 1) = (m × 1).
+        gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                  total_columns, 1, total_rows,
                   input.data, input.cuda_dtype(), total_columns,
-                  Device::get_ones(total_rows), CUDA_ACTIVATION_DTYPE,
-                  output.data, output.cuda_dtype(),
+                  Device::get_ones(total_rows), CUDA_ACTIVATION_DTYPE, total_rows,
+                  output.data, output.cuda_dtype(), total_columns,
                   alpha, beta);
         return;
     }
@@ -442,6 +444,34 @@ void combination_gradient(const TensorView& output_delta,
                           TensorView& bias_gradient,
                           bool accumulate_input_delta)
 {
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu())
+    {
+        const int input_columns  = to_int(input.shape.back());
+        const int output_columns = to_int(output_delta.shape.back());
+        const int total_rows     = to_int(input.size() / input.shape.back());
+
+        // Fused: dW = X^T @ dY (in row-major view) plus bias_gradient = sum_rows(dY)
+        // computed as the BGRADA epilogue's row-wise reduction of A.
+        // In cuBLAS column-major view: A = dY [output_columns × total_rows], op(A) = N;
+        // B = X [input_columns × total_rows], op(B) = T. M = output_columns, N = input_columns,
+        // K = total_rows. The BGRADA output has length M = output_columns, matching the bias.
+        gemm_bgrad_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
+                        output_columns, input_columns, total_rows,
+                        output_delta.data,         // A
+                        input.data,                // B
+                        weight_gradient.data,      // C / D
+                        bias_gradient.as<float>());
+
+        if (input_delta.data && input_delta.size() > 0)
+        {
+            const type beta = accumulate_input_delta ? type(1) : type(0);
+            multiply(output_delta, false, weights, true, input_delta, type(1), beta);
+        }
+        return;
+    }
+#endif
+
     multiply(input, true, output_delta, false, weight_gradient);
     sum(output_delta, bias_gradient);
 
