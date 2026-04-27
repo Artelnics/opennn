@@ -132,6 +132,16 @@ void softmax_backward(const TensorView& softmax_out, TensorView& output_delta);
 void combination(const TensorView& input, const TensorView& weights, const TensorView& biases, TensorView& output);
 void combination_gradient(const TensorView& output_delta, const TensorView& input, const TensorView& weights, TensorView& input_delta, TensorView& weight_gradient, TensorView& bias_gradient, bool accumulate_input_delta);
 void activation(TensorView& output, ActivationArguments arguments);
+
+// Equivalent to combination(...) followed by activation(output, args), but on
+// GPU fuses both into one cuBLASLt matmul when the activation is supported by
+// the cuBLASLt epilogue (currently RectifiedLinear). Other activations fall
+// back to the unfused pair.
+void combination_activation(const TensorView& input,
+                            const TensorView& weights,
+                            const TensorView& biases,
+                            const ActivationArguments& activation_arguments,
+                            TensorView& output);
 void activation_delta(const TensorView& outputs, const TensorView& output_delta, TensorView& input_delta, const ActivationArguments& arguments);
 void dropout(TensorView& output, DropoutArguments& args);
 void dropout_delta(const TensorView& output_delta, TensorView& input_delta, const DropoutArguments& args);

@@ -330,7 +330,7 @@ Device::~Device()
 {
 #ifdef OPENNN_WITH_CUDA
     // Plans hold cuBLASLt descriptor handles; clear before destroying the LT handle.
-    lt_gemm_bias_plans.clear();
+    lt_gemm_plans.clear();
     if (cublas_lt_workspace) cudaFree(cublas_lt_workspace);
     if (operator_sum_descriptor) cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
     if (operator_multiplication_descriptor) cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
@@ -343,26 +343,32 @@ Device::~Device()
 
 #ifdef OPENNN_WITH_CUDA
 
-const LtMatmulPlan& Device::get_lt_gemm_bias_plan(
+const LtMatmulPlan& Device::get_lt_gemm_plan(
     int m, int n, int k,
     cublasOperation_t transA,
-    cublasOperation_t transB)
+    cublasOperation_t transB,
+    cublasLtEpilogue_t epilogue)
 {
     auto& self = instance();
 
-    const LtMatmulPlanKey key{m, n, k, static_cast<int>(transA), static_cast<int>(transB)};
-    auto it = self.lt_gemm_bias_plans.find(key);
-    if (it != self.lt_gemm_bias_plans.end()) return it->second;
+    const LtMatmulPlanKey key{m, n, k,
+                              static_cast<int>(transA),
+                              static_cast<int>(transB),
+                              static_cast<int>(epilogue)};
+    auto it = self.lt_gemm_plans.find(key);
+    if (it != self.lt_gemm_plans.end()) return it->second;
 
     LtMatmulPlan plan;
 
-    // Operation: compute=FP32, scale=FP32. Epilogue=BIAS, bias dtype=FP32.
-    CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.op_desc, CUBLAS_COMPUTE_DTYPE, CUDA_R_32F));
+    // Operation: compute=TF32 multiply / FP32 accumulate, scale=FP32, epilogue per request,
+    // bias dtype=FP32. TF32 matches the math mode already set on the regular cuBLAS handle
+    // (cublasSetMathMode in Device::Device) and is ~2-3x faster than strict FP32 on Ampere+
+    // tensor cores; storage stays FP32 throughout.
+    CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.op_desc, CUBLAS_COMPUTE_32F_FAST_TF32, CUDA_R_32F));
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_TRANSA,
                                                 &transA, sizeof(transA)));
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_TRANSB,
                                                 &transB, sizeof(transB)));
-    const cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS;
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_EPILOGUE,
                                                 &epilogue, sizeof(epilogue)));
     const cudaDataType_t bias_dtype = CUDA_R_32F;
@@ -404,7 +410,7 @@ const LtMatmulPlan& Device::get_lt_gemm_bias_plan(
         plan.algo_valid = true;
     }
 
-    auto [iter, _] = self.lt_gemm_bias_plans.emplace(key, std::move(plan));
+    auto [iter, _] = self.lt_gemm_plans.emplace(key, std::move(plan));
     return iter->second;
 }
 

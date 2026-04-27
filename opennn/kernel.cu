@@ -3,10 +3,6 @@
 
 #include "kernel.cuh"
 
-// ---------------------------------------------------------------------------
-// Common host helpers shared by every kernel launcher in this TU.
-// ---------------------------------------------------------------------------
-
 static constexpr int block_size = 256;
 
 static inline int ceil_div(int a, int b)
@@ -19,8 +15,6 @@ static inline int grid_size_for(int n)
     return ceil_div(n, block_size);
 }
 
-// For unified vec+tail kernels: launch enough threads to cover whichever
-// loop is larger; each thread grid-strides through both phases.
 static inline int vector_work_size(int total, int n_vec, int vec_width)
 {
     const int n_tail = total - n_vec * vec_width;
@@ -32,7 +26,6 @@ static inline bool is_float4_aligned(const void* ptr)
     return (reinterpret_cast<std::uintptr_t>(ptr) & 0xF) == 0;
 }
 
-// Variadic chain check; accepts any pointer types.
 template<typename... Ptrs>
 static inline bool are_float4_aligned(const Ptrs*... ptrs)
 {
@@ -56,6 +49,10 @@ __device__ __forceinline__ void adam_update_one(
     p -= lr * m / (sqrtf(v) + eps);
 }
 
+// Adam optimizer step. Element-wise: m,v <- bias-corrected moments of g; then
+// parameters[i] -= lr * m[i]/(sqrt(v[i]) + eps). Vectorised via float4 over
+// [0, n_vec); the [n_vec*4, n) tail runs scalar. Caller decides n_vec based on
+// pointer alignment (0 = scalar-only).
 __global__ void adam_update_kernel(
     const int n_vec,
     const int n,
@@ -162,6 +159,8 @@ __device__ __forceinline__ void sgd_update_one(
     p += nesterov ? fmaf(momentum, v_new, -lr_g) : v_new;
 }
 
+// SGD step with optional momentum and Nesterov correction. Same vec+tail layout
+// as adam_update_kernel. Velocity write-back is skipped when momentum<=0.
 __global__ void sgd_update_kernel(
     const int n_vec,
     const int n,
@@ -229,6 +228,8 @@ void sgd_update_cuda(
         learning_rate, momentum, nesterov);
 }
 
+// Per-element BCE forward term: tgt*log(out+eps) + (1-tgt)*log(1-out+eps).
+// Reduced into a scalar by the host (cublasSasum on term_results).
 template<typename T>
 __global__ void binary_cross_entropy_kernel(const int n, float* __restrict__ term_results, const T* __restrict__ targets, const T* __restrict__ outputs, const float epsilon)
 {
@@ -266,6 +267,8 @@ __device__ __forceinline__ void bce_gradient_one(T& d, T target, T output, float
     d = static_cast<T>(((1.0f - tgt) / (1.0f - out + epsilon) - tgt / (out + epsilon)) * scaling_factor);
 }
 
+// BCE gradient: delta[i] = ((1 - tgt) / (1 - out + eps) - tgt / (out + eps)) * scale.
+// Vec+tail layout (see adam_update_kernel for the convention).
 template<typename T>
 __global__ void binary_cross_entropy_gradient_kernel(
     const int n_vec, const int n,
@@ -324,6 +327,8 @@ void binary_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targe
 template void binary_cross_entropy_gradient_cuda<float>        (const Index, float*,         const float*,         const float*,         const float, const float);
 template void binary_cross_entropy_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, const float, const float);
 
+// Per-element multi-class CE forward term: tgt > 0 ? tgt*log(out+eps) : 0.
+// Reduced into a scalar by the host.
 template<typename T>
 __global__ void multiple_cross_entropy_kernel(const int n, float* __restrict__ term_results, const T* __restrict__ targets, const T* __restrict__ outputs, const float epsilon)
 {
@@ -354,6 +359,8 @@ __device__ __forceinline__ void mce_gradient_one(T& d, T target, T output, float
     d = static_cast<T>((static_cast<float>(output) - static_cast<float>(target)) * scaling_factor);
 }
 
+// Multi-class CE gradient: delta[i] = (out[i] - tgt[i]) * scale.
+// Vec+tail layout.
 template<typename T>
 __global__ void multiple_cross_entropy_gradient_kernel(
     const int n_vec, const int n,
@@ -412,6 +419,8 @@ void multiple_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* tar
 template void multiple_cross_entropy_gradient_cuda<float>        (const Index, float*,         const float*,         const float*,         const float);
 template void multiple_cross_entropy_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, const float);
 
+// Per-element weighted squared error: (out - tgt)^2 * (tgt == 0 ? neg_w : pos_w).
+// Reduced into a scalar by the host.
 template<typename T>
 __global__ void weighted_squared_error_kernel(const int n, float* __restrict__ term_results, const T* __restrict__ targets, const T* __restrict__ outputs, const float positives_weight, const float negatives_weight)
 {
@@ -451,6 +460,8 @@ __device__ __forceinline__ void wse_gradient_one(T& d, T target, T output,
     d = static_cast<T>(diff * weight * scaling_factor);
 }
 
+// Weighted squared-error gradient: delta[i] = (out - tgt) * weight * scale,
+// with weight = (tgt == 0 ? neg_w : pos_w). Vec+tail layout.
 template<typename T>
 __global__ void weighted_squared_error_gradient_kernel(
     const int n_vec, const int n,
@@ -513,6 +524,9 @@ void weighted_squared_error_gradient_cuda(const Index n, T* deltas, const T* tar
 template void weighted_squared_error_gradient_cuda<float>        (const Index, float*,         const float*,         const float*,         const float, const float, const float);
 template void weighted_squared_error_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, const float, const float, const float);
 
+// Per-token CE for [batch, seq, vocab] outputs. Writes per-token error,
+// valid-token mask (target_class > 0), and correct-prediction mask to
+// host-allocated FP32 scratch; host reduces all three with cublasSasum.
 template<typename T>
 __global__ void cross_entropy_3d_multiple_forward_kernel(const int total_tokens,
                                                          const int vocab_size,
@@ -572,6 +586,8 @@ void cross_entropy_3d_multiple_forward_cuda(const Index n,
 template void cross_entropy_3d_multiple_forward_cuda<float>        (const Index, const int, const float*,         const float*, float*, float*, float*, const float);
 template void cross_entropy_3d_multiple_forward_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, float*, float*, float*, const float);
 
+// CE gradient for [batch, seq, vocab]: delta = (output - one_hot(target)) * scale,
+// zero where target_class is invalid (<=0 or >=vocab).
 template<typename T>
 __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
                                                           const int vocab_size,
@@ -623,6 +639,8 @@ __device__ __forceinline__ void l1_gradient_one(T& d, T p, float weight)
     d = static_cast<T>(static_cast<float>(d) + weight * s);
 }
 
+// L1 regularisation gradient: deltas[i] += weight * sign(parameters[i]).
+// Vec+tail layout. Accumulates onto existing deltas (does not overwrite).
 template<typename T>
 __global__ void l1_gradient_kernel(
     const int n_vec, const int n,
@@ -676,6 +694,7 @@ void l1_gradient_cuda(const Index n, T* deltas, const T* parameters, const float
 template void l1_gradient_cuda<float>        (const Index, float*,         const float*,         const float);
 template void l1_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const __nv_bfloat16*, const float);
 
+// Per-feature clip: output[i] = clamp(input[i], lower[f], upper[f]) where f = i % features.
 template<typename T>
 __global__ void bounding_kernel(const int n, const int features,
                                 const T* __restrict__ input,
@@ -708,6 +727,8 @@ template void bounding_cuda<__nv_bfloat16>(const Index, const int, const __nv_bf
 
 #define SCALER_EPSILON 1e-7f
 
+// Per-feature input scaling. Method per feature is encoded in `scalers` (cast from
+// ScalerMethod enum stored as float): MinMax, MeanStd, StdDev, Logarithm, ImageMinMax.
 template<typename T>
 __global__ void scale_kernel(const int n, const int features,
                              const T* __restrict__ input,
@@ -773,6 +794,7 @@ void scale_cuda(const Index n, const int features,
 template void scale_cuda<float>        (const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, float*);
 template void scale_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
 
+// Inverse of scale_kernel: per-feature output unscaling.
 template<typename T>
 __global__ void unscale_kernel(const int n, const int features,
                                const T* __restrict__ input,
@@ -838,6 +860,9 @@ void unscale_cuda(const Index n, const int features,
 template void unscale_cuda<float>        (const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, float*);
 template void unscale_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
 
+// Token embedding lookup: outputs[i] = scale * weights[token_id, dim] + positional_encoding.
+// `inputs` carries integer token ids stored as float. Out-of-vocab tokens get 0.
+// `scale_embedding` applies sqrt(D) scaling (Transformer convention).
 template<typename T>
 __global__ void embedding_forward_kernel(const int n, const float* __restrict__ inputs, const float* __restrict__ weights, const float* __restrict__ positional_encoding, T* __restrict__ outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding)
 {
@@ -878,6 +903,8 @@ void embedding_forward_cuda(const Index n, const float* inputs, const float* wei
 template void embedding_forward_cuda<float>        (const Index, const float*, const float*, const float*, float*,         const int, const int, const int, const bool, const bool);
 template void embedding_forward_cuda<__nv_bfloat16>(const Index, const float*, const float*, const float*, __nv_bfloat16*, const int, const int, const int, const bool, const bool);
 
+// Embedding weight gradient via atomicAdd into the vocabulary table.
+// Padding tokens (id 0 or out-of-range) contribute nothing.
 template<typename T>
 __global__ void embedding_backward_kernel(const int n, const float* __restrict__ inputs, const T* __restrict__ output_deltas, float* __restrict__ weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
 {
@@ -910,6 +937,7 @@ void embedding_backward_cuda(const Index n, const float* inputs, const T* output
 template void embedding_backward_cuda<float>        (const Index, const float*, const float*,         float*, const int, const int, const bool);
 template void embedding_backward_cuda<__nv_bfloat16>(const Index, const float*, const __nv_bfloat16*, float*, const int, const int, const bool);
 
+// [batch, seq, heads, head_dim] -> [batch, heads, seq, head_dim], scalar path.
 template<typename T>
 __global__ void split_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D)
 {
@@ -925,6 +953,8 @@ __global__ void split_heads_scalar_kernel(const int n, const T* __restrict__ in,
     }
 }
 
+// split_heads using float4 lanes when head_dim*sizeof(T) is a multiple of 16 bytes.
+// D_vec = head_dim / vec_width.
 template<typename T>
 __global__ void split_heads_vec_kernel(const int n_vec, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D_vec)
 {
@@ -964,6 +994,7 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
 template void split_heads_cuda<float>        (const Index, const float*,         float*,         const int, const int, const int);
 template void split_heads_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int, const int, const int);
 
+// Inverse of split_heads: [batch, heads, seq, head_dim] -> [batch, seq, heads, head_dim].
 template<typename T>
 __global__ void merge_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D)
 {
@@ -979,6 +1010,7 @@ __global__ void merge_heads_scalar_kernel(const int n, const T* __restrict__ in,
     }
 }
 
+// merge_heads using float4 lanes when head_dim*sizeof(T) is a multiple of 16 bytes.
 template<typename T>
 __global__ void merge_heads_vec_kernel(const int n_vec, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D_vec)
 {
@@ -1018,6 +1050,8 @@ void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int
 template void merge_heads_cuda<float>        (const Index, const float*,         float*,         const int, const int, const int);
 template void merge_heads_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int, const int, const int);
 
+// Per-token validity for attention: padding_mask[i] = 1 if all embedding dims of
+// token i are ~0 (treated as PAD), else 0.
 template<typename T>
 __global__ void padding_mask_kernel(const int num_tokens, const T* __restrict__ source_input, T* __restrict__ padding_mask, const int embedding_dimension)
 {
@@ -1031,6 +1065,9 @@ __global__ void padding_mask_kernel(const int num_tokens, const T* __restrict__ 
     }
 }
 
+// Apply padding + optional causal mask to pre-softmax attention weights by
+// setting masked positions to -1e9 (so softmax produces ~0). Operates on
+// [batch, heads, seq_q, seq_k] flattened to n.
 template<typename T>
 __global__ void fused_masks_kernel(const int n, T* __restrict__ attention_weights, const T* __restrict__ padding_mask,
                                          const int heads_number, const int query_sequence_length,
@@ -1068,6 +1105,8 @@ void attention_masks_cuda(const int batch_size, const int heads_number,
 template void attention_masks_cuda<float>        (int, int, int, int, int, const float*,         float*,         float*,         bool);
 template void attention_masks_cuda<__nv_bfloat16>(int, int, int, int, int, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*, bool);
 
+// Max pooling over the seq axis of [batch, seq, features]. Saves the argmax
+// position per (batch, feature) into `indices` for the backward pass.
 template<typename T>
 __global__ void max_pooling_3d_forward_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, float* __restrict__ indices, const int S, const int F)
 {
@@ -1103,6 +1142,8 @@ void max_pooling_3d_forward_cuda(const Index n, const T* in, T* out, float* indi
 template void max_pooling_3d_forward_cuda<float>        (const Index, const float*,         float*,         float*, const int, const int);
 template void max_pooling_3d_forward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, float*, const int, const int);
 
+// Scatter delta back to argmax positions saved by max_pooling_3d_forward.
+// Caller must zero-initialise in_gradient first (host does cudaMemset).
 template<typename T>
 __global__ void max_pooling_3d_backward_kernel(const int n, const T* __restrict__ delta, T* __restrict__ in_gradient, const float* __restrict__ indices, const int S, const int F)
 {
@@ -1142,6 +1183,8 @@ static float* get_pooling_scratch(size_t floats_needed)
     return pooling_scratch_;
 }
 
+// Helper for average pooling: writes per-token validity (1 if any feature is
+// ~nonzero, else 0) and accumulates per-batch valid counts via atomicAdd.
 template<typename T>
 __global__ void pooling_3d_valid_mask_kernel(const int BS, const int S, const int F,
                                              const T* __restrict__ in,
@@ -1160,6 +1203,8 @@ __global__ void pooling_3d_valid_mask_kernel(const int BS, const int S, const in
     if (valid) atomicAdd(&counts[bs / S], 1.0f);
 }
 
+// Average pooling over the seq axis, masking invalid (~zero) tokens. Output
+// is sum-of-valid-tokens / valid_count; zero rows when no valid tokens.
 template<typename T>
 __global__ void average_pooling_3d_forward_kernel(const int n, const T* __restrict__ in, T* __restrict__ out,
                                                   const int S, const int F,
@@ -1207,6 +1252,8 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
 template void average_pooling_3d_forward_cuda<float>        (const Index, const float*,         float*,         const int, const int);
 template void average_pooling_3d_forward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int, const int);
 
+// Distribute output delta uniformly across the batch's valid tokens
+// (delta_per_token = delta / valid_count, zero where invalid).
 template<typename T>
 __global__ void average_pooling_3d_backward_kernel(const int n, const T* __restrict__ delta, T* __restrict__ in_gradient,
                                                    const int S, const int F,
@@ -1262,6 +1309,9 @@ __device__ __forceinline__ void warp_reduce_sum2(float& a, float& b)
     }
 }
 
+// Per-row layer norm, one block per row of [N, D]: y = gamma*(x-mean)/sqrt(var+eps) + beta.
+// Saves mean and 1/sqrt(var+eps) for the backward pass. Variance computed from the
+// online moments E[X], E[X^2] reduced via warp_reduce_sum2.
 template<typename T>
 __global__ void layernorm_forward_kernel(const int N, const int D, const T* __restrict__ X, T* __restrict__ Y, float* __restrict__ means, float* __restrict__ inv_vars, const float* __restrict__ gamma, const float* __restrict__ beta, const float eps)
 {
@@ -1345,6 +1395,8 @@ void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* m
 template void layernorm_forward_cuda<float>        (const int, const int, const float*,         float*,         float*, float*, const float*, const float*, const float);
 template void layernorm_forward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, __nv_bfloat16*, float*, float*, const float*, const float*, const float);
 
+// Per-row dX for layer norm, one block per row of [N, D]. Uses cached mean and
+// inv_var saved by layernorm_forward_kernel.
 template<typename T>
 __global__ void layernorm_backward_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, const float* __restrict__ gamma, T* __restrict__ dX)
 {
@@ -1413,6 +1465,8 @@ __global__ void layernorm_backward_kernel(const int N, const int D, const T* __r
     }
 }
 
+// Per-feature dGamma/dBeta accumulation for layer norm, one block per feature
+// (column of [N, D]). Reduces across rows via warp shuffle.
 template<typename T>
 __global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, float* __restrict__ dGamma, float* __restrict__ dBeta)
 {

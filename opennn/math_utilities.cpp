@@ -407,6 +407,37 @@ void combination(const TensorView& input,
                                       + biases.as_vector().transpose();
 }
 
+void combination_activation(const TensorView& input,
+                            const TensorView& weights,
+                            const TensorView& biases,
+                            const ActivationArguments& activation_arguments,
+                            TensorView& output)
+{
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu()
+        && activation_arguments.activation_function == ActivationFunction::RectifiedLinear)
+    {
+        const int input_columns  = to_int(input.shape.back());
+        const int output_columns = to_int(weights.shape.back());
+        const int total_rows     = to_int(input.size() / input.shape.back());
+
+        // Fused GEMM + bias + ReLU in one cuBLASLt launch.
+        gemm_bias_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                       output_columns, total_rows, input_columns,
+                       weights.data,
+                       input.data,
+                       output.data,
+                       biases.as<float>(),
+                       CUBLASLT_EPILOGUE_RELU_BIAS);
+        return;
+    }
+#endif
+
+    // Fallback: unfused combination + activation.
+    combination(input, weights, biases, output);
+    activation(output, activation_arguments);
+}
+
 void combination_gradient(const TensorView& output_delta,
                           const TensorView& input,
                           const TensorView& weights,

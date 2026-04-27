@@ -405,8 +405,15 @@ struct TensorView
     // Float-typed view of `data`. Used at CUDA dispatch sites where kernels expect
     // raw float* regardless of the project's `type` alias (e.g. descriptive stats,
     // scaler tables, masks). Mirrors as<T>() but skips the dtype check.
-    float*       as_float()       noexcept { return reinterpret_cast<float*>(data); }
-    const float* as_float() const noexcept { return reinterpret_cast<const float*>(data); }
+    float* as_float() noexcept
+    { 
+        return reinterpret_cast<float*>(data); 
+    }
+
+    const float* as_float() const noexcept 
+    { 
+        return reinterpret_cast<const float*>(data); 
+    }
 
     cudaDataType_t cuda_dtype() const noexcept { return cudnn_to_cuda_dtype(dtype); }
 
@@ -965,10 +972,13 @@ struct LtMatmulPlanKey
     int k;
     int transA;
     int transB;
+    int epilogue;   // cublasLtEpilogue_t cast to int (e.g. BIAS, RELU_BIAS)
 
     bool operator==(const LtMatmulPlanKey& o) const noexcept
     {
-        return m == o.m && n == o.n && k == o.k && transA == o.transA && transB == o.transB;
+        return m == o.m && n == o.n && k == o.k
+            && transA == o.transA && transB == o.transB
+            && epilogue == o.epilogue;
     }
 };
 
@@ -985,6 +995,7 @@ struct LtMatmulPlanKeyHash
         mix(h, k.k);
         mix(h, k.transA);
         mix(h, k.transB);
+        mix(h, k.epilogue);
         return h;
     }
 };
@@ -1044,14 +1055,17 @@ public:
         return self.cublas_lt_workspace;
     }
 
-    // Returns a cached cuBLASLt plan for a GEMM with bias-add epilogue. The plan
-    // is built (descriptors + heuristic algo) once per unique shape and reused
-    // thereafter. Per-call bias pointer is set on the returned op_desc by the
-    // caller — it is intentionally not part of the cache key.
-    static const LtMatmulPlan& get_lt_gemm_bias_plan(
+    // Returns a cached cuBLASLt plan for a GEMM with the requested epilogue.
+    // Built (descriptors + heuristic algo) once per unique (shape, epilogue)
+    // and reused thereafter. The bias *pointer* is set on the returned op_desc
+    // by the caller per call — it is not part of the cache key.
+    //
+    // Supported epilogues: CUBLASLT_EPILOGUE_BIAS, CUBLASLT_EPILOGUE_RELU_BIAS.
+    static const LtMatmulPlan& get_lt_gemm_plan(
         int m, int n, int k,
         cublasOperation_t transA,
-        cublasOperation_t transB);
+        cublasOperation_t transB,
+        cublasLtEpilogue_t epilogue);
 #endif
 
 private:
@@ -1074,7 +1088,7 @@ private:
     void* cublas_lt_workspace = nullptr;
 
 #ifdef OPENNN_WITH_CUDA
-    std::unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_bias_plans;
+    std::unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans;
 #endif
 };
 
@@ -1178,8 +1192,13 @@ inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_
                                             CUBLAS_GEMM_DEFAULT));
 }
 
-// Fused GEMM + bias-add via cuBLASLt epilogue: one launch, no intermediate
-// write-then-read of the output tensor.
+// Fused GEMM + (optionally activation +) bias via cuBLASLt epilogue: one launch
+// for the whole gemm-bias[-relu] sequence, no intermediate write-then-read of
+// the output tensor between stages.
+//
+// `epilogue` selects the post-matmul fusion. Currently supported:
+//   - CUBLASLT_EPILOGUE_BIAS       : D = α(A·B) + bias                (default)
+//   - CUBLASLT_EPILOGUE_RELU_BIAS  : D = max(0, α(A·B) + bias)
 //
 // Layout assumptions (encoded in the cached plan):
 //   - All operands use CUDA_ACTIVATION_DTYPE.
@@ -1197,9 +1216,10 @@ inline void gemm_bias_cuda(cublasOperation_t transa, cublasOperation_t transb,
                            const void* B,
                            void* C,
                            const float* bias,
+                           cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
                            float alpha = 1.0f, float beta = 0.0f)
 {
-    const LtMatmulPlan& plan = Device::get_lt_gemm_bias_plan(m, n, k, transa, transb);
+    const LtMatmulPlan& plan = Device::get_lt_gemm_plan(m, n, k, transa, transb, epilogue);
 
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias, sizeof(bias)));
