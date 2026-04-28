@@ -676,69 +676,6 @@ void l1_gradient_cuda(const Index n, T* deltas, const T* parameters, const float
 template void l1_gradient_cuda<float>        (const Index, float*,         const float*,         const float);
 template void l1_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const __nv_bfloat16*, const float);
 
-// Broadcasts a 1-D FP32 bias across a (total_rows × bias_dim) output. Output is
-// dtype T (activation dtype). Used by Dense's combination — replaces cudnnAddTensor
-// so FP32 biases can be added to BF16 outputs (AMP recipe).
-template<typename T>
-__global__ void add_bias_scalar_kernel(const int total_elements, T* __restrict__ output, const float* __restrict__ bias, const int bias_dim)
-{
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < total_elements; i += blockDim.x * gridDim.x)
-    {
-        const int bias_idx = i % bias_dim;
-        const float val = static_cast<float>(output[i]) + bias[bias_idx];
-        output[i] = static_cast<T>(val);
-    }
-}
-
-// Vec path is only safe when bias_dim is a multiple of vec_width — that keeps every
-// 16-byte output chunk entirely inside one row, so the bias broadcast is still just
-// vec_width consecutive FP32 loads starting at (linear_index % bias_dim).
-template<typename T>
-__global__ void add_bias_vec_kernel(const int n_vec, T* __restrict__ output, const float* __restrict__ bias, const int bias_dim)
-{
-    constexpr int vec_width = 16 / sizeof(T);
-    float4* out_v = reinterpret_cast<float4*>(output);
-
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
-    {
-        const int bias_start = (i * vec_width) % bias_dim;
-
-        float4 chunk = out_v[i];
-        T* lanes = reinterpret_cast<T*>(&chunk);
-
-        #pragma unroll
-        for (int k = 0; k < vec_width; ++k)
-            lanes[k] = static_cast<T>(static_cast<float>(lanes[k]) + bias[bias_start + k]);
-
-        out_v[i] = chunk;
-    }
-}
-
-
-template<typename T>
-void add_bias_cuda(const Index n, T* output, const float* bias, const int bias_dim)
-{
-    if (n == 0) return;
-    const int block_size = 256;
-    const int total = static_cast<int>(n);
-    constexpr int vec_width = 16 / sizeof(T);
-
-    if ((bias_dim % vec_width) == 0)
-    {
-        const int n_vec = total / vec_width;
-        const int grid_size = (n_vec + block_size - 1) / block_size;
-        add_bias_vec_kernel<T><<<grid_size, block_size>>>(n_vec, output, bias, bias_dim);
-    }
-    else
-    {
-        const int grid_size = (total + block_size - 1) / block_size;
-        add_bias_scalar_kernel<T><<<grid_size, block_size>>>(total, output, bias, bias_dim);
-    }
-}
-
-template void add_bias_cuda<float>        (const Index, float*,         const float*, const int);
-template void add_bias_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const float*, const int);
-
 template<typename T>
 __global__ void addition_scalar_kernel(const int n, const T* __restrict__ input1, const T* __restrict__ input2, T* __restrict__ output)
 {
@@ -747,12 +684,15 @@ __global__ void addition_scalar_kernel(const int n, const T* __restrict__ input1
 }
 
 template<typename T>
-__global__ void addition_vec_kernel(const int n_vec, const T* __restrict__ input1, const T* __restrict__ input2, T* __restrict__ output)
+__global__ void addition_vec_kernel(const int n_vec, 
+    const T* __restrict__ input1, 
+    const T* __restrict__ input2, 
+    T* __restrict__ output)
 {
     constexpr int vec_width = 16 / sizeof(T);
     const float4* in1_v = reinterpret_cast<const float4*>(input1);
     const float4* in2_v = reinterpret_cast<const float4*>(input2);
-    float4*       out_v = reinterpret_cast<float4*>(output);
+    float4* out_v = reinterpret_cast<float4*>(output);
 
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
     {
@@ -761,7 +701,7 @@ __global__ void addition_vec_kernel(const int n_vec, const T* __restrict__ input
         float4 co;
         const T* c1_lanes = reinterpret_cast<const T*>(&c1);
         const T* c2_lanes = reinterpret_cast<const T*>(&c2);
-        T*       co_lanes = reinterpret_cast<T*>(&co);
+        T* co_lanes = reinterpret_cast<T*>(&co);
 
         #pragma unroll
         for (int k = 0; k < vec_width; ++k)
@@ -1113,6 +1053,47 @@ template void split_heads_cuda<float>        (const Index, const float*,        
 template void split_heads_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int, const int, const int);
 
 template<typename T>
+__global__ void add_bias_split_heads_kernel(const int n,
+                                            const T* __restrict__ scratch_2d,
+                                            const float* __restrict__ bias,
+                                            T* __restrict__ output_4d,
+                                            const int S, const int H, const int D)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int d = i % D;
+        const int h = (i / D) % H;
+        const int s = (i / (D * H)) % S;
+        const int b = i / (D * H * S);
+
+        const int bias_idx = h * D + d;
+        const float val = static_cast<float>(scratch_2d[i]) + bias[bias_idx];
+
+        output_4d[((b * H + h) * S + s) * D + d] = static_cast<T>(val);
+    }
+}
+
+template<typename T>
+void add_bias_split_heads_cuda(const Index n,
+                               const T* scratch_2d,
+                               const float* bias,
+                               T* output_4d,
+                               const int S, const int H, const int D)
+{
+    if (n == 0) return;
+
+    const int block_size = 256;
+    const int total      = static_cast<int>(n);
+    const int grid_size  = (total + block_size - 1) / block_size;
+
+    add_bias_split_heads_kernel<T><<<grid_size, block_size>>>(
+        total, scratch_2d, bias, output_4d, S, H, D);
+}
+
+template void add_bias_split_heads_cuda<float>        (const Index, const float*,         const float*, float*,         const int, const int, const int);
+template void add_bias_split_heads_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, const float*, __nv_bfloat16*, const int, const int, const int);
+
+template<typename T>
 __global__ void merge_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D)
 {
     // [Batch, Heads, Seq, HeadDim] -> [Batch, Seq, Heads, HeadDim]
@@ -1231,6 +1212,116 @@ void attention_masks_cuda(const int batch_size, const int heads_number,
 
 template void attention_masks_cuda<float>        (int, int, int, int, int, const float*,         float*,         float*,         bool);
 template void attention_masks_cuda<__nv_bfloat16>(int, int, int, int, int, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*, bool);
+
+template<typename T>
+void padding_mask_compute_cuda(const int batch_size, const int source_sequence_length,
+                               const int embedding_dimension,
+                               const T* source_input, T* padding_mask)
+{
+    const int num_tokens = batch_size * source_sequence_length;
+    if (num_tokens <= 0) return;
+
+    const int block_size = 256;
+    const int grid_size  = (num_tokens + block_size - 1) / block_size;
+    padding_mask_kernel<T><<<grid_size, block_size>>>(num_tokens, source_input,
+                                                      padding_mask, embedding_dimension);
+}
+
+template void padding_mask_compute_cuda<float>        (int, int, int, const float*,         float*);
+template void padding_mask_compute_cuda<__nv_bfloat16>(int, int, int, const __nv_bfloat16*, __nv_bfloat16*);
+
+// All-masked rows yield uniform 1/Sk (matches legacy mask=-1e9 + cuDNN softmax).
+
+__device__ __forceinline__ float warp_reduce_max(float v)
+{
+    #pragma unroll
+    for (int offset = 16; offset > 0; offset >>= 1)
+        v = fmaxf(v, __shfl_down_sync(0xffffffffu, v, offset));
+    return v;
+}
+
+__device__ __forceinline__ float warp_reduce_sum(float v)
+{
+    #pragma unroll
+    for (int offset = 16; offset > 0; offset >>= 1)
+        v += __shfl_down_sync(0xffffffffu, v, offset);
+    return v;
+}
+
+template<typename T, int WARPS_PER_BLOCK>
+__global__ void mask_softmax_fused_small_kernel(T* __restrict__ logits,
+                                                const T* __restrict__ padding_mask,
+                                                const int n_rows,
+                                                const int Sq, const int Sk, const int H,
+                                                const bool use_causal_mask)
+{
+    const int warp_in_block = threadIdx.x >> 5;
+    const int lane          = threadIdx.x & 31;
+
+    const int row_idx = blockIdx.x * WARPS_PER_BLOCK + warp_in_block;
+    if (row_idx >= n_rows) return;
+
+    const int sq = row_idx % Sq;
+    const int b  = row_idx / (Sq * H);
+
+    T*       row   = logits + static_cast<size_t>(row_idx) * Sk;
+    const T* pmask = padding_mask + static_cast<size_t>(b) * Sk;
+
+    const bool active = (lane < Sk);
+    float v;
+    if (active)
+    {
+        const bool causal = use_causal_mask && (lane > sq);
+        const bool padded = static_cast<float>(pmask[lane]) > 0.5f;
+        v = (causal || padded) ? -1e9f : static_cast<float>(row[lane]);
+    }
+    else
+    {
+        v = -INFINITY;
+    }
+
+    float row_max = warp_reduce_max(v);
+    row_max = __shfl_sync(0xffffffffu, row_max, 0);
+
+    const float ev = active ? expf(v - row_max) : 0.0f;
+    float row_sum = warp_reduce_sum(ev);
+    row_sum = __shfl_sync(0xffffffffu, row_sum, 0);
+
+    if (active)
+    {
+        const float inv_sum = (row_sum > 0.0f) ? (1.0f / row_sum) : 0.0f;
+        row[lane] = static_cast<T>(ev * inv_sum);
+    }
+}
+
+template<typename T>
+void mask_softmax_fused_cuda(const int batch_size, const int heads_number,
+                             const int query_sequence_length,
+                             const int source_sequence_length,
+                             T* attention_weights,
+                             const T* padding_mask,
+                             const bool use_causal_mask)
+{
+    if (batch_size <= 0 || heads_number <= 0
+        || query_sequence_length <= 0 || source_sequence_length <= 0) return;
+
+    if (source_sequence_length > 32) return;
+
+    const int n_rows = batch_size * heads_number * query_sequence_length;
+
+    constexpr int WARPS_PER_BLOCK = 4;
+    constexpr int BLOCK_SIZE = WARPS_PER_BLOCK * 32;
+    const int grid_size = (n_rows + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK;
+
+    mask_softmax_fused_small_kernel<T, WARPS_PER_BLOCK><<<grid_size, BLOCK_SIZE>>>(
+        attention_weights, padding_mask, n_rows,
+        query_sequence_length, source_sequence_length, heads_number,
+        use_causal_mask);
+}
+
+template void mask_softmax_fused_cuda<float>        (int, int, int, int, float*,         const float*,         bool);
+template void mask_softmax_fused_cuda<__nv_bfloat16>(int, int, int, int, __nv_bfloat16*, const __nv_bfloat16*, bool);
+
 
 template<typename T>
 __global__ void max_pooling_3d_forward_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, float* __restrict__ indices, const int S, const int F)

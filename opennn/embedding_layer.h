@@ -74,6 +74,10 @@ public:
 
     void copy_positional_encoding_device();
 
+#ifdef OPENNN_WITH_CUDA
+    void init_cuda(Index batch_size);
+#endif
+
 private:
 
     Memory positional_encoding_device;

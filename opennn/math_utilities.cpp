@@ -46,7 +46,8 @@ void bounding(const TensorView& input,
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu())
     {
-        output.dispatch([&](auto tag) {
+        output.dispatch([&](auto tag) 
+        {
             using T = decltype(tag);
             bounding_cuda<T>(output.size(),
                              to_int(features),
@@ -330,7 +331,7 @@ void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, 
     output.as_vector().noalias() = input_a.as_vector().cwiseProduct(input_b.as_vector());
 }
 
-void sum(const TensorView& input, TensorView& output, type alpha, type beta)
+void reduce_sum(const TensorView& input, TensorView& output, type alpha, type beta)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
@@ -395,6 +396,7 @@ void softmax_backward(const TensorView& softmax_out, TensorView& output_delta)
         return;
     }
 #endif
+
     const MatrixMap y = softmax_out.as_flat_matrix();
     MatrixMap dY = output_delta.as_flat_matrix();
 
@@ -422,10 +424,12 @@ void combination(const TensorView& input,
                   input.data,   input.cuda_dtype(),   to_int(input_columns),
                   output.data,  output.cuda_dtype(),  to_int(output_columns));
 
-        output.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            add_bias_cuda<T>(output.size(), output.as<T>(), biases.as<float>(), to_int(output_columns));
-        });
+        CHECK_CUDNN(cudnnAddTensor(Device::get_cudnn_handle(),
+                                   &one,
+                                   biases.get_descriptor(), biases.data,
+                                   &one,
+                                   output.get_descriptor(), output.data));
+
         return;
     }
 #endif
@@ -443,7 +447,7 @@ void combination_gradient(const TensorView& output_delta,
                           bool accumulate_input_delta)
 {
     multiply(input, true, output_delta, false, weight_gradient);
-    sum(output_delta, bias_gradient);
+    reduce_sum(output_delta, bias_gradient);
 
     if(input_delta.data && input_delta.size() > 0)
     {
@@ -1688,6 +1692,30 @@ void projection(const TensorView& input,
     TensorView input_2d = input.reshape({total_rows, embedding_dim});
     TensorView scratch_2d(transpose_scratch, {total_rows, embedding_dim});
 
+#ifdef OPENNN_WITH_CUDA
+    if(Device::instance().is_gpu())
+    {
+        gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                  to_int(embedding_dim), to_int(total_rows), to_int(embedding_dim),
+                  weights.data,  weights.cuda_dtype(),  to_int(embedding_dim),
+                  input_2d.data, input_2d.cuda_dtype(), to_int(embedding_dim),
+                  scratch_2d.data, scratch_2d.cuda_dtype(), to_int(embedding_dim));
+
+                  
+        scratch_2d.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            add_bias_split_heads_cuda<T>(output.size(),
+                                         scratch_2d.as<T>(),
+                                         biases.as<float>(),
+                                         output.as<T>(),
+                                         to_int(sequence_length),
+                                         to_int(heads_number),
+                                         to_int(head_dimension));
+        });
+        return;
+    }
+#endif
+
     combination(input_2d, weights, biases, scratch_2d);
 
     TensorView scratch_4d(transpose_scratch,
@@ -1721,6 +1749,45 @@ void projection_gradient(const TensorView& head_gradient,
 
     combination_gradient(head_gradient_flat, input_flat, weights,
                          input_delta_flat, weight_gradient, bias_gradient, accumulate);
+}
+
+void attention_softmax(const TensorView& source_input,
+                       TensorView& attention_weights,
+                       const MatrixR& causal_mask,
+                       bool use_causal_mask,
+                       float* padding_mask_scratch)
+{
+    const Index batch_size = source_input.shape[0];
+    const Index source_sequence_length = source_input.shape[1];
+    const Index embedding_dimension = source_input.shape[2];
+    const Index heads_number = attention_weights.shape[1];
+    const Index query_sequence_length = attention_weights.shape[2];
+
+#ifdef OPENNN_WITH_CUDA
+    if(Device::instance().is_gpu() && source_sequence_length <= 32)
+    {
+        const int B = to_int(batch_size), H = to_int(heads_number);
+        const int Sq = to_int(query_sequence_length), Sk = to_int(source_sequence_length);
+        const int E = to_int(embedding_dimension);
+        // padding_mask_scratch is activation-dtype storage on GPU (reinterpret to T*);
+        // the API keeps float* because TensorView::data is type*.
+        attention_weights.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            padding_mask_compute_cuda<T>(B, Sk, E,
+                                         source_input.as<T>(),
+                                         reinterpret_cast<T*>(padding_mask_scratch));
+            mask_softmax_fused_cuda<T>(B, H, Sq, Sk,
+                                       attention_weights.as<T>(),
+                                       reinterpret_cast<const T*>(padding_mask_scratch),
+                                       use_causal_mask);
+        });
+        return;
+    }
+#endif
+
+    attention_masks(source_input, attention_weights, causal_mask,
+                    use_causal_mask, padding_mask_scratch);
+    softmax(attention_weights);
 }
 
 void attention_masks(const TensorView& source_input,

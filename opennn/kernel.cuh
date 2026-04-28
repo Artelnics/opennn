@@ -59,12 +59,6 @@ void cross_entropy_3d_multiple_backward_cuda(const Index, const int, const T*, c
 template<typename T>
 void l1_gradient_cuda(const Index, T*, const T*, const float);
 
-// Bias add — FP32 bias broadcast onto dtype-T output (replaces cudnnAddTensor
-// when bias and output dtypes differ, e.g. FP32 bias + BF16 activation output).
-
-template<typename T>
-void add_bias_cuda(const Index, T*, const float*, const int);
-
 // Addition
 
 template<typename T>
@@ -98,7 +92,16 @@ void unscale_cuda(const Index n, const int features,
 // Embedding
 
 template<typename T>
-void embedding_forward_cuda(const Index n, const float* inputs, const float* weights, const float* positional_encoding, T* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding);
+void embedding_forward_cuda(const Index n, 
+    const float* inputs, 
+    const float* weights, 
+    const float* positional_encoding, 
+    T* outputs, 
+    const int sequence_length, 
+    const int embedding_dimension, 
+    const int vocabulary_size, 
+    const bool scale_embedding, 
+    const bool add_positional_encoding);
 
 template<typename T>
 void embedding_backward_cuda(const Index n, const float* inputs, const T* output_deltas, float* weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding);
@@ -108,6 +111,11 @@ void embedding_backward_cuda(const Index n, const float* inputs, const T* output
 template<typename T>
 void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D);
 
+// Fused add_bias + split_heads: scratch_2d (B*S, H*D) -> output_4d (B, H, S, D) with per-channel bias.
+template<typename T>
+void add_bias_split_heads_cuda(const Index n, const T* scratch_2d, const float* bias,
+                               T* output_4d, const int S, const int H, const int D);
+
 template<typename T>
 void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D);
 
@@ -116,6 +124,21 @@ void attention_masks_cuda(const int batch_size, const int heads_number, const in
                           const int source_sequence_length, const int embedding_dimension,
                           const T* source_input, T* attention_weights, T* padding_mask,
                           const bool use_causal_mask);
+
+template<typename T>
+void padding_mask_compute_cuda(const int batch_size, const int source_sequence_length,
+                               const int embedding_dimension,
+                               const T* source_input, T* padding_mask);
+
+// Warp-shuffle fused mask+softmax. No-op when source_sequence_length > 32.
+template<typename T>
+void mask_softmax_fused_cuda(const int batch_size, const int heads_number,
+                             const int query_sequence_length,
+                             const int source_sequence_length,
+                             T* attention_weights,
+                             const T* padding_mask,
+                             const bool use_causal_mask);
+
 
 // Pooling 3D
 

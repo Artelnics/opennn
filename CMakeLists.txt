@@ -44,6 +44,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 option(OpenNN_DISABLE_CUDA "Disable CUDA even if toolkit is found" OFF)
+option(OPENNN_USE_BF16_ACTIVATIONS "Use BF16 for forward/backward activations on CUDA" OFF)
 
 include(CheckLanguage)
 check_language(CUDA)
@@ -52,6 +53,10 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     enable_language(CUDA)
     find_package(CUDAToolkit REQUIRED)
     set(OPENNN_WITH_CUDA ON CACHE BOOL "")
+
+    if(OPENNN_USE_BF16_ACTIVATIONS)
+        add_compile_definitions(OPENNN_BF16_ACTIVATIONS)
+    endif()
 
     find_library(CUDNN_LIBRARY NAMES cudnn 
                  HINTS ${CUDAToolkit_LIBRARY_DIR} 

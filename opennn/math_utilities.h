@@ -105,6 +105,12 @@ struct DropoutArguments
 
 // Generic
 
+void attention_softmax(const TensorView& source_input,
+                       TensorView& attention_weights,
+                       const MatrixR& causal_mask,
+                       bool use_causal_mask,
+                       float* padding_mask_scratch);
+
 void padding(const TensorView& input, TensorView& output);
 void bounding(const TensorView& input, const TensorView& lower_bounds, const TensorView& upper_bounds, TensorView& output);
 void scale(const TensorView& input,
@@ -123,7 +129,7 @@ void copy(const TensorView& source, TensorView& destination);
 void addition(const TensorView& input_1, const TensorView& input_2, TensorView& output);
 void multiply(const TensorView& input_a, bool transpose_a, const TensorView& input_b, bool transpose_b, TensorView& output, type alpha = 1.0f, type beta = 0.0f);
 void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, TensorView& output);
-void sum(const TensorView& input, TensorView& output, type alpha = 1.0f, type beta = 0.0f);
+void reduce_sum(const TensorView& input, TensorView& output, type alpha = 1.0f, type beta = 0.0f);
 void softmax(TensorView& output);
 void softmax_backward(const TensorView& softmax_out, TensorView& output_delta);
 

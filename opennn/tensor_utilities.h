@@ -85,11 +85,17 @@ struct EnumMap
 };
 
 constexpr cudnnDataType_t     CUDNN_WEIGHT_DTYPE     = CUDNN_DATA_FLOAT;
-constexpr cudnnDataType_t     CUDNN_ACTIVATION_DTYPE = CUDNN_DATA_FLOAT;
 constexpr cudaDataType_t      CUDA_WEIGHT_DTYPE      = CUDA_R_32F;
-constexpr cudaDataType_t      CUDA_ACTIVATION_DTYPE  = CUDA_R_32F;
 constexpr cudaDataType_t      CUDA_REDUCTION_DTYPE   = CUDA_R_32F;
-constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F;
+constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_TF32;
+
+#if defined(OPENNN_BF16_ACTIVATIONS) && defined(OPENNN_WITH_CUDA)
+constexpr cudnnDataType_t     CUDNN_ACTIVATION_DTYPE = CUDNN_DATA_BFLOAT16;
+constexpr cudaDataType_t      CUDA_ACTIVATION_DTYPE  = CUDA_R_16BF;
+#else
+constexpr cudnnDataType_t     CUDNN_ACTIVATION_DTYPE = CUDNN_DATA_FLOAT;
+constexpr cudaDataType_t      CUDA_ACTIVATION_DTYPE  = CUDA_R_32F;
+#endif
 
 inline Index dtype_bytes(cudnnDataType_t t)
 {
@@ -350,7 +356,10 @@ struct Memory
     const uint8_t* device_bytes() const { return device_data; }
 
 #ifdef OPENNN_WITH_CUDA
-    void resize_device(Index n_floats) { resize_device_bytes(n_floats * Index(sizeof(float))); }
+    void resize_device(Index n_floats) 
+    { 
+        resize_device_bytes(n_floats * Index(sizeof(float))); 
+    }
 
     void resize_device_bytes(Index n_bytes)
     {
@@ -369,7 +378,12 @@ struct Memory
 private:
     void free_device()
     {
-        if(device_data) { cudaFree(device_data); device_data = nullptr; allocated_bytes = 0; }
+        if(device_data) 
+        { 
+            cudaFree(device_data); 
+            device_data = nullptr; 
+            allocated_bytes = 0; 
+        }
     }
 #else
 private:
@@ -399,16 +413,21 @@ struct TensorView
 
     bool empty() const noexcept { return shape.empty(); }
 
-    template<typename T>       T* as()       noexcept;
+    template<typename T>  T* as() noexcept;
     template<typename T> const T* as() const noexcept;
 
-    cudaDataType_t cuda_dtype() const noexcept { return cudnn_to_cuda_dtype(dtype); }
+    cudaDataType_t cuda_dtype() const noexcept 
+    { 
+        return cudnn_to_cuda_dtype(dtype); 
+    }
 
     template<typename F>
     void dispatch(F&& fn) const
     {
-        if (dtype == CUDNN_DATA_BFLOAT16) fn(__nv_bfloat16{});
-        else                              fn(float{});
+        if (dtype == CUDNN_DATA_BFLOAT16) 
+            fn(__nv_bfloat16{});
+        else                              
+            fn(float{});
     }
 
     TensorView reshape(const Shape& new_shape) const
