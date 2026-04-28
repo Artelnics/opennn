@@ -268,8 +268,38 @@ void Optimizer::set_names()
         target_variable_names.push_back(current_target_name);
     }
 */
-    neural_network->set_input_variables(input_variables);
-    neural_network->set_output_variables(target_variables);
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+
+    if(time_series_dataset)
+    {
+        const Index input_features_number = Index(input_variables.size());
+        const Index target_features_number = Index(target_variables.size());
+        const Index past_time_steps = time_series_dataset->get_past_time_steps();
+        const bool multi_target = time_series_dataset->get_multi_target();
+        const Index target_repeats = multi_target ? time_series_dataset->get_future_time_steps() : Index(1);
+
+        vector<string> input_variable_names;
+        input_variable_names.reserve(input_features_number * past_time_steps);
+        for(Index i = 0; i < input_features_number; i++)
+            for(Index j = 0; j < past_time_steps; j++)
+                input_variable_names.push_back(input_variables[i].name + "_lag" + to_string(j));
+
+        vector<string> target_variable_names;
+        target_variable_names.reserve(target_features_number * target_repeats);
+        for(Index s = 0; s < target_repeats; s++)
+            for(Index i = 0; i < target_features_number; i++)
+                target_variable_names.push_back(multi_target
+                    ? target_variables[i].name + "_ahead_t" + to_string(s + 1)
+                    : target_variables[i].name + "_ahead");
+
+        neural_network->set_input_names(input_variable_names);
+        neural_network->set_output_names(target_variable_names);
+    }
+    else
+    {
+        neural_network->set_input_variables(input_variables);
+        neural_network->set_output_variables(target_variables);
+    }
 }
 
 
@@ -307,15 +337,12 @@ void Optimizer::set_scaling()
         scaling_layer_descriptives.reserve(past_time_steps * input_variable_descriptives.size());
         scaling_layer_scalers.reserve(past_time_steps * input_variable_scalers.size());
 
-        for(Index t = 0; t < past_time_steps; ++t)
-        {
-            scaling_layer_descriptives.insert(scaling_layer_descriptives.end(),
-                                              input_variable_descriptives.begin(),
-                                              input_variable_descriptives.end());
-            scaling_layer_scalers.insert(scaling_layer_scalers.end(),
-                                         input_variable_scalers.begin(),
-                                         input_variable_scalers.end());
-        }
+        for(Index v = 0; v < Index(input_variable_descriptives.size()); ++v)
+            for(Index t = 0; t < past_time_steps; ++t)
+            {
+                scaling_layer_descriptives.push_back(input_variable_descriptives[v]);
+                scaling_layer_scalers.push_back(input_variable_scalers[v]);
+            }
 
         scaling_layer->set_descriptives(scaling_layer_descriptives);
         scaling_layer->set_scalers(scaling_layer_scalers);

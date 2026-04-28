@@ -947,7 +947,7 @@ vector<Histogram> histograms(const MatrixR& matrix, Index bins_number)
 
     for(Index i = 0; i < columns_number; i++)
     {
-        const VectorR column = VectorR(vector_map(matrix, i));
+        const VectorR column = matrix.col(i);
         histograms[i] = histogram(column, bins_number);
     }
 

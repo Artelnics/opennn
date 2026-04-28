@@ -298,6 +298,9 @@ public:
 
         for(Index i = 0; i < outputs_number; i++)
         {
+            if(i >= Index(descriptives.size())) continue;
+            if(i >= Index(scalers.size())) continue;
+
             const string& scaler = scalers[i];
 
             if(scaler == "None")

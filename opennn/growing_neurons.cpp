@@ -117,9 +117,16 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         for(Index trial = 0; trial < trials_number; trial++)
         {
-            neural_network->set_parameters_random();
-
-            training_results = training_strategy->train();
+            try
+            {
+                neural_network->set_parameters_random();
+                training_results = training_strategy->train();
+            }
+            catch(const exception& e)
+            {
+                if(display) cout << "Trial " << trial + 1 << " skipped: " << e.what() << endl;
+                continue;
+            }
 
             if(display)
                 cout << "Trial: " << trial+1 << endl

@@ -442,6 +442,7 @@ string ModelExpression::get_expression_api(const vector<Variable>& variables) co
         lines.push_back(line);
     }
 
+    vector<string> intermediate_vars;
     for(size_t i = 0; i < lines.size(); i++)
     {
         const size_t equal_pos = lines[i].find('=');
@@ -454,7 +455,7 @@ string ModelExpression::get_expression_api(const vector<Variable>& variables) co
                 continue;
 
             const size_t last = var_def.find_last_not_of(" \t");
-            const string clean_var = var_def.substr(first, (last - first + 1));
+            string clean_var = var_def.substr(first, (last - first + 1));
 
             if(clean_var.find(' ') != string::npos)
             {
@@ -463,9 +464,22 @@ string ModelExpression::get_expression_api(const vector<Variable>& variables) co
 
                 for(size_t j = 0; j < lines.size(); j++)
                     replace_all_appearances(lines[j], clean_var, fixed_var);
+
+                clean_var = fixed_var;
             }
+
+            const bool already_dollar = !clean_var.empty() && clean_var[0] == '$';
+            if(!already_dollar)
+                intermediate_vars.push_back(clean_var);
         }
     }
+
+    sort(intermediate_vars.begin(), intermediate_vars.end(),
+         [](const string& a, const string& b){ return a.length() > b.length(); });
+
+    for(const string& var_name : intermediate_vars)
+        for(size_t j = 0; j < lines.size(); j++)
+            replace_all_word_appearances(lines[j], var_name, "$" + var_name);
 
     for(const string& l : lines)
         buffer << l << "\n";
@@ -892,10 +906,12 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
             else
                 desc_idx = i;
 
-            if(desc_idx >= 0 && desc_idx < (int)inputs_descriptives.size())
+            int lookup_idx = is_scaling_3d ? int(i) : desc_idx;
+
+            if(lookup_idx >= 0 && lookup_idx < (int)inputs_descriptives.size())
             {
-                min_value = inputs_descriptives[desc_idx].minimum;
-                max_value = inputs_descriptives[desc_idx].maximum;
+                min_value = inputs_descriptives[lookup_idx].minimum;
+                max_value = inputs_descriptives[lookup_idx].maximum;
             }
             else
             {
@@ -962,7 +978,7 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
                << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">" << endl;
 
         for(Index i = 0; i < outputs_number; i++)
-            buffer << "<option value=\"" << output_names[i] << "\">" << output_names[i] << "</option>" << endl;
+            buffer << "<option value=\"" << fixes_output_names[i] << "\">" << output_names[i] << "</option>" << endl;
 
         buffer << "</select>" << endl
                << "</td>" << endl
@@ -1033,7 +1049,11 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
     buffer << "\n" << "\t" << "var outputs = calculate_outputs(inputs); " << endl;
 
     if(outputs_number > maximum_output_feature_numbers)
+    {
+        for(Index i = 0; i < outputs_number; i++)
+            buffer << "\t" << "document.getElementById(\"" << fixes_output_names[i] << "\").value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
         buffer << "\t" << "updateSelectedCategory();" << endl;
+    }
     else
         for(Index i = 0; i < outputs_number; i++)
             buffer << "\t" << "var " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");" << endl

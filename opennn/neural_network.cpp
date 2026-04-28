@@ -256,7 +256,11 @@ void NeuralNetwork::set(const filesystem::path& file_name)
 
 void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
 {
-    if(input_variables.empty() && !new_input_names.empty())
+    bool any_categorical = false;
+    for(const Variable& v : input_variables)
+        if(v.is_categorical()) { any_categorical = true; break; }
+
+    if(!any_categorical && input_variables.size() != new_input_names.size())
         input_variables.resize(new_input_names.size());
 
     Index j = 0;
@@ -281,7 +285,11 @@ void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
 
 void NeuralNetwork::set_output_names(const vector<string>& new_output_namess)
 {
-    if(output_variables.empty() && !new_output_namess.empty())
+    bool any_categorical = false;
+    for(const Variable& v : output_variables)
+        if(v.is_categorical()) { any_categorical = true; break; }
+
+    if(!any_categorical && output_variables.size() != new_output_namess.size())
         output_variables.resize(new_output_namess.size());
 
     Index j = 0;
@@ -1344,10 +1352,6 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
     const Index past_time_steps = inputs_3d.dimension(1);
     const Index features_number = inputs_3d.dimension(2);
 
-    Tensor2 last_time_step_inputs(batch_size, features_number);
-
-    last_time_step_inputs = inputs_3d.chip(past_time_steps - 1, 1);
-
     ofstream file(file_name);
 
     if(!file.is_open())
@@ -1370,8 +1374,9 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
 
     for(Index i = 0; i < batch_size; ++i)
     {
-        for(Index j = 0; j < features_number; ++j)
-            file << last_time_step_inputs(i, j) << ";";
+        for(Index v = 0; v < features_number; ++v)
+            for(Index t = 0; t < past_time_steps; ++t)
+                file << inputs_3d(i, t, v) << ";";
 
         for(Index j = 0; j < outputs_number; ++j)
         {

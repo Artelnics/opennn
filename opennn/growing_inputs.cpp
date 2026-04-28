@@ -196,11 +196,38 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             const Index past_time_steps = time_series_dataset->get_past_time_steps();
             neural_network->set_input_shape({ past_time_steps, input_features_number });
             dataset->set_shape("Input", { past_time_steps, input_features_number });
+
+            if(neural_network->has("Scaling3d"))
+            {
+                Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(neural_network->get_first("Scaling3d"));
+                const vector<Descriptives> base_descriptives = dataset->calculate_feature_descriptives("Input");
+                const vector<string> base_scalers = dataset->get_feature_scalers("Input");
+
+                vector<Descriptives> expanded_descriptives;
+                vector<string> expanded_scalers;
+                expanded_descriptives.reserve(input_features_number * past_time_steps);
+                expanded_scalers.reserve(input_features_number * past_time_steps);
+                for(Index ii = 0; ii < input_features_number; ii++)
+                    for(Index jj = 0; jj < past_time_steps; jj++)
+                    {
+                        expanded_descriptives.push_back(base_descriptives[ii]);
+                        expanded_scalers.push_back(base_scalers[ii]);
+                    }
+                scaling_layer->set_descriptives(expanded_descriptives);
+                scaling_layer->set_scalers(expanded_scalers);
+            }
         }
         else
         {
             neural_network->set_input_shape({ input_features_number });
             dataset->set_shape("Input", { input_features_number });
+
+            if(neural_network->has("Scaling2d"))
+            {
+                Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(neural_network->get_first("Scaling2d"));
+                scaling_layer->set_descriptives(dataset->calculate_feature_descriptives("Input"));
+                scaling_layer->set_scalers(dataset->get_feature_scalers("Input"));
+            }
         }
 
         if(display)
@@ -219,8 +246,16 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
         for(Index j = 0; j < trials_number; j++)
         {
-            neural_network->set_parameters_random();
-            training_results = training_strategy->train();
+            try
+            {
+                neural_network->set_parameters_random();
+                training_results = training_strategy->train();
+            }
+            catch(const exception& e)
+            {
+                if(display) cout << "Trial " << j + 1 << " skipped: " << e.what() << endl;
+                continue;
+            }
 
             if(training_results.get_validation_error() < minimum_validation_error)
             {
@@ -364,8 +399,21 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     else if(neural_network->has("Scaling3d"))
     {
         Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(neural_network->get_first("Scaling3d"));
-        scaling_layer->set_descriptives(input_variable_descriptives);
-        scaling_layer->set_scalers(input_variable_scalers);
+        const Index past_time_steps = time_series_dataset->get_past_time_steps();
+        const Index inputs_count = Index(input_variable_descriptives.size());
+
+        vector<Descriptives> expanded_descriptives;
+        vector<string> expanded_scalers;
+        expanded_descriptives.reserve(inputs_count * past_time_steps);
+        expanded_scalers.reserve(inputs_count * past_time_steps);
+        for(Index i = 0; i < inputs_count; i++)
+            for(Index j = 0; j < past_time_steps; j++)
+            {
+                expanded_descriptives.push_back(input_variable_descriptives[i]);
+                expanded_scalers.push_back(input_variable_scalers[i]);
+            }
+        scaling_layer->set_descriptives(expanded_descriptives);
+        scaling_layer->set_scalers(expanded_scalers);
     }
 
     neural_network->set_parameters(input_selection_results.optimal_parameters);

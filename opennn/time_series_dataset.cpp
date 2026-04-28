@@ -333,66 +333,51 @@ void TimeSeriesDataset::impute_missing_values_unuse()
 
 void TimeSeriesDataset::impute_missing_values_interpolate()
 {
-    const vector<Index> used_sample_indices = get_used_sample_indices();
-    const vector<Index> used_feature_indices = get_used_feature_indices();
-    const vector<Index> input_feature_indices = get_feature_indices("Input");
-    const vector<Index> target_feature_indices = get_feature_indices("Target");
-
-    const VectorR means = mean(data, used_sample_indices, used_feature_indices);
-
-    const Index used_samples_number = used_sample_indices.size();
+    const Index samples_number = get_samples_number();
+    const Index features_number_total = get_features_number();
 
     #pragma omp parallel for
-    for(Index feature_index = 0; feature_index < get_features_number(); feature_index++)
+    for(Index feature_index = 0; feature_index < features_number_total; feature_index++)
     {
-        for(Index i = 0; i < used_samples_number; i++)
+        for(Index i = 0; i < samples_number; i++)
         {
-            const Index current_sample_index = used_sample_indices[i];
-
-            if(!isnan(data(current_sample_index, feature_index)))
+            if(!isnan(data(i, feature_index)))
                 continue;
 
-            Index prev_index = i-1;
+            Index prev_index = i - 1;
             type prev_value = NAN;
             while(prev_index >= 0 && isnan(prev_value))
             {
-                prev_value = data(used_sample_indices[prev_index], feature_index);
+                prev_value = data(prev_index, feature_index);
                 if(isnan(prev_value)) prev_index--;
             }
 
-            Index start_missing = i;
             Index end_missing = i;
+            while(end_missing < samples_number && isnan(data(end_missing, feature_index)))
+                end_missing++;
 
-            while(end_missing < used_samples_number && isnan(data(used_sample_indices[end_missing], feature_index)))            
-                end_missing++;            
-
-            const Index n_missing = end_missing - start_missing;
+            const Index n_missing = end_missing - i;
 
             type next_value = NAN;
-
-            if(end_missing < used_samples_number)
-                next_value = data(used_sample_indices[end_missing], feature_index);
+            if(end_missing < samples_number)
+                next_value = data(end_missing, feature_index);
 
             for(Index k = 0; k < n_missing; ++k)
             {
-                const Index sample_k = used_sample_indices[start_missing + k];
-
-                if(isnan(prev_value))
-                    data(sample_k, feature_index) = type(next_value);
+                if(isnan(prev_value) && isnan(next_value))
+                    break;
+                else if(isnan(prev_value))
+                    data(i + k, feature_index) = next_value;
                 else if(isnan(next_value))
-                    data(sample_k, feature_index) = type(prev_value);
-                else if(!isnan(prev_value) && !isnan(next_value))
+                    data(i + k, feature_index) = prev_value;
+                else
                 {
                     const type fraction = type(k + 1) / type(n_missing + 1);
-                    const type value_interpolated = prev_value + (next_value - prev_value) * fraction;
-
-                    data(sample_k, feature_index) = value_interpolated;
+                    data(i + k, feature_index) = prev_value + (next_value - prev_value) * fraction;
                 }
-                else
-                    throw runtime_error("The last " + to_string(sample_k-i+1) + " samples are all missing, delete them.\n");
             }
 
-            i = end_missing;
+            i = end_missing - 1;
         }
     }
 }
