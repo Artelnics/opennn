@@ -646,7 +646,11 @@ type TestingAnalysis::calculate_Minkowski_error(const MatrixR& targets,
 
     if(predictions_number == type(0)) return type(0);
 
-    const type sum = (outputs - targets).array().abs().pow(minkowski_parameter).sum();
+    const type p = minkowski_parameter;
+
+    const type sum = (outputs - targets).array().unaryExpr([p](type e) {
+                                                       return pow(abs(e) + EPSILON, p);
+                                                   }).sum();
 
     return pow(sum / predictions_number, type(1) / minkowski_parameter);
 }

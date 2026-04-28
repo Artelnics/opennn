@@ -53,7 +53,9 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
     const MatrixR targets = dataset->get_feature_data("Target");
     const Index rows = targets.rows() - 1;
 
-    normalization_coefficient = (targets.topRows(rows) - targets.bottomRows(rows)).squaredNorm();
+    const type raw = (targets.topRows(rows) - targets.bottomRows(rows)).squaredNorm();
+
+    normalization_coefficient = (raw < EPSILON) ? type(1) : raw;
 }
 
 

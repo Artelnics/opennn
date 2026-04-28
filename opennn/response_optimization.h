@@ -14,6 +14,7 @@
 #include "pch.h"
 #include "statistics.h"
 #include "variable.h"
+#include "formula_expression.h"
 
 namespace opennn
 {
@@ -34,6 +35,19 @@ public:
 
         Condition(ConditionType new_type = ConditionType::None, type low = 0.0, type up = 0.0)
             : condition(new_type), low_bound(low), up_bound(up) {}
+    };
+
+    struct FormulaConstraint
+    {
+        string expression;
+        function<type(const VectorR&, const VectorR&)> callback;
+        bool uses_callback = false;
+
+        ConditionType op = ConditionType::None;
+        type low_bound = 0;
+        type up_bound = 0;
+
+        CompiledFormula compiled;
     };
 
     struct Domain
@@ -88,6 +102,19 @@ public:
 
     void set_condition(const string& name, const ConditionType condition = ConditionType::None, type low = 0.0, type up = 0.0);
 
+    void set_formula_constraint(const string& expression,
+                                ConditionType op,
+                                type low = 0, type up = 0);
+
+    void set_formula_constraint(function<type(const VectorR&, const VectorR&)> callback,
+                                ConditionType op,
+                                type low = 0, type up = 0);
+
+    void clear_formula_constraints();
+
+    void set_min_feasible_ratio(type new_ratio);
+    void set_max_oversample_factor(Index new_factor);
+
     void set_fixed_history(const Tensor3& history);
 
     void set_iterations(const int iterations);
@@ -106,7 +133,7 @@ public:
 
     Domain get_original_domain(const string role) const;
 
-    MatrixR calculate_random_inputs(const Domain& input_domain) const;
+    MatrixR calculate_random_inputs(const Domain& input_domain, Index evaluations_count = -1) const;
 
     Tensor3 combine_input(const MatrixR& present_random_values) const;
 
@@ -114,6 +141,9 @@ public:
 
     pair<MatrixR, MatrixR> filter_feasible_points(const MatrixR& inputs,
                                                   const MatrixR& outputs,
+                                                  const Domain& output_domain) const;
+
+    pair<MatrixR, MatrixR> sample_feasible_points(const Domain& input_domain,
                                                   const Domain& output_domain) const;
 
     pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR& feasible_inputs,
@@ -138,9 +168,28 @@ public:
 
 private:
 
+    vector<NamedColumn> build_input_columns_for_formula() const;
+    vector<NamedColumn> build_output_columns_for_formula() const;
+
+    void apply_affine_input_swap(MatrixR& random_inputs,
+                                 const FormulaConstraint& formula_constraint,
+                                 const Domain& input_domain) const;
+
+    bool row_satisfies_formula_constraints(const VectorR& input_row,
+                                           const VectorR& output_row) const;
+
+    pair<MatrixR, MatrixR> generate_feasible_points(const Domain& input_domain,
+                                       const Domain& output_domain,
+                                       Index evaluations_count) const;
+
     NeuralNetwork* neural_network = nullptr;
 
     map<string, Condition> conditions;
+
+    vector<FormulaConstraint> formula_constraints;
+
+    type min_feasible_ratio = type(0.01);
+    Index max_oversample_factor = 8;
 
     Index evaluations_number = 2000;
 

@@ -63,6 +63,7 @@ public:
    void set_loss_goal(const type);
    void set_accuracy_goal(const type);
    void set_maximum_time(const type);
+   void set_gradient_clip_norm(const type);
 
    // Training
 
@@ -87,6 +88,8 @@ private:
    type beta_1 = type(0.9);
 
    type beta_2 = type(0.999);
+
+   type gradient_clip_norm = type(1.0);
 
     // Stopping criteria
 

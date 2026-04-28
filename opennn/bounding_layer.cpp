@@ -190,14 +190,21 @@ string Bounding::get_expression(const vector<string>& new_input_names, const vec
                                             : new_output_names;
 
 
-    if (bounding_method == BoundingMethod::NoBounding)
-        return string();
-
     ostringstream buffer;
 
     buffer.precision(10);
 
     const Shape output_shape = get_output_shape();
+
+    // Even in NoBounding mode, emit passthrough assignments so that downstream
+    // exporters (ModelExpression::save_python / save_c / save_javascript) can
+    // bind the target variable names to the previous layer's outputs.
+    if (bounding_method == BoundingMethod::NoBounding)
+    {
+        for(Index i = 0; i < output_shape[0]; i++)
+            buffer << output_names[i] << " = " << input_names[i] << "\n";
+        return buffer.str();
+    }
 
     for(Index i = 0; i < output_shape[0]; i++)
         buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << input_names[i] << ")\n"

@@ -183,10 +183,20 @@ string ModelExpression::get_expression_c(const vector<Variable>& variables) cons
             const size_t last = var_def.find_last_not_of(" \t");
             const string clean_var = var_def.substr(first, (last - first + 1));
 
-            if(clean_var.find(' ') != string::npos)
+            bool needs_fix = false;
+            for(char c : clean_var)
+                if(!isalnum(static_cast<unsigned char>(c)) && c != '_' && c != '$')
+                {
+                    needs_fix = true;
+                    break;
+                }
+
+            if(needs_fix)
             {
                 string fixed_var = clean_var;
-                replace(fixed_var.begin(), fixed_var.end(), ' ', '_');
+                for(char& c : fixed_var)
+                    if(!isalnum(static_cast<unsigned char>(c)) && c != '_' && c != '$')
+                        c = '_';
 
                 for(size_t j = 0; j < lines.size(); j++)
                     replace_all_appearances(lines[j], clean_var, fixed_var);
@@ -457,10 +467,20 @@ string ModelExpression::get_expression_api(const vector<Variable>& variables) co
             const size_t last = var_def.find_last_not_of(" \t");
             string clean_var = var_def.substr(first, (last - first + 1));
 
-            if(clean_var.find(' ') != string::npos)
+            bool needs_fix = false;
+            for(char c : clean_var)
+                if(!isalnum(static_cast<unsigned char>(c)) && c != '_' && c != '$')
+                {
+                    needs_fix = true;
+                    break;
+                }
+
+            if(needs_fix)
             {
                 string fixed_var = clean_var;
-                replace(fixed_var.begin(), fixed_var.end(), ' ', '_');
+                for(char& c : fixed_var)
+                    if(!isalnum(static_cast<unsigned char>(c)) && c != '_' && c != '$')
+                        c = '_';
 
                 for(size_t j = 0; j < lines.size(); j++)
                     replace_all_appearances(lines[j], clean_var, fixed_var);
@@ -813,10 +833,20 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
             const size_t last = var_def.find_last_not_of(" \t");
             const string clean_var = var_def.substr(first, (last - first + 1));
 
-            if(clean_var.find(' ') != string::npos)
+            bool needs_fix = false;
+            for(char c : clean_var)
+                if(!isalnum(static_cast<unsigned char>(c)) && c != '_' && c != '$')
+                {
+                    needs_fix = true;
+                    break;
+                }
+
+            if(needs_fix)
             {
                 string fixed_var = clean_var;
-                replace(fixed_var.begin(), fixed_var.end(), ' ', '_');
+                for(char& c : fixed_var)
+                    if(!isalnum(static_cast<unsigned char>(c)) && c != '_' && c != '$')
+                        c = '_';
 
                 for(size_t j = 0; j < lines.size(); j++)
                     replace_all_appearances(lines[j], clean_var, fixed_var);
@@ -925,13 +955,13 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
 
             if(min_value==0 && max_value==0)
             {
-                buffer << "<input type=\"range\" id=\"" << fixes_feature_names[i] << "\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "_text')\" />" << endl;
-                buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_feature_names[i] << "_text\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"any\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "')\">" << endl;
+                buffer << "<input type=\"range\" id=\"" << fixes_feature_names[i] << "\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" oninput=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "_text'); neuralNetwork();\" />" << endl;
+                buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_feature_names[i] << "_text\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"any\" oninput=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "'); neuralNetwork();\">" << endl;
             }
             else
             {
-                buffer << "<input type=\"range\" id=\"" << fixes_feature_names[i] << "\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "_text')\" />" << endl;
-                buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_feature_names[i] << "_text\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"any\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "')\">" << endl;
+                buffer << "<input type=\"range\" id=\"" << fixes_feature_names[i] << "\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" oninput=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "_text'); neuralNetwork();\" />" << endl;
+                buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_feature_names[i] << "_text\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"any\" oninput=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "'); neuralNetwork();\">" << endl;
             }
 
             buffer << "</td>" << endl;
@@ -946,8 +976,8 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
                    << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << input_names[i] << " </td>" << endl
                    << "<td class=\"neural-cell\">" << endl
-                   << "<input type=\"range\" id=\"" << fixes_feature_names[i] << "\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "_text')\" />" << endl
-                   << "<input type=\"number\" id=\"" << fixes_feature_names[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"any\" onchange=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "')\">" << endl
+                   << "<input type=\"range\" id=\"" << fixes_feature_names[i] << "\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" oninput=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "_text'); neuralNetwork();\" />" << endl
+                   << "<input type=\"number\" id=\"" << fixes_feature_names[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"any\" oninput=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "'); neuralNetwork();\">" << endl
                    << "</td>" << endl
                    << "</tr>\n" << endl;
     }
@@ -1226,10 +1256,20 @@ string ModelExpression::get_expression_python(const vector<Variable>& variables)
             const size_t last = var_def.find_last_not_of(" \t");
             const string clean_var = var_def.substr(first, (last - first + 1));
 
-            if(clean_var.find(' ') != string::npos)
+            bool needs_fix = false;
+            for(char c : clean_var)
+                if(!isalnum(static_cast<unsigned char>(c)) && c != '_' && c != '$')
+                {
+                    needs_fix = true;
+                    break;
+                }
+
+            if(needs_fix)
             {
                 string fixed_var = clean_var;
-                replace(fixed_var.begin(), fixed_var.end(), ' ', '_');
+                for(char& c : fixed_var)
+                    if(!isalnum(static_cast<unsigned char>(c)) && c != '_' && c != '$')
+                        c = '_';
 
                 for(size_t j = 0; j < lines.size(); j++)
                     replace_all_appearances(lines[j], clean_var, fixed_var);

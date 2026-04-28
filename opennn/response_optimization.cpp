@@ -39,6 +39,117 @@ void ResponseOptimization::set_condition(const string& name, const ConditionType
 }
 
 
+vector<NamedColumn> ResponseOptimization::build_input_columns_for_formula() const
+{
+    const vector<Variable>& input_variables = neural_network->get_input_variables();
+
+    vector<NamedColumn> input_columns;
+    input_columns.reserve(input_variables.size());
+
+    Index input_column = 0;
+
+    for (const Variable& variable : input_variables)
+    {
+        const Index dimension = variable.is_categorical() ? variable.get_categories_number() : 1;
+        const bool is_past = (get_condition(variable.name).condition == ConditionType::Past);
+
+        if (variable.role != "Input" || is_past)
+            continue;
+
+        if (dimension == 1)
+            input_columns.push_back({variable.name, input_column});
+
+        input_column += dimension;
+    }
+
+    return input_columns;
+}
+
+
+vector<NamedColumn> ResponseOptimization::build_output_columns_for_formula() const
+{
+    const vector<Variable>& output_variables = neural_network->get_output_variables();
+
+    vector<NamedColumn> output_columns;
+    output_columns.reserve(output_variables.size());
+
+    Index output_column = 0;
+
+    for (const Variable& variable : output_variables)
+    {
+        const Index dimension = variable.is_categorical() ? variable.get_categories_number() : 1;
+
+        if (dimension == 1)
+            output_columns.push_back({variable.name, output_column});
+
+        output_column += dimension;
+    }
+
+    return output_columns;
+}
+
+
+void ResponseOptimization::set_formula_constraint(const string& expression,
+                                                  const ConditionType op,
+                                                  const type low,
+                                                  const type up)
+{
+    if (!neural_network)
+        throw runtime_error("ResponseOptimization: set_formula_constraint requires a neural network to be set first");
+
+    FormulaConstraint formula_constraint;
+    formula_constraint.expression = expression;
+    formula_constraint.op = op;
+    formula_constraint.low_bound = low;
+    formula_constraint.up_bound = up;
+    formula_constraint.uses_callback = false;
+
+    const vector<NamedColumn> input_columns = build_input_columns_for_formula();
+    const vector<NamedColumn> output_columns = build_output_columns_for_formula();
+
+    formula_constraint.compiled = compile_formula(expression, input_columns, output_columns);
+
+    formula_constraints.push_back(move(formula_constraint));
+}
+
+
+void ResponseOptimization::set_formula_constraint(function<type(const VectorR&, const VectorR&)> callback,
+                                                  const ConditionType op,
+                                                  const type low,
+                                                  const type up)
+{
+    FormulaConstraint formula_constraint;
+    formula_constraint.callback = move(callback);
+    formula_constraint.uses_callback = true;
+    formula_constraint.op = op;
+    formula_constraint.low_bound = low;
+    formula_constraint.up_bound = up;
+
+    formula_constraint.compiled.shape = FormulaShape::Nonlinear;
+    formula_constraint.compiled.scope = FormulaScope::Mixed;
+
+    formula_constraints.push_back(move(formula_constraint));
+}
+
+
+void ResponseOptimization::clear_formula_constraints()
+{
+    formula_constraints.clear();
+}
+
+
+void ResponseOptimization::set_min_feasible_ratio(type new_ratio)
+{
+    min_feasible_ratio = new_ratio;
+}
+
+
+void ResponseOptimization::set_max_oversample_factor(Index new_factor)
+{
+    max_oversample_factor = new_factor;
+}
+
+
 void ResponseOptimization::clear_conditions()
 {
     conditions.clear();
@@ -373,7 +484,7 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
 }
 
 
-MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain) const
+MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain, const Index evaluations_count) const
 {
     const auto [variables, descriptives] = get_variables_and_descriptives("Input");
 
@@ -381,7 +492,9 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
     const Index inputs_features_number = get_features_number(variables);
 
-    MatrixR random_inputs(evaluations_number, inputs_features_number);
+    const Index effective_evaluations = (evaluations_count > 0) ? evaluations_count : evaluations_number;
+
+    MatrixR random_inputs(effective_evaluations, inputs_features_number);
     set_random_uniform(random_inputs, 0, 1);
 
     Index current_feature_index = 0;
@@ -406,29 +519,187 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
         }
         else
         {
-            random_inputs.block(0, current_feature_index, evaluations_number, categories_number).setZero();
+            random_inputs.block(0, current_feature_index, effective_evaluations, categories_number).setZero();
 
             vector<Index> allowed_categories;
+            allowed_categories.reserve(categories_number);
 
             for(Index i = 0; i < categories_number; ++i)
                 if(input_domain.superior_frontier(current_feature_index + i) > 0.5)
                     allowed_categories.push_back(i);
 
-            for(Index i = 0; i < evaluations_number; ++i)
+            for(Index i = 0; i < effective_evaluations; ++i)
                 random_inputs(i, current_feature_index + allowed_categories[random_integer(0, allowed_categories.size()-1)]) = 1.0;
 
             current_feature_index += categories_number;
         }
     }
 
+    for (const FormulaConstraint& formula_constraint : formula_constraints)
+    {
+        if (formula_constraint.uses_callback)
+            continue;
+        if (formula_constraint.compiled.shape != FormulaShape::Affine)
+            continue;
+        if (formula_constraint.compiled.scope != FormulaScope::InputsOnly)
+            continue;
+
+        apply_affine_input_swap(random_inputs, formula_constraint, input_domain);
+    }
+
     return random_inputs;
+}
+
+
+void ResponseOptimization::apply_affine_input_swap(MatrixR& random_inputs,
+                                                   const FormulaConstraint& formula_constraint,
+                                                   const Domain& input_domain) const
+{
+    const vector<pair<Index, type>>& affine_input_terms = formula_constraint.compiled.affine_input_terms;
+
+    if (affine_input_terms.empty())
+        return;
+
+    const type affine_constant = formula_constraint.compiled.affine_constant;
+    const type low_bound = formula_constraint.low_bound;
+    const type up_bound = formula_constraint.up_bound;
+
+    const Index rows_number = random_inputs.rows();
+    const Index terms_number = static_cast<Index>(affine_input_terms.size());
+
+    for (Index row_index = 0; row_index < rows_number; ++row_index)
+    {
+        // Evaluate the current constraint value: f = sum(ai * xi) + c.
+
+        type weighted_sum = 0;
+
+        for (const auto& [column, coefficient] : affine_input_terms)
+            weighted_sum += coefficient * random_inputs(row_index, column);
+
+        const type current_value = weighted_sum + affine_constant;
+
+        // Determine the correction target based on the condition type.
+
+        type target = current_value;
+
+        switch (formula_constraint.op)
+        {
+        case ConditionType::EqualTo:
+            target = low_bound;
+            break;
+
+        case ConditionType::Between:
+            if (current_value >= low_bound && current_value <= up_bound)
+                continue;
+            target = (current_value < low_bound) ? low_bound : up_bound;
+            break;
+
+        case ConditionType::GreaterEqualTo:
+        case ConditionType::GreaterThan:
+            if (current_value >= low_bound)
+                continue;
+            target = low_bound;
+            break;
+
+        case ConditionType::LessEqualTo:
+        case ConditionType::LessThan:
+            if (current_value <= up_bound)
+                continue;
+            target = up_bound;
+            break;
+
+        default:
+            continue;
+        }
+
+        // Iterative redistribution with clamping.
+        //
+        // Distribute the correction across variables. When a variable hits
+        // its domain bound (saturates), compute the residual that couldn't
+        // be absorbed and redistribute it among the remaining active variables.
+        // Repeat until the constraint is satisfied or all variables are frozen.
+
+        vector<bool> frozen(terms_number, false);
+        type residual_error = current_value - target;
+
+        const Index max_redistribution_passes = terms_number;
+
+        for (Index pass = 0; pass < max_redistribution_passes && abs(residual_error) > EPSILON; ++pass)
+        {
+            // Recompute active weighted sum and active sum of squared coefficients.
+
+            type active_weighted_sum = 0;
+            type active_sum_coefficients_squared = 0;
+
+            for (Index term_index = 0; term_index < terms_number; ++term_index)
+            {
+                if (frozen[term_index])
+                    continue;
+
+                const Index column = affine_input_terms[term_index].first;
+                const type coefficient = affine_input_terms[term_index].second;
+
+                active_weighted_sum += coefficient * random_inputs(row_index, column);
+                active_sum_coefficients_squared += coefficient * coefficient;
+            }
+
+            if (active_sum_coefficients_squared < EPSILON)
+                break;
+
+            const type target_minus_constant = target - affine_constant;
+
+            const bool use_proportional = abs(active_weighted_sum) > EPSILON
+                && (active_weighted_sum > 0) == (target_minus_constant > 0);
+
+            type absorbed_correction = 0;
+            bool any_clamped = false;
+
+            for (Index term_index = 0; term_index < terms_number; ++term_index)
+            {
+                if (frozen[term_index])
+                    continue;
+
+                const Index column = affine_input_terms[term_index].first;
+                const type coefficient = affine_input_terms[term_index].second;
+
+                const type delta = use_proportional
+                    ? -residual_error * random_inputs(row_index, column) / active_weighted_sum
+                    : -residual_error * coefficient / active_sum_coefficients_squared;
+
+                const type old_value = random_inputs(row_index, column);
+                const type corrected_value = old_value + delta;
+
+                const type clamped_value = max(input_domain.inferior_frontier(column),
+                                               min(input_domain.superior_frontier(column),
+                                                   corrected_value));
+
+                random_inputs(row_index, column) = clamped_value;
+
+                // Track what this variable actually absorbed (in constraint-space).
+
+                absorbed_correction += coefficient * (clamped_value - old_value);
+
+                if (clamped_value != corrected_value)
+                {
+                    frozen[term_index] = true;
+                    any_clamped = true;
+                }
+            }
+
+            // The residual is what's left after the absorbed correction.
+            // absorbed_correction should ideally equal -residual_error.
+
+            residual_error += absorbed_correction;
+
+            if (!any_clamped)
+                break;
+        }
+    }
 }
 
 
 Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 {
-    // Get all 8 input features
-
     const vector<Variable> input_variables = neural_network->get_input_variables();
     const Index batch_size = input_control.rows(); // 1000
     const Shape input_shape = neural_network->get_input_shape();
@@ -439,10 +710,8 @@ Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 
     input_combined.device(get_device()) = fixed_history.broadcast(array_3(batch_size, 1, 1));
 
-    // Step 2: Paste the 5 "Line on Top" candidate values
-    // into the last lag (current time step)
-    Index feature_cursor = 0;      // Moves 0 to 7 (8 total)
-    Index candidate_col_cursor = 0; // Moves 0 to 4 (5 total)
+    Index feature_cursor = 0;    
+    Index candidate_col_cursor = 0; 
 
     for (const Variable& variable : input_variables)
     {
@@ -525,21 +794,71 @@ void ResponseOptimization::Domain::reshape(const type zoom_factor,
 }
 
 
-pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const MatrixR& inputs, const MatrixR& outputs, const Domain& output_domain) const
+bool ResponseOptimization::row_satisfies_formula_constraints(const VectorR& input_row,
+                                                             const VectorR& output_row) const
+{
+    for (const FormulaConstraint& formula_constraint : formula_constraints)
+    {
+        const type evaluated_value = formula_constraint.uses_callback
+            ? formula_constraint.callback(input_row, output_row)
+            : formula_constraint.compiled.evaluate(input_row, output_row);
+
+        const type low_bound = formula_constraint.low_bound;
+        const type up_bound = formula_constraint.up_bound;
+
+        bool constraint_satisfied = true;
+
+        switch (formula_constraint.op)
+        {
+        case ConditionType::EqualTo:
+            constraint_satisfied = abs(evaluated_value - low_bound)
+                <= max(EPSILON, abs(low_bound) * type(1e-4));
+            break;
+        case ConditionType::Between:
+            constraint_satisfied = (evaluated_value >= low_bound) && (evaluated_value <= up_bound);
+            break;
+        case ConditionType::GreaterEqualTo:
+            constraint_satisfied = evaluated_value >= low_bound;
+            break;
+        case ConditionType::LessEqualTo:
+            constraint_satisfied = evaluated_value <= up_bound;
+            break;
+        case ConditionType::GreaterThan:
+            constraint_satisfied = evaluated_value > low_bound;
+            break;
+        case ConditionType::LessThan:
+            constraint_satisfied = evaluated_value < up_bound;
+            break;
+        default:
+            constraint_satisfied = true;
+            break;
+        }
+
+        if (!constraint_satisfied)
+            return false;
+    }
+
+    return true;
+}
+
+
+pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const MatrixR& inputs,
+                                                                    const MatrixR& outputs,
+                                                                    const Domain& output_domain) const
 {
     // Iterate ALL output variables so col_index stays aligned with outputs columns (unfiltered).
     // domain_index advances only for non-Past variables, matching how output_domain was built.
-    const vector<Variable>& all_target_vars = neural_network->get_output_variables();
-    const Index rows_count = outputs.rows();
+    const vector<Variable>& all_target_variables = neural_network->get_output_variables();
+    const Index rows_number = outputs.rows();
 
-    vector<Index> feasible_indices(rows_count);
+    vector<Index> feasible_indices(rows_number);
     iota(feasible_indices.begin(), feasible_indices.end(), 0);
 
     Index domain_index = 0;
 
-    for (Index col_index = 0; col_index < static_cast<Index>(all_target_vars.size()); ++col_index)
+    for (Index column_index = 0; column_index < static_cast<Index>(all_target_variables.size()); ++column_index)
     {
-        const Condition current_condition = get_condition(all_target_vars[col_index].name);
+        const Condition current_condition = get_condition(all_target_variables[column_index].name);
 
         if (current_condition.condition == ConditionType::Past)
             continue; // not in domain — skip without advancing domain_index
@@ -549,10 +868,10 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
               current_condition.condition == ConditionType::None))
         {
             feasible_indices = filter_selected_indices_by_column(outputs,
-                                                        feasible_indices,
-                                                        col_index,
-                                                        output_domain.inferior_frontier(domain_index),
-                                                        output_domain.superior_frontier(domain_index));
+                                                                 feasible_indices,
+                                                                 column_index,
+                                                                 output_domain.inferior_frontier(domain_index),
+                                                                 output_domain.superior_frontier(domain_index));
         }
 
         ++domain_index;
@@ -561,19 +880,115 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
             break;
     }
 
+    if (!formula_constraints.empty() && !feasible_indices.empty())
+    {
+        vector<Index> formula_feasible_indices;
+        formula_feasible_indices.reserve(feasible_indices.size());
+
+        for (const Index row_index : feasible_indices)
+        {
+            const VectorR input_row = inputs.row(row_index).transpose();
+            const VectorR output_row = outputs.row(row_index).transpose();
+
+            if (row_satisfies_formula_constraints(input_row, output_row))
+                formula_feasible_indices.push_back(row_index);
+        }
+
+        feasible_indices = move(formula_feasible_indices);
+    }
+
     if (feasible_indices.empty())
         return {MatrixR(), MatrixR()};
 
-    MatrixR feasible_inputs((Index)feasible_indices.size(), inputs.cols());
-    MatrixR feasible_outputs((Index)feasible_indices.size(), outputs.cols());
+    const Index feasible_count = static_cast<Index>(feasible_indices.size());
 
-    for (Index i = 0; i < (Index)feasible_indices.size(); ++i)
+    MatrixR feasible_inputs(feasible_count, inputs.cols());
+    MatrixR feasible_outputs(feasible_count, outputs.cols());
+
+    for (Index i = 0; i < feasible_count; ++i)
     {
         feasible_inputs.row(i) = inputs.row(feasible_indices[i]);
         feasible_outputs.row(i) = outputs.row(feasible_indices[i]);
     }
 
     return {feasible_inputs, feasible_outputs};
+}
+
+
+pair<MatrixR, MatrixR> ResponseOptimization::sample_feasible_points(const Domain& input_domain,
+                                                                    const Domain& output_domain) const
+{
+    if (formula_constraints.empty())
+        return generate_feasible_points(input_domain, output_domain, evaluations_number);
+
+    const Index base_evaluations = evaluations_number;
+    const Index evaluations_cap = base_evaluations * max_oversample_factor;
+    const type low_ratio_threshold = min_feasible_ratio * type(0.25);
+
+    Index current_evaluations = base_evaluations;
+    Index consecutive_low_ratio_attempts = 0;
+
+    pair<MatrixR, MatrixR> feasible_result;
+
+    while (true)
+    {
+        feasible_result = generate_feasible_points(input_domain, output_domain, current_evaluations);
+
+        const Index feasible_count = feasible_result.first.rows();
+        const type feasible_ratio = (current_evaluations > 0)
+            ? type(feasible_count) / type(current_evaluations)
+            : type(0);
+
+        if (feasible_count > 0 && feasible_ratio >= min_feasible_ratio)
+            return feasible_result;
+
+        if (feasible_ratio < low_ratio_threshold)
+            ++consecutive_low_ratio_attempts;
+        else
+            consecutive_low_ratio_attempts = 0;
+
+        if (current_evaluations >= evaluations_cap)
+            break;
+        if (consecutive_low_ratio_attempts >= 2)
+            break;
+
+        const Index next_evaluations = min(current_evaluations * Index(2), evaluations_cap);
+
+        cout << "> Adaptive oversampling: feasible ratio " << feasible_ratio
+             << " below threshold " << min_feasible_ratio
+             << ", increasing evaluations from " << current_evaluations
+             << " to " << next_evaluations << endl;
+
+        current_evaluations = next_evaluations;
+    }
+
+    const bool early_stop_triggered = (consecutive_low_ratio_attempts >= 2);
+    const Index final_feasible_count = feasible_result.first.rows();
+
+    if (final_feasible_count == 0)
+        throw runtime_error("ResponseOptimization: formula constraints appear infeasible — "
+                            "no feasible points found after adaptive oversampling up to "
+                            + to_string(current_evaluations) + " evaluations.");
+
+    if (early_stop_triggered)
+        throw runtime_error("ResponseOptimization: formula constraints are too tight — "
+                            "feasibility ratio stayed below "
+                            + to_string(low_ratio_threshold)
+                            + " over consecutive oversampling attempts (up to "
+                            + to_string(current_evaluations) + " evaluations, "
+                            + to_string(final_feasible_count) + " feasible points found).");
+
+    return feasible_result;
+}
+
+
+pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Domain& input_domain,
+                                                         const Domain& output_domain,
+                                                         const Index evaluations_count) const
+{
+    const MatrixR random_inputs = calculate_random_inputs(input_domain, evaluations_count);
+    const MatrixR outputs = calculate_outputs(random_inputs);
+    return filter_feasible_points(random_inputs, outputs, output_domain);
 }
 
 
@@ -649,14 +1064,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 
     for (Index i = 0; i < max_iterations; i++)
     {
-        const MatrixR random_inputs = calculate_random_inputs(input_domain);
-
-        const MatrixR outputs = calculate_outputs(random_inputs);
-
-        if (outputs.hasNaN())
-            cout << "Model produced NaN" << endl;
-
-        auto [feasible_inputs, feasible_outputs] = filter_feasible_points(random_inputs, outputs, original_output_domain);
+        auto [feasible_inputs, feasible_outputs] = sample_feasible_points(input_domain, original_output_domain);
 
         if (feasible_inputs.rows() == 0)
             cout << "!!! [Critical] Zero feasible points found. "
@@ -808,11 +1216,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     const Domain original_input_domain = get_original_domain("Input");
     const Domain original_output_domain = get_original_domain("Target");
 
-    const MatrixR random_inputs = calculate_random_inputs(original_input_domain);
-
-    const MatrixR outputs = calculate_outputs(random_inputs);
-
-    auto [first_feasible_inputs, first_feasible_outputs] = filter_feasible_points(random_inputs, outputs, original_output_domain);
+    auto [first_feasible_inputs, first_feasible_outputs] = sample_feasible_points(original_input_domain, original_output_domain);
 
     if (first_feasible_inputs.rows() == 0)
     {
@@ -846,11 +1250,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 
         for (Index j = 0; j < global_pareto_inputs.rows(); j++)
         {
-            const MatrixR local_random_inputs = calculate_random_inputs(input_domains[j]);
-
-            const MatrixR local_outputs = calculate_outputs(local_random_inputs);
-
-            auto [local_feasible_inputs, local_feasible_outputs] = filter_feasible_points(local_random_inputs, local_outputs, original_output_domain);
+            auto [local_feasible_inputs, local_feasible_outputs] = sample_feasible_points(input_domains[j], original_output_domain);
 
             MatrixR local_objective_matrix  = objectives.extract(local_feasible_inputs, local_feasible_outputs);
             objectives.normalize(local_objective_matrix);

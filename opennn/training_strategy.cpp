@@ -74,6 +74,9 @@ void TrainingStrategy::set_loss(const string& new_loss)
 
     loss->set(neural_network, dataset);
 
+    if(dataset)
+        loss->set_dataset(dataset);
+
     if(optimizer){
         if(optimizer->get_name() == "QuasiNewtonMethod")
             static_cast<QuasiNewtonMethod*>(optimizer.get())->set_loss(loss.get());

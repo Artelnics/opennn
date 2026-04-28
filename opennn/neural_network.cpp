@@ -1068,6 +1068,11 @@ void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
 
     for(Variable& variable : input_variables)
     {
+        // Default role: variables under <Inputs> are inputs. XML I/O does not
+        // serialize the role explicitly, so without this set ResponseOptimization
+        // (which filters by role == "Input") would see no features.
+        variable.role = "Input";
+
         if(variable.is_categorical())
         {
             for(string& category_name : variable.categories)
@@ -1172,6 +1177,8 @@ void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
 
     for(Variable& variable : output_variables)
     {
+        variable.role = "Target";
+
         if(variable.is_categorical())
             for(string& category_name : variable.categories)
             {

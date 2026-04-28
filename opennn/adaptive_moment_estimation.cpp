@@ -69,6 +69,12 @@ void AdaptiveMomentEstimation::set_beta_2(const type new_beta_2)
 }
 
 
+void AdaptiveMomentEstimation::set_gradient_clip_norm(const type new_gradient_clip_norm)
+{
+    gradient_clip_norm = new_gradient_clip_norm;
+}
+
+
 void AdaptiveMomentEstimation::set_default()
 {
     display_period = 100;
@@ -453,8 +459,14 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     const VectorR& gradient = back_propagation.neural_network.gradient;
 
-    gradient_exponential_decay.array() = beta_1 * gradient_exponential_decay.array() + (type(1) - beta_1) * gradient.array();
-    square_gradient_exponential_decay.array() = beta_2 * square_gradient_exponential_decay.array() + (type(1) - beta_2) * gradient.array().square();
+    const type grad_norm = gradient.norm();
+    const bool clip = gradient_clip_norm > type(0) && grad_norm > gradient_clip_norm;
+    const VectorR effective_gradient = clip
+        ? VectorR(gradient * (gradient_clip_norm / grad_norm))
+        : gradient;
+
+    gradient_exponential_decay.array() = beta_1 * gradient_exponential_decay.array() + (type(1) - beta_1) * effective_gradient.array();
+    square_gradient_exponential_decay.array() = beta_2 * square_gradient_exponential_decay.array() + (type(1) - beta_2) * effective_gradient.array().square();
 
     parameters.array() -= learning_rate * (gradient_exponential_decay.array() / bias_correction_1) /
                           ((square_gradient_exponential_decay.array() / bias_correction_2).sqrt() + EPSILON);
@@ -469,6 +481,7 @@ void AdaptiveMomentEstimation::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
     add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+    add_xml_element(printer, "GradientClipNorm", to_string(double(gradient_clip_norm)));
     add_xml_element(printer, "HardwareUse", get_hardware_use());
 
     printer.CloseElement();
@@ -487,6 +500,11 @@ void AdaptiveMomentEstimation::from_XML(const XMLDocument& document)
     set_loss_goal(read_xml_type(root_element, "LossGoal"));
     set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+
+    const XMLElement* clip_element = root_element->FirstChildElement("GradientClipNorm");
+    if(clip_element && clip_element->GetText())
+        set_gradient_clip_norm(type(stod(clip_element->GetText())));
+
     set_hardware_use(read_xml_string(root_element, "HardwareUse"));
 }
 

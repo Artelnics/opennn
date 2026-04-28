@@ -112,8 +112,6 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Unscaling>(output_shape));
 
-    // add_layer(make_unique<Bounding>(output_shape));
-
     this->compile();
     this->set_parameters_random();
 

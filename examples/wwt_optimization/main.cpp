@@ -199,11 +199,49 @@ int main()
         try
         {
             TestingAnalysis testing_analysis(forecasting_network, &time_series_dataset);
-            testing_analysis.print_goodness_of_fit_analysis();
+
+            cout << "Parameters count: " << forecasting_network->get_parameters().size() << endl;
+            cout << "Parameters norm: " << forecasting_network->get_parameters().norm() << endl;
+            cout.flush();
+
+            // Test with a small batch first
+            const Tensor3 small_input = time_series_dataset.get_data("Testing", "Input")
+                                            .slice(array_3(0, 0, 0), array_3(10, num_lags, inputs_count)).eval();
+            cout << "Small input shape: " << small_input.dimension(0) << "x"
+                 << small_input.dimension(1) << "x" << small_input.dimension(2) << endl;
+            cout.flush();
+
+            MatrixR small_output = forecasting_network->calculate_outputs(small_input);
+            cout << "Small output OK: " << small_output.rows() << "x" << small_output.cols() << endl;
+            cout.flush();
+
+            // Test increasing batch sizes to find the limit
+            for (Index test_batch : {100, 1000, 5000, 10000, 20000, 40000, 79000})
+            {
+                const Index actual_batch = min(test_batch, time_series_dataset.get_samples_number("Testing"));
+                const Tensor3 test_input = time_series_dataset.get_data("Testing", "Input")
+                                               .slice(array_3(0, 0, 0), array_3(actual_batch, num_lags, inputs_count)).eval();
+                cout << "Testing batch " << actual_batch << "... " << flush;
+                MatrixR test_output = forecasting_network->calculate_outputs(test_input);
+                cout << "OK (" << test_output.rows() << "x" << test_output.cols() << ")" << endl;
+                cout.flush();
+            }
+
+            cout << "Calling get_targets_and_outputs..." << endl;
+            cout.flush();
+
+            auto [targets, outputs] = testing_analysis.get_targets_and_outputs("Testing");
+
+            cout << "Targets: " << targets.rows() << "x" << targets.cols() << endl;
+            cout << "Outputs: " << outputs.rows() << "x" << outputs.cols() << endl;
+            cout.flush();
+
+            cout << "Calling calculate_errors..." << endl;
+            cout.flush();
 
             VectorR errors = testing_analysis.calculate_errors("Testing");
             cout << "Testing MSE: " << errors[1] << endl;
-            cout << "Testing NSE: " << errors[3] << endl;
+            cout << "Testing NMSE: " << errors[3] << endl;
         }
         catch (exception& e)
         {

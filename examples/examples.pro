@@ -20,6 +20,7 @@ SUBDIRS += mnist
 SUBDIRS += translation
 SUBDIRS += concrete
 SUBDIRS += wwt_optimization
+SUBDIRS += n2o_forecast
 
 if($$CUDA_ENABLED) {
     SUBDIRS += melanoma_cancer

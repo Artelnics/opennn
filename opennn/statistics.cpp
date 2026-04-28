@@ -1297,9 +1297,10 @@ VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vect
             count++;            
         }
 
+        if(count == 0) { mean(j) = type(0); continue; }
         mean(j) /= type(count);
     }
-    
+
     return mean;
 }
 
@@ -1328,6 +1329,7 @@ type mean(const MatrixR& matrix, Index column_index)
         }
     }
 
+    if(count == 0) return type(0);
     mean /= type(count);
 
     return mean;
