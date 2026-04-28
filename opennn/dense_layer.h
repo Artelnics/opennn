@@ -257,38 +257,30 @@ public:
     void set_parameters_glorot() override
     {
         const type limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
-
-        VectorMap(parameters[Bias].template as<float>(), parameters[Bias].size()).setZero();
-
         set_random_uniform(VectorMap(parameters[Weight].template as<float>(), parameters[Weight].size()), -limit, limit);
-
-        VectorMap(parameters[Gamma].template as<float>(), parameters[Gamma].size()).setConstant(1.0);
-
-        VectorMap(parameters[Beta].template as<float>(), parameters[Beta].size()).setZero();
-
-        if (batch_normalization && ssize(states) > RunningVariance)
-        {
-            VectorMap(states[RunningMean].template as<float>(), states[RunningMean].size()).setZero();
-            VectorMap(states[RunningVariance].template as<float>(), states[RunningVariance].size()).setOnes();
-        }
+        init_dense_norm_defaults();
     }
 
     void set_parameters_random() override
     {
-        VectorMap(parameters[Bias].template as<float>(), parameters[Bias].size()).setZero();
-
         set_random_uniform(VectorMap(parameters[Weight].template as<float>(), parameters[Weight].size()));
+        init_dense_norm_defaults();
+    }
 
-        VectorMap(parameters[Gamma].template as<float>(), parameters[Gamma].size()).setConstant(1.0);
-
-        VectorMap(parameters[Beta].template as<float>(), parameters[Beta].size()).setZero();
-
+private:
+    // Bias=0, Gamma=1, Beta=0; running stats reset (when batch norm active).
+    void init_dense_norm_defaults()
+    {
+        parameters[Bias].fill(0.0f);
+        parameters[Gamma].fill(1.0f);
+        parameters[Beta].fill(0.0f);
         if (batch_normalization && ssize(states) > RunningVariance)
         {
-            VectorMap(states[RunningMean].template as<float>(), states[RunningMean].size()).setZero();
-            VectorMap(states[RunningVariance].template as<float>(), states[RunningVariance].size()).setOnes();
+            states[RunningMean].fill(0.0f);
+            states[RunningVariance].fill(1.0f);
         }
     }
+public:
 
 #ifdef OPENNN_WITH_CUDA
 

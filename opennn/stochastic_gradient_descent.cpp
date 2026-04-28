@@ -276,13 +276,13 @@ TrainingResults StochasticGradientDescent::train()
 
     for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
-        if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << "\n";
+        if(should_display(epoch)) cout << "Epoch: " << epoch << "\n";
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
         current_learning_rate = initial_learning_rate / (type(1) + type(epoch) * initial_decay);
 
-        const EpochStats train_stats = run_epoch(true,
+        const EpochStats train_stats = run_epoch(Phase::Training,
                                                  is_classification_model,
                                                  training_forward_propagation,
                                                  training_back_propagation,
@@ -302,7 +302,7 @@ TrainingResults StochasticGradientDescent::train()
         {
             dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
 
-            const EpochStats val_stats = run_epoch(false,
+            const EpochStats val_stats = run_epoch(Phase::Validation,
                                                    is_classification_model,
                                                    *validation_forward_propagation,
                                                    *validation_back_propagation,
@@ -324,7 +324,7 @@ TrainingResults StochasticGradientDescent::train()
 
         elapsed_time = get_elapsed_time(beginning_time);
 
-        if(display && epoch % display_period == 0)
+        if(should_display(epoch))
         {
             cout << "Training error: " << training_error << "\n";
             if(is_classification_model) cout << "Training accuracy: " << training_accuracy << "\n";

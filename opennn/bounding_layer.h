@@ -24,6 +24,19 @@ public:
 
     enum class BoundingMethod{NoBounding, Bounding};
 
+    static const EnumMap<BoundingMethod>& bounding_method_map()
+    {
+        static const vector<pair<BoundingMethod, string>> entries = {
+            {BoundingMethod::NoBounding, "NoBounding"},
+            {BoundingMethod::NoBounding, "No bounding"},
+            {BoundingMethod::Bounding,   "Bounding"},
+            {BoundingMethod::Bounding,   "Positive outputs"},
+            {BoundingMethod::Bounding,   "Data range"}
+        };
+        static const EnumMap<BoundingMethod> map{entries};
+        return map;
+    }
+
     Shape get_input_shape() const override { return output_shape; }
 
     Shape get_output_shape() const override;

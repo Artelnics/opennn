@@ -35,7 +35,6 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
     if(is_constant(x) || is_constant(y))
         return Correlation();
 
-    const Index x_rows = x.rows();
     const Index x_columns = x.cols();
     const Index y_columns = y.cols();
 
@@ -90,7 +89,6 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
 
 Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
 {
-    const Index x_rows = x.rows();
     const Index x_columns = x.cols();
     const Index y_columns = y.cols();
 
@@ -735,23 +733,23 @@ void Correlation::set_perfect()
     form = Correlation::Form::Linear;
 }
 
-string Correlation::write_type() const
+static const char* form_to_string(Correlation::Form form)
 {
     switch(form)
     {
-    case Form::Linear: return "linear";
-    case Form::Sigmoid: return "logistic";
-    case Form::Logarithmic: return "logarithmic";
-    case Form::Exponential: return "exponential";
-    case Form::Power: return "power";
-    default: return string();
+    case Correlation::Form::Linear:      return "linear";
+    case Correlation::Form::Sigmoid:     return "logistic";
+    case Correlation::Form::Logarithmic: return "logarithmic";
+    case Correlation::Form::Exponential: return "exponential";
+    case Correlation::Form::Power:       return "power";
+    default:                             return "";
     }
 }
 
 void Correlation::print() const
 {
     cout << "Correlation" << "\n"
-         << "Type: " << write_type() << "\n"
+         << "Type: " << form_to_string(form) << "\n"
          << "a: " << a << "\n"
          << "b: " << b << "\n"
          << "r: " << r << "\n"

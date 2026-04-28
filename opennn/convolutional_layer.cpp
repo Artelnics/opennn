@@ -142,44 +142,33 @@ void Convolutional::set_batch_normalization(bool new_batch_normalization)
 
 // Parameter initialization
 
+void Convolutional::init_conv_norm_defaults()
+{
+    parameters[Bias].fill(0.0f);
+    parameters[Gamma].fill(1.0f);
+    parameters[Beta].fill(0.0f);
+    if (batch_normalization && ssize(states) > RunningVariance)
+    {
+        states[RunningMean].fill(0.0f);
+        states[RunningVariance].fill(1.0f);
+    }
+}
+
 void Convolutional::set_parameters_glorot()
 {
     const Index kernel_area = kernel_height * kernel_width;
-    const Index fan_in = kernel_area * kernel_channels;
+    const Index fan_in  = kernel_area * kernel_channels;
     const Index fan_out = kernel_area * kernels_number;
-
     const type limit = sqrt(6.0f / static_cast<type>(fan_in + fan_out));
 
-    VectorMap(parameters[Bias].as<float>(), parameters[Bias].size()).setZero();
-
     set_random_uniform(VectorMap(parameters[Weight].as<float>(), parameters[Weight].size()), -limit, limit);
-
-    VectorMap(parameters[Gamma].as<float>(), parameters[Gamma].size()).setConstant(1.0);
-
-    VectorMap(parameters[Beta].as<float>(), parameters[Beta].size()).setZero();
-
-    if (batch_normalization && ssize(states) > RunningVariance)
-    {
-        VectorMap(states[RunningMean].as<float>(), states[RunningMean].size()).setZero();
-        VectorMap(states[RunningVariance].as<float>(), states[RunningVariance].size()).setOnes();
-    }
+    init_conv_norm_defaults();
 }
 
 void Convolutional::set_parameters_random()
 {
-    VectorMap(parameters[Bias].as<float>(), parameters[Bias].size()).setZero();
-
     set_random_uniform(VectorMap(parameters[Weight].as<float>(), parameters[Weight].size()));
-
-    VectorMap(parameters[Gamma].as<float>(), parameters[Gamma].size()).setConstant(1.0);
-
-    VectorMap(parameters[Beta].as<float>(), parameters[Beta].size()).setZero();
-
-    if (batch_normalization && ssize(states) > RunningVariance)
-    {
-        VectorMap(states[RunningMean].as<float>(), states[RunningMean].size()).setZero();
-        VectorMap(states[RunningVariance].as<float>(), states[RunningVariance].size()).setOnes();
-    }
+    init_conv_norm_defaults();
 }
 
 #ifdef OPENNN_WITH_CUDA

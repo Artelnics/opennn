@@ -74,17 +74,10 @@ struct BackPropagation
 
     type error = type(0);
     Index active_tokens_count = 0;
-    MatrixR errors;
     Buffer output_deltas;
     Shape output_delta_dimensions;
 
     Tensor0 accuracy;
-    MatrixR predictions;
-
-    MatrixB matches;
-    MatrixB mask;
-
-    bool built_mask = false;
     type loss_value = type(0);
 
 #ifdef OPENNN_WITH_CUDA

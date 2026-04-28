@@ -101,14 +101,10 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     }
 
     const Shape output_shape = neural_network->get_output_shape();
-    const Index outputs_number = output_shape[0];
 
     loss_value = type(0);
     error = type(0);
-    built_mask = false;
     accuracy.setZero();
-
-    errors.resize(batch_size, outputs_number);
 
     output_delta_dimensions = Shape({batch_size}).append(output_shape);
 
@@ -395,12 +391,8 @@ TensorView BackPropagation::get_output_deltas() const
 void BackPropagation::print() const
 {
     cout << "Back-propagation" << "\n"
-         << "Errors:" << "\n"
-         << errors << "\n"
-         << "Error:" << "\n"
-         << error << "\n"
-         << "Loss:" << "\n"
-         << loss_value << "\n";
+         << "Error: " << error << "\n"
+         << "Loss:  " << loss_value << "\n";
 }
 
 }

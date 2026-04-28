@@ -12,24 +12,13 @@
 
 namespace opennn
 {
-    void set_seed(Index);
-    long long get_seed();
-
     type random_uniform(type = -1, type = 1);
-    type random_normal(type = 0, type = 1);
     Index random_integer(Index, Index);
     bool random_bool(type = 0.5);
 
-    void set_random_uniform(VectorR&, type = -0.1, type = 0.1);
     void set_random_uniform(MatrixR&, type = -0.1, type = 0.1);
-
     void set_random_uniform(VectorMap, type = -0.1, type = 0.1);
-    void set_random_uniform(MatrixMap, type = -0.1, type = 0.1);
 
-    void set_random_normal(VectorR&, type = 0, type = 1);
-    void set_random_normal(MatrixR&, type = 0, type = 1);
-
-    void set_random_normal(VectorMap, type = 0, type = 1);
     void set_random_normal(MatrixMap, type = 0, type = 1);
 
     void set_random_integer(MatrixR&, Index, Index);

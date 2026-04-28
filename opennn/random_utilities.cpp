@@ -6,66 +6,20 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include <atomic>
 #include "random_utilities.h"
 
 namespace opennn
 {
 
-static atomic<long long> global_seed{-1};
-static atomic<unsigned int> seed_generation{0};
-
-thread_local mt19937 generator;
-thread_local unsigned int local_generation = 0;
-
-void initialize_generator()
-{
-    const long long seed = global_seed.load(memory_order_relaxed);
-
-    if (seed == -1)
-    {
-        random_device rd;
-        generator.seed(rd());
-    }
-    else
-    {
-        const int thread_id = omp_get_thread_num();
-        generator.seed(static_cast<unsigned int>(seed + thread_id * 5489u));
-    }
-
-    local_generation = seed_generation.load(memory_order_acquire);
-}
-
-void set_seed(Index seed)
-{
-    global_seed.store(seed, memory_order_relaxed);
-    seed_generation.fetch_add(1, memory_order_release);
-
-    initialize_generator();
-}
-
-long long get_seed()
-{
-    return global_seed.load(memory_order_relaxed);
-}
-
 inline mt19937& get_generator()
 {
-    if(local_generation != seed_generation.load(memory_order_acquire))
-        initialize_generator();
-
+    thread_local mt19937 generator{random_device{}()};
     return generator;
 }
 
 type random_uniform(type min, type max)
 {
     uniform_real_distribution<type> distribution(min, max);
-    return distribution(get_generator());
-}
-
-type random_normal(type mean, type std_dev)
-{
-    normal_distribution<type> distribution(mean, std_dev);
     return distribution(get_generator());
 }
 
@@ -79,17 +33,6 @@ bool random_bool(type probability)
 {
     bernoulli_distribution distribution(probability);
     return distribution(get_generator());
-}
-
-void set_random_uniform(VectorR& tensor, type min, type max)
-{
-    #pragma omp parallel
-    {
-        uniform_real_distribution<type> distribution(min, max);
-        #pragma omp for
-        for(Index i = 0; i < tensor.size(); ++i)
-            tensor(i) = distribution(get_generator());
-    }
 }
 
 void set_random_uniform(MatrixR& tensor, type min, type max)
@@ -108,50 +51,6 @@ void set_random_uniform(VectorMap tensor, type min, type max)
     #pragma omp parallel
     {
         uniform_real_distribution<type> distribution(min, max);
-        #pragma omp for
-        for(Index i = 0; i < tensor.size(); ++i)
-            tensor(i) = distribution(get_generator());
-    }
-}
-
-void set_random_uniform(MatrixMap tensor, type min, type max)
-{
-    #pragma omp parallel
-    {
-        uniform_real_distribution<type> distribution(min, max);
-        #pragma omp for
-        for(Index i = 0; i < tensor.size(); ++i)
-            tensor(i) = distribution(get_generator());
-    }
-}
-
-void set_random_normal(VectorR& tensor, type mean, type std_dev)
-{
-    #pragma omp parallel
-    {
-        normal_distribution<type> distribution(mean, std_dev);
-        #pragma omp for
-        for(Index i = 0; i < tensor.size(); ++i)
-            tensor(i) = distribution(get_generator());
-    }
-}
-
-void set_random_normal(MatrixR& tensor, type mean, type std_dev)
-{
-    #pragma omp parallel
-    {
-        normal_distribution<type> distribution(mean, std_dev);
-        #pragma omp for
-        for(Index i = 0; i < tensor.size(); ++i)
-            tensor(i) = distribution(get_generator());
-    }
-}
-
-void set_random_normal(VectorMap tensor, type mean, type std_dev)
-{
-    #pragma omp parallel
-    {
-        normal_distribution<type> distribution(mean, std_dev);
         #pragma omp for
         for(Index i = 0; i < tensor.size(); ++i)
             tensor(i) = distribution(get_generator());

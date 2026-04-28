@@ -19,7 +19,6 @@ namespace opennn
     Index count_tokens(const string&, const string&);
 
     vector<string> get_tokens(const string&, const string&);
-    vector<string_view> get_tokens_fast(string_view, string_view);
 
     vector<string> tokenize(const string&);
 
@@ -50,7 +49,6 @@ namespace opennn
     void replace(string&, const string&, const string&);
     void replace_double_char_with_label(string&, const string&, const string&);
     void replace_substring_within_quotes(string&, const string&, const string&);
-    void replace_substring_in_string (vector<string>&, string&, const string&);
 
     void display_progress_bar(const int&, const int&);
 
@@ -75,9 +73,13 @@ namespace opennn
         return buffer.str();
     }
 
-    string vector_to_string(const VectorI& x, const string& separator = " ");
-    string vector_to_string(const VectorR& x, const string& separator = " ");
-    string vector_to_string(const VectorMap& x, const string& separator = " ");
+    template <typename Derived>
+    inline string vector_to_string(const Eigen::DenseBase<Derived>& x, const string& separator = " ")
+    {
+        ostringstream buffer;
+        for(Index i = 0; i < x.size(); ++i) buffer << x(i) << separator;
+        return buffer.str();
+    }
 
     void string_to_vector(const string& input, VectorR& x);
 

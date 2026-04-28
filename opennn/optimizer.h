@@ -109,8 +109,11 @@ protected:
 
     static void clip_gradient_norm(Buffer& gradient, type max_norm);
 
+    enum class Phase { Training, Validation };
 
-    EpochStats run_epoch(bool is_training_phase,
+    bool should_display(Index epoch) const { return display && epoch % display_period == 0; }
+
+    EpochStats run_epoch(Phase phase,
                          bool is_classification,
                          ForwardPropagation& fp,
                          BackPropagation& bp,

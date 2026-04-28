@@ -253,7 +253,7 @@ TrainingResults QuasiNewtonMethod::train()
 
     for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
-        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << "\n";
+        if(should_display(epoch)) cout << "Epoch: " << epoch << "\n";
 
         neural_network->forward_propagate(training_batch.get_inputs(),
                                           training_forward_propagation,
@@ -297,7 +297,7 @@ TrainingResults QuasiNewtonMethod::train()
 
         elapsed_time = get_elapsed_time(beginning_time);
 
-        if(display && epoch%display_period == 0)
+        if(should_display(epoch))
         {
             cout << "Training error: " << training_back_propagation.error << "\n";
             if(has_validation) cout << "Validation error: " << validation_back_propagation.error << "\n";

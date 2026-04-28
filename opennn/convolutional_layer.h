@@ -227,6 +227,10 @@ public:
     void set_parameters_glorot() override;
     void set_parameters_random() override;
 
+private:
+    void init_conv_norm_defaults();
+public:
+
     // Device setup
 
     void init_cuda(Index);

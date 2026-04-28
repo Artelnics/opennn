@@ -470,55 +470,41 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
     return H;
 }
 
+static MatrixR activation_derivative(ActivationFunction act, const MatrixMap& outputs)
+{
+    switch(act)
+    {
+    case ActivationFunction::Sigmoid:
+        return outputs.array() * (type(1) - outputs.array());
+    case ActivationFunction::HyperbolicTangent:
+        return type(1) - outputs.array().square();
+    case ActivationFunction::RectifiedLinear:
+        return (outputs.array() > type(0)).cast<type>();
+    default:                                                  // Linear / unrecognized → identity
+        return MatrixR::Ones(outputs.rows(), outputs.cols());
+    }
+}
+
 void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
                                                         const ForwardPropagation& fp,
                                                         Index layer_index,
                                                         Index parameter_offset,
                                                         MatrixR& jacobian)
 {
-    const Index batch_size = fp.batch_size;
+    const Index batch_size  = fp.batch_size;
     const Index num_neurons = layer->get_outputs_number();
-    const Index num_inputs = layer->get_input_shape()[0];
+    const Index num_inputs  = layer->get_input_shape()[0];
 
-    const MatrixMap inputs = fp.views[layer_index][0][0].as_matrix();
+    const MatrixMap inputs  = fp.views[layer_index][0][0].as_matrix();
 
-    // Activation derivative: dσ/dz
-    // For non-linear activations we need the post-activation output to compute σ'
-    const ActivationFunction act = layer->get_activation_function();
-
-    // Output is in the last slot of views for this layer (slot 0 = input, last slot = output)
+    // Output is in the last slot of views for this layer (slot 0 = input, last slot = output).
     const size_t output_slot = fp.views[layer_index].size() - 1;
-    const MatrixMap outputs = fp.views[layer_index][output_slot][0].as_matrix();
+    const MatrixMap outputs  = fp.views[layer_index][output_slot][0].as_matrix();
 
-    // Compute activation derivative per sample per neuron
-    MatrixR act_deriv(batch_size, num_neurons);
-
-    switch(act)
-    {
-    case ActivationFunction::Linear:
-        act_deriv.setOnes();
-        break;
-
-    case ActivationFunction::Sigmoid:
-        act_deriv = outputs.array() * (type(1) - outputs.array());
-        break;
-
-    case ActivationFunction::HyperbolicTangent:
-        act_deriv = type(1) - outputs.array().square();
-        break;
-
-    case ActivationFunction::RectifiedLinear:
-        act_deriv = (outputs.array() > type(0)).cast<type>();
-        break;
-
-    default:
-        // Fallback: assume linear
-        act_deriv.setOnes();
-        break;
-    }
+    const MatrixR act_deriv = activation_derivative(layer->get_activation_function(), outputs);
 
     // Parameter layout (aligned): [bias(aligned) | weights(aligned) | gamma | beta]
-    const Index bias_aligned = get_aligned_size(num_neurons);
+    const Index bias_aligned  = get_aligned_size(num_neurons);
     const Index weight_offset = parameter_offset + bias_aligned;
 
     // Bias derivatives: dE/db_j = act_deriv(s,j)
@@ -612,7 +598,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
-        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << "\n";
+        if(should_display(epoch)) cout << "Epoch: " << epoch << "\n";
 
         neural_network->forward_propagate(training_batch.get_inputs(),
                                           training_forward_propagation,
@@ -646,7 +632,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
         old_loss = training_back_propagation_lm.loss_value;
 
-        if(display && epoch%display_period == 0)
+        if(should_display(epoch))
         {
             cout << "Training error: " << results.training_error_history(epoch) << "\n";
             if(has_validation) cout << "Validation error: " << results.validation_error_history(epoch) << "\n";

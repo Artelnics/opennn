@@ -65,12 +65,7 @@ void Bounding::set_bounding_method(const BoundingMethod& new_method)
 
 void Bounding::set_bounding_method(const string& new_method_string)
 {
-    if(new_method_string == "NoBounding" || new_method_string == "No bounding")
-        bounding_method = BoundingMethod::NoBounding;
-    else if(new_method_string == "Positive outputs" || new_method_string == "Data range" || new_method_string == "Bounding")
-        bounding_method = BoundingMethod::Bounding;
-    else
-        throw runtime_error("Unknown bounding method: " + new_method_string + ".\n");
+    bounding_method = bounding_method_map().from_string(new_method_string);
 }
 
 void Bounding::set_input_shape(const Shape& new_input_shape)
@@ -161,8 +156,7 @@ void Bounding::to_XML(XmlPrinter& printer) const
         add_xml_element(printer, "UpperBounds", vector_to_string(states[Upper].as_vector()));
     }
 
-    add_xml_element(printer, "BoundingMethod",
-                     bounding_method == BoundingMethod::Bounding ? "Bounding" : "NoBounding");
+    add_xml_element(printer, "BoundingMethod", bounding_method_map().to_string(bounding_method));
 
     printer.close_element();
 }

@@ -624,7 +624,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, type max_norm)
         gradient_view *= max_norm / (gradient_norm + type(1e-6));
 }
 
-EpochStats Optimizer::run_epoch(bool is_training_phase,
+EpochStats Optimizer::run_epoch(Phase phase,
                                 bool is_classification,
                                 ForwardPropagation& fp,
                                 BackPropagation& bp,
@@ -637,6 +637,8 @@ EpochStats Optimizer::run_epoch(bool is_training_phase,
                                 const std::function<void(BackPropagation&)>& update)
 {
     EpochStats stats;
+
+    const bool is_training = (phase == Phase::Training);
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index batches_number = Index(batches.size());
@@ -660,7 +662,7 @@ EpochStats Optimizer::run_epoch(bool is_training_phase,
                         input_feature_indices,
                         decoder_feature_indices,
                         target_feature_indices,
-                        is_training_phase);   // augment only in training
+                        is_training);   // augment only in training
             ready_queue.push(batch);
         }
     });
@@ -686,9 +688,9 @@ EpochStats Optimizer::run_epoch(bool is_training_phase,
             prefetch_batch(*next_batch, batches[iteration + 1].size(), (iteration + 1) % 2);
         }
 
-        neural_network->forward_propagate(current_batch->get_inputs_active(), fp, is_training_phase);
+        neural_network->forward_propagate(current_batch->get_inputs_active(), fp, is_training);
 
-        if(is_training_phase)
+        if(is_training)
             loss->back_propagate(*current_batch, fp, bp);
         else
             loss->calculate_error(*current_batch, fp, bp);

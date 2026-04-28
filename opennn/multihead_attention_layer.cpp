@@ -93,12 +93,8 @@ void MultiHeadAttention::set_parameters_random()
                            -weight_limit, weight_limit);
     }
 
-    const int bias_slots[] = {QueryBias, KeyBias, ValueBias, ProjectionBias};
-    for(const int slot : bias_slots)
-    {
-        if(parameters[slot].empty()) continue;
-        VectorMap(parameters[slot].as<float>(), parameters[slot].size()).setZero();
-    }
+    for(const int slot : {QueryBias, KeyBias, ValueBias, ProjectionBias})
+        if(!parameters[slot].empty()) parameters[slot].fill(0.0f);
 }
 
 void MultiHeadAttention::set(Index new_query_sequence_length,
