@@ -309,9 +309,17 @@ TEST(Dataset, ReadCSV_Basic)
     EXPECT_EQ(raw_vars[1].type, VariableType::Numeric);
     EXPECT_EQ(raw_vars[2].type, VariableType::Binary);
 
-    EXPECT_EQ(raw_vars[0].role, VariableRole::Input);
-    EXPECT_EQ(raw_vars[1].role, VariableRole::Input);
-    EXPECT_EQ(raw_vars[2].role, VariableRole::Target);
+    // read_csv() no longer auto-assigns roles or shapes; set manually
+    dataset.set_variable_role(0, "Input");
+    dataset.set_variable_role(1, "Input");
+    dataset.set_variable_role(2, "Target");
+
+    dataset.set_shape("Input", { dataset.get_variables_number("Input") });
+    dataset.set_shape("Target", { dataset.get_variables_number("Target") });
+
+    EXPECT_EQ(dataset.get_variables()[0].role, VariableRole::Input);
+    EXPECT_EQ(dataset.get_variables()[1].role, VariableRole::Input);
+    EXPECT_EQ(dataset.get_variables()[2].role, VariableRole::Target);
 
     // Data Tensor Content
     const MatrixR& data = dataset.get_data();

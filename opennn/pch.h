@@ -94,7 +94,7 @@ struct __nv_bfloat16 {};
 
 // --- CUDA / cuBLAS enums ---
 enum cudaDataType_t                  { CUDA_R_32F = 0, CUDA_R_16F = 2, CUDA_R_16BF = 14 };
-enum cublasComputeType_t             { CUBLAS_COMPUTE_32F = 0, CUBLAS_COMPUTE_32F_FAST_16BF = 65 };
+enum cublasComputeType_t             { CUBLAS_COMPUTE_32F = 0, CUBLAS_COMPUTE_32F_FAST_16BF = 65, CUBLAS_COMPUTE_32F_FAST_TF32 = 68 };
 enum cublasOperation_t               { CUBLAS_OP_N = 0, CUBLAS_OP_T = 1 };
 
 // --- cuDNN enums ---

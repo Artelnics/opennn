@@ -479,23 +479,57 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
 
     const MatrixMap inputs = fp.views[layer_index][0][0].as_matrix();
 
+    // Activation derivative: dσ/dz
+    // For non-linear activations we need the post-activation output to compute σ'
+    const ActivationFunction act = layer->get_activation_function();
+
+    // Output is in the last slot of views for this layer (slot 0 = input, last slot = output)
+    const size_t output_slot = fp.views[layer_index].size() - 1;
+    const MatrixMap outputs = fp.views[layer_index][output_slot][0].as_matrix();
+
+    // Compute activation derivative per sample per neuron
+    MatrixR act_deriv(batch_size, num_neurons);
+
+    switch(act)
+    {
+    case ActivationFunction::Linear:
+        act_deriv.setOnes();
+        break;
+
+    case ActivationFunction::Sigmoid:
+        act_deriv = outputs.array() * (type(1) - outputs.array());
+        break;
+
+    case ActivationFunction::HyperbolicTangent:
+        act_deriv = type(1) - outputs.array().square();
+        break;
+
+    case ActivationFunction::RectifiedLinear:
+        act_deriv = (outputs.array() > type(0)).cast<type>();
+        break;
+
+    default:
+        // Fallback: assume linear
+        act_deriv.setOnes();
+        break;
+    }
+
     // Parameter layout (aligned): [bias(aligned) | weights(aligned) | gamma | beta]
-    // Bias shape: {num_neurons}, Weight shape: {num_inputs, num_neurons}
     const Index bias_aligned = get_aligned_size(num_neurons);
     const Index weight_offset = parameter_offset + bias_aligned;
 
-    // Bias derivatives: dE/db_j = 1 for each sample
+    // Bias derivatives: dE/db_j = act_deriv(s,j)
     for(Index j = 0; j < num_neurons; ++j)
         for(Index s = 0; s < batch_size; ++s)
-            jacobian(s * num_neurons + j, parameter_offset + j) = type(1);
+            jacobian(s * num_neurons + j, parameter_offset + j) = act_deriv(s, j);
 
-    // Weight derivatives: dE/dw_{k,j} = input_k for each sample
+    // Weight derivatives: dE/dw_{k,j} = input_k * act_deriv(s,j)
     for(Index k = 0; k < num_inputs; ++k)
         for(Index j = 0; j < num_neurons; ++j)
         {
             const Index col = weight_offset + k * num_neurons + j;
             for(Index s = 0; s < batch_size; ++s)
-                jacobian(s * num_neurons + j, col) = inputs(s, k);
+                jacobian(s * num_neurons + j, col) = inputs(s, k) * act_deriv(s, j);
         }
 }
 
