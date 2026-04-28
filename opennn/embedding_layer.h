@@ -89,7 +89,7 @@ public:
 
 private:
 
-    Memory positional_encoding_device;
+    Buffer positional_encoding_device{DeviceType::Gpu};
 
     enum Parameters {Weight};
     enum Forward {Input, Output};

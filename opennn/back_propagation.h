@@ -43,13 +43,13 @@ struct BackPropagation
 
     NeuralNetwork* neural_network = nullptr;
 
-    Memory gradient;
+    Buffer gradient;
     vector<vector<TensorView>> gradient_views;
 
-    Memory backward;
+    Buffer backward;
     vector<vector<vector<TensorView>>> delta_views;
 
-    Memory per_layer_output_deltas;
+    Buffer per_layer_output_deltas;
     vector<Shape> per_layer_output_delta_shapes;
     vector<vector<BackwardEdge>> backward_edges;
 
@@ -75,7 +75,7 @@ struct BackPropagation
     type error = type(0);
     Index active_tokens_count = 0;
     MatrixR errors;
-    Memory output_deltas;
+    Buffer output_deltas;
     Shape output_delta_dimensions;
 
     Tensor0 accuracy;

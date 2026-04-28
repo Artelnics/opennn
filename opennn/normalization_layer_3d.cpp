@@ -60,9 +60,9 @@ void Normalization3d::set(const Index new_sequence_length,
 
 void Normalization3d::set_parameters_random()
 {
-    VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setOnes();
+    VectorMap(parameters[Gamma].as<float>(), parameters[Gamma].size()).setOnes();
 
-    VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
+    VectorMap(parameters[Beta].as<float>(), parameters[Beta].size()).setZero();
 }
 
 void Normalization3d::set_parameters_glorot()

@@ -31,7 +31,7 @@ public:
 
     void set_input_shape(const Shape& new_input_shape) override
     {
-        if(new_input_shape.rank() >= 2)
+        if(new_input_shape.rank >= 2)
         {
             sequence_length = new_input_shape[0];
             embedding_dimension = new_input_shape[1];

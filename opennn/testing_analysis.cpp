@@ -572,9 +572,9 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
 
         MatrixR batch_outputs;
 
-        if(input_shape.rank() == 1)
+        if(input_shape.rank == 1)
             batch_outputs = neural_network->calculate_outputs(batch_inputs_flat);
-        else if(input_shape.rank() == 3)
+        else if(input_shape.rank == 3)
         {
             Tensor4 inputs_4d(current_batch_size,
                               input_shape[0],
@@ -1126,7 +1126,7 @@ Tensor<string, 2> TestingAnalysis::classify_samples(const MatrixR& targets,
         ++count;
     }
 
-    return result.slice(array_2(0, 0), array_2(count, 4));
+    return result.slice(Eigen::array<Index, 2>{0, 0}, Eigen::array<Index, 2>{count, 4});
 }
 
 Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const MatrixR& targets,

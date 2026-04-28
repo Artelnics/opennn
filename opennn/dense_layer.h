@@ -168,10 +168,10 @@ public:
              bool new_batch_normalization = false,
              const string& new_label = "dense_layer")
     {
-        if (new_input_shape.rank() != Rank - 1)
+        if (new_input_shape.rank != Rank - 1)
             throw runtime_error("Input shape size must be " + to_string(Rank - 1));
 
-        if (new_output_shape.rank() != 1)
+        if (new_output_shape.rank != 1)
             throw runtime_error("Output shape size is not 1");
 
         if constexpr (Rank == 2)
@@ -196,7 +196,7 @@ public:
 
     void set_input_shape(const Shape& new_input_shape) override
     {
-        if (new_input_shape.rank() != Rank - 1)
+        if (new_input_shape.rank != Rank - 1)
             throw runtime_error("Input shape size must be " + to_string(Rank - 1));
 
         if constexpr (Rank == 2)
@@ -258,35 +258,35 @@ public:
     {
         const type limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
 
-        VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
+        VectorMap(parameters[Bias].template as<float>(), parameters[Bias].size()).setZero();
 
-        set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()), -limit, limit);
+        set_random_uniform(VectorMap(parameters[Weight].template as<float>(), parameters[Weight].size()), -limit, limit);
 
-        VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
+        VectorMap(parameters[Gamma].template as<float>(), parameters[Gamma].size()).setConstant(1.0);
 
-        VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
+        VectorMap(parameters[Beta].template as<float>(), parameters[Beta].size()).setZero();
 
         if (batch_normalization && ssize(states) > RunningVariance)
         {
-            VectorMap(states[RunningMean].data, states[RunningMean].size()).setZero();
-            VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
+            VectorMap(states[RunningMean].template as<float>(), states[RunningMean].size()).setZero();
+            VectorMap(states[RunningVariance].template as<float>(), states[RunningVariance].size()).setOnes();
         }
     }
 
     void set_parameters_random() override
     {
-        VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
+        VectorMap(parameters[Bias].template as<float>(), parameters[Bias].size()).setZero();
 
-        set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()));
+        set_random_uniform(VectorMap(parameters[Weight].template as<float>(), parameters[Weight].size()));
 
-        VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
+        VectorMap(parameters[Gamma].template as<float>(), parameters[Gamma].size()).setConstant(1.0);
 
-        VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
+        VectorMap(parameters[Beta].template as<float>(), parameters[Beta].size()).setZero();
 
         if (batch_normalization && ssize(states) > RunningVariance)
         {
-            VectorMap(states[RunningMean].data, states[RunningMean].size()).setZero();
-            VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
+            VectorMap(states[RunningMean].template as<float>(), states[RunningMean].size()).setZero();
+            VectorMap(states[RunningVariance].template as<float>(), states[RunningVariance].size()).setOnes();
         }
     }
 
@@ -503,11 +503,11 @@ public:
         VectorR tmp;
         string_to_vector(read_xml_string(dense_layer_element, "RunningMeans"), tmp);
         if(tmp.size() == states[RunningMean].size() && states[RunningMean].data)
-            VectorMap(states[RunningMean].data, states[RunningMean].size()) = tmp;
+            VectorMap(states[RunningMean].template as<float>(), states[RunningMean].size()) = tmp;
 
         string_to_vector(read_xml_string(dense_layer_element, "RunningVariances"), tmp);
         if(tmp.size() == states[RunningVariance].size() && states[RunningVariance].data)
-            VectorMap(states[RunningVariance].data, states[RunningVariance].size()) = tmp;
+            VectorMap(states[RunningVariance].template as<float>(), states[RunningVariance].size()) = tmp;
     }
 
     void to_XML(XmlPrinter& printer) const override

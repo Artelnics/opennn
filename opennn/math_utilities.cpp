@@ -260,9 +260,9 @@ void multiply(const TensorView& input_a, bool transpose_a,
         else
             gemm_strided_batched_cuda(operation_b, operation_a,
                                       output_columns, output_rows, inner_dimension,
-                                      input_b.data, cols_b, stride_b,
-                                      input_a.data, cols_a, stride_a,
-                                      output.data, output_columns, stride_output,
+                                      input_b.as<float>(), cols_b, stride_b,
+                                      input_a.as<float>(), cols_a, stride_a,
+                                      output.as<float>(), output_columns, stride_output,
                                       batch_count,
                                       alpha, beta);
         return;
@@ -401,7 +401,7 @@ void combination(const TensorView& input,
                        weights.data,
                        input.data,
                        output.data,
-                       biases.data);
+                       biases.as<float>());
         return;
     }
 #endif
@@ -430,7 +430,7 @@ void combination_activation(const TensorView& input,
                        weights.data,
                        input.data,
                        output.data,
-                       biases.data,
+                       biases.as<float>(),
                        CUBLASLT_EPILOGUE_RELU_BIAS);
         return;
     }
@@ -633,7 +633,7 @@ void dropout(TensorView& output, DropoutArguments& args)
     {
         const type mask_value = random_uniform(type(0), type(1)) < args.rate ? type(0) : scale;
         args.mask_cpu[i] = mask_value;
-        output.data[i] *= mask_value;
+        output.as<float>()[i] *= mask_value;
     }
 }
 
@@ -832,13 +832,13 @@ void layernorm_forward(const TensorView& input, const TensorView& gamma, const T
                                   gamma.as<float>(), beta.as<float>(), EPSILON);
     })) return;
 
-    const type* input_data = input.data;
-    type* means_data = means.data;
-    type* stds_data = standard_deviations.data;
-    type* normalized_data = normalized.data;
-    type* output_data = output.data;
-    const type* gamma_data = gamma.data;
-    const type* beta_data = beta.data;
+    const type* input_data = input.as<float>();
+    type* means_data = means.as<float>();
+    type* stds_data = standard_deviations.as<float>();
+    type* normalized_data = normalized.as<float>();
+    type* output_data = output.as<float>();
+    const type* gamma_data = gamma.as<float>();
+    const type* beta_data = beta.as<float>();
 
     const Index total_rows = batch_size * sequence_length;
     const type inv_D = type(1) / to_type(embedding_dimension);
@@ -899,11 +899,11 @@ void layernorm_backward(const TensorView& input, const TensorView& output_delta,
     beta_gradient.as_vector().noalias() = dy_flat.colwise().sum();
     gamma_gradient.as_vector().noalias() = (dy_flat.array() * norm_flat.array()).matrix().colwise().sum();
 
-    const type* dy_data = output_delta.data;
-    const type* norm_data = normalized.data;
-    const type* std_data = standard_deviations.data;
-    const type* gamma_data = gamma.data;
-    type* dx_data = input_delta.data;
+    const type* dy_data = output_delta.as<float>();
+    const type* norm_data = normalized.as<float>();
+    const type* std_data = standard_deviations.as<float>();
+    const type* gamma_data = gamma.as<float>();
+    type* dx_data = input_delta.as<float>();
 
     const Index total_rows = batch_size * sequence_length;
     const type inv_D = type(1) / to_type(embedding_dimension);
@@ -1055,13 +1055,13 @@ void convolution_backward_weights(const TensorView& input,
                                  * output_deltas.dimension(1)
                                  * output_deltas.dimension(2);
 
-    MatrixMap output_grads_mat(output_delta.data, grads_per_kernel, kernels_number);
-    VectorMap(bias_grad.data, kernels_number).noalias() = output_grads_mat.colwise().sum();
+    MatrixMap output_grads_mat(output_delta.as<float>(), grads_per_kernel, kernels_number);
+    VectorMap(bias_grad.as<float>(), kernels_number).noalias() = output_grads_mat.colwise().sum();
 
     // Weight gradients: for each kernel, convolve padded input with output-gradient slice
     // along (batch, H, W). Eigen's Tensor::convolve is SIMD-vectorized — much faster than
     // the naive 6-nested loop it replaced.
-    type* weight_data = weight_grad.data;
+    type* weight_data = weight_grad.as<float>();
 
     #pragma omp parallel for
     for(Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
@@ -1615,7 +1615,7 @@ void embedding_backward(const TensorView& input_indices,
 
     for(Index token_index = 0; token_index < total_elements; ++token_index)
     {
-        const Index vocabulary_index = static_cast<Index>(input_indices.data[token_index]);
+        const Index vocabulary_index = static_cast<Index>(input_indices.as<float>()[token_index]);
 
         if(vocabulary_index < 0 || vocabulary_index >= weight_gradients.rows())
             continue;
@@ -1655,7 +1655,7 @@ void split_heads(const TensorView& source, TensorView& destination)
                             to_int(head_dimension));
     })) return;
 
-    transpose_middle_axes(source.data, destination.data,
+    transpose_middle_axes(source.as<float>(), destination.as<float>(),
                           batch_size, sequence_length, heads_number, head_dimension);
 }
 
@@ -1674,7 +1674,7 @@ void merge_heads(const TensorView& source, TensorView& destination)
                             to_int(head_dimension));
     })) return;
 
-    transpose_middle_axes(source.data, destination.data,
+    transpose_middle_axes(source.as<float>(), destination.as<float>(),
                           batch_size, heads_number, sequence_length, head_dimension);
 }
 
@@ -1759,8 +1759,8 @@ void attention_masks(const TensorView& source_input,
     #pragma omp parallel for
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
-        const type* src = source_input.data + batch_index * source_sequence_length * embedding_dimension;
-        type*       att = attention_weights.data + batch_index * att_rows_per_batch * source_sequence_length;
+        const type* src = source_input.as<float>() + batch_index * source_sequence_length * embedding_dimension;
+        type*       att = attention_weights.as<float>() + batch_index * att_rows_per_batch * source_sequence_length;
 
         for(Index s = 0; s < source_sequence_length; ++s)
         {
@@ -1781,7 +1781,7 @@ void attention_masks(const TensorView& source_input,
     if(!use_causal_mask) return;
 
     const Index bh = batch_size * heads_number;
-    MatrixMap attention_flat(attention_weights.data, bh * query_sequence_length, source_sequence_length);
+    MatrixMap attention_flat(attention_weights.as<float>(), bh * query_sequence_length, source_sequence_length);
     attention_flat += causal_mask.replicate(bh, 1);
 }
 

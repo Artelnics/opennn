@@ -470,13 +470,13 @@ void OptimizerData::set(const vector<Shape>& slot_shapes)
     for(const Shape& s : slot_shapes)
         total_size += get_aligned_size(s.size());
 
-    data.resize(total_size);
+    data.resize_bytes(total_size * Index(sizeof(type)), DeviceType::Cpu);
     data.setZero();
 
     views.clear();
     views.reserve(slot_shapes.size());
 
-    type* pointer = (total_size > 0) ? data.data() : nullptr;
+    type* pointer = (total_size > 0) ? data.as<type>() : nullptr;
 
     for(const Shape& s : slot_shapes)
     {
@@ -498,10 +498,10 @@ void OptimizerData::allocate_device()
 {
     if(data.size() == 0) return;
 
-    data.resize_device(data.size());
-    data.setZero_device();
+    data.resize_bytes(data.size() * Index(sizeof(float)), DeviceType::Gpu);
+    data.setZero();
 
-    type* dev_pointer = data.device();
+    type* dev_pointer = data.as<type>();
 
     for(TensorView& view : views)
     {
@@ -592,7 +592,7 @@ void Optimizer::sync_device()
 #endif
 }
 
-void Optimizer::clip_gradient_norm(Memory& gradient, type max_norm)
+void Optimizer::clip_gradient_norm(Buffer& gradient, type max_norm)
 {
     const Index gradient_size = gradient.size();
     if(gradient_size <= 0) return;
@@ -603,8 +603,8 @@ void Optimizer::clip_gradient_norm(Memory& gradient, type max_norm)
         float squared_norm = 0.0f;
         CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(),
                                 to_int(gradient_size),
-                                gradient.device(), 1,
-                                gradient.device(), 1,
+                                gradient.as<type>(), 1,
+                                gradient.as<type>(), 1,
                                 &squared_norm));
         const float gradient_norm = std::sqrt(squared_norm);
         if(gradient_norm > float(max_norm))
@@ -612,15 +612,16 @@ void Optimizer::clip_gradient_norm(Memory& gradient, type max_norm)
             const float scale = float(max_norm) / (gradient_norm + 1e-6f);
             CHECK_CUBLAS(cublasSscal(Device::get_cublas_handle(),
                                      to_int(gradient_size), &scale,
-                                     gradient.device(), 1));
+                                     gradient.as<type>(), 1));
         }
         return;
     }
 #endif
 
-    const type gradient_norm = gradient.vector.norm();
+    VectorMap gradient_view(gradient.as<type>(), gradient.size());
+    const type gradient_norm = gradient_view.norm();
     if(gradient_norm > max_norm)
-        gradient.vector *= max_norm / (gradient_norm + type(1e-6));
+        gradient_view *= max_norm / (gradient_norm + type(1e-6));
 }
 
 EpochStats Optimizer::run_epoch(bool is_training_phase,

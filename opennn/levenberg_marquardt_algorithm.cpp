@@ -186,7 +186,8 @@ VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient()
 
     BackPropagationLM back_propagation_lm(samples_number, loss);
 
-    VectorR& parameters = neural_network->get_parameters();
+    VectorMap parameters(neural_network->get_parameters_data(),
+                         neural_network->get_parameters_size());
 
     const Index parameters_number = parameters.size();
 
@@ -254,7 +255,8 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_jacobian()
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagationLM back_propagation_lm(samples_number, loss);
 
-    VectorR& parameters = neural_network->get_parameters();
+    VectorMap parameters(neural_network->get_parameters_data(),
+                         neural_network->get_parameters_size());
     const Index parameters_number = parameters.size();
 
     const Index total_error_terms = back_propagation_lm.squared_errors.size();
@@ -309,7 +311,8 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
     BackPropagationLM back_propagation_lm(samples_number, loss);
 
-    VectorR& parameters = neural_network->get_parameters();
+    VectorMap parameters(neural_network->get_parameters_data(),
+                         neural_network->get_parameters_size());
 
     const Index parameters_number = parameters.size();
 
@@ -698,7 +701,8 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    VectorR& parameters = neural_network->get_parameters();
+    VectorMap parameters(neural_network->get_parameters_data(),
+                         neural_network->get_parameters_size());
 
     type& error = back_propagation_lm.error;
     type& loss_value = back_propagation_lm.loss_value;
@@ -707,7 +711,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     MatrixR& hessian = back_propagation_lm.hessian;
 
     VectorR& potential_parameters = optimization_data.potential_parameters;
-    VectorMap parameter_updates(optimization_data.views[ParameterUpdate].data,
+    VectorMap parameter_updates(optimization_data.views[ParameterUpdate].as<float>(),
                                 optimization_data.views[ParameterUpdate].size());
 
     const Index parameters_number = parameters.size();

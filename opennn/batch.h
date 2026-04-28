@@ -59,13 +59,13 @@ struct Batch
 
     const Dataset* dataset = nullptr;
 
-    Memory input;
+    Buffer input;
     Shape input_shape;
 
-    Memory decoder;
+    Buffer decoder;
     Shape decoder_shape;
 
-    Memory target;
+    Buffer target;
     Shape target_shape;
 
     int input_contiguous = -1;

@@ -90,8 +90,8 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         sgd_update_cuda(
             parameters_number,
             neural_network->get_parameters_device(),
-            optimization_data.views[ParameterUpdate].data,
-            back_propagation.gradient.device(),
+            optimization_data.views[ParameterUpdate].as<float>(),
+            back_propagation.gradient.as<type>(),
             current_learning_rate,
             momentum,
             nesterov);
@@ -99,13 +99,15 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     }
 #endif
 
-    VectorR& parameters = neural_network->get_parameters();
+    VectorMap parameters(neural_network->get_parameters_data(),
+                         neural_network->get_parameters_size());
 
-    const VectorR& gradient = back_propagation.gradient.vector;
+    VectorMap gradient(back_propagation.gradient.as<type>(),
+                       back_propagation.gradient.size());
 
-    VectorMap parameter_updates(optimization_data.views[ParameterUpdate].data,
+    VectorMap parameter_updates(optimization_data.views[ParameterUpdate].as<float>(),
                                 optimization_data.views[ParameterUpdate].size());
-    VectorMap last_parameter_updates(optimization_data.views[LastParameterUpdate].data,
+    VectorMap last_parameter_updates(optimization_data.views[LastParameterUpdate].as<float>(),
                                      optimization_data.views[LastParameterUpdate].size());
 
     const Index n = parameters.size();

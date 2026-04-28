@@ -36,7 +36,7 @@ vector<Shape> Recurrent::get_parameter_shapes() const
 
 void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 {
-    if(new_input_shape.rank() != 2)
+    if(new_input_shape.rank != 2)
         throw runtime_error("Input shape rank is not 2 for Recurrent (time_steps, inputs).");
 
     time_steps = new_input_shape[0];
@@ -56,7 +56,7 @@ void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 
 void Recurrent::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.rank() != 2)
+    if (new_input_shape.rank != 2)
         throw runtime_error("Input shape rank is not 2 for Recurrent (time_steps, inputs).");
 
     time_steps = new_input_shape[0];
@@ -105,13 +105,13 @@ void Recurrent::forward_propagate(ForwardPropagation& /*forward_propagation*/, s
     const Index input_features = forward_propagation->inputs[0].shape[2];
     const Index output_size = biases.shape[0];
 
-    const VectorMap biases_map = vector_map(biases);
-    const MatrixMap input_weights_map = matrix_map(input_weights);
-    const MatrixMap recurrent_weights_map = matrix_map(recurrent_weights);
+    const VectorMap biases_map = biases.as_vector();
+    const MatrixMap input_weights_map = input_weights.as_matrix();
+    const MatrixMap recurrent_weights_map = recurrent_weights.as_matrix();
 
-    TensorMap3 input_sequences = tensor_map<3>(forward_propagation->inputs[0]);
-    TensorMap3 all_hidden_states = tensor_map<3>(recurrent_forward_propagation->hidden_states);
-    TensorMap3 all_activation_derivatives = tensor_map<3>(recurrent_forward_propagation->activation_derivatives);
+    TensorMap3 input_sequences = forward_propagation->inputs[0].as_tensor<3>();
+    TensorMap3 all_hidden_states = recurrent_forward_propagation->hidden_states.as_tensor<3>();
+    TensorMap3 all_activation_derivatives = recurrent_forward_propagation->activation_derivatives.as_tensor<3>();
 
     MatrixR current_hidden_state = MatrixR::Zero(batch_size, output_size);
 
@@ -170,7 +170,7 @@ void Recurrent::forward_propagate(ForwardPropagation& /*forward_propagation*/, s
         outputs_map = all_hidden_states.chip(past_time_steps - 1, 1);
     }
 
-    MatrixMap outputs_map = matrix_map(recurrent_forward_propagation->outputs);
+    MatrixMap outputs_map = recurrent_forward_propagation->outputs.as_matrix();
     TensorMap2(outputs_map.data(), batch_size, output_size) = all_hidden_states.chip(past_time_steps - 1, 1);
 */
 
@@ -186,24 +186,24 @@ void Recurrent::back_propagate(ForwardPropagation& /*forward_propagation*/,
     const Index input_features = forward_propagation->inputs[0].shape[2];
     const Index output_features = biases.shape[0];
 
-    const MatrixMap W_in = matrix_map(input_weights);
-    const MatrixMap W_rec = matrix_map(recurrent_weights);
-    const MatrixMap external_output_deltas = matrix_map(back_propagation->output_deltas[0]);
+    const MatrixMap W_in = input_weights.as_matrix();
+    const MatrixMap W_rec = recurrent_weights.as_matrix();
+    const MatrixMap external_output_deltas = back_propagation->output_deltas[0].as_matrix();
 
-    VectorMap bias_gradients = vector_map(recurrent_bp->bias_gradients);
-    MatrixMap input_weight_gradients = matrix_map(recurrent_bp->input_weight_gradients);
-    MatrixMap recurrent_weight_gradients = matrix_map(recurrent_bp->recurrent_weight_gradients);
+    VectorMap bias_gradients = recurrent_bp->bias_gradients.as_vector();
+    MatrixMap input_weight_gradients = recurrent_bp->input_weight_gradients.as_matrix();
+    MatrixMap recurrent_weight_gradients = recurrent_bp->recurrent_weight_gradients.as_matrix();
 
-    TensorMap3 input_sequence_gradient = tensor_map<3>(recurrent_bp->input_deltas[0]);
+    TensorMap3 input_sequence_gradient = recurrent_bp->input_deltas[0].as_tensor<3>();
 
     bias_gradients.setZero();
     input_weight_gradients.setZero();
     recurrent_weight_gradients.setZero();
 
     RecurrentForwardPropagation* recurrent_fp = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
-    TensorMap3 input_sequences = tensor_map<3>(forward_propagation->inputs[0]);
-    TensorMap3 all_hidden_states = tensor_map<3>(recurrent_fp->hidden_states);
-    TensorMap3 all_activation_derivatives = tensor_map<3>(recurrent_fp->activation_derivatives);
+    TensorMap3 input_sequences = forward_propagation->inputs[0].as_tensor<3>();
+    TensorMap3 all_hidden_states = recurrent_fp->hidden_states.as_tensor<3>();
+    TensorMap3 all_activation_derivatives = recurrent_fp->activation_derivatives.as_tensor<3>();
 
     MatrixR output_delta(batch_size, output_features);
     MatrixR next_step_gradient = MatrixR::Zero(batch_size, output_features);

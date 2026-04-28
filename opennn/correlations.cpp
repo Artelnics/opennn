@@ -359,7 +359,8 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     correlation.lower_confidence = z_correlation_to_r_correlation(ci_lower);
     correlation.upper_confidence = z_correlation_to_r_correlation(ci_upper);
 
-    const VectorR coefficients = neural_network.get_parameters();
+    const VectorR coefficients = Map<const VectorR, AlignedMax>(
+        neural_network.get_parameters_data(), neural_network.get_parameters_size());
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
 

@@ -171,7 +171,8 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
         return;
     }
 #endif
-    const VectorR& params_vec = neural_network->get_parameters();
+    Map<const VectorR, AlignedMax> params_vec(neural_network->get_parameters_data(),
+                                               neural_network->get_parameters_size());
     back_propagation.loss_value += calculate_regularization(params_vec);
 }
 
@@ -258,13 +259,13 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 #ifdef OPENNN_WITH_CUDA
     const TensorView parameters = Device::instance().is_gpu()
         ? TensorView(neural_network->get_parameters_device(), { n })
-        : TensorView(const_cast<type*>(neural_network->get_parameters().data()), { n });
+        : TensorView(neural_network->get_parameters_data(), { n });
     TensorView gradient = Device::instance().is_gpu()
-        ? TensorView(back_propagation.gradient.device(), { n })
-        : TensorView(back_propagation.gradient.data(), { n });
+        ? TensorView(back_propagation.gradient.as<type>(), { n })
+        : TensorView(back_propagation.gradient.as<type>(), { n });
 #else
-    const TensorView parameters(const_cast<type*>(neural_network->get_parameters().data()), { n });
-    TensorView gradient(back_propagation.gradient.data(), { n });
+    const TensorView parameters(neural_network->get_parameters_data(), { n });
+    TensorView gradient(back_propagation.gradient.as<type>(), { n });
 #endif
 
     if (regularization_method == Regularization::L1)
@@ -356,7 +357,8 @@ VectorR Loss::calculate_gradient()
 
     BackPropagation back_propagation(samples_number, this);
 
-    const VectorR& parameters = neural_network->get_parameters();
+    Map<const VectorR, AlignedMax> parameters(neural_network->get_parameters_data(),
+                                               neural_network->get_parameters_size());
 
     neural_network->forward_propagate(batch.get_inputs(),
                                       parameters,
@@ -364,7 +366,8 @@ VectorR Loss::calculate_gradient()
 
     back_propagate(batch, forward_propagation, back_propagation);
 
-    return back_propagation.gradient.vector;
+    return Map<const VectorR, AlignedMax>(back_propagation.gradient.as<type>(),
+                                          back_propagation.gradient.size());
 }
 
 VectorR Loss::calculate_numerical_gradient()
@@ -387,7 +390,8 @@ VectorR Loss::calculate_numerical_gradient()
 
     BackPropagation back_propagation(samples_number, this);
 
-    VectorR& parameters = neural_network->get_parameters();
+    VectorMap parameters(neural_network->get_parameters_data(),
+                         neural_network->get_parameters_size());
 
     const Index parameters_number = parameters.size();
 
@@ -461,27 +465,27 @@ VectorR Loss::calculate_numerical_input_deltas()
 
     const vector<TensorView>& input_views = batch.get_inputs();
 
-    TensorMap4 inputs_vector = tensor_map<4>(input_views[0]);
+    TensorMap4 inputs_vector = input_views[0].as_tensor<4>();
 
     for(Index i = 0; i < values_number; ++i)
     {
         h = calculate_h(inputs_vector(i));
 
-        input_views[0].data[i] += h;
+        input_views[0].as<float>()[i] += h;
 
         neural_network->forward_propagate(input_views, forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
         error_forward = back_propagation.error;
 
-        input_views[0].data[i] -= 2*h;
+        input_views[0].as<float>()[i] -= 2*h;
 
         neural_network->forward_propagate(input_views, forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
         error_backward = back_propagation.error;
 
-        input_views[0].data[i] += h;
+        input_views[0].as<float>()[i] += h;
 
         numerical_inputs_gradients(i) = (error_forward - error_backward) / type(2 * h);
     }

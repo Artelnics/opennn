@@ -93,10 +93,10 @@ type* Bounding::link_states(type* pointer)
     if(bounding_method == BoundingMethod::NoBounding) return next;
 
     if(states[Lower].data)
-        VectorMap(states[Lower].data, states[Lower].size()).setConstant(-numeric_limits<type>::max());
+        VectorMap(states[Lower].as<float>(), states[Lower].size()).setConstant(-numeric_limits<type>::max());
 
     if(states[Upper].data)
-        VectorMap(states[Upper].data, states[Upper].size()).setConstant(numeric_limits<type>::max());
+        VectorMap(states[Upper].as<float>(), states[Upper].size()).setConstant(numeric_limits<type>::max());
 
     return next;
 }
@@ -106,7 +106,7 @@ void Bounding::set_lower_bound(const Index index, type new_lower_bound)
     if(ssize(states) <= Lower || !states[Lower].data)
         throw runtime_error("Bounding::set_lower_bound: layer not compiled yet (call NeuralNetwork::compile() first).");
 
-    states[Lower].data[index] = new_lower_bound;
+    states[Lower].as<float>()[index] = new_lower_bound;
 }
 
 void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
@@ -114,7 +114,7 @@ void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
     if(ssize(states) <= Lower || !states[Lower].data)
         throw runtime_error("Bounding::set_lower_bounds: layer not compiled yet (call NeuralNetwork::compile() first).");
 
-    VectorMap(states[Lower].data, states[Lower].size()) = new_lower_bounds;
+    VectorMap(states[Lower].as<float>(), states[Lower].size()) = new_lower_bounds;
 }
 
 void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
@@ -122,7 +122,7 @@ void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
     if(ssize(states) <= Upper || !states[Upper].data)
         throw runtime_error("Bounding::set_upper_bounds: layer not compiled yet (call NeuralNetwork::compile() first).");
 
-    VectorMap(states[Upper].data, states[Upper].size()) = new_upper_bounds;
+    VectorMap(states[Upper].as<float>(), states[Upper].size()) = new_upper_bounds;
 }
 
 void Bounding::set_upper_bound(const Index index, type new_upper_bound)
@@ -130,7 +130,7 @@ void Bounding::set_upper_bound(const Index index, type new_upper_bound)
     if(ssize(states) <= Upper || !states[Upper].data)
         throw runtime_error("Bounding::set_upper_bound: layer not compiled yet (call NeuralNetwork::compile() first).");
 
-    states[Upper].data[index] = new_upper_bound;
+    states[Upper].as<float>()[index] = new_upper_bound;
 }
 
 void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer_index, bool) noexcept
@@ -190,11 +190,11 @@ void Bounding::load_state_from_XML(const XmlDocument& document)
     VectorR tmp;
     string_to_vector(read_xml_string(root_element, "LowerBounds"), tmp);
     if(tmp.size() == states[Lower].size())
-        VectorMap(states[Lower].data, states[Lower].size()) = tmp;
+        VectorMap(states[Lower].as<float>(), states[Lower].size()) = tmp;
 
     string_to_vector(read_xml_string(root_element, "UpperBounds"), tmp);
     if(tmp.size() == states[Upper].size())
-        VectorMap(states[Upper].data, states[Upper].size()) = tmp;
+        VectorMap(states[Upper].as<float>(), states[Upper].size()) = tmp;
 }
 
 REGISTER(Layer, Bounding, "Bounding")

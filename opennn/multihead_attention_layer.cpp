@@ -89,7 +89,7 @@ void MultiHeadAttention::set_parameters_random()
     for(const int slot : weight_slots)
     {
         if(parameters[slot].empty()) continue;
-        set_random_uniform(VectorMap(parameters[slot].data, parameters[slot].size()),
+        set_random_uniform(VectorMap(parameters[slot].as<float>(), parameters[slot].size()),
                            -weight_limit, weight_limit);
     }
 
@@ -97,7 +97,7 @@ void MultiHeadAttention::set_parameters_random()
     for(const int slot : bias_slots)
     {
         if(parameters[slot].empty()) continue;
-        VectorMap(parameters[slot].data, parameters[slot].size()).setZero();
+        VectorMap(parameters[slot].as<float>(), parameters[slot].size()).setZero();
     }
 }
 
@@ -195,7 +195,7 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     const Index batch_size = forward_propagation.batch_size;
     const Index total_rows = batch_size * query_sequence_length;
 
-    float* transpose_scratch = forward_views[TransposeScratch][0].data;
+    float* transpose_scratch = forward_views[TransposeScratch][0].as<float>();
 
     projection(query_input,  parameters[QueryWeight], parameters[QueryBias], query, transpose_scratch);
     projection(source_input, parameters[KeyWeight],   parameters[KeyBias],   key,   transpose_scratch);
@@ -203,7 +203,7 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
 
     multiply(query, false, key, true, attention_weights, get_scaling_factor(), type(0));
 
-    attention_masks(source_input, attention_weights, causal_mask, use_causal_mask, forward_views[PaddingMask][0].data);
+    attention_masks(source_input, attention_weights, causal_mask, use_causal_mask, forward_views[PaddingMask][0].as<float>());
 
     softmax(attention_weights);
 
@@ -252,7 +252,7 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     const Index total_rows = batch_size * query_sequence_length;
     const Shape flat_shape = {total_rows, embedding_dimension};
 
-    float* transpose_scratch = forward_views[TransposeScratch][0].data;
+    float* transpose_scratch = forward_views[TransposeScratch][0].as<float>();
     const type scaling_factor = get_scaling_factor();
 
     TensorView concat_grad_flat = delta_views[ConcatenatedOutputDelta][0].reshape(flat_shape);

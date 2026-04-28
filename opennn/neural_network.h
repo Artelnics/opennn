@@ -73,11 +73,8 @@ public:
 
     bool is_empty() const { return layers.empty(); }
 
-    VectorR& get_parameters() { return parameters.vector; }
-    const VectorR& get_parameters() const { return parameters.vector; }
-
-    type* get_parameters_data() { return parameters.data(); }
-    const type* get_parameters_data() const { return parameters.data(); }
+    type* get_parameters_data() { return parameters.as<type>(); }
+    const type* get_parameters_data() const { return parameters.as<type>(); }
     Index get_parameters_size() const { return parameters.size(); }
 
     const vector<Variable>& get_input_variables() const { return input_variables; }
@@ -148,7 +145,7 @@ public:
 
     vector<Index> get_layer_parameter_numbers() const;
 
-    void set_parameters(const VectorR& p) { parameters.vector = p; }
+    void set_parameters(const VectorR& p);
 
     // Parameters initialization
 
@@ -202,20 +199,12 @@ public:
 
 public:
 
-    type* get_parameters_device() { return parameters.device(); }
-    const type* get_parameters_device() const { return parameters.device(); }
+    type* get_parameters_device() { return parameters.as<type>(); }
+    const type* get_parameters_device() const { return parameters.as<type>(); }
 
-    // BF16 working copy of `parameters`. Allocated only when
-    // OPENNN_USE_BF16_ACTIVATIONS is on. Refreshed by cast_parameters_to_bf16()
-    // after each Adam step. When the flag is off, this Memory stays empty and
-    // every call site that consults `parameters_bf16.empty()` falls back to FP32.
-    __nv_bfloat16* get_parameters_bf16_device() { return reinterpret_cast<__nv_bfloat16*>(parameters_bf16.device()); }
-    const __nv_bfloat16* get_parameters_bf16_device() const { return reinterpret_cast<const __nv_bfloat16*>(parameters_bf16.device()); }
-
-    // parameters_bf16 is GPU-only so Memory::empty() always says true; check
-    // the device allocation directly.
-    bool has_bf16_working_copy() const { return parameters_bf16.allocated_bytes > 0; }
-
+    // BF16 working copy of `parameters`. Allocated only when OPENNN_BF16_ACTIVATIONS
+    // is on. Refreshed by cast_parameters_to_bf16() after each Adam step. When the
+    // flag is off, this stays empty and call sites fall back to FP32.
     void cast_parameters_to_bf16();
 
     void copy_parameters_device();
@@ -253,11 +242,11 @@ protected:
 
     vector<vector<Index>> layer_input_indices;
 
-    Memory parameters;
-    Memory parameters_bf16;  // GPU-only BF16 mirror; empty when flag is off.
+    Buffer parameters;
+    Buffer parameters_bf16{DeviceType::Gpu};
     vector<vector<vector<TensorView>>> parameter_views;
 
-    Memory states;
+    Buffer states;
 };
 
 }

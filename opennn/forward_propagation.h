@@ -35,7 +35,7 @@ struct ForwardPropagation
 
     NeuralNetwork* neural_network = nullptr;
 
-    Memory data;
+    Buffer data;
     vector<vector<vector<TensorView>>> views;
 };
 

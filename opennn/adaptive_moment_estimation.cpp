@@ -299,9 +299,9 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         adam_update_cuda(
             parameters_number,
             neural_network->get_parameters_device(),
-            optimization_data.views[GradientMoment].data,
-            optimization_data.views[SquareGradientMoment].data,
-            back_propagation.gradient.device(),
+            optimization_data.views[GradientMoment].as<float>(),
+            optimization_data.views[SquareGradientMoment].as<float>(),
+            back_propagation.gradient.as<type>(),
             beta_1,
             beta_2,
             learning_rate,
@@ -311,20 +311,22 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
         // Master FP32 weights just changed in-place. Refresh the BF16 working
         // copy so the next forward pass sees up-to-date weights. No-op when
-        // OPENNN_USE_BF16_ACTIVATIONS is off (parameters_bf16 stays empty).
+        // OPENNN_BF16_ACTIVATIONS is off (parameters_bf16 stays empty).
         neural_network->cast_parameters_to_bf16();
         return;
     }
 #endif
 
-    VectorR& parameters = neural_network->get_parameters();
+    VectorMap parameters(neural_network->get_parameters_data(),
+                         neural_network->get_parameters_size());
 
-    VectorMap gradient_exponential_decay(optimization_data.views[GradientMoment].data,
+    VectorMap gradient_exponential_decay(optimization_data.views[GradientMoment].as<float>(),
                                          optimization_data.views[GradientMoment].size());
-    VectorMap square_gradient_exponential_decay(optimization_data.views[SquareGradientMoment].data,
+    VectorMap square_gradient_exponential_decay(optimization_data.views[SquareGradientMoment].as<float>(),
                                                 optimization_data.views[SquareGradientMoment].size());
 
-    const VectorR& gradient = back_propagation.gradient.vector;
+    VectorMap gradient(back_propagation.gradient.as<type>(),
+                       back_propagation.gradient.size());
 
     const Index n = parameters.size();
     const type one_minus_beta_1 = type(1) - beta_1;
