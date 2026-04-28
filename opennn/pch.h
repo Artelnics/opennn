@@ -70,26 +70,43 @@
 
 #else
 
-// CPU-only stubs. Values don't matter; GPU code paths never execute (Device::is_gpu() == false).
-// Enums (not type aliases) so that scoped references like `cudnnPoolingMode_t::CUDNN_POOLING_MAX`
-// continue to compile.
+// =========================================================================
+// CPU-only stubs.
+// Goal: every CUDA/cuDNN/cuBLAS *type* that appears in OpenNN's signatures or
+// struct members must compile when CUDA is off. Values don't matter — runtime
+// GPU paths are gated by Device::is_gpu() and never execute in this build.
+// Enums (not type aliases) so scoped references like
+// `cudnnPoolingMode_t::CUDNN_POOLING_MAX` keep working.
+//
+// When adding a new CUDA-only type referenced from non-CUDA-guarded code,
+// add the stub here in the matching subsection.
+// =========================================================================
+
+// --- Runtime / library handles ---
 using cudaStream_t     = void*;
 using cudaEvent_t      = void*;
 using cublasHandle_t   = void*;
 using cublasLtHandle_t = void*;
 using cudnnHandle_t    = void*;
 
-enum cudaDataType_t                     { CUDA_R_32F = 0, CUDA_R_16F = 2, CUDA_R_16BF = 14 };
-enum cublasComputeType_t                { CUBLAS_COMPUTE_32F = 0, CUBLAS_COMPUTE_32F_FAST_16BF = 65 };
-enum cublasOperation_t                  { CUBLAS_OP_N = 0, CUBLAS_OP_T = 1 };
-enum cudnnDataType_t                    { CUDNN_DATA_FLOAT = 0, CUDNN_DATA_HALF = 2, CUDNN_DATA_BFLOAT16 = 14 };
-enum cudnnActivationMode_t              { CUDNN_ACTIVATION_IDENTITY = 0, CUDNN_ACTIVATION_SIGMOID = 1, CUDNN_ACTIVATION_RELU = 2, CUDNN_ACTIVATION_TANH = 3, CUDNN_ACTIVATION_ELU = 4 };
-enum cudnnPoolingMode_t                 { CUDNN_POOLING_MAX = 0 };
-enum cudnnBatchNormMode_t               { CUDNN_BATCHNORM_PER_ACTIVATION = 0 };
-enum cudnnConvolutionFwdAlgo_t          { CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM = 0 };
-enum cudnnConvolutionBwdDataAlgo_t      { CUDNN_CONVOLUTION_BWD_DATA_ALGO_0 = 0 };
-enum cudnnConvolutionBwdFilterAlgo_t    { CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0 = 0 };
+// --- Scalar / opaque types ---
+struct __nv_bfloat16 {};
 
+// --- CUDA / cuBLAS enums ---
+enum cudaDataType_t                  { CUDA_R_32F = 0, CUDA_R_16F = 2, CUDA_R_16BF = 14 };
+enum cublasComputeType_t             { CUBLAS_COMPUTE_32F = 0, CUBLAS_COMPUTE_32F_FAST_16BF = 65 };
+enum cublasOperation_t               { CUBLAS_OP_N = 0, CUBLAS_OP_T = 1 };
+
+// --- cuDNN enums ---
+enum cudnnDataType_t                 { CUDNN_DATA_FLOAT = 0, CUDNN_DATA_HALF = 2, CUDNN_DATA_BFLOAT16 = 14 };
+enum cudnnActivationMode_t           { CUDNN_ACTIVATION_IDENTITY = 0, CUDNN_ACTIVATION_SIGMOID = 1, CUDNN_ACTIVATION_RELU = 2, CUDNN_ACTIVATION_TANH = 3, CUDNN_ACTIVATION_ELU = 4 };
+enum cudnnPoolingMode_t              { CUDNN_POOLING_MAX = 0 };
+enum cudnnBatchNormMode_t            { CUDNN_BATCHNORM_PER_ACTIVATION = 0 };
+enum cudnnConvolutionFwdAlgo_t       { CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM = 0 };
+enum cudnnConvolutionBwdDataAlgo_t   { CUDNN_CONVOLUTION_BWD_DATA_ALGO_0 = 0 };
+enum cudnnConvolutionBwdFilterAlgo_t { CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0 = 0 };
+
+// --- cuDNN descriptor handles (opaque pointer-typed) ---
 struct cudnnTensorStruct {};
 using cudnnTensorDescriptor_t      = cudnnTensorStruct*;
 using cudnnFilterDescriptor_t      = void*;
@@ -98,8 +115,6 @@ using cudnnPoolingDescriptor_t     = void*;
 using cudnnActivationDescriptor_t  = void*;
 using cudnnDropoutDescriptor_t     = void*;
 using cudnnOpTensorDescriptor_t    = void*;
-
-struct __nv_bfloat16 {};   // opaque placeholder
 
 #endif
 

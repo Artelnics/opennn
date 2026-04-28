@@ -329,6 +329,9 @@ Device::Device()
 Device::~Device()
 {
 #ifdef OPENNN_WITH_CUDA
+    // Plans hold cuBLASLt descriptor handles; clear before destroying the LT handle.
+    lt_gemm_plans.clear();
+    if (cublas_lt_workspace) cudaFree(cublas_lt_workspace);
     if (operator_sum_descriptor) cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
     if (operator_multiplication_descriptor) cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
     if (cublas_lt_handle) cublasLtDestroy(cublas_lt_handle);
@@ -337,6 +340,81 @@ Device::~Device()
     if (compute_stream) cudaStreamDestroy(compute_stream);
 #endif
 }
+
+#ifdef OPENNN_WITH_CUDA
+
+const LtMatmulPlan& Device::get_lt_gemm_plan(
+    int m, int n, int k,
+    cublasOperation_t transA,
+    cublasOperation_t transB,
+    cublasLtEpilogue_t epilogue)
+{
+    auto& self = instance();
+
+    const LtMatmulPlanKey key{m, n, k,
+                              static_cast<int>(transA),
+                              static_cast<int>(transB),
+                              static_cast<int>(epilogue)};
+    auto it = self.lt_gemm_plans.find(key);
+    if (it != self.lt_gemm_plans.end()) return it->second;
+
+    LtMatmulPlan plan;
+
+    // Operation: compute=TF32 multiply / FP32 accumulate, scale=FP32, epilogue per request,
+    // bias dtype=FP32. TF32 matches the math mode already set on the regular cuBLAS handle
+    // (cublasSetMathMode in Device::Device) and is ~2-3x faster than strict FP32 on Ampere+
+    // tensor cores; storage stays FP32 throughout.
+    CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.op_desc, CUBLAS_COMPUTE_32F_FAST_TF32, CUDA_R_32F));
+    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_TRANSA,
+                                                &transA, sizeof(transA)));
+    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_TRANSB,
+                                                &transB, sizeof(transB)));
+    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_EPILOGUE,
+                                                &epilogue, sizeof(epilogue)));
+    const cudaDataType_t bias_dtype = CUDA_R_32F;
+    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
+                                                &bias_dtype, sizeof(bias_dtype)));
+
+    // Layouts. Inputs are column-major in the cuBLAS view (the row-major caller
+    // achieves row-major semantics by swapping operand roles outside this plan).
+    const int a_rows = (transA == CUBLAS_OP_N) ? m : k;
+    const int a_cols = (transA == CUBLAS_OP_N) ? k : m;
+    const int b_rows = (transB == CUBLAS_OP_N) ? k : n;
+    const int b_cols = (transB == CUBLAS_OP_N) ? n : k;
+
+    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.a_desc, CUDA_ACTIVATION_DTYPE, a_rows, a_cols, a_rows));
+    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.b_desc, CUDA_ACTIVATION_DTYPE, b_rows, b_cols, b_rows));
+    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.c_desc, CUDA_ACTIVATION_DTYPE, m, n, m));
+    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.d_desc, CUDA_ACTIVATION_DTYPE, m, n, m));
+
+    // Heuristic: pick one algo that fits within our workspace budget. If none
+    // is returned, leave algo_valid=false and the call site will pass nullptr,
+    // letting cuBLASLt use its internal default (slower path, but always works).
+    cublasLtMatmulPreference_t pref = nullptr;
+    CHECK_CUBLAS(cublasLtMatmulPreferenceCreate(&pref));
+    const size_t max_workspace = Device::cublas_lt_workspace_bytes();
+    CHECK_CUBLAS(cublasLtMatmulPreferenceSetAttribute(pref,
+        CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &max_workspace, sizeof(max_workspace)));
+
+    cublasLtMatmulHeuristicResult_t heuristic = {};
+    int returned_results = 0;
+    cublasLtMatmulAlgoGetHeuristic(Device::get_cublas_lt_handle(),
+                                   plan.op_desc,
+                                   plan.a_desc, plan.b_desc, plan.c_desc, plan.d_desc,
+                                   pref, 1, &heuristic, &returned_results);
+    cublasLtMatmulPreferenceDestroy(pref);
+
+    if (returned_results > 0)
+    {
+        plan.algo = heuristic.algo;
+        plan.algo_valid = true;
+    }
+
+    auto [iter, _] = self.lt_gemm_plans.emplace(key, std::move(plan));
+    return iter->second;
+}
+
+#endif // OPENNN_WITH_CUDA
 
 void Device::set_threads_number(int num_threads)
 {

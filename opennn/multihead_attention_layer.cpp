@@ -203,8 +203,9 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
 
     multiply(query, false, key, true, attention_weights, get_scaling_factor(), type(0));
 
-    attention_softmax(source_input, attention_weights, causal_mask, use_causal_mask,
-                      forward_views[PaddingMask][0].data);
+    attention_masks(source_input, attention_weights, causal_mask, use_causal_mask, forward_views[PaddingMask][0].data);
+
+    softmax(attention_weights);
 
     const bool apply_dropout = is_training && dropout_rate > type(0);
     TensorView& attention_used = apply_dropout

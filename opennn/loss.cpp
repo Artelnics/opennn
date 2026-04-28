@@ -53,9 +53,10 @@ void Loss::set_normalization_coefficient()
 
         if(positives == 0 || negatives == 0) return;
 
-        negatives_weight = type(1);
-        positives_weight = type(negatives) / type(positives);
-        normalization_coefficient = type(negatives) * negatives_weight * type(0.5);
+        const type total = type(positives + negatives);
+        positives_weight = total / (type(2) * type(positives));
+        negatives_weight = total / (type(2) * type(negatives));
+        normalization_coefficient = type(1);
     }
 }
 

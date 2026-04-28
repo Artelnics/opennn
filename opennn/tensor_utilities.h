@@ -117,10 +117,6 @@ inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t t)
     }
 }
 
-template<cudnnDataType_t D> struct MapDtype;
-template<> struct MapDtype<CUDNN_DATA_FLOAT>    { using type = float; };
-template<> struct MapDtype<CUDNN_DATA_BFLOAT16> { using type = __nv_bfloat16; };
-
 template <typename T>
 class ThreadSafeQueue
 {
@@ -356,10 +352,7 @@ struct Memory
     const uint8_t* device_bytes() const { return device_data; }
 
 #ifdef OPENNN_WITH_CUDA
-    void resize_device(Index n_floats) 
-    { 
-        resize_device_bytes(n_floats * Index(sizeof(float))); 
-    }
+    void resize_device(Index n_floats) { resize_device_bytes(n_floats * Index(sizeof(float))); }
 
     void resize_device_bytes(Index n_bytes)
     {
@@ -378,12 +371,7 @@ struct Memory
 private:
     void free_device()
     {
-        if(device_data) 
-        { 
-            cudaFree(device_data); 
-            device_data = nullptr; 
-            allocated_bytes = 0; 
-        }
+        if(device_data) { cudaFree(device_data); device_data = nullptr; allocated_bytes = 0; }
     }
 #else
 private:
@@ -413,21 +401,29 @@ struct TensorView
 
     bool empty() const noexcept { return shape.empty(); }
 
-    template<typename T>  T* as() noexcept;
+    template<typename T>       T* as()       noexcept;
     template<typename T> const T* as() const noexcept;
 
-    cudaDataType_t cuda_dtype() const noexcept 
+    // Float-typed view of `data`. Used at CUDA dispatch sites where kernels expect
+    // raw float* regardless of the project's `type` alias (e.g. descriptive stats,
+    // scaler tables, masks). Mirrors as<T>() but skips the dtype check.
+    float* as_float() noexcept
     { 
-        return cudnn_to_cuda_dtype(dtype); 
+        return reinterpret_cast<float*>(data); 
     }
+
+    const float* as_float() const noexcept 
+    { 
+        return reinterpret_cast<const float*>(data); 
+    }
+
+    cudaDataType_t cuda_dtype() const noexcept { return cudnn_to_cuda_dtype(dtype); }
 
     template<typename F>
     void dispatch(F&& fn) const
     {
-        if (dtype == CUDNN_DATA_BFLOAT16) 
-            fn(__nv_bfloat16{});
-        else                              
-            fn(float{});
+        if (dtype == CUDNN_DATA_BFLOAT16) fn(__nv_bfloat16{});
+        else                              fn(float{});
     }
 
     TensorView reshape(const Shape& new_shape) const
@@ -931,6 +927,83 @@ inline bool are_equal(const T& A, const U& B, type tolerance = type(1.0e-3))
 
 enum class DeviceType { Cpu, Gpu };
 
+#ifdef OPENNN_WITH_CUDA
+
+// Cached cuBLASLt plan: 1 op desc + 4 layout descs + a heuristic-selected algo.
+// Built once per (m, n, k, transA, transB) shape; bias *pointer* is set per call
+// because it varies per layer/iteration.
+struct LtMatmulPlan
+{
+    cublasLtMatmulDesc_t   op_desc = nullptr;
+    cublasLtMatrixLayout_t a_desc  = nullptr;
+    cublasLtMatrixLayout_t b_desc  = nullptr;
+    cublasLtMatrixLayout_t c_desc  = nullptr;
+    cublasLtMatrixLayout_t d_desc  = nullptr;
+    cublasLtMatmulAlgo_t   algo{};
+    bool                   algo_valid = false;
+
+    LtMatmulPlan() = default;
+    LtMatmulPlan(const LtMatmulPlan&) = delete;
+    LtMatmulPlan& operator=(const LtMatmulPlan&) = delete;
+    LtMatmulPlan(LtMatmulPlan&& o) noexcept { *this = std::move(o); }
+    LtMatmulPlan& operator=(LtMatmulPlan&& o) noexcept
+    {
+        std::swap(op_desc, o.op_desc);
+        std::swap(a_desc,  o.a_desc);
+        std::swap(b_desc,  o.b_desc);
+        std::swap(c_desc,  o.c_desc);
+        std::swap(d_desc,  o.d_desc);
+        std::swap(algo,    o.algo);
+        std::swap(algo_valid, o.algo_valid);
+        return *this;
+    }
+    ~LtMatmulPlan()
+    {
+        if(d_desc)  cublasLtMatrixLayoutDestroy(d_desc);
+        if(c_desc)  cublasLtMatrixLayoutDestroy(c_desc);
+        if(b_desc)  cublasLtMatrixLayoutDestroy(b_desc);
+        if(a_desc)  cublasLtMatrixLayoutDestroy(a_desc);
+        if(op_desc) cublasLtMatmulDescDestroy(op_desc);
+    }
+};
+
+struct LtMatmulPlanKey
+{
+    int m;
+    int n;
+    int k;
+    int transA;
+    int transB;
+    int epilogue;   // cublasLtEpilogue_t cast to int (e.g. BIAS, RELU_BIAS)
+
+    bool operator==(const LtMatmulPlanKey& o) const noexcept
+    {
+        return m == o.m && n == o.n && k == o.k
+            && transA == o.transA && transB == o.transB
+            && epilogue == o.epilogue;
+    }
+};
+
+struct LtMatmulPlanKeyHash
+{
+    size_t operator()(const LtMatmulPlanKey& k) const noexcept
+    {
+        // Standard mix; keys are int-tuples, modest cardinality.
+        size_t h = std::hash<int>{}(k.m);
+        const auto mix = [](size_t& acc, int v) {
+            acc ^= std::hash<int>{}(v) + 0x9e3779b9 + (acc << 6) + (acc >> 2);
+        };
+        mix(h, k.n);
+        mix(h, k.k);
+        mix(h, k.transA);
+        mix(h, k.transB);
+        mix(h, k.epilogue);
+        return h;
+    }
+};
+
+#endif // OPENNN_WITH_CUDA
+
 class Device
 {
 public:
@@ -971,6 +1044,30 @@ public:
         }
         return self.ones_device;
     }
+
+    // 32 MB matches NVIDIA's cuBLASLt sample default. Lazy-allocated on first use,
+    // shared across all cublasLtMatmul call sites.
+    static constexpr size_t cublas_lt_workspace_bytes() { return 32ull * 1024 * 1024; }
+
+    static void* get_cublas_lt_workspace()
+    {
+        auto& self = instance();
+        if(!self.cublas_lt_workspace)
+            CHECK_CUDA(cudaMalloc(&self.cublas_lt_workspace, cublas_lt_workspace_bytes()));
+        return self.cublas_lt_workspace;
+    }
+
+    // Returns a cached cuBLASLt plan for a GEMM with the requested epilogue.
+    // Built (descriptors + heuristic algo) once per unique (shape, epilogue)
+    // and reused thereafter. The bias *pointer* is set on the returned op_desc
+    // by the caller per call — it is not part of the cache key.
+    //
+    // Supported epilogues: CUBLASLT_EPILOGUE_BIAS, CUBLASLT_EPILOGUE_RELU_BIAS.
+    static const LtMatmulPlan& get_lt_gemm_plan(
+        int m, int n, int k,
+        cublasOperation_t transA,
+        cublasOperation_t transB,
+        cublasLtEpilogue_t epilogue);
 #endif
 
 private:
@@ -990,6 +1087,11 @@ private:
     cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
     float* ones_device = nullptr;
     int ones_size = 0;
+    void* cublas_lt_workspace = nullptr;
+
+#ifdef OPENNN_WITH_CUDA
+    std::unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans;
+#endif
 };
 
 inline ThreadPoolDevice& get_device()
@@ -1053,24 +1155,6 @@ inline void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
                               CUBLAS_GEMM_DEFAULT));
 }
 
-inline void gemv_cuda(cublasOperation_t transa,
-                      int m, int n,
-                      const void* A, cudaDataType_t Atype, int lda,
-                      const void* x, cudaDataType_t Xtype,
-                      void* y, cudaDataType_t Ytype,
-                      float alpha = 1.0f, float beta = 0.0f)
-{
-    const int m_out = (transa == CUBLAS_OP_N) ? m : n;
-    const int k_dim = (transa == CUBLAS_OP_N) ? n : m;
-
-    gemm_cuda(transa, CUBLAS_OP_N,
-              m_out, 1, k_dim,
-              A, Atype, lda,
-              x, Xtype, k_dim,
-              y, Ytype, m_out,
-              alpha, beta);
-}
-
 inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
                                       int m, int n, int k,
                                       const float* A, int lda, long long stride_a,
@@ -1090,6 +1174,92 @@ inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_
                                             batch_count,
                                             CUBLAS_COMPUTE_DTYPE,
                                             CUBLAS_GEMM_DEFAULT));
+}
+
+// Fused GEMM + (optionally activation +) bias via cuBLASLt epilogue: one launch
+// for the whole gemm-bias[-relu] sequence, no intermediate write-then-read of
+// the output tensor between stages.
+//
+// `epilogue` selects the post-matmul fusion. Currently supported:
+//   - CUBLASLT_EPILOGUE_BIAS       : D = α(A·B) + bias                (default)
+//   - CUBLASLT_EPILOGUE_RELU_BIAS  : D = max(0, α(A·B) + bias)
+//
+// Layout assumptions (encoded in the cached plan):
+//   - All operands use CUDA_ACTIVATION_DTYPE.
+//   - Bias is FP32, length = m, broadcast along D's columns
+//     (i.e. one bias element per output feature row).
+//   - Tightly packed: lda = (transa==N ? m : k), ldb = (transb==N ? k : n), ldc = ldd = m.
+//     If a caller needs different strides, it should not use this wrapper.
+//
+// Not thread-safe: the bias pointer is set on the cached op_desc per call, so concurrent
+// invocations on the same shape would race. Matches the rest of this codebase's
+// single-stream GPU usage assumption.
+inline void gemm_bias_cuda(cublasOperation_t transa, cublasOperation_t transb,
+                           int m, int n, int k,
+                           const void* A,
+                           const void* B,
+                           void* C,
+                           const float* bias,
+                           cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
+                           float alpha = 1.0f, float beta = 0.0f)
+{
+    const LtMatmulPlan& plan = Device::get_lt_gemm_plan(m, n, k, transa, transb, epilogue);
+
+    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
+        CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias, sizeof(bias)));
+
+    void* workspace = Device::get_cublas_lt_workspace();
+    const size_t workspace_size = Device::cublas_lt_workspace_bytes();
+
+    CHECK_CUBLAS(cublasLtMatmul(Device::get_cublas_lt_handle(),
+                                plan.op_desc,
+                                &alpha,
+                                A, plan.a_desc,
+                                B, plan.b_desc,
+                                &beta,
+                                C, plan.c_desc,   // C (read when beta != 0)
+                                C, plan.d_desc,   // D (write); aliasing C is supported
+                                plan.algo_valid ? &plan.algo : nullptr,
+                                workspace, workspace_size,
+                                Device::get_compute_stream()));
+}
+
+// Fused matmul + bias-gradient via cuBLASLt's BGRADA epilogue. Computes the
+// matmul C = α(A·B) + βC and, as a side product, writes the row-wise reduction
+// of A (in cuBLAS column-major view) into `bias_grad`. For Dense backward,
+// pass A = output_delta with transA = N to get bias_grad = sum_rows(dY) — i.e.
+// the bias gradient — for free, replacing a separate sum() reduction kernel.
+//
+// `bias_grad` length must be m (the matmul's M dim, == D rows in column-major).
+// Same threading caveat as gemm_bias_cuda.
+inline void gemm_bgrad_cuda(cublasOperation_t transa, cublasOperation_t transb,
+                            int m, int n, int k,
+                            const void* A,
+                            const void* B,
+                            void* C,
+                            float* bias_grad,
+                            float alpha = 1.0f, float beta = 0.0f)
+{
+    const LtMatmulPlan& plan = Device::get_lt_gemm_plan(m, n, k, transa, transb,
+                                                        CUBLASLT_EPILOGUE_BGRADA);
+
+    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
+        CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_grad, sizeof(bias_grad)));
+
+    void* workspace = Device::get_cublas_lt_workspace();
+    const size_t workspace_size = Device::cublas_lt_workspace_bytes();
+
+    CHECK_CUBLAS(cublasLtMatmul(Device::get_cublas_lt_handle(),
+                                plan.op_desc,
+                                &alpha,
+                                A, plan.a_desc,
+                                B, plan.b_desc,
+                                &beta,
+                                C, plan.c_desc,
+                                C, plan.d_desc,
+                                plan.algo_valid ? &plan.algo : nullptr,
+                                workspace, workspace_size,
+                                Device::get_compute_stream()));
 }
 
 #endif

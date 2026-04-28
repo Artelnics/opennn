@@ -8,6 +8,7 @@
 
 #include "math_utilities.h"
 #include "random_utilities.h"
+#include "cuda_dispatch.h"
 
 namespace opennn
 {
@@ -43,22 +44,13 @@ void bounding(const TensorView& input,
 {
     const Index features = lower_bounds.size();
 
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu())
-    {
-        output.dispatch([&](auto tag) 
-        {
-            using T = decltype(tag);
-            bounding_cuda<T>(output.size(),
-                             to_int(features),
-                             input.as<T>(),
-                             reinterpret_cast<const float*>(lower_bounds.data),
-                             reinterpret_cast<const float*>(upper_bounds.data),
-                             output.as<T>());
-        });
-        return;
-    }
-#endif
+    if (TRY_GPU_DISPATCH(output, [&](auto tag) {
+        using T = decltype(tag);
+        bounding_cuda<T>(output.size(), to_int(features), input.as<T>(),
+                         lower_bounds.as_float(),
+                         upper_bounds.as_float(),
+                         output.as<T>());
+    })) return;
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap lower_bounds_vector = lower_bounds.as_vector();
@@ -81,24 +73,18 @@ void scale(const TensorView& input,
 {
     const Index features = scalers.size();
 
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu())
-    {
-        output.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            scale_cuda<T>(output.size(), to_int(features),
-                          input.as<T>(),
-                          reinterpret_cast<const float*>(minimums.data),
-                          reinterpret_cast<const float*>(maximums.data),
-                          reinterpret_cast<const float*>(means.data),
-                          reinterpret_cast<const float*>(standard_deviations.data),
-                          reinterpret_cast<const float*>(scalers.data),
-                          min_range, max_range,
-                          output.as<T>());
-        });
-        return;
-    }
-#endif
+    if (TRY_GPU_DISPATCH(output, [&](auto tag) {
+        using T = decltype(tag);
+        scale_cuda<T>(output.size(), to_int(features),
+                      input.as<T>(),
+                      minimums.as_float(),
+                      maximums.as_float(),
+                      means.as_float(),
+                      standard_deviations.as_float(),
+                      scalers.as_float(),
+                      min_range, max_range,
+                      output.as<T>());
+    })) return;
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap mins = minimums.as_vector();
@@ -149,24 +135,18 @@ void unscale(const TensorView& input,
 {
     const Index features = scalers.size();
 
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu())
-    {
-        output.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            unscale_cuda<T>(output.size(), to_int(features),
-                            input.as<T>(),
-                            reinterpret_cast<const float*>(minimums.data),
-                            reinterpret_cast<const float*>(maximums.data),
-                            reinterpret_cast<const float*>(means.data),
-                            reinterpret_cast<const float*>(standard_deviations.data),
-                            reinterpret_cast<const float*>(scalers.data),
-                            min_range, max_range,
-                            output.as<T>());
-        });
-        return;
-    }
-#endif
+    if (TRY_GPU_DISPATCH(output, [&](auto tag) {
+        using T = decltype(tag);
+        unscale_cuda<T>(output.size(), to_int(features),
+                        input.as<T>(),
+                        minimums.as_float(),
+                        maximums.as_float(),
+                        means.as_float(),
+                        standard_deviations.as_float(),
+                        scalers.as_float(),
+                        min_range, max_range,
+                        output.as<T>());
+    })) return;
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap mins = minimums.as_vector();
@@ -213,30 +193,28 @@ void copy(const TensorView& source, TensorView& destination)
     if(source.size() != destination.size())
         throw runtime_error("Math Error: Tensor sizes mismatch in copy operation.");
 
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    IF_GPU({
         CHECK_CUDA(cudaMemcpy(destination.data, source.data, source.byte_size(), cudaMemcpyDeviceToDevice));
         return;
-    }
-#endif
+    });
     memcpy(destination.data, source.data, source.size() * sizeof(type));
 }
 
-void addition(const TensorView& input_1, 
-              const TensorView& input_2, 
+void addition(const TensorView& input_1,
+              const TensorView& input_2,
               TensorView& output)
 {
     if(input_1.size() != input_2.size() || input_1.size() != output.size())
         throw runtime_error("Addition Error: Tensor dimensions do not match.");
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu())
-    {
-        const Index n = input_1.size();
-        output.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            addition_cuda<T>(n, input_1.as<T>(), input_2.as<T>(), output.as<T>());
-        });
+    if (Device::instance().is_gpu()) {
+        // operator_sum_descriptor is configured with CUDNN_OP_TENSOR_ADD; reused here.
+        CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(),
+                                  Device::get_operator_sum_descriptor(),
+                                  &one, input_1.get_descriptor(), input_1.data,
+                                  &one, input_2.get_descriptor(), input_2.data,
+                                  &zero, output.get_descriptor(), output.data));
         return;
     }
 #endif
@@ -265,9 +243,6 @@ void multiply(const TensorView& input_a, bool transpose_a,
 
         const cublasOperation_t operation_b = transpose_b ? CUBLAS_OP_T : CUBLAS_OP_N;
         const cublasOperation_t operation_a = transpose_a ? CUBLAS_OP_T : CUBLAS_OP_N;
-        const int leading_dimension_b = cols_b;
-        const int leading_dimension_a = cols_a;
-        const int leading_dimension_output = output_columns;
 
         const int batch_count = to_int(input_a.size() / (rows_a * cols_a));
         const long long stride_a = rows_a * cols_a;
@@ -277,16 +252,16 @@ void multiply(const TensorView& input_a, bool transpose_a,
         if(batch_count == 1)
             gemm_cuda(operation_b, operation_a,
                       output_columns, output_rows, inner_dimension,
-                      input_b.data, input_b.cuda_dtype(), leading_dimension_b,
-                      input_a.data, input_a.cuda_dtype(), leading_dimension_a,
-                      output.data,  output.cuda_dtype(),  leading_dimension_output,
+                      input_b.data, input_b.cuda_dtype(), cols_b,
+                      input_a.data, input_a.cuda_dtype(), cols_a,
+                      output.data,  output.cuda_dtype(),  output_columns,
                       alpha, beta);
         else
             gemm_strided_batched_cuda(operation_b, operation_a,
                                       output_columns, output_rows, inner_dimension,
-                                      input_b.data, leading_dimension_b, stride_b,
-                                      input_a.data, leading_dimension_a, stride_a,
-                                      output.data, leading_dimension_output, stride_output,
+                                      input_b.data, cols_b, stride_b,
+                                      input_a.data, cols_a, stride_a,
+                                      output.data, output_columns, stride_output,
                                       batch_count,
                                       alpha, beta);
         return;
@@ -318,16 +293,14 @@ void multiply(const TensorView& input_a, bool transpose_a,
 
 void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, TensorView& output)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
-        CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(), 
+    IF_GPU({
+        CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(),
                                   Device::get_operator_multiplication_descriptor(),
                                   &one, input_a.get_descriptor(), input_a.data,
                                   &one, input_b.get_descriptor(), input_b.data,
                                   &zero, output.get_descriptor(), output.data));
         return;
-    }
-#endif
+    });
     output.as_vector().noalias() = input_a.as_vector().cwiseProduct(input_b.as_vector());
 }
 
@@ -335,14 +308,16 @@ void reduce_sum(const TensorView& input, TensorView& output, type alpha, type be
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        const int total_rows = to_int(input.shape[0]);
+        const int total_rows    = to_int(input.shape[0]);
         const int total_columns = to_int(input.shape.size() / input.shape[0]);
 
-        gemv_cuda(CUBLAS_OP_N,
-                  total_columns, total_rows,
+        // Column-wise reduction expressed as matrix * ones-vector via GEMM
+        // (m × k) * (k × 1) = (m × 1).
+        gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                  total_columns, 1, total_rows,
                   input.data, input.cuda_dtype(), total_columns,
-                  Device::get_ones(total_rows), CUDA_ACTIVATION_DTYPE,
-                  output.data, output.cuda_dtype(),
+                  Device::get_ones(total_rows), CUDA_ACTIVATION_DTYPE, total_rows,
+                  output.data, output.cuda_dtype(), total_columns,
                   alpha, beta);
         return;
     }
@@ -396,7 +371,6 @@ void softmax_backward(const TensorView& softmax_out, TensorView& output_delta)
         return;
     }
 #endif
-
     const MatrixMap y = softmax_out.as_flat_matrix();
     MatrixMap dY = output_delta.as_flat_matrix();
 
@@ -409,33 +383,57 @@ void combination(const TensorView& input,
                  const TensorView& biases,
                  TensorView& output)
 {
-
 #ifdef OPENNN_WITH_CUDA
-
-    const Index input_columns = input.shape.back();
-    const Index total_rows = input.size() / input_columns;
-    const Index output_columns = weights.shape.back();
-
     if (Device::instance().is_gpu())
     {
-        gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-                  to_int(output_columns), to_int(total_rows), to_int(input_columns),
-                  weights.data, weights.cuda_dtype(), to_int(output_columns),
-                  input.data,   input.cuda_dtype(),   to_int(input_columns),
-                  output.data,  output.cuda_dtype(),  to_int(output_columns));
+        const int input_columns  = to_int(input.shape.back());
+        const int output_columns = to_int(weights.shape.back());
+        const int total_rows     = to_int(input.size() / input.shape.back());
 
-        CHECK_CUDNN(cudnnAddTensor(Device::get_cudnn_handle(),
-                                   &one,
-                                   biases.get_descriptor(), biases.data,
-                                   &one,
-                                   output.get_descriptor(), output.data));
-
+        // Fused GEMM + bias-add via cuBLASLt epilogue (one launch instead of two).
+        gemm_bias_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                       output_columns, total_rows, input_columns,
+                       weights.data,
+                       input.data,
+                       output.data,
+                       biases.as<float>());
         return;
     }
 #endif
 
-    output.as_flat_matrix().noalias() = (input.as_flat_matrix() * weights.as_matrix()).rowwise() 
+    output.as_flat_matrix().noalias() = (input.as_flat_matrix() * weights.as_matrix()).rowwise()
                                       + biases.as_vector().transpose();
+}
+
+void combination_activation(const TensorView& input,
+                            const TensorView& weights,
+                            const TensorView& biases,
+                            const ActivationArguments& activation_arguments,
+                            TensorView& output)
+{
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu()
+        && activation_arguments.activation_function == ActivationFunction::RectifiedLinear)
+    {
+        const int input_columns  = to_int(input.shape.back());
+        const int output_columns = to_int(weights.shape.back());
+        const int total_rows     = to_int(input.size() / input.shape.back());
+
+        // Fused GEMM + bias + ReLU in one cuBLASLt launch.
+        gemm_bias_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                       output_columns, total_rows, input_columns,
+                       weights.data,
+                       input.data,
+                       output.data,
+                       biases.as<float>(),
+                       CUBLASLT_EPILOGUE_RELU_BIAS);
+        return;
+    }
+#endif
+
+    // Fallback: unfused combination + activation.
+    combination(input, weights, biases, output);
+    activation(output, activation_arguments);
 }
 
 void combination_gradient(const TensorView& output_delta,
@@ -446,6 +444,34 @@ void combination_gradient(const TensorView& output_delta,
                           TensorView& bias_gradient,
                           bool accumulate_input_delta)
 {
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu())
+    {
+        const int input_columns  = to_int(input.shape.back());
+        const int output_columns = to_int(output_delta.shape.back());
+        const int total_rows     = to_int(input.size() / input.shape.back());
+
+        // Fused: dW = X^T @ dY (in row-major view) plus bias_gradient = sum_rows(dY)
+        // computed as the BGRADA epilogue's row-wise reduction of A.
+        // In cuBLAS column-major view: A = dY [output_columns × total_rows], op(A) = N;
+        // B = X [input_columns × total_rows], op(B) = T. M = output_columns, N = input_columns,
+        // K = total_rows. The BGRADA output has length M = output_columns, matching the bias.
+        gemm_bgrad_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
+                        output_columns, input_columns, total_rows,
+                        output_delta.data,         // A
+                        input.data,                // B
+                        weight_gradient.data,      // C / D
+                        bias_gradient.as<float>());
+
+        if (input_delta.data && input_delta.size() > 0)
+        {
+            const type beta = accumulate_input_delta ? type(1) : type(0);
+            multiply(output_delta, false, weights, true, input_delta, type(1), beta);
+        }
+        return;
+    }
+#endif
+
     multiply(input, true, output_delta, false, weight_gradient);
     reduce_sum(output_delta, bias_gradient);
 
@@ -793,18 +819,15 @@ void layernorm_forward(const TensorView& input, const TensorView& gamma, const T
                        TensorView& output,
                        Index batch_size, Index sequence_length, Index embedding_dimension)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
-        const int N = to_int(batch_size * sequence_length), D = to_int(embedding_dimension);
-        output.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            layernorm_forward_cuda<T>(N, D, input.as<T>(), output.as<T>(),
-                means.as<float>(), standard_deviations.as<float>(),
-                gamma.as<float>(), beta.as<float>(), EPSILON);
-        });
-        return;
-    }
-#endif
+    if (TRY_GPU_DISPATCH(output, [&](auto tag) {
+        using T = decltype(tag);
+        layernorm_forward_cuda<T>(to_int(batch_size * sequence_length),
+                                  to_int(embedding_dimension),
+                                  input.as<T>(), output.as<T>(),
+                                  means.as<float>(), standard_deviations.as<float>(),
+                                  gamma.as<float>(), beta.as<float>(), EPSILON);
+    })) return;
+
     const type* input_data = input.data;
     type* means_data = means.data;
     type* stds_data = standard_deviations.data;
@@ -856,21 +879,16 @@ void layernorm_backward(const TensorView& input, const TensorView& output_delta,
                         TensorView& gamma_gradient, TensorView& beta_gradient, TensorView& input_delta,
                         Index batch_size, Index sequence_length, Index embedding_dimension)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
-        const int N = to_int(batch_size * sequence_length), D = to_int(embedding_dimension);
-        input.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            layernorm_backward_cuda<T>(N, D,
-                output_delta.as<T>(), input.as<T>(),
-                means.as<float>(), standard_deviations.as<float>(),
-                gamma.as<float>(),
-                input_delta.as<T>(),
-                gamma_gradient.as<float>(), beta_gradient.as<float>());
-        });
-        return;
-    }
-#endif
+    if (TRY_GPU_DISPATCH(input, [&](auto tag) {
+        using T = decltype(tag);
+        layernorm_backward_cuda<T>(to_int(batch_size * sequence_length),
+                                   to_int(embedding_dimension),
+                                   output_delta.as<T>(), input.as<T>(),
+                                   means.as<float>(), standard_deviations.as<float>(),
+                                   gamma.as<float>(),
+                                   input_delta.as<T>(),
+                                   gamma_gradient.as<float>(), beta_gradient.as<float>());
+    })) return;
     const MatrixMap dy_flat = output_delta.as_flat_matrix();
     const MatrixMap norm_flat = normalized.as_flat_matrix();
 
@@ -1444,18 +1462,14 @@ void average_pooling_backward(const TensorView& input,
 
 void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
-        (void)is_training;
-        const Index n = to_int(input.shape[0]) * to_int(input.shape[2]);
-        const int S = to_int(input.shape[1]), F = to_int(input.shape[2]);
-        output.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            max_pooling_3d_forward_cuda<T>(n, input.as<T>(), output.as<T>(), maximal_indices.as<float>(), S, F);
-        });
-        return;
-    }
-#endif
+    if (TRY_GPU_DISPATCH(output, [&](auto tag) {
+        using T = decltype(tag);
+        max_pooling_3d_forward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
+                                       input.as<T>(), output.as<T>(),
+                                       maximal_indices.as<float>(),
+                                       to_int(input.shape[1]),
+                                       to_int(input.shape[2]));
+    })) return;
     const TensorMap3 inputs = input.as_tensor<3>();
     MatrixMap outputs = output.as_matrix();
 
@@ -1485,17 +1499,13 @@ void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorV
 
 void average_pooling_3d_forward(const TensorView& input, TensorView& output)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
-        const Index n = to_int(input.shape[0]) * to_int(input.shape[2]);
-        const int S = to_int(input.shape[1]), F = to_int(input.shape[2]);
-        output.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            average_pooling_3d_forward_cuda<T>(n, input.as<T>(), output.as<T>(), S, F);
-        });
-        return;
-    }
-#endif
+    if (TRY_GPU_DISPATCH(output, [&](auto tag) {
+        using T = decltype(tag);
+        average_pooling_3d_forward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
+                                           input.as<T>(), output.as<T>(),
+                                           to_int(input.shape[1]),
+                                           to_int(input.shape[2]));
+    })) return;
     const TensorMap3 inputs = input.as_tensor<3>();
     MatrixMap outputs = output.as_matrix();
 
@@ -1519,19 +1529,15 @@ void average_pooling_3d_forward(const TensorView& input, TensorView& output)
 
 void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (TRY_GPU_DISPATCH(input_delta, [&](auto tag) {
+        using T = decltype(tag);
         CHECK_CUDA(cudaMemset(input_delta.data, 0, input_delta.byte_size()));
-
-        const Index n = to_int(output_delta.shape[0]) * to_int(output_delta.shape[1]);
-        const int S = to_int(input_delta.shape[1]), F = to_int(output_delta.shape[1]);
-        input_delta.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            max_pooling_3d_backward_cuda<T>(n, output_delta.as<T>(), input_delta.as<T>(), maximal_indices.as<float>(), S, F);
-        });
-        return;
-    }
-#endif
+        max_pooling_3d_backward_cuda<T>(to_int(output_delta.shape[0]) * to_int(output_delta.shape[1]),
+                                        output_delta.as<T>(), input_delta.as<T>(),
+                                        maximal_indices.as<float>(),
+                                        to_int(input_delta.shape[1]),
+                                        to_int(output_delta.shape[1]));
+    })) return;
     const MatrixMap max_indices = maximal_indices.as_matrix();
     const MatrixMap output_delta_matrix = output_delta.as_matrix();
     TensorMap3 input_delta_map = input_delta.as_tensor<3>().setZero();
@@ -1552,19 +1558,15 @@ void average_pooling_3d_backward(const TensorView& input,
                                  const TensorView& output_delta, 
                                  TensorView& input_delta)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (TRY_GPU_DISPATCH(input_delta, [&](auto tag) {
+        using T = decltype(tag);
         CHECK_CUDA(cudaMemset(input_delta.data, 0, input_delta.byte_size()));
-
-        const Index n = to_int(input.shape[0]) * to_int(input.shape[2]);
-        const int S = to_int(input.shape[1]), F = to_int(input.shape[2]);
-        input_delta.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            average_pooling_3d_backward_cuda<T>(n, input.as<T>(), output_delta.as<T>(), input_delta.as<T>(), S, F);
-        });
-        return;
-    }
-#endif
+        average_pooling_3d_backward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
+                                            input.as<T>(), output_delta.as<T>(),
+                                            input_delta.as<T>(),
+                                            to_int(input.shape[1]),
+                                            to_int(input.shape[2]));
+    })) return;
     const TensorMap3 inputs = input.as_tensor<3>();
     const MatrixMap output_delta_matrix = output_delta.as_matrix();
     TensorMap3 input_delta_map = input_delta.as_tensor<3>().setZero();
@@ -1639,17 +1641,14 @@ void split_heads(const TensorView& source, TensorView& destination)
     const Index heads_number = source.shape[2];
     const Index head_dimension = source.shape[3];
 
-#ifdef OPENNN_WITH_CUDA
-    if(Device::instance().is_gpu())
-    {
-        const int S = to_int(sequence_length), H = to_int(heads_number), D = to_int(head_dimension);
-        destination.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            split_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(), S, H, D);
-        });
-        return;
-    }
-#endif
+    if (TRY_GPU_DISPATCH(destination, [&](auto tag) {
+        using T = decltype(tag);
+        split_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
+                            to_int(sequence_length),
+                            to_int(heads_number),
+                            to_int(head_dimension));
+    })) return;
+
     transpose_middle_axes(source.data, destination.data,
                           batch_size, sequence_length, heads_number, head_dimension);
 }
@@ -1661,17 +1660,14 @@ void merge_heads(const TensorView& source, TensorView& destination)
     const Index sequence_length = source.shape[2];
     const Index head_dimension = source.shape[3];
 
-#ifdef OPENNN_WITH_CUDA
-    if(Device::instance().is_gpu())
-    {
-        const int S = to_int(sequence_length), H = to_int(heads_number), D = to_int(head_dimension);
-        destination.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            merge_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(), S, H, D);
-        });
-        return;
-    }
-#endif
+    if (TRY_GPU_DISPATCH(destination, [&](auto tag) {
+        using T = decltype(tag);
+        merge_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
+                            to_int(sequence_length),
+                            to_int(heads_number),
+                            to_int(head_dimension));
+    })) return;
+
     transpose_middle_axes(source.data, destination.data,
                           batch_size, heads_number, sequence_length, head_dimension);
 }
@@ -1691,30 +1687,6 @@ void projection(const TensorView& input,
 
     TensorView input_2d = input.reshape({total_rows, embedding_dim});
     TensorView scratch_2d(transpose_scratch, {total_rows, embedding_dim});
-
-#ifdef OPENNN_WITH_CUDA
-    if(Device::instance().is_gpu())
-    {
-        gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-                  to_int(embedding_dim), to_int(total_rows), to_int(embedding_dim),
-                  weights.data,  weights.cuda_dtype(),  to_int(embedding_dim),
-                  input_2d.data, input_2d.cuda_dtype(), to_int(embedding_dim),
-                  scratch_2d.data, scratch_2d.cuda_dtype(), to_int(embedding_dim));
-
-                  
-        scratch_2d.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            add_bias_split_heads_cuda<T>(output.size(),
-                                         scratch_2d.as<T>(),
-                                         biases.as<float>(),
-                                         output.as<T>(),
-                                         to_int(sequence_length),
-                                         to_int(heads_number),
-                                         to_int(head_dimension));
-        });
-        return;
-    }
-#endif
 
     combination(input_2d, weights, biases, scratch_2d);
 
@@ -1751,45 +1723,6 @@ void projection_gradient(const TensorView& head_gradient,
                          input_delta_flat, weight_gradient, bias_gradient, accumulate);
 }
 
-void attention_softmax(const TensorView& source_input,
-                       TensorView& attention_weights,
-                       const MatrixR& causal_mask,
-                       bool use_causal_mask,
-                       float* padding_mask_scratch)
-{
-    const Index batch_size = source_input.shape[0];
-    const Index source_sequence_length = source_input.shape[1];
-    const Index embedding_dimension = source_input.shape[2];
-    const Index heads_number = attention_weights.shape[1];
-    const Index query_sequence_length = attention_weights.shape[2];
-
-#ifdef OPENNN_WITH_CUDA
-    if(Device::instance().is_gpu() && source_sequence_length <= 32)
-    {
-        const int B = to_int(batch_size), H = to_int(heads_number);
-        const int Sq = to_int(query_sequence_length), Sk = to_int(source_sequence_length);
-        const int E = to_int(embedding_dimension);
-        // padding_mask_scratch is activation-dtype storage on GPU (reinterpret to T*);
-        // the API keeps float* because TensorView::data is type*.
-        attention_weights.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            padding_mask_compute_cuda<T>(B, Sk, E,
-                                         source_input.as<T>(),
-                                         reinterpret_cast<T*>(padding_mask_scratch));
-            mask_softmax_fused_cuda<T>(B, H, Sq, Sk,
-                                       attention_weights.as<T>(),
-                                       reinterpret_cast<const T*>(padding_mask_scratch),
-                                       use_causal_mask);
-        });
-        return;
-    }
-#endif
-
-    attention_masks(source_input, attention_weights, causal_mask,
-                    use_causal_mask, padding_mask_scratch);
-    softmax(attention_weights);
-}
-
 void attention_masks(const TensorView& source_input,
                            TensorView& attention_weights,
                            const MatrixR& causal_mask,
@@ -1802,22 +1735,18 @@ void attention_masks(const TensorView& source_input,
     const Index heads_number = attention_weights.shape[1];
     const Index query_sequence_length = attention_weights.shape[2];
 
-#ifdef OPENNN_WITH_CUDA
-    if(Device::instance().is_gpu())
-    {
-        const int B = to_int(batch_size), H = to_int(heads_number);
-        const int Sq = to_int(query_sequence_length), Sk = to_int(source_sequence_length);
-        const int E = to_int(embedding_dimension);
-        attention_weights.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            attention_masks_cuda<T>(B, H, Sq, Sk, E,
-                                     source_input.as<T>(), attention_weights.as<T>(),
-                                     reinterpret_cast<T*>(padding_mask_scratch),
-                                     use_causal_mask);
-        });
-        return;
-    }
-#endif
+    if (TRY_GPU_DISPATCH(attention_weights, [&](auto tag) {
+        using T = decltype(tag);
+        attention_masks_cuda<T>(to_int(batch_size),
+                                to_int(heads_number),
+                                to_int(query_sequence_length),
+                                to_int(source_sequence_length),
+                                to_int(embedding_dimension),
+                                source_input.as<T>(),
+                                attention_weights.as<T>(),
+                                reinterpret_cast<T*>(padding_mask_scratch),
+                                use_causal_mask);
+    })) return;
 
     const Index att_rows_per_batch = heads_number * query_sequence_length;
 

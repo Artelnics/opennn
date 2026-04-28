@@ -80,13 +80,24 @@ public:
 
     void set(const Shape& new_input_shape = {})
     {
-        if (new_input_shape.rank() != Rank -1)
+        if (!new_input_shape.empty() && new_input_shape.rank() != Rank -1)
         {
            ostringstream buffer;
            buffer << "OpenNN Exception: Scaling Layer.\n"
                   << "void set(const Shape& new_input_shape) method.\n"
                   << "Input shape size must be " << Rank - 1 << ", but is " << new_input_shape.rank() << ".\n";
            throw logic_error(buffer.str());
+        }
+
+        if (new_input_shape.empty())
+        {
+            input_shape = {};
+            name = "Scaling" + to_string(Rank) + "d";
+            if constexpr (Rank == 2) layer_type = LayerType::Scaling2d;
+            else if constexpr (Rank == 3) layer_type = LayerType::Scaling3d;
+            else layer_type = LayerType::Scaling4d;
+            is_trainable = false;
+            return;
         }
 
         input_shape = new_input_shape;

@@ -367,11 +367,18 @@ public:
                                               states[RunningMean],
                                               states[RunningVariance],
                                               forward_views[Output][0]);
+
+            activation(forward_views[Output][0], activation_arguments);
         }
         else
-            combination(forward_views[Input][0], parameters[Weight], parameters[Bias], forward_views[Output][0]);
-
-        activation(forward_views[Output][0], activation_arguments);
+        {
+            // Non-batch-norm path: combination + activation can be fused on GPU
+            // when activation is supported by the cuBLASLt epilogue (ReLU).
+            combination_activation(forward_views[Input][0],
+                                   parameters[Weight], parameters[Bias],
+                                   activation_arguments,
+                                   forward_views[Output][0]);
+        }
 
         if (is_training && dropout_rate > type(0))
         {

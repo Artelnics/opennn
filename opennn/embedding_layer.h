@@ -72,11 +72,11 @@ public:
 
 public:
 
-    void copy_positional_encoding_device();
-
 #ifdef OPENNN_WITH_CUDA
     void init_cuda(Index batch_size);
 #endif
+
+    void copy_positional_encoding_device();
 
 private:
 
