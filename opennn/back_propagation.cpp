@@ -184,8 +184,11 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     TensorView& destination = delta_views[layer_index][0][0];
     if(!destination.data) return;
 
-    destination.fill(0.0f);
-
+    // Copy the first valid source instead of fill(0) + addition. Saves one full
+    // memset of the destination (B·S·E · sizeof(T) bytes) plus one cudnnOpTensor
+    // launch per multi-consumer layer. The remaining edges still accumulate
+    // via addition into the seeded destination.
+    bool seeded = false;
     for(const BackwardEdge& edge : backward_edges[layer_index])
     {
         const size_t slot = 1 + edge.port;
@@ -197,8 +200,21 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
         const TensorView& source = consumer_views[slot][0];
         if(!source.data || source.size() != destination.size()) continue;
 
-        addition(destination, source, destination);
+        if(!seeded)
+        {
+            copy(source, destination);
+            seeded = true;
+        }
+        else
+        {
+            addition(destination, source, destination);
+        }
     }
+
+    // No edge contributed (every one was filtered out): zero the destination so
+    // downstream layers see the correct "no gradient" value. Rare path.
+    if(!seeded)
+        destination.fill(0.0f);
 }
 
 void BackPropagation::allocate_device()

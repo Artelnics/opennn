@@ -11,6 +11,7 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "loss.h"
+#include "profiler.h"
 #include "batch.h"
 #include "adaptive_moment_estimation.h"
 
@@ -279,7 +280,10 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     optimization_data.iteration++;
 
-    clip_gradient_norm(back_propagation.gradient, type(1));
+    {
+        PROFILE_SCOPE("optim:clip_gradient_norm");
+        clip_gradient_norm(back_propagation.gradient, type(1));
+    }
 
     const type iteration = static_cast<type>(optimization_data.iteration);
 
@@ -289,6 +293,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu())
     {
+        PROFILE_SCOPE("optim:adam_update_cuda");
         const Index parameters_number = neural_network->get_parameters_size();
 
         adam_update_cuda(
@@ -303,6 +308,11 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             EPSILON,
             bias_correction_1,
             bias_correction_2);
+
+        // Master FP32 weights just changed in-place. Refresh the BF16 working
+        // copy so the next forward pass sees up-to-date weights. No-op when
+        // OPENNN_USE_BF16_ACTIVATIONS is off (parameters_bf16 stays empty).
+        neural_network->cast_parameters_to_bf16();
         return;
     }
 #endif

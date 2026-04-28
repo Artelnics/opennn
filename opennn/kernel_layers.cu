@@ -777,10 +777,9 @@ __global__ void layernorm_backward_kernel(const int N, const int D, const T* __r
     }
 }
 
-// Per-feature dGamma/dBeta accumulation for layer norm, one block per feature
-// (column of [N, D]). Reduces across rows via warp shuffle.
+// OLD strided version, kept for A/B perf comparison.
 template<typename T>
-__global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, float* __restrict__ dGamma, float* __restrict__ dBeta)
+__global__ void layernorm_gamma_beta_gradient_kernel_OLD(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, float* __restrict__ dGamma, float* __restrict__ dBeta)
 {
     const int d = blockIdx.x;
     if (d >= D) return;
@@ -804,11 +803,7 @@ __global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, c
     const int lane    = threadIdx.x & 31;
     const int warp_id = threadIdx.x >> 5;
 
-    if (lane == 0)
-    {
-        warp_gamma[warp_id] = local_gamma;
-        warp_beta[warp_id]  = local_beta;
-    }
+    if (lane == 0) { warp_gamma[warp_id] = local_gamma; warp_beta[warp_id] = local_beta; }
     __syncthreads();
 
     const int num_warps = (blockDim.x + 31) >> 5;
@@ -817,12 +812,60 @@ __global__ void layernorm_gamma_beta_gradient_kernel(const int N, const int D, c
         float g = (threadIdx.x < num_warps) ? warp_gamma[threadIdx.x] : 0.0f;
         float b = (threadIdx.x < num_warps) ? warp_beta[threadIdx.x]  : 0.0f;
         warp_reduce_sum2(g, b);
+        if (threadIdx.x == 0) { dGamma[d] = g; dBeta[d] = b; }
+    }
+}
 
-        if (threadIdx.x == 0)
+// Per-feature dGamma/dBeta accumulation for layer norm, with coalesced reads.
+template<typename T, int NUM_WARPS>
+__global__ void layernorm_gamma_beta_gradient_coalesced_kernel(const int N, const int D,
+                                                               const T* __restrict__ dY,
+                                                               const T* __restrict__ X,
+                                                               const float* __restrict__ means,
+                                                               const float* __restrict__ inv_vars,
+                                                               float* __restrict__ dGamma,
+                                                               float* __restrict__ dBeta)
+{
+    const int lane    = threadIdx.x;          // 0..31 along d
+    const int warp_id = threadIdx.y;          // 0..NUM_WARPS-1 along n stride
+    const int d       = blockIdx.x * 32 + lane;
+    const bool active = (d < D);
+
+    float local_gamma = 0.0f;
+    float local_beta  = 0.0f;
+
+    if (active)
+    {
+        for (int n = warp_id; n < N; n += NUM_WARPS)
         {
-            dGamma[d] = g;
-            dBeta[d]  = b;
+            const float dy    = static_cast<float>(dY[n * D + d]);
+            const float x_hat = (static_cast<float>(X[n * D + d]) - means[n]) * inv_vars[n];
+            local_gamma += dy * x_hat;
+            local_beta  += dy;
         }
+    }
+
+    // Inter-warp reduction: one slot per (warp, lane). One sync, then warp 0
+    // sums the NUM_WARPS partials for its lane.
+    __shared__ float partial_gamma[NUM_WARPS][32];
+    __shared__ float partial_beta [NUM_WARPS][32];
+
+    partial_gamma[warp_id][lane] = local_gamma;
+    partial_beta [warp_id][lane] = local_beta;
+    __syncthreads();
+
+    if (warp_id == 0 && active)
+    {
+        float g = 0.0f;
+        float b = 0.0f;
+        #pragma unroll
+        for (int w = 0; w < NUM_WARPS; ++w)
+        {
+            g += partial_gamma[w][lane];
+            b += partial_beta [w][lane];
+        }
+        dGamma[d] = g;
+        dBeta [d] = b;
     }
 }
 
@@ -838,8 +881,13 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
 
     layernorm_backward_kernel<T><<<N, dx_threads>>>(N, D, dY, X, means, inv_vars, gamma, dX);
 
-    const int gb_threads = 256;
-    layernorm_gamma_beta_gradient_kernel<T><<<D, gb_threads>>>(N, D, dY, X, means, inv_vars, dGamma, dBeta);
+    // A/B SWITCH: comment one of the two below.
+    // layernorm_gamma_beta_gradient_kernel_OLD<T><<<D, 256>>>(N, D, dY, X, means, inv_vars, dGamma, dBeta);
+    constexpr int NUM_WARPS = 8;
+    const dim3 block(32, NUM_WARPS);
+    const int grid_x = (D + 31) / 32;
+    layernorm_gamma_beta_gradient_coalesced_kernel<T, NUM_WARPS><<<grid_x, block>>>(
+        N, D, dY, X, means, inv_vars, dGamma, dBeta);
 }
 
 template void layernorm_backward_cuda<float>        (const int, const int, const float*,         const float*,         const float*, const float*, const float*, float*,         float*, float*);

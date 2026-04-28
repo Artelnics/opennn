@@ -33,6 +33,15 @@ public:
 
     vector<Shape> get_parameter_shapes() const override;
 
+    // Embedding's weight is the vocabulary lookup table [V, D]. Its gradient is
+    // accumulated via atomicAdd, which on bfloat16 requires CC ≥ 9.0 (Hopper).
+    // RTX 4080 (Ada, CC 8.9) does NOT support atomicAdd<__nv_bfloat16>, so we
+    // pin the embedding weight to FP32 even when activations are BF16.
+    vector<cudnnDataType_t> get_parameter_dtypes() const override
+    {
+        return vector<cudnnDataType_t>(get_parameter_shapes().size(), CUDNN_DATA_FLOAT);
+    }
+
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
         return {{batch_size, sequence_length, embedding_dimension}}; // Output

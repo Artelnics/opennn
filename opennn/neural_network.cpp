@@ -9,6 +9,7 @@
 #include "registry.h"
 #include "tensor_utilities.h"
 #include "neural_network.h"
+#include "profiler.h"
 #include "dense_layer.h"
 #include "scaling_layer.h"
 #include "flatten_layer.h"
@@ -515,7 +516,11 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     }
 
     for(Index i = first_layer_index; i <= last_layer_index; ++i)
+    {
+        const std::string key = "fwd:" + layers[i]->get_name();
+        PROFILE_SCOPE(key);
         layers[i]->forward_propagate(forward_propagation, i, is_training);
+    }
 }
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
@@ -1037,6 +1042,26 @@ void NeuralNetwork::copy_parameters_device()
                           parameters.vector.data(),
                           parameters.size() * sizeof(float),
                           cudaMemcpyHostToDevice));
+
+#ifdef OPENNN_BF16_ACTIVATIONS
+    // Allocate the BF16 working copy alongside the FP32 master and seed it from
+    // the freshly-uploaded master. From this point on every Adam step refreshes
+    // it in cast_parameters_to_bf16(); GEMMs read it instead of the master.
+    parameters_bf16.resize_device_bytes(parameters.size() * Index(sizeof(__nv_bfloat16)));
+    cast_parameters_to_bf16();
+#endif
+}
+
+void NeuralNetwork::cast_parameters_to_bf16()
+{
+    // GPU-only: parameters_bf16 has no host vector so Memory::empty() always
+    // says true. Use device allocation as the indicator.
+    if (parameters_bf16.allocated_bytes == 0) return;
+    if (parameters.size() == 0)               return;
+
+    cast_fp32_to_bf16_cuda(parameters.size(),
+                           parameters.device(),
+                           reinterpret_cast<__nv_bfloat16*>(parameters_bf16.device()));
 }
 
 void NeuralNetwork::copy_parameters_host()
@@ -1051,21 +1076,55 @@ void NeuralNetwork::copy_parameters_host()
 
 void NeuralNetwork::link_parameters_device()
 {
-    type* dev_ptr = parameters.device();
+    type* fp32_ptr = parameters.device();
+    // parameters_bf16 is GPU-only (no host vector), so Memory::empty() always
+    // reports true for it. Use the device-side `allocated_bytes` to decide
+    // whether the BF16 mirror exists.
+    __nv_bfloat16* bf16_ptr = (parameters_bf16.allocated_bytes == 0)
+                                ? nullptr
+                                : reinterpret_cast<__nv_bfloat16*>(parameters_bf16.device());
+
+    // Both buffers (when bf16 is allocated) hold the same number of elements
+    // at the same per-slot offsets — they only differ in element dtype/size.
+    // We walk them in parallel and pick the right one per slot via
+    // get_parameter_dtypes. Pointer arithmetic uses each pointer's own element
+    // size so the slot offsets stay aligned across buffers.
 
     for(auto& layer : layers)
     {
         const vector<Shape> shapes = layer->get_parameter_shapes();
+        const vector<cudnnDataType_t> dtypes = layer->get_parameter_dtypes();
         auto& param_views = layer->get_parameter_views();
 
         for(size_t i = 0; i < shapes.size(); ++i)
         {
             if(shapes[i].empty()) continue;
 
-            if(i < param_views.size())
-                param_views[i].data = dev_ptr;
+            const Index aligned = get_aligned_size(shapes[i].size());
+            const cudnnDataType_t slot_dtype = (i < dtypes.size())
+                                                 ? dtypes[i]
+                                                 : CUDNN_DATA_FLOAT;
 
-            dev_ptr += get_aligned_size(shapes[i].size());
+            if(i < param_views.size())
+            {
+                if(slot_dtype == CUDNN_DATA_BFLOAT16 && bf16_ptr != nullptr)
+                {
+                    // BF16 slot: TensorView stores the data pointer as `type*`
+                    // (= float*) but the underlying bytes are __nv_bfloat16 —
+                    // call sites that need bf16 access via TensorView::as<__nv_bfloat16>()
+                    // will reinterpret_cast back, gated by the dtype field.
+                    param_views[i].data = reinterpret_cast<type*>(bf16_ptr);
+                    param_views[i].dtype = CUDNN_DATA_BFLOAT16;
+                }
+                else
+                {
+                    param_views[i].data = fp32_ptr;
+                    param_views[i].dtype = CUDNN_DATA_FLOAT;
+                }
+            }
+
+            fp32_ptr += aligned;                    // +aligned * sizeof(float) bytes
+            if (bf16_ptr != nullptr) bf16_ptr += aligned;  // +aligned * sizeof(bf16) bytes
         }
     }
 }

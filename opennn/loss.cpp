@@ -11,6 +11,7 @@
 #include "dataset.h"
 #include "loss.h"
 #include "error_utilities.h"
+#include "profiler.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include <Eigen/LU>
@@ -203,12 +204,20 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    calculate_output_deltas(batch, forward_propagation, back_propagation);
+    {
+        PROFILE_SCOPE("loss:calculate_output_deltas");
+        calculate_output_deltas(batch, forward_propagation, back_propagation);
+    }
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {
         if(i != last_trainable_layer_index)
+        {
+            PROFILE_SCOPE("bwd:accumulate_output_deltas");
             back_propagation.accumulate_output_deltas(static_cast<size_t>(i));
+        }
+        const std::string key = "bwd:" + layers[i]->get_name();
+        PROFILE_SCOPE(key);
         layers[i]->back_propagate(forward_propagation, back_propagation, i);
     }
 }

@@ -9,6 +9,7 @@
 #include "math_utilities.h"
 #include "random_utilities.h"
 #include "cuda_dispatch.h"
+#include "profiler.h"
 
 namespace opennn
 {
@@ -391,12 +392,16 @@ void combination(const TensorView& input,
         const int total_rows     = to_int(input.size() / input.shape.back());
 
         // Fused GEMM + bias-add via cuBLASLt epilogue (one launch instead of two).
+        // Bias is passed as raw data pointer; gemm_bias_cuda's plan sets the
+        // cuBLASLt bias dtype to match the output dtype (FP32 or BF16). When
+        // the BF16 flag is on, biases are stored in `parameters_bf16` and the
+        // memory at this pointer is BF16; cuBLASLt reads it accordingly.
         gemm_bias_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
                        output_columns, total_rows, input_columns,
                        weights.data,
                        input.data,
                        output.data,
-                       biases.as<float>());
+                       biases.data);
         return;
     }
 #endif
@@ -425,7 +430,7 @@ void combination_activation(const TensorView& input,
                        weights.data,
                        input.data,
                        output.data,
-                       biases.as<float>(),
+                       biases.data,
                        CUBLASLT_EPILOGUE_RELU_BIAS);
         return;
     }
@@ -451,20 +456,19 @@ void combination_gradient(const TensorView& output_delta,
         const int output_columns = to_int(output_delta.shape.back());
         const int total_rows     = to_int(input.size() / input.shape.back());
 
-        // Fused: dW = X^T @ dY (in row-major view) plus bias_gradient = sum_rows(dY)
-        // computed as the BGRADA epilogue's row-wise reduction of A.
-        // In cuBLAS column-major view: A = dY [output_columns × total_rows], op(A) = N;
-        // B = X [input_columns × total_rows], op(B) = T. M = output_columns, N = input_columns,
-        // K = total_rows. The BGRADA output has length M = output_columns, matching the bias.
-        gemm_bgrad_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
-                        output_columns, input_columns, total_rows,
-                        output_delta.data,         // A
-                        input.data,                // B
-                        weight_gradient.data,      // C / D
-                        bias_gradient.as<float>());
+        {
+            PROFILE_SCOPE("comb_grad:gemm_bgrad_W_b");
+            gemm_bgrad_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
+                            output_columns, input_columns, total_rows,
+                            output_delta.data,         // A
+                            input.data,                // B
+                            weight_gradient.data,      // C / D
+                            bias_gradient.as<float>());
+        }
 
         if (input_delta.data && input_delta.size() > 0)
         {
+            PROFILE_SCOPE("comb_grad:multiply_input_delta");
             const type beta = accumulate_input_delta ? type(1) : type(0);
             multiply(output_delta, false, weights, true, input_delta, type(1), beta);
         }

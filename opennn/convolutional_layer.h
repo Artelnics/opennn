@@ -86,6 +86,18 @@ private:
                 {batch_normalization ? kernels_number : 0}};                    // Beta
     }
 
+    // Convolutional weight gradient (cudnnConvolutionBackwardFilter) shares its
+    // dtype with the filter via the same cudnnFilterDescriptor. Our FP32
+    // gradient buffer in BackPropagation can't accept BF16 writes, so we keep
+    // the filter slot in FP32 even when activations are BF16. Activations
+    // still go BF16 via the input/output tensor descriptors. Net: convolution
+    // input × FP32 filter → BF16 output is a mixed-dtype path that cuDNN
+    // supports out of the box.
+    vector<cudnnDataType_t> get_parameter_dtypes() const override
+    {
+        return vector<cudnnDataType_t>(get_parameter_shapes().size(), CUDNN_DATA_FLOAT);
+    }
+
     enum States {RunningMean, RunningVariance};
 
     vector<Shape> get_state_shapes() const override

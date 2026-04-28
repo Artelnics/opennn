@@ -231,6 +231,15 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
     if (Device::instance().is_gpu()) {
         const Index total_elements = forward_propagation.batch_size * sequence_length * embedding_dimension;
 
+        // The kernel does atomicAdd into weight_gradient (multiple tokens may map
+        // to the same vocabulary row), so this slot must start at zero. Every
+        // other layer overwrites its parameter gradient via cuBLASLt/cuDNN with
+        // beta=0, so the global gradient buffer is no longer pre-zeroed by the
+        // optimizer — embedding zeroes its own slot here instead.
+        TensorView& weight_grad = gradient_views[Weight];
+        CHECK_CUDA(cudaMemsetAsync(weight_grad.data, 0, weight_grad.byte_size(),
+                                   Device::get_compute_stream()));
+
         output_delta.dispatch([&](auto tag) {
             using T = decltype(tag);
             embedding_backward_cuda<T>(

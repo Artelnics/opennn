@@ -128,6 +128,25 @@ public:
         return vector<cudnnDataType_t>(get_backward_shapes(batch_size).size(), CUDNN_ACTIVATION_DTYPE);
     }
 
+    // Per-parameter-slot dtype. Used by NeuralNetwork::link_parameters_device
+    // to decide whether each layer's TensorView slot points into the FP32
+    // master (`parameters`) or the BF16 working copy (`parameters_bf16`).
+    //
+    // Default: every slot is CUDNN_ACTIVATION_DTYPE — both weights and biases
+    // go to the working copy when the BF16 flag is on. This matches cuBLASLt
+    // 12.x's BIAS-epilogue constraint that bias dtype must equal output dtype
+    // (FP32 bias on BF16 output is rejected by the heuristic).
+    //
+    // Layers whose parameters can't go BF16 override this:
+    //   - Embedding: atomicAdd<__nv_bfloat16> requires CC ≥ 9.0 (Ada is 8.9).
+    //   - LayerNorm / BatchNorm gamma/beta: cuDNN expects FP32.
+    //   - Convolutional: filter gradient dtype follows the filter descriptor;
+    //     keeping FP32 sidesteps the FP32-grad-vs-BF16-filter mismatch.
+    virtual vector<cudnnDataType_t> get_parameter_dtypes() const
+    {
+        return vector<cudnnDataType_t>(get_parameter_shapes().size(), CUDNN_ACTIVATION_DTYPE);
+    }
+
     virtual Shape get_input_shape() const = 0;
 
     virtual Shape get_output_shape() const = 0;

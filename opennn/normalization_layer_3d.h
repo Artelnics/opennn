@@ -40,6 +40,14 @@ public:
 
     vector<Shape> get_parameter_shapes() const override;
 
+    // Gamma and beta are 1-D and stay FP32 by the default rule, but be explicit
+    // anyway: our layernorm CUDA kernels read `const float* gamma`/`beta` and
+    // would not compile if these slots ever changed dtype.
+    vector<cudnnDataType_t> get_parameter_dtypes() const override
+    {
+        return vector<cudnnDataType_t>(get_parameter_shapes().size(), CUDNN_DATA_FLOAT);
+    }
+
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
         return {{batch_size, sequence_length },                      // Means

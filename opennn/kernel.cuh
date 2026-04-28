@@ -28,6 +28,11 @@ void adam_update_cuda(const Index, float*, float*, float*, const float*, const f
 
 void sgd_update_cuda(const Index, float*, float*, const float*, const float, const float, const bool);
 
+// Cast FP32 source buffer to a BF16 destination buffer of the same length.
+// Used to refresh the BF16 working copy of network parameters after each
+// Adam step (master FP32 → working BF16 mirror).
+void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst);
+
 // Errors
 
 template<typename T>

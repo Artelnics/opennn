@@ -17,6 +17,8 @@
 #include "back_propagation.h"
 #include "batch.h"
 #include "neural_network.h"
+#include "profiler.h"
+#include <chrono>
 
 namespace opennn
 {
@@ -639,6 +641,15 @@ EpochStats Optimizer::run_epoch(bool is_training_phase,
     const Index batches_number = Index(batches.size());
     if(batches_number == 0) return stats;
 
+    // Profiler disabled by default; flip to true to capture per-section timings.
+    const bool profile_this = false;
+    if (profile_this)
+    {
+        ::opennn::profiler::enabled() = true;
+        ::opennn::profiler::global_stats().clear();
+    }
+    const auto epoch_t0 = std::chrono::steady_clock::now();
+
     std::thread worker([&]()
     {
         for(Index iteration = 0; iteration < batches_number; ++iteration)
@@ -658,8 +669,10 @@ EpochStats Optimizer::run_epoch(bool is_training_phase,
 
     for(Index iteration = 0; iteration < batches_number; ++iteration)
     {
-        if(is_training_phase)
-            bp.gradient.setZero_active();
+        // Gradient buffer is no longer zeroed globally each iteration. Every
+        // layer's backward overwrites its parameter slot via cuBLASLt/cuDNN
+        // with beta=0; Embedding (the only atomicAdd path) zeros its own slot
+        // internally before the kernel. Saves a 119 MB cudaMemset per iter.
 
         Batch* current_batch = next_batch;
         next_batch = nullptr;
@@ -693,6 +706,15 @@ EpochStats Optimizer::run_epoch(bool is_training_phase,
 
     stats.error /= type(batches_number);
     if(is_classification) stats.accuracy /= type(batches_number);
+
+    if (profile_this)
+    {
+        const auto epoch_t1 = std::chrono::steady_clock::now();
+        const double epoch_ms = std::chrono::duration<double, std::milli>(epoch_t1 - epoch_t0).count();
+        ::opennn::profiler::global_stats().print(std::cout, "Epoch breakdown (training)", epoch_ms);
+        std::cout << "  Wall-clock epoch time: " << std::fixed << std::setprecision(2) << epoch_ms << " ms\n\n";
+        ::opennn::profiler::enabled() = false;
+    }
 
     return stats;
 }

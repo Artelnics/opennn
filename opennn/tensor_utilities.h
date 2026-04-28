@@ -975,12 +975,15 @@ struct LtMatmulPlanKey
     int transA;
     int transB;
     int epilogue;   // cublasLtEpilogue_t cast to int (e.g. BIAS, RELU_BIAS)
+    int io_dtype;   // cudaDataType_t for A and B (inputs)
+    int out_dtype;  // cudaDataType_t for C and D (outputs)
 
     bool operator==(const LtMatmulPlanKey& o) const noexcept
     {
         return m == o.m && n == o.n && k == o.k
             && transA == o.transA && transB == o.transB
-            && epilogue == o.epilogue;
+            && epilogue == o.epilogue
+            && io_dtype == o.io_dtype && out_dtype == o.out_dtype;
     }
 };
 
@@ -998,6 +1001,8 @@ struct LtMatmulPlanKeyHash
         mix(h, k.transA);
         mix(h, k.transB);
         mix(h, k.epilogue);
+        mix(h, k.io_dtype);
+        mix(h, k.out_dtype);
         return h;
     }
 };
@@ -1058,16 +1063,25 @@ public:
     }
 
     // Returns a cached cuBLASLt plan for a GEMM with the requested epilogue.
-    // Built (descriptors + heuristic algo) once per unique (shape, epilogue)
-    // and reused thereafter. The bias *pointer* is set on the returned op_desc
-    // by the caller per call — it is not part of the cache key.
+    // Built (descriptors + heuristic algo) once per unique key and reused.
+    // The bias *pointer* is set on the returned op_desc by the caller per
+    // call — it is not part of the cache key.
     //
-    // Supported epilogues: CUBLASLT_EPILOGUE_BIAS, CUBLASLT_EPILOGUE_RELU_BIAS.
+    // `io_dtype` is the dtype of the GEMM inputs (A and B); `out_dtype` is the
+    // dtype of the outputs (C and D). For pure FP32 they're both CUDA_R_32F;
+    // for fully-bf16 forward (bias_add path) they're both CUDA_R_16BF; for
+    // mixed-precision backward (BGRADA, weight gradient) inputs are bf16 but
+    // weight_grad output stays FP32. Defaults preserve legacy behaviour.
+    //
+    // Supported epilogues: CUBLASLT_EPILOGUE_BIAS, CUBLASLT_EPILOGUE_RELU_BIAS,
+    // CUBLASLT_EPILOGUE_BGRADA.
     static const LtMatmulPlan& get_lt_gemm_plan(
         int m, int n, int k,
         cublasOperation_t transA,
         cublasOperation_t transB,
-        cublasLtEpilogue_t epilogue);
+        cublasLtEpilogue_t epilogue,
+        cudaDataType_t io_dtype  = CUDA_ACTIVATION_DTYPE,
+        cudaDataType_t out_dtype = CUDA_ACTIVATION_DTYPE);
 #endif
 
 private:
@@ -1143,6 +1157,12 @@ inline void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
                       void* C, cudaDataType_t Ctype, int ldc,
                       float alpha = 1.0f, float beta = 0.0f)
 {
+    // CUBLAS_COMPUTE_32F_FAST_TF32 only triggers TF32 rounding for FP32 inputs;
+    // for BF16 inputs cuBLAS rejects it (NOT_SUPPORTED) and we want
+    // CUBLAS_COMPUTE_32F (FP32 accumulator over BF16 Tensor Cores).
+    const cublasComputeType_t compute = (Atype == CUDA_R_16BF || Btype == CUDA_R_16BF)
+                                            ? CUBLAS_COMPUTE_32F
+                                            : CUBLAS_COMPUTE_DTYPE;
     CHECK_CUBLAS(cublasGemmEx(Device::get_cublas_handle(),
                               transa, transb,
                               m, n, k,
@@ -1151,7 +1171,7 @@ inline void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
                               B, Btype, ldb,
                               &beta,
                               C, Ctype, ldc,
-                              CUBLAS_COMPUTE_DTYPE,
+                              compute,
                               CUBLAS_GEMM_DEFAULT));
 }
 
@@ -1240,8 +1260,13 @@ inline void gemm_bgrad_cuda(cublasOperation_t transa, cublasOperation_t transb,
                             float* bias_grad,
                             float alpha = 1.0f, float beta = 0.0f)
 {
+    // Inputs (output_delta, input) follow the activation dtype; the weight
+    // gradient (D / C) is always FP32 so Adam can accumulate without precision
+    // loss. cuBLASLt mixed-dtype matmul handles bf16 in × fp32 out natively.
     const LtMatmulPlan& plan = Device::get_lt_gemm_plan(m, n, k, transa, transb,
-                                                        CUBLASLT_EPILOGUE_BGRADA);
+                                                        CUBLASLT_EPILOGUE_BGRADA,
+                                                        CUDA_ACTIVATION_DTYPE,
+                                                        CUDA_R_32F);
 
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_grad, sizeof(bias_grad)));

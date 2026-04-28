@@ -206,3 +206,48 @@ void sgd_update_cuda(
         gradients,
         learning_rate, momentum, nesterov);
 }
+
+// Element-wise FP32 → BF16 cast. Used to refresh the BF16 working copy of
+// network parameters after each Adam step (master FP32 stays the source of
+// truth, BF16 mirror feeds GEMMs that hit BF16 Tensor Cores).
+//
+// Vec phase: each thread reads one float4 (4 fp32) and writes one
+// __nv_bfloat162-pair sequence (4 bf16 packed into 2× 32-bit stores via
+// __nv_bfloat162). Scalar tail handles the remainder when `n` isn't a
+// multiple of 4. Aligned-input path is enabled by `aligned_in_out` from the
+// host wrapper; otherwise we fall back to scalar over the whole range.
+__global__ void cast_fp32_to_bf16_kernel(const int n_vec,
+                                         const int n,
+                                         const float* __restrict__ src,
+                                         __nv_bfloat16* __restrict__ dst)
+{
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int stride = blockDim.x * gridDim.x;
+
+    const float4* __restrict__ const src4 = reinterpret_cast<const float4*>(src);
+    __nv_bfloat162* __restrict__ const dst2 = reinterpret_cast<__nv_bfloat162*>(dst);
+
+    for (int i = tid; i < n_vec; i += stride)
+    {
+        const float4 in = src4[i];
+        // Pack each pair of floats into one __nv_bfloat162 (one 32-bit store).
+        dst2[i * 2 + 0] = __floats2bfloat162_rn(in.x, in.y);
+        dst2[i * 2 + 1] = __floats2bfloat162_rn(in.z, in.w);
+    }
+
+    const int tail_start = n_vec * 4;
+    for (int i = tail_start + tid; i < n; i += stride)
+        dst[i] = __float2bfloat16(src[i]);
+}
+
+void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst)
+{
+    if (n == 0) return;
+
+    const int total = static_cast<int>(n);
+    const bool aligned = are_float4_aligned(src);
+    const int n_vec = aligned ? (total / 4) : 0;
+    const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));
+
+    cast_fp32_to_bf16_kernel<<<grid_size, block_size>>>(n_vec, total, src, dst);
+}

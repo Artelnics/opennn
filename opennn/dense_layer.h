@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "profiler.h"
 
 namespace opennn
 {
@@ -42,6 +43,17 @@ private:
                 {input_dimension, output_features},           // Weight
                 {batch_normalization ? output_features : 0},  // Gamma
                 {batch_normalization ? output_features : 0}}; // Beta
+    }
+
+    // Bias and Weight follow the activation dtype (BF16 working copy when flag
+    // is on); Gamma and Beta stay FP32 because cuDNN's batch normalization
+    // expects FP32 scale/shift even when the activation tensors are BF16.
+    vector<cudnnDataType_t> get_parameter_dtypes() const override
+    {
+        return {CUDNN_ACTIVATION_DTYPE,   // Bias
+                CUDNN_ACTIVATION_DTYPE,   // Weight
+                CUDNN_DATA_FLOAT,         // Gamma
+                CUDNN_DATA_FLOAT};        // Beta
     }
 
     enum States {RunningMean, RunningVariance};
@@ -372,8 +384,7 @@ public:
         }
         else
         {
-            // Non-batch-norm path: combination + activation can be fused on GPU
-            // when activation is supported by the cuBLASLt epilogue (ReLU).
+            ::opennn::profiler::ScopedTimer _t("dense3d_fwd:combination_activation");
             combination_activation(forward_views[Input][0],
                                    parameters[Weight], parameters[Bias],
                                    activation_arguments,
@@ -382,7 +393,7 @@ public:
 
         if (is_training && dropout_rate > type(0))
         {
-            // Save post-activation, pre-dropout value for use by back-propagation.
+            ::opennn::profiler::ScopedTimer _t("dense3d_fwd:dropout_save_and_apply");
             copy(forward_views[Output][0], forward_views[Activation][0]);
             dropout(forward_views[Output][0], dropout_arguments);
         }
@@ -403,18 +414,20 @@ public:
 
         if (dropout_rate > type(0))
         {
+            ::opennn::profiler::ScopedTimer _t1("dense3d_bwd:01_dropout_delta");
             dropout_delta(output_delta, output_delta, dropout_arguments);
-            // When dropout is active, `output` holds the post-dropout value;
-            // the post-activation (needed by activation_delta) was saved here.
+            ::opennn::profiler::ScopedTimer _t2("dense3d_bwd:02_activation_delta_dropout");
             activation_delta(forward_views[Activation][0], output_delta, output_delta, activation_arguments);
         }
         else
         {
-            // No dropout: `output` still holds the post-activation value.
+            ::opennn::profiler::ScopedTimer _t("dense3d_bwd:02_activation_delta");
             activation_delta(output, output_delta, output_delta, activation_arguments);
         }
 
         if (batch_normalization)
+        {
+            ::opennn::profiler::ScopedTimer _t("dense3d_bwd:03_batchnorm_backward");
             batch_normalization_backward(forward_views[Combination][0],
                                          output,
                                          output_delta,
@@ -424,6 +437,7 @@ public:
                                          gradient_views[Gamma],
                                          gradient_views[Beta],
                                          output_delta);
+        }
 
         const Index total_rows = input.size() / input.shape.back();
 
@@ -437,13 +451,16 @@ public:
             input_delta_2d = input_delta.reshape({total_rows, input_delta.shape.back()});
         }
 
-        combination_gradient(output_delta_2d,
-                             input_2d,
-                             parameters[Weight],
-                             input_delta_2d,
-                             gradient_views[Weight],
-                             gradient_views[Bias],
-                             false);
+        {
+            ::opennn::profiler::ScopedTimer _t("dense3d_bwd:04_combination_gradient");
+            combination_gradient(output_delta_2d,
+                                 input_2d,
+                                 parameters[Weight],
+                                 input_delta_2d,
+                                 gradient_views[Weight],
+                                 gradient_views[Bias],
+                                 false);
+        }
     }
 
     // Serialization

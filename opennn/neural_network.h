@@ -205,6 +205,19 @@ public:
     type* get_parameters_device() { return parameters.device(); }
     const type* get_parameters_device() const { return parameters.device(); }
 
+    // BF16 working copy of `parameters`. Allocated only when
+    // OPENNN_USE_BF16_ACTIVATIONS is on. Refreshed by cast_parameters_to_bf16()
+    // after each Adam step. When the flag is off, this Memory stays empty and
+    // every call site that consults `parameters_bf16.empty()` falls back to FP32.
+    __nv_bfloat16* get_parameters_bf16_device() { return reinterpret_cast<__nv_bfloat16*>(parameters_bf16.device()); }
+    const __nv_bfloat16* get_parameters_bf16_device() const { return reinterpret_cast<const __nv_bfloat16*>(parameters_bf16.device()); }
+
+    // parameters_bf16 is GPU-only so Memory::empty() always says true; check
+    // the device allocation directly.
+    bool has_bf16_working_copy() const { return parameters_bf16.allocated_bytes > 0; }
+
+    void cast_parameters_to_bf16();
+
     void copy_parameters_device();
     void copy_parameters_host();
     void link_parameters_device();
@@ -241,6 +254,7 @@ protected:
     vector<vector<Index>> layer_input_indices;
 
     Memory parameters;
+    Memory parameters_bf16;  // GPU-only BF16 mirror; empty when flag is off.
     vector<vector<vector<TensorView>>> parameter_views;
 
     Memory states;
