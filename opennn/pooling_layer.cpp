@@ -161,15 +161,19 @@ void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t 
 {
     auto& forward_views = forward_propagation.views[layer];
 
+    // For MaxPooling: slot 1 = MaximalIndices, slot 2 = Output
+    // For AveragePooling: slot 1 = Output (no MaximalIndices)
+    const size_t output_slot = forward_views.size() - 1;
+
     if(pooling_method == PoolingMethod::MaxPooling)
-        max_pooling(forward_views[Input][0], 
-                    forward_views[Output][0], 
-                    forward_views[MaximalIndices][0], 
-                    cached_pool_args, 
+        max_pooling(forward_views[Input][0],
+                    forward_views[output_slot][0],
+                    forward_views[MaximalIndices][0],
+                    cached_pool_args,
                     is_training);
     else
-        average_pooling(forward_views[Input][0], 
-                        forward_views[Output][0], 
+        average_pooling(forward_views[Input][0],
+                        forward_views[output_slot][0],
                         cached_pool_args);
 }
 
@@ -180,18 +184,20 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
     auto& forward_views = forward_propagation.views[layer];
     auto& delta_views = back_propagation.delta_views[layer];
 
+    const size_t output_slot = forward_views.size() - 1;
+
     if(pooling_method == PoolingMethod::MaxPooling)
-        max_pooling_backward(forward_views[Input][0], 
-                             forward_views[Output][0], 
-                             delta_views[OutputDelta][0], 
-                             forward_views[MaximalIndices][0], 
-                             delta_views[InputDelta][0], 
+        max_pooling_backward(forward_views[Input][0],
+                             forward_views[output_slot][0],
+                             delta_views[OutputDelta][0],
+                             forward_views[MaximalIndices][0],
+                             delta_views[InputDelta][0],
                              cached_pool_args);
     else
-        average_pooling_backward(forward_views[Input][0], 
-                                 forward_views[Output][0], 
-                                 delta_views[OutputDelta][0], 
-                                 delta_views[InputDelta][0], 
+        average_pooling_backward(forward_views[Input][0],
+                                 forward_views[output_slot][0],
+                                 delta_views[OutputDelta][0],
+                                 delta_views[InputDelta][0],
                                  cached_pool_args);
 }
 

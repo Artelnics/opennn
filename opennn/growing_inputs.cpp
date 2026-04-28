@@ -185,6 +185,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             dataset->set_shape("Input", { input_features_number });
         }
 
+        neural_network->compile();
+
         if(display)
         {
             cout << "\n"
@@ -314,7 +316,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         neural_network->set_input_shape({ optimal_processed_variables_number });
     }
 
-    //dataset->print();
+    neural_network->compile();
 
     const vector<string> input_variable_scalers = dataset->get_feature_scalers("Input");
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_feature_descriptives("Input");

@@ -286,8 +286,8 @@ TEST_F(CorrelationsTest, ExponentialCorrelation)
     correlation = exponential_correlation(x, y);
 
     EXPECT_NEAR(correlation.r, type(1), type(1.0e-3));
-    EXPECT_NEAR(correlation.b, type(2.5), EPSILON);
-    EXPECT_NEAR(correlation.a, type(1.4), EPSILON);
+    EXPECT_NEAR(correlation.b, type(2.5), type(1.0e-6));
+    EXPECT_NEAR(correlation.a, type(1.4), type(1.0e-6));
 
 }
 

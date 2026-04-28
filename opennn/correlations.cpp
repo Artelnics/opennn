@@ -322,6 +322,7 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     const Shape dim = { 1 };
     neural_network.add_layer(make_unique<Scaling<2>>(dim));
     neural_network.add_layer(make_unique<Dense<2>>(dim, dim, "Sigmoid"));
+    neural_network.compile();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error("MeanSquaredError");

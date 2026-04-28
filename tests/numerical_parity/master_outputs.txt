@@ -1,0 +1,36 @@
+# Test1_Dense_Constant
+layers 1
+params 8
+output 0 0 0.7000000477
+output 0 1 0.7000000477
+output 1 0 1.6000000238
+output 1 1 1.6000000238
+output 2 0 2.5000000000
+output 2 1 2.5000000000
+output 3 0 3.3999998569
+output 3 1 3.3999998569
+# Test2_Dense_Sigmoid
+params 6
+output 0 0 0.6570104361
+output 0 1 0.6570104361
+output 1 0 0.7407748699
+output 1 1 0.7407748699
+output 2 0 0.6791787148
+output 2 1 0.6791787148
+output 3 0 0.6791787148
+output 3 1 0.6791787148
+# Test3_TwoDense_ReLU_Linear
+params 13
+output 0 0 0.6800000072
+output 1 0 0.2599999905
+output 2 0 0.3199999928
+# Test4_MSE_Error
+error 15.7483329773
+# Test5_Scaling_Descriptives
+params 3
+output 0 0 0.0587164909
+output 1 0 0.2414148450
+output 2 0 0.4241131544
+output 3 0 -0.1198785827
+output 4 0 -0.0001313314
+output 5 0 -0.0042345971

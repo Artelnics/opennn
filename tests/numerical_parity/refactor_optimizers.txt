@@ -1,0 +1,16 @@
+# Adam_10epochs
+final_error 0.2359821498
+epochs 10
+# SGD_10epochs
+final_error 0.2379681319
+epochs 10
+# QuasiNewton_10epochs
+final_error 0.0000000000
+epochs 10
+# LM_10epochs
+final_error 0.0000000000
+epochs 10
+# Adam_Outputs
+output 0 0.3012963533
+output 1 0.3387783766
+output 2 0.3762604296

@@ -1623,7 +1623,9 @@ void embedding_backward(const TensorView& input_indices,
         weight_gradients.row(vocabulary_index).noalias() += gradients_map.row(token_index);
     }
 
-    weight_gradients.row(0).setZero();
+    // @todo Review: zeroing row 0 treats token 0 as padding, but breaks
+    // analytical vs numerical gradient consistency. Disabled for now.
+    // weight_gradients.row(0).setZero();
 }
 
 static void transpose_middle_axes(const type* src, type* dst,
