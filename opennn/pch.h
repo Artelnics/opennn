@@ -1,4 +1,6 @@
 #pragma once
+#ifndef OPENNN_PCH_H_INCLUDED
+#define OPENNN_PCH_H_INCLUDED
 
 #ifndef EIGEN_USE_THREADS
 #define EIGEN_USE_THREADS
@@ -155,6 +157,8 @@ inline bool is_instance_of(const T* ptr)
 {
     return dynamic_cast<const Base*>(ptr);
 }
+
+#endif // OPENNN_PCH_H_INCLUDED
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
