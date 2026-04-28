@@ -253,14 +253,33 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             }
             catch(const exception& e)
             {
-                if(display) cout << "Trial " << j + 1 << " skipped: " << e.what() << endl;
+                if(display)
+                    cout << "Trial number: " << j + 1
+                         << " skipped (" << e.what() << ")" << endl;
+                continue;
+            }
+            catch(...)
+            {
+                if(display)
+                    cout << "Trial number: " << j + 1
+                         << " skipped (unknown error)" << endl;
                 continue;
             }
 
-            if(training_results.get_validation_error() < minimum_validation_error)
+            const type trial_training_error = training_results.get_training_error();
+            const type trial_validation_error = training_results.get_validation_error();
+
+            if(isnan(trial_training_error) || isnan(trial_validation_error))
             {
-                minimum_training_error = training_results.get_training_error();
-                minimum_validation_error = training_results.get_validation_error();
+                if(display)
+                    cout << "Trial number: " << j + 1 << " skipped (NaN)" << endl;
+                continue;
+            }
+
+            if(trial_validation_error < minimum_validation_error)
+            {
+                minimum_training_error = trial_training_error;
+                minimum_validation_error = trial_validation_error;
             }
 
             if(minimum_validation_error < input_selection_results.optimum_validation_error)
@@ -268,14 +287,14 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                 input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices("Input");
                 input_selection_results.optimal_input_variable_names = dataset->get_variable_names("Input");
                 //neural_network->get_parameters(input_selection_results.optimal_parameters);
-                input_selection_results.optimum_training_error = training_results.get_training_error();
-                input_selection_results.optimum_validation_error = training_results.get_validation_error();
+                input_selection_results.optimum_training_error = trial_training_error;
+                input_selection_results.optimum_validation_error = trial_validation_error;
             }
 
             if(display)
                 cout << "Trial number: " << j + 1 << endl
-                << "   Training error: " << training_results.get_training_error() << endl
-                << "   Validation error: " << training_results.get_validation_error() << endl;
+                << "   Training error: " << trial_training_error << endl
+                << "   Validation error: " << trial_validation_error << endl;
         }
 
         if(previus_training_error < minimum_training_error)

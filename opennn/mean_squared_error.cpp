@@ -49,7 +49,10 @@ void MeanSquaredError::calculate_error(const Batch& batch,
 
     back_propagation.error = errors.squaredNorm() / static_cast<type>(samples_number * outputs_number);
 
-    if(isnan(back_propagation.error)) throw runtime_error("\nError is NAN.");
+    // NaN can happen during input selection trials when training diverges.
+    // Don't throw here — that aborts the whole task. Leave the value as NaN
+    // so the optimizer (or caller) can stop training and the surrounding
+    // input-selection trial loop can mark this trial as failed.
 }
 
 
@@ -62,8 +65,6 @@ void MeanSquaredError::calculate_error(const Batch&,
     type& error = back_propagation.error;
 
     error = squared_errors.squaredNorm() * static_cast<type>(0.5);
-
-    if(isnan(error)) throw runtime_error("\nError is NAN.");
 }
 
 

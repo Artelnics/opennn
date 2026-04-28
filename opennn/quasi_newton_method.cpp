@@ -327,6 +327,20 @@ TrainingResults QuasiNewtonMethod::train()
 
         results.training_error_history(epoch) = training_back_propagation.error;
 
+        // If training diverged (NaN/Inf), stop early so the caller can decide
+        // what to do with this trial instead of letting the next iteration
+        // multiply NaN values until something downstream aborts.
+        if(isnan(training_back_propagation.error) || isinf(training_back_propagation.error))
+        {
+            if(display) cout << "Epoch " << epoch << "\nTraining diverged (NaN/Inf)." << endl;
+            results.stopping_condition = Optimizer::StoppingCondition::MaximumEpochsNumber;
+            results.loss = training_back_propagation.loss_value;
+            results.resize_training_error_history(epoch + 1);
+            results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
+            results.elapsed_time = write_time(elapsed_time);
+            break;
+        }
+
         // Update parameters
 
         update_parameters(training_batch,

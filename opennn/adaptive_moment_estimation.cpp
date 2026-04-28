@@ -291,6 +291,15 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         results.training_error_history(epoch) = training_error;
 
+        if(isnan(training_error) || isinf(training_error))
+        {
+            if(display) cout << "Epoch " << epoch << "\nTraining diverged (NaN/Inf)." << endl;
+            results.stopping_condition = Optimizer::StoppingCondition::MaximumEpochsNumber;
+            results.resize_training_error_history(epoch + 1);
+            results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
+            break;
+        }
+
         if(has_validation)
         {
             validation_batches = dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle);

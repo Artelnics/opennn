@@ -373,13 +373,32 @@ void GeneticAlgorithm::evaluate_population()
         training_strategy->get_loss()->set_display(false);
         training_strategy->get_optimization_algorithm()->set_display(false);
 
-        training_results = training_strategy->train();
+        try
+        {
+            training_results = training_strategy->train();
+        }
+        catch(const exception& e)
+        {
+            // Skip individuals whose training diverges (NaN/Inf) instead of
+            // killing the genetic algorithm. Penalize with MAX so they aren't
+            // selected.
+            if(display)
+                cout << "Individual " << i << " skipped (" << e.what() << ")" << endl;
+            parameters(i) = neural_network->get_parameters();
+            training_errors(i) = numeric_limits<type>::max();
+            validation_errors(i) = numeric_limits<type>::max();
+            dataset->set_variable_indices(original_input_variable_indices, original_target_variable_indices);
+            continue;
+        }
 
         parameters(i) = neural_network->get_parameters();
 
         training_errors(i) = training_results.get_training_error();
 
         validation_errors(i) = training_results.get_validation_error();
+
+        if(isnan(training_errors(i))) training_errors(i) = numeric_limits<type>::max();
+        if(isnan(validation_errors(i))) validation_errors(i) = numeric_limits<type>::max();
 
         if(display)
             cout << "Training error: " << training_results.get_training_error() << endl
