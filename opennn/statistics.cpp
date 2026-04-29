@@ -8,6 +8,9 @@
 
 #include "statistics.h"
 #include "tensor_utilities.h"
+#include "random_utilities.h"
+
+#include <Eigen/Dense>
 
 namespace opennn
 {
@@ -1306,6 +1309,177 @@ VectorI maximal_indices(const MatrixR& matrix)
     maximal_indices << maxRow, maxCol;
 
     return maximal_indices;
+}
+
+// =====================================================================
+// Eigen Matrix/Vector data-manipulation helpers (moved from tensor_utilities).
+// =====================================================================
+
+MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
+{
+    if (starting_matrix.size() == 0)
+        return block;
+    if (block.size() == 0)
+        return starting_matrix;
+
+    if (starting_matrix.cols() != block.cols())
+        throw runtime_error("append_rows: Column mismatch (" +
+                                to_string(starting_matrix.cols()) + " vs " +
+                                to_string(block.cols()) + ")");
+
+    MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
+
+    final_matrix.topRows(starting_matrix.rows()) = starting_matrix;
+    final_matrix.bottomRows(block.rows()) = block;
+
+    return final_matrix;
+}
+
+vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums)
+{
+    const Index rows_unfiltered =  outputs.rows();
+    const Index variables_to_filter = outputs.cols();
+
+    if(minimums.size() != variables_to_filter || maximums.size() != variables_to_filter)
+        throw runtime_error("build_feasible_rows_mask: Minimums/maximums size mismatch with outputs columns.\n");
+
+    vector<Index> feasible_rows;
+    feasible_rows.reserve(static_cast<size_t>(rows_unfiltered));
+
+    const auto min_bound = minimums.transpose().array();
+    const auto max_bound = maximums.transpose().array();
+
+    for (Index i = 0; i < rows_unfiltered; ++i)
+    {
+        const auto row_arr = outputs.row(i).array();
+
+        if ((row_arr >= min_bound && row_arr <= max_bound).all())
+            feasible_rows.push_back(i);
+    }
+
+    return feasible_rows;
+}
+
+VectorI calculate_rank(const VectorR& vector, bool ascending)
+{
+    const Index size = vector.size();
+
+    VectorI rank(size);
+    iota(rank.data(), rank.data() + rank.size(), 0);
+
+    sort(rank.data(),
+         rank.data() + rank.size(),
+         [&](Index i, Index j){ return ascending ? vector[i] < vector[j] : vector[i] > vector[j]; });
+
+    return rank;
+}
+
+vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
+{
+    vector<Index> indices;
+    copy_if(data.begin(), data.end(), back_inserter(indices),
+            [bound](Index value) { return value > bound; });
+    return indices;
+}
+
+VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int n)
+{
+    const Index rows = matrix.rows();
+
+    const VectorR distances = (matrix.rowwise() - point.transpose()).rowwise().norm();
+
+    vector<pair<type, Index>> pairs(rows);
+
+    for(Index i = 0; i < rows; ++i)
+        pairs[i] = {distances(i), i};
+
+    if (n > rows)
+        n = rows;
+
+    partial_sort(pairs.begin(), pairs.begin() + n, pairs.end());
+
+    VectorI result(n);
+
+    for(int i = 0; i < n; ++i)
+        result(i) = pairs[i].second;
+
+    return result;
+}
+
+VectorR perform_Householder_QR_decomposition(const MatrixR& A, const VectorR& b)
+{
+    return A.colPivHouseholderQr().solve(b);
+}
+
+void fill_tensor_data(const MatrixR& matrix,
+                      const vector<Index>& row_indices,
+                      const vector<Index>& column_indices,
+                      type* __restrict tensor_data,
+                      bool parallelize,
+                      int contiguous_hint)
+{
+    const Index rows_number = row_indices.size();
+    const Index columns_number = column_indices.size();
+
+    if(rows_number == 0 || columns_number == 0) return;
+
+    const type* matrix_data = matrix.data();
+
+    const Index matrix_cols_number = matrix.cols();
+
+    const bool contiguous = (contiguous_hint >= 0) ? static_cast<bool>(contiguous_hint) : is_contiguous(column_indices);
+
+    if (contiguous)
+    {
+        #pragma omp parallel for schedule(static) if (parallelize)
+        for(Index i = 0; i < rows_number; ++i)
+            memcpy(tensor_data + i * columns_number, &matrix(row_indices[i], column_indices[0]), static_cast<size_t>(columns_number) * sizeof(float));
+    }
+    else
+    {
+        #pragma omp parallel for schedule(static) if (parallelize)
+        for(Index i = 0; i < rows_number; ++i)
+        {
+            const Index src_row = row_indices[i];
+            const type* src_row_ptr = matrix_data + src_row * matrix_cols_number;
+            type* dest_row_ptr = tensor_data + i * columns_number;
+
+            for(Index j = 0; j < columns_number; ++j)
+                dest_row_ptr[j] = src_row_ptr[column_indices[j]];
+        }
+    }
+}
+
+VectorMap vector_map(const MatrixR& tensor, Index index_1)
+{
+    return VectorMap(const_cast<type*>(tensor.data()) + tensor.rows()*index_1, tensor.rows());
+}
+
+void shuffle_rows(MatrixR& matrix)
+{
+    const Index rows_number = matrix.rows();
+
+    if (rows_number <= 1) return;
+
+    for(Index i = rows_number - 1; i > 0; --i)
+    {
+        const Index j = random_integer(0, i);
+
+        if (i == j) continue;
+
+        matrix.row(i).swap(matrix.row(j));
+    }
+}
+
+VectorR filter_missing_values(const VectorR& x)
+{
+    vector<Index> valid;
+    valid.reserve(x.size());
+
+    for (Index i = 0; i < x.size(); ++i)
+        if (isfinite(x(i))) valid.push_back(i);
+
+    return slice_rows(x, valid);
 }
 
 }

@@ -149,6 +149,21 @@ constexpr type MAX = numeric_limits<type>::max();
 constexpr type NEG_INFINITY = -numeric_limits<type>::infinity();
 constexpr type QUIET_NAN = numeric_limits<type>::quiet_NaN();
 constexpr type SOFTMAX_MASK_VALUE = type(-1e9f);
+
+// Generic stream output for std::vector. Lives here so it's available everywhere
+// pch.h reaches (which is essentially the whole library).
+template <typename T>
+ostream& operator<<(ostream& os, const vector<T>& vec)
+{
+    os << "[ ";
+    for(size_t i = 0; i < vec.size(); ++i)
+    {
+        os << vec[i];
+        if (i + 1 < vec.size()) os << "; ";
+    }
+    os << " ]";
+    return os;
+}
 }
 
 constexpr int Layout = Eigen::RowMajor;

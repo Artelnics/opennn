@@ -10,7 +10,8 @@
 
 #include <functional>
 #include "tinyxml2.h"
-#include "tensor_utilities.h"   // for ThreadSafeQueue
+#include "tensor_utilities.h"
+#include "thread_safe_queue.h"
 
 using namespace tinyxml2;
 

@@ -174,6 +174,120 @@ Index maximal_index(const VectorR&);
 VectorI maximal_indices(const VectorR&, Index);
 VectorI maximal_indices(const MatrixR&);
 
+// =====================================================================
+// Eigen Matrix/Vector data-manipulation helpers.
+// (Moved here from tensor_utilities.h: these operate on Eigen types, not
+// TensorView, and live in the same conceptual neighbourhood as Descriptives
+// and the slicing/filtering code that already lives here.)
+// =====================================================================
+
+inline bool row_finite(const VectorR& v, Index i) { return isfinite(v(i)); }
+inline bool row_finite(const MatrixR& m, Index i) { return m.row(i).array().isFinite().all(); }
+
+inline VectorR slice_rows(const VectorR& v, const vector<Index>& idx)
+{
+    VectorR r(idx.size());
+    for (Index i = 0; i < Index(idx.size()); ++i) r(i) = v(idx[i]);
+    return r;
+}
+
+inline MatrixR slice_rows(const MatrixR& m, const vector<Index>& idx)
+{
+    MatrixR r(idx.size(), m.cols());
+    for (Index i = 0; i < Index(idx.size()); ++i) r.row(i) = m.row(idx[i]);
+    return r;
+}
+
+VectorR filter_missing_values(const VectorR&);
+
+template<typename X, typename Y>
+pair<X, Y> filter_missing_values(const X& x, const Y& y)
+{
+    if (x.rows() != y.rows())
+        throw runtime_error("filter_missing_values: row count mismatch");
+
+    vector<Index> valid;
+    valid.reserve(x.rows());
+
+    for (Index i = 0; i < x.rows(); ++i)
+        if (row_finite(x, i) && row_finite(y, i))
+            valid.push_back(i);
+
+    return { slice_rows(x, valid), slice_rows(y, valid) };
+}
+
+void shuffle_rows(MatrixR& matrix);
+
+inline bool is_contiguous(const vector<Index>& v)
+{
+    return std::adjacent_find(v.begin(), v.end(),
+        [](Index a, Index b) { return b != a + 1; }) == v.end();
+}
+
+template <typename T>
+inline bool is_binary(const T& tensor)
+{
+    return all_of(tensor.data(), tensor.data() + tensor.size(),
+                  [](type v) { return v == type(0) || v == type(1) || isnan(v); });
+}
+
+MatrixR append_rows(const MatrixR&, const MatrixR&);
+
+template<typename T>
+vector<T> gather_by_index(const vector<T>& data, const vector<Index>& indices)
+{
+    vector<T> result;
+    result.reserve(indices.size());
+
+    transform(indices.begin(), indices.end(), back_inserter(result),
+              [&data](Index i) { return data[i]; });
+
+    return result;
+}
+
+vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums);
+
+template <typename T>
+inline bool is_constant(const T& tensor)
+{
+    const type* data = tensor.data();
+    const type* end = data + tensor.size();
+
+    const type* first = find_if(data, end, [](type v) { return !isnan(v); });
+
+    if (first == end)
+        return true;
+
+    const type val = *first;
+
+    return all_of(first + 1, end,
+                  [val](type v) { return isnan(v) || abs(val - v) <= numeric_limits<float>::min(); });
+}
+
+inline vector<Index> get_true_indices(const VectorB& v)
+{
+    vector<Index> indices;
+    indices.reserve(v.size());
+
+    for(Index i = 0; i < v.size(); ++i)
+        if (v(i))
+            indices.push_back(i);
+
+    return indices;
+}
+
+VectorI calculate_rank(const VectorR&, bool ascending = true);
+
+vector<Index> get_elements_greater_than(const vector<Index>&, Index);
+
+VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
+
+void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true, int contiguous = -1);
+
+VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
+
+VectorMap vector_map(const MatrixR&, Index);
+
 }
 
 // OpenNN: Open Neural Networks Library.

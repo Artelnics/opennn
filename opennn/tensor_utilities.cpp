@@ -7,147 +7,11 @@
 //   artelnics@artelnics.com
 
 #include "tensor_utilities.h"
-#include "random_utilities.h"
 
 #include <Eigen/Dense>
 
 namespace opennn
 {
-
-MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
-{
-    if (starting_matrix.size() == 0)
-        return block;
-    if (block.size() == 0)
-        return starting_matrix;
-
-    if (starting_matrix.cols() != block.cols())
-        throw runtime_error("append_rows: Column mismatch (" +
-                                to_string(starting_matrix.cols()) + " vs " +
-                                to_string(block.cols()) + ")");
-
-    MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
-
-    final_matrix.topRows(starting_matrix.rows()) = starting_matrix;
-    final_matrix.bottomRows(block.rows()) = block;
-
-    return final_matrix;
-}
-
-vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums)
-{
-    const Index rows_unfiltered =  outputs.rows();
-    const Index variables_to_filter = outputs.cols();
-
-    if(minimums.size() != variables_to_filter || maximums.size() != variables_to_filter)
-        throw runtime_error("build_feasible_rows_mask: Minimums/maximums size mismatch with outputs columns.\n");
-
-    vector<Index> feasible_rows;
-    feasible_rows.reserve(static_cast<size_t>(rows_unfiltered));
-
-    const auto min_bound = minimums.transpose().array();
-    const auto max_bound = maximums.transpose().array();
-
-    for (Index i = 0; i < rows_unfiltered; ++i)
-    {
-        const auto row_arr = outputs.row(i).array();
-
-        if ((row_arr >= min_bound && row_arr <= max_bound).all())
-            feasible_rows.push_back(i);
-    }
-
-    return feasible_rows;
-}
-
-VectorI calculate_rank(const VectorR& vector, bool ascending)
-{
-    const Index size = vector.size();
-
-    VectorI rank(size);
-    iota(rank.data(), rank.data() + rank.size(), 0);
-
-    sort(rank.data(),
-         rank.data() + rank.size(),
-         [&](Index i, Index j){ return ascending ? vector[i] < vector[j] : vector[i] > vector[j]; });
-
-    return rank;
-}
-
-vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
-{
-    vector<Index> indices;
-    copy_if(data.begin(), data.end(), back_inserter(indices),
-            [bound](Index value) { return value > bound; });
-    return indices;
-}
-
-VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n)
-{
-    const Index rows = matrix.rows();
-
-    const VectorR distances = (matrix.rowwise() - point.transpose()).rowwise().norm();
-
-    vector<pair<type, Index>> pairs(rows);
-
-    for(Index i = 0; i < rows; ++i)
-        pairs[i] = {distances(i), i};
-
-    if (n > rows)
-        n = rows;
-
-    partial_sort(pairs.begin(), pairs.begin() + n, pairs.end());
-
-    VectorI result(n);
-
-    for(int i = 0; i < n; ++i)
-        result(i) = pairs[i].second;
-
-    return result;
-}
-
-VectorR perform_Householder_QR_decomposition(const MatrixR& A, const VectorR& b)
-{
-    return A.colPivHouseholderQr().solve(b);
-}
-
-void fill_tensor_data(const MatrixR& matrix,
-                      const vector<Index>& row_indices,
-                      const vector<Index>& column_indices,
-                      type* __restrict tensor_data,
-                      bool parallelize,
-                      int contiguous_hint)
-{
-    const Index rows_number = row_indices.size();
-    const Index columns_number = column_indices.size();
-
-    if(rows_number == 0 || columns_number == 0) return;
-
-    const type* matrix_data = matrix.data();
-
-    const Index matrix_cols_number = matrix.cols();
-
-    const bool contiguous = (contiguous_hint >= 0) ? static_cast<bool>(contiguous_hint) : is_contiguous(column_indices);
-
-    if (contiguous)
-    {
-        #pragma omp parallel for schedule(static) if (parallelize)
-        for(Index i = 0; i < rows_number; ++i)
-            memcpy(tensor_data + i * columns_number, &matrix(row_indices[i], column_indices[0]), static_cast<size_t>(columns_number) * sizeof(float));
-    }
-    else
-    {
-        #pragma omp parallel for schedule(static) if (parallelize)
-        for(Index i = 0; i < rows_number; ++i)
-        {
-            const Index src_row = row_indices[i];
-            const type* src_row_ptr = matrix_data + src_row * matrix_cols_number;
-            type* dest_row_ptr = tensor_data + i * columns_number;
-
-            for(Index j = 0; j < columns_number; ++j)
-                dest_row_ptr[j] = src_row_ptr[column_indices[j]];
-        }
-    }
-}
 
 string shape_to_string(const Shape& x, const string& separator)
 {
@@ -190,27 +54,6 @@ Shape string_to_shape(const string& x, const string& separator)
     return result;
 }
 
-VectorMap vector_map(const MatrixR& tensor, Index index_1)
-{
-    return VectorMap(const_cast<type*>(tensor.data()) + tensor.rows()*index_1, tensor.rows());
-}
-
-void shuffle_rows(MatrixR& matrix)
-{
-    const Index rows_number = matrix.rows();
-
-    if (rows_number <= 1) return;
-
-    for(Index i = rows_number - 1; i > 0; --i)
-    {
-        const Index j = random_integer(0, i);
-
-        if (i == j) continue;
-
-        matrix.row(i).swap(matrix.row(j));
-    }
-}
-
 Device::Device()
 {
     set_threads_number(0);
@@ -240,12 +83,8 @@ Device::Device()
 Device::~Device()
 {
 #ifdef OPENNN_WITH_CUDA
-    // Plans hold cuBLASLt descriptor handles; clear before destroying the LT handle.
-    lt_gemm_plans.clear();
-    if (cublas_lt_workspace) cudaFree(cublas_lt_workspace);
-    if (bf16_input_scratch) cudaFree(bf16_input_scratch);
-    if (ones_device) cudaFree(ones_device);
-    if (ones_bf16_device) cudaFree(ones_bf16_device);
+    // The cuBLASLt plan cache, workspace and BF16 scratch are TU-local in
+    // cuda_gemm.cpp now and have process lifetime; nothing to free here.
     if (operator_sum_descriptor) cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
     if (operator_multiplication_descriptor) cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
     if (cublas_lt_handle) cublasLtDestroy(cublas_lt_handle);
@@ -255,90 +94,7 @@ Device::~Device()
 #endif
 }
 
-#ifdef OPENNN_WITH_CUDA
-
-const LtMatmulPlan& Device::get_lt_gemm_plan(
-    int m, int n, int k,
-    cublasOperation_t transA,
-    cublasOperation_t transB,
-    cublasLtEpilogue_t epilogue,
-    cudaDataType_t io_dtype,
-    cudaDataType_t out_dtype)
-{
-    auto& self = instance();
-
-    const LtMatmulPlanKey key{m, n, k,
-                              static_cast<int>(transA),
-                              static_cast<int>(transB),
-                              static_cast<int>(epilogue),
-                              static_cast<int>(io_dtype),
-                              static_cast<int>(out_dtype)};
-    auto it = self.lt_gemm_plans.find(key);
-    if (it != self.lt_gemm_plans.end()) return it->second;
-
-    LtMatmulPlan plan;
-
-    // Compute type: FP32 accumulator. For FP32 inputs we use the TF32 fast
-    // path; for BF16 inputs we use plain CUBLAS_COMPUTE_32F because the
-    // _FAST_TF32 mode is only meaningful when inputs are FP32 (it tells
-    // cuBLAS to round FP32 inputs to TF32 before the TC multiply).
-    const cublasComputeType_t compute_type = (io_dtype == CUDA_R_16BF)
-                                                ? CUBLAS_COMPUTE_32F
-                                                : CUBLAS_COMPUTE_32F_FAST_TF32;
-    CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.op_desc, compute_type, CUDA_R_32F));
-    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_TRANSA,
-                                                &transA, sizeof(transA)));
-    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_TRANSB,
-                                                &transB, sizeof(transB)));
-    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_EPILOGUE,
-                                                &epilogue, sizeof(epilogue)));
-    // cuBLASLt 12.x requires bias dtype == output dtype for BF16/FP16 outputs.
-    // FP32 bias on BF16 output returns 0 algos from the heuristic. So we mirror
-    // out_dtype here; storage at the bias pointer must match.
-    const cudaDataType_t bias_dtype = out_dtype;
-    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
-                                                &bias_dtype, sizeof(bias_dtype)));
-
-    // Layouts. Inputs are column-major in the cuBLAS view (the row-major caller
-    // achieves row-major semantics by swapping operand roles outside this plan).
-    const int a_rows = (transA == CUBLAS_OP_N) ? m : k;
-    const int a_cols = (transA == CUBLAS_OP_N) ? k : m;
-    const int b_rows = (transB == CUBLAS_OP_N) ? k : n;
-    const int b_cols = (transB == CUBLAS_OP_N) ? n : k;
-
-    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.a_desc, io_dtype,  a_rows, a_cols, a_rows));
-    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.b_desc, io_dtype,  b_rows, b_cols, b_rows));
-    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.c_desc, out_dtype, m, n, m));
-    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.d_desc, out_dtype, m, n, m));
-
-    // Heuristic: pick one algo that fits within our workspace budget. If none
-    // is returned, leave algo_valid=false and the call site will pass nullptr,
-    // letting cuBLASLt use its internal default (slower path, but always works).
-    cublasLtMatmulPreference_t pref = nullptr;
-    CHECK_CUBLAS(cublasLtMatmulPreferenceCreate(&pref));
-    const size_t max_workspace = Device::cublas_lt_workspace_bytes();
-    CHECK_CUBLAS(cublasLtMatmulPreferenceSetAttribute(pref,
-        CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &max_workspace, sizeof(max_workspace)));
-
-    cublasLtMatmulHeuristicResult_t heuristic = {};
-    int returned_results = 0;
-    cublasLtMatmulAlgoGetHeuristic(Device::get_cublas_lt_handle(),
-                                   plan.op_desc,
-                                   plan.a_desc, plan.b_desc, plan.c_desc, plan.d_desc,
-                                   pref, 1, &heuristic, &returned_results);
-    cublasLtMatmulPreferenceDestroy(pref);
-
-    if (returned_results > 0)
-    {
-        plan.algo = heuristic.algo;
-        plan.algo_valid = true;
-    }
-
-    auto [iter, _] = self.lt_gemm_plans.emplace(key, std::move(plan));
-    return iter->second;
-}
-
-#endif // OPENNN_WITH_CUDA
+// get_lt_gemm_plan implementation moved to cuda_gemm.cpp.
 
 void Device::set_threads_number(int num_threads)
 {
@@ -361,139 +117,11 @@ Device& Device::instance()
     return device;
 }
 
-// ---------------------------------------------------------------------------
-// Configuration singleton: user-facing runtime config (device + precision).
-// ---------------------------------------------------------------------------
-
-Configuration& Configuration::instance()
-{
-    static Configuration cfg;
-    return cfg;
-}
-
-void Configuration::set(DeviceType d, TrainingPrecision tp, InferencePrecision ip)
-{
-    device              = d;
-    training_precision  = tp;
-    inference_precision = ip;
-    // Invalidate the cached Resolved so a follow-up is_gpu()/resolve() re-detects
-    // hardware and applies the new user request.
-    cache_valid = false;
-}
-
-#ifdef OPENNN_WITH_CUDA
-// True if there's at least one CUDA device available. Wraps cudaGetDeviceCount
-// and clears any sticky error so a missing CUDA stack on the host doesn't poison
-// later cudaGetLastError() calls.
-static bool has_cuda_gpu()
-{
-    int count = 0;
-    const cudaError_t err = cudaGetDeviceCount(&count);
-    if (err != cudaSuccess) { cudaGetLastError(); return false; }
-    return count > 0;
-}
-
-// Compute capability of device 0. Returns major*10+minor, or -1 on failure.
-// BF16 Tensor Cores require >= 80 (Ampere).
-static int cuda_compute_capability()
-{
-    cudaDeviceProp prop{};
-    if (cudaGetDeviceProperties(&prop, 0) != cudaSuccess) { cudaGetLastError(); return -1; }
-    return prop.major * 10 + prop.minor;
-}
-#else
-static bool has_cuda_gpu()           { return false; }
-static int  cuda_compute_capability(){ return -1; }
-#endif
-
-const Configuration::Resolved& Configuration::resolve() const
-{
-    if (cache_valid) return cached_resolved;
-
-    Resolved r;
-
-    // 1. Device.
-    switch (device)
-    {
-    case DeviceType::Auto:
-        r.device = has_cuda_gpu() ? DeviceType::CUDA : DeviceType::CPU;
-        break;
-    case DeviceType::CPU:
-        r.device = DeviceType::CPU;
-        break;
-    case DeviceType::CUDA:
-        if (!has_cuda_gpu())
-            throw runtime_error("Configuration: CUDA requested but no GPU detected.");
-        r.device = DeviceType::CUDA;
-        break;
-    }
-
-    const bool gpu = (r.device == DeviceType::CUDA);
-    const int  cc  = gpu ? cuda_compute_capability() : -1;
-    const bool bf16_capable = gpu && (cc >= 80);   // Ampere+ has BF16 Tensor Cores.
-
-    // 2. Training precision.
-    switch (training_precision)
-    {
-    case TrainingPrecision::Auto:
-        r.training_precision = bf16_capable ? TrainingPrecision::BP16 : TrainingPrecision::Float32;
-        break;
-    case TrainingPrecision::Float32:
-        r.training_precision = TrainingPrecision::Float32;
-        break;
-    case TrainingPrecision::BP16:
-        if (!gpu)
-            throw runtime_error("Configuration: BP16 training requires CUDA.");
-        if (!bf16_capable)
-            throw runtime_error("Configuration: BP16 training requires CUDA compute capability >= 8.0 (Ampere+).");
-        r.training_precision = TrainingPrecision::BP16;
-        break;
-    }
-
-    // 3. Inference precision. Defaults to mirror the training precision so that the
-    //    parameters_bf16 working copy (if any) is reused for inference without re-cast.
-    switch (inference_precision)
-    {
-    case InferencePrecision::Auto:
-        r.inference_precision = (r.training_precision == TrainingPrecision::BP16)
-                                    ? InferencePrecision::BP16
-                                    : InferencePrecision::Float32;
-        break;
-    case InferencePrecision::Float32:
-        r.inference_precision = InferencePrecision::Float32;
-        break;
-    case InferencePrecision::BP16:
-        if (!gpu)
-            throw runtime_error("Configuration: BP16 inference requires CUDA.");
-        if (!bf16_capable)
-            throw runtime_error("Configuration: BP16 inference requires CUDA compute capability >= 8.0 (Ampere+).");
-        r.inference_precision = InferencePrecision::BP16;
-        break;
-    case InferencePrecision::Int8:
-        // Placeholder: enum exists so user code can be written against the future API,
-        // but no INT8 calibration / kernels are implemented. Fail loudly.
-        throw runtime_error("Configuration: INT8 inference not yet supported (placeholder).");
-    }
-
-    cached_resolved = r;
-    cache_valid = true;
-    return cached_resolved;
-}
+// Configuration impls moved to configuration.cpp.
 
 ThreadPoolDevice* Device::get_thread_pool_device()
 {
     return thread_pool_device.get();
-}
-
-VectorR filter_missing_values(const VectorR& x)
-{
-    vector<Index> valid;
-    valid.reserve(x.size());
-
-    for (Index i = 0; i < x.size(); ++i)
-        if (isfinite(x(i))) valid.push_back(i);
-
-    return slice_rows(x, valid);
 }
 
 }

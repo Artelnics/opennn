@@ -9,6 +9,7 @@
 #include "math_utilities.h"
 #include "random_utilities.h"
 #include "cuda_dispatch.h"
+#include "cuda_gemm.h"
 #include "profiler.h"
 
 namespace opennn
@@ -16,6 +17,47 @@ namespace opennn
 
 static constexpr float SELU_ALPHA  = 1.6732632423543772848170429916717f;
 static constexpr float SELU_LAMBDA = 1.0507009873554804934193349852946f;
+
+#ifdef OPENNN_WITH_CUDA
+
+// Per-TU device buffer of [1, 1, ..., 1] used as the right operand of the
+// GEMM-as-column-reduction trick in sum(). Sized lazily, never freed
+// (process-lifetime allocation, matches the existing pooling-scratch pattern).
+// One buffer per dtype because the GEMM path requires uniform-dtype operands.
+namespace {
+    float*         ones_fp32 = nullptr; int ones_fp32_size = 0;
+    __nv_bfloat16* ones_bf16 = nullptr; int ones_bf16_size = 0;
+}
+
+static const void* get_ones(int n, cudnnDataType_t dtype)
+{
+    if (dtype == CUDNN_DATA_BFLOAT16)
+    {
+        if (n > ones_bf16_size)
+        {
+            if (ones_bf16) CHECK_CUDA(cudaFree(ones_bf16));
+            CHECK_CUDA(cudaMalloc(&ones_bf16, n * sizeof(__nv_bfloat16)));
+            vector<__nv_bfloat16> h(n, __float2bfloat16(1.0f));
+            CHECK_CUDA(cudaMemcpy(ones_bf16, h.data(),
+                                  n * sizeof(__nv_bfloat16), cudaMemcpyHostToDevice));
+            ones_bf16_size = n;
+        }
+        return ones_bf16;
+    }
+
+    if (n > ones_fp32_size)
+    {
+        if (ones_fp32) CHECK_CUDA(cudaFree(ones_fp32));
+        CHECK_CUDA(cudaMalloc(&ones_fp32, n * sizeof(float)));
+        vector<float> h(n, 1.0f);
+        CHECK_CUDA(cudaMemcpy(ones_fp32, h.data(), n * sizeof(float),
+                              cudaMemcpyHostToDevice));
+        ones_fp32_size = n;
+    }
+    return ones_fp32;
+}
+
+#endif
 
 void padding(const TensorView& input, TensorView& output)
 {
@@ -344,7 +386,7 @@ void reduce_sum(const TensorView& input, TensorView& output, type alpha, type be
         gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
                   total_columns, 1, total_rows,
                   input.data, input.cuda_dtype(), total_columns,
-                  Device::get_ones(total_rows, input.dtype), input.cuda_dtype(), total_rows,
+                  get_ones(total_rows, input.dtype), input.cuda_dtype(), total_rows,
                   output.data, output.cuda_dtype(), total_columns,
                   alpha, beta);
         return;
@@ -418,7 +460,7 @@ static const void* maybe_cast_input_to_weights_dtype(const TensorView& input,
     if (input.dtype == weights.dtype) return input.data;
     if (input.dtype == CUDNN_DATA_FLOAT && weights.dtype == CUDNN_DATA_BFLOAT16)
     {
-        __nv_bfloat16* scratch = Device::get_bf16_input_scratch(input.size());
+        __nv_bfloat16* scratch = get_bf16_input_scratch(input.size());
         cast_fp32_to_bf16_cuda(input.size(), input.as_float(), scratch);
         return scratch;
     }
@@ -522,7 +564,7 @@ void combination_gradient(const TensorView& output_delta,
             const bool need_cast = (input.dtype == CUDNN_DATA_FLOAT
                                     && io_dtype == CUDA_R_16BF);
             const void* input_for_gemm = need_cast
-                ? static_cast<const void*>(Device::get_bf16_input_scratch(input.size()))
+                ? static_cast<const void*>(get_bf16_input_scratch(input.size()))
                 : input.data;
 
             if (need_cast)
