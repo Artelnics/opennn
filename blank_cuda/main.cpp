@@ -70,7 +70,7 @@ int main()
 
         adam->set_batch_size(128);
         adam->set_learning_rate(type(5e-4));
-        adam->set_maximum_epochs(1);
+        adam->set_maximum_epochs(4);   // 5 epochs (loop runs 0..4 inclusive)
         adam->set_display_period(1);
 
         cout << "[PARITY] train="  << dataset.get_samples_number("Training")

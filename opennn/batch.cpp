@@ -32,21 +32,32 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if(!dataset_input_shape.empty())
     {
         input_shape = Shape({samples_number}).append(dataset_input_shape);
-        input.resize_bytes(input_shape.size() * Index(sizeof(type)), DeviceType::Cpu);
 
 #ifdef OPENNN_WITH_CUDA
-        input.resize_bytes(input_shape.size() * Index(sizeof(float)), DeviceType::Gpu);
-
-        num_input_features = dataset->get_features_number("Input");
-        const Index input_size = samples_number * num_input_features;
-
-        if(input_size > inputs_host_allocated_size)
+        // GPU runs keep `input` in device memory and use a pinned host staging
+        // buffer (inputs_host) for the H2D copy. CPU runs keep `input` in host
+        // memory directly. The previous code overrode the CPU buffer with a
+        // GPU one whenever CUDA was compiled in, which segfaulted on Batch::fill
+        // when actually running CPU-only.
+        if (Device::instance().is_gpu())
         {
-            if(inputs_host) cudaFreeHost(inputs_host);
-            CHECK_CUDA(cudaMallocHost(&inputs_host, input_size * sizeof(float)));
-            inputs_host_allocated_size = input_size;
+            input.resize_bytes(input_shape.size() * Index(sizeof(float)), DeviceType::Gpu);
+
+            num_input_features = dataset->get_features_number("Input");
+            const Index input_size = samples_number * num_input_features;
+
+            if(input_size > inputs_host_allocated_size)
+            {
+                if(inputs_host) cudaFreeHost(inputs_host);
+                CHECK_CUDA(cudaMallocHost(&inputs_host, input_size * sizeof(float)));
+                inputs_host_allocated_size = input_size;
+            }
         }
+        else
 #endif
+        {
+            input.resize_bytes(input_shape.size() * Index(sizeof(type)), DeviceType::Cpu);
+        }
     }
 
     // Target
@@ -56,21 +67,27 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if(!dataset_target_shape.empty())
     {
         target_shape = Shape({samples_number}).append(dataset_target_shape);
-        target.resize_bytes(target_shape.size() * Index(sizeof(type)), DeviceType::Cpu);
 
 #ifdef OPENNN_WITH_CUDA
-        target.resize_bytes(target_shape.size() * Index(sizeof(float)), DeviceType::Gpu);
-
-        num_target_features = dataset->get_features_number("Target");
-        const Index target_size = samples_number * num_target_features;
-
-        if(target_size > targets_host_allocated_size)
+        if (Device::instance().is_gpu())
         {
-            if(targets_host) cudaFreeHost(targets_host);
-            CHECK_CUDA(cudaMallocHost(&targets_host, target_size * sizeof(float)));
-            targets_host_allocated_size = target_size;
+            target.resize_bytes(target_shape.size() * Index(sizeof(float)), DeviceType::Gpu);
+
+            num_target_features = dataset->get_features_number("Target");
+            const Index target_size = samples_number * num_target_features;
+
+            if(target_size > targets_host_allocated_size)
+            {
+                if(targets_host) cudaFreeHost(targets_host);
+                CHECK_CUDA(cudaMallocHost(&targets_host, target_size * sizeof(float)));
+                targets_host_allocated_size = target_size;
+            }
         }
+        else
 #endif
+        {
+            target.resize_bytes(target_shape.size() * Index(sizeof(type)), DeviceType::Cpu);
+        }
     }
 
     // Decoder
@@ -80,21 +97,27 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if(!dataset_decoder_shape.empty())
     {
         decoder_shape = Shape({samples_number}).append(dataset_decoder_shape);
-        decoder.resize_bytes(decoder_shape.size() * Index(sizeof(type)), DeviceType::Cpu);
 
 #ifdef OPENNN_WITH_CUDA
-        decoder.resize_bytes(decoder_shape.size() * Index(sizeof(float)), DeviceType::Gpu);
-
-        num_decoder_features = dataset->get_features_number("Decoder");
-        const Index decoder_size = samples_number * num_decoder_features;
-
-        if(decoder_size > decoder_host_allocated_size)
+        if (Device::instance().is_gpu())
         {
-            if(decoder_host) cudaFreeHost(decoder_host);
-            CHECK_CUDA(cudaMallocHost(&decoder_host, decoder_size * sizeof(float)));
-            decoder_host_allocated_size = decoder_size;
+            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(float)), DeviceType::Gpu);
+
+            num_decoder_features = dataset->get_features_number("Decoder");
+            const Index decoder_size = samples_number * num_decoder_features;
+
+            if(decoder_size > decoder_host_allocated_size)
+            {
+                if(decoder_host) cudaFreeHost(decoder_host);
+                CHECK_CUDA(cudaMallocHost(&decoder_host, decoder_size * sizeof(float)));
+                decoder_host_allocated_size = decoder_size;
+            }
         }
+        else
 #endif
+        {
+            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(type)), DeviceType::Cpu);
+        }
     }
 
     // Host view caches (populated once per batch size change — zero allocations per forward pass)

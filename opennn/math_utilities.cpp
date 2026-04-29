@@ -449,7 +449,7 @@ void combination(const TensorView& input,
                        weights.data,
                        input_for_gemm,
                        output.data,
-                       biases.as<float>());
+                       biases.as_float());
         return;
     }
 #endif
@@ -480,7 +480,7 @@ void combination_activation(const TensorView& input,
                        weights.data,
                        input_for_gemm,
                        output.data,
-                       biases.as<float>(),
+                       biases.as_float(),    // raw byte pointer — bias dtype is set by cuBLASLt plan to match output dtype (FP32 or BF16)
                        CUBLASLT_EPILOGUE_RELU_BIAS);
         return;
     }

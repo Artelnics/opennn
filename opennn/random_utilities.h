@@ -12,6 +12,10 @@
 
 namespace opennn
 {
+    // Reseeds the thread-local mt19937 + libc rand for deterministic runs.
+    // Used by example mains that pin a seed for reproducibility.
+    void set_seed(unsigned seed);
+
     type random_uniform(type = -1, type = 1);
     Index random_integer(Index, Index);
     bool random_bool(type = 0.5);

@@ -307,7 +307,20 @@ struct TensorView
 
     bool empty() const noexcept { return shape.empty(); }
 
-    template<typename T> T* as() const noexcept;
+    // Typed reinterpretation of `data`. We deliberately do NOT assert that the
+    // requested type matches `dtype`: the codebase has several call sites that
+    // pass raw byte pointers to APIs (cuBLASLt, cuDNN) which interpret the
+    // bytes via plan/descriptor metadata, so a `bias.as<float>()` on a BF16
+    // bias is legal — cuBLASLt reads the underlying bytes as BF16 because the
+    // plan was built with bias_dtype = BF16. Inlining + a single primary
+    // template avoids the "specialization after instantiation" ordering trap
+    // with the inline as_matrix/as_vector helpers below.
+    template<typename T>
+    T* as() const noexcept
+    {
+        assert(data);
+        return reinterpret_cast<T*>(data);
+    }
 
     // Float-typed view of `data`. Used at CUDA dispatch sites where kernels expect
     // raw float* regardless of the project's `type` alias (e.g. descriptive stats,
@@ -319,12 +332,14 @@ struct TensorView
 
     cudaDataType_t cuda_dtype() const noexcept { return cudnn_to_cuda_dtype(dtype); }
 
+    // FP16 is intentionally absent: no kernel in this project is instantiated
+    // for __half. Adding it here would generate unresolved symbols for every
+    // dispatch site (scale, unscale, bounding, layernorm, pooling, ...).
     template<typename F>
     void dispatch(F&& fn) const
     {
-        if      (dtype == CUDNN_DATA_BFLOAT16) fn(__nv_bfloat16{});
-        else if (dtype == CUDNN_DATA_HALF)     fn(__half{});
-        else                                   fn(float{});
+        if (dtype == CUDNN_DATA_BFLOAT16) fn(__nv_bfloat16{});
+        else                              fn(float{});
     }
 
     TensorView reshape(const Shape& new_shape) const
@@ -427,12 +442,6 @@ private:
 #endif
 
 };
-
-template<> inline float*         TensorView::as<float>()         const noexcept { assert(data && dtype == CUDNN_DATA_FLOAT);    return reinterpret_cast<float*>(data); }
-template<> inline __nv_bfloat16* TensorView::as<__nv_bfloat16>() const noexcept { assert(data && dtype == CUDNN_DATA_BFLOAT16); return reinterpret_cast<__nv_bfloat16*>(data); }
-template<> inline __half*        TensorView::as<__half>()        const noexcept { assert(data && dtype == CUDNN_DATA_HALF);     return reinterpret_cast<__half*>(data); }
-template<> inline int8_t*        TensorView::as<int8_t>()        const noexcept { assert(data && dtype == CUDNN_DATA_INT8);     return reinterpret_cast<int8_t*>(data); }
-template<> inline int32_t*       TensorView::as<int32_t>()       const noexcept { assert(data && dtype == CUDNN_DATA_INT32);    return reinterpret_cast<int32_t*>(data); }
 
 inline bool row_finite(const VectorR& v, Index i) { return isfinite(v(i)); }
 inline bool row_finite(const MatrixR& m, Index i) { return m.row(i).array().isFinite().all(); }
@@ -786,7 +795,17 @@ inline void TensorView::fill(float value)
     if(!data) return;
 
 #ifdef OPENNN_WITH_CUDA
-    if(Device::instance().is_gpu())
+    // Decide CPU vs GPU per buffer, not per-Device. set_parameters_random()
+    // calls fill() on TensorViews that still point at host memory even when
+    // Device is already set to Gpu (params are migrated only later via
+    // copy_parameters_device). Probing the pointer keeps this dispatch
+    // independent of the global Device state.
+    cudaPointerAttributes attr{};
+    const cudaError_t err = cudaPointerGetAttributes(&attr, data);
+    const bool gpu_data = (err == cudaSuccess) && (attr.type == cudaMemoryTypeDevice);
+    if (err != cudaSuccess) cudaGetLastError();   // clear sticky error from CPU pointer probe
+
+    if (gpu_data)
     {
         if(value == 0.0f)
         {

@@ -17,6 +17,12 @@ inline mt19937& get_generator()
     return generator;
 }
 
+void set_seed(unsigned seed)
+{
+    get_generator().seed(seed);
+    srand(seed);
+}
+
 type random_uniform(type min, type max)
 {
     uniform_real_distribution<type> distribution(min, max);
