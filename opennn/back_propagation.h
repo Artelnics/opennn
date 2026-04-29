@@ -57,15 +57,6 @@ struct BackPropagation
 
     TensorView get_output_deltas() const;
 
-    TensorView get_output_deltas_active() const
-    {
-#ifdef OPENNN_WITH_CUDA
-        return Configuration::instance().is_gpu() ? get_output_deltas_device() : get_output_deltas();
-#else
-        return get_output_deltas();
-#endif
-    }
-
     void print() const;
 
     Index batch_size = 0;
@@ -85,8 +76,6 @@ struct BackPropagation
     float* errors_device = nullptr;
 
     TensorView output_deltas_view_device;
-
-    const TensorView& get_output_deltas_device() const;
 
 #endif
 };

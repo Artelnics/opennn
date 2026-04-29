@@ -466,9 +466,7 @@ void OptimizerData::print() const
 
 void OptimizerData::set(const vector<Shape>& slot_shapes)
 {
-    Index total_size = 0;
-    for(const Shape& s : slot_shapes)
-        total_size += get_aligned_size(s.size());
+    const Index total_size = aligned_total_elements(slot_shapes);
 
     data.resize_bytes(total_size * Index(sizeof(type)), DeviceType::CPU);
     data.setZero();
@@ -526,9 +524,9 @@ void Optimizer::setup_device_training(ForwardPropagation& training_fp,
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     neural_network->copy_parameters_device();
-    neural_network->link_parameters_device();
+    neural_network->link_parameters();
     neural_network->copy_states_device();
-    neural_network->link_states_device();
+    neural_network->link_states();
 
     training_fp.allocate_device();
     training_bp.allocate_device();
@@ -558,9 +556,9 @@ void Optimizer::teardown_device_training()
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     neural_network->copy_parameters_host();
-    neural_network->link_parameters_cpu();
+    neural_network->link_parameters();
     neural_network->copy_states_host();
-    neural_network->link_states_cpu();
+    neural_network->link_states();
 #endif
 }
 
@@ -672,11 +670,6 @@ EpochStats Optimizer::run_epoch(Phase phase,
 
     for(Index iteration = 0; iteration < batches_number; ++iteration)
     {
-        // Gradient buffer is no longer zeroed globally each iteration. Every
-        // layer's backward overwrites its parameter slot via cuBLASLt/cuDNN
-        // with beta=0; Embedding (the only atomicAdd path) zeros its own slot
-        // internally before the kernel. Saves a 119 MB cudaMemset per iter.
-
         Batch* current_batch = next_batch;
         next_batch = nullptr;
 
@@ -688,7 +681,7 @@ EpochStats Optimizer::run_epoch(Phase phase,
             prefetch_batch(*next_batch, batches[iteration + 1].size(), (iteration + 1) % 2);
         }
 
-        neural_network->forward_propagate(current_batch->get_inputs_active(), fp, is_training);
+        neural_network->forward_propagate(current_batch->get_inputs(), fp, is_training);
 
         if(is_training)
             loss->back_propagate(*current_batch, fp, bp);

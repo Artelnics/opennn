@@ -244,8 +244,6 @@ Device::~Device()
     lt_gemm_plans.clear();
     if (cublas_lt_workspace) cudaFree(cublas_lt_workspace);
     if (bf16_input_scratch) cudaFree(bf16_input_scratch);
-    if (ones_device) cudaFree(ones_device);
-    if (ones_bf16_device) cudaFree(ones_bf16_device);
     if (operator_sum_descriptor) cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
     if (operator_multiplication_descriptor) cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
     if (cublas_lt_handle) cublasLtDestroy(cublas_lt_handle);

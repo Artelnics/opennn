@@ -108,9 +108,6 @@ TrainingResults AdaptiveMomentEstimation::train()
     set_names();
     set_scaling();
 
-    // Batch pool: minimum 2 for producer/consumer double-buffer (avoids worker-main
-    // deadlock on prefetch_before_loop + pop_next). GPU uses 3 for triple-buffer H2D.
-
     const int pool_size = is_gpu ? 3 : 2;
 
     ThreadSafeQueue<Batch*> empty_training_queue;
@@ -298,7 +295,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
         adam_update_cuda(
             parameters_number,
-            neural_network->get_parameters_device(),
+            neural_network->get_parameters_data(),
             optimization_data.views[GradientMoment].as<float>(),
             optimization_data.views[SquareGradientMoment].as<float>(),
             back_propagation.gradient.as<type>(),
@@ -310,7 +307,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             bias_correction_2);
 
         neural_network->cast_parameters_to_bf16();
-        
+
         return;
     }
 #endif

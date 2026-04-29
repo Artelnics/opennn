@@ -89,7 +89,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
         sgd_update_cuda(
             parameters_number,
-            neural_network->get_parameters_device(),
+            neural_network->get_parameters_data(),
             optimization_data.views[ParameterUpdate].as<float>(),
             back_propagation.gradient.as<type>(),
             current_learning_rate,

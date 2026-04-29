@@ -333,23 +333,12 @@ void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, 
 
 void reduce_sum(const TensorView& input, TensorView& output, type alpha, type beta)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
-        const int total_rows    = to_int(input.shape[0]);
-        const int total_columns = to_int(input.shape.size() / input.shape[0]);
-
-        // Column-wise reduction expressed as matrix * ones-vector via GEMM
-        // (m × k) * (k × 1) = (m × 1). Ones-vector dtype must match the input
-        // dtype so cuBLAS picks a uniform-dtype GEMM path.
-        gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-                  total_columns, 1, total_rows,
-                  input.data, input.cuda_dtype(), total_columns,
-                  Device::get_ones(total_rows, input.dtype), input.cuda_dtype(), total_rows,
-                  output.data, output.cuda_dtype(), total_columns,
-                  alpha, beta);
-        return;
-    }
-#endif
+    // CPU-only: the only caller is combination_gradient, and its GPU branch
+    // computes the bias gradient as a side product of gemm_bgrad_cuda's BGRADA
+    // epilogue — so reduce_sum is never reached on GPU. If a future GPU call
+    // site appears, replace this with a custom reduction kernel (the previous
+    // GEMM-with-ones-vector implementation lived here and was removed along
+    // with Device::get_ones).
     output.as_vector().noalias() = alpha * input.as_matrix().colwise().sum() + beta * output.as_vector();
 }
 

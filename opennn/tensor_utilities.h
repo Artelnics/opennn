@@ -197,6 +197,20 @@ struct Shape
     }
 };
 
+inline Index aligned_total_elements(const std::vector<Shape>& shapes)
+{
+    Index total = 0;
+    for (const Shape& s : shapes) total += get_aligned_size(s.size());
+    return total;
+}
+
+inline Index aligned_total_elements(const std::vector<std::vector<Shape>>& nested)
+{
+    Index total = 0;
+    for (const auto& v : nested) total += aligned_total_elements(v);
+    return total;
+}
+
 // `Auto` is only valid as user input. Configuration::resolve() converts it to
 // CPU or CUDA based on detected hardware before the network sees it, so any
 // runtime path (Buffer, kernel dispatch) only ever observes CPU or CUDA.
@@ -752,41 +766,6 @@ public:
     static cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor() { return instance().operator_multiplication_descriptor; }
 
 #ifdef OPENNN_WITH_CUDA
-    // Returns a device-side vector of 1's used by reduce_sum_cuda's GEMM-as-reduction
-    // trick. The reduction GEMM mixes activation dtype on A with this ones-vector on B,
-    // so we allocate one variant per dtype on demand. FP32 is the default; pass
-    // CUDNN_DATA_BFLOAT16 when reducing a BF16 tensor.
-    static void* get_ones(int n, cudnnDataType_t dtype = CUDNN_DATA_FLOAT)
-    {
-        auto& self = instance();
-
-        if (dtype == CUDNN_DATA_BFLOAT16)
-        {
-            if (n > self.ones_bf16_size)
-            {
-                if (self.ones_bf16_device) CHECK_CUDA(cudaFree(self.ones_bf16_device));
-                CHECK_CUDA(cudaMalloc(&self.ones_bf16_device, n * sizeof(__nv_bfloat16)));
-                vector<__nv_bfloat16> h(n, __float2bfloat16(1.0f));
-                CHECK_CUDA(cudaMemcpy(self.ones_bf16_device, h.data(),
-                                      n * sizeof(__nv_bfloat16), cudaMemcpyHostToDevice));
-                self.ones_bf16_size = n;
-            }
-            return self.ones_bf16_device;
-        }
-
-        // FP32 path (default).
-        if (n > self.ones_size)
-        {
-            if (self.ones_device) CHECK_CUDA(cudaFree(self.ones_device));
-            CHECK_CUDA(cudaMalloc(&self.ones_device, n * sizeof(float)));
-            vector<float> h(n, 1.0f);
-            CHECK_CUDA(cudaMemcpy(self.ones_device, h.data(), n * sizeof(float),
-                                  cudaMemcpyHostToDevice));
-            self.ones_size = n;
-        }
-        return self.ones_device;
-    }
-
     // 32 MB matches NVIDIA's cuBLASLt sample default. Lazy-allocated on first use,
     // shared across all cublasLtMatmul call sites.
     static constexpr size_t cublas_lt_workspace_bytes() { return 32ull * 1024 * 1024; }
@@ -852,10 +831,6 @@ private:
     cudaStream_t compute_stream = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
     cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
-    float* ones_device = nullptr;
-    int ones_size = 0;
-    void* ones_bf16_device = nullptr;
-    int   ones_bf16_size   = 0;
     void* cublas_lt_workspace = nullptr;
     void* bf16_input_scratch = nullptr;
     size_t bf16_input_scratch_bytes = 0;
@@ -904,162 +879,11 @@ inline void TensorView::fill(float value)
     std::fill(p, p + size(), value);
 }
 
-#ifdef OPENNN_WITH_CUDA
-
-inline const float one = 1.0f;
-inline const float zero = 0.0f;
-inline const float minus_one = -1.0f;
-
-inline void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
-                      int m, int n, int k,
-                      const void* A, cudaDataType_t Atype, int lda,
-                      const void* B, cudaDataType_t Btype, int ldb,
-                      void* C, cudaDataType_t Ctype, int ldc,
-                      float alpha = 1.0f, float beta = 0.0f)
-{
-    // CUBLAS_COMPUTE_32F_FAST_TF32 only triggers TF32 rounding for FP32 inputs;
-    // for BF16 inputs cuBLAS rejects it (NOT_SUPPORTED) and we want
-    // CUBLAS_COMPUTE_32F (FP32 accumulator over BF16 Tensor Cores).
-    const cublasComputeType_t compute = (Atype == CUDA_R_16BF || Btype == CUDA_R_16BF)
-                                            ? CUBLAS_COMPUTE_32F
-                                            : CUBLAS_COMPUTE_DTYPE;
-    CHECK_CUBLAS(cublasGemmEx(Device::get_cublas_handle(),
-                              transa, transb,
-                              m, n, k,
-                              &alpha,
-                              A, Atype, lda,
-                              B, Btype, ldb,
-                              &beta,
-                              C, Ctype, ldc,
-                              compute,
-                              CUBLAS_GEMM_DEFAULT));
-}
-
-// Strided-batched GEMM (used by MHA's per-head batched matmul). Operands all
-// share the same dtype, passed in by the caller (FP32 or BF16 depending on the
-// network's activation_dtype).
-inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
-                                      int m, int n, int k,
-                                      const void* A, int lda, long long stride_a,
-                                      const void* B, int ldb, long long stride_b,
-                                      void* C, int ldc, long long stride_c,
-                                      int batch_count,
-                                      cudaDataType_t io_dtype = CUDA_R_32F,
-                                      float alpha = 1.0f, float beta = 0.0f)
-{
-    const cublasComputeType_t compute = (io_dtype == CUDA_R_16BF)
-                                            ? CUBLAS_COMPUTE_32F
-                                            : CUBLAS_COMPUTE_DTYPE;
-    CHECK_CUBLAS(cublasGemmStridedBatchedEx(Device::get_cublas_handle(),
-                                            transa, transb,
-                                            m, n, k,
-                                            &alpha,
-                                            A, io_dtype, lda, stride_a,
-                                            B, io_dtype, ldb, stride_b,
-                                            &beta,
-                                            C, io_dtype, ldc, stride_c,
-                                            batch_count,
-                                            compute,
-                                            CUBLAS_GEMM_DEFAULT));
-}
-
-// Fused GEMM + (optionally activation +) bias via cuBLASLt epilogue: one launch
-// for the whole gemm-bias[-relu] sequence, no intermediate write-then-read of
-// the output tensor between stages.
-//
-// `epilogue` selects the post-matmul fusion. Currently supported:
-//   - CUBLASLT_EPILOGUE_BIAS       : D = α(A·B) + bias                (default)
-//   - CUBLASLT_EPILOGUE_RELU_BIAS  : D = max(0, α(A·B) + bias)
-//
-// Layout assumptions (encoded in the cached plan):
-//   - All operands use the activation dtype declared on the cached LtMatmulPlan
-//     (FP32 or BF16 — the caller chose when get_lt_gemm_plan was first invoked).
-//   - Bias is FP32, length = m, broadcast along D's columns
-//     (i.e. one bias element per output feature row).
-//   - Tightly packed: lda = (transa==N ? m : k), ldb = (transb==N ? k : n), ldc = ldd = m.
-//     If a caller needs different strides, it should not use this wrapper.
-//
-// Not thread-safe: the bias pointer is set on the cached op_desc per call, so concurrent
-// invocations on the same shape would race. Matches the rest of this codebase's
-// single-stream GPU usage assumption.
-inline void gemm_bias_cuda(cublasOperation_t transa, cublasOperation_t transb,
-                           int m, int n, int k,
-                           const void* A,
-                           const void* B,
-                           void* C,
-                           const float* bias,
-                           cudaDataType_t io_dtype = CUDA_R_32F,
-                           cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
-                           float alpha = 1.0f, float beta = 0.0f)
-{
-    const LtMatmulPlan& plan = Device::get_lt_gemm_plan(m, n, k, transa, transb,
-                                                        epilogue, io_dtype, io_dtype);
-
-    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
-        CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias, sizeof(bias)));
-
-    void* workspace = Device::get_cublas_lt_workspace();
-    const size_t workspace_size = Device::cublas_lt_workspace_bytes();
-
-    CHECK_CUBLAS(cublasLtMatmul(Device::get_cublas_lt_handle(),
-                                plan.op_desc,
-                                &alpha,
-                                A, plan.a_desc,
-                                B, plan.b_desc,
-                                &beta,
-                                C, plan.c_desc,   // C (read when beta != 0)
-                                C, plan.d_desc,   // D (write); aliasing C is supported
-                                plan.algo_valid ? &plan.algo : nullptr,
-                                workspace, workspace_size,
-                                Device::get_compute_stream()));
-}
-
-// Fused matmul + bias-gradient via cuBLASLt's BGRADA epilogue. Computes the
-// matmul C = α(A·B) + βC and, as a side product, writes the row-wise reduction
-// of A (in cuBLAS column-major view) into `bias_grad`. For Dense backward,
-// pass A = output_delta with transA = N to get bias_grad = sum_rows(dY) — i.e.
-// the bias gradient — for free, replacing a separate sum() reduction kernel.
-//
-// `bias_grad` length must be m (the matmul's M dim, == D rows in column-major).
-// Same threading caveat as gemm_bias_cuda.
-inline void gemm_bgrad_cuda(cublasOperation_t transa, cublasOperation_t transb,
-                            int m, int n, int k,
-                            const void* A,
-                            const void* B,
-                            void* C,
-                            float* bias_grad,
-                            cudaDataType_t io_dtype = CUDA_R_32F,
-                            float alpha = 1.0f, float beta = 0.0f)
-{
-    // Inputs (output_delta, input) follow the activation dtype passed by the
-    // caller; the weight gradient (D / C) is always FP32 so Adam can accumulate
-    // without precision loss. cuBLASLt mixed-dtype matmul handles bf16 in × fp32
-    // out natively.
-    const LtMatmulPlan& plan = Device::get_lt_gemm_plan(m, n, k, transa, transb,
-                                                        CUBLASLT_EPILOGUE_BGRADA,
-                                                        io_dtype,
-                                                        CUDA_R_32F);
-
-    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
-        CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_grad, sizeof(bias_grad)));
-
-    void* workspace = Device::get_cublas_lt_workspace();
-    const size_t workspace_size = Device::cublas_lt_workspace_bytes();
-
-    CHECK_CUBLAS(cublasLtMatmul(Device::get_cublas_lt_handle(),
-                                plan.op_desc,
-                                &alpha,
-                                A, plan.a_desc,
-                                B, plan.b_desc,
-                                &beta,
-                                C, plan.c_desc,
-                                C, plan.d_desc,
-                                plan.algo_valid ? &plan.algo : nullptr,
-                                workspace, workspace_size,
-                                Device::get_compute_stream()));
-}
-
-#endif
+// gemm_cuda / gemm_strided_batched_cuda / gemm_bias_cuda / gemm_bgrad_cuda used
+// to live here. They are math-level operations (not part of the tensor / dtype
+// infrastructure) and all their call sites are in math_utilities.cpp, so they
+// were moved to math_utilities.h. The host-side scalar constants (one, zero,
+// minus_one) used by cuBLAS/cuDNN alpha/beta arguments moved with them.
 
 }
 

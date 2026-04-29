@@ -94,6 +94,25 @@ public:
         return shapes;
     }
 
+    vector<vector<Shape>> get_state_shapes() const
+    {
+        const Index layers_number = get_layers_number();
+        vector<vector<Shape>> shapes(layers_number);
+
+        for(Index i = 0; i < layers_number; ++i)
+            shapes[i] = layers[i]->get_state_shapes();
+
+        return shapes;
+    }
+
+    // Total aligned-element counts for each arena. compile() and the
+    // ForwardPropagation / BackPropagation set()/allocate_device() paths all
+    // need these to size their buffers, so they live on the network rather
+    // than being recomputed by hand at every call site.
+    Index get_states_size() const     { return aligned_total_elements(get_state_shapes()); }
+    Index get_forward_size(Index b)  const { return aligned_total_elements(get_forward_shapes(b));  }
+    Index get_backward_size(Index b) const { return aligned_total_elements(get_backward_shapes(b)); }
+
     void compile();
 
     // Get
@@ -229,9 +248,6 @@ public:
 
 public:
 
-    type* get_parameters_device() { return parameters.as<type>(); }
-    const type* get_parameters_device() const { return parameters.as<type>(); }
-
     // BF16 working copy of `parameters`. Allocated by copy_parameters_device()
     // when the resolved Configuration sets training or inference precision to BP16.
     // Refreshed by cast_parameters_to_bf16() after each Adam step. Empty otherwise;
@@ -240,13 +256,11 @@ public:
 
     void copy_parameters_device();
     void copy_parameters_host();
-    void link_parameters_device();
-    void link_parameters_cpu();
+    void link_parameters();
 
     void copy_states_device();
     void copy_states_host();
-    void link_states_device();
-    void link_states_cpu();
+    void link_states();
 
 private:
 

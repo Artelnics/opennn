@@ -917,9 +917,9 @@ string Transformer::calculate_outputs(const string& source)
                                       InferencePrecision::Float32);
 #ifdef OPENNN_WITH_CUDA
         copy_parameters_host();
-        link_parameters_cpu();
+        link_parameters();
         copy_states_host();
-        link_states_cpu();
+        link_states();
 #endif
     }
 
@@ -955,9 +955,9 @@ string Transformer::calculate_outputs(const string& source)
                                       InferencePrecision::Auto);
 #ifdef OPENNN_WITH_CUDA
         copy_parameters_device();
-        link_parameters_device();
+        link_parameters();
         copy_states_device();
-        link_states_device();
+        link_states();
 #endif
     }
 

@@ -152,8 +152,6 @@ struct OptimizerData
 
     virtual void print() const;
 
-    // Arena-based buffer storage (analogous to ForwardPropagation / BackPropagation).
-    // Call set(slot_shapes) once; each optimizer defines its own local enum to index `views`.
     void set(const vector<Shape>& slot_shapes);
 
 #ifdef OPENNN_WITH_CUDA
