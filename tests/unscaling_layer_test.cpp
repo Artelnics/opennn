@@ -53,9 +53,9 @@ TEST(UnscalingTest, ForwardPropagate)
 
         TensorView output_view = forward_propagation.get_outputs();
 
-        EXPECT_NEAR(output_view.data[0], type(10), TOLERANCE);
-        EXPECT_NEAR(output_view.data[1], type(10), TOLERANCE);
-        EXPECT_NEAR(output_view.data[2], type(10), TOLERANCE);
+        EXPECT_NEAR(output_view.as<type>()[0], type(10), TOLERANCE);
+        EXPECT_NEAR(output_view.as<type>()[1], type(10), TOLERANCE);
+        EXPECT_NEAR(output_view.as<type>()[2], type(10), TOLERANCE);
     }
 
     // Test Unscaling with MinimumMaximum
@@ -87,8 +87,8 @@ TEST(UnscalingTest, ForwardPropagate)
 
         TensorView output_view = forward_propagation.get_outputs();
 
-        EXPECT_NEAR(output_view.data[0], original_data(0, 0), TOLERANCE);
-        EXPECT_NEAR(output_view.data[1], original_data(1, 0), TOLERANCE);
-        EXPECT_NEAR(output_view.data[2], original_data(2, 0), TOLERANCE);
+        EXPECT_NEAR(output_view.as<type>()[0], original_data(0, 0), TOLERANCE);
+        EXPECT_NEAR(output_view.as<type>()[1], original_data(1, 0), TOLERANCE);
+        EXPECT_NEAR(output_view.as<type>()[2], original_data(2, 0), TOLERANCE);
     }
 }

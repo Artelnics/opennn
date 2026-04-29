@@ -62,7 +62,7 @@ TEST(MeanSquaredErrorTest, BackPropagateDense2d)
     const VectorR gradient = loss.calculate_gradient();
     const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
-    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
 
 
@@ -90,7 +90,7 @@ TEST(MeanSquaredErrorTest, BackPropagateRecurrent)
     const VectorR gradient = loss.calculate_gradient();
     const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
-    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
 
 
@@ -123,7 +123,7 @@ TEST(MeanSquaredErrorTest, BackPropagateConvolutional)
     const VectorR gradient = loss.calculate_gradient();
     const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
-    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
 
 
@@ -159,7 +159,7 @@ TEST(MeanSquaredErrorTest, BackPropagatePooling)
     const VectorR gradient = loss.calculate_gradient();
     const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
-    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
 
 
@@ -197,7 +197,7 @@ TEST(MeanSquaredErrorTest, BackPropagateEmbedding)
 
     // Embedding + Dense with large flattened sizes produces large gradients;
     // absolute tolerance must account for gradient magnitude.
-    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(5.0e-2)), true);
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(5.0e-2));
 }
 
 
@@ -229,5 +229,5 @@ TEST(MeanSquaredErrorTest, BackPropagateMultiheadAttention)
     const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
     EXPECT_GE(error, 0.0) << "MSE must be positive";
-    EXPECT_TRUE(are_equal(analytical_gradient, numerical_gradient, type(1.0e-3)));
+    EXPECT_LT((analytical_gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }

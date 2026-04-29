@@ -85,8 +85,7 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
     neural_network.compile();
 
     // Set all parameters to 0.5
-    VectorR& params = neural_network.get_parameters();
-    params.setConstant(type(0.5));
+    VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_size()).setConstant(type(0.5));
 
     const Index batch_size = 2;
 
@@ -108,7 +107,7 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
     TensorView output_view = forward_propagation.get_outputs();
     const Shape expected_output_dims = neural_network.get_layer(0)->get_output_shape();
 
-    ASSERT_EQ(output_view.shape.rank(), 4);
+    ASSERT_EQ(output_view.shape.rank, 4);
     EXPECT_EQ(output_view.shape[0], batch_size);
     EXPECT_EQ(output_view.shape[1], expected_output_dims[0]);
     EXPECT_EQ(output_view.shape[2], expected_output_dims[1]);
@@ -122,8 +121,9 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
 
         const type expected_value = (kernel_height * kernel_width * kernel_channels * 1.0 * 0.5) + 0.5;
 
+        const type* output_data = output_view.as<type>();
         for (Index i = 0; i < output_view.size(); ++i)
-            EXPECT_NEAR(output_view.data[i], expected_value, 1e-5);
+            EXPECT_NEAR(output_data[i], expected_value, 1e-5);
     }
 }
 
@@ -143,8 +143,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
         parameters.test_name));
     neural_network.compile();
 
-    VectorR& params = neural_network.get_parameters();
-    params.setConstant(type(0.5));
+    VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_size()).setConstant(type(0.5));
 
     const Index batch_size = 2;
 
@@ -162,6 +161,6 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank(), 4);
+    ASSERT_EQ(output_view.shape.rank, 4);
     EXPECT_EQ(output_view.shape[0], batch_size);
 }

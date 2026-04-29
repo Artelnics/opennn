@@ -350,10 +350,10 @@ TEST(Dataset, ReadCSV_Basic)
     Shape input_shape = dataset.get_shape("Input");
     Shape target_shape = dataset.get_shape("Target");
 
-    ASSERT_EQ(input_shape.rank(), 1);
+    ASSERT_EQ(input_shape.rank, 1);
     EXPECT_EQ(input_shape[0], 2);
 
-    ASSERT_EQ(target_shape.rank(), 1);
+    ASSERT_EQ(target_shape.rank, 1);
     EXPECT_EQ(target_shape[0], 1);
 
     // Missing Values Info

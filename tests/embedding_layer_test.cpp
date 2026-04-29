@@ -80,7 +80,7 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank(), 3);
+    ASSERT_EQ(output_view.shape.rank, 3);
     EXPECT_EQ(output_view.shape[0], batch_size);
     EXPECT_EQ(output_view.shape[1], parameters.sequence_length);
     EXPECT_EQ(output_view.shape[2], parameters.embedding_dimension);
@@ -114,7 +114,7 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank(), 3);
+    ASSERT_EQ(output_view.shape.rank, 3);
     EXPECT_EQ(output_view.shape[0], batch_size);
     EXPECT_EQ(output_view.shape[1], parameters.sequence_length);
     EXPECT_EQ(output_view.shape[2], parameters.embedding_dimension);

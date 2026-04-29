@@ -112,7 +112,7 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank(), 4);
+    ASSERT_EQ(output_view.shape.rank, 4);
     EXPECT_EQ(output_view.shape[0], batch_size);
 }
 
@@ -139,7 +139,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank(), 4);
+    ASSERT_EQ(output_view.shape.rank, 4);
     EXPECT_EQ(output_view.shape[0], batch_size);
 }
 

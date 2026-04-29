@@ -153,17 +153,24 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& batch,
 
     bp_lm.squared_errors_jacobian.setZero();
 
-    Index parameter_offset = 0;
-
+    // Current insert_dense_jacobian only handles single-layer Jacobians correctly
+    // (row indexing uses the layer's own neuron count). For multi-layer networks,
+    // find the last trainable Dense and compute offset up to it.
+    Index last_trainable_dense = -1;
     for (size_t i = 0; i < layers.size(); ++i)
-    {
-        if (!layers[i]->get_is_trainable()) continue;
+        if (layers[i]->get_is_trainable() && dynamic_cast<Dense<2>*>(layers[i].get()))
+            last_trainable_dense = i;
 
-        if (auto* dense = dynamic_cast<Dense<2>*>(layers[i].get()))
-            insert_dense_jacobian(dense, fp, i, parameter_offset, bp_lm.squared_errors_jacobian);        
+    if (last_trainable_dense < 0) return;
 
-        parameter_offset += layers[i]->get_parameters_number();
-    }
+    // Compute parameter offset up to the last trainable Dense layer
+    Index parameter_offset = 0;
+    for (size_t i = 0; i < static_cast<size_t>(last_trainable_dense); ++i)
+        if (layers[i]->get_is_trainable())
+            parameter_offset += layers[i]->get_parameters_number();
+
+    auto* dense = dynamic_cast<Dense<2>*>(layers[last_trainable_dense].get());
+    insert_dense_jacobian(dense, fp, last_trainable_dense, parameter_offset, bp_lm.squared_errors_jacobian);
 }
 
 VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient()

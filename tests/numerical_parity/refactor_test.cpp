@@ -27,7 +27,7 @@ int main()
         NeuralNetwork network;
         network.add_layer(make_unique<opennn::Dense<2>>(Shape{inputs_n}, Shape{outputs_n}, "Linear"));
         network.compile();
-        network.get_parameters().setConstant(type(0.1));
+        VectorMap(network.get_parameters_data(), network.get_parameters_size()).setConstant(type(0.1));
 
         MatrixR input_data(samples, inputs_n);
         for(Index i = 0; i < samples; i++)
@@ -51,7 +51,7 @@ int main()
         NeuralNetwork network;
         network.add_layer(make_unique<opennn::Dense<2>>(Shape{inputs_n}, Shape{outputs_n}, "Sigmoid"));
         network.compile();
-        network.get_parameters().setConstant(type(0.5));
+        VectorMap(network.get_parameters_data(), network.get_parameters_size()).setConstant(type(0.5));
 
         MatrixR input_data(samples, inputs_n);
         input_data << 0.1f, 0.2f, 0.5f, 0.6f, -0.3f, 0.8f, 1.0f, -0.5f;
@@ -73,7 +73,7 @@ int main()
         network.add_layer(make_unique<opennn::Dense<2>>(Shape{inputs_n}, Shape{hidden_n}, "RectifiedLinear"));
         network.add_layer(make_unique<opennn::Dense<2>>(Shape{hidden_n}, Shape{outputs_n}, "Linear"));
         network.compile();
-        network.get_parameters().setConstant(type(0.2));
+        VectorMap(network.get_parameters_data(), network.get_parameters_size()).setConstant(type(0.2));
 
         MatrixR input_data(samples, inputs_n);
         input_data << 1.0f, 2.0f, -1.0f, 0.5f, 0.0f, 0.0f;
@@ -105,7 +105,7 @@ int main()
         NeuralNetwork network;
         network.add_layer(make_unique<opennn::Dense<2>>(Shape{inputs_n}, Shape{outputs_n}, "Linear"));
         network.compile();
-        network.get_parameters().setConstant(type(0.1));
+        VectorMap(network.get_parameters_data(), network.get_parameters_size()).setConstant(type(0.1));
 
         Loss loss(&network, &dataset);
         loss.set_error(Loss::Error::MeanSquaredError);
@@ -135,7 +135,7 @@ int main()
         network.add_layer(make_unique<Scaling<2>>(Shape{inputs_n}));
         network.add_layer(make_unique<opennn::Dense<2>>(Shape{inputs_n}, Shape{outputs_n}, "Linear"));
         network.compile();
-        network.get_parameters().setConstant(type(0.1));
+        VectorMap(network.get_parameters_data(), network.get_parameters_size()).setConstant(type(0.1));
 
         // Set descriptives after compile (states are now linked)
         MatrixR input_data = dataset.get_feature_data("Input");

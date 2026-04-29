@@ -24,7 +24,7 @@ TEST(ImageDataset, GeneralConstructor)
 
     // Verify input shape instead
     Shape input_shape = image_data_set.get_input_shape();
-    EXPECT_EQ(input_shape.rank(), 3);
+    EXPECT_EQ(input_shape.rank, 3);
     EXPECT_EQ(input_shape[0], 4);  // height
     EXPECT_EQ(input_shape[1], 3);  // width
     EXPECT_EQ(input_shape[2], 2);  // channels

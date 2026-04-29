@@ -52,5 +52,5 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
     const VectorR gradient = loss.calculate_gradient();
 
     EXPECT_GE(error, 0);
-    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }

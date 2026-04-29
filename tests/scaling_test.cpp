@@ -65,7 +65,7 @@ TEST(ScalingTest, ScaleDataNoScaling2d)
 
     scaled_matrix = dataset.get_data();
     
-    EXPECT_EQ(are_equal(matrix, scaled_matrix, EPSILON),true);
+    EXPECT_LT((matrix - scaled_matrix).array().abs().maxCoeff(), EPSILON);
 }
 
 
@@ -113,7 +113,7 @@ TEST(ScalingTest, ScaleDataLogarithmic)
     for(Index i = 0; i < matrix.size(); i++)
         solution_matrix(i) = log(matrix(i));
 
-    EXPECT_EQ(are_equal(scaled_matrix, solution_matrix, type(1e-4)), true);
+    EXPECT_LT((scaled_matrix - solution_matrix).array().abs().maxCoeff(), type(1e-4));
 }
 
 
@@ -139,7 +139,7 @@ TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
 
     unscaled_matrix = dataset.get_data();
 
-    EXPECT_EQ(are_equal(matrix, unscaled_matrix,EPSILON),true);
+    EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(), EPSILON);
 }
 
 
@@ -164,7 +164,7 @@ TEST(ScalingTest, UnscaleDataMinimumMaximum)
 
     unscaled_matrix = dataset.get_data();
 
-    EXPECT_EQ(are_equal(matrix, unscaled_matrix,EPSILON),true);
+    EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(), EPSILON);
 }
 
 
@@ -189,7 +189,7 @@ TEST(ScalingTest, UnscaleDataNoScaling2d)
 
     unscaled_matrix = dataset.get_data();
 
-    EXPECT_EQ(are_equal(matrix, unscaled_matrix,EPSILON),true);
+    EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(), EPSILON);
 }
 
 
@@ -213,7 +213,7 @@ TEST(ScalingTest, UnscaleDataStandardDeviation)
 
     unscaled_matrix = dataset.get_data();
 
-    EXPECT_EQ(are_equal(matrix, unscaled_matrix, type(1e-4)), true);
+    EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(), type(1e-4));
 }
 
 
@@ -240,5 +240,5 @@ TEST(ScalingTest, UnscaleDataLogarithmic)
 
     unscaled_matrix = dataset.get_data();
 
-    EXPECT_EQ(are_equal(matrix, unscaled_matrix, type(1e-4)), true);
+    EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(), type(1e-4));
 }

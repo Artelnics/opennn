@@ -48,8 +48,7 @@ TEST(RecurrentLayerTest, ForwardPropagate)
         neural_network.compile();
 
         // Set all parameters to 0.1
-        VectorR& params = neural_network.get_parameters();
-        params.setConstant(type(0.1));
+        VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_size()).setConstant(type(0.1));
 
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
@@ -71,8 +70,7 @@ TEST(RecurrentLayerTest, ForwardPropagate)
         neural_network.add_layer(std::move(layer));
         neural_network.compile();
 
-        VectorR& params = neural_network.get_parameters();
-        params.setConstant(type(0.1));
+        VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_size()).setConstant(type(0.1));
 
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
@@ -94,8 +92,7 @@ TEST(RecurrentLayerTest, ForwardPropagate)
         neural_network.add_layer(std::move(layer));
         neural_network.compile();
 
-        VectorR& params = neural_network.get_parameters();
-        params.setConstant(type(0.1));
+        VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_size()).setConstant(type(0.1));
 
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));

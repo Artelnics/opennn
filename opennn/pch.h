@@ -94,12 +94,12 @@ struct __nv_bfloat16 {};
 struct __half {};
 
 // --- CUDA / cuBLAS enums ---
-enum cudaDataType_t                  { CUDA_R_32F = 0, CUDA_R_16F = 2, CUDA_R_16BF = 14 };
+enum cudaDataType_t                  { CUDA_R_32F = 0, CUDA_R_16F = 2, CUDA_R_8I = 3, CUDA_R_32I = 10, CUDA_R_16BF = 14 };
 enum cublasComputeType_t             { CUBLAS_COMPUTE_32F = 0, CUBLAS_COMPUTE_32F_FAST_16BF = 65, CUBLAS_COMPUTE_32F_FAST_TF32 = 68 };
 enum cublasOperation_t               { CUBLAS_OP_N = 0, CUBLAS_OP_T = 1 };
 
 // --- cuDNN enums ---
-enum cudnnDataType_t                 { CUDNN_DATA_FLOAT = 0, CUDNN_DATA_HALF = 2, CUDNN_DATA_BFLOAT16 = 14 };
+enum cudnnDataType_t                 { CUDNN_DATA_FLOAT = 0, CUDNN_DATA_HALF = 2, CUDNN_DATA_INT8 = 3, CUDNN_DATA_INT32 = 4, CUDNN_DATA_BFLOAT16 = 14 };
 enum cudnnActivationMode_t           { CUDNN_ACTIVATION_IDENTITY = 0, CUDNN_ACTIVATION_SIGMOID = 1, CUDNN_ACTIVATION_RELU = 2, CUDNN_ACTIVATION_TANH = 3, CUDNN_ACTIVATION_ELU = 4 };
 enum cudnnPoolingMode_t              { CUDNN_POOLING_MAX = 0 };
 enum cudnnBatchNormMode_t            { CUDNN_BATCHNORM_PER_ACTIVATION = 0 };
