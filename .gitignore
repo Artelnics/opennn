@@ -300,3 +300,13 @@ examples/wwt_optimization/data/WWTP_PO4_NH4_removal.csv
 **/release/
 **/*.dir/
 **/vc*.pdb
+
+# Claude
+CLAUDE.md
+
+# Local build/run scripts
+build-cmake/
+build_and_run.bat
+continue_build.ps1
+run_friday_experiments.bat
+run_n2o.bat
