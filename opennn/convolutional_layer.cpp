@@ -690,6 +690,19 @@ void Convolutional::from_XML(const XMLDocument& document)
     set_label(read_xml_string(convolutional_layer_element, "Label"));
     set_input_shape(string_to_shape(inputDimsStr));
 
+    // Read kernel dimensions from XML and resize the weight/bias tensors so
+    // the layer matches the persisted architecture instead of staying at
+    // whatever defaults the Convolutional was constructed with.
+    // (Without this, edits to KernelsNumber / KernelsHeight / KernelsWidth
+    // in the editor were silently dropped on the next engine save.)
+    const Index kernels_number   = read_xml_index(convolutional_layer_element, "KernelsNumber");
+    const Index kernel_height    = read_xml_index(convolutional_layer_element, "KernelsHeight");
+    const Index kernel_width     = read_xml_index(convolutional_layer_element, "KernelsWidth");
+    const Index kernel_channels  = read_xml_index(convolutional_layer_element, "KernelsChannels");
+
+    biases.shape  = {kernels_number};
+    weights.shape = {kernels_number, kernel_height, kernel_width, kernel_channels};
+
     set_activation_function(read_xml_string(convolutional_layer_element, "Activation"));
 
     const Shape stride_shape = string_to_shape(read_xml_string(convolutional_layer_element, "StrideDimensions"));
@@ -707,13 +720,11 @@ void Convolutional::from_XML(const XMLDocument& document)
 
     if (batch_normalization)
     {
-        const Index kernels_number = read_xml_index(convolutional_layer_element, "KernelsNumber");
-
         running_means.resize(kernels_number);
         running_standard_deviations.resize(kernels_number);
 
         gammas.shape = {kernels_number};
-        betas.shape = {kernels_number};
+        betas.shape  = {kernels_number};
 
         string_to_vector(read_xml_string(convolutional_layer_element, "RunningMeans"), running_means);
         string_to_vector(read_xml_string(convolutional_layer_element, "RunningStandardDeviations"), running_standard_deviations);

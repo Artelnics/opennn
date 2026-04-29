@@ -528,6 +528,16 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                 if(input_domain.superior_frontier(current_feature_index + i) > 0.5)
                     allowed_categories.push_back(i);
 
+            // Guard: if every category is constrained out, indexing
+            // allowed_categories[random_integer(0, -1)] reads past the end and
+            // crashes (SIGSEGV). Throw a useful error instead.
+            if (allowed_categories.empty())
+            {
+                throw runtime_error("ResponseOptimization: variable '"
+                                    + variables[input_variable].name +
+                                    "' has every category constrained out — cannot generate inputs.");
+            }
+
             for(Index i = 0; i < effective_evaluations; ++i)
                 random_inputs(i, current_feature_index + allowed_categories[random_integer(0, allowed_categories.size()-1)]) = 1.0;
 
@@ -1066,13 +1076,39 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
     {
         auto [feasible_inputs, feasible_outputs] = sample_feasible_points(input_domain, original_output_domain);
 
+        // Defensive: if the model produced NaN, bail out instead of letting it
+        // propagate to optimal_set.first.row(0) below and segfault.
+        if (feasible_outputs.size() > 0 && !feasible_outputs.allFinite())
+        {
+            cout << "Model produced NaN — aborting optimization loop." << endl;
+            break;
+        }
+
+        // No feasible point in this iteration: the constraints are too tight (or
+        // the model output range no longer overlaps them). Stop instead of
+        // calling calculate_optimal_points with empty matrices, which then
+        // crashed on optimal_set.first.row(0) below (SIGSEGV).
         if (feasible_inputs.rows() == 0)
+        {
             cout << "!!! [Critical] Zero feasible points found. "
-                 << "Check if your constraints are too strict." << endl;
+                 << "Check if your constraints are too strict. "
+                 << "Aborting optimization loop." << endl;
+            break;
+        }
 
         cout << "> feasible done " << endl;
 
         optimal_set = calculate_optimal_points(feasible_inputs, feasible_outputs, objectives);
+
+        // Defensive guard: calculate_optimal_points should not return empty when
+        // its inputs aren't, but if it ever does, accessing (0, ...) below would
+        // segfault. Same for the subsequent input_domain.reshape(... row(0) ...).
+        if (optimal_set.first.rows() == 0 || optimal_set.second.rows() == 0)
+        {
+            cout << "!!! [Critical] calculate_optimal_points returned empty. "
+                 << "Aborting optimization loop." << endl;
+            break;
+        }
 
         optimal_point = (objectives.objective_sources(0, 0) > 0.5f
             ? optimal_set.first

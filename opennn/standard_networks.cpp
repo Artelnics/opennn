@@ -206,15 +206,11 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Flatten<4>>(get_output_shape()));
 
-    const Index flatten_size = get_output_shape()[0];
-    const Shape hidden_shape = { min(flatten_size, Index(128)) };
-    add_layer(make_unique<Dense<2>>(get_output_shape(),
-                                    hidden_shape,
-                                    "RectifiedLinear",
-                                    false,
-                                    "dense_2d_layer_1"));
-
-
+    // Default architecture: feed Flatten directly into the classification head.
+    // We previously inserted an extra Dense(min(flatten,128), ReLU) hidden layer,
+    // but for the standard image-classification template we'd rather keep the
+    // baseline minimal — users can add hidden Dense layers from the editor when
+    // their problem actually benefits from one.
     add_layer(make_unique<Dense<2>>(get_output_shape(),
                                     output_shape,
                                     "Softmax",
