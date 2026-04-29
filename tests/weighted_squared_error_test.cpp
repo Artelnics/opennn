@@ -46,7 +46,7 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
     const VectorR analytical_gradient = loss.calculate_gradient();
     const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
-    EXPECT_TRUE(are_equal(analytical_gradient, numerical_gradient, type(1.0e-2)));
+    EXPECT_LT((analytical_gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-2));
 }
 
 

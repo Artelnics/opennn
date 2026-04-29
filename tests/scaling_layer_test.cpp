@@ -49,7 +49,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
         neural_network.forward_propagate(input_views, forward_propagation, false);
 
         TensorView output_view = forward_propagation.get_outputs();
-        EXPECT_NEAR(output_view.data[0], 10.0, TOLERANCE);
+        EXPECT_NEAR(output_view.as<type>()[0], 10.0, TOLERANCE);
     }
 
     // Test: scaling layer copies input regardless of scaler setting
@@ -74,7 +74,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
 
         TensorView output_view = forward_propagation.get_outputs();
         // Scaling layer just copies, so output == input
-        EXPECT_NEAR(output_view.data[0], type(2), TOLERANCE);
-        EXPECT_NEAR(output_view.data[2], type(6), TOLERANCE);
+        EXPECT_NEAR(output_view.as<type>()[0], type(2), TOLERANCE);
+        EXPECT_NEAR(output_view.as<type>()[2], type(6), TOLERANCE);
     }
 }

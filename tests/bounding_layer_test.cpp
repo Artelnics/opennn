@@ -42,7 +42,7 @@ TEST(BoundingTest, ForwardPropagate)
     neural_network.forward_propagate(inputs, forward_propagation, false);
 
     TensorView output_view = forward_propagation.get_outputs();
-    MatrixMap outputs(output_view.data, rows_number, columns_number);
+    MatrixMap outputs(output_view.as<type>(), rows_number, columns_number);
 
     EXPECT_EQ(outputs.rows(), rows_number);
     EXPECT_EQ(outputs.cols(), columns_number);

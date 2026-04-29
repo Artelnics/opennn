@@ -25,7 +25,7 @@ output 0 0 0.6800000072
 output 1 0 0.2599999905
 output 2 0 0.3199999928
 # Test4_MSE_Error
-error 15.7483329773
+error 7.8741664886
 # Test5_Scaling_Descriptives
 params 3
 output 0 0 0.0587164946

@@ -41,7 +41,7 @@ int main()
         NeuralNetwork nn;
         nn.add_layer(make_unique<opennn::Dense<2>>(Shape{2}, Shape{1}, "Linear"));
         nn.compile();
-        nn.get_parameters().setConstant(type(0.1));
+        VectorMap(nn.get_parameters_data(), nn.get_parameters_size()).setConstant(type(0.1));
 
         Loss loss(&nn, &dataset);
         loss.set_error(Loss::Error::MeanSquaredError);
@@ -67,7 +67,7 @@ int main()
         NeuralNetwork nn;
         nn.add_layer(make_unique<opennn::Dense<2>>(Shape{2}, Shape{1}, "Linear"));
         nn.compile();
-        nn.get_parameters().setConstant(type(0.1));
+        VectorMap(nn.get_parameters_data(), nn.get_parameters_size()).setConstant(type(0.1));
 
         Loss loss(&nn, &dataset);
         loss.set_error(Loss::Error::MeanSquaredError);
@@ -93,7 +93,7 @@ int main()
         NeuralNetwork nn;
         nn.add_layer(make_unique<opennn::Dense<2>>(Shape{2}, Shape{1}, "Linear"));
         nn.compile();
-        nn.get_parameters().setConstant(type(0.1));
+        VectorMap(nn.get_parameters_data(), nn.get_parameters_size()).setConstant(type(0.1));
 
         Loss loss(&nn, &dataset);
         loss.set_error(Loss::Error::MeanSquaredError);
@@ -118,7 +118,7 @@ int main()
         NeuralNetwork nn;
         nn.add_layer(make_unique<opennn::Dense<2>>(Shape{2}, Shape{1}, "Linear"));
         nn.compile();
-        nn.get_parameters().setConstant(type(0.1));
+        VectorMap(nn.get_parameters_data(), nn.get_parameters_size()).setConstant(type(0.1));
 
         Loss loss(&nn, &dataset);
         loss.set_error(Loss::Error::MeanSquaredError);
@@ -143,7 +143,7 @@ int main()
         NeuralNetwork nn;
         nn.add_layer(make_unique<opennn::Dense<2>>(Shape{2}, Shape{1}, "Linear"));
         nn.compile();
-        nn.get_parameters().setConstant(type(0.1));
+        VectorMap(nn.get_parameters_data(), nn.get_parameters_size()).setConstant(type(0.1));
 
         Loss loss(&nn, &dataset);
         loss.set_error(Loss::Error::MeanSquaredError);

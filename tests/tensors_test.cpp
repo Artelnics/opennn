@@ -21,7 +21,7 @@ TEST(Tensors, Fill)
 
     fill_tensor_data(matrix, rows_indices, columns_indices, submatrix.data());
 
-    EXPECT_EQ(is_equal(submatrix, type(3.1416)), true);
+    EXPECT_LT((submatrix.array() - type(3.1416)).abs().maxCoeff(), type(1e-6));
 }
 
 

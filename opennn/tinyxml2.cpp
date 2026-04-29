@@ -27,7 +27,114 @@ const char* XmlElement::get_text() const {
 }
 
 int XmlDocument::parse(const char* xml) {
-    const std::string s = xml;
+    if(!xml) return 1;
+
+    _children.clear();
+
+    const char* p = xml;
+    std::vector<XmlElement*> stack; // parent stack
+
+    auto skip_ws = [&]() { while(*p && (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')) ++p; };
+
+    while(*p) {
+        skip_ws();
+        if(!*p) break;
+
+        if(*p != '<') {
+            // Text content — find the next '<'
+            const char* start = p;
+            while(*p && *p != '<') ++p;
+            if(start != p && !stack.empty()) {
+                std::string text(start, p);
+                // Trim whitespace
+                size_t b = text.find_first_not_of(" \t\n\r");
+                size_t e = text.find_last_not_of(" \t\n\r");
+                if(b != std::string::npos) {
+                    auto text_node = std::make_unique<XmlElement>();
+                    text_node->_value = text.substr(b, e - b + 1);
+                    text_node->_parent = stack.back();
+                    stack.back()->_children.push_back(std::move(text_node));
+                }
+            }
+            continue;
+        }
+
+        ++p; // skip '<'
+
+        if(*p == '/') {
+            // Closing tag </name>
+            ++p;
+            while(*p && *p != '>') ++p;
+            if(*p == '>') ++p;
+            if(!stack.empty()) stack.pop_back();
+            continue;
+        }
+
+        // Opening tag <name ...>
+        skip_ws();
+        const char* name_start = p;
+        while(*p && *p != ' ' && *p != '>' && *p != '/' && *p != '\n' && *p != '\r' && *p != '\t') ++p;
+        std::string tag_name(name_start, p);
+
+        auto element = std::make_unique<XmlElement>();
+        element->_value = tag_name;
+
+        // Parse attributes: name="value" pairs
+        // The printer format may omit '>' before child elements: <Parent\n  <Child>
+        // So we also break on '<' (start of child tag).
+        while(*p) {
+            skip_ws();
+            if(*p == '>' || *p == '/' || *p == '<' || !*p) break;
+
+            // Attribute name
+            const char* attr_start = p;
+            while(*p && *p != '=' && *p != '>' && *p != '/' && *p != ' ' && *p != '<' && *p != '\n') ++p;
+            std::string attr_name(attr_start, p);
+            if(attr_name.empty()) break;
+
+            skip_ws();
+            if(*p != '=') break; // not an attribute
+            ++p; // skip '='
+            skip_ws();
+            if(*p != '"') break;
+            ++p; // skip opening quote
+            const char* val_start = p;
+            while(*p && *p != '"') ++p;
+            std::string attr_value(val_start, p);
+            if(*p == '"') ++p;
+
+            XmlAttribute attr;
+            attr._name = attr_name;
+            attr._value = attr_value;
+            element->_attributes.push_back(attr);
+        }
+
+        bool self_closing = false;
+        if(*p == '/') {
+            self_closing = true;
+            ++p;
+            if(*p == '>') ++p;
+        }
+        else if(*p == '>') {
+            ++p;
+        }
+        // else: *p == '<' or whitespace — the '>' was omitted (printer format); treat as open tag
+
+        XmlElement* raw = element.get();
+
+        if(stack.empty()) {
+            element->_parent = this;
+            _children.push_back(std::move(element));
+        } else {
+            element->_parent = stack.back();
+            stack.back()->_children.push_back(std::move(element));
+        }
+
+        if(!self_closing) {
+            stack.push_back(raw);
+        }
+    }
+
     return 0;
 }
 

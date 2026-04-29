@@ -33,7 +33,7 @@ public:
 
     void set(const Shape& new_input_shape)
     {
-        if (new_input_shape.rank != Rank - 1)
+        if (!new_input_shape.empty() && new_input_shape.rank != Rank - 1)
             throw runtime_error("Error: Input shape size must match layer Rank in FlattenLayer::set().");
 
         name = "Flatten" + to_string(Rank) + "d";

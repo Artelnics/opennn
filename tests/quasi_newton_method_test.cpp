@@ -49,7 +49,7 @@ TEST(QuasiNewtonMethodTest, BFGS_Update)
     VectorR gradient_k = loss.calculate_gradient();
 
     // Just verify gradient is computable and has correct size
-    EXPECT_EQ(gradient_k.size(), neural_network.get_parameters().size());
+    EXPECT_EQ(gradient_k.size(), neural_network.get_parameters_size());
 
     MatrixR numerical_inverse_hessian = loss.calculate_inverse_hessian();
 

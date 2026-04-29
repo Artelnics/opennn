@@ -4,8 +4,17 @@
 #include "../opennn/random_utilities.h"
 #include "../opennn/normalization_layer_3d.h"
 #include "../opennn/neural_network.h"
+#include <random>
 
 using namespace opennn;
+
+namespace {
+type random_normal_value(double mean, double stddev) {
+    static std::mt19937 gen(42);
+    std::normal_distribution<double> dist(mean, stddev);
+    return static_cast<type>(dist(gen));
+}
+}
 
 
 struct Normalization3dLayerConfig {
@@ -29,9 +38,9 @@ TEST(Normalization3dTest, DefaultConstructor)
 {
     Normalization3d normalization_3d;
 
-    EXPECT_EQ(normalization_3d.get_input_shape().rank(), 2);
+    EXPECT_EQ(normalization_3d.get_input_shape().rank, 2);
     EXPECT_EQ(normalization_3d.get_input_shape()[0], 0);
-    EXPECT_EQ(normalization_3d.get_output_shape().rank(), 2);
+    EXPECT_EQ(normalization_3d.get_output_shape().rank, 2);
     EXPECT_EQ(normalization_3d.get_output_shape()[0], 0);
 }
 
@@ -64,7 +73,7 @@ TEST_P(Normalization3dLayerTest, ForwardPropagate)
 
     Tensor3 inputs_tensor(batch_size, seq, dim);
     for (Index i = 0; i < inputs_tensor.size(); ++i) {
-        inputs_tensor.data()[i] = static_cast<type>(random_normal(0.0, 5.0));
+        inputs_tensor.data()[i] = static_cast<type>(random_normal_value(0.0, 5.0));
     }
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
@@ -93,7 +102,7 @@ TEST_P(Normalization3dLayerTest, BackPropagate)
 
     Tensor3 inputs_tensor(batch_size, seq, dim);
     for (Index i = 0; i < inputs_tensor.size(); ++i)
-        inputs_tensor.data()[i] = static_cast<type>(random_normal(0.0, 5.0));
+        inputs_tensor.data()[i] = static_cast<type>(random_normal_value(0.0, 5.0));
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(inputs_tensor.data(), {batch_size, seq, dim}) };

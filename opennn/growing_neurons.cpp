@@ -87,6 +87,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape({ neurons_number });
         neural_network->get_layer(last_trainable_layer_index)->set_input_shape({ neurons_number });
 
+        neural_network->compile();
+
         //neural_network->print();
         // throw runtime_error("Checking the network");
 

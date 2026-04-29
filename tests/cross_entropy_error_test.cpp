@@ -45,7 +45,7 @@ TEST(CrossEntropyError2d, BackPropagate)
 
     const VectorR numerical_gradient = loss.calculate_numerical_gradient();
 
-    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 
     type difference = 0;
     for (int i = 0; i < gradient.size(); i++)
@@ -226,7 +226,7 @@ TEST(CrossEntropyError2d, to_XML)
 }
 
 // @todo Re-enable when XmlPrinter → XmlDocument round-trip is working
-TEST(CrossEntropyError2d, DISABLED_from_XML_valid_document)
+TEST(CrossEntropyError2d, from_XML_valid_document)
 {
     NeuralNetwork neural_network;
     Dataset dataset;

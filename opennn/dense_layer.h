@@ -168,6 +168,15 @@ public:
              bool new_batch_normalization = false,
              const string& new_label = "dense_layer")
     {
+        if (new_input_shape.size() == 0 && new_output_shape.size() == 0)
+        {
+            // Default construction for registry — will be configured via from_XML
+            name = (Rank == 2) ? "Dense2d" : "Dense3d";
+            layer_type = (Rank == 2) ? LayerType::Dense2d : LayerType::Dense3d;
+            is_trainable = true;
+            return;
+        }
+
         if (new_input_shape.rank != Rank - 1)
             throw runtime_error("Input shape size must be " + to_string(Rank - 1));
 
