@@ -257,16 +257,6 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
     CHECK_CUDA(cudaMemcpyAsync(target.as<type>(), targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice, stream));
 }
 
-const vector<TensorView>& Batch::get_inputs_device() const
-{
-    return input_views_cache;
-}
-
-const TensorView& Batch::get_targets_device() const
-{
-    return target_view_cache;
-}
-
 #endif
 
 }

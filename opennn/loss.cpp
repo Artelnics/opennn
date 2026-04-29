@@ -90,7 +90,7 @@ type Loss::get_weighted_coefficient(const Batch& batch) const
 void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
-    const TensorView target = batch.get_targets_active();
+    const TensorView target = batch.get_targets();
 
 #ifdef OPENNN_WITH_CUDA
     float* workspace_device = Configuration::instance().is_gpu() ? back_propagation.errors_device : nullptr;
@@ -134,8 +134,8 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
 void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
-    const TensorView target = batch.get_targets_active();
-    TensorView input_delta = back_propagation.get_output_deltas_active();
+    const TensorView target = batch.get_targets();
+    TensorView input_delta = back_propagation.get_output_deltas();
 
     switch(error)
     {
@@ -256,17 +256,8 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 
     const Index n = neural_network->get_parameters_size();
 
-#ifdef OPENNN_WITH_CUDA
-    const TensorView parameters = Configuration::instance().is_gpu()
-        ? TensorView(neural_network->get_parameters_device(), { n })
-        : TensorView(neural_network->get_parameters_data(), { n });
-    TensorView gradient = Configuration::instance().is_gpu()
-        ? TensorView(back_propagation.gradient.as<type>(), { n })
-        : TensorView(back_propagation.gradient.as<type>(), { n });
-#else
     const TensorView parameters(neural_network->get_parameters_data(), { n });
     TensorView gradient(back_propagation.gradient.as<type>(), { n });
-#endif
 
     if (regularization_method == Regularization::L1)
         l1_regularization_gradient(parameters, regularization_weight, gradient);

@@ -83,8 +83,6 @@ Device::Device()
 Device::~Device()
 {
 #ifdef OPENNN_WITH_CUDA
-    // The cuBLASLt plan cache, workspace and BF16 scratch are TU-local in
-    // cuda_gemm.cpp now and have process lifetime; nothing to free here.
     if (operator_sum_descriptor) cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
     if (operator_multiplication_descriptor) cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
     if (cublas_lt_handle) cublasLtDestroy(cublas_lt_handle);
@@ -93,8 +91,6 @@ Device::~Device()
     if (compute_stream) cudaStreamDestroy(compute_stream);
 #endif
 }
-
-// get_lt_gemm_plan implementation moved to cuda_gemm.cpp.
 
 void Device::set_threads_number(int num_threads)
 {
@@ -116,8 +112,6 @@ Device& Device::instance()
     static Device device;
     return device;
 }
-
-// Configuration impls moved to configuration.cpp.
 
 ThreadPoolDevice* Device::get_thread_pool_device()
 {

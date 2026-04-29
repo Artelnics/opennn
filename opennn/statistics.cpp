@@ -1312,7 +1312,7 @@ VectorI maximal_indices(const MatrixR& matrix)
 }
 
 // =====================================================================
-// Eigen Matrix/Vector data-manipulation helpers (moved from tensor_utilities).
+// Eigen Matrix/Vector data-manipulation helpers.
 // =====================================================================
 
 MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)

@@ -77,12 +77,8 @@ void NeuralNetwork::compile()
             layers[i]->set_input_shape(layers[inputs[0]]->get_output_shape());
     }
 
-    Index total_parameters = 0;
-    for (const auto& layer : layers)
-        for (const Shape& s : layer->get_parameter_shapes())
-            total_parameters += get_aligned_size(s.size());
-
-    parameters.resize_bytes(total_parameters * Index(sizeof(type)), DeviceType::CPU);
+    parameters.resize_bytes(aligned_total_elements(get_parameter_shapes()) * Index(sizeof(type)),
+                            DeviceType::CPU);
     parameters.setZero();
 
     type* pointer = parameters.as<type>();
@@ -90,12 +86,7 @@ void NeuralNetwork::compile()
     for (auto& layer : layers)
         pointer = layer->link_parameters(pointer);
 
-    Index total_states = 0;
-    for (const auto& layer : layers)
-        for (const Shape& s : layer->get_state_shapes())
-            total_states += get_aligned_size(s.size());
-
-    states.resize_bytes(total_states * Index(sizeof(type)), DeviceType::CPU);
+    states.resize_bytes(get_states_size() * Index(sizeof(type)), DeviceType::CPU);
     states.setZero();
 
     type* state_pointer = states.as<type>();
@@ -440,10 +431,15 @@ void NeuralNetwork::set_parameters_random()
 
 void NeuralNetwork::set_parameters_glorot()
 {
+    // Sequential by design: each Dense::set_parameters_glorot() already runs
+    // an OpenMP-parallelized set_random_uniform() over its weight slot.
+    // Wrapping this loop in another `parallel for` would nest OpenMP regions
+    // and recycled threads ended up reusing thread_local PRNG state with
+    // unstable seeds — sometimes producing weights that diverged on the very
+    // first batch (loss exploding to ~1e+33).
     const Index layers_number = get_layers_number();
 
-    #pragma omp parallel for
-    for(int i = 0; i < layers_number; ++i)
+    for(Index i = 0; i < layers_number; ++i)
         layers[i]->set_parameters_glorot();
 }
 
@@ -1108,13 +1104,22 @@ void NeuralNetwork::copy_parameters_host()
     parameters.migrate_to(DeviceType::CPU);
 }
 
-void NeuralNetwork::link_parameters_device()
+void NeuralNetwork::link_parameters()
 {
-    // Walk fp32 master and bf16 mirror in parallel; bf16_ptr is null when the
-    // resolved Configuration didn't ask for a BF16 mirror. Each pointer advances
-    // by its own sizeof, so slot offsets stay aligned across both buffers.
+    // Walks the FP32 master (always present) and the BF16 mirror (only when the
+    // resolved Configuration asked for it) in parallel. Each pointer advances by
+    // its own element size, so slot offsets stay aligned across both buffers.
+    //
+    // The BF16 mirror is opt-in via Configuration: even if `parameters_bf16` is
+    // allocated from a previous GPU run, we ignore it whenever the active
+    // Configuration is CPU (e.g. greedy-decode flips Configuration to CPU
+    // temporarily) — the host-side forward path can't read GPU memory.
     type* fp32_ptr           = parameters.as<type>();
-    __nv_bfloat16* bf16_ptr  = parameters_bf16.as<__nv_bfloat16>();
+    const bool use_bf16_mirror =
+        Configuration::instance().is_gpu() && parameters_bf16.bytes > 0;
+    __nv_bfloat16* bf16_ptr  = use_bf16_mirror
+                                ? parameters_bf16.as<__nv_bfloat16>()
+                                : nullptr;
 
     for(auto& layer : layers)
     {
@@ -1137,37 +1142,18 @@ void NeuralNetwork::link_parameters_device()
                 {
                     param_views[i].data = bf16_ptr;
                     param_views[i].dtype = CUDNN_DATA_BFLOAT16;
+                    param_views[i].shape = shapes[i];
                 }
                 else
                 {
                     param_views[i].data = fp32_ptr;
                     param_views[i].dtype = CUDNN_DATA_FLOAT;
+                    param_views[i].shape = shapes[i];
                 }
             }
 
             fp32_ptr += aligned;                    // +aligned * sizeof(float) bytes
             if (bf16_ptr != nullptr) bf16_ptr += aligned;  // +aligned * sizeof(bf16) bytes
-        }
-    }
-}
-
-void NeuralNetwork::link_parameters_cpu()
-{
-    type* cpu_ptr = parameters.as<type>();
-
-    for(auto& layer : layers)
-    {
-        const vector<Shape> shapes = layer->get_parameter_shapes();
-        auto& param_views = layer->get_parameter_views();
-
-        for(size_t i = 0; i < shapes.size(); ++i)
-        {
-            if(shapes[i].empty()) continue;
-
-            if(i < param_views.size())
-                param_views[i] = TensorView(cpu_ptr, shapes[i]);
-
-            cpu_ptr += get_aligned_size(shapes[i].size());
         }
     }
 }
@@ -1186,10 +1172,14 @@ void NeuralNetwork::copy_states_host()
     states.migrate_to(DeviceType::CPU);
 }
 
-void NeuralNetwork::link_states_device()
+void NeuralNetwork::link_states()
 {
-    type* dev_ptr = states.as<type>();
-    if(!dev_ptr) return;
+    // States are always FP32 (descriptive stats, BatchNorm running mean/variance,
+    // positional encoding tables — none of these benefit from BF16). The same
+    // pointer walk works for CPU and GPU: states.as<type>() returns whichever
+    // host the buffer currently lives on, and we just rebuild each layer's view.
+    type* ptr = states.as<type>();
+    if(!ptr) return;
 
     for(auto& layer : layers)
     {
@@ -1201,30 +1191,9 @@ void NeuralNetwork::link_states_device()
             if(shapes[i].empty()) continue;
 
             if(i < state_views.size())
-                state_views[i].data = dev_ptr;
+                state_views[i] = TensorView(ptr, shapes[i], CUDNN_DATA_FLOAT);
 
-            dev_ptr += get_aligned_size(shapes[i].size());
-        }
-    }
-}
-
-void NeuralNetwork::link_states_cpu()
-{
-    type* cpu_ptr = states.as<type>();
-
-    for(auto& layer : layers)
-    {
-        const vector<Shape> shapes = layer->get_state_shapes();
-        auto& state_views = layer->get_state_views();
-
-        for(size_t i = 0; i < shapes.size(); ++i)
-        {
-            if(shapes[i].empty()) continue;
-
-            if(i < state_views.size())
-                state_views[i] = TensorView(cpu_ptr, shapes[i]);
-
-            cpu_ptr += get_aligned_size(shapes[i].size());
+            ptr += get_aligned_size(shapes[i].size());
         }
     }
 }
@@ -1233,9 +1202,9 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
                                                 ForwardPropagation& fp)
 {
     copy_parameters_device();
-    link_parameters_device();
+    link_parameters();
     copy_states_device();
-    link_states_device();
+    link_states();
 
     fp.allocate_device();
 
@@ -1271,8 +1240,8 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     CHECK_CUDA(cudaFree(input_device));
     copy_parameters_host();
     copy_states_host();
-    link_parameters_cpu();
-    link_states_cpu();
+    link_parameters();
+    link_states();
 
     return result;
 }

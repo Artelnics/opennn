@@ -176,9 +176,6 @@ VectorI maximal_indices(const MatrixR&);
 
 // =====================================================================
 // Eigen Matrix/Vector data-manipulation helpers.
-// (Moved here from tensor_utilities.h: these operate on Eigen types, not
-// TensorView, and live in the same conceptual neighbourhood as Descriptives
-// and the slicing/filtering code that already lives here.)
 // =====================================================================
 
 inline bool row_finite(const VectorR& v, Index i) { return isfinite(v(i)); }

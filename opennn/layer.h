@@ -128,7 +128,7 @@ public:
         return vector<cudnnDataType_t>(get_backward_shapes(batch_size).size(), activation_dtype);
     }
 
-    // Per-parameter-slot dtype. Used by NeuralNetwork::link_parameters_device
+    // Per-parameter-slot dtype. Used by NeuralNetwork::link_parameters()
     // to decide whether each layer's TensorView slot points into the FP32
     // master (`parameters`) or the BF16 working copy (`parameters_bf16`).
     //

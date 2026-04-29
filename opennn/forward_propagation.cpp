@@ -32,11 +32,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
 
-    Index total_size = 0;
-
-    for(const auto& layer_shapes : forward_shapes)
-        for(const Shape& shape : layer_shapes)
-            total_size += get_aligned_size(shape.size());
+    const Index total_size = aligned_total_elements(forward_shapes);
 
     // Forward arena is pure scratch — no Eigen-based init reads from it before
     // the first forward pass. When the resolved device is CUDA we skip the CPU

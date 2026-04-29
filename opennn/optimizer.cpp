@@ -466,9 +466,7 @@ void OptimizerData::print() const
 
 void OptimizerData::set(const vector<Shape>& slot_shapes)
 {
-    Index total_size = 0;
-    for(const Shape& s : slot_shapes)
-        total_size += get_aligned_size(s.size());
+    const Index total_size = aligned_total_elements(slot_shapes);
 
     data.resize_bytes(total_size * Index(sizeof(type)), DeviceType::CPU);
     data.setZero();
@@ -526,9 +524,9 @@ void Optimizer::setup_device_training(ForwardPropagation& training_fp,
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     neural_network->copy_parameters_device();
-    neural_network->link_parameters_device();
+    neural_network->link_parameters();
     neural_network->copy_states_device();
-    neural_network->link_states_device();
+    neural_network->link_states();
 
     training_fp.allocate_device();
     training_bp.allocate_device();
@@ -558,9 +556,9 @@ void Optimizer::teardown_device_training()
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     neural_network->copy_parameters_host();
-    neural_network->link_parameters_cpu();
+    neural_network->link_parameters();
     neural_network->copy_states_host();
-    neural_network->link_states_cpu();
+    neural_network->link_states();
 #endif
 }
 
@@ -624,21 +622,18 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, type max_norm)
         gradient_view *= max_norm / (gradient_norm + type(1e-6));
 }
 
-EpochStats Optimizer::run_epoch(Phase phase,
-                                bool is_classification,
-                                ForwardPropagation& fp,
-                                BackPropagation& bp,
-                                ThreadSafeQueue<Batch*>& empty_queue,
-                                ThreadSafeQueue<Batch*>& ready_queue,
-                                const vector<vector<Index>>& batches,
-                                const vector<Index>& input_feature_indices,
-                                const vector<Index>& decoder_feature_indices,
-                                const vector<Index>& target_feature_indices,
-                                const std::function<void(BackPropagation&)>& update)
+EpochStats Optimizer::train_epoch(bool is_classification,
+                                  ForwardPropagation& fp,
+                                  BackPropagation& bp,
+                                  ThreadSafeQueue<Batch*>& empty_queue,
+                                  ThreadSafeQueue<Batch*>& ready_queue,
+                                  const vector<vector<Index>>& batches,
+                                  const vector<Index>& input_feature_indices,
+                                  const vector<Index>& decoder_feature_indices,
+                                  const vector<Index>& target_feature_indices,
+                                  const std::function<void(BackPropagation&)>& update)
 {
     EpochStats stats;
-
-    const bool is_training = (phase == Phase::Training);
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index batches_number = Index(batches.size());
@@ -662,7 +657,7 @@ EpochStats Optimizer::run_epoch(Phase phase,
                         input_feature_indices,
                         decoder_feature_indices,
                         target_feature_indices,
-                        is_training);   // augment only in training
+                        true);
             ready_queue.push(batch);
         }
     });
@@ -672,11 +667,6 @@ EpochStats Optimizer::run_epoch(Phase phase,
 
     for(Index iteration = 0; iteration < batches_number; ++iteration)
     {
-        // Gradient buffer is no longer zeroed globally each iteration. Every
-        // layer's backward overwrites its parameter slot via cuBLASLt/cuDNN
-        // with beta=0; Embedding (the only atomicAdd path) zeros its own slot
-        // internally before the kernel. Saves a 119 MB cudaMemset per iter.
-
         Batch* current_batch = next_batch;
         next_batch = nullptr;
 
@@ -688,12 +678,9 @@ EpochStats Optimizer::run_epoch(Phase phase,
             prefetch_batch(*next_batch, batches[iteration + 1].size(), (iteration + 1) % 2);
         }
 
-        neural_network->forward_propagate(current_batch->get_inputs_active(), fp, is_training);
+        neural_network->forward_propagate(current_batch->get_inputs(), fp, true);
 
-        if(is_training)
-            loss->back_propagate(*current_batch, fp, bp);
-        else
-            loss->calculate_error(*current_batch, fp, bp);
+        loss->back_propagate(*current_batch, fp, bp);
 
         stats.error += bp.error;
         if(is_classification) stats.accuracy += bp.accuracy(0);
@@ -718,6 +705,71 @@ EpochStats Optimizer::run_epoch(Phase phase,
         std::cout << "  Wall-clock epoch time: " << std::fixed << std::setprecision(2) << epoch_ms << " ms\n\n";
         ::opennn::profiler::enabled() = false;
     }
+
+    return stats;
+}
+
+EpochStats Optimizer::evaluate_epoch(bool is_classification,
+                                     ForwardPropagation& fp,
+                                     BackPropagation& bp,
+                                     ThreadSafeQueue<Batch*>& empty_queue,
+                                     ThreadSafeQueue<Batch*>& ready_queue,
+                                     const vector<vector<Index>>& batches,
+                                     const vector<Index>& input_feature_indices,
+                                     const vector<Index>& decoder_feature_indices,
+                                     const vector<Index>& target_feature_indices)
+{
+    EpochStats stats;
+
+    NeuralNetwork* neural_network = loss->get_neural_network();
+    const Index batches_number = Index(batches.size());
+    if(batches_number == 0) return stats;
+
+    std::thread worker([&]()
+    {
+        for(Index iteration = 0; iteration < batches_number; ++iteration)
+        {
+            Batch* batch = empty_queue.pop();
+            batch->fill(batches[iteration],
+                        input_feature_indices,
+                        decoder_feature_indices,
+                        target_feature_indices,
+                        false);
+            ready_queue.push(batch);
+        }
+    });
+
+    Batch* next_batch = ready_queue.pop();
+    prefetch_batch(*next_batch, batches[0].size(), 0);
+
+    for(Index iteration = 0; iteration < batches_number; ++iteration)
+    {
+        Batch* current_batch = next_batch;
+        next_batch = nullptr;
+
+        wait_prefetch(iteration % 2);
+
+        if(iteration + 1 < batches_number)
+        {
+            next_batch = ready_queue.pop();
+            prefetch_batch(*next_batch, batches[iteration + 1].size(), (iteration + 1) % 2);
+        }
+
+        neural_network->forward_propagate(current_batch->get_inputs(), fp, false);
+        loss->calculate_error(*current_batch, fp, bp);
+
+        stats.error += bp.error;
+        if(is_classification) stats.accuracy += bp.accuracy(0);
+
+        sync_device();
+
+        empty_queue.push(current_batch);
+    }
+
+    worker.join();
+
+    stats.error /= type(batches_number);
+    if(is_classification) stats.accuracy /= type(batches_number);
 
     return stats;
 }

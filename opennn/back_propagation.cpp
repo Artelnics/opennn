@@ -37,11 +37,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     const vector<vector<Shape>> parameter_shapes = neural_network->get_parameter_shapes();
 
-    Index total_parameters_size = 0;
-
-    for(const auto& layer_shapes : parameter_shapes)
-        for(const Shape& s : layer_shapes)
-            total_parameters_size += get_aligned_size(s.size());
+    const Index total_parameters_size = aligned_total_elements(parameter_shapes);
 
     // gradient/backward/output_deltas are pure scratch — no Eigen-based init
     // reads them before the first backward pass, so the CPU allocation is
@@ -78,11 +74,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     const vector<vector<Shape>> backward_shapes = neural_network->get_backward_shapes(batch_size);
 
-    Index total_backward_size = 0;
-
-    for(const auto& layer_shapes : backward_shapes)
-        for(const Shape& s : layer_shapes)
-            total_backward_size += get_aligned_size(s.size());
+    const Index total_backward_size = aligned_total_elements(backward_shapes);
 
     if(!gpu_mode)
     {
@@ -259,13 +251,7 @@ void BackPropagation::allocate_device()
 
     // Compute sizes from shapes — set() may have skipped the CPU allocation when
     // running in GPU mode, so we can't read sizes from the CPU buffers.
-    Index total_gradient_floats = 0;
-    {
-        const vector<vector<Shape>> parameter_shapes_for_sizing = neural_network->get_parameter_shapes();
-        for(const auto& layer_shapes : parameter_shapes_for_sizing)
-            for(const Shape& s : layer_shapes)
-                total_gradient_floats += get_aligned_size(s.size());
-    }
+    const Index total_gradient_floats   = aligned_total_elements(neural_network->get_parameter_shapes());
     const Index total_output_delta_elems = batch_size * output_shape.size();
 
     gradient.resize_bytes(total_gradient_floats * Index(sizeof(float)), DeviceType::CUDA);
@@ -400,16 +386,6 @@ void BackPropagation::allocate_device()
 }
 
 
-#ifdef OPENNN_WITH_CUDA
-
-const TensorView& BackPropagation::get_output_deltas_device() const
-{
-    return output_deltas_view_device;
-}
-
-#endif
-
-
 const NeuralNetwork* BackPropagation::get_neural_network() const
 {
     return neural_network;
@@ -428,6 +404,10 @@ vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
 
 TensorView BackPropagation::get_output_deltas() const
 {
+#ifdef OPENNN_WITH_CUDA
+    if (Configuration::instance().is_gpu())
+        return output_deltas_view_device;
+#endif
     return {const_cast<type*>(output_deltas.as<type>()), output_delta_dimensions};
 }
 

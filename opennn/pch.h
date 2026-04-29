@@ -51,11 +51,6 @@
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <Eigen/src/Core/util/DisableStupidWarnings.h>
 
-// CUDA type layer: real CUDA headers when OPENNN_WITH_CUDA is on, stubs otherwise.
-// Types and enum values are available unconditionally so struct members and
-// function signatures don't need #ifdef guards. Actual CUDA function calls
-// still require OPENNN_WITH_CUDA and are gated at runtime by Device::is_gpu().
-
 #ifdef OPENNN_WITH_CUDA
 
 #include <cuda.h>

@@ -27,26 +27,23 @@ struct Batch
               const vector<Index>&,
               bool augment = false);
 
-    const vector<TensorView>& get_inputs() const { return input_views_host_cache; }
-
-    const TensorView& get_targets() const { return target_view_host_cache; }
-
-    const vector<TensorView>& get_inputs_active() const
+    // Returns input/target views routed to the active device based on the
+    // resolved Configuration. There is no separate `_device` / `_active` /
+    // host overload exposed publicly anymore.
+    const vector<TensorView>& get_inputs() const
     {
 #ifdef OPENNN_WITH_CUDA
-        return Configuration::instance().is_gpu() ? get_inputs_device() : get_inputs();
-#else
-        return get_inputs();
+        if (Configuration::instance().is_gpu()) return input_views_cache;
 #endif
+        return input_views_host_cache;
     }
 
-    const TensorView& get_targets_active() const
+    const TensorView& get_targets() const
     {
 #ifdef OPENNN_WITH_CUDA
-        return Configuration::instance().is_gpu() ? get_targets_device() : get_targets();
-#else
-        return get_targets();
+        if (Configuration::instance().is_gpu()) return target_view_cache;
 #endif
+        return target_view_host_cache;
     }
 
     Index get_samples_number() const;
@@ -74,13 +71,13 @@ struct Batch
 
     void copy_device_async(const Index, cudaStream_t);
 
-    const vector<TensorView>& get_inputs_device() const;
-    const TensorView& get_targets_device() const;
-
+    // Cache of TensorView wrappers around the host pinned / device buffers, populated
+    // by set(). Kept public for now so subclasses and helpers can read shapes; the
+    // active subset is surfaced through get_inputs()/get_targets() above.
     vector<TensorView> input_views_host_cache;
     TensorView target_view_host_cache;
 
-    vector<TensorView> input_views_cache;
+    vector<TensorView> input_views_cache;       // GPU views; populated only on CUDA mode
     TensorView target_view_cache;
 
     Index num_input_features = 0;

@@ -89,7 +89,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
         sgd_update_cuda(
             parameters_number,
-            neural_network->get_parameters_device(),
+            neural_network->get_parameters_data(),
             optimization_data.views[ParameterUpdate].as<float>(),
             back_propagation.gradient.as<type>(),
             current_learning_rate,
@@ -286,17 +286,16 @@ TrainingResults StochasticGradientDescent::train()
 
         current_learning_rate = initial_learning_rate / (type(1) + type(epoch) * initial_decay);
 
-        const EpochStats train_stats = run_epoch(Phase::Training,
-                                                 is_classification_model,
-                                                 training_forward_propagation,
-                                                 training_back_propagation,
-                                                 empty_training_queue,
-                                                 ready_training_queue,
-                                                 training_batches,
-                                                 input_feature_indices,
-                                                 decoder_feature_indices,
-                                                 target_feature_indices,
-                                                 training_update);
+        const EpochStats train_stats = train_epoch(is_classification_model,
+                                                   training_forward_propagation,
+                                                   training_back_propagation,
+                                                   empty_training_queue,
+                                                   ready_training_queue,
+                                                   training_batches,
+                                                   input_feature_indices,
+                                                   decoder_feature_indices,
+                                                   target_feature_indices,
+                                                   training_update);
 
         training_error = train_stats.error;
         training_accuracy = train_stats.accuracy;
@@ -306,17 +305,15 @@ TrainingResults StochasticGradientDescent::train()
         {
             dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
 
-            const EpochStats val_stats = run_epoch(Phase::Validation,
-                                                   is_classification_model,
-                                                   *validation_forward_propagation,
-                                                   *validation_back_propagation,
-                                                   empty_validation_queue,
-                                                   ready_validation_queue,
-                                                   validation_batches,
-                                                   input_feature_indices,
-                                                   decoder_feature_indices,
-                                                   target_feature_indices,
-                                                   [](BackPropagation&){});
+            const EpochStats val_stats = evaluate_epoch(is_classification_model,
+                                                        *validation_forward_propagation,
+                                                        *validation_back_propagation,
+                                                        empty_validation_queue,
+                                                        ready_validation_queue,
+                                                        validation_batches,
+                                                        input_feature_indices,
+                                                        decoder_feature_indices,
+                                                        target_feature_indices);
 
             validation_error = val_stats.error;
             validation_accuracy = val_stats.accuracy;

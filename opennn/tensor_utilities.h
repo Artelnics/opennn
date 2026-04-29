@@ -39,8 +39,6 @@ inline bool is_aligned(const void* ptr)
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
 }
 
-// EnumMap<Enum> moved to enum_map.h.
-
 constexpr cudaDataType_t      CUDA_REDUCTION_DTYPE   = CUDA_R_32F;
 constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_TF32;
 
@@ -74,8 +72,6 @@ inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t t)
         default:                  return CUDA_R_32F;
     }
 }
-
-// ThreadSafeQueue<T> moved to thread_safe_queue.h.
 
 struct Shape
 {
@@ -134,8 +130,19 @@ struct Shape
     }
 };
 
-// DeviceType / TrainingPrecision / InferencePrecision live in configuration.h
-// (which is included from this header for Buffer's DeviceType reference).
+inline Index aligned_total_elements(const std::vector<Shape>& shapes)
+{
+    Index total = 0;
+    for (const Shape& s : shapes) total += get_aligned_size(s.size());
+    return total;
+}
+
+inline Index aligned_total_elements(const std::vector<std::vector<Shape>>& nested)
+{
+    Index total = 0;
+    for (const auto& v : nested) total += aligned_total_elements(v);
+    return total;
+}
 
 struct Buffer
 {
@@ -380,23 +387,11 @@ private:
 
 };
 
-// Eigen Matrix/Vector data-manipulation helpers (slice_rows, filter_missing_values,
-// shuffle_rows, is_binary, is_constant, etc.) live in statistics.h now — they
-// operate on Eigen types, not TensorView, and conceptually belong with the
-// statistical/data-prep code there.
-
 template<typename T, size_t N>
 using array = Eigen::array<T, N>;
 
 string shape_to_string(const Shape&, const string& = " ");
 Shape string_to_shape(const string&, const string& = " ");
-
-
-// get_maximum_size was inlined into its single caller (language_dataset.cpp).
-// operator<< for vector<T> moved to pch.h so it's available everywhere.
-// LtMatmulPlan / LtMatmulPlanKey / LtMatmulPlanKeyHash live in cuda_gemm.h.
-
-// Configuration class (singleton runtime configuration) moved to configuration.h.
 
 // Container for CUDA/cuBLAS/cuDNN handles, streams and lazily-allocated workspaces.
 // It is *infrastructure* — owning these resources for the life of the program. The
@@ -416,9 +411,6 @@ public:
     static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
     static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
     static cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor() { return instance().operator_multiplication_descriptor; }
-
-    // cuBLASLt workspace, BF16 input scratch, and the matmul plan cache live
-    // in cuda_gemm.h/.cpp now. Device only owns generic runtime context.
 
 private:
     Device();
