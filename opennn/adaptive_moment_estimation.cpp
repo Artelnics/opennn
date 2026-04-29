@@ -194,11 +194,11 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
-        if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << "\n";
+        if(should_display(epoch)) cout << "Epoch: " << epoch << "\n";
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
-        const EpochStats train_stats = run_epoch(true,
+        const EpochStats train_stats = run_epoch(Phase::Training,
                                                  is_classification_model,
                                                  training_forward_propagation,
                                                  training_back_propagation,
@@ -218,7 +218,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         {
             dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
 
-            const EpochStats val_stats = run_epoch(false,
+            const EpochStats val_stats = run_epoch(Phase::Validation,
                                                    is_classification_model,
                                                    *validation_forward_propagation,
                                                    *validation_back_propagation,
@@ -240,7 +240,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         elapsed_time = get_elapsed_time(beginning_time);
 
-        if(display && epoch % display_period == 0)
+        if(should_display(epoch))
         {
             cout << "Training error: " << training_error << "\n";
             if(is_classification_model) cout << "Training accuracy: " << training_accuracy << "\n";
@@ -299,9 +299,9 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         adam_update_cuda(
             parameters_number,
             neural_network->get_parameters_device(),
-            optimization_data.views[GradientMoment].data,
-            optimization_data.views[SquareGradientMoment].data,
-            back_propagation.gradient.device(),
+            optimization_data.views[GradientMoment].as<float>(),
+            optimization_data.views[SquareGradientMoment].as<float>(),
+            back_propagation.gradient.as<type>(),
             beta_1,
             beta_2,
             learning_rate,
@@ -311,20 +311,22 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
         // Master FP32 weights just changed in-place. Refresh the BF16 working
         // copy so the next forward pass sees up-to-date weights. No-op when
-        // OPENNN_USE_BF16_ACTIVATIONS is off (parameters_bf16 stays empty).
+        // OPENNN_BF16_ACTIVATIONS is off (parameters_bf16 stays empty).
         neural_network->cast_parameters_to_bf16();
         return;
     }
 #endif
 
-    VectorR& parameters = neural_network->get_parameters();
+    VectorMap parameters(neural_network->get_parameters_data(),
+                         neural_network->get_parameters_size());
 
-    VectorMap gradient_exponential_decay(optimization_data.views[GradientMoment].data,
+    VectorMap gradient_exponential_decay(optimization_data.views[GradientMoment].as<float>(),
                                          optimization_data.views[GradientMoment].size());
-    VectorMap square_gradient_exponential_decay(optimization_data.views[SquareGradientMoment].data,
+    VectorMap square_gradient_exponential_decay(optimization_data.views[SquareGradientMoment].as<float>(),
                                                 optimization_data.views[SquareGradientMoment].size());
 
-    const VectorR& gradient = back_propagation.gradient.vector;
+    VectorMap gradient(back_propagation.gradient.as<type>(),
+                       back_propagation.gradient.size());
 
     const Index n = parameters.size();
     const type one_minus_beta_1 = type(1) - beta_1;

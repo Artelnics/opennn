@@ -46,10 +46,10 @@ void Convolutional::set(const Shape& new_input_shape,
                         bool new_batch_normalization,
                         const string& new_label)
 {
-    if (new_kernel_shape.rank() != 4)
+    if (new_kernel_shape.rank != 4)
         throw runtime_error("Kernel shape must be 4");
 
-    if (new_stride_shape.rank() != 2)
+    if (new_stride_shape.rank != 2)
         throw runtime_error("Stride shape must be 2");
 
     if (new_kernel_shape[0] > new_input_shape[0] || new_kernel_shape[1] > new_input_shape[1])
@@ -88,8 +88,8 @@ void Convolutional::set(const Shape& new_input_shape,
 
 void Convolutional::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.rank() != 3)
-        throw runtime_error("Input new_input_shape.rank() must be 3");
+    if (new_input_shape.rank != 3)
+        throw runtime_error("Input new_input_shape.rank must be 3");
 
     input_height = new_input_shape[0];
     input_width = new_input_shape[1];
@@ -142,44 +142,33 @@ void Convolutional::set_batch_normalization(bool new_batch_normalization)
 
 // Parameter initialization
 
+void Convolutional::init_conv_norm_defaults()
+{
+    parameters[Bias].fill(0.0f);
+    parameters[Gamma].fill(1.0f);
+    parameters[Beta].fill(0.0f);
+    if (batch_normalization && ssize(states) > RunningVariance)
+    {
+        states[RunningMean].fill(0.0f);
+        states[RunningVariance].fill(1.0f);
+    }
+}
+
 void Convolutional::set_parameters_glorot()
 {
     const Index kernel_area = kernel_height * kernel_width;
-    const Index fan_in = kernel_area * kernel_channels;
+    const Index fan_in  = kernel_area * kernel_channels;
     const Index fan_out = kernel_area * kernels_number;
-
     const type limit = sqrt(6.0f / static_cast<type>(fan_in + fan_out));
 
-    VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
-
-    set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()), -limit, limit);
-
-    VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
-
-    VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
-
-    if (batch_normalization && ssize(states) > RunningVariance)
-    {
-        VectorMap(states[RunningMean].data, states[RunningMean].size()).setZero();
-        VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
-    }
+    set_random_uniform(VectorMap(parameters[Weight].as<float>(), parameters[Weight].size()), -limit, limit);
+    init_conv_norm_defaults();
 }
 
 void Convolutional::set_parameters_random()
 {
-    VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
-
-    set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()));
-
-    VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
-
-    VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
-
-    if (batch_normalization && ssize(states) > RunningVariance)
-    {
-        VectorMap(states[RunningMean].data, states[RunningMean].size()).setZero();
-        VectorMap(states[RunningVariance].data, states[RunningVariance].size()).setOnes();
-    }
+    set_random_uniform(VectorMap(parameters[Weight].as<float>(), parameters[Weight].size()));
+    init_conv_norm_defaults();
 }
 
 #ifdef OPENNN_WITH_CUDA
@@ -450,11 +439,11 @@ void Convolutional::load_state_from_XML(const XmlDocument& document)
     VectorR tmp;
     string_to_vector(read_xml_string(convolutional_layer_element, "RunningMeans"), tmp);
     if(tmp.size() == states[RunningMean].size() && states[RunningMean].data)
-        VectorMap(states[RunningMean].data, states[RunningMean].size()) = tmp;
+        VectorMap(states[RunningMean].as<float>(), states[RunningMean].size()) = tmp;
 
     string_to_vector(read_xml_string(convolutional_layer_element, "RunningVariances"), tmp);
     if(tmp.size() == states[RunningVariance].size() && states[RunningVariance].data)
-        VectorMap(states[RunningVariance].data, states[RunningVariance].size()) = tmp;
+        VectorMap(states[RunningVariance].as<float>(), states[RunningVariance].size()) = tmp;
 }
 
 void Convolutional::to_XML(XmlPrinter& printer) const

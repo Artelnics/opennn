@@ -73,37 +73,11 @@ VectorI calculate_rank(const VectorR& vector, bool ascending)
     return rank;
 }
 
-Index count_greater_than(const vector<Index>& data, Index bound)
-{
-    return count_if(data.begin(), data.end(), [&](const Index value) {
-        return value > bound;
-    });
-}
-
 vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
 {
     vector<Index> indices;
     copy_if(data.begin(), data.end(), back_inserter(indices),
             [bound](Index value) { return value > bound; });
-    return indices;
-}
-
-vector<Index> get_elements_greater_than(const vector<vector<Index>>& vectors, Index bound)
-{
-    size_t total = 0;
-    for(const auto& v : vectors)
-        total += v.size();
-
-    vector<Index> indices;
-    indices.reserve(total);
-
-    for(const auto& v : vectors)
-    {
-        const vector<Index> filtered = get_elements_greater_than(v, bound);
-
-        indices.insert(indices.end(), filtered.begin(), filtered.end());
-    }
-
     return indices;
 }
 
@@ -219,73 +193,6 @@ Shape string_to_shape(const string& x, const string& separator)
 VectorMap vector_map(const MatrixR& tensor, Index index_1)
 {
     return VectorMap(const_cast<type*>(tensor.data()) + tensor.rows()*index_1, tensor.rows());
-}
-
-MatrixMap tensor_map(const Tensor3& tensor, Index index_2)
-{
-    return MatrixMap(const_cast<type*>(tensor.data()) +  tensor.dimension(0) * tensor.dimension(1)* index_2,
-                                      tensor.dimension(0), tensor.dimension(1));
-}
-
-TensorMap3 tensor_map(const Tensor4& tensor, Index index_3)
-{
-    return TensorMap3(const_cast<type*>(tensor.data()) + tensor.dimension(0) * tensor.dimension(1) * tensor.dimension(2) * index_3,
-                                      tensor.dimension(0), tensor.dimension(1), tensor.dimension(2));
-}
-
-MatrixMap tensor_map(const Tensor4& tensor, Index index_3, Index index_2)
-{
-    return MatrixMap(const_cast<type*>(tensor.data()) + tensor.dimension(0) * tensor.dimension(1)*(index_3 * tensor.dimension(2) + index_2),
-                                      tensor.dimension(0), tensor.dimension(1));
-}
-
-type* link(type *pointer, const vector<TensorView*>& views)
-{
-    for(TensorView* view : views)
-    {
-        if(!view || view->size() == 0)
-            continue;
-
-        view->data = pointer;
-
-        if (reinterpret_cast<uintptr_t>(pointer) % EIGEN_MAX_ALIGN_BYTES != 0)
-            throw runtime_error("Master pointer in link() is not aligned.");
-
-        pointer += (view->size() + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
-    }
-
-    return pointer;
-}
-
-void link(type *pointer, const vector<vector<TensorView*>>& views)
-{
-    for(size_t i = 0; i < views.size(); ++i)
-        pointer = link(pointer, views[i]);
-}
-
-Index get_size(const vector<TensorView*>& views)
-{
-    Index total_size = 0;
-
-    for(const TensorView* view : views)
-    {
-        if(!view || view->size() == 0)
-            continue;
-
-        total_size += (view->size() + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
-    }
-
-    return total_size;
-}
-
-Index get_size(const vector<vector<TensorView*>>& views)
-{
-    Index total_size = 0;
-
-    for(size_t i = 0; i < views.size(); ++i)
-        total_size += get_size(views[i]);
-
-    return total_size;
 }
 
 void shuffle_rows(MatrixR& matrix)

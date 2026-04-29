@@ -35,7 +35,6 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
     if(is_constant(x) || is_constant(y))
         return Correlation();
 
-    const Index x_rows = x.rows();
     const Index x_columns = x.cols();
     const Index y_columns = y.cols();
 
@@ -90,7 +89,6 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
 
 Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
 {
-    const Index x_rows = x.rows();
     const Index x_columns = x.cols();
     const Index y_columns = y.cols();
 
@@ -359,7 +357,8 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     correlation.lower_confidence = z_correlation_to_r_correlation(ci_lower);
     correlation.upper_confidence = z_correlation_to_r_correlation(ci_upper);
 
-    const VectorR coefficients = neural_network.get_parameters();
+    const VectorR coefficients = Map<const VectorR, AlignedMax>(
+        neural_network.get_parameters_data(), neural_network.get_parameters_size());
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
 
@@ -734,23 +733,23 @@ void Correlation::set_perfect()
     form = Correlation::Form::Linear;
 }
 
-string Correlation::write_type() const
+static const char* form_to_string(Correlation::Form form)
 {
     switch(form)
     {
-    case Form::Linear: return "linear";
-    case Form::Sigmoid: return "logistic";
-    case Form::Logarithmic: return "logarithmic";
-    case Form::Exponential: return "exponential";
-    case Form::Power: return "power";
-    default: return string();
+    case Correlation::Form::Linear:      return "linear";
+    case Correlation::Form::Sigmoid:     return "logistic";
+    case Correlation::Form::Logarithmic: return "logarithmic";
+    case Correlation::Form::Exponential: return "exponential";
+    case Correlation::Form::Power:       return "power";
+    default:                             return "";
     }
 }
 
 void Correlation::print() const
 {
     cout << "Correlation" << "\n"
-         << "Type: " << write_type() << "\n"
+         << "Type: " << form_to_string(form) << "\n"
          << "a: " << a << "\n"
          << "b: " << b << "\n"
          << "r: " << r << "\n"

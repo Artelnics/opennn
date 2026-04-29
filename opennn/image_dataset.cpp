@@ -19,10 +19,10 @@ ImageDataset::ImageDataset(const Index new_samples_number,
                            const Shape& new_input_shape,
                            const Shape& new_target_shape)
 {
-    if (new_input_shape.rank() != 3)
+    if (new_input_shape.rank != 3)
         throw runtime_error("Input shape is not 3");
 
-    if (new_target_shape.rank() != 1)
+    if (new_target_shape.rank != 1)
         throw runtime_error("Target shape is not 1");
 
     set(new_samples_number, new_input_shape, new_target_shape);

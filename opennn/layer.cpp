@@ -32,7 +32,7 @@ void Layer::set_parameters_glorot()
     for(auto& param : parameters)
     {
         if(param.empty()) continue;
-        set_random_uniform(VectorMap(param.data, param.size()), -limit, limit);
+        set_random_uniform(VectorMap(param.as<float>(), param.size()), -limit, limit);
     }
 }
 

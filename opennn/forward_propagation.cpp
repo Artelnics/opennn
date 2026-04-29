@@ -39,10 +39,13 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             total_size += get_aligned_size(s.size());
 
     if(total_size > 0)
-        data.setZero(total_size);
+    {
+        data.resize_bytes(total_size * Index(sizeof(type)), DeviceType::Cpu);
+        data.setZero();
+    }
 
     views.resize(layers_number);
-    type* pointer = (total_size > 0) ? data.data() : nullptr;
+    type* pointer = (total_size > 0) ? data.as<type>() : nullptr;
 
     for(Index i = 0; i < layers_number; ++i)
     {
@@ -114,10 +117,10 @@ void ForwardPropagation::allocate_device()
                 total_bytes += get_aligned_bytes(shapes[j].size() * dtype_bytes(forward_dtypes[i][j]));
     }
 
-    data.resize_device_bytes(total_bytes);
-    data.setZero_device();
+    data.resize_bytes(total_bytes, DeviceType::Gpu);
+    data.setZero();
 
-    uint8_t* cursor = data.device_bytes();
+    uint8_t* cursor = data.as<uint8_t>();
 
     for(Index i = 0; i < layers_number; ++i)
     {
@@ -129,7 +132,7 @@ void ForwardPropagation::allocate_device()
 
             if(s.size() > 0)
             {
-                views[i][j + 1][0].data  = reinterpret_cast<type*>(cursor);
+                views[i][j + 1][0].data  = cursor;
                 views[i][j + 1][0].dtype = forward_dtypes[i][j];
                 cursor += get_aligned_bytes(s.size() * dtype_bytes(forward_dtypes[i][j]));
             }

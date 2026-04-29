@@ -91,6 +91,7 @@ using cudnnHandle_t    = void*;
 
 // --- Scalar / opaque types ---
 struct __nv_bfloat16 {};
+struct __half {};
 
 // --- CUDA / cuBLAS enums ---
 enum cudaDataType_t                  { CUDA_R_32F = 0, CUDA_R_16F = 2, CUDA_R_16BF = 14 };

@@ -413,9 +413,9 @@ string ModelExpression::write_recurrent_expression(const Recurrent& layer,
     const Index inputs_number = input_shape[1];
     const Index outputs_number = layer.get_outputs_number();
 
-    VectorMap biases_map = vector_map(layer.get_biases());
-    MatrixMap input_to_hidden_weights_map = matrix_map(layer.get_input_weights());
-    MatrixMap hidden_to_hidden_weights_map = matrix_map(layer.get_recurrent_weights());
+    VectorMap biases_map = layer.get_biases().as_vector();
+    MatrixMap input_to_hidden_weights_map = layer.get_input_weights().as_matrix();
+    MatrixMap hidden_to_hidden_weights_map = layer.get_recurrent_weights().as_matrix();
 
     const string& activation_function = layer.get_activation_function();
 
@@ -474,8 +474,8 @@ string ModelExpression::write_dense_expression(const Dense<2>& layer,
     const Index inputs_number = layer.get_inputs_number();
     const Index outputs_number = layer.get_outputs_number();
 
-    const type* bias_data = parameters[0].data;
-    const type* weight_data = parameters[1].data;
+    const type* bias_data = parameters[0].as<float>();
+    const type* weight_data = parameters[1].as<float>();
 
     const string& activation_function = activation_function_map().to_string(layer.get_activation_function());
 

@@ -344,7 +344,7 @@ void l1_regularization(const TensorView& parameters, type lambda, type& penalty)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        penalty = lambda * sum_abs_cuda(parameters.data, parameters.size());
+        penalty = lambda * sum_abs_cuda(parameters.as<float>(), parameters.size());
         return;
     }
 #endif
@@ -366,7 +366,7 @@ void l2_regularization(const TensorView& parameters, type lambda, type& penalty)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Device::instance().is_gpu()) {
-        penalty = 0.5f * lambda * squared_norm_cuda(parameters.data, parameters.size());
+        penalty = 0.5f * lambda * squared_norm_cuda(parameters.as<float>(), parameters.size());
         return;
     }
 #endif

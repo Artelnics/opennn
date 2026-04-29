@@ -68,9 +68,10 @@ void NeuralNetwork::compile()
         for (const Shape& s : layer->get_parameter_shapes())
             total_parameters += get_aligned_size(s.size());
 
-    parameters.setZero(total_parameters);
+    parameters.resize_bytes(total_parameters * Index(sizeof(type)), DeviceType::Cpu);
+    parameters.setZero();
 
-    type* pointer = parameters.data();
+    type* pointer = parameters.as<type>();
 
     for (auto& layer : layers)
         pointer = layer->link_parameters(pointer);
@@ -80,9 +81,10 @@ void NeuralNetwork::compile()
         for (const Shape& s : layer->get_state_shapes())
             total_states += get_aligned_size(s.size());
 
-    states.setZero(total_states);
+    states.resize_bytes(total_states * Index(sizeof(type)), DeviceType::Cpu);
+    states.setZero();
 
-    type* state_pointer = states.data();
+    type* state_pointer = states.as<type>();
     for (auto& layer : layers)
         state_pointer = layer->link_states(state_pointer);
 }
@@ -395,6 +397,25 @@ Index NeuralNetwork::get_layers_number(LayerType type) const
                     [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
 }
 
+void NeuralNetwork::set_parameters(const VectorR& p)
+{
+    const Index n_bytes = p.size() * Index(sizeof(type));
+
+#ifdef OPENNN_WITH_CUDA
+    if(parameters.device_type == DeviceType::Gpu)
+    {
+        parameters.resize_bytes(n_bytes, DeviceType::Gpu);
+        if(n_bytes > 0)
+            CHECK_CUDA(cudaMemcpy(parameters.data, p.data(), n_bytes, cudaMemcpyHostToDevice));
+        return;
+    }
+#endif
+
+    parameters.resize_bytes(n_bytes, DeviceType::Cpu);
+    if(n_bytes > 0)
+        std::memcpy(parameters.data, p.data(), static_cast<size_t>(n_bytes));
+}
+
 void NeuralNetwork::set_parameters_random()
 {
     const Index layers_number = get_layers_number();
@@ -428,7 +449,7 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
 
     forward_propagate(input_views, forward_propagation, false);
 
-    return tensor_map<3>(forward_propagation.get_outputs());
+    return forward_propagation.get_outputs().as_tensor<3>();
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
@@ -453,7 +474,7 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
                           ? fp.views[layers_count - 1].back()[0]
                           : fp.get_last_trainable_layer_outputs();
 
-    return MatrixMap(out_view.data, batch_size, out_view.size() / batch_size);
+    return MatrixMap(out_view.as<float>(), batch_size, out_view.size() / batch_size);
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
@@ -527,15 +548,15 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       const VectorR& new_parameters,
                                       ForwardPropagation& forward_propagation)
 {
-    VectorR& parameters_vector = get_parameters();
+    VectorMap parameters_view(parameters.as<type>(), parameters.size());
 
-    const VectorR saved_parameters = parameters_vector;
+    const VectorR saved_parameters = parameters_view;
 
-    parameters_vector = new_parameters;
+    parameters_view = new_parameters;
 
     forward_propagate(input_view, forward_propagation, true);
 
-    parameters_vector = saved_parameters;
+    parameters_view = saved_parameters;
 }
 
 MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
@@ -731,7 +752,10 @@ void NeuralNetwork::to_XML(XmlPrinter& printer) const
     printer.open_element("Parameters");
 
     if (parameters.size() > 0)
-        printer.push_text(vector_to_string(parameters.vector, " ").c_str());
+    {
+        const Map<const VectorR, AlignedMax> parameters_view(parameters.as<type>(), parameters.size());
+        printer.push_text(vector_to_string(parameters_view, " ").c_str());
+    }
 
     printer.close_element();
 
@@ -862,7 +886,7 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
             }
 
             const Index elements_to_copy = min(parameters.size(), xml_parameters.size());
-            std::copy(xml_parameters.data(), xml_parameters.data() + elements_to_copy, parameters.data());
+            std::copy(xml_parameters.data(), xml_parameters.data() + elements_to_copy, parameters.as<type>());
         }
     }
 }
@@ -886,7 +910,8 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open parameters data file.\n");
 
-    file << parameters.vector << "\n";
+    const Map<const VectorR, AlignedMax> parameters_view(parameters.as<type>(), parameters.size());
+    file << parameters_view << "\n";
 
     file.close();
 }
@@ -907,7 +932,7 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 
     const Index parameters_number = parameters.size();
 
-    file.read(reinterpret_cast<char*>(parameters.data()), parameters_number * sizeof(type));
+    file.read(reinterpret_cast<char*>(parameters.as<type>()), parameters_number * sizeof(type));
 
     if(!file)
         throw runtime_error("Error reading binary file: " + file_name.string());
@@ -1036,59 +1061,41 @@ void NeuralNetwork::copy_parameters_device()
 {
     if(parameters.empty()) return;
 
-    parameters.resize_device(parameters.size());
-
-    CHECK_CUDA(cudaMemcpy(parameters.device(),
-                          parameters.vector.data(),
-                          parameters.size() * sizeof(float),
-                          cudaMemcpyHostToDevice));
+    parameters.migrate_to(DeviceType::Gpu);
 
 #ifdef OPENNN_BF16_ACTIVATIONS
     // Allocate the BF16 working copy alongside the FP32 master and seed it from
     // the freshly-uploaded master. From this point on every Adam step refreshes
     // it in cast_parameters_to_bf16(); GEMMs read it instead of the master.
-    parameters_bf16.resize_device_bytes(parameters.size() * Index(sizeof(__nv_bfloat16)));
+    parameters_bf16.resize_bytes(parameters.size() * Index(sizeof(__nv_bfloat16)), DeviceType::Gpu);
     cast_parameters_to_bf16();
 #endif
 }
 
 void NeuralNetwork::cast_parameters_to_bf16()
 {
-    // GPU-only: parameters_bf16 has no host vector so Memory::empty() always
-    // says true. Use device allocation as the indicator.
-    if (parameters_bf16.allocated_bytes == 0) return;
-    if (parameters.size() == 0)               return;
+    if (parameters_bf16.empty()) return;
+    if (parameters.empty())      return;
 
     cast_fp32_to_bf16_cuda(parameters.size(),
-                           parameters.device(),
-                           reinterpret_cast<__nv_bfloat16*>(parameters_bf16.device()));
+                           parameters.as<type>(),
+                           parameters_bf16.as<__nv_bfloat16>());
 }
 
 void NeuralNetwork::copy_parameters_host()
 {
     if(parameters.empty()) return;
 
-    CHECK_CUDA(cudaMemcpy(parameters.vector.data(),
-                          parameters.device(),
-                          parameters.size() * sizeof(float),
-                          cudaMemcpyDeviceToHost));
+    parameters.migrate_to(DeviceType::Cpu);
 }
 
 void NeuralNetwork::link_parameters_device()
 {
-    type* fp32_ptr = parameters.device();
-    // parameters_bf16 is GPU-only (no host vector), so Memory::empty() always
-    // reports true for it. Use the device-side `allocated_bytes` to decide
-    // whether the BF16 mirror exists.
-    __nv_bfloat16* bf16_ptr = (parameters_bf16.allocated_bytes == 0)
-                                ? nullptr
-                                : reinterpret_cast<__nv_bfloat16*>(parameters_bf16.device());
-
-    // Both buffers (when bf16 is allocated) hold the same number of elements
-    // at the same per-slot offsets — they only differ in element dtype/size.
-    // We walk them in parallel and pick the right one per slot via
-    // get_parameter_dtypes. Pointer arithmetic uses each pointer's own element
-    // size so the slot offsets stay aligned across buffers.
+    // Walk fp32 master and bf16 mirror in parallel; bf16_ptr is null when
+    // OPENNN_BF16_ACTIVATIONS is off. Each pointer advances by its own
+    // sizeof, so slot offsets stay aligned across both buffers.
+    type* fp32_ptr           = parameters.as<type>();
+    __nv_bfloat16* bf16_ptr  = parameters_bf16.as<__nv_bfloat16>();
 
     for(auto& layer : layers)
     {
@@ -1109,11 +1116,7 @@ void NeuralNetwork::link_parameters_device()
             {
                 if(slot_dtype == CUDNN_DATA_BFLOAT16 && bf16_ptr != nullptr)
                 {
-                    // BF16 slot: TensorView stores the data pointer as `type*`
-                    // (= float*) but the underlying bytes are __nv_bfloat16 —
-                    // call sites that need bf16 access via TensorView::as<__nv_bfloat16>()
-                    // will reinterpret_cast back, gated by the dtype field.
-                    param_views[i].data = reinterpret_cast<type*>(bf16_ptr);
+                    param_views[i].data = bf16_ptr;
                     param_views[i].dtype = CUDNN_DATA_BFLOAT16;
                 }
                 else
@@ -1131,7 +1134,7 @@ void NeuralNetwork::link_parameters_device()
 
 void NeuralNetwork::link_parameters_cpu()
 {
-    type* cpu_ptr = parameters.data();
+    type* cpu_ptr = parameters.as<type>();
 
     for(auto& layer : layers)
     {
@@ -1154,27 +1157,19 @@ void NeuralNetwork::copy_states_device()
 {
     if(states.empty()) return;
 
-    states.resize_device(states.size());
-
-    CHECK_CUDA(cudaMemcpy(states.device(),
-                          states.vector.data(),
-                          states.size() * sizeof(float),
-                          cudaMemcpyHostToDevice));
+    states.migrate_to(DeviceType::Gpu);
 }
 
 void NeuralNetwork::copy_states_host()
 {
-    if(states.empty() || !states.device()) return;
+    if(states.empty()) return;
 
-    CHECK_CUDA(cudaMemcpy(states.vector.data(),
-                          states.device(),
-                          states.size() * sizeof(float),
-                          cudaMemcpyDeviceToHost));
+    states.migrate_to(DeviceType::Cpu);
 }
 
 void NeuralNetwork::link_states_device()
 {
-    type* dev_ptr = states.device();
+    type* dev_ptr = states.as<type>();
     if(!dev_ptr) return;
 
     for(auto& layer : layers)
@@ -1196,7 +1191,7 @@ void NeuralNetwork::link_states_device()
 
 void NeuralNetwork::link_states_cpu()
 {
-    type* cpu_ptr = states.data();
+    type* cpu_ptr = states.as<type>();
 
     for(auto& layer : layers)
     {
@@ -1255,6 +1250,8 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
                           cudaMemcpyDeviceToHost));
 
     CHECK_CUDA(cudaFree(input_device));
+    copy_parameters_host();
+    copy_states_host();
     link_parameters_cpu();
     link_states_cpu();
 

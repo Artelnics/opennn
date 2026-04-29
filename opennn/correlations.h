@@ -23,8 +23,6 @@ struct Correlation
 
     void set_perfect();
 
-    string write_type() const;
-
     void print() const;
 
     type a = type(NAN);

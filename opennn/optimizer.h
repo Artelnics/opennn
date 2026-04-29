@@ -19,7 +19,7 @@ namespace opennn
 
 class Loss;
 struct Batch;
-struct Memory;
+struct Buffer;
 struct ForwardPropagation;
 struct BackPropagation;
 
@@ -107,10 +107,13 @@ protected:
 
     void sync_device();
 
-    static void clip_gradient_norm(Memory& gradient, type max_norm);
+    static void clip_gradient_norm(Buffer& gradient, type max_norm);
 
+    enum class Phase { Training, Validation };
 
-    EpochStats run_epoch(bool is_training_phase,
+    bool should_display(Index epoch) const { return display && epoch % display_period == 0; }
+
+    EpochStats run_epoch(Phase phase,
                          bool is_classification,
                          ForwardPropagation& fp,
                          BackPropagation& bp,
@@ -158,7 +161,7 @@ struct OptimizerData
     void allocate_device();
 #endif
 
-    Memory data;
+    Buffer data;
     vector<TensorView> views;
 
     // Shared state across all optimizers

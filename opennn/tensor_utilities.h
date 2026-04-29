@@ -21,19 +21,14 @@ static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(type);
 
 inline int to_int(Index value) { return static_cast<int>(value); }
 inline type to_type(Index value) { return static_cast<type>(value); }
-static constexpr Index ALIGN_MASK = ~(ALIGN_ELEMENTS - 1);
 
-inline Index get_aligned_size(Index size)
+inline Index align_up(Index n, Index alignment)
 {
-    if (size == 0) return 0;
-    return (size + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
+    return n == 0 ? 0 : (n + alignment - 1) & ~(alignment - 1);
 }
 
-inline Index get_aligned_bytes(Index n_bytes)
-{
-    if (n_bytes == 0) return 0;
-    return (n_bytes + ALIGN_BYTES - 1) & ~(ALIGN_BYTES - 1);
-}
+inline Index get_aligned_size(Index size)     { return align_up(size,    ALIGN_ELEMENTS); }
+inline Index get_aligned_bytes(Index n_bytes) { return align_up(n_bytes, ALIGN_BYTES); }
 
 template<typename Container>
 inline Index ssize(const Container& c) noexcept
@@ -44,12 +39,6 @@ inline Index ssize(const Container& c) noexcept
 inline bool is_aligned(const void* ptr)
 {
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
-}
-
-template<typename Base, typename T>
-inline bool is_instance_of(const T* ptr)
-{
-    return dynamic_cast<const Base*>(ptr);
 }
 
 template <typename Enum>
@@ -84,8 +73,6 @@ struct EnumMap
     }
 };
 
-constexpr cudnnDataType_t     CUDNN_WEIGHT_DTYPE     = CUDNN_DATA_FLOAT;
-constexpr cudaDataType_t      CUDA_WEIGHT_DTYPE      = CUDA_R_32F;
 constexpr cudaDataType_t      CUDA_REDUCTION_DTYPE   = CUDA_R_32F;
 constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_TF32;
 
@@ -101,8 +88,10 @@ inline Index dtype_bytes(cudnnDataType_t t)
 {
     switch (t) {
         case CUDNN_DATA_FLOAT:    return 4;
+        case CUDNN_DATA_INT32:    return 4;
         case CUDNN_DATA_BFLOAT16: return 2;
         case CUDNN_DATA_HALF:     return 2;
+        case CUDNN_DATA_INT8:     return 1;
         default:                  return 4;
     }
 }
@@ -111,8 +100,10 @@ inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t t)
 {
     switch (t) {
         case CUDNN_DATA_FLOAT:    return CUDA_R_32F;
+        case CUDNN_DATA_INT32:    return CUDA_R_32I;
         case CUDNN_DATA_BFLOAT16: return CUDA_R_16BF;
         case CUDNN_DATA_HALF:     return CUDA_R_16F;
+        case CUDNN_DATA_INT8:     return CUDA_R_8I;
         default:                  return CUDA_R_32F;
     }
 }
@@ -120,280 +111,195 @@ inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t t)
 template <typename T>
 class ThreadSafeQueue
 {
-private:
-
-    queue<T> queue_;
-    mutex mutex_;
-    condition_variable cond_;
-
 public:
 
     void push(T item)
     {
-        {
-            lock_guard<mutex> lock(mutex_);
-            queue_.push(move(item));
-        }
+        { lock_guard<mutex> lock(mutex_); queue_.push(std::move(item)); }
         cond_.notify_one();
     }
 
     T pop()
     {
         unique_lock<mutex> lock(mutex_);
-        cond_.wait(lock, [this]() { return !queue_.empty(); });
-        T item = queue_.front();
+        cond_.wait(lock, [this] { return !queue_.empty(); });
+        T item = std::move(queue_.front());
         queue_.pop();
         return item;
     }
 
-    bool empty()
+    bool empty() const
     {
         lock_guard<mutex> lock(mutex_);
         return queue_.empty();
     }
+
+private:
+
+    queue<T> queue_;
+    mutable mutex mutex_;
+    condition_variable cond_;
 };
 
-class Shape
+struct Shape
 {
-public:
-
     static constexpr size_t MaxRank = 4;
+
+    Index  dims[MaxRank] = {0};
+    size_t rank          = 0;
 
     Shape() noexcept = default;
 
-    Shape(size_t n, Index value)
-    {
-        rank_ = (n > MaxRank) ? MaxRank : n;
+    Shape(size_t n, Index value) : rank(min(n, MaxRank))
+    { std::fill_n(dims, rank, value); }
 
-        for (size_t i = 0; i < rank_; ++i)
-            shape_[i] = value;
-    }
+    Shape(initializer_list<Index> list) : rank(min(list.size(), MaxRank))
+    { std::copy_n(list.begin(), rank, dims); }
 
-    Shape(initializer_list<Index> list)
-    {
-        rank_ = min(list.size(), MaxRank);
-        size_t i = 0;
-        for (Index d : list)
-            if (i < rank_)
-                shape_[i++] = d;
-    }
+    const Index* begin() const noexcept { return dims; }
+    const Index* end()   const noexcept { return dims + rank; }
+    const Index& operator[](size_t i) const noexcept { return dims[i]; }
+    Index&       operator[](size_t i)       noexcept { return dims[i]; }
 
-    size_t rank() const noexcept
-    {
-        return rank_;
-    }
+    Index& back()             { if (rank == 0) throw runtime_error("Shape::back() on empty"); return dims[rank - 1]; }
+    const Index& back() const { if (rank == 0) throw runtime_error("Shape::back() on empty"); return dims[rank - 1]; }
 
-    const Index* begin() const noexcept
-    {
-        return shape_;
-    }
-
-    const Index* end() const noexcept
-    {
-        return shape_ + rank_;
-    }
-
-    const Index& operator[](size_t i) const noexcept
-    {
-        return shape_[i];
-    }
-
-    Index& operator[](size_t i) noexcept
-    {
-        return shape_[i];
-    }
-
-    Index& back()
-    {
-        if(rank_ == 0) throw runtime_error("Shape::back() on empty shape");
-        return shape_[rank_ - 1];
-    }
-
-    const Index& back() const
-    {
-        if(rank_ == 0) throw runtime_error("Shape::back() on empty shape");
-        return shape_[rank_ - 1];
-    }
-
-    bool empty() const noexcept
-    {
-        return rank_ == 0;
-    }
+    bool empty() const noexcept { return rank == 0; }
 
     Index size() const noexcept
     {
-        if (rank_ == 0) return 0;
-
-        Index total = shape_[0];
-
-        for (size_t i = 1; i < rank_; ++i)
-            total *= shape_[i];
-
-        return total;
+        return rank == 0 ? 0 : std::accumulate(begin(), end(), Index(1), std::multiplies<>{});
     }
 
-    void clear() noexcept
-    {
-        rank_ = 0;
-    }
-
-    void push_back(Index value) noexcept
-    {
-        if (rank_ < MaxRank)
-            shape_[rank_++] = value;
-    }
+    void clear() noexcept { rank = 0; }
+    void push_back(Index v) noexcept { if (rank < MaxRank) dims[rank++] = v; }
 
     friend ostream& operator<<(ostream& os, const Shape& s)
     {
-        os << "[ ";
-
-        for (size_t i = 0; i < s.rank_; ++i)
-            os << s.shape_[i] << (i < s.rank_ - 1 ? ", " : " ");
-
-        os << "]";
+        os << "[";
+        for (size_t i = 0; i < s.rank; ++i) os << (i ? ", " : " ") << s.dims[i];
+        os << " ]";
         return os;
     }
 
-    bool operator == (const Shape& other) const noexcept
+    bool operator==(const Shape& other) const noexcept
     {
-        if (rank_ != other.rank_) return false;
-
-        for (size_t i = 0; i < rank_; ++i)
-            if (shape_[i] != other.shape_[i]) return false;
-
-        return true;
+        return rank == other.rank && std::equal(begin(), end(), other.begin());
     }
 
-    bool operator != (const Shape& other) const noexcept
-    {
-        return !(*this == other);
-    }
+    bool operator!=(const Shape& other) const noexcept { return !(*this == other); }
 
     Shape& append(const Shape& other)
     {
-        for(size_t i = 0; i < other.rank_ && rank_ < MaxRank; ++i)
-            shape_[rank_++] = other.shape_[i];
-
+        const size_t n = min(other.rank, MaxRank - rank);
+        std::copy_n(other.dims, n, dims + rank);
+        rank += n;
         return *this;
     }
-
-    template<int Rank>
-    Eigen::array<Index, Rank> get_eigen_dims() const {
-        if (Rank != rank_) 
-            throw std::runtime_error("Shape Error: Requested Rank (" + std::to_string(Rank) +
-                                     ") does not match Shape rank (" + std::to_string(rank_) + ").");
-        
-        Eigen::array<Index, Rank> dims;
-
-        for (size_t i = 0; i < Rank; ++i) 
-            dims[i] = shape_[i];
-        
-        return dims;
-    }
-
-private:
-
-    Index shape_[MaxRank] = {0};
-    size_t rank_ = 0;
 };
 
-struct Memory
+enum class DeviceType { Cpu, Gpu };
+
+struct Buffer
 {
-    VectorR vector;
+    void* data = nullptr;
+    Index bytes = 0;
+    DeviceType device_type = DeviceType::Cpu;
 
-    type* data() { return vector.data(); }
-    const type* data() const { return vector.data(); }
-    Index size() const { return vector.size(); }
-    bool empty() const { return vector.size() == 0; }
+    template<typename T> T*       as()       { return static_cast<T*>(data); }
+    template<typename T> const T* as() const { return static_cast<const T*>(data); }
 
-    void resize(Index n) { vector.resize(n); }
-    void setZero() { vector.setZero(); }
-    void setZero(Index n) { vector = VectorR::Zero(n); }
+    Index size()  const { return bytes / Index(sizeof(type)); }   // legacy: assumes T = type
+    bool  empty() const { return bytes == 0; }
 
-    // Device-aware: zeroes host or device storage depending on Device::is_gpu().
-    // Defined out-of-class below because Device is declared later in this header.
-    void setZero_active();
-
-    uint8_t* device_data = nullptr;
-    Index    allocated_bytes = 0;
-
-    Memory() = default;
-    Memory(const Memory&) = delete;
-    Memory& operator=(const Memory&) = delete;
-
-    Memory(Memory&& other) noexcept
-        : vector(std::move(other.vector))
-        , device_data(other.device_data)
-        , allocated_bytes(other.allocated_bytes)
+    void resize_bytes(Index n_bytes, DeviceType t)
     {
-        other.device_data = nullptr;
-        other.allocated_bytes = 0;
+        if(n_bytes == bytes && device_type == t) return;
+        free_buffer();
+        device_type = t;
+        if(n_bytes > 0) data = alloc(t, n_bytes);
+        bytes = n_bytes;
     }
 
-    Memory& operator=(Memory&& other) noexcept
+    void setZero()
     {
-        if(this != &other)
-        {
-            free_device();
-            vector = std::move(other.vector);
-            device_data = other.device_data;
-            allocated_bytes = other.allocated_bytes;
-            other.device_data = nullptr;
-            other.allocated_bytes = 0;
-        }
-        return *this;
+        if(!data) return;
+#ifdef OPENNN_WITH_CUDA
+        if(device_type == DeviceType::Gpu) CHECK_CUDA(cudaMemset(data, 0, bytes));
+        else
+#endif
+            std::memset(data, 0, static_cast<size_t>(bytes));
     }
-
-    ~Memory() { free_device(); }
-
-    type*          device()             { return reinterpret_cast<type*>(device_data); }
-    const type*    device()       const { return reinterpret_cast<const type*>(device_data); }
-    uint8_t*       device_bytes()       { return device_data; }
-    const uint8_t* device_bytes() const { return device_data; }
 
 #ifdef OPENNN_WITH_CUDA
-    void resize_device(Index n_floats) { resize_device_bytes(n_floats * Index(sizeof(float))); }
-
-    void resize_device_bytes(Index n_bytes)
+    // Migrate the buffer to the target side: alloc on target, copy, free source.
+    void migrate_to(DeviceType target)
     {
-        if(n_bytes == allocated_bytes) return;
-        free_device();
-        allocated_bytes = n_bytes;
-        if(n_bytes > 0) CHECK_CUDA(cudaMalloc(&device_data, n_bytes));
+        if(device_type == target || !data) return;
+        void* fresh = alloc(target, bytes);
+        const cudaMemcpyKind kind = (target == DeviceType::Gpu)
+            ? cudaMemcpyHostToDevice : cudaMemcpyDeviceToHost;
+        CHECK_CUDA(cudaMemcpy(fresh, data, bytes, kind));
+        dealloc(device_type, data, bytes);
+        data = fresh;
+        device_type = target;
     }
-
-    void setZero_device()
-    {
-        if(device_data && allocated_bytes > 0)
-            CHECK_CUDA(cudaMemset(device_data, 0, allocated_bytes));
-    }
-
-private:
-    void free_device()
-    {
-        if(device_data) { cudaFree(device_data); device_data = nullptr; allocated_bytes = 0; }
-    }
-#else
-private:
-    void free_device() {}
 #endif
+
+    explicit Buffer(DeviceType t = DeviceType::Cpu) noexcept : device_type(t) {}
+    Buffer(const Buffer&) = delete;
+    Buffer& operator=(const Buffer&) = delete;
+
+    Buffer(Buffer&& o) noexcept : Buffer() { swap(o); }
+    Buffer& operator=(Buffer&& o) noexcept { swap(o); return *this; }
+
+    ~Buffer() { free_buffer(); }
+
+    void swap(Buffer& o) noexcept
+    {
+        std::swap(data, o.data);
+        std::swap(bytes, o.bytes);
+        std::swap(device_type, o.device_type);
+    }
+
+private:
+    static void* alloc(DeviceType t, Index n)
+    {
+#ifdef OPENNN_WITH_CUDA
+        if(t == DeviceType::Gpu) { void* p = nullptr; CHECK_CUDA(cudaMalloc(&p, n)); return p; }
+#endif
+        return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(n));
+    }
+
+    static void dealloc(DeviceType t, void* p, Index n)
+    {
+#ifdef OPENNN_WITH_CUDA
+        if(t == DeviceType::Gpu) { cudaFree(p); return; }
+#endif
+        Eigen::aligned_allocator<uint8_t>{}.deallocate(static_cast<uint8_t*>(p), static_cast<size_t>(n));
+    }
+
+    void free_buffer()
+    {
+        if(data) dealloc(device_type, data, bytes);
+        data = nullptr;
+        bytes = 0;
+    }
 };
 
 struct TensorView
 {
-    TensorView() noexcept = default;
-
-    type* data = nullptr;
+    void* data = nullptr;
 
     Shape shape;
 
     cudnnDataType_t dtype = CUDNN_ACTIVATION_DTYPE;
 
-    TensorView(type* new_data, const Shape& new_shape,
+    TensorView(void* new_data = nullptr, const Shape& new_shape = {},
                cudnnDataType_t new_dtype = CUDNN_ACTIVATION_DTYPE) noexcept
         : data(new_data), shape(new_shape), dtype(new_dtype) {}
 
-    Index get_rank() const noexcept { return shape.rank(); }
+    Index get_rank() const noexcept { return shape.rank; }
 
     Index size() const noexcept { return shape.size(); }
 
@@ -401,20 +307,14 @@ struct TensorView
 
     bool empty() const noexcept { return shape.empty(); }
 
-    template<typename T>       T* as()       noexcept;
-    template<typename T> const T* as() const noexcept;
+    template<typename T> T* as() const noexcept;
 
     // Float-typed view of `data`. Used at CUDA dispatch sites where kernels expect
     // raw float* regardless of the project's `type` alias (e.g. descriptive stats,
     // scaler tables, masks). Mirrors as<T>() but skips the dtype check.
-    float* as_float() noexcept
-    { 
-        return reinterpret_cast<float*>(data); 
-    }
-
-    const float* as_float() const noexcept 
-    { 
-        return reinterpret_cast<const float*>(data); 
+    float* as_float() const noexcept
+    {
+        return reinterpret_cast<float*>(data);
     }
 
     cudaDataType_t cuda_dtype() const noexcept { return cudnn_to_cuda_dtype(dtype); }
@@ -422,141 +322,91 @@ struct TensorView
     template<typename F>
     void dispatch(F&& fn) const
     {
-        if (dtype == CUDNN_DATA_BFLOAT16) fn(__nv_bfloat16{});
-        else                              fn(float{});
+        if      (dtype == CUDNN_DATA_BFLOAT16) fn(__nv_bfloat16{});
+        else if (dtype == CUDNN_DATA_HALF)     fn(__half{});
+        else                                   fn(float{});
     }
 
     TensorView reshape(const Shape& new_shape) const
     { return TensorView(data, new_shape, dtype); }
 
-    void print() const
-    {
-        if(!data || shape.empty())
-        {
-            cout << "TensorView: Empty or Null" << "\n";
-            return;
-        }
-
-        cout << "Shape: " << shape << "\n";
-
-        const Index total_size = size();
-        const Index last_dim_stride = shape.back();
-
-        for(Index i = 0; i < total_size; ++i)
-        {
-            cout << data[i] << " ";
-
-            if (shape.rank() > 1 && (i + 1) % last_dim_stride == 0)
-                cout << "\n";
-        }
-
-        if (shape.rank() == 1 || total_size % last_dim_stride != 0)
-            cout << "\n";
-    }
-
     MatrixMap as_matrix() const
     {
-        assert(data && shape.rank() >= 2);
-        return MatrixMap(data, shape[0], shape.size() / shape[0]);
+        assert(shape.rank >= 2);
+        return MatrixMap(as<float>(), shape[0], shape.size() / shape[0]);
     }
 
     MatrixMap as_matrix(Index batch_index) const
     {
-        assert(data && shape.rank() >= 2);
-        const Index rows = shape[shape.rank() - 2];
-        const Index cols = shape[shape.rank() - 1];
-        return MatrixMap(data + batch_index * rows * cols, rows, cols);
+        assert(shape.rank >= 2);
+        const Index rows = shape[shape.rank - 2];
+        const Index cols = shape[shape.rank - 1];
+        return MatrixMap(as<float>() + batch_index * rows * cols, rows, cols);
     }
 
     MatrixMap as_flat_matrix() const
     {
-        assert(data && shape.rank() >= 1);
-        const Index cols = shape[shape.rank() - 1];
-        return MatrixMap(data, shape.size() / cols, cols);
+        assert(shape.rank >= 1);
+        const Index cols = shape[shape.rank - 1];
+        return MatrixMap(as<float>(), shape.size() / cols, cols);
     }
 
     MatrixMap as_flat_matrix(Index batch_index) const
     {
-        assert(data && shape.rank() >= 2);
-        const Index cols = shape[shape.rank() - 1];
-        Index rows = 1;
-        for (size_t i = 1; i + 1 < shape.rank(); ++i)
-            rows *= shape[i];
-        return MatrixMap(data + batch_index * rows * cols, rows, cols);
+        assert(shape.rank >= 2);
+        const Index cols = shape[shape.rank - 1];
+        const Index rows = shape.size() / (shape[0] * cols);
+        return MatrixMap(as<float>() + batch_index * rows * cols, rows, cols);
     }
 
     VectorMap as_vector() const
     {
-        assert(data);
-        return VectorMap(data, shape.size());
+        return VectorMap(as<float>(), shape.size());
     }
 
     template<int Rank>
     TensorMapR<Rank> as_tensor() const
     {
-        assert(data && shape.rank() == Rank);
-        return TensorMapR<Rank>(data, shape.template get_eigen_dims<Rank>());
+        assert(shape.rank == Rank);
+        Eigen::array<Index, Rank> dims;
+        std::copy_n(shape.dims, Rank, dims.begin());
+        return TensorMapR<Rank>(as<float>(), dims);
     }
 
     template<int Rank>
     TensorMapR<Rank> as_tensor(Index batch_index) const
     {
-        assert(data && shape.rank() == Rank + 1);
+        assert(shape.rank == Rank + 1);
         Eigen::array<Index, Rank> dims;
-        Index slice_size = 1;
-        for(int i = 0; i < Rank; ++i)
-        {
-            dims[i] = shape[i + 1];
-            slice_size *= shape[i + 1];
-        }
-        return TensorMapR<Rank>(data + batch_index * slice_size, dims);
+        for(int i = 0; i < Rank; ++i) dims[i] = shape[i + 1];
+        const Index slice_size = shape.size() / shape[0];
+        return TensorMapR<Rank>(as<float>() + batch_index * slice_size, dims);
     }
 
     void fill(float value);
 
 #ifdef OPENNN_WITH_CUDA
 
-    float* device = nullptr;
-
     mutable shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
-
-    TensorView(float* new_data, std::shared_ptr<cudnnTensorStruct> handle)
-        : data(new_data), descriptor_handle(handle) {}
-
-    explicit TensorView(const Shape& new_shape)
-        : shape(new_shape)
-    {
-        set_descriptor(new_shape);
-    }
 
     cudnnTensorDescriptor_t get_descriptor() const
     {
         if (!descriptor_handle && !shape.empty())
             set_descriptor(shape);
-        return descriptor_handle ? descriptor_handle.get() : nullptr;
+        return descriptor_handle.get();
     }
 
-    void set_descriptor(const Shape& desc_shape) const
+private:
+    void set_descriptor(const Shape& s) const
     {
+        // NHWC layout: N first, then H, W, C trailing. For rank < 4 the
+        // missing leading dims default to 1.
         int n = 1, c = 1, h = 1, w = 1;
-        if (desc_shape.rank() == 4) {
-            n = static_cast<int>(desc_shape[0]);
-            h = static_cast<int>(desc_shape[1]);
-            w = static_cast<int>(desc_shape[2]);
-            c = static_cast<int>(desc_shape[3]);
-        }
-        else if (desc_shape.rank() == 3) {
-            n = static_cast<int>(desc_shape[0]);
-            w = static_cast<int>(desc_shape[1]);
-            c = static_cast<int>(desc_shape[2]);
-        }
-        else if (desc_shape.rank() == 2) {
-            n = static_cast<int>(desc_shape[0]);
-            c = static_cast<int>(desc_shape[1]);
-        }
-        else if (desc_shape.rank() == 1) {
-            c = static_cast<int>(desc_shape[0]);
-        }
+        const size_t r = s.rank;
+        if (r >= 1) c = static_cast<int>(s[r - 1]);
+        if (r >= 2) n = static_cast<int>(s[0]);
+        if (r >= 3) w = static_cast<int>(s[r - 2]);
+        if (r >= 4) h = static_cast<int>(s[r - 3]);
 
         if (n <= 0 || c <= 0 || h <= 0 || w <= 0)
             return;
@@ -564,41 +414,25 @@ struct TensorView
         if (!descriptor_handle)
         {
             cudnnTensorDescriptor_t raw_desc;
-            if (cudnnCreateTensorDescriptor(&raw_desc) != CUDNN_STATUS_SUCCESS)
-                throw runtime_error("TensorView: Failed to create descriptor.");
+            CHECK_CUDNN(cudnnCreateTensorDescriptor(&raw_desc));
 
             descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
-                if (p) cudnnDestroyTensorDescriptor(p);
+                cudnnDestroyTensorDescriptor(p);
             });
         }
 
         CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, dtype, n, c, h, w));
     }
 
-    Index device_size() const
-    {
-        if (!descriptor_handle) return 0;
-
-        constexpr int REQUESTED_DIMS = CUDNN_DIM_MAX;
-        cudnnDataType_t dataType;
-        int nbDims = 0, dimA[REQUESTED_DIMS], strideA[REQUESTED_DIMS];
-
-        CHECK_CUDNN(cudnnGetTensorNdDescriptor(descriptor_handle.get(), REQUESTED_DIMS, &dataType, &nbDims, dimA, strideA));
-
-        Index total_elements = 1;
-        for (int i = 0; i < nbDims; ++i)
-            total_elements *= static_cast<Index>(dimA[i]);
-        return total_elements;
-    }
-
 #endif
 
 };
 
-template<> inline       float*         TensorView::as<float>()               noexcept { assert(dtype == CUDNN_DATA_FLOAT);    return reinterpret_cast<float*>(data); }
-template<> inline const float*         TensorView::as<float>()         const noexcept { assert(dtype == CUDNN_DATA_FLOAT);    return reinterpret_cast<const float*>(data); }
-template<> inline       __nv_bfloat16* TensorView::as<__nv_bfloat16>()       noexcept { assert(dtype == CUDNN_DATA_BFLOAT16); return reinterpret_cast<__nv_bfloat16*>(data); }
-template<> inline const __nv_bfloat16* TensorView::as<__nv_bfloat16>() const noexcept { assert(dtype == CUDNN_DATA_BFLOAT16); return reinterpret_cast<const __nv_bfloat16*>(data); }
+template<> inline float*         TensorView::as<float>()         const noexcept { assert(data && dtype == CUDNN_DATA_FLOAT);    return reinterpret_cast<float*>(data); }
+template<> inline __nv_bfloat16* TensorView::as<__nv_bfloat16>() const noexcept { assert(data && dtype == CUDNN_DATA_BFLOAT16); return reinterpret_cast<__nv_bfloat16*>(data); }
+template<> inline __half*        TensorView::as<__half>()        const noexcept { assert(data && dtype == CUDNN_DATA_HALF);     return reinterpret_cast<__half*>(data); }
+template<> inline int8_t*        TensorView::as<int8_t>()        const noexcept { assert(data && dtype == CUDNN_DATA_INT8);     return reinterpret_cast<int8_t*>(data); }
+template<> inline int32_t*       TensorView::as<int32_t>()       const noexcept { assert(data && dtype == CUDNN_DATA_INT32);    return reinterpret_cast<int32_t*>(data); }
 
 inline bool row_finite(const VectorR& v, Index i) { return isfinite(v(i)); }
 inline bool row_finite(const MatrixR& m, Index i) { return m.row(i).array().isFinite().all(); }
@@ -637,80 +471,13 @@ pair<X, Y> filter_missing_values(const X& x, const Y& y)
 
 void shuffle_rows(MatrixR& matrix);
 
-type* link(type*, const vector<TensorView*>&);
-void link(type*, const vector<vector<TensorView*>>&);
-
-inline Index get_size(const vector<Shape>& shapes)
-{
-    Index total = 0;
-
-    for(const Shape& s : shapes)
-    {
-        const Index n = s.size();
-        if(n > 0)
-            total += (n + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
-    }
-
-    return total;
-}
-
-inline Index get_size(const vector<vector<Shape>>& shapes)
-{
-    Index total = 0;
-
-    for(const auto& layer_shapes : shapes)
-        total += get_size(layer_shapes);
-
-    return total;
-}
-
-Index get_size(const vector<TensorView*>&);
-Index get_size(const vector<vector<TensorView*>>&);
-
 template<typename T, size_t N>
 using array = Eigen::array<T, N>;
 
-template <typename Index>
-Eigen::array<IndexPair<Index>, 1> axes(const Index a, Index b)
-{
-    return Eigen::array<IndexPair<Index>, 1>({IndexPair<Index>(a, b)});
-}
-
-template <typename Index>
-Eigen::array<IndexPair<Index>, 2> axes(const Index a1, Index b1, Index a2, Index b2)
-{
-    return Eigen::array<IndexPair<Index>, 2>({IndexPair<Index>(a1, b1), IndexPair<Index>(a2, b2)});
-}
-
-inline Eigen::array<Index, 1> array_1(const Index a)
-{
-    return Eigen::array<Index, 1>({a});
-}
-
-inline Eigen::array<Index, 2> array_2(const Index a, Index b)
-{
-    return Eigen::array<Index, 2>({a, b});
-}
-
-inline Eigen::array<Index, 3> array_3(const Index a, Index b, Index c)
-{
-    return Eigen::array<Index, 3>({a, b, c});
-}
-
-inline Eigen::array<Index, 4> array_4(const Index a, Index b, Index c, Index d)
-{
-    return Eigen::array<Index, 4>({a, b, c, d});
-}
-
 inline bool is_contiguous(const vector<Index>& v)
 {
-    const type first = v[0];
-
-    for (size_t i = 0; i < v.size(); ++i)
-        if (v[i] != first + Index(i))
-            return false;
-
-    return true;
+    return std::adjacent_find(v.begin(), v.end(),
+        [](Index a, Index b) { return b != a + 1; }) == v.end();
 }
 
 template <typename T>
@@ -753,12 +520,6 @@ inline bool is_constant(const T& tensor)
                   [val](type v) { return isnan(v) || abs(val - v) <= numeric_limits<float>::min(); });
 }
 
-template<int rank>
-Index count_NAN(const TensorR<rank>& x)
-{
-    return count_if(x.data(), x.data() + x.size(), [](type value) {return std::isnan(value); });
-}
-
 inline vector<Index> get_true_indices(const VectorB& v)
 {
     vector<Index> indices;
@@ -771,85 +532,21 @@ inline vector<Index> get_true_indices(const VectorB& v)
     return indices;
 }
 
-Index count_greater_than(const vector<Index>&, Index);
-
 VectorI calculate_rank(const VectorR&, bool ascending = true);
 
 vector<Index> get_elements_greater_than(const vector<Index>&, Index);
-vector<Index> get_elements_greater_than(const vector<vector<Index>>&, Index);
 
 VectorI get_nearest_points(const MatrixR& ,const VectorR& , int = 1);
 
 void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true, int contiguous = -1);
 
-template <typename Type, int Rank>
-bool contains(const TensorR<Rank>& tensor, const Type& value)
-{
-    return find(tensor.data(), tensor.data() + tensor.size(), value) != (tensor.data() + tensor.size());
-}
-
-template <typename Derived, typename T>
-bool contains(const Eigen::MatrixBase<Derived>& vector, const T& value)
-{
-    const auto* begin = vector.derived().data();
-    const auto* end = begin + vector.size();
-
-    return find(begin, end, value) != end;
-}
-
-
 VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
-
-template <typename T>
-void push_back(Tensor<T, 1, AlignedMax>& tensor, const T& value)
-{
-    const Index old_size = tensor.dimension(0);
-
-    Tensor<T, 1> new_tensor(old_size + 1);
-
-    memcpy(new_tensor.data(), tensor.data(), old_size * sizeof(T));
-
-    new_tensor(old_size) = value;
-
-    tensor = new_tensor;
-}
 
 string shape_to_string(const Shape&, const string& = " ");
 Shape string_to_shape(const string&, const string& = " ");
 
 VectorMap vector_map(const MatrixR&, Index);
 
-MatrixMap matrix_map(const Tensor3&, Index);
-TensorMap3 tensor_map(const Tensor4&, Index);
-MatrixMap matrix_map(const Tensor4&, Index, Index);
-
-inline VectorMap vector_map(const TensorView& tensor_view)
-{
-    assert(tensor_view.data);
-    assert(reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES == 0);
-
-    return VectorMap(tensor_view.data, tensor_view.size());
-}
-
-inline MatrixMap matrix_map(const TensorView& tensor_view)
-{
-    assert(tensor_view.data);
-    assert(reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES == 0);
-
-    return MatrixMap(tensor_view.data, tensor_view.shape[0], tensor_view.size() / tensor_view.shape[0]);
-}
-
-template <Index rank>
-TensorMapR<rank> tensor_map(const TensorView& tensor_view)
-{
-    assert(tensor_view.data);
-    assert(reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES == 0);
-
-    if (tensor_view.get_rank() != rank)
-        throw runtime_error("Dimensions is " + to_string(tensor_view.get_rank()) + " and must be " + to_string(rank));
-
-    return TensorMapR<rank>(tensor_view.data, tensor_view.shape.get_eigen_dims<rank>());
-}
 
 template <typename T>
 size_t get_maximum_size(const vector<vector<T>>& v)
@@ -878,54 +575,6 @@ ostream& operator << (ostream& os, const vector<T>& vec)
     os << " ]";
     return os;
 }
-
-template<class T, int n>
-VectorI get_shape(const Tensor<T, n, AlignedMax>& tensor)
-{
-    return Eigen::Map<const VectorI>(tensor.dimensions().data(), n);
-}
-
-template <typename T, typename Value>
-inline bool is_equal(const T& tensor,
-                     const Value& value,
-                     const Value& tolerance = Value(1.0e-3))
-{
-    const auto* data = tensor.data();
-    const Index size = tensor.size();
-
-    if constexpr (is_same_v<Value, bool>)
-    {
-        for(Index i = 0; i < size; ++i)
-            if (data[i] != value)
-                return false;
-    }
-    else
-    {
-        for(Index i = 0; i < size; ++i)
-            if(std::abs(data[i] - value) > tolerance)
-                return false;
-    }
-
-    return true;
-}
-
-template <typename T, typename U>
-inline bool are_equal(const T& A, const U& B, type tolerance = type(1.0e-3))
-{
-    if(A.size() != B.size())
-        throw runtime_error("are_equal: sizes are different.");
-
-    const type* a = A.data();
-    const type* b = B.data();
-
-    for(Index i = 0; i < A.size(); ++i)
-        if(abs(a[i] - b[i]) > tolerance)
-            return false;
-
-    return true;
-}
-
-enum class DeviceType { Cpu, Gpu };
 
 #ifdef OPENNN_WITH_CUDA
 
@@ -959,11 +608,11 @@ struct LtMatmulPlan
     }
     ~LtMatmulPlan()
     {
-        if(d_desc)  cublasLtMatrixLayoutDestroy(d_desc);
-        if(c_desc)  cublasLtMatrixLayoutDestroy(c_desc);
-        if(b_desc)  cublasLtMatrixLayoutDestroy(b_desc);
-        if(a_desc)  cublasLtMatrixLayoutDestroy(a_desc);
-        if(op_desc) cublasLtMatmulDescDestroy(op_desc);
+        cublasLtMatrixLayoutDestroy(d_desc);
+        cublasLtMatrixLayoutDestroy(c_desc);
+        cublasLtMatrixLayoutDestroy(b_desc);
+        cublasLtMatrixLayoutDestroy(a_desc);
+        cublasLtMatmulDescDestroy(op_desc);
     }
 };
 
@@ -1017,7 +666,6 @@ public:
     void set_threads_number(int num_threads);
 
     void set(DeviceType type);
-    DeviceType get_type() const { return device_type; }
     bool is_gpu() const { return device_type == DeviceType::Gpu; }
     bool is_cpu() const { return device_type == DeviceType::Cpu; }
 
@@ -1133,14 +781,6 @@ inline ThreadPoolDevice& get_device()
     return *Device::instance().get_thread_pool_device();
 }
 
-inline void Memory::setZero_active()
-{
-#ifdef OPENNN_WITH_CUDA
-    if(Device::instance().is_gpu()) { setZero_device(); return; }
-#endif
-    vector.setZero();
-}
-
 inline void TensorView::fill(float value)
 {
     if(!data) return;
@@ -1161,7 +801,8 @@ inline void TensorView::fill(float value)
 #endif
 
     assert(dtype == CUDNN_DATA_FLOAT);
-    std::fill(data, data + size(), value);
+    float* p = static_cast<float*>(data);
+    std::fill(p, p + size(), value);
 }
 
 #ifdef OPENNN_WITH_CUDA

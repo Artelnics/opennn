@@ -71,9 +71,8 @@ void Embedding::set(const Index new_vocabulary_size,
 #ifdef OPENNN_WITH_CUDA
 
     const Index pe_size = new_sequence_length * new_embedding_dimension;
-    positional_encoding_device.resize(pe_size);
-    positional_encoding_device.resize_device(pe_size);
-    CHECK_CUDA(cudaMemcpy(positional_encoding_device.device(),
+    positional_encoding_device.resize_bytes(pe_size * Index(sizeof(float)), DeviceType::Gpu);
+    CHECK_CUDA(cudaMemcpy(positional_encoding_device.as<type>(),
                           positional_encoding.data(),
                           pe_size * sizeof(float),
                           cudaMemcpyHostToDevice));
@@ -87,7 +86,7 @@ void Embedding::set_parameters_random()
 {
     if(parameters[Weight].empty()) return;
 
-    MatrixMap weights = matrix_map(parameters[Weight]);
+    MatrixMap weights = parameters[Weight].as_matrix();
     set_random_normal(weights, type(0), type(1));
 
     weights.row(0).setZero();
@@ -99,7 +98,7 @@ void Embedding::set_parameters_glorot()
 
     const type limit = sqrt(type(6.0) / (vocabulary_size + embedding_dimension));
 
-    MatrixMap weights = matrix_map(parameters[Weight]);
+    MatrixMap weights = parameters[Weight].as_matrix();
 
     weights.setRandom();
     weights *= limit;
@@ -155,7 +154,7 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
         const Index total_elements = batch_size * sequence_length * embedding_dimension;
 
         const float* positional_encoding_data = add_positional_encoding
-            ? positional_encoding_device.device()
+            ? positional_encoding_device.as<type>()
             : nullptr;
 
         TensorView& output_view = forward_views[Output][0];
@@ -177,11 +176,11 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
         const Index total_tokens = batch_size * sequence_length;
 
         const TensorView& output_view = forward_views[Output][0];
-        MatrixMap outputs(output_view.data, total_tokens, embedding_dimension);
+        MatrixMap outputs(output_view.as<float>(), total_tokens, embedding_dimension);
 
-        const MatrixMap weights(parameters[Weight].data, vocabulary_size, embedding_dimension);
+        const MatrixMap weights(parameters[Weight].as<float>(), vocabulary_size, embedding_dimension);
 
-        const type* input_indices = forward_views[Input][0].data;
+        const type* input_indices = forward_views[Input][0].as<float>();
 
         static std::atomic<bool> out_of_range_warned{false};
 

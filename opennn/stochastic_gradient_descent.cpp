@@ -90,8 +90,8 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         sgd_update_cuda(
             parameters_number,
             neural_network->get_parameters_device(),
-            optimization_data.views[ParameterUpdate].data,
-            back_propagation.gradient.device(),
+            optimization_data.views[ParameterUpdate].as<float>(),
+            back_propagation.gradient.as<type>(),
             current_learning_rate,
             momentum,
             nesterov);
@@ -103,13 +103,15 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     }
 #endif
 
-    VectorR& parameters = neural_network->get_parameters();
+    VectorMap parameters(neural_network->get_parameters_data(),
+                         neural_network->get_parameters_size());
 
-    const VectorR& gradient = back_propagation.gradient.vector;
+    VectorMap gradient(back_propagation.gradient.as<type>(),
+                       back_propagation.gradient.size());
 
-    VectorMap parameter_updates(optimization_data.views[ParameterUpdate].data,
+    VectorMap parameter_updates(optimization_data.views[ParameterUpdate].as<float>(),
                                 optimization_data.views[ParameterUpdate].size());
-    VectorMap last_parameter_updates(optimization_data.views[LastParameterUpdate].data,
+    VectorMap last_parameter_updates(optimization_data.views[LastParameterUpdate].as<float>(),
                                      optimization_data.views[LastParameterUpdate].size());
 
     const Index n = parameters.size();
@@ -278,13 +280,13 @@ TrainingResults StochasticGradientDescent::train()
 
     for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
-        if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << "\n";
+        if(should_display(epoch)) cout << "Epoch: " << epoch << "\n";
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
         current_learning_rate = initial_learning_rate / (type(1) + type(epoch) * initial_decay);
 
-        const EpochStats train_stats = run_epoch(true,
+        const EpochStats train_stats = run_epoch(Phase::Training,
                                                  is_classification_model,
                                                  training_forward_propagation,
                                                  training_back_propagation,
@@ -304,7 +306,7 @@ TrainingResults StochasticGradientDescent::train()
         {
             dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
 
-            const EpochStats val_stats = run_epoch(false,
+            const EpochStats val_stats = run_epoch(Phase::Validation,
                                                    is_classification_model,
                                                    *validation_forward_propagation,
                                                    *validation_back_propagation,
@@ -326,7 +328,7 @@ TrainingResults StochasticGradientDescent::train()
 
         elapsed_time = get_elapsed_time(beginning_time);
 
-        if(display && epoch % display_period == 0)
+        if(should_display(epoch))
         {
             cout << "Training error: " << training_error << "\n";
             if(is_classification_model) cout << "Training accuracy: " << training_accuracy << "\n";

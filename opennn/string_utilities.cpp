@@ -120,29 +120,6 @@ vector<string> get_tokens(const string& text, const string& separator)
     return tokens;
 }
 
-vector<string_view> get_tokens_fast(string_view text, string_view separator)
-{
-    vector<string_view> tokens;
-
-    size_t start = 0;
-
-    while (start < text.length())
-    {
-        const size_t end = text.find(separator, start);
-
-        if (end == string_view::npos)
-        {
-            tokens.push_back(text.substr(start));
-            break;
-        }
-
-        tokens.push_back(text.substr(start, end - start));
-        start = end + separator.length();
-    }
-
-    return tokens;
-}
-
 vector<string> convert_string_vector(const vector<vector<string>>& input_vector, const string& separator)
 {
     vector<string> vector_result;
@@ -496,33 +473,6 @@ string get_time(type time)
     return elapsed_time.str();
 }
 
-void replace_substring_in_string (vector<string>& tokens, string& expression, const string& keyword)
-{
-    string::size_type previous_pos = 0;
-
-    for(const string& token : tokens)
-    {
-        const string new_word = keyword + " " + token;
-
-        string::size_type position = 0;
-
-        while((position = expression.find(token, position)) != string::npos)
-        {
-            if(position > previous_pos)
-            {
-                expression.replace(position, token.length(), new_word);
-                position += new_word.length();
-                previous_pos = position;
-                break;
-            }
-            else
-            {
-                position += new_word.length();
-            }
-        }
-    }
-}
-
 void display_progress_bar(const int& completed, const int& total)
 {
     const int width = 100;
@@ -536,36 +486,6 @@ void display_progress_bar(const int& completed, const int& total)
 
     cout << "] " << int(progress * 100.0) << " %\r";
     cout.flush();
-}
-
-string vector_to_string(const VectorI& x, const string& separator)
-{
-    ostringstream buffer;
-
-    for(Index i = 0; i < x.size(); ++i)
-        buffer << x(i) << separator;
-
-    return buffer.str();
-}
-
-string vector_to_string(const VectorR& x, const string& separator)
-{
-    ostringstream buffer;
-
-    for(Index i = 0; i < x.size(); ++i)
-        buffer << x(i) << separator;
-
-    return buffer.str();
-}
-
-string vector_to_string(const VectorMap& x, const string& separator)
-{
-    ostringstream buffer;
-
-    for(Index i = 0; i < x.size(); ++i)
-        buffer << x(i) << separator;
-
-    return buffer.str();
 }
 
 void string_to_vector(const string& input, VectorR& x)

@@ -89,12 +89,12 @@ public:
 
     void set(const Shape& new_input_shape = {})
     {
-        if (!new_input_shape.empty() && new_input_shape.rank() != Rank -1)
+        if (!new_input_shape.empty() && new_input_shape.rank != Rank -1)
         {
            ostringstream buffer;
            buffer << "OpenNN Exception: Scaling Layer.\n"
                   << "void set(const Shape& new_input_shape) method.\n"
-                  << "Input shape size must be " << Rank - 1 << ", but is " << new_input_shape.rank() << ".\n";
+                  << "Input shape size must be " << Rank - 1 << ", but is " << new_input_shape.rank << ".\n";
            throw logic_error(buffer.str());
         }
 
@@ -138,16 +138,16 @@ public:
         if(ssize(states) < 5) return next;
 
         if(states[Means].data)
-            VectorMap(states[Means].data, states[Means].size()).setZero();
+            VectorMap(states[Means].template as<float>(), states[Means].size()).setZero();
         if(states[StandardDeviations].data)
-            VectorMap(states[StandardDeviations].data, states[StandardDeviations].size()).setOnes();
+            VectorMap(states[StandardDeviations].template as<float>(), states[StandardDeviations].size()).setOnes();
         if(states[Minimums].data)
-            VectorMap(states[Minimums].data, states[Minimums].size()).setConstant(type(-1));
+            VectorMap(states[Minimums].template as<float>(), states[Minimums].size()).setConstant(type(-1));
         if(states[Maximums].data)
-            VectorMap(states[Maximums].data, states[Maximums].size()).setOnes();
+            VectorMap(states[Maximums].template as<float>(), states[Maximums].size()).setOnes();
         if(states[Scalers].data && ssize(scalers) == states[Scalers].size())
             for(size_t i = 0; i < scalers.size(); ++i)
-                states[Scalers].data[i] = static_cast<type>(scalers[i]);
+                states[Scalers].template as<float>()[i] = static_cast<type>(scalers[i]);
 
         return next;
     }
@@ -174,10 +174,10 @@ public:
 
         for(Index i = 0; i < n; ++i)
         {
-            states[Means].data[i]              = desc[i].mean;
-            states[StandardDeviations].data[i] = desc[i].standard_deviation;
-            states[Minimums].data[i]           = desc[i].minimum;
-            states[Maximums].data[i]           = desc[i].maximum;
+            states[Means].template as<float>()[i]              = desc[i].mean;
+            states[StandardDeviations].template as<float>()[i] = desc[i].standard_deviation;
+            states[Minimums].template as<float>()[i]           = desc[i].minimum;
+            states[Maximums].template as<float>()[i]           = desc[i].maximum;
         }
     }
 
@@ -241,8 +241,8 @@ public:
         buffer.precision(10);
 
         const Index inputs_number = get_output_shape().size();
-        const type* mins = states[Minimums].data;
-        const type* maxs = states[Maximums].data;
+        const type* mins = states[Minimums].template as<float>();
+        const type* maxs = states[Maximums].template as<float>();
         for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = 2*(" << input_names[i] << "-(" << mins[i]
                    << "))/(" << maxs[i] << "-(" << mins[i] << "))-1;\n";
@@ -256,8 +256,8 @@ public:
         buffer.precision(10);
 
         const Index inputs_number = get_output_shape().size();
-        const type* mns = states[Means].data;
-        const type* sds = states[StandardDeviations].data;
+        const type* mns = states[Means].template as<float>();
+        const type* sds = states[StandardDeviations].template as<float>();
         for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = (" << input_names[i] << "-(" << mns[i]
                    << "))/" << sds[i] << ";\n";
@@ -271,7 +271,7 @@ public:
         buffer.precision(10);
 
         const Index inputs_number = get_output_shape().size();
-        const type* sds = states[StandardDeviations].data;
+        const type* sds = states[StandardDeviations].template as<float>();
         for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = " << input_names[i] << "/(" << sds[i] << ");\n";
 
@@ -306,19 +306,19 @@ public:
         VectorR tmp;
         string_to_vector(read_xml_string(scaling_layer_element, "Means"), tmp);
         if(tmp.size() == states[Means].size())
-            VectorMap(states[Means].data, states[Means].size()) = tmp;
+            VectorMap(states[Means].template as<float>(), states[Means].size()) = tmp;
 
         string_to_vector(read_xml_string(scaling_layer_element, "StandardDeviations"), tmp);
         if(tmp.size() == states[StandardDeviations].size())
-            VectorMap(states[StandardDeviations].data, states[StandardDeviations].size()) = tmp;
+            VectorMap(states[StandardDeviations].template as<float>(), states[StandardDeviations].size()) = tmp;
 
         string_to_vector(read_xml_string(scaling_layer_element, "Minimums"), tmp);
         if(tmp.size() == states[Minimums].size())
-            VectorMap(states[Minimums].data, states[Minimums].size()) = tmp;
+            VectorMap(states[Minimums].template as<float>(), states[Minimums].size()) = tmp;
 
         string_to_vector(read_xml_string(scaling_layer_element, "Maximums"), tmp);
         if(tmp.size() == states[Maximums].size())
-            VectorMap(states[Maximums].data, states[Maximums].size()) = tmp;
+            VectorMap(states[Maximums].template as<float>(), states[Maximums].size()) = tmp;
     }
 
     void to_XML(XmlPrinter& printer) const override
@@ -353,7 +353,7 @@ private:
         if(ssize(states) <= Scalers || !states[Scalers].data) return;
         if(ssize(scalers) != states[Scalers].size()) return;
         for(size_t i = 0; i < scalers.size(); ++i)
-            states[Scalers].data[i] = static_cast<type>(scalers[i]);
+            states[Scalers].template as<float>()[i] = static_cast<type>(scalers[i]);
     }
 
     Shape input_shape;

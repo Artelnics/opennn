@@ -196,7 +196,8 @@ void GeneticAlgorithm::evaluate_population()
 
         training_results = training_strategy->train();
 
-        individual_parameters(i) = neural_network->get_parameters();
+        individual_parameters(i) = VectorMap(neural_network->get_parameters_data(),
+                                              neural_network->get_parameters_size());
 
         training_errors(i) = training_results.get_training_error();
         validation_errors(i) = training_results.get_validation_error();
@@ -594,7 +595,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
         scaling_layer->set_scalers(input_variable_scalers);
     }
 
-    if(input_selection_results.optimal_parameters.size() == neural_network->get_parameters().size())
+    if(input_selection_results.optimal_parameters.size() == neural_network->get_parameters_size())
     {
         neural_network->set_parameters(input_selection_results.optimal_parameters);
     }

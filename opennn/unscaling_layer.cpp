@@ -93,10 +93,10 @@ void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 
     for(Index i = 0; i < n; ++i)
     {
-        states[Means].data[i]              = new_descriptives[i].mean;
-        states[StandardDeviations].data[i] = new_descriptives[i].standard_deviation;
-        states[Minimums].data[i]           = new_descriptives[i].minimum;
-        states[Maximums].data[i]           = new_descriptives[i].maximum;
+        states[Means].as<float>()[i]              = new_descriptives[i].mean;
+        states[StandardDeviations].as<float>()[i] = new_descriptives[i].standard_deviation;
+        states[Minimums].as<float>()[i]           = new_descriptives[i].minimum;
+        states[Maximums].as<float>()[i]           = new_descriptives[i].maximum;
     }
 }
 
@@ -131,16 +131,16 @@ type* Unscaling::link_states(type* pointer)
     if(ssize(states) < 5) return next;
 
     if(states[Means].data)
-        VectorMap(states[Means].data, states[Means].size()).setZero();
+        VectorMap(states[Means].as<float>(), states[Means].size()).setZero();
     if(states[StandardDeviations].data)
-        VectorMap(states[StandardDeviations].data, states[StandardDeviations].size()).setOnes();
+        VectorMap(states[StandardDeviations].as<float>(), states[StandardDeviations].size()).setOnes();
     if(states[Minimums].data)
-        VectorMap(states[Minimums].data, states[Minimums].size()).setConstant(type(-1));
+        VectorMap(states[Minimums].as<float>(), states[Minimums].size()).setConstant(type(-1));
     if(states[Maximums].data)
-        VectorMap(states[Maximums].data, states[Maximums].size()).setOnes();
+        VectorMap(states[Maximums].as<float>(), states[Maximums].size()).setOnes();
     if(states[Scalers].data && ssize(scalers) == states[Scalers].size())
         for(size_t i = 0; i < scalers.size(); ++i)
-            states[Scalers].data[i] = static_cast<type>(scalers[i]);
+            states[Scalers].as<float>()[i] = static_cast<type>(scalers[i]);
 
     return next;
 }
@@ -153,7 +153,7 @@ void Unscaling::flush_scalers_to_states()
     if(ssize(states) <= Scalers || !states[Scalers].data) return;
     if(ssize(scalers) != states[Scalers].size()) return;
     for(size_t i = 0; i < scalers.size(); ++i)
-        states[Scalers].data[i] = static_cast<type>(scalers[i]);
+        states[Scalers].as<float>()[i] = static_cast<type>(scalers[i]);
 }
 
 // Forward propagation
@@ -236,10 +236,10 @@ void Unscaling::load_state_from_XML(const XmlDocument& document)
             const vector<string> tokens = get_tokens(descriptives_element->get_text(), " ");
             if(tokens.size() >= 4 && i < states[Minimums].size())
             {
-                states[Minimums].data[i]           = type(stof(tokens[0]));
-                states[Maximums].data[i]           = type(stof(tokens[1]));
-                states[Means].data[i]              = type(stof(tokens[2]));
-                states[StandardDeviations].data[i] = type(stof(tokens[3]));
+                states[Minimums].as<float>()[i]           = type(stof(tokens[0]));
+                states[Maximums].as<float>()[i]           = type(stof(tokens[1]));
+                states[Means].as<float>()[i]              = type(stof(tokens[2]));
+                states[StandardDeviations].as<float>()[i] = type(stof(tokens[3]));
             }
         }
 
@@ -256,10 +256,10 @@ void Unscaling::to_XML(XmlPrinter& printer) const
     add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
 
     const bool have_state = (ssize(states) > StandardDeviations && states[Means].data);
-    const type* mins = have_state ? states[Minimums].data           : nullptr;
-    const type* maxs = have_state ? states[Maximums].data           : nullptr;
-    const type* mns  = have_state ? states[Means].data              : nullptr;
-    const type* sds  = have_state ? states[StandardDeviations].data : nullptr;
+    const type* mins = have_state ? states[Minimums].as<float>()           : nullptr;
+    const type* maxs = have_state ? states[Maximums].as<float>()           : nullptr;
+    const type* mns  = have_state ? states[Means].as<float>()              : nullptr;
+    const type* sds  = have_state ? states[StandardDeviations].as<float>() : nullptr;
 
     for(Index i = 0; i < output_shape[0]; ++i)
     {
