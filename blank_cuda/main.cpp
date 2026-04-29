@@ -26,7 +26,7 @@ int main()
 
 #ifdef OPENNN_WITH_CUDA
 
-        Device::instance().set(DeviceType::Gpu);
+        Configuration::instance().set(DeviceType::Auto, TrainingPrecision::Auto, InferencePrecision::Auto);
 
         set_seed(42);
 

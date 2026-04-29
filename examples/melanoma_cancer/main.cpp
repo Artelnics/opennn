@@ -57,7 +57,7 @@ int main()
         adam->set_batch_size(16);
         adam->set_maximum_epochs(50);
 
-        Device::instance().set(DeviceType::Gpu);
+        Configuration::instance().set(DeviceType::Auto, TrainingPrecision::Auto, InferencePrecision::Auto);
 
         training_strategy.train();
 

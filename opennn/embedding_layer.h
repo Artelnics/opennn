@@ -52,6 +52,21 @@ public:
         return {{batch_size, sequence_length}};
     }
 
+    // Positional encoding lives in the NN-owned `states` arena: it is read-only,
+    // independent of batch_size, and persists across iterations — same lifecycle
+    // as Scaling's descriptive stats or BatchNorm's running mean/variance.
+    // Slot is empty when add_positional_encoding=false.
+    vector<Shape> get_state_shapes() const override
+    {
+        if (!add_positional_encoding) return {};
+        return {{sequence_length, embedding_dimension}};
+    }
+
+    // Runs after NeuralNetwork::compile() allocates the states arena. Writes
+    // the sinusoidal table directly into the slot so we never need a separate
+    // Buffer/MatrixR member or an explicit H2D copy.
+    type* link_states(type* pointer) override;
+
     void set(const Index = 0,
              Index = 0,
              Index = 0,
@@ -85,13 +100,10 @@ public:
     void init_cuda(Index batch_size);
 #endif
 
-    void copy_positional_encoding_device();
-
 private:
 
-    Buffer positional_encoding_device{DeviceType::Gpu};
-
     enum Parameters {Weight};
+    enum States {PositionalEncoding};
     enum Forward {Input, Output};
     enum Backward {OutputDelta};
 
@@ -101,9 +113,6 @@ private:
 
     bool scale_embedding = false;
     bool add_positional_encoding = false;
-
-    MatrixR positional_encoding;
-    bool pos_encoding_synced = false;
 
     type embedding_scale = type(1);
 

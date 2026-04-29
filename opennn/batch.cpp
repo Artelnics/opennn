@@ -39,9 +39,9 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         // memory directly. The previous code overrode the CPU buffer with a
         // GPU one whenever CUDA was compiled in, which segfaulted on Batch::fill
         // when actually running CPU-only.
-        if (Device::instance().is_gpu())
+        if (Configuration::instance().is_gpu())
         {
-            input.resize_bytes(input_shape.size() * Index(sizeof(float)), DeviceType::Gpu);
+            input.resize_bytes(input_shape.size() * Index(sizeof(float)), DeviceType::CUDA);
 
             num_input_features = dataset->get_features_number("Input");
             const Index input_size = samples_number * num_input_features;
@@ -56,7 +56,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         else
 #endif
         {
-            input.resize_bytes(input_shape.size() * Index(sizeof(type)), DeviceType::Cpu);
+            input.resize_bytes(input_shape.size() * Index(sizeof(type)), DeviceType::CPU);
         }
     }
 
@@ -69,9 +69,9 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         target_shape = Shape({samples_number}).append(dataset_target_shape);
 
 #ifdef OPENNN_WITH_CUDA
-        if (Device::instance().is_gpu())
+        if (Configuration::instance().is_gpu())
         {
-            target.resize_bytes(target_shape.size() * Index(sizeof(float)), DeviceType::Gpu);
+            target.resize_bytes(target_shape.size() * Index(sizeof(float)), DeviceType::CUDA);
 
             num_target_features = dataset->get_features_number("Target");
             const Index target_size = samples_number * num_target_features;
@@ -86,7 +86,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         else
 #endif
         {
-            target.resize_bytes(target_shape.size() * Index(sizeof(type)), DeviceType::Cpu);
+            target.resize_bytes(target_shape.size() * Index(sizeof(type)), DeviceType::CPU);
         }
     }
 
@@ -99,9 +99,9 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         decoder_shape = Shape({samples_number}).append(dataset_decoder_shape);
 
 #ifdef OPENNN_WITH_CUDA
-        if (Device::instance().is_gpu())
+        if (Configuration::instance().is_gpu())
         {
-            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(float)), DeviceType::Gpu);
+            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(float)), DeviceType::CUDA);
 
             num_decoder_features = dataset->get_features_number("Decoder");
             const Index decoder_size = samples_number * num_decoder_features;
@@ -116,7 +116,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         else
 #endif
         {
-            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(type)), DeviceType::Cpu);
+            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(type)), DeviceType::CPU);
         }
     }
 
@@ -160,7 +160,7 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& target_indices,
                  bool augment)
 {
-    const bool is_gpu = Device::instance().is_gpu();
+    const bool is_gpu = Configuration::instance().is_gpu();
 
     // GPU path writes into pinned host buffers (pre-allocated in set()) so that
     // copy_device_async can DMA them straight to device memory. CPU path writes

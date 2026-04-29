@@ -83,7 +83,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     NeuralNetwork* neural_network = loss->get_neural_network();
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu())
+    if (Configuration::instance().is_gpu())
     {
         const Index parameters_number = neural_network->get_parameters_size();
 
@@ -149,7 +149,7 @@ TrainingResults StochasticGradientDescent::train()
 
     check();
 
-    const bool is_gpu = Device::instance().is_gpu();
+    const bool is_gpu = Configuration::instance().is_gpu();
 
     if(display) cout << "Training with stochastic gradient descent (SGD)"
                      << (is_gpu ? " CUDA" : "") << "...\n";
@@ -251,7 +251,7 @@ TrainingResults StochasticGradientDescent::train()
     optimization_data.set({Shape{parameters_number}, Shape{parameters_number}});
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) optimization_data.allocate_device();
+    if (Configuration::instance().is_gpu()) optimization_data.allocate_device();
 #endif
 
     optimization_data.iteration = 1;

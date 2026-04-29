@@ -905,10 +905,25 @@ string Transformer::calculate_outputs(const string& source)
     target_ids.setConstant(PAD);
     target_ids(0, 0) = START;
 
-    ForwardPropagation forward_propagation(batch_size, this);
+    // Greedy decoding runs the network token-by-token with batch=1; on GPU the
+    // per-step launch overhead dominates and CPU is faster. Temporarily flip the
+    // global Configuration to CPU and migrate parameters back to host memory so
+    // the CPU forward path can read them. Restored at the end of the loop.
+    const bool was_gpu = Configuration::instance().is_gpu();
+    if (was_gpu)
+    {
+        Configuration::instance().set(DeviceType::CPU,
+                                      TrainingPrecision::Float32,
+                                      InferencePrecision::Float32);
+#ifdef OPENNN_WITH_CUDA
+        copy_parameters_host();
+        link_parameters_cpu();
+        copy_states_host();
+        link_states_cpu();
+#endif
+    }
 
-    const bool was_gpu = Device::instance().is_gpu();
-    if (was_gpu) Device::instance().set(DeviceType::Cpu);
+    ForwardPropagation forward_propagation(batch_size, this);
 
     for(Index i = 1; i < decoder_sequence_length; ++i)
     {
@@ -933,7 +948,18 @@ string Transformer::calculate_outputs(const string& source)
             break;
     }
 
-    if (was_gpu) Device::instance().set(DeviceType::Gpu);
+    if (was_gpu)
+    {
+        Configuration::instance().set(DeviceType::Auto,
+                                      TrainingPrecision::Auto,
+                                      InferencePrecision::Auto);
+#ifdef OPENNN_WITH_CUDA
+        copy_parameters_device();
+        link_parameters_device();
+        copy_states_device();
+        link_states_device();
+#endif
+    }
 
     string result;
 

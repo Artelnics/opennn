@@ -68,7 +68,7 @@ private:
     vector<cudnnDataType_t> get_forward_dtypes(Index) const override
     {
         return {CUDNN_DATA_FLOAT,        // MaximalIndices
-                CUDNN_ACTIVATION_DTYPE}; // Output
+                activation_dtype}; // Output
     }
 
     vector<Shape> get_backward_shapes(Index batch_size) const override

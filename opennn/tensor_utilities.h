@@ -76,13 +76,12 @@ struct EnumMap
 constexpr cudaDataType_t      CUDA_REDUCTION_DTYPE   = CUDA_R_32F;
 constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_TF32;
 
-#if defined(OPENNN_BF16_ACTIVATIONS) && defined(OPENNN_WITH_CUDA)
-constexpr cudnnDataType_t     CUDNN_ACTIVATION_DTYPE = CUDNN_DATA_BFLOAT16;
-constexpr cudaDataType_t      CUDA_ACTIVATION_DTYPE  = CUDA_R_16BF;
-#else
-constexpr cudnnDataType_t     CUDNN_ACTIVATION_DTYPE = CUDNN_DATA_FLOAT;
-constexpr cudaDataType_t      CUDA_ACTIVATION_DTYPE  = CUDA_R_32F;
-#endif
+// Activation dtype used to be a compile-time constant gated by
+// `OPENNN_USE_BF16_ACTIVATIONS`. It is now a runtime field on every Layer
+// (`activation_dtype` / `cuda_activation_dtype`), populated by
+// NeuralNetwork::compile() from Configuration::resolve(). Anything outside a
+// network (TensorView default ctor, generic GEMM helpers, etc.) defaults to
+// FP32 — call sites that need BF16 must pass the dtype explicitly.
 
 inline Index dtype_bytes(cudnnDataType_t t)
 {
@@ -198,13 +197,22 @@ struct Shape
     }
 };
 
-enum class DeviceType { Cpu, Gpu };
+// `Auto` is only valid as user input. Configuration::resolve() converts it to
+// CPU or CUDA based on detected hardware before the network sees it, so any
+// runtime path (Buffer, kernel dispatch) only ever observes CPU or CUDA.
+enum class DeviceType { Auto, CPU, CUDA };
+
+// Precision selectors. `Auto` is also resolved at compile() time. INT8 is a
+// deliberate placeholder: Configuration::resolve() throws runtime_error if a
+// user picks it — calibration + INT8 kernels are out of scope here.
+enum class TrainingPrecision  { Auto, Float32, BP16 };
+enum class InferencePrecision { Auto, Float32, BP16, Int8 };
 
 struct Buffer
 {
     void* data = nullptr;
     Index bytes = 0;
-    DeviceType device_type = DeviceType::Cpu;
+    DeviceType device_type = DeviceType::CPU;
 
     template<typename T> T*       as()       { return static_cast<T*>(data); }
     template<typename T> const T* as() const { return static_cast<const T*>(data); }
@@ -225,7 +233,7 @@ struct Buffer
     {
         if(!data) return;
 #ifdef OPENNN_WITH_CUDA
-        if(device_type == DeviceType::Gpu) CHECK_CUDA(cudaMemset(data, 0, bytes));
+        if(device_type == DeviceType::CUDA) CHECK_CUDA(cudaMemset(data, 0, bytes));
         else
 #endif
             std::memset(data, 0, static_cast<size_t>(bytes));
@@ -237,7 +245,7 @@ struct Buffer
     {
         if(device_type == target || !data) return;
         void* fresh = alloc(target, bytes);
-        const cudaMemcpyKind kind = (target == DeviceType::Gpu)
+        const cudaMemcpyKind kind = (target == DeviceType::CUDA)
             ? cudaMemcpyHostToDevice : cudaMemcpyDeviceToHost;
         CHECK_CUDA(cudaMemcpy(fresh, data, bytes, kind));
         dealloc(device_type, data, bytes);
@@ -246,7 +254,7 @@ struct Buffer
     }
 #endif
 
-    explicit Buffer(DeviceType t = DeviceType::Cpu) noexcept : device_type(t) {}
+    explicit Buffer(DeviceType t = DeviceType::CPU) noexcept : device_type(t) {}
     Buffer(const Buffer&) = delete;
     Buffer& operator=(const Buffer&) = delete;
 
@@ -266,7 +274,7 @@ private:
     static void* alloc(DeviceType t, Index n)
     {
 #ifdef OPENNN_WITH_CUDA
-        if(t == DeviceType::Gpu) { void* p = nullptr; CHECK_CUDA(cudaMalloc(&p, n)); return p; }
+        if(t == DeviceType::CUDA) { void* p = nullptr; CHECK_CUDA(cudaMalloc(&p, n)); return p; }
 #endif
         return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(n));
     }
@@ -274,7 +282,7 @@ private:
     static void dealloc(DeviceType t, void* p, Index n)
     {
 #ifdef OPENNN_WITH_CUDA
-        if(t == DeviceType::Gpu) { cudaFree(p); return; }
+        if(t == DeviceType::CUDA) { cudaFree(p); return; }
 #endif
         Eigen::aligned_allocator<uint8_t>{}.deallocate(static_cast<uint8_t*>(p), static_cast<size_t>(n));
     }
@@ -293,10 +301,10 @@ struct TensorView
 
     Shape shape;
 
-    cudnnDataType_t dtype = CUDNN_ACTIVATION_DTYPE;
+    cudnnDataType_t dtype = CUDNN_DATA_FLOAT;
 
     TensorView(void* new_data = nullptr, const Shape& new_shape = {},
-               cudnnDataType_t new_dtype = CUDNN_ACTIVATION_DTYPE) noexcept
+               cudnnDataType_t new_dtype = CUDNN_DATA_FLOAT) noexcept
         : data(new_data), shape(new_shape), dtype(new_dtype) {}
 
     Index get_rank() const noexcept { return shape.rank; }
@@ -667,16 +675,74 @@ struct LtMatmulPlanKeyHash
 
 #endif // OPENNN_WITH_CUDA
 
+// Singleton runtime configuration. Set once at program start (or never — Auto/Auto/Auto
+// is the default). NeuralNetwork::compile() reads this, calls resolve() to convert any
+// `Auto` to a concrete value based on detected hardware, and freezes the result inside
+// the network. Subsequent changes to this singleton don't affect networks already
+// compiled.
+//
+// Convenience predicates `is_gpu()` / `is_cpu()` are also exposed here so that the
+// rest of the codebase has a single source of truth for "are we on GPU?" — there is
+// no duplicate `Device::is_gpu()` mirror anymore. The first call resolves Auto and
+// caches the result; subsequent calls are O(1).
+class Configuration
+{
+public:
+
+    struct Resolved
+    {
+        DeviceType         device              = DeviceType::CPU;
+        TrainingPrecision  training_precision  = TrainingPrecision::Float32;
+        InferencePrecision inference_precision = InferencePrecision::Float32;
+    };
+
+    static Configuration& instance();
+
+    // Replaces all three at once. Defaulting any argument to Auto is the recommended
+    // entry point — let resolve() pick. Invalidates the cached Resolved so the next
+    // is_gpu()/is_cpu()/resolve() call re-detects hardware.
+    void set(DeviceType         d  = DeviceType::Auto,
+             TrainingPrecision  tp = TrainingPrecision::Auto,
+             InferencePrecision ip = InferencePrecision::Auto);
+
+    DeviceType         get_device()              const { return device; }
+    TrainingPrecision  get_training_precision()  const { return training_precision; }
+    InferencePrecision get_inference_precision() const { return inference_precision; }
+
+    // Resolves Auto values to concrete ones by inspecting available hardware. Throws
+    // runtime_error on impossible combinations (CUDA requested but no GPU; BP16 on CPU;
+    // INT8 placeholder). Cached after first call.
+    const Resolved& resolve() const;
+
+    // Single source of truth for "is the active device GPU/CPU?". Resolves on first
+    // call and caches. Use these everywhere instead of any Device-side mirror.
+    bool is_gpu() const { return resolve().device == DeviceType::CUDA; }
+    bool is_cpu() const { return resolve().device == DeviceType::CPU; }
+
+private:
+
+    Configuration() = default;
+
+    DeviceType         device              = DeviceType::Auto;
+    TrainingPrecision  training_precision  = TrainingPrecision::Auto;
+    InferencePrecision inference_precision = InferencePrecision::Auto;
+
+    mutable Resolved cached_resolved;
+    mutable bool     cache_valid = false;
+};
+
+
+// Container for CUDA/cuBLAS/cuDNN handles, streams and lazily-allocated workspaces.
+// It is *infrastructure* — owning these resources for the life of the program. The
+// "are we on GPU?" question is answered by Configuration, not here, so this class
+// no longer carries a DeviceType: that state would just duplicate Configuration's.
 class Device
 {
 public:
+
     static Device& instance();
     ThreadPoolDevice* get_thread_pool_device();
     void set_threads_number(int num_threads);
-
-    void set(DeviceType type);
-    bool is_gpu() const { return device_type == DeviceType::Gpu; }
-    bool is_cpu() const { return device_type == DeviceType::Cpu; }
 
     static cublasHandle_t get_cublas_handle()                      { return instance().cublas_handle; }
     static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
@@ -686,22 +752,36 @@ public:
     static cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor() { return instance().operator_multiplication_descriptor; }
 
 #ifdef OPENNN_WITH_CUDA
-    static float* get_ones(int n)
+    // Returns a device-side vector of 1's used by reduce_sum_cuda's GEMM-as-reduction
+    // trick. The reduction GEMM mixes activation dtype on A with this ones-vector on B,
+    // so we allocate one variant per dtype on demand. FP32 is the default; pass
+    // CUDNN_DATA_BFLOAT16 when reducing a BF16 tensor.
+    static void* get_ones(int n, cudnnDataType_t dtype = CUDNN_DATA_FLOAT)
     {
         auto& self = instance();
-        if(n > self.ones_size)
-        {
-            if(self.ones_device) CHECK_CUDA(cudaFree(self.ones_device));
-            const size_t elem_bytes = dtype_bytes(CUDNN_ACTIVATION_DTYPE);
-            CHECK_CUDA(cudaMalloc(&self.ones_device, n * elem_bytes));
 
-            if (CUDNN_ACTIVATION_DTYPE == CUDNN_DATA_FLOAT) {
-                vector<float> h(n, 1.0f);
-                CHECK_CUDA(cudaMemcpy(self.ones_device, h.data(), n * sizeof(float), cudaMemcpyHostToDevice));
-            } else {
+        if (dtype == CUDNN_DATA_BFLOAT16)
+        {
+            if (n > self.ones_bf16_size)
+            {
+                if (self.ones_bf16_device) CHECK_CUDA(cudaFree(self.ones_bf16_device));
+                CHECK_CUDA(cudaMalloc(&self.ones_bf16_device, n * sizeof(__nv_bfloat16)));
                 vector<__nv_bfloat16> h(n, __float2bfloat16(1.0f));
-                CHECK_CUDA(cudaMemcpy(self.ones_device, h.data(), n * sizeof(__nv_bfloat16), cudaMemcpyHostToDevice));
+                CHECK_CUDA(cudaMemcpy(self.ones_bf16_device, h.data(),
+                                      n * sizeof(__nv_bfloat16), cudaMemcpyHostToDevice));
+                self.ones_bf16_size = n;
             }
+            return self.ones_bf16_device;
+        }
+
+        // FP32 path (default).
+        if (n > self.ones_size)
+        {
+            if (self.ones_device) CHECK_CUDA(cudaFree(self.ones_device));
+            CHECK_CUDA(cudaMalloc(&self.ones_device, n * sizeof(float)));
+            vector<float> h(n, 1.0f);
+            CHECK_CUDA(cudaMemcpy(self.ones_device, h.data(), n * sizeof(float),
+                                  cudaMemcpyHostToDevice));
             self.ones_size = n;
         }
         return self.ones_device;
@@ -755,15 +835,13 @@ public:
         cublasOperation_t transA,
         cublasOperation_t transB,
         cublasLtEpilogue_t epilogue,
-        cudaDataType_t io_dtype  = CUDA_ACTIVATION_DTYPE,
-        cudaDataType_t out_dtype = CUDA_ACTIVATION_DTYPE);
+        cudaDataType_t io_dtype  = CUDA_R_32F,
+        cudaDataType_t out_dtype = CUDA_R_32F);
 #endif
 
 private:
     Device();
     ~Device();
-
-    DeviceType device_type = DeviceType::Cpu;
 
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
@@ -776,6 +854,8 @@ private:
     cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
     float* ones_device = nullptr;
     int ones_size = 0;
+    void* ones_bf16_device = nullptr;
+    int   ones_bf16_size   = 0;
     void* cublas_lt_workspace = nullptr;
     void* bf16_input_scratch = nullptr;
     size_t bf16_input_scratch_bytes = 0;
@@ -855,24 +935,31 @@ inline void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
                               CUBLAS_GEMM_DEFAULT));
 }
 
+// Strided-batched GEMM (used by MHA's per-head batched matmul). Operands all
+// share the same dtype, passed in by the caller (FP32 or BF16 depending on the
+// network's activation_dtype).
 inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
                                       int m, int n, int k,
-                                      const float* A, int lda, long long stride_a,
-                                      const float* B, int ldb, long long stride_b,
-                                      float* C, int ldc, long long stride_c,
+                                      const void* A, int lda, long long stride_a,
+                                      const void* B, int ldb, long long stride_b,
+                                      void* C, int ldc, long long stride_c,
                                       int batch_count,
+                                      cudaDataType_t io_dtype = CUDA_R_32F,
                                       float alpha = 1.0f, float beta = 0.0f)
 {
+    const cublasComputeType_t compute = (io_dtype == CUDA_R_16BF)
+                                            ? CUBLAS_COMPUTE_32F
+                                            : CUBLAS_COMPUTE_DTYPE;
     CHECK_CUBLAS(cublasGemmStridedBatchedEx(Device::get_cublas_handle(),
                                             transa, transb,
                                             m, n, k,
                                             &alpha,
-                                            A, CUDA_ACTIVATION_DTYPE, lda, stride_a,
-                                            B, CUDA_ACTIVATION_DTYPE, ldb, stride_b,
+                                            A, io_dtype, lda, stride_a,
+                                            B, io_dtype, ldb, stride_b,
                                             &beta,
-                                            C, CUDA_ACTIVATION_DTYPE, ldc, stride_c,
+                                            C, io_dtype, ldc, stride_c,
                                             batch_count,
-                                            CUBLAS_COMPUTE_DTYPE,
+                                            compute,
                                             CUBLAS_GEMM_DEFAULT));
 }
 
@@ -885,7 +972,8 @@ inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_
 //   - CUBLASLT_EPILOGUE_RELU_BIAS  : D = max(0, α(A·B) + bias)
 //
 // Layout assumptions (encoded in the cached plan):
-//   - All operands use CUDA_ACTIVATION_DTYPE.
+//   - All operands use the activation dtype declared on the cached LtMatmulPlan
+//     (FP32 or BF16 — the caller chose when get_lt_gemm_plan was first invoked).
 //   - Bias is FP32, length = m, broadcast along D's columns
 //     (i.e. one bias element per output feature row).
 //   - Tightly packed: lda = (transa==N ? m : k), ldb = (transb==N ? k : n), ldc = ldd = m.
@@ -900,10 +988,12 @@ inline void gemm_bias_cuda(cublasOperation_t transa, cublasOperation_t transb,
                            const void* B,
                            void* C,
                            const float* bias,
+                           cudaDataType_t io_dtype = CUDA_R_32F,
                            cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
                            float alpha = 1.0f, float beta = 0.0f)
 {
-    const LtMatmulPlan& plan = Device::get_lt_gemm_plan(m, n, k, transa, transb, epilogue);
+    const LtMatmulPlan& plan = Device::get_lt_gemm_plan(m, n, k, transa, transb,
+                                                        epilogue, io_dtype, io_dtype);
 
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias, sizeof(bias)));
@@ -938,14 +1028,16 @@ inline void gemm_bgrad_cuda(cublasOperation_t transa, cublasOperation_t transb,
                             const void* B,
                             void* C,
                             float* bias_grad,
+                            cudaDataType_t io_dtype = CUDA_R_32F,
                             float alpha = 1.0f, float beta = 0.0f)
 {
-    // Inputs (output_delta, input) follow the activation dtype; the weight
-    // gradient (D / C) is always FP32 so Adam can accumulate without precision
-    // loss. cuBLASLt mixed-dtype matmul handles bf16 in × fp32 out natively.
+    // Inputs (output_delta, input) follow the activation dtype passed by the
+    // caller; the weight gradient (D / C) is always FP32 so Adam can accumulate
+    // without precision loss. cuBLASLt mixed-dtype matmul handles bf16 in × fp32
+    // out natively.
     const LtMatmulPlan& plan = Device::get_lt_gemm_plan(m, n, k, transa, transb,
                                                         CUBLASLT_EPILOGUE_BGRADA,
-                                                        CUDA_ACTIVATION_DTYPE,
+                                                        io_dtype,
                                                         CUDA_R_32F);
 
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,

@@ -93,7 +93,7 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
     const TensorView target = batch.get_targets_active();
 
 #ifdef OPENNN_WITH_CUDA
-    float* workspace_device = Device::instance().is_gpu() ? back_propagation.errors_device : nullptr;
+    float* workspace_device = Configuration::instance().is_gpu() ? back_propagation.errors_device : nullptr;
 #else
     float* workspace_device = nullptr;
 #endif
@@ -167,7 +167,7 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
     check_neural_network();
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         return;
     }
 #endif
@@ -257,10 +257,10 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
     const Index n = neural_network->get_parameters_size();
 
 #ifdef OPENNN_WITH_CUDA
-    const TensorView parameters = Device::instance().is_gpu()
+    const TensorView parameters = Configuration::instance().is_gpu()
         ? TensorView(neural_network->get_parameters_device(), { n })
         : TensorView(neural_network->get_parameters_data(), { n });
-    TensorView gradient = Device::instance().is_gpu()
+    TensorView gradient = Configuration::instance().is_gpu()
         ? TensorView(back_propagation.gradient.as<type>(), { n })
         : TensorView(back_propagation.gradient.as<type>(), { n });
 #else

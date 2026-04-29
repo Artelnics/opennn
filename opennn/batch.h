@@ -34,7 +34,7 @@ struct Batch
     const vector<TensorView>& get_inputs_active() const
     {
 #ifdef OPENNN_WITH_CUDA
-        return Device::instance().is_gpu() ? get_inputs_device() : get_inputs();
+        return Configuration::instance().is_gpu() ? get_inputs_device() : get_inputs();
 #else
         return get_inputs();
 #endif
@@ -43,7 +43,7 @@ struct Batch
     const TensorView& get_targets_active() const
     {
 #ifdef OPENNN_WITH_CUDA
-        return Device::instance().is_gpu() ? get_targets_device() : get_targets();
+        return Configuration::instance().is_gpu() ? get_targets_device() : get_targets();
 #else
         return get_targets();
 #endif

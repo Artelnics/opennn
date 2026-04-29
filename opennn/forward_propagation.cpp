@@ -35,17 +35,23 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     Index total_size = 0;
 
     for(const auto& layer_shapes : forward_shapes)
-        for(const Shape& s : layer_shapes)
-            total_size += get_aligned_size(s.size());
+        for(const Shape& shape : layer_shapes)
+            total_size += get_aligned_size(shape.size());
 
-    if(total_size > 0)
+    // Forward arena is pure scratch — no Eigen-based init reads from it before
+    // the first forward pass. When the resolved device is CUDA we skip the CPU
+    // allocation entirely and let allocate_device() build the GPU buffer; the
+    // view structure is still populated below so input wiring works.
+    const bool gpu_mode = Configuration::instance().is_gpu();
+
+    if(total_size > 0 && !gpu_mode)
     {
-        data.resize_bytes(total_size * Index(sizeof(type)), DeviceType::Cpu);
+        data.resize_bytes(total_size * Index(sizeof(type)), DeviceType::CPU);
         data.setZero();
     }
 
     views.resize(layers_number);
-    type* pointer = (total_size > 0) ? data.as<type>() : nullptr;
+    type* pointer = (total_size > 0 && !gpu_mode) ? data.as<type>() : nullptr;
 
     for(Index i = 0; i < layers_number; ++i)
     {
@@ -59,11 +65,13 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             const Shape& s = shapes[j];
             views[i][j + 1].resize(1);
 
-            if(s.size() > 0 && pointer)
+            // Always set the shape so downstream wiring sees a non-empty view.
+            // `data` may be null in GPU mode (allocate_device fills it later).
+            if(s.size() > 0)
             {
                 views[i][j + 1][0] = TensorView(pointer, s);
 
-                pointer += get_aligned_size(s.size());
+                if(pointer) pointer += get_aligned_size(s.size());
             }
         }
     }
@@ -97,7 +105,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 void ForwardPropagation::allocate_device()
 {
 #ifdef OPENNN_WITH_CUDA
-    if(!neural_network || batch_size <= 0 || data.size() == 0) return;
+    if(!neural_network || batch_size <= 0) return;
 
     const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
     const auto& nn_layers = neural_network->get_layers();
@@ -117,7 +125,9 @@ void ForwardPropagation::allocate_device()
                 total_bytes += get_aligned_bytes(shapes[j].size() * dtype_bytes(forward_dtypes[i][j]));
     }
 
-    data.resize_bytes(total_bytes, DeviceType::Gpu);
+    if(total_bytes == 0) return;
+
+    data.resize_bytes(total_bytes, DeviceType::CUDA);
     data.setZero();
 
     uint8_t* cursor = data.as<uint8_t>();

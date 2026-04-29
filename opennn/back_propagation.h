@@ -60,7 +60,7 @@ struct BackPropagation
     TensorView get_output_deltas_active() const
     {
 #ifdef OPENNN_WITH_CUDA
-        return Device::instance().is_gpu() ? get_output_deltas_device() : get_output_deltas();
+        return Configuration::instance().is_gpu() ? get_output_deltas_device() : get_output_deltas();
 #else
         return get_output_deltas();
 #endif

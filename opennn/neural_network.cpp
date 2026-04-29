@@ -55,6 +55,20 @@ void NeuralNetwork::compile()
 
     if (layers_number == 0) return;
 
+    // Resolve any Auto values in the global Configuration to concrete (CPU/CUDA,
+    // Float32/BP16, Float32/BP16/Int8) and snapshot the result. From here on
+    // this network always uses `this->config`, ignoring later changes to the
+    // singleton.
+    config = Configuration::instance().resolve();
+
+    // Propagate the activation dtype to every layer. Used by the layer's
+    // get_forward_dtypes / get_parameter_dtypes / get_backward_dtypes overrides
+    // and by descriptor setup inside init_cuda.
+    const cudnnDataType_t cudnn_t = get_training_cudnn_dtype();
+    const cudaDataType_t  cuda_t  = get_training_cuda_dtype();
+    for (auto& layer : layers)
+        layer->set_activation_dtype(cudnn_t, cuda_t);
+
     for (Index i = 0; i < layers_number; ++i)
     {
         const vector<Index>& inputs = layer_input_indices[i];
@@ -68,7 +82,7 @@ void NeuralNetwork::compile()
         for (const Shape& s : layer->get_parameter_shapes())
             total_parameters += get_aligned_size(s.size());
 
-    parameters.resize_bytes(total_parameters * Index(sizeof(type)), DeviceType::Cpu);
+    parameters.resize_bytes(total_parameters * Index(sizeof(type)), DeviceType::CPU);
     parameters.setZero();
 
     type* pointer = parameters.as<type>();
@@ -81,7 +95,7 @@ void NeuralNetwork::compile()
         for (const Shape& s : layer->get_state_shapes())
             total_states += get_aligned_size(s.size());
 
-    states.resize_bytes(total_states * Index(sizeof(type)), DeviceType::Cpu);
+    states.resize_bytes(total_states * Index(sizeof(type)), DeviceType::CPU);
     states.setZero();
 
     type* state_pointer = states.as<type>();
@@ -402,16 +416,16 @@ void NeuralNetwork::set_parameters(const VectorR& p)
     const Index n_bytes = p.size() * Index(sizeof(type));
 
 #ifdef OPENNN_WITH_CUDA
-    if(parameters.device_type == DeviceType::Gpu)
+    if(parameters.device_type == DeviceType::CUDA)
     {
-        parameters.resize_bytes(n_bytes, DeviceType::Gpu);
+        parameters.resize_bytes(n_bytes, DeviceType::CUDA);
         if(n_bytes > 0)
             CHECK_CUDA(cudaMemcpy(parameters.data, p.data(), n_bytes, cudaMemcpyHostToDevice));
         return;
     }
 #endif
 
-    parameters.resize_bytes(n_bytes, DeviceType::Cpu);
+    parameters.resize_bytes(n_bytes, DeviceType::CPU);
     if(n_bytes > 0)
         std::memcpy(parameters.data, p.data(), static_cast<size_t>(n_bytes));
 }
@@ -460,7 +474,7 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     ForwardPropagation fp(batch_size, this);
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu())
+    if (Configuration::instance().is_gpu())
         return calculate_outputs_device(input_views, fp);
 #endif
 
@@ -1061,15 +1075,20 @@ void NeuralNetwork::copy_parameters_device()
 {
     if(parameters.empty()) return;
 
-    parameters.migrate_to(DeviceType::Gpu);
+    parameters.migrate_to(DeviceType::CUDA);
 
-#ifdef OPENNN_BF16_ACTIVATIONS
     // Allocate the BF16 working copy alongside the FP32 master and seed it from
-    // the freshly-uploaded master. From this point on every Adam step refreshes
-    // it in cast_parameters_to_bf16(); GEMMs read it instead of the master.
-    parameters_bf16.resize_bytes(parameters.size() * Index(sizeof(__nv_bfloat16)), DeviceType::Gpu);
-    cast_parameters_to_bf16();
-#endif
+    // the freshly-uploaded master when the resolved precision needs it. From
+    // here every Adam step refreshes it via cast_parameters_to_bf16(); GEMMs
+    // read it instead of the master.
+    const bool needs_bf16_mirror =
+        config.training_precision  == TrainingPrecision::BP16 ||
+        config.inference_precision == InferencePrecision::BP16;
+    if (needs_bf16_mirror)
+    {
+        parameters_bf16.resize_bytes(parameters.size() * Index(sizeof(__nv_bfloat16)), DeviceType::CUDA);
+        cast_parameters_to_bf16();
+    }
 }
 
 void NeuralNetwork::cast_parameters_to_bf16()
@@ -1086,14 +1105,14 @@ void NeuralNetwork::copy_parameters_host()
 {
     if(parameters.empty()) return;
 
-    parameters.migrate_to(DeviceType::Cpu);
+    parameters.migrate_to(DeviceType::CPU);
 }
 
 void NeuralNetwork::link_parameters_device()
 {
-    // Walk fp32 master and bf16 mirror in parallel; bf16_ptr is null when
-    // OPENNN_BF16_ACTIVATIONS is off. Each pointer advances by its own
-    // sizeof, so slot offsets stay aligned across both buffers.
+    // Walk fp32 master and bf16 mirror in parallel; bf16_ptr is null when the
+    // resolved Configuration didn't ask for a BF16 mirror. Each pointer advances
+    // by its own sizeof, so slot offsets stay aligned across both buffers.
     type* fp32_ptr           = parameters.as<type>();
     __nv_bfloat16* bf16_ptr  = parameters_bf16.as<__nv_bfloat16>();
 
@@ -1157,14 +1176,14 @@ void NeuralNetwork::copy_states_device()
 {
     if(states.empty()) return;
 
-    states.migrate_to(DeviceType::Gpu);
+    states.migrate_to(DeviceType::CUDA);
 }
 
 void NeuralNetwork::copy_states_host()
 {
     if(states.empty()) return;
 
-    states.migrate_to(DeviceType::Cpu);
+    states.migrate_to(DeviceType::CPU);
 }
 
 void NeuralNetwork::link_states_device()

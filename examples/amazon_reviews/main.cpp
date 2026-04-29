@@ -57,7 +57,7 @@ int main()
         adam->set_maximum_epochs(50);
         adam->set_display_period(10);
 
-        Device::instance().set(DeviceType::Cpu);
+        Configuration::instance().set(DeviceType::CPU, TrainingPrecision::Float32, InferencePrecision::Float32);
 
         cout << "Training network..." << endl;
         training_strategy.train();

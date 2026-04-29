@@ -44,7 +44,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 option(OpenNN_DISABLE_CUDA "Disable CUDA even if toolkit is found" OFF)
-option(OPENNN_USE_BF16_ACTIVATIONS "Use BF16 for forward/backward activations on CUDA" OFF)
+
+# BF16 mixed precision used to be a CMake flag (OPENNN_USE_BF16_ACTIVATIONS).
+# It is now a runtime decision: Configuration::set(..., TrainingPrecision::BP16,
+# InferencePrecision::BP16) — the FP32 and BF16 paths are always compiled in
+# (templated kernels) when CUDA is enabled.
 
 include(CheckLanguage)
 check_language(CUDA)
@@ -53,10 +57,6 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     enable_language(CUDA)
     find_package(CUDAToolkit REQUIRED)
     set(OPENNN_WITH_CUDA ON CACHE BOOL "")
-
-    if(OPENNN_USE_BF16_ACTIVATIONS)
-        add_compile_definitions(OPENNN_BF16_ACTIVATIONS)
-    endif()
 
     find_library(CUDNN_LIBRARY NAMES cudnn 
                  HINTS ${CUDAToolkit_LIBRARY_DIR} 

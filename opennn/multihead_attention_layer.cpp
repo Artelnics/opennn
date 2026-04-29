@@ -149,7 +149,7 @@ void MultiHeadAttention::init_cuda(Index batch_size)
 
     cudnnTensorDescriptor_t temp_desc = nullptr;
     cudnnCreateTensorDescriptor(&temp_desc);
-    cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_ACTIVATION_DTYPE,
+    cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, activation_dtype,
                                static_cast<int>(batch_size),
                                static_cast<int>(source_sequence_length),
                                static_cast<int>(heads_number),

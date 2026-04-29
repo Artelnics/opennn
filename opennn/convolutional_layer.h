@@ -133,11 +133,11 @@ private:
 
     vector<cudnnDataType_t> get_forward_dtypes(Index) const override
     {
-        return {CUDNN_ACTIVATION_DTYPE,  // PaddedInputs
-                CUDNN_ACTIVATION_DTYPE,  // Convolution
+        return {activation_dtype,  // PaddedInputs
+                activation_dtype,  // Convolution
                 CUDNN_DATA_FLOAT,        // BatchNormMean
                 CUDNN_DATA_FLOAT,        // BatchNormInverseVariance
-                CUDNN_ACTIVATION_DTYPE}; // Output
+                activation_dtype}; // Output
     }
 
     enum Backward {OutputDelta, InputDelta};

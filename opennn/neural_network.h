@@ -31,6 +31,36 @@ public:
     void add_layer(unique_ptr<Layer>,
                   const vector<Index>& = vector<Index>());
 
+    // Resolved runtime configuration captured by compile() — see tensor_utilities.h's
+    // `Configuration` class for how Auto values are picked.
+    const Configuration::Resolved& get_config() const { return config; }
+    bool is_gpu() const { return config.device == DeviceType::CUDA; }
+    bool is_cpu() const { return config.device == DeviceType::CPU; }
+
+    // Convenience aliases so the Resolved enums map to cuDNN/CUDA dtype constants
+    // without callers having to do the switch themselves. Forward/training and
+    // inference can differ (e.g. train Float32 but infer BP16); callers pick.
+    cudnnDataType_t get_training_cudnn_dtype() const
+    {
+        return (config.training_precision == TrainingPrecision::BP16)
+                    ? CUDNN_DATA_BFLOAT16 : CUDNN_DATA_FLOAT;
+    }
+    cudaDataType_t get_training_cuda_dtype() const
+    {
+        return (config.training_precision == TrainingPrecision::BP16)
+                    ? CUDA_R_16BF : CUDA_R_32F;
+    }
+    cudnnDataType_t get_inference_cudnn_dtype() const
+    {
+        return (config.inference_precision == InferencePrecision::BP16)
+                    ? CUDNN_DATA_BFLOAT16 : CUDNN_DATA_FLOAT;
+    }
+    cudaDataType_t get_inference_cuda_dtype() const
+    {
+        return (config.inference_precision == InferencePrecision::BP16)
+                    ? CUDA_R_16BF : CUDA_R_32F;
+    }
+
     vector<vector<Shape>> get_parameter_shapes() const
     {
         const Index layers_number = get_layers_number();
@@ -202,9 +232,10 @@ public:
     type* get_parameters_device() { return parameters.as<type>(); }
     const type* get_parameters_device() const { return parameters.as<type>(); }
 
-    // BF16 working copy of `parameters`. Allocated only when OPENNN_BF16_ACTIVATIONS
-    // is on. Refreshed by cast_parameters_to_bf16() after each Adam step. When the
-    // flag is off, this stays empty and call sites fall back to FP32.
+    // BF16 working copy of `parameters`. Allocated by copy_parameters_device()
+    // when the resolved Configuration sets training or inference precision to BP16.
+    // Refreshed by cast_parameters_to_bf16() after each Adam step. Empty otherwise;
+    // call sites fall back to the FP32 master.
     void cast_parameters_to_bf16();
 
     void copy_parameters_device();
@@ -243,10 +274,14 @@ protected:
     vector<vector<Index>> layer_input_indices;
 
     Buffer parameters;
-    Buffer parameters_bf16{DeviceType::Gpu};
+    Buffer parameters_bf16{DeviceType::CUDA};
     vector<vector<vector<TensorView>>> parameter_views;
 
     Buffer states;
+
+    // Frozen at compile() from Configuration::resolve(). Subsequent changes to the
+    // Configuration singleton don't affect a network already compiled.
+    Configuration::Resolved config;
 };
 
 }

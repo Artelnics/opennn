@@ -19,7 +19,7 @@ static constexpr float SELU_LAMBDA = 1.0507009873554804934193349852946f;
 
 void padding(const TensorView& input, TensorView& output)
 {
-    if (Device::instance().is_gpu())
+    if (Configuration::instance().is_gpu())
         throw runtime_error("padding: GPU implementation not available.");
 
     const TensorMap4 input_map = input.as_tensor<4>();
@@ -46,7 +46,7 @@ void bounding(const TensorView& input,
     const Index features = lower_bounds.size();
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         input.dispatch([&](auto in_tag) {
             using TIn = decltype(in_tag);
             output.dispatch([&](auto out_tag) {
@@ -84,7 +84,7 @@ void scale(const TensorView& input,
     const Index features = scalers.size();
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         input.dispatch([&](auto in_tag) {
             using TIn = decltype(in_tag);
             output.dispatch([&](auto out_tag) {
@@ -154,7 +154,7 @@ void unscale(const TensorView& input,
     const Index features = scalers.size();
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         input.dispatch([&](auto in_tag) {
             using TIn = decltype(in_tag);
             output.dispatch([&](auto out_tag) {
@@ -234,7 +234,7 @@ void addition(const TensorView& input_1,
         throw runtime_error("Addition Error: Tensor dimensions do not match.");
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         // operator_sum_descriptor is configured with CUDNN_OP_TENSOR_ADD; reused here.
         CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(),
                                   Device::get_operator_sum_descriptor(),
@@ -256,7 +256,7 @@ void multiply(const TensorView& input_a, bool transpose_a,
     const size_t rank = input_a.get_rank();
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu())
+    if (Configuration::instance().is_gpu())
     {
         const int rows_a = to_int(input_a.shape[rank - 2]);
         const int cols_a = to_int(input_a.shape[rank - 1]);
@@ -285,10 +285,11 @@ void multiply(const TensorView& input_a, bool transpose_a,
         else
             gemm_strided_batched_cuda(operation_b, operation_a,
                                       output_columns, output_rows, inner_dimension,
-                                      input_b.as<float>(), cols_b, stride_b,
-                                      input_a.as<float>(), cols_a, stride_a,
-                                      output.as<float>(), output_columns, stride_output,
+                                      input_b.data, cols_b, stride_b,
+                                      input_a.data, cols_a, stride_a,
+                                      output.data,  output_columns, stride_output,
                                       batch_count,
+                                      output.cuda_dtype(),
                                       alpha, beta);
         return;
     }
@@ -333,16 +334,17 @@ void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, 
 void reduce_sum(const TensorView& input, TensorView& output, type alpha, type beta)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         const int total_rows    = to_int(input.shape[0]);
         const int total_columns = to_int(input.shape.size() / input.shape[0]);
 
         // Column-wise reduction expressed as matrix * ones-vector via GEMM
-        // (m × k) * (k × 1) = (m × 1).
+        // (m × k) * (k × 1) = (m × 1). Ones-vector dtype must match the input
+        // dtype so cuBLAS picks a uniform-dtype GEMM path.
         gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
                   total_columns, 1, total_rows,
                   input.data, input.cuda_dtype(), total_columns,
-                  Device::get_ones(total_rows), CUDA_ACTIVATION_DTYPE, total_rows,
+                  Device::get_ones(total_rows, input.dtype), input.cuda_dtype(), total_rows,
                   output.data, output.cuda_dtype(), total_columns,
                   alpha, beta);
         return;
@@ -356,7 +358,7 @@ void softmax(TensorView& output)
     if (output.empty()) return;
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         CHECK_CUDNN(cudnnSoftmaxForward(Device::get_cudnn_handle(),
                                         CUDNN_SOFTMAX_ACCURATE,
                                         CUDNN_SOFTMAX_MODE_CHANNEL,
@@ -385,7 +387,7 @@ void softmax_backward(const TensorView& softmax_out, TensorView& output_delta)
     if (output_delta.empty()) return;
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         CHECK_CUDNN(cudnnSoftmaxBackward(Device::get_cudnn_handle(),
                                          CUDNN_SOFTMAX_ACCURATE,
                                          CUDNN_SOFTMAX_MODE_CHANNEL,
@@ -431,7 +433,7 @@ void combination(const TensorView& input,
                  TensorView& output)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu())
+    if (Configuration::instance().is_gpu())
     {
         const int input_columns  = to_int(input.shape.back());
         const int output_columns = to_int(weights.shape.back());
@@ -442,14 +444,15 @@ void combination(const TensorView& input,
         // Fused GEMM + bias-add via cuBLASLt epilogue (one launch instead of two).
         // Bias is passed as raw data pointer; gemm_bias_cuda's plan sets the
         // cuBLASLt bias dtype to match the output dtype (FP32 or BF16). When
-        // the BF16 flag is on, biases are stored in `parameters_bf16` and the
+        // BP16 training is on, biases are stored in `parameters_bf16` and the
         // memory at this pointer is BF16; cuBLASLt reads it accordingly.
         gemm_bias_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
                        output_columns, total_rows, input_columns,
                        weights.data,
                        input_for_gemm,
                        output.data,
-                       biases.as_float());
+                       biases.as_float(),
+                       output.cuda_dtype());
         return;
     }
 #endif
@@ -465,7 +468,7 @@ void combination_activation(const TensorView& input,
                             TensorView& output)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()
+    if (Configuration::instance().is_gpu()
         && activation_arguments.activation_function == ActivationFunction::RectifiedLinear)
     {
         const int input_columns  = to_int(input.shape.back());
@@ -480,7 +483,8 @@ void combination_activation(const TensorView& input,
                        weights.data,
                        input_for_gemm,
                        output.data,
-                       biases.as_float(),    // raw byte pointer — bias dtype is set by cuBLASLt plan to match output dtype (FP32 or BF16)
+                       biases.as_float(),    // raw byte pointer — bias dtype is set by cuBLASLt plan to match output dtype
+                       output.cuda_dtype(),
                        CUBLASLT_EPILOGUE_RELU_BIAS);
         return;
     }
@@ -500,7 +504,7 @@ void combination_gradient(const TensorView& output_delta,
                           bool accumulate_input_delta)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu())
+    if (Configuration::instance().is_gpu())
     {
         const int input_columns  = to_int(input.shape.back());
         const int output_columns = to_int(output_delta.shape.back());
@@ -509,17 +513,19 @@ void combination_gradient(const TensorView& output_delta,
         {
             PROFILE_SCOPE("comb_grad:gemm_bgrad_W_b");
 
-            // gemm_bgrad_cuda assumes both A (output_delta) and B (input) follow
-            // the activation dtype. The first trainable Dense receives input
-            // straight from the Batch in FP32, so we have to down-cast it to
-            // match output_delta before the matmul.
-            const void* input_for_gemm = (input.dtype == CUDNN_DATA_FLOAT
-                                          && CUDA_ACTIVATION_DTYPE == CUDA_R_16BF)
-                                          ? static_cast<const void*>(
-                                                Device::get_bf16_input_scratch(input.size()))
-                                          : input.data;
+            // gemm_bgrad_cuda assumes both A (output_delta) and B (input) share
+            // a single dtype (set on the cached cuBLASLt plan). The first trainable
+            // Dense receives input straight from the Batch in FP32, so when the
+            // activation dtype is BF16 we down-cast the input on-the-fly into a
+            // shared scratch buffer.
+            const cudaDataType_t io_dtype = output_delta.cuda_dtype();
+            const bool need_cast = (input.dtype == CUDNN_DATA_FLOAT
+                                    && io_dtype == CUDA_R_16BF);
+            const void* input_for_gemm = need_cast
+                ? static_cast<const void*>(Device::get_bf16_input_scratch(input.size()))
+                : input.data;
 
-            if (input_for_gemm != input.data)
+            if (need_cast)
                 cast_fp32_to_bf16_cuda(input.size(),
                                        input.as_float(),
                                        const_cast<__nv_bfloat16*>(
@@ -530,7 +536,8 @@ void combination_gradient(const TensorView& output_delta,
                             output_delta.data,         // A
                             input_for_gemm,            // B
                             weight_gradient.data,      // C / D
-                            bias_gradient.as<float>());
+                            bias_gradient.as<float>(),
+                            io_dtype);
         }
 
         if (input_delta.data && input_delta.size() > 0)
@@ -567,7 +574,7 @@ void activation(TensorView& output, ActivationArguments arguments)
     }
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         CHECK_CUDNN(cudnnActivationForward(Device::get_cudnn_handle(),
                                            arguments.activation_descriptor,
                                            &one,
@@ -613,7 +620,7 @@ void activation_delta(const TensorView& outputs,
     const ActivationFunction activation_function = arguments.activation_function;
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         if(activation_function == ActivationFunction::Linear
         || activation_function == ActivationFunction::Softmax)
         {
@@ -680,7 +687,7 @@ void dropout(TensorView& output, DropoutArguments& args)
     if (args.rate <= type(0)) return;
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         CHECK_CUDNN(cudnnDropoutForward(Device::get_cudnn_handle(),
                                         args.descriptor,
                                         output.get_descriptor(), output.data,
@@ -715,7 +722,7 @@ void dropout_delta(const TensorView& output_delta,
     }
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         CHECK_CUDNN(cudnnDropoutBackward(Device::get_cudnn_handle(),
                                          args.descriptor,
                                          output_delta.get_descriptor(), output_delta.data,
@@ -736,7 +743,7 @@ void batch_normalization_inference(
     TensorView& output)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         const cudnnBatchNormMode_t mode = CUDNN_BATCHNORM_SPATIAL;
 
         CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
@@ -775,7 +782,7 @@ void batch_normalization_training(
     type momentum)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         const cudnnBatchNormMode_t mode = CUDNN_BATCHNORM_SPATIAL;
 
         CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
@@ -831,7 +838,7 @@ void batch_normalization_backward(
     TensorView& input_delta)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         const cudnnBatchNormMode_t mode = CUDNN_BATCHNORM_SPATIAL;
 
         CHECK_CUDNN(cudnnBatchNormalizationBackward(
@@ -1010,7 +1017,7 @@ void convolution(const TensorView& input,
                         const ConvolutionArguments& args)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         CHECK_CUDNN(cudnnConvolutionForward(Device::get_cudnn_handle(),
                                             &one,
                                             input.get_descriptor(), input.data,
@@ -1059,7 +1066,7 @@ void convolution_activation(const TensorView& input,
                             const ActivationArguments& activation_arguments)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         CHECK_CUDNN(cudnnConvolutionBiasActivationForward(
             Device::get_cudnn_handle(),
             &one,
@@ -1087,7 +1094,7 @@ void convolution_backward_weights(const TensorView& input,
                                   const ConvolutionArguments& args)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         CHECK_CUDNN(cudnnConvolutionBackwardFilter(Device::get_cudnn_handle(),
             &one,
             input.get_descriptor(), input.data,
@@ -1149,7 +1156,7 @@ void convolution_backward_data(const TensorView& output_delta,
                                const ConvolutionArguments& args)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         CHECK_CUDNN(cudnnConvolutionBackwardData(Device::get_cudnn_handle(),
             &one,
             args.kernel_descriptor, kernel.data,
@@ -1311,7 +1318,7 @@ void max_pooling(const TensorView& input,
                  bool is_training)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         (void)maximal_indices; (void)is_training;
 
         CHECK_CUDNN(cudnnPoolingForward(Device::get_cudnn_handle(),
@@ -1334,7 +1341,7 @@ void average_pooling(const TensorView& input,
                      const PoolingArguments& arguments)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         CHECK_CUDNN(cudnnPoolingForward(Device::get_cudnn_handle(),
             arguments.pooling_descriptor,
             &one,
@@ -1406,7 +1413,7 @@ void max_pooling_backward(const TensorView& input,
                           const PoolingArguments& args)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         CHECK_CUDNN(cudnnPoolingBackward(Device::get_cudnn_handle(),
             args.pooling_descriptor,
             &one,
@@ -1466,7 +1473,7 @@ void average_pooling_backward(const TensorView& input,
                                      const PoolingArguments& args)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         CHECK_CUDNN(cudnnPoolingBackward(Device::get_cudnn_handle(),
             args.pooling_descriptor,
             &one,
@@ -1758,13 +1765,17 @@ void projection(const TensorView& input,
     const Index embedding_dim    = heads_number * head_dimension;
     const Index total_rows       = batch_size * sequence_length;
 
+    // Match transpose-scratch dtype to the surrounding activation dtype so the
+    // GEMM inside `combination` sees uniform A/B/C dtypes. `output` already has
+    // the correct activation dtype (set by allocate_device).
     TensorView input_2d = input.reshape({total_rows, embedding_dim});
-    TensorView scratch_2d(transpose_scratch, {total_rows, embedding_dim});
+    TensorView scratch_2d(transpose_scratch, {total_rows, embedding_dim}, output.dtype);
 
     combination(input_2d, weights, biases, scratch_2d);
 
     TensorView scratch_4d(transpose_scratch,
-                          {batch_size, sequence_length, heads_number, head_dimension});
+                          {batch_size, sequence_length, heads_number, head_dimension},
+                          output.dtype);
     split_heads(scratch_4d, output);
 }
 
@@ -1784,11 +1795,18 @@ void projection_gradient(const TensorView& head_gradient,
     const Index embedding_dim    = heads_number * head_dimension;
     const Index total_rows       = batch_size * sequence_length;
 
+    // The transpose scratch buffer carries activations in the same dtype as the
+    // surrounding forward/backward arenas — propagate the dtype from
+    // head_gradient so the downstream combination_gradient sees uniform dtypes
+    // on its A/B operands.
     TensorView scratch_4d(transpose_scratch,
-                          {batch_size, sequence_length, heads_number, head_dimension});
+                          {batch_size, sequence_length, heads_number, head_dimension},
+                          head_gradient.dtype);
     merge_heads(head_gradient, scratch_4d);
 
-    TensorView head_gradient_flat(transpose_scratch, {total_rows, embedding_dim});
+    TensorView head_gradient_flat(transpose_scratch,
+                                  {total_rows, embedding_dim},
+                                  head_gradient.dtype);
     TensorView input_flat          = input.reshape({total_rows, embedding_dim});
     TensorView input_delta_flat = input_delta.reshape({total_rows, embedding_dim});
 

@@ -59,7 +59,7 @@ static float sum_abs_cuda(const float* data, Index n)
 }
 
 // L2 regularization sums squared FP32 master parameters. Stays FP32 even when
-// activations are BF16 (so we can't route through CUDA_ACTIVATION_DTYPE here).
+// activations are BF16 — the master parameters arena is always FP32.
 static float squared_norm_cuda(const float* data, Index n)
 {
     float dot = 0.0f;
@@ -74,7 +74,7 @@ void mean_squared_error(const TensorView& input, const TensorView& target, type&
 {
     const Index batch_size = input.shape[0];
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         error = sum_squared_diff_cuda(input, target, workspace_device) / to_int(2 * batch_size);
         return;
     }
@@ -86,7 +86,7 @@ void mean_squared_error_gradient(const TensorView& input, const TensorView& targ
 {
     const Index batch_size = input.shape[0];
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         scaled_diff_cuda(input, target, 1.0f / to_int(batch_size), input_delta);
         return;
     }
@@ -97,7 +97,7 @@ void mean_squared_error_gradient(const TensorView& input, const TensorView& targ
 void normalized_squared_error(const TensorView& input, const TensorView& target, type coefficient, type& error, float* workspace_device)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         error = sum_squared_diff_cuda(input, target, workspace_device) / (2.0f * (coefficient + EPSILON));
         return;
     }
@@ -108,7 +108,7 @@ void normalized_squared_error(const TensorView& input, const TensorView& target,
 void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, type coefficient, TensorView& input_delta)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         scaled_diff_cuda(input, target, 1.0f / (static_cast<float>(coefficient) + EPSILON), input_delta);
         return;
     }
@@ -220,7 +220,7 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
 
 void minkowski_error(const TensorView& input, const TensorView& target, type p, type& error, float* workspace_device)
 {
-    if (Device::instance().is_gpu())
+    if (Configuration::instance().is_gpu())
         throw runtime_error("minkowski_error: GPU implementation not available.");
 
     (void)workspace_device;
@@ -230,7 +230,7 @@ void minkowski_error(const TensorView& input, const TensorView& target, type p, 
 
 void minkowski_error_gradient(const TensorView& input, const TensorView& target, type p, TensorView& input_delta)
 {
-    if (Device::instance().is_gpu())
+    if (Configuration::instance().is_gpu())
         throw runtime_error("minkowski_error_gradient: GPU implementation not available.");
 
     const Index batch_size = input.shape[0];
@@ -343,7 +343,7 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
 void l1_regularization(const TensorView& parameters, type lambda, type& penalty)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         penalty = lambda * sum_abs_cuda(parameters.as<float>(), parameters.size());
         return;
     }
@@ -354,7 +354,7 @@ void l1_regularization(const TensorView& parameters, type lambda, type& penalty)
 void l1_regularization_gradient(const TensorView& parameters, type lambda, TensorView& gradient)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         l1_gradient_cuda<float>(parameters.size(), gradient.as<float>(), parameters.as<float>(), lambda);
         return;
     }
@@ -365,7 +365,7 @@ void l1_regularization_gradient(const TensorView& parameters, type lambda, Tenso
 void l2_regularization(const TensorView& parameters, type lambda, type& penalty)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         penalty = 0.5f * lambda * squared_norm_cuda(parameters.as<float>(), parameters.size());
         return;
     }
@@ -376,13 +376,15 @@ void l2_regularization(const TensorView& parameters, type lambda, type& penalty)
 void l2_regularization_gradient(const TensorView& parameters, type lambda, TensorView& gradient)
 {
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         const int total_size = to_int(parameters.size());
+        // L2 regularization runs over the FP32 master parameters and the FP32
+        // gradient buffer; both stay FP32 regardless of TrainingPrecision.
         CHECK_CUBLAS(cublasAxpyEx(Device::get_cublas_handle(), total_size,
-                                  &lambda, CUDA_REDUCTION_DTYPE,
-                                  parameters.data, CUDA_ACTIVATION_DTYPE, 1,
-                                  gradient.data,   CUDA_ACTIVATION_DTYPE, 1,
-                                  CUDA_REDUCTION_DTYPE));
+                                  &lambda,         CUDA_R_32F,
+                                  parameters.data, CUDA_R_32F, 1,
+                                  gradient.data,   CUDA_R_32F, 1,
+                                  CUDA_R_32F));
         return;
     }
 #endif

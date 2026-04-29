@@ -60,8 +60,8 @@ public:
     {
         return {CUDNN_DATA_FLOAT,        // Means
                 CUDNN_DATA_FLOAT,        // StandardDeviations
-                CUDNN_ACTIVATION_DTYPE,  // NormalizedInputs
-                CUDNN_ACTIVATION_DTYPE}; // Output
+                activation_dtype,  // NormalizedInputs
+                activation_dtype}; // Output
     }
 
     vector<Shape> get_backward_shapes(Index batch_size) const override

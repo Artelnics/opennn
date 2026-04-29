@@ -120,19 +120,19 @@ public:
 
     virtual vector<cudnnDataType_t> get_forward_dtypes(Index batch_size) const
     {
-        return vector<cudnnDataType_t>(get_forward_shapes(batch_size).size(), CUDNN_ACTIVATION_DTYPE);
+        return vector<cudnnDataType_t>(get_forward_shapes(batch_size).size(), activation_dtype);
     }
 
     virtual vector<cudnnDataType_t> get_backward_dtypes(Index batch_size) const
     {
-        return vector<cudnnDataType_t>(get_backward_shapes(batch_size).size(), CUDNN_ACTIVATION_DTYPE);
+        return vector<cudnnDataType_t>(get_backward_shapes(batch_size).size(), activation_dtype);
     }
 
     // Per-parameter-slot dtype. Used by NeuralNetwork::link_parameters_device
     // to decide whether each layer's TensorView slot points into the FP32
     // master (`parameters`) or the BF16 working copy (`parameters_bf16`).
     //
-    // Default: every slot is CUDNN_ACTIVATION_DTYPE — both weights and biases
+    // Default: every slot is activation_dtype — both weights and biases
     // go to the working copy when the BF16 flag is on. This matches cuBLASLt
     // 12.x's BIAS-epilogue constraint that bias dtype must equal output dtype
     // (FP32 bias on BF16 output is rejected by the heuristic).
@@ -144,7 +144,7 @@ public:
     //     keeping FP32 sidesteps the FP32-grad-vs-BF16-filter mismatch.
     virtual vector<cudnnDataType_t> get_parameter_dtypes() const
     {
-        return vector<cudnnDataType_t>(get_parameter_shapes().size(), CUDNN_ACTIVATION_DTYPE);
+        return vector<cudnnDataType_t>(get_parameter_shapes().size(), activation_dtype);
     }
 
     virtual Shape get_input_shape() const = 0;
@@ -187,6 +187,17 @@ public:
 
     bool get_is_trainable() const { return is_trainable; }
 
+    cudnnDataType_t get_activation_dtype()      const { return activation_dtype; }
+    cudaDataType_t  get_cuda_activation_dtype() const { return cuda_activation_dtype; }
+
+    // Called by NeuralNetwork::compile() after Configuration::resolve(). Both dtypes
+    // must match (BFLOAT16+CUDA_R_16BF or FLOAT+CUDA_R_32F).
+    void set_activation_dtype(cudnnDataType_t cudnn_t, cudaDataType_t cuda_t)
+    {
+        activation_dtype      = cudnn_t;
+        cuda_activation_dtype = cuda_t;
+    }
+
     type* link_parameters(type* pointer);
 
     vector<TensorView>& get_parameter_views() { return parameters; }
@@ -210,6 +221,13 @@ protected:
     bool is_trainable = true;
 
     bool is_first_layer = false;
+
+    // Activation/parameter dtype for this layer. Replaces the previous
+    // activation_dtype compile-time constant: it's now a runtime field
+    // set by NeuralNetwork::compile() based on Configuration::resolve(). FP32
+    // by default so layers built outside a network (e.g. unit tests) still work.
+    cudnnDataType_t activation_dtype      = CUDNN_DATA_FLOAT;
+    cudaDataType_t  cuda_activation_dtype = CUDA_R_32F;
 
     vector<TensorView> parameters;
     vector<TensorView> states;

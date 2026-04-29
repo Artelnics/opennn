@@ -64,7 +64,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     check();
 
-    const bool is_gpu = Device::instance().is_gpu();
+    const bool is_gpu = Configuration::instance().is_gpu();
 
     if(display) cout << "Training with adaptive moment estimation \"Adam\""
                      << (is_gpu ? " CUDA" : "") << " ...\n";
@@ -166,7 +166,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     optimization_data.set({Shape{parameters_number}, Shape{parameters_number}});
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) optimization_data.allocate_device();
+    if (Configuration::instance().is_gpu()) optimization_data.allocate_device();
 #endif
 
     optimization_data.iteration = 1;
@@ -291,7 +291,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const type bias_correction_2 = type(1) - pow(beta_2, iteration);
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu())
+    if (Configuration::instance().is_gpu())
     {
         PROFILE_SCOPE("optim:adam_update_cuda");
         const Index parameters_number = neural_network->get_parameters_size();
@@ -309,10 +309,8 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             bias_correction_1,
             bias_correction_2);
 
-        // Master FP32 weights just changed in-place. Refresh the BF16 working
-        // copy so the next forward pass sees up-to-date weights. No-op when
-        // OPENNN_BF16_ACTIVATIONS is off (parameters_bf16 stays empty).
         neural_network->cast_parameters_to_bf16();
+        
         return;
     }
 #endif

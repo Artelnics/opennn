@@ -181,7 +181,7 @@ void Convolutional::init_cuda(Index batch_size)
         cudnnCreateFilterDescriptor(&kernel_descriptor);
 
     cudnnSetFilter4dDescriptor(kernel_descriptor,
-                               CUDNN_ACTIVATION_DTYPE,
+                               activation_dtype,
                                CUDNN_TENSOR_NHWC,
                                kernels_number, kernel_channels, kernel_height, kernel_width);
 
@@ -193,7 +193,7 @@ void Convolutional::init_cuda(Index batch_size)
                                     row_stride, column_stride,
                                     1, 1,
                                     CUDNN_CROSS_CORRELATION,
-                                    CUDNN_ACTIVATION_DTYPE);
+                                    activation_dtype);
 
     cudnnSetConvolutionMathType(convolution_descriptor, CUDNN_TENSOR_OP_MATH);
 
@@ -212,7 +212,7 @@ void Convolutional::init_cuda(Index batch_size)
     cudnnTensorDescriptor_t input_desc;
     cudnnCreateTensorDescriptor(&input_desc);
 
-    cudnnSetTensor4dDescriptor(input_desc, CUDNN_TENSOR_NHWC, CUDNN_ACTIVATION_DTYPE,
+    cudnnSetTensor4dDescriptor(input_desc, CUDNN_TENSOR_NHWC, activation_dtype,
                                static_cast<int>(batch_size),
                                static_cast<int>(kernel_channels),
                                static_cast<int>(input_height),
@@ -221,7 +221,7 @@ void Convolutional::init_cuda(Index batch_size)
     cudnnTensorDescriptor_t output_desc;
     cudnnCreateTensorDescriptor(&output_desc);
 
-    cudnnSetTensor4dDescriptor(output_desc, CUDNN_TENSOR_NHWC, CUDNN_ACTIVATION_DTYPE,
+    cudnnSetTensor4dDescriptor(output_desc, CUDNN_TENSOR_NHWC, activation_dtype,
                                static_cast<int>(batch_size),
                                static_cast<int>(kernels_number),
                                static_cast<int>(get_output_height()),
@@ -309,7 +309,7 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     const TensorView& betas = parameters[Beta];
 
 #ifdef OPENNN_WITH_CUDA
-    const bool is_gpu = Device::instance().is_gpu();
+    const bool is_gpu = Configuration::instance().is_gpu();
 #else
     constexpr bool is_gpu = false;
 #endif
@@ -370,7 +370,7 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     TensorView& output_delta = delta_views[OutputDelta][0];
 
 #ifdef OPENNN_WITH_CUDA
-    const bool is_gpu = Device::instance().is_gpu();
+    const bool is_gpu = Configuration::instance().is_gpu();
 #else
     constexpr bool is_gpu = false;
 #endif

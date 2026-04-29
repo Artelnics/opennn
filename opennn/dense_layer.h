@@ -50,8 +50,8 @@ private:
     // expects FP32 scale/shift even when the activation tensors are BF16.
     vector<cudnnDataType_t> get_parameter_dtypes() const override
     {
-        return {CUDNN_ACTIVATION_DTYPE,   // Bias
-                CUDNN_ACTIVATION_DTYPE,   // Weight
+        return {activation_dtype,   // Bias
+                activation_dtype,   // Weight
                 CUDNN_DATA_FLOAT,         // Gamma
                 CUDNN_DATA_FLOAT};        // Beta
     }
@@ -92,11 +92,11 @@ private:
 
     vector<cudnnDataType_t> get_forward_dtypes(Index) const override
     {
-        return {CUDNN_ACTIVATION_DTYPE,  // Combination
+        return {activation_dtype,  // Combination
                 CUDNN_DATA_FLOAT,        // BatchNormMean
                 CUDNN_DATA_FLOAT,        // BatchNormInverseVariance
-                CUDNN_ACTIVATION_DTYPE,  // Activation
-                CUDNN_ACTIVATION_DTYPE}; // Output
+                activation_dtype,  // Activation
+                activation_dtype}; // Output
     }
 
     enum Backward {OutputDelta, InputDelta};
@@ -306,7 +306,7 @@ public:
 
             const Index output_size = get_outputs_number();
 
-            cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_ACTIVATION_DTYPE,
+            cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, activation_dtype,
                                        static_cast<int>(batch_size),
                                        static_cast<int>(output_size),
                                        static_cast<int>(Rank == 3 ? sequence_length : 1),

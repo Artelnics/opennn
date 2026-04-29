@@ -26,7 +26,7 @@
 // (e.g., `const int A = ..., B = ...;`) — they get folded into __VA_ARGS__.
 #ifdef OPENNN_WITH_CUDA
     #define TRY_GPU_DISPATCH(view, ...) \
-        (::opennn::Device::instance().is_gpu() \
+        (::opennn::Configuration::instance().is_gpu() \
             ? ((view).dispatch(__VA_ARGS__), true) \
             : false)
 #else
@@ -50,7 +50,7 @@
 //   });
 //   // CPU body follows.
 #ifdef OPENNN_WITH_CUDA
-    #define IF_GPU(body) do { if (::opennn::Device::instance().is_gpu()) body } while (0)
+    #define IF_GPU(body) do { if (::opennn::Configuration::instance().is_gpu()) body } while (0)
 #else
     #define IF_GPU(body) ((void)0)
 #endif

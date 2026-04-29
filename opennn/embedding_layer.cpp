@@ -54,30 +54,37 @@ void Embedding::set(const Index new_vocabulary_size,
     embedding_scale = sqrt(static_cast<type>(new_embedding_dimension));
     label = new_label;
 
-    positional_encoding = MatrixR::Zero(new_sequence_length, new_embedding_dimension);
+    // The sinusoidal positional encoding is materialized in link_states(),
+    // which runs once after NeuralNetwork::compile() has reserved its slot in
+    // the shared `states` arena. Keeping the computation there means we never
+    // hold a duplicate host MatrixR or a per-layer GPU Buffer.
+}
 
-    const type half_depth = type(new_embedding_dimension) / 2;
+type* Embedding::link_states(type* pointer)
+{
+    type* next = Layer::link_states(pointer);
 
-    VectorR divisors(new_embedding_dimension);
-    for(Index j = 0; j < new_embedding_dimension; ++j)
-        divisors(j) = pow(type(10000), (j < Index(half_depth) ? j : j - Index(half_depth)) / half_depth);
+    if (!add_positional_encoding) return next;
+    if (states.empty() || !states[PositionalEncoding].data) return next;
+
+    float* table = states[PositionalEncoding].as<float>();
+    if (!table) return next;
+
+    const type half_depth = type(embedding_dimension) / 2;
+
+    VectorR divisors(embedding_dimension);
+    for (Index j = 0; j < embedding_dimension; ++j)
+        divisors(j) = pow(type(10000),
+                          (j < Index(half_depth) ? j : j - Index(half_depth)) / half_depth);
 
     #pragma omp parallel for collapse(2)
-    for(Index i = 0; i < new_sequence_length; ++i)
-        for(Index j = 0; j < new_embedding_dimension; ++j)
-            positional_encoding(i, j) = (j < Index(half_depth))
+    for (Index i = 0; i < sequence_length; ++i)
+        for (Index j = 0; j < embedding_dimension; ++j)
+            table[i * embedding_dimension + j] = (j < Index(half_depth))
                 ? sin(i / divisors(j))
                 : cos(i / divisors(j));
-#ifdef OPENNN_WITH_CUDA
 
-    const Index pe_size = new_sequence_length * new_embedding_dimension;
-    positional_encoding_device.resize_bytes(pe_size * Index(sizeof(float)), DeviceType::Gpu);
-    CHECK_CUDA(cudaMemcpy(positional_encoding_device.as<type>(),
-                          positional_encoding.data(),
-                          pe_size * sizeof(float),
-                          cudaMemcpyHostToDevice));
-
-#endif
+    return next;
 }
 
 // Parameter initialization
@@ -119,7 +126,7 @@ void Embedding::init_cuda(Index batch_size)
 
     cudnnTensorDescriptor_t temp_desc = nullptr;
     cudnnCreateTensorDescriptor(&temp_desc);
-    cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_ACTIVATION_DTYPE,
+    cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, activation_dtype,
                                static_cast<int>(batch_size),
                                static_cast<int>(embedding_dimension),
                                static_cast<int>(sequence_length),
@@ -150,11 +157,11 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
     const Index batch_size = forward_propagation.batch_size;
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         const Index total_elements = batch_size * sequence_length * embedding_dimension;
 
         const float* positional_encoding_data = add_positional_encoding
-            ? positional_encoding_device.as<type>()
+            ? states[PositionalEncoding].as<float>()
             : nullptr;
 
         TensorView& output_view = forward_views[Output][0];
@@ -205,7 +212,11 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
                 outputs.row(i) *= embedding_scale;
 
             if(add_positional_encoding && token_id > 0)
-                outputs.row(i) += positional_encoding.row(i % sequence_length);
+            {
+                const MatrixMap pe(states[PositionalEncoding].as<float>(),
+                                   sequence_length, embedding_dimension);
+                outputs.row(i) += pe.row(i % sequence_length);
+            }
         }
     }
 
@@ -227,7 +238,7 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
         dropout_delta(output_delta, output_delta, dropout_arguments);
 
 #ifdef OPENNN_WITH_CUDA
-    if (Device::instance().is_gpu()) {
+    if (Configuration::instance().is_gpu()) {
         const Index total_elements = forward_propagation.batch_size * sequence_length * embedding_dimension;
 
         // The kernel does atomicAdd into weight_gradient (multiple tokens may map

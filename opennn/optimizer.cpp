@@ -470,7 +470,7 @@ void OptimizerData::set(const vector<Shape>& slot_shapes)
     for(const Shape& s : slot_shapes)
         total_size += get_aligned_size(s.size());
 
-    data.resize_bytes(total_size * Index(sizeof(type)), DeviceType::Cpu);
+    data.resize_bytes(total_size * Index(sizeof(type)), DeviceType::CPU);
     data.setZero();
 
     views.clear();
@@ -498,7 +498,7 @@ void OptimizerData::allocate_device()
 {
     if(data.size() == 0) return;
 
-    data.resize_bytes(data.size() * Index(sizeof(float)), DeviceType::Gpu);
+    data.resize_bytes(data.size() * Index(sizeof(float)), DeviceType::CUDA);
     data.setZero();
 
     type* dev_pointer = data.as<type>();
@@ -521,7 +521,7 @@ void Optimizer::setup_device_training(ForwardPropagation& training_fp,
                                       BackPropagation* validation_bp)
 {
 #ifdef OPENNN_WITH_CUDA
-    if(!Device::instance().is_gpu()) return;
+    if(!Configuration::instance().is_gpu()) return;
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -547,7 +547,7 @@ void Optimizer::setup_device_training(ForwardPropagation& training_fp,
 void Optimizer::teardown_device_training()
 {
 #ifdef OPENNN_WITH_CUDA
-    if(!Device::instance().is_gpu()) return;
+    if(!Configuration::instance().is_gpu()) return;
 
     cudaStreamDestroy(memory_stream);
     cudaEventDestroy(batch_ready_event[0]);
@@ -567,7 +567,7 @@ void Optimizer::teardown_device_training()
 void Optimizer::prefetch_batch(Batch& batch, Index sample_count, int slot)
 {
 #ifdef OPENNN_WITH_CUDA
-    if(!Device::instance().is_gpu()) return;
+    if(!Configuration::instance().is_gpu()) return;
     batch.copy_device_async(sample_count, memory_stream);
     cudaEventRecord(batch_ready_event[slot], memory_stream);
 #else
@@ -578,7 +578,7 @@ void Optimizer::prefetch_batch(Batch& batch, Index sample_count, int slot)
 void Optimizer::wait_prefetch(int slot)
 {
 #ifdef OPENNN_WITH_CUDA
-    if(!Device::instance().is_gpu()) return;
+    if(!Configuration::instance().is_gpu()) return;
     cudaStreamWaitEvent(0, batch_ready_event[slot], 0);
 #else
     (void)slot;
@@ -588,7 +588,7 @@ void Optimizer::wait_prefetch(int slot)
 void Optimizer::sync_device()
 {
 #ifdef OPENNN_WITH_CUDA
-    if(Device::instance().is_gpu()) cudaStreamSynchronize(0);
+    if(Configuration::instance().is_gpu()) cudaStreamSynchronize(0);
 #endif
 }
 
@@ -598,7 +598,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, type max_norm)
     if(gradient_size <= 0) return;
 
 #ifdef OPENNN_WITH_CUDA
-    if(Device::instance().is_gpu())
+    if(Configuration::instance().is_gpu())
     {
         float squared_norm = 0.0f;
         CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(),

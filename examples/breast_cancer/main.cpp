@@ -48,7 +48,7 @@ int main()
         StochasticGradientDescent* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
         sgd->set_maximum_epochs(1000);
 
-        Device::instance().set(DeviceType::Cpu);
+        Configuration::instance().set(DeviceType::CPU, TrainingPrecision::Float32, InferencePrecision::Float32);
 
         training_strategy.train();
 

@@ -30,6 +30,10 @@ int main()
 
         cout << "Airfoil self noise" << endl;
 
+        Configuration::instance().set(DeviceType::Auto, TrainingPrecision::Auto, InferencePrecision::Auto);
+
+        
+
         const Index neurons_number = 12;
         const type regularization_weight = type(0.001);
 
@@ -61,7 +65,6 @@ int main()
         sgd->set_initial_learning_rate(type(0.0001));
         sgd->set_display_period(50);
 
-        Device::instance().set(DeviceType::Gpu);
 
         TrainingResults training_results = training_strategy.train();
 
