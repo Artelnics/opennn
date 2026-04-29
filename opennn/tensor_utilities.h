@@ -1062,6 +1062,24 @@ public:
         return self.cublas_lt_workspace;
     }
 
+    // BF16 scratch buffer used when a layer (typically the first trainable Dense)
+    // receives an FP32 input but its weights live in the BF16 working copy.
+    // cuBLASLt requires A and B to share dtype, so we down-cast the input to BF16
+    // here and feed the scratch into the matmul. Lazy-grown to fit the largest
+    // request seen so far; callers must not retain the pointer across batches.
+    static __nv_bfloat16* get_bf16_input_scratch(Index n_elements)
+    {
+        auto& self = instance();
+        const size_t needed_bytes = size_t(n_elements) * sizeof(__nv_bfloat16);
+        if(needed_bytes > self.bf16_input_scratch_bytes)
+        {
+            if(self.bf16_input_scratch) cudaFree(self.bf16_input_scratch);
+            CHECK_CUDA(cudaMalloc(&self.bf16_input_scratch, needed_bytes));
+            self.bf16_input_scratch_bytes = needed_bytes;
+        }
+        return reinterpret_cast<__nv_bfloat16*>(self.bf16_input_scratch);
+    }
+
     // Returns a cached cuBLASLt plan for a GEMM with the requested epilogue.
     // Built (descriptors + heuristic algo) once per unique key and reused.
     // The bias *pointer* is set on the returned op_desc by the caller per
@@ -1102,6 +1120,8 @@ private:
     float* ones_device = nullptr;
     int ones_size = 0;
     void* cublas_lt_workspace = nullptr;
+    void* bf16_input_scratch = nullptr;
+    size_t bf16_input_scratch_bytes = 0;
 
 #ifdef OPENNN_WITH_CUDA
     std::unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans;

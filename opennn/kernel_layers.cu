@@ -6,50 +6,56 @@
 #include "kernel_common.cuh"
 
 // Per-feature clip: output[i] = clamp(input[i], lower[f], upper[f]) where f = i % features.
-template<typename T>
+// Input/output dtypes are independent so the boundary layers can bridge a BF16
+// activation arena with FP32 final outputs (or vice versa).
+template<typename TIn, typename TOut>
 __global__ void bounding_kernel(const int n, const int features,
-                                const T* __restrict__ input,
+                                const TIn* __restrict__ input,
                                 const float* __restrict__ lower,
                                 const float* __restrict__ upper,
-                                T* __restrict__ output)
+                                TOut* __restrict__ output)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
         const int f = i % features;
         const float x = static_cast<float>(input[i]);
-        output[i] = static_cast<T>(fminf(fmaxf(x, lower[f]), upper[f]));
+        output[i] = static_cast<TOut>(fminf(fmaxf(x, lower[f]), upper[f]));
     }
 }
 
-template<typename T>
+template<typename TIn, typename TOut>
 void bounding_cuda(const Index n, const int features,
-                   const T* input, const float* lower, const float* upper,
-                   T* output)
+                   const TIn* input, const float* lower, const float* upper,
+                   TOut* output)
 {
     if (n == 0) return;
 
     const int total = static_cast<int>(n);
 
-    bounding_kernel<T><<<grid_size_for(total), block_size>>>(total, features, input, lower, upper, output);
+    bounding_kernel<TIn, TOut><<<grid_size_for(total), block_size>>>(total, features, input, lower, upper, output);
 }
 
-template void bounding_cuda<float>        (const Index, const int, const float*,         const float*, const float*, float*);
-template void bounding_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, __nv_bfloat16*);
+template void bounding_cuda<float,         float>        (const Index, const int, const float*,         const float*, const float*, float*);
+template void bounding_cuda<float,         __nv_bfloat16>(const Index, const int, const float*,         const float*, const float*, __nv_bfloat16*);
+template void bounding_cuda<__nv_bfloat16, float>        (const Index, const int, const __nv_bfloat16*, const float*, const float*, float*);
+template void bounding_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, __nv_bfloat16*);
 
 static constexpr float SCALER_EPSILON = 1e-7f;
 
 // Per-feature input scaling. Method per feature is encoded in `scalers` (cast from
 // ScalerMethod enum stored as float): MinMax, MeanStd, StdDev, Logarithm, ImageMinMax.
-template<typename T>
+// Input and output dtypes are independent: the first network input often arrives
+// FP32 from the Batch while the output may need to feed BF16 activations downstream.
+template<typename TIn, typename TOut>
 __global__ void scale_kernel(const int n, const int features,
-                             const T* __restrict__ input,
+                             const TIn* __restrict__ input,
                              const float* __restrict__ minimums,
                              const float* __restrict__ maximums,
                              const float* __restrict__ means,
                              const float* __restrict__ stds,
                              const float* __restrict__ scalers,
                              const float min_range, const float max_range,
-                             T* __restrict__ output)
+                             TOut* __restrict__ output)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
@@ -80,42 +86,46 @@ __global__ void scale_kernel(const int n, const int features,
             break;
         }
 
-        output[i] = static_cast<T>(y);
+        output[i] = static_cast<TOut>(y);
     }
 }
 
-template<typename T>
+template<typename TIn, typename TOut>
 void scale_cuda(const Index n, const int features,
-                const T* input,
+                const TIn* input,
                 const float* minimums, const float* maximums,
                 const float* means, const float* stds,
                 const float* scalers,
                 float min_range, float max_range,
-                T* output)
+                TOut* output)
 {
     if (n == 0) return;
 
     const int total = static_cast<int>(n);
 
-    scale_kernel<T><<<grid_size_for(total), block_size>>>(total, features,
-                                                          input, minimums, maximums, means, stds, scalers,
-                                                          min_range, max_range, output);
+    scale_kernel<TIn, TOut><<<grid_size_for(total), block_size>>>(total, features,
+                                                                  input, minimums, maximums, means, stds, scalers,
+                                                                  min_range, max_range, output);
 }
 
-template void scale_cuda<float>        (const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, float*);
-template void scale_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
+template void scale_cuda<float,         float>        (const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, float*);
+template void scale_cuda<float,         __nv_bfloat16>(const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
+template void scale_cuda<__nv_bfloat16, float>        (const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, float*);
+template void scale_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
 
-// Inverse of scale_kernel: per-feature output unscaling.
-template<typename T>
+// Inverse of scale_kernel: per-feature output unscaling. Same mixed-dtype
+// signature as scale_kernel — the last hidden layer's output may be BF16 while
+// the unscaled tensor that feeds Bounding/loss is FP32.
+template<typename TIn, typename TOut>
 __global__ void unscale_kernel(const int n, const int features,
-                               const T* __restrict__ input,
+                               const TIn* __restrict__ input,
                                const float* __restrict__ minimums,
                                const float* __restrict__ maximums,
                                const float* __restrict__ means,
                                const float* __restrict__ stds,
                                const float* __restrict__ scalers,
                                const float min_range, const float max_range,
-                               T* __restrict__ output)
+                               TOut* __restrict__ output)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
@@ -146,30 +156,86 @@ __global__ void unscale_kernel(const int n, const int features,
             break;
         }
 
-        output[i] = static_cast<T>(y);
+        output[i] = static_cast<TOut>(y);
     }
 }
 
-template<typename T>
+template<typename TIn, typename TOut>
 void unscale_cuda(const Index n, const int features,
-                  const T* input,
+                  const TIn* input,
                   const float* minimums, const float* maximums,
                   const float* means, const float* stds,
                   const float* scalers,
                   float min_range, float max_range,
-                  T* output)
+                  TOut* output)
 {
     if (n == 0) return;
 
     const int total = static_cast<int>(n);
 
-    unscale_kernel<T><<<grid_size_for(total), block_size>>>(total, features,
-                                                            input, minimums, maximums, means, stds, scalers,
-                                                            min_range, max_range, output);
+    unscale_kernel<TIn, TOut><<<grid_size_for(total), block_size>>>(total, features,
+                                                                    input, minimums, maximums, means, stds, scalers,
+                                                                    min_range, max_range, output);
 }
 
-template void unscale_cuda<float>        (const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, float*);
-template void unscale_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
+template void unscale_cuda<float,         float>        (const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, float*);
+template void unscale_cuda<float,         __nv_bfloat16>(const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
+template void unscale_cuda<__nv_bfloat16, float>        (const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, float*);
+template void unscale_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
+
+// Mixed-dtype loss helpers. cuDNN OpTensor requires all input descriptors to
+// share dtype, which is incompatible with our BF16 activations / FP32 targets
+// pairing. These two kernels do (input - target) elementwise with the input
+// dtype templated and target/output FP32 (or templated for the gradient case).
+
+template<typename TIn>
+__global__ void diff_to_fp32_kernel(const int n,
+                                    const TIn* __restrict__ input,
+                                    const float* __restrict__ target,
+                                    float* __restrict__ output)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+        output[i] = static_cast<float>(input[i]) - target[i];
+}
+
+template<typename TIn>
+void diff_to_fp32_cuda(const Index n, const TIn* input, const float* target, float* output)
+{
+    if (n == 0) return;
+    const int total = static_cast<int>(n);
+    diff_to_fp32_kernel<TIn><<<grid_size_for(total), block_size>>>(total, input, target, output);
+}
+
+template void diff_to_fp32_cuda<float>        (const Index, const float*,         const float*, float*);
+template void diff_to_fp32_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, const float*, float*);
+
+template<typename TIn, typename TOut>
+__global__ void scaled_diff_kernel(const int n,
+                                   const TIn* __restrict__ input,
+                                   const float* __restrict__ target,
+                                   const float scale,
+                                   TOut* __restrict__ output)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const float d = static_cast<float>(input[i]) - target[i];
+        output[i] = static_cast<TOut>(scale * d);
+    }
+}
+
+template<typename TIn, typename TOut>
+void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target,
+                            float scale, TOut* output)
+{
+    if (n == 0) return;
+    const int total = static_cast<int>(n);
+    scaled_diff_kernel<TIn, TOut><<<grid_size_for(total), block_size>>>(total, input, target, scale, output);
+}
+
+template void scaled_diff_cuda_typed<float,         float>        (const Index, const float*,         const float*, float, float*);
+template void scaled_diff_cuda_typed<float,         __nv_bfloat16>(const Index, const float*,         const float*, float, __nv_bfloat16*);
+template void scaled_diff_cuda_typed<__nv_bfloat16, float>        (const Index, const __nv_bfloat16*, const float*, float, float*);
+template void scaled_diff_cuda_typed<__nv_bfloat16, __nv_bfloat16>(const Index, const __nv_bfloat16*, const float*, float, __nv_bfloat16*);
 
 // Token embedding lookup: outputs[i] = scale * weights[token_id, dim] + positional_encoding.
 // `inputs` carries integer token ids stored as float. Out-of-vocab tokens get 0.

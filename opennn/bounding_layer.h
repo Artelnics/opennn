@@ -33,6 +33,14 @@ public:
         return {Shape{batch_size}.append(get_output_shape())};
     }
 
+    // Boundary layer: output stays FP32 so the host receives the network's
+    // final tensor in FP32. Mixed-dtype bounding_kernel covers the BF16→FP32
+    // cast when activations upstream are BF16.
+    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
+    {
+        return {CUDNN_DATA_FLOAT};
+    }
+
     const BoundingMethod& get_bounding_method() const;
 
     // Return by value — zero-copy would require VectorMap; VectorR copy is cheap here

@@ -32,6 +32,14 @@ private:
         return {Shape{batch_size}.append(get_output_shape())};
     }
 
+    // Boundary layer: output stays FP32 so the network's final tensor reaches
+    // the host in FP32. The mixed-dtype unscale_kernel handles the BF16→FP32
+    // cast when activations upstream are BF16.
+    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
+    {
+        return {CUDNN_DATA_FLOAT};
+    }
+
     void flush_scalers_to_states();
 
 public:

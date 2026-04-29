@@ -14,33 +14,41 @@ namespace opennn
 
 #ifdef OPENNN_WITH_CUDA
 
+// Compute Σ (input − target)² for tensors that may have different dtypes
+// (typical case: input = model output in BF16, target = labels in FP32). cuDNN
+// OpTensor requires uniform dtypes across A/B/C, so we lower to a custom kernel
+// that materializes (input − target) in FP32 and reduce with cublasSdot.
 static float sum_squared_diff_cuda(const TensorView& input, const TensorView& target, float* workspace)
 {
     const int total_size = to_int(input.size());
-    CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(), Device::get_operator_sum_descriptor(),
-                              &one, input.get_descriptor(), input.data,
-                              &minus_one, target.get_descriptor(), target.data,
-                              &zero, input.get_descriptor(), workspace));
+
+    input.dispatch([&](auto tag) {
+        using TIn = decltype(tag);
+        diff_to_fp32_cuda<TIn>(input.size(), input.as<TIn>(), target.as_float(), workspace);
+    });
+
     float sum_squared = 0.0f;
-    CHECK_CUBLAS(cublasDotEx(Device::get_cublas_handle(), total_size,
-                             workspace, CUDA_ACTIVATION_DTYPE, 1,
-                             workspace, CUDA_ACTIVATION_DTYPE, 1,
-                             &sum_squared, CUDA_REDUCTION_DTYPE,
-                             CUDA_REDUCTION_DTYPE));
+    CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(), total_size,
+                            workspace, 1, workspace, 1, &sum_squared));
     return sum_squared;
 }
 
+// Compute output = scale * (input − target). Input/output may carry different
+// dtypes; target is always FP32 (Batch::target). Replaces the cudnnOpTensor +
+// cublasScalEx pair, which choked on mixed dtypes.
 static void scaled_diff_cuda(const TensorView& input, const TensorView& target, float scale, TensorView& output)
 {
-    const int total_size = to_int(input.size());
-    CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(), Device::get_operator_sum_descriptor(),
-                              &one, input.get_descriptor(), input.data,
-                              &minus_one, target.get_descriptor(), target.data,
-                              &zero, output.get_descriptor(), output.data));
-    CHECK_CUBLAS(cublasScalEx(Device::get_cublas_handle(), total_size,
-                              &scale, CUDA_REDUCTION_DTYPE,
-                              output.data, CUDA_ACTIVATION_DTYPE, 1,
-                              CUDA_REDUCTION_DTYPE));
+    input.dispatch([&](auto in_tag) {
+        using TIn = decltype(in_tag);
+        output.dispatch([&](auto out_tag) {
+            using TOut = decltype(out_tag);
+            scaled_diff_cuda_typed<TIn, TOut>(input.size(),
+                                              input.as<TIn>(),
+                                              target.as_float(),
+                                              scale,
+                                              output.as<TOut>());
+        });
+    });
 }
 
 static float sum_abs_cuda(const float* data, Index n)
@@ -50,14 +58,13 @@ static float sum_abs_cuda(const float* data, Index n)
     return sum;
 }
 
+// L2 regularization sums squared FP32 master parameters. Stays FP32 even when
+// activations are BF16 (so we can't route through CUDA_ACTIVATION_DTYPE here).
 static float squared_norm_cuda(const float* data, Index n)
 {
     float dot = 0.0f;
-    CHECK_CUBLAS(cublasDotEx(Device::get_cublas_handle(), to_int(n),
-                             data, CUDA_ACTIVATION_DTYPE, 1,
-                             data, CUDA_ACTIVATION_DTYPE, 1,
-                             &dot, CUDA_REDUCTION_DTYPE,
-                             CUDA_REDUCTION_DTYPE));
+    CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(), to_int(n),
+                            data, 1, data, 1, &dot));
     return dot;
 }
 

@@ -95,6 +95,10 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
             current_learning_rate,
             momentum,
             nesterov);
+
+        // Refresh the BF16 working copy from the freshly-updated FP32 master
+        // so the next forward sees current weights. No-op when the flag is off.
+        neural_network->cast_parameters_to_bf16();
         return;
     }
 #endif

@@ -40,6 +40,15 @@ public:
         return {Shape{batch_size}.append(input_shape)}; // Output
     }
 
+    // Boundary layer: stays FP32 even when activations are BF16 so the host
+    // path (Batch input arrives FP32; final output goes back to FP32) keeps
+    // a contiguous dtype boundary. The Dense that follows handles the FP32→BF16
+    // cast internally via maybe_cast_input_to_weights_dtype.
+    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
+    {
+        return {CUDNN_DATA_FLOAT}; // Output
+    }
+
     enum States {Minimums, Maximums, Means, StandardDeviations, Scalers};
 
     vector<Shape> get_state_shapes() const override

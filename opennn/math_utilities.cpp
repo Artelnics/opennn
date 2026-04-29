@@ -45,13 +45,22 @@ void bounding(const TensorView& input,
 {
     const Index features = lower_bounds.size();
 
-    if (TRY_GPU_DISPATCH(output, [&](auto tag) {
-        using T = decltype(tag);
-        bounding_cuda<T>(output.size(), to_int(features), input.as<T>(),
-                         lower_bounds.as_float(),
-                         upper_bounds.as_float(),
-                         output.as<T>());
-    })) return;
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu()) {
+        input.dispatch([&](auto in_tag) {
+            using TIn = decltype(in_tag);
+            output.dispatch([&](auto out_tag) {
+                using TOut = decltype(out_tag);
+                bounding_cuda<TIn, TOut>(output.size(), to_int(features),
+                                         input.as<TIn>(),
+                                         lower_bounds.as_float(),
+                                         upper_bounds.as_float(),
+                                         output.as<TOut>());
+            });
+        });
+        return;
+    }
+#endif
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap lower_bounds_vector = lower_bounds.as_vector();
@@ -74,18 +83,26 @@ void scale(const TensorView& input,
 {
     const Index features = scalers.size();
 
-    if (TRY_GPU_DISPATCH(output, [&](auto tag) {
-        using T = decltype(tag);
-        scale_cuda<T>(output.size(), to_int(features),
-                      input.as<T>(),
-                      minimums.as_float(),
-                      maximums.as_float(),
-                      means.as_float(),
-                      standard_deviations.as_float(),
-                      scalers.as_float(),
-                      min_range, max_range,
-                      output.as<T>());
-    })) return;
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu()) {
+        input.dispatch([&](auto in_tag) {
+            using TIn = decltype(in_tag);
+            output.dispatch([&](auto out_tag) {
+                using TOut = decltype(out_tag);
+                scale_cuda<TIn, TOut>(output.size(), to_int(features),
+                                      input.as<TIn>(),
+                                      minimums.as_float(),
+                                      maximums.as_float(),
+                                      means.as_float(),
+                                      standard_deviations.as_float(),
+                                      scalers.as_float(),
+                                      min_range, max_range,
+                                      output.as<TOut>());
+            });
+        });
+        return;
+    }
+#endif
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap mins = minimums.as_vector();
@@ -136,18 +153,26 @@ void unscale(const TensorView& input,
 {
     const Index features = scalers.size();
 
-    if (TRY_GPU_DISPATCH(output, [&](auto tag) {
-        using T = decltype(tag);
-        unscale_cuda<T>(output.size(), to_int(features),
-                        input.as<T>(),
-                        minimums.as_float(),
-                        maximums.as_float(),
-                        means.as_float(),
-                        standard_deviations.as_float(),
-                        scalers.as_float(),
-                        min_range, max_range,
-                        output.as<T>());
-    })) return;
+#ifdef OPENNN_WITH_CUDA
+    if (Device::instance().is_gpu()) {
+        input.dispatch([&](auto in_tag) {
+            using TIn = decltype(in_tag);
+            output.dispatch([&](auto out_tag) {
+                using TOut = decltype(out_tag);
+                unscale_cuda<TIn, TOut>(output.size(), to_int(features),
+                                        input.as<TIn>(),
+                                        minimums.as_float(),
+                                        maximums.as_float(),
+                                        means.as_float(),
+                                        standard_deviations.as_float(),
+                                        scalers.as_float(),
+                                        min_range, max_range,
+                                        output.as<TOut>());
+            });
+        });
+        return;
+    }
+#endif
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap mins = minimums.as_vector();
@@ -379,6 +404,27 @@ void softmax_backward(const TensorView& softmax_out, TensorView& output_delta)
     dY.array() = y.array() * (dY.colwise() - dot).array();
 }
 
+#ifdef OPENNN_WITH_CUDA
+// First-trainable Dense receives input directly from the Batch (FP32) but its
+// weights live in the BF16 working copy. cuBLASLt requires A and B to share
+// dtype, so we down-cast the input on-the-fly into a Device-owned scratch
+// buffer and feed that into the matmul. Returns the original pointer when no
+// cast is needed.
+static const void* maybe_cast_input_to_weights_dtype(const TensorView& input,
+                                                     const TensorView& weights)
+{
+    if (input.dtype == weights.dtype) return input.data;
+    if (input.dtype == CUDNN_DATA_FLOAT && weights.dtype == CUDNN_DATA_BFLOAT16)
+    {
+        __nv_bfloat16* scratch = Device::get_bf16_input_scratch(input.size());
+        cast_fp32_to_bf16_cuda(input.size(), input.as_float(), scratch);
+        return scratch;
+    }
+    // Other mismatches are not produced by the current dtype routing.
+    return input.data;
+}
+#endif
+
 void combination(const TensorView& input,
                  const TensorView& weights,
                  const TensorView& biases,
@@ -391,6 +437,8 @@ void combination(const TensorView& input,
         const int output_columns = to_int(weights.shape.back());
         const int total_rows     = to_int(input.size() / input.shape.back());
 
+        const void* input_for_gemm = maybe_cast_input_to_weights_dtype(input, weights);
+
         // Fused GEMM + bias-add via cuBLASLt epilogue (one launch instead of two).
         // Bias is passed as raw data pointer; gemm_bias_cuda's plan sets the
         // cuBLASLt bias dtype to match the output dtype (FP32 or BF16). When
@@ -399,7 +447,7 @@ void combination(const TensorView& input,
         gemm_bias_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
                        output_columns, total_rows, input_columns,
                        weights.data,
-                       input.data,
+                       input_for_gemm,
                        output.data,
                        biases.data);
         return;
@@ -424,11 +472,13 @@ void combination_activation(const TensorView& input,
         const int output_columns = to_int(weights.shape.back());
         const int total_rows     = to_int(input.size() / input.shape.back());
 
+        const void* input_for_gemm = maybe_cast_input_to_weights_dtype(input, weights);
+
         // Fused GEMM + bias + ReLU in one cuBLASLt launch.
         gemm_bias_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
                        output_columns, total_rows, input_columns,
                        weights.data,
-                       input.data,
+                       input_for_gemm,
                        output.data,
                        biases.data,
                        CUBLASLT_EPILOGUE_RELU_BIAS);
@@ -458,10 +508,27 @@ void combination_gradient(const TensorView& output_delta,
 
         {
             PROFILE_SCOPE("comb_grad:gemm_bgrad_W_b");
+
+            // gemm_bgrad_cuda assumes both A (output_delta) and B (input) follow
+            // the activation dtype. The first trainable Dense receives input
+            // straight from the Batch in FP32, so we have to down-cast it to
+            // match output_delta before the matmul.
+            const void* input_for_gemm = (input.dtype == CUDNN_DATA_FLOAT
+                                          && CUDA_ACTIVATION_DTYPE == CUDA_R_16BF)
+                                          ? static_cast<const void*>(
+                                                Device::get_bf16_input_scratch(input.size()))
+                                          : input.data;
+
+            if (input_for_gemm != input.data)
+                cast_fp32_to_bf16_cuda(input.size(),
+                                       input.as_float(),
+                                       const_cast<__nv_bfloat16*>(
+                                           static_cast<const __nv_bfloat16*>(input_for_gemm)));
+
             gemm_bgrad_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
                             output_columns, input_columns, total_rows,
                             output_delta.data,         // A
-                            input.data,                // B
+                            input_for_gemm,            // B
                             weight_gradient.data,      // C / D
                             bias_gradient.as<float>());
         }

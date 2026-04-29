@@ -456,19 +456,19 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     return MatrixMap(out_view.data, batch_size, out_view.size() / batch_size);
 }
 
-MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs) 
+MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()})});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()}, CUDNN_DATA_FLOAT)});
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)})});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)}, CUDNN_DATA_FLOAT)});
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)})});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}, CUDNN_DATA_FLOAT)});
 }
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
