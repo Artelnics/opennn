@@ -15,7 +15,7 @@ namespace opennn
 
 string shape_to_string(const Shape& x, const string& separator)
 {
-    const Index size = x.size();
+    const Index size = x.rank;
 
     ostringstream buffer;
 
