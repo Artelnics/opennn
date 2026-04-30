@@ -83,9 +83,9 @@ struct BackPropagationLM
 
     Loss* loss = nullptr;
 
-    type error;
-    type regularization = type(0);
-    type loss_value = type(0);
+    float error;
+    float regularization = float(0);
+    float loss_value = float(0);
 
     NeuralNetworkBackPropagationLM neural_network;
 
@@ -108,16 +108,16 @@ public:
 
    void set_default();
 
-   void set_damping_parameter(const type);
+   void set_damping_parameter(const float);
 
-   void set_damping_parameter_factor(const type);
+   void set_damping_parameter_factor(const float);
 
-   void set_minimum_damping_parameter(const type);
-   void set_maximum_damping_parameter(const type);
+   void set_minimum_damping_parameter(const float);
+   void set_maximum_damping_parameter(const float);
 
    // Stopping criteria
 
-   void set_minimum_loss_decrease(const type);
+   void set_minimum_loss_decrease(const float);
    // Training
 
    void check() const override;
@@ -159,17 +159,17 @@ private:
                               Index layer_index,
                               Index parameter_offset,
                               MatrixR& jacobian);
-   type damping_parameter = type(0);
+   float damping_parameter = float(0);
 
-   type minimum_damping_parameter = type(0);
+   float minimum_damping_parameter = float(0);
 
-   type maximum_damping_parameter = type(0);
+   float maximum_damping_parameter = float(0);
 
-   type damping_parameter_factor = type(0);
+   float damping_parameter_factor = float(0);
 
    // Stopping criteria 
 
-   type minimum_loss_decrease = type(0);
+   float minimum_loss_decrease = float(0);
 
 };
 

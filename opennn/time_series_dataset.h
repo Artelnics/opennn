@@ -56,13 +56,13 @@ public:
 
     void fill_inputs(const vector<Index>&,
                            const vector<Index>&,
-                           type*,
+                           float*,
                            bool = true,
                            int contiguous = -1) const override;
 
     void fill_targets(const vector<Index>&,
                             const vector<Index>&,
-                            type*,
+                            float*,
                             bool = true,
                             int contiguous = -1) const override;
 

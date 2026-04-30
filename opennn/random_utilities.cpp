@@ -23,9 +23,9 @@ void set_seed(unsigned seed)
     srand(seed);
 }
 
-type random_uniform(type min, type max)
+float random_uniform(float min, float max)
 {
-    uniform_real_distribution<type> distribution(min, max);
+    uniform_real_distribution<float> distribution(min, max);
     return distribution(get_generator());
 }
 
@@ -35,39 +35,39 @@ Index random_integer(Index min, Index max)
     return distribution(get_generator());
 }
 
-bool random_bool(type probability)
+bool random_bool(float probability)
 {
     bernoulli_distribution distribution(probability);
     return distribution(get_generator());
 }
 
-void set_random_uniform(MatrixR& tensor, type min, type max)
+void set_random_uniform(MatrixR& tensor, float min, float max)
 {
     #pragma omp parallel
     {
-        uniform_real_distribution<type> distribution(min, max);
+        uniform_real_distribution<float> distribution(min, max);
         #pragma omp for
         for(Index i = 0; i < tensor.size(); ++i)
             tensor(i) = distribution(get_generator());
     }
 }
 
-void set_random_uniform(VectorMap tensor, type min, type max)
+void set_random_uniform(VectorMap tensor, float min, float max)
 {
     #pragma omp parallel
     {
-        uniform_real_distribution<type> distribution(min, max);
+        uniform_real_distribution<float> distribution(min, max);
         #pragma omp for
         for(Index i = 0; i < tensor.size(); ++i)
             tensor(i) = distribution(get_generator());
     }
 }
 
-void set_random_normal(MatrixMap tensor, type mean, type std_dev)
+void set_random_normal(MatrixMap tensor, float mean, float std_dev)
 {
     #pragma omp parallel
     {
-        normal_distribution<type> distribution(mean, std_dev);
+        normal_distribution<float> distribution(mean, std_dev);
         #pragma omp for
         for(Index i = 0; i < tensor.size(); ++i)
             tensor(i) = distribution(get_generator());

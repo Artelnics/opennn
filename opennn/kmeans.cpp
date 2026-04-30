@@ -53,7 +53,7 @@ void KMeans::fit(const MatrixR& data)
             }
 
             if(count != 0)
-                cluster_centers.row(cluster_index) = center_sum / type(count);
+                cluster_centers.row(cluster_index) = center_sum / float(count);
         }
     }
 }
@@ -79,7 +79,7 @@ VectorR KMeans::elbow_method(const MatrixR& data, Index max_clusters)
     const Index rows_number = data.rows();
 
     const Index original_clusters_number = clusters_number;
-    type mean_squared_error;
+    float mean_squared_error;
 
     for(Index cluster_index = 1; cluster_index <= max_clusters; ++cluster_index)
     {
@@ -87,7 +87,7 @@ VectorR KMeans::elbow_method(const MatrixR& data, Index max_clusters)
 
         fit(data);
 
-        mean_squared_error = type(0);
+        mean_squared_error = float(0);
 
         for(Index row_index = 0; row_index < rows_number; ++row_index)
         {
@@ -107,23 +107,23 @@ Index KMeans::find_optimal_clusters(const VectorR& sum_squared_error_values) con
     const Index cluster_number = sum_squared_error_values.size();
 
     VectorR initial_endpoint(2);
-    initial_endpoint << type(1), type(sum_squared_error_values(0));
+    initial_endpoint << float(1), float(sum_squared_error_values(0));
 
     VectorR override_endpoint(2);
-    override_endpoint << type(clusters_number), sum_squared_error_values(clusters_number - 1);
+    override_endpoint << float(clusters_number), sum_squared_error_values(clusters_number - 1);
 
-    type max_distance = type(0);
+    float max_distance = float(0);
     Index optimal_clusters_number = 1;
 
-    const type dy = override_endpoint(1) - initial_endpoint(1);
-    const type dx = override_endpoint(0) - initial_endpoint(0);
-    const type cross_term = override_endpoint(0) * initial_endpoint(1) - override_endpoint(1) * initial_endpoint(0);
-    const type inv_line_length = type(1) / sqrt(dy * dy + dx * dx);
+    const float dy = override_endpoint(1) - initial_endpoint(1);
+    const float dx = override_endpoint(0) - initial_endpoint(0);
+    const float cross_term = override_endpoint(0) * initial_endpoint(1) - override_endpoint(1) * initial_endpoint(0);
+    const float inv_line_length = float(1) / sqrt(dy * dy + dx * dx);
 
     for(Index cluster_index = 1; cluster_index <= cluster_number; ++cluster_index)
     {
-        const type perpendicular_distance
-            = abs(dy * type(cluster_index) - dx * sum_squared_error_values(cluster_index - 1) + cross_term) * inv_line_length;
+        const float perpendicular_distance
+            = abs(dy * float(cluster_index) - dx * sum_squared_error_values(cluster_index - 1) + cross_term) * inv_line_length;
 
         if(perpendicular_distance > max_distance)
         {

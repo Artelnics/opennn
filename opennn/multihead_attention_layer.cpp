@@ -41,13 +41,13 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
         new_name);
 }
 
-type MultiHeadAttention::get_scaling_factor() const
+float MultiHeadAttention::get_scaling_factor() const
 {
     const Index head_dimension = get_head_dimension();
 
     return (head_dimension == 0)
         ? 0.25
-        : type(1) / type(sqrt(head_dimension));
+        : float(1) / float(sqrt(head_dimension));
 }
 
 Index MultiHeadAttention::get_head_dimension() const
@@ -83,7 +83,7 @@ void MultiHeadAttention::set_parameters_random()
 {
     if(embedding_dimension == 0) return;
 
-    const type weight_limit = sqrt(type(6) / type(2 * embedding_dimension));
+    const float weight_limit = sqrt(float(6) / float(2 * embedding_dimension));
 
     const int weight_slots[] = {QueryWeight, KeyWeight, ValueWeight, ProjectionWeight};
     for(const int slot : weight_slots)
@@ -132,7 +132,7 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
 
         for(Index row = 0; row < query_sequence_length; ++row)
             for(Index column = 0; column < source_sequence_length; ++column)
-                causal_mask(row, column) = (column > row) ? NEG_INFINITY : type(0);
+                causal_mask(row, column) = (column > row) ? NEG_INFINITY : float(0);
     }
 }
 
@@ -140,7 +140,7 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
 
 void MultiHeadAttention::init_cuda(Index batch_size)
 {
-    if(dropout_rate <= type(0)) return;
+    if(dropout_rate <= float(0)) return;
     if(heads_number == 0 || embedding_dimension == 0) return;
 
     if(dropout_arguments.descriptor)    { cudnnDestroyDropoutDescriptor(dropout_arguments.descriptor); dropout_arguments.descriptor = nullptr; }
@@ -197,13 +197,13 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     projection(source_input, parameters[KeyWeight],   parameters[KeyBias],   key,   transpose_scratch);
     projection(source_input, parameters[ValueWeight], parameters[ValueBias], value, transpose_scratch);
 
-    multiply(query, false, key, true, attention_weights, get_scaling_factor(), type(0));
+    multiply(query, false, key, true, attention_weights, get_scaling_factor(), float(0));
 
     attention_masks(source_input, attention_weights, causal_mask, use_causal_mask, forward_views[PaddingMask][0].as<float>());
 
     softmax(attention_weights);
 
-    const bool apply_dropout = is_training && dropout_rate > type(0);
+    const bool apply_dropout = is_training && dropout_rate > float(0);
     TensorView& attention_used = apply_dropout
         ? forward_views[AttentionWeightsDropped][0]
         : attention_weights;
@@ -249,7 +249,7 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     const Shape flat_shape = {total_rows, embedding_dimension};
 
     float* transpose_scratch = forward_views[TransposeScratch][0].as<float>();
-    const type scaling_factor = get_scaling_factor();
+    const float scaling_factor = get_scaling_factor();
 
     TensorView concat_grad_flat = delta_views[ConcatenatedOutputDelta][0].reshape(flat_shape);
 
@@ -273,7 +273,7 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 
     split_heads(concat_grad_4d, scratch_4d);
 
-    const bool dropout_active = dropout_rate > type(0);
+    const bool dropout_active = dropout_rate > float(0);
     const TensorView& attention_forward_output = dropout_active
         ? forward_views[AttentionWeightsDropped][0]
         : attention_weights;
@@ -287,9 +287,9 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 
     softmax_backward(attention_weights, att_weight_grad);
 
-    multiply(att_weight_grad, false, forward_views[Key][0],   false, query_grad, scaling_factor, type(0));
+    multiply(att_weight_grad, false, forward_views[Key][0],   false, query_grad, scaling_factor, float(0));
 
-    multiply(att_weight_grad, true,  forward_views[Query][0], false, key_grad,   scaling_factor, type(0));
+    multiply(att_weight_grad, true,  forward_views[Query][0], false, key_grad,   scaling_factor, float(0));
 
     projection_gradient(query_grad, query_input, parameters[QueryWeight],
                         gradient_views[QueryBias], gradient_views[QueryWeight],

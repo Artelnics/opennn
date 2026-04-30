@@ -34,20 +34,16 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     const Index total_size = aligned_total_elements(forward_shapes);
 
-    // Forward arena is pure scratch — no Eigen-based init reads from it before
-    // the first forward pass. When the resolved device is CUDA we skip the CPU
-    // allocation entirely and let allocate_device() build the GPU buffer; the
-    // view structure is still populated below so input wiring works.
     const bool gpu_mode = Configuration::instance().is_gpu();
 
     if(total_size > 0 && !gpu_mode)
     {
-        data.resize_bytes(total_size * Index(sizeof(type)), DeviceType::CPU);
+        data.resize_bytes(total_size * Index(sizeof(float)), DeviceType::CPU);
         data.setZero();
     }
 
     views.resize(layers_number);
-    type* pointer = (total_size > 0 && !gpu_mode) ? data.as<type>() : nullptr;
+    float* pointer = (total_size > 0 && !gpu_mode) ? data.as<float>() : nullptr;
 
     for(Index i = 0; i < layers_number; ++i)
     {
@@ -58,16 +54,16 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
         for(size_t j = 0; j < slots; ++j)
         {
-            const Shape& s = shapes[j];
+            const Shape& shape = shapes[j];
             views[i][j + 1].resize(1);
 
             // Always set the shape so downstream wiring sees a non-empty view.
             // `data` may be null in GPU mode (allocate_device fills it later).
-            if(s.size() > 0)
+            if(shape.size() > 0)
             {
-                views[i][j + 1][0] = TensorView(pointer, s);
+                views[i][j + 1][0] = TensorView(pointer, shape);
 
-                if(pointer) pointer += get_aligned_size(s.size());
+                if(pointer) pointer += get_aligned_size(shape.size());
             }
         }
     }
@@ -134,13 +130,13 @@ void ForwardPropagation::allocate_device()
 
         for(size_t j = 0; j < shapes.size(); ++j)
         {
-            const Shape& s = shapes[j];
+            const Shape& shape = shapes[j];
 
-            if(s.size() > 0)
+            if(shape.size() > 0)
             {
                 views[i][j + 1][0].data  = cursor;
                 views[i][j + 1][0].dtype = forward_dtypes[i][j];
-                cursor += get_aligned_bytes(s.size() * dtype_bytes(forward_dtypes[i][j]));
+                cursor += get_aligned_bytes(shape.size() * dtype_bytes(forward_dtypes[i][j]));
             }
         }
     }

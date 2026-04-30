@@ -155,8 +155,8 @@ VectorR to_type_vector(const string& text, const string& separator)
         const float value = strtof(begin, &end);
 
         type_vector(i) = (end == begin || errno == ERANGE || *end != '\0')
-            ? type(nan(""))
-            : type(value);
+            ? float(nan(""))
+            : float(value);
     }
 
     return type_vector;
@@ -457,7 +457,7 @@ string get_first_word(const string& line)
     return line.substr(0, line.find_first_of(" ="));
 }
 
-string get_time(type time)
+string get_time(float time)
 {
     const int total_seconds = static_cast<int>(time);
     const int hours = total_seconds / 3600;
@@ -491,8 +491,8 @@ void display_progress_bar(const int& completed, const int& total)
 void string_to_vector(const string& input, VectorR& x)
 {
     istringstream stream(input);
-    type value;
-    vector<type> buffer;
+    float value;
+    vector<float> buffer;
 
     while (stream >> value)
         buffer.push_back(value);

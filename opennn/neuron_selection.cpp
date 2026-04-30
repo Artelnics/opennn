@@ -40,9 +40,9 @@ void NeuronSelection::set_default()
     trials_number = 1;
     display = true;
 
-    validation_error_goal = type(0);
+    validation_error_goal = float(0);
     maximum_epochs = 1000;
-    maximum_time = type(3600);
+    maximum_time = float(3600);
 }
 
 void NeuronSelection::check() const
@@ -104,10 +104,10 @@ NeuronsSelectionResults::NeuronsSelectionResults(const Index maximum_epochs)
     neurons_number_history = VectorI::Zero(maximum_epochs);
 
     training_error_history.resize(maximum_epochs);
-    training_error_history.setConstant(type(-1));
+    training_error_history.setConstant(float(-1));
 
     validation_error_history.resize(maximum_epochs);
-    validation_error_history.setConstant(type(-1));
+    validation_error_history.setConstant(float(-1));
 
     optimum_training_error = MAX;
     optimum_validation_error = MAX;

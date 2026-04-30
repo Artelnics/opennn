@@ -25,12 +25,12 @@ struct Correlation
 
     void print() const;
 
-    type a = type(NAN);
-    type b = type(NAN);
-    type r = type(NAN);
+    float a = float(NAN);
+    float b = float(NAN);
+    float r = float(NAN);
 
-    type lower_confidence = type(NAN);
-    type upper_confidence = type(NAN);
+    float lower_confidence = float(NAN);
+    float upper_confidence = float(NAN);
 
     Method method = Method::Pearson;
     Form form = Form::Linear;
@@ -70,10 +70,10 @@ Correlation correlation_spearman(const MatrixR&, const MatrixR&);
 
 // Confidence interval
 
-type r_correlation_to_z_correlation(const type);
-type z_correlation_to_r_correlation(const type);
+float r_correlation_to_z_correlation(const float);
+float z_correlation_to_r_correlation(const float);
 
-pair<type, type> confidence_interval_z_correlation(const type, Index);
+pair<float, float> confidence_interval_z_correlation(const float, Index);
 
 // Time series correlation
 

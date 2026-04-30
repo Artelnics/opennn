@@ -51,7 +51,7 @@ void Embedding::set(const Index new_vocabulary_size,
     sequence_length = new_sequence_length;
     vocabulary_size = new_vocabulary_size;
     embedding_dimension = new_embedding_dimension;
-    embedding_scale = sqrt(static_cast<type>(new_embedding_dimension));
+    embedding_scale = sqrt(static_cast<float>(new_embedding_dimension));
     label = new_label;
 
     // The sinusoidal positional encoding is materialized in link_states(),
@@ -60,9 +60,9 @@ void Embedding::set(const Index new_vocabulary_size,
     // hold a duplicate host MatrixR or a per-layer GPU Buffer.
 }
 
-type* Embedding::link_states(type* pointer)
+float* Embedding::link_states(float* pointer)
 {
-    type* next = Layer::link_states(pointer);
+    float* next = Layer::link_states(pointer);
 
     if (!add_positional_encoding) return next;
     if (states.empty() || !states[PositionalEncoding].data) return next;
@@ -70,11 +70,11 @@ type* Embedding::link_states(type* pointer)
     float* table = states[PositionalEncoding].as<float>();
     if (!table) return next;
 
-    const type half_depth = type(embedding_dimension) / 2;
+    const float half_depth = float(embedding_dimension) / 2;
 
     VectorR divisors(embedding_dimension);
     for (Index j = 0; j < embedding_dimension; ++j)
-        divisors(j) = pow(type(10000),
+        divisors(j) = pow(float(10000),
                           (j < Index(half_depth) ? j : j - Index(half_depth)) / half_depth);
 
     #pragma omp parallel for collapse(2)
@@ -94,7 +94,7 @@ void Embedding::set_parameters_random()
     if(parameters[Weight].empty()) return;
 
     MatrixMap weights = parameters[Weight].as_matrix();
-    set_random_normal(weights, type(0), type(1));
+    set_random_normal(weights, float(0), float(1));
 
     weights.row(0).setZero();
 }
@@ -103,7 +103,7 @@ void Embedding::set_parameters_glorot()
 {
     if(parameters[Weight].empty()) return;
 
-    const type limit = sqrt(type(6.0) / (vocabulary_size + embedding_dimension));
+    const float limit = sqrt(float(6.0) / (vocabulary_size + embedding_dimension));
 
     MatrixMap weights = parameters[Weight].as_matrix();
 
@@ -117,7 +117,7 @@ void Embedding::set_parameters_glorot()
 
 void Embedding::init_cuda(Index batch_size)
 {
-    if(dropout_rate <= type(0)) return;
+    if(dropout_rate <= float(0)) return;
     if(sequence_length == 0 || embedding_dimension == 0) return;
 
     if(dropout_arguments.descriptor)    { cudnnDestroyDropoutDescriptor(dropout_arguments.descriptor); dropout_arguments.descriptor = nullptr; }
@@ -187,7 +187,7 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
 
         const MatrixMap weights(parameters[Weight].as<float>(), vocabulary_size, embedding_dimension);
 
-        const type* input_indices = forward_views[Input][0].as<float>();
+        const float* input_indices = forward_views[Input][0].as<float>();
 
         static std::atomic<bool> out_of_range_warned{false};
 
@@ -220,7 +220,7 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
         }
     }
 
-    if (is_training && dropout_rate > type(0))
+    if (is_training && dropout_rate > float(0))
         dropout(forward_views[Output][0], dropout_arguments);
 }
 
@@ -234,7 +234,7 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
 
     TensorView& output_delta = delta_views[OutputDelta][0];
 
-    if (dropout_rate > type(0))
+    if (dropout_rate > float(0))
         dropout_delta(output_delta, output_delta, dropout_arguments);
 
 #ifdef OPENNN_WITH_CUDA

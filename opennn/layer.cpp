@@ -25,9 +25,9 @@ void Layer::set_parameters_glorot()
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    const type limit = (inputs_number + outputs_number > 0)
+    const float limit = (inputs_number + outputs_number > 0)
         ? sqrt(6.0 / (inputs_number + outputs_number))
-        : type(0.05);
+        : float(0.05);
 
     for(auto& param : parameters)
     {
@@ -39,8 +39,8 @@ void Layer::set_parameters_glorot()
 Index Layer::get_parameters_number() const
 {
     Index total = 0;
-    for(const Shape& s : get_parameter_shapes())
-        total += s.size();
+    for(const Shape& shape : get_parameter_shapes())
+        total += shape.size();
     return total;
 }
 
@@ -68,7 +68,7 @@ vector<string> Layer::get_default_output_names() const
     return output_names;
 }
 
-type *Layer::link_parameters(type *pointer)
+float *Layer::link_parameters(float *pointer)
 {
     const vector<Shape> shapes = get_parameter_shapes();
     parameters.resize(shapes.size());
@@ -87,7 +87,7 @@ type *Layer::link_parameters(type *pointer)
     return pointer;
 }
 
-type *Layer::link_states(type *pointer)
+float *Layer::link_states(float *pointer)
 {
     const vector<Shape> shapes = get_state_shapes();
     states.resize(shapes.size());

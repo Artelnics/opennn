@@ -153,7 +153,7 @@ void LanguageDataset::encode_input(const vector<vector<string>>& input_document_
             const auto iterator = input_vocabulary_map.find(input_tokens[i]);
 
             data(sample, 1 + i) = (iterator != input_vocabulary_map.end())
-                ? static_cast<type>(iterator->second)
+                ? static_cast<float>(iterator->second)
                 : UNK_INDEX;
         }
 
@@ -184,8 +184,8 @@ void LanguageDataset::encode_decoder_target_sequence_to_sequence(const vector<ve
 
             const auto iterator = target_vocabulary_map.find(target_tokens[i]);
 
-            const type token_index = (iterator != target_vocabulary_map.end())
-                ? static_cast<type>(iterator->second)
+            const float token_index = (iterator != target_vocabulary_map.end())
+                ? static_cast<float>(iterator->second)
                 : UNK_INDEX;
 
             if(i + 1 < maximum_target_sequence_length)

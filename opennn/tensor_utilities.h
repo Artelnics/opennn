@@ -15,10 +15,10 @@ namespace opennn
 {
 
 static constexpr Index ALIGN_BYTES = EIGEN_MAX_ALIGN_BYTES;
-static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(type);
+static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(float);
 
 inline int to_int(Index value) { return static_cast<int>(value); }
-inline type to_type(Index value) { return static_cast<type>(value); }
+inline float to_type(Index value) { return static_cast<float>(value); }
 
 inline Index align_up(Index n, Index alignment)
 {
@@ -42,13 +42,6 @@ inline bool is_aligned(const void* ptr)
 constexpr cudaDataType_t      CUDA_REDUCTION_DTYPE   = CUDA_R_32F;
 constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_TF32;
 
-// Activation dtype used to be a compile-time constant gated by
-// `OPENNN_USE_BF16_ACTIVATIONS`. It is now a runtime field on every Layer
-// (`activation_dtype` / `cuda_activation_dtype`), populated by
-// NeuralNetwork::compile() from Configuration::resolve(). Anything outside a
-// network (TensorView default ctor, generic GEMM helpers, etc.) defaults to
-// FP32 — call sites that need BF16 must pass the dtype explicitly.
-
 inline Index dtype_bytes(cudnnDataType_t t)
 {
     switch (t) {
@@ -61,9 +54,9 @@ inline Index dtype_bytes(cudnnDataType_t t)
     }
 }
 
-inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t t)
+inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t cudnn_data_type)
 {
-    switch (t) {
+    switch (cudnn_data_type) {
         case CUDNN_DATA_FLOAT:    return CUDA_R_32F;
         case CUDNN_DATA_INT32:    return CUDA_R_32I;
         case CUDNN_DATA_BFLOAT16: return CUDA_R_16BF;
@@ -106,10 +99,10 @@ struct Shape
     void clear() noexcept { rank = 0; }
     void push_back(Index v) noexcept { if (rank < MaxRank) dims[rank++] = v; }
 
-    friend ostream& operator<<(ostream& os, const Shape& s)
+    friend ostream& operator<<(ostream& os, const Shape& shape)
     {
         os << "[";
-        for (size_t i = 0; i < s.rank; ++i) os << (i ? ", " : " ") << s.dims[i];
+        for (size_t i = 0; i < shape.rank; ++i) os << (i ? ", " : " ") << shape.dims[i];
         os << " ]";
         return os;
     }
@@ -133,7 +126,7 @@ struct Shape
 inline Index aligned_total_elements(const std::vector<Shape>& shapes)
 {
     Index total = 0;
-    for (const Shape& s : shapes) total += get_aligned_size(s.size());
+    for (const Shape& shape : shapes) total += get_aligned_size(shape.size());
     return total;
 }
 
@@ -153,7 +146,7 @@ struct Buffer
     template<typename T> T*       as()       { return static_cast<T*>(data); }
     template<typename T> const T* as() const { return static_cast<const T*>(data); }
 
-    Index size()  const { return bytes / Index(sizeof(type)); }   // legacy: assumes T = type
+    Index size()  const { return bytes / Index(sizeof(float)); }   // legacy: assumes T = float
     bool  empty() const { return bytes == 0; }
 
     void resize_bytes(Index n_bytes, DeviceType t)
@@ -252,7 +245,7 @@ struct TensorView
     bool empty() const noexcept { return shape.empty(); }
 
     // Typed reinterpretation of `data`. We deliberately do NOT assert that the
-    // requested type matches `dtype`: the codebase has several call sites that
+    // requested float matches `dtype`: the codebase has several call sites that
     // pass raw byte pointers to APIs (cuBLASLt, cuDNN) which interpret the
     // bytes via plan/descriptor metadata, so a `bias.as<float>()` on a BF16
     // bias is legal — cuBLASLt reads the underlying bytes as BF16 because the
@@ -267,7 +260,7 @@ struct TensorView
     }
 
     // Float-typed view of `data`. Used at CUDA dispatch sites where kernels expect
-    // raw float* regardless of the project's `type` alias (e.g. descriptive stats,
+    // raw float* regardless of the project's `float` alias (e.g. descriptive stats,
     // scaler tables, masks). Mirrors as<T>() but skips the dtype check.
     float* as_float() const noexcept
     {
@@ -356,16 +349,16 @@ struct TensorView
     }
 
 private:
-    void set_descriptor(const Shape& s) const
+    void set_descriptor(const Shape& shape) const
     {
         // NHWC layout: N first, then H, W, C trailing. For rank < 4 the
         // missing leading dims default to 1.
         int n = 1, c = 1, h = 1, w = 1;
-        const size_t r = s.rank;
-        if (r >= 1) c = static_cast<int>(s[r - 1]);
-        if (r >= 2) n = static_cast<int>(s[0]);
-        if (r >= 3) w = static_cast<int>(s[r - 2]);
-        if (r >= 4) h = static_cast<int>(s[r - 3]);
+        const size_t r = shape.rank;
+        if (r >= 1) c = static_cast<int>(shape[r - 1]);
+        if (r >= 2) n = static_cast<int>(shape[0]);
+        if (r >= 3) w = static_cast<int>(shape[r - 2]);
+        if (r >= 4) h = static_cast<int>(shape[r - 3]);
 
         if (n <= 0 || c <= 0 || h <= 0 || w <= 0)
             return;

@@ -86,7 +86,7 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
         const VectorMap targets = vector_map(targets_outputs.first, i);
         const VectorMap outputs = vector_map(targets_outputs.second, i);
 
-        const type determination = calculate_determination(outputs, targets);
+        const float determination = calculate_determination(outputs, targets);
 
         goodness_of_fit_results[i].set(targets, outputs, determination);
     }
@@ -171,13 +171,13 @@ Tensor3 TestingAnalysis::calculate_error_data() const
 #pragma omp parallel for
     for(Index i = 0; i < outputs_number; ++i)
     {
-        const type range = abs(output_maximums(i) - output_minimums(i));
+        const float range = abs(output_maximums(i) - output_minimums(i));
 
         for(Index j = 0; j < testing_samples_number; ++j)
         {
             error_data(j, 0, i) = absolute_errors(j,i);
             error_data(j, 1, i) = absolute_errors(j,i) / range;
-            error_data(j, 2, i) = error_data(j, 1, i) * type(100.0);
+            error_data(j, 2, i) = error_data(j, 1, i) * float(100.0);
         }
     }
 
@@ -219,7 +219,7 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 
     for(Index i = 0; i < testing_samples_number; ++i)
         for(Index j = 0; j < outputs_number; ++j)
-            error_data(i, j) = errors(i, j)*type(100.0)/abs(output_maximums(j) - output_minimums(j));
+            error_data(i, j) = errors(i, j)*float(100.0)/abs(output_maximums(j) - output_minimums(j));
 
     return error_data;
 }
@@ -249,7 +249,7 @@ vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives()
 vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives(const MatrixR& targets,
                                                                                const MatrixR& outputs) const
 {
-    const MatrixR difference = type(100)*(targets-outputs).array().abs()/targets.array();
+    const MatrixR difference = float(100)*(targets-outputs).array().abs()/targets.array();
 
     return descriptives(difference);
 }
@@ -314,7 +314,7 @@ vector<Histogram> TestingAnalysis::calculate_error_data_histograms(const Index b
     vector<Histogram> histograms(outputs_number);
 
     for(Index i = 0; i < outputs_number; ++i)
-        histograms[i] = histogram_centered(error_data.col(i), type(0), bins_number);
+        histograms[i] = histogram_centered(error_data.col(i), float(0), bins_number);
 
     return histograms;
 }
@@ -386,8 +386,8 @@ MatrixR TestingAnalysis::calculate_multiple_classification_errors() const
 VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
                                           const MatrixR& outputs) const
 {
-    const TensorView outputs_view(const_cast<type*>(outputs.data()), {outputs.rows(), outputs.cols()});
-    const TensorView targets_view(const_cast<type*>(targets.data()), {targets.rows(), targets.cols()});
+    const TensorView outputs_view(const_cast<float*>(outputs.data()), {outputs.rows(), outputs.cols()});
+    const TensorView targets_view(const_cast<float*>(targets.data()), {targets.rows(), targets.cols()});
 
     VectorR errors(5);
 
@@ -395,14 +395,14 @@ VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
     mean_squared_error(outputs_view, targets_view, errors(1), nullptr);
 
     // 0. Sum Squared Error
-    errors(0) = errors(1) * static_cast<type>(targets.size());
+    errors(0) = errors(1) * static_cast<float>(targets.size());
 
     // 2. Root Mean Squared Error
     errors(2) = sqrt(errors(1));
 
     // 3. Normalized Squared Error
     const VectorR targets_mean = mean(targets);
-    const type normalization_coefficient = (targets.rowwise() - targets_mean.transpose()).squaredNorm();
+    const float normalization_coefficient = (targets.rowwise() - targets_mean.transpose()).squaredNorm();
     normalized_squared_error(outputs_view, targets_view, normalization_coefficient, errors(3), nullptr);
 
     // 4. Minkowski Error
@@ -422,8 +422,8 @@ VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sa
 {
     const auto [targets, outputs] = get_targets_and_outputs(sample_role);
 
-    const TensorView outputs_view(const_cast<type*>(outputs.data()), {outputs.rows(), outputs.cols()});
-    const TensorView targets_view(const_cast<type*>(targets.data()), {targets.rows(), targets.cols()});
+    const TensorView outputs_view(const_cast<float*>(outputs.data()), {outputs.rows(), outputs.cols()});
+    const TensorView targets_view(const_cast<float*>(targets.data()), {targets.rows(), targets.cols()});
 
     VectorR errors(6);
 
@@ -435,10 +435,10 @@ VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sa
 
     // 5. Weighted Squared Error
     const VectorI target_distribution = dataset->calculate_target_distribution();
-    const type neg_w = 1.0f;
-    const type pos_w = (target_distribution[0] == 0 || target_distribution[1] == 0)
+    const float neg_w = 1.0f;
+    const float pos_w = (target_distribution[0] == 0 || target_distribution[1] == 0)
                            ? 1.0f
-                           : static_cast<type>(target_distribution[0]) / target_distribution[1];
+                           : static_cast<float>(target_distribution[0]) / target_distribution[1];
 
     weighted_squared_error(outputs_view, targets_view, pos_w, neg_w, errors(5), nullptr);
 
@@ -449,8 +449,8 @@ VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& 
 {
     const auto [targets, outputs] = get_targets_and_outputs(sample_role);
 
-    const TensorView outputs_view(const_cast<type*>(outputs.data()), {outputs.rows(), outputs.cols()});
-    const TensorView targets_view(const_cast<type*>(targets.data()), {targets.rows(), targets.cols()});
+    const TensorView outputs_view(const_cast<float*>(outputs.data()), {outputs.rows(), outputs.cols()});
+    const TensorView targets_view(const_cast<float*>(targets.data()), {targets.rows(), targets.cols()});
 
     VectorR errors(5);
 
@@ -463,7 +463,7 @@ VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& 
     return errors;
 }
 
-type TestingAnalysis::calculate_masked_accuracy(const Tensor3& /*outputs*/, const MatrixR& /*targets*/) const
+float TestingAnalysis::calculate_masked_accuracy(const Tensor3& /*outputs*/, const MatrixR& /*targets*/) const
 {
 /*
     const Index batch_size = outputs.rows();
@@ -477,42 +477,42 @@ type TestingAnalysis::calculate_masked_accuracy(const Tensor3& /*outputs*/, cons
 
     mask = targets != targets.constant(0);
 
-    const Tensor0 mask_sum = mask.cast<type>().sum();
+    const Tensor0 mask_sum = mask.cast<float>().sum();
 
-    predictions = outputs.argmax(2).cast<type>();
+    predictions = outputs.argmax(2).cast<float>();
 
     matches = predictions == targets;
 
     matches = matches && mask;
 
-    accuracy = matches.cast<type>().sum() / mask_sum(0);
+    accuracy = matches.cast<float>().sum() / mask_sum(0);
 
     return accuracy(0);
 */
     return 0;
 }
 
-type TestingAnalysis::calculate_determination(const VectorR& outputs, const VectorR& targets) const
+float TestingAnalysis::calculate_determination(const VectorR& outputs, const VectorR& targets) const
 {
-    const type targets_mean = targets.mean();
-    const type outputs_mean = outputs.mean();
+    const float targets_mean = targets.mean();
+    const float outputs_mean = outputs.mean();
 
-    const type numerator = ((targets.array() - targets_mean) * (outputs.array() - outputs_mean)).sum();
+    const float numerator = ((targets.array() - targets_mean) * (outputs.array() - outputs_mean)).sum();
 
-    const type targets_ss = (targets.array() - targets_mean).square().sum();
-    const type outputs_ss = (outputs.array() - outputs_mean).square().sum();
+    const float targets_ss = (targets.array() - targets_mean).square().sum();
+    const float outputs_ss = (outputs.array() - outputs_mean).square().sum();
 
-    const type denominator = sqrt(targets_ss * outputs_ss);
+    const float denominator = sqrt(targets_ss * outputs_ss);
 
     if(denominator < EPSILON)
-        return type(0);
+        return float(0);
 
-    const type r = numerator / denominator;
+    const float r = numerator / denominator;
 
     return r * r;
 }
 
-vector<MatrixI> TestingAnalysis::calculate_multilabel_confusion(const type decision_threshold) const
+vector<MatrixI> TestingAnalysis::calculate_multilabel_confusion(const float decision_threshold) const
 {
     check();
 
@@ -529,7 +529,7 @@ vector<MatrixI> TestingAnalysis::calculate_multilabel_confusion(const type decis
 
 VectorI TestingAnalysis::calculate_positives_negatives_rate(const MatrixR& targets, const MatrixR& outputs) const
 {
-    const MatrixI confusion = calculate_confusion(targets, outputs, type(0.5));
+    const MatrixI confusion = calculate_confusion(targets, outputs, float(0.5));
 
     VectorI positives_negatives_rate(2);
 
@@ -539,7 +539,7 @@ VectorI TestingAnalysis::calculate_positives_negatives_rate(const MatrixR& targe
     return positives_negatives_rate;
 }
 
-MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) const
+MatrixI TestingAnalysis::calculate_confusion(const float decision_threshold) const
 {
     check();
 
@@ -582,7 +582,7 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
                               input_shape[2]);
 
             memcpy(inputs_4d.data(), batch_inputs_flat.data(),
-                   current_batch_size * batch_inputs_flat.cols() * sizeof(type));
+                   current_batch_size * batch_inputs_flat.cols() * sizeof(float));
 
             batch_outputs = neural_network->calculate_outputs(inputs_4d);
         }
@@ -601,7 +601,7 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
 
 MatrixI TestingAnalysis::calculate_confusion(const MatrixR& targets,
                                              const MatrixR& outputs,
-                                             type decision_threshold) const
+                                             float decision_threshold) const
 {
     const Index samples = targets.rows();
     const Index outputs_number = outputs.cols();
@@ -674,15 +674,15 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
 
     for(Index i = 1; i < Index(points_number); ++i)
     {
-        const type threshold = type(i) * (type(1)/type(points_number));
+        const float threshold = float(i) * (float(1)/float(points_number));
 
         Index true_positive = 0;
         Index false_negative = 0;
         Index false_positive = 0;
         Index true_negative = 0;
 
-        type target;
-        type output;
+        float target;
+        float output;
 
         for(Index j = 0; j < targets.size(); ++j)
         {
@@ -699,39 +699,39 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
                 ++true_negative;
         }
 
-        roc_curve(i,0) = type(1) - type(true_positive)/type(true_positive + false_negative);
-        roc_curve(i,1) = type(true_negative)/type(true_negative + false_positive);
-        roc_curve(i,2) = type(threshold);
+        roc_curve(i,0) = float(1) - float(true_positive)/float(true_positive + false_negative);
+        roc_curve(i,1) = float(true_negative)/float(true_negative + false_positive);
+        roc_curve(i,2) = float(threshold);
 
         if(isnan(roc_curve(i,0)))
-            roc_curve(i,0) = type(1);
+            roc_curve(i,0) = float(1);
 
         if(isnan(roc_curve(i,1)))
-            roc_curve(i,1) = type(0);
+            roc_curve(i,1) = float(0);
     }
 
-    roc_curve(0,0) = type(0);
-    roc_curve(0,1) = type(0);
-    roc_curve(0,2) = type(0);
+    roc_curve(0,0) = float(0);
+    roc_curve(0,1) = float(0);
+    roc_curve(0,2) = float(0);
 
-    roc_curve(points_number,0) = type(1);
-    roc_curve(points_number,1) = type(1);
-    roc_curve(points_number,2) = type(1);
+    roc_curve(points_number,0) = float(1);
+    roc_curve(points_number,1) = float(1);
+    roc_curve(points_number,2) = float(1);
 
     return roc_curve;
 }
 
-type TestingAnalysis::calculate_area_under_curve(const MatrixR& roc_curve) const
+float TestingAnalysis::calculate_area_under_curve(const MatrixR& roc_curve) const
 {
-    type area_under_curve = type(0);
+    float area_under_curve = float(0);
 
     for(Index i = 1; i < roc_curve.rows(); ++i)
         area_under_curve += (roc_curve(i,0) - roc_curve(i-1,0))*(roc_curve(i,1) + roc_curve(i-1,1));
 
-    return area_under_curve/ type(2);
+    return area_under_curve/ float(2);
 }
 
-type TestingAnalysis::calculate_area_under_curve_confidence_limit(const MatrixR& targets, const MatrixR& outputs) const
+float TestingAnalysis::calculate_area_under_curve_confidence_limit(const MatrixR& targets, const MatrixR& outputs) const
 {
     const VectorI positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
 
@@ -746,29 +746,29 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const MatrixR&
 
     const MatrixR roc_curve = calculate_roc_curve(targets, outputs);
 
-    const type area_under_curve = calculate_area_under_curve(roc_curve);
+    const float area_under_curve = calculate_area_under_curve(roc_curve);
 
-    const type Q_1 = area_under_curve/(type(2.0) - area_under_curve);
-    const type Q_2 = (type(2.0) * area_under_curve * area_under_curve) / (type(1) + area_under_curve);
+    const float Q_1 = area_under_curve/(float(2.0) - area_under_curve);
+    const float Q_2 = (float(2.0) * area_under_curve * area_under_curve) / (float(1) + area_under_curve);
 
-    const type confidence_limit = type(type(1.64485)*sqrt((area_under_curve*(type(1) - area_under_curve)
-                                                             + (type(total_positives) - type(1))*(Q_1-area_under_curve*area_under_curve)
-                                                             + (type(total_negatives) - type(1))*(Q_2-area_under_curve*area_under_curve))/(type(total_positives*total_negatives))));
+    const float confidence_limit = float(float(1.64485)*sqrt((area_under_curve*(float(1) - area_under_curve)
+                                                             + (float(total_positives) - float(1))*(Q_1-area_under_curve*area_under_curve)
+                                                             + (float(total_negatives) - float(1))*(Q_2-area_under_curve*area_under_curve))/(float(total_positives*total_negatives))));
 
     return confidence_limit;
 }
 
-type TestingAnalysis::calculate_optimal_threshold(const MatrixR& roc_curve) const
+float TestingAnalysis::calculate_optimal_threshold(const MatrixR& roc_curve) const
 {
     const Index points_number = roc_curve.rows();
 
-    type optimal_threshold = type(0.5);
+    float optimal_threshold = float(0.5);
 
-    type minimun_distance = MAX;
+    float minimun_distance = MAX;
 
     for(Index i = 0; i < points_number; ++i)
     {
-        const type distance = hypot(roc_curve(i, 0), roc_curve(i, 1) - type(1));
+        const float distance = hypot(roc_curve(i, 0), roc_curve(i, 1) - float(1));
 
         if(distance < minimun_distance)
         {
@@ -812,27 +812,27 @@ MatrixR TestingAnalysis::calculate_cumulative_gain_impl(const MatrixR& targets, 
         sorted_targets(i) = targets(sorted_indices(i), 0);
 
     const Index points_number = 21;
-    const type percentage_increment = type(0.05);
+    const float percentage_increment = float(0.05);
 
     MatrixR cumulative_gain(points_number, 2);
-    cumulative_gain(0, 0) = type(0);
-    cumulative_gain(0, 1) = type(0);
+    cumulative_gain(0, 0) = float(0);
+    cumulative_gain(0, 1) = float(0);
 
-    type percentage = type(0);
+    float percentage = float(0);
 
     for(Index i = 0; i < points_number - 1; ++i)
     {
         percentage += percentage_increment;
 
         Index count = 0;
-        const Index maximum_index = Index(percentage * type(testing_samples_number));
+        const Index maximum_index = Index(percentage * float(testing_samples_number));
 
         for(Index j = 0; j < maximum_index; ++j)
             if(positive ? double(sorted_targets(j)) == 1.0 : sorted_targets(j) < EPSILON)
                 ++count;
 
         cumulative_gain(i + 1, 0) = percentage;
-        cumulative_gain(i + 1, 1) = type(count) / type(total);
+        cumulative_gain(i + 1, 1) = float(count) / float(total);
     }
 
     return cumulative_gain;
@@ -864,15 +864,15 @@ MatrixR TestingAnalysis::calculate_lift_chart(const MatrixR& cumulative_gain) co
 
     MatrixR lift_chart(rows_number, variables_number);
 
-    lift_chart(0,0) = type(0);
-    lift_chart(0,1) = type(1);
+    lift_chart(0,0) = float(0);
+    lift_chart(0,1) = float(1);
 
 #pragma omp parallel for
 
     for(Index i = 1; i < rows_number; ++i)
     {
-        lift_chart(i, 0) = type(cumulative_gain(i, 0));
-        lift_chart(i, 1) = type(cumulative_gain(i, 1))/type(cumulative_gain(i, 0));
+        lift_chart(i, 0) = float(cumulative_gain(i, 0));
+        lift_chart(i, 1) = float(cumulative_gain(i, 1))/float(cumulative_gain(i, 0));
     }
 
     return lift_chart;
@@ -899,16 +899,16 @@ VectorR TestingAnalysis::calculate_maximum_gain(const MatrixR& positive_cumulati
 
     VectorR maximum_gain = VectorR::Zero(2);
 
-    const type percentage_increment = type(0.05);
+    const float percentage_increment = float(0.05);
 
-    type percentage = type(0);
+    float percentage = float(0);
 
     for(Index i = 0; i < points_number - 1; ++i)
     {
         percentage += percentage_increment;
 
         if(positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > maximum_gain[1]
-        && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > type(0))
+        && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > float(0))
         {
             maximum_gain(1) = positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1);
             maximum_gain(0) = percentage;
@@ -929,7 +929,7 @@ vector<Histogram> TestingAnalysis::calculate_output_histogram(const MatrixR& out
     return output_histogram;
 }
 
-TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_classification_rates(const type decision_threshold) const
+TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_classification_rates(const float decision_threshold) const
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
@@ -948,7 +948,7 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 vector<Index> TestingAnalysis::filter_classification_samples(const MatrixR& targets,
                                                               const MatrixR& outputs,
                                                               const vector<Index>& testing_indices,
-                                                              type decision_threshold,
+                                                              float decision_threshold,
                                                               bool target_positive,
                                                               bool output_positive) const
 {
@@ -970,25 +970,25 @@ vector<Index> TestingAnalysis::filter_classification_samples(const MatrixR& targ
 }
 
 vector<Index> TestingAnalysis::calculate_true_positive_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                               const vector<Index>& testing_indices, type threshold) const
+                                                               const vector<Index>& testing_indices, float threshold) const
 {
     return filter_classification_samples(targets, outputs, testing_indices, threshold, true, true);
 }
 
 vector<Index> TestingAnalysis::calculate_false_positive_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                                const vector<Index>& testing_indices, type threshold) const
+                                                                const vector<Index>& testing_indices, float threshold) const
 {
     return filter_classification_samples(targets, outputs, testing_indices, threshold, false, true);
 }
 
 vector<Index> TestingAnalysis::calculate_false_negative_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                                const vector<Index>& testing_indices, type threshold) const
+                                                                const vector<Index>& testing_indices, float threshold) const
 {
     return filter_classification_samples(targets, outputs, testing_indices, threshold, true, false);
 }
 
 vector<Index> TestingAnalysis::calculate_true_negative_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                               const vector<Index>& testing_indices, type threshold) const
+                                                               const vector<Index>& testing_indices, float threshold) const
 {
     return filter_classification_samples(targets, outputs, testing_indices, threshold, false, false);
 }
@@ -1002,9 +1002,9 @@ VectorR TestingAnalysis::calculate_multiple_classification_precision() const
     const MatrixI confusion_matrix = calculate_confusion(targets, outputs);
 
     const Index n = confusion_matrix.rows() - 1;
-    const type total = static_cast<type>(confusion_matrix(n, n));
+    const float total = static_cast<float>(confusion_matrix(n, n));
 
-    const type diagonal_sum = static_cast<type>(confusion_matrix.topLeftCorner(n, n).diagonal().sum());
+    const float diagonal_sum = static_cast<float>(confusion_matrix.topLeftCorner(n, n).diagonal().sum());
 
     multiple_classification_tests(0) = diagonal_sum / total;
     multiple_classification_tests(1) = (total - diagonal_sum) / total;
@@ -1054,7 +1054,7 @@ void TestingAnalysis::save_multiple_classification_tests(const filesystem::path&
     ofstream file(file_name);
 
     file << "accuracy,error" << "\n";
-    file << multiple_classification_tests(0)* type(100) << "," << multiple_classification_tests(1)* type(100) << "\n";
+    file << multiple_classification_tests(0)* float(100) << "," << multiple_classification_tests(1)* float(100) << "\n";
 
     file.close();
 }
@@ -1180,7 +1180,7 @@ VectorR TestingAnalysis::extract_probabilities(const Tensor<string, 2>& samples)
     VectorR probabilities(samples.dimension(0));
 
     for(Index i = 0; i < probabilities.size(); ++i)
-        probabilities(i) = type(::atof(samples(i, 3).c_str()));
+        probabilities(i) = float(::atof(samples(i, 3).c_str()));
 
     return probabilities;
 }
@@ -1245,7 +1245,7 @@ vector<VectorR> TestingAnalysis::calculate_inputs_errors_cross_correlation(const
     return inputs_errors_cross_correlation;
 }
 
-pair<type, type> TestingAnalysis::test_transformer() const
+pair<float, float> TestingAnalysis::test_transformer() const
 {
     cout << "Testing transformer..." << "\n";
 
@@ -1281,7 +1281,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
     // cout<<"Prediction:"<<endl;
 
     // for(Index j = 0; j < outputs.dimension(1); ++j){
-    //     type max = outputs(10, j, 0);
+    //     float max = outputs(10, j, 0);
     //     Index index = 0;
     //     for(Index i = 1; i < outputs.dimension(2); ++i){
     //         if(max < outputs(10,j,i)){
@@ -1293,7 +1293,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
     // }
     // cout<<endl;
     // for(Index j = 0; j < outputs.dimension(1); ++j){
-    //     type max = outputs(10, j, 0);
+    //     float max = outputs(10, j, 0);
     //     Index index = 0;
     //     for(Index i = 1; i < outputs.dimension(2); ++i){
     //         if(max < outputs(10,j,i)){
@@ -1304,11 +1304,11 @@ pair<type, type> TestingAnalysis::test_transformer() const
     //     cout<<language_dataset->get_completion_vocabulary()[index]<<" ";
     // }
 /*
-    const type error = calculate_cross_entropy_error_3d(outputs, testing_target);
+    const float error = calculate_cross_entropy_error_3d(outputs, testing_target);
 
-    const type accuracy = calculate_masked_accuracy(outputs, testing_target);
+    const float accuracy = calculate_masked_accuracy(outputs, testing_target);
 
-    return pair<type, type>(error, accuracy);
+    return pair<float, float>(error, accuracy);
 */
     return {};
 }
@@ -1324,7 +1324,7 @@ string TestingAnalysis::test_transformer(const vector<string>& /*context_string*
     return string();
 }
 
-VectorR TestingAnalysis::calculate_binary_classification_tests(const type decision_threshold) const
+VectorR TestingAnalysis::calculate_binary_classification_tests(const float decision_threshold) const
 {
     const MatrixI confusion = calculate_confusion(decision_threshold);
 
@@ -1333,73 +1333,73 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const type decisi
     const Index false_negative = confusion(0,1);
     const Index true_negative = confusion(1,1);
 
-    const type classification_accuracy = (true_positive + true_negative + false_positive + false_negative == 0)
-                                             ? type(0)
-                                             : type(true_positive + true_negative) / type(true_positive + true_negative + false_positive + false_negative);
+    const float classification_accuracy = (true_positive + true_negative + false_positive + false_negative == 0)
+                                             ? float(0)
+                                             : float(true_positive + true_negative) / float(true_positive + true_negative + false_positive + false_negative);
 
-    const type error_rate = (true_positive + true_negative + false_positive + false_negative == 0)
-                                ? type(0)
-                                : type(false_positive + false_negative) / type(true_positive + true_negative + false_positive + false_negative);
+    const float error_rate = (true_positive + true_negative + false_positive + false_negative == 0)
+                                ? float(0)
+                                : float(false_positive + false_negative) / float(true_positive + true_negative + false_positive + false_negative);
 
-    const type sensitivity = (true_positive + false_negative == 0)
-                                 ? type(0)
-                                 : type(true_positive) / type(true_positive + false_negative);
+    const float sensitivity = (true_positive + false_negative == 0)
+                                 ? float(0)
+                                 : float(true_positive) / float(true_positive + false_negative);
 
-    const type false_positive_rate = (false_positive + true_negative == 0)
-                                         ? type(0)
-                                         : type(false_positive) / type(false_positive + true_negative);
+    const float false_positive_rate = (false_positive + true_negative == 0)
+                                         ? float(0)
+                                         : float(false_positive) / float(false_positive + true_negative);
 
-    const type specificity = (false_positive + true_negative == 0)
-                                 ? type(0)
-                                 : type(true_negative) / type(true_negative + false_positive);
+    const float specificity = (false_positive + true_negative == 0)
+                                 ? float(0)
+                                 : float(true_negative) / float(true_negative + false_positive);
 
-    const type precision = (true_positive + false_positive == 0)
-                               ? type(0)
-                               : type(true_positive) / type(true_positive + false_positive);
+    const float precision = (true_positive + false_positive == 0)
+                               ? float(0)
+                               : float(true_positive) / float(true_positive + false_positive);
 
-    type positive_likelihood;
+    float positive_likelihood;
 
-    if(abs(classification_accuracy - type(1)) < EPSILON)
-        positive_likelihood = type(1);
-    else if(abs(type(1) - specificity) < EPSILON)
-        positive_likelihood = type(0);
+    if(abs(classification_accuracy - float(1)) < EPSILON)
+        positive_likelihood = float(1);
+    else if(abs(float(1) - specificity) < EPSILON)
+        positive_likelihood = float(0);
     else
-        positive_likelihood = sensitivity/(type(1) - specificity);
+        positive_likelihood = sensitivity/(float(1) - specificity);
 
-    type negative_likelihood;
+    float negative_likelihood;
 
-    if(abs(classification_accuracy - type(1)) < EPSILON)
-        negative_likelihood = type(1);
-    else if(abs(type(1) - sensitivity) < EPSILON)
-        negative_likelihood = type(0);
+    if(abs(classification_accuracy - float(1)) < EPSILON)
+        negative_likelihood = float(1);
+    else if(abs(float(1) - sensitivity) < EPSILON)
+        negative_likelihood = float(0);
     else
-        negative_likelihood = specificity/(type(1) - sensitivity);
+        negative_likelihood = specificity/(float(1) - sensitivity);
 
-    const type f1_score = (2 * true_positive + false_positive + false_negative == 0)
-                              ? type(0)
-                              : type(2.0) * type(true_positive) / (type(2.0) * type(true_positive) + type(false_positive) + type(false_negative));
+    const float f1_score = (2 * true_positive + false_positive + false_negative == 0)
+                              ? float(0)
+                              : float(2.0) * float(true_positive) / (float(2.0) * float(true_positive) + float(false_positive) + float(false_negative));
 
-    const type false_discovery_rate = (false_positive + true_positive == 0)
-                                          ? type(0)
-                                          : type(false_positive) / type(false_positive + true_positive);
+    const float false_discovery_rate = (false_positive + true_positive == 0)
+                                          ? float(0)
+                                          : float(false_positive) / float(false_positive + true_positive);
 
-    const type false_negative_rate = (false_negative + true_positive == 0)
-                                         ? type(0)
-                                         : type(false_negative) / type(false_negative + true_positive);
+    const float false_negative_rate = (false_negative + true_positive == 0)
+                                         ? float(0)
+                                         : float(false_negative) / float(false_negative + true_positive);
 
-    const type negative_predictive_value = (true_negative + false_negative == 0)
-                                               ? type(0)
-                                               : type(true_negative) / type(true_negative + false_negative);
+    const float negative_predictive_value = (true_negative + false_negative == 0)
+                                               ? float(0)
+                                               : float(true_negative) / float(true_negative + false_negative);
 
-    const type Matthews_correlation_coefficient = ((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative) == 0)
-                                                      ? type(0)
-                                                      : type(true_positive * true_negative - false_positive * false_negative) / type(sqrt((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative)));
+    const float Matthews_correlation_coefficient = ((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative) == 0)
+                                                      ? float(0)
+                                                      : float(true_positive * true_negative - false_positive * false_negative) / float(sqrt((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative)));
 
-    const type informedness = sensitivity + specificity - type(1);
+    const float informedness = sensitivity + specificity - float(1);
 
-    const type markedness = (true_negative + false_positive == 0)
-                                ? precision - type(1)
-                                : precision + negative_predictive_value - type(1);
+    const float markedness = (true_negative + false_positive == 0)
+                                ? precision - float(1)
+                                : precision + negative_predictive_value - float(1);
 
     VectorR binary_classification_test(15);
 
@@ -1441,13 +1441,13 @@ MatrixR TestingAnalysis::calculate_multiple_classification_tests() const
 
     const MatrixI confusion = calculate_confusion();
 
-    type total_precision = type(0);
-    type total_recall = type(0);
-    type total_f1_score= type(0);
+    float total_precision = float(0);
+    float total_recall = float(0);
+    float total_f1_score= float(0);
 
-    type total_weighted_precision = type(0);
-    type total_weighted_recall = type(0);
-    type total_weighted_f1_score= type(0);
+    float total_weighted_precision = float(0);
+    float total_weighted_recall = float(0);
+    float total_weighted_f1_score= float(0);
 
     Index total_samples = 0;
 
@@ -1461,17 +1461,17 @@ MatrixR TestingAnalysis::calculate_multiple_classification_tests() const
         const Index false_negatives = row_sum - true_positives;
         const Index false_positives = column_sum - true_positives;
 
-        const type precision = (true_positives + false_positives == 0)
-                                   ? type(1.0)
-                                   : type(true_positives) / type(true_positives + false_positives);
+        const float precision = (true_positives + false_positives == 0)
+                                   ? float(1.0)
+                                   : float(true_positives) / float(true_positives + false_positives);
 
-        const type recall = (true_positives + false_negatives == 0)
-                                ? type(1.0)
-                                : type(true_positives) / type(true_positives + false_negatives);
+        const float recall = (true_positives + false_negatives == 0)
+                                ? float(1.0)
+                                : float(true_positives) / float(true_positives + false_negatives);
 
-        const type f1_score = (precision + recall == 0)
-                                  ? type(0)
-                                  : type(2 * precision * recall) / type(precision + recall);
+        const float f1_score = (precision + recall == 0)
+                                  ? float(0)
+                                  : float(2 * precision * recall) / float(precision + recall);
 
         multiple_classification_tests(target_index, 0) = precision;
         multiple_classification_tests(target_index, 1) = recall;
@@ -1481,9 +1481,9 @@ MatrixR TestingAnalysis::calculate_multiple_classification_tests() const
         total_recall += recall;
         total_f1_score += f1_score;
 
-        total_weighted_precision += precision * type(row_sum);
-        total_weighted_recall += recall * type(row_sum);
-        total_weighted_f1_score += f1_score * type(row_sum);
+        total_weighted_precision += precision * float(row_sum);
+        total_weighted_recall += recall * float(row_sum);
+        total_weighted_f1_score += f1_score * float(row_sum);
 
         total_samples += row_sum;
     }
@@ -1539,7 +1539,7 @@ void TestingAnalysis::load(const filesystem::path& file_name)
 
 void TestingAnalysis::GoodnessOfFitAnalysis::set(const VectorR& new_targets,
                                                  const VectorR& new_outputs,
-                                                 type new_determination)
+                                                 float new_determination)
 {
     targets = new_targets;
     outputs = new_outputs;

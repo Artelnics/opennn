@@ -52,7 +52,7 @@ namespace opennn
 
     void display_progress_bar(const int&, const int&);
 
-    string get_time(type);
+    string get_time(float);
 
     string get_first_word(const string&);
 

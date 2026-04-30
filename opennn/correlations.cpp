@@ -147,7 +147,7 @@ Correlation exponential_correlation(const VectorR& x, const VectorR& y)
 
     if((!y.array().isNaN() && y.array() <= 0.0f).any())
     {
-        exponential_correlation.r = static_cast<type>(NAN);
+        exponential_correlation.r = static_cast<float>(NAN);
         return exponential_correlation;
     }
 
@@ -204,36 +204,36 @@ Correlation linear_correlation(const VectorR& x,
 
     Correlation linear_correlation;
     linear_correlation.form = Correlation::Form::Linear;
-    linear_correlation.a = static_cast<type>((s_y * s_xx - s_x * s_xy) / (double(n) * s_xx - s_x * s_x));
-    linear_correlation.b = static_cast<type>((double(n) * s_xy - s_x * s_y) / (double(n) * s_xx - s_x * s_x));
-    linear_correlation.r = static_cast<type>((double(n) * s_xy - s_x * s_y) / denominator);
+    linear_correlation.a = static_cast<float>((s_y * s_xx - s_x * s_xy) / (double(n) * s_xx - s_x * s_x));
+    linear_correlation.b = static_cast<float>((double(n) * s_xy - s_x * s_y) / (double(n) * s_xx - s_x * s_x));
+    linear_correlation.r = static_cast<float>((double(n) * s_xy - s_x * s_y) / denominator);
 
-    const type z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
+    const float z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
 
     const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z_correlation, n);
 
-    linear_correlation.lower_confidence = clamp(z_correlation_to_r_correlation(ci_lower), type(-1), type(1));
-    linear_correlation.upper_confidence = clamp(z_correlation_to_r_correlation(ci_upper), type(-1), type(1));
-    linear_correlation.r = clamp(linear_correlation.r, type(-1), type(1));
+    linear_correlation.lower_confidence = clamp(z_correlation_to_r_correlation(ci_lower), float(-1), float(1));
+    linear_correlation.upper_confidence = clamp(z_correlation_to_r_correlation(ci_upper), float(-1), float(1));
+    linear_correlation.r = clamp(linear_correlation.r, float(-1), float(1));
 
     return linear_correlation;
 }
 
-type r_correlation_to_z_correlation(const type r_correlation)
+float r_correlation_to_z_correlation(const float r_correlation)
 {
-    const type r_clamped = clamp(r_correlation, type(-0.9999), type(0.9999));
+    const float r_clamped = clamp(r_correlation, float(-0.9999), float(0.9999));
 
-    return type(0.5 * log((1 + r_clamped) / (1 - r_clamped)));
+    return float(0.5 * log((1 + r_clamped) / (1 - r_clamped)));
 }
 
-type z_correlation_to_r_correlation (const type z_correlation)
+float z_correlation_to_r_correlation (const float z_correlation)
 {
     return tanh(z_correlation);
 }
 
-pair<type, type> confidence_interval_z_correlation(const type z_correlation, Index n)
+pair<float, float> confidence_interval_z_correlation(const float z_correlation, Index n)
 {
-    const type margin = type(1.959964) * type(1/sqrt(n - 3));
+    const float margin = float(1.959964) * float(1/sqrt(n - 3));
 
     return { z_correlation - margin, z_correlation + margin };
 }
@@ -260,7 +260,7 @@ VectorR calculate_spearman_ranks(const VectorR& x)
         while (j + 1 < n && x(sorted_indices(j + 1)) == x(sorted_indices(i)))
             ++j;
 
-        const type average_rank = (static_cast<type>(i + 1) + static_cast<type>(j + 1)) / type(2.0);
+        const float average_rank = (static_cast<float>(i + 1) + static_cast<float>(j + 1)) / float(2.0);
 
         for(Index k = i; k <= j; ++k)
             ranks(sorted_indices(k)) = average_rank;
@@ -286,9 +286,9 @@ Correlation logarithmic_correlation(const VectorR& x,
 {
     Correlation logarithmic_correlation;
 
-    if((!x.array().isNaN() && x.array() <= type(0)).any())
+    if((!x.array().isNaN() && x.array() <= float(0)).any())
     {
-        logarithmic_correlation.r = type(NAN);
+        logarithmic_correlation.r = float(NAN);
         return logarithmic_correlation;
     }
 
@@ -335,7 +335,7 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     }
     catch(const exception&)
     {
-        correlation.r = type(0);
+        correlation.r = float(0);
         return correlation;
     }
 
@@ -347,11 +347,11 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
 
     if(!isfinite(correlation.r))
     {
-        correlation.r = type(0);
+        correlation.r = float(0);
         return correlation;
     }
 
-    const type z_correlation = r_correlation_to_z_correlation(correlation.r);
+    const float z_correlation = r_correlation_to_z_correlation(correlation.r);
     const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z_correlation, inputs.rows());
 
     correlation.lower_confidence = z_correlation_to_r_correlation(ci_lower);
@@ -362,10 +362,10 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
 
-    if(correlation.b < type(0))
+    if(correlation.b < float(0))
     {
-        correlation.r *= type(-1);
-        const type old_lower = correlation.lower_confidence;
+        correlation.r *= float(-1);
+        const float old_lower = correlation.lower_confidence;
         correlation.lower_confidence = -correlation.upper_confidence;
         correlation.upper_confidence = -old_lower;
     }
@@ -380,7 +380,7 @@ Correlation logistic_correlation(const VectorR& x, const VectorR& y)
     if (x_filter.size() < 2 || is_constant(x_filter) || is_constant(y_filter))
     {
         Correlation c;
-        c.r = type(NAN);
+        c.r = float(NAN);
         c.form = Correlation::Form::Sigmoid;
         return c;
     }
@@ -395,7 +395,7 @@ Correlation logistic_correlation_spearman(const VectorR& x, const VectorR& y)
     if(x_filter.size() < 2)
     {
         Correlation c;
-        c.r = type(NAN);
+        c.r = float(NAN);
         c.form = Correlation::Form::Sigmoid;
         return c;
     }
@@ -414,14 +414,14 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
     {
         cout << "Warning: Y variable has too many categories." << "\n";
 
-        correlation.r = type(NAN);
+        correlation.r = float(NAN);
 
         return correlation;
     }
 
     if(x_filter.size() == 0)
     {
-        correlation.r = type(NAN);
+        correlation.r = float(NAN);
 
         return correlation;
     }
@@ -430,7 +430,7 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
     data << x_filter, y_filter;
 
     vector<Index> input_columns_indices(1);
-    input_columns_indices[0] = type(0);
+    input_columns_indices[0] = float(0);
 
     vector<Index> target_columns_indices(y_filter.cols());
     iota(target_columns_indices.begin(), target_columns_indices.end(), 1);
@@ -470,7 +470,7 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
     }
     catch(const exception&)
     {
-        correlation.r = type(0);
+        correlation.r = float(0);
         return correlation;
     }
 
@@ -480,7 +480,7 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
 
     correlation.r = linear_correlation(outputs.reshaped(), targets.reshaped()).r;
 
-    const type z_correlation = r_correlation_to_z_correlation(correlation.r);
+    const float z_correlation = r_correlation_to_z_correlation(correlation.r);
 
     const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z_correlation, x_filter.size());
 
@@ -505,7 +505,7 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
     if(x_filter.rows() == y_filter.rows() && x_filter.cols() == y_filter.cols())
         if((x_filter.array() == y_filter.array()).all())
         {
-            correlation.r = static_cast<type>(1);
+            correlation.r = static_cast<float>(1);
             return correlation;
         }
 
@@ -513,14 +513,14 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
     {
         cout << "Warning: One variable has too many categories." << "\n";
 
-        correlation.r = type(NAN);
+        correlation.r = float(NAN);
 
         return correlation;
     }
 
     if(x_filter.size() == 0 && y_filter.size() == 0)
     {
-        correlation.r = type(NAN);
+        correlation.r = float(NAN);
 
         return correlation;
     }
@@ -567,7 +567,7 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
     }
     catch(const exception&)
     {
-        correlation.r = type(0);
+        correlation.r = float(0);
         return correlation;
     }
 
@@ -579,7 +579,7 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 
     correlation.r = linear_correlation(outputs.reshaped(), targets.reshaped()).r;
 
-    const type z_correlation = r_correlation_to_z_correlation(correlation.r);
+    const float z_correlation = r_correlation_to_z_correlation(correlation.r);
 
     const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z_correlation, inputs.rows());
 
@@ -602,7 +602,7 @@ Correlation point_biserial_correlation(const VectorR& continuous,
 
     if(x_filter.size() < 2 || is_constant(x_filter) || is_constant(y_filter))
     {
-        result.r = type(0);
+        result.r = float(0);
         return result;
     }
 
@@ -612,7 +612,7 @@ Correlation point_biserial_correlation(const VectorR& continuous,
     const double sum_all = x_dbl.sum();
     const double sum_sq = x_dbl.squaredNorm();
 
-    const auto mask1 = (y_filter.array() > type(0.5));
+    const auto mask1 = (y_filter.array() > float(0.5));
     const Index n1 = mask1.count();
     const Index n0 = n - n1;
     const double sum1 = mask1.select(x_dbl.array(), 0.0).sum();
@@ -620,7 +620,7 @@ Correlation point_biserial_correlation(const VectorR& continuous,
 
     if(n1 == 0 || n0 == 0)
     {
-        result.r = type(0);
+        result.r = float(0);
         return result;
     }
 
@@ -629,7 +629,7 @@ Correlation point_biserial_correlation(const VectorR& continuous,
 
     if(variance <= 0)
     {
-        result.r = type(0);
+        result.r = float(0);
         return result;
     }
 
@@ -639,9 +639,9 @@ Correlation point_biserial_correlation(const VectorR& continuous,
     const double r_pb = (M1 - M0) / s_x
                         * sqrt(double(n1) * double(n0) / (double(n) * double(n)));
 
-    result.r = type(clamp(r_pb, -1.0, 1.0));
+    result.r = float(clamp(r_pb, -1.0, 1.0));
 
-    const type z = r_correlation_to_z_correlation(result.r);
+    const float z = r_correlation_to_z_correlation(result.r);
     const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z, n);
     result.lower_confidence = z_correlation_to_r_correlation(ci_lower);
     result.upper_confidence = z_correlation_to_r_correlation(ci_upper);
@@ -660,7 +660,7 @@ Correlation eta_squared_correlation(const VectorR& continuous,
 
     if(x_filter.size() < 2 || is_constant(x_filter))
     {
-        result.r = type(0);
+        result.r = float(0);
         return result;
     }
 
@@ -673,7 +673,7 @@ Correlation eta_squared_correlation(const VectorR& continuous,
 
     if(ss_total <= 0)
     {
-        result.r = type(0);
+        result.r = float(0);
         return result;
     }
 
@@ -681,7 +681,7 @@ Correlation eta_squared_correlation(const VectorR& continuous,
 
     for(Index cat = 0; cat < n_cats; ++cat)
     {
-        const auto mask = (y_filter.col(cat).array() > type(0.5));
+        const auto mask = (y_filter.col(cat).array() > float(0.5));
         const double group_sum = mask.select(x_filter.cast<double>().array(), 0.0).sum();
         const Index group_count = mask.count();
 
@@ -694,9 +694,9 @@ Correlation eta_squared_correlation(const VectorR& continuous,
 
     const double eta_sq = ss_between / ss_total;
 
-    result.r = type(clamp(sqrt(eta_sq), 0.0, 1.0));
+    result.r = float(clamp(sqrt(eta_sq), 0.0, 1.0));
 
-    const type z = r_correlation_to_z_correlation(result.r);
+    const float z = r_correlation_to_z_correlation(result.r);
     const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z, n);
     result.lower_confidence = z_correlation_to_r_correlation(ci_lower);
     result.upper_confidence = z_correlation_to_r_correlation(ci_upper);
@@ -710,7 +710,7 @@ Correlation power_correlation(const VectorR& x, const VectorR& y)
 
     if ((x.array() <= 0.0f).any() || (y.array() <= 0.0f).any())
     {
-        power_correlation.r = static_cast<type>(NAN);
+        power_correlation.r = static_cast<float>(NAN);
         return power_correlation;
     }
 
@@ -724,12 +724,12 @@ Correlation power_correlation(const VectorR& x, const VectorR& y)
 
 void Correlation::set_perfect()
 {
-    r = type(1);
-    a = type(0);
-    b = type(1);
+    r = float(1);
+    a = float(0);
+    b = float(1);
 
-    upper_confidence = type(1);
-    lower_confidence = type(1);
+    upper_confidence = float(1);
+    lower_confidence = float(1);
     form = Correlation::Form::Linear;
 }
 

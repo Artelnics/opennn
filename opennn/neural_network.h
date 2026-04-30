@@ -122,8 +122,8 @@ public:
 
     bool is_empty() const { return layers.empty(); }
 
-    type* get_parameters_data() { return parameters.as<type>(); }
-    const type* get_parameters_data() const { return parameters.as<type>(); }
+    float* get_parameters_data() { return parameters.as<float>(); }
+    const float* get_parameters_data() const { return parameters.as<float>(); }
     Index get_parameters_size() const { return parameters.size(); }
 
     const vector<Variable>& get_input_variables() const { return input_variables; }
@@ -211,7 +211,7 @@ public:
 
     MatrixR calculate_outputs(const Tensor4&);
 
-    MatrixR calculate_directional_inputs(const Index, const VectorR&, type, type, Index = 101) const;
+    MatrixR calculate_directional_inputs(const Index, const VectorR&, float, float, Index = 101) const;
 
     Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
 

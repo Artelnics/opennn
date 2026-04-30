@@ -36,9 +36,9 @@ public:
 
    // Training operators
 
-   void set_learning_rate(const type);
-   void set_beta_1(const type);
-   void set_beta_2(const type);
+   void set_learning_rate(const float);
+   void set_beta_1(const float);
+   void set_beta_2(const float);
 
    // Training
 
@@ -54,11 +54,11 @@ public:
 
 private:
 
-   type learning_rate = type(0.001);
+   float learning_rate = float(0.001);
 
-   type beta_1 = type(0.9);
+   float beta_1 = float(0.9);
 
-   type beta_2 = type(0.98);
+   float beta_2 = float(0.98);
 
    Index batch_size = 1000;
 };

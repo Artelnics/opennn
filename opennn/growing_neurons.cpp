@@ -33,7 +33,7 @@ void GrowingNeurons::set_default()
     trials_number = 3;
     neurons_increment = 1;
     maximum_validation_failures = 100;
-    maximum_time = type(3600);
+    maximum_time = float(3600);
 }
 
 void GrowingNeurons::set_neurons_increment(const Index new_neurons_increment)
@@ -57,7 +57,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     // Loss index
 
-    type previous_validation_error = MAX;
+    float previous_validation_error = MAX;
 
     // Optimization algorithm
 
@@ -68,7 +68,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     time_t beginning_time;
     time_t current_time;
 
-    type elapsed_time = type(0);
+    float elapsed_time = float(0);
 
     TrainingResults training_results;
 
@@ -96,8 +96,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         // Loss index
 
-        type minimum_training_error = MAX;
-        type minimum_validation_error = MAX;
+        float minimum_training_error = MAX;
+        float minimum_validation_error = MAX;
 
         for(Index trial = 0; trial < trials_number; ++trial)
         {
@@ -141,7 +141,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         time(&current_time);
 
-        elapsed_time = type(difftime(current_time,beginning_time));
+        elapsed_time = float(difftime(current_time,beginning_time));
 
         // Stopping criteria
 

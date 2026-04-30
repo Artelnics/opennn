@@ -84,8 +84,8 @@ public:
         return scalers;
     }
 
-    type get_min_range() const { return min_range; }
-    type get_max_range() const { return max_range; }
+    float get_min_range() const { return min_range; }
+    float get_max_range() const { return max_range; }
 
     void set(const Shape& new_input_shape = {})
     {
@@ -119,7 +119,7 @@ public:
 
         label = "scaling_layer";
 
-        set_min_max_range(type(-1), type(1));
+        set_min_max_range(float(-1), float(1));
 
         name = "Scaling" + to_string(Rank) + "d";
         if constexpr (Rank == 2) layer_type = LayerType::Scaling2d;
@@ -131,9 +131,9 @@ public:
 
     // Runs after NN::compile() allocates the states arena. Initializes descriptive
     // defaults (means=0, std=1, min=-1, max=1) and writes scaler enums as float.
-    type* link_states(type* pointer) override
+    float* link_states(float* pointer) override
     {
-        type* next = Layer::link_states(pointer);
+        float* next = Layer::link_states(pointer);
 
         if(ssize(states) < 5) return next;
 
@@ -142,12 +142,12 @@ public:
         if(states[StandardDeviations].data)
             VectorMap(states[StandardDeviations].template as<float>(), states[StandardDeviations].size()).setOnes();
         if(states[Minimums].data)
-            VectorMap(states[Minimums].template as<float>(), states[Minimums].size()).setConstant(type(-1));
+            VectorMap(states[Minimums].template as<float>(), states[Minimums].size()).setConstant(float(-1));
         if(states[Maximums].data)
             VectorMap(states[Maximums].template as<float>(), states[Maximums].size()).setOnes();
         if(states[Scalers].data && ssize(scalers) == states[Scalers].size())
             for(size_t i = 0; i < scalers.size(); ++i)
-                states[Scalers].template as<float>()[i] = static_cast<type>(scalers[i]);
+                states[Scalers].template as<float>()[i] = static_cast<float>(scalers[i]);
 
         return next;
     }
@@ -181,7 +181,7 @@ public:
         }
     }
 
-    void set_min_max_range(const type min, type max)
+    void set_min_max_range(const float min, float max)
     {
         min_range = min;
         max_range = max;
@@ -241,8 +241,8 @@ public:
         buffer.precision(10);
 
         const Index inputs_number = get_output_shape().size();
-        const type* mins = states[Minimums].template as<float>();
-        const type* maxs = states[Maximums].template as<float>();
+        const float* mins = states[Minimums].template as<float>();
+        const float* maxs = states[Maximums].template as<float>();
         for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = 2*(" << input_names[i] << "-(" << mins[i]
                    << "))/(" << maxs[i] << "-(" << mins[i] << "))-1;\n";
@@ -256,8 +256,8 @@ public:
         buffer.precision(10);
 
         const Index inputs_number = get_output_shape().size();
-        const type* mns = states[Means].template as<float>();
-        const type* sds = states[StandardDeviations].template as<float>();
+        const float* mns = states[Means].template as<float>();
+        const float* sds = states[StandardDeviations].template as<float>();
         for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = (" << input_names[i] << "-(" << mns[i]
                    << "))/" << sds[i] << ";\n";
@@ -271,7 +271,7 @@ public:
         buffer.precision(10);
 
         const Index inputs_number = get_output_shape().size();
-        const type* sds = states[StandardDeviations].template as<float>();
+        const float* sds = states[StandardDeviations].template as<float>();
         for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = " << input_names[i] << "/(" << sds[i] << ");\n";
 
@@ -292,8 +292,8 @@ public:
         for(size_t i = 0; i < scaler_names.size(); ++i)
             scalers[i] = string_to_scaler_method(scaler_names[i]);
 
-        min_range = type(stof(read_xml_string(scaling_layer_element, "MinRange")));
-        max_range = type(stof(read_xml_string(scaling_layer_element, "MaxRange")));
+        min_range = float(stof(read_xml_string(scaling_layer_element, "MinRange")));
+        max_range = float(stof(read_xml_string(scaling_layer_element, "MaxRange")));
     }
 
     // Phase 2: descriptives parsed directly into the states arena.
@@ -353,7 +353,7 @@ private:
         if(ssize(states) <= Scalers || !states[Scalers].data) return;
         if(ssize(scalers) != states[Scalers].size()) return;
         for(size_t i = 0; i < scalers.size(); ++i)
-            states[Scalers].template as<float>()[i] = static_cast<type>(scalers[i]);
+            states[Scalers].template as<float>()[i] = static_cast<float>(scalers[i]);
     }
 
     Shape input_shape;
@@ -363,8 +363,8 @@ private:
     // Scaler method is enum, not float — can't live in the arena directly.
     vector<ScalerMethod> scalers;
 
-    type min_range;
-    type max_range;
+    float min_range;
+    float max_range;
 };
 
 }

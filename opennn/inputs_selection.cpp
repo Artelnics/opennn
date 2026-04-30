@@ -64,16 +64,16 @@ Index InputsSelectionResults::get_epochs_number() const
 void InputsSelectionResults::set(const Index maximum_epochs)
 {
     training_error_history.resize(maximum_epochs);
-    training_error_history.setConstant(type(-1));
+    training_error_history.setConstant(float(-1));
 
     validation_error_history.resize(maximum_epochs);
-    validation_error_history.setConstant(type(-1));
+    validation_error_history.setConstant(float(-1));
 
     mean_validation_error_history.resize(maximum_epochs);
-    mean_validation_error_history.setConstant(type(-1));
+    mean_validation_error_history.setConstant(float(-1));
 
     mean_training_error_history.resize(maximum_epochs);
-    mean_training_error_history.setConstant(type(-1));
+    mean_training_error_history.setConstant(float(-1));
 }
 
 string InputsSelectionResults::write_stopping_condition() const

@@ -20,8 +20,6 @@
 using namespace std;
 using namespace Eigen;
 
-typedef float type;
-
 // Optimizer
 
 void adam_update_cuda(const Index, float*, float*, float*, const float*, const float, const float, const float, const float, const float, const float);

@@ -25,9 +25,9 @@ private:
 
     bool batch_normalization = false;
 
-    type momentum = type(0.1);
+    float momentum = float(0.1);
 
-    type dropout_rate = type(0);
+    float dropout_rate = float(0);
 
     DropoutArguments dropout_arguments;
 
@@ -74,7 +74,7 @@ private:
         // Activation view stores the post-activation, pre-dropout value so that
         // back-propagation can compute the activation derivative after dropout
         // has overwritten the output tensor. Allocated only when dropout is in use.
-        const Shape activation_shape = (dropout_rate > type(0)) ? output_shape : Shape{};
+        const Shape activation_shape = (dropout_rate > float(0)) ? output_shape : Shape{};
 
         if(batch_normalization)
             return {output_shape,             // Combination
@@ -158,7 +158,7 @@ public:
 
     bool get_batch_normalization() const { return batch_normalization; }
 
-    type get_momentum() const { return momentum; }
+    float get_momentum() const { return momentum; }
 
     // Setters
 
@@ -244,18 +244,18 @@ public:
         batch_normalization = new_batch_normalization;
     }
 
-    void set_dropout_rate(const type new_dropout_rate)
+    void set_dropout_rate(const float new_dropout_rate)
     {
-        if (new_dropout_rate < type(0) || new_dropout_rate >= type(1))
+        if (new_dropout_rate < float(0) || new_dropout_rate >= float(1))
             throw runtime_error("Dropout rate must be in [0,1).");
 
         dropout_rate = new_dropout_rate;
         dropout_arguments.rate = new_dropout_rate;
     }
 
-    void set_momentum(const type new_momentum)
+    void set_momentum(const float new_momentum)
     {
-        if (new_momentum < type(0) || new_momentum >= type(1))
+        if (new_momentum < float(0) || new_momentum >= float(1))
             throw runtime_error("Batch normalization momentum must be in [0,1).");
 
         momentum = new_momentum;
@@ -265,7 +265,7 @@ public:
 
     void set_parameters_glorot() override
     {
-        const type limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
+        const float limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
         set_random_uniform(VectorMap(parameters[Weight].template as<float>(), parameters[Weight].size()), -limit, limit);
         init_dense_norm_defaults();
     }
@@ -308,7 +308,7 @@ public:
 
         // Dropout
 
-        if (dropout_rate > type(0))
+        if (dropout_rate > float(0))
         {
             cudnnTensorDescriptor_t temp_desc;
             cudnnCreateTensorDescriptor(&temp_desc);
@@ -392,7 +392,7 @@ public:
                                    forward_views[Output][0]);
         }
 
-        if (is_training && dropout_rate > type(0))
+        if (is_training && dropout_rate > float(0))
         {
             ::opennn::profiler::ScopedTimer _t("dense3d_fwd:dropout_save_and_apply");
             copy(forward_views[Output][0], forward_views[Activation][0]);
@@ -413,7 +413,7 @@ public:
 
         TensorView& output_delta = delta_views[OutputDelta][0];
 
-        if (dropout_rate > type(0))
+        if (dropout_rate > float(0))
         {
             ::opennn::profiler::ScopedTimer _t1("dense3d_bwd:01_dropout_delta");
             dropout_delta(output_delta, output_delta, dropout_arguments);

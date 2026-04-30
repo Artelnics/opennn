@@ -70,7 +70,7 @@ public:
         return {Shape{output_shape[0]}, Shape{output_shape[0]}};
     }
 
-    type* link_states(type* pointer) override;
+    float* link_states(float* pointer) override;
 
     void set(const Shape& = { 0 }, const string & = "bounding_layer");
 
@@ -82,10 +82,10 @@ public:
 
     // Setters require the layer to be compiled first (states arena must be allocated).
     void set_lower_bounds(const VectorR&);
-    void set_lower_bound(const Index, type);
+    void set_lower_bound(const Index, float);
 
     void set_upper_bounds(const VectorR&);
-    void set_upper_bound(const Index, type);
+    void set_upper_bound(const Index, float);
 
     // Forward
 

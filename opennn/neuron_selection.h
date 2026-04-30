@@ -42,10 +42,10 @@ public:
 
     void set_display(bool d) { display = d; }
 
-    void set_validation_error_goal(const type v) { validation_error_goal = v; }
+    void set_validation_error_goal(const float v) { validation_error_goal = v; }
     void set_maximum_epochs(const Index n) { maximum_epochs = n; }
     void set_maximum_validation_failures(const Index n) { maximum_validation_failures = n; }
-    void set_maximum_time(const type t) { maximum_time = t; }
+    void set_maximum_time(const float t) { maximum_time = t; }
 
 void check() const;
 
@@ -79,13 +79,13 @@ protected:
 
     Index trials_number = 1;
 
-    type validation_error_goal = 0;
+    float validation_error_goal = 0;
 
     Index maximum_epochs = 10;
 
     Index maximum_validation_failures = 100;
 
-    type maximum_time = 0;
+    float maximum_time = 0;
 
     bool display = true;
 
@@ -116,9 +116,9 @@ struct NeuronsSelectionResults
 
    VectorR validation_error_history;
 
-   type optimum_training_error = type(10);
+   float optimum_training_error = float(10);
 
-   type optimum_validation_error = type(10);
+   float optimum_validation_error = float(10);
 
    // Model selection
 

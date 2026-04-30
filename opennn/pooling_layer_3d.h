@@ -37,7 +37,7 @@ public:
     // Setters
 
     void set(const Shape&, const PoolingMethod&, const string&);
-    void set_input_shape(const Shape& s) override { sequence_length = s[0]; input_features = s[1]; }
+    void set_input_shape(const Shape& shape) override { sequence_length = shape[0]; input_features = shape[1]; }
     void set_pooling_method(const PoolingMethod& m) { pooling_method = m; }
     void set_pooling_method(const string&);
 

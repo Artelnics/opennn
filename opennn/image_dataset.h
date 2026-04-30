@@ -18,12 +18,12 @@ struct AugmentationSettings
     bool enabled = false;
     bool reflection_axis_x = false;
     bool reflection_axis_y = false;
-    type rotation_minimum = type(0);
-    type rotation_maximum = type(0);
-    type horizontal_translation_minimum = type(0);
-    type horizontal_translation_maximum = type(0);
-    type vertical_translation_minimum = type(0);
-    type vertical_translation_maximum = type(0);
+    float rotation_minimum = float(0);
+    float rotation_maximum = float(0);
+    float horizontal_translation_minimum = float(0);
+    float horizontal_translation_maximum = float(0);
+    float vertical_translation_minimum = float(0);
+    float vertical_translation_maximum = float(0);
 };
 
 class ImageDataset : public Dataset
@@ -52,7 +52,7 @@ public:
     void from_XML(const XmlDocument&) override;
     void to_XML(XmlPrinter&) const override;
 
-    void augment_inputs(type*, Index) const override;
+    void augment_inputs(float*, Index) const override;
 
 private:
 

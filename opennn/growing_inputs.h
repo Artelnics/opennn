@@ -28,8 +28,8 @@ public:
     void set_maximum_inputs_number(const Index);
     void set_minimum_inputs_number(const Index);
 
-    void set_maximum_correlation(const type);
-    void set_minimum_correlation(const type);
+    void set_maximum_correlation(const float);
+    void set_minimum_correlation(const float);
 
     InputsSelectionResults perform_input_selection() override;
 
@@ -42,8 +42,8 @@ private:
     Index minimum_inputs_number = 1;
     Index maximum_inputs_number = 1;
 
-    type minimum_correlation = 0;
-    type maximum_correlation = 0;
+    float minimum_correlation = 0;
+    float maximum_correlation = 0;
 
 };
 

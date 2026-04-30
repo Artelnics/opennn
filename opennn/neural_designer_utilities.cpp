@@ -25,7 +25,7 @@ vector<string> concatenate_string_vectors(const vector<string>& string_vector_1,
     return string_vector;
 }
 
-string formatNumber(type value, int precision)
+string formatNumber(float value, int precision)
 {
     ostringstream oss;
     oss << fixed << setprecision(precision) << value;
@@ -45,9 +45,9 @@ string formatNumber(type value, int precision)
     return str;
 }
 
-type round_to_precision(type x, const int& precision)
+float round_to_precision(float x, const int& precision)
 {
-    const type factor = type(pow(10, precision));
+    const float factor = float(pow(10, precision));
 
     return round(factor*x)/factor;
 }

@@ -59,7 +59,7 @@ private:
     bool use_padding = false;
 
     bool batch_normalization = false;
-    type momentum = type(0.9);
+    float momentum = float(0.9);
 
     ActivationArguments activation_arguments;
     ConvolutionArguments convolution_arguments;

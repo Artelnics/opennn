@@ -30,10 +30,10 @@ public:
     struct Condition
     {
         ConditionType condition;
-        type low_bound;
-        type up_bound;
+        float low_bound;
+        float up_bound;
 
-        Condition(ConditionType new_type = ConditionType::None, type low = 0.0, type up = 0.0)
+        Condition(ConditionType new_type = ConditionType::None, float low = 0.0, float up = 0.0)
             : condition(new_type), low_bound(low), up_bound(up) {}
     };
 
@@ -51,7 +51,7 @@ public:
 
         void bound(const vector<Index>& feature_dimensions, const vector<Condition>& conditions);
 
-        void reshape(const type zoom_factor,
+        void reshape(const float zoom_factor,
                      const VectorR& center,
                      const MatrixR& subset_optimal_points,
                      const vector<Index>& input_feature_dimensions,
@@ -83,14 +83,14 @@ public:
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
     void clear_conditions();
-    void set_condition(const string& name, const ConditionType condition, type low = 0.0, type up = 0.0);
+    void set_condition(const string& name, const ConditionType condition, float low = 0.0, float up = 0.0);
 
     void set_iterations(const int iterations);
-    void set_zoom_factor(type new_zoom_factor);
+    void set_zoom_factor(float new_zoom_factor);
     void set_evaluations_number(const int new_evaluations_number);
-    void set_relative_tolerance(type new_relative_tolerance);
+    void set_relative_tolerance(float new_relative_tolerance);
 
-    vector<type> get_utopian_point() const;
+    vector<float> get_utopian_point() const;
 
     Domain get_original_domain(const string role) const;
 
@@ -112,7 +112,7 @@ public:
 
     pair<MatrixR, MatrixR> calculate_pareto(const MatrixR& inputs, const MatrixR& outputs, const MatrixR& objective_matrix) const;
 
-    pair<type, type> calculate_quality_metrics(const MatrixR& inputs, const MatrixR& outputs,const Objectives& objectives) const;
+    pair<float, float> calculate_quality_metrics(const MatrixR& inputs, const MatrixR& outputs,const Objectives& objectives) const;
 
     MatrixR perform_multiobjective_optimization(const Objectives& objectives) const;
 
@@ -132,9 +132,9 @@ private:
 
     Index min_iterations = 4;
 
-    type zoom_factor = type(0.45);
+    float zoom_factor = float(0.45);
 
-    type relative_tolerance = type(0.001);
+    float relative_tolerance = float(0.001);
 
 };
 

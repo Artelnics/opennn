@@ -16,14 +16,14 @@ namespace opennn
     // Used by example mains that pin a seed for reproducibility.
     void set_seed(unsigned seed);
 
-    type random_uniform(type = -1, type = 1);
+    float random_uniform(float = -1, float = 1);
     Index random_integer(Index, Index);
-    bool random_bool(type = 0.5);
+    bool random_bool(float = 0.5);
 
-    void set_random_uniform(MatrixR&, type = -0.1, type = 0.1);
-    void set_random_uniform(VectorMap, type = -0.1, type = 0.1);
+    void set_random_uniform(MatrixR&, float = -0.1, float = 0.1);
+    void set_random_uniform(VectorMap, float = -0.1, float = 0.1);
 
-    void set_random_normal(MatrixMap, type = 0, type = 1);
+    void set_random_normal(MatrixMap, float = 0, float = 1);
 
     void set_random_integer(MatrixR&, Index, Index);
 

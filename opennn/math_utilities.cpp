@@ -120,7 +120,7 @@ void scale(const TensorView& input,
            const TensorView& minimums, const TensorView& maximums,
            const TensorView& means, const TensorView& standard_deviations,
            const TensorView& scalers,
-           type min_range, type max_range,
+           float min_range, float max_range,
            TensorView& output)
 {
     const Index features = scalers.size();
@@ -178,7 +178,7 @@ void scale(const TensorView& input,
             col = col.log();
             break;
         case 5: // ImageMinMax
-            col /= type(255);
+            col /= float(255);
             break;
         default: // None
             break;
@@ -190,7 +190,7 @@ void unscale(const TensorView& input,
              const TensorView& minimums, const TensorView& maximums,
              const TensorView& means, const TensorView& standard_deviations,
              const TensorView& scalers,
-             type min_range, type max_range,
+             float min_range, float max_range,
              TensorView& output)
 {
     const Index features = scalers.size();
@@ -248,7 +248,7 @@ void unscale(const TensorView& input,
             col = col.exp();
             break;
         case 5: // ImageMinMax
-            col *= type(255);
+            col *= float(255);
             break;
         default: // None
             break;
@@ -265,7 +265,7 @@ void copy(const TensorView& source, TensorView& destination)
         CHECK_CUDA(cudaMemcpy(destination.data, source.data, source.byte_size(), cudaMemcpyDeviceToDevice));
         return;
     });
-    memcpy(destination.data, source.data, source.size() * sizeof(type));
+    memcpy(destination.data, source.data, source.size() * sizeof(float));
 }
 
 void addition(const TensorView& input_1,
@@ -293,7 +293,7 @@ void addition(const TensorView& input_1,
 void multiply(const TensorView& input_a, bool transpose_a,
               const TensorView& input_b, bool transpose_b,
               TensorView& output,
-              type alpha, type beta)
+              float alpha, float beta)
 {
     const size_t rank = input_a.get_rank();
 
@@ -373,7 +373,7 @@ void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, 
     output.as_vector().noalias() = input_a.as_vector().cwiseProduct(input_b.as_vector());
 }
 
-void reduce_sum(const TensorView& input, TensorView& output, type alpha, type beta)
+void reduce_sum(const TensorView& input, TensorView& output, float alpha, float beta)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
@@ -418,7 +418,7 @@ void softmax(TensorView& output)
     #pragma omp parallel for
     for (Index i = 0; i < rows; ++i)
     {
-        const type max_val = output_matrix.row(i).maxCoeff();
+        const float max_val = output_matrix.row(i).maxCoeff();
         output_matrix.row(i).array() = (output_matrix.row(i).array() - max_val).exp();
         output_matrix.row(i) /= output_matrix.row(i).sum();
     }
@@ -585,8 +585,8 @@ void combination_gradient(const TensorView& output_delta,
         if (input_delta.data && input_delta.size() > 0)
         {
             PROFILE_SCOPE("comb_grad:multiply_input_delta");
-            const type beta = accumulate_input_delta ? type(1) : type(0);
-            multiply(output_delta, false, weights, true, input_delta, type(1), beta);
+            const float beta = accumulate_input_delta ? float(1) : float(0);
+            multiply(output_delta, false, weights, true, input_delta, float(1), beta);
         }
         return;
     }
@@ -597,8 +597,8 @@ void combination_gradient(const TensorView& output_delta,
 
     if(input_delta.data && input_delta.size() > 0)
     {
-        const type beta = accumulate_input_delta ? type(1) : type(0);
-        multiply(output_delta, false, weights, true, input_delta, type(1), beta);
+        const float beta = accumulate_input_delta ? float(1) : float(0);
+        multiply(output_delta, false, weights, true, input_delta, float(1), beta);
     }
 }
 
@@ -726,7 +726,7 @@ void activation_delta(const TensorView& outputs,
 
 void dropout(TensorView& output, DropoutArguments& args)
 {
-    if (args.rate <= type(0)) return;
+    if (args.rate <= float(0)) return;
 
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
@@ -743,11 +743,11 @@ void dropout(TensorView& output, DropoutArguments& args)
     if (args.mask_cpu.size() != total_size)
         args.mask_cpu.resize(total_size);
 
-    const type scale = type(1) / (type(1) - args.rate);
+    const float scale = float(1) / (float(1) - args.rate);
 
     for (Index i = 0; i < total_size; ++i)
     {
-        const type mask_value = random_uniform(type(0), type(1)) < args.rate ? type(0) : scale;
+        const float mask_value = random_uniform(float(0), float(1)) < args.rate ? float(0) : scale;
         args.mask_cpu[i] = mask_value;
         output.as<float>()[i] *= mask_value;
     }
@@ -757,7 +757,7 @@ void dropout_delta(const TensorView& output_delta,
                    TensorView& input_delta,
                    const DropoutArguments& args)
 {
-    if (args.rate <= type(0))
+    if (args.rate <= float(0))
     {
         copy(output_delta, input_delta);
         return;
@@ -821,7 +821,7 @@ void batch_normalization_training(
     TensorView& mean,
     TensorView& inverse_variance,
     TensorView& output,
-    type momentum)
+    float momentum)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
@@ -835,7 +835,7 @@ void batch_normalization_training(
             output.get_descriptor(), output.data,
             gamma.get_descriptor(), gamma.data,
             beta.data,
-            static_cast<double>(type(1) - momentum),
+            static_cast<double>(float(1) - momentum),
             running_mean.data, running_variance.data,
             EPSILON,
             mean.data,
@@ -856,10 +856,10 @@ void batch_normalization_training(
 
     inverse_variances.noalias() = output_matrix.array().square().colwise().mean().matrix();
 
-    running_means = running_means * momentum + means * (type(1) - momentum);
-    running_variances = running_variances * momentum + inverse_variances * (type(1) - momentum);
+    running_means = running_means * momentum + means * (float(1) - momentum);
+    running_variances = running_variances * momentum + inverse_variances * (float(1) - momentum);
 
-    inverse_variances.array() = type(1) / (inverse_variances.array() + EPSILON).sqrt();
+    inverse_variances.array() = float(1) / (inverse_variances.array() + EPSILON).sqrt();
     const VectorR scale = inverse_variances.array() * gamma.as_vector().array();
     const VectorMap betas = beta.as_vector();
 
@@ -900,8 +900,8 @@ void batch_normalization_backward(
 #endif
     (void)output;
     const Index effective_batch_size = input.size() / gamma.size();
-    const type inv_N = type(1) / to_type(effective_batch_size);
-    const type N = to_type(effective_batch_size);
+    const float inv_N = float(1) / to_type(effective_batch_size);
+    const float N = to_type(effective_batch_size);
 
     const MatrixMap input_matrix = input.as_flat_matrix();
     const MatrixMap output_deltas = output_delta.as_flat_matrix();
@@ -928,7 +928,7 @@ void batch_normalization_backward(
     for (Index i = 0; i < effective_batch_size; ++i)
         for (Index c = 0; c < cols; ++c)
         {
-            const type x_hat = (input_matrix(i, c) - means(c)) * inverse_variances(c);
+            const float x_hat = (input_matrix(i, c) - means(c)) * inverse_variances(c);
             input_deltas(i, c) =
                 scale(c) * (N * output_deltas(i, c) - beta_gradients(c) - x_hat * gamma_gradients(c));
         }
@@ -948,44 +948,44 @@ void layernorm_forward(const TensorView& input, const TensorView& gamma, const T
                                   gamma.as<float>(), beta.as<float>(), EPSILON);
     })) return;
 
-    const type* input_data = input.as<float>();
-    type* means_data = means.as<float>();
-    type* stds_data = standard_deviations.as<float>();
-    type* normalized_data = normalized.as<float>();
-    type* output_data = output.as<float>();
-    const type* gamma_data = gamma.as<float>();
-    const type* beta_data = beta.as<float>();
+    const float* input_data = input.as<float>();
+    float* means_data = means.as<float>();
+    float* stds_data = standard_deviations.as<float>();
+    float* normalized_data = normalized.as<float>();
+    float* output_data = output.as<float>();
+    const float* gamma_data = gamma.as<float>();
+    const float* beta_data = beta.as<float>();
 
     const Index total_rows = batch_size * sequence_length;
-    const type inv_D = type(1) / to_type(embedding_dimension);
+    const float inv_D = float(1) / to_type(embedding_dimension);
 
     #pragma omp parallel for
     for (Index row = 0; row < total_rows; ++row)
     {
-        const type* x = input_data + row * embedding_dimension;
-        type* norm_row = normalized_data + row * embedding_dimension;
-        type* out_row = output_data + row * embedding_dimension;
+        const float* x = input_data + row * embedding_dimension;
+        float* norm_row = normalized_data + row * embedding_dimension;
+        float* out_row = output_data + row * embedding_dimension;
 
-        type sum = 0;
-        type sum_sq = 0;
+        float sum = 0;
+        float sum_sq = 0;
         for (Index d = 0; d < embedding_dimension; ++d)
         {
-            const type v = x[d];
+            const float v = x[d];
             sum += v;
             sum_sq += v * v;
         }
 
-        const type mean = sum * inv_D;
-        const type variance = sum_sq * inv_D - mean * mean;
-        const type std_val = std::sqrt(variance + EPSILON);
-        const type inv_std = type(1) / std_val;
+        const float mean = sum * inv_D;
+        const float variance = sum_sq * inv_D - mean * mean;
+        const float std_val = std::sqrt(variance + EPSILON);
+        const float inv_std = float(1) / std_val;
 
         means_data[row] = mean;
         stds_data[row] = std_val;
 
         for (Index d = 0; d < embedding_dimension; ++d)
         {
-            const type x_hat = (x[d] - mean) * inv_std;
+            const float x_hat = (x[d] - mean) * inv_std;
             norm_row[d] = x_hat;
             out_row[d] = gamma_data[d] * x_hat + beta_data[d];
         }
@@ -1015,28 +1015,28 @@ void layernorm_backward(const TensorView& input, const TensorView& output_delta,
     beta_gradient.as_vector().noalias() = dy_flat.colwise().sum();
     gamma_gradient.as_vector().noalias() = (dy_flat.array() * norm_flat.array()).matrix().colwise().sum();
 
-    const type* dy_data = output_delta.as<float>();
-    const type* norm_data = normalized.as<float>();
-    const type* std_data = standard_deviations.as<float>();
-    const type* gamma_data = gamma.as<float>();
-    type* dx_data = input_delta.as<float>();
+    const float* dy_data = output_delta.as<float>();
+    const float* norm_data = normalized.as<float>();
+    const float* std_data = standard_deviations.as<float>();
+    const float* gamma_data = gamma.as<float>();
+    float* dx_data = input_delta.as<float>();
 
     const Index total_rows = batch_size * sequence_length;
-    const type inv_D = type(1) / to_type(embedding_dimension);
+    const float inv_D = float(1) / to_type(embedding_dimension);
 
     #pragma omp parallel for
     for (Index row = 0; row < total_rows; ++row)
     {
-        const type* dy = dy_data + row * embedding_dimension;
-        const type* norm = norm_data + row * embedding_dimension;
-        type* dx = dx_data + row * embedding_dimension;
-        const type inv_std = type(1) / std_data[row];
+        const float* dy = dy_data + row * embedding_dimension;
+        const float* norm = norm_data + row * embedding_dimension;
+        float* dx = dx_data + row * embedding_dimension;
+        const float inv_std = float(1) / std_data[row];
 
-        type sum_sg = 0;
-        type sum_sg_norm = 0;
+        float sum_sg = 0;
+        float sum_sg_norm = 0;
         for (Index d = 0; d < embedding_dimension; ++d)
         {
-            const type sg = gamma_data[d] * dy[d];
+            const float sg = gamma_data[d] * dy[d];
             sum_sg += sg;
             sum_sg_norm += sg * norm[d];
         }
@@ -1045,7 +1045,7 @@ void layernorm_backward(const TensorView& input, const TensorView& output_delta,
 
         for (Index d = 0; d < embedding_dimension; ++d)
         {
-            const type sg = gamma_data[d] * dy[d];
+            const float sg = gamma_data[d] * dy[d];
             dx[d] = (sg - sum_sg - norm[d] * sum_sg_norm) * inv_std;
         }
     }
@@ -1177,7 +1177,7 @@ void convolution_backward_weights(const TensorView& input,
     // Weight gradients: for each kernel, convolve padded input with output-gradient slice
     // along (batch, H, W). Eigen's Tensor::convolve is SIMD-vectorized — much faster than
     // the naive 6-nested loop it replaced.
-    type* weight_data = weight_grad.as<float>();
+    float* weight_data = weight_grad.as<float>();
 
     #pragma omp parallel for
     for(Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
@@ -1323,7 +1323,7 @@ static void max_pooling_cpu(const TensorView& input,
                     const Index pool_col_start = max(Index(0), -input_column_start);
                     const Index pool_col_end   = min(pool_width, input_width - input_column_start);
 
-                    type maximum_value = NEG_INFINITY;
+                    float maximum_value = NEG_INFINITY;
                     [[maybe_unused]] Index maximal_index = 0;
 
                     for(Index pool_row = pool_row_start; pool_row < pool_row_end; ++pool_row)
@@ -1334,7 +1334,7 @@ static void max_pooling_cpu(const TensorView& input,
                         {
                             const Index input_column = input_column_start + pool_column;
 
-                            const type current_value = inputs(batch_index, input_row, input_column, channel_index);
+                            const float current_value = inputs(batch_index, input_row, input_column, channel_index);
 
                             if(current_value > maximum_value)
                             {
@@ -1410,7 +1410,7 @@ void average_pooling(const TensorView& input,
     const Index padding_height = arguments.padding_shape[0];
     const Index padding_width = arguments.padding_shape[1];
 
-    const type inv_pool_size = type(1) / (pool_height * pool_width);
+    const float inv_pool_size = float(1) / (pool_height * pool_width);
 
 #pragma omp parallel for collapse(2)
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
@@ -1429,7 +1429,7 @@ void average_pooling(const TensorView& input,
                     const Index pool_col_start = max(Index(0), -input_column_start);
                     const Index pool_col_end   = min(pool_width, input_width - input_column_start);
 
-                    type sum = 0;
+                    float sum = 0;
 
                     for(Index pool_row = pool_row_start; pool_row < pool_row_end; ++pool_row)
                     {
@@ -1546,7 +1546,7 @@ void average_pooling_backward(const TensorView& input,
     const Index padding_height = args.padding_shape[0];
     const Index padding_width = args.padding_shape[1];
 
-    const type inv_pool_size = type(1) / (pool_height * pool_width);
+    const float inv_pool_size = float(1) / (pool_height * pool_width);
 
     #pragma omp parallel for collapse(2)
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
@@ -1559,7 +1559,7 @@ void average_pooling_backward(const TensorView& input,
 
                 for(Index output_column = 0; output_column < output_width; ++output_column)
                 {
-                    const type average_gradient = out_grads(batch_index, output_row, output_column, channel_index) * inv_pool_size;
+                    const float average_gradient = out_grads(batch_index, output_row, output_column, channel_index) * inv_pool_size;
 
                     const Index input_column_start = output_column * column_stride - padding_width;
                     const Index pool_col_start = max(Index(0), -input_column_start);
@@ -1607,7 +1607,7 @@ void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorV
         for(Index step = 0; step < sequence_length; ++step)
             for(Index feature_index = 0; feature_index < features; ++feature_index)
             {
-                const type value = inputs(batch_index, step, feature_index);
+                const float value = inputs(batch_index, step, feature_index);
                 if(value > outputs(batch_index, feature_index))
                 {
                     outputs(batch_index, feature_index) = value;
@@ -1638,7 +1638,7 @@ void average_pooling_3d_forward(const TensorView& input, TensorView& output)
     {
         const Map<const MatrixR> seq_matrix(&inputs(batch_index, 0, 0), sequence_length, features);
 
-        const Index valid_count = ((seq_matrix.array() != type(0)).rowwise().any()).count();
+        const Index valid_count = ((seq_matrix.array() != float(0)).rowwise().any()).count();
 
         if(valid_count > 0)
             outputs.row(batch_index) = seq_matrix.colwise().sum() / to_type(valid_count);
@@ -1699,12 +1699,12 @@ void average_pooling_3d_backward(const TensorView& input,
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
         const Map<const MatrixR> seq_matrix(&inputs(batch_index, 0, 0), sequence_length, features);
-        const auto non_padding = (seq_matrix.array() != type(0)).rowwise().any().eval();
+        const auto non_padding = (seq_matrix.array() != float(0)).rowwise().any().eval();
         const Index valid_count = non_padding.count();
 
         if(valid_count == 0) continue;
 
-        const type inverse_valid_count = type(1) / to_type(valid_count);
+        const float inverse_valid_count = float(1) / to_type(valid_count);
         Map<MatrixR> grad_matrix(&input_delta_map(batch_index, 0, 0), sequence_length, features);
         const auto output_row = output_delta_matrix.row(batch_index);
 
@@ -1744,7 +1744,7 @@ void embedding_backward(const TensorView& input_indices,
     // weight_gradients.row(0).setZero();
 }
 
-static void transpose_middle_axes(const type* src, type* dst,
+static void transpose_middle_axes(const float* src, float* dst,
                                   Index batch_size, Index src_m1, Index src_m2, Index D)
 {
     #pragma omp parallel for collapse(3)
@@ -1753,7 +1753,7 @@ static void transpose_middle_axes(const type* src, type* dst,
             for (Index j = 0; j < src_m1; ++j)
                 memcpy(dst + ((b * src_m2 + i) * src_m1 + j) * D,
                        src + ((b * src_m1 + j) * src_m2 + i) * D,
-                       D * sizeof(type));
+                       D * sizeof(float));
 }
 
 void split_heads(const TensorView& source, TensorView& destination)
@@ -1886,16 +1886,16 @@ void attention_masks(const TensorView& source_input,
     #pragma omp parallel for
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
-        const type* src = source_input.as<float>() + batch_index * source_sequence_length * embedding_dimension;
-        type*       att = attention_weights.as<float>() + batch_index * att_rows_per_batch * source_sequence_length;
+        const float* src = source_input.as<float>() + batch_index * source_sequence_length * embedding_dimension;
+        float*       att = attention_weights.as<float>() + batch_index * att_rows_per_batch * source_sequence_length;
 
         for(Index s = 0; s < source_sequence_length; ++s)
         {
-            const type* src_row = src + s * embedding_dimension;
-            type max_abs = type(0);
+            const float* src_row = src + s * embedding_dimension;
+            float max_abs = float(0);
             for(Index k = 0; k < embedding_dimension; ++k)
             {
-                const type a = std::abs(src_row[k]);
+                const float a = std::abs(src_row[k]);
                 if(a > max_abs) max_abs = a;
             }
             if(max_abs > EPSILON) continue;

@@ -67,13 +67,13 @@
 
 // =========================================================================
 // CPU-only stubs.
-// Goal: every CUDA/cuDNN/cuBLAS *type* that appears in OpenNN's signatures or
+// Goal: every CUDA/cuDNN/cuBLAS *float* that appears in OpenNN's signatures or
 // struct members must compile when CUDA is off. Values don't matter — runtime
 // GPU paths are gated by Device::is_gpu() and never execute in this build.
-// Enums (not type aliases) so scoped references like
+// Enums (not float aliases) so scoped references like
 // `cudnnPoolingMode_t::CUDNN_POOLING_MAX` keep working.
 //
-// When adding a new CUDA-only type referenced from non-CUDA-guarded code,
+// When adding a new CUDA-only float referenced from non-CUDA-guarded code,
 // add the stub here in the matching subsection.
 // =========================================================================
 
@@ -136,14 +136,12 @@ void check_cuda_status(T status, const char* file, int line, const char* msg)
 using namespace std;
 using namespace Eigen;
 
-using type = float;
-
 namespace opennn {
-constexpr type EPSILON = numeric_limits<type>::epsilon();
-constexpr type MAX = numeric_limits<type>::max();
-constexpr type NEG_INFINITY = -numeric_limits<type>::infinity();
-constexpr type QUIET_NAN = numeric_limits<type>::quiet_NaN();
-constexpr type SOFTMAX_MASK_VALUE = type(-1e9f);
+constexpr float EPSILON = numeric_limits<float>::epsilon();
+constexpr float MAX = numeric_limits<float>::max();
+constexpr float NEG_INFINITY = -numeric_limits<float>::infinity();
+constexpr float QUIET_NAN = numeric_limits<float>::quiet_NaN();
+constexpr float SOFTMAX_MASK_VALUE = float(-1e9f);
 
 // Generic stream output for std::vector. Lives here so it's available everywhere
 // pch.h reaches (which is essentially the whole library).
@@ -163,33 +161,33 @@ ostream& operator<<(ostream& os, const vector<T>& vec)
 
 constexpr int Layout = Eigen::RowMajor;
 
-using MatrixR = Matrix<type, Dynamic, Dynamic, Layout>;
+using MatrixR = Matrix<float, Dynamic, Dynamic, Layout>;
 using MatrixI = Matrix<Index, Dynamic, Dynamic, Layout>;
 using MatrixB = Matrix<bool, Dynamic, Dynamic, Layout>;
 
-using VectorR = Matrix<type, Dynamic, 1>;
+using VectorR = Matrix<float, Dynamic, 1>;
 using VectorI = Matrix<Index, Dynamic, 1>;
 using VectorB = Matrix<bool, Dynamic, 1>;
 
 using VectorMap = Map<VectorR, AlignedMax>;
 using MatrixMap = Map<MatrixR, Layout | AlignedMax>;
 
-using Tensor0 = Tensor<type, 0, Layout | AlignedMax>;
-using Tensor1 = Tensor<type, 1, Layout | AlignedMax>;
-using Tensor2 = Tensor<type, 2, Layout | AlignedMax>;
-using Tensor3 = Tensor<type, 3, Layout | AlignedMax>;
-using Tensor4 = Tensor<type, 4, Layout | AlignedMax>;
+using Tensor0 = Tensor<float, 0, Layout | AlignedMax>;
+using Tensor1 = Tensor<float, 1, Layout | AlignedMax>;
+using Tensor2 = Tensor<float, 2, Layout | AlignedMax>;
+using Tensor3 = Tensor<float, 3, Layout | AlignedMax>;
+using Tensor4 = Tensor<float, 4, Layout | AlignedMax>;
 
 template <int Rank>
-using TensorR = Tensor<type, Rank, Layout | AlignedMax>;
+using TensorR = Tensor<float, Rank, Layout | AlignedMax>;
 
-using TensorMap1 = TensorMap<Tensor<type, 1, Layout | AlignedMax>, AlignedMax>;
-using TensorMap2 = TensorMap<Tensor<type, 2, Layout | AlignedMax>, AlignedMax>;
-using TensorMap3 = TensorMap<Tensor<type, 3, Layout | AlignedMax>, AlignedMax>;
-using TensorMap4 = TensorMap<Tensor<type, 4, Layout | AlignedMax>, AlignedMax>;
+using TensorMap1 = TensorMap<Tensor<float, 1, Layout | AlignedMax>, AlignedMax>;
+using TensorMap2 = TensorMap<Tensor<float, 2, Layout | AlignedMax>, AlignedMax>;
+using TensorMap3 = TensorMap<Tensor<float, 3, Layout | AlignedMax>, AlignedMax>;
+using TensorMap4 = TensorMap<Tensor<float, 4, Layout | AlignedMax>, AlignedMax>;
 
 template <int Rank>
-using TensorMapR = TensorMap<Tensor<type, Rank, Layout | AlignedMax>, AlignedMax>;
+using TensorMapR = TensorMap<Tensor<float, Rank, Layout | AlignedMax>, AlignedMax>;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"

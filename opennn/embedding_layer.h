@@ -65,23 +65,23 @@ public:
     // Runs after NeuralNetwork::compile() allocates the states arena. Writes
     // the sinusoidal table directly into the slot so we never need a separate
     // Buffer/MatrixR member or an explicit H2D copy.
-    type* link_states(type* pointer) override;
+    float* link_states(float* pointer) override;
 
     void set(const Index = 0,
              Index = 0,
              Index = 0,
              const string & = "embedding_layer");
 
-    void set_scale_embedding(bool v) { scale_embedding = v; }
-    void set_add_positional_encoding(bool v) { add_positional_encoding = v; }
+    void set_scale_embedding(bool enabled) { scale_embedding = enabled; }
+    void set_add_positional_encoding(bool enabled) { add_positional_encoding = enabled; }
 
-    void set_dropout_rate(const type r)
+    void set_dropout_rate(const float rate)
     {
-        if (r < type(0) || r >= type(1))
+        if (rate < float(0) || rate >= float(1))
             throw runtime_error("Dropout rate must be in [0,1).");
 
-        dropout_rate = r;
-        dropout_arguments.rate = r;
+        dropout_rate = rate;
+        dropout_arguments.rate = rate;
     }
 
     void set_parameters_random() override;
@@ -114,9 +114,9 @@ private:
     bool scale_embedding = false;
     bool add_positional_encoding = false;
 
-    type embedding_scale = type(1);
+    float embedding_scale = float(1);
 
-    type dropout_rate = type(0);
+    float dropout_rate = float(0);
     DropoutArguments dropout_arguments;
 };
 

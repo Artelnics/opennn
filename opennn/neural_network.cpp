@@ -77,19 +77,19 @@ void NeuralNetwork::compile()
             layers[i]->set_input_shape(layers[inputs[0]]->get_output_shape());
     }
 
-    parameters.resize_bytes(aligned_total_elements(get_parameter_shapes()) * Index(sizeof(type)),
+    parameters.resize_bytes(aligned_total_elements(get_parameter_shapes()) * Index(sizeof(float)),
                             DeviceType::CPU);
     parameters.setZero();
 
-    type* pointer = parameters.as<type>();
+    float* pointer = parameters.as<float>();
 
     for (auto& layer : layers)
         pointer = layer->link_parameters(pointer);
 
-    states.resize_bytes(get_states_size() * Index(sizeof(type)), DeviceType::CPU);
+    states.resize_bytes(get_states_size() * Index(sizeof(float)), DeviceType::CPU);
     states.setZero();
 
-    type* state_pointer = states.as<type>();
+    float* state_pointer = states.as<float>();
     for (auto& layer : layers)
         state_pointer = layer->link_states(state_pointer);
 }
@@ -404,7 +404,7 @@ Index NeuralNetwork::get_layers_number(LayerType type) const
 
 void NeuralNetwork::set_parameters(const VectorR& p)
 {
-    const Index n_bytes = p.size() * Index(sizeof(type));
+    const Index n_bytes = p.size() * Index(sizeof(float));
 
 #ifdef OPENNN_WITH_CUDA
     if(parameters.device_type == DeviceType::CUDA)
@@ -454,8 +454,8 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
 
     ForwardPropagation forward_propagation(batch_size, this);
 
-    const vector<TensorView> input_views = {TensorView(const_cast<type*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
-                                            TensorView(const_cast<type*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
+    const vector<TensorView> input_views = {TensorView(const_cast<float*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
+                                            TensorView(const_cast<float*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
 
     forward_propagate(input_views, forward_propagation, false);
 
@@ -489,17 +489,17 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
 
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()}, CUDNN_DATA_FLOAT)});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.rows(), inputs.cols()}, CUDNN_DATA_FLOAT)});
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)}, CUDNN_DATA_FLOAT)});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)}, CUDNN_DATA_FLOAT)});
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}, CUDNN_DATA_FLOAT)});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}, CUDNN_DATA_FLOAT)});
 }
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
@@ -558,7 +558,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       const VectorR& new_parameters,
                                       ForwardPropagation& forward_propagation)
 {
-    VectorMap parameters_view(parameters.as<type>(), parameters.size());
+    VectorMap parameters_view(parameters.as<float>(), parameters.size());
 
     const VectorR saved_parameters = parameters_view;
 
@@ -571,8 +571,8 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
 MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
                                                     const VectorR& point,
-                                                    type minimum,
-                                                    type maximum,
+                                                    float minimum,
+                                                    float maximum,
                                                     Index points_number) const
 {
     const Index inputs_number = get_inputs_number();
@@ -585,7 +585,7 @@ MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
 
     for(Index i = 0; i < points_number; ++i)
     {
-        inputs(direction) = minimum + (maximum - minimum)*type(i)/type(points_number-1);
+        inputs(direction) = minimum + (maximum - minimum)*float(i)/float(points_number-1);
 
         for(Index j = 0; j < inputs_number; ++j)
             directional_inputs(i, j) = inputs(j);
@@ -629,7 +629,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 
     if (outputs.size() > 1)
     {
-        type max_value = outputs(0);
+        float max_value = outputs(0);
 
         for(Index i = 1; i < outputs.cols(); ++i)
         {
@@ -685,7 +685,7 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
             const auto it = vocabulary_map.find(tokens[j]);
 
             inputs(i, 1 + j) = (it != vocabulary_map.end())
-                                   ? static_cast<type>(it->second)
+                                   ? static_cast<float>(it->second)
                                    : 1.0f; // UNK_INDEX
         }
 
@@ -763,7 +763,7 @@ void NeuralNetwork::to_XML(XmlPrinter& printer) const
 
     if (parameters.size() > 0)
     {
-        const Map<const VectorR, AlignedMax> parameters_view(parameters.as<type>(), parameters.size());
+        const Map<const VectorR, AlignedMax> parameters_view(parameters.as<float>(), parameters.size());
         printer.push_text(vector_to_string(parameters_view, " ").c_str());
     }
 
@@ -838,8 +838,8 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
                 const char* text = indices_element->get_text();
                 if(text)
                 {
-                    Shape s = string_to_shape(text, " ");
-                    layer_input_indices[layer_idx] = vector<Index>(s.begin(), s.end());
+                    Shape shape = string_to_shape(text, " ");
+                    layer_input_indices[layer_idx] = vector<Index>(shape.begin(), shape.end());
                 }
             }
             indices_element = indices_element->next_sibling_element("LayerInputsIndices");
@@ -896,7 +896,7 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
             }
 
             const Index elements_to_copy = min(parameters.size(), xml_parameters.size());
-            std::copy(xml_parameters.data(), xml_parameters.data() + elements_to_copy, parameters.as<type>());
+            std::copy(xml_parameters.data(), xml_parameters.data() + elements_to_copy, parameters.as<float>());
         }
     }
 }
@@ -920,7 +920,7 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open parameters data file.\n");
 
-    const Map<const VectorR, AlignedMax> parameters_view(parameters.as<type>(), parameters.size());
+    const Map<const VectorR, AlignedMax> parameters_view(parameters.as<float>(), parameters.size());
     file << parameters_view << "\n";
 
     file.close();
@@ -942,7 +942,7 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 
     const Index parameters_number = parameters.size();
 
-    file.read(reinterpret_cast<char*>(parameters.as<type>()), parameters_number * sizeof(type));
+    file.read(reinterpret_cast<char*>(parameters.as<float>()), parameters_number * sizeof(float));
 
     if(!file)
         throw runtime_error("Error reading binary file: " + file_name.string());
@@ -1093,7 +1093,7 @@ void NeuralNetwork::cast_parameters_to_bf16()
     if (parameters.empty())      return;
 
     cast_fp32_to_bf16_cuda(parameters.size(),
-                           parameters.as<type>(),
+                           parameters.as<float>(),
                            parameters_bf16.as<__nv_bfloat16>());
 }
 
@@ -1114,7 +1114,7 @@ void NeuralNetwork::link_parameters()
     // allocated from a previous GPU run, we ignore it whenever the active
     // Configuration is CPU (e.g. greedy-decode flips Configuration to CPU
     // temporarily) — the host-side forward path can't read GPU memory.
-    type* fp32_ptr           = parameters.as<type>();
+    float* fp32_ptr           = parameters.as<float>();
     const bool use_bf16_mirror =
         Configuration::instance().is_gpu() && parameters_bf16.bytes > 0;
     __nv_bfloat16* bf16_ptr  = use_bf16_mirror
@@ -1176,9 +1176,9 @@ void NeuralNetwork::link_states()
 {
     // States are always FP32 (descriptive stats, BatchNorm running mean/variance,
     // positional encoding tables — none of these benefit from BF16). The same
-    // pointer walk works for CPU and GPU: states.as<type>() returns whichever
+    // pointer walk works for CPU and GPU: states.as<float>() returns whichever
     // host the buffer currently lives on, and we just rebuild each layer's view.
-    type* ptr = states.as<type>();
+    float* ptr = states.as<float>();
     if(!ptr) return;
 
     for(auto& layer : layers)
@@ -1209,11 +1209,11 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     fp.allocate_device();
 
     const Index input_size = input_views_cpu[0].size();
-    type* input_device = nullptr;
-    CHECK_CUDA(cudaMalloc(&input_device, input_size * sizeof(type)));
+    float* input_device = nullptr;
+    CHECK_CUDA(cudaMalloc(&input_device, input_size * sizeof(float)));
     CHECK_CUDA(cudaMemcpy(input_device,
                           input_views_cpu[0].data,
-                          input_size * sizeof(type),
+                          input_size * sizeof(float),
                           cudaMemcpyHostToDevice));
 
     vector<TensorView> input_views_gpu = input_views_cpu;
@@ -1234,7 +1234,7 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     MatrixR result(batch_size, out_cols);
     CHECK_CUDA(cudaMemcpy(result.data(),
                           out_view.data,
-                          out_view.size() * sizeof(type),
+                          out_view.size() * sizeof(float),
                           cudaMemcpyDeviceToHost));
 
     CHECK_CUDA(cudaFree(input_device));

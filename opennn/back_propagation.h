@@ -63,13 +63,13 @@ struct BackPropagation
 
     Loss* loss = nullptr;
 
-    type error = type(0);
+    float error = float(0);
     Index active_tokens_count = 0;
     Buffer output_deltas;
     Shape output_delta_dimensions;
 
     Tensor0 accuracy;
-    type loss_value = type(0);
+    float loss_value = float(0);
 
 #ifdef OPENNN_WITH_CUDA
 

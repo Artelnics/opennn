@@ -247,16 +247,16 @@ public:
     void set_separator_string(const string&);
     void set_separator_name(const string&);
 
-    void set_codification(const Codification& c) { codification = c; }
+    void set_codification(const Codification& new_codification) { codification = new_codification; }
     void set_codification(const string&);
 
-    void set_missing_values_label(string l) { missing_values_label = std::move(l); }
-    void set_missing_values_method(const MissingValuesMethod& m) { missing_values_method = m; }
+    void set_missing_values_label(string label) { missing_values_label = std::move(label); }
+    void set_missing_values_method(const MissingValuesMethod& method) { missing_values_method = method; }
     void set_missing_values_method(const string&);
 
-    void set_gmt(const Index g) { gmt = g; }
+    void set_gmt(const Index new_gmt) { gmt = new_gmt; }
 
-    void set_display(bool d) { display = d; }
+    void set_display(bool new_display) { display = new_display; }
 
     bool is_sample_used(const Index i) const { return sample_roles[i] != SampleRole::None; }
 
@@ -271,27 +271,27 @@ public:
 
     // Splitting
 
-    void split_samples(const type training_ratio = type(0.6),
-                       type selection_ratio = type(0.2),
-                       type testing_ratio = type(0.2),
+    void split_samples(const float training_ratio = float(0.6),
+                       float selection_ratio = float(0.2),
+                       float testing_ratio = float(0.2),
                        bool shuffle = true);
 
-    void split_samples_sequential(const type training_ratio = type(0.6),
-                                  type selection_ratio = type(0.2),
-                                  type testing_ratio = type(0.2));
+    void split_samples_sequential(const float training_ratio = float(0.6),
+                                  float selection_ratio = float(0.2),
+                                  float testing_ratio = float(0.2));
 
-    void split_samples_random(const type training_ratio = type(0.6),
-                              type selection_ratio = type(0.2),
-                              type testing_ratio = type(0.2));
+    void split_samples_random(const float training_ratio = float(0.6),
+                              float selection_ratio = float(0.2),
+                              float testing_ratio = float(0.2));
 
     // Unusing
 
-    vector<string> unuse_uncorrelated_variables(const type = type(0.25));
-    vector<string> unuse_collinear_variables(const type = type(0.95));
+    vector<string> unuse_uncorrelated_variables(const float = float(0.25));
+    vector<string> unuse_collinear_variables(const float = float(0.95));
 
     // Initialization
 
-    void set_data_constant(const type);
+    void set_data_constant(const float);
 
     // Descriptives
 
@@ -350,11 +350,11 @@ public:
 
     // Tuckey outlier detection
 
-    vector<vector<Index>> calculate_Tukey_outliers(const type = type(1.5), bool = false);
+    vector<vector<Index>> calculate_Tukey_outliers(const float = float(1.5), bool = false);
 
-    vector<vector<Index>> replace_Tukey_outliers_with_NaN(const type = type(1.5));
+    vector<vector<Index>> replace_Tukey_outliers_with_NaN(const float = float(1.5));
 
-    void unuse_Tukey_outliers(const type = type(1.5));
+    void unuse_Tukey_outliers(const float = float(1.5));
 
     // Data generation
 
@@ -413,21 +413,21 @@ public:
 
     virtual void fill_inputs(const vector<Index>&,
                              const vector<Index>&,
-                             type*,
+                             float*,
                              bool = true,
                              int contiguous = -1) const;
 
-    virtual void augment_inputs(type*, Index) const {}
+    virtual void augment_inputs(float*, Index) const {}
 
     virtual void fill_decoder(const vector<Index>&,
                               const vector<Index>&,
-                              type*,
+                              float*,
                               bool = true,
                               int contiguous = -1) const;
 
     virtual void fill_targets(const vector<Index>&,
                               const vector<Index>&,
-                              type*,
+                              float*,
                               bool = true,
                               int contiguous = -1) const;
 

@@ -44,7 +44,7 @@ void GrowingInputs::set_default()
     minimum_inputs_number = 1;
     trials_number = 3;
     maximum_epochs = 1000;
-    maximum_time = type(3600);
+    maximum_time = float(3600);
 
     training_strategy && training_strategy->get_neural_network()
         ? maximum_inputs_number = training_strategy->get_dataset()->get_variables_number("Input")
@@ -65,12 +65,12 @@ void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_num
                                 : min(new_maximum_inputs_number, inputs_number);
 }
 
-void GrowingInputs::set_minimum_correlation(const type new_minimum_correlation)
+void GrowingInputs::set_minimum_correlation(const float new_minimum_correlation)
 {
     minimum_correlation = new_minimum_correlation;
 }
 
-void GrowingInputs::set_maximum_correlation(const type new_maximum_correlation)
+void GrowingInputs::set_maximum_correlation(const float new_maximum_correlation)
 {
     maximum_correlation = new_maximum_correlation;
 }
@@ -94,8 +94,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 //    const Loss* loss = training_strategy->get_loss();
     training_strategy->get_optimization_algorithm()->set_display(false);
 
-    type previous_validation_error = MAX;
-    type previous_training_error = MAX;
+    float previous_validation_error = MAX;
+    float previous_training_error = MAX;
 
     const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
@@ -140,7 +140,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     time_t beginning_time;
     time_t current_time;
-    type elapsed_time = type(0);
+    float elapsed_time = float(0);
     time(&beginning_time);
 
     bool stop = false;
@@ -198,8 +198,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             cout << input_variable_names;
         }
 
-        type minimum_training_error = MAX;
-        type minimum_validation_error = MAX;
+        float minimum_training_error = MAX;
+        float minimum_validation_error = MAX;
 
         for(Index j = 0; j < trials_number; ++j)
         {
@@ -250,7 +250,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
         ++variable_index;
         time(&current_time);
-        elapsed_time = type(difftime(current_time, beginning_time));
+        elapsed_time = float(difftime(current_time, beginning_time));
 
         // Stopping criteria
 

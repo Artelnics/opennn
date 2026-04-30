@@ -165,45 +165,45 @@ Tensor3 resize_image(const Tensor3& input_image,
 
     Tensor3 output_image(output_height, output_width, channels);
 
-    const type scale_y = static_cast<type>(input_height) / output_height;
-    const type scale_x = static_cast<type>(input_width) / output_width;
+    const float scale_y = static_cast<float>(input_height) / output_height;
+    const float scale_x = static_cast<float>(input_width) / output_width;
 
     vector<Index> x0(output_width), x1(output_width);
-    vector<type> x_weight(output_width);
+    vector<float> x_weight(output_width);
 
     for(Index x = 0; x < output_width; ++x)
     {
-        const type in_x = x * scale_x;
+        const float in_x = x * scale_x;
         x0[x] = min<Index>(static_cast<Index>(in_x), input_width - 1);
         x1[x] = min<Index>(x0[x] + 1, input_width - 1);
-        x_weight[x] = in_x - static_cast<type>(x0[x]);
+        x_weight[x] = in_x - static_cast<float>(x0[x]);
     }
 
     #pragma omp parallel for collapse(2)
     for(Index y = 0; y < output_height; ++y)
         for(Index x = 0; x < output_width; ++x)
         {
-            const type in_y = y * scale_y;
+            const float in_y = y * scale_y;
             const Index y0 = min<Index>(static_cast<Index>(in_y), input_height - 1);
             const Index y1 = min<Index>(y0 + 1, input_height - 1);
-            const type y_weight = in_y - static_cast<type>(y0);
+            const float y_weight = in_y - static_cast<float>(y0);
 
             const Index x0_value = x0[x];
             const Index x1_value = x1[x];
-            const type x_weight_value = x_weight[x];
+            const float x_weight_value = x_weight[x];
 
             for(Index c = 0; c < channels; ++c)
             {
-                const type top =
-                    (type(1) - x_weight_value) * input_image(y0, x0_value, c) +
+                const float top =
+                    (float(1) - x_weight_value) * input_image(y0, x0_value, c) +
                     x_weight_value             * input_image(y0, x1_value, c);
 
-                const type bottom =
-                    (type(1) - x_weight_value) * input_image(y1, x0_value, c) +
+                const float bottom =
+                    (float(1) - x_weight_value) * input_image(y1, x0_value, c) +
                     x_weight_value             * input_image(y1, x1_value, c);
 
                 output_image(y, x, c) =
-                    (type(1) - y_weight) * top + y_weight * bottom;
+                    (float(1) - y_weight) * top + y_weight * bottom;
             }
         }
 
@@ -220,26 +220,26 @@ void reflect_image_vertical(Tensor3& image)
     image.device(get_device()) = image.reverse(array<bool, 3>({true, false, false}));
 }
 
-void rotate_image(const Tensor3& input, Tensor3& output, type angle_degree)
+void rotate_image(const Tensor3& input, Tensor3& output, float angle_degree)
 {
     const Index height = input.dimension(0);
     const Index width = input.dimension(1);
     const Index channels = input.dimension(2);
 
-    const type center_x = type(width) / type(2);
-    const type center_y = type(height) / type(2);
+    const float center_x = float(width) / float(2);
+    const float center_y = float(height) / float(2);
 
-    const type angle_rad = -angle_degree * type(3.1415927) / type(180.0);
-    const type cos_angle = cos(angle_rad);
-    const type sin_angle = sin(angle_rad);
+    const float angle_rad = -angle_degree * float(3.1415927) / float(180.0);
+    const float cos_angle = cos(angle_rad);
+    const float sin_angle = sin(angle_rad);
 
     MatrixR rotation_matrix(3, 3);
 
     rotation_matrix << cos_angle, -sin_angle, center_x - cos_angle * center_x + sin_angle * center_y,
                        sin_angle, cos_angle, center_y - sin_angle * center_x - cos_angle * center_y,
-                       type(0), type(0), type(1);
+                       float(0), float(0), float(1);
 
-    using Vector3T = Matrix<type, 3, 1>;
+    using Vector3T = Matrix<float, 3, 1>;
 
     #pragma omp parallel for collapse(2)
 
@@ -248,7 +248,7 @@ void rotate_image(const Tensor3& input, Tensor3& output, type angle_degree)
         for(Index x = 0; x < width; ++x)
         {
             Vector3T coordinates;
-            coordinates << static_cast<type>(x), static_cast<type>(y), 1.0f;
+            coordinates << static_cast<float>(x), static_cast<float>(y), 1.0f;
 
             const Vector3T transformed = rotation_matrix * coordinates;
 
@@ -260,7 +260,7 @@ void rotate_image(const Tensor3& input, Tensor3& output, type angle_degree)
                                             c);
             else
                 for(Index c = 0; c < channels; ++c)
-                    output(y, x, c) = type(0);
+                    output(y, x, c) = float(0);
         }
     }
 }
