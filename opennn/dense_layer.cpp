@@ -11,14 +11,7 @@
 
 namespace opennn
 {
-    using Dense2d = Dense<2>;
-    using Dense3d = Dense<3>;
-
-    REGISTER(Layer, Dense2d, "Dense2d")
-    REGISTER(Layer, Dense3d, "Dense3d")
-
-    template class Dense<2>;
-    template class Dense<3>;
+    REGISTER(Layer, Dense, "Dense")
 }
 
 // OpenNN: Open Neural Networks Library.

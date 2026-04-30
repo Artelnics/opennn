@@ -41,33 +41,26 @@ public:
 
     Shape get_output_shape() const override;
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
-        return {Shape{batch_size}.append(get_output_shape())};
-    }
-
-    // Boundary layer: output stays FP32 so the host receives the network's
-    // final tensor in FP32. Mixed-dtype bounding_kernel covers the BF16→FP32
-    // cast when activations upstream are BF16.
-    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
-    {
-        return {CUDNN_DATA_FLOAT};
+        return {{Shape{batch_size}.append(get_output_shape()), Type::FP32}};
     }
 
     const BoundingMethod& get_bounding_method() const;
 
-    // Return by value — zero-copy would require VectorMap; VectorR copy is cheap here
-    // (bounds are output-sized, typically small) and lets const& callers bind safely.
     VectorR get_lower_bounds() const;
     VectorR get_upper_bounds() const;
 
     enum States {Lower, Upper};
 
-    vector<Shape> get_state_shapes() const override
+    vector<pair<Shape, Type>> get_state_specs() const override
     {
         if(bounding_method == BoundingMethod::NoBounding || output_shape.empty() || output_shape[0] == 0)
             return {};
-        return {Shape{output_shape[0]}, Shape{output_shape[0]}};
+        return {
+            /*Lower*/ {Shape{output_shape[0]}, Type::FP32},
+            /*Upper*/ {Shape{output_shape[0]}, Type::FP32},
+        };
     }
 
     float* link_states(float* pointer) override;
@@ -80,7 +73,6 @@ public:
     void set_bounding_method(const BoundingMethod&);
     void set_bounding_method(const string&);
 
-    // Setters require the layer to be compiled first (states arena must be allocated).
     void set_lower_bounds(const VectorR&);
     void set_lower_bound(const Index, float);
 
@@ -91,7 +83,7 @@ public:
 
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
-    // Serialization (two-phase: from_XML parses config; load_state_from_XML parses bounds after compile)
+    // Serialization
 
     void from_XML(const XmlDocument&) override;
 

@@ -188,10 +188,6 @@ void Convolutional::init_cuda(Index batch_size)
     if (!convolution_descriptor)
         cudnnCreateConvolutionDescriptor(&convolution_descriptor);
 
-    // cuDNN convolution accumulator is FP32 even when input/filter/output are
-    // BF16: BF16 accumulation is not supported by any conv algorithm. The
-    // dtype mix (BF16 io, FP32 compute) is the standard mixed-precision pattern,
-    // and is what cudnnConvolutionBiasActivationForward expects.
     cudnnSetConvolution2dDescriptor(convolution_descriptor,
                                     get_padding_height(), get_padding_width(),
                                     row_stride, column_stride,
@@ -233,13 +229,6 @@ void Convolutional::init_cuda(Index batch_size)
 
     int returned_count;
 
-    // cudnnConvolutionBiasActivationForward with the ReLU epilogue requires
-    // the convolution algorithm to be CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM
-    // (CUDNN-12 docs § cudnnConvolutionBiasActivationForward, "Restrictions").
-    // Other algos return CUDNN_STATUS_NOT_SUPPORTED at execution time, even if
-    // cudnnFind picks them — the heuristic doesn't know we'll use the fused path.
-    // We pin the algo explicitly when the activation is ReLU; for other
-    // activations we still let Find pick (the non-fused path is taken anyway).
     if (activation_arguments.activation_function == ActivationFunction::RectifiedLinear)
     {
         convolution_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
@@ -438,16 +427,9 @@ void Convolutional::from_XML(const XmlDocument& document)
     set_column_stride(stride_shape[1]);
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
-
-    const XmlElement* batch_normalization_element = convolutional_layer_element->first_child_element("BatchNormalization");
-    const bool use_batch_normalization = batch_normalization_element && batch_normalization_element->get_text()
-                                         && string(batch_normalization_element->get_text()) == "true";
-    set_batch_normalization(use_batch_normalization);
-
+    set_batch_normalization(read_xml_bool(convolutional_layer_element, "BatchNormalization"));
 }
 
-// Phase 2: runs after NN::compile(), so states[] is allocated. Parses BN running
-// statistics directly into the arena — no staging required.
 void Convolutional::load_state_from_XML(const XmlDocument& document)
 {
     if(!batch_normalization) return;
@@ -478,7 +460,7 @@ void Convolutional::to_XML(XmlPrinter& printer) const
         {"Activation", activation_to_string(activation_arguments.activation_function)},
         {"StrideDimensions", shape_to_string({get_row_stride(), get_column_stride()})},
         {"Convolution", convolution_type_to_string(convolution_type)},
-        {"BatchNormalization", batch_normalization ? "true" : "false"}
+        {"BatchNormalization", to_string(batch_normalization)}
     });
 
     if (batch_normalization)

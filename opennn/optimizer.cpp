@@ -91,38 +91,43 @@ void Optimizer::set_scaling()
     vector<Descriptives> input_variable_descriptives;
     vector<string> input_variable_scalers;
 
-    if(neural_network->has(LayerType::Scaling2d))
+    // Discriminate by the scaling layer's input rank: 1 = tabular,
+    // 2 = time-series ([seq, feat]), 3 = image ([H, W, C]).
+    if (auto* scaling_layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
     {
-        input_variable_scalers = dataset->get_feature_scalers("Input");
-        input_variable_descriptives = dataset->scale_features("Input");
+        switch (scaling_layer->get_input_shape().rank)
+        {
+            case 1:
+                input_variable_scalers = dataset->get_feature_scalers("Input");
+                input_variable_descriptives = dataset->scale_features("Input");
+                scaling_layer->set_descriptives(input_variable_descriptives);
+                scaling_layer->set_scalers(input_variable_scalers);
+                break;
 
-        auto* scaling_layer = dynamic_cast<Scaling<2>*>(neural_network->get_first(LayerType::Scaling2d));
-        if(!scaling_layer) throw runtime_error("Expected Scaling<2> layer.");
-        scaling_layer->set_descriptives(input_variable_descriptives);
-        scaling_layer->set_scalers(input_variable_scalers);
-    }
-    else if(neural_network->has(LayerType::Scaling3d))
-    {
-        auto* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
-        if(!time_series_dataset) throw runtime_error("Expected TimeSeriesDataset.");
-        input_variable_scalers = time_series_dataset->get_feature_scalers("Input");
-        input_variable_descriptives = time_series_dataset->scale_features("Input");
+            case 2:
+            {
+                auto* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+                if(!time_series_dataset) throw runtime_error("Expected TimeSeriesDataset.");
+                input_variable_scalers = time_series_dataset->get_feature_scalers("Input");
+                input_variable_descriptives = time_series_dataset->scale_features("Input");
+                scaling_layer->set_descriptives(input_variable_descriptives);
+                scaling_layer->set_scalers(input_variable_scalers);
+                break;
+            }
 
-        auto* scaling_layer = dynamic_cast<Scaling<3>*>(neural_network->get_first(LayerType::Scaling3d));
-        if(!scaling_layer) throw runtime_error("Expected Scaling<3> layer.");
-        scaling_layer->set_descriptives(input_variable_descriptives);
-        scaling_layer->set_scalers(input_variable_scalers);
-    }
-    else if (neural_network->has(LayerType::Scaling4d))
-    {
-        auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
-        if(!image_dataset) throw runtime_error("Expected ImageDataset.");
+            case 3:
+            {
+                auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
+                if(!image_dataset) throw runtime_error("Expected ImageDataset.");
+                image_dataset->scale_features("Input");
+                scaling_layer->set_scalers("ImageMinMax");
+                break;
+            }
 
-        image_dataset->scale_features("Input");
-
-        auto* scaling_layer = dynamic_cast<Scaling<4>*>(neural_network->get_first(LayerType::Scaling4d));
-        if(scaling_layer)
-            scaling_layer->set_scalers("ImageMinMax");
+            default:
+                throw runtime_error("Unexpected Scaling input rank: "
+                                    + to_string(scaling_layer->get_input_shape().rank));
+        }
     }
 
     if(!neural_network->has(LayerType::Unscaling))
@@ -183,10 +188,6 @@ void Optimizer::set_unscaling()
     Dataset* dataset = loss->get_dataset();
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    // Scaling layer: restore dataset inputs to raw scale so that post-training
-    // inference (e.g. TestingAnalysis) receives unscaled inputs and the Scaling
-    // layer's forward can apply the transformation.
-
     auto reconstruct_descriptives = [](const VectorR& minimums, const VectorR& maximums,
                                        const VectorR& means, const VectorR& std_devs)
     {
@@ -202,26 +203,24 @@ void Optimizer::set_unscaling()
         return descriptives;
     };
 
-    if(neural_network->has(LayerType::Scaling2d))
+    // Mirror set_scaling's rank dispatch: tabular/time-series invert via descriptives,
+    // image inverts at the dataset level (no descriptives kept).
+    if (auto* layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
     {
-        auto* layer = dynamic_cast<Scaling<2>*>(neural_network->get_first(LayerType::Scaling2d));
-        if(layer)
-            dataset->unscale_features("Input",
-                reconstruct_descriptives(layer->get_minimums(), layer->get_maximums(),
-                                          layer->get_means(), layer->get_standard_deviations()));
-    }
-    else if(neural_network->has(LayerType::Scaling3d))
-    {
-        auto* layer = dynamic_cast<Scaling<3>*>(neural_network->get_first(LayerType::Scaling3d));
-        if(layer)
-            dataset->unscale_features("Input",
-                reconstruct_descriptives(layer->get_minimums(), layer->get_maximums(),
-                                          layer->get_means(), layer->get_standard_deviations()));
-    }
-    else if(neural_network->has(LayerType::Scaling4d))
-    {
-        auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
-        if(image_dataset) image_dataset->unscale_features("Input");
+        switch (layer->get_input_shape().rank)
+        {
+            case 1:
+            case 2:
+                dataset->unscale_features("Input",
+                    reconstruct_descriptives(layer->get_minimums(), layer->get_maximums(),
+                                              layer->get_means(), layer->get_standard_deviations()));
+                break;
+
+            case 3:
+                if (auto* image_dataset = dynamic_cast<ImageDataset*>(dataset))
+                    image_dataset->unscale_features("Input");
+                break;
+        }
     }
 
     if(!neural_network->has(LayerType::Unscaling))
@@ -630,12 +629,6 @@ EpochStats Optimizer::train_epoch(bool is_classification,
     }
     const auto epoch_t0 = std::chrono::steady_clock::now();
 
-    // The producer/consumer worker exists so that batch->fill() (host copies +
-    // optional async H2D) overlaps with forward/backward on the GPU. On CPU the
-    // overlap gives no real speed-up and introduces non-determinism (the worker
-    // and main thread spawn independent OMP teams that interleave with the main
-    // OMP regions in math_utilities, so identical seeds produce different
-    // floating-point trajectories). Take the synchronous path on CPU.
     const bool use_async_worker = Configuration::instance().is_gpu();
 
     if(!use_async_worker)

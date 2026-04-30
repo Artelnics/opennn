@@ -297,7 +297,7 @@ string ModelExpression::write_bounding_expression(const Bounding& layer,
     return buffer.str();
 }
 
-string ModelExpression::write_scaling_expression(const Scaling<2>& layer,
+string ModelExpression::write_scaling_expression(const Scaling& layer,
                                                  const vector<string>& input_names,
                                                  const vector<string>& /*output_names*/)
 {
@@ -464,7 +464,7 @@ string ModelExpression::write_recurrent_expression(const Recurrent& layer,
     return buffer.str();
 }
 
-string ModelExpression::write_dense_expression(const Dense<2>& layer,
+string ModelExpression::write_dense_expression(const Dense& layer,
                                                const vector<string>& input_names,
                                                const vector<string>& output_names)
 {
@@ -506,14 +506,14 @@ string ModelExpression::get_layer_expression(const Layer& layer,
     {
     case LayerType::Bounding:
         return write_bounding_expression(static_cast<const Bounding&>(layer), input_names, output_names);
-    case LayerType::Scaling2d:
-        return write_scaling_expression(static_cast<const Scaling<2>&>(layer), input_names, output_names);
+    case LayerType::Scaling:
+        return write_scaling_expression(static_cast<const Scaling&>(layer), input_names, output_names);
     case LayerType::Unscaling:
         return write_unscaling_expression(static_cast<const Unscaling&>(layer), input_names, output_names);
     case LayerType::Recurrent:
         return write_recurrent_expression(static_cast<const Recurrent&>(layer), input_names, output_names);
-    case LayerType::Dense2d:
-        return write_dense_expression(static_cast<const Dense<2>&>(layer), input_names, output_names);
+    case LayerType::Dense:
+        return write_dense_expression(static_cast<const Dense&>(layer), input_names, output_names);
     default:
         return string();
     }
@@ -945,8 +945,8 @@ void ModelExpression::emit_js_inputs_html(ostringstream& buffer) const
     const vector<string> input_names = neural_network->get_input_feature_names();
     const vector<string> fixes_feature_names = fix_names(input_names, "input_");
 
-    const Scaling<2>* scaling_layer = neural_network->has(LayerType::Scaling2d)
-        ? static_cast<const Scaling<2>*>(neural_network->get_first("Scaling2d"))
+    const Scaling* scaling_layer = neural_network->has(LayerType::Scaling)
+        ? static_cast<const Scaling*>(neural_network->get_first(LayerType::Scaling))
         : nullptr;
     const VectorR scaling_minimums = scaling_layer ? scaling_layer->get_minimums() : VectorR();
     const VectorR scaling_maximums = scaling_layer ? scaling_layer->get_maximums() : VectorR();

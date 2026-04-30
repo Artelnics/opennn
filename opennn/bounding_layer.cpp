@@ -79,8 +79,6 @@ void Bounding::set_output_shape(const Shape& new_output_shape)
     output_shape = new_output_shape;
 }
 
-// States[] is allocated by NN::compile() → Layer::link_states(). This override initializes
-// the arena slots to defaults (±max) since they're zero-initialized by the base.
 float* Bounding::link_states(float* pointer)
 {
     float* next = Layer::link_states(pointer);
@@ -148,6 +146,7 @@ void Bounding::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Bounding");
 
+    add_xml_element(printer, "Label", label);
     add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
 
     if(bounding_method == BoundingMethod::Bounding && ssize(states) > Upper && states[Lower].data)
@@ -161,19 +160,17 @@ void Bounding::to_XML(XmlPrinter& printer) const
     printer.close_element();
 }
 
-// Phase 1: parse config only; states[] isn't allocated yet.
 void Bounding::from_XML(const XmlDocument& document)
 {
     const XmlElement* root_element = get_xml_root(document, "Bounding");
 
     const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
 
-    set({ neurons_number });
+    set({ neurons_number }, read_xml_string(root_element, "Label"));
 
     set_bounding_method(read_xml_string(root_element, "BoundingMethod"));
 }
 
-// Phase 2: states[] is allocated; parse bounds directly into arena.
 void Bounding::load_state_from_XML(const XmlDocument& document)
 {
     if(bounding_method == BoundingMethod::NoBounding) return;

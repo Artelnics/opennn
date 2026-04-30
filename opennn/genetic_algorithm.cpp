@@ -580,17 +580,8 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     configure_neural_network_inputs(neural_network, dataset, optimal_variables_number);
 
-    if(neural_network->has(LayerType::Scaling2d))
+    if (auto* scaling_layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
     {
-        auto* scaling_layer = dynamic_cast<Scaling<2>*>(neural_network->get_first(LayerType::Scaling2d));
-        if(!scaling_layer) throw runtime_error("Expected Scaling<2> layer.");
-        scaling_layer->set_descriptives(input_variable_descriptives);
-        scaling_layer->set_scalers(input_variable_scalers);
-    }
-    else if(neural_network->has(LayerType::Scaling3d))
-    {
-        auto* scaling_layer = dynamic_cast<Scaling<3>*>(neural_network->get_first(LayerType::Scaling3d));
-        if(!scaling_layer) throw runtime_error("Expected Scaling<3> layer.");
         scaling_layer->set_descriptives(input_variable_descriptives);
         scaling_layer->set_scalers(input_variable_scalers);
     }

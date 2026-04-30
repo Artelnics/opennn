@@ -32,16 +32,16 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
 {
     const Index complexity_size = complexity_dimensions.rank;
 
-    add_layer(make_unique<Scaling<2>>(input_shape));
+    add_layer(make_unique<Scaling>(input_shape));
 
     for(Index i = 0; i < complexity_size; ++i)
-        add_layer(make_unique<Dense<2>>(get_output_shape(),
+        add_layer(make_unique<Dense>(get_output_shape(),
                                        Shape{ complexity_dimensions[i] },
                                        "HyperbolicTangent",
                                        false,
                                        "dense2d_layer_" + to_string(i + 1)));
 
-    add_layer(make_unique<Dense<2>>(get_output_shape(),
+    add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,
                                    "Linear",
                                    false,
@@ -61,16 +61,16 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
 {
     const Index complexity_size = complexity_dimensions.rank;
 
-    add_layer(make_unique<Scaling<2>>(input_shape));
+    add_layer(make_unique<Scaling>(input_shape));
 
     for(Index i = 0; i < complexity_size; ++i)
-        add_layer(make_unique<Dense<2>>(get_output_shape(),
+        add_layer(make_unique<Dense>(get_output_shape(),
                                        Shape{complexity_dimensions[i]},
                                        "HyperbolicTangent",
                                        false,
                                        "dense2d_layer_" + to_string(i + 1)));
 
-    add_layer(make_unique<Dense<2>>(get_output_shape(),
+    add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,
                                    output_shape[0] == 1 ? "Sigmoid" : "Softmax",
                                    false,
@@ -88,7 +88,7 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Recurrent>(input_shape, complexity_dimensions));
 
-    add_layer(make_unique<Dense<2>>(complexity_dimensions, output_shape, "Linear", false, "dense_layer"));
+    add_layer(make_unique<Dense>(complexity_dimensions, output_shape, "Linear", false, "dense_layer"));
 
     compile();
     set_parameters_random();
@@ -98,30 +98,30 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
                                                const Shape& complexity_dimensions,
                                                const Shape& output_shape) : NeuralNetwork()
 {
-    add_layer(make_unique<Scaling<2>>(input_shape));
+    add_layer(make_unique<Scaling>(input_shape));
 
     const Index mapping_neurons_number = 10;
     const Index bottle_neck_neurons_number = complexity_dimensions[0];
 
-    add_layer(make_unique<Dense<2>>(input_shape,
+    add_layer(make_unique<Dense>(input_shape,
                                    Shape{mapping_neurons_number},
                                    "HyperbolicTangent",
                                    false,
                                    "mapping_layer"));
 
-    add_layer(make_unique<Dense<2>>(Shape{ mapping_neurons_number },
+    add_layer(make_unique<Dense>(Shape{ mapping_neurons_number },
                                    Shape{ bottle_neck_neurons_number },
                                    "Linear",
                                    false,
                                    "bottleneck_layer"));
 
-    add_layer(make_unique<Dense<2>>(Shape{ bottle_neck_neurons_number },
+    add_layer(make_unique<Dense>(Shape{ bottle_neck_neurons_number },
                                    Shape{ mapping_neurons_number },
                                    "HyperbolicTangent",
                                    false,
                                    "demapping_layer"));
 
-    add_layer(make_unique<Dense<2>>(Shape{ mapping_neurons_number },
+    add_layer(make_unique<Dense>(Shape{ mapping_neurons_number },
                                    Shape{ output_shape },
                                    "Linear",
                                    false,
@@ -140,7 +140,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
     if (input_shape.rank != 3)
         throw runtime_error("Input shape size is not 3.");
 
-    auto scaling_layer = make_unique<Scaling<4>>(input_shape);
+    auto scaling_layer = make_unique<Scaling>(input_shape);
     scaling_layer->set_scalers("ImageMinMax");
     add_layer(std::move(scaling_layer));
 
@@ -171,18 +171,18 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                        "pooling_layer_" + to_string(i + 1)));
     }
 
-    add_layer(make_unique<Flatten<4>>(get_output_shape()));
+    add_layer(make_unique<Flatten>(get_output_shape()));
 
     const Index flatten_size = get_output_shape()[0];
     const Shape hidden_shape = { min(flatten_size, Index(128)) };
 
-    add_layer(make_unique<Dense<2>>(get_output_shape(),
+    add_layer(make_unique<Dense>(get_output_shape(),
                                    hidden_shape,
                                    "RectifiedLinear",
                                    false,                     // batch_normalization
                                    "dense_2d_layer_1"));
 
-    add_layer(make_unique<Dense<2>>(get_output_shape(),
+    add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,
                                    output_shape[0] == 1 ? "Sigmoid" : "Softmax",
                                    false,
@@ -202,7 +202,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
     if (Index(blocks_per_stage.size()) != initial_filters.size())
         throw runtime_error("blocks_per_stage and initial_filters must have the same size.");
 
-    add_layer(make_unique<Scaling<4>>(input_shape));
+    add_layer(make_unique<Scaling>(input_shape));
 
     Index last_layer_index = 0;
 
@@ -286,7 +286,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
             const Shape main_out_shape = get_layer(main_path_index)->get_output_shape();
 
-            auto addition_layer = make_unique<Addition<4>>(main_out_shape, "s" + to_string(stage) + "b" + to_string(block) + "_add");
+            auto addition_layer = make_unique<Addition>(main_out_shape, "s" + to_string(stage) + "b" + to_string(block) + "_add");
 
             add_layer(std::move(addition_layer), { main_path_index, skip_path_index });
 
@@ -319,13 +319,13 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
     last_layer_index = get_layers_number() - 1;
 
-    auto flatten_layer = make_unique<Flatten<2>>(get_layer(last_layer_index)->get_output_shape());
+    auto flatten_layer = make_unique<Flatten>(get_layer(last_layer_index)->get_output_shape());
 
     add_layer(std::move(flatten_layer), { last_layer_index });
 
     last_layer_index = get_layers_number() - 1;
 
-    auto dense_layer = make_unique<Dense<2>>(get_layer(last_layer_index)->get_output_shape(),
+    auto dense_layer = make_unique<Dense>(get_layer(last_layer_index)->get_output_shape(),
                                             output_shape,
                                             "Softmax",
                                             false,
@@ -346,7 +346,7 @@ VGG16::VGG16(const Shape& new_input_shape, const Shape& new_target_shape)
 void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
 {
     // Scaling 4D
-    add_layer(make_unique<Scaling<4>>(new_input_shape));
+    add_layer(make_unique<Scaling>(new_input_shape));
 
     {
         add_layer(make_unique<Convolutional>(
@@ -497,10 +497,10 @@ void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
         "global_avg_pool"));
 
     // Flatten
-    add_layer(make_unique<Flatten<2>>(get_output_shape()));
+    add_layer(make_unique<Flatten>(get_output_shape()));
 
     //Classifier
-    add_layer(make_unique<Dense<2>>(get_output_shape(),
+    add_layer(make_unique<Dense>(get_output_shape(),
                                    new_target_shape,
                                    "Softmax",
                                    false,
@@ -539,9 +539,9 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Pooling3d>(get_output_shape(), PoolingMethod::AveragePooling));
 
-    add_layer(make_unique<Dense<2>>(get_output_shape(), Shape({16}), "RectifiedLinear", false, "hidden_layer"));
+    add_layer(make_unique<Dense>(get_output_shape(), Shape({16}), "RectifiedLinear", false, "hidden_layer"));
 
-    add_layer(make_unique<Dense<2>>(get_output_shape(), output_shape, "Sigmoid", false, "classification_layer"));
+    add_layer(make_unique<Dense>(get_output_shape(), output_shape, "Sigmoid", false, "classification_layer"));
 
     compile();
     set_parameters_glorot();
@@ -635,7 +635,7 @@ void Transformer::set(const Index input_sequence_length,
 
         // Residual
         add_layer(
-            make_unique<Addition<3>>(
+            make_unique<Addition>(
                 Shape{input_sequence_length, embedding_dimension},
                 "encoder_self_attention_addition" + suffix),
             {current_encoder_idx, encoder_self_attention_idx});
@@ -650,7 +650,7 @@ void Transformer::set(const Index input_sequence_length,
 
         // Feed-forward
         add_layer(
-            make_unique<Dense<3>>(
+            make_unique<Dense>(
                 Shape{input_sequence_length, embedding_dimension},
                 Shape{feed_forward_dimension},
                 "RectifiedLinear",
@@ -658,7 +658,7 @@ void Transformer::set(const Index input_sequence_length,
                 "encoder_internal_dense" + suffix));
 
         add_layer(
-            make_unique<Dense<3>>(
+            make_unique<Dense>(
                 Shape{input_sequence_length, feed_forward_dimension},
                 Shape{embedding_dimension},
                 "Linear",
@@ -669,7 +669,7 @@ void Transformer::set(const Index input_sequence_length,
 
         // Residual
         add_layer(
-            make_unique<Addition<3>>(
+            make_unique<Addition>(
                 Shape{input_sequence_length, embedding_dimension},
                 "encoder_dense_addition" + suffix),
             {encoder_norm_1_idx, encoder_ff_idx});
@@ -710,7 +710,7 @@ void Transformer::set(const Index input_sequence_length,
 
         // Residual
         add_layer(
-            make_unique<Addition<3>>(
+            make_unique<Addition>(
                 Shape{decoder_sequence_length, embedding_dimension},
                 "decoder_self_attention_addition" + suffix),
             {current_decoder_idx, decoder_self_attention_idx});
@@ -736,7 +736,7 @@ void Transformer::set(const Index input_sequence_length,
 
         // Residual
         add_layer(
-            make_unique<Addition<3>>(
+            make_unique<Addition>(
                 Shape{decoder_sequence_length, embedding_dimension},
                 "cross_attention_addition" + suffix),
             {decoder_norm_1_idx, cross_attention_idx});
@@ -751,7 +751,7 @@ void Transformer::set(const Index input_sequence_length,
 
         // Feed-forward
         add_layer(
-            make_unique<Dense<3>>(
+            make_unique<Dense>(
                 Shape{decoder_sequence_length, embedding_dimension},
                 Shape{feed_forward_dimension},
                 "RectifiedLinear",
@@ -759,7 +759,7 @@ void Transformer::set(const Index input_sequence_length,
                 "decoder_internal_dense" + suffix));
 
         add_layer(
-            make_unique<Dense<3>>(
+            make_unique<Dense>(
                 Shape{decoder_sequence_length, feed_forward_dimension},
                 Shape{embedding_dimension},
                 "Linear",
@@ -770,7 +770,7 @@ void Transformer::set(const Index input_sequence_length,
 
         // Residual
         add_layer(
-            make_unique<Addition<3>>(
+            make_unique<Addition>(
                 Shape{decoder_sequence_length, embedding_dimension},
                 "decoder_dense_addition" + suffix),
             {decoder_norm_2_idx, decoder_ff_idx});
@@ -786,7 +786,7 @@ void Transformer::set(const Index input_sequence_length,
 
     // Final token projection
 
-    add_layer(make_unique<Dense<3>>(
+    add_layer(make_unique<Dense>(
             Shape{decoder_sequence_length, embedding_dimension},
             Shape{output_vocabulary_size},
             "Softmax",
@@ -812,7 +812,7 @@ void Transformer::set_dropout_rate(const float new_dropout_rate)
 
         if(is_ffn_dense)
         {
-            if(auto* dense = dynamic_cast<Dense<3>*>(layer.get()))
+            if(auto* dense = dynamic_cast<Dense*>(layer.get()))
                 dense->set_dropout_rate(new_dropout_rate);
         }
         else if(auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
@@ -905,10 +905,6 @@ string Transformer::calculate_outputs(const string& source)
     target_ids.setConstant(PAD);
     target_ids(0, 0) = START;
 
-    // Greedy decoding runs the network token-by-token with batch=1; on GPU the
-    // per-step launch overhead dominates and CPU is faster. Temporarily flip the
-    // global Configuration to CPU and migrate parameters back to host memory so
-    // the CPU forward path can read them. Restored at the end of the loop.
     const bool was_gpu = Configuration::instance().is_gpu();
     if (was_gpu)
     {

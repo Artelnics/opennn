@@ -27,9 +27,6 @@ struct Batch
               const vector<Index>&,
               bool augment = false);
 
-    // Returns input/target views routed to the active device based on the
-    // resolved Configuration. There is no separate `_device` / `_active` /
-    // host overload exposed publicly anymore.
     const vector<TensorView>& get_inputs() const
     {
 #ifdef OPENNN_WITH_CUDA
@@ -71,9 +68,6 @@ struct Batch
 
     void copy_device_async(const Index, cudaStream_t);
 
-    // Cache of TensorView wrappers around the host pinned / device buffers, populated
-    // by set(). Kept public for now so subclasses and helpers can read shapes; the
-    // active subset is surfaced through get_inputs()/get_targets() above.
     vector<TensorView> input_views_host_cache;
     TensorView target_view_host_cache;
 
@@ -92,9 +86,6 @@ struct Batch
     Index decoder_host_allocated_size = 0;
     Index targets_host_allocated_size = 0;
 
-    // BP16 training mode: H2D uploads land in this FP32 device staging buffer
-    // first, then a `cast_fp32_to_bf16_cuda` kernel converts into `input`
-    // (which is BF16-sized in BP16 mode). Only allocated when BP16 is active.
     void* inputs_fp32_staging = nullptr;
     Index inputs_fp32_staging_size = 0;
 };

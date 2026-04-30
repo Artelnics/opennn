@@ -58,8 +58,6 @@ VectorR Unscaling::get_standard_deviations() const
 
 void Unscaling::set(const Index new_neurons_number, const string& new_label)
 {
-    // Scaler methods are enum-valued, not float, so they can't live solely in the arena.
-    // Keep as member; link_states() will write-through the float cast into states[Scalers].
     scalers.assign(new_neurons_number, ScalerMethod::MinimumMaximum);
 
     label = new_label;
@@ -81,7 +79,6 @@ void Unscaling::set_output_shape(const Shape& /*new_output_shape*/)
 {
 }
 
-// Requires NN::compile() first — writes directly into the states arena.
 void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
     if(ssize(states) < 5 || !states[Means].data)
@@ -122,8 +119,6 @@ void Unscaling::set_scalers(const string& new_scalers)
     flush_scalers_to_states();
 }
 
-// Runs after NN::compile() allocates the states arena. Initializes descriptive
-// defaults (means=0, std=1, min=-1, max=1) and writes scaler enums as float.
 float* Unscaling::link_states(float* pointer)
 {
     float* next = Layer::link_states(pointer);
@@ -145,9 +140,6 @@ float* Unscaling::link_states(float* pointer)
     return next;
 }
 
-// Helper: writes the current scaler enum values into the arena (as floats).
-// Needed because ScalerMethod is non-float; setters maintain the enum member
-// and mirror it into states[Scalers] for the forward kernel.
 void Unscaling::flush_scalers_to_states()
 {
     if(ssize(states) <= Scalers || !states[Scalers].data) return;
@@ -162,9 +154,6 @@ void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    // Unscaling has is_trainable=false and sits after the last trainable layer, so
-    // NeuralNetwork::forward_propagate skips it entirely during training. This path
-    // runs only for validation during training and for inference.
     if (states.size() < 5)
     {
         copy(forward_views[Input][0], forward_views[Output][0]);
@@ -186,7 +175,6 @@ void Unscaling::print() const
     cout << "Unscaling layer" << "\n";
 }
 
-// Phase 1: config only (neurons_number, scalers).
 void Unscaling::from_XML(const XmlDocument& document)
 {
     const XmlElement* root_element = get_xml_root(document, "Unscaling");
@@ -215,7 +203,6 @@ void Unscaling::from_XML(const XmlDocument& document)
     }
 }
 
-// Phase 2: descriptives parsed directly into the states arena.
 void Unscaling::load_state_from_XML(const XmlDocument& document)
 {
     if(ssize(states) < 5 || !states[Means].data) return;

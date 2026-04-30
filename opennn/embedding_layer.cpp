@@ -36,9 +36,9 @@ Shape Embedding::get_output_shape() const
     return {sequence_length, embedding_dimension};
 }
 
-vector<Shape> Embedding::get_parameter_shapes() const
+vector<pair<Shape, Type>> Embedding::get_parameter_specs() const
 {
-    return {{vocabulary_size, embedding_dimension}}; // weights
+    return {/*Weight*/ {{vocabulary_size, embedding_dimension}, Type::FP32}};
 }
 
 // Setters
@@ -53,11 +53,6 @@ void Embedding::set(const Index new_vocabulary_size,
     embedding_dimension = new_embedding_dimension;
     embedding_scale = sqrt(static_cast<float>(new_embedding_dimension));
     label = new_label;
-
-    // The sinusoidal positional encoding is materialized in link_states(),
-    // which runs once after NeuralNetwork::compile() has reserved its slot in
-    // the shared `states` arena. Keeping the computation there means we never
-    // hold a duplicate host MatrixR or a per-layer GPU Buffer.
 }
 
 float* Embedding::link_states(float* pointer)
@@ -242,11 +237,7 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
     if (Configuration::instance().is_gpu()) {
         const Index total_elements = forward_propagation.batch_size * sequence_length * embedding_dimension;
 
-        // The kernel does atomicAdd into weight_gradient (multiple tokens may map
-        // to the same vocabulary row), so this slot must start at zero. Every
-        // other layer overwrites its parameter gradient via cuBLASLt/cuDNN with
-        // beta=0, so the global gradient buffer is no longer pre-zeroed by the
-        // optimizer — embedding zeroes its own slot here instead.
+        // atomicAdd into weight_gradient requires this slot to start at zero.
         TensorView& weight_grad = gradient_views[Weight];
         CHECK_CUDA(cudaMemsetAsync(weight_grad.data, 0, weight_grad.byte_size(),
                                    Device::get_compute_stream()));

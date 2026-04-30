@@ -9,7 +9,7 @@
 #pragma once
 
 #include "pch.h"
-#include "configuration.h"   // Buffer references DeviceType; existing callers expect Configuration available transitively.
+#include "configuration.h"
 
 namespace opennn
 {
@@ -41,37 +41,6 @@ inline bool is_aligned(const void* ptr)
 
 constexpr cudaDataType_t      CUDA_REDUCTION_DTYPE   = CUDA_R_32F;
 constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_TF32;
-
-// Activation dtype used to be a compile-time constant gated by
-// `OPENNN_USE_BF16_ACTIVATIONS`. It is now a runtime field on every Layer
-// (`activation_dtype`, of float `ActivationDtype`), populated by
-// NeuralNetwork::compile() from Configuration::resolve(). Conversion to cuDNN
-// / CUDA library constants happens at API boundaries via to_cudnn() / to_cuda()
-// in configuration.h. Anything outside a network defaults to FP32.
-
-inline Index dtype_bytes(cudnnDataType_t dtype)
-{
-    switch (dtype) {
-        case CUDNN_DATA_FLOAT:    return 4;
-        case CUDNN_DATA_INT32:    return 4;
-        case CUDNN_DATA_BFLOAT16: return 2;
-        case CUDNN_DATA_HALF:     return 2;
-        case CUDNN_DATA_INT8:     return 1;
-        default:                  return 4;
-    }
-}
-
-inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t dtype)
-{
-    switch (dtype) {
-        case CUDNN_DATA_FLOAT:    return CUDA_R_32F;
-        case CUDNN_DATA_INT32:    return CUDA_R_32I;
-        case CUDNN_DATA_BFLOAT16: return CUDA_R_16BF;
-        case CUDNN_DATA_HALF:     return CUDA_R_16F;
-        case CUDNN_DATA_INT8:     return CUDA_R_8I;
-        default:                  return CUDA_R_32F;
-    }
-}
 
 struct Shape
 {
@@ -176,7 +145,6 @@ struct Buffer
     }
 
 #ifdef OPENNN_WITH_CUDA
-    // Migrate the buffer to the target side: alloc on target, copy, free source.
     void migrate_to(DeviceType target)
     {
         if(device_type == target || !data) return;
@@ -237,10 +205,10 @@ struct TensorView
 
     Shape shape;
 
-    cudnnDataType_t dtype = CUDNN_DATA_FLOAT;
+    Type dtype = Type::FP32;
 
     TensorView(void* new_data = nullptr, const Shape& new_shape = {},
-               cudnnDataType_t new_dtype = CUDNN_DATA_FLOAT) noexcept
+               Type new_dtype = Type::FP32) noexcept
         : data(new_data), shape(new_shape), dtype(new_dtype) {}
 
     Index get_rank() const noexcept { return shape.rank; }
@@ -251,14 +219,6 @@ struct TensorView
 
     bool empty() const noexcept { return shape.empty(); }
 
-    // Typed reinterpretation of `data`. We deliberately do NOT assert that the
-    // requested float matches `dtype`: the codebase has several call sites that
-    // pass raw byte pointers to APIs (cuBLASLt, cuDNN) which interpret the
-    // bytes via plan/descriptor metadata, so a `bias.as<float>()` on a BF16
-    // bias is legal — cuBLASLt reads the underlying bytes as BF16 because the
-    // plan was built with bias_dtype = BF16. Inlining + a single primary
-    // template avoids the "specialization after instantiation" ordering trap
-    // with the inline as_matrix/as_vector helpers below.
     template<typename T>
     T* as() const noexcept
     {
@@ -266,24 +226,19 @@ struct TensorView
         return reinterpret_cast<T*>(data);
     }
 
-    // Float-typed view of `data`. Used at CUDA dispatch sites where kernels expect
-    // raw float* regardless of the project's `float` alias (e.g. descriptive stats,
-    // scaler tables, masks). Mirrors as<T>() but skips the dtype check.
     float* as_float() const noexcept
     {
         return reinterpret_cast<float*>(data);
     }
 
-    cudaDataType_t cuda_dtype() const noexcept { return cudnn_to_cuda_dtype(dtype); }
+    cudaDataType_t cuda_dtype() const noexcept { return to_cuda(dtype); }
 
-    // FP16 is intentionally absent: no kernel in this project is instantiated
-    // for __half. Adding it here would generate unresolved symbols for every
-    // dispatch site (scale, unscale, bounding, layernorm, pooling, ...).
+    // FP16 is intentionally absent: no kernel in this project is instantiated for __half.
     template<typename F>
     void dispatch(F&& fn) const
     {
-        if (dtype == CUDNN_DATA_BFLOAT16) fn(__nv_bfloat16{});
-        else                              fn(float{});
+        if (dtype == Type::BF16) fn(__nv_bfloat16{});
+        else                     fn(float{});
     }
 
     TensorView reshape(const Shape& new_shape) const
@@ -358,8 +313,7 @@ struct TensorView
 private:
     void set_descriptor(const Shape& shape) const
     {
-        // NHWC layout: N first, then H, W, C trailing. For rank < 4 the
-        // missing leading dims default to 1.
+        // NHWC layout: rank < 4 leading dims default to 1.
         int batch_count = 1, channels = 1, height = 1, width = 1;
         const size_t rank = shape.rank;
         if (rank >= 1) channels    = static_cast<int>(shape[rank - 1]);
@@ -380,7 +334,7 @@ private:
             });
         }
 
-        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, dtype, batch_count, channels, height, width));
+        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, to_cudnn(dtype), batch_count, channels, height, width));
     }
 
 #endif
@@ -393,10 +347,6 @@ using array = Eigen::array<T, N>;
 string shape_to_string(const Shape&, const string& = " ");
 Shape string_to_shape(const string&, const string& = " ");
 
-// Container for CUDA/cuBLAS/cuDNN handles, streams and lazily-allocated workspaces.
-// It is *infrastructure* — owning these resources for the life of the program. The
-// "are we on GPU?" question is answered by Configuration, not here, so this class
-// no longer carries a DeviceType: that state would just duplicate Configuration's.
 class Device
 {
 public:
@@ -437,11 +387,8 @@ inline void TensorView::fill(float value)
     if(!data) return;
 
 #ifdef OPENNN_WITH_CUDA
-    // Decide CPU vs GPU per buffer, not per-Device. set_parameters_random()
-    // calls fill() on TensorViews that still point at host memory even when
-    // Device is already set to Gpu (params are migrated only later via
-    // copy_parameters_device). Probing the pointer keeps this dispatch
-    // independent of the global Device state.
+    // Probe the pointer: set_parameters_random() may call fill() on host-resident
+    // TensorViews even when Device is already GPU.
     cudaPointerAttributes attr{};
     const cudaError_t err = cudaPointerGetAttributes(&attr, data);
     const bool gpu_data = (err == cudaSuccess) && (attr.type == cudaMemoryTypeDevice);
@@ -461,16 +408,13 @@ inline void TensorView::fill(float value)
     }
 #endif
 
-    assert(dtype == CUDNN_DATA_FLOAT);
+    assert(dtype == Type::FP32);
     float* data_pointer = static_cast<float*>(data);
     std::fill(data_pointer, data_pointer + size(), value);
 }
 
 #ifdef OPENNN_WITH_CUDA
 
-// Scalar pointer-args used by cuDNN op-tensor calls (cudnnOpTensor sees these
-// as host scalars). Kept here because they're shared across cuDNN op sites
-// (sum, multiplication) — not GEMM-specific.
 inline const float one = 1.0f;
 inline const float zero = 0.0f;
 inline const float minus_one = -1.0f;

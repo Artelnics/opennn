@@ -228,16 +228,11 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
     const Index total_inputs = new_input_shape.size();
     input_variables.resize(total_inputs);
 
-    if(has(LayerType::Scaling2d))
-        get_first(LayerType::Scaling2d)->set_input_shape(new_input_shape);
-    else if(has(LayerType::Scaling3d))
-        get_first(LayerType::Scaling3d)->set_input_shape(new_input_shape);
+    if(has(LayerType::Scaling))
+        get_first(LayerType::Scaling)->set_input_shape(new_input_shape);
 
     layers[get_first_trainable_layer_index()]->set_input_shape(new_input_shape);
 
-    // Propagate the new shape downstream so every layer's input/output shape
-    // stays in sync. Single-input layers inherit their predecessor's output
-    // shape; multi-input layers (e.g. residual blocks) decide internally.
     const Index layers_number = get_layers_number();
     for (Index i = 0; i < layers_number; ++i)
     {
@@ -475,17 +470,17 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
 
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.rows(), inputs.cols()}, CUDNN_DATA_FLOAT)});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.rows(), inputs.cols()}, Type::FP32)});
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)}, CUDNN_DATA_FLOAT)});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)}, Type::FP32)});
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}, CUDNN_DATA_FLOAT)});
+    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}, Type::FP32)});
 }
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
@@ -584,8 +579,9 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
     Tensor3 image = load_image(image_path);
 
-    const auto* scaling_layer = dynamic_cast<Scaling<4>*>(get_first(LayerType::Scaling4d));
-    if(!scaling_layer) throw runtime_error("Expected Scaling<4> layer.");
+    const auto* scaling_layer = dynamic_cast<Scaling*>(get_first(LayerType::Scaling));
+    if(!scaling_layer || scaling_layer->get_input_shape().rank != 3)
+        throw runtime_error("Expected 4D image Scaling layer.");
 
     const Index height = scaling_layer->get_input_shape()[0];
     const Index width = scaling_layer->get_input_shape()[1];
@@ -846,8 +842,6 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
 
     compile();
 
-    // Phase 2: now that the state arena is allocated, let each layer parse its
-    // persistent state directly into states[]. Iterate the layer elements again.
     {
         Index layer_idx = 0;
         const XmlElement* phase2_element = layers_container->first_child_element();
@@ -1059,10 +1053,6 @@ void NeuralNetwork::copy_parameters_device()
 
     parameters.migrate_to(DeviceType::CUDA);
 
-    // Allocate the BF16 working copy alongside the FP32 master and seed it from
-    // the freshly-uploaded master when the resolved precision needs it. From
-    // here every Adam step refreshes it via cast_parameters_to_bf16(); GEMMs
-    // read it instead of the master.
     const bool needs_bf16_mirror =
         config.training_precision  == TrainingPrecision::BP16 ||
         config.inference_precision == InferencePrecision::BP16;
@@ -1092,14 +1082,7 @@ void NeuralNetwork::copy_parameters_host()
 
 void NeuralNetwork::link_parameters()
 {
-    // Walks the FP32 master (always present) and the BF16 mirror (only when the
-    // resolved Configuration asked for it) in parallel. Each pointer advances by
-    // its own element size, so slot offsets stay aligned across both buffers.
-    //
-    // The BF16 mirror is opt-in via Configuration: even if `parameters_bf16` is
-    // allocated from a previous GPU run, we ignore it whenever the active
-    // Configuration is CPU (e.g. greedy-decode flips Configuration to CPU
-    // temporarily) — the host-side forward path can't read GPU memory.
+    // Ignore the BF16 mirror when active Configuration is CPU (host can't read GPU memory).
     float* fp32_ptr           = parameters.as<float>();
     const bool use_bf16_mirror =
         Configuration::instance().is_gpu() && parameters_bf16.bytes > 0;
@@ -1110,7 +1093,7 @@ void NeuralNetwork::link_parameters()
     for(auto& layer : layers)
     {
         const vector<Shape> shapes = layer->get_parameter_shapes();
-        const vector<cudnnDataType_t> dtypes = layer->get_parameter_dtypes();
+        const vector<Type> dtypes = layer->get_parameter_dtypes();
         auto& param_views = layer->get_parameter_views();
 
         for(size_t i = 0; i < shapes.size(); ++i)
@@ -1118,28 +1101,28 @@ void NeuralNetwork::link_parameters()
             if(shapes[i].empty()) continue;
 
             const Index aligned = get_aligned_size(shapes[i].size());
-            const cudnnDataType_t slot_dtype = (i < dtypes.size())
-                                                 ? dtypes[i]
-                                                 : CUDNN_DATA_FLOAT;
+            const Type slot_dtype = (i < dtypes.size())
+                                        ? dtypes[i]
+                                        : Type::FP32;
 
             if(i < param_views.size())
             {
-                if(slot_dtype == CUDNN_DATA_BFLOAT16 && bf16_ptr != nullptr)
+                if(slot_dtype == Type::BF16 && bf16_ptr != nullptr)
                 {
                     param_views[i].data = bf16_ptr;
-                    param_views[i].dtype = CUDNN_DATA_BFLOAT16;
+                    param_views[i].dtype = Type::BF16;
                     param_views[i].shape = shapes[i];
                 }
                 else
                 {
                     param_views[i].data = fp32_ptr;
-                    param_views[i].dtype = CUDNN_DATA_FLOAT;
+                    param_views[i].dtype = Type::FP32;
                     param_views[i].shape = shapes[i];
                 }
             }
 
-            fp32_ptr += aligned;                    // +aligned * sizeof(float) bytes
-            if (bf16_ptr != nullptr) bf16_ptr += aligned;  // +aligned * sizeof(bf16) bytes
+            fp32_ptr += aligned;
+            if (bf16_ptr != nullptr) bf16_ptr += aligned;
         }
     }
 }
@@ -1160,10 +1143,6 @@ void NeuralNetwork::copy_states_host()
 
 void NeuralNetwork::link_states()
 {
-    // States are always FP32 (descriptive stats, BatchNorm running mean/variance,
-    // positional encoding tables — none of these benefit from BF16). The same
-    // pointer walk works for CPU and GPU: states.as<float>() returns whichever
-    // host the buffer currently lives on, and we just rebuild each layer's view.
     float* state_pointer = states.as<float>();
     if(!state_pointer) return;
 
@@ -1177,7 +1156,7 @@ void NeuralNetwork::link_states()
             if(shapes[i].empty()) continue;
 
             if(i < state_views.size())
-                state_views[i] = TensorView(state_pointer, shapes[i], CUDNN_DATA_FLOAT);
+                state_views[i] = TensorView(state_pointer, shapes[i], Type::FP32);
 
             state_pointer += get_aligned_size(shapes[i].size());
         }
@@ -1217,10 +1196,7 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     const Index out_cols = out_view.size() / batch_size;
     MatrixR result(batch_size, out_cols);
 
-    // BP16 inference: device buffer holds BF16 (2 bytes/elem). Copy raw bytes
-    // to a host staging buffer, then upcast to FP32. BF16 is the high 16 bits
-    // of FP32, so the conversion is a left-shift — no rounding involved.
-    if(out_view.dtype == CUDNN_DATA_BFLOAT16)
+    if(out_view.dtype == Type::BF16)
     {
         const Index size = out_view.size();
         vector<uint16_t> staging(static_cast<size_t>(size));

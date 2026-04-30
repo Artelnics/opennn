@@ -38,25 +38,9 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         input_shape = Shape({samples_number}).append(dataset_input_shape);
 
 #ifdef OPENNN_WITH_CUDA
-        // GPU runs keep `input` in device memory and use a pinned host staging
-        // buffer (inputs_host) for the H2D copy. CPU runs keep `input` in host
-        // memory directly. The previous code overrode the CPU buffer with a
-        // GPU one whenever CUDA was compiled in, which segfaulted on Batch::fill
-        // when actually running CPU-only.
         if (Configuration::instance().is_gpu())
         {
-            // In BP16 training mode `input` is the BF16 buffer the layers read
-            // from. The H2D upload still arrives as FP32 (CSV → MatrixR is FP32),
-            // so we route it through `inputs_fp32_staging` and run a tiny
-            // FP32→BF16 cast on stream once per copy_device_async — this is the
-            // single dtype-conversion point in the GPU input path; conv/Dense
-            // forwards then receive BF16 directly.
-            //
-            // LanguageDataset is the exception: its inputs are integer token IDs
-            // stored in FP32, and Embedding casts them to Index. BF16 has only
-            // 7 mantissa bits → vocab IDs > 128 get rounded → embedding lookup
-            // collapses. Keep input as FP32 in that case; Embedding's first kernel
-            // is the dtype boundary anyway (it produces BF16 activations).
+            // LanguageDataset inputs are integer token IDs: BF16's 7 mantissa bits round vocab IDs > 128, so keep FP32.
             const bool integer_inputs = (dynamic_cast<const LanguageDataset*>(dataset) != nullptr);
             const bool bp16 = Configuration::instance().is_bp16_training() && !integer_inputs;
             const Index elem_bytes = bp16 ? Index(sizeof(__nv_bfloat16)) : Index(sizeof(float));
@@ -146,7 +130,6 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         }
     }
 
-    // Host view caches (populated once per batch size change — zero allocations per forward pass)
     input_views_host_cache.clear();
     input_views_host_cache.reserve(decoder_shape.empty() ? 1 : 2);
 
@@ -163,16 +146,15 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if(!input_shape.empty() && input.as<float>())
     {
         const bool integer_inputs = (dynamic_cast<const LanguageDataset*>(dataset) != nullptr);
-        const cudnnDataType_t input_dtype = (Configuration::instance().is_bp16_training() && !integer_inputs)
-                                                ? CUDNN_DATA_BFLOAT16
-                                                : CUDNN_DATA_FLOAT;
+        const Type input_dtype = (Configuration::instance().is_bp16_training() && !integer_inputs)
+                                     ? Type::BF16
+                                     : Type::FP32;
         TensorView in_view(input.as<float>(), input_shape, input_dtype);
 
         if(!decoder_shape.empty() && decoder.as<float>())
         {
-            // Decoder stays FP32 — the only consumer is Embedding which reads
-            // integer indices and produces BF16 itself; no upstream FP32 op.
-            TensorView dec_view(decoder.as<float>(), decoder_shape, CUDNN_DATA_FLOAT);
+            // Decoder stays FP32: Embedding reads integer indices and produces BF16 itself.
+            TensorView dec_view(decoder.as<float>(), decoder_shape, Type::FP32);
             input_views_cache = { dec_view, in_view };
         }
         else
@@ -182,7 +164,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     }
 
     if(!target_shape.empty() && target.as<float>())
-        target_view_cache = TensorView(target.as<float>(), target_shape, CUDNN_DATA_FLOAT);
+        target_view_cache = TensorView(target.as<float>(), target_shape, Type::FP32);
 #endif
 }
 
@@ -194,15 +176,10 @@ void Batch::fill(const vector<Index>& sample_indices,
 {
     const bool is_gpu = Configuration::instance().is_gpu();
 
-    // GPU path writes into pinned host buffers (pre-allocated in set()) so that
-    // copy_device_async can DMA them straight to device memory. CPU path writes
-    // into Buffer's storage.
     float* input_dst   = is_gpu ? inputs_host   : input.as<float>();
     float* decoder_dst = is_gpu ? decoder_host  : decoder.as<float>();
     float* target_dst  = is_gpu ? targets_host  : target.as<float>();
 
-    // Serial fill on the GPU worker thread (leaves CPU cores for the GPU driver);
-    // OMP parallel fill on CPU-only runs.
     const bool parallelize = !is_gpu;
 
     if(input_contiguous < 0 && !input_indices.empty())
@@ -278,9 +255,6 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
     const Index input_size = current_batch_size * num_input_features;
     const Index target_size = current_batch_size * num_target_features;
 
-    // BP16 mode with real-valued inputs uses the staging-then-cast path.
-    // LanguageDataset (integer token IDs) keeps inputs FP32 even in BP16 — the
-    // staging buffer is not allocated in that case; see set().
     if(inputs_fp32_staging != nullptr)
     {
         CHECK_CUDA(cudaMemcpyAsync(inputs_fp32_staging, inputs_host,

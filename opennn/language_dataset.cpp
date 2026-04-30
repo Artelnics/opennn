@@ -16,9 +16,6 @@ namespace opennn
 
 namespace {
 
-// Maximum length across a collection of token sequences. Used to size padded
-// input/target tensors. Was a generic template in tensor_utilities.h but only
-// this file consumes it, so it lives here now.
 template <typename T>
 size_t get_maximum_size(const vector<vector<T>>& nested_values)
 {

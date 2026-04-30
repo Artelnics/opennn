@@ -20,18 +20,14 @@ static constexpr float SELU_LAMBDA = 1.0507009873554804934193349852946f;
 
 #ifdef OPENNN_WITH_CUDA
 
-// Per-TU device buffer of [1, 1, ..., 1] used as the right operand of the
-// GEMM-as-column-reduction trick in sum(). Sized lazily, never freed
-// (process-lifetime allocation, matches the existing pooling-scratch pattern).
-// One buffer per dtype because the GEMM path requires uniform-dtype operands.
 namespace {
     float*         ones_fp32 = nullptr; int ones_fp32_size = 0;
     __nv_bfloat16* ones_bf16 = nullptr; int ones_bf16_size = 0;
 }
 
-static const void* get_ones(int size, cudnnDataType_t dtype)
+static const void* get_ones(int size, Type dtype)
 {
-    if (dtype == CUDNN_DATA_BFLOAT16)
+    if (dtype == Type::BF16)
     {
         if (size > ones_bf16_size)
         {
@@ -277,7 +273,6 @@ void addition(const TensorView& input_1,
 
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
-        // operator_sum_descriptor is configured with CUDNN_OP_TENSOR_ADD; reused here.
         CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(),
                                   Device::get_operator_sum_descriptor(),
                                   &one, input_1.get_descriptor(), input_1.data,
@@ -380,9 +375,7 @@ void reduce_sum(const TensorView& input, TensorView& output, float alpha, float 
         const int total_rows    = to_int(input.shape[0]);
         const int total_columns = to_int(input.shape.size() / input.shape[0]);
 
-        // Column-wise reduction expressed as matrix * ones-vector via GEMM
-        // (m × k) * (k × 1) = (m × 1). Ones-vector dtype must match the input
-        // dtype so cuBLAS picks a uniform-dtype GEMM path.
+        // Ones-vector dtype must match input dtype so cuBLAS picks a uniform-dtype GEMM path.
         gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
                   total_columns, 1, total_rows,
                   input.data, input.cuda_dtype(), total_columns,
@@ -449,22 +442,16 @@ void softmax_backward(const TensorView& softmax_out, TensorView& output_delta)
 }
 
 #ifdef OPENNN_WITH_CUDA
-// First-trainable Dense receives input directly from the Batch (FP32) but its
-// weights live in the BF16 working copy. cuBLASLt requires A and B to share
-// dtype, so we down-cast the input on-the-fly into a Device-owned scratch
-// buffer and feed that into the matmul. Returns the original pointer when no
-// cast is needed.
 static const void* maybe_cast_input_to_weights_dtype(const TensorView& input,
                                                      const TensorView& weights)
 {
     if (input.dtype == weights.dtype) return input.data;
-    if (input.dtype == CUDNN_DATA_FLOAT && weights.dtype == CUDNN_DATA_BFLOAT16)
+    if (input.dtype == Type::FP32 && weights.dtype == Type::BF16)
     {
         __nv_bfloat16* scratch = get_bf16_input_scratch(input.size());
         cast_fp32_to_bf16_cuda(input.size(), input.as_float(), scratch);
         return scratch;
     }
-    // Other mismatches are not produced by the current dtype routing.
     return input.data;
 }
 #endif
@@ -472,7 +459,8 @@ static const void* maybe_cast_input_to_weights_dtype(const TensorView& input,
 void combination(const TensorView& input,
                  const TensorView& weights,
                  const TensorView& biases,
-                 TensorView& output)
+                 TensorView& output,
+                 cublasLtEpilogue_t epilogue)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu())
@@ -483,18 +471,30 @@ void combination(const TensorView& input,
 
         const void* input_for_gemm = maybe_cast_input_to_weights_dtype(input, weights);
 
-        // Fused GEMM + bias-add via cuBLASLt epilogue (one launch instead of two).
-        // Bias is passed as raw data pointer; gemm_bias_cuda's plan sets the
-        // cuBLASLt bias dtype to match the output dtype (FP32 or BF16). When
-        // BP16 training is on, biases are stored in `parameters_bf16` and the
-        // memory at this pointer is BF16; cuBLASLt reads it accordingly.
-        gemm_bias_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-                       output_columns, total_rows, input_columns,
-                       weights.data,
-                       input_for_gemm,
-                       output.data,
-                       biases.as_float(),
-                       output.cuda_dtype());
+        const cudaDataType_t io_dtype = output.cuda_dtype();
+        const LtMatmulPlan& plan = get_lt_gemm_plan(output_columns, total_rows, input_columns,
+                                                    CUBLAS_OP_N, CUBLAS_OP_N,
+                                                    epilogue, io_dtype, io_dtype);
+
+        const float* bias_pointer = biases.as_float();
+        CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
+            CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
+
+        const float alpha = 1.0f, beta = 0.0f;
+        void* workspace = get_cublas_lt_workspace();
+        const size_t workspace_size = cublas_lt_workspace_bytes();
+
+        CHECK_CUBLAS(cublasLtMatmul(Device::get_cublas_lt_handle(),
+                                    plan.op_desc,
+                                    &alpha,
+                                    weights.data,    plan.a_desc,
+                                    input_for_gemm,  plan.b_desc,
+                                    &beta,
+                                    output.data,     plan.c_desc,   // C (read when beta != 0)
+                                    output.data,     plan.d_desc,   // D (write); aliasing C is supported
+                                    plan.algo_valid ? &plan.algo : nullptr,
+                                    workspace, workspace_size,
+                                    Device::get_compute_stream()));
         return;
     }
 #endif
@@ -513,26 +513,11 @@ void combination_activation(const TensorView& input,
     if (Configuration::instance().is_gpu()
         && activation_arguments.activation_function == ActivationFunction::RectifiedLinear)
     {
-        const int input_columns  = to_int(input.shape.back());
-        const int output_columns = to_int(weights.shape.back());
-        const int total_rows     = to_int(input.size() / input.shape.back());
-
-        const void* input_for_gemm = maybe_cast_input_to_weights_dtype(input, weights);
-
-        // Fused GEMM + bias + ReLU in one cuBLASLt launch.
-        gemm_bias_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-                       output_columns, total_rows, input_columns,
-                       weights.data,
-                       input_for_gemm,
-                       output.data,
-                       biases.as_float(),    // raw byte pointer — bias dtype is set by cuBLASLt plan to match output dtype
-                       output.cuda_dtype(),
-                       CUBLASLT_EPILOGUE_RELU_BIAS);
+        combination(input, weights, biases, output, CUBLASLT_EPILOGUE_RELU_BIAS);
         return;
     }
 #endif
 
-    // Fallback: unfused combination + activation.
     combination(input, weights, biases, output);
     activation(output, activation_arguments);
 }
@@ -555,13 +540,8 @@ void combination_gradient(const TensorView& output_delta,
         {
             PROFILE_SCOPE("comb_grad:gemm_bgrad_W_b");
 
-            // gemm_bgrad_cuda assumes both A (output_delta) and B (input) share
-            // a single dtype (set on the cached cuBLASLt plan). The first trainable
-            // Dense receives input straight from the Batch in FP32, so when the
-            // activation dtype is BF16 we down-cast the input on-the-fly into a
-            // shared scratch buffer.
             const cudaDataType_t io_dtype = output_delta.cuda_dtype();
-            const bool need_cast = (input.dtype == CUDNN_DATA_FLOAT
+            const bool need_cast = (input.dtype == Type::FP32
                                     && io_dtype == CUDA_R_16BF);
             const void* input_for_gemm = need_cast
                 ? static_cast<const void*>(get_bf16_input_scratch(input.size()))
@@ -573,13 +553,31 @@ void combination_gradient(const TensorView& output_delta,
                                        const_cast<__nv_bfloat16*>(
                                            static_cast<const __nv_bfloat16*>(input_for_gemm)));
 
-            gemm_bgrad_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
-                            output_columns, input_columns, total_rows,
-                            output_delta.data,         // A
-                            input_for_gemm,            // B
-                            weight_gradient.data,      // C / D
-                            bias_gradient.as<float>(),
-                            io_dtype);
+            const LtMatmulPlan& plan = get_lt_gemm_plan(output_columns, input_columns, total_rows,
+                                                        CUBLAS_OP_N, CUBLAS_OP_T,
+                                                        CUBLASLT_EPILOGUE_BGRADA,
+                                                        io_dtype,
+                                                        CUDA_R_32F);
+
+            float* bias_grad_pointer = bias_gradient.as<float>();
+            CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
+                CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_grad_pointer, sizeof(bias_grad_pointer)));
+
+            const float alpha = 1.0f, beta = 0.0f;
+            void* workspace = get_cublas_lt_workspace();
+            const size_t workspace_size = cublas_lt_workspace_bytes();
+
+            CHECK_CUBLAS(cublasLtMatmul(Device::get_cublas_lt_handle(),
+                                        plan.op_desc,
+                                        &alpha,
+                                        output_delta.data,    plan.a_desc,
+                                        input_for_gemm,       plan.b_desc,
+                                        &beta,
+                                        weight_gradient.data, plan.c_desc,
+                                        weight_gradient.data, plan.d_desc,
+                                        plan.algo_valid ? &plan.algo : nullptr,
+                                        workspace, workspace_size,
+                                        Device::get_compute_stream()));
         }
 
         if (input_delta.data && input_delta.size() > 0)
@@ -730,11 +728,8 @@ void dropout(TensorView& output, DropoutArguments& args)
 
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
-        // cuDNN 9's dropout is FLOAT/HALF only — BFLOAT16 returns NOT_SUPPORTED.
-        // Up-cast to FP32 in scratch, run dropout there, cast back. The dropout
-        // descriptor is set up with an FP32 tensor at layer-init time so the
-        // reserve_space size matches; see Dense::init_cuda.
-        if (output.dtype == CUDNN_DATA_BFLOAT16)
+        // cuDNN 9 dropout is FLOAT/HALF only — BFLOAT16 returns NOT_SUPPORTED.
+        if (output.dtype == Type::BF16)
         {
             const Index size = output.size();
             float* fp32_scratch = get_fp32_upcast_scratch(size);
@@ -744,7 +739,7 @@ void dropout(TensorView& output, DropoutArguments& args)
 
             TensorView fp32_view = output;
             fp32_view.data  = fp32_scratch;
-            fp32_view.dtype = CUDNN_DATA_FLOAT;
+            fp32_view.dtype = Type::FP32;
             fp32_view.descriptor_handle.reset();
 
             CHECK_CUDNN(cudnnDropoutForward(Device::get_cudnn_handle(),
@@ -793,17 +788,10 @@ void dropout_delta(const TensorView& output_delta,
 
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
-        // Same BF16 limitation as forward: cuDNN dropout is FP/HALF only.
-        // Up-cast both deltas to FP32, run backward, cast input_delta back to BF16.
-        if (output_delta.dtype == CUDNN_DATA_BFLOAT16)
+        // cuDNN 9 dropout is FP/HALF only — same BF16 limitation as forward.
+        if (output_delta.dtype == Type::BF16)
         {
             const Index size = output_delta.size();
-            // Need two FP32 scratches: one for dy, one for dx. Reuse the upcast
-            // singleton for dy, the bf16-input singleton for dx... but they need
-            // different sizes potentially. Same n in this case (deltas share shape).
-            // get_fp32_upcast_scratch is already used by dropout forward, so we
-            // chain: cast dy here, write dx into the same scratch (in-place is
-            // fine because cuDNN dropout backward is element-wise).
             float* fp32_dy = get_fp32_upcast_scratch(size);
             cast_bf16_to_fp32_cuda(size,
                                    reinterpret_cast<const __nv_bfloat16*>(output_delta.data),
@@ -811,10 +799,10 @@ void dropout_delta(const TensorView& output_delta,
 
             TensorView dy_view = output_delta;
             dy_view.data  = fp32_dy;
-            dy_view.dtype = CUDNN_DATA_FLOAT;
+            dy_view.dtype = Type::FP32;
             dy_view.descriptor_handle.reset();
 
-            // dx scratch overlaps dy on purpose (in-place); cudnn supports that.
+            // dx scratch overlaps dy on purpose (in-place); cuDNN supports that.
             CHECK_CUDNN(cudnnDropoutBackward(Device::get_cudnn_handle(),
                                              args.descriptor,
                                              dy_view.get_descriptor(), fp32_dy,
@@ -1198,12 +1186,8 @@ void convolution_backward_weights(const TensorView& input,
 {
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
-        // cuDNN's BackwardFilter / BackwardBias require dwDesc / dbDesc to share
-        // dtype with x and dy (BF16 in BP16 mode). Our master gradient buffer
-        // is FP32, so when activations are BF16 we route the writes through a
-        // BF16 scratch and cast back to FP32 afterwards. BF16→FP32 is exact
-        // (left-shift by 16), so no precision is lost in the cast itself.
-        const bool bp16 = (input.dtype == CUDNN_DATA_BFLOAT16);
+        // cuDNN BackwardFilter/BackwardBias require dwDesc/dbDesc dtype to match x/dy (BF16 in BP16 mode).
+        const bool bp16 = (input.dtype == Type::BF16);
 
         void* dw_dst = weight_grad.data;
         __nv_bfloat16* dw_scratch = nullptr;
@@ -1224,10 +1208,7 @@ void convolution_backward_weights(const TensorView& input,
             &zero,
             args.kernel_descriptor, dw_dst));
 
-        // Bias backward: cuDNN 9's BackwardBias is FP/half-only — BFLOAT16 dy
-        // returns NOT_SUPPORTED. Up-cast dy to FP32 once and run the reduction
-        // in FP32 directly into bias_grad (which is already FP32). Avoids the
-        // need for a BF16 scratch / cast on the bias side.
+        // cuDNN 9 BackwardBias is FP/half-only — BFLOAT16 dy returns NOT_SUPPORTED.
         if (bp16)
         {
             float* dy_fp32 = get_fp32_upcast_scratch(output_delta.size());
@@ -1237,7 +1218,7 @@ void convolution_backward_weights(const TensorView& input,
 
             TensorView dy_fp32_view = output_delta;
             dy_fp32_view.data = dy_fp32;
-            dy_fp32_view.dtype = CUDNN_DATA_FLOAT;
+            dy_fp32_view.dtype = Type::FP32;
             dy_fp32_view.descriptor_handle.reset();
 
             CHECK_CUDNN(cudnnConvolutionBackwardBias(Device::get_cudnn_handle(),
@@ -1246,7 +1227,6 @@ void convolution_backward_weights(const TensorView& input,
                 &zero,
                 bias_grad.get_descriptor(), bias_grad.data));
 
-            // Filter-grad: BF16 staging → FP32 master.
             cast_bf16_to_fp32_cuda(weight_grad.size(), dw_scratch, weight_grad.as_float());
         }
         else
@@ -1271,7 +1251,6 @@ void convolution_backward_weights(const TensorView& input,
     const Index kernel_channels = weight_grad.shape[3];
     const Index kernel_size = kernel_height * kernel_width * kernel_channels;
 
-    // Bias gradients: sum output_deltas over (batch, height, width), leaving [kernels].
     const Index grads_per_kernel = output_deltas.dimension(0)
                                  * output_deltas.dimension(1)
                                  * output_deltas.dimension(2);
@@ -1279,9 +1258,6 @@ void convolution_backward_weights(const TensorView& input,
     MatrixMap output_grads_mat(output_delta.as<float>(), grads_per_kernel, kernels_number);
     VectorMap(bias_grad.as<float>(), kernels_number).noalias() = output_grads_mat.colwise().sum();
 
-    // Weight gradients: for each kernel, convolve padded input with output-gradient slice
-    // along (batch, H, W). Eigen's Tensor::convolve is SIMD-vectorized — much faster than
-    // the naive 6-nested loop it replaced.
     float* weight_data = weight_grad.as<float>();
 
     #pragma omp parallel for
@@ -1331,7 +1307,6 @@ void convolution_backward_data(const TensorView& output_delta,
     const Index output_height = output_deltas.dimension(1);
     const Index output_width = output_deltas.dimension(2);
 
-    // Pad output_delta so full-convolution with rotated kernel produces input-sized output.
     const Index pad_height = (input_height + kernel_height - 1) - output_height;
     const Index pad_width  = (input_width  + kernel_width  - 1) - output_width;
     const Index pad_top = pad_height / 2;
@@ -1912,9 +1887,6 @@ void projection(const TensorView& input,
     const Index embedding_dim    = heads_number * head_dimension;
     const Index total_rows       = batch_size * sequence_length;
 
-    // Match transpose-scratch dtype to the surrounding activation dtype so the
-    // GEMM inside `combination` sees uniform A/B/C dtypes. `output` already has
-    // the correct activation dtype (set by allocate_device).
     TensorView input_2d = input.reshape({total_rows, embedding_dim});
     TensorView scratch_2d(transpose_scratch, {total_rows, embedding_dim}, output.dtype);
 
@@ -1942,10 +1914,6 @@ void projection_gradient(const TensorView& head_gradient,
     const Index embedding_dim    = heads_number * head_dimension;
     const Index total_rows       = batch_size * sequence_length;
 
-    // The transpose scratch buffer carries activations in the same dtype as the
-    // surrounding forward/backward arenas — propagate the dtype from
-    // head_gradient so the downstream combination_gradient sees uniform dtypes
-    // on its A/B operands.
     TensorView scratch_4d(transpose_scratch,
                           {batch_size, sequence_length, heads_number, head_dimension},
                           head_gradient.dtype);

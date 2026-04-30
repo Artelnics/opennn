@@ -13,6 +13,7 @@
 #include "adaptive_moment_estimation.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "dense_layer.h"
 
 namespace opennn
 {
@@ -70,9 +71,15 @@ void TrainingStrategy::set_default()
         return;
     }
 
-    // Transformer
-
-    if(neural_network->has(LayerType::Dense3d))
+    // Transformer: signaled by *any* Dense layer that consumes a rank-2 (seq, feat)
+    // input — i.e. the layers formerly known as Dense3d.
+    bool has_seq_dense = false;
+    for (const auto& layer : neural_network->get_layers())
+    {
+        const auto* dense = dynamic_cast<const opennn::Dense*>(layer.get());
+        if (dense && dense->get_input_shape().rank == 2) { has_seq_dense = true; break; }
+    }
+    if (has_seq_dense)
     {
         set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");

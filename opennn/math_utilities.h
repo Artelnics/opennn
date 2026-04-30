@@ -67,11 +67,6 @@ struct ConvolutionArguments
     Shape stride_shape;
     Shape padding_shape;
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
-    // Filter dtype = activation_dtype (BF16 in BP16 mode, FP32 otherwise). Used
-    // by every conv call — forward, backward filter, backward data — because
-    // cuDNN requires xDesc/dyDesc/wDesc/dwDesc to share dtype. In BP16 mode the
-    // gradient is staged in a BF16 scratch then cast back to the FP32 master
-    // gradient (see `convolution_backward_weights`).
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
     cudnnConvolutionFwdAlgo_t algorithm_forward = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
     cudnnConvolutionBwdDataAlgo_t algorithm_data = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
@@ -135,14 +130,10 @@ void softmax_backward(const TensorView& softmax_out, TensorView& output_delta);
 
 // Dense layer
 
-void combination(const TensorView& input, const TensorView& weights, const TensorView& biases, TensorView& output);
+void combination(const TensorView& input, const TensorView& weights, const TensorView& biases, TensorView& output, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS);
 void combination_gradient(const TensorView& output_delta, const TensorView& input, const TensorView& weights, TensorView& input_delta, TensorView& weight_gradient, TensorView& bias_gradient, bool accumulate_input_delta);
 void activation(TensorView& output, ActivationArguments arguments);
 
-// Equivalent to combination(...) followed by activation(output, args), but on
-// GPU fuses both into one cuBLASLt matmul when the activation is supported by
-// the cuBLASLt epilogue (currently RectifiedLinear). Other activations fall
-// back to the unfused pair.
 void combination_activation(const TensorView& input,
                             const TensorView& weights,
                             const TensorView& biases,

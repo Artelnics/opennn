@@ -318,8 +318,8 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
 
     NeuralNetwork neural_network;
     const Shape dimensions = { 1 };
-    neural_network.add_layer(make_unique<Scaling<2>>(dimensions));
-    neural_network.add_layer(make_unique<Dense<2>>(dimensions, dimensions, "Sigmoid"));
+    neural_network.add_layer(make_unique<Scaling>(dimensions));
+    neural_network.add_layer(make_unique<Dense>(dimensions, dimensions, "Sigmoid"));
     neural_network.compile();
 
     Loss loss(&neural_network, &dataset);
@@ -451,8 +451,8 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
 
     ClassificationNetwork neural_network({ input_features_number }, {1}, {target_features_number});
 
-    auto* dense_2d = dynamic_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
-    if(!dense_2d) throw runtime_error("Expected Dense<2> layer.");
+    auto* dense_2d = dynamic_cast<Dense*>(neural_network.get_first(LayerType::Dense));
+    if(!dense_2d) throw runtime_error("Expected Dense layer.");
 
     dense_2d->set_activation_function("Softmax");
 
@@ -548,8 +548,8 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 
     ClassificationNetwork neural_network({input_features_number }, {}, {target_features_number});
 
-    auto* dense_2d = dynamic_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
-    if(!dense_2d) throw runtime_error("Expected Dense<2> layer.");
+    auto* dense_2d = dynamic_cast<Dense*>(neural_network.get_first(LayerType::Dense));
+    if(!dense_2d) throw runtime_error("Expected Dense layer.");
 
     dense_2d->set_activation_function("Softmax");
 

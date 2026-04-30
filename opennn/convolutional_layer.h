@@ -78,71 +78,60 @@ private:
 
     enum Parameters {Bias, Weight, Gamma, Beta};
 
-    vector<Shape> get_parameter_shapes() const override
+    vector<pair<Shape, Type>> get_parameter_specs() const override
     {
-        return {{kernels_number},                                               // Bias
-                {kernels_number, kernel_height, kernel_width, kernel_channels}, // Weight
-                {batch_normalization ? kernels_number : 0},                     // Gamma
-                {batch_normalization ? kernels_number : 0}};                    // Beta
-    }
-
-    // Filter dtype follows activation_dtype because cudnnConvolutionBiasActivationForward
-    // requires input/filter/bias/output to share dtype. In BP16 mode the filter
-    // lives in parameters_bf16. Backward filter writes the gradient via a BF16
-    // scratch + cast back to the FP32 master gradient (see math_utilities::convolution_backward_weights).
-    vector<cudnnDataType_t> get_parameter_dtypes() const override
-    {
-        return vector<cudnnDataType_t>(get_parameter_shapes().size(), to_cudnn(activation_dtype));
+        const Type act = activation_dtype;
+        return {
+            /*Bias*/   {{kernels_number},                                               act},
+            /*Weight*/ {{kernels_number, kernel_height, kernel_width, kernel_channels}, act},
+            /*Gamma*/  {{batch_normalization ? kernels_number : 0},                     act},
+            /*Beta*/   {{batch_normalization ? kernels_number : 0},                     act},
+        };
     }
 
     enum States {RunningMean, RunningVariance};
 
-    vector<Shape> get_state_shapes() const override
+    vector<pair<Shape, Type>> get_state_specs() const override
     {
         if (!batch_normalization) return {};
-        return {{kernels_number},   // RunningMean
-                {kernels_number}};  // RunningVariance
+        return {
+            /*RunningMean*/     {{kernels_number}, Type::FP32},
+            /*RunningVariance*/ {{kernels_number}, Type::FP32},
+        };
     }
 
     enum Forward {Input, PaddedInput, Convolution, BatchNormMean, BatchNormInverseVariance, Output};
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
         const Shape output_shape = {batch_size, get_output_height(), get_output_width(), kernels_number};
         const Shape padded_shape = {batch_size,
                                     input_height + 2 * get_padding_height(),
                                     input_width + 2 * get_padding_width(),
                                     input_channels};
+        const Type act = activation_dtype;
 
-        if (batch_normalization)
-            return {padded_shape,             // PaddedInputs
-                    output_shape,             // Convolution
-                    Shape{kernels_number},    // BatchNormMean
-                    Shape{kernels_number},    // BatchNormInverseVariance
-                    output_shape};            // Output
+        const Shape convolution_shape = batch_normalization ? output_shape           : Shape{};
+        const Shape bn_stat_shape     = batch_normalization ? Shape{kernels_number}  : Shape{};
 
-        return {padded_shape,                 // PaddedInputs
-                Shape{},                      // Convolution (unused)
-                Shape{},                      // BatchNormMean (unused)
-                Shape{},                      // BatchNormInverseVariance (unused)
-                output_shape};                // Output
-    }
-
-    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
-    {
-        return {to_cudnn(activation_dtype),  // PaddedInputs
-                to_cudnn(activation_dtype),  // Convolution
-                CUDNN_DATA_FLOAT,            // BatchNormMean
-                CUDNN_DATA_FLOAT,            // BatchNormInverseVariance
-                to_cudnn(activation_dtype)}; // Output
+        return {
+            /*PaddedInputs*/             {padded_shape,      act},
+            /*Convolution*/              {convolution_shape, act},
+            /*BatchNormMean*/            {bn_stat_shape,     Type::FP32},
+            /*BatchNormInverseVariance*/ {bn_stat_shape,     Type::FP32},
+            /*Output*/                   {output_shape,      act},
+        };
     }
 
     enum Backward {OutputDelta, InputDelta};
 
-    vector<Shape> get_backward_shapes(Index batch_size) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{batch_size, input_height, input_width, input_channels},
-                {kernels_number, kernel_height, kernel_width, kernel_channels}};
+        const Type act = activation_dtype;
+        return {
+            {{batch_size, input_height, input_width, input_channels},          act},
+            {{kernels_number, kernel_height, kernel_width, kernel_channels},   act},
+        };
     }
 
 public:

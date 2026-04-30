@@ -20,7 +20,6 @@ namespace opennn
 {
 
 
-template<int Rank>
 class Scaling final : public Layer
 {
 
@@ -35,36 +34,26 @@ public:
 
     Shape get_output_shape() const override { return input_shape; }
 
-    vector<Shape> get_forward_shapes(Index batch_size) const override
+    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override
     {
-        return {Shape{batch_size}.append(input_shape)}; // Output
-    }
-
-    // Output matches the network's activation dtype so the next layer doesn't
-    // see a dtype boundary. The kernel `scale_cuda<TIn, TOut>` is instantiated
-    // for every (FP32→FP32) and (FP32→BF16) pair we need: the Batch input
-    // arrives in FP32 (training data is pre-scaled offline anyway, so the
-    // math is effectively identity) and the kernel writes the result in
-    // `activation_dtype`. This matters for Convolutional, which uses the
-    // fused cudnnConvolutionBiasActivationForward and requires all of
-    // input/filter/bias/output to share dtype — Dense's
-    // `maybe_cast_input_to_weights_dtype` is not enough because it only
-    // covers the GEMM path, not the conv path.
-    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
-    {
-        return {to_cudnn(activation_dtype)}; // Output
+        return {/*Output*/ {Shape{batch_size}.append(input_shape), activation_dtype}};
     }
 
     enum States {Minimums, Maximums, Means, StandardDeviations, Scalers};
 
-    vector<Shape> get_state_shapes() const override
+    vector<pair<Shape, Type>> get_state_specs() const override
     {
         const Index features = input_shape.size();
         if (features == 0) return {};
-        return {Shape{features}, Shape{features}, Shape{features}, Shape{features}, Shape{features}};
+        return {
+            /*Minimums*/           {Shape{features}, Type::FP32},
+            /*Maximums*/           {Shape{features}, Type::FP32},
+            /*Means*/              {Shape{features}, Type::FP32},
+            /*StandardDeviations*/ {Shape{features}, Type::FP32},
+            /*Scalers*/            {Shape{features}, Type::FP32},
+        };
     }
 
-    // Getters return by value (zero-copy via states[].as_vector() + Eigen move on return).
     VectorR get_minimums() const
     {
         return (ssize(states) > Minimums && states[Minimums].data) ? states[Minimums].as_vector() : VectorR();
@@ -95,48 +84,27 @@ public:
 
     void set(const Shape& new_input_shape = {})
     {
-        if (!new_input_shape.empty() && new_input_shape.rank != Rank -1)
-        {
-           ostringstream buffer;
-           buffer << "OpenNN Exception: Scaling Layer.\n"
-                  << "void set(const Shape& new_input_shape) method.\n"
-                  << "Input shape size must be " << Rank - 1 << ", but is " << new_input_shape.rank << ".\n";
-           throw logic_error(buffer.str());
-        }
-
-        if (new_input_shape.empty())
-        {
-            input_shape = {};
-            name = "Scaling" + to_string(Rank) + "d";
-            if constexpr (Rank == 2) layer_type = LayerType::Scaling2d;
-            else if constexpr (Rank == 3) layer_type = LayerType::Scaling3d;
-            else layer_type = LayerType::Scaling4d;
-            is_trainable = false;
-            return;
-        }
-
         input_shape = new_input_shape;
+        is_trainable = false;
+        name = "Scaling";
+        layer_type = LayerType::Scaling;
 
-        const Index new_inputs_number = new_input_shape.size();
+        if (input_shape.empty())
+            return;
 
-        // Scaler methods are enum-valued, not float, so they can't live solely in the arena.
-        // Keep as member; link_states() will write-through the float cast into states[Scalers].
+        if (input_shape.rank != 1 && input_shape.rank != 2 && input_shape.rank != 3)
+            throw runtime_error("Scaling layer supports input rank 1, 2 or 3 (got "
+                                + to_string(input_shape.rank) + ").");
+
+        const Index new_inputs_number = input_shape.size();
+
         scalers.assign(new_inputs_number, ScalerMethod::MeanStandardDeviation);
 
         label = "scaling_layer";
 
         set_min_max_range(float(-1), float(1));
-
-        name = "Scaling" + to_string(Rank) + "d";
-        if constexpr (Rank == 2) layer_type = LayerType::Scaling2d;
-        else if constexpr (Rank == 3) layer_type = LayerType::Scaling3d;
-        else layer_type = LayerType::Scaling4d;
-
-        is_trainable = false;
     }
 
-    // Runs after NN::compile() allocates the states arena. Initializes descriptive
-    // defaults (means=0, std=1, min=-1, max=1) and writes scaler enums as float.
     float* link_states(float* pointer) override
     {
         float* next = Layer::link_states(pointer);
@@ -144,16 +112,16 @@ public:
         if(ssize(states) < 5) return next;
 
         if(states[Means].data)
-            VectorMap(states[Means].template as<float>(), states[Means].size()).setZero();
+            VectorMap(states[Means].as<float>(), states[Means].size()).setZero();
         if(states[StandardDeviations].data)
-            VectorMap(states[StandardDeviations].template as<float>(), states[StandardDeviations].size()).setOnes();
+            VectorMap(states[StandardDeviations].as<float>(), states[StandardDeviations].size()).setOnes();
         if(states[Minimums].data)
-            VectorMap(states[Minimums].template as<float>(), states[Minimums].size()).setConstant(float(-1));
+            VectorMap(states[Minimums].as<float>(), states[Minimums].size()).setConstant(float(-1));
         if(states[Maximums].data)
-            VectorMap(states[Maximums].template as<float>(), states[Maximums].size()).setOnes();
+            VectorMap(states[Maximums].as<float>(), states[Maximums].size()).setOnes();
         if(states[Scalers].data && ssize(scalers) == states[Scalers].size())
             for(size_t i = 0; i < scalers.size(); ++i)
-                states[Scalers].template as<float>()[i] = static_cast<float>(scalers[i]);
+                states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
 
         return next;
     }
@@ -168,7 +136,6 @@ public:
         set_input_shape(new_output_shape);
     }
 
-    // Requires NN::compile() first — writes directly into the states arena.
     void set_descriptives(const vector<Descriptives>& new_descriptives)
     {
         if(ssize(states) < 5 || !states[Means].data)
@@ -180,10 +147,10 @@ public:
 
         for(Index i = 0; i < descriptives_count; ++i)
         {
-            states[Means].template as<float>()[i]              = new_descriptives[i].mean;
-            states[StandardDeviations].template as<float>()[i] = new_descriptives[i].standard_deviation;
-            states[Minimums].template as<float>()[i]           = new_descriptives[i].minimum;
-            states[Maximums].template as<float>()[i]           = new_descriptives[i].maximum;
+            states[Means].as<float>()[i]              = new_descriptives[i].mean;
+            states[StandardDeviations].as<float>()[i] = new_descriptives[i].standard_deviation;
+            states[Minimums].as<float>()[i]           = new_descriptives[i].minimum;
+            states[Maximums].as<float>()[i]           = new_descriptives[i].maximum;
         }
     }
 
@@ -247,8 +214,8 @@ public:
         buffer.precision(10);
 
         const Index inputs_number = get_output_shape().size();
-        const float* mins = states[Minimums].template as<float>();
-        const float* maxs = states[Maximums].template as<float>();
+        const float* mins = states[Minimums].as<float>();
+        const float* maxs = states[Maximums].as<float>();
         for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = 2*(" << input_names[i] << "-(" << mins[i]
                    << "))/(" << maxs[i] << "-(" << mins[i] << "))-1;\n";
@@ -262,8 +229,8 @@ public:
         buffer.precision(10);
 
         const Index inputs_number = get_output_shape().size();
-        const float* mns = states[Means].template as<float>();
-        const float* sds = states[StandardDeviations].template as<float>();
+        const float* mns = states[Means].as<float>();
+        const float* sds = states[StandardDeviations].as<float>();
         for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = (" << input_names[i] << "-(" << mns[i]
                    << "))/" << sds[i] << ";\n";
@@ -277,21 +244,19 @@ public:
         buffer.precision(10);
 
         const Index inputs_number = get_output_shape().size();
-        const float* sds = states[StandardDeviations].template as<float>();
+        const float* sds = states[StandardDeviations].as<float>();
         for(Index i = 0; i < inputs_number; ++i)
             buffer << output_names[i] << " = " << input_names[i] << "/(" << sds[i] << ");\n";
 
         return buffer.str();
     }
 
-    // Phase 1: config only (neurons_number, scalers, min/max range).
     void from_XML(const XmlDocument& document) override
     {
-        const XmlElement* scaling_layer_element = get_xml_root(document, name);
+        const XmlElement* scaling_layer_element = document.first_child_element("Scaling");
+        if (!scaling_layer_element) throw runtime_error(name + " element is nullptr.");
 
-        const Index neurons_number = read_xml_index(scaling_layer_element, "NeuronsNumber");
-
-        set({ neurons_number });
+        set(string_to_shape(read_xml_string(scaling_layer_element, "InputDimensions")));
 
         const vector<string> scaler_names = get_tokens(read_xml_string(scaling_layer_element, "Scalers"), " ");
         scalers.resize(scaler_names.size());
@@ -302,41 +267,41 @@ public:
         max_range = float(stof(read_xml_string(scaling_layer_element, "MaxRange")));
     }
 
-    // Phase 2: descriptives parsed directly into the states arena.
     void load_state_from_XML(const XmlDocument& document) override
     {
         if(ssize(states) < 5 || !states[Means].data) return;
 
-        const XmlElement* scaling_layer_element = get_xml_root(document, name);
+        const XmlElement* scaling_layer_element = document.first_child_element("Scaling");
+        if (!scaling_layer_element) throw runtime_error(name + " element is nullptr.");
 
         VectorR tmp;
         string_to_vector(read_xml_string(scaling_layer_element, "Means"), tmp);
         if(tmp.size() == states[Means].size())
-            VectorMap(states[Means].template as<float>(), states[Means].size()) = tmp;
+            VectorMap(states[Means].as<float>(), states[Means].size()) = tmp;
 
         string_to_vector(read_xml_string(scaling_layer_element, "StandardDeviations"), tmp);
         if(tmp.size() == states[StandardDeviations].size())
-            VectorMap(states[StandardDeviations].template as<float>(), states[StandardDeviations].size()) = tmp;
+            VectorMap(states[StandardDeviations].as<float>(), states[StandardDeviations].size()) = tmp;
 
         string_to_vector(read_xml_string(scaling_layer_element, "Minimums"), tmp);
         if(tmp.size() == states[Minimums].size())
-            VectorMap(states[Minimums].template as<float>(), states[Minimums].size()) = tmp;
+            VectorMap(states[Minimums].as<float>(), states[Minimums].size()) = tmp;
 
         string_to_vector(read_xml_string(scaling_layer_element, "Maximums"), tmp);
         if(tmp.size() == states[Maximums].size())
-            VectorMap(states[Maximums].template as<float>(), states[Maximums].size()) = tmp;
+            VectorMap(states[Maximums].as<float>(), states[Maximums].size()) = tmp;
     }
 
     void to_XML(XmlPrinter& printer) const override
     {
-        printer.open_element(name.c_str());
+        printer.open_element("Scaling");
 
         vector<string> scaler_names(scalers.size());
         for(size_t i = 0; i < scalers.size(); ++i)
             scaler_names[i] = scaler_method_to_string(scalers[i]);
 
         write_xml(printer, {
-            {"NeuronsNumber", to_string(get_outputs_number())},
+            {"InputDimensions", shape_to_string(input_shape)},
             {"Means", vector_to_string(states[Means].as_vector())},
             {"StandardDeviations", vector_to_string(states[StandardDeviations].as_vector())},
             {"Minimums", vector_to_string(states[Minimums].as_vector())},
@@ -351,22 +316,18 @@ public:
 
 private:
 
-    // Helper: writes the current scaler enum values into the arena (as floats).
-    // Needed because ScalerMethod is non-float; setters maintain the enum member
-    // and mirror it into states[Scalers] for the forward kernel.
     void flush_scalers_to_states()
     {
         if(ssize(states) <= Scalers || !states[Scalers].data) return;
         if(ssize(scalers) != states[Scalers].size()) return;
         for(size_t i = 0; i < scalers.size(); ++i)
-            states[Scalers].template as<float>()[i] = static_cast<float>(scalers[i]);
+            states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
     }
 
     Shape input_shape;
 
     enum Forward {Input, Output};
 
-    // Scaler method is enum, not float — can't live in the arena directly.
     vector<ScalerMethod> scalers;
 
     float min_range;

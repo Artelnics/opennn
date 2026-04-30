@@ -57,23 +57,21 @@ private:
     enum Forward { Input, MaximalIndices, Output };
     enum Backward { OutputDelta, InputDelta };
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
-        return {(pooling_method == PoolingMethod::MaxPooling)
-                    ? Shape{batch_size, input_features}   // MaximalIndices
-                    : Shape{},
-                { batch_size, input_features }};          // Output (must be last)
+        const Type act = activation_dtype;
+        return {
+            /*MaximalIndices*/ {(pooling_method == PoolingMethod::MaxPooling)
+                                    ? Shape{batch_size, input_features}
+                                    : Shape{},
+                                Type::FP32},
+            /*Output*/         {{batch_size, input_features}, act}, // must be last
+        };
     }
 
-    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {CUDNN_DATA_FLOAT,            // MaximalIndices
-                to_cudnn(activation_dtype)}; // Output
-    }
-
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        return {{ batch_size, sequence_length, input_features }};
+        return {{{batch_size, sequence_length, input_features}, activation_dtype}};
     }
 
     Index sequence_length = 0;

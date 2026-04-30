@@ -31,16 +31,10 @@ namespace opennn
 
 void register_classes()
 {
-    const Dense<2> dense_2d;
-    const Dense<3> dense_3d;
-    const Scaling<2> scaling_2d;
-    const Scaling<3> scaling_3d;
-    const Scaling<4> scaling_4d;
-    const Flatten<2> flatten_2d;
-    const Flatten<3> flatten_3d;
-    const Flatten<4> flatten_4d;
-    const Addition<3> addition_3d;
-    const Addition<4> addition_4d;
+    const Dense dense;
+    const Scaling scaling;
+    const Flatten flatten;
+    const Addition addition;
     const Embedding embedding;
     const MultiHeadAttention multi_head_attention;
     const Normalization3d normalization_3d;

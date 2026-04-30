@@ -31,18 +31,12 @@ public:
     void add_layer(unique_ptr<Layer>,
                   const vector<Index>& = vector<Index>());
 
-    // Resolved runtime configuration captured by compile() — see tensor_utilities.h's
-    // `Configuration` class for how Auto values are picked.
     const Configuration::Resolved& get_config() const { return config; }
     bool is_gpu() const { return config.device == DeviceType::CUDA; }
     bool is_cpu() const { return config.device == DeviceType::CPU; }
 
-    // Project-internal dtype for activations / parameters. Training and inference
-    // can differ (e.g. train Float32 but infer BP16). High-level code reads these;
-    // conversion to cuDNN/CUDA library constants happens at API boundaries via
-    // to_cudnn() / to_cuda() in configuration.h.
-    ActivationDtype get_training_dtype()  const { return to_activation_dtype(config.training_precision); }
-    ActivationDtype get_inference_dtype() const { return to_activation_dtype(config.inference_precision); }
+    Type get_training_dtype()  const { return to_type(config.training_precision); }
+    Type get_inference_dtype() const { return to_type(config.inference_precision); }
 
     vector<vector<Shape>> get_parameter_shapes() const
     {
@@ -88,10 +82,6 @@ public:
         return shapes;
     }
 
-    // Total aligned-element counts for each arena. compile() and the
-    // ForwardPropagation / BackPropagation set()/allocate_device() paths all
-    // need these to size their buffers, so they live on the network rather
-    // than being recomputed by hand at every call site.
     Index get_states_size() const     { return aligned_total_elements(get_state_shapes()); }
     Index get_forward_size(Index b)  const { return aligned_total_elements(get_forward_shapes(b));  }
     Index get_backward_size(Index b) const { return aligned_total_elements(get_backward_shapes(b)); }
@@ -231,10 +221,6 @@ public:
 
 public:
 
-    // BF16 working copy of `parameters`. Allocated by copy_parameters_device()
-    // when the resolved Configuration sets training or inference precision to BP16.
-    // Refreshed by cast_parameters_to_bf16() after each Adam step. Empty otherwise;
-    // call sites fall back to the FP32 master.
     void cast_parameters_to_bf16();
 
     void copy_parameters_device();

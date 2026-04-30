@@ -36,10 +36,12 @@ Shape Normalization3d::get_output_shape() const
     return { sequence_length, embedding_dimension };
 }
 
-vector<Shape> Normalization3d::get_parameter_shapes() const
+vector<pair<Shape, Type>> Normalization3d::get_parameter_specs() const
 {
-    return {{embedding_dimension},
-            {embedding_dimension}};
+    return {
+        /*Gamma*/ {{embedding_dimension}, Type::FP32},
+        /*Beta*/  {{embedding_dimension}, Type::FP32},
+    };
 }
 
 // Setters

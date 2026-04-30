@@ -38,7 +38,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     
     if(is_gpu)
     {
-        vector<vector<cudnnDataType_t>> forward_dtypes(layers_number);
+        vector<vector<Type>> forward_dtypes(layers_number);
         for(Index i = 0; i < layers_number; ++i)
             forward_dtypes[i] = layers[i]->get_forward_dtypes(batch_size);
 
@@ -143,14 +143,9 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                 if(auto* conv = dynamic_cast<Convolutional*>(layer.get()))
                     conv->init_cuda(batch_size);
             }
-            else if(layer->get_type() == LayerType::Dense2d)
+            else if(layer->get_type() == LayerType::Dense)
             {
-                if(auto* dense = dynamic_cast<Dense<2>*>(layer.get()))
-                    dense->init_cuda(batch_size);
-            }
-            else if(layer->get_type() == LayerType::Dense3d)
-            {
-                if(auto* dense = dynamic_cast<Dense<3>*>(layer.get()))
+                if(auto* dense = dynamic_cast<Dense*>(layer.get()))
                     dense->init_cuda(batch_size);
             }
             else if(layer->get_type() == LayerType::MultiHeadAttention)

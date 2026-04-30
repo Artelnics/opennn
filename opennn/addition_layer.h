@@ -16,7 +16,6 @@
 namespace opennn
 {
 
-template<int Rank>
 class Addition final : public Layer
 {
 
@@ -31,35 +30,30 @@ public:
 
     Shape get_output_shape() const override { return input_shape; }
 
-    vector<Shape> get_forward_shapes(Index batch_size) const override
+    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override
     {
-        return {Shape{batch_size}.append(input_shape)};
+        return {{Shape{batch_size}.append(input_shape), activation_dtype}};
     }
 
-    vector<Shape> get_backward_shapes(Index batch_size) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {Shape{batch_size}.append(input_shape),   // InputDelta0
-                Shape{batch_size}.append(input_shape)};  // InputDelta1
+        const Type act = activation_dtype;
+        return {
+            /*InputDelta0*/ {Shape{batch_size}.append(input_shape), act},
+            /*InputDelta1*/ {Shape{batch_size}.append(input_shape), act},
+        };
     }
 
     void set(const Shape& new_input_shape, const string& new_label)
     {
-        if(!new_input_shape.empty() && new_input_shape.rank != Rank - 1)
-            throw runtime_error("Input shape rank for AdditionLayer<" + to_string(Rank) + "> must be " + to_string(Rank - 1) + " (without batch dimension).");
-
         input_shape = new_input_shape;
-
         label = new_label;
+        name = "Addition";
+        layer_type = LayerType::Addition;
 
-        if constexpr (Rank == 3) {
-            name = "Addition3d";
-            layer_type = LayerType::Addition3d;
-        } else if constexpr (Rank == 4) {
-            name = "Addition4d";
-            layer_type = LayerType::Addition4d;
-        } else {
-            throw runtime_error("Addition layer not implemented for rank: " + to_string(Rank));
-        }
+        if (!input_shape.empty() && input_shape.rank != 2 && input_shape.rank != 3)
+            throw runtime_error("Addition layer supports input rank 2 or 3 (got "
+                                + to_string(input_shape.rank) + ").");
     }
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept override
@@ -82,7 +76,7 @@ public:
     void from_XML(const XmlDocument& document) override
     {
         const XmlElement* element = document.first_child_element("Addition");
-        if(!element) throw runtime_error(name + " element is nullptr.");
+        if (!element) throw runtime_error(name + " element is nullptr.");
 
         const string new_label = read_xml_string(element, "Label");
         const Shape new_input_shape = string_to_shape(read_xml_string(element, "InputDimensions"));
@@ -102,7 +96,7 @@ public:
         printer.close_element();
     }
 
-    void set_input_shape(const Shape& shape) override { input_shape = shape; }
+    void set_input_shape(const Shape& shape) override { set(shape, label); }
 
 private:
 

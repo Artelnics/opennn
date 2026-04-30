@@ -13,22 +13,6 @@
 namespace opennn
 {
 
-// ---------------------------------------------------------------------------
-// PRNG state
-//
-// `global_seed` is the single source of truth for the user-visible seed:
-//   -1   → no deterministic seed; each thread initializes from random_device
-//   >= 0 → deterministic mode; thread N seeds with `global_seed + N*5489u`,
-//          giving each OpenMP worker its own non-correlated stream while
-//          keeping the whole run reproducible.
-//
-// `seed_generation` is a monotonic counter bumped on every set_seed() call.
-// Each thread caches the last generation it observed in `local_generation`;
-// when they differ, get_generator() reseeds the thread's mt19937 lazily.
-// This means a set_seed() from the main thread propagates to OMP workers the
-// next time they hit get_generator(), without any explicit synchronization.
-// ---------------------------------------------------------------------------
-
 static std::atomic<long long>    global_seed{-1};
 static std::atomic<unsigned int> seed_generation{0};
 
@@ -90,13 +74,6 @@ bool random_bool(float probability)
     bernoulli_distribution distribution(probability);
     return distribution(get_generator());
 }
-
-// The set_random_* helpers below run under `#pragma omp parallel`. The PRNG
-// machinery above guarantees that each OpenMP worker reseeds itself the first
-// time it touches get_generator() after a set_seed(), so parallel init is
-// reproducible bit-for-bit (given the same OMP_NUM_THREADS and a `static`
-// schedule). Without the seed-generation tracking these were silently
-// non-deterministic — that was the airfoil_self_noise CPU divergence bug.
 
 void set_random_uniform(MatrixR& tensor, float min, float max)
 {

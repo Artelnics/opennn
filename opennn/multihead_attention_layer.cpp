@@ -67,16 +67,19 @@ Shape MultiHeadAttention::get_output_shape() const
     return get_input_shape();
 }
 
-vector<Shape> MultiHeadAttention::get_parameter_shapes() const
+vector<pair<Shape, Type>> MultiHeadAttention::get_parameter_specs() const
 {
-    return {{embedding_dimension, embedding_dimension},
-            {embedding_dimension},
-            {embedding_dimension, embedding_dimension},
-            {embedding_dimension},
-            {embedding_dimension, embedding_dimension},
-            {embedding_dimension},
-            {embedding_dimension, embedding_dimension},
-            {embedding_dimension}};
+    const Type act = activation_dtype;
+    return {
+        /*QueryWeight*/      {{embedding_dimension, embedding_dimension}, act},
+        /*QueryBias*/        {{embedding_dimension},                      act},
+        /*KeyWeight*/        {{embedding_dimension, embedding_dimension}, act},
+        /*KeyBias*/          {{embedding_dimension},                      act},
+        /*ValueWeight*/      {{embedding_dimension, embedding_dimension}, act},
+        /*ValueBias*/        {{embedding_dimension},                      act},
+        /*ProjectionWeight*/ {{embedding_dimension, embedding_dimension}, act},
+        /*ProjectionBias*/   {{embedding_dimension},                      act},
+    };
 }
 
 void MultiHeadAttention::set_parameters_random()

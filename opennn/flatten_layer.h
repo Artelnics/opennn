@@ -16,7 +16,6 @@
 namespace opennn
 {
 
-template<int Rank>
 class Flatten final : public Layer
 {
 
@@ -33,42 +32,38 @@ public:
 
     void set(const Shape& new_input_shape)
     {
-        if (!new_input_shape.empty() && new_input_shape.rank != Rank - 1)
-            throw runtime_error("Error: Input shape size must match layer Rank in FlattenLayer::set().");
-
-        name = "Flatten" + to_string(Rank) + "d";
-        if constexpr (Rank == 2) layer_type = LayerType::Flatten2d;
-        else if constexpr (Rank == 3) layer_type = LayerType::Flatten3d;
-        else layer_type = LayerType::Flatten4d;
-
-        set_label("flatten_layer");
-
         input_shape = new_input_shape;
+        set_label("flatten_layer");
+        name = "Flatten";
+        layer_type = LayerType::Flatten;
+
+        if (!input_shape.empty()
+            && input_shape.rank != 1 && input_shape.rank != 2 && input_shape.rank != 3)
+            throw runtime_error("Flatten layer supports input rank 1, 2 or 3 (got "
+                                + to_string(input_shape.rank) + ").");
     }
 
     void set_input_shape(const Shape& new_input_shape) override
     {
-        input_shape = new_input_shape;
+        set(new_input_shape);
     }
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
-        return {Shape{batch_size}.append(get_output_shape())};
+        return {{Shape{batch_size}.append(get_output_shape()), activation_dtype}};
     }
 
-    vector<Shape> get_backward_shapes(Index batch_size) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {Shape{batch_size}.append(input_shape)};
+        return {{Shape{batch_size}.append(input_shape), activation_dtype}};
     }
 
-    
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept override
     {
         auto& forward_views = forward_propagation.views[layer];
 
         copy(forward_views[Input][0], forward_views[Output][0]);
     }
-
 
     void back_propagate(ForwardPropagation&,
                         BackPropagation& back_propagation,
@@ -78,67 +73,27 @@ public:
 
         copy(delta_views[OutputDelta][0], delta_views[InputDelta][0]);
     }
-    
-    // Serialization
 
     void from_XML(const XmlDocument& document) override
     {
-        const XmlElement* element = get_xml_root(document, "Flatten");
+        const XmlElement* element = document.first_child_element("Flatten");
+        if (!element) throw runtime_error(name + " element is nullptr.");
 
-        const Index input_height = read_xml_index(element, "InputHeight");
-        const Index input_width = read_xml_index(element, "InputWidth");
-
-        if constexpr (Rank == 3)
-        {
-            const Index input_channels = read_xml_index(element, "InputChannels");
-            set({input_height, input_width, input_channels});
-        }
-        else
-            set({input_height, input_width});
-
+        set(string_to_shape(read_xml_string(element, "InputDimensions")));
     }
 
     void to_XML(XmlPrinter& printer) const override
     {
         printer.open_element("Flatten");
 
-        if constexpr (Rank == 3)
-            write_xml(printer, {
-                {"InputHeight", to_string(get_input_height())},
-                {"InputWidth", to_string(get_input_width())},
-                {"InputChannels", to_string(get_input_channels())}
-            });
-        else
-            write_xml(printer, {
-                {"InputHeight", to_string(get_input_height())},
-                {"InputWidth", to_string(get_input_width())}
-            });
+        write_xml(printer, {
+            {"InputDimensions", shape_to_string(input_shape)}
+        });
 
         printer.close_element();
     }
 
 private:
-
-    Index get_input_height() const
-    {
-        if constexpr (Rank < 2)
-            throw logic_error("get_input_height() requires Rank ≥ 2.");
-        return input_shape[0];
-    }
-
-    Index get_input_width() const
-    {
-        if constexpr (Rank < 2)
-            throw logic_error("get_input_width() requires Rank >= 2.");
-        return input_shape[1];
-    }
-
-    Index get_input_channels() const
-    {
-        if constexpr (Rank < 3)
-            throw logic_error("get_input_channels() requires Rank >= 3.");
-        return input_shape[2];
-    }
 
     Shape input_shape;
 

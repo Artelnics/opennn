@@ -68,10 +68,7 @@ Device::Device()
     CHECK_CUDNN(cudnnCreate(&cudnn_handle));
     CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
 
-    // Compute type for OpTensor is the precision of the elementwise op, which
-    // must be FP32 when input tensors are FP16/BF16 (cuDNN does not implement
-    // BF16/FP16 compute for these ops). Tensor data type is set per-call via
-    // the tensor descriptors, so this stays FP32 regardless of activation dtype.
+    // OpTensor compute must be FP32 when input tensors are FP16/BF16 (cuDNN does not implement BF16/FP16 compute).
     CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
     CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
 

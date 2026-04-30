@@ -2105,9 +2105,6 @@ void Dataset::unuse_Tukey_outliers(const float cleaning_parameter)
 {
     const vector<vector<Index>> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 
-    // calculate_Tukey_outliers returns one vector per feature. Collapse to a
-    // single sample-index list (sample is "outlier" if any feature flags it)
-    // before delegating to get_elements_greater_than.
     vector<Index> flat_outliers;
     for (const auto& per_feature : outliers_indices)
         flat_outliers.insert(flat_outliers.end(), per_feature.begin(), per_feature.end());

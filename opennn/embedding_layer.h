@@ -31,40 +31,29 @@ public:
     Shape get_input_shape() const override { return {sequence_length}; }
     Shape get_output_shape() const override;
 
-    vector<Shape> get_parameter_shapes() const override;
-
     // Embedding's weight is the vocabulary lookup table [V, D]. Its gradient is
     // accumulated via atomicAdd, which on bfloat16 requires CC ≥ 9.0 (Hopper).
     // RTX 4080 (Ada, CC 8.9) does NOT support atomicAdd<__nv_bfloat16>, so we
     // pin the embedding weight to FP32 even when activations are BF16.
-    vector<cudnnDataType_t> get_parameter_dtypes() const override
+    vector<pair<Shape, Type>> get_parameter_specs() const override;
+
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
-        return vector<cudnnDataType_t>(get_parameter_shapes().size(), CUDNN_DATA_FLOAT);
+        return {/*Output*/ {{batch_size, sequence_length, embedding_dimension},
+                            activation_dtype}};
     }
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{batch_size, sequence_length, embedding_dimension}}; // Output
+        return {{{batch_size, sequence_length}, activation_dtype}};
     }
 
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        return {{batch_size, sequence_length}};
-    }
-
-    // Positional encoding lives in the NN-owned `states` arena: it is read-only,
-    // independent of batch_size, and persists across iterations — same lifecycle
-    // as Scaling's descriptive stats or BatchNorm's running mean/variance.
-    // Slot is empty when add_positional_encoding=false.
-    vector<Shape> get_state_shapes() const override
+    vector<pair<Shape, Type>> get_state_specs() const override
     {
         if (!add_positional_encoding) return {};
-        return {{sequence_length, embedding_dimension}};
+        return {/*PositionalEncoding*/ {{sequence_length, embedding_dimension}, Type::FP32}};
     }
 
-    // Runs after NeuralNetwork::compile() allocates the states arena. Writes
-    // the sinusoidal table directly into the slot so we never need a separate
-    // Buffer/MatrixR member or an explicit H2D copy.
     float* link_states(float* pointer) override;
 
     void set(const Index = 0,

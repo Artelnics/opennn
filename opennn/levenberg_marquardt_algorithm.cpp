@@ -137,12 +137,9 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& batch,
 
     back_propagation_lm.squared_errors_jacobian.setZero();
 
-    // Current insert_dense_jacobian only handles single-layer Jacobians correctly
-    // (row indexing uses the layer's own neuron count). For multi-layer networks,
-    // find the last trainable Dense and compute offset up to it.
     Index last_trainable_dense = -1;
     for (size_t i = 0; i < layers.size(); ++i)
-        if (layers[i]->get_is_trainable() && dynamic_cast<Dense<2>*>(layers[i].get()))
+        if (layers[i]->get_is_trainable() && dynamic_cast<Dense*>(layers[i].get()))
             last_trainable_dense = i;
 
     if (last_trainable_dense < 0) return;
@@ -153,7 +150,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& batch,
         if (layers[i]->get_is_trainable())
             parameter_offset += layers[i]->get_parameters_number();
 
-    auto* dense = dynamic_cast<Dense<2>*>(layers[last_trainable_dense].get());
+    auto* dense = dynamic_cast<Dense*>(layers[last_trainable_dense].get());
     insert_dense_jacobian(dense, forward_propagation, last_trainable_dense, parameter_offset, back_propagation_lm.squared_errors_jacobian);
 }
 
@@ -476,7 +473,7 @@ static MatrixR activation_derivative(ActivationFunction activation_function, con
     }
 }
 
-void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
+void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense* layer,
                                                         const ForwardPropagation& forward_propagation,
                                                         Index layer_index,
                                                         Index parameter_offset,

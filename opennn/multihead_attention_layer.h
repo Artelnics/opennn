@@ -61,41 +61,46 @@ public:
 
     Shape get_output_shape() const override;
 
-    vector<Shape> get_parameter_shapes() const override;
+    vector<pair<Shape, Type>> get_parameter_specs() const override;
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
         const Index head_dimension = get_head_dimension();
-
         const Index max_seq = max(query_sequence_length, source_sequence_length);
+        const Type act = activation_dtype;
 
         const Shape attn_drop_shape = (dropout_rate > float(0))
             ? Shape{batch_size, heads_number, query_sequence_length, source_sequence_length}
             : Shape{};
 
-        return {{batch_size, heads_number, query_sequence_length, head_dimension},         // Query
-                {batch_size, heads_number, source_sequence_length, head_dimension},        // Key
-                {batch_size, heads_number, query_sequence_length, source_sequence_length}, // AttentionWeights
-                attn_drop_shape,                                                           // AttentionWeightsDropped
-                {batch_size, query_sequence_length, embedding_dimension},                  // ConcatenatedAttentionOutputs
-                {batch_size, heads_number, source_sequence_length, head_dimension},        // Value
-                {batch_size, source_sequence_length},                                      // PaddingMask
-                {batch_size, max_seq, embedding_dimension},                                // TransposeScratch
-                {batch_size, heads_number, query_sequence_length, head_dimension},         // AttentionOutputTransposed
-                {batch_size, query_sequence_length, embedding_dimension}};                 // Output (must be last)
+        return {
+            /*Query*/                        {{batch_size, heads_number, query_sequence_length, head_dimension},         act},
+            /*Key*/                          {{batch_size, heads_number, source_sequence_length, head_dimension},        act},
+            /*AttentionWeights*/             {{batch_size, heads_number, query_sequence_length, source_sequence_length}, act},
+            /*AttentionWeightsDropped*/      {attn_drop_shape,                                                           act},
+            /*ConcatenatedAttentionOutputs*/ {{batch_size, query_sequence_length, embedding_dimension},                  act},
+            /*Value*/                        {{batch_size, heads_number, source_sequence_length, head_dimension},        act},
+            /*PaddingMask*/                  {{batch_size, source_sequence_length},                                      act},
+            /*TransposeScratch*/             {{batch_size, max_seq, embedding_dimension},                                act},
+            /*AttentionOutputTransposed*/    {{batch_size, heads_number, query_sequence_length, head_dimension},         act},
+            /*Output*/                       {{batch_size, query_sequence_length, embedding_dimension},                  act},
+        };
     }
 
-    vector<Shape> get_backward_shapes(Index batch_size) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
         const Index head_dimension = get_head_dimension();
+        const Type act = activation_dtype;
 
-        return {{batch_size, query_sequence_length, embedding_dimension},                          // InputQueryDelta
-                {batch_size, source_sequence_length, embedding_dimension},                         // InputSourceDelta
-                {batch_size, heads_number, query_sequence_length, source_sequence_length},         // AttentionWeightDelta
-                {batch_size, query_sequence_length, embedding_dimension},                          // ConcatenatedOutputDelta
-                {batch_size, heads_number, query_sequence_length, head_dimension},                 // QueryDelta (transposed)
-                {batch_size, heads_number, source_sequence_length, head_dimension},                // KeyDelta (transposed)
-                {batch_size, heads_number, source_sequence_length, head_dimension}};               // ValueDelta (transposed)
+        return {
+            /*InputQueryDelta*/        {{batch_size, query_sequence_length, embedding_dimension},                  act},
+            /*InputSourceDelta*/       {{batch_size, source_sequence_length, embedding_dimension},                 act},
+            /*AttentionWeightDelta*/   {{batch_size, heads_number, query_sequence_length, source_sequence_length}, act},
+            /*ConcatenatedOutputDelta*/{{batch_size, query_sequence_length, embedding_dimension},                  act},
+            /*QueryDelta (transposed)*/{{batch_size, heads_number, query_sequence_length, head_dimension},         act},
+            /*KeyDelta (transposed)*/  {{batch_size, heads_number, source_sequence_length, head_dimension},        act},
+            /*ValueDelta (transposed)*/{{batch_size, heads_number, source_sequence_length, head_dimension},        act},
+        };
     }
 
     void set_input_shape(const Shape& new_input_shape) override

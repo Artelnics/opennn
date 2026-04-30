@@ -13,13 +13,6 @@
 namespace opennn
 {
 
-// ---------------------------------------------------------------------
-// TU-local state (process-lifetime, never freed). Mirrors the pattern used
-// for `pooling_scratch_` in kernel_layers.cu and `ones_*` in math_utilities.cpp.
-// Visibility is intentionally TU-private; callers go through the public
-// accessors below.
-// ---------------------------------------------------------------------
-
 namespace
 {
     void*  cublas_lt_workspace_ = nullptr;
@@ -95,10 +88,7 @@ const LtMatmulPlan& get_lt_gemm_plan(
 
     LtMatmulPlan plan;
 
-    // Compute type: FP32 accumulator. For FP32 inputs we use the TF32 fast
-    // path; for BF16 inputs we use plain CUBLAS_COMPUTE_32F because the
-    // _FAST_TF32 mode is only meaningful when inputs are FP32 (it tells
-    // cuBLAS to round FP32 inputs to TF32 before the TC multiply).
+    // _FAST_TF32 is FP32-input only; BF16 needs plain CUBLAS_COMPUTE_32F.
     const cublasComputeType_t compute_type = (io_dtype == CUDA_R_16BF)
                                                 ? CUBLAS_COMPUTE_32F
                                                 : CUBLAS_COMPUTE_32F_FAST_TF32;
@@ -110,14 +100,10 @@ const LtMatmulPlan& get_lt_gemm_plan(
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_EPILOGUE,
                                                 &epilogue, sizeof(epilogue)));
     // cuBLASLt 12.x requires bias dtype == output dtype for BF16/FP16 outputs.
-    // FP32 bias on BF16 output returns 0 algos from the heuristic. So we mirror
-    // out_dtype here; storage at the bias pointer must match.
     const cudaDataType_t bias_dtype = out_dtype;
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
                                                 &bias_dtype, sizeof(bias_dtype)));
 
-    // Layouts. Inputs are column-major in the cuBLAS view (the row-major caller
-    // achieves row-major semantics by swapping operand roles outside this plan).
     const int a_rows = (transA == CUBLAS_OP_N) ? m : k;
     const int a_cols = (transA == CUBLAS_OP_N) ? k : m;
     const int b_rows = (transB == CUBLAS_OP_N) ? k : n;
@@ -128,9 +114,6 @@ const LtMatmulPlan& get_lt_gemm_plan(
     CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.c_desc, out_dtype, m, n, m));
     CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.d_desc, out_dtype, m, n, m));
 
-    // Heuristic: pick one algo that fits within our workspace budget. If none
-    // is returned, leave algo_valid=false and the call site will pass nullptr,
-    // letting cuBLASLt use its internal default (slower path, but always works).
     cublasLtMatmulPreference_t pref = nullptr;
     CHECK_CUBLAS(cublasLtMatmulPreferenceCreate(&pref));
     const size_t max_workspace = cublas_lt_workspace_bytes();

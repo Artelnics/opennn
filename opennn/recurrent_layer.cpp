@@ -27,9 +27,14 @@ Shape Recurrent::get_output_shape() const
     return { biases.size() };
 }
 
-vector<Shape> Recurrent::get_parameter_shapes() const
+vector<pair<Shape, Type>> Recurrent::get_parameter_specs() const
 {
-    return {biases.shape, input_weights.shape, recurrent_weights.shape};
+    const Type act = activation_dtype;
+    return {
+        {biases.shape,            act},
+        {input_weights.shape,     act},
+        {recurrent_weights.shape, act},
+    };
 }
 
 // Setters

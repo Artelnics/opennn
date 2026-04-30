@@ -14,10 +14,6 @@ namespace opennn
 
 #ifdef OPENNN_WITH_CUDA
 
-// Compute Σ (input − target)² for tensors that may have different dtypes
-// (typical case: input = model output in BF16, target = labels in FP32). cuDNN
-// OpTensor requires uniform dtypes across A/B/C, so we lower to a custom kernel
-// that materializes (input − target) in FP32 and reduce with cublasSdot.
 static float sum_squared_diff_cuda(const TensorView& input, const TensorView& target, float* workspace)
 {
     const int total_size = to_int(input.size());
@@ -33,9 +29,6 @@ static float sum_squared_diff_cuda(const TensorView& input, const TensorView& ta
     return sum_squared;
 }
 
-// Compute output = scale * (input − target). Input/output may carry different
-// dtypes; target is always FP32 (Batch::target). Replaces the cudnnOpTensor +
-// cublasScalEx pair, which choked on mixed dtypes.
 static void scaled_diff_cuda(const TensorView& input, const TensorView& target, float scale, TensorView& output)
 {
     input.dispatch([&](auto in_tag) {
@@ -58,8 +51,6 @@ static float sum_abs_cuda(const float* data, Index size)
     return sum;
 }
 
-// L2 regularization sums squared FP32 master parameters. Stays FP32 even when
-// activations are BF16 — the master parameters arena is always FP32.
 static float squared_norm_cuda(const float* data, Index size)
 {
     float dot = 0.0f;
@@ -127,7 +118,6 @@ void weighted_squared_error(const TensorView& input, const TensorView& target, f
                                        pos_w,
                                        neg_w);
 
-        // 0.5 factor to match the CPU path's textbook MSE formulation: loss = 0.5·Σ(out-tgt)²·w.
         error = 0.5f * sum_abs_cuda(workspace_device, input.size());
     })) return;
 
@@ -378,8 +368,6 @@ void l2_regularization_gradient(const TensorView& parameters, float lambda, Tens
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
         const int total_size = to_int(parameters.size());
-        // L2 regularization runs over the FP32 master parameters and the FP32
-        // gradient buffer; both stay FP32 regardless of TrainingPrecision.
         CHECK_CUBLAS(cublasAxpyEx(Device::get_cublas_handle(), total_size,
                                   &lambda,         CUDA_R_32F,
                                   parameters.data, CUDA_R_32F, 1,

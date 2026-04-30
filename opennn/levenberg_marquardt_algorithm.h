@@ -152,7 +152,7 @@ private:
                          const ForwardPropagation& forward_propagation,
                          BackPropagationLM& back_propagation_lm);
 
-   void insert_dense_jacobian(const Dense<2>* layer,
+   void insert_dense_jacobian(const Dense* layer,
                               const ForwardPropagation& forward_propagation,
                               Index layer_index,
                               Index parameter_offset,

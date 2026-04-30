@@ -89,6 +89,7 @@ void Pooling3d::from_XML(const XmlDocument& document)
 {
     const XmlElement* element = get_xml_root(document, "Pooling3d");
 
+    set_label(read_xml_string(element, "Label"));
     set_input_shape(string_to_shape(read_xml_string(element, "InputDimensions")));
     set_pooling_method(read_xml_string(element, "PoolingMethod"));
 }
@@ -97,6 +98,7 @@ void Pooling3d::to_XML(XmlPrinter& printer) const
 {
     printer.open_element("Pooling3d");
     write_xml(printer, {
+        {"Label", label},
         {"InputDimensions", shape_to_string(get_input_shape())},
         {"PoolingMethod", write_pooling_method()}
     });

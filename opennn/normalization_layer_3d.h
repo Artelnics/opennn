@@ -38,35 +38,25 @@ public:
         }
     }
 
-    vector<Shape> get_parameter_shapes() const override;
+    // Gamma and beta are 1-D and stay FP32: our layernorm CUDA kernels read
+    // `const float* gamma`/`beta` and would not compile if these slots ever
+    // changed dtype.
+    vector<pair<Shape, Type>> get_parameter_specs() const override;
 
-    // Gamma and beta are 1-D and stay FP32 by the default rule, but be explicit
-    // anyway: our layernorm CUDA kernels read `const float* gamma`/`beta` and
-    // would not compile if these slots ever changed dtype.
-    vector<cudnnDataType_t> get_parameter_dtypes() const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
-        return vector<cudnnDataType_t>(get_parameter_shapes().size(), CUDNN_DATA_FLOAT);
+        const Type act = activation_dtype;
+        return {
+            /*Means*/              {{batch_size, sequence_length},                      Type::FP32},
+            /*StandardDeviations*/ {{batch_size, sequence_length},                      Type::FP32},
+            /*NormalizedInputs*/   {{batch_size, sequence_length, embedding_dimension}, act},
+            /*Output*/             {{batch_size, sequence_length, embedding_dimension}, act},
+        };
     }
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{batch_size, sequence_length },                      // Means
-                {batch_size, sequence_length },                      // StandardDeviations
-                {batch_size, sequence_length, embedding_dimension},  // NormalizedInputs
-                {batch_size, sequence_length, embedding_dimension}}; // Output
-    }
-
-    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
-    {
-        return {CUDNN_DATA_FLOAT,            // Means
-                CUDNN_DATA_FLOAT,            // StandardDeviations
-                to_cudnn(activation_dtype),  // NormalizedInputs
-                to_cudnn(activation_dtype)}; // Output
-    }
-
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        return {{ batch_size, sequence_length, embedding_dimension}};
+        return {{{batch_size, sequence_length, embedding_dimension}, activation_dtype}};
     }
 
     void set(const Index = 0, Index = 0, const string& = "normalization_layer_3d");

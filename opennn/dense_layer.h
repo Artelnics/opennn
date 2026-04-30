@@ -14,13 +14,11 @@
 namespace opennn
 {
 
-template<int Rank>
 class Dense final : public Layer
 {
 private:
 
-    Index input_features = 0;
-    Index sequence_length = 0;
+    Shape input_shape;     // without-batch input shape; back() is feature count
     Index output_features;
 
     bool batch_normalization = false;
@@ -35,81 +33,77 @@ private:
 
     enum Parameters {Bias, Weight, Gamma, Beta};
 
-    vector<Shape> get_parameter_shapes() const override
+    vector<pair<Shape, Type>> get_parameter_specs() const override
     {
-        const Index input_dimension = input_features;
-
-        return {{output_features},                            // Bias
-                {input_dimension, output_features},           // Weight
-                {batch_normalization ? output_features : 0},  // Gamma
-                {batch_normalization ? output_features : 0}}; // Beta
+        const Type act = activation_dtype;
+        return {
+            /*Bias*/   {{output_features},                           act},
+            /*Weight*/ {{get_input_features(), output_features},     act},
+            /*Gamma*/  {{batch_normalization ? output_features : 0}, Type::FP32},
+            /*Beta*/   {{batch_normalization ? output_features : 0}, Type::FP32},
+        };
     }
 
-    // Bias and Weight follow the activation dtype (BF16 working copy when flag
-    // is on); Gamma and Beta stay FP32 because cuDNN's batch normalization
-    // expects FP32 scale/shift even when the activation tensors are BF16.
-    vector<cudnnDataType_t> get_parameter_dtypes() const override
+    Index get_input_features() const
     {
-        return {to_cudnn(activation_dtype),   // Bias
-                to_cudnn(activation_dtype),   // Weight
-                CUDNN_DATA_FLOAT,             // Gamma
-                CUDNN_DATA_FLOAT};            // Beta
+        return input_shape.empty() ? 0 : input_shape.back();
     }
 
     enum States {RunningMean, RunningVariance};
 
-    vector<Shape> get_state_shapes() const override
+    vector<pair<Shape, Type>> get_state_specs() const override
     {
         if (!batch_normalization) return {};
-        return {{output_features},   // RunningMean
-                {output_features}};  // RunningVariance
+        return {
+            /*RunningMean*/     {{output_features}, Type::FP32},
+            /*RunningVariance*/ {{output_features}, Type::FP32},
+        };
     }
 
     enum Forward {Input, Combination, BatchNormMean, BatchNormInverseVariance, Activation, Output};
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
         const Shape output_shape = Shape{batch_size}.append(get_output_shape());
+        const Type act = activation_dtype;
 
-        // Activation view stores the post-activation, pre-dropout value so that
-        // back-propagation can compute the activation derivative after dropout
-        // has overwritten the output tensor. Allocated only when dropout is in use.
         const Shape activation_shape = (dropout_rate > float(0)) ? output_shape : Shape{};
 
-        if(batch_normalization)
-            return {output_shape,             // Combination
-                    Shape{output_features},   // BatchNormMean
-                    Shape{output_features},   // BatchNormInverseVariance
-                    activation_shape,         // Activation
-                    output_shape};            // Output
-        else
-            return {Shape{},                  // Combination (unused)
-                    Shape{},                  // BatchNormMean (unused)
-                    Shape{},                  // BatchNormInverseVariance (unused)
-                    activation_shape,         // Activation
-                    output_shape};            // Output
-    }
+        const Shape combination_shape = batch_normalization ? output_shape           : Shape{};
+        const Shape bn_stat_shape     = batch_normalization ? Shape{output_features} : Shape{};
 
-    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
-    {
-        return {to_cudnn(activation_dtype),  // Combination
-                CUDNN_DATA_FLOAT,            // BatchNormMean
-                CUDNN_DATA_FLOAT,            // BatchNormInverseVariance
-                to_cudnn(activation_dtype),  // Activation
-                to_cudnn(activation_dtype)}; // Output
+        return {
+            /*Combination*/              {combination_shape, act},
+            /*BatchNormMean*/            {bn_stat_shape,     Type::FP32},
+            /*BatchNormInverseVariance*/ {bn_stat_shape,     Type::FP32},
+            /*Activation*/               {activation_shape,  act},
+            /*Output*/                   {output_shape,      act},
+        };
     }
 
     enum Backward {OutputDelta, InputDelta};
 
-    vector<Shape> get_backward_shapes(Index batch_size) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {Shape{batch_size}.append(get_input_shape())};
+        return {{Shape{batch_size}.append(get_input_shape()), activation_dtype}};
+    }
+
+    void init_dense_norm_defaults()
+    {
+        parameters[Bias].fill(0.0f);
+        parameters[Gamma].fill(1.0f);
+        parameters[Beta].fill(0.0f);
+        if (batch_normalization && ssize(states) > RunningVariance)
+        {
+            states[RunningMean].fill(0.0f);
+            states[RunningVariance].fill(1.0f);
+        }
     }
 
 public:
 
-    Dense(const Shape& new_input_shape = {0},
-          const Shape& new_output_shape = {0},
+    Dense(const Shape& new_input_shape = {},
+          const Shape& new_output_shape = {},
           const string& new_activation_function = "HyperbolicTangent",
           bool new_batch_normalization = false,
           const string& new_label = "dense_layer")
@@ -128,23 +122,17 @@ public:
 #endif
     }
 
-    Shape get_input_shape() const override
-    {
-        if constexpr (Rank == 2)
-            return {input_features};
-        else
-            return {sequence_length, input_features};
-    }
+    Shape get_input_shape() const override { return input_shape; }
 
     Shape get_output_shape() const override
     {
-        if constexpr (Rank == 2)
-            return {output_features};
-        else
-            return {sequence_length, output_features};
+        Shape result = input_shape;
+        if (result.empty()) return {output_features};
+        result.back() = output_features;
+        return result;
     }
 
-    Index get_sequence_length() const { return sequence_length; }
+    Index get_sequence_length() const { return (input_shape.rank == 2) ? input_shape[0] : Index(1); }
 
     const ActivationFunction& get_activation_function() const
     {
@@ -168,53 +156,38 @@ public:
              bool new_batch_normalization = false,
              const string& new_label = "dense_layer")
     {
-        if (new_input_shape.size() == 0 && new_output_shape.size() == 0)
+        is_trainable = true;
+        layer_type = LayerType::Dense;
+        name = "Dense";
+
+        if (new_input_shape.empty() && new_output_shape.empty())
         {
-            // Default construction for registry — will be configured via from_XML
-            name = (Rank == 2) ? "Dense2d" : "Dense3d";
-            layer_type = (Rank == 2) ? LayerType::Dense2d : LayerType::Dense3d;
-            is_trainable = true;
+            input_shape = {};
+            output_features = 0;
             return;
         }
 
-        if (new_input_shape.rank != Rank - 1)
-            throw runtime_error("Input shape size must be " + to_string(Rank - 1));
+        if (new_input_shape.rank != 1 && new_input_shape.rank != 2)
+            throw runtime_error("Dense input shape rank must be 1 or 2 (got "
+                                + to_string(new_input_shape.rank) + ").");
 
         if (new_output_shape.rank != 1)
-            throw runtime_error("Output shape size is not 1");
+            throw runtime_error("Dense output shape rank must be 1.");
 
-        if constexpr (Rank == 2)
-            input_features = new_input_shape[0];
-        else
-        {
-            sequence_length = new_input_shape[0];
-            input_features = new_input_shape[1];
-        }
-
+        input_shape = new_input_shape;
         output_features = new_output_shape.back();
 
         set_activation_function(new_activation_function);
-
         set_batch_normalization(new_batch_normalization);
-
         set_label(new_label);
-
-        name = "Dense" + to_string(Rank) + "d";
-        layer_type = (Rank == 2) ? LayerType::Dense2d : LayerType::Dense3d;
     }
 
     void set_input_shape(const Shape& new_input_shape) override
     {
-        if (new_input_shape.rank != Rank - 1)
-            throw runtime_error("Input shape size must be " + to_string(Rank - 1));
+        if (new_input_shape.rank != 1 && new_input_shape.rank != 2)
+            throw runtime_error("Dense input shape rank must be 1 or 2.");
 
-        if constexpr (Rank == 2)
-            input_features = new_input_shape[0];
-        else
-        {
-            sequence_length = new_input_shape[0];
-            input_features = new_input_shape[1];
-        }
+        input_shape = new_input_shape;
     }
 
     void set_output_shape(const Shape& new_output_shape) override
@@ -266,30 +239,15 @@ public:
     void set_parameters_glorot() override
     {
         const float limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
-        set_random_uniform(VectorMap(parameters[Weight].template as<float>(), parameters[Weight].size()), -limit, limit);
+        set_random_uniform(VectorMap(parameters[Weight].as<float>(), parameters[Weight].size()), -limit, limit);
         init_dense_norm_defaults();
     }
 
     void set_parameters_random() override
     {
-        set_random_uniform(VectorMap(parameters[Weight].template as<float>(), parameters[Weight].size()));
+        set_random_uniform(VectorMap(parameters[Weight].as<float>(), parameters[Weight].size()));
         init_dense_norm_defaults();
     }
-
-private:
-    // Bias=0, Gamma=1, Beta=0; running stats reset (when batch norm active).
-    void init_dense_norm_defaults()
-    {
-        parameters[Bias].fill(0.0f);
-        parameters[Gamma].fill(1.0f);
-        parameters[Beta].fill(0.0f);
-        if (batch_normalization && ssize(states) > RunningVariance)
-        {
-            states[RunningMean].fill(0.0f);
-            states[RunningVariance].fill(1.0f);
-        }
-    }
-public:
 
 #ifdef OPENNN_WITH_CUDA
 
@@ -315,14 +273,11 @@ public:
 
             const Index output_size = get_outputs_number();
 
-            // Always FP32: cuDNN 9 rejects BFLOAT16 in cudnnDropoutForward, so
-            // dropout is performed in FP32 (with up/down casts around the call,
-            // see math_utilities.cpp::dropout). Reserve-space size is computed
-            // for FP32 here so the runtime descriptor matches.
-            cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
+            // cuDNN 9 rejects BFLOAT16 in cudnnDropoutForward; pin to FP32.
+            cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, to_cudnn(Type::FP32),
                                        static_cast<int>(batch_size),
                                        static_cast<int>(output_size),
-                                       static_cast<int>(Rank == 3 ? sequence_length : 1),
+                                       static_cast<int>(get_sequence_length()),
                                        1);
 
             if (dropout_arguments.descriptor) { cudnnDestroyDropoutDescriptor(dropout_arguments.descriptor); dropout_arguments.descriptor = nullptr; }
@@ -389,7 +344,7 @@ public:
         }
         else
         {
-            ::opennn::profiler::ScopedTimer timer("dense3d_fwd:combination_activation");
+            ::opennn::profiler::ScopedTimer timer("dense_fwd:combination_activation");
             combination_activation(forward_views[Input][0],
                                    parameters[Weight], parameters[Bias],
                                    activation_arguments,
@@ -398,7 +353,7 @@ public:
 
         if (is_training && dropout_rate > float(0))
         {
-            ::opennn::profiler::ScopedTimer timer("dense3d_fwd:dropout_save_and_apply");
+            ::opennn::profiler::ScopedTimer timer("dense_fwd:dropout_save_and_apply");
             copy(forward_views[Output][0], forward_views[Activation][0]);
             dropout(forward_views[Output][0], dropout_arguments);
         }
@@ -419,20 +374,20 @@ public:
 
         if (dropout_rate > float(0))
         {
-            ::opennn::profiler::ScopedTimer dropout_delta_timer("dense3d_bwd:01_dropout_delta");
+            ::opennn::profiler::ScopedTimer dropout_delta_timer("dense_bwd:01_dropout_delta");
             dropout_delta(output_delta, output_delta, dropout_arguments);
-            ::opennn::profiler::ScopedTimer activation_delta_timer("dense3d_bwd:02_activation_delta_dropout");
+            ::opennn::profiler::ScopedTimer activation_delta_timer("dense_bwd:02_activation_delta_dropout");
             activation_delta(forward_views[Activation][0], output_delta, output_delta, activation_arguments);
         }
         else
         {
-            ::opennn::profiler::ScopedTimer timer("dense3d_bwd:02_activation_delta");
+            ::opennn::profiler::ScopedTimer timer("dense_bwd:02_activation_delta");
             activation_delta(output, output_delta, output_delta, activation_arguments);
         }
 
         if (batch_normalization)
         {
-            ::opennn::profiler::ScopedTimer timer("dense3d_bwd:03_batchnorm_backward");
+            ::opennn::profiler::ScopedTimer timer("dense_bwd:03_batchnorm_backward");
             batch_normalization_backward(forward_views[Combination][0],
                                          output,
                                          output_delta,
@@ -447,7 +402,7 @@ public:
         const Index total_rows = input.size() / input.shape.back();
 
         TensorView output_delta_2d = output_delta.reshape({total_rows, output_delta.shape.back()});
-        TensorView input_2d           = input.reshape({total_rows, input.shape.back()});
+        TensorView input_2d        = input.reshape({total_rows, input.shape.back()});
 
         TensorView input_delta_2d;
         if (!is_first_layer)
@@ -457,7 +412,7 @@ public:
         }
 
         {
-            ::opennn::profiler::ScopedTimer timer("dense3d_bwd:04_combination_gradient");
+            ::opennn::profiler::ScopedTimer timer("dense_bwd:04_combination_gradient");
             combination_gradient(output_delta_2d,
                                  input_2d,
                                  parameters[Weight],
@@ -472,70 +427,46 @@ public:
 
     void from_XML(const XmlDocument& document) override
     {
-        const XmlElement* dense_layer_element = get_xml_root(document, name);
+        const XmlElement* dense_layer_element = document.first_child_element("Dense");
+        if (!dense_layer_element) throw runtime_error(name + " element is nullptr.");
 
         set_label(read_xml_string(dense_layer_element, "Label"));
 
-        const Index inputs_number = read_xml_index(dense_layer_element, "InputsNumber");
-        const Index output_features = read_xml_index(dense_layer_element, "NeuronsNumber");
-
-        if constexpr (Rank == 3)
-        {
-            const Index input_sequence_length = read_xml_index(dense_layer_element, "InputSequenceLength");
-            set_input_shape({ input_sequence_length, inputs_number });
-        }
-        else
-            set_input_shape({ inputs_number });
-
-        set_output_shape({ output_features });
+        set_input_shape(string_to_shape(read_xml_string(dense_layer_element, "InputDimensions")));
+        set_output_shape({ read_xml_index(dense_layer_element, "NeuronsNumber") });
 
         set_activation_function(read_xml_string(dense_layer_element, "Activation"));
-
-        const XmlElement* bn_element = dense_layer_element->first_child_element("BatchNormalization");
-        const bool use_batch_normalization = bn_element && bn_element->get_text()
-                                             && string(bn_element->get_text()) == "true";
-        set_batch_normalization(use_batch_normalization);
+        set_batch_normalization(read_xml_bool(dense_layer_element, "BatchNormalization"));
     }
 
-    // Phase 2: runs after NN::compile(), so states[] is allocated. Parses BN running
-    // statistics directly into the arena — no staging required.
     void load_state_from_XML(const XmlDocument& document) override
     {
         if(!batch_normalization) return;
 
-        const XmlElement* dense_layer_element = get_xml_root(document, name);
+        const XmlElement* dense_layer_element = document.first_child_element("Dense");
+        if (!dense_layer_element) throw runtime_error(name + " element is nullptr.");
 
         VectorR tmp;
         string_to_vector(read_xml_string(dense_layer_element, "RunningMeans"), tmp);
         if(tmp.size() == states[RunningMean].size() && states[RunningMean].data)
-            VectorMap(states[RunningMean].template as<float>(), states[RunningMean].size()) = tmp;
+            VectorMap(states[RunningMean].as<float>(), states[RunningMean].size()) = tmp;
 
         string_to_vector(read_xml_string(dense_layer_element, "RunningVariances"), tmp);
         if(tmp.size() == states[RunningVariance].size() && states[RunningVariance].data)
-            VectorMap(states[RunningVariance].template as<float>(), states[RunningVariance].size()) = tmp;
+            VectorMap(states[RunningVariance].as<float>(), states[RunningVariance].size()) = tmp;
     }
 
     void to_XML(XmlPrinter& printer) const override
     {
-        printer.open_element(name.c_str());
+        printer.open_element("Dense");
 
-        if constexpr (Rank == 3)
-            write_xml(printer, {
-                {"Label", label},
-                {"InputSequenceLength", to_string(get_input_shape()[0])},
-                {"InputsNumber", to_string(get_input_shape()[1])},
-                {"NeuronsNumber", to_string(get_output_shape()[1])},
-                {"Activation", activation_to_string(activation_arguments.activation_function)},
-                {"BatchNormalization", batch_normalization ? "true" : "false"}
-            });
-        else
-            write_xml(printer, {
-                {"Label", label},
-                {"InputsNumber", to_string(get_input_shape()[0])},
-                {"NeuronsNumber", to_string(get_output_shape()[0])},
-                {"Activation", activation_to_string(activation_arguments.activation_function)},
-                {"BatchNormalization", batch_normalization ? "true" : "false"}
-            });
+        write_xml(printer, {
+            {"Label", label},
+            {"InputDimensions", shape_to_string(input_shape)},
+            {"NeuronsNumber", to_string(output_features)},
+            {"Activation", activation_to_string(activation_arguments.activation_function)},
+            {"BatchNormalization", to_string(batch_normalization)}
+        });
 
         if (batch_normalization)
             write_xml(printer, {

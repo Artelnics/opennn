@@ -8,12 +8,6 @@
 
 #pragma once
 
-// Generic enum↔string lookup used by every layer/loss header that needs to
-// serialize an enumeration to text (XML, logs, expression generators).
-// Storage is a const reference to a vector<pair<Enum, string>>; lookups are
-// linear scans, which is fine for the small enums (≤ ~10 entries) this
-// project uses.
-
 #include "pch.h"
 
 namespace opennn

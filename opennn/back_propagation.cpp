@@ -47,9 +47,6 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     error = float(0);
     accuracy.setZero();
 
-    // Backward edges: for each producer layer, the list of (consumer, port) pairs
-    // that read its output. Multi-consumer producers need a private accumulation
-    // slot in `per_layer_output_deltas`. Device-independent.
     backward_edges.assign(layers_number, {});
     for(size_t consumer_index = 0; consumer_index < layers_number; ++consumer_index)
     {
@@ -79,16 +76,13 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     const bool is_gpu = Configuration::instance().is_gpu();
     if(is_gpu)
     {
-        // Activation dtype for output_delta / per_layer_output_delta arenas.
-        const ActivationDtype activation_dtype = neural_network->get_training_dtype();
+        const Type activation_dtype = neural_network->get_training_dtype();
         const Index activation_bytes = dtype_bytes(activation_dtype);
 
-        // Per-slot backward dtype for the delta arena.
-        vector<vector<cudnnDataType_t>> backward_dtypes(layers_number);
+        vector<vector<Type>> backward_dtypes(layers_number);
         for(Index i = 0; i < layers_number; ++i)
             backward_dtypes[i] = layers[i]->get_backward_dtypes(batch_size);
 
-        // -- gradient (FP32 master, regardless of activation precision) --
         const Index total_gradient_floats = aligned_total_elements(parameter_shapes);
         gradient.resize_bytes(total_gradient_floats * Index(sizeof(float)), DeviceType::CUDA);
         gradient.setZero();
@@ -104,13 +98,12 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
                 const Shape& slot_shape = layer_param_shapes[j];
                 if(slot_shape.size() > 0)
                 {
-                    gradient_views[i][j] = TensorView(g_ptr, slot_shape, CUDNN_DATA_FLOAT);
+                    gradient_views[i][j] = TensorView(g_ptr, slot_shape, Type::FP32);
                     g_ptr += get_aligned_size(slot_shape.size());
                 }
             }
         }
 
-        // -- backward (delta arena, dtype-aware) --
         Index total_backward_bytes = 0;
         for(Index i = 0; i < layers_number; ++i)
         {
@@ -148,12 +141,10 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             }
         }
 
-        // -- output_deltas (final layer's delta, activation-typed) --
         const Index total_output_delta_elems = batch_size * output_shape.size();
         output_deltas.resize_bytes(total_output_delta_elems * activation_bytes, DeviceType::CUDA);
         output_deltas.setZero();
 
-        // -- per_layer_output_deltas (multi-consumer accumulation, activation-typed) --
         Index total_og_bytes = 0;
         for(Index i = 0; i < layers_number; ++i)
             if(!per_layer_output_delta_shapes[i].empty())
@@ -165,7 +156,6 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             per_layer_output_deltas.setZero();
         }
 
-        // -- wire delta_views[i][0][0] (input delta of layer i) --
         for(Index i = 0; i < layers_number; ++i)
         {
             if(delta_views[i].empty()) continue;
@@ -174,7 +164,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             {
                 delta_views[i][0][0] = TensorView(output_deltas.as<float>(),
                                                   output_delta_dimensions,
-                                                  to_cudnn(activation_dtype));
+                                                  activation_dtype);
             }
             else if(!backward_edges[i].empty())
             {
@@ -190,7 +180,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
                     delta_views[i][0][0].data  = og_cursor;
                     delta_views[i][0][0].shape = per_layer_output_delta_shapes[i];
-                    delta_views[i][0][0].dtype = to_cudnn(activation_dtype);
+                    delta_views[i][0][0].dtype = activation_dtype;
                 }
                 else
                 {
@@ -206,19 +196,17 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             }
         }
 
-        // -- errors_device + output_deltas_view_device (CUDA-only auxiliaries) --
         if(errors_device) { cudaFree(errors_device); errors_device = nullptr; }
         const Index outputs_number = output_shape[0];
         CHECK_CUDA(cudaMalloc(&errors_device, batch_size * outputs_number * sizeof(float)));
 
         output_deltas_view_device = TensorView(output_deltas.as<float>(),
                                                output_delta_dimensions,
-                                               to_cudnn(activation_dtype));
+                                               activation_dtype);
         return;
     }
 #endif
 
-    // -- CPU path: everything in FP32 --
     const Index total_parameters_size = aligned_total_elements(parameter_shapes);
     if(total_parameters_size > 0)
     {
@@ -237,7 +225,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             const Shape& slot_shape = layer_param_shapes[j];
             if(slot_shape.size() > 0)
             {
-                gradient_views[i][j] = TensorView(g_ptr, slot_shape, CUDNN_DATA_FLOAT);
+                gradient_views[i][j] = TensorView(g_ptr, slot_shape, Type::FP32);
                 if(g_ptr) g_ptr += get_aligned_size(slot_shape.size());
             }
         }
@@ -330,10 +318,6 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     TensorView& destination = delta_views[layer_index][0][0];
     if(!destination.data) return;
 
-    // Copy the first valid source instead of fill(0) + addition. Saves one full
-    // memset of the destination (B·S·E · sizeof(T) bytes) plus one cudnnOpTensor
-    // launch per multi-consumer layer. The remaining edges still accumulate
-    // via addition into the seeded destination.
     bool seeded = false;
     for(const BackwardEdge& edge : backward_edges[layer_index])
     {
@@ -357,8 +341,6 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
         }
     }
 
-    // No edge contributed (every one was filtered out): zero the destination so
-    // downstream layers see the correct "no gradient" value. Rare path.
     if(!seeded)
         destination.fill(0.0f);
 }

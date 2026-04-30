@@ -1,7 +1,6 @@
 #pragma once
 
-// IntelliSense-only define so VS Code does not gray out CUDA code.
-// Real builds get OPENNN_WITH_CUDA from CMake (-DOPENNN_WITH_CUDA).
+// IntelliSense-only: real builds get OPENNN_WITH_CUDA from CMake.
 #if defined(__INTELLISENSE__) && !defined(OPENNN_WITH_CUDA)
 #define OPENNN_WITH_CUDA
 #endif
@@ -65,17 +64,7 @@
 
 #else
 
-// =========================================================================
 // CPU-only stubs.
-// Goal: every CUDA/cuDNN/cuBLAS *float* that appears in OpenNN's signatures or
-// struct members must compile when CUDA is off. Values don't matter — runtime
-// GPU paths are gated by Device::is_gpu() and never execute in this build.
-// Enums (not float aliases) so scoped references like
-// `cudnnPoolingMode_t::CUDNN_POOLING_MAX` keep working.
-//
-// When adding a new CUDA-only float referenced from non-CUDA-guarded code,
-// add the stub here in the matching subsection.
-// =========================================================================
 
 // --- Runtime / library handles ---
 using cudaStream_t     = void*;
@@ -92,6 +81,7 @@ struct __half {};
 enum cudaDataType_t                  { CUDA_R_32F = 0, CUDA_R_16F = 2, CUDA_R_8I = 3, CUDA_R_32I = 10, CUDA_R_16BF = 14 };
 enum cublasComputeType_t             { CUBLAS_COMPUTE_32F = 0, CUBLAS_COMPUTE_32F_FAST_16BF = 65, CUBLAS_COMPUTE_32F_FAST_TF32 = 68 };
 enum cublasOperation_t               { CUBLAS_OP_N = 0, CUBLAS_OP_T = 1 };
+enum cublasLtEpilogue_t              { CUBLASLT_EPILOGUE_DEFAULT = 1, CUBLASLT_EPILOGUE_BIAS = 4, CUBLASLT_EPILOGUE_RELU_BIAS = 132 };
 
 // --- cuDNN enums ---
 enum cudnnDataType_t                 { CUDNN_DATA_FLOAT = 0, CUDNN_DATA_HALF = 2, CUDNN_DATA_INT8 = 3, CUDNN_DATA_INT32 = 4, CUDNN_DATA_BFLOAT16 = 14 };
@@ -114,7 +104,6 @@ using cudnnOpTensorDescriptor_t    = void*;
 
 #endif
 
-// CUDA-only machinery — functions, kernel declarations, error-check macros.
 #ifdef OPENNN_WITH_CUDA
 
 #include "../opennn/kernel.cuh"
@@ -143,8 +132,6 @@ constexpr float NEG_INFINITY = -numeric_limits<float>::infinity();
 constexpr float QUIET_NAN = numeric_limits<float>::quiet_NaN();
 constexpr float SOFTMAX_MASK_VALUE = float(-1e9f);
 
-// Generic stream output for std::vector. Lives here so it's available everywhere
-// pch.h reaches (which is essentially the whole library).
 template <typename T>
 ostream& operator<<(ostream& os, const vector<T>& vec)
 {

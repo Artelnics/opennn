@@ -8,61 +8,67 @@
 
 #pragma once
 
-// Singleton runtime configuration: which device the library should run on
-// (CPU vs CUDA) and which precision to use for training / inference. Every
-// call site that needs to ask "are we on GPU?" goes through Configuration —
-// no other class duplicates this state.
-//
-// Lifecycle: user (optionally) calls Configuration::instance().set(...) once
-// at program start; NeuralNetwork::compile() calls resolve() to convert any
-// `Auto` to a concrete value based on detected hardware, and freezes the
-// result inside the network.
-
 #include "pch.h"
 
 namespace opennn
 {
 
-// `Auto` is only valid as user input. Configuration::resolve() converts it to
-// CPU or CUDA based on detected hardware before the network sees it, so any
-// runtime path (Buffer, kernel dispatch) only ever observes CPU or CUDA.
 enum class DeviceType { Auto, CPU, CUDA };
 
-// Precision selectors. `Auto` is also resolved at compile() time. INT8 is a
-// deliberate placeholder: Configuration::resolve() throws runtime_error if a
-// user picks it — calibration + INT8 kernels are out of scope here.
 enum class TrainingPrecision  { Auto, Float32, BP16 };
 enum class InferencePrecision { Auto, Float32, BP16, Int8 };
 
-enum class ActivationDtype { Float32, BP16 };
+enum class Type { FP32, FP16, BF16, INT8 };
 
-inline ActivationDtype to_activation_dtype(TrainingPrecision precision) noexcept
+inline Type to_type(TrainingPrecision precision) noexcept
 {
-    return precision == TrainingPrecision::BP16 ? ActivationDtype::BP16 : ActivationDtype::Float32;
+    return precision == TrainingPrecision::BP16 ? Type::BF16 : Type::FP32;
 }
 
-inline ActivationDtype to_activation_dtype(InferencePrecision precision) noexcept
+inline Type to_type(InferencePrecision precision) noexcept
 {
-    return precision == InferencePrecision::BP16 ? ActivationDtype::BP16 : ActivationDtype::Float32;
+    switch (precision)
+    {
+        case InferencePrecision::BP16: return Type::BF16;
+        case InferencePrecision::Int8: return Type::INT8;
+        default:                       return Type::FP32;
+    }
 }
 
-inline cudnnDataType_t to_cudnn(ActivationDtype dtype) noexcept
+inline cudnnDataType_t to_cudnn(Type dtype) noexcept
 {
-    return dtype == ActivationDtype::BP16 ? CUDNN_DATA_BFLOAT16 : CUDNN_DATA_FLOAT;
+    switch (dtype)
+    {
+        case Type::FP32: return CUDNN_DATA_FLOAT;
+        case Type::FP16: return CUDNN_DATA_HALF;
+        case Type::BF16: return CUDNN_DATA_BFLOAT16;
+        case Type::INT8: return CUDNN_DATA_INT8;
+    }
+    return CUDNN_DATA_FLOAT;
 }
 
-inline cudaDataType_t to_cuda(ActivationDtype dtype) noexcept
+inline cudaDataType_t to_cuda(Type dtype) noexcept
 {
-    return dtype == ActivationDtype::BP16 ? CUDA_R_16BF : CUDA_R_32F;
+    switch (dtype)
+    {
+        case Type::FP32: return CUDA_R_32F;
+        case Type::FP16: return CUDA_R_16F;
+        case Type::BF16: return CUDA_R_16BF;
+        case Type::INT8: return CUDA_R_8I;
+    }
+    return CUDA_R_32F;
 }
 
-// Element size in bytes. Overloads the `dtype_bytes(cudnnDataType_t)` helper in
-// tensor_utilities.h so high-level code (BackPropagation arena sizing, Buffer
-// allocation) can stay on the project-internal enum.
-inline Index dtype_bytes(ActivationDtype dtype) noexcept
+inline Index dtype_bytes(Type dtype) noexcept
 {
-    return dtype == ActivationDtype::BP16 ? Index(sizeof(__nv_bfloat16))
-                                          : Index(sizeof(float));
+    switch (dtype)
+    {
+        case Type::FP32: return Index(sizeof(float));
+        case Type::FP16: return Index(2);
+        case Type::BF16: return Index(sizeof(__nv_bfloat16));
+        case Type::INT8: return Index(1);
+    }
+    return Index(sizeof(float));
 }
 
 class Configuration
@@ -78,9 +84,6 @@ public:
 
     static Configuration& instance();
 
-    // Replaces all three at once. Defaulting any argument to Auto is the recommended
-    // entry point — let resolve() pick. Invalidates the cached Resolved so the next
-    // is_gpu()/is_cpu()/resolve() call re-detects hardware.
     void set(DeviceType         new_device_type     = DeviceType::Auto,
              TrainingPrecision  new_training_precision  = TrainingPrecision::Auto,
              InferencePrecision new_inference_precision = InferencePrecision::Auto);
@@ -89,19 +92,11 @@ public:
     TrainingPrecision  get_training_precision()  const { return training_precision; }
     InferencePrecision get_inference_precision() const { return inference_precision; }
 
-    // Resolves Auto values to concrete ones by inspecting available hardware. Throws
-    // runtime_error on impossible combinations (CUDA requested but no GPU; BP16 on CPU;
-    // INT8 placeholder). Cached after first call.
     const Resolved& resolve() const;
 
-    // Single source of truth for "is the active device GPU/CPU?". Resolves on first
-    // call and caches.
     bool is_gpu() const { return resolve().device == DeviceType::CUDA; }
     bool is_cpu() const { return resolve().device == DeviceType::CPU; }
 
-    // Reduced-precision flags. Resolved values, not raw user input — `Auto` is
-    // already resolved by this point. Used by Batch / inference paths to decide
-    // whether to upload inputs as BF16 (cast at H2D) instead of FP32.
     bool is_bp16_training() const  { return resolve().training_precision  == TrainingPrecision::BP16; }
     bool is_bp16_inference() const { return resolve().inference_precision == InferencePrecision::BP16; }
 

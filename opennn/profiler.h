@@ -1,9 +1,5 @@
 #pragma once
 
-// Lightweight profiler — wall-clock + cudaDeviceSynchronize so GPU work is
-// actually fenced before reading the timer. Only intended for ad-hoc benchmark
-// runs; remove or guard with #ifdef before production.
-
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -105,12 +101,9 @@ public:
 
 }  // namespace opennn::profiler
 
-// Concatenation tricks so PROFILE_SCOPE can appear multiple times in one scope.
 #define OPENNN_PROFILE_CAT_INNER(a, b) a##b
 #define OPENNN_PROFILE_CAT(a, b)       OPENNN_PROFILE_CAT_INNER(a, b)
 
-// PROFILE_SCOPE — fences GPU before/after, accurate but adds overhead.
-// PROFILE_SCOPE_HOST — host-only timing, no cudaDeviceSynchronize.
 #define PROFILE_SCOPE(name) \
     ::opennn::profiler::ScopedTimer OPENNN_PROFILE_CAT(_profile_, __LINE__)(name, true)
 #define PROFILE_SCOPE_HOST(name) \
