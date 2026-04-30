@@ -651,54 +651,92 @@ EpochStats Optimizer::run_epoch(Phase phase,
     }
     const auto epoch_t0 = std::chrono::steady_clock::now();
 
-    std::thread worker([&]()
+    // The producer/consumer worker exists so that batch->fill() (host copies +
+    // optional async H2D) overlaps with forward/backward on the GPU. On CPU the
+    // overlap gives no real speed-up and introduces non-determinism (the worker
+    // and main thread spawn independent OMP teams that interleave with the main
+    // OMP regions in math_utilities, so identical seeds give different
+    // floating-point trajectories). Take the synchronous path on CPU.
+    const bool use_async_worker = Configuration::instance().is_gpu();
+
+    if(!use_async_worker)
     {
+        Batch* current_batch = empty_queue.pop();
+
         for(Index iteration = 0; iteration < batches_number; ++iteration)
         {
-            Batch* batch = empty_queue.pop();
-            batch->fill(batches[iteration],
-                        input_feature_indices,
-                        decoder_feature_indices,
-                        target_feature_indices,
-                        is_training);   // augment only in training
-            ready_queue.push(batch);
+            current_batch->fill(batches[iteration],
+                                input_feature_indices,
+                                decoder_feature_indices,
+                                target_feature_indices,
+                                is_training);
+
+            neural_network->forward_propagate(current_batch->get_inputs(), fp, is_training);
+
+            if(is_training)
+                loss->back_propagate(*current_batch, fp, bp);
+            else
+                loss->calculate_error(*current_batch, fp, bp);
+
+            stats.error += bp.error;
+            if(is_classification) stats.accuracy += bp.accuracy(0);
+
+            update(bp);
         }
-    });
-
-    Batch* next_batch = ready_queue.pop();
-    prefetch_batch(*next_batch, batches[0].size(), 0);
-
-    for(Index iteration = 0; iteration < batches_number; ++iteration)
-    {
-        Batch* current_batch = next_batch;
-        next_batch = nullptr;
-
-        wait_prefetch(iteration % 2);
-
-        if(iteration + 1 < batches_number)
-        {
-            next_batch = ready_queue.pop();
-            prefetch_batch(*next_batch, batches[iteration + 1].size(), (iteration + 1) % 2);
-        }
-
-        neural_network->forward_propagate(current_batch->get_inputs(), fp, is_training);
-
-        if(is_training)
-            loss->back_propagate(*current_batch, fp, bp);
-        else
-            loss->calculate_error(*current_batch, fp, bp);
-
-        stats.error += bp.error;
-        if(is_classification) stats.accuracy += bp.accuracy(0);
-
-        update(bp);
-
-        sync_device();
 
         empty_queue.push(current_batch);
     }
+    else
+    {
+        std::thread worker([&]()
+        {
+            for(Index iteration = 0; iteration < batches_number; ++iteration)
+            {
+                Batch* batch = empty_queue.pop();
+                batch->fill(batches[iteration],
+                            input_feature_indices,
+                            decoder_feature_indices,
+                            target_feature_indices,
+                            is_training);
+                ready_queue.push(batch);
+            }
+        });
 
-    worker.join();
+        Batch* next_batch = ready_queue.pop();
+        prefetch_batch(*next_batch, batches[0].size(), 0);
+
+        for(Index iteration = 0; iteration < batches_number; ++iteration)
+        {
+            Batch* current_batch = next_batch;
+            next_batch = nullptr;
+
+            wait_prefetch(iteration % 2);
+
+            if(iteration + 1 < batches_number)
+            {
+                next_batch = ready_queue.pop();
+                prefetch_batch(*next_batch, batches[iteration + 1].size(), (iteration + 1) % 2);
+            }
+
+            neural_network->forward_propagate(current_batch->get_inputs(), fp, is_training);
+
+            if(is_training)
+                loss->back_propagate(*current_batch, fp, bp);
+            else
+                loss->calculate_error(*current_batch, fp, bp);
+
+            stats.error += bp.error;
+            if(is_classification) stats.accuracy += bp.accuracy(0);
+
+            update(bp);
+
+            sync_device();
+
+            empty_queue.push(current_batch);
+        }
+
+        worker.join();
+    }
 
     stats.error /= type(batches_number);
     if(is_classification) stats.accuracy /= type(batches_number);

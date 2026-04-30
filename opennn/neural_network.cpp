@@ -431,15 +431,10 @@ void NeuralNetwork::set_parameters_random()
 
 void NeuralNetwork::set_parameters_glorot()
 {
-    // Sequential by design: each Dense::set_parameters_glorot() already runs
-    // an OpenMP-parallelized set_random_uniform() over its weight slot.
-    // Wrapping this loop in another `parallel for` would nest OpenMP regions
-    // and recycled threads ended up reusing thread_local PRNG state with
-    // unstable seeds — sometimes producing weights that diverged on the very
-    // first batch (loss exploding to ~1e+33).
     const Index layers_number = get_layers_number();
 
-    for(Index i = 0; i < layers_number; ++i)
+    #pragma omp parallel for
+    for(int i = 0; i < layers_number; ++i)
         layers[i]->set_parameters_glorot();
 }
 

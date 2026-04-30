@@ -169,6 +169,7 @@ crashlytics-build.properties
 
 ## Build generated
 build/
+build_*/
 DerivedData
 
 ## Various settings

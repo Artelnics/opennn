@@ -6,21 +6,71 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
+#include <atomic>
+#include <omp.h>
 #include "random_utilities.h"
 
 namespace opennn
 {
 
+// ---------------------------------------------------------------------------
+// PRNG state
+//
+// `global_seed` is the single source of truth for the user-visible seed:
+//   -1   → no deterministic seed; each thread initializes from random_device
+//   >= 0 → deterministic mode; thread N seeds with `global_seed + N*5489u`,
+//          giving each OpenMP worker its own non-correlated stream while
+//          keeping the whole run reproducible.
+//
+// `seed_generation` is a monotonic counter bumped on every set_seed() call.
+// Each thread caches the last generation it observed in `local_generation`;
+// when they differ, get_generator() reseeds the thread's mt19937 lazily.
+// This means a set_seed() from the main thread propagates to OMP workers the
+// next time they hit get_generator(), without any explicit synchronization.
+// ---------------------------------------------------------------------------
+
+static std::atomic<long long>    global_seed{-1};
+static std::atomic<unsigned int> seed_generation{0};
+
+thread_local mt19937    generator;
+thread_local unsigned int local_generation = 0;
+
+static void initialize_generator()
+{
+    const long long seed = global_seed.load(std::memory_order_relaxed);
+
+    if (seed < 0)
+    {
+        random_device rd;
+        generator.seed(rd());
+    }
+    else
+    {
+        const int thread_id = omp_get_thread_num();
+        generator.seed(static_cast<unsigned int>(seed + thread_id * 5489u));
+    }
+
+    local_generation = seed_generation.load(std::memory_order_acquire);
+}
+
 inline mt19937& get_generator()
 {
-    thread_local mt19937 generator{random_device{}()};
+    if (local_generation != seed_generation.load(std::memory_order_acquire))
+        initialize_generator();
     return generator;
 }
 
 void set_seed(unsigned seed)
 {
-    get_generator().seed(seed);
-    srand(seed);
+    global_seed.store(static_cast<long long>(seed), std::memory_order_relaxed);
+    seed_generation.fetch_add(1, std::memory_order_release);
+    initialize_generator();   // reseed the calling (main) thread immediately.
+    srand(seed);              // covers Eigen helpers that fall back to libc rand().
+}
+
+long long get_seed()
+{
+    return global_seed.load(std::memory_order_relaxed);
 }
 
 type random_uniform(type min, type max)
@@ -40,6 +90,13 @@ bool random_bool(type probability)
     bernoulli_distribution distribution(probability);
     return distribution(get_generator());
 }
+
+// The set_random_* helpers below run under `#pragma omp parallel`. The PRNG
+// machinery above guarantees that each OpenMP worker reseeds itself the first
+// time it touches get_generator() after a set_seed(), so parallel init is
+// reproducible bit-for-bit (given the same OMP_NUM_THREADS and a `static`
+// schedule). Without the seed-generation tracking these were silently
+// non-deterministic — that was the airfoil_self_noise CPU divergence bug.
 
 void set_random_uniform(MatrixR& tensor, type min, type max)
 {
