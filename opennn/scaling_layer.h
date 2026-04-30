@@ -169,21 +169,21 @@ public:
     }
 
     // Requires NN::compile() first — writes directly into the states arena.
-    void set_descriptives(const vector<Descriptives>& desc)
+    void set_descriptives(const vector<Descriptives>& new_descriptives)
     {
         if(ssize(states) < 5 || !states[Means].data)
             throw runtime_error("Scaling::set_descriptives: layer not compiled yet.");
 
-        const Index n = desc.size();
-        if(n != states[Means].size())
+        const Index descriptives_count = new_descriptives.size();
+        if(descriptives_count != states[Means].size())
             throw runtime_error("Scaling::set_descriptives: size mismatch.");
 
-        for(Index i = 0; i < n; ++i)
+        for(Index i = 0; i < descriptives_count; ++i)
         {
-            states[Means].template as<float>()[i]              = desc[i].mean;
-            states[StandardDeviations].template as<float>()[i] = desc[i].standard_deviation;
-            states[Minimums].template as<float>()[i]           = desc[i].minimum;
-            states[Maximums].template as<float>()[i]           = desc[i].maximum;
+            states[Means].template as<float>()[i]              = new_descriptives[i].mean;
+            states[StandardDeviations].template as<float>()[i] = new_descriptives[i].standard_deviation;
+            states[Minimums].template as<float>()[i]           = new_descriptives[i].minimum;
+            states[Maximums].template as<float>()[i]           = new_descriptives[i].maximum;
         }
     }
 

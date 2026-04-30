@@ -29,30 +29,30 @@ namespace {
     __nv_bfloat16* ones_bf16 = nullptr; int ones_bf16_size = 0;
 }
 
-static const void* get_ones(int n, cudnnDataType_t dtype)
+static const void* get_ones(int size, cudnnDataType_t dtype)
 {
     if (dtype == CUDNN_DATA_BFLOAT16)
     {
-        if (n > ones_bf16_size)
+        if (size > ones_bf16_size)
         {
             if (ones_bf16) CHECK_CUDA(cudaFree(ones_bf16));
-            CHECK_CUDA(cudaMalloc(&ones_bf16, n * sizeof(__nv_bfloat16)));
-            vector<__nv_bfloat16> h(n, __float2bfloat16(1.0f));
-            CHECK_CUDA(cudaMemcpy(ones_bf16, h.data(),
-                                  n * sizeof(__nv_bfloat16), cudaMemcpyHostToDevice));
-            ones_bf16_size = n;
+            CHECK_CUDA(cudaMalloc(&ones_bf16, size * sizeof(__nv_bfloat16)));
+            vector<__nv_bfloat16> host_buffer(size, __float2bfloat16(1.0f));
+            CHECK_CUDA(cudaMemcpy(ones_bf16, host_buffer.data(),
+                                  size * sizeof(__nv_bfloat16), cudaMemcpyHostToDevice));
+            ones_bf16_size = size;
         }
         return ones_bf16;
     }
 
-    if (n > ones_fp32_size)
+    if (size > ones_fp32_size)
     {
         if (ones_fp32) CHECK_CUDA(cudaFree(ones_fp32));
-        CHECK_CUDA(cudaMalloc(&ones_fp32, n * sizeof(float)));
-        vector<float> h(n, 1.0f);
-        CHECK_CUDA(cudaMemcpy(ones_fp32, h.data(), n * sizeof(float),
+        CHECK_CUDA(cudaMalloc(&ones_fp32, size * sizeof(float)));
+        vector<float> host_buffer(size, 1.0f);
+        CHECK_CUDA(cudaMemcpy(ones_fp32, host_buffer.data(), size * sizeof(float),
                               cudaMemcpyHostToDevice));
-        ones_fp32_size = n;
+        ones_fp32_size = size;
     }
     return ones_fp32;
 }
@@ -147,38 +147,38 @@ void scale(const TensorView& input,
 #endif
 
     const MatrixMap input_matrix = input.as_matrix();
-    const VectorMap mins = minimums.as_vector();
-    const VectorMap maxs = maximums.as_vector();
-    const VectorMap mus  = means.as_vector();
-    const VectorMap sds  = standard_deviations.as_vector();
-    const VectorMap sc   = scalers.as_vector();
+    const VectorMap minimums_vector = minimums.as_vector();
+    const VectorMap maximums_vector = maximums.as_vector();
+    const VectorMap means_vector  = means.as_vector();
+    const VectorMap standard_deviations_vector  = standard_deviations.as_vector();
+    const VectorMap scalers_vector   = scalers.as_vector();
 
     MatrixMap output_matrix = output.as_matrix();
 
     output_matrix.noalias() = input_matrix;
 
-    for(Index f = 0; f < features; ++f)
+    for(Index feature_index = 0; feature_index < features; ++feature_index)
     {
-        const int code = static_cast<int>(sc(f));
-        auto col = output_matrix.col(f).array();
+        const int code = static_cast<int>(scalers_vector(feature_index));
+        auto column = output_matrix.col(feature_index).array();
 
         switch(code)
         {
         case 1: // MinimumMaximum
-            col = (col - mins(f)) / ((maxs(f) - mins(f)) + EPSILON)
+            column = (column - minimums_vector(feature_index)) / ((maximums_vector(feature_index) - minimums_vector(feature_index)) + EPSILON)
                    * (max_range - min_range) + min_range;
             break;
         case 2: // MeanStandardDeviation
-            col = (col - mus(f)) / (sds(f) + EPSILON);
+            column = (column - means_vector(feature_index)) / (standard_deviations_vector(feature_index) + EPSILON);
             break;
         case 3: // StandardDeviation
-            col /= (sds(f) + EPSILON);
+            column /= (standard_deviations_vector(feature_index) + EPSILON);
             break;
         case 4: // Logarithm
-            col = col.log();
+            column = column.log();
             break;
         case 5: // ImageMinMax
-            col /= float(255);
+            column /= float(255);
             break;
         default: // None
             break;
@@ -217,38 +217,38 @@ void unscale(const TensorView& input,
 #endif
 
     const MatrixMap input_matrix = input.as_matrix();
-    const VectorMap mins = minimums.as_vector();
-    const VectorMap maxs = maximums.as_vector();
-    const VectorMap mus  = means.as_vector();
-    const VectorMap sds  = standard_deviations.as_vector();
-    const VectorMap sc   = scalers.as_vector();
+    const VectorMap minimums_vector = minimums.as_vector();
+    const VectorMap maximums_vector = maximums.as_vector();
+    const VectorMap means_vector  = means.as_vector();
+    const VectorMap standard_deviations_vector  = standard_deviations.as_vector();
+    const VectorMap scalers_vector   = scalers.as_vector();
 
     MatrixMap output_matrix = output.as_matrix();
 
     output_matrix.noalias() = input_matrix;
 
-    for(Index f = 0; f < features; ++f)
+    for(Index feature_index = 0; feature_index < features; ++feature_index)
     {
-        const int code = static_cast<int>(sc(f));
-        auto col = output_matrix.col(f).array();
+        const int code = static_cast<int>(scalers_vector(feature_index));
+        auto column = output_matrix.col(feature_index).array();
 
         switch(code)
         {
         case 1: // MinimumMaximum
-            col = (col - min_range) / (max_range - min_range)
-                   * (maxs(f) - mins(f)) + mins(f);
+            column = (column - min_range) / (max_range - min_range)
+                   * (maximums_vector(feature_index) - minimums_vector(feature_index)) + minimums_vector(feature_index);
             break;
         case 2: // MeanStandardDeviation
-            col = mus(f) + col * sds(f);
+            column = means_vector(feature_index) + column * standard_deviations_vector(feature_index);
             break;
         case 3: // StandardDeviation
-            col *= sds(f);
+            column *= standard_deviations_vector(feature_index);
             break;
         case 4: // Logarithm
-            col = col.exp();
+            column = column.exp();
             break;
         case 5: // ImageMinMax
-            col *= float(255);
+            column *= float(255);
             break;
         default: // None
             break;
@@ -626,25 +626,25 @@ void activation(TensorView& output, ActivationArguments arguments)
         return;
     }
 #endif
-    auto arr = output.as_vector().array();
+    auto output_array = output.as_vector().array();
 
     switch (activation_function)
     {
     case ActivationFunction::Sigmoid:
     case ActivationFunction::Logistic:
-        arr = (1.0f + (-arr).exp()).inverse();
+        output_array = (1.0f + (-output_array).exp()).inverse();
         return;
 
     case ActivationFunction::HyperbolicTangent:
-        arr = arr.tanh();
+        output_array = output_array.tanh();
         return;
 
     case ActivationFunction::RectifiedLinear:
-        arr = arr.cwiseMax(0.0f);
+        output_array = output_array.cwiseMax(0.0f);
         return;
 
     case ActivationFunction::ScaledExponentialLinear:
-        arr = SELU_LAMBDA * (arr > 0.0f).select(arr, SELU_ALPHA * (arr.exp() - 1.0f));
+        output_array = SELU_LAMBDA * (output_array > 0.0f).select(output_array, SELU_ALPHA * (output_array.exp() - 1.0f));
         return;
 
     default:
@@ -736,9 +736,9 @@ void dropout(TensorView& output, DropoutArguments& args)
         // reserve_space size matches; see Dense::init_cuda.
         if (output.dtype == CUDNN_DATA_BFLOAT16)
         {
-            const Index n = output.size();
-            float* fp32_scratch = get_fp32_upcast_scratch(n);
-            cast_bf16_to_fp32_cuda(n,
+            const Index size = output.size();
+            float* fp32_scratch = get_fp32_upcast_scratch(size);
+            cast_bf16_to_fp32_cuda(size,
                                    reinterpret_cast<const __nv_bfloat16*>(output.data),
                                    fp32_scratch);
 
@@ -753,7 +753,7 @@ void dropout(TensorView& output, DropoutArguments& args)
                                             fp32_view.get_descriptor(), fp32_scratch,
                                             args.reserve_space, args.reserve_size));
 
-            cast_fp32_to_bf16_cuda(n, fp32_scratch,
+            cast_fp32_to_bf16_cuda(size, fp32_scratch,
                                    reinterpret_cast<__nv_bfloat16*>(output.data));
             return;
         }
@@ -797,15 +797,15 @@ void dropout_delta(const TensorView& output_delta,
         // Up-cast both deltas to FP32, run backward, cast input_delta back to BF16.
         if (output_delta.dtype == CUDNN_DATA_BFLOAT16)
         {
-            const Index n = output_delta.size();
+            const Index size = output_delta.size();
             // Need two FP32 scratches: one for dy, one for dx. Reuse the upcast
             // singleton for dy, the bf16-input singleton for dx... but they need
             // different sizes potentially. Same n in this case (deltas share shape).
             // get_fp32_upcast_scratch is already used by dropout forward, so we
             // chain: cast dy here, write dx into the same scratch (in-place is
             // fine because cuDNN dropout backward is element-wise).
-            float* fp32_dy = get_fp32_upcast_scratch(n);
-            cast_bf16_to_fp32_cuda(n,
+            float* fp32_dy = get_fp32_upcast_scratch(size);
+            cast_bf16_to_fp32_cuda(size,
                                    reinterpret_cast<const __nv_bfloat16*>(output_delta.data),
                                    fp32_dy);
 
@@ -821,7 +821,7 @@ void dropout_delta(const TensorView& output_delta,
                                              dy_view.get_descriptor(), fp32_dy,
                                              const_cast<void*>(args.reserve_space), args.reserve_size));
 
-            cast_fp32_to_bf16_cuda(n, fp32_dy,
+            cast_fp32_to_bf16_cuda(size, fp32_dy,
                                    reinterpret_cast<__nv_bfloat16*>(input_delta.data));
             return;
         }
@@ -987,11 +987,11 @@ void batch_normalization_backward(
 
     #pragma omp parallel for
     for (Index i = 0; i < effective_batch_size; ++i)
-        for (Index c = 0; c < cols; ++c)
+        for (Index column_index = 0; column_index < cols; ++column_index)
         {
-            const float x_hat = (input_matrix(i, c) - means(c)) * inverse_variances(c);
-            input_deltas(i, c) =
-                scale(c) * (N * output_deltas(i, c) - beta_gradients(c) - x_hat * gamma_gradients(c));
+            const float x_hat = (input_matrix(i, column_index) - means(column_index)) * inverse_variances(column_index);
+            input_deltas(i, column_index) =
+                scale(column_index) * (N * output_deltas(i, column_index) - beta_gradients(column_index) - x_hat * gamma_gradients(column_index));
         }
 }
 
@@ -1023,17 +1023,17 @@ void layernorm_forward(const TensorView& input, const TensorView& gamma, const T
     #pragma omp parallel for
     for (Index row = 0; row < total_rows; ++row)
     {
-        const float* x = input_data + row * embedding_dimension;
+        const float* input_row = input_data + row * embedding_dimension;
         float* norm_row = normalized_data + row * embedding_dimension;
         float* out_row = output_data + row * embedding_dimension;
 
         float sum = 0;
         float sum_sq = 0;
-        for (Index d = 0; d < embedding_dimension; ++d)
+        for (Index dim_index = 0; dim_index < embedding_dimension; ++dim_index)
         {
-            const float v = x[d];
-            sum += v;
-            sum_sq += v * v;
+            const float value = input_row[dim_index];
+            sum += value;
+            sum_sq += value * value;
         }
 
         const float mean = sum * inv_D;
@@ -1044,11 +1044,11 @@ void layernorm_forward(const TensorView& input, const TensorView& gamma, const T
         means_data[row] = mean;
         stds_data[row] = std_val;
 
-        for (Index d = 0; d < embedding_dimension; ++d)
+        for (Index dim_index = 0; dim_index < embedding_dimension; ++dim_index)
         {
-            const float x_hat = (x[d] - mean) * inv_std;
-            norm_row[d] = x_hat;
-            out_row[d] = gamma_data[d] * x_hat + beta_data[d];
+            const float x_hat = (input_row[dim_index] - mean) * inv_std;
+            norm_row[dim_index] = x_hat;
+            out_row[dim_index] = gamma_data[dim_index] * x_hat + beta_data[dim_index];
         }
     }
 }
@@ -1088,26 +1088,26 @@ void layernorm_backward(const TensorView& input, const TensorView& output_delta,
     #pragma omp parallel for
     for (Index row = 0; row < total_rows; ++row)
     {
-        const float* dy = dy_data + row * embedding_dimension;
-        const float* norm = norm_data + row * embedding_dimension;
-        float* dx = dx_data + row * embedding_dimension;
+        const float* output_delta_row = dy_data + row * embedding_dimension;
+        const float* norm_row = norm_data + row * embedding_dimension;
+        float* input_delta_row = dx_data + row * embedding_dimension;
         const float inv_std = float(1) / std_data[row];
 
-        float sum_sg = 0;
-        float sum_sg_norm = 0;
-        for (Index d = 0; d < embedding_dimension; ++d)
+        float sum_scaled_grad = 0;
+        float sum_scaled_grad_norm = 0;
+        for (Index dim_index = 0; dim_index < embedding_dimension; ++dim_index)
         {
-            const float sg = gamma_data[d] * dy[d];
-            sum_sg += sg;
-            sum_sg_norm += sg * norm[d];
+            const float scaled_grad = gamma_data[dim_index] * output_delta_row[dim_index];
+            sum_scaled_grad += scaled_grad;
+            sum_scaled_grad_norm += scaled_grad * norm_row[dim_index];
         }
-        sum_sg *= inv_D;
-        sum_sg_norm *= inv_D;
+        sum_scaled_grad *= inv_D;
+        sum_scaled_grad_norm *= inv_D;
 
-        for (Index d = 0; d < embedding_dimension; ++d)
+        for (Index dim_index = 0; dim_index < embedding_dimension; ++dim_index)
         {
-            const float sg = gamma_data[d] * dy[d];
-            dx[d] = (sg - sum_sg - norm[d] * sum_sg_norm) * inv_std;
+            const float scaled_grad = gamma_data[dim_index] * output_delta_row[dim_index];
+            input_delta_row[dim_index] = (scaled_grad - sum_scaled_grad - norm_row[dim_index] * sum_scaled_grad_norm) * inv_std;
         }
     }
 }
@@ -1853,11 +1853,11 @@ static void transpose_middle_axes(const float* src, float* dst,
                                   Index batch_size, Index src_m1, Index src_m2, Index D)
 {
     #pragma omp parallel for collapse(3)
-    for (Index b = 0; b < batch_size; ++b)
+    for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
         for (Index i = 0; i < src_m2; ++i)
             for (Index j = 0; j < src_m1; ++j)
-                memcpy(dst + ((b * src_m2 + i) * src_m1 + j) * D,
-                       src + ((b * src_m1 + j) * src_m2 + i) * D,
+                memcpy(dst + ((batch_index * src_m2 + i) * src_m1 + j) * D,
+                       src + ((batch_index * src_m1 + j) * src_m2 + i) * D,
                        D * sizeof(float));
 }
 
@@ -1991,30 +1991,30 @@ void attention_masks(const TensorView& source_input,
     #pragma omp parallel for
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
-        const float* src = source_input.as<float>() + batch_index * source_sequence_length * embedding_dimension;
-        float*       att = attention_weights.as<float>() + batch_index * att_rows_per_batch * source_sequence_length;
+        const float* source_batch = source_input.as<float>() + batch_index * source_sequence_length * embedding_dimension;
+        float*       attention_batch = attention_weights.as<float>() + batch_index * att_rows_per_batch * source_sequence_length;
 
-        for(Index s = 0; s < source_sequence_length; ++s)
+        for(Index source_index = 0; source_index < source_sequence_length; ++source_index)
         {
-            const float* src_row = src + s * embedding_dimension;
+            const float* source_row = source_batch + source_index * embedding_dimension;
             float max_abs = float(0);
             for(Index k = 0; k < embedding_dimension; ++k)
             {
-                const float a = std::abs(src_row[k]);
-                if(a > max_abs) max_abs = a;
+                const float abs_value = std::abs(source_row[k]);
+                if(abs_value > max_abs) max_abs = abs_value;
             }
             if(max_abs > EPSILON) continue;
 
-            for(Index r = 0; r < att_rows_per_batch; ++r)
-                att[r * source_sequence_length + s] = SOFTMAX_MASK_VALUE;
+            for(Index row_index = 0; row_index < att_rows_per_batch; ++row_index)
+                attention_batch[row_index * source_sequence_length + source_index] = SOFTMAX_MASK_VALUE;
         }
     }
 
     if(!use_causal_mask) return;
 
-    const Index bh = batch_size * heads_number;
-    MatrixMap attention_flat(attention_weights.as<float>(), bh * query_sequence_length, source_sequence_length);
-    attention_flat += causal_mask.replicate(bh, 1);
+    const Index batch_heads = batch_size * heads_number;
+    MatrixMap attention_flat(attention_weights.as<float>(), batch_heads * query_sequence_length, source_sequence_length);
+    attention_flat += causal_mask.replicate(batch_heads, 1);
 }
 
 

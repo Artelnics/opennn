@@ -573,8 +573,8 @@ string ModelExpression::build_expression() const
 
 void ModelExpression::apply_name_mapping(string& text, const vector<string>& original, const vector<string>& mapped)
 {
-    const size_t n = min(original.size(), mapped.size());
-    for(size_t i = 0; i < n; ++i)
+    const size_t count = min(original.size(), mapped.size());
+    for(size_t i = 0; i < count; ++i)
         replace_all_word_appearances(text, original[i], mapped[i]);
 }
 
@@ -1278,7 +1278,7 @@ void ModelExpression::emit_python_batch_and_main(ostringstream& buffer) const
               "\tmain()\n";
 }
 
-string ModelExpression::replace_reserved_keywords(const string& s)
+string ModelExpression::replace_reserved_keywords(const string& input)
 {
     static const unordered_map<char, string_view> char_replacements = {
         {' ', "_"},        {'.', "_dot_"},    {'/', "_div_"},    {'*', "_mul_"},
@@ -1293,16 +1293,16 @@ string ModelExpression::replace_reserved_keywords(const string& s)
 
     string out;
 
-    if(s[0] == '$')
-        out = s;
+    if(input[0] == '$')
+        out = input;
 
-    for(const char c : s)
+    for(const char character : input)
     {
-        const auto it = char_replacements.find(c);
+        const auto it = char_replacements.find(character);
         if(it != char_replacements.end())
             out += it->second;
-        else if(isalnum(static_cast<unsigned char>(c)) || c == '_')
-            out += c;
+        else if(isalnum(static_cast<unsigned char>(character)) || character == '_')
+            out += character;
     }
 
     if(!out.empty() && isdigit(static_cast<unsigned char>(out[0])))

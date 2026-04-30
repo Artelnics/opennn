@@ -66,13 +66,13 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
             for(size_t j = 0; j < slots; ++j)
             {
-                const Shape& s = shapes[j];
+                const Shape& slot_shape = shapes[j];
                 views[i][j + 1].resize(1);
 
-                if(s.size() > 0)
+                if(slot_shape.size() > 0)
                 {
-                    views[i][j + 1][0] = TensorView(cursor, s, forward_dtypes[i][j]);
-                    if(cursor) cursor += get_aligned_bytes(s.size() * dtype_bytes(forward_dtypes[i][j]));
+                    views[i][j + 1][0] = TensorView(cursor, slot_shape, forward_dtypes[i][j]);
+                    if(cursor) cursor += get_aligned_bytes(slot_shape.size() * dtype_bytes(forward_dtypes[i][j]));
                 }
             }
         }
@@ -97,13 +97,13 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
             for(size_t j = 0; j < slots; ++j)
             {
-                const Shape& s = shapes[j];
+                const Shape& slot_shape = shapes[j];
                 views[i][j + 1].resize(1);
 
-                if(s.size() > 0)
+                if(slot_shape.size() > 0)
                 {
-                    views[i][j + 1][0] = TensorView(pointer, s);
-                    if(pointer) pointer += get_aligned_size(s.size());
+                    views[i][j + 1][0] = TensorView(pointer, slot_shape);
+                    if(pointer) pointer += get_aligned_size(slot_shape.size());
                 }
             }
         }
@@ -118,16 +118,16 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
         for(size_t k = 0; k < input_indices_size; ++k)
         {
-            const Index j = input_indices[k];
+            const Index producer_index = input_indices[k];
 
-            if(j >= 0)
+            if(producer_index >= 0)
             {
-                const size_t output_slot = forward_shapes[j].size();
+                const size_t output_slot = forward_shapes[producer_index].size();
 
-                if(output_slot > 0 && j < ssize(views)
-                    && !views[j][output_slot].empty())
+                if(output_slot > 0 && producer_index < ssize(views)
+                    && !views[producer_index][output_slot].empty())
                 {
-                    views[i][0][k] = views[j][output_slot][0];
+                    views[i][0][k] = views[producer_index][output_slot][0];
                 }
             }
         }

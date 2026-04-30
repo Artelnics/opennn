@@ -92,14 +92,14 @@ bool NeuralNetwork::has(LayerType type) const
                   [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
 }
 
-static vector<string> get_feature_names_from(const vector<Variable>& vars)
+static vector<string> get_feature_names_from(const vector<Variable>& variables)
 {
     vector<string> feature_names;
-    feature_names.reserve(vars.size());
+    feature_names.reserve(variables.size());
 
-    for (const auto& var : vars)
+    for (const auto& variable : variables)
     {
-        const vector<string> names = var.get_names();
+        const vector<string> names = variable.get_names();
         feature_names.insert(feature_names.end(), names.begin(), names.end());
     }
 
@@ -194,21 +194,21 @@ Layer* NeuralNetwork::get_first(LayerType type)
     return const_cast<Layer*>(const_cast<const NeuralNetwork*>(this)->get_first(type));
 }
 
-static void set_variable_names(vector<Variable>& vars, const vector<string>& new_names)
+static void set_variable_names(vector<Variable>& variables, const vector<string>& new_names)
 {
-    Index j = 0;
-    for(size_t i = 0; i < vars.size(); ++i)
+    Index name_index = 0;
+    for(size_t i = 0; i < variables.size(); ++i)
     {
-        if(vars[i].is_categorical())
+        if(variables[i].is_categorical())
         {
-            const size_t num_cats = vars[i].get_categories_number();
-            vars[i].categories.assign(new_names.begin() + j, new_names.begin() + j + num_cats);
-            j += num_cats;
+            const size_t num_cats = variables[i].get_categories_number();
+            variables[i].categories.assign(new_names.begin() + name_index, new_names.begin() + name_index + num_cats);
+            name_index += num_cats;
         }
         else
         {
-            vars[i].name = new_names[j];
-            ++j;
+            variables[i].name = new_names[name_index];
+            ++name_index;
         }
     }
 }
@@ -393,23 +393,23 @@ Index NeuralNetwork::get_layers_number(LayerType type) const
                     [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
 }
 
-void NeuralNetwork::set_parameters(const VectorR& p)
+void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 {
-    const Index n_bytes = p.size() * Index(sizeof(float));
+    const Index byte_count = new_parameters.size() * Index(sizeof(float));
 
 #ifdef OPENNN_WITH_CUDA
     if(parameters.device_type == DeviceType::CUDA)
     {
-        parameters.resize_bytes(n_bytes, DeviceType::CUDA);
-        if(n_bytes > 0)
-            CHECK_CUDA(cudaMemcpy(parameters.data, p.data(), n_bytes, cudaMemcpyHostToDevice));
+        parameters.resize_bytes(byte_count, DeviceType::CUDA);
+        if(byte_count > 0)
+            CHECK_CUDA(cudaMemcpy(parameters.data, new_parameters.data(), byte_count, cudaMemcpyHostToDevice));
         return;
     }
 #endif
 
-    parameters.resize_bytes(n_bytes, DeviceType::CPU);
-    if(n_bytes > 0)
-        std::memcpy(parameters.data, p.data(), static_cast<size_t>(n_bytes));
+    parameters.resize_bytes(byte_count, DeviceType::CPU);
+    if(byte_count > 0)
+        std::memcpy(parameters.data, new_parameters.data(), static_cast<size_t>(byte_count));
 }
 
 void NeuralNetwork::set_parameters_random()
@@ -453,22 +453,22 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     if(layers.empty() || input_views.empty()) return {};
 
     const Index batch_size = input_views[0].shape[0];
-    ForwardPropagation fp(batch_size, this);
+    ForwardPropagation forward_propagation(batch_size, this);
 
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu())
-        return calculate_outputs_device(input_views, fp);
+        return calculate_outputs_device(input_views, forward_propagation);
 #endif
 
-    forward_propagate(input_views, fp, false);
+    forward_propagate(input_views, forward_propagation, false);
 
     const size_t layers_count = get_layers_number();
     const TensorView out_view = (layers_count > 0
-                           && layers_count - 1 < fp.views.size()
-                           && fp.views[layers_count - 1].size() > 1
-                           && !fp.views[layers_count - 1].back().empty())
-                          ? fp.views[layers_count - 1].back()[0]
-                          : fp.get_last_trainable_layer_outputs();
+                           && layers_count - 1 < forward_propagation.views.size()
+                           && forward_propagation.views[layers_count - 1].size() > 1
+                           && !forward_propagation.views[layers_count - 1].back().empty())
+                          ? forward_propagation.views[layers_count - 1].back()[0]
+                          : forward_propagation.get_last_trainable_layer_outputs();
 
     return MatrixMap(out_view.as<float>(), batch_size, out_view.size() / batch_size);
 }
@@ -771,9 +771,9 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
         const Index inputs_number = read_xml_index(inputs_element, "InputsNumber");
         input_variables.resize(inputs_number);
 
-        for_xml_items(inputs_element, "Input", inputs_number, [this](Index i, const XmlElement* el){
-            if(el->get_text())
-                input_variables[i].name = el->get_text();
+        for_xml_items(inputs_element, "Input", inputs_number, [this](Index i, const XmlElement* element){
+            if(element->get_text())
+                input_variables[i].name = element->get_text();
         });
     }
 
@@ -824,8 +824,8 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
                 const char* text = indices_element->get_text();
                 if(text)
                 {
-                    Shape s = string_to_shape(text, " ");
-                    layer_input_indices[layer_idx] = vector<Index>(s.begin(), s.end());
+                    Shape shape = string_to_shape(text, " ");
+                    layer_input_indices[layer_idx] = vector<Index>(shape.begin(), shape.end());
                 }
             }
             indices_element = indices_element->next_sibling_element("LayerInputsIndices");
@@ -838,9 +838,9 @@ void NeuralNetwork::from_XML(const XmlDocument& document)
         const Index outputs_number = read_xml_index(outputs_element, "OutputsNumber");
         output_variables.resize(outputs_number);
 
-        for_xml_items(outputs_element, "Output", outputs_number, [this](Index i, const XmlElement* el){
-            if(el->get_text())
-                output_variables[i].name = el->get_text();
+        for_xml_items(outputs_element, "Output", outputs_number, [this](Index i, const XmlElement* element){
+            if(element->get_text())
+                output_variables[i].name = element->get_text();
         });
     }
 
@@ -1164,8 +1164,8 @@ void NeuralNetwork::link_states()
     // positional encoding tables — none of these benefit from BF16). The same
     // pointer walk works for CPU and GPU: states.as<float>() returns whichever
     // host the buffer currently lives on, and we just rebuild each layer's view.
-    float* ptr = states.as<float>();
-    if(!ptr) return;
+    float* state_pointer = states.as<float>();
+    if(!state_pointer) return;
 
     for(auto& layer : layers)
     {
@@ -1177,15 +1177,15 @@ void NeuralNetwork::link_states()
             if(shapes[i].empty()) continue;
 
             if(i < state_views.size())
-                state_views[i] = TensorView(ptr, shapes[i], CUDNN_DATA_FLOAT);
+                state_views[i] = TensorView(state_pointer, shapes[i], CUDNN_DATA_FLOAT);
 
-            ptr += get_aligned_size(shapes[i].size());
+            state_pointer += get_aligned_size(shapes[i].size());
         }
     }
 }
 
 MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
-                                                ForwardPropagation& fp)
+                                                ForwardPropagation& forward_propagation)
 {
     copy_parameters_device();
     link_parameters();
@@ -1203,15 +1203,15 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     vector<TensorView> input_views_gpu = input_views_cpu;
     input_views_gpu[0].data = input_device;
 
-    forward_propagate(input_views_gpu, fp, false);
+    forward_propagate(input_views_gpu, forward_propagation, false);
 
     const size_t layers_count = get_layers_number();
     const TensorView out_view = (layers_count > 0
-                           && layers_count - 1 < fp.views.size()
-                           && fp.views[layers_count - 1].size() > 1
-                           && !fp.views[layers_count - 1].back().empty())
-                          ? fp.views[layers_count - 1].back()[0]
-                          : fp.get_last_trainable_layer_outputs();
+                           && layers_count - 1 < forward_propagation.views.size()
+                           && forward_propagation.views[layers_count - 1].size() > 1
+                           && !forward_propagation.views[layers_count - 1].back().empty())
+                          ? forward_propagation.views[layers_count - 1].back()[0]
+                          : forward_propagation.get_last_trainable_layer_outputs();
 
     const Index batch_size = input_views_cpu[0].shape[0];
     const Index out_cols = out_view.size() / batch_size;
@@ -1222,17 +1222,17 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     // of FP32, so the conversion is a left-shift — no rounding involved.
     if(out_view.dtype == CUDNN_DATA_BFLOAT16)
     {
-        const Index n = out_view.size();
-        vector<uint16_t> staging(static_cast<size_t>(n));
+        const Index size = out_view.size();
+        vector<uint16_t> staging(static_cast<size_t>(size));
         CHECK_CUDA(cudaMemcpy(staging.data(),
                               out_view.data,
-                              n * sizeof(uint16_t),
+                              size * sizeof(uint16_t),
                               cudaMemcpyDeviceToHost));
-        float* dst = result.data();
-        for(Index i = 0; i < n; ++i)
+        float* destination = result.data();
+        for(Index i = 0; i < size; ++i)
         {
             const uint32_t bits = static_cast<uint32_t>(staging[size_t(i)]) << 16;
-            std::memcpy(&dst[i], &bits, sizeof(float));
+            std::memcpy(&destination[i], &bits, sizeof(float));
         }
     }
     else

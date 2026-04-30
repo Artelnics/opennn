@@ -69,13 +69,13 @@ vector<string> tokenize(const string& document)
     vector<string> tokens;
     string current_token;
 
-    for(const char c : document)
+    for(const char character : document)
     {
-        const unsigned char uc = static_cast<unsigned char>(c);
+        const unsigned char unsigned_character = static_cast<unsigned char>(character);
 
-        if(isalnum(uc))
+        if(isalnum(unsigned_character))
         {
-            current_token += static_cast<char>(tolower(uc));
+            current_token += static_cast<char>(tolower(unsigned_character));
         }
         else
         {
@@ -85,8 +85,8 @@ vector<string> tokenize(const string& document)
                 current_token.clear();
             }
 
-            if(ispunct(uc))
-                tokens.emplace_back(1, c);
+            if(ispunct(unsigned_character))
+                tokens.emplace_back(1, character);
         }
     }
 
@@ -201,7 +201,7 @@ bool is_date_time_string(const string& text)
     };
 
     return any_of(date_regexes.begin(), date_regexes.end(),
-                  [&](const regex& r) { return regex_match(text, r); });
+                  [&](const regex& date_regex) { return regex_match(text, date_regex); });
 }
 
 time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format)
@@ -216,8 +216,8 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
     static const regex re_dmy(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))");
     static const regex re_hms(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))");
 
-    struct tm t = {};
-    smatch m;
+    struct tm time_components = {};
+    smatch match;
 
     const bool try_ymd = (format == YMD || format == AUTO);
     const bool try_dmy = (format == DMY || format == MDY || format == AUTO);
@@ -225,91 +225,91 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
     auto fill_dmy = [&](int part1, int part2)
     {
         const bool mdy = (format == MDY) || (format == AUTO && part1 <= 12 && part2 > 12);
-        if(mdy) { t.tm_mon = part1 - 1; t.tm_mday = part2; }
-        else    { t.tm_mday = part1;    t.tm_mon = part2 - 1; }
+        if(mdy) { time_components.tm_mon = part1 - 1; time_components.tm_mday = part2; }
+        else    { time_components.tm_mday = part1;    time_components.tm_mon = part2 - 1; }
     };
 
-    if(try_ymd && regex_match(date, m, re_ymd_hms_ms))
+    if(try_ymd && regex_match(date, match, re_ymd_hms_ms))
     {
-        t.tm_year = stoi(m[1]) - 1900;
-        t.tm_mon  = stoi(m[2]) - 1;
-        t.tm_mday = stoi(m[3]);
-        t.tm_hour = stoi(m[4]) - gmt;
-        t.tm_min  = stoi(m[5]);
-        t.tm_sec  = stoi(m[6]);
-        return mktime(&t);
+        time_components.tm_year = stoi(match[1]) - 1900;
+        time_components.tm_mon  = stoi(match[2]) - 1;
+        time_components.tm_mday = stoi(match[3]);
+        time_components.tm_hour = stoi(match[4]) - gmt;
+        time_components.tm_min  = stoi(match[5]);
+        time_components.tm_sec  = stoi(match[6]);
+        return mktime(&time_components);
     }
-    if(try_ymd && regex_match(date, m, re_ymd_hms))
+    if(try_ymd && regex_match(date, match, re_ymd_hms))
     {
-        t.tm_year = stoi(m[1]) - 1900;
-        t.tm_mon  = stoi(m[2]) - 1;
-        t.tm_mday = stoi(m[3]);
-        t.tm_hour = stoi(m[4]) - gmt;
-        t.tm_min  = stoi(m[5]);
-        t.tm_sec  = stoi(m[6]);
-        return mktime(&t);
+        time_components.tm_year = stoi(match[1]) - 1900;
+        time_components.tm_mon  = stoi(match[2]) - 1;
+        time_components.tm_mday = stoi(match[3]);
+        time_components.tm_hour = stoi(match[4]) - gmt;
+        time_components.tm_min  = stoi(match[5]);
+        time_components.tm_sec  = stoi(match[6]);
+        return mktime(&time_components);
     }
-    if(try_ymd && regex_match(date, m, re_ymd_hm))
+    if(try_ymd && regex_match(date, match, re_ymd_hm))
     {
-        t.tm_year = stoi(m[1]) - 1900;
-        t.tm_mon  = stoi(m[2]) - 1;
-        t.tm_mday = stoi(m[3]);
-        t.tm_hour = stoi(m[4]) - gmt;
-        t.tm_min  = stoi(m[5]);
-        return mktime(&t);
+        time_components.tm_year = stoi(match[1]) - 1900;
+        time_components.tm_mon  = stoi(match[2]) - 1;
+        time_components.tm_mday = stoi(match[3]);
+        time_components.tm_hour = stoi(match[4]) - gmt;
+        time_components.tm_min  = stoi(match[5]);
+        return mktime(&time_components);
     }
-    if(try_ymd && regex_match(date, m, re_ymd))
+    if(try_ymd && regex_match(date, match, re_ymd))
     {
-        t.tm_year = stoi(m[1]) - 1900;
-        t.tm_mon  = stoi(m[2]) - 1;
-        t.tm_mday = stoi(m[3]);
-        return mktime(&t);
+        time_components.tm_year = stoi(match[1]) - 1900;
+        time_components.tm_mon  = stoi(match[2]) - 1;
+        time_components.tm_mday = stoi(match[3]);
+        return mktime(&time_components);
     }
-    if(try_ymd && regex_match(date, m, re_ym))
+    if(try_ymd && regex_match(date, match, re_ym))
     {
-        t.tm_year = stoi(m[1]) - 1900;
-        t.tm_mon  = stoi(m[2]) - 1;
-        t.tm_mday = 1;
-        return mktime(&t);
+        time_components.tm_year = stoi(match[1]) - 1900;
+        time_components.tm_mon  = stoi(match[2]) - 1;
+        time_components.tm_mday = 1;
+        return mktime(&time_components);
     }
-    if(try_dmy && regex_match(date, m, re_dmy_hms))
+    if(try_dmy && regex_match(date, match, re_dmy_hms))
     {
-        fill_dmy(stoi(m[1]), stoi(m[2]));
-        t.tm_year = stoi(m[3]) - 1900;
+        fill_dmy(stoi(match[1]), stoi(match[2]));
+        time_components.tm_year = stoi(match[3]) - 1900;
 
-        int hour = stoi(m[4]);
-        if(m[7].matched)
+        int hour = stoi(match[4]);
+        if(match[7].matched)
         {
-            const string ampm = m[7].str();
+            const string ampm = match[7].str();
             if(ampm == "PM" && hour < 12) hour += 12;
             if(ampm == "AM" && hour == 12) hour = 0;
         }
 
-        t.tm_hour = hour - gmt;
-        t.tm_min  = stoi(m[5]);
-        t.tm_sec  = stoi(m[6]);
-        return mktime(&t);
+        time_components.tm_hour = hour - gmt;
+        time_components.tm_min  = stoi(match[5]);
+        time_components.tm_sec  = stoi(match[6]);
+        return mktime(&time_components);
     }
-    if(try_dmy && regex_match(date, m, re_dmy_hm))
+    if(try_dmy && regex_match(date, match, re_dmy_hm))
     {
-        fill_dmy(stoi(m[1]), stoi(m[2]));
-        t.tm_year = stoi(m[3]) - 1900;
-        t.tm_hour = stoi(m[4]) - gmt;
-        t.tm_min  = stoi(m[5]);
-        return mktime(&t);
+        fill_dmy(stoi(match[1]), stoi(match[2]));
+        time_components.tm_year = stoi(match[3]) - 1900;
+        time_components.tm_hour = stoi(match[4]) - gmt;
+        time_components.tm_min  = stoi(match[5]);
+        return mktime(&time_components);
     }
-    if(try_dmy && regex_match(date, m, re_dmy))
+    if(try_dmy && regex_match(date, match, re_dmy))
     {
-        fill_dmy(stoi(m[1]), stoi(m[2]));
-        t.tm_year = stoi(m[3]) - 1900;
-        return mktime(&t);
+        fill_dmy(stoi(match[1]), stoi(match[2]));
+        time_components.tm_year = stoi(match[3]) - 1900;
+        return mktime(&time_components);
     }
-    if(format == AUTO && regex_match(date, m, re_hms))
+    if(format == AUTO && regex_match(date, match, re_hms))
     {
-        t.tm_hour = stoi(m[1]) - gmt;
-        t.tm_min  = stoi(m[2]);
-        t.tm_sec  = stoi(m[3]);
-        return mktime(&t);
+        time_components.tm_hour = stoi(match[1]) - gmt;
+        time_components.tm_min  = stoi(match[2]);
+        time_components.tm_sec  = stoi(match[3]);
+        return mktime(&time_components);
     }
 
     return -1;
@@ -400,12 +400,12 @@ void replace_double_char_with_label(string &str, const string &target_char, cons
 
 void replace_substring_within_quotes(string &str, const string &target, const string &replacement)
 {
-    const regex r("\"([^\"]*)\"");
+    const regex quoted_regex("\"([^\"]*)\"");
     string result;
     string::const_iterator search_start(str.begin());
     smatch match;
 
-    while (regex_search(search_start, str.cend(), match, r))
+    while (regex_search(search_start, str.cend(), match, quoted_regex))
     {
         result += string(search_start, match[0].first);
 
@@ -427,7 +427,7 @@ void erase(string& text, char character)
 
 string get_trimmed(const string& text)
 {
-    const auto is_space = [](char c) { return isspace(static_cast<unsigned char>(c)); };
+    const auto is_space = [](char character) { return isspace(static_cast<unsigned char>(character)); };
 
     const auto start = find_if_not(text.begin(), text.end(), is_space);
     const auto end = find_if_not(text.rbegin(), text.rend(), is_space).base();
@@ -488,7 +488,7 @@ void display_progress_bar(const int& completed, const int& total)
     cout.flush();
 }
 
-void string_to_vector(const string& input, VectorR& x)
+void string_to_vector(const string& input, VectorR& values)
 {
     istringstream stream(input);
     float value;
@@ -497,10 +497,10 @@ void string_to_vector(const string& input, VectorR& x)
     while (stream >> value)
         buffer.push_back(value);
 
-    x.resize(static_cast<Index>(buffer.size()));
+    values.resize(static_cast<Index>(buffer.size()));
 
-    for (Index i = 0; i < x.size(); ++i)
-        x(i) = buffer[i];
+    for (Index i = 0; i < values.size(); ++i)
+        values(i) = buffer[i];
 }
 
 bool contains(const vector<string>& data, const string& value)

@@ -87,11 +87,11 @@ void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
     if(ssize(states) < 5 || !states[Means].data)
         throw runtime_error("Unscaling::set_descriptives: layer not compiled yet.");
 
-    const Index n = new_descriptives.size();
-    if(n != states[Means].size())
+    const Index descriptives_count = new_descriptives.size();
+    if(descriptives_count != states[Means].size())
         throw runtime_error("Unscaling::set_descriptives: size mismatch.");
 
-    for(Index i = 0; i < n; ++i)
+    for(Index i = 0; i < descriptives_count; ++i)
     {
         states[Means].as<float>()[i]              = new_descriptives[i].mean;
         states[StandardDeviations].as<float>()[i] = new_descriptives[i].standard_deviation;

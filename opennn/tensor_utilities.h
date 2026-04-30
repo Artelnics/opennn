@@ -20,18 +20,18 @@ static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(float);
 inline int to_int(Index value) { return static_cast<int>(value); }
 inline float to_type(Index value) { return static_cast<float>(value); }
 
-inline Index align_up(Index n, Index alignment)
+inline Index align_up(Index value, Index alignment)
 {
-    return n == 0 ? 0 : (n + alignment - 1) & ~(alignment - 1);
+    return value == 0 ? 0 : (value + alignment - 1) & ~(alignment - 1);
 }
 
 inline Index get_aligned_size(Index size)     { return align_up(size,    ALIGN_ELEMENTS); }
 inline Index get_aligned_bytes(Index n_bytes) { return align_up(n_bytes, ALIGN_BYTES); }
 
 template<typename Container>
-inline Index ssize(const Container& c) noexcept
+inline Index ssize(const Container& container) noexcept
 {
-    return static_cast<Index>(c.size());
+    return static_cast<Index>(container.size());
 }
 
 inline bool is_aligned(const void* ptr)
@@ -49,9 +49,9 @@ constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_T
 // / CUDA library constants happens at API boundaries via to_cudnn() / to_cuda()
 // in configuration.h. Anything outside a network defaults to FP32.
 
-inline Index dtype_bytes(cudnnDataType_t t)
+inline Index dtype_bytes(cudnnDataType_t dtype)
 {
-    switch (t) {
+    switch (dtype) {
         case CUDNN_DATA_FLOAT:    return 4;
         case CUDNN_DATA_INT32:    return 4;
         case CUDNN_DATA_BFLOAT16: return 2;
@@ -61,9 +61,9 @@ inline Index dtype_bytes(cudnnDataType_t t)
     }
 }
 
-inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t t)
+inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t dtype)
 {
-    switch (t) {
+    switch (dtype) {
         case CUDNN_DATA_FLOAT:    return CUDA_R_32F;
         case CUDNN_DATA_INT32:    return CUDA_R_32I;
         case CUDNN_DATA_BFLOAT16: return CUDA_R_16BF;
@@ -82,7 +82,7 @@ struct Shape
 
     Shape() noexcept = default;
 
-    Shape(size_t n, Index value) : rank(min(n, MaxRank))
+    Shape(size_t new_rank, Index value) : rank(min(new_rank, MaxRank))
     { std::fill_n(dims, rank, value); }
 
     Shape(initializer_list<Index> list) : rank(min(list.size(), MaxRank))
@@ -104,12 +104,12 @@ struct Shape
     }
 
     void clear() noexcept { rank = 0; }
-    void push_back(Index v) noexcept { if (rank < MaxRank) dims[rank++] = v; }
+    void push_back(Index value) noexcept { if (rank < MaxRank) dims[rank++] = value; }
 
-    friend ostream& operator<<(ostream& os, const Shape& s)
+    friend ostream& operator<<(ostream& os, const Shape& shape)
     {
         os << "[";
-        for (size_t i = 0; i < s.rank; ++i) os << (i ? ", " : " ") << s.dims[i];
+        for (size_t i = 0; i < shape.rank; ++i) os << (i ? ", " : " ") << shape.dims[i];
         os << " ]";
         return os;
     }
@@ -123,9 +123,9 @@ struct Shape
 
     Shape& append(const Shape& other)
     {
-        const size_t n = min(other.rank, MaxRank - rank);
-        std::copy_n(other.dims, n, dims + rank);
-        rank += n;
+        const size_t copy_count = min(other.rank, MaxRank - rank);
+        std::copy_n(other.dims, copy_count, dims + rank);
+        rank += copy_count;
         return *this;
     }
 };
@@ -156,12 +156,12 @@ struct Buffer
     Index size()  const { return bytes / Index(sizeof(float)); }   // legacy: assumes T = float
     bool  empty() const { return bytes == 0; }
 
-    void resize_bytes(Index n_bytes, DeviceType t)
+    void resize_bytes(Index n_bytes, DeviceType new_device_type)
     {
-        if(n_bytes == bytes && device_type == t) return;
+        if(n_bytes == bytes && device_type == new_device_type) return;
         free_buffer();
-        device_type = t;
-        if(n_bytes > 0) data = alloc(t, n_bytes);
+        device_type = new_device_type;
+        if(n_bytes > 0) data = alloc(new_device_type, n_bytes);
         bytes = n_bytes;
     }
 
@@ -190,37 +190,37 @@ struct Buffer
     }
 #endif
 
-    explicit Buffer(DeviceType t = DeviceType::CPU) noexcept : device_type(t) {}
+    explicit Buffer(DeviceType new_device_type = DeviceType::CPU) noexcept : device_type(new_device_type) {}
     Buffer(const Buffer&) = delete;
     Buffer& operator=(const Buffer&) = delete;
 
-    Buffer(Buffer&& o) noexcept : Buffer() { swap(o); }
-    Buffer& operator=(Buffer&& o) noexcept { swap(o); return *this; }
+    Buffer(Buffer&& other) noexcept : Buffer() { swap(other); }
+    Buffer& operator=(Buffer&& other) noexcept { swap(other); return *this; }
 
     ~Buffer() { free_buffer(); }
 
-    void swap(Buffer& o) noexcept
+    void swap(Buffer& other) noexcept
     {
-        std::swap(data, o.data);
-        std::swap(bytes, o.bytes);
-        std::swap(device_type, o.device_type);
+        std::swap(data, other.data);
+        std::swap(bytes, other.bytes);
+        std::swap(device_type, other.device_type);
     }
 
 private:
-    static void* alloc(DeviceType t, Index n)
+    static void* alloc(DeviceType device_type, Index byte_count)
     {
 #ifdef OPENNN_WITH_CUDA
-        if(t == DeviceType::CUDA) { void* p = nullptr; CHECK_CUDA(cudaMalloc(&p, n)); return p; }
+        if(device_type == DeviceType::CUDA) { void* device_pointer = nullptr; CHECK_CUDA(cudaMalloc(&device_pointer, byte_count)); return device_pointer; }
 #endif
-        return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(n));
+        return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
     }
 
-    static void dealloc(DeviceType t, void* p, Index n)
+    static void dealloc(DeviceType device_type, void* pointer, Index byte_count)
     {
 #ifdef OPENNN_WITH_CUDA
-        if(t == DeviceType::CUDA) { cudaFree(p); return; }
+        if(device_type == DeviceType::CUDA) { cudaFree(pointer); return; }
 #endif
-        Eigen::aligned_allocator<uint8_t>{}.deallocate(static_cast<uint8_t*>(p), static_cast<size_t>(n));
+        Eigen::aligned_allocator<uint8_t>{}.deallocate(static_cast<uint8_t*>(pointer), static_cast<size_t>(byte_count));
     }
 
     void free_buffer()
@@ -356,18 +356,18 @@ struct TensorView
     }
 
 private:
-    void set_descriptor(const Shape& s) const
+    void set_descriptor(const Shape& shape) const
     {
         // NHWC layout: N first, then H, W, C trailing. For rank < 4 the
         // missing leading dims default to 1.
-        int n = 1, c = 1, h = 1, w = 1;
-        const size_t r = s.rank;
-        if (r >= 1) c = static_cast<int>(s[r - 1]);
-        if (r >= 2) n = static_cast<int>(s[0]);
-        if (r >= 3) w = static_cast<int>(s[r - 2]);
-        if (r >= 4) h = static_cast<int>(s[r - 3]);
+        int batch_count = 1, channels = 1, height = 1, width = 1;
+        const size_t rank = shape.rank;
+        if (rank >= 1) channels    = static_cast<int>(shape[rank - 1]);
+        if (rank >= 2) batch_count = static_cast<int>(shape[0]);
+        if (rank >= 3) width       = static_cast<int>(shape[rank - 2]);
+        if (rank >= 4) height      = static_cast<int>(shape[rank - 3]);
 
-        if (n <= 0 || c <= 0 || h <= 0 || w <= 0)
+        if (batch_count <= 0 || channels <= 0 || height <= 0 || width <= 0)
             return;
 
         if (!descriptor_handle)
@@ -375,12 +375,12 @@ private:
             cudnnTensorDescriptor_t raw_desc;
             CHECK_CUDNN(cudnnCreateTensorDescriptor(&raw_desc));
 
-            descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
-                cudnnDestroyTensorDescriptor(p);
+            descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t descriptor) {
+                cudnnDestroyTensorDescriptor(descriptor);
             });
         }
 
-        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, dtype, n, c, h, w));
+        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, dtype, batch_count, channels, height, width));
     }
 
 #endif
@@ -462,8 +462,8 @@ inline void TensorView::fill(float value)
 #endif
 
     assert(dtype == CUDNN_DATA_FLOAT);
-    float* p = static_cast<float*>(data);
-    std::fill(p, p + size(), value);
+    float* data_pointer = static_cast<float*>(data);
+    std::fill(data_pointer, data_pointer + size(), value);
 }
 
 #ifdef OPENNN_WITH_CUDA

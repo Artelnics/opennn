@@ -41,8 +41,8 @@ static void initialize_generator()
 
     if (seed < 0)
     {
-        random_device rd;
-        generator.seed(rd());
+        random_device device;
+        generator.seed(device());
     }
     else
     {
@@ -142,10 +142,10 @@ template void shuffle_vector<size_t>(vector<size_t>&);
 
 void shuffle_vector_blocks(vector<Index>& vec, size_t blocks_number)
 {
-    const size_t n = vec.size();
-    if (n < 2) return;
+    const size_t size = vec.size();
+    if (size < 2) return;
 
-    const size_t block_size = n / max(size_t(1), blocks_number);
+    const size_t block_size = size / max(size_t(1), blocks_number);
 
     if (block_size < 10)
     {
@@ -153,18 +153,18 @@ void shuffle_vector_blocks(vector<Index>& vec, size_t blocks_number)
         return;
     }
 
-    for (size_t i = 0; i < n; i += block_size)
+    for (size_t i = 0; i < size; i += block_size)
     {
         const auto start = vec.begin() + i;
-        const auto end = (i + block_size > n) ? vec.end() : start + block_size;
+        const auto end = (i + block_size > size) ? vec.end() : start + block_size;
 
         shuffle(start, end, get_generator());
     }
 }
 
-void shuffle(VectorB& v)
+void shuffle(VectorB& vector_to_shuffle)
 {
-    shuffle(v.data(), v.data() + v.size(), get_generator());
+    shuffle(vector_to_shuffle.data(), vector_to_shuffle.data() + vector_to_shuffle.size(), get_generator());
 }
 
 Index get_random_element(const vector<Index>&values)

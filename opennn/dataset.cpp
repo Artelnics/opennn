@@ -1121,9 +1121,9 @@ vector<string> Dataset::unuse_uncorrelated_variables(const float minimum_correla
 
         for(Index j = 0; j < target_variables_number; ++j)
         {
-            const float r = correlations(i, j).r;
+            const float correlation_value = correlations(i, j).r;
 
-            if(!isnan(r) && abs(r) >= minimum_correlation)
+            if(!isnan(correlation_value) && abs(correlation_value) >= minimum_correlation)
             {
                 has_significant_correlation = true;
                 break;
@@ -2566,10 +2566,10 @@ void Dataset::read_csv()
     variables_missing_values_number = VectorI::Zero(variables_number);
 
     vector<unordered_map<string, Index>> category_maps(variables_number);
-    for(Index v = 0; v < variables_number; ++v)
-        if(variables[v].type == VariableType::Categorical)
-            for(Index c = 0; c < ssize(variables[v].categories); ++c)
-                category_maps[v][variables[v].categories[c]] = c;
+    for(Index variable_index = 0; variable_index < variables_number; ++variable_index)
+        if(variables[variable_index].type == VariableType::Categorical)
+            for(Index category_index = 0; category_index < ssize(variables[variable_index].categories); ++category_index)
+                category_maps[variable_index][variables[variable_index].categories[category_index]] = category_index;
 
     for(Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {

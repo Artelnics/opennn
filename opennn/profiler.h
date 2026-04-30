@@ -48,15 +48,15 @@ struct Stats
         if (total_ms > 0.0) os << std::setw(8) << "%";
         os << "\n";
 
-        for (const auto& [k, v] : sorted)
+        for (const auto& [key, total] : sorted)
         {
-            const long n = counts.at(k);
-            os << "  " << std::left << std::setw(48) << k
-               << std::right << std::setw(12) << std::fixed << std::setprecision(2) << v
-               << std::setw(10) << n
-               << std::setw(12) << std::fixed << std::setprecision(3) << (v / double(n));
+            const long call_count = counts.at(key);
+            os << "  " << std::left << std::setw(48) << key
+               << std::right << std::setw(12) << std::fixed << std::setprecision(2) << total
+               << std::setw(10) << call_count
+               << std::setw(12) << std::fixed << std::setprecision(3) << (total / double(call_count));
             if (total_ms > 0.0)
-                os << std::setw(7) << std::fixed << std::setprecision(1) << (v / total_ms * 100.0) << "%";
+                os << std::setw(7) << std::fixed << std::setprecision(1) << (total / total_ms * 100.0) << "%";
             os << "\n";
         }
         os << "\n";
@@ -65,14 +65,14 @@ struct Stats
 
 inline Stats& global_stats()
 {
-    static Stats s;
-    return s;
+    static Stats stats;
+    return stats;
 }
 
 inline bool& enabled()
 {
-    static bool e = false;
-    return e;
+    static bool is_enabled = false;
+    return is_enabled;
 }
 
 class ScopedTimer
@@ -97,9 +97,9 @@ public:
 #ifdef OPENNN_WITH_CUDA
         if (sync_gpu_) cudaDeviceSynchronize();
 #endif
-        const auto t1 = std::chrono::steady_clock::now();
-        const double ms = std::chrono::duration<double, std::milli>(t1 - t0_).count();
-        global_stats().add(key_, ms);
+        const auto end_time = std::chrono::steady_clock::now();
+        const double elapsed_ms = std::chrono::duration<double, std::milli>(end_time - t0_).count();
+        global_stats().add(key_, elapsed_ms);
     }
 };
 

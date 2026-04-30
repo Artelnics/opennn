@@ -133,17 +133,17 @@ public:
 
     // Set
 
-    void set_layers_number(const Index n) { layers.resize(n); layer_input_indices.resize(n); }
+    void set_layers_number(const Index new_layers_number) { layers.resize(new_layers_number); layer_input_indices.resize(new_layers_number); }
 
-    void set_layer_input_indices(const vector<vector<Index>>& v) { layer_input_indices = v; }
-    void set_layer_input_indices(const Index i, const vector<Index>& v) { layer_input_indices[i] = v; }
+    void set_layer_input_indices(const vector<vector<Index>>& new_layer_input_indices) { layer_input_indices = new_layer_input_indices; }
+    void set_layer_input_indices(const Index layer_index, const vector<Index>& new_input_indices) { layer_input_indices[layer_index] = new_input_indices; }
 
     void set_layer_input_indices(const string&, const vector<string>&);
     void set_layer_input_indices(const string&, initializer_list<string>);
     void set_layer_input_indices(const string&, const string&);
 
-    void set_input_variables(const vector<Variable>& v) { input_variables = v; }
-    void set_output_variables(const vector<Variable>& v) { output_variables = v; }
+    void set_input_variables(const vector<Variable>& new_input_variables) { input_variables = new_input_variables; }
+    void set_output_variables(const vector<Variable>& new_output_variables) { output_variables = new_output_variables; }
 
     void set_input_names(const vector<string>&);
     void set_output_names(const vector<string>&);
@@ -177,7 +177,7 @@ public:
 
     vector<Index> get_layer_parameter_numbers() const;
 
-    void set_parameters(const VectorR& p);
+    void set_parameters(const VectorR& new_parameters);
 
     // Parameters initialization
 

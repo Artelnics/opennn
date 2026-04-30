@@ -13,15 +13,15 @@ namespace opennn
 
 Configuration& Configuration::instance()
 {
-    static Configuration cfg;
-    return cfg;
+    static Configuration configuration;
+    return configuration;
 }
 
-void Configuration::set(DeviceType d, TrainingPrecision tp, InferencePrecision ip)
+void Configuration::set(DeviceType new_device_type, TrainingPrecision new_training_precision, InferencePrecision new_inference_precision)
 {
-    device              = d;
-    training_precision  = tp;
-    inference_precision = ip;
+    device              = new_device_type;
+    training_precision  = new_training_precision;
+    inference_precision = new_inference_precision;
     // Invalidate the cached Resolved so a follow-up is_gpu()/resolve() re-detects
     // hardware and applies the new user request.
     cache_valid = false;
@@ -34,8 +34,8 @@ void Configuration::set(DeviceType d, TrainingPrecision tp, InferencePrecision i
 static bool has_cuda_gpu()
 {
     int count = 0;
-    const cudaError_t err = cudaGetDeviceCount(&count);
-    if (err != cudaSuccess) { cudaGetLastError(); return false; }
+    const cudaError_t error = cudaGetDeviceCount(&count);
+    if (error != cudaSuccess) { cudaGetLastError(); return false; }
     return count > 0;
 }
 
@@ -56,43 +56,43 @@ const Configuration::Resolved& Configuration::resolve() const
 {
     if (cache_valid) return cached_resolved;
 
-    Resolved r;
+    Resolved resolved;
 
     // 1. Device.
     switch (device)
     {
     case DeviceType::Auto:
-        r.device = has_cuda_gpu() ? DeviceType::CUDA : DeviceType::CPU;
+        resolved.device = has_cuda_gpu() ? DeviceType::CUDA : DeviceType::CPU;
         break;
     case DeviceType::CPU:
-        r.device = DeviceType::CPU;
+        resolved.device = DeviceType::CPU;
         break;
     case DeviceType::CUDA:
         if (!has_cuda_gpu())
             throw runtime_error("Configuration: CUDA requested but no GPU detected.");
-        r.device = DeviceType::CUDA;
+        resolved.device = DeviceType::CUDA;
         break;
     }
 
-    const bool gpu = (r.device == DeviceType::CUDA);
-    const int  cc  = gpu ? cuda_compute_capability() : -1;
-    const bool bf16_capable = gpu && (cc >= 80);   // Ampere+ has BF16 Tensor Cores.
+    const bool gpu = (resolved.device == DeviceType::CUDA);
+    const int  compute_capability = gpu ? cuda_compute_capability() : -1;
+    const bool bf16_capable = gpu && (compute_capability >= 80);   // Ampere+ has BF16 Tensor Cores.
 
     // 2. Training precision.
     switch (training_precision)
     {
     case TrainingPrecision::Auto:
-        r.training_precision = bf16_capable ? TrainingPrecision::BP16 : TrainingPrecision::Float32;
+        resolved.training_precision = bf16_capable ? TrainingPrecision::BP16 : TrainingPrecision::Float32;
         break;
     case TrainingPrecision::Float32:
-        r.training_precision = TrainingPrecision::Float32;
+        resolved.training_precision = TrainingPrecision::Float32;
         break;
     case TrainingPrecision::BP16:
         if (!gpu)
             throw runtime_error("Configuration: BP16 training requires CUDA.");
         if (!bf16_capable)
             throw runtime_error("Configuration: BP16 training requires CUDA compute capability >= 8.0 (Ampere+).");
-        r.training_precision = TrainingPrecision::BP16;
+        resolved.training_precision = TrainingPrecision::BP16;
         break;
     }
 
@@ -101,19 +101,19 @@ const Configuration::Resolved& Configuration::resolve() const
     switch (inference_precision)
     {
     case InferencePrecision::Auto:
-        r.inference_precision = (r.training_precision == TrainingPrecision::BP16)
+        resolved.inference_precision = (resolved.training_precision == TrainingPrecision::BP16)
                                     ? InferencePrecision::BP16
                                     : InferencePrecision::Float32;
         break;
     case InferencePrecision::Float32:
-        r.inference_precision = InferencePrecision::Float32;
+        resolved.inference_precision = InferencePrecision::Float32;
         break;
     case InferencePrecision::BP16:
         if (!gpu)
             throw runtime_error("Configuration: BP16 inference requires CUDA.");
         if (!bf16_capable)
             throw runtime_error("Configuration: BP16 inference requires CUDA compute capability >= 8.0 (Ampere+).");
-        r.inference_precision = InferencePrecision::BP16;
+        resolved.inference_precision = InferencePrecision::BP16;
         break;
     case InferencePrecision::Int8:
         // Placeholder: enum exists so user code can be written against the future API,
@@ -121,7 +121,7 @@ const Configuration::Resolved& Configuration::resolve() const
         throw runtime_error("Configuration: INT8 inference not yet supported (placeholder).");
     }
 
-    cached_resolved = r;
+    cached_resolved = resolved;
     cache_valid = true;
     return cached_resolved;
 }

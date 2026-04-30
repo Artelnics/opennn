@@ -32,7 +32,7 @@ public:
 
     // Set
 
-    void set(TrainingStrategy* ts) { training_strategy = ts; }
+    void set(TrainingStrategy* new_training_strategy) { training_strategy = new_training_strategy; }
 
     void set_default();
 

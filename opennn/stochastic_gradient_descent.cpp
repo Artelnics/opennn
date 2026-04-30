@@ -114,12 +114,12 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     VectorMap last_parameter_updates(optimization_data.views[LastParameterUpdate].as<float>(),
                                      optimization_data.views[LastParameterUpdate].size());
 
-    const Index n = parameters.size();
+    const Index parameters_size = parameters.size();
 
     if (momentum <= float(0))
     {
         #pragma omp parallel for
-        for (Index i = 0; i < n; ++i)
+        for (Index i = 0; i < parameters_size; ++i)
         {
             const float lr_g = current_learning_rate * gradient(i);
             parameter_updates(i) = -lr_g;
@@ -129,13 +129,13 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     else
     {
         #pragma omp parallel for
-        for (Index i = 0; i < n; ++i)
+        for (Index i = 0; i < parameters_size; ++i)
         {
             const float lr_g = current_learning_rate * gradient(i);
-            const float v_new = momentum * last_parameter_updates(i) - lr_g;
-            parameter_updates(i) = v_new;
-            last_parameter_updates(i) = v_new;
-            parameters(i) += nesterov ? momentum * v_new - lr_g : v_new;
+            const float velocity = momentum * last_parameter_updates(i) - lr_g;
+            parameter_updates(i) = velocity;
+            last_parameter_updates(i) = velocity;
+            parameters(i) += nesterov ? momentum * velocity - lr_g : velocity;
         }
     }
 }
@@ -264,8 +264,8 @@ TrainingResults StochasticGradientDescent::train()
     float elapsed_time = float(0);
 
     float current_learning_rate = initial_learning_rate;
-    const auto training_update = [&](BackPropagation& bp) {
-        update_parameters(bp, optimization_data, current_learning_rate);
+    const auto training_update = [&](BackPropagation& back_propagation) {
+        update_parameters(back_propagation, optimization_data, current_learning_rate);
     };
 
     // Main loop

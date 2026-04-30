@@ -41,7 +41,7 @@ public:
 
     // Stopping criteria
 
-    void set_minimum_loss_decrease(const float v) { minimum_loss_decrease = v; }
+    void set_minimum_loss_decrease(const float new_minimum_loss_decrease) { minimum_loss_decrease = new_minimum_loss_decrease; }
 
     // Training
 

@@ -357,13 +357,13 @@ void GeneticAlgorithm::perform_crossover()
     // Fill remaining slots with crossover children
     for(Index i = elitism_size; i < individuals_number; ++i)
     {
-        const Index p1 = get_random_element(selected_individual_indices);
-        Index p2 = get_random_element(selected_individual_indices);
+        const Index parent_index_1 = get_random_element(selected_individual_indices);
+        Index parent_index_2 = get_random_element(selected_individual_indices);
 
-        while (selected_individual_indices.size() > 1 && p1 == p2)
-            p2 = get_random_element(selected_individual_indices);
+        while (selected_individual_indices.size() > 1 && parent_index_1 == parent_index_2)
+            parent_index_2 = get_random_element(selected_individual_indices);
 
-        new_population.row(i) = crossover(population.row(p1), population.row(p2));
+        new_population.row(i) = crossover(population.row(parent_index_1), population.row(parent_index_2));
     }
 
     population.swap(new_population);

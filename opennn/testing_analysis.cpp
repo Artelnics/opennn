@@ -1001,10 +1001,10 @@ VectorR TestingAnalysis::calculate_multiple_classification_precision() const
 
     const MatrixI confusion_matrix = calculate_confusion(targets, outputs);
 
-    const Index n = confusion_matrix.rows() - 1;
-    const float total = static_cast<float>(confusion_matrix(n, n));
+    const Index classes_number = confusion_matrix.rows() - 1;
+    const float total = static_cast<float>(confusion_matrix(classes_number, classes_number));
 
-    const float diagonal_sum = static_cast<float>(confusion_matrix.topLeftCorner(n, n).diagonal().sum());
+    const float diagonal_sum = static_cast<float>(confusion_matrix.topLeftCorner(classes_number, classes_number).diagonal().sum());
 
     multiple_classification_tests(0) = diagonal_sum / total;
     multiple_classification_tests(1) = (total - diagonal_sum) / total;

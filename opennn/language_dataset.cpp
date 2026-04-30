@@ -20,10 +20,10 @@ namespace {
 // input/target tensors. Was a generic template in tensor_utilities.h but only
 // this file consumes it, so it lives here now.
 template <typename T>
-size_t get_maximum_size(const vector<vector<T>>& v)
+size_t get_maximum_size(const vector<vector<T>>& nested_values)
 {
     size_t maximum_size = 0;
-    for (const auto& inner : v)
+    for (const auto& inner : nested_values)
         if (inner.size() > maximum_size)
             maximum_size = inner.size();
     return maximum_size;

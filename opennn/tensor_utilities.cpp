@@ -13,9 +13,9 @@
 namespace opennn
 {
 
-string shape_to_string(const Shape& x, const string& separator)
+string shape_to_string(const Shape& shape, const string& separator)
 {
-    const Index size = x.rank;
+    const Index size = shape.rank;
 
     ostringstream buffer;
 
@@ -23,22 +23,22 @@ string shape_to_string(const Shape& x, const string& separator)
         throw runtime_error("Error: Dimensions size must be greater than 0.\n");
 
     for(Index i = 0; i < size; ++i)
-        buffer << x[i] << separator;
+        buffer << shape[i] << separator;
 
     return buffer.str();
 }
 
-Shape string_to_shape(const string& x, const string& separator)
+Shape string_to_shape(const string& text, const string& separator)
 {
     Shape result;
 
-    if (x.empty())
+    if (text.empty())
         throw runtime_error("Error: Input string must not be empty.\n");
 
-    stringstream ss(x);
+    stringstream stream(text);
     string token;
 
-    while (getline(ss, token, separator[0]))
+    while (getline(stream, token, separator[0]))
     {
         try
         {

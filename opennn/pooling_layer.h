@@ -98,11 +98,11 @@ public:
 
     void set_pool_size(const Index, Index);
 
-    void set_row_stride(const Index s) { row_stride = s; }
-    void set_column_stride(const Index s) { column_stride = s; }
+    void set_row_stride(const Index new_row_stride) { row_stride = new_row_stride; }
+    void set_column_stride(const Index new_column_stride) { column_stride = new_column_stride; }
 
-    void set_padding_height(const Index h) { padding_height = h; }
-    void set_padding_width(const Index w) { padding_width = w; }
+    void set_padding_height(const Index new_padding_height) { padding_height = new_padding_height; }
+    void set_padding_width(const Index new_padding_width) { padding_width = new_padding_width; }
 
     void set_pooling_method(const string&);
 

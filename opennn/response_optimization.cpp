@@ -34,14 +34,14 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_d
     conditions.assign(static_cast<size_t>(variables_number), Condition(ConditionType::None));
 }
 
-void ResponseOptimization::set_condition(const string& name, const ConditionType condition, float low, float up)
+void ResponseOptimization::set_condition(const string& name, const ConditionType condition, float low_bound, float up_bound)
 {
     if(!dataset)
         throw runtime_error("Dataset not set.");
 
     const Index index = dataset->get_variable_index(name);
 
-    conditions[index] = Condition(condition, low, up);
+    conditions[index] = Condition(condition, low_bound, up_bound);
 }
 
 void ResponseOptimization::clear_conditions()
@@ -279,11 +279,11 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                 random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array().round();
             else
             {
-                const float inf = input_domain.inferior_frontier(current_feature_index);
-                const float sup = input_domain.superior_frontier(current_feature_index);
-                const float range = sup - inf;
+                const float inferior = input_domain.inferior_frontier(current_feature_index);
+                const float superior = input_domain.superior_frontier(current_feature_index);
+                const float range = superior - inferior;
 
-                random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array() * range + inf;
+                random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array() * range + inferior;
             }
             ++current_feature_index;
         }

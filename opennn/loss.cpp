@@ -236,14 +236,14 @@ void Loss::set_error(const Error& new_error)
 {
     error = new_error;
 
-    for(const auto& [e, n] : error_map)
-        if (e == error) { name = n; return; }
+    for(const auto& [error_value, error_name] : error_map)
+        if (error_value == error) { name = error_name; return; }
 }
 
 void Loss::set_error(const string& new_name)
 {
-    for(const auto& [e, n] : error_map)
-        if (n == new_name) { set_error(e); return; }
+    for(const auto& [error_value, error_name] : error_map)
+        if (error_name == new_name) { set_error(error_value); return; }
 
     throw runtime_error("Unknown loss method: " + new_name);
 }
@@ -254,10 +254,10 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 
     check_neural_network();
 
-    const Index n = neural_network->get_parameters_size();
+    const Index parameters_number = neural_network->get_parameters_size();
 
-    const TensorView parameters(neural_network->get_parameters_data(), { n });
-    TensorView gradient(back_propagation.gradient.as<float>(), { n });
+    const TensorView parameters(neural_network->get_parameters_data(), { parameters_number });
+    TensorView gradient(back_propagation.gradient.as<float>(), { parameters_number });
 
     if (regularization_method == Regularization::L1)
         l1_regularization_gradient(parameters, regularization_weight, gradient);
@@ -572,8 +572,8 @@ MatrixR Loss::calculate_numerical_hessian()
 {
     // @todo Stub - not yet refactored
     const VectorR gradient = calculate_numerical_gradient();
-    const Index n = gradient.size();
-    return MatrixR::Zero(n, n);
+    const Index parameters_number = gradient.size();
+    return MatrixR::Zero(parameters_number, parameters_number);
 }
 
 }

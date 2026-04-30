@@ -196,7 +196,7 @@ public:
 
     // Variables set
 
-    void set_variables(const vector<Variable>& v) { variables = v; }
+    void set_variables(const vector<Variable>& new_variables) { variables = new_variables; }
 
     void set_default_variable_names();
 
@@ -216,7 +216,7 @@ public:
 
     void set_variable_names(const vector<string>&);
 
-    void set_variables_number(const Index n) { variables.resize(n); }
+    void set_variables_number(const Index new_size) { variables.resize(new_size); }
 
     void set_variable_scalers(const string&);
 
@@ -238,12 +238,12 @@ public:
 
     // Members set
 
-    void set_data_path(const filesystem::path& p) { data_path = p; }
+    void set_data_path(const filesystem::path& new_data_path) { data_path = new_data_path; }
 
-    void set_has_header(bool h) { has_header = h; }
-    void set_has_ids(bool h) { has_sample_ids = h; }
+    void set_has_header(bool new_has_header) { has_header = new_has_header; }
+    void set_has_ids(bool new_has_ids) { has_sample_ids = new_has_ids; }
 
-    void set_separator(const Separator& s) { separator = s; }
+    void set_separator(const Separator& new_separator) { separator = new_separator; }
     void set_separator_string(const string&);
     void set_separator_name(const string&);
 

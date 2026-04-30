@@ -214,9 +214,9 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
 
             if(add_positional_encoding && token_id > 0)
             {
-                const MatrixMap pe(states[PositionalEncoding].as<float>(),
-                                   sequence_length, embedding_dimension);
-                outputs.row(i) += pe.row(i % sequence_length);
+                const MatrixMap positional_encoding(states[PositionalEncoding].as<float>(),
+                                                    sequence_length, embedding_dimension);
+                outputs.row(i) += positional_encoding.row(i % sequence_length);
             }
         }
     }

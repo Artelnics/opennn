@@ -44,18 +44,18 @@ void QuasiNewtonMethod::set_default()
 
 void QuasiNewtonMethod::calculate_inverse_hessian(OptimizerData& optimization_data) const
 {
-    const Index n = optimization_data.views[ParameterDifferences].size();
+    const Index parameters_number = optimization_data.views[ParameterDifferences].size();
 
-    VectorMap parameter_differences(optimization_data.views[ParameterDifferences].as<float>(), n);
-    VectorMap gradient_difference(optimization_data.views[GradientDifference].as<float>(), n);
+    VectorMap parameter_differences(optimization_data.views[ParameterDifferences].as<float>(), parameters_number);
+    VectorMap gradient_difference(optimization_data.views[GradientDifference].as<float>(), parameters_number);
 
     VectorMap old_inverse_hessian_dot_gradient_difference(
-        optimization_data.views[OldInverseHessianDotGradientDifference].as<float>(), n);
+        optimization_data.views[OldInverseHessianDotGradientDifference].as<float>(), parameters_number);
 
-    MatrixMap old_inverse_hessian(optimization_data.views[OldInverseHessian].as<float>(), n, n);
-    MatrixMap inverse_hessian(optimization_data.views[InverseHessian].as<float>(), n, n);
+    MatrixMap old_inverse_hessian(optimization_data.views[OldInverseHessian].as<float>(), parameters_number, parameters_number);
+    MatrixMap inverse_hessian(optimization_data.views[InverseHessian].as<float>(), parameters_number, parameters_number);
 
-    VectorMap bfgs(optimization_data.views[BFGS].as<float>(), n);
+    VectorMap bfgs(optimization_data.views[BFGS].as<float>(), parameters_number);
 
     const float parameters_difference_dot_gradient_difference = parameter_differences.dot(gradient_difference);
 
@@ -92,17 +92,17 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     VectorMap gradient(back_propagation.gradient.as<float>(),
                        back_propagation.gradient.size());
 
-    const Index n = parameters.size();
+    const Index parameters_number = parameters.size();
 
-    VectorMap old_parameters(optimization_data.views[OldParameters].as<float>(), n);
-    VectorMap parameter_differences(optimization_data.views[ParameterDifferences].as<float>(), n);
-    VectorMap parameter_updates(optimization_data.views[ParameterUpdates].as<float>(), n);
+    VectorMap old_parameters(optimization_data.views[OldParameters].as<float>(), parameters_number);
+    VectorMap parameter_differences(optimization_data.views[ParameterDifferences].as<float>(), parameters_number);
+    VectorMap parameter_updates(optimization_data.views[ParameterUpdates].as<float>(), parameters_number);
 
-    VectorMap old_gradient(optimization_data.views[OldGradient].as<float>(), n);
-    VectorMap gradient_difference(optimization_data.views[GradientDifference].as<float>(), n);
+    VectorMap old_gradient(optimization_data.views[OldGradient].as<float>(), parameters_number);
+    VectorMap gradient_difference(optimization_data.views[GradientDifference].as<float>(), parameters_number);
 
     VectorR& training_direction = optimization_data.training_direction;
-    MatrixMap inverse_hessian(optimization_data.views[InverseHessian].as<float>(), n, n);
+    MatrixMap inverse_hessian(optimization_data.views[InverseHessian].as<float>(), parameters_number, parameters_number);
 
     parameter_differences = parameters - old_parameters;
     gradient_difference = gradient - old_gradient;
@@ -370,7 +370,7 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
 
     float alpha = float(1);
     const float rho = float(0.5);
-    const float c = float(1e-4);
+    const float armijo_constant = float(1e-4);
 
     Map<const VectorR, AlignedMax> parameters(neural_network->get_parameters_data(),
                                                neural_network->get_parameters_size());
@@ -387,7 +387,7 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
         loss->calculate_error(batch, forward_propagation, back_propagation);
         const float new_loss = back_propagation.error + loss->calculate_regularization(potential_parameters);
 
-        if (new_loss <= current_loss + c * alpha * slope)
+        if (new_loss <= current_loss + armijo_constant * alpha * slope)
             return {alpha, new_loss};
 
         alpha *= rho;

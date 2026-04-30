@@ -36,33 +36,33 @@ enum class InferencePrecision { Auto, Float32, BP16, Int8 };
 
 enum class ActivationDtype { Float32, BP16 };
 
-inline ActivationDtype to_activation_dtype(TrainingPrecision p) noexcept
+inline ActivationDtype to_activation_dtype(TrainingPrecision precision) noexcept
 {
-    return p == TrainingPrecision::BP16 ? ActivationDtype::BP16 : ActivationDtype::Float32;
+    return precision == TrainingPrecision::BP16 ? ActivationDtype::BP16 : ActivationDtype::Float32;
 }
 
-inline ActivationDtype to_activation_dtype(InferencePrecision p) noexcept
+inline ActivationDtype to_activation_dtype(InferencePrecision precision) noexcept
 {
-    return p == InferencePrecision::BP16 ? ActivationDtype::BP16 : ActivationDtype::Float32;
+    return precision == InferencePrecision::BP16 ? ActivationDtype::BP16 : ActivationDtype::Float32;
 }
 
-inline cudnnDataType_t to_cudnn(ActivationDtype d) noexcept
+inline cudnnDataType_t to_cudnn(ActivationDtype dtype) noexcept
 {
-    return d == ActivationDtype::BP16 ? CUDNN_DATA_BFLOAT16 : CUDNN_DATA_FLOAT;
+    return dtype == ActivationDtype::BP16 ? CUDNN_DATA_BFLOAT16 : CUDNN_DATA_FLOAT;
 }
 
-inline cudaDataType_t to_cuda(ActivationDtype d) noexcept
+inline cudaDataType_t to_cuda(ActivationDtype dtype) noexcept
 {
-    return d == ActivationDtype::BP16 ? CUDA_R_16BF : CUDA_R_32F;
+    return dtype == ActivationDtype::BP16 ? CUDA_R_16BF : CUDA_R_32F;
 }
 
 // Element size in bytes. Overloads the `dtype_bytes(cudnnDataType_t)` helper in
 // tensor_utilities.h so high-level code (BackPropagation arena sizing, Buffer
 // allocation) can stay on the project-internal enum.
-inline Index dtype_bytes(ActivationDtype d) noexcept
+inline Index dtype_bytes(ActivationDtype dtype) noexcept
 {
-    return d == ActivationDtype::BP16 ? Index(sizeof(__nv_bfloat16))
-                                      : Index(sizeof(float));
+    return dtype == ActivationDtype::BP16 ? Index(sizeof(__nv_bfloat16))
+                                          : Index(sizeof(float));
 }
 
 class Configuration
@@ -81,9 +81,9 @@ public:
     // Replaces all three at once. Defaulting any argument to Auto is the recommended
     // entry point — let resolve() pick. Invalidates the cached Resolved so the next
     // is_gpu()/is_cpu()/resolve() call re-detects hardware.
-    void set(DeviceType         d  = DeviceType::Auto,
-             TrainingPrecision  tp = TrainingPrecision::Auto,
-             InferencePrecision ip = InferencePrecision::Auto);
+    void set(DeviceType         new_device_type     = DeviceType::Auto,
+             TrainingPrecision  new_training_precision  = TrainingPrecision::Auto,
+             InferencePrecision new_inference_precision = InferencePrecision::Auto);
 
     DeviceType         get_device()              const { return device; }
     TrainingPrecision  get_training_precision()  const { return training_precision; }

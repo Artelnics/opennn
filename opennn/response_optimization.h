@@ -33,8 +33,8 @@ public:
         float low_bound;
         float up_bound;
 
-        Condition(ConditionType new_type = ConditionType::None, float low = 0.0, float up = 0.0)
-            : condition(new_type), low_bound(low), up_bound(up) {}
+        Condition(ConditionType new_type = ConditionType::None, float new_low_bound = 0.0, float new_up_bound = 0.0)
+            : condition(new_type), low_bound(new_low_bound), up_bound(new_up_bound) {}
     };
 
     struct Domain
@@ -83,7 +83,7 @@ public:
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
     void clear_conditions();
-    void set_condition(const string& name, const ConditionType condition, float low = 0.0, float up = 0.0);
+    void set_condition(const string& name, const ConditionType condition, float low_bound = 0.0, float up_bound = 0.0);
 
     void set_iterations(const int iterations);
     void set_zoom_factor(float new_zoom_factor);

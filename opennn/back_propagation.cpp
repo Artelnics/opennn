@@ -51,14 +51,14 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     // that read its output. Multi-consumer producers need a private accumulation
     // slot in `per_layer_output_deltas`. Device-independent.
     backward_edges.assign(layers_number, {});
-    for(size_t c = 0; c < layers_number; ++c)
+    for(size_t consumer_index = 0; consumer_index < layers_number; ++consumer_index)
     {
-        const vector<Index>& inputs = layer_input_indices[c];
-        for(size_t p = 0; p < inputs.size(); ++p)
+        const vector<Index>& inputs = layer_input_indices[consumer_index];
+        for(size_t port_index = 0; port_index < inputs.size(); ++port_index)
         {
-            const Index producer = inputs[p];
+            const Index producer = inputs[port_index];
             if(producer >= 0 && static_cast<size_t>(producer) < layers_number)
-                backward_edges[producer].push_back({c, p});
+                backward_edges[producer].push_back({consumer_index, port_index});
         }
     }
 
@@ -101,11 +101,11 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
             for(size_t j = 0; j < layer_param_shapes.size(); ++j)
             {
-                const Shape& s = layer_param_shapes[j];
-                if(s.size() > 0)
+                const Shape& slot_shape = layer_param_shapes[j];
+                if(slot_shape.size() > 0)
                 {
-                    gradient_views[i][j] = TensorView(g_ptr, s, CUDNN_DATA_FLOAT);
-                    g_ptr += get_aligned_size(s.size());
+                    gradient_views[i][j] = TensorView(g_ptr, slot_shape, CUDNN_DATA_FLOAT);
+                    g_ptr += get_aligned_size(slot_shape.size());
                 }
             }
         }
@@ -137,13 +137,13 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
             for(size_t j = 0; j < slots; ++j)
             {
-                const Shape& s = shapes[j];
+                const Shape& slot_shape = shapes[j];
                 delta_views[i][j + 1].resize(1);
 
-                if(s.size() > 0)
+                if(slot_shape.size() > 0)
                 {
-                    delta_views[i][j + 1][0] = TensorView(b_cursor, s, backward_dtypes[i][j]);
-                    if(b_cursor) b_cursor += get_aligned_bytes(s.size() * dtype_bytes(backward_dtypes[i][j]));
+                    delta_views[i][j + 1][0] = TensorView(b_cursor, slot_shape, backward_dtypes[i][j]);
+                    if(b_cursor) b_cursor += get_aligned_bytes(slot_shape.size() * dtype_bytes(backward_dtypes[i][j]));
                 }
             }
         }
@@ -234,11 +234,11 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
         for(size_t j = 0; j < layer_param_shapes.size(); ++j)
         {
-            const Shape& s = layer_param_shapes[j];
-            if(s.size() > 0)
+            const Shape& slot_shape = layer_param_shapes[j];
+            if(slot_shape.size() > 0)
             {
-                gradient_views[i][j] = TensorView(g_ptr, s, CUDNN_DATA_FLOAT);
-                if(g_ptr) g_ptr += get_aligned_size(s.size());
+                gradient_views[i][j] = TensorView(g_ptr, slot_shape, CUDNN_DATA_FLOAT);
+                if(g_ptr) g_ptr += get_aligned_size(slot_shape.size());
             }
         }
     }
@@ -261,13 +261,13 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
         for(size_t j = 0; j < slots; ++j)
         {
-            const Shape& s = shapes[j];
+            const Shape& slot_shape = shapes[j];
             delta_views[i][j + 1].resize(1);
 
-            if(s.size() > 0)
+            if(slot_shape.size() > 0)
             {
-                delta_views[i][j + 1][0] = TensorView(b_ptr, s);
-                if(b_ptr) b_ptr += get_aligned_size(s.size());
+                delta_views[i][j + 1][0] = TensorView(b_ptr, slot_shape);
+                if(b_ptr) b_ptr += get_aligned_size(slot_shape.size());
             }
         }
     }

@@ -111,7 +111,7 @@ public:
              bool = false,
              const string& = "multihead_attention_layer");
 
-    void set_dropout_rate(const float r) { dropout_rate = r; }
+    void set_dropout_rate(const float new_dropout_rate) { dropout_rate = new_dropout_rate; }
 
     void set_parameters_random() override;
 

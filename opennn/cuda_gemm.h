@@ -45,16 +45,16 @@ struct LtMatmulPlan
     LtMatmulPlan() = default;
     LtMatmulPlan(const LtMatmulPlan&) = delete;
     LtMatmulPlan& operator=(const LtMatmulPlan&) = delete;
-    LtMatmulPlan(LtMatmulPlan&& o) noexcept { *this = std::move(o); }
-    LtMatmulPlan& operator=(LtMatmulPlan&& o) noexcept
+    LtMatmulPlan(LtMatmulPlan&& other) noexcept { *this = std::move(other); }
+    LtMatmulPlan& operator=(LtMatmulPlan&& other) noexcept
     {
-        std::swap(op_desc, o.op_desc);
-        std::swap(a_desc,  o.a_desc);
-        std::swap(b_desc,  o.b_desc);
-        std::swap(c_desc,  o.c_desc);
-        std::swap(d_desc,  o.d_desc);
-        std::swap(algo,    o.algo);
-        std::swap(algo_valid, o.algo_valid);
+        std::swap(op_desc, other.op_desc);
+        std::swap(a_desc,  other.a_desc);
+        std::swap(b_desc,  other.b_desc);
+        std::swap(c_desc,  other.c_desc);
+        std::swap(d_desc,  other.d_desc);
+        std::swap(algo,    other.algo);
+        std::swap(algo_valid, other.algo_valid);
         return *this;
     }
     ~LtMatmulPlan()
@@ -78,31 +78,31 @@ struct LtMatmulPlanKey
     int io_dtype;   // cudaDataType_t for A and B (inputs)
     int out_dtype;  // cudaDataType_t for C and D (outputs)
 
-    bool operator==(const LtMatmulPlanKey& o) const noexcept
+    bool operator==(const LtMatmulPlanKey& other) const noexcept
     {
-        return m == o.m && n == o.n && k == o.k
-            && transA == o.transA && transB == o.transB
-            && epilogue == o.epilogue
-            && io_dtype == o.io_dtype && out_dtype == o.out_dtype;
+        return m == other.m && n == other.n && k == other.k
+            && transA == other.transA && transB == other.transB
+            && epilogue == other.epilogue
+            && io_dtype == other.io_dtype && out_dtype == other.out_dtype;
     }
 };
 
 struct LtMatmulPlanKeyHash
 {
-    size_t operator()(const LtMatmulPlanKey& k) const noexcept
+    size_t operator()(const LtMatmulPlanKey& key) const noexcept
     {
-        size_t h = std::hash<int>{}(k.m);
-        const auto mix = [](size_t& acc, int v) {
-            acc ^= std::hash<int>{}(v) + 0x9e3779b9 + (acc << 6) + (acc >> 2);
+        size_t hash_value = std::hash<int>{}(key.m);
+        const auto mix = [](size_t& acc, int value) {
+            acc ^= std::hash<int>{}(value) + 0x9e3779b9 + (acc << 6) + (acc >> 2);
         };
-        mix(h, k.n);
-        mix(h, k.k);
-        mix(h, k.transA);
-        mix(h, k.transB);
-        mix(h, k.epilogue);
-        mix(h, k.io_dtype);
-        mix(h, k.out_dtype);
-        return h;
+        mix(hash_value, key.n);
+        mix(hash_value, key.k);
+        mix(hash_value, key.transA);
+        mix(hash_value, key.transB);
+        mix(hash_value, key.epilogue);
+        mix(hash_value, key.io_dtype);
+        mix(hash_value, key.out_dtype);
+        return hash_value;
     }
 };
 

@@ -38,11 +38,11 @@ public:
     Index get_channels_number() const;
 
     const AugmentationSettings& get_augmentation() const { return augmentation; }
-    void set_augmentation(const AugmentationSettings& a) { augmentation = a; }
+    void set_augmentation(const AugmentationSettings& new_augmentation) { augmentation = new_augmentation; }
 
     void set_data_random() override;
 
-    void set_image_padding(const int& p) { padding = p; }
+    void set_image_padding(const int& new_padding) { padding = new_padding; }
 
     vector<Descriptives> scale_features(const string&) override;
     void unscale_features(const string&);

@@ -389,7 +389,7 @@ public:
         }
         else
         {
-            ::opennn::profiler::ScopedTimer _t("dense3d_fwd:combination_activation");
+            ::opennn::profiler::ScopedTimer timer("dense3d_fwd:combination_activation");
             combination_activation(forward_views[Input][0],
                                    parameters[Weight], parameters[Bias],
                                    activation_arguments,
@@ -398,7 +398,7 @@ public:
 
         if (is_training && dropout_rate > float(0))
         {
-            ::opennn::profiler::ScopedTimer _t("dense3d_fwd:dropout_save_and_apply");
+            ::opennn::profiler::ScopedTimer timer("dense3d_fwd:dropout_save_and_apply");
             copy(forward_views[Output][0], forward_views[Activation][0]);
             dropout(forward_views[Output][0], dropout_arguments);
         }
@@ -419,20 +419,20 @@ public:
 
         if (dropout_rate > float(0))
         {
-            ::opennn::profiler::ScopedTimer _t1("dense3d_bwd:01_dropout_delta");
+            ::opennn::profiler::ScopedTimer dropout_delta_timer("dense3d_bwd:01_dropout_delta");
             dropout_delta(output_delta, output_delta, dropout_arguments);
-            ::opennn::profiler::ScopedTimer _t2("dense3d_bwd:02_activation_delta_dropout");
+            ::opennn::profiler::ScopedTimer activation_delta_timer("dense3d_bwd:02_activation_delta_dropout");
             activation_delta(forward_views[Activation][0], output_delta, output_delta, activation_arguments);
         }
         else
         {
-            ::opennn::profiler::ScopedTimer _t("dense3d_bwd:02_activation_delta");
+            ::opennn::profiler::ScopedTimer timer("dense3d_bwd:02_activation_delta");
             activation_delta(output, output_delta, output_delta, activation_arguments);
         }
 
         if (batch_normalization)
         {
-            ::opennn::profiler::ScopedTimer _t("dense3d_bwd:03_batchnorm_backward");
+            ::opennn::profiler::ScopedTimer timer("dense3d_bwd:03_batchnorm_backward");
             batch_normalization_backward(forward_views[Combination][0],
                                          output,
                                          output_delta,
@@ -457,7 +457,7 @@ public:
         }
 
         {
-            ::opennn::profiler::ScopedTimer _t("dense3d_bwd:04_combination_gradient");
+            ::opennn::profiler::ScopedTimer timer("dense3d_bwd:04_combination_gradient");
             combination_gradient(output_delta_2d,
                                  input_2d,
                                  parameters[Weight],

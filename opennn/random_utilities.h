@@ -31,7 +31,7 @@ namespace opennn
 
     void set_random_integer(MatrixR&, Index, Index);
 
-    void shuffle(VectorB& v);
+    void shuffle(VectorB& vector_to_shuffle);
 
     template<typename T>
     void shuffle_vector(vector<T>&);

@@ -134,7 +134,7 @@ void Optimizer::set_scaling()
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
     const bool has_pure_targets = any_of(target_feature_indices.begin(), target_feature_indices.end(),
-        [&](Index t) { return find(input_feature_indices.begin(), input_feature_indices.end(), t) == input_feature_indices.end(); });
+        [&](Index target_index) { return find(input_feature_indices.begin(), input_feature_indices.end(), target_index) == input_feature_indices.end(); });
 
     vector<Descriptives> target_variable_descriptives;
     vector<string> target_variable_scalers;
@@ -190,9 +190,9 @@ void Optimizer::set_unscaling()
     auto reconstruct_descriptives = [](const VectorR& minimums, const VectorR& maximums,
                                        const VectorR& means, const VectorR& std_devs)
     {
-        const Index n = minimums.size();
-        vector<Descriptives> descriptives(n);
-        for (Index i = 0; i < n; ++i)
+        const Index descriptives_count = minimums.size();
+        vector<Descriptives> descriptives(descriptives_count);
+        for (Index i = 0; i < descriptives_count; ++i)
         {
             descriptives[i].minimum = minimums[i];
             descriptives[i].maximum = maximums[i];
@@ -605,8 +605,8 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
 }
 
 EpochStats Optimizer::train_epoch(bool is_classification,
-                                  ForwardPropagation& fp,
-                                  BackPropagation& bp,
+                                  ForwardPropagation& forward_propagation,
+                                  BackPropagation& back_propagation,
                                   ThreadSafeQueue<Batch*>& empty_queue,
                                   ThreadSafeQueue<Batch*>& ready_queue,
                                   const vector<vector<Index>>& batches,
@@ -650,14 +650,14 @@ EpochStats Optimizer::train_epoch(bool is_classification,
                                 target_feature_indices,
                                 true);
 
-            neural_network->forward_propagate(current_batch->get_inputs(), fp, true);
+            neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, true);
 
-            loss->back_propagate(*current_batch, fp, bp);
+            loss->back_propagate(*current_batch, forward_propagation, back_propagation);
 
-            stats.error += bp.error;
-            if(is_classification) stats.accuracy += bp.accuracy(0);
+            stats.error += back_propagation.error;
+            if(is_classification) stats.accuracy += back_propagation.accuracy(0);
 
-            update(bp);
+            update(back_propagation);
         }
 
         empty_queue.push(current_batch);
@@ -694,14 +694,14 @@ EpochStats Optimizer::train_epoch(bool is_classification,
                 prefetch_batch(*next_batch, batches[iteration + 1].size(), (iteration + 1) % 2);
             }
 
-            neural_network->forward_propagate(current_batch->get_inputs(), fp, true);
+            neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, true);
 
-            loss->back_propagate(*current_batch, fp, bp);
+            loss->back_propagate(*current_batch, forward_propagation, back_propagation);
 
-            stats.error += bp.error;
-            if(is_classification) stats.accuracy += bp.accuracy(0);
+            stats.error += back_propagation.error;
+            if(is_classification) stats.accuracy += back_propagation.accuracy(0);
 
-            update(bp);
+            update(back_propagation);
 
             sync_device();
 
@@ -727,8 +727,8 @@ EpochStats Optimizer::train_epoch(bool is_classification,
 }
 
 EpochStats Optimizer::evaluate_epoch(bool is_classification,
-                                     ForwardPropagation& fp,
-                                     BackPropagation& bp,
+                                     ForwardPropagation& forward_propagation,
+                                     BackPropagation& back_propagation,
                                      ThreadSafeQueue<Batch*>& empty_queue,
                                      ThreadSafeQueue<Batch*>& ready_queue,
                                      const vector<vector<Index>>& batches,
@@ -757,11 +757,11 @@ EpochStats Optimizer::evaluate_epoch(bool is_classification,
                                 target_feature_indices,
                                 false);
 
-            neural_network->forward_propagate(current_batch->get_inputs(), fp, false);
-            loss->calculate_error(*current_batch, fp, bp);
+            neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, false);
+            loss->calculate_error(*current_batch, forward_propagation, back_propagation);
 
-            stats.error += bp.error;
-            if(is_classification) stats.accuracy += bp.accuracy(0);
+            stats.error += back_propagation.error;
+            if(is_classification) stats.accuracy += back_propagation.accuracy(0);
         }
 
         empty_queue.push(current_batch);
@@ -798,11 +798,11 @@ EpochStats Optimizer::evaluate_epoch(bool is_classification,
                 prefetch_batch(*next_batch, batches[iteration + 1].size(), (iteration + 1) % 2);
             }
 
-            neural_network->forward_propagate(current_batch->get_inputs(), fp, false);
-            loss->calculate_error(*current_batch, fp, bp);
+            neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, false);
+            loss->calculate_error(*current_batch, forward_propagation, back_propagation);
 
-            stats.error += bp.error;
-            if(is_classification) stats.accuracy += bp.accuracy(0);
+            stats.error += back_propagation.error;
+            if(is_classification) stats.accuracy += back_propagation.accuracy(0);
 
             sync_device();
 

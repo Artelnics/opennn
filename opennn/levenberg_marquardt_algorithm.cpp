@@ -92,10 +92,10 @@ void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
     compute_jacobian(batch, forward_propagation, back_propagation_lm);
 
     const MatrixR& J = back_propagation_lm.squared_errors_jacobian;
-    const VectorR& e = back_propagation_lm.errors;
-    const float factor = float(2) / float(e.size());
+    const VectorR& errors_vector = back_propagation_lm.errors;
+    const float factor = float(2) / float(errors_vector.size());
 
-    back_propagation_lm.gradient.noalias() = factor * J.transpose() * e;
+    back_propagation_lm.gradient.noalias() = factor * J.transpose() * errors_vector;
     back_propagation_lm.hessian.noalias() = factor * J.transpose() * J;
 
     back_propagation_lm.loss_value = back_propagation_lm.error;
@@ -128,14 +128,14 @@ void LevenbergMarquardtAlgorithm::calculate_error(const Batch&,
 }
 
 void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& batch,
-                                                   const ForwardPropagation& fp,
-                                                   BackPropagationLM& bp_lm)
+                                                   const ForwardPropagation& forward_propagation,
+                                                   BackPropagationLM& back_propagation_lm)
 {
 
-    NeuralNetwork* nn = loss->get_neural_network();
-    const auto& layers = nn->get_layers();
+    NeuralNetwork* neural_network = loss->get_neural_network();
+    const auto& layers = neural_network->get_layers();
 
-    bp_lm.squared_errors_jacobian.setZero();
+    back_propagation_lm.squared_errors_jacobian.setZero();
 
     // Current insert_dense_jacobian only handles single-layer Jacobians correctly
     // (row indexing uses the layer's own neuron count). For multi-layer networks,
@@ -154,7 +154,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& batch,
             parameter_offset += layers[i]->get_parameters_number();
 
     auto* dense = dynamic_cast<Dense<2>*>(layers[last_trainable_dense].get());
-    insert_dense_jacobian(dense, fp, last_trainable_dense, parameter_offset, bp_lm.squared_errors_jacobian);
+    insert_dense_jacobian(dense, forward_propagation, last_trainable_dense, parameter_offset, back_propagation_lm.squared_errors_jacobian);
 }
 
 VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient()
@@ -461,9 +461,9 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
     return H;
 }
 
-static MatrixR activation_derivative(ActivationFunction act, const MatrixMap& outputs)
+static MatrixR activation_derivative(ActivationFunction activation_function, const MatrixMap& outputs)
 {
-    switch(act)
+    switch(activation_function)
     {
     case ActivationFunction::Sigmoid:
         return outputs.array() * (float(1) - outputs.array());
@@ -477,20 +477,20 @@ static MatrixR activation_derivative(ActivationFunction act, const MatrixMap& ou
 }
 
 void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
-                                                        const ForwardPropagation& fp,
+                                                        const ForwardPropagation& forward_propagation,
                                                         Index layer_index,
                                                         Index parameter_offset,
                                                         MatrixR& jacobian)
 {
-    const Index batch_size  = fp.batch_size;
+    const Index batch_size  = forward_propagation.batch_size;
     const Index num_neurons = layer->get_outputs_number();
     const Index num_inputs  = layer->get_input_shape()[0];
 
-    const MatrixMap inputs  = fp.views[layer_index][0][0].as_matrix();
+    const MatrixMap inputs  = forward_propagation.views[layer_index][0][0].as_matrix();
 
     // Output is in the last slot of views for this layer (slot 0 = input, last slot = output).
-    const size_t output_slot = fp.views[layer_index].size() - 1;
-    const MatrixMap outputs  = fp.views[layer_index][output_slot][0].as_matrix();
+    const size_t output_slot = forward_propagation.views[layer_index].size() - 1;
+    const MatrixMap outputs  = forward_propagation.views[layer_index][output_slot][0].as_matrix();
 
     const MatrixR act_deriv = activation_derivative(layer->get_activation_function(), outputs);
 
@@ -500,16 +500,16 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
 
     // Bias derivatives: dE/db_j = act_deriv(s,j)
     for(Index j = 0; j < num_neurons; ++j)
-        for(Index s = 0; s < batch_size; ++s)
-            jacobian(s * num_neurons + j, parameter_offset + j) = act_deriv(s, j);
+        for(Index sample = 0; sample < batch_size; ++sample)
+            jacobian(sample * num_neurons + j, parameter_offset + j) = act_deriv(sample, j);
 
     // Weight derivatives: dE/dw_{k,j} = input_k * act_deriv(s,j)
     for(Index k = 0; k < num_inputs; ++k)
         for(Index j = 0; j < num_neurons; ++j)
         {
             const Index col = weight_offset + k * num_neurons + j;
-            for(Index s = 0; s < batch_size; ++s)
-                jacobian(s * num_neurons + j, col) = inputs(s, k) * act_deriv(s, j);
+            for(Index sample = 0; sample < batch_size; ++sample)
+                jacobian(sample * num_neurons + j, col) = inputs(sample, k) * act_deriv(sample, j);
         }
 }
 
@@ -785,10 +785,10 @@ void BackPropagationLM::set(const Index new_samples_number, Loss* new_loss)
 
     if(!new_loss || !new_loss->get_neural_network() || new_samples_number == 0) return;
 
-    const NeuralNetwork* nn = new_loss->get_neural_network();
+    const NeuralNetwork* neural_network = new_loss->get_neural_network();
 
-    const Index outputs_number = nn->get_outputs_number();
-    const Index parameters_number = nn->get_parameters_size();
+    const Index outputs_number = neural_network->get_outputs_number();
+    const Index parameters_number = neural_network->get_parameters_size();
     const Index total_error_terms = new_samples_number * outputs_number;
 
     errors.resize(total_error_terms);

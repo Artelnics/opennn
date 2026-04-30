@@ -26,8 +26,8 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, flo
 void categorical_cross_entropy(const TensorView& input, const TensorView& target, float& error, float* workspace_device);
 void cross_entropy_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta);
 
-void minkowski_error(const TensorView& input, const TensorView& target, float p, float& error, float* workspace_device);
-void minkowski_error_gradient(const TensorView& input, const TensorView& target, float p, TensorView& input_delta);
+void minkowski_error(const TensorView& input, const TensorView& target, float power, float& error, float* workspace_device);
+void minkowski_error_gradient(const TensorView& input, const TensorView& target, float power, TensorView& input_delta);
 
 void cross_entropy_3d(const TensorView& input, const TensorView& target, float& error, Index& active_tokens_out, Index& correct_tokens_out, float* errors_device = nullptr);
 void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta, Index active_tokens_count);

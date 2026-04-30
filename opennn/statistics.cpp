@@ -482,15 +482,15 @@ float standard_deviation(const VectorR& vector)
 float median(const VectorR& input_vector)
 {
     VectorR valid = filter_missing_values(input_vector);
-    const Index n = valid.size();
+    const Index size = valid.size();
 
-    if(n == 0) return float(NAN);
+    if(size == 0) return float(NAN);
 
-    sort(valid.data(), valid.data() + n);
+    sort(valid.data(), valid.data() + size);
 
-    return (n % 2 == 0)
-        ? (valid(n/2 - 1) + valid(n/2)) / float(2)
-        : valid(n/2);
+    return (size % 2 == 0)
+        ? (valid(size/2 - 1) + valid(size/2)) / float(2)
+        : valid(size/2);
 }
 
 VectorR quartiles(const VectorR& data)
@@ -767,7 +767,7 @@ Histogram histogram_centered(const VectorR& vector, float center, Index bins_num
     return histogram;
 }
 
-Histogram histogram(const VectorB& v)
+Histogram histogram(const VectorB& flags)
 {
     VectorR minimums = VectorR::Zero(2);
 
@@ -781,11 +781,11 @@ Histogram histogram(const VectorB& v)
 
     // Calculate bins frequency
 
-    const Index size = v.size();
+    const Index size = flags.size();
 
     for(Index i = 0; i < size; ++i)
         for(Index j = 0; j < 2; ++j)
-            if(Index(v(i)) == Index(minimums(j)))
+            if(Index(flags(i)) == Index(minimums(j)))
                 frequencies(j)++;
 
     Histogram histogram(2);
@@ -835,18 +835,18 @@ Descriptives vector_descriptives(const VectorR& x)
     const VectorR valid = filter_missing_values(x);
     const Index count = valid.size();
 
-    const float m = (count > 0) ? valid.mean() : float(0);
+    const float mean = (count > 0) ? valid.mean() : float(0);
 
-    float sd = 0;
+    float standard_deviation = 0;
 
     if (count > 1)
     {
         const double sum = valid.cast<double>().sum();
         const double squared_sum = valid.cast<double>().squaredNorm();
-        sd = sqrt(float((squared_sum - sum * sum / count) / (count - 1)));
+        standard_deviation = sqrt(float((squared_sum - sum * sum / count) / (count - 1)));
     }
 
-    return Descriptives(min, max, m, sd);
+    return Descriptives(min, max, mean, standard_deviation);
 }
 
 vector<Descriptives> descriptives(const MatrixR& matrix)
@@ -933,8 +933,8 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
     {
         if (count(i) > 1)
         {
-            const double n = static_cast<double>(count(i));
-            const double variance = (squared_sums(i) - (sums(i) * sums(i) / n)) / (n - 1.0);
+            const double sample_count = static_cast<double>(count(i));
+            const double variance = (squared_sums(i) - (sums(i) * sums(i) / sample_count)) / (sample_count - 1.0);
             standard_deviation(i) = sqrt(max(0.0, variance));
         }
 
@@ -1108,15 +1108,15 @@ VectorR median(const MatrixR& matrix)
     {
         const auto column = matrix.col(j);
 
-        const Index n = column.array().isFinite().count();
+        const Index valid_count = column.array().isFinite().count();
 
-        if (n == 0)
+        if (valid_count == 0)
         {
             medians(j) = QUIET_NAN;
             continue;
         }
 
-        VectorR valid_values(n);
+        VectorR valid_values(valid_count);
 
         Index k = 0;
 
@@ -1124,11 +1124,11 @@ VectorR median(const MatrixR& matrix)
             if(isfinite(column(i)))
                 valid_values(k++) = column(i);
 
-        sort(valid_values.data(), valid_values.data() + n);
+        sort(valid_values.data(), valid_values.data() + valid_count);
 
-        medians(j) = (n % 2 == 0)
-            ? (valid_values(n / 2 - 1) + valid_values(n / 2)) / 2.0f
-            : valid_values(n / 2);
+        medians(j) = (valid_count % 2 == 0)
+            ? (valid_values(valid_count / 2 - 1) + valid_values(valid_count / 2)) / 2.0f
+            : valid_values(valid_count / 2);
     }
 
     return medians;
@@ -1147,10 +1147,10 @@ float median(const MatrixR& matrix, Index column_index)
 
     sort(sorted_column.begin(), sorted_column.end());
 
-    const Index n = static_cast<Index>(sorted_column.size());
-    const Index median_index = n / 2;
+    const Index valid_count = static_cast<Index>(sorted_column.size());
+    const Index median_index = valid_count / 2;
 
-    return (n % 2 == 0)
+    return (valid_count % 2 == 0)
         ? (sorted_column[median_index - 1] + sorted_column[median_index]) / float(2.0)
         : sorted_column[median_index];
 }
@@ -1166,26 +1166,26 @@ VectorR median(const MatrixR& matrix, const VectorI& column_indices)
         const Index column_index = column_indices(j);
         const VectorR column = matrix.col(column_index);
 
-        const Index n = column.array().isFinite().count();
+        const Index valid_count = column.array().isFinite().count();
 
-        if (n == 0)
+        if (valid_count == 0)
         {
             medians(j) = QUIET_NAN;
             continue;
         }
 
-        VectorR valid_values(n);
+        VectorR valid_values(valid_count);
         Index k = 0;
 
         for(Index i = 0; i < column.size(); ++i)
             if(isfinite(column(i)))
                 valid_values(k++) = column(i);
 
-        sort(valid_values.data(), valid_values.data() + n);
+        sort(valid_values.data(), valid_values.data() + valid_count);
 
-        medians(j) = (n % 2 == 0)
-            ? (valid_values(n / 2 - 1) + valid_values(n / 2)) / 2.0f
-            : valid_values(n / 2);
+        medians(j) = (valid_count % 2 == 0)
+            ? (valid_values(valid_count / 2 - 1) + valid_values(valid_count / 2)) / 2.0f
+            : valid_values(valid_count / 2);
     }
 
     return medians;
@@ -1204,18 +1204,18 @@ VectorR median(const MatrixR& matrix,
     {
         const Index column_index = column_indices[j];
 
-        Index n = 0;
+        Index valid_count = 0;
         for(Index k = 0; k < row_indices_size; ++k)
             if(isfinite(matrix(row_indices[k], column_index)))
-                ++n;
+                ++valid_count;
 
-        if (n == 0)
+        if (valid_count == 0)
         {
             medians(j) = QUIET_NAN;
             continue;
         }
 
-        VectorR valid_values(n);
+        VectorR valid_values(valid_count);
         Index idx = 0;
 
         for(Index k = 0; k < row_indices_size; ++k)
@@ -1225,11 +1225,11 @@ VectorR median(const MatrixR& matrix,
                 valid_values(idx++) = value;
         }
 
-        sort(valid_values.data(), valid_values.data() + n);
+        sort(valid_values.data(), valid_values.data() + valid_count);
 
-        medians(j) = (n % 2 == 0)
-            ? (valid_values(n / 2 - 1) + valid_values(n / 2)) / 2.0f
-            : valid_values(n / 2);
+        medians(j) = (valid_count % 2 == 0)
+            ? (valid_values(valid_count / 2 - 1) + valid_values(valid_count / 2)) / 2.0f
+            : valid_values(valid_count / 2);
     }
 
     return medians;
@@ -1251,38 +1251,38 @@ Index maximal_index(const VectorR& vector)
     return index;
 }
 
-VectorI minimal_indices(const VectorR& data, Index k)
+VectorI minimal_indices(const VectorR& data, Index count)
 {
     vector<Index> indices(data.size());
     iota(indices.begin(), indices.end(), 0);
 
-    k = min(k, ssize(data));
+    count = min(count, ssize(data));
 
     partial_sort(indices.begin(),
-                 indices.begin() + k,
+                 indices.begin() + count,
                  indices.end(),
                  [&data](Index i, Index j) {
                      if (data(i) == data(j)) return i < j;
                      return data(i) < data(j);
                  });
 
-    return Map<VectorI>(indices.data(), k);
+    return Map<VectorI>(indices.data(), count);
 }
 
-VectorI maximal_indices(const VectorR& data, Index k)
+VectorI maximal_indices(const VectorR& data, Index count)
 {
     vector<Index> indices(data.size());
     iota(indices.begin(), indices.end(), 0);
 
-    k = min(k, ssize(data));
+    count = min(count, ssize(data));
 
-    partial_sort(indices.begin(), indices.begin() + k, indices.end(),
+    partial_sort(indices.begin(), indices.begin() + count, indices.end(),
                  [&data](Index i, Index j) {
                      if (data(i) == data(j)) return i < j;
                      return data(i) > data(j);
                  });
 
-    return Map<VectorI>(indices.data(), k);
+    return Map<VectorI>(indices.data(), count);
 }
 
 VectorI minimal_indices(const MatrixR& matrix)
@@ -1382,7 +1382,7 @@ vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
     return indices;
 }
 
-VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int n)
+VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neighbors_number)
 {
     const Index rows = matrix.rows();
 
@@ -1393,14 +1393,14 @@ VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int n)
     for(Index i = 0; i < rows; ++i)
         pairs[i] = {distances(i), i};
 
-    if (n > rows)
-        n = rows;
+    if (neighbors_number > rows)
+        neighbors_number = rows;
 
-    partial_sort(pairs.begin(), pairs.begin() + n, pairs.end());
+    partial_sort(pairs.begin(), pairs.begin() + neighbors_number, pairs.end());
 
-    VectorI result(n);
+    VectorI result(neighbors_number);
 
-    for(int i = 0; i < n; ++i)
+    for(int i = 0; i < neighbors_number; ++i)
         result(i) = pairs[i].second;
 
     return result;

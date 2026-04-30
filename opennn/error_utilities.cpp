@@ -51,19 +51,19 @@ static void scaled_diff_cuda(const TensorView& input, const TensorView& target, 
     });
 }
 
-static float sum_abs_cuda(const float* data, Index n)
+static float sum_abs_cuda(const float* data, Index size)
 {
     float sum = 0.0f;
-    CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), to_int(n), data, 1, &sum));
+    CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), to_int(size), data, 1, &sum));
     return sum;
 }
 
 // L2 regularization sums squared FP32 master parameters. Stays FP32 even when
 // activations are BF16 — the master parameters arena is always FP32.
-static float squared_norm_cuda(const float* data, Index n)
+static float squared_norm_cuda(const float* data, Index size)
 {
     float dot = 0.0f;
-    CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(), to_int(n),
+    CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(), to_int(size),
                             data, 1, data, 1, &dot));
     return dot;
 }
@@ -218,24 +218,24 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
         gradients = (outputs - targets) / to_type(samples_number);
 }
 
-void minkowski_error(const TensorView& input, const TensorView& target, float p, float& error, float* workspace_device)
+void minkowski_error(const TensorView& input, const TensorView& target, float power, float& error, float* workspace_device)
 {
     if (Configuration::instance().is_gpu())
         throw runtime_error("minkowski_error: GPU implementation not available.");
 
     (void)workspace_device;
     const Index batch_size = input.shape[0];
-    error = (input.as_vector() - target.as_vector()).array().abs().pow(p).sum() / to_type(p * batch_size);
+    error = (input.as_vector() - target.as_vector()).array().abs().pow(power).sum() / to_type(power * batch_size);
 }
 
-void minkowski_error_gradient(const TensorView& input, const TensorView& target, float p, TensorView& input_delta)
+void minkowski_error_gradient(const TensorView& input, const TensorView& target, float power, TensorView& input_delta)
 {
     if (Configuration::instance().is_gpu())
         throw runtime_error("minkowski_error_gradient: GPU implementation not available.");
 
     const Index batch_size = input.shape[0];
     const auto difference = (input.as_vector() - target.as_vector()).array();
-    input_delta.as_vector().array() = (1.0f / to_type(batch_size)) * difference.sign() * (difference.abs() + EPSILON).pow(p - 1.0f);
+    input_delta.as_vector().array() = (1.0f / to_type(batch_size)) * difference.sign() * (difference.abs() + EPSILON).pow(power - 1.0f);
 }
 
 void cross_entropy_3d(const TensorView& input, const TensorView& target, float& error,
@@ -276,21 +276,21 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
     Index correct_tokens = 0;
 
     #pragma omp parallel for reduction(+:total_log_loss, active_tokens, correct_tokens)
-    for(Index t = 0; t < token_count; ++t)
+    for(Index token_index = 0; token_index < token_count; ++token_index)
     {
-        const Index target_index = static_cast<Index>(targets_flat(t));
+        const Index target_index = static_cast<Index>(targets_flat(token_index));
         if(target_index > 0 && target_index < vocabulary_size)
         {
-            total_log_loss -= log(outputs_flat(t, target_index) + EPSILON);
+            total_log_loss -= log(outputs_flat(token_index, target_index) + EPSILON);
             ++active_tokens;
 
             Index best_index = 0;
-            float best_value = outputs_flat(t, 0);
+            float best_value = outputs_flat(token_index, 0);
             for(Index k = 1; k < vocabulary_size; ++k)
             {
-                if(outputs_flat(t, k) > best_value)
+                if(outputs_flat(token_index, k) > best_value)
                 {
-                    best_value = outputs_flat(t, k);
+                    best_value = outputs_flat(token_index, k);
                     best_index = k;
                 }
             }
@@ -325,17 +325,17 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
     const float scale = active_tokens_count > 0 ? float(1) / to_type(active_tokens_count) : float(0);
 
     #pragma omp parallel for
-    for(Index t = 0; t < token_count; ++t)
+    for(Index token_index = 0; token_index < token_count; ++token_index)
     {
-        const Index target_index = static_cast<Index>(targets_flat(t));
+        const Index target_index = static_cast<Index>(targets_flat(token_index));
         if(target_index > 0 && target_index < vocabulary_size)
         {
-            gradients_flat.row(t).noalias() = scale * outputs_flat.row(t);
-            gradients_flat(t, target_index) -= scale;
+            gradients_flat.row(token_index).noalias() = scale * outputs_flat.row(token_index);
+            gradients_flat(token_index, target_index) -= scale;
         }
         else
         {
-            gradients_flat.row(t).setZero();
+            gradients_flat.row(token_index).setZero();
         }
     }
 }

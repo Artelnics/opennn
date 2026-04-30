@@ -30,8 +30,8 @@ public:
     Index get_maximum_input_sequence_length() const { return maximum_input_sequence_length; }
     Index get_maximum_target_sequence_length() const { return maximum_target_sequence_length; }
 
-    void set_input_vocabulary(const vector<string>& v) { input_vocabulary = v; }
-    void set_target_vocabulary(const vector<string>& v) { target_vocabulary = v; }
+    void set_input_vocabulary(const vector<string>& new_vocabulary) { input_vocabulary = new_vocabulary; }
+    void set_target_vocabulary(const vector<string>& new_vocabulary) { target_vocabulary = new_vocabulary; }
 
     void read_csv() override;
 

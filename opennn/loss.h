@@ -45,9 +45,9 @@ public:
         return map;
     }
 
-    static const string& regularization_to_string(Regularization r)
+    static const string& regularization_to_string(Regularization regularization)
     {
-        return regularization_map().to_string(r);
+        return regularization_map().to_string(regularization);
     }
 
     static Regularization string_to_regularization(const string& name)
@@ -85,13 +85,13 @@ public:
 
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-    void set_neural_network(NeuralNetwork* nn) { neural_network = nn; }
+    void set_neural_network(NeuralNetwork* new_neural_network) { neural_network = new_neural_network; }
 
-    virtual void set_dataset(Dataset* ds) { dataset = ds; }
+    virtual void set_dataset(Dataset* new_dataset) { dataset = new_dataset; }
 
-    void set_regularization(const string& m) { regularization_method = string_to_regularization(m); }
-    void set_regularization(Regularization r) { regularization_method = r; }
-    void set_regularization_weight(const float w) { regularization_weight = w; }
+    void set_regularization(const string& new_regularization_method) { regularization_method = string_to_regularization(new_regularization_method); }
+    void set_regularization(Regularization new_regularization) { regularization_method = new_regularization; }
+    void set_regularization_weight(const float new_regularization_weight) { regularization_weight = new_regularization_weight; }
 
     void set_normalization_coefficient();
 

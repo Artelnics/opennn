@@ -149,11 +149,11 @@ private:
    void calculate_error(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
 
    void compute_jacobian(const Batch& batch,
-                         const ForwardPropagation& fp,
-                         BackPropagationLM& bp_lm);
+                         const ForwardPropagation& forward_propagation,
+                         BackPropagationLM& back_propagation_lm);
 
    void insert_dense_jacobian(const Dense<2>* layer,
-                              const ForwardPropagation& fp,
+                              const ForwardPropagation& forward_propagation,
                               Index layer_index,
                               Index parameter_offset,
                               MatrixR& jacobian);

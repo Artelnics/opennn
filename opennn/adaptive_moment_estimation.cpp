@@ -175,8 +175,8 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     // Main loop
 
-    const auto training_update = [&](BackPropagation& bp) {
-        update_parameters(bp, optimization_data);
+    const auto training_update = [&](BackPropagation& back_propagation) {
+        update_parameters(back_propagation, optimization_data);
     };
 
     for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
@@ -310,26 +310,26 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     VectorMap gradient(back_propagation.gradient.as<float>(),
                        back_propagation.gradient.size());
 
-    const Index n = parameters.size();
+    const Index parameters_size = parameters.size();
     const float one_minus_beta_1 = float(1) - beta_1;
     const float one_minus_beta_2 = float(1) - beta_2;
 
-    const float s = sqrt(bias_correction_2);
-    const float effective_learning_rate = learning_rate * s / bias_correction_1;
-    const float effective_epsilon = EPSILON * s;
+    const float sqrt_bias_correction_2 = sqrt(bias_correction_2);
+    const float effective_learning_rate = learning_rate * sqrt_bias_correction_2 / bias_correction_1;
+    const float effective_epsilon = EPSILON * sqrt_bias_correction_2;
 
     #pragma omp parallel for
-    for (Index i = 0; i < n; ++i)
+    for (Index i = 0; i < parameters_size; ++i)
     {
-        const float g = gradient(i);
+        const float gradient_value = gradient(i);
 
-        auto& m = gradient_exponential_decay(i);
-        auto& v = square_gradient_exponential_decay(i);
+        auto& first_moment = gradient_exponential_decay(i);
+        auto& second_moment = square_gradient_exponential_decay(i);
 
-        m = beta_1 * m + one_minus_beta_1 * g;
-        v = beta_2 * v + one_minus_beta_2 * g * g;
+        first_moment = beta_1 * first_moment + one_minus_beta_1 * gradient_value;
+        second_moment = beta_2 * second_moment + one_minus_beta_2 * gradient_value * gradient_value;
 
-        parameters(i) -= effective_learning_rate * m / (sqrt(v) + effective_epsilon);
+        parameters(i) -= effective_learning_rate * first_moment / (sqrt(second_moment) + effective_epsilon);
     }
 }
 

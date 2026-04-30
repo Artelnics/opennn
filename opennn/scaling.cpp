@@ -53,18 +53,18 @@ void scale_minimum_maximum(MatrixMap matrix,
 
 void scale_logarithmic(MatrixMap matrix, Index column_index)
 {
-    auto col = matrix.col(column_index).array();
+    auto column = matrix.col(column_index).array();
 
-    const float min_val = (col.isFinite()).select(col, MAX).minCoeff();
+    const float min_val = (column.isFinite()).select(column, MAX).minCoeff();
 
     if (min_val <= 0)
     {
         const float offset = abs(min_val) + 1.0 + EPSILON;
 
-        col = (col.isNaN()).select(col, col + offset);
+        column = (column.isNaN()).select(column, column + offset);
     }
 
-    col = col.log();
+    column = column.log();
 }
 
 void unscale_minimum_maximum(MatrixMap matrix,

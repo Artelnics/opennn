@@ -63,7 +63,7 @@ public:
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
     void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }
-    void set_maximum_validation_failures(const Index n) { maximum_validation_failures = n; }
+    void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
 
     // Training
 
@@ -111,8 +111,8 @@ protected:
     bool should_display(Index epoch) const { return display && epoch % display_period == 0; }
 
     EpochStats train_epoch(bool is_classification,
-                           ForwardPropagation& fp,
-                           BackPropagation& bp,
+                           ForwardPropagation& forward_propagation,
+                           BackPropagation& back_propagation,
                            ThreadSafeQueue<Batch*>& empty_queue,
                            ThreadSafeQueue<Batch*>& ready_queue,
                            const vector<vector<Index>>& batches,
@@ -122,8 +122,8 @@ protected:
                            const std::function<void(BackPropagation&)>& update);
 
     EpochStats evaluate_epoch(bool is_classification,
-                              ForwardPropagation& fp,
-                              BackPropagation& bp,
+                              ForwardPropagation& forward_propagation,
+                              BackPropagation& back_propagation,
                               ThreadSafeQueue<Batch*>& empty_queue,
                               ThreadSafeQueue<Batch*>& ready_queue,
                               const vector<vector<Index>>& batches,

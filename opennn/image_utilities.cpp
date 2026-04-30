@@ -122,12 +122,12 @@ Tensor3 load_image(const filesystem::path& path)
         {
             for(Index x = 0; x < width; ++x)
             {
-                const uint8_t* p = row_ptr + x * bytes_per_pixel;
+                const uint8_t* pixel_pointer = row_ptr + x * bytes_per_pixel;
                 const Index pixel_idx = row_start_idx + x * channels;
-                
-                img_data[pixel_idx + 0] = static_cast<float>(p[2]); // R
-                img_data[pixel_idx + 1] = static_cast<float>(p[1]); // G
-                img_data[pixel_idx + 2] = static_cast<float>(p[0]); // B
+
+                img_data[pixel_idx + 0] = static_cast<float>(pixel_pointer[2]); // R
+                img_data[pixel_idx + 1] = static_cast<float>(pixel_pointer[1]); // G
+                img_data[pixel_idx + 2] = static_cast<float>(pixel_pointer[0]); // B
             }
         }
         else if (biBitCount == 8)
