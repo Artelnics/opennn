@@ -9,6 +9,7 @@
 #include "registry.h"
 #include "tensor_utilities.h"
 #include "recurrent_layer.h"
+#include "dense_layer.h"
 
 namespace opennn
 {
@@ -251,6 +252,161 @@ void Recurrent::back_propagate(unique_ptr<LayerForwardPropagation>& forward_prop
 
         if(t > 0)
             next_step_delta.noalias() = delta * W_rec.transpose();
+    }
+}
+
+
+void Recurrent::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
+                               unique_ptr<LayerBackPropagationLM>& back_propagation) const
+{
+    const Index real_batch_size = forward_propagation->inputs[0].shape[0];
+    const Index past_time_steps = forward_propagation->inputs[0].shape[1];
+    const Index input_size = forward_propagation->inputs[0].shape[2];
+    const Index outputs_number = biases.shape[0];
+
+    DenseBackPropagationLM* dense_lm = static_cast<DenseBackPropagationLM*>(back_propagation.get());
+
+    MatrixMap jacobian = matrix_map(dense_lm->squared_errors_Jacobian);
+    jacobian.setZero();
+
+    const Index total_error_terms = jacobian.rows();
+
+    if(total_error_terms == 0 || real_batch_size == 0 || past_time_steps == 0)
+        return;
+
+    const Index network_outputs = total_error_terms / real_batch_size;
+
+    const MatrixMap external_output_gradients(back_propagation->output_gradients[0].data,
+                                              total_error_terms, outputs_number);
+
+    RecurrentForwardPropagation* recurrent_fp = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
+
+    TensorMap3 input_sequences = tensor_map<3>(forward_propagation->inputs[0]);
+    TensorMap3 all_hidden_states = tensor_map<3>(recurrent_fp->hidden_states);
+    TensorMap3 all_activation_derivatives = tensor_map<3>(recurrent_fp->activation_derivatives);
+
+    const MatrixMap W_in = matrix_map(input_weights);
+    const MatrixMap W_rec = matrix_map(recurrent_weights);
+
+    const Index biases_offset = 0;
+    const Index input_weights_offset = outputs_number;
+    const Index recurrent_weights_offset = outputs_number + input_size * outputs_number;
+
+    MatrixR delta(total_error_terms, outputs_number);
+    MatrixR next_delta(total_error_terms, outputs_number);
+    next_delta.setZero();
+
+    VectorR step_deriv_s(outputs_number);
+    VectorR step_input_s(input_size);
+    VectorR step_prev_hidden_s(outputs_number);
+
+    for(Index t = past_time_steps - 1; t >= 0; t--)
+    {
+        if(t == past_time_steps - 1)
+            delta = external_output_gradients;
+        else
+            delta = next_delta;
+
+        for(Index s = 0; s < real_batch_size; s++)
+        {
+            TensorMap1(step_deriv_s.data(), outputs_number) = all_activation_derivatives.chip(s, 0).chip(t, 0);
+
+            for(Index r = 0; r < network_outputs; r++)
+                delta.row(s * network_outputs + r).array() *= step_deriv_s.transpose().array();
+        }
+
+        jacobian.block(0, biases_offset, total_error_terms, outputs_number).noalias() += delta;
+
+        for(Index s = 0; s < real_batch_size; s++)
+        {
+            TensorMap1(step_input_s.data(), input_size) = input_sequences.chip(s, 0).chip(t, 0);
+
+            const auto delta_block = delta.middleRows(s * network_outputs, network_outputs);
+
+            for(Index i = 0; i < input_size; i++)
+            {
+                const Index col_start = input_weights_offset + i * outputs_number;
+
+                jacobian.block(s * network_outputs, col_start, network_outputs, outputs_number).noalias()
+                    += step_input_s(i) * delta_block;
+            }
+        }
+
+        if(t > 0)
+        {
+            for(Index s = 0; s < real_batch_size; s++)
+            {
+                TensorMap1(step_prev_hidden_s.data(), outputs_number) = all_hidden_states.chip(s, 0).chip(t - 1, 0);
+
+                const auto delta_block = delta.middleRows(s * network_outputs, network_outputs);
+
+                for(Index i = 0; i < outputs_number; i++)
+                {
+                    const Index col_start = recurrent_weights_offset + i * outputs_number;
+
+                    jacobian.block(s * network_outputs, col_start, network_outputs, outputs_number).noalias()
+                        += step_prev_hidden_s(i) * delta_block;
+                }
+            }
+        }
+
+        if(!is_first_layer)
+        {
+            MatrixR d_input_t = delta * W_in.transpose();
+
+            TensorMap3 d_input_seq = tensor_map<3>(dense_lm->input_gradients[0]);
+            d_input_seq.chip(t, 1) = TensorMap2(d_input_t.data(), total_error_terms, input_size);
+        }
+
+        if(t > 0)
+            next_delta.noalias() = delta * W_rec.transpose();
+    }
+}
+
+
+void Recurrent::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>& back_propagation,
+                                                  Index start_column_index,
+                                                  MatrixR& global_jacobian) const
+{
+    const Index alignment_elements = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
+    const Index mask_elements = ~(alignment_elements - 1);
+    const Index total_error_terms = global_jacobian.rows();
+
+    Index global_offset = start_column_index;
+    Index local_offset = 0;
+
+    DenseBackPropagationLM* dense_lm = static_cast<DenseBackPropagationLM*>(back_propagation.get());
+
+    MatrixMap layer_jacobian = matrix_map(dense_lm->squared_errors_Jacobian);
+
+    const Index biases_size = biases.size();
+
+    if(biases_size > 0)
+    {
+        global_jacobian.block(0, global_offset, total_error_terms, biases_size) =
+            layer_jacobian.block(0, local_offset, total_error_terms, biases_size);
+
+        local_offset += biases_size;
+        global_offset += (biases_size + alignment_elements - 1) & mask_elements;
+    }
+
+    const Index input_weights_size = input_weights.size();
+
+    if(input_weights_size > 0)
+    {
+        global_jacobian.block(0, global_offset, total_error_terms, input_weights_size) =
+            layer_jacobian.block(0, local_offset, total_error_terms, input_weights_size);
+
+        local_offset += input_weights_size;
+        global_offset += (input_weights_size + alignment_elements - 1) & mask_elements;
+    }
+
+    const Index recurrent_weights_size = recurrent_weights.size();
+
+    if(recurrent_weights_size > 0)
+    {
+        global_jacobian.block(0, global_offset, total_error_terms, recurrent_weights_size) =
+            layer_jacobian.block(0, local_offset, total_error_terms, recurrent_weights_size);
     }
 }
 

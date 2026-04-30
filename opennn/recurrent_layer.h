@@ -40,6 +40,13 @@ public:
     void back_propagate(unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
+    void back_propagate(unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagationLM>&) const override;
+
+    void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
+                                           Index,
+                                           MatrixR&) const override;
+
     string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
     void print() const override;

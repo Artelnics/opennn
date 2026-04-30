@@ -12,7 +12,9 @@
 #include "training_strategy.h"
 #include "quasi_newton_method.h"
 #include "adaptive_moment_estimation.h"
+#include "stochastic_gradient_descent.h"
 #include "dense_layer.h"
+#include "recurrent_layer.h"
 
 namespace opennn
 {
@@ -228,34 +230,39 @@ TrainingResults TrainingStrategy::train()
 
 void TrainingStrategy::fix_forecasting()
 {
-    Index past_time_steps = 0;
-/*
-    if(neural_network->has("Recurrent"))
-        past_time_steps = static_cast<Recurrent*>(neural_network->get_first(Recurrent))->get_timesteps();
-    else
+    if(!has_neural_network() || !neural_network->has("Recurrent"))
         return;
 
-    Index batch_size = 0;
+    const Recurrent* recurrent = static_cast<const Recurrent*>(neural_network->get_first("Recurrent"));
+    const Shape recurrent_input_shape = recurrent->get_input_shape();
 
-    if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
-        batch_size = adaptive_moment_estimation.get_samples_number();
-    else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
-        batch_size = stochastic_gradient_descent.get_samples_number();
-    else
+    if(recurrent_input_shape.empty())
         return;
 
-    if(batch_size%past_time_steps == 0)
+    const Index past_time_steps = recurrent_input_shape[0];
+
+    if(past_time_steps <= 0)
         return;
 
-    const Index constant = past_time_steps > batch_size
-        ? 1
-        : Index(batch_size/past_time_steps);
+    AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get());
+    StochasticGradientDescent* sgd = dynamic_cast<StochasticGradientDescent*>(optimizer.get());
 
-    if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
-        adaptive_moment_estimation.set_batch_size(constant*past_time_steps);
-    else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
-        stochastic_gradient_descent.set_batch_size(constant*past_time_steps);
-*/
+    if(!adam && !sgd)
+        return;
+
+    const Index current_batch_size = adam ? adam->get_samples_number() : sgd->get_samples_number();
+
+    if(current_batch_size > 0 && current_batch_size % past_time_steps == 0)
+        return;
+
+    const Index multiple = (current_batch_size > past_time_steps)
+                               ? current_batch_size / past_time_steps
+                               : Index(1);
+
+    const Index aligned_batch_size = multiple * past_time_steps;
+
+    if(adam) adam->set_batch_size(aligned_batch_size);
+    else     sgd->set_batch_size(aligned_batch_size);
 }
 
 
