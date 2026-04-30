@@ -77,22 +77,6 @@ void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type new_minim
     minimum_loss_decrease = new_minimum_loss_decrease;
 }
 
-void LevenbergMarquardtAlgorithm::check() const
-{
-    if(!loss)
-        throw runtime_error("LevenbergMarquardtAlgorithm error: loss is not set.");
-
-    const Dataset* dataset = loss->get_dataset();
-
-    if(!dataset)
-        throw runtime_error("LevenbergMarquardtAlgorithm error: dataset is not set.");
-
-    const NeuralNetwork* neural_network = loss->get_neural_network();
-
-    if(!neural_network)
-        throw runtime_error("LevenbergMarquardtAlgorithm error: neural network is not set.");
-}
-
 void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
                                                   const ForwardPropagation& forward_propagation,
                                                   BackPropagationLM& back_propagation_lm)
@@ -531,9 +515,6 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
 
 TrainingResults LevenbergMarquardtAlgorithm::train()
 {
-    if(!loss || !loss->get_neural_network() || !loss->get_dataset())
-        return TrainingResults();
-
     if(loss->get_name() == "MinkowskiError")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
     else if(loss->get_name() == "CrossEntropy")

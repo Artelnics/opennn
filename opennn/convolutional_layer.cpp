@@ -181,19 +181,23 @@ void Convolutional::init_cuda(Index batch_size)
         cudnnCreateFilterDescriptor(&kernel_descriptor);
 
     cudnnSetFilter4dDescriptor(kernel_descriptor,
-                               activation_dtype,
+                               to_cudnn(activation_dtype),
                                CUDNN_TENSOR_NHWC,
                                kernels_number, kernel_channels, kernel_height, kernel_width);
 
     if (!convolution_descriptor)
         cudnnCreateConvolutionDescriptor(&convolution_descriptor);
 
+    // cuDNN convolution accumulator is FP32 even when input/filter/output are
+    // BF16: BF16 accumulation is not supported by any conv algorithm. The
+    // dtype mix (BF16 io, FP32 compute) is the standard mixed-precision pattern,
+    // and is what cudnnConvolutionBiasActivationForward expects.
     cudnnSetConvolution2dDescriptor(convolution_descriptor,
                                     get_padding_height(), get_padding_width(),
                                     row_stride, column_stride,
                                     1, 1,
                                     CUDNN_CROSS_CORRELATION,
-                                    activation_dtype);
+                                    CUDNN_DATA_FLOAT);
 
     cudnnSetConvolutionMathType(convolution_descriptor, CUDNN_TENSOR_OP_MATH);
 
@@ -212,7 +216,7 @@ void Convolutional::init_cuda(Index batch_size)
     cudnnTensorDescriptor_t input_desc;
     cudnnCreateTensorDescriptor(&input_desc);
 
-    cudnnSetTensor4dDescriptor(input_desc, CUDNN_TENSOR_NHWC, activation_dtype,
+    cudnnSetTensor4dDescriptor(input_desc, CUDNN_TENSOR_NHWC, to_cudnn(activation_dtype),
                                static_cast<int>(batch_size),
                                static_cast<int>(kernel_channels),
                                static_cast<int>(input_height),
@@ -221,7 +225,7 @@ void Convolutional::init_cuda(Index batch_size)
     cudnnTensorDescriptor_t output_desc;
     cudnnCreateTensorDescriptor(&output_desc);
 
-    cudnnSetTensor4dDescriptor(output_desc, CUDNN_TENSOR_NHWC, activation_dtype,
+    cudnnSetTensor4dDescriptor(output_desc, CUDNN_TENSOR_NHWC, to_cudnn(activation_dtype),
                                static_cast<int>(batch_size),
                                static_cast<int>(kernels_number),
                                static_cast<int>(get_output_height()),
@@ -229,11 +233,25 @@ void Convolutional::init_cuda(Index batch_size)
 
     int returned_count;
 
-    cudnnConvolutionFwdAlgoPerf_t fwd_perf;
-    cudnnFindConvolutionForwardAlgorithm(Device::get_cudnn_handle(),
-                                         input_desc, kernel_descriptor, convolution_descriptor, output_desc,
-                                         1, &returned_count, &fwd_perf);
-    convolution_algorithm = fwd_perf.algo;
+    // cudnnConvolutionBiasActivationForward with the ReLU epilogue requires
+    // the convolution algorithm to be CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM
+    // (CUDNN-12 docs § cudnnConvolutionBiasActivationForward, "Restrictions").
+    // Other algos return CUDNN_STATUS_NOT_SUPPORTED at execution time, even if
+    // cudnnFind picks them — the heuristic doesn't know we'll use the fused path.
+    // We pin the algo explicitly when the activation is ReLU; for other
+    // activations we still let Find pick (the non-fused path is taken anyway).
+    if (activation_arguments.activation_function == ActivationFunction::RectifiedLinear)
+    {
+        convolution_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+    }
+    else
+    {
+        cudnnConvolutionFwdAlgoPerf_t fwd_perf;
+        cudnnFindConvolutionForwardAlgorithm(Device::get_cudnn_handle(),
+                                             input_desc, kernel_descriptor, convolution_descriptor, output_desc,
+                                             1, &returned_count, &fwd_perf);
+        convolution_algorithm = fwd_perf.algo;
+    }
 
     cudnnGetConvolutionForwardWorkspaceSize(Device::get_cudnn_handle(),
                                             input_desc, kernel_descriptor, convolution_descriptor, output_desc,

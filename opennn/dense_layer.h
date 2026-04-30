@@ -50,10 +50,10 @@ private:
     // expects FP32 scale/shift even when the activation tensors are BF16.
     vector<cudnnDataType_t> get_parameter_dtypes() const override
     {
-        return {activation_dtype,   // Bias
-                activation_dtype,   // Weight
-                CUDNN_DATA_FLOAT,         // Gamma
-                CUDNN_DATA_FLOAT};        // Beta
+        return {to_cudnn(activation_dtype),   // Bias
+                to_cudnn(activation_dtype),   // Weight
+                CUDNN_DATA_FLOAT,             // Gamma
+                CUDNN_DATA_FLOAT};            // Beta
     }
 
     enum States {RunningMean, RunningVariance};
@@ -92,11 +92,11 @@ private:
 
     vector<cudnnDataType_t> get_forward_dtypes(Index) const override
     {
-        return {activation_dtype,  // Combination
-                CUDNN_DATA_FLOAT,        // BatchNormMean
-                CUDNN_DATA_FLOAT,        // BatchNormInverseVariance
-                activation_dtype,  // Activation
-                activation_dtype}; // Output
+        return {to_cudnn(activation_dtype),  // Combination
+                CUDNN_DATA_FLOAT,            // BatchNormMean
+                CUDNN_DATA_FLOAT,            // BatchNormInverseVariance
+                to_cudnn(activation_dtype),  // Activation
+                to_cudnn(activation_dtype)}; // Output
     }
 
     enum Backward {OutputDelta, InputDelta};
@@ -315,7 +315,11 @@ public:
 
             const Index output_size = get_outputs_number();
 
-            cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, activation_dtype,
+            // Always FP32: cuDNN 9 rejects BFLOAT16 in cudnnDropoutForward, so
+            // dropout is performed in FP32 (with up/down casts around the call,
+            // see math_utilities.cpp::dropout). Reserve-space size is computed
+            // for FP32 here so the runtime descriptor matches.
+            cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
                                        static_cast<int>(batch_size),
                                        static_cast<int>(output_size),
                                        static_cast<int>(Rank == 3 ? sequence_length : 1),

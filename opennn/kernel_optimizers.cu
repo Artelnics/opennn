@@ -240,7 +240,8 @@ __global__ void cast_fp32_to_bf16_kernel(const int n_vec,
         dst[i] = __float2bfloat16(src[i]);
 }
 
-void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst)
+void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
+                            cudaStream_t stream)
 {
     if (n == 0) return;
 
@@ -249,5 +250,23 @@ void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst)
     const int n_vec = aligned ? (total / 4) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));
 
-    cast_fp32_to_bf16_kernel<<<grid_size, block_size>>>(n_vec, total, src, dst);
+    cast_fp32_to_bf16_kernel<<<grid_size, block_size, 0, stream>>>(n_vec, total, src, dst);
+}
+
+__global__ void cast_bf16_to_fp32_kernel(const int n,
+                                         const __nv_bfloat16* __restrict__ src,
+                                         float* __restrict__ dst)
+{
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int stride = blockDim.x * gridDim.x;
+    for (int i = tid; i < n; i += stride)
+        dst[i] = __bfloat162float(src[i]);
+}
+
+void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst)
+{
+    if (n == 0) return;
+    const int total = static_cast<int>(n);
+    const int grid_size = grid_size_for(total);
+    cast_bf16_to_fp32_kernel<<<grid_size, block_size>>>(total, src, dst);
 }

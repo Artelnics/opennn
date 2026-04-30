@@ -35,8 +35,6 @@ struct BackPropagation
 
     void set(const Index = 0, Loss* = nullptr);
 
-    void allocate_device();
-
     const NeuralNetwork* get_neural_network() const;
 
     void accumulate_output_deltas(size_t layer_index);

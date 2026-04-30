@@ -9,6 +9,7 @@
 #include "math_utilities.h"
 #include "random_utilities.h"
 #include "cuda_dispatch.h"
+#include "cuda_gemm.h"
 #include "profiler.h"
 
 namespace opennn
@@ -16,6 +17,47 @@ namespace opennn
 
 static constexpr float SELU_ALPHA  = 1.6732632423543772848170429916717f;
 static constexpr float SELU_LAMBDA = 1.0507009873554804934193349852946f;
+
+#ifdef OPENNN_WITH_CUDA
+
+// Per-TU device buffer of [1, 1, ..., 1] used as the right operand of the
+// GEMM-as-column-reduction trick in sum(). Sized lazily, never freed
+// (process-lifetime allocation, matches the existing pooling-scratch pattern).
+// One buffer per dtype because the GEMM path requires uniform-dtype operands.
+namespace {
+    float*         ones_fp32 = nullptr; int ones_fp32_size = 0;
+    __nv_bfloat16* ones_bf16 = nullptr; int ones_bf16_size = 0;
+}
+
+static const void* get_ones(int n, cudnnDataType_t dtype)
+{
+    if (dtype == CUDNN_DATA_BFLOAT16)
+    {
+        if (n > ones_bf16_size)
+        {
+            if (ones_bf16) CHECK_CUDA(cudaFree(ones_bf16));
+            CHECK_CUDA(cudaMalloc(&ones_bf16, n * sizeof(__nv_bfloat16)));
+            vector<__nv_bfloat16> h(n, __float2bfloat16(1.0f));
+            CHECK_CUDA(cudaMemcpy(ones_bf16, h.data(),
+                                  n * sizeof(__nv_bfloat16), cudaMemcpyHostToDevice));
+            ones_bf16_size = n;
+        }
+        return ones_bf16;
+    }
+
+    if (n > ones_fp32_size)
+    {
+        if (ones_fp32) CHECK_CUDA(cudaFree(ones_fp32));
+        CHECK_CUDA(cudaMalloc(&ones_fp32, n * sizeof(float)));
+        vector<float> h(n, 1.0f);
+        CHECK_CUDA(cudaMemcpy(ones_fp32, h.data(), n * sizeof(float),
+                              cudaMemcpyHostToDevice));
+        ones_fp32_size = n;
+    }
+    return ones_fp32;
+}
+
+#endif
 
 void padding(const TensorView& input, TensorView& output)
 {
@@ -333,12 +375,23 @@ void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, 
 
 void reduce_sum(const TensorView& input, TensorView& output, type alpha, type beta)
 {
-    // CPU-only: the only caller is combination_gradient, and its GPU branch
-    // computes the bias gradient as a side product of gemm_bgrad_cuda's BGRADA
-    // epilogue — so reduce_sum is never reached on GPU. If a future GPU call
-    // site appears, replace this with a custom reduction kernel (the previous
-    // GEMM-with-ones-vector implementation lived here and was removed along
-    // with Device::get_ones).
+#ifdef OPENNN_WITH_CUDA
+    if (Configuration::instance().is_gpu()) {
+        const int total_rows    = to_int(input.shape[0]);
+        const int total_columns = to_int(input.shape.size() / input.shape[0]);
+
+        // Column-wise reduction expressed as matrix * ones-vector via GEMM
+        // (m × k) * (k × 1) = (m × 1). Ones-vector dtype must match the input
+        // dtype so cuBLAS picks a uniform-dtype GEMM path.
+        gemm_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                  total_columns, 1, total_rows,
+                  input.data, input.cuda_dtype(), total_columns,
+                  get_ones(total_rows, input.dtype), input.cuda_dtype(), total_rows,
+                  output.data, output.cuda_dtype(), total_columns,
+                  alpha, beta);
+        return;
+    }
+#endif
     output.as_vector().noalias() = alpha * input.as_matrix().colwise().sum() + beta * output.as_vector();
 }
 
@@ -407,7 +460,7 @@ static const void* maybe_cast_input_to_weights_dtype(const TensorView& input,
     if (input.dtype == weights.dtype) return input.data;
     if (input.dtype == CUDNN_DATA_FLOAT && weights.dtype == CUDNN_DATA_BFLOAT16)
     {
-        __nv_bfloat16* scratch = Device::get_bf16_input_scratch(input.size());
+        __nv_bfloat16* scratch = get_bf16_input_scratch(input.size());
         cast_fp32_to_bf16_cuda(input.size(), input.as_float(), scratch);
         return scratch;
     }
@@ -511,7 +564,7 @@ void combination_gradient(const TensorView& output_delta,
             const bool need_cast = (input.dtype == CUDNN_DATA_FLOAT
                                     && io_dtype == CUDA_R_16BF);
             const void* input_for_gemm = need_cast
-                ? static_cast<const void*>(Device::get_bf16_input_scratch(input.size()))
+                ? static_cast<const void*>(get_bf16_input_scratch(input.size()))
                 : input.data;
 
             if (need_cast)
@@ -677,6 +730,34 @@ void dropout(TensorView& output, DropoutArguments& args)
 
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
+        // cuDNN 9's dropout is FLOAT/HALF only — BFLOAT16 returns NOT_SUPPORTED.
+        // Up-cast to FP32 in scratch, run dropout there, cast back. The dropout
+        // descriptor is set up with an FP32 tensor at layer-init time so the
+        // reserve_space size matches; see Dense::init_cuda.
+        if (output.dtype == CUDNN_DATA_BFLOAT16)
+        {
+            const Index n = output.size();
+            float* fp32_scratch = get_fp32_upcast_scratch(n);
+            cast_bf16_to_fp32_cuda(n,
+                                   reinterpret_cast<const __nv_bfloat16*>(output.data),
+                                   fp32_scratch);
+
+            TensorView fp32_view = output;
+            fp32_view.data  = fp32_scratch;
+            fp32_view.dtype = CUDNN_DATA_FLOAT;
+            fp32_view.descriptor_handle.reset();
+
+            CHECK_CUDNN(cudnnDropoutForward(Device::get_cudnn_handle(),
+                                            args.descriptor,
+                                            fp32_view.get_descriptor(), fp32_scratch,
+                                            fp32_view.get_descriptor(), fp32_scratch,
+                                            args.reserve_space, args.reserve_size));
+
+            cast_fp32_to_bf16_cuda(n, fp32_scratch,
+                                   reinterpret_cast<__nv_bfloat16*>(output.data));
+            return;
+        }
+
         CHECK_CUDNN(cudnnDropoutForward(Device::get_cudnn_handle(),
                                         args.descriptor,
                                         output.get_descriptor(), output.data,
@@ -712,6 +793,39 @@ void dropout_delta(const TensorView& output_delta,
 
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
+        // Same BF16 limitation as forward: cuDNN dropout is FP/HALF only.
+        // Up-cast both deltas to FP32, run backward, cast input_delta back to BF16.
+        if (output_delta.dtype == CUDNN_DATA_BFLOAT16)
+        {
+            const Index n = output_delta.size();
+            // Need two FP32 scratches: one for dy, one for dx. Reuse the upcast
+            // singleton for dy, the bf16-input singleton for dx... but they need
+            // different sizes potentially. Same n in this case (deltas share shape).
+            // get_fp32_upcast_scratch is already used by dropout forward, so we
+            // chain: cast dy here, write dx into the same scratch (in-place is
+            // fine because cuDNN dropout backward is element-wise).
+            float* fp32_dy = get_fp32_upcast_scratch(n);
+            cast_bf16_to_fp32_cuda(n,
+                                   reinterpret_cast<const __nv_bfloat16*>(output_delta.data),
+                                   fp32_dy);
+
+            TensorView dy_view = output_delta;
+            dy_view.data  = fp32_dy;
+            dy_view.dtype = CUDNN_DATA_FLOAT;
+            dy_view.descriptor_handle.reset();
+
+            // dx scratch overlaps dy on purpose (in-place); cudnn supports that.
+            CHECK_CUDNN(cudnnDropoutBackward(Device::get_cudnn_handle(),
+                                             args.descriptor,
+                                             dy_view.get_descriptor(), fp32_dy,
+                                             dy_view.get_descriptor(), fp32_dy,
+                                             const_cast<void*>(args.reserve_space), args.reserve_size));
+
+            cast_fp32_to_bf16_cuda(n, fp32_dy,
+                                   reinterpret_cast<__nv_bfloat16*>(input_delta.data));
+            return;
+        }
+
         CHECK_CUDNN(cudnnDropoutBackward(Device::get_cudnn_handle(),
                                          args.descriptor,
                                          output_delta.get_descriptor(), output_delta.data,
@@ -1084,6 +1198,22 @@ void convolution_backward_weights(const TensorView& input,
 {
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
+        // cuDNN's BackwardFilter / BackwardBias require dwDesc / dbDesc to share
+        // dtype with x and dy (BF16 in BP16 mode). Our master gradient buffer
+        // is FP32, so when activations are BF16 we route the writes through a
+        // BF16 scratch and cast back to FP32 afterwards. BF16→FP32 is exact
+        // (left-shift by 16), so no precision is lost in the cast itself.
+        const bool bp16 = (input.dtype == CUDNN_DATA_BFLOAT16);
+
+        void* dw_dst = weight_grad.data;
+        __nv_bfloat16* dw_scratch = nullptr;
+
+        if (bp16)
+        {
+            dw_scratch = get_bf16_grad_scratch(weight_grad.size());
+            dw_dst = dw_scratch;
+        }
+
         CHECK_CUDNN(cudnnConvolutionBackwardFilter(Device::get_cudnn_handle(),
             &one,
             input.get_descriptor(), input.data,
@@ -1092,13 +1222,41 @@ void convolution_backward_weights(const TensorView& input,
             args.algorithm_filter,
             args.backward_filter_workspace, args.backward_filter_workspace_size,
             &zero,
-            args.kernel_descriptor, weight_grad.data));
+            args.kernel_descriptor, dw_dst));
 
-        CHECK_CUDNN(cudnnConvolutionBackwardBias(Device::get_cudnn_handle(),
-            &one,
-            output_delta.get_descriptor(), output_delta.data,
-            &zero,
-            bias_grad.get_descriptor(), bias_grad.data));
+        // Bias backward: cuDNN 9's BackwardBias is FP/half-only — BFLOAT16 dy
+        // returns NOT_SUPPORTED. Up-cast dy to FP32 once and run the reduction
+        // in FP32 directly into bias_grad (which is already FP32). Avoids the
+        // need for a BF16 scratch / cast on the bias side.
+        if (bp16)
+        {
+            float* dy_fp32 = get_fp32_upcast_scratch(output_delta.size());
+            cast_bf16_to_fp32_cuda(output_delta.size(),
+                                   reinterpret_cast<const __nv_bfloat16*>(output_delta.data),
+                                   dy_fp32);
+
+            TensorView dy_fp32_view = output_delta;
+            dy_fp32_view.data = dy_fp32;
+            dy_fp32_view.dtype = CUDNN_DATA_FLOAT;
+            dy_fp32_view.descriptor_handle.reset();
+
+            CHECK_CUDNN(cudnnConvolutionBackwardBias(Device::get_cudnn_handle(),
+                &one,
+                dy_fp32_view.get_descriptor(), dy_fp32_view.data,
+                &zero,
+                bias_grad.get_descriptor(), bias_grad.data));
+
+            // Filter-grad: BF16 staging → FP32 master.
+            cast_bf16_to_fp32_cuda(weight_grad.size(), dw_scratch, weight_grad.as_float());
+        }
+        else
+        {
+            CHECK_CUDNN(cudnnConvolutionBackwardBias(Device::get_cudnn_handle(),
+                &one,
+                output_delta.get_descriptor(), output_delta.data,
+                &zero,
+                bias_grad.get_descriptor(), bias_grad.data));
+        }
         return;
     }
 #endif

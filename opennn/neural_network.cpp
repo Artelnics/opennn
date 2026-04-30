@@ -51,38 +51,18 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
 
 void NeuralNetwork::compile()
 {
-    const Index layers_number = get_layers_number();
+    if (get_layers_number() == 0) return;
 
-    if (layers_number == 0) return;
-
-    // Resolve any Auto values in the global Configuration to concrete (CPU/CUDA,
-    // Float32/BP16, Float32/BP16/Int8) and snapshot the result. From here on
-    // this network always uses `this->config`, ignoring later changes to the
-    // singleton.
     config = Configuration::instance().resolve();
 
-    // Propagate the activation dtype to every layer. Used by the layer's
-    // get_forward_dtypes / get_parameter_dtypes / get_backward_dtypes overrides
-    // and by descriptor setup inside init_cuda.
-    const cudnnDataType_t cudnn_t = get_training_cudnn_dtype();
-    const cudaDataType_t  cuda_t  = get_training_cuda_dtype();
     for (auto& layer : layers)
-        layer->set_activation_dtype(cudnn_t, cuda_t);
-
-    for (Index i = 0; i < layers_number; ++i)
-    {
-        const vector<Index>& inputs = layer_input_indices[i];
-
-        if (inputs.size() == 1 && inputs[0] >= 0)
-            layers[i]->set_input_shape(layers[inputs[0]]->get_output_shape());
-    }
+        layer->set_activation_dtype(get_training_dtype());
 
     parameters.resize_bytes(aligned_total_elements(get_parameter_shapes()) * Index(sizeof(type)),
                             DeviceType::CPU);
     parameters.setZero();
 
     type* pointer = parameters.as<type>();
-
     for (auto& layer : layers)
         pointer = layer->link_parameters(pointer);
 
@@ -254,6 +234,17 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
         get_first(LayerType::Scaling3d)->set_input_shape(new_input_shape);
 
     layers[get_first_trainable_layer_index()]->set_input_shape(new_input_shape);
+
+    // Propagate the new shape downstream so every layer's input/output shape
+    // stays in sync. Single-input layers inherit their predecessor's output
+    // shape; multi-input layers (e.g. residual blocks) decide internally.
+    const Index layers_number = get_layers_number();
+    for (Index i = 0; i < layers_number; ++i)
+    {
+        const vector<Index>& inputs = layer_input_indices[i];
+        if (inputs.size() == 1 && inputs[0] >= 0)
+            layers[i]->set_input_shape(layers[inputs[0]]->get_output_shape());
+    }
 }
 
 void NeuralNetwork::set_default()
@@ -1201,8 +1192,6 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     copy_states_device();
     link_states();
 
-    fp.allocate_device();
-
     const Index input_size = input_views_cpu[0].size();
     type* input_device = nullptr;
     CHECK_CUDA(cudaMalloc(&input_device, input_size * sizeof(type)));
@@ -1227,10 +1216,32 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     const Index batch_size = input_views_cpu[0].shape[0];
     const Index out_cols = out_view.size() / batch_size;
     MatrixR result(batch_size, out_cols);
-    CHECK_CUDA(cudaMemcpy(result.data(),
-                          out_view.data,
-                          out_view.size() * sizeof(type),
-                          cudaMemcpyDeviceToHost));
+
+    // BP16 inference: device buffer holds BF16 (2 bytes/elem). Copy raw bytes
+    // to a host staging buffer, then upcast to FP32. BF16 is the high 16 bits
+    // of FP32, so the conversion is a left-shift — no rounding involved.
+    if(out_view.dtype == CUDNN_DATA_BFLOAT16)
+    {
+        const Index n = out_view.size();
+        vector<uint16_t> staging(static_cast<size_t>(n));
+        CHECK_CUDA(cudaMemcpy(staging.data(),
+                              out_view.data,
+                              n * sizeof(uint16_t),
+                              cudaMemcpyDeviceToHost));
+        type* dst = result.data();
+        for(Index i = 0; i < n; ++i)
+        {
+            const uint32_t bits = static_cast<uint32_t>(staging[size_t(i)]) << 16;
+            std::memcpy(&dst[i], &bits, sizeof(type));
+        }
+    }
+    else
+    {
+        CHECK_CUDA(cudaMemcpy(result.data(),
+                              out_view.data,
+                              out_view.size() * sizeof(type),
+                              cudaMemcpyDeviceToHost));
+    }
 
     CHECK_CUDA(cudaFree(input_device));
     copy_parameters_host();

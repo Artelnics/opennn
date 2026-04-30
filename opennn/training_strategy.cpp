@@ -126,10 +126,10 @@ TrainingResults TrainingStrategy::train()
         throw runtime_error("TrainingStrategy error: dataset is not set.");
 
     if(!loss->get_neural_network() || !loss->get_dataset())
-        throw runtime_error("Loss index is wrong.");
+        throw runtime_error("TrainingStrategy error: loss is not set.");
 
     if(!optimizer->get_loss())
-        throw runtime_error("Optimization algorithm is wrong.");
+        throw runtime_error("TrainingStrategy error: optimizer is not set.");
 
     if(neural_network->has(LayerType::Recurrent))
         fix_forecasting();

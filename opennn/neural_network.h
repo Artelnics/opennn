@@ -37,29 +37,12 @@ public:
     bool is_gpu() const { return config.device == DeviceType::CUDA; }
     bool is_cpu() const { return config.device == DeviceType::CPU; }
 
-    // Convenience aliases so the Resolved enums map to cuDNN/CUDA dtype constants
-    // without callers having to do the switch themselves. Forward/training and
-    // inference can differ (e.g. train Float32 but infer BP16); callers pick.
-    cudnnDataType_t get_training_cudnn_dtype() const
-    {
-        return (config.training_precision == TrainingPrecision::BP16)
-                    ? CUDNN_DATA_BFLOAT16 : CUDNN_DATA_FLOAT;
-    }
-    cudaDataType_t get_training_cuda_dtype() const
-    {
-        return (config.training_precision == TrainingPrecision::BP16)
-                    ? CUDA_R_16BF : CUDA_R_32F;
-    }
-    cudnnDataType_t get_inference_cudnn_dtype() const
-    {
-        return (config.inference_precision == InferencePrecision::BP16)
-                    ? CUDNN_DATA_BFLOAT16 : CUDNN_DATA_FLOAT;
-    }
-    cudaDataType_t get_inference_cuda_dtype() const
-    {
-        return (config.inference_precision == InferencePrecision::BP16)
-                    ? CUDA_R_16BF : CUDA_R_32F;
-    }
+    // Project-internal dtype for activations / parameters. Training and inference
+    // can differ (e.g. train Float32 but infer BP16). High-level code reads these;
+    // conversion to cuDNN/CUDA library constants happens at API boundaries via
+    // to_cudnn() / to_cuda() in configuration.h.
+    ActivationDtype get_training_dtype()  const { return to_activation_dtype(config.training_precision); }
+    ActivationDtype get_inference_dtype() const { return to_activation_dtype(config.inference_precision); }
 
     vector<vector<Shape>> get_parameter_shapes() const
     {
@@ -293,8 +276,6 @@ protected:
 
     Buffer states;
 
-    // Frozen at compile() from Configuration::resolve(). Subsequent changes to the
-    // Configuration singleton don't affect a network already compiled.
     Configuration::Resolved config;
 };
 

@@ -10,7 +10,8 @@
 
 #include <functional>
 #include "tinyxml2.h"
-#include "tensor_utilities.h"   // for ThreadSafeQueue
+#include "tensor_utilities.h"
+#include "thread_safe_queue.h"
 
 using namespace tinyxml2;
 
@@ -66,8 +67,6 @@ public:
 
     // Training
 
-    virtual void check() const;
-
     virtual TrainingResults train() = 0;
 
     const string& get_name() const { return name; }
@@ -109,21 +108,28 @@ protected:
 
     static void clip_gradient_norm(Buffer& gradient, type max_norm);
 
-    enum class Phase { Training, Validation };
-
     bool should_display(Index epoch) const { return display && epoch % display_period == 0; }
 
-    EpochStats run_epoch(Phase phase,
-                         bool is_classification,
-                         ForwardPropagation& fp,
-                         BackPropagation& bp,
-                         ThreadSafeQueue<Batch*>& empty_queue,
-                         ThreadSafeQueue<Batch*>& ready_queue,
-                         const vector<vector<Index>>& batches,
-                         const vector<Index>& input_feature_indices,
-                         const vector<Index>& decoder_feature_indices,
-                         const vector<Index>& target_feature_indices,
-                         const std::function<void(BackPropagation&)>& update);
+    EpochStats train_epoch(bool is_classification,
+                           ForwardPropagation& fp,
+                           BackPropagation& bp,
+                           ThreadSafeQueue<Batch*>& empty_queue,
+                           ThreadSafeQueue<Batch*>& ready_queue,
+                           const vector<vector<Index>>& batches,
+                           const vector<Index>& input_feature_indices,
+                           const vector<Index>& decoder_feature_indices,
+                           const vector<Index>& target_feature_indices,
+                           const std::function<void(BackPropagation&)>& update);
+
+    EpochStats evaluate_epoch(bool is_classification,
+                              ForwardPropagation& fp,
+                              BackPropagation& bp,
+                              ThreadSafeQueue<Batch*>& empty_queue,
+                              ThreadSafeQueue<Batch*>& ready_queue,
+                              const vector<vector<Index>>& batches,
+                              const vector<Index>& input_feature_indices,
+                              const vector<Index>& decoder_feature_indices,
+                              const vector<Index>& target_feature_indices);
 
     Loss* loss = nullptr;
 

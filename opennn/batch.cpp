@@ -7,6 +7,10 @@
 //   artelnics@artelnics.com
 
 #include "batch.h"
+#include "language_dataset.h"
+#ifdef OPENNN_WITH_CUDA
+#include "kernel.cuh"
+#endif
 
 namespace opennn
 {
@@ -41,7 +45,22 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         // when actually running CPU-only.
         if (Configuration::instance().is_gpu())
         {
-            input.resize_bytes(input_shape.size() * Index(sizeof(float)), DeviceType::CUDA);
+            // In BP16 training mode `input` is the BF16 buffer the layers read
+            // from. The H2D upload still arrives as FP32 (CSV → MatrixR is FP32),
+            // so we route it through `inputs_fp32_staging` and run a tiny
+            // FP32→BF16 cast on stream once per copy_device_async — this is the
+            // single dtype-conversion point in the GPU input path; conv/Dense
+            // forwards then receive BF16 directly.
+            //
+            // LanguageDataset is the exception: its inputs are integer token IDs
+            // stored in FP32, and Embedding casts them to Index. BF16 has only
+            // 7 mantissa bits → vocab IDs > 128 get rounded → embedding lookup
+            // collapses. Keep input as FP32 in that case; Embedding's first kernel
+            // is the dtype boundary anyway (it produces BF16 activations).
+            const bool integer_inputs = (dynamic_cast<const LanguageDataset*>(dataset) != nullptr);
+            const bool bp16 = Configuration::instance().is_bp16_training() && !integer_inputs;
+            const Index elem_bytes = bp16 ? Index(sizeof(__nv_bfloat16)) : Index(sizeof(float));
+            input.resize_bytes(input_shape.size() * elem_bytes, DeviceType::CUDA);
 
             num_input_features = dataset->get_features_number("Input");
             const Index input_size = samples_number * num_input_features;
@@ -51,6 +70,13 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
                 if(inputs_host) cudaFreeHost(inputs_host);
                 CHECK_CUDA(cudaMallocHost(&inputs_host, input_size * sizeof(float)));
                 inputs_host_allocated_size = input_size;
+            }
+
+            if(bp16 && input_size > inputs_fp32_staging_size)
+            {
+                if(inputs_fp32_staging) cudaFree(inputs_fp32_staging);
+                CHECK_CUDA(cudaMalloc(&inputs_fp32_staging, input_size * sizeof(float)));
+                inputs_fp32_staging_size = input_size;
             }
         }
         else
@@ -136,10 +162,16 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 #ifdef OPENNN_WITH_CUDA
     if(!input_shape.empty() && input.as<type>())
     {
-        TensorView in_view(input.as<type>(), input_shape, CUDNN_DATA_FLOAT);
+        const bool integer_inputs = (dynamic_cast<const LanguageDataset*>(dataset) != nullptr);
+        const cudnnDataType_t input_dtype = (Configuration::instance().is_bp16_training() && !integer_inputs)
+                                                ? CUDNN_DATA_BFLOAT16
+                                                : CUDNN_DATA_FLOAT;
+        TensorView in_view(input.as<type>(), input_shape, input_dtype);
 
         if(!decoder_shape.empty() && decoder.as<type>())
         {
+            // Decoder stays FP32 — the only consumer is Embedding which reads
+            // integer indices and produces BF16 itself; no upstream FP32 op.
             TensorView dec_view(decoder.as<type>(), decoder_shape, CUDNN_DATA_FLOAT);
             input_views_cache = { dec_view, in_view };
         }
@@ -246,7 +278,25 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
     const Index input_size = current_batch_size * num_input_features;
     const Index target_size = current_batch_size * num_target_features;
 
-    CHECK_CUDA(cudaMemcpyAsync(input.as<type>(), inputs_host, input_size * sizeof(float), cudaMemcpyHostToDevice, stream));
+    // BP16 mode with real-valued inputs uses the staging-then-cast path.
+    // LanguageDataset (integer token IDs) keeps inputs FP32 even in BP16 — the
+    // staging buffer is not allocated in that case; see set().
+    if(inputs_fp32_staging != nullptr)
+    {
+        CHECK_CUDA(cudaMemcpyAsync(inputs_fp32_staging, inputs_host,
+                                   input_size * sizeof(float),
+                                   cudaMemcpyHostToDevice, stream));
+        cast_fp32_to_bf16_cuda(input_size,
+                               static_cast<const float*>(inputs_fp32_staging),
+                               input.as<__nv_bfloat16>(),
+                               stream);
+    }
+    else
+    {
+        CHECK_CUDA(cudaMemcpyAsync(input.as<type>(), inputs_host,
+                                   input_size * sizeof(float),
+                                   cudaMemcpyHostToDevice, stream));
+    }
 
     if(!decoder_shape.empty())
     {

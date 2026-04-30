@@ -91,6 +91,12 @@ struct Batch
     Index inputs_host_allocated_size = 0;
     Index decoder_host_allocated_size = 0;
     Index targets_host_allocated_size = 0;
+
+    // BP16 training mode: H2D uploads land in this FP32 device staging buffer
+    // first, then a `cast_fp32_to_bf16_cuda` kernel converts into `input`
+    // (which is BF16-sized in BP16 mode). Only allocated when BP16 is active.
+    void* inputs_fp32_staging = nullptr;
+    Index inputs_fp32_staging_size = 0;
 };
 
 }

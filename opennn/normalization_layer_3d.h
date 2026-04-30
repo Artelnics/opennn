@@ -58,10 +58,10 @@ public:
 
     vector<cudnnDataType_t> get_forward_dtypes(Index) const override
     {
-        return {CUDNN_DATA_FLOAT,        // Means
-                CUDNN_DATA_FLOAT,        // StandardDeviations
-                activation_dtype,  // NormalizedInputs
-                activation_dtype}; // Output
+        return {CUDNN_DATA_FLOAT,            // Means
+                CUDNN_DATA_FLOAT,            // StandardDeviations
+                to_cudnn(activation_dtype),  // NormalizedInputs
+                to_cudnn(activation_dtype)}; // Output
     }
 
     vector<Shape> get_backward_shapes(Index batch_size) const override

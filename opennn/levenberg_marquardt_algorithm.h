@@ -120,8 +120,6 @@ public:
    void set_minimum_loss_decrease(const type);
    // Training
 
-   void check() const override;
-
    TrainingResults train() override;
 
    enum DataSlot { ParameterUpdate };

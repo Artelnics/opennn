@@ -31,6 +31,8 @@ int main()
 
         #ifdef OPENNN_WITH_CUDA
 
+        Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
+
         // Data set
 
         ImageDataset image_dataset("../data/melanoma_cancer_data");
@@ -56,8 +58,6 @@ int main()
         adam->set_display_period(10);
         adam->set_batch_size(16);
         adam->set_maximum_epochs(50);
-
-        Configuration::instance().set(DeviceType::Auto, TrainingPrecision::Auto, InferencePrecision::Auto);
 
         training_strategy.train();
 

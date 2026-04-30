@@ -57,12 +57,7 @@ void AdaptiveMomentEstimation::set_learning_rate(const type new_learning_rate)
 
 TrainingResults AdaptiveMomentEstimation::train()
 {
-    if(!loss || !loss->get_neural_network() || !loss->get_dataset())
-        return TrainingResults();
-
     TrainingResults results(maximum_epochs + 1);
-
-    check();
 
     const bool is_gpu = Configuration::instance().is_gpu();
 
@@ -72,9 +67,6 @@ TrainingResults AdaptiveMomentEstimation::train()
     // Dataset
 
     Dataset* dataset = loss->get_dataset();
-
-    if(!dataset)
-        throw runtime_error("AdaptiveMomentEstimation error: dataset is not set.");
 
     const bool has_validation = dataset->has_validation();
 
@@ -125,13 +117,11 @@ TrainingResults AdaptiveMomentEstimation::train()
     vector<unique_ptr<Batch>> validation_batch_pool;
 
     if(has_validation)
-    {
         for(int i = 0; i < pool_size; ++i)
         {
             validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
             empty_validation_queue.push(validation_batch_pool.back().get());
         }
-    }
 
     // Forward / back propagation
 
@@ -195,17 +185,16 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
-        const EpochStats train_stats = run_epoch(Phase::Training,
-                                                 is_classification_model,
-                                                 training_forward_propagation,
-                                                 training_back_propagation,
-                                                 empty_training_queue,
-                                                 ready_training_queue,
-                                                 training_batches,
-                                                 input_feature_indices,
-                                                 decoder_feature_indices,
-                                                 target_feature_indices,
-                                                 training_update);
+        const EpochStats train_stats = train_epoch(is_classification_model,
+                                                   training_forward_propagation,
+                                                   training_back_propagation,
+                                                   empty_training_queue,
+                                                   ready_training_queue,
+                                                   training_batches,
+                                                   input_feature_indices,
+                                                   decoder_feature_indices,
+                                                   target_feature_indices,
+                                                   training_update);
 
         training_error = train_stats.error;
         training_accuracy = train_stats.accuracy;
@@ -215,17 +204,15 @@ TrainingResults AdaptiveMomentEstimation::train()
         {
             dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
 
-            const EpochStats val_stats = run_epoch(Phase::Validation,
-                                                   is_classification_model,
-                                                   *validation_forward_propagation,
-                                                   *validation_back_propagation,
-                                                   empty_validation_queue,
-                                                   ready_validation_queue,
-                                                   validation_batches,
-                                                   input_feature_indices,
-                                                   decoder_feature_indices,
-                                                   target_feature_indices,
-                                                   [](BackPropagation&){});
+            const EpochStats val_stats = evaluate_epoch(is_classification_model,
+                                                        *validation_forward_propagation,
+                                                        *validation_back_propagation,
+                                                        empty_validation_queue,
+                                                        ready_validation_queue,
+                                                        validation_batches,
+                                                        input_feature_indices,
+                                                        decoder_feature_indices,
+                                                        target_feature_indices);
 
             validation_error = val_stats.error;
             validation_accuracy = val_stats.accuracy;
@@ -327,7 +314,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const type one_minus_beta_1 = type(1) - beta_1;
     const type one_minus_beta_2 = type(1) - beta_2;
 
-    const type s = std::sqrt(bias_correction_2);
+    const type s = sqrt(bias_correction_2);
     const type effective_learning_rate = learning_rate * s / bias_correction_1;
     const type effective_epsilon = EPSILON * s;
 
@@ -336,13 +323,13 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     {
         const type g = gradient(i);
 
-        const type m_new = beta_1 * gradient_exponential_decay(i) + one_minus_beta_1 * g;
-        gradient_exponential_decay(i) = m_new;
+        auto& m = gradient_exponential_decay(i);
+        auto& v = square_gradient_exponential_decay(i);
 
-        const type v_new = beta_2 * square_gradient_exponential_decay(i) + one_minus_beta_2 * g * g;
-        square_gradient_exponential_decay(i) = v_new;
+        m = beta_1 * m + one_minus_beta_1 * g;
+        v = beta_2 * v + one_minus_beta_2 * g * g;
 
-        parameters(i) -= effective_learning_rate * m_new / (std::sqrt(v_new) + effective_epsilon);
+        parameters(i) -= effective_learning_rate * m / (sqrt(v) + effective_epsilon);
     }
 }
 

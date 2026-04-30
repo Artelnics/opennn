@@ -27,53 +27,89 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     if(!neural_network) throw runtime_error("ForwardPropagation error: neural network is not set.");
 
-    const vector<unique_ptr<Layer>>& nn_layers = neural_network->get_layers();
-    const size_t layers_number = nn_layers.size();
-
+    const auto& layers = neural_network->get_layers();
+    const size_t layers_number = layers.size();
     const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
 
-    const Index total_size = aligned_total_elements(forward_shapes);
-
-    // Forward arena is pure scratch — no Eigen-based init reads from it before
-    // the first forward pass. When the resolved device is CUDA we skip the CPU
-    // allocation entirely and let allocate_device() build the GPU buffer; the
-    // view structure is still populated below so input wiring works.
-    const bool gpu_mode = Configuration::instance().is_gpu();
-
-    if(total_size > 0 && !gpu_mode)
-    {
-        data.resize_bytes(total_size * Index(sizeof(type)), DeviceType::CPU);
-        data.setZero();
-    }
-
     views.resize(layers_number);
-    type* pointer = (total_size > 0 && !gpu_mode) ? data.as<type>() : nullptr;
 
-    for(Index i = 0; i < layers_number; ++i)
+#ifdef OPENNN_WITH_CUDA
+    const bool is_gpu = Configuration::instance().is_gpu();
+    
+    if(is_gpu)
     {
-        const vector<Shape>& shapes = forward_shapes[i];
-        const size_t slots = shapes.size();
+        vector<vector<cudnnDataType_t>> forward_dtypes(layers_number);
+        for(Index i = 0; i < layers_number; ++i)
+            forward_dtypes[i] = layers[i]->get_forward_dtypes(batch_size);
 
-        views[i].resize(slots + 1);
-
-        for(size_t j = 0; j < slots; ++j)
+        Index total_bytes = 0;
+        for(Index i = 0; i < layers_number; ++i)
         {
-            const Shape& s = shapes[j];
-            views[i][j + 1].resize(1);
+            const vector<Shape>& shapes = forward_shapes[i];
+            for(size_t j = 0; j < shapes.size(); ++j)
+                if(shapes[j].size() > 0)
+                    total_bytes += get_aligned_bytes(shapes[j].size() * dtype_bytes(forward_dtypes[i][j]));
+        }
 
-            // Always set the shape so downstream wiring sees a non-empty view.
-            // `data` may be null in GPU mode (allocate_device fills it later).
-            if(s.size() > 0)
+        if(total_bytes > 0)
+        {
+            data.resize_bytes(total_bytes, DeviceType::CUDA);
+            data.setZero();
+        }
+
+        uint8_t* cursor = (total_bytes > 0) ? data.as<uint8_t>() : nullptr;
+        for(Index i = 0; i < layers_number; ++i)
+        {
+            const vector<Shape>& shapes = forward_shapes[i];
+            const size_t slots = shapes.size();
+            views[i].resize(slots + 1);
+
+            for(size_t j = 0; j < slots; ++j)
             {
-                views[i][j + 1][0] = TensorView(pointer, s);
+                const Shape& s = shapes[j];
+                views[i][j + 1].resize(1);
 
-                if(pointer) pointer += get_aligned_size(s.size());
+                if(s.size() > 0)
+                {
+                    views[i][j + 1][0] = TensorView(cursor, s, forward_dtypes[i][j]);
+                    if(cursor) cursor += get_aligned_bytes(s.size() * dtype_bytes(forward_dtypes[i][j]));
+                }
+            }
+        }
+    }
+    else
+#endif
+    {
+        const Index total_size = aligned_total_elements(forward_shapes);
+
+        if(total_size > 0)
+        {
+            data.resize_bytes(total_size * Index(sizeof(type)), DeviceType::CPU);
+            data.setZero();
+        }
+
+        type* pointer = (total_size > 0) ? data.as<type>() : nullptr;
+        for(Index i = 0; i < layers_number; ++i)
+        {
+            const vector<Shape>& shapes = forward_shapes[i];
+            const size_t slots = shapes.size();
+            views[i].resize(slots + 1);
+
+            for(size_t j = 0; j < slots; ++j)
+            {
+                const Shape& s = shapes[j];
+                views[i][j + 1].resize(1);
+
+                if(s.size() > 0)
+                {
+                    views[i][j + 1][0] = TensorView(pointer, s);
+                    if(pointer) pointer += get_aligned_size(s.size());
+                }
             }
         }
     }
 
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
-
     for(Index i = 0; i < layers_number; ++i)
     {
         const vector<Index>& input_indices = layer_input_indices[i];
@@ -96,97 +132,32 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             }
         }
     }
-}
 
-void ForwardPropagation::allocate_device()
-{
 #ifdef OPENNN_WITH_CUDA
-    if(!neural_network || batch_size <= 0) return;
-
-    const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
-    const auto& nn_layers = neural_network->get_layers();
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
-    const size_t layers_number = nn_layers.size();
-
-    vector<vector<cudnnDataType_t>> forward_dtypes(layers_number);
-    for(Index i = 0; i < layers_number; ++i)
-        forward_dtypes[i] = nn_layers[i]->get_forward_dtypes(batch_size);
-
-    Index total_bytes = 0;
-    for(Index i = 0; i < layers_number; ++i)
+    if(is_gpu)
     {
-        const vector<Shape>& shapes = forward_shapes[i];
-        for(size_t j = 0; j < shapes.size(); ++j)
-            if(shapes[j].size() > 0)
-                total_bytes += get_aligned_bytes(shapes[j].size() * dtype_bytes(forward_dtypes[i][j]));
-    }
-
-    if(total_bytes == 0) return;
-
-    data.resize_bytes(total_bytes, DeviceType::CUDA);
-    data.setZero();
-
-    uint8_t* cursor = data.as<uint8_t>();
-
-    for(Index i = 0; i < layers_number; ++i)
-    {
-        const vector<Shape>& shapes = forward_shapes[i];
-
-        for(size_t j = 0; j < shapes.size(); ++j)
+        for(auto& layer : layers)
         {
-            const Shape& s = shapes[j];
-
-            if(s.size() > 0)
+            if(layer->get_type() == LayerType::Convolutional)
             {
-                views[i][j + 1][0].data  = cursor;
-                views[i][j + 1][0].dtype = forward_dtypes[i][j];
-                cursor += get_aligned_bytes(s.size() * dtype_bytes(forward_dtypes[i][j]));
+                if(auto* conv = dynamic_cast<Convolutional*>(layer.get()))
+                    conv->init_cuda(batch_size);
             }
-        }
-    }
-
-    for(Index i = 0; i < layers_number; ++i)
-    {
-        const vector<Index>& input_idx = layer_input_indices[i];
-
-        for(size_t k = 0; k < input_idx.size(); ++k)
-        {
-            const Index j = input_idx[k];
-
-            if(j >= 0)
+            else if(layer->get_type() == LayerType::Dense2d)
             {
-                const size_t output_slot = forward_shapes[j].size();
-
-                if(output_slot > 0 && j < ssize(views)
-                    && !views[j][output_slot].empty())
-                {
-                    views[i][0][k] = views[j][output_slot][0];
-                }
+                if(auto* dense = dynamic_cast<Dense<2>*>(layer.get()))
+                    dense->init_cuda(batch_size);
             }
-        }
-    }
-
-    for(auto& layer : neural_network->get_layers())
-    {
-        if(layer->get_type() == LayerType::Convolutional)
-        {
-            if(auto* conv = dynamic_cast<Convolutional*>(layer.get()))
-                conv->init_cuda(batch_size);
-        }
-        else if(layer->get_type() == LayerType::Dense2d)
-        {
-            if(auto* dense = dynamic_cast<Dense<2>*>(layer.get()))
-                dense->init_cuda(batch_size);
-        }
-        else if(layer->get_type() == LayerType::Dense3d)
-        {
-            if(auto* dense = dynamic_cast<Dense<3>*>(layer.get()))
-                dense->init_cuda(batch_size);
-        }
-        else if(layer->get_type() == LayerType::MultiHeadAttention)
-        {
-            if(auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
-                mha->init_cuda(batch_size);
+            else if(layer->get_type() == LayerType::Dense3d)
+            {
+                if(auto* dense = dynamic_cast<Dense<3>*>(layer.get()))
+                    dense->init_cuda(batch_size);
+            }
+            else if(layer->get_type() == LayerType::MultiHeadAttention)
+            {
+                if(auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
+                    mha->init_cuda(batch_size);
+            }
         }
     }
 #endif

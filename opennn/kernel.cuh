@@ -30,8 +30,20 @@ void sgd_update_cuda(const Index, float*, float*, const float*, const float, con
 
 // Cast FP32 source buffer to a BF16 destination buffer of the same length.
 // Used to refresh the BF16 working copy of network parameters after each
-// Adam step (master FP32 → working BF16 mirror).
-void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst);
+// Adam step (master FP32 → working BF16 mirror), and by Batch::copy_device_async
+// to convert FP32 inputs (pinned host) to BF16 inputs (device). `stream`
+// defaults to the default stream so existing call sites don't change; Batch
+// passes its prefetch stream for proper async ordering with the H2D copy.
+void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
+                            cudaStream_t stream = nullptr);
+
+// Cast BF16 source buffer to a FP32 destination buffer of the same length.
+// Used by `convolution_backward_weights` to merge the BF16 gradient written by
+// cudnnConvolutionBackwardFilter (which requires dwDesc to match xDesc/dyDesc
+// dtype, i.e. BF16 in BP16 mode) into the FP32 master gradient that Adam
+// reads. BF16→FP32 is exact: BF16 is the high 16 bits of FP32, so this is a
+// shift, no rounding.
+void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst);
 
 // (input - target) into a FP32 buffer; input dtype templated, target/output FP32.
 // Used by the loss helpers to bridge BF16 activations and FP32 targets without

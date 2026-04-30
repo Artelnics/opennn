@@ -25,6 +25,7 @@ int main()
     {
         cout << "OpenNN. Breast Cancer Example." << endl;
 
+        Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
 
         // Dataset
 
@@ -47,8 +48,6 @@ int main()
         training_strategy.set_optimization_algorithm("StochasticGradientDescent");
         StochasticGradientDescent* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
         sgd->set_maximum_epochs(1000);
-
-        Configuration::instance().set(DeviceType::CPU, TrainingPrecision::Float32, InferencePrecision::Float32);
 
         training_strategy.train();
 

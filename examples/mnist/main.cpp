@@ -30,6 +30,8 @@ int main()
 
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
+        Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
+
         // Dataset
 
         ImageDataset image_dataset("../data/mnist_data");
@@ -54,8 +56,6 @@ int main()
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(20);
         adam->set_display_period(5);
-
-        Configuration::instance().set(DeviceType::CPU, TrainingPrecision::Float32, InferencePrecision::Float32);
 
         training_strategy.train();
 

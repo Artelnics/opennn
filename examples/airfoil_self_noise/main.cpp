@@ -30,7 +30,7 @@ int main()
 
         set_seed(42);
 
-        Configuration::instance().set(DeviceType::Auto, TrainingPrecision::Auto, InferencePrecision::Auto);
+        Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
 
         const Index neurons_number = 12;
         const type regularization_weight = type(0.001);

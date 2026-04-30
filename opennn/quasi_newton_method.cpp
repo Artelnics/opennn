@@ -160,8 +160,6 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
 TrainingResults QuasiNewtonMethod::train()
 {
-    check();
-
     TrainingResults results(maximum_epochs + 1);
 
     if(display) cout << "Training with quasi-Newton method..." << "\n";

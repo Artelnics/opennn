@@ -40,13 +40,19 @@ public:
         return {Shape{batch_size}.append(input_shape)}; // Output
     }
 
-    // Boundary layer: stays FP32 even when activations are BF16 so the host
-    // path (Batch input arrives FP32; final output goes back to FP32) keeps
-    // a contiguous dtype boundary. The Dense that follows handles the FP32→BF16
-    // cast internally via maybe_cast_input_to_weights_dtype.
+    // Output matches the network's activation dtype so the next layer doesn't
+    // see a dtype boundary. The kernel `scale_cuda<TIn, TOut>` is instantiated
+    // for every (FP32→FP32) and (FP32→BF16) pair we need: the Batch input
+    // arrives in FP32 (training data is pre-scaled offline anyway, so the
+    // math is effectively identity) and the kernel writes the result in
+    // `activation_dtype`. This matters for Convolutional, which uses the
+    // fused cudnnConvolutionBiasActivationForward and requires all of
+    // input/filter/bias/output to share dtype — Dense's
+    // `maybe_cast_input_to_weights_dtype` is not enough because it only
+    // covers the GEMM path, not the conv path.
     vector<cudnnDataType_t> get_forward_dtypes(Index) const override
     {
-        return {CUDNN_DATA_FLOAT}; // Output
+        return {to_cudnn(activation_dtype)}; // Output
     }
 
     enum States {Minimums, Maximums, Means, StandardDeviations, Scalers};

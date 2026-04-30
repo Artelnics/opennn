@@ -86,16 +86,13 @@ private:
                 {batch_normalization ? kernels_number : 0}};                    // Beta
     }
 
-    // Convolutional weight gradient (cudnnConvolutionBackwardFilter) shares its
-    // dtype with the filter via the same cudnnFilterDescriptor. Our FP32
-    // gradient buffer in BackPropagation can't accept BF16 writes, so we keep
-    // the filter slot in FP32 even when activations are BF16. Activations
-    // still go BF16 via the input/output tensor descriptors. Net: convolution
-    // input × FP32 filter → BF16 output is a mixed-dtype path that cuDNN
-    // supports out of the box.
+    // Filter dtype follows activation_dtype because cudnnConvolutionBiasActivationForward
+    // requires input/filter/bias/output to share dtype. In BP16 mode the filter
+    // lives in parameters_bf16. Backward filter writes the gradient via a BF16
+    // scratch + cast back to the FP32 master gradient (see math_utilities::convolution_backward_weights).
     vector<cudnnDataType_t> get_parameter_dtypes() const override
     {
-        return vector<cudnnDataType_t>(get_parameter_shapes().size(), CUDNN_DATA_FLOAT);
+        return vector<cudnnDataType_t>(get_parameter_shapes().size(), to_cudnn(activation_dtype));
     }
 
     enum States {RunningMean, RunningVariance};
@@ -133,11 +130,11 @@ private:
 
     vector<cudnnDataType_t> get_forward_dtypes(Index) const override
     {
-        return {activation_dtype,  // PaddedInputs
-                activation_dtype,  // Convolution
-                CUDNN_DATA_FLOAT,        // BatchNormMean
-                CUDNN_DATA_FLOAT,        // BatchNormInverseVariance
-                activation_dtype}; // Output
+        return {to_cudnn(activation_dtype),  // PaddedInputs
+                to_cudnn(activation_dtype),  // Convolution
+                CUDNN_DATA_FLOAT,            // BatchNormMean
+                CUDNN_DATA_FLOAT,            // BatchNormInverseVariance
+                to_cudnn(activation_dtype)}; // Output
     }
 
     enum Backward {OutputDelta, InputDelta};

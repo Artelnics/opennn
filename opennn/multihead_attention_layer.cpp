@@ -149,7 +149,9 @@ void MultiHeadAttention::init_cuda(Index batch_size)
 
     cudnnTensorDescriptor_t temp_desc = nullptr;
     cudnnCreateTensorDescriptor(&temp_desc);
-    cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, activation_dtype,
+    // Dropout: always FP32 (cuDNN 9 rejects BFLOAT16 in DropoutForward; we
+    // up-cast around the call). See math_utilities.cpp::dropout.
+    cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
                                static_cast<int>(batch_size),
                                static_cast<int>(source_sequence_length),
                                static_cast<int>(heads_number),

@@ -12,6 +12,7 @@
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/adaptive_moment_estimation.h"
 #include "../../opennn/random_utilities.h"
+#include "../../opennn/configuration.h"
 
 using namespace opennn;
 
@@ -20,6 +21,8 @@ int main()
     try
     {
         cout << "OpenNN. Iris Plant Example." << endl;
+
+        Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
 
         // Dataset
 
@@ -37,6 +40,10 @@ int main()
         // Training Strategy
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
+
+        // QuasiNewton (TrainingStrategy default for classification) has no GPU
+        // backend; switch to Adam to exercise the CUDA path.
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
 
         training_strategy.train();
 

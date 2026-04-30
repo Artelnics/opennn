@@ -25,6 +25,7 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
+        Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
 
         // Settings
 
@@ -56,8 +57,6 @@ int main()
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(50);
         adam->set_display_period(10);
-
-        Configuration::instance().set(DeviceType::CPU, TrainingPrecision::Float32, InferencePrecision::Float32);
 
         cout << "Training network..." << endl;
         training_strategy.train();

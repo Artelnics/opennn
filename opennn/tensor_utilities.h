@@ -9,9 +9,7 @@
 #pragma once
 
 #include "pch.h"
-#include <queue>
-#include <mutex>
-#include <condition_variable>
+#include "configuration.h"   // Buffer references DeviceType; existing callers expect Configuration available transitively.
 
 namespace opennn
 {
@@ -41,47 +39,15 @@ inline bool is_aligned(const void* ptr)
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
 }
 
-template <typename Enum>
-struct EnumMap
-{
-    using Entry = pair<Enum, string>;
-
-    const vector<Entry>& entries;
-
-    const string& to_string(Enum value) const
-    {
-        for(const auto& [e, s] : entries)
-            if(e == value)
-                return s;
-        throw runtime_error("Unknown enum value");
-    }
-
-    Enum from_string(const string& name) const
-    {
-        for(const auto& [e, s] : entries)
-            if(s == name)
-                return e;
-        throw runtime_error("Unknown enum string: " + name);
-    }
-
-    Enum from_string(const string& name, Enum fallback) const
-    {
-        for(const auto& [e, s] : entries)
-            if(s == name)
-                return e;
-        return fallback;
-    }
-};
-
 constexpr cudaDataType_t      CUDA_REDUCTION_DTYPE   = CUDA_R_32F;
 constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_TF32;
 
 // Activation dtype used to be a compile-time constant gated by
 // `OPENNN_USE_BF16_ACTIVATIONS`. It is now a runtime field on every Layer
-// (`activation_dtype` / `cuda_activation_dtype`), populated by
-// NeuralNetwork::compile() from Configuration::resolve(). Anything outside a
-// network (TensorView default ctor, generic GEMM helpers, etc.) defaults to
-// FP32 — call sites that need BF16 must pass the dtype explicitly.
+// (`activation_dtype`, of type `ActivationDtype`), populated by
+// NeuralNetwork::compile() from Configuration::resolve(). Conversion to cuDNN
+// / CUDA library constants happens at API boundaries via to_cudnn() / to_cuda()
+// in configuration.h. Anything outside a network defaults to FP32.
 
 inline Index dtype_bytes(cudnnDataType_t t)
 {
@@ -106,39 +72,6 @@ inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t t)
         default:                  return CUDA_R_32F;
     }
 }
-
-template <typename T>
-class ThreadSafeQueue
-{
-public:
-
-    void push(T item)
-    {
-        { lock_guard<mutex> lock(mutex_); queue_.push(std::move(item)); }
-        cond_.notify_one();
-    }
-
-    T pop()
-    {
-        unique_lock<mutex> lock(mutex_);
-        cond_.wait(lock, [this] { return !queue_.empty(); });
-        T item = std::move(queue_.front());
-        queue_.pop();
-        return item;
-    }
-
-    bool empty() const
-    {
-        lock_guard<mutex> lock(mutex_);
-        return queue_.empty();
-    }
-
-private:
-
-    queue<T> queue_;
-    mutable mutex mutex_;
-    condition_variable cond_;
-};
 
 struct Shape
 {
@@ -197,30 +130,19 @@ struct Shape
     }
 };
 
-inline Index aligned_total_elements(const std::vector<Shape>& shapes)
+inline Index aligned_total_elements(const vector<Shape>& shapes)
 {
     Index total = 0;
-    for (const Shape& s : shapes) total += get_aligned_size(s.size());
+    for (const Shape& shape : shapes) total += get_aligned_size(shape.size());
     return total;
 }
 
-inline Index aligned_total_elements(const std::vector<std::vector<Shape>>& nested)
+inline Index aligned_total_elements(const vector<vector<Shape>>& nested)
 {
     Index total = 0;
-    for (const auto& v : nested) total += aligned_total_elements(v);
+    for (const auto& shape_vector : nested) total += aligned_total_elements(shape_vector);
     return total;
 }
-
-// `Auto` is only valid as user input. Configuration::resolve() converts it to
-// CPU or CUDA based on detected hardware before the network sees it, so any
-// runtime path (Buffer, kernel dispatch) only ever observes CPU or CUDA.
-enum class DeviceType { Auto, CPU, CUDA };
-
-// Precision selectors. `Auto` is also resolved at compile() time. INT8 is a
-// deliberate placeholder: Configuration::resolve() throws runtime_error if a
-// user picks it — calibration + INT8 kernels are out of scope here.
-enum class TrainingPrecision  { Auto, Float32, BP16 };
-enum class InferencePrecision { Auto, Float32, BP16, Int8 };
 
 struct Buffer
 {
@@ -465,286 +387,11 @@ private:
 
 };
 
-inline bool row_finite(const VectorR& v, Index i) { return isfinite(v(i)); }
-inline bool row_finite(const MatrixR& m, Index i) { return m.row(i).array().isFinite().all(); }
-
-inline VectorR slice_rows(const VectorR& v, const vector<Index>& idx)
-{
-    VectorR r(idx.size());
-    for (Index i = 0; i < Index(idx.size()); ++i) r(i) = v(idx[i]);
-    return r;
-}
-
-inline MatrixR slice_rows(const MatrixR& m, const vector<Index>& idx)
-{
-    MatrixR r(idx.size(), m.cols());
-    for (Index i = 0; i < Index(idx.size()); ++i) r.row(i) = m.row(idx[i]);
-    return r;
-}
-
-VectorR filter_missing_values(const VectorR&);
-
-template<typename X, typename Y>
-pair<X, Y> filter_missing_values(const X& x, const Y& y)
-{
-    if (x.rows() != y.rows())
-        throw runtime_error("filter_missing_values: row count mismatch");
-
-    vector<Index> valid;
-    valid.reserve(x.rows());
-
-    for (Index i = 0; i < x.rows(); ++i)
-        if (row_finite(x, i) && row_finite(y, i))
-            valid.push_back(i);
-
-    return { slice_rows(x, valid), slice_rows(y, valid) };
-}
-
-void shuffle_rows(MatrixR& matrix);
-
 template<typename T, size_t N>
 using array = Eigen::array<T, N>;
 
-inline bool is_contiguous(const vector<Index>& v)
-{
-    return std::adjacent_find(v.begin(), v.end(),
-        [](Index a, Index b) { return b != a + 1; }) == v.end();
-}
-
-template <typename T>
-inline bool is_binary(const T& tensor)
-{
-    return all_of(tensor.data(), tensor.data() + tensor.size(),
-                  [](type v) { return v == type(0) || v == type(1) || isnan(v); });
-}
-
-MatrixR append_rows(const MatrixR& , const MatrixR&);
-
-template<typename T>
-vector<T> gather_by_index(const vector<T>& data, const vector<Index>& indices)
-{
-    vector<T> result;
-    result.reserve(indices.size());
-
-    transform(indices.begin(), indices.end(), back_inserter(result),
-              [&data](Index i) { return data[i]; });
-
-    return result;
-}
-
-vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums);
-
-template <typename T>
-inline bool is_constant(const T& tensor)
-{
-    const type* data = tensor.data();
-    const type* end = data + tensor.size();
-
-    const type* first = find_if(data, end, [](type v) { return !isnan(v); });
-
-    if (first == end)
-        return true;
-
-    const type val = *first;
-
-    return all_of(first + 1, end,
-                  [val](type v) { return isnan(v) || abs(val - v) <= numeric_limits<float>::min(); });
-}
-
-inline vector<Index> get_true_indices(const VectorB& v)
-{
-    vector<Index> indices;
-    indices.reserve(v.size());
-
-    for(Index i = 0; i < v.size(); ++i)
-        if (v(i))
-            indices.push_back(i);
-
-    return indices;
-}
-
-VectorI calculate_rank(const VectorR&, bool ascending = true);
-
-vector<Index> get_elements_greater_than(const vector<Index>&, Index);
-
-VectorI get_nearest_points(const MatrixR& ,const VectorR& , int = 1);
-
-void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true, int contiguous = -1);
-
-VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
-
 string shape_to_string(const Shape&, const string& = " ");
 Shape string_to_shape(const string&, const string& = " ");
-
-VectorMap vector_map(const MatrixR&, Index);
-
-
-template <typename T>
-size_t get_maximum_size(const vector<vector<T>>& v)
-{
-    size_t maximum_size = 0;
-
-    for(const auto& inner : v)
-        if (inner.size() > maximum_size)
-            maximum_size = inner.size();
-
-    return maximum_size;
-}
-
-template <typename T>
-ostream& operator << (ostream& os, const vector<T>& vec)
-{
-    os << "[ ";
-
-    for(size_t i = 0; i < vec.size(); ++i)
-    {
-        os << vec[i];
-        if (i + 1 < vec.size())
-            os << "; ";
-    }
-
-    os << " ]";
-    return os;
-}
-
-#ifdef OPENNN_WITH_CUDA
-
-// Cached cuBLASLt plan: 1 op desc + 4 layout descs + a heuristic-selected algo.
-// Built once per (m, n, k, transA, transB) shape; bias *pointer* is set per call
-// because it varies per layer/iteration.
-struct LtMatmulPlan
-{
-    cublasLtMatmulDesc_t   op_desc = nullptr;
-    cublasLtMatrixLayout_t a_desc  = nullptr;
-    cublasLtMatrixLayout_t b_desc  = nullptr;
-    cublasLtMatrixLayout_t c_desc  = nullptr;
-    cublasLtMatrixLayout_t d_desc  = nullptr;
-    cublasLtMatmulAlgo_t   algo{};
-    bool                   algo_valid = false;
-
-    LtMatmulPlan() = default;
-    LtMatmulPlan(const LtMatmulPlan&) = delete;
-    LtMatmulPlan& operator=(const LtMatmulPlan&) = delete;
-    LtMatmulPlan(LtMatmulPlan&& o) noexcept { *this = std::move(o); }
-    LtMatmulPlan& operator=(LtMatmulPlan&& o) noexcept
-    {
-        std::swap(op_desc, o.op_desc);
-        std::swap(a_desc,  o.a_desc);
-        std::swap(b_desc,  o.b_desc);
-        std::swap(c_desc,  o.c_desc);
-        std::swap(d_desc,  o.d_desc);
-        std::swap(algo,    o.algo);
-        std::swap(algo_valid, o.algo_valid);
-        return *this;
-    }
-    ~LtMatmulPlan()
-    {
-        cublasLtMatrixLayoutDestroy(d_desc);
-        cublasLtMatrixLayoutDestroy(c_desc);
-        cublasLtMatrixLayoutDestroy(b_desc);
-        cublasLtMatrixLayoutDestroy(a_desc);
-        cublasLtMatmulDescDestroy(op_desc);
-    }
-};
-
-struct LtMatmulPlanKey
-{
-    int m;
-    int n;
-    int k;
-    int transA;
-    int transB;
-    int epilogue;   // cublasLtEpilogue_t cast to int (e.g. BIAS, RELU_BIAS)
-    int io_dtype;   // cudaDataType_t for A and B (inputs)
-    int out_dtype;  // cudaDataType_t for C and D (outputs)
-
-    bool operator==(const LtMatmulPlanKey& o) const noexcept
-    {
-        return m == o.m && n == o.n && k == o.k
-            && transA == o.transA && transB == o.transB
-            && epilogue == o.epilogue
-            && io_dtype == o.io_dtype && out_dtype == o.out_dtype;
-    }
-};
-
-struct LtMatmulPlanKeyHash
-{
-    size_t operator()(const LtMatmulPlanKey& k) const noexcept
-    {
-        // Standard mix; keys are int-tuples, modest cardinality.
-        size_t h = std::hash<int>{}(k.m);
-        const auto mix = [](size_t& acc, int v) {
-            acc ^= std::hash<int>{}(v) + 0x9e3779b9 + (acc << 6) + (acc >> 2);
-        };
-        mix(h, k.n);
-        mix(h, k.k);
-        mix(h, k.transA);
-        mix(h, k.transB);
-        mix(h, k.epilogue);
-        mix(h, k.io_dtype);
-        mix(h, k.out_dtype);
-        return h;
-    }
-};
-
-#endif // OPENNN_WITH_CUDA
-
-// Singleton runtime configuration. Set once at program start (or never — Auto/Auto/Auto
-// is the default). NeuralNetwork::compile() reads this, calls resolve() to convert any
-// `Auto` to a concrete value based on detected hardware, and freezes the result inside
-// the network. Subsequent changes to this singleton don't affect networks already
-// compiled.
-//
-// Convenience predicates `is_gpu()` / `is_cpu()` are also exposed here so that the
-// rest of the codebase has a single source of truth for "are we on GPU?" — there is
-// no duplicate `Device::is_gpu()` mirror anymore. The first call resolves Auto and
-// caches the result; subsequent calls are O(1).
-class Configuration
-{
-public:
-
-    struct Resolved
-    {
-        DeviceType         device              = DeviceType::CPU;
-        TrainingPrecision  training_precision  = TrainingPrecision::Float32;
-        InferencePrecision inference_precision = InferencePrecision::Float32;
-    };
-
-    static Configuration& instance();
-
-    // Replaces all three at once. Defaulting any argument to Auto is the recommended
-    // entry point — let resolve() pick. Invalidates the cached Resolved so the next
-    // is_gpu()/is_cpu()/resolve() call re-detects hardware.
-    void set(DeviceType         d  = DeviceType::Auto,
-             TrainingPrecision  tp = TrainingPrecision::Auto,
-             InferencePrecision ip = InferencePrecision::Auto);
-
-    DeviceType         get_device()              const { return device; }
-    TrainingPrecision  get_training_precision()  const { return training_precision; }
-    InferencePrecision get_inference_precision() const { return inference_precision; }
-
-    // Resolves Auto values to concrete ones by inspecting available hardware. Throws
-    // runtime_error on impossible combinations (CUDA requested but no GPU; BP16 on CPU;
-    // INT8 placeholder). Cached after first call.
-    const Resolved& resolve() const;
-
-    // Single source of truth for "is the active device GPU/CPU?". Resolves on first
-    // call and caches. Use these everywhere instead of any Device-side mirror.
-    bool is_gpu() const { return resolve().device == DeviceType::CUDA; }
-    bool is_cpu() const { return resolve().device == DeviceType::CPU; }
-
-private:
-
-    Configuration() = default;
-
-    DeviceType         device              = DeviceType::Auto;
-    TrainingPrecision  training_precision  = TrainingPrecision::Auto;
-    InferencePrecision inference_precision = InferencePrecision::Auto;
-
-    mutable Resolved cached_resolved;
-    mutable bool     cache_valid = false;
-};
-
 
 // Container for CUDA/cuBLAS/cuDNN handles, streams and lazily-allocated workspaces.
 // It is *infrastructure* — owning these resources for the life of the program. The
@@ -765,59 +412,6 @@ public:
     static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
     static cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor() { return instance().operator_multiplication_descriptor; }
 
-#ifdef OPENNN_WITH_CUDA
-    // 32 MB matches NVIDIA's cuBLASLt sample default. Lazy-allocated on first use,
-    // shared across all cublasLtMatmul call sites.
-    static constexpr size_t cublas_lt_workspace_bytes() { return 32ull * 1024 * 1024; }
-
-    static void* get_cublas_lt_workspace()
-    {
-        auto& self = instance();
-        if(!self.cublas_lt_workspace)
-            CHECK_CUDA(cudaMalloc(&self.cublas_lt_workspace, cublas_lt_workspace_bytes()));
-        return self.cublas_lt_workspace;
-    }
-
-    // BF16 scratch buffer used when a layer (typically the first trainable Dense)
-    // receives an FP32 input but its weights live in the BF16 working copy.
-    // cuBLASLt requires A and B to share dtype, so we down-cast the input to BF16
-    // here and feed the scratch into the matmul. Lazy-grown to fit the largest
-    // request seen so far; callers must not retain the pointer across batches.
-    static __nv_bfloat16* get_bf16_input_scratch(Index n_elements)
-    {
-        auto& self = instance();
-        const size_t needed_bytes = size_t(n_elements) * sizeof(__nv_bfloat16);
-        if(needed_bytes > self.bf16_input_scratch_bytes)
-        {
-            if(self.bf16_input_scratch) cudaFree(self.bf16_input_scratch);
-            CHECK_CUDA(cudaMalloc(&self.bf16_input_scratch, needed_bytes));
-            self.bf16_input_scratch_bytes = needed_bytes;
-        }
-        return reinterpret_cast<__nv_bfloat16*>(self.bf16_input_scratch);
-    }
-
-    // Returns a cached cuBLASLt plan for a GEMM with the requested epilogue.
-    // Built (descriptors + heuristic algo) once per unique key and reused.
-    // The bias *pointer* is set on the returned op_desc by the caller per
-    // call — it is not part of the cache key.
-    //
-    // `io_dtype` is the dtype of the GEMM inputs (A and B); `out_dtype` is the
-    // dtype of the outputs (C and D). For pure FP32 they're both CUDA_R_32F;
-    // for fully-bf16 forward (bias_add path) they're both CUDA_R_16BF; for
-    // mixed-precision backward (BGRADA, weight gradient) inputs are bf16 but
-    // weight_grad output stays FP32. Defaults preserve legacy behaviour.
-    //
-    // Supported epilogues: CUBLASLT_EPILOGUE_BIAS, CUBLASLT_EPILOGUE_RELU_BIAS,
-    // CUBLASLT_EPILOGUE_BGRADA.
-    static const LtMatmulPlan& get_lt_gemm_plan(
-        int m, int n, int k,
-        cublasOperation_t transA,
-        cublasOperation_t transB,
-        cublasLtEpilogue_t epilogue,
-        cudaDataType_t io_dtype  = CUDA_R_32F,
-        cudaDataType_t out_dtype = CUDA_R_32F);
-#endif
-
 private:
     Device();
     ~Device();
@@ -831,13 +425,6 @@ private:
     cudaStream_t compute_stream = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
     cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
-    void* cublas_lt_workspace = nullptr;
-    void* bf16_input_scratch = nullptr;
-    size_t bf16_input_scratch_bytes = 0;
-
-#ifdef OPENNN_WITH_CUDA
-    std::unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans;
-#endif
 };
 
 inline ThreadPoolDevice& get_device()
@@ -879,11 +466,16 @@ inline void TensorView::fill(float value)
     std::fill(p, p + size(), value);
 }
 
-// gemm_cuda / gemm_strided_batched_cuda / gemm_bias_cuda / gemm_bgrad_cuda used
-// to live here. They are math-level operations (not part of the tensor / dtype
-// infrastructure) and all their call sites are in math_utilities.cpp, so they
-// were moved to math_utilities.h. The host-side scalar constants (one, zero,
-// minus_one) used by cuBLAS/cuDNN alpha/beta arguments moved with them.
+#ifdef OPENNN_WITH_CUDA
+
+// Scalar pointer-args used by cuDNN op-tensor calls (cudnnOpTensor sees these
+// as host scalars). Kept here because they're shared across cuDNN op sites
+// (sum, multiplication) — not GEMM-specific.
+inline const float one = 1.0f;
+inline const float zero = 0.0f;
+inline const float minus_one = -1.0f;
+
+#endif
 
 }
 

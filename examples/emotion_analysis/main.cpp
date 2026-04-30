@@ -24,6 +24,8 @@ int main()
     {
         cout << "OpenNN. Emotion analysis example." << endl;
 
+        Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
+
         // Settings
 
         const Index embedding_dimension = 64;
@@ -55,8 +57,6 @@ int main()
         adam->set_maximum_epochs(200);
         adam->set_learning_rate(type(0.0001));
         adam->set_display_period(20);
-
-        Configuration::instance().set(DeviceType::Auto, TrainingPrecision::Auto, InferencePrecision::Auto);
 
         cout << "Training with GPU, it might take some time: " << endl;
         training_strategy.train();
