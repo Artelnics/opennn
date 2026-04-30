@@ -43,7 +43,7 @@ int main()
             image_dataset.get_shape("Target"));
 
         opennn::Dense<2>* hidden_dense = dynamic_cast<opennn::Dense<2>*>(image_classification_network.get_first("Dense2d"));
-        if (hidden_dense) hidden_dense->set_dropout_rate(type(0.2));
+        if (hidden_dense) hidden_dense->set_dropout_rate(float(0.2));
 
         // Training strategy
 

@@ -55,7 +55,7 @@ public:
         return {batch_size, query_sequence_length, heads_number, get_head_dimension()};
     }
 
-    type get_scaling_factor() const;
+    float get_scaling_factor() const;
 
     Shape get_input_shape() const override;
 
@@ -69,7 +69,7 @@ public:
 
         const Index max_seq = max(query_sequence_length, source_sequence_length);
 
-        const Shape attn_drop_shape = (dropout_rate > type(0))
+        const Shape attn_drop_shape = (dropout_rate > float(0))
             ? Shape{batch_size, heads_number, query_sequence_length, source_sequence_length}
             : Shape{};
 
@@ -111,7 +111,7 @@ public:
              bool = false,
              const string& = "multihead_attention_layer");
 
-    void set_dropout_rate(const type r) { dropout_rate = r; }
+    void set_dropout_rate(const float r) { dropout_rate = r; }
 
     void set_parameters_random() override;
 
@@ -162,7 +162,7 @@ private:
     MatrixR causal_mask;
     MatrixB key_mask;
 
-    type dropout_rate = type(0);
+    float dropout_rate = float(0);
     DropoutArguments dropout_arguments;
 };
 

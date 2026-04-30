@@ -34,12 +34,12 @@ void AdaptiveMomentEstimation::set_batch_size(const Index new_batch_size)
     batch_size = new_batch_size;
 }
 
-void AdaptiveMomentEstimation::set_beta_1(const type new_beta_1)
+void AdaptiveMomentEstimation::set_beta_1(const float new_beta_1)
 {
     beta_1 = new_beta_1;
 }
 
-void AdaptiveMomentEstimation::set_beta_2(const type new_beta_2)
+void AdaptiveMomentEstimation::set_beta_2(const float new_beta_2)
 {
     beta_2 = new_beta_2;
 }
@@ -50,7 +50,7 @@ void AdaptiveMomentEstimation::set_default()
     name = "AdaptiveMomentEstimation";
 }
 
-void AdaptiveMomentEstimation::set_learning_rate(const type new_learning_rate)
+void AdaptiveMomentEstimation::set_learning_rate(const float new_learning_rate)
 {
     learning_rate = new_learning_rate;
 }
@@ -158,10 +158,10 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     optimization_data.iteration = 1;
 
-    type training_error = type(0);
-    type training_accuracy = type(0);
-    type validation_error = type(0);
-    type validation_accuracy = type(0);
+    float training_error = float(0);
+    float training_accuracy = float(0);
+    float validation_error = float(0);
+    float validation_accuracy = float(0);
     Index validation_failures = 0;
 
     const bool is_classification_model = (loss->get_error() == Loss::Error::CrossEntropy3d);
@@ -171,7 +171,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     time_t beginning_time;
     time(&beginning_time);
-    type elapsed_time = type(0);
+    float elapsed_time = float(0);
 
     // Main loop
 
@@ -266,13 +266,13 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     {
         PROFILE_SCOPE("optim:clip_gradient_norm");
-        clip_gradient_norm(back_propagation.gradient, type(1));
+        clip_gradient_norm(back_propagation.gradient, float(1));
     }
 
-    const type iteration = static_cast<type>(optimization_data.iteration);
+    const float iteration = static_cast<float>(optimization_data.iteration);
 
-    const type bias_correction_1 = type(1) - pow(beta_1, iteration);
-    const type bias_correction_2 = type(1) - pow(beta_2, iteration);
+    const float bias_correction_1 = float(1) - pow(beta_1, iteration);
+    const float bias_correction_2 = float(1) - pow(beta_2, iteration);
 
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu())
@@ -285,7 +285,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             neural_network->get_parameters_data(),
             optimization_data.views[GradientMoment].as<float>(),
             optimization_data.views[SquareGradientMoment].as<float>(),
-            back_propagation.gradient.as<type>(),
+            back_propagation.gradient.as<float>(),
             beta_1,
             beta_2,
             learning_rate,
@@ -307,21 +307,21 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     VectorMap square_gradient_exponential_decay(optimization_data.views[SquareGradientMoment].as<float>(),
                                                 optimization_data.views[SquareGradientMoment].size());
 
-    VectorMap gradient(back_propagation.gradient.as<type>(),
+    VectorMap gradient(back_propagation.gradient.as<float>(),
                        back_propagation.gradient.size());
 
     const Index n = parameters.size();
-    const type one_minus_beta_1 = type(1) - beta_1;
-    const type one_minus_beta_2 = type(1) - beta_2;
+    const float one_minus_beta_1 = float(1) - beta_1;
+    const float one_minus_beta_2 = float(1) - beta_2;
 
-    const type s = sqrt(bias_correction_2);
-    const type effective_learning_rate = learning_rate * s / bias_correction_1;
-    const type effective_epsilon = EPSILON * s;
+    const float s = sqrt(bias_correction_2);
+    const float effective_learning_rate = learning_rate * s / bias_correction_1;
+    const float effective_epsilon = EPSILON * s;
 
     #pragma omp parallel for
     for (Index i = 0; i < n; ++i)
     {
-        const type g = gradient(i);
+        const float g = gradient(i);
 
         auto& m = gradient_exponential_decay(i);
         auto& v = square_gradient_exponential_decay(i);

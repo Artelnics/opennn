@@ -39,12 +39,12 @@ int main()
         //dataset.set_variable_role("FLOW(cm)", "None");
         dataset.set_variable_role("effluent_violation_index", "Target");
 
-        dataset.split_samples_random(type(0.6), type(0.2), type(0.2));
+        dataset.split_samples_random(float(0.6), float(0.2), float(0.2));
 
         // Neural Network
 
         const Index neurons_number = 3;
-        const type regularization_weight = 0.0001;
+        const float regularization_weight = 0.0001;
 
         ApproximationNetwork approximation_network(dataset.get_input_shape(), {neurons_number}, dataset.get_target_shape());
 
@@ -99,7 +99,7 @@ int main()
         // Define a simple structure to hold experiment parameters
         struct ExperimentConfig
         {
-            type zoom;
+            float zoom;
             int evals;
             int iterations;
         };
@@ -183,12 +183,12 @@ int main()
         //dataset.set_variable_role("FLOW(cm)", "Target");
         dataset.set_variable_role("Compressive Strength (28-day)(Mpa)", "Target");
 
-        dataset.split_samples_random(type(0.6), type(0.2), type(0.2));
+        dataset.split_samples_random(float(0.6), float(0.2), float(0.2));
 
         // Neural Network
 
         const Index neurons_number = 3;
-        const type regularization_weight = 0.0001;
+        const float regularization_weight = 0.0001;
 
         ApproximationNetwork approximation_network(dataset.get_input_shape(), {neurons_number}, dataset.get_target_shape());
 
@@ -247,7 +247,7 @@ int main()
             // Define a simple structure to hold experiment parameters
             struct ExperimentConfig
             {
-                type zoom;
+                float zoom;
                 int evals;
                 int iterations;
             };

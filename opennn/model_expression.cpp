@@ -138,7 +138,7 @@ text-align: right;
 width: 50%;
 }
 
-.neural-cell input[type="range"] {
+.neural-cell input[float="range"] {
 display: block;
 margin-left: auto;
 margin-right: 0;
@@ -147,8 +147,8 @@ max-width: 200px;
 width: 90%;
 }
 
-.neural-cell input[type="number"],
-.neural-cell input[type="text"],
+.neural-cell input[float="number"],
+.neural-cell input[float="text"],
 .neural-cell select {
 display: block;
 margin-left: auto;
@@ -161,7 +161,7 @@ text-align: right;
 text-align-last: right;
 }
 
-.neural-cell input[type="number"] {
+.neural-cell input[float="number"] {
 margin-top: 8px;
 }
 
@@ -184,17 +184,17 @@ font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 background-color: #4b92d3;
 }
 
-input[type="range"]::-webkit-slider-runnable-track {
+input[float="range"]::-webkit-slider-runnable-track {
 background: #8fc4f0;
 height: 0.5rem;
 }
 
-input[type="range"]::-moz-range-track {
+input[float="range"]::-moz-range-track {
 background: #8fc4f0;
 height: 0.5rem;
 }
 
-input[type="range"]::-webkit-slider-thumb {
+input[float="range"]::-webkit-slider-thumb {
 -webkit-appearance: none;
 appearance: none;
 margin-top: -5px;
@@ -207,7 +207,7 @@ box-shadow: 0 0 5px rgba(0,0,0,0.25);
 cursor: pointer;
 }
 
-input[type="range"]::-moz-range-thumb {
+input[float="range"]::-moz-range-thumb {
 background-color: #5da9e9;
 border-radius: 50%;
 margin-top: -5px;
@@ -311,8 +311,8 @@ string ModelExpression::write_scaling_expression(const Scaling<2>& layer,
     const VectorR& means = layer.get_means();
     const VectorR& standard_deviations = layer.get_standard_deviations();
     const vector<ScalerMethod>& scalers = layer.get_scalers();
-    const type min_range = layer.get_min_range();
-    const type max_range = layer.get_max_range();
+    const float min_range = layer.get_min_range();
+    const float max_range = layer.get_max_range();
 
     for(Index i = 0; i < outputs_number; ++i)
     {
@@ -364,8 +364,8 @@ string ModelExpression::write_unscaling_expression(const Unscaling& layer,
     const VectorR& means = layer.get_means();
     const VectorR& standard_deviations = layer.get_standard_deviations();
     const vector<ScalerMethod>& scalers = layer.get_scalers();
-    const type min_range = layer.get_min_range();
-    const type max_range = layer.get_max_range();
+    const float min_range = layer.get_min_range();
+    const float max_range = layer.get_max_range();
 
     for(Index i = 0; i < outputs_number; ++i)
     {
@@ -474,8 +474,8 @@ string ModelExpression::write_dense_expression(const Dense<2>& layer,
     const Index inputs_number = layer.get_inputs_number();
     const Index outputs_number = layer.get_outputs_number();
 
-    const type* bias_data = parameters[0].as<float>();
-    const type* weight_data = parameters[1].as<float>();
+    const float* bias_data = parameters[0].as<float>();
+    const float* weight_data = parameters[1].as<float>();
 
     const string& activation_function = activation_function_map().to_string(layer.get_activation_function());
 

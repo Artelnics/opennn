@@ -26,9 +26,9 @@ void scale_standard_deviation(MatrixMap matrix,
                               Index column_index,
                               const Descriptives& column_descriptives)
 {
-    const type slope = (column_descriptives.standard_deviation > EPSILON)
-        ? type(1) / column_descriptives.standard_deviation
-        : type(0);
+    const float slope = (column_descriptives.standard_deviation > EPSILON)
+        ? float(1) / column_descriptives.standard_deviation
+        : float(0);
 
     matrix.col(column_index) *= slope;
 }
@@ -36,10 +36,10 @@ void scale_standard_deviation(MatrixMap matrix,
 void scale_minimum_maximum(MatrixMap matrix,
                            Index column_index,
                            const Descriptives& column_descriptives,
-                           type min_range,
-                           type max_range)
+                           float min_range,
+                           float max_range)
 {
-    const type range = column_descriptives.maximum - column_descriptives.minimum;
+    const float range = column_descriptives.maximum - column_descriptives.minimum;
 
     if (range < EPSILON)
     {
@@ -55,11 +55,11 @@ void scale_logarithmic(MatrixMap matrix, Index column_index)
 {
     auto col = matrix.col(column_index).array();
 
-    const type min_val = (col.isFinite()).select(col, MAX).minCoeff();
+    const float min_val = (col.isFinite()).select(col, MAX).minCoeff();
 
     if (min_val <= 0)
     {
-        const type offset = abs(min_val) + 1.0 + EPSILON;
+        const float offset = abs(min_val) + 1.0 + EPSILON;
 
         col = (col.isNaN()).select(col, col + offset);
     }
@@ -70,11 +70,11 @@ void scale_logarithmic(MatrixMap matrix, Index column_index)
 void unscale_minimum_maximum(MatrixMap matrix,
                              Index column_index,
                              const Descriptives& column_descriptives,
-                             type min_range,
-                             type max_range)
+                             float min_range,
+                             float max_range)
 {
-    const type minimum = column_descriptives.minimum;
-    const type maximum = column_descriptives.maximum;
+    const float minimum = column_descriptives.minimum;
+    const float maximum = column_descriptives.maximum;
 
     if(max_range - min_range < EPSILON)
         throw runtime_error("The range values are not valid.");
@@ -85,8 +85,8 @@ void unscale_minimum_maximum(MatrixMap matrix,
 
 void unscale_mean_standard_deviation(MatrixMap matrix, Index column_index, const Descriptives& column_descriptives)
 {
-    const type mean = column_descriptives.mean;
-    const type standard_deviation = column_descriptives.standard_deviation;
+    const float mean = column_descriptives.mean;
+    const float standard_deviation = column_descriptives.standard_deviation;
 
     if(standard_deviation < EPSILON)
     {
@@ -99,8 +99,8 @@ void unscale_mean_standard_deviation(MatrixMap matrix, Index column_index, const
 
 void unscale_standard_deviation(MatrixMap matrix, Index column_index, const Descriptives& column_descriptives)
 {
-    const type slope = abs(column_descriptives.standard_deviation) < EPSILON
-            ? type(1)
+    const float slope = abs(column_descriptives.standard_deviation) < EPSILON
+            ? float(1)
             : column_descriptives.standard_deviation;
 
     matrix.col(column_index) *= slope;
@@ -113,7 +113,7 @@ void unscale_logarithmic(MatrixMap matrix, Index column_index)
 
 void unscale_image_minimum_maximum(MatrixMap matrix, Index column_index)
 {
-    matrix.col(column_index) *= type(255);
+    matrix.col(column_index) *= float(255);
 }
 
 }

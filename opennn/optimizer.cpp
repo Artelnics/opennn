@@ -61,11 +61,11 @@ void Optimizer::load(const filesystem::path& file_name)
     from_XML(load_xml_file(file_name));
 }
 
-type Optimizer::get_elapsed_time(const time_t &beginning_time)
+float Optimizer::get_elapsed_time(const time_t &beginning_time)
 {
     time_t current_time;
     time(&current_time);
-    return type(difftime(current_time, beginning_time));
+    return float(difftime(current_time, beginning_time));
 }
 
 void Optimizer::set_names()
@@ -256,8 +256,8 @@ void Optimizer::set_unscaling()
 
 bool Optimizer::check_stopping_condition(TrainingResults& results,
                                           const Index epoch,
-                                          const type elapsed_time,
-                                          const type training_error,
+                                          const float elapsed_time,
+                                          const float training_error,
                                           const Index validation_failures) const
 {
     if(training_error < training_loss_goal)
@@ -309,10 +309,10 @@ void Optimizer::read_common_xml(const XmlElement* root_element)
 TrainingResults::TrainingResults(const Index epochs_number)
 {
     training_error_history.resize(1 + epochs_number);
-    training_error_history.setConstant(type(-1.0));
+    training_error_history.setConstant(float(-1.0));
 
     validation_error_history.resize(1 + epochs_number);
-    validation_error_history.setConstant(type(-1.0));
+    validation_error_history.setConstant(float(-1.0));
 }
 
 string TrainingResults::write_stopping_condition() const
@@ -342,18 +342,18 @@ string TrainingResults::write_stopping_condition() const
     }
 }
 
-type TrainingResults::get_training_error() const
+float TrainingResults::get_training_error() const
 {
     const Index size = training_error_history.size();
 
     return training_error_history(size - 1);
 }
 
-type TrainingResults::get_validation_error() const
+float TrainingResults::get_validation_error() const
 {
     const Index size = validation_error_history.size();
 
-    if(size == 0) return type(0);
+    if(size == 0) return float(0);
 
     return validation_error_history(size - 1);
 }
@@ -456,20 +456,20 @@ void OptimizerData::set(const vector<Shape>& slot_shapes)
 {
     const Index total_size = aligned_total_elements(slot_shapes);
 
-    data.resize_bytes(total_size * Index(sizeof(type)), DeviceType::CPU);
+    data.resize_bytes(total_size * Index(sizeof(float)), DeviceType::CPU);
     data.setZero();
 
     views.clear();
     views.reserve(slot_shapes.size());
 
-    type* pointer = (total_size > 0) ? data.as<type>() : nullptr;
+    float* pointer = (total_size > 0) ? data.as<float>() : nullptr;
 
-    for(const Shape& s : slot_shapes)
+    for(const Shape& shape : slot_shapes)
     {
-        if(s.size() > 0 && pointer)
+        if(shape.size() > 0 && pointer)
         {
-            views.emplace_back(pointer, s);
-            pointer += get_aligned_size(s.size());
+            views.emplace_back(pointer, shape);
+            pointer += get_aligned_size(shape.size());
         }
         else
         {
@@ -487,7 +487,7 @@ void OptimizerData::allocate_device()
     data.resize_bytes(data.size() * Index(sizeof(float)), DeviceType::CUDA);
     data.setZero();
 
-    type* dev_pointer = data.as<type>();
+    float* dev_pointer = data.as<float>();
 
     for(TensorView& view : views)
     {
@@ -572,7 +572,7 @@ void Optimizer::sync_device()
 #endif
 }
 
-void Optimizer::clip_gradient_norm(Buffer& gradient, type max_norm)
+void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
 {
     const Index gradient_size = gradient.size();
     if(gradient_size <= 0) return;
@@ -583,8 +583,8 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, type max_norm)
         float squared_norm = 0.0f;
         CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(),
                                 to_int(gradient_size),
-                                gradient.as<type>(), 1,
-                                gradient.as<type>(), 1,
+                                gradient.as<float>(), 1,
+                                gradient.as<float>(), 1,
                                 &squared_norm));
         const float gradient_norm = std::sqrt(squared_norm);
         if(gradient_norm > float(max_norm))
@@ -592,16 +592,16 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, type max_norm)
             const float scale = float(max_norm) / (gradient_norm + 1e-6f);
             CHECK_CUBLAS(cublasSscal(Device::get_cublas_handle(),
                                      to_int(gradient_size), &scale,
-                                     gradient.as<type>(), 1));
+                                     gradient.as<float>(), 1));
         }
         return;
     }
 #endif
 
-    VectorMap gradient_view(gradient.as<type>(), gradient.size());
-    const type gradient_norm = gradient_view.norm();
+    VectorMap gradient_view(gradient.as<float>(), gradient.size());
+    const float gradient_norm = gradient_view.norm();
     if(gradient_norm > max_norm)
-        gradient_view *= max_norm / (gradient_norm + type(1e-6));
+        gradient_view *= max_norm / (gradient_norm + float(1e-6));
 }
 
 EpochStats Optimizer::train_epoch(bool is_classification,
@@ -711,8 +711,8 @@ EpochStats Optimizer::train_epoch(bool is_classification,
         worker.join();
     }
 
-    stats.error /= type(batches_number);
-    if(is_classification) stats.accuracy /= type(batches_number);
+    stats.error /= float(batches_number);
+    if(is_classification) stats.accuracy /= float(batches_number);
 
     if (profile_this)
     {
@@ -812,8 +812,8 @@ EpochStats Optimizer::evaluate_epoch(bool is_classification,
         worker.join();
     }
 
-    stats.error /= type(batches_number);
-    if(is_classification) stats.accuracy /= type(batches_number);
+    stats.error /= float(batches_number);
+    if(is_classification) stats.accuracy /= float(batches_number);
 
     return stats;
 }

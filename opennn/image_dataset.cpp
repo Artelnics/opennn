@@ -114,7 +114,7 @@ void ImageDataset::to_XML(XmlPrinter& printer) const
     printer.close_element();
 }
 
-void ImageDataset::augment_inputs(type* input_data, Index batch_size) const
+void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
 {
     if(!augmentation.enabled) return;
 
@@ -189,14 +189,14 @@ vector<Descriptives> ImageDataset::scale_features(const string&)
     #pragma omp parallel for
     for(Index i = 0; i < samples_number; ++i)
         for(Index j = 0; j < input_features_number; ++j)
-            data(i, j) /= type(255);
+            data(i, j) /= float(255);
 
     return {};
 }
 
 void ImageDataset::unscale_features(const string&)
 {
-    data.leftCols(get_features_number("Input")) *= type(255);
+    data.leftCols(get_features_number("Input")) *= float(255);
 }
 
 void ImageDataset::read_bmp(const Shape& new_input_shape)

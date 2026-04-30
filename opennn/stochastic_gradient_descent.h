@@ -30,12 +30,12 @@ public:
 
     Index get_samples_number() const;
 
-    void set_initial_learning_rate(const type);
-    void set_initial_decay(const type);
-    void set_momentum(const type);
+    void set_initial_learning_rate(const float);
+    void set_initial_decay(const float);
+    void set_momentum(const float);
     void set_nesterov(bool);
 
-    void update_parameters(BackPropagation&, OptimizerData&, type) const;
+    void update_parameters(BackPropagation&, OptimizerData&, float) const;
 
     TrainingResults train() override;
 
@@ -45,11 +45,11 @@ public:
 
 private:
 
-    type initial_learning_rate;
+    float initial_learning_rate;
 
-    type initial_decay;
+    float initial_decay;
 
-    type momentum = type(0);
+    float momentum = float(0);
 
     bool nesterov = false;
 

@@ -48,9 +48,9 @@ void GeneticAlgorithm::set_default()
 
     maximum_epochs = 100;
 
-    maximum_time = type(3600);
+    maximum_time = float(3600);
 
-    mutation_rate = type(0.05);
+    mutation_rate = float(0.05);
 
     individual_parameters.resize(individuals_number);
 
@@ -59,7 +59,7 @@ void GeneticAlgorithm::set_default()
     validation_errors.resize(individuals_number);
 
     fitness.resize(individuals_number);
-    fitness.setConstant(type(-1.0));
+    fitness.setConstant(float(-1.0));
 
     selected.resize(individuals_number);
 
@@ -90,7 +90,7 @@ void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number
     training_errors.resize(new_individuals_number);
     validation_errors.resize(new_individuals_number);
     fitness.resize(new_individuals_number);
-    fitness.setConstant(type(-1.0));
+    fitness.setConstant(float(-1.0));
     selected.resize(new_individuals_number);
 
     elitism_size = min(elitism_size, new_individuals_number);
@@ -138,15 +138,15 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     population.setConstant(false);
 
-    const VectorR correlations_rank = dataset->calculate_correlations_rank().cast<type>().array() + 1.0f;
+    const VectorR correlations_rank = dataset->calculate_correlations_rank().cast<float>().array() + 1.0f;
 
-    const type correlations_sum = correlations_rank.sum();
+    const float correlations_sum = correlations_rank.sum();
 
     VectorR correlations_cumsum(genes_number);
     partial_sum(correlations_rank.data(), correlations_rank.data() + genes_number, correlations_cumsum.data());
 
-    const type* begin = correlations_cumsum.data();
-    const type* end   = begin + genes_number;
+    const float* begin = correlations_cumsum.data();
+    const float* end   = begin + genes_number;
 
     for(Index i = 0; i < individuals_number; ++i)
     {        
@@ -156,7 +156,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         while (individual_genes.count() < true_count)
         {   
-            const type arrow = random_uniform(0, correlations_sum);
+            const float arrow = random_uniform(0, correlations_sum);
 
             const Index j = min(static_cast<Index>(upper_bound(begin, end, arrow) - begin), genes_number - 1);
 
@@ -215,21 +215,21 @@ void GeneticAlgorithm::evaluate_population()
 
 void GeneticAlgorithm::assign_fitness()
 {
-    fitness = calculate_rank(validation_errors).cast<type>().array() + type(1.0);
+    fitness = calculate_rank(validation_errors).cast<float>().array() + float(1.0);
 }
 
 void GeneticAlgorithm::perform_selection()
 {
     const Index individuals_number = get_individuals_number();
 
-    const type fitness_sum = fitness.sum();
+    const float fitness_sum = fitness.sum();
 
     selected.setConstant(false);
 
     const Index individuals_to_be_selected = individuals_number/2;
 
     if(elitism_size != 0)
-        selected = (fitness.array() > type(individuals_number - elitism_size)).matrix();
+        selected = (fitness.array() > float(individuals_number - elitism_size)).matrix();
 
     VectorR fitness_cumsum(individuals_number);
     partial_sum(fitness.data(), fitness.data() + individuals_number, fitness_cumsum.data());
@@ -238,7 +238,7 @@ void GeneticAlgorithm::perform_selection()
 
     while (selected_count < individuals_to_be_selected)
     {
-        const type arrow = random_uniform(type(0), fitness_sum);
+        const float arrow = random_uniform(float(0), fitness_sum);
 
         const Index i = min(static_cast<Index>(upper_bound(fitness_cumsum.data(), fitness_cumsum.data() + individuals_number, arrow) - fitness_cumsum.data()), individuals_number - 1);
 
@@ -338,7 +338,7 @@ void GeneticAlgorithm::perform_crossover()
     if(elitism_size > 0)
     {
         // Find the top elitism_size individuals by fitness
-        vector<pair<type, Index>> fitness_indexed(individuals_number);
+        vector<pair<float, Index>> fitness_indexed(individuals_number);
         for(Index i = 0; i < individuals_number; ++i)
             fitness_indexed[i] = {fitness(i), i};
 
@@ -456,7 +456,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     Index optimal_individual_index;
     time_t beginning_time, current_time;
-    type elapsed_time = type(0);
+    float elapsed_time = float(0);
     vector<Index> best_input_indices;
     Index best_generation = 0;
 
@@ -474,8 +474,8 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         optimal_individual_index = minimal_index(validation_errors);
 
-        const type optimal_training_error = training_errors(optimal_individual_index);
-        const type optimal_validation_error = validation_errors(optimal_individual_index);
+        const float optimal_training_error = training_errors(optimal_individual_index);
+        const float optimal_validation_error = validation_errors(optimal_individual_index);
 
         input_selection_results.training_error_history(epoch) = optimal_training_error;
         input_selection_results.validation_error_history(epoch) = optimal_validation_error;
@@ -506,7 +506,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         time(&current_time);
 
-        elapsed_time = type(difftime(current_time, beginning_time));
+        elapsed_time = float(difftime(current_time, beginning_time));
 
         if(display)
             cout << "\n"

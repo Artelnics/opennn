@@ -51,11 +51,11 @@ int main()
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
         training_strategy.set_loss("CrossEntropy");
         training_strategy.get_loss()->set_regularization("L2");
-        training_strategy.get_loss()->set_regularization_weight(type(0.001));
+        training_strategy.get_loss()->set_regularization_weight(float(0.001));
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(200);
-        adam->set_learning_rate(type(0.0001));
+        adam->set_learning_rate(float(0.0001));
         adam->set_display_period(20);
 
         cout << "Training with GPU, it might take some time: " << endl;
@@ -78,7 +78,7 @@ int main()
         MatrixR outputs = text_classification_network.calculate_text_outputs(documents);
 
         Index predicted_class = 0;
-        type max_value = outputs(0, 0);
+        float max_value = outputs(0, 0);
         for(Index i = 1; i < outputs.cols(); i++)
         {
             if(outputs(0, i) > max_value)

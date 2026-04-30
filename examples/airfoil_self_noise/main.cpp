@@ -33,13 +33,13 @@ int main()
         Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
 
         const Index neurons_number = 12;
-        const type regularization_weight = type(0.001);
+        const float regularization_weight = float(0.001);
 
         // DataSet
 
         Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
-        dataset.split_samples_random(type(0.8), type(0.0), type(0.2));
+        dataset.split_samples_random(float(0.8), float(0.0), float(0.2));
 
         // Neural Network
 
@@ -60,7 +60,7 @@ int main()
 
         training_strategy.set_optimization_algorithm("StochasticGradientDescent");
         StochasticGradientDescent* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
-        sgd->set_initial_learning_rate(type(0.0001));
+        sgd->set_initial_learning_rate(float(0.0001));
         sgd->set_display_period(50);
 
 

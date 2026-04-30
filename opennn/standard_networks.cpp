@@ -797,7 +797,7 @@ void Transformer::set(const Index input_sequence_length,
     set_parameters_random();
 }
 
-void Transformer::set_dropout_rate(const type new_dropout_rate)
+void Transformer::set_dropout_rate(const float new_dropout_rate)
 {
     for(auto& layer : get_layers())
     {
@@ -871,10 +871,10 @@ string Transformer::calculate_outputs(const string& source)
     if(input_vocabulary_map.empty() || output_inverse_vocabulary_map.empty())
         throw runtime_error("Transformer::calculate_outputs Error: Vocabularies not initialized.");
 
-    constexpr type PAD   = 0.0f;
-    constexpr type UNK   = 1.0f;
-    constexpr type START = 2.0f;
-    constexpr type END   = 3.0f;
+    constexpr float PAD   = 0.0f;
+    constexpr float UNK   = 1.0f;
+    constexpr float START = 2.0f;
+    constexpr float END   = 3.0f;
 
     const Index input_sequence_length = get_input_sequence_length();
     const Index decoder_sequence_length = get_decoder_sequence_length();
@@ -894,7 +894,7 @@ string Transformer::calculate_outputs(const string& source)
         const auto it = input_vocabulary_map.find(source_tokens[i]);
 
         source_ids(0, write_index) = (it != input_vocabulary_map.end())
-                                         ? static_cast<type>(it->second)
+                                         ? static_cast<float>(it->second)
                                          : UNK;
     }
 
@@ -936,13 +936,13 @@ string Transformer::calculate_outputs(const string& source)
         const TensorView output_view = forward_propagation.get_outputs();
         const Index vocabulary_size = output_view.shape[2];
 
-        const type* distribution_ptr = output_view.as<float>() + (i-1)*vocabulary_size;
+        const float* distribution_ptr = output_view.as<float>() + (i-1)*vocabulary_size;
 
         const Map<const VectorR> current_distribution(distribution_ptr, vocabulary_size);
 
         const Index best_id = maximal_index(current_distribution);
 
-        target_ids(0, i) = static_cast<type>(best_id);
+        target_ids(0, i) = static_cast<float>(best_id);
 
         if(best_id == END)
             break;

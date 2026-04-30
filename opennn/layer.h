@@ -190,12 +190,12 @@ public:
     // Called by NeuralNetwork::compile() after Configuration::resolve().
     void set_activation_dtype(ActivationDtype d) { activation_dtype = d; }
 
-    type* link_parameters(type* pointer);
+    float* link_parameters(float* pointer);
 
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const { return parameters; }
 
-    virtual type* link_states(type* pointer);
+    virtual float* link_states(float* pointer);
 
     vector<TensorView>& get_state_views() { return states; }
     const vector<TensorView>& get_state_views() const { return states; }
@@ -220,8 +220,6 @@ protected:
     vector<TensorView> states;
 
     Tensor2 empty_2;
-    Tensor3 empty_3;
-    Tensor4 empty_4;
     
     void add_gradients(const vector<TensorView>&) const;
 };

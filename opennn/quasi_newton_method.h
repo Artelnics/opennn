@@ -41,7 +41,7 @@ public:
 
     // Stopping criteria
 
-    void set_minimum_loss_decrease(const type v) { minimum_loss_decrease = v; }
+    void set_minimum_loss_decrease(const float v) { minimum_loss_decrease = v; }
 
     // Training
 
@@ -59,23 +59,23 @@ private:
 
     void calculate_inverse_hessian(OptimizerData&) const;
 
-    pair<type, type> calculate_directional_point(const Batch&,
+    pair<float, float> calculate_directional_point(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagation&,
                                                  OptimizerData&,
-                                                 type);
+                                                 float);
 
-    type first_learning_rate = type(0.01);
+    float first_learning_rate = float(0.01);
 
     // Stopping criteria
 
-    type minimum_loss_decrease = EPSILON;
+    float minimum_loss_decrease = EPSILON;
 
     // Optimizer-specific state (not shared across optimizers, so not in OptimizerData)
 
-    type training_slope = type(0);
-    type learning_rate = type(0);
-    type old_learning_rate = type(0);
+    float training_slope = float(0);
+    float learning_rate = float(0);
+    float old_learning_rate = float(0);
 };
 
 }

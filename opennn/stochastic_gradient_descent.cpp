@@ -30,15 +30,15 @@ void StochasticGradientDescent::set_default()
 
     // TRAINING OPERATORS
 
-    initial_learning_rate = type(0.001);
-    initial_decay = type(0.001);
-    momentum = type(0);
+    initial_learning_rate = float(0.001);
+    initial_decay = float(0.001);
+    momentum = float(0);
     nesterov = false;
 
     // Stopping criteria
 
-    training_loss_goal = type(0);
-    maximum_time = type(3600);
+    training_loss_goal = float(0);
+    maximum_time = float(3600);
     maximum_epochs = 1000;
 
     // UTILITIES
@@ -56,17 +56,17 @@ Index StochasticGradientDescent::get_samples_number() const
     return batch_size;
 }
 
-void StochasticGradientDescent::set_initial_learning_rate(const type new_learning_rate)
+void StochasticGradientDescent::set_initial_learning_rate(const float new_learning_rate)
 {
     initial_learning_rate = new_learning_rate;
 }
 
-void StochasticGradientDescent::set_initial_decay(const type new_decay)
+void StochasticGradientDescent::set_initial_decay(const float new_decay)
 {
     initial_decay = new_decay;
 }
 
-void StochasticGradientDescent::set_momentum(const type new_momentum)
+void StochasticGradientDescent::set_momentum(const float new_momentum)
 {
     momentum = new_momentum;
 }
@@ -78,7 +78,7 @@ void StochasticGradientDescent::set_nesterov(bool new_nesterov_momentum)
 
 void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
                                                   OptimizerData& optimization_data,
-                                                  type current_learning_rate) const
+                                                  float current_learning_rate) const
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -91,7 +91,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
             parameters_number,
             neural_network->get_parameters_data(),
             optimization_data.views[ParameterUpdate].as<float>(),
-            back_propagation.gradient.as<type>(),
+            back_propagation.gradient.as<float>(),
             current_learning_rate,
             momentum,
             nesterov);
@@ -106,7 +106,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     VectorMap parameters(neural_network->get_parameters_data(),
                          neural_network->get_parameters_size());
 
-    VectorMap gradient(back_propagation.gradient.as<type>(),
+    VectorMap gradient(back_propagation.gradient.as<float>(),
                        back_propagation.gradient.size());
 
     VectorMap parameter_updates(optimization_data.views[ParameterUpdate].as<float>(),
@@ -116,12 +116,12 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
     const Index n = parameters.size();
 
-    if (momentum <= type(0))
+    if (momentum <= float(0))
     {
         #pragma omp parallel for
         for (Index i = 0; i < n; ++i)
         {
-            const type lr_g = current_learning_rate * gradient(i);
+            const float lr_g = current_learning_rate * gradient(i);
             parameter_updates(i) = -lr_g;
             parameters(i) -= lr_g;
         }
@@ -131,8 +131,8 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         #pragma omp parallel for
         for (Index i = 0; i < n; ++i)
         {
-            const type lr_g = current_learning_rate * gradient(i);
-            const type v_new = momentum * last_parameter_updates(i) - lr_g;
+            const float lr_g = current_learning_rate * gradient(i);
+            const float v_new = momentum * last_parameter_updates(i) - lr_g;
             parameter_updates(i) = v_new;
             last_parameter_updates(i) = v_new;
             parameters(i) += nesterov ? momentum * v_new - lr_g : v_new;
@@ -248,10 +248,10 @@ TrainingResults StochasticGradientDescent::train()
 
     optimization_data.iteration = 1;
 
-    type training_error = type(0);
-    type training_accuracy = type(0);
-    type validation_error = type(0);
-    type validation_accuracy = type(0);
+    float training_error = float(0);
+    float training_accuracy = float(0);
+    float validation_error = float(0);
+    float validation_accuracy = float(0);
     Index validation_failures = 0;
 
     const bool is_classification_model = (loss->get_error() == Loss::Error::CrossEntropy3d);
@@ -261,9 +261,9 @@ TrainingResults StochasticGradientDescent::train()
 
     time_t beginning_time;
     time(&beginning_time);
-    type elapsed_time = type(0);
+    float elapsed_time = float(0);
 
-    type current_learning_rate = initial_learning_rate;
+    float current_learning_rate = initial_learning_rate;
     const auto training_update = [&](BackPropagation& bp) {
         update_parameters(bp, optimization_data, current_learning_rate);
     };
@@ -276,7 +276,7 @@ TrainingResults StochasticGradientDescent::train()
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
-        current_learning_rate = initial_learning_rate / (type(1) + type(epoch) * initial_decay);
+        current_learning_rate = initial_learning_rate / (float(1) + float(epoch) * initial_decay);
 
         const EpochStats train_stats = train_epoch(is_classification_model,
                                                    training_forward_propagation,
@@ -356,7 +356,7 @@ void StochasticGradientDescent::to_XML(XmlPrinter& printer) const
 
     write_xml(printer, {
         {"BatchSize", to_string(batch_size)},
-        {"ApplyMomentum", to_string(momentum > type(0))}
+        {"ApplyMomentum", to_string(momentum > float(0))}
     });
     write_common_xml(printer);
 
@@ -370,7 +370,7 @@ void StochasticGradientDescent::from_XML(const XmlDocument& document)
     set_batch_size(read_xml_index(root_element, "BatchSize"));
 
     const bool apply_momentum = read_xml_bool(root_element, "ApplyMomentum");
-    set_momentum(apply_momentum ? type(0.9) : type(0));
+    set_momentum(apply_momentum ? float(0.9) : float(0));
 
     read_common_xml(root_element);
 }

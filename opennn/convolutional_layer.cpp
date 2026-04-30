@@ -159,7 +159,7 @@ void Convolutional::set_parameters_glorot()
     const Index kernel_area = kernel_height * kernel_width;
     const Index fan_in  = kernel_area * kernel_channels;
     const Index fan_out = kernel_area * kernels_number;
-    const type limit = sqrt(6.0f / static_cast<type>(fan_in + fan_out));
+    const float limit = sqrt(6.0f / static_cast<float>(fan_in + fan_out));
 
     set_random_uniform(VectorMap(parameters[Weight].as<float>(), parameters[Weight].size()), -limit, limit);
     init_conv_norm_defaults();

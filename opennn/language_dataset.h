@@ -49,9 +49,9 @@ public:
     inline static const string START_TOKEN = "[START]";   // 2
     inline static const string END_TOKEN   = "[END]";     // 3
 
-    inline static const type UNK_INDEX = 1.0f;
-    inline static const type START_INDEX = 2.0f;
-    inline static const type END_INDEX = 3.0f;
+    inline static const float UNK_INDEX = 1.0f;
+    inline static const float START_INDEX = 2.0f;
+    inline static const float END_INDEX = 3.0f;
 
     inline static const vector<string> reserved_tokens = {PAD_TOKEN, UNK_TOKEN, START_TOKEN, END_TOKEN};
 

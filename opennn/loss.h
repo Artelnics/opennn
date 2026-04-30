@@ -91,11 +91,11 @@ public:
 
     void set_regularization(const string& m) { regularization_method = string_to_regularization(m); }
     void set_regularization(Regularization r) { regularization_method = r; }
-    void set_regularization_weight(const type w) { regularization_weight = w; }
+    void set_regularization_weight(const float w) { regularization_weight = w; }
 
     void set_normalization_coefficient();
 
-    virtual type get_Minkowski_parameter() const { return minkowski_parameter; }
+    virtual float get_Minkowski_parameter() const { return minkowski_parameter; }
 
     // Back propagation
 
@@ -114,7 +114,7 @@ public:
 
     // Regularization
 
-    type calculate_regularization(const VectorR&) const;
+    float calculate_regularization(const VectorR&) const;
 
     // Serialization
 
@@ -129,9 +129,9 @@ public:
 
     // Numerical differentiation
 
-    static type calculate_h(const type);
+    static float calculate_h(const float);
 
-    type calculate_numerical_error() const;
+    float calculate_numerical_error() const;
 
     VectorR calculate_gradient();
 
@@ -158,7 +158,7 @@ private:
 
     void add_regularization(BackPropagation&) const;
 
-    type get_weighted_coefficient(const Batch&) const;
+    float get_weighted_coefficient(const Batch&) const;
 
     void calculate_layers_error_gradient(const Batch&,
                                          ForwardPropagation&,
@@ -175,14 +175,14 @@ protected:
     Error error = Error::MeanSquaredError;
 
     // Method-specific parameters
-    type normalization_coefficient = 1.0f;
-    type positives_weight = 1.0f;
-    type negatives_weight = 1.0f;
-    type minkowski_parameter = 1.5f;
+    float normalization_coefficient = 1.0f;
+    float positives_weight = 1.0f;
+    float negatives_weight = 1.0f;
+    float minkowski_parameter = 1.5f;
 
     // Regularization
     Regularization regularization_method = Regularization::L2;
-    type regularization_weight = 0.001f;
+    float regularization_weight = 0.001f;
 
     NeuralNetwork* neural_network = nullptr;
     Dataset* dataset = nullptr;

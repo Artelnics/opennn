@@ -84,11 +84,11 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
         if(total_size > 0)
         {
-            data.resize_bytes(total_size * Index(sizeof(type)), DeviceType::CPU);
+            data.resize_bytes(total_size * Index(sizeof(float)), DeviceType::CPU);
             data.setZero();
         }
 
-        type* pointer = (total_size > 0) ? data.as<type>() : nullptr;
+        float* pointer = (total_size > 0) ? data.as<float>() : nullptr;
         for(Index i = 0; i < layers_number; ++i)
         {
             const vector<Shape>& shapes = forward_shapes[i];

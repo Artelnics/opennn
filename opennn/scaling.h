@@ -14,10 +14,10 @@ namespace opennn
 {
     void scale_mean_standard_deviation(MatrixMap, Index, const Descriptives&);
     void scale_standard_deviation(MatrixMap, Index, const Descriptives&);
-    void scale_minimum_maximum(MatrixMap, Index, const Descriptives&, type = type(-1), type = type(1));
+    void scale_minimum_maximum(MatrixMap, Index, const Descriptives&, float = float(-1), float = float(1));
     void scale_logarithmic(MatrixMap, Index);
 
-    void unscale_minimum_maximum(MatrixMap, Index, const Descriptives&, type = type(-1), type = type(1));
+    void unscale_minimum_maximum(MatrixMap, Index, const Descriptives&, float = float(-1), float = float(1));
     void unscale_mean_standard_deviation(MatrixMap, Index, const Descriptives&);
     void unscale_standard_deviation(MatrixMap, Index, const Descriptives&);
     void unscale_logarithmic(MatrixMap, Index);

@@ -28,8 +28,8 @@ struct TrainingResults;
 
 struct EpochStats
 {
-    type error = type(0);
-    type accuracy = type(0);
+    float error = float(0);
+    float accuracy = float(0);
 };
 
 class Optimizer
@@ -60,9 +60,9 @@ public:
     void set_display_period(const Index new_display_period) { display_period = new_display_period; }
 
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
-    void set_maximum_time(const type new_maximum_time) { maximum_time = new_maximum_time; }
+    void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
-    void set_loss_goal(const type new_loss_goal) { training_loss_goal = new_loss_goal; }
+    void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }
     void set_maximum_validation_failures(const Index n) { maximum_validation_failures = n; }
 
     // Training
@@ -80,7 +80,7 @@ public:
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
-    static type get_elapsed_time(const time_t& beginning_time);
+    static float get_elapsed_time(const time_t& beginning_time);
 
 protected:
 
@@ -88,8 +88,8 @@ protected:
     void set_scaling();
     void set_unscaling();
 
-    bool check_stopping_condition(TrainingResults&, Index epoch, type elapsed_time,
-                                   type training_error, Index validation_failures) const;
+    bool check_stopping_condition(TrainingResults&, Index epoch, float elapsed_time,
+                                   float training_error, Index validation_failures) const;
 
     void write_common_xml(XmlPrinter&) const;
     void read_common_xml(const XmlElement*);
@@ -106,7 +106,7 @@ protected:
 
     void sync_device();
 
-    static void clip_gradient_norm(Buffer& gradient, type max_norm);
+    static void clip_gradient_norm(Buffer& gradient, float max_norm);
 
     bool should_display(Index epoch) const { return display && epoch % display_period == 0; }
 
@@ -133,13 +133,13 @@ protected:
 
     Loss* loss = nullptr;
 
-    type training_loss_goal = type(0);
+    float training_loss_goal = float(0);
 
     Index maximum_validation_failures = numeric_limits<Index>::max();
 
     Index maximum_epochs = 10000;
 
-    type maximum_time = type(360000);
+    float maximum_time = float(360000);
 
     Index display_period = 10;
 
@@ -171,7 +171,7 @@ struct OptimizerData
     // Shared state across all optimizers
     VectorR potential_parameters;
     VectorR training_direction;
-    type initial_learning_rate = type(0);
+    float initial_learning_rate = float(0);
     Index iteration = 0;
 };
 
@@ -182,9 +182,9 @@ struct TrainingResults
 
     string write_stopping_condition() const;
 
-    type get_training_error() const;
+    float get_training_error() const;
 
-    type get_validation_error() const;
+    float get_validation_error() const;
 
     Index get_epochs_number() const;
 
@@ -206,11 +206,11 @@ struct TrainingResults
 
     string elapsed_time;
 
-    type loss = NAN;
+    float loss = NAN;
 
     Index validation_failures = 0;
 
-    type loss_decrease = type(0);
+    float loss_decrease = float(0);
 };
 
 }

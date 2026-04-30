@@ -82,7 +82,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         else
 #endif
         {
-            input.resize_bytes(input_shape.size() * Index(sizeof(type)), DeviceType::CPU);
+            input.resize_bytes(input_shape.size() * Index(sizeof(float)), DeviceType::CPU);
         }
     }
 
@@ -112,7 +112,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         else
 #endif
         {
-            target.resize_bytes(target_shape.size() * Index(sizeof(type)), DeviceType::CPU);
+            target.resize_bytes(target_shape.size() * Index(sizeof(float)), DeviceType::CPU);
         }
     }
 
@@ -142,7 +142,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         else
 #endif
         {
-            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(type)), DeviceType::CPU);
+            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(float)), DeviceType::CPU);
         }
     }
 
@@ -151,28 +151,28 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     input_views_host_cache.reserve(decoder_shape.empty() ? 1 : 2);
 
     if(!decoder_shape.empty())
-        input_views_host_cache.push_back(TensorView(const_cast<type*>(decoder.as<type>()), decoder_shape));
+        input_views_host_cache.push_back(TensorView(const_cast<float*>(decoder.as<float>()), decoder_shape));
 
     if(!input_shape.empty())
-        input_views_host_cache.push_back(TensorView(const_cast<type*>(input.as<type>()), input_shape));
+        input_views_host_cache.push_back(TensorView(const_cast<float*>(input.as<float>()), input_shape));
 
     if(!target_shape.empty())
-        target_view_host_cache = TensorView(const_cast<type*>(target.as<type>()), target_shape);
+        target_view_host_cache = TensorView(const_cast<float*>(target.as<float>()), target_shape);
 
 #ifdef OPENNN_WITH_CUDA
-    if(!input_shape.empty() && input.as<type>())
+    if(!input_shape.empty() && input.as<float>())
     {
         const bool integer_inputs = (dynamic_cast<const LanguageDataset*>(dataset) != nullptr);
         const cudnnDataType_t input_dtype = (Configuration::instance().is_bp16_training() && !integer_inputs)
                                                 ? CUDNN_DATA_BFLOAT16
                                                 : CUDNN_DATA_FLOAT;
-        TensorView in_view(input.as<type>(), input_shape, input_dtype);
+        TensorView in_view(input.as<float>(), input_shape, input_dtype);
 
-        if(!decoder_shape.empty() && decoder.as<type>())
+        if(!decoder_shape.empty() && decoder.as<float>())
         {
             // Decoder stays FP32 — the only consumer is Embedding which reads
             // integer indices and produces BF16 itself; no upstream FP32 op.
-            TensorView dec_view(decoder.as<type>(), decoder_shape, CUDNN_DATA_FLOAT);
+            TensorView dec_view(decoder.as<float>(), decoder_shape, CUDNN_DATA_FLOAT);
             input_views_cache = { dec_view, in_view };
         }
         else
@@ -181,8 +181,8 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         }
     }
 
-    if(!target_shape.empty() && target.as<type>())
-        target_view_cache = TensorView(target.as<type>(), target_shape, CUDNN_DATA_FLOAT);
+    if(!target_shape.empty() && target.as<float>())
+        target_view_cache = TensorView(target.as<float>(), target_shape, CUDNN_DATA_FLOAT);
 #endif
 }
 
@@ -197,9 +197,9 @@ void Batch::fill(const vector<Index>& sample_indices,
     // GPU path writes into pinned host buffers (pre-allocated in set()) so that
     // copy_device_async can DMA them straight to device memory. CPU path writes
     // into Buffer's storage.
-    type* input_dst   = is_gpu ? inputs_host   : input.as<type>();
-    type* decoder_dst = is_gpu ? decoder_host  : decoder.as<type>();
-    type* target_dst  = is_gpu ? targets_host  : target.as<type>();
+    float* input_dst   = is_gpu ? inputs_host   : input.as<float>();
+    float* decoder_dst = is_gpu ? decoder_host  : decoder.as<float>();
+    float* target_dst  = is_gpu ? targets_host  : target.as<float>();
 
     // Serial fill on the GPU worker thread (leaves CPU cores for the GPU driver);
     // OMP parallel fill on CPU-only runs.
@@ -235,18 +235,18 @@ void Batch::print() const
          << "Input shape:" << input_shape << "\n";
 
     if (input_shape.rank == 4)
-        cout << TensorMap4(const_cast<type*>(input.as<type>()),
+        cout << TensorMap4(const_cast<float*>(input.as<float>()),
                            input_shape[0],
                            input_shape[1],
                            input_shape[2],
                            input_shape[3]);
     else if (input_shape.rank == 3)
-        cout << TensorMap3(const_cast<type*>(input.as<type>()),
+        cout << TensorMap3(const_cast<float*>(input.as<float>()),
                            input_shape[0],
                            input_shape[1],
                            input_shape[2]);
     else if (input_shape.rank == 2)
-        cout << MatrixMap(const_cast<type*>(input.as<type>()),
+        cout << MatrixMap(const_cast<float*>(input.as<float>()),
                           input_shape[0],
                           input_shape[1]);
 
@@ -261,7 +261,7 @@ void Batch::print() const
     cout << "Targets:" << "\n"
          << "Target shape:" << target_shape << "\n";
 
-    cout << MatrixMap(const_cast<type*>(target.as<type>()),
+    cout << MatrixMap(const_cast<float*>(target.as<float>()),
                       target_shape[0],
                       target_shape[1]) << "\n";
 }
@@ -293,7 +293,7 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
     }
     else
     {
-        CHECK_CUDA(cudaMemcpyAsync(input.as<type>(), inputs_host,
+        CHECK_CUDA(cudaMemcpyAsync(input.as<float>(), inputs_host,
                                    input_size * sizeof(float),
                                    cudaMemcpyHostToDevice, stream));
     }
@@ -301,10 +301,10 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
     if(!decoder_shape.empty())
     {
         const Index decoder_size = current_batch_size * num_decoder_features;
-        CHECK_CUDA(cudaMemcpyAsync(decoder.as<type>(), decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice, stream));
+        CHECK_CUDA(cudaMemcpyAsync(decoder.as<float>(), decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice, stream));
     }
 
-    CHECK_CUDA(cudaMemcpyAsync(target.as<type>(), targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice, stream));
+    CHECK_CUDA(cudaMemcpyAsync(target.as<float>(), targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice, stream));
 }
 
 #endif

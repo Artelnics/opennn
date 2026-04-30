@@ -31,16 +31,16 @@ public:
     Index get_minimum_inputs_number() const override { return minimum_inputs_number; }
     Index get_maximum_inputs_number() const override { return maximum_inputs_number; }
 
-    void set_minimum_inputs_number(const Index n) { minimum_inputs_number = n; }
+    void set_minimum_inputs_number(const Index new_minimum) { minimum_inputs_number = new_minimum; }
     void set_maximum_inputs_number(const Index);
 
     void set_individuals_number(const Index new_individuals_number = 4);
 
-    void set_initialization_method(string m) { initialization_method = std::move(m); }
+    void set_initialization_method(string method) { initialization_method = std::move(method); }
 
-    void set_mutation_rate(const type r) { mutation_rate = clamp(r, type(0), type(1)); }
+    void set_mutation_rate(const float rate) { mutation_rate = clamp(rate, float(0), float(1)); }
 
-    void set_elitism_size(const Index n) { elitism_size = clamp<Index>(n, 0, get_individuals_number()); }
+    void set_elitism_size(const Index size) { elitism_size = clamp<Index>(size, 0, get_individuals_number()); }
 
     InputsSelectionResults perform_input_selection() override;
 
@@ -80,7 +80,7 @@ private:
     Index minimum_inputs_number = 1;
     Index maximum_inputs_number;
 
-    type mutation_rate;
+    float mutation_rate;
 
     Index elitism_size;
 

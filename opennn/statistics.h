@@ -15,11 +15,11 @@ namespace opennn
 
 struct Descriptives
 {
-    Descriptives(const type = type(NAN), type = type(NAN), type = type(NAN), type = type(NAN));
+    Descriptives(const float = float(NAN), float = float(NAN), float = float(NAN), float = float(NAN));
 
     VectorR to_tensor() const;
 
-    void set(const type = type(NAN), type = type(NAN), type = type(NAN), type = type(NAN));
+    void set(const float = float(NAN), float = float(NAN), float = float(NAN), float = float(NAN));
 
     void save(const filesystem::path&) const;
 
@@ -27,39 +27,39 @@ struct Descriptives
 
     string name = "Descriptives";
 
-    type minimum = type(-1.0);
+    float minimum = float(-1.0);
 
-    type maximum = type(1);
+    float maximum = float(1);
 
-    type mean = type(0);
+    float mean = float(0);
 
-    type standard_deviation = type(1);
+    float standard_deviation = float(1);
 
 };
 
 struct BoxPlot
 {
-    BoxPlot(const type = type(NAN),
-            type = type(NAN),
-            type = type(NAN),
-            type = type(NAN),
-            type = type(NAN));
+    BoxPlot(const float = float(NAN),
+            float = float(NAN),
+            float = float(NAN),
+            float = float(NAN),
+            float = float(NAN));
 
-    void set(const type = type(NAN),
-             type = type(NAN),
-             type = type(NAN),
-             type = type(NAN),
-             type = type(NAN));
+    void set(const float = float(NAN),
+             float = float(NAN),
+             float = float(NAN),
+             float = float(NAN),
+             float = float(NAN));
 
-    type minimum = type(NAN);
+    float minimum = float(NAN);
 
-    type first_quartile = type(NAN);
+    float first_quartile = float(NAN);
 
-    type median = type(NAN);
+    float median = float(NAN);
 
-    type third_quartile = type(NAN);
+    float third_quartile = float(NAN);
 
-    type maximum = type(NAN);
+    float maximum = float(NAN);
 };
 
 struct Histogram
@@ -90,9 +90,9 @@ struct Histogram
 
     VectorR calculate_maximal_centers() const;
 
-    Index calculate_bin(const type) const;
+    Index calculate_bin(const float) const;
 
-    Index calculate_frequency(const type) const;
+    Index calculate_frequency(const float) const;
 
     void save(const filesystem::path&) const;
 
@@ -106,39 +106,39 @@ struct Histogram
 };
 
 // Minimum
-type minimum(const MatrixR&);
-type minimum(const VectorR&);
-type minimum(const VectorR&, const vector<Index>&);
+float minimum(const MatrixR&);
+float minimum(const VectorR&);
+float minimum(const VectorR&, const vector<Index>&);
 VectorR column_minimums(const Tensor2&, const vector<Index>& = vector<Index>(), const vector<Index>& = vector<Index>());
 
 // Maximum
-type maximum(const MatrixR&);
-type maximum(const VectorR&);
-type maximum(const VectorR&, const vector<Index>&);
+float maximum(const MatrixR&);
+float maximum(const VectorR&);
+float maximum(const VectorR&, const vector<Index>&);
 VectorR column_maximums(const Tensor2&, const vector<Index>& = vector<Index>(), const vector<Index>& = vector<Index>());
 
 // Range
-type range(const VectorR&);
+float range(const VectorR&);
 
 // Mean
-type mean(const VectorR&);
-type mean(const MatrixR&, Index);
+float mean(const VectorR&);
+float mean(const MatrixR&, Index);
 VectorR mean(const MatrixR&);
 VectorR mean(const MatrixR&, const vector<Index>&, const vector<Index>&);
 
 // Median
-type median(const VectorR&);
-type median(const MatrixR&, Index);
+float median(const VectorR&);
+float median(const MatrixR&, Index);
 VectorR median(const MatrixR&);
 VectorR median(const MatrixR&, const vector<Index>&);
 VectorR median(const MatrixR&, const vector<Index>&, const vector<Index>&);
 
 // Variance
-type variance(const VectorR&);
-type variance(const VectorR&, const VectorI&);
+float variance(const VectorR&);
+float variance(const VectorR&, const VectorI&);
 
 // Standard deviation
-type standard_deviation(const VectorR&);
+float standard_deviation(const VectorR&);
 VectorR standard_deviation(const VectorR&, Index);
 
 // Quartiles
@@ -158,7 +158,7 @@ vector<Descriptives> descriptives(const MatrixR&, const vector<Index>&, const ve
 
 // Histograms
 Histogram histogram(const VectorR&, Index  = 10);
-Histogram histogram_centered(const VectorR&, type = type(0), Index  = 10);
+Histogram histogram_centered(const VectorR&, float = float(0), Index  = 10);
 Histogram histogram(const VectorB&);
 Histogram histogram(const VectorI&, Index  = 10);
 vector<Histogram> histograms(const MatrixR&, Index = 10);
@@ -225,7 +225,7 @@ template <typename T>
 inline bool is_binary(const T& tensor)
 {
     return all_of(tensor.data(), tensor.data() + tensor.size(),
-                  [](type v) { return v == type(0) || v == type(1) || isnan(v); });
+                  [](float v) { return v == float(0) || v == float(1) || isnan(v); });
 }
 
 MatrixR append_rows(const MatrixR&, const MatrixR&);
@@ -247,18 +247,18 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
 template <typename T>
 inline bool is_constant(const T& tensor)
 {
-    const type* data = tensor.data();
-    const type* end = data + tensor.size();
+    const float* data = tensor.data();
+    const float* end = data + tensor.size();
 
-    const type* first = find_if(data, end, [](type v) { return !isnan(v); });
+    const float* first = find_if(data, end, [](float v) { return !isnan(v); });
 
     if (first == end)
         return true;
 
-    const type val = *first;
+    const float val = *first;
 
     return all_of(first + 1, end,
-                  [val](type v) { return isnan(v) || abs(val - v) <= numeric_limits<float>::min(); });
+                  [val](float v) { return isnan(v) || abs(val - v) <= numeric_limits<float>::min(); });
 }
 
 inline vector<Index> get_true_indices(const VectorB& v)
@@ -279,7 +279,7 @@ vector<Index> get_elements_greater_than(const vector<Index>&, Index);
 
 VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
 
-void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true, int contiguous = -1);
+void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, float*, bool = true, int contiguous = -1);
 
 VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
 

@@ -34,7 +34,7 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_d
     conditions.assign(static_cast<size_t>(variables_number), Condition(ConditionType::None));
 }
 
-void ResponseOptimization::set_condition(const string& name, const ConditionType condition, type low, type up)
+void ResponseOptimization::set_condition(const string& name, const ConditionType condition, float low, float up)
 {
     if(!dataset)
         throw runtime_error("Dataset not set.");
@@ -62,12 +62,12 @@ void ResponseOptimization::set_iterations(const int new_max_iterations)
     max_iterations = new_max_iterations;
 }
 
-void ResponseOptimization::set_zoom_factor(type new_zoom_factor)
+void ResponseOptimization::set_zoom_factor(float new_zoom_factor)
 {
     zoom_factor = new_zoom_factor;
 }
 
-void ResponseOptimization::set_relative_tolerance(type new_relative_tolerance)
+void ResponseOptimization::set_relative_tolerance(float new_relative_tolerance)
 {
     relative_tolerance = new_relative_tolerance;
 }
@@ -94,8 +94,8 @@ void ResponseOptimization::Domain::set(const vector<Index>& feature_dimensions, 
         }
         else
         {
-            inferior_frontier(feature_index) = static_cast<type>(descriptives[variable].minimum);
-            superior_frontier(feature_index) = static_cast<type>(descriptives[variable].maximum);
+            inferior_frontier(feature_index) = static_cast<float>(descriptives[variable].minimum);
+            superior_frontier(feature_index) = static_cast<float>(descriptives[variable].maximum);
         }
 
         feature_index += feature_dimension;
@@ -167,11 +167,11 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
             {
                 objective_sources(0, current_objective_index) = is_input ? 1.0 : 0.0;
 
-                objective_sources(1, current_objective_index) = static_cast<type>(feature_pointer);
+                objective_sources(1, current_objective_index) = static_cast<float>(feature_pointer);
 
-                const type inferior_frontier = domain.inferior_frontier(feature_pointer);
-                const type superior_frontier = domain.superior_frontier(feature_pointer);
-                const type range = superior_frontier - inferior_frontier;
+                const float inferior_frontier = domain.inferior_frontier(feature_pointer);
+                const float superior_frontier = domain.superior_frontier(feature_pointer);
+                const float range = superior_frontier - inferior_frontier;
 
                 objective_normalizer(0, current_objective_index) = 1.0 / (range < EPSILON ? EPSILON : range);
 
@@ -215,8 +215,8 @@ void ResponseOptimization::Domain::bound(const vector<Index>& feature_dimensions
 
         if(feature_dimension == 1)
         {
-            type& inferior = inferior_frontier(feature_index);
-            type& superior = superior_frontier(feature_index);
+            float& inferior = inferior_frontier(feature_index);
+            float& superior = superior_frontier(feature_index);
 
             switch(condition.condition)
             {
@@ -279,9 +279,9 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                 random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array().round();
             else
             {
-                const type inf = input_domain.inferior_frontier(current_feature_index);
-                const type sup = input_domain.superior_frontier(current_feature_index);
-                const type range = sup - inf;
+                const float inf = input_domain.inferior_frontier(current_feature_index);
+                const float sup = input_domain.superior_frontier(current_feature_index);
+                const float range = sup - inf;
 
                 random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array() * range + inf;
             }
@@ -308,7 +308,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
     return random_inputs;
 }
 
-void ResponseOptimization::Domain::reshape(const type zoom_factor,
+void ResponseOptimization::Domain::reshape(const float zoom_factor,
                                            const VectorR& center,
                                            const MatrixR& optimal_points_inputs,
                                            const vector<Index>& input_feature_dimensions,
@@ -328,7 +328,7 @@ void ResponseOptimization::Domain::reshape(const type zoom_factor,
 
         if(categories_number == 1 && input_variable_types[input_variable] != VariableType::Binary)
         {
-            const type half_span = (superior_frontier(current_feature_index) - inferior_frontier(current_feature_index)) * zoom_factor / 2;
+            const float half_span = (superior_frontier(current_feature_index) - inferior_frontier(current_feature_index)) * zoom_factor / 2;
             inferior_frontier(current_feature_index) = max(center(current_feature_index) - half_span, inferior_frontier(current_feature_index));
             superior_frontier(current_feature_index) = min(center(current_feature_index) + half_span, superior_frontier(current_feature_index));
 
@@ -397,7 +397,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
 
     objectives.normalize(objective_matrix);
 
-    const VectorR normalized_utopian_point = (objectives.utopian_and_senses.row(1).array() + static_cast<type>(1.0)) / static_cast<type>(2.0);
+    const VectorR normalized_utopian_point = (objectives.utopian_and_senses.row(1).array() + static_cast<float>(1.0)) / static_cast<float>(2.0);
 
     const VectorI nearest_rows = get_nearest_points(objective_matrix, normalized_utopian_point , static_cast<int>(subset_dimension));
 
@@ -468,9 +468,9 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 
     pair<MatrixR, MatrixR> optimal_set;
 
-    type optimal_point;
+    float optimal_point;
 
-    type previous_optimal_point = 0;
+    float previous_optimal_point = 0;
 
     cout << "> Optimization loop starting with zoom factor: " << zoom_factor << "\n";
 
@@ -490,7 +490,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
                              ? optimal_set.first
                              : optimal_set.second)(0, static_cast<Index>(objectives.objective_sources(1, 0)));
 
-        const type relative_error = abs((optimal_point - previous_optimal_point) / (objectives.utopian_and_senses(0,0) + 1e-6f));
+        const float relative_error = abs((optimal_point - previous_optimal_point) / (objectives.utopian_and_senses(0,0) + 1e-6f));
 
         cout <<  i << "-th " << "> loop " << "with relative error" << relative_error << "\n";
 
@@ -566,21 +566,21 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inp
     return {pareto_inputs, pareto_outputs};
 }
 
-pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& inputs, const MatrixR& outputs, const Objectives& objectives) const
+pair<float, float> ResponseOptimization::calculate_quality_metrics(const MatrixR& inputs, const MatrixR& outputs, const Objectives& objectives) const
 {
     const Index points_number = inputs.rows();
 
     if (points_number == 0)
-        return {static_cast<type>(1e6), static_cast<type>(1e6)};
+        return {static_cast<float>(1e6), static_cast<float>(1e6)};
 
     MatrixR objective_matrix = objectives.extract(inputs, outputs);
     objectives.normalize(objective_matrix);
 
     const Index objectives_number = objective_matrix.cols();
 
-    const type hypercube_diagonal = sqrt(static_cast<type>(objectives_number));
+    const float hypercube_diagonal = sqrt(static_cast<float>(objectives_number));
 
-    type maximum_internal_gap = 0.0;
+    float maximum_internal_gap = 0.0;
 
     for (Index i = 0; i < points_number; ++i)
     {
@@ -590,7 +590,7 @@ pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& 
 
         distances(i) = MAX;
 
-        const type minimum_neighbor_distance = sqrt(distances.minCoeff());
+        const float minimum_neighbor_distance = sqrt(distances.minCoeff());
 
         maximum_internal_gap = max(maximum_internal_gap, minimum_neighbor_distance);
     }
@@ -602,10 +602,10 @@ pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& 
 
     VectorR max_objectives = objective_matrix.colwise().maxCoeff();
 
-    const type sum_boundary_gaps = (1.0 - max_objectives.array()).abs().sum();
+    const float sum_boundary_gaps = (1.0 - max_objectives.array()).abs().sum();
 
-    const type average_boundary_gap = sum_boundary_gaps / static_cast<type>(objectives_number);
-    const type normalized_boundary_gap = average_boundary_gap / hypercube_diagonal;
+    const float average_boundary_gap = sum_boundary_gaps / static_cast<float>(objectives_number);
+    const float normalized_boundary_gap = average_boundary_gap / hypercube_diagonal;
 
     return {maximum_internal_gap, normalized_boundary_gap};
 }
@@ -643,10 +643,10 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
 
     vector<Domain> local_input_domains(static_cast<size_t>(global_pareto_inputs.rows()), original_input_domain);
 
-    type current_zoom = zoom_factor;
+    float current_zoom = zoom_factor;
 
-    type previous_holes_magnitude = 0.0;
-    type previous_area_covered = 0.0;
+    float previous_holes_magnitude = 0.0;
+    float previous_area_covered = 0.0;
 
     cout << "> Optimization loop starting with zoom factor: " << current_zoom << "\n";
 
@@ -689,15 +689,15 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
 
         cout << "  - New Pareto front size: " << global_pareto_inputs.rows()  << "\n";
 
-        const pair<type, type> quality = calculate_quality_metrics(global_pareto_inputs, global_pareto_outputs, objectives);
+        const pair<float, float> quality = calculate_quality_metrics(global_pareto_inputs, global_pareto_outputs, objectives);
 
-        const type current_hole = quality.first;
-        const type current_boundary = quality.second;
+        const float current_hole = quality.first;
+        const float current_boundary = quality.second;
 
         cout << "  - Internal Hole: " << current_hole << " | Boundary Gap: " << current_boundary << "\n";
 
-        const type delta_hole = abs(current_hole - previous_holes_magnitude);
-        const type delta_boundary = abs(current_boundary - previous_area_covered);
+        const float delta_hole = abs(current_hole - previous_holes_magnitude);
+        const float delta_boundary = abs(current_boundary - previous_area_covered);
 
         if (i > min_iterations && delta_hole < relative_tolerance && delta_boundary < relative_tolerance)
         {

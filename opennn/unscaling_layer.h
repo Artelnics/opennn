@@ -24,8 +24,8 @@ private:
     // Scaler method is enum, not float — can't live in the arena directly.
     vector<ScalerMethod> scalers;
 
-    type min_range = -1.0f;
-    type max_range = 1.0f;
+    float min_range = -1.0f;
+    float max_range = 1.0f;
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
@@ -57,8 +57,8 @@ public:
     VectorR get_means() const;
     VectorR get_standard_deviations() const;
     const vector<ScalerMethod>& get_scalers() const { return scalers; }
-    type get_min_range() const { return min_range; }
-    type get_max_range() const { return max_range; }
+    float get_min_range() const { return min_range; }
+    float get_max_range() const { return max_range; }
 
     enum States {Minimums, Maximums, Means, StandardDeviations, Scalers};
 
@@ -69,7 +69,7 @@ public:
         return {Shape{features}, Shape{features}, Shape{features}, Shape{features}, Shape{features}};
     }
 
-    type* link_states(type* pointer) override;
+    float* link_states(float* pointer) override;
 
     // Setters
 
@@ -81,7 +81,7 @@ public:
     // Requires NN::compile() first — writes directly into the states arena.
     void set_descriptives(const vector<Descriptives>&);
 
-    void set_min_max_range(const type, const type);
+    void set_min_max_range(const float, const float);
 
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);

@@ -29,12 +29,12 @@ public:
 
     struct GoodnessOfFitAnalysis
     {
-        type determination = type(0);
+        float determination = float(0);
 
         VectorR targets;
         VectorR outputs;
 
-        void set(const VectorR&, const VectorR&, type);
+        void set(const VectorR&, const VectorR&, float);
 
         void save(const filesystem::path&) const;
 
@@ -45,11 +45,11 @@ public:
     {
         MatrixR roc_curve;
 
-        type area_under_curve = 0;
+        float area_under_curve = 0;
 
-        type confidence_limit = 0;
+        float confidence_limit = 0;
 
-        type optimal_threshold = 0;
+        float optimal_threshold = 0;
 
         void print() const;
     };
@@ -120,9 +120,9 @@ public:
     MatrixR calculate_multiple_classification_errors() const;
     VectorR calculate_multiple_classification_errors(const string&) const;
 
-    type calculate_masked_accuracy(const Tensor3&, const MatrixR&) const;
+    float calculate_masked_accuracy(const Tensor3&, const MatrixR&) const;
 
-    type calculate_determination(const VectorR&, const VectorR&) const;
+    float calculate_determination(const VectorR&, const VectorR&) const;
 
     // Goodness-of-fit analysis
 
@@ -135,15 +135,15 @@ public:
 
     // Binary classifcation
 
-    VectorR calculate_binary_classification_tests(const type = 0.50) const;
+    VectorR calculate_binary_classification_tests(const float = 0.50) const;
 
     void print_binary_classification_tests() const;
 
     // Confusion
 
-    vector<MatrixI> calculate_multilabel_confusion(const type) const;
-    MatrixI calculate_confusion(const MatrixR&, const MatrixR&, type = 0.50) const;
-    MatrixI calculate_confusion(const type = 0.50) const;
+    vector<MatrixI> calculate_multilabel_confusion(const float) const;
+    MatrixI calculate_confusion(const MatrixR&, const MatrixR&, float = 0.50) const;
+    MatrixI calculate_confusion(const float = 0.50) const;
 
     VectorI calculate_positives_negatives_rate(const MatrixR&, const MatrixR&) const;
 
@@ -153,9 +153,9 @@ public:
 
     MatrixR calculate_roc_curve(const MatrixR&, const MatrixR&) const;
 
-    type calculate_area_under_curve(const MatrixR&) const;
-    type calculate_area_under_curve_confidence_limit(const MatrixR&, const MatrixR&) const;
-    type calculate_optimal_threshold(const MatrixR&) const;
+    float calculate_area_under_curve(const MatrixR&) const;
+    float calculate_area_under_curve_confidence_limit(const MatrixR&, const MatrixR&) const;
+    float calculate_optimal_threshold(const MatrixR&) const;
 
     // Lift Chart
 
@@ -175,12 +175,12 @@ public:
 
     // Binary classification rates
 
-    BinaryClassificationRates calculate_binary_classification_rates(const type = 0.50) const;
+    BinaryClassificationRates calculate_binary_classification_rates(const float = 0.50) const;
 
-    vector<Index> calculate_true_positive_samples(const MatrixR&, const MatrixR&, const vector<Index>&, type) const;
-    vector<Index> calculate_false_positive_samples(const MatrixR&, const MatrixR&, const vector<Index>&, type) const;
-    vector<Index> calculate_false_negative_samples(const MatrixR&, const MatrixR&, const vector<Index>&, type) const;
-    vector<Index> calculate_true_negative_samples(const MatrixR&, const MatrixR&, const vector<Index>&, type) const;
+    vector<Index> calculate_true_positive_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
+    vector<Index> calculate_false_positive_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
+    vector<Index> calculate_false_negative_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
+    vector<Index> calculate_true_negative_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
 
     // Multiple classification tests
 
@@ -219,7 +219,7 @@ public:
 
     // Transformer
 
-    pair<type, type> test_transformer() const;
+    pair<float, float> test_transformer() const;
 
     string test_transformer(const vector<string>& context_string, bool imported_vocabulary) const;
 
@@ -236,7 +236,7 @@ private:
 
     pair<MatrixR, MatrixR> get_targets_and_outputs(const string&) const;
 
-    vector<Index> filter_classification_samples(const MatrixR&, const MatrixR&, const vector<Index>&, type,
+    vector<Index> filter_classification_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float,
                                                 bool target_positive, bool output_positive) const;
 
     MatrixR calculate_cumulative_gain_impl(const MatrixR&, const MatrixR&, bool) const;

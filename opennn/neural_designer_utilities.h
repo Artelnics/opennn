@@ -7,8 +7,8 @@ namespace opennn
 
 void sort_string_vector(vector<string>&);
 vector<string> concatenate_string_vectors(const vector<string>&, const vector<string>&);
-string formatNumber(type, int);
+string formatNumber(float, int);
 
-type round_to_precision(type, const int&);
+float round_to_precision(float, const int&);
 
 }

@@ -43,7 +43,7 @@ int main()
 
         training_strategy.set_loss("WeightedSquaredError");
         training_strategy.get_loss()->set_regularization("L1");
-        training_strategy.get_loss()->set_regularization_weight(type(0.001));
+        training_strategy.get_loss()->set_regularization_weight(float(0.001));
 
         training_strategy.set_optimization_algorithm("StochasticGradientDescent");
         StochasticGradientDescent* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());

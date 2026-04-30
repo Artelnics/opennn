@@ -81,22 +81,22 @@ void Bounding::set_output_shape(const Shape& new_output_shape)
 
 // States[] is allocated by NN::compile() → Layer::link_states(). This override initializes
 // the arena slots to defaults (±max) since they're zero-initialized by the base.
-type* Bounding::link_states(type* pointer)
+float* Bounding::link_states(float* pointer)
 {
-    type* next = Layer::link_states(pointer);
+    float* next = Layer::link_states(pointer);
 
     if(bounding_method == BoundingMethod::NoBounding) return next;
 
     if(states[Lower].data)
-        VectorMap(states[Lower].as<float>(), states[Lower].size()).setConstant(-numeric_limits<type>::max());
+        VectorMap(states[Lower].as<float>(), states[Lower].size()).setConstant(-numeric_limits<float>::max());
 
     if(states[Upper].data)
-        VectorMap(states[Upper].as<float>(), states[Upper].size()).setConstant(numeric_limits<type>::max());
+        VectorMap(states[Upper].as<float>(), states[Upper].size()).setConstant(numeric_limits<float>::max());
 
     return next;
 }
 
-void Bounding::set_lower_bound(const Index index, type new_lower_bound)
+void Bounding::set_lower_bound(const Index index, float new_lower_bound)
 {
     if(ssize(states) <= Lower || !states[Lower].data)
         throw runtime_error("Bounding::set_lower_bound: layer not compiled yet (call NeuralNetwork::compile() first).");
@@ -120,7 +120,7 @@ void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
     VectorMap(states[Upper].as<float>(), states[Upper].size()) = new_upper_bounds;
 }
 
-void Bounding::set_upper_bound(const Index index, type new_upper_bound)
+void Bounding::set_upper_bound(const Index index, float new_upper_bound)
 {
     if(ssize(states) <= Upper || !states[Upper].data)
         throw runtime_error("Bounding::set_upper_bound: layer not compiled yet (call NeuralNetwork::compile() first).");

@@ -15,10 +15,10 @@ namespace opennn
 {
 
 static constexpr Index ALIGN_BYTES = EIGEN_MAX_ALIGN_BYTES;
-static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(type);
+static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(float);
 
 inline int to_int(Index value) { return static_cast<int>(value); }
-inline type to_type(Index value) { return static_cast<type>(value); }
+inline float to_type(Index value) { return static_cast<float>(value); }
 
 inline Index align_up(Index n, Index alignment)
 {
@@ -44,7 +44,7 @@ constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_T
 
 // Activation dtype used to be a compile-time constant gated by
 // `OPENNN_USE_BF16_ACTIVATIONS`. It is now a runtime field on every Layer
-// (`activation_dtype`, of type `ActivationDtype`), populated by
+// (`activation_dtype`, of float `ActivationDtype`), populated by
 // NeuralNetwork::compile() from Configuration::resolve(). Conversion to cuDNN
 // / CUDA library constants happens at API boundaries via to_cudnn() / to_cuda()
 // in configuration.h. Anything outside a network defaults to FP32.
@@ -153,7 +153,7 @@ struct Buffer
     template<typename T> T*       as()       { return static_cast<T*>(data); }
     template<typename T> const T* as() const { return static_cast<const T*>(data); }
 
-    Index size()  const { return bytes / Index(sizeof(type)); }   // legacy: assumes T = type
+    Index size()  const { return bytes / Index(sizeof(float)); }   // legacy: assumes T = float
     bool  empty() const { return bytes == 0; }
 
     void resize_bytes(Index n_bytes, DeviceType t)
@@ -252,7 +252,7 @@ struct TensorView
     bool empty() const noexcept { return shape.empty(); }
 
     // Typed reinterpretation of `data`. We deliberately do NOT assert that the
-    // requested type matches `dtype`: the codebase has several call sites that
+    // requested float matches `dtype`: the codebase has several call sites that
     // pass raw byte pointers to APIs (cuBLASLt, cuDNN) which interpret the
     // bytes via plan/descriptor metadata, so a `bias.as<float>()` on a BF16
     // bias is legal — cuBLASLt reads the underlying bytes as BF16 because the
@@ -267,7 +267,7 @@ struct TensorView
     }
 
     // Float-typed view of `data`. Used at CUDA dispatch sites where kernels expect
-    // raw float* regardless of the project's `type` alias (e.g. descriptive stats,
+    // raw float* regardless of the project's `float` alias (e.g. descriptive stats,
     // scaler tables, masks). Mirrors as<T>() but skips the dtype check.
     float* as_float() const noexcept
     {

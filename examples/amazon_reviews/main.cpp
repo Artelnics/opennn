@@ -52,7 +52,7 @@ int main()
 
         training_strategy.set_loss("CrossEntropy");
         training_strategy.get_loss()->set_regularization("L2");
-        training_strategy.get_loss()->set_regularization_weight(type(0.001));
+        training_strategy.get_loss()->set_regularization_weight(float(0.001));
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(50);

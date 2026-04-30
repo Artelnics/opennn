@@ -107,7 +107,7 @@ int main()
         //     }
 
         //     MatrixR output = nn.calculate_outputs(input_sample);
-        //     type real_val = raw_data(i + lags, target_col);
+        //     float real_val = raw_data(i + lags, target_col);
         //     cout << "Real: " << real_val << "\tPred: " << output(0,0) << endl;
         // }
 
@@ -123,7 +123,7 @@ int main()
 
         // for(int j = 0; j < 100; ++j) {
         //     MatrixR prediction = nn.calculate_outputs(rolling_input);
-        //     type next_val = prediction(0,0);
+        //     float next_val = prediction(0,0);
         //     cout << "Paso t+" << j+1 << ": " << next_val << endl;
 
         //     // Desplazar ventana: movemos todos una posición atrás y metemos el nuevo al final
@@ -150,8 +150,8 @@ int main()
         //     MatrixR output = nn.NeuralNetwork::calculate_outputs(input_sample);
 
         //     // El valor real de t+3 está en: i + lags + (3 - 1)
-        //     type real_val = raw_data(i + lags + 2, target_col);
-        //     type pred_val = output(0, 0);
+        //     float real_val = raw_data(i + lags + 2, target_col);
+        //     float pred_val = output(0, 0);
 
         //     cout << "Muestra " << i << " -> Real(t+3): " << real_val << "\tPred(t+3): " << pred_val << endl;
         // }
@@ -166,7 +166,7 @@ int main()
 
         // for(int j = 0; j < 10; ++j) {
         //     MatrixR prediction = nn.NeuralNetwork::calculate_outputs(rolling_input);
-        //     type next_val = prediction(0, 0);
+        //     float next_val = prediction(0, 0);
 
         //     cout << "Paso t+" << (j+1)*3 << ": " << next_val << endl;
         //     for(Index l = 0; l < lags - 1; ++l) {
@@ -195,8 +195,8 @@ int main()
 
         // cout << "Predicción para los próximos 3 pasos:" << endl;
         // for(int s = 0; s < 5; ++s) {
-        //     type real_val = raw_data(i + lags + s, 0); // t+1, t+2, t+3
-        //     type pred_val = output(0, s);
+        //     float real_val = raw_data(i + lags + s, 0); // t+1, t+2, t+3
+        //     float pred_val = output(0, s);
         //     cout << "  t+" << s+1 << " -> Real: " << real_val << " | Pred: " << pred_val << endl;
         // }
         // cout << "-----------------------------------" << endl;
@@ -879,8 +879,8 @@ int main()
         //      << seqA.dimension(1) << ", "
         //      << seqA.dimension(2) << "}\n";
 
-        // type outA = forecasting_network.NeuralNetwork::calculate_outputs(seqA)(0, 0);
-        // type outB = forecasting_network.NeuralNetwork::calculate_outputs(seqB)(0, 0);
+        // float outA = forecasting_network.NeuralNetwork::calculate_outputs(seqA)(0, 0);
+        // float outB = forecasting_network.NeuralNetwork::calculate_outputs(seqB)(0, 0);
 
         // cout << "Salida A (pasado activo): " << outA << endl;
         // cout << "Salida B (pasado cero): " << outB << endl;
@@ -903,8 +903,8 @@ int main()
         // forecasting_network.set_parameters(nuevos_pesos);
 
         // // Los cálculos ahora tendrán memoria automáticamente
-        // type outA = forecasting_network.calculate_outputs(seqA)(0, 0);
-        // type outB = forecasting_network.calculate_outputs(seqB)(0, 0);
+        // float outA = forecasting_network.calculate_outputs(seqA)(0, 0);
+        // float outB = forecasting_network.calculate_outputs(seqB)(0, 0);
 
         // cout << "Salida A (pasado activo): " << outA << endl;
         // cout << "Salida B (pasado cero): " << outB << endl;
@@ -986,10 +986,10 @@ int main()
         //     for(Index i = 0; i < 20; i++) {
         //         cout << "\n[Ventana " << i << "]" << endl;
 
-        //         type t_minus_2 = training_inputs(i, 0, 0);
-        //         type t_minus_1 = training_inputs(i, 1, 0);
+        //         float t_minus_2 = training_inputs(i, 0, 0);
+        //         float t_minus_1 = training_inputs(i, 1, 0);
 
-        //         type t_future = training_targets(i, 0);
+        //         float t_future = training_targets(i, 0);
 
         //         cout << "  Inputs (Pasado): [ " << t_minus_2 << ", " << t_minus_1 << " ]" << endl;
         //         cout << "  Target (Futuro): " << t_future << endl;
@@ -1106,7 +1106,7 @@ int main()
         // cout << "outputs: " << outputs << endl;
 
         /// Pruebas output funcion seno
-        // const vector<std::pair<type, type>> input_views = {
+        // const vector<std::pair<float, float>> input_views = {
         //     {0.0,          0.0998334166},
         //     {0.0998334166, 0.1986693308},
         //     {0.198669331,  0.295520207},
@@ -1123,8 +1123,8 @@ int main()
         // for(size_t i = 0; i < input_views.size() - 1; ++i)
         // {
         //     const auto& current_pair = input_views[i];
-        //     const type input_val_1 = current_pair.first;
-        //     const type input_val_2 = current_pair.second;
+        //     const float input_val_1 = current_pair.first;
+        //     const float input_val_2 = current_pair.second;
 
         //     cout << "\n--- Prueba " << i + 1 << " ---" << endl;
         //     cout << "Inputs: [ " << input_val_1 << ", " << input_val_2 << " ]" << endl;

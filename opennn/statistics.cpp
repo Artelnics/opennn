@@ -15,10 +15,10 @@
 namespace opennn
 {
 
-Descriptives::Descriptives(type new_minimum,
-                           type new_maximum,
-                           type new_mean,
-                           type new_standard_deviation) :
+Descriptives::Descriptives(float new_minimum,
+                           float new_maximum,
+                           float new_mean,
+                           float new_standard_deviation) :
     minimum(new_minimum),
     maximum(new_maximum),
     mean(new_mean),
@@ -34,8 +34,8 @@ VectorR Descriptives::to_tensor() const
     return descriptives_tensor;
 }
 
-void Descriptives::set(const type new_minimum, type new_maximum,
-                       type new_mean, type new_standard_deviation)
+void Descriptives::set(const float new_minimum, float new_maximum,
+                       float new_mean, float new_standard_deviation)
 {
     minimum = new_minimum;
     maximum = new_maximum;
@@ -52,11 +52,11 @@ void Descriptives::print(const string& title) const
          << "Standard deviation: " << standard_deviation << "\n";
 }
 
-BoxPlot::BoxPlot(type new_minimum,
-                 type new_first_quartile,
-                 type new_median,
-                 type new_third_quartile,
-                 type new_maximum)
+BoxPlot::BoxPlot(float new_minimum,
+                 float new_first_quartile,
+                 float new_median,
+                 float new_third_quartile,
+                 float new_maximum)
     : minimum(new_minimum),
       first_quartile(new_first_quartile),
       median(new_median),
@@ -65,11 +65,11 @@ BoxPlot::BoxPlot(type new_minimum,
 {
 }
 
-void BoxPlot::set(type new_minimum,
-                  type new_first_quartile,
-                  type new_median,
-                  type new_third_quartile,
-                  type new_maximum)
+void BoxPlot::set(float new_minimum,
+                  float new_first_quartile,
+                  float new_median,
+                  float new_third_quartile,
+                  float new_maximum)
 {
     minimum = new_minimum;
     first_quartile = new_first_quartile;
@@ -119,16 +119,16 @@ Histogram::Histogram(const VectorR& new_frequencies,
 
 Histogram::Histogram(const VectorR& data, Index bins_number)
 {
-    const type data_maximum = maximum(data);
-    const type data_minimum = minimum(data);
-    const type step = (data_maximum - data_minimum) / type(bins_number);
-    const type inv_step = type(1) / step;
+    const float data_maximum = maximum(data);
+    const float data_minimum = minimum(data);
+    const float step = (data_maximum - data_minimum) / float(bins_number);
+    const float inv_step = float(1) / step;
 
-    const VectorR new_centers = VectorR::LinSpaced(bins_number, data_minimum + type(0.5) * step, data_maximum - type(0.5) * step);
+    const VectorR new_centers = VectorR::LinSpaced(bins_number, data_minimum + float(0.5) * step, data_maximum - float(0.5) * step);
 
     VectorR new_frequencies = VectorR::Zero(bins_number);
 
-    type value;
+    float value;
     Index corresponding_bin;
 
     for(Index i = 0; i < data.size(); ++i)
@@ -151,19 +151,19 @@ Histogram::Histogram(const VectorR& data, Index bins_number)
 Histogram::Histogram(const VectorR& probability_data)
 {
     const size_t bins_number = 10;
-    type data_maximum = maximum(probability_data);
-    const type data_minimum = type(0);
+    float data_maximum = maximum(probability_data);
+    const float data_minimum = float(0);
 
-    data_maximum = (data_maximum > type(1)) ? type(100.0) : type(1);
+    data_maximum = (data_maximum > float(1)) ? float(100.0) : float(1);
 
-    const type step = (data_maximum - data_minimum) / type(bins_number);
-    const type inv_step = type(1) / step;
+    const float step = (data_maximum - data_minimum) / float(bins_number);
+    const float inv_step = float(1) / step;
 
-    const VectorR new_centers = VectorR::LinSpaced(bins_number, data_minimum + type(0.5) * step, data_maximum - type(0.5) * step);
+    const VectorR new_centers = VectorR::LinSpaced(bins_number, data_minimum + float(0.5) * step, data_maximum - float(0.5) * step);
 
     VectorR new_frequencies = VectorR::Zero(bins_number);
 
-    type value;
+    float value;
     Index corresponding_bin;
 
     for(Index i = 0; i < probability_data.size(); ++i)
@@ -214,7 +214,7 @@ VectorR Histogram::calculate_minimal_centers() const
     if (frequencies.size() == 0)
     {
         VectorR nan(1);
-        nan << type(NAN);
+        nan << float(NAN);
         return nan;
     }
 
@@ -234,7 +234,7 @@ VectorR Histogram::calculate_minimal_centers() const
 VectorR Histogram::calculate_maximal_centers() const
 {
     if (frequencies.size() == 0)
-        return VectorR::Constant(1, type(NAN));
+        return VectorR::Constant(1, float(NAN));
 
     const Index maximum_frequency = calculate_maximum_frequency();
     const Index count = (frequencies.array() == maximum_frequency).count();
@@ -249,15 +249,15 @@ VectorR Histogram::calculate_maximal_centers() const
     return maximal_centers;
 }
 
-Index Histogram::calculate_bin(const type value) const
+Index Histogram::calculate_bin(const float value) const
 {
     const Index bins_number = get_bins_number();
 
     if (bins_number == 0) return 0;
 
-    const type min_center = centers(0);
-    const type max_center = centers(bins_number - 1);
-    const type bin_width = (max_center - min_center) / (bins_number - 1);
+    const float min_center = centers(0);
+    const float max_center = centers(bins_number - 1);
+    const float bin_width = (max_center - min_center) / (bins_number - 1);
 
     for(Index i = 0; i < bins_number; ++i) {
         if (value < centers(i) + bin_width / 2) {
@@ -268,7 +268,7 @@ Index Histogram::calculate_bin(const type value) const
     return bins_number - 1; 
 }
 
-Index Histogram::calculate_frequency(const type value) const
+Index Histogram::calculate_frequency(const float value) const
 {
     if(get_bins_number() == 0) return 0;
 
@@ -289,37 +289,37 @@ void Histogram::save(const filesystem::path& histogram_file_name) const
     histogram_file.close();
 }
 
-type minimum(const MatrixR& matrix)
+float minimum(const MatrixR& matrix)
 {
-    if(matrix.size() == 0) return type(NAN);
+    if(matrix.size() == 0) return float(NAN);
     return matrix.minCoeff();
 }
 
-type maximum(const MatrixR& matrix)
+float maximum(const MatrixR& matrix)
 {
-    if(matrix.size() == 0) return type(NAN);
+    if(matrix.size() == 0) return float(NAN);
     return matrix.maxCoeff();
 }
 
-type minimum(const VectorR& vector)
+float minimum(const VectorR& vector)
 {
-    if(vector.size() == 0) return type(NAN);
+    if(vector.size() == 0) return float(NAN);
     return vector.minCoeff();
 }
 
-type maximum(const VectorR& vector)
+float maximum(const VectorR& vector)
 {
-    if(vector.size() == 0) return type(NAN);
+    if(vector.size() == 0) return float(NAN);
     return vector.maxCoeff();
 }
 
-type minimum(const VectorR& data, const vector<Index>& indices)
+float minimum(const VectorR& data, const vector<Index>& indices)
 {
     const Index size = indices.size();
 
-    if(size == 0) return type(NAN);
+    if(size == 0) return float(NAN);
 
-    type minimum = MAX;
+    float minimum = MAX;
 
     Index index;
 
@@ -334,13 +334,13 @@ type minimum(const VectorR& data, const vector<Index>& indices)
     return minimum;
 }
 
-type maximum(const VectorR& data, const vector<Index>& indices)
+float maximum(const VectorR& data, const vector<Index>& indices)
 {
     const Index size = indices.size();
 
-    if(size == 0) return type(NAN);
+    if(size == 0) return float(NAN);
 
-    type maximum = -MAX;
+    float maximum = -MAX;
 
     Index index;
 
@@ -415,23 +415,23 @@ VectorR column_maximums(const MatrixR& matrix,
     return maximums;
 }
 
-type mean(const VectorR& vector)
+float mean(const VectorR& vector)
 {
     const auto is_finite = vector.array().isFinite();
     const Index count = is_finite.count();
 
-    if (count == 0) return type(NAN);
+    if (count == 0) return float(NAN);
 
-    return is_finite.select(vector.array(), 0.0f).sum() / static_cast<type>(count);
+    return is_finite.select(vector.array(), 0.0f).sum() / static_cast<float>(count);
 }
 
-type variance(const VectorR& vector)
+float variance(const VectorR& vector)
 {
     const VectorR new_vector = filter_missing_values(vector);
 
     const Index count = new_vector.size();
 
-    if (count <= 1) return type(0);
+    if (count <= 1) return float(0);
 
     const auto new_vector_d = new_vector.cast<double>();
     const double sum = new_vector_d.sum();
@@ -440,7 +440,7 @@ type variance(const VectorR& vector)
     return (squared_sum - (sum * sum) / count) / (count - 1);
 }
 
-type variance(const VectorR& vector, const VectorI& indices)
+float variance(const VectorR& vector, const VectorI& indices)
 {
     const Index size = indices.size();
 
@@ -464,32 +464,32 @@ type variance(const VectorR& vector, const VectorI& indices)
         }
     }
 
-    if(count <= 1) return type(0);
+    if(count <= 1) return float(0);
 
-    const type variance
-        = type(squared_sum/(count - 1) - (sum/count)*(sum/count)*count/(count-1));
+    const float variance
+        = float(squared_sum/(count - 1) - (sum/count)*(sum/count)*count/(count-1));
 
     return variance;
 }
 
-type standard_deviation(const VectorR& vector)
+float standard_deviation(const VectorR& vector)
 {
-    if(vector.size() == 0) return type(0);
+    if(vector.size() == 0) return float(0);
 
     return sqrt(variance(vector));
 }
 
-type median(const VectorR& input_vector)
+float median(const VectorR& input_vector)
 {
     VectorR valid = filter_missing_values(input_vector);
     const Index n = valid.size();
 
-    if(n == 0) return type(NAN);
+    if(n == 0) return float(NAN);
 
     sort(valid.data(), valid.data() + n);
 
     return (n % 2 == 0)
-        ? (valid(n/2 - 1) + valid(n/2)) / type(2)
+        ? (valid(n/2 - 1) + valid(n/2)) / float(2)
         : valid(n/2);
 }
 
@@ -511,15 +511,15 @@ VectorR quartiles(const VectorR& data)
     }
     else if (new_size == 2)
     {
-        quartiles(0) = (valid_data(0) + valid_data(1)) / type(4.0);
-        quartiles(1) = (valid_data(0) + valid_data(1)) / type(2.0);
-        quartiles(2) = (valid_data(0) + valid_data(1)) * type(0.75);
+        quartiles(0) = (valid_data(0) + valid_data(1)) / float(4.0);
+        quartiles(1) = (valid_data(0) + valid_data(1)) / float(2.0);
+        quartiles(2) = (valid_data(0) + valid_data(1)) * float(0.75);
     }
     else if (new_size == 3)
     {
-        quartiles(0) = (valid_data(0) + valid_data(1)) / type(2.0);
+        quartiles(0) = (valid_data(0) + valid_data(1)) / float(2.0);
         quartiles(1) = valid_data(1);
-        quartiles(2) = (valid_data(1) + valid_data(2)) / type(2.0);
+        quartiles(2) = (valid_data(1) + valid_data(2)) / float(2.0);
     }
     else
     {
@@ -601,8 +601,8 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     VectorR centers(bins_number);
     VectorR frequencies = VectorR::Zero(bins_number);
 
-    vector<type> unique_values;
-    unordered_set<type> unique_set;
+    vector<float> unique_values;
+    unordered_set<float> unique_set;
 
     unique_values.reserve(min<Index>(size, bins_number));
     unique_values.push_back(new_vector(0));
@@ -610,7 +610,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
 
     for(Index i = 1; i < size; ++i)
     {
-        const type value = new_vector(i);
+        const float value = new_vector(i);
 
         if(!isnan(value))
             if (unique_set.find(value) == unique_set.end())
@@ -626,7 +626,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     const Index unique_values_number = ssize(unique_values);
     if(unique_values_number <= bins_number)
     {
-        sort(unique_values.data(), unique_values.data() + unique_values.size(), less<type>());
+        sort(unique_values.data(), unique_values.data() + unique_values.size(), less<float>());
 
         VectorR tensor_unique(unique_values.size());
 
@@ -655,14 +655,14 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     }
     else
     {
-        const type min = minimum(new_vector);
-        const type max = maximum(new_vector);
+        const float min = minimum(new_vector);
+        const float max = maximum(new_vector);
 
-        const type length = (max - min) /type(bins_number);
+        const float length = (max - min) /float(bins_number);
 
         minimums(0) = min;
         maximums(0) = min + length;
-        centers(0) = (maximums(0) + minimums(0)) /type(2.0);
+        centers(0) = (maximums(0) + minimums(0)) /float(2.0);
 
         // Calculate bins center
 
@@ -671,7 +671,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
             minimums(i) = minimums(i - 1) + length;
             maximums(i) = maximums(i - 1) + length;
 
-            centers(i) = (maximums(i) + minimums(i)) /type(2.0);
+            centers(i) = (maximums(i) + minimums(i)) /float(2.0);
         }
 
         // Calculate bins frequency
@@ -705,11 +705,11 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     return histogram;
 }
 
-Histogram histogram_centered(const VectorR& vector, type center, Index bins_number)
+Histogram histogram_centered(const VectorR& vector, float center, Index bins_number)
 {
     const Index bin_center = (bins_number % 2 == 0) 
-        ? Index(type(bins_number) / type(2.0)) 
-        : Index(type(bins_number) / type(2.0) + type(0.5));
+        ? Index(float(bins_number) / float(2.0)) 
+        : Index(float(bins_number) / float(2.0) + float(0.5));
 
     VectorR minimums(bins_number);
     VectorR maximums(bins_number);
@@ -717,10 +717,10 @@ Histogram histogram_centered(const VectorR& vector, type center, Index bins_numb
     VectorR centers(bins_number);
     VectorR frequencies = VectorR::Zero(bins_number);
 
-    const type min = minimum(vector);
-    const type max = maximum(vector);
+    const float min = minimum(vector);
+    const float max = maximum(vector);
 
-    const type length = (max - min)/type(bins_number);
+    const float length = (max - min)/float(bins_number);
 
     minimums(bin_center-1) = center - length;
     maximums(bin_center-1) = center + length;
@@ -733,7 +733,7 @@ Histogram histogram_centered(const VectorR& vector, type center, Index bins_numb
         minimums(i) = minimums(i - 1) + length;
         maximums(i) = maximums(i - 1) + length;
 
-        centers(i) = (maximums(i) + minimums(i)) /type(2.0);
+        centers(i) = (maximums(i) + minimums(i)) /float(2.0);
     }
 
     for(Index i = Index(bin_center)-2; i >= 0; i--) // Lower centers
@@ -741,7 +741,7 @@ Histogram histogram_centered(const VectorR& vector, type center, Index bins_numb
         minimums(i) = minimums(i+1) - length;
         maximums(i) = maximums(i+1) - length;
 
-        centers(i) = (maximums(i) + minimums(i)) /type(2.0);
+        centers(i) = (maximums(i) + minimums(i)) /float(2.0);
     }
 
     // Calculate bins frequency
@@ -772,10 +772,10 @@ Histogram histogram(const VectorB& v)
     VectorR minimums = VectorR::Zero(2);
 
     VectorR maximums(2);
-    maximums.setConstant(type(1));
+    maximums.setConstant(float(1));
 
     VectorR centers(2);
-    centers << type(0), type(1);
+    centers << float(0), float(1);
 
     VectorR frequencies = VectorR::Zero(2);
 
@@ -829,21 +829,21 @@ Descriptives vector_descriptives(const VectorR& x)
     if (x.size() <= 0)
         return Descriptives();
 
-    const type min = x.minCoeff();
-    const type max = x.maxCoeff();
+    const float min = x.minCoeff();
+    const float max = x.maxCoeff();
 
     const VectorR valid = filter_missing_values(x);
     const Index count = valid.size();
 
-    const type m = (count > 0) ? valid.mean() : type(0);
+    const float m = (count > 0) ? valid.mean() : float(0);
 
-    type sd = 0;
+    float sd = 0;
 
     if (count > 1)
     {
         const double sum = valid.cast<double>().sum();
         const double squared_sum = valid.cast<double>().squaredNorm();
-        sd = sqrt(type((squared_sum - sum * sum / count) / (count - 1)));
+        sd = sqrt(float((squared_sum - sum * sum / count) / (count - 1)));
     }
 
     return Descriptives(min, max, m, sd);
@@ -888,8 +888,8 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
     {
         const Index column_index = column_indices[j];
 
-        type current_min = 0;
-        type current_max = 0;
+        float current_min = 0;
+        float current_max = 0;
         double current_sum = 0;
         double current_sq_sum = 0;
         Index current_count = 0;
@@ -898,7 +898,7 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
         for(Index i = 0; i < row_indices_size; ++i)
         {
             const Index row_index = row_indices[i];
-            const type value = matrix(row_index, column_index);
+            const float value = matrix(row_index, column_index);
 
             if (std::isnan(value)) continue;
 
@@ -940,8 +940,8 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
 
         descriptives_results[i].set(minimums(i),
                                     maximums(i),
-                                    static_cast<type>(mean(i)),
-                                    static_cast<type>(standard_deviation(i)));
+                                    static_cast<float>(mean(i)),
+                                    static_cast<float>(standard_deviation(i)));
     }
 
     return descriptives_results;
@@ -1038,10 +1038,10 @@ VectorR column_maximums(const MatrixR& matrix, const vector<Index>& column_indic
     return maximums;
 }
 
-type range(const VectorR& vector)
+float range(const VectorR& vector)
 {
-    const type min = minimum(vector);
-    const type max = maximum(vector);
+    const float min = minimum(vector);
+    const float max = maximum(vector);
 
     return abs(max - min);
 }
@@ -1050,9 +1050,9 @@ VectorR mean(const MatrixR& matrix)
 {
     const auto finite = matrix.array().isFinite();
     const VectorR sums   = finite.select(matrix.array(), 0.0f).colwise().sum();
-    const VectorR counts = finite.cast<type>().colwise().sum();
+    const VectorR counts = finite.cast<float>().colwise().sum();
 
-    return (counts.array() > 0.0f).select(sums.array() / counts.array(), type(NAN));
+    return (counts.array() > 0.0f).select(sums.array() / counts.array(), float(NAN));
 }
 
 VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vector<Index>& column_indices)
@@ -1068,34 +1068,34 @@ VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vect
     {
         const Index column_index = column_indices[j];
 
-        type sum = 0;
+        float sum = 0;
         Index count = 0;
 
         for(Index i = 0; i < row_indices_size; ++i)
         {
-            const type value = matrix(row_indices[i], column_index);
+            const float value = matrix(row_indices[i], column_index);
             if (isnan(value)) continue;
             sum += value;
             ++count;
         }
 
-        means(j) = (count > 0) ? sum / type(count) : type(NAN);
+        means(j) = (count > 0) ? sum / float(count) : float(NAN);
     }
 
     return means;
 }
 
-type mean(const MatrixR& matrix, Index column_index)
+float mean(const MatrixR& matrix, Index column_index)
 {
-    if(matrix.size() == 0) return type(NAN);
+    if(matrix.size() == 0) return float(NAN);
 
     const VectorR col = matrix.col(column_index);
     const auto finite = col.array().isFinite();
     const Index count = finite.count();
 
-    if(count == 0) return type(NAN);
+    if(count == 0) return float(NAN);
 
-    return finite.select(col.array(), 0.0f).sum() / type(count);
+    return finite.select(col.array(), 0.0f).sum() / float(count);
 }
 
 VectorR median(const MatrixR& matrix)
@@ -1134,16 +1134,16 @@ VectorR median(const MatrixR& matrix)
     return medians;
 }
 
-type median(const MatrixR& matrix, Index column_index)
+float median(const MatrixR& matrix, Index column_index)
 {
-    vector<type> sorted_column;
+    vector<float> sorted_column;
     sorted_column.reserve(matrix.rows());
 
     for(Index i = 0; i < matrix.rows(); ++i)
         if(!isnan(matrix(i, column_index)))
             sorted_column.push_back(matrix(i, column_index));
 
-    if(sorted_column.empty()) return type(NAN);
+    if(sorted_column.empty()) return float(NAN);
 
     sort(sorted_column.begin(), sorted_column.end());
 
@@ -1151,7 +1151,7 @@ type median(const MatrixR& matrix, Index column_index)
     const Index median_index = n / 2;
 
     return (n % 2 == 0)
-        ? (sorted_column[median_index - 1] + sorted_column[median_index]) / type(2.0)
+        ? (sorted_column[median_index - 1] + sorted_column[median_index]) / float(2.0)
         : sorted_column[median_index];
 }
 
@@ -1220,7 +1220,7 @@ VectorR median(const MatrixR& matrix,
 
         for(Index k = 0; k < row_indices_size; ++k)
         {
-            const type value = matrix(row_indices[k], column_index);
+            const float value = matrix(row_indices[k], column_index);
             if(isfinite(value))
                 valid_values(idx++) = value;
         }
@@ -1388,7 +1388,7 @@ VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int n)
 
     const VectorR distances = (matrix.rowwise() - point.transpose()).rowwise().norm();
 
-    vector<pair<type, Index>> pairs(rows);
+    vector<pair<float, Index>> pairs(rows);
 
     for(Index i = 0; i < rows; ++i)
         pairs[i] = {distances(i), i};
@@ -1414,7 +1414,7 @@ VectorR perform_Householder_QR_decomposition(const MatrixR& A, const VectorR& b)
 void fill_tensor_data(const MatrixR& matrix,
                       const vector<Index>& row_indices,
                       const vector<Index>& column_indices,
-                      type* __restrict tensor_data,
+                      float* __restrict tensor_data,
                       bool parallelize,
                       int contiguous_hint)
 {
@@ -1423,7 +1423,7 @@ void fill_tensor_data(const MatrixR& matrix,
 
     if(rows_number == 0 || columns_number == 0) return;
 
-    const type* matrix_data = matrix.data();
+    const float* matrix_data = matrix.data();
 
     const Index matrix_cols_number = matrix.cols();
 
@@ -1441,8 +1441,8 @@ void fill_tensor_data(const MatrixR& matrix,
         for(Index i = 0; i < rows_number; ++i)
         {
             const Index src_row = row_indices[i];
-            const type* src_row_ptr = matrix_data + src_row * matrix_cols_number;
-            type* dest_row_ptr = tensor_data + i * columns_number;
+            const float* src_row_ptr = matrix_data + src_row * matrix_cols_number;
+            float* dest_row_ptr = tensor_data + i * columns_number;
 
             for(Index j = 0; j < columns_number; ++j)
                 dest_row_ptr[j] = src_row_ptr[column_indices[j]];
@@ -1452,7 +1452,7 @@ void fill_tensor_data(const MatrixR& matrix,
 
 VectorMap vector_map(const MatrixR& tensor, Index index_1)
 {
-    return VectorMap(const_cast<type*>(tensor.data()) + tensor.rows()*index_1, tensor.rows());
+    return VectorMap(const_cast<float*>(tensor.data()) + tensor.rows()*index_1, tensor.rows());
 }
 
 void shuffle_rows(MatrixR& matrix)

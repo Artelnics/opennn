@@ -48,10 +48,10 @@ public:
 
     void set_display(bool d) { display = d; }
 
-    void set_validation_error_goal(const type v) { validation_error_goal = v; }
+    void set_validation_error_goal(const float v) { validation_error_goal = v; }
     void set_maximum_epochs(const Index n) { maximum_epochs = n; }
     void set_maximum_validation_failures(const Index n) { maximum_validation_failures = n; }
-    void set_maximum_time(const type t) { maximum_time = t; }
+    void set_maximum_time(const float t) { maximum_time = t; }
 
     void check() const;
 
@@ -81,13 +81,13 @@ protected:
    
     // Stopping criteria
 
-    type validation_error_goal;
+    float validation_error_goal;
 
     Index maximum_epochs;
 
     Index maximum_validation_failures = 100;
 
-    type maximum_time;
+    float maximum_time;
 
     string name;
 };
@@ -120,9 +120,9 @@ struct InputsSelectionResults
 
     VectorR mean_training_error_history;
 
-    type optimum_training_error = MAX;
+    float optimum_training_error = MAX;
 
-    type optimum_validation_error = MAX;
+    float optimum_validation_error = MAX;
 
     vector<string> optimal_input_variable_names;
 

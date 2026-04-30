@@ -92,14 +92,14 @@ struct PoolingArguments
 
 struct BatchNormalizationArguments
 {
-    type momentum;
+    float momentum;
     cudnnBatchNormMode_t batch_normalization_mode = CUDNN_BATCHNORM_PER_ACTIVATION;
     cudnnTensorDescriptor_t per_activation_descriptor = nullptr;
 };
 
 struct DropoutArguments
 {
-    type rate = type(0);
+    float rate = float(0);
     VectorR mask_cpu;
     cudnnDropoutDescriptor_t descriptor = nullptr;
     void* states = nullptr;
@@ -117,19 +117,19 @@ void scale(const TensorView& input,
            const TensorView& minimums, const TensorView& maximums,
            const TensorView& means, const TensorView& standard_deviations,
            const TensorView& scalers,
-           type min_range, type max_range,
+           float min_range, float max_range,
            TensorView& output);
 void unscale(const TensorView& input,
              const TensorView& minimums, const TensorView& maximums,
              const TensorView& means, const TensorView& standard_deviations,
              const TensorView& scalers,
-             type min_range, type max_range,
+             float min_range, float max_range,
              TensorView& output);
 void copy(const TensorView& source, TensorView& destination);
 void addition(const TensorView& input_1, const TensorView& input_2, TensorView& output);
-void multiply(const TensorView& input_a, bool transpose_a, const TensorView& input_b, bool transpose_b, TensorView& output, type alpha = 1.0f, type beta = 0.0f);
+void multiply(const TensorView& input_a, bool transpose_a, const TensorView& input_b, bool transpose_b, TensorView& output, float alpha = 1.0f, float beta = 0.0f);
 void multiply_elementwise(const TensorView& input_a, const TensorView& input_b, TensorView& output);
-void reduce_sum(const TensorView& input, TensorView& output, type alpha = 1.0f, type beta = 0.0f);
+void reduce_sum(const TensorView& input, TensorView& output, float alpha = 1.0f, float beta = 0.0f);
 void softmax(TensorView& output);
 void softmax_backward(const TensorView& softmax_out, TensorView& output_delta);
 
@@ -155,7 +155,7 @@ void dropout_delta(const TensorView& output_delta, TensorView& input_delta, cons
 // Batch normalization
 
 void batch_normalization_inference(const TensorView& input, const TensorView& gamma, const TensorView& beta, const TensorView& running_mean, const TensorView& running_variance, TensorView& output);
-void batch_normalization_training(const TensorView& input, const TensorView& gamma, const TensorView& beta, TensorView& running_mean, TensorView& running_variance, TensorView& mean, TensorView& inverse_variance, TensorView& output, type momentum = type(0.9));
+void batch_normalization_training(const TensorView& input, const TensorView& gamma, const TensorView& beta, TensorView& running_mean, TensorView& running_variance, TensorView& mean, TensorView& inverse_variance, TensorView& output, float momentum = float(0.9));
 void batch_normalization_backward(const TensorView& input, const TensorView& output, const TensorView& output_delta, const TensorView& mean, const TensorView& inverse_variance, const TensorView& gamma, TensorView& gamma_gradient, TensorView& beta_gradient, TensorView& input_delta);
 
 // Layer normalization (3D)

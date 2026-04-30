@@ -102,7 +102,7 @@ public:
         printer.close_element();
     }
 
-    void set_input_shape(const Shape& s) override { input_shape = s; }
+    void set_input_shape(const Shape& shape) override { input_shape = shape; }
 
 private:
 

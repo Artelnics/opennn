@@ -175,16 +175,16 @@ void Dataset::set_sample_roles(const vector<Index>& indices, const string& sampl
         sample_roles[i] = role_type;
 }
 
-void Dataset::split_samples(const type training_samples_ratio,
-                            type validation_samples_ratio,
-                            type testing_samples_ratio,
+void Dataset::split_samples(const float training_samples_ratio,
+                            float validation_samples_ratio,
+                            float testing_samples_ratio,
                             bool shuffle)
 {
     const Index used_samples_number = get_used_samples_number();
 
     if (used_samples_number == 0) return;
 
-    const type total_ratio = training_samples_ratio + validation_samples_ratio + testing_samples_ratio;
+    const float total_ratio = training_samples_ratio + validation_samples_ratio + testing_samples_ratio;
 
     const Index validation_samples_number = Index((validation_samples_ratio * used_samples_number) / total_ratio);
     const Index testing_samples_number = Index((testing_samples_ratio * used_samples_number) / total_ratio);
@@ -224,16 +224,16 @@ void Dataset::split_samples(const type training_samples_ratio,
     assign_role(SampleRole::Testing, testing_samples_number, index);
 }
 
-void Dataset::split_samples_random(const type training_ratio,
-                                   type validation_ratio,
-                                   type testing_ratio)
+void Dataset::split_samples_random(const float training_ratio,
+                                   float validation_ratio,
+                                   float testing_ratio)
 {
     split_samples(training_ratio, validation_ratio, testing_ratio, true);
 }
 
-void Dataset::split_samples_sequential(const type training_ratio,
-                                       type validation_ratio,
-                                       type testing_ratio)
+void Dataset::split_samples_sequential(const float training_ratio,
+                                       float validation_ratio,
+                                       float testing_ratio)
 {
     split_samples(training_ratio, validation_ratio, testing_ratio, false);
 }
@@ -1102,7 +1102,7 @@ void Dataset::set_missing_values_method(const string& new_missing_values_method)
     throw runtime_error("Unknown method type.\n");
 }
 
-vector<string> Dataset::unuse_uncorrelated_variables(const type minimum_correlation)
+vector<string> Dataset::unuse_uncorrelated_variables(const float minimum_correlation)
 {
     vector<string> unused_variables;
 
@@ -1121,7 +1121,7 @@ vector<string> Dataset::unuse_uncorrelated_variables(const type minimum_correlat
 
         for(Index j = 0; j < target_variables_number; ++j)
         {
-            const type r = correlations(i, j).r;
+            const float r = correlations(i, j).r;
 
             if(!isnan(r) && abs(r) >= minimum_correlation)
             {
@@ -1150,24 +1150,24 @@ vector<string> Dataset::unuse_uncorrelated_variables(const type minimum_correlat
     return unused_variables;
 }
 
-vector<string> Dataset::unuse_collinear_variables(const type maximum_correlation)
+vector<string> Dataset::unuse_collinear_variables(const float maximum_correlation)
 {
     const Tensor<Correlation, 2> correlations = calculate_input_variable_pearson_correlations();
     const vector<Index> input_variable_indices = get_variable_indices("Input");
     const Index input_variables_number = input_variable_indices.size();
 
     vector<Index> high_corr_counts(input_variables_number, 0);
-    vector<type> mean_abs_corr(input_variables_number, 0.0);
+    vector<float> mean_abs_corr(input_variables_number, 0.0);
     vector<bool> to_be_removed(input_variables_number, false);
 
     for(Index i = 0; i < input_variables_number; ++i)
     {
-        type sum_of_abs_corr = 0.0;
+        float sum_of_abs_corr = 0.0;
         for(Index j = 0; j < input_variables_number; ++j)
         {
             if (i == j) continue;
 
-            const type abs_r = abs(correlations(i, j).r);
+            const float abs_r = abs(correlations(i, j).r);
             if(!isnan(abs_r))
             {
                 if (abs_r >= maximum_correlation)
@@ -1266,10 +1266,10 @@ vector<Histogram> Dataset::calculate_variable_distributions(const Index bins_num
             for(Index j = 0; j < categories_number; ++j)
             {
                 for(Index k = 0; k < used_samples_number; ++k)
-                    if (abs(data(used_sample_indices[k], feature_index) - type(1)) < EPSILON)
+                    if (abs(data(used_sample_indices[k], feature_index) - float(1)) < EPSILON)
                         categories_frequencies(j)++;
 
-                centers(j) = type(j);
+                centers(j) = float(j);
 
                 ++feature_index;
             }
@@ -1286,7 +1286,7 @@ vector<Histogram> Dataset::calculate_variable_distributions(const Index bins_num
             VectorR binary_frequencies = VectorR::Zero(2);
 
             for(Index j = 0; j < used_samples_number; ++j)
-                binary_frequencies(abs(data(used_sample_indices[j], feature_index) - type(1)) < EPSILON
+                binary_frequencies(abs(data(used_sample_indices[j], feature_index) - float(1)) < EPSILON
                    ? 1
                    : 0)++;
 
@@ -1361,7 +1361,7 @@ vector<Index> Dataset::filter_used_samples_by_column(Index column_index, bool po
     for(const Index sample_index : used_sample_indices)
     {
         const bool match = positive
-            ? abs(data(sample_index, column_index) - type(1)) < EPSILON
+            ? abs(data(sample_index, column_index) - float(1)) < EPSILON
             : data(sample_index, column_index) < EPSILON;
 
         if(match)
@@ -1495,8 +1495,8 @@ Tensor<Correlation, 2> Dataset::calculate_input_variable_correlations(
 
             correlations(i, j) = correlation_function(input_i, input_j);
 
-            if (correlations(i, j).r > type(1) - EPSILON)
-                correlations(i, j).r = type(1);
+            if (correlations(i, j).r > float(1) - EPSILON)
+                correlations(i, j).r = float(1);
 
             correlations(j, i) = correlations(i, j);
         }
@@ -1611,7 +1611,7 @@ void Dataset::unscale_features(const string& variable_role,
         apply_scaler(feature_indices[i], scalers[i], feature_descriptives[i], true);
 }
 
-void Dataset::set_data_constant(const type new_value)
+void Dataset::set_data_constant(const float new_value)
 {
     data.setConstant(new_value);
 }
@@ -1925,7 +1925,7 @@ void Dataset::save_data_binary(const filesystem::path& binary_data_file_name) co
     file.write(reinterpret_cast<char*>(&columns_number), size);
     file.write(reinterpret_cast<char*>(&rows_number), size);
 
-    size = sizeof(type);
+    size = sizeof(float);
 
     const Index total_elements = columns_number * rows_number;
 
@@ -1949,7 +1949,7 @@ void Dataset::load_data_binary()
     file.read(reinterpret_cast<char*>(&columns_number), size);
     file.read(reinterpret_cast<char*>(&rows_number), size);
 
-    size = sizeof(type);
+    size = sizeof(float);
 
     data.resize(rows_number, columns_number);
 
@@ -1979,7 +1979,7 @@ VectorI Dataset::calculate_target_distribution() const
 
         for(Index sample_index = 0; sample_index < samples_number; ++sample_index){
             if(!isnan(data(sample_index, target_index)))
-                (data(sample_index, target_index) < type(0.5))
+                (data(sample_index, target_index) < float(0.5))
                     ? negatives++
                     : positives++;
         }
@@ -2001,7 +2001,7 @@ VectorI Dataset::calculate_target_distribution() const
                 if (isnan(data(i, target_feature_indices[j])))
                     continue;
 
-                if (data(i, target_feature_indices[j]) > type(0.5))
+                if (data(i, target_feature_indices[j]) > float(0.5))
                     class_distribution(j)++;
             }
         }
@@ -2010,7 +2010,7 @@ VectorI Dataset::calculate_target_distribution() const
     return class_distribution;
 }
 
-vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_parameter, bool replace_with_nan)
+vector<vector<Index>> Dataset::calculate_Tukey_outliers(const float cleaning_parameter, bool replace_with_nan)
 {
     const Index samples_number = get_used_samples_number();
     const vector<Index> sample_indices = get_used_sample_indices();
@@ -2059,7 +2059,7 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_para
         }
         else
         {
-            const type interquartile_range = box_plots[i].third_quartile - box_plots[i].first_quartile;
+            const float interquartile_range = box_plots[i].third_quartile - box_plots[i].first_quartile;
 
             if (interquartile_range < EPSILON)
             {
@@ -2096,12 +2096,12 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_para
     return return_values;
 }
 
-vector<vector<Index>> Dataset::replace_Tukey_outliers_with_NaN(const type cleaning_parameter)
+vector<vector<Index>> Dataset::replace_Tukey_outliers_with_NaN(const float cleaning_parameter)
 {
     return calculate_Tukey_outliers(cleaning_parameter, true);
 }
 
-void Dataset::unuse_Tukey_outliers(const type cleaning_parameter)
+void Dataset::unuse_Tukey_outliers(const float cleaning_parameter)
 {
     const vector<vector<Index>> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 
@@ -2128,14 +2128,14 @@ void Dataset::set_data_rosenbrock()
 
     for(Index i = 0; i < samples_number; ++i)
     {
-        type rosenbrock(0);
+        float rosenbrock(0);
 
         for(Index j = 0; j < features_number - 1; ++j)
         {
-            const type value = data(i, j);
-            const type next_value = data(i, j + 1);
+            const float value = data(i, j);
+            const float next_value = data(i, j + 1);
 
-            rosenbrock += (type(1) - value) * (type(1) - value) + type(100) * (next_value - value * value) * (next_value - value * value);
+            rosenbrock += (float(1) - value) * (float(1) - value) + float(100) * (next_value - value * value) * (next_value - value * value);
         }
 
         data(i, features_number - 1) = rosenbrock;
@@ -2151,7 +2151,7 @@ void Dataset::set_data_binary_classification()
 
 #pragma omp parallel for
     for(Index i = 0; i < samples_number; ++i)
-        data(i, features_number - 1) = type(random_bool());
+        data(i, features_number - 1) = float(random_bool());
 }
 
 void Dataset::impute_missing_values_unuse()
@@ -2238,8 +2238,8 @@ void Dataset::impute_missing_values_interpolate()
                 Index x2 = 0;
                 Index y1 = 0;
                 Index y2 = 0;
-                type x = type(0);
-                type y = type(0);
+                float x = float(0);
+                float y = float(0);
 
                 for(Index k = i - 1; k >= 0; k--)
                 {
@@ -2261,7 +2261,7 @@ void Dataset::impute_missing_values_interpolate()
 
                 if (x2 != x1)
                 {
-                    x = type(current_sample);
+                    x = float(current_sample);
                     y = y1 + (x - x1) * (y2 - y1) / (x2 - x1);
                 }
                 else
@@ -2701,21 +2701,21 @@ void Dataset::check_separators(const string& line) const
 
 void Dataset::fill_inputs(const vector<Index>& sample_indices,
                           const vector<Index>& input_indices,
-                          type* input_data, bool parallelize, int contiguous) const
+                          float* input_data, bool parallelize, int contiguous) const
 {
     fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize, contiguous);
 }
 
 void Dataset::fill_decoder(const vector<Index>& sample_indices,
                            const vector<Index>& decoder_indices,
-                           type* decoder_data, bool parallelize, int contiguous) const
+                           float* decoder_data, bool parallelize, int contiguous) const
 {
     fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, parallelize, contiguous);
 }
 
 void Dataset::fill_targets(const vector<Index>& sample_indices,
                            const vector<Index>& target_indices,
-                           type* target_data, bool parallelize, int contiguous) const
+                           float* target_data, bool parallelize, int contiguous) const
 {
     fill_tensor_data(data, sample_indices, target_indices, target_data, parallelize, contiguous);
 }

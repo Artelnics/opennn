@@ -58,7 +58,7 @@ int main()
 
         transformer.set_input_vocabulary(dataset.get_input_vocabulary());
         transformer.set_output_vocabulary(dataset.get_target_vocabulary());
-        transformer.set_dropout_rate(type(0));
+        transformer.set_dropout_rate(float(0));
 
         TrainingStrategy training_strategy(&transformer, &dataset);
 
@@ -69,7 +69,7 @@ int main()
         if(!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
 
         adam->set_batch_size(128);
-        adam->set_learning_rate(type(5e-4));
+        adam->set_learning_rate(float(5e-4));
         adam->set_maximum_epochs(4);   // 5 epochs (loop runs 0..4 inclusive)
         adam->set_display_period(1);
 

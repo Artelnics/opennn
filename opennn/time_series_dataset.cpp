@@ -42,7 +42,7 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
     input_shape = {past_time_steps, get_features_number("Input")};
     target_shape = { get_features_number("Target") };
 
-    split_samples_sequential(type(0.6), type(0.2), type(0.2));
+    split_samples_sequential(float(0.6), float(0.2), float(0.2));
 }
 
 Index TimeSeriesDataset::get_time_variable_index() const
@@ -224,7 +224,7 @@ void TimeSeriesDataset::read_csv()
         for(Index i = samples_number - invalid_samples; i < samples_number; ++i)
             set_sample_role(i, "None");
 
-    split_samples_sequential(type(0.6), type(0.2), type(0.2));
+    split_samples_sequential(float(0.6), float(0.2), float(0.2));
 }
 
 void TimeSeriesDataset::impute_missing_values_unuse()
@@ -287,7 +287,7 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
                 continue;
 
             Index prev_index = i-1;
-            type prev_value = NAN;
+            float prev_value = NAN;
             while(prev_index >= 0 && isnan(prev_value))
             {
                 prev_value = data(used_sample_indices[prev_index], feature_index);
@@ -302,7 +302,7 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
 
             const Index n_missing = end_missing - start_missing;
 
-            const type next_value = (end_missing < used_samples_number)
+            const float next_value = (end_missing < used_samples_number)
                 ? data(used_sample_indices[end_missing], feature_index) : NAN;
 
             for(Index k = 0; k < n_missing; ++k)
@@ -310,13 +310,13 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
                 const Index sample_k = used_sample_indices[start_missing + k];
 
                 if(isnan(prev_value))
-                    data(sample_k, feature_index) = type(next_value);
+                    data(sample_k, feature_index) = float(next_value);
                 else if(isnan(next_value))
-                    data(sample_k, feature_index) = type(prev_value);
+                    data(sample_k, feature_index) = float(prev_value);
                 else if(!isnan(prev_value) && !isnan(next_value))
                 {
-                    const type fraction = type(k + 1) / type(n_missing + 1);
-                    const type value_interpolated = prev_value + (next_value - prev_value) * fraction;
+                    const float fraction = float(k + 1) / float(n_missing + 1);
+                    const float value_interpolated = prev_value + (next_value - prev_value) * fraction;
 
                     data(sample_k, feature_index) = value_interpolated;
                 }
@@ -337,7 +337,7 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
 
 void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
                                     const vector<Index>& input_indices,
-                                    type* input_data,
+                                    float* input_data,
                                      bool parallelize,
                                      int) const
 {
@@ -363,14 +363,14 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
                     inputs(i, j, k) = data(actual_row, input_indices[k]);
             else
                 for(Index k = 0; k < inputs_number; ++k)
-                    inputs(i, j, k) = static_cast<type>(0);
+                    inputs(i, j, k) = static_cast<float>(0);
         }
     }
 }
 
 void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
                                            const vector<Index>& target_indices,
-                                           type* target_data,
+                                           float* target_data,
                                            bool parallelize,
                                            int) const
 {
@@ -393,7 +393,7 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
                 if(target_row < total_rows_in_data)
                     targets(i, j) = data(target_row, target_indices[0]);
                 else
-                    targets(i, j) = static_cast<type>(0);
+                    targets(i, j) = static_cast<float>(0);
             }
         }
         else
@@ -403,26 +403,26 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
             if(target_row < total_rows_in_data)
                 targets(i, 0) = data(target_row, target_indices[0]);
             else
-                targets(i, 0) = static_cast<type>(0);
+                targets(i, 0) = static_cast<float>(0);
         }
     }
 }
 
 void TimeSeriesDataset::fill_gaps()
 {   
-    const type start_time = 50;
-    const type end_time = 100;
+    const float start_time = 50;
+    const float end_time = 100;
 
-    const type period = 2;
+    const float period = 2;
 
-    const type new_samples_number = (end_time - start_time)/period;
-    const type new_features_number = get_features_number();
+    const float new_samples_number = (end_time - start_time)/period;
+    const float new_features_number = get_features_number();
 
     Tensor2 new_data(new_samples_number,  new_features_number);
 
-    type timestamp = 0;
+    float timestamp = 0;
 
-    type new_timestamp = 0;
+    float new_timestamp = 0;
 
     Index row_index = 0;
     const Index column_index = 0;
