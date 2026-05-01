@@ -142,48 +142,48 @@ void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t
              forward_views[Output][0]);
 }
 
-void Bounding::to_XML(XmlPrinter& printer) const
+void Bounding::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Bounding");
 
-    add_xml_element(printer, "Label", label);
-    add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
+    add_json_field(printer, "Label", label);
+    add_json_field(printer, "NeuronsNumber", to_string(output_shape[0]));
 
     if(bounding_method == BoundingMethod::Bounding && ssize(states) > Upper && states[Lower].data)
     {
-        add_xml_element(printer, "LowerBounds", vector_to_string(states[Lower].as_vector()));
-        add_xml_element(printer, "UpperBounds", vector_to_string(states[Upper].as_vector()));
+        add_json_field(printer, "LowerBounds", vector_to_string(states[Lower].as_vector()));
+        add_json_field(printer, "UpperBounds", vector_to_string(states[Upper].as_vector()));
     }
 
-    add_xml_element(printer, "BoundingMethod", bounding_method_map().to_string(bounding_method));
+    add_json_field(printer, "BoundingMethod", bounding_method_map().to_string(bounding_method));
 
     printer.close_element();
 }
 
-void Bounding::from_XML(const XmlDocument& document)
+void Bounding::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "Bounding");
+    const Json* root_element = get_json_root(document, "Bounding");
 
-    const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
+    const Index neurons_number = read_json_index(root_element, "NeuronsNumber");
 
-    set({ neurons_number }, read_xml_string(root_element, "Label"));
+    set({ neurons_number }, read_json_string(root_element, "Label"));
 
-    set_bounding_method(read_xml_string(root_element, "BoundingMethod"));
+    set_bounding_method(read_json_string(root_element, "BoundingMethod"));
 }
 
-void Bounding::load_state_from_XML(const XmlDocument& document)
+void Bounding::load_state_from_JSON(const JsonDocument& document)
 {
     if(bounding_method == BoundingMethod::NoBounding) return;
     if(ssize(states) <= Upper || !states[Lower].data) return;
 
-    const XmlElement* root_element = get_xml_root(document, "Bounding");
+    const Json* root_element = get_json_root(document, "Bounding");
 
     VectorR tmp;
-    string_to_vector(read_xml_string(root_element, "LowerBounds"), tmp);
+    string_to_vector(read_json_string(root_element, "LowerBounds"), tmp);
     if(tmp.size() == states[Lower].size())
         VectorMap(states[Lower].as<float>(), states[Lower].size()) = tmp;
 
-    string_to_vector(read_xml_string(root_element, "UpperBounds"), tmp);
+    string_to_vector(read_json_string(root_element, "UpperBounds"), tmp);
     if(tmp.size() == states[Upper].size())
         VectorMap(states[Upper].as<float>(), states[Upper].size()) = tmp;
 }

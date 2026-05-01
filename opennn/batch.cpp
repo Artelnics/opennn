@@ -42,9 +42,9 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         {
             // LanguageDataset inputs are integer token IDs: BF16's 7 mantissa bits round vocab IDs > 128, so keep FP32.
             const bool integer_inputs = (dynamic_cast<const LanguageDataset*>(dataset) != nullptr);
-            const bool bp16 = Configuration::instance().is_bp16_training() && !integer_inputs;
+            const bool bp16 = Configuration::instance().is_bf16_training() && !integer_inputs;
             const Index elem_bytes = bp16 ? Index(sizeof(__nv_bfloat16)) : Index(sizeof(float));
-            input.resize_bytes(input_shape.size() * elem_bytes, DeviceType::CUDA);
+            input.resize_bytes(input_shape.size() * elem_bytes, Device::CUDA);
 
             num_input_features = dataset->get_features_number("Input");
             const Index input_size = samples_number * num_input_features;
@@ -66,7 +66,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         else
 #endif
         {
-            input.resize_bytes(input_shape.size() * Index(sizeof(float)), DeviceType::CPU);
+            input.resize_bytes(input_shape.size() * Index(sizeof(float)), Device::CPU);
         }
     }
 
@@ -81,7 +81,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 #ifdef OPENNN_WITH_CUDA
         if (Configuration::instance().is_gpu())
         {
-            target.resize_bytes(target_shape.size() * Index(sizeof(float)), DeviceType::CUDA);
+            target.resize_bytes(target_shape.size() * Index(sizeof(float)), Device::CUDA);
 
             num_target_features = dataset->get_features_number("Target");
             const Index target_size = samples_number * num_target_features;
@@ -96,7 +96,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         else
 #endif
         {
-            target.resize_bytes(target_shape.size() * Index(sizeof(float)), DeviceType::CPU);
+            target.resize_bytes(target_shape.size() * Index(sizeof(float)), Device::CPU);
         }
     }
 
@@ -111,7 +111,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 #ifdef OPENNN_WITH_CUDA
         if (Configuration::instance().is_gpu())
         {
-            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(float)), DeviceType::CUDA);
+            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(float)), Device::CUDA);
 
             num_decoder_features = dataset->get_features_number("Decoder");
             const Index decoder_size = samples_number * num_decoder_features;
@@ -126,7 +126,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         else
 #endif
         {
-            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(float)), DeviceType::CPU);
+            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(float)), Device::CPU);
         }
     }
 
@@ -146,7 +146,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if(!input_shape.empty() && input.as<float>())
     {
         const bool integer_inputs = (dynamic_cast<const LanguageDataset*>(dataset) != nullptr);
-        const Type input_dtype = (Configuration::instance().is_bp16_training() && !integer_inputs)
+        const Type input_dtype = (Configuration::instance().is_bf16_training() && !integer_inputs)
                                      ? Type::BF16
                                      : Type::FP32;
         TensorView in_view(input.as<float>(), input_shape, input_dtype);

@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
@@ -114,8 +115,8 @@ public:
 
     // Serialization
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 
 private:
 
@@ -157,10 +158,7 @@ private:
 
     PoolingMethod pooling_method = PoolingMethod::MaxPooling;
 
-    PoolingArguments cached_pool_args;
-
-    cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
-    cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
+    Pool pool;
 };
 
 }

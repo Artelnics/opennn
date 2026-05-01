@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
@@ -50,8 +51,7 @@ public:
 
     vector<pair<Shape, Type>> get_state_specs() const override
     {
-        if (!add_positional_encoding) return {};
-        return {/*PositionalEncoding*/ {{sequence_length, embedding_dimension}, Type::FP32}};
+        return embedding_lookup.state_specs();
     }
 
     float* link_states(float* pointer) override;
@@ -61,16 +61,12 @@ public:
              Index = 0,
              const string & = "embedding_layer");
 
-    void set_scale_embedding(bool enabled) { scale_embedding = enabled; }
-    void set_add_positional_encoding(bool enabled) { add_positional_encoding = enabled; }
+    void set_scale_embedding(bool enabled) { embedding_lookup.scale_embedding = enabled; }
+    void set_add_positional_encoding(bool enabled) { embedding_lookup.add_positional_encoding = enabled; }
 
     void set_dropout_rate(const float rate)
     {
-        if (rate < float(0) || rate >= float(1))
-            throw runtime_error("Dropout rate must be in [0,1).");
-
-        dropout_rate = rate;
-        dropout_arguments.rate = rate;
+        dropout.set_rate(rate);
     }
 
     void set_parameters_random() override;
@@ -80,14 +76,10 @@ public:
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t index) const noexcept override;
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 
-public:
-
-#ifdef OPENNN_WITH_CUDA
-    void init_cuda(Index batch_size);
-#endif
+    float* link_parameters(float* pointer) override;
 
 private:
 
@@ -100,13 +92,8 @@ private:
     Index sequence_length = 0;
     Index embedding_dimension = 0;
 
-    bool scale_embedding = false;
-    bool add_positional_encoding = false;
-
-    float embedding_scale = float(1);
-
-    float dropout_rate = float(0);
-    DropoutArguments dropout_arguments;
+    EmbeddingLookup embedding_lookup;
+    Dropout         dropout;
 };
 
 }

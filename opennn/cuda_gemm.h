@@ -100,6 +100,11 @@ __nv_bfloat16* get_bf16_grad_scratch(Index n_elements);
 
 float* get_fp32_upcast_scratch(Index n_elements);
 
+// Returns input.data when input.type matches target_type; otherwise casts the
+// input into a per-thread scratch buffer of target_type and returns the scratch
+// pointer. Currently supports FP32 <-> BF16 only; throws on unsupported pairs.
+const void* maybe_cast(const TensorView& input, Type target_type);
+
 const LtMatmulPlan& get_lt_gemm_plan(
     int m, int n, int k,
     cublasOperation_t transA,
@@ -119,7 +124,7 @@ inline void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
     const cublasComputeType_t compute = (Atype == CUDA_R_16BF || Btype == CUDA_R_16BF)
                                             ? CUBLAS_COMPUTE_32F
                                             : CUBLAS_COMPUTE_DTYPE;
-    CHECK_CUBLAS(cublasGemmEx(Device::get_cublas_handle(),
+    CHECK_CUBLAS(cublasGemmEx(Backend::get_cublas_handle(),
                               transa, transb,
                               m, n, k,
                               &alpha,
@@ -143,7 +148,7 @@ inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_
     const cublasComputeType_t compute = (io_dtype == CUDA_R_16BF)
                                             ? CUBLAS_COMPUTE_32F
                                             : CUBLAS_COMPUTE_DTYPE;
-    CHECK_CUBLAS(cublasGemmStridedBatchedEx(Device::get_cublas_handle(),
+    CHECK_CUBLAS(cublasGemmStridedBatchedEx(Backend::get_cublas_handle(),
                                             transa, transb,
                                             m, n, k,
                                             &alpha,

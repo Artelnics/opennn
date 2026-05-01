@@ -117,7 +117,7 @@ struct Buffer
 {
     void* data = nullptr;
     Index bytes = 0;
-    DeviceType device_type = DeviceType::CPU;
+    Device device_type = Device::CPU;
 
     template<typename T> T*       as()       { return static_cast<T*>(data); }
     template<typename T> const T* as() const { return static_cast<const T*>(data); }
@@ -125,7 +125,7 @@ struct Buffer
     Index size()  const { return bytes / Index(sizeof(float)); }   // legacy: assumes T = float
     bool  empty() const { return bytes == 0; }
 
-    void resize_bytes(Index n_bytes, DeviceType new_device_type)
+    void resize_bytes(Index n_bytes, Device new_device_type)
     {
         if(n_bytes == bytes && device_type == new_device_type) return;
         free_buffer();
@@ -138,18 +138,18 @@ struct Buffer
     {
         if(!data) return;
 #ifdef OPENNN_WITH_CUDA
-        if(device_type == DeviceType::CUDA) CHECK_CUDA(cudaMemset(data, 0, bytes));
+        if(device_type == Device::CUDA) CHECK_CUDA(cudaMemset(data, 0, bytes));
         else
 #endif
             std::memset(data, 0, static_cast<size_t>(bytes));
     }
 
 #ifdef OPENNN_WITH_CUDA
-    void migrate_to(DeviceType target)
+    void migrate_to(Device target)
     {
         if(device_type == target || !data) return;
         void* fresh = alloc(target, bytes);
-        const cudaMemcpyKind kind = (target == DeviceType::CUDA)
+        const cudaMemcpyKind kind = (target == Device::CUDA)
             ? cudaMemcpyHostToDevice : cudaMemcpyDeviceToHost;
         CHECK_CUDA(cudaMemcpy(fresh, data, bytes, kind));
         dealloc(device_type, data, bytes);
@@ -158,7 +158,7 @@ struct Buffer
     }
 #endif
 
-    explicit Buffer(DeviceType new_device_type = DeviceType::CPU) noexcept : device_type(new_device_type) {}
+    explicit Buffer(Device new_device_type = Device::CPU) noexcept : device_type(new_device_type) {}
     Buffer(const Buffer&) = delete;
     Buffer& operator=(const Buffer&) = delete;
 
@@ -175,18 +175,18 @@ struct Buffer
     }
 
 private:
-    static void* alloc(DeviceType device_type, Index byte_count)
+    static void* alloc(Device device_type, Index byte_count)
     {
 #ifdef OPENNN_WITH_CUDA
-        if(device_type == DeviceType::CUDA) { void* device_pointer = nullptr; CHECK_CUDA(cudaMalloc(&device_pointer, byte_count)); return device_pointer; }
+        if(device_type == Device::CUDA) { void* device_pointer = nullptr; CHECK_CUDA(cudaMalloc(&device_pointer, byte_count)); return device_pointer; }
 #endif
         return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
     }
 
-    static void dealloc(DeviceType device_type, void* pointer, Index byte_count)
+    static void dealloc(Device device_type, void* pointer, Index byte_count)
     {
 #ifdef OPENNN_WITH_CUDA
-        if(device_type == DeviceType::CUDA) { cudaFree(pointer); return; }
+        if(device_type == Device::CUDA) { cudaFree(pointer); return; }
 #endif
         Eigen::aligned_allocator<uint8_t>{}.deallocate(static_cast<uint8_t*>(pointer), static_cast<size_t>(byte_count));
     }
@@ -205,17 +205,17 @@ struct TensorView
 
     Shape shape;
 
-    Type dtype = Type::FP32;
+    Type type = Type::FP32;
 
     TensorView(void* new_data = nullptr, const Shape& new_shape = {},
                Type new_dtype = Type::FP32) noexcept
-        : data(new_data), shape(new_shape), dtype(new_dtype) {}
+        : data(new_data), shape(new_shape), type(new_dtype) {}
 
     Index get_rank() const noexcept { return shape.rank; }
 
     Index size() const noexcept { return shape.size(); }
 
-    Index byte_size() const noexcept { return size() * dtype_bytes(dtype); }
+    Index byte_size() const noexcept { return size() * type_bytes(type); }
 
     bool empty() const noexcept { return shape.empty(); }
 
@@ -231,18 +231,19 @@ struct TensorView
         return reinterpret_cast<float*>(data);
     }
 
-    cudaDataType_t cuda_dtype() const noexcept { return to_cuda(dtype); }
+    cudaDataType_t cuda_dtype() const noexcept { return to_cuda(type); }
 
-    // FP16 is intentionally absent: no kernel in this project is instantiated for __half.
     template<typename F>
     void dispatch(F&& fn) const
     {
-        if (dtype == Type::BF16) fn(__nv_bfloat16{});
-        else                     fn(float{});
+        visit_type<Type::FP32, Type::BF16>(type, [&](auto info)
+        {
+            fn(typename decltype(info)::type{});
+        });
     }
 
     TensorView reshape(const Shape& new_shape) const
-    { return TensorView(data, new_shape, dtype); }
+    { return TensorView(data, new_shape, type); }
 
     MatrixMap as_matrix() const
     {
@@ -334,7 +335,7 @@ private:
             });
         }
 
-        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, to_cudnn(dtype), batch_count, channels, height, width));
+        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, to_cudnn(type), batch_count, channels, height, width));
     }
 
 #endif
@@ -347,11 +348,11 @@ using array = Eigen::array<T, N>;
 string shape_to_string(const Shape&, const string& = " ");
 Shape string_to_shape(const string&, const string& = " ");
 
-class Device
+class Backend
 {
 public:
 
-    static Device& instance();
+    static Backend& instance();
     ThreadPoolDevice* get_thread_pool_device();
     void set_threads_number(int num_threads);
 
@@ -363,8 +364,8 @@ public:
     static cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor() { return instance().operator_multiplication_descriptor; }
 
 private:
-    Device();
-    ~Device();
+    Backend();
+    ~Backend();
 
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
@@ -379,7 +380,7 @@ private:
 
 inline ThreadPoolDevice& get_device()
 {
-    return *Device::instance().get_thread_pool_device();
+    return *Backend::instance().get_thread_pool_device();
 }
 
 inline void TensorView::fill(float value)
@@ -402,13 +403,13 @@ inline void TensorView::fill(float value)
             return;
         }
 
-        CHECK_CUDNN(cudnnSetTensor(Device::get_cudnn_handle(),
+        CHECK_CUDNN(cudnnSetTensor(Backend::get_cudnn_handle(),
                                    get_descriptor(), data, &value));
         return;
     }
 #endif
 
-    assert(dtype == Type::FP32);
+    assert(type == Type::FP32);
     float* data_pointer = static_cast<float*>(data);
     std::fill(data_pointer, data_pointer + size(), value);
 }

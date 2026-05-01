@@ -178,10 +178,8 @@ using TensorMapR = TensorMap<Tensor<float, Rank, Layout | AlignedMax>, AlignedMa
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "tinyxml2.h"
+#include "json.h"
 #pragma GCC diagnostic pop
-
-using namespace tinyxml2;
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

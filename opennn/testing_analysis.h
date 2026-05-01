@@ -225,9 +225,9 @@ public:
 
     // Serialization
 
-    void from_XML(const XmlDocument&);
+    void from_JSON(const JsonDocument&);
 
-    void to_XML(XmlPrinter&) const;
+    void to_JSON(JsonWriter&) const;
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);

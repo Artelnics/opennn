@@ -56,17 +56,17 @@ void NeuralNetwork::compile()
     config = Configuration::instance().resolve();
 
     for (auto& layer : layers)
-        layer->set_activation_dtype(get_training_dtype());
+        layer->set_activation_dtype(get_training_type());
 
     parameters.resize_bytes(aligned_total_elements(get_parameter_shapes()) * Index(sizeof(float)),
-                            DeviceType::CPU);
+                            Device::CPU);
     parameters.setZero();
 
     float* pointer = parameters.as<float>();
     for (auto& layer : layers)
         pointer = layer->link_parameters(pointer);
 
-    states.resize_bytes(get_states_size() * Index(sizeof(float)), DeviceType::CPU);
+    states.resize_bytes(get_states_size() * Index(sizeof(float)), Device::CPU);
     states.setZero();
 
     float* state_pointer = states.as<float>();
@@ -320,11 +320,11 @@ Shape NeuralNetwork::get_output_shape() const
     return layers.back()->get_output_shape();
 }
 
-ActivationFunction NeuralNetwork::get_output_activation() const
+Activation::Function NeuralNetwork::get_output_activation() const
 {
     const Index last_idx = get_last_trainable_layer_index();
     if(last_idx < 0 || static_cast<size_t>(last_idx) >= layers.size())
-        return ActivationFunction::Linear;
+        return Activation::Function::Identity;
 
     return layers[last_idx]->get_output_activation();
 }
@@ -393,16 +393,16 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
     const Index byte_count = new_parameters.size() * Index(sizeof(float));
 
 #ifdef OPENNN_WITH_CUDA
-    if(parameters.device_type == DeviceType::CUDA)
+    if(parameters.device_type == Device::CUDA)
     {
-        parameters.resize_bytes(byte_count, DeviceType::CUDA);
+        parameters.resize_bytes(byte_count, Device::CUDA);
         if(byte_count > 0)
             CHECK_CUDA(cudaMemcpy(parameters.data, new_parameters.data(), byte_count, cudaMemcpyHostToDevice));
         return;
     }
 #endif
 
-    parameters.resize_bytes(byte_count, DeviceType::CPU);
+    parameters.resize_bytes(byte_count, Device::CPU);
     if(byte_count > 0)
         std::memcpy(parameters.data, new_parameters.data(), static_cast<size_t>(byte_count));
 }
@@ -680,7 +680,7 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
     return outputs;
 }
 
-void NeuralNetwork::to_XML(XmlPrinter& printer) const
+void NeuralNetwork::to_JSON(JsonWriter& printer) const
 {
     const Index inputs_number = get_inputs_number();
     const Index layers_number = get_layers_number();
@@ -699,30 +699,42 @@ void NeuralNetwork::to_XML(XmlPrinter& printer) const
     // Input
 
     printer.open_element("Inputs");
-
-    add_xml_element(printer, "InputsNumber", to_string(inputs_number));
-
-    for(Index i = 0; i < inputs_number; ++i)
-        add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
-
+    add_json_field(printer, "InputsNumber", to_string(inputs_number));
+    printer.begin_array("Input");
+    for (Index i = 0; i < inputs_number; ++i)
+    {
+        printer.begin_array_object();
+        add_json_field(printer, "Index", to_string(i + 1));
+        add_json_field(printer, "Text",  input_names[i]);
+        printer.end_array_object();
+    }
+    printer.end_array();
     printer.close_element();
 
     // Layers
 
     printer.open_element("Layers");
+    add_json_field(printer, "LayersNumber", to_string(layers_number));
 
-    add_xml_element(printer, "LayersNumber", to_string(layers_number));
-
-    for(Index i = 0; i < layers_number; ++i)
-        layers[i]->to_XML(printer);
-
-    // Layer input indices
+    printer.begin_array("Items");
+    for (Index i = 0; i < layers_number; ++i)
+    {
+        printer.begin_array_object();
+        layers[i]->to_JSON(printer);
+        printer.end_array_object();
+    }
+    printer.end_array();
 
     printer.open_element("LayerInputIndices");
-
-    for(size_t i = 0; i < layer_input_indices.size(); ++i)
-        add_xml_element_attribute(printer, "LayerInputsIndices", vector_to_string(layer_input_indices[i]), "LayerIndex", to_string(i));
-
+    printer.begin_array("LayerInputsIndices");
+    for (size_t i = 0; i < layer_input_indices.size(); ++i)
+    {
+        printer.begin_array_object();
+        add_json_field(printer, "LayerIndex", to_string(i));
+        add_json_field(printer, "Text", vector_to_string(layer_input_indices[i]));
+        printer.end_array_object();
+    }
+    printer.end_array();
     printer.close_element();
 
     printer.close_element();
@@ -730,142 +742,136 @@ void NeuralNetwork::to_XML(XmlPrinter& printer) const
     // Outputs
 
     printer.open_element("Outputs");
-
     const Index outputs_count = has(LayerType::Embedding) ? outputs_number : output_names.size();
-    add_xml_element(printer, "OutputsNumber", to_string(outputs_count));
-
-    for(Index i = 0; i < outputs_count; ++i)
-        add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
-
+    add_json_field(printer, "OutputsNumber", to_string(outputs_count));
+    printer.begin_array("Output");
+    for (Index i = 0; i < outputs_count; ++i)
+    {
+        printer.begin_array_object();
+        add_json_field(printer, "Index", to_string(i + 1));
+        add_json_field(printer, "Text",  output_names[i]);
+        printer.end_array_object();
+    }
+    printer.end_array();
     printer.close_element();
 
-    // Paramaters
+    // Parameters
 
     printer.open_element("Parameters");
-
     if (parameters.size() > 0)
     {
         const Map<const VectorR, AlignedMax> parameters_view(parameters.as<float>(), parameters.size());
-        printer.push_text(vector_to_string(parameters_view, " ").c_str());
+        add_json_field(printer, "Values", vector_to_string(parameters_view, " "));
     }
-
     printer.close_element();
 
     printer.close_element();
 }
 
-void NeuralNetwork::from_XML(const XmlDocument& document)
+void NeuralNetwork::from_JSON(const JsonDocument& document)
 {
     static const bool _layers_registered = []() { register_classes(); return true; }();
     (void)_layers_registered;
 
-    const XmlElement* neural_network_element = get_xml_root(document, "NeuralNetwork");
+    const Json* neural_network_element = get_json_root(document, "NeuralNetwork");
 
-    const XmlElement* inputs_element = neural_network_element->first_child_element("Inputs");
-    if(inputs_element)
+    const Json* inputs_element = neural_network_element->first_child("Inputs");
+    if (inputs_element)
     {
-        const Index inputs_number = read_xml_index(inputs_element, "InputsNumber");
+        const Index inputs_number = read_json_index(inputs_element, "InputsNumber");
         input_variables.resize(inputs_number);
 
-        for_xml_items(inputs_element, "Input", inputs_number, [this](Index i, const XmlElement* element){
-            if(element->get_text())
-                input_variables[i].name = element->get_text();
+        for_json_items(inputs_element, "Input", inputs_number, [this](Index i, const Json* element) {
+            input_variables[i].name = read_json_string(element, "Text");
         });
     }
 
-    const XmlElement* layers_container = neural_network_element->first_child_element("Layers");
-    if(!layers_container)
+    const Json* layers_container = neural_network_element->first_child("Layers");
+    if (!layers_container)
         throw runtime_error("NeuralNetwork error: layers container is nullptr.");
 
-    const Index layers_number = read_xml_index(layers_container, "LayersNumber");
+    const Index layers_number = read_json_index(layers_container, "LayersNumber");
 
     layers.clear();
     layer_input_indices.clear();
     layers.reserve(layers_number);
     layer_input_indices.resize(layers_number);
 
-    const XmlElement* layer_element = layers_container->first_child_element();
-    while(layer_element)
+    const Json* items_array = layers_container->find("Items");
+    if (items_array && items_array->is_array())
     {
-        string tag_name = layer_element->name();
-
-        if(tag_name != "LayersNumber" && tag_name != "LayerInputIndices")
+        for (const Json& item : items_array->array_value)
         {
+            if (!item.is_object() || item.object_value.empty()) continue;
+
+            const string& tag_name = item.object_value[0].first;
+
             unique_ptr<Layer> layer = Registry<Layer>::instance().create(tag_name);
-
             if (!layer)
-                throw runtime_error("Layer float '" + tag_name + "' not found in Registry. "
-                                                                "Ensure the layer file is linked and REGISTER macro is used.");
+                throw runtime_error("Layer '" + tag_name + "' not found in Registry. "
+                                                          "Ensure the layer file is linked and REGISTER macro is used.");
 
-            XmlDocument layer_doc;
-            layer_doc.insert_first_child(layer_element->deep_clone(&layer_doc));
-            layer->from_XML(layer_doc);
+            JsonDocument layer_doc;
+            layer_doc.root = item;
+            layer->from_JSON(layer_doc);
 
             layers.push_back(std::move(layer));
         }
-        layer_element = layer_element->next_sibling_element();
     }
 
-    const XmlElement* connectivity_element = layers_container->first_child_element("LayerInputIndices");
-    if(connectivity_element)
+    const Json* connectivity_element = layers_container->find("LayerInputIndices");
+    if (connectivity_element)
     {
-        const XmlElement* indices_element = connectivity_element->first_child_element("LayerInputsIndices");
-        while(indices_element)
+        const Json* indices_array = connectivity_element->find("LayerInputsIndices");
+        if (indices_array && indices_array->is_array())
         {
-            int layer_idx = -1;
-            indices_element->query_int_attribute("LayerIndex", &layer_idx);
-
-            if(layer_idx >= 0 && layer_idx < ssize(layers))
+            for (const Json& entry : indices_array->array_value)
             {
-                const char* text = indices_element->get_text();
-                if(text)
+                const long layer_idx = read_json_index(&entry, "LayerIndex");
+                const string text   = read_json_string(&entry, "Text");
+                if (layer_idx >= 0 && layer_idx < ssize(layers) && !text.empty())
                 {
                     Shape shape = string_to_shape(text, " ");
                     layer_input_indices[layer_idx] = vector<Index>(shape.begin(), shape.end());
                 }
             }
-            indices_element = indices_element->next_sibling_element("LayerInputsIndices");
         }
     }
 
-    const XmlElement* outputs_element = neural_network_element->first_child_element("Outputs");
-    if(outputs_element)
+    const Json* outputs_element = neural_network_element->first_child("Outputs");
+    if (outputs_element)
     {
-        const Index outputs_number = read_xml_index(outputs_element, "OutputsNumber");
+        const Index outputs_number = read_json_index(outputs_element, "OutputsNumber");
         output_variables.resize(outputs_number);
 
-        for_xml_items(outputs_element, "Output", outputs_number, [this](Index i, const XmlElement* element){
-            if(element->get_text())
-                output_variables[i].name = element->get_text();
+        for_json_items(outputs_element, "Output", outputs_number, [this](Index i, const Json* element) {
+            output_variables[i].name = read_json_string(element, "Text");
         });
     }
 
     compile();
 
+    if (items_array && items_array->is_array())
     {
         Index layer_idx = 0;
-        const XmlElement* phase2_element = layers_container->first_child_element();
-        while(phase2_element)
+        for (const Json& item : items_array->array_value)
         {
-            const string tag_name = phase2_element->name();
+            if (!item.is_object() || item.object_value.empty()) continue;
+            if (layer_idx >= ssize(layers)) break;
 
-            if(tag_name != "LayersNumber" && tag_name != "LayerInputIndices"
-               && layer_idx < ssize(layers))
-            {
-                XmlDocument layer_doc;
-                layer_doc.insert_first_child(phase2_element->deep_clone(&layer_doc));
-                layers[layer_idx]->load_state_from_XML(layer_doc);
-                ++layer_idx;
-            }
-            phase2_element = phase2_element->next_sibling_element();
+            JsonDocument layer_doc;
+            layer_doc.root = item;
+            layers[layer_idx]->load_state_from_JSON(layer_doc);
+            ++layer_idx;
         }
     }
 
-    const XmlElement* parameters_element = neural_network_element->first_child_element("Parameters");
-    if(parameters_element && parameters_element->get_text())
+    const Json* parameters_element = neural_network_element->first_child("Parameters");
+    const string parameters_text   = parameters_element ? read_json_string(parameters_element, "Values") : string();
+    if (!parameters_text.empty())
     {
         VectorR xml_parameters;
-        string_to_vector(parameters_element->get_text(), xml_parameters);
+        string_to_vector(parameters_text, xml_parameters);
 
         if (xml_parameters.size() > 0)
         {
@@ -888,8 +894,8 @@ void NeuralNetwork::save(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open file: " + file_name.string());
 
-    XmlPrinter printer;
-    to_XML(printer);
+    JsonWriter printer;
+    to_JSON(printer);
     file << printer.c_str();
 }
 
@@ -910,7 +916,7 @@ void NeuralNetwork::load(const filesystem::path& file_name)
 {
     set_default();
 
-    from_XML(load_xml_file(file_name));
+    from_JSON(load_json_file(file_name));
 }
 
 void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
@@ -1051,14 +1057,14 @@ void NeuralNetwork::copy_parameters_device()
 {
     if(parameters.empty()) return;
 
-    parameters.migrate_to(DeviceType::CUDA);
+    parameters.migrate_to(Device::CUDA);
 
     const bool needs_bf16_mirror =
-        config.training_precision  == TrainingPrecision::BP16 ||
-        config.inference_precision == InferencePrecision::BP16;
+        config.training_type  == Type::BF16 ||
+        config.inference_type == Type::BF16;
     if (needs_bf16_mirror)
     {
-        parameters_bf16.resize_bytes(parameters.size() * Index(sizeof(__nv_bfloat16)), DeviceType::CUDA);
+        parameters_bf16.resize_bytes(parameters.size() * Index(sizeof(__nv_bfloat16)), Device::CUDA);
         cast_parameters_to_bf16();
     }
 }
@@ -1077,7 +1083,7 @@ void NeuralNetwork::copy_parameters_host()
 {
     if(parameters.empty()) return;
 
-    parameters.migrate_to(DeviceType::CPU);
+    parameters.migrate_to(Device::CPU);
 }
 
 void NeuralNetwork::link_parameters()
@@ -1110,13 +1116,13 @@ void NeuralNetwork::link_parameters()
                 if(slot_dtype == Type::BF16 && bf16_ptr != nullptr)
                 {
                     param_views[i].data = bf16_ptr;
-                    param_views[i].dtype = Type::BF16;
+                    param_views[i].type = Type::BF16;
                     param_views[i].shape = shapes[i];
                 }
                 else
                 {
                     param_views[i].data = fp32_ptr;
-                    param_views[i].dtype = Type::FP32;
+                    param_views[i].type = Type::FP32;
                     param_views[i].shape = shapes[i];
                 }
             }
@@ -1131,14 +1137,14 @@ void NeuralNetwork::copy_states_device()
 {
     if(states.empty()) return;
 
-    states.migrate_to(DeviceType::CUDA);
+    states.migrate_to(Device::CUDA);
 }
 
 void NeuralNetwork::copy_states_host()
 {
     if(states.empty()) return;
 
-    states.migrate_to(DeviceType::CPU);
+    states.migrate_to(Device::CPU);
 }
 
 void NeuralNetwork::link_states()
@@ -1147,20 +1153,7 @@ void NeuralNetwork::link_states()
     if(!state_pointer) return;
 
     for(auto& layer : layers)
-    {
-        const vector<Shape> shapes = layer->get_state_shapes();
-        auto& state_views = layer->get_state_views();
-
-        for(size_t i = 0; i < shapes.size(); ++i)
-        {
-            if(shapes[i].empty()) continue;
-
-            if(i < state_views.size())
-                state_views[i] = TensorView(state_pointer, shapes[i], Type::FP32);
-
-            state_pointer += get_aligned_size(shapes[i].size());
-        }
-    }
+        state_pointer = layer->link_states(state_pointer);
 }
 
 MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
@@ -1196,7 +1189,7 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     const Index out_cols = out_view.size() / batch_size;
     MatrixR result(batch_size, out_cols);
 
-    if(out_view.dtype == Type::BF16)
+    if(out_view.type == Type::BF16)
     {
         const Index size = out_view.size();
         vector<uint16_t> staging(static_cast<size_t>(size));

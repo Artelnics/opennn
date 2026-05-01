@@ -44,9 +44,9 @@ public:
 
     InputsSelectionResults perform_input_selection() override;
 
-    void from_XML(const XmlDocument&) override;
+    void from_JSON(const JsonDocument&) override;
 
-    void to_XML(XmlPrinter&) const override;
+    void to_JSON(JsonWriter&) const override;
 
 private:
 

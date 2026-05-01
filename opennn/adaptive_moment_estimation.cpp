@@ -333,21 +333,21 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     }
 }
 
-void AdaptiveMomentEstimation::to_XML(XmlPrinter& printer) const
+void AdaptiveMomentEstimation::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("AdaptiveMomentEstimation");
 
-    add_xml_element(printer, "BatchSize", to_string(batch_size));
+    add_json_field(printer, "BatchSize", to_string(batch_size));
     write_common_xml(printer);
 
     printer.close_element();
 }
 
-void AdaptiveMomentEstimation::from_XML(const XmlDocument& document)
+void AdaptiveMomentEstimation::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "AdaptiveMomentEstimation");
+    const Json* root_element = get_json_root(document, "AdaptiveMomentEstimation");
 
-    set_batch_size(read_xml_index(root_element, "BatchSize"));
+    set_batch_size(read_json_index(root_element, "BatchSize"));
     read_common_xml(root_element);
 }
 

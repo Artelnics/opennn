@@ -89,9 +89,9 @@ public:
 
     void print() const override;
 
-    void from_XML(const XmlDocument&) override;
-    void load_state_from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    void from_JSON(const JsonDocument&) override;
+    void load_state_from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 };
 
 }

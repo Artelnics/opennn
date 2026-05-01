@@ -200,11 +200,11 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     return neuron_selection_results;
 }
 
-void GrowingNeurons::to_XML(XmlPrinter& printer) const
+void GrowingNeurons::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("GrowingNeurons");
 
-    write_xml(printer, {
+    write_json(printer, {
         {"MinimumNeurons", to_string(minimum_neurons)},
         {"MaximumNeurons", to_string(maximum_neurons)},
         {"NeuronsIncrement", to_string(neurons_increment)},
@@ -217,17 +217,17 @@ void GrowingNeurons::to_XML(XmlPrinter& printer) const
     printer.close_element();
 }
 
-void GrowingNeurons::from_XML(const XmlDocument& document)
+void GrowingNeurons::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "GrowingNeurons");
+    const Json* root_element = get_json_root(document, "GrowingNeurons");
 
-    set_minimum_neurons(read_xml_index(root_element, "MinimumNeurons"));
-    set_maximum_neurons(read_xml_index(root_element, "MaximumNeurons"));
-    set_neurons_increment(read_xml_index(root_element, "NeuronsIncrement"));
-    set_trials_number(read_xml_index(root_element, "TrialsNumber"));
-    set_validation_error_goal(read_xml_type(root_element, "SelectionErrorGoal"));
-    set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
-    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+    set_minimum_neurons(read_json_index(root_element, "MinimumNeurons"));
+    set_maximum_neurons(read_json_index(root_element, "MaximumNeurons"));
+    set_neurons_increment(read_json_index(root_element, "NeuronsIncrement"));
+    set_trials_number(read_json_index(root_element, "TrialsNumber"));
+    set_validation_error_goal(read_json_type(root_element, "SelectionErrorGoal"));
+    set_maximum_validation_failures(read_json_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_time(read_json_type(root_element, "MaximumTime"));
 }
 
 REGISTER(NeuronSelection, GrowingNeurons, "GrowingNeurons");

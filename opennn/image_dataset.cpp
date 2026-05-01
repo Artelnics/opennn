@@ -78,13 +78,13 @@ void ImageDataset::set_data_random()
     }
 }
 
-void ImageDataset::to_XML(XmlPrinter& printer) const
+void ImageDataset::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("ImageDataset");
 
     printer.open_element("DataSource");
 
-    write_xml(printer, {
+    write_json(printer, {
         {"FileType", "bmp"},
         {"Path", data_path.string()},
         {"HasSamplesId", to_string(has_sample_ids)},
@@ -105,11 +105,11 @@ void ImageDataset::to_XML(XmlPrinter& printer) const
 
     printer.close_element();
 
-    variables_to_XML(printer);
+    variables_to_JSON(printer);
 
-    samples_to_XML(printer);
+    samples_to_JSON(printer);
 
-    add_xml_element(printer, "Display", to_string(display));
+    add_json_field(printer, "Display", to_string(display));
 
     printer.close_element();
 }
@@ -151,34 +151,34 @@ void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
     }
 }
 
-void ImageDataset::from_XML(const XmlDocument& data_set_document)
+void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 {
-    const XmlElement* image_dataset_element = get_xml_root(data_set_document, "ImageDataset");
+    const Json* image_dataset_element = get_json_root(data_set_document, "ImageDataset");
 
-    const XmlElement* data_source_element = require_xml_element(image_dataset_element, "DataSource");
+    const Json* data_source_element = require_json_field(image_dataset_element, "DataSource");
 
-    set_data_path(read_xml_string(data_source_element, "Path"));
-    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
+    set_data_path(read_json_string(data_source_element, "Path"));
+    set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
-    set_shape("Input", { read_xml_index(data_source_element, "Height"),
-                         read_xml_index(data_source_element, "Width"),
-                         read_xml_index(data_source_element, "Channels") });
+    set_shape("Input", { read_json_index(data_source_element, "Height"),
+                         read_json_index(data_source_element, "Width"),
+                         read_json_index(data_source_element, "Channels") });
 
-    set_image_padding(read_xml_index(data_source_element, "Padding"));
+    set_image_padding(read_json_index(data_source_element, "Padding"));
 
-    set_codification(read_xml_string(data_source_element, "Codification"));
+    set_codification(read_json_string(data_source_element, "Codification"));
 
-    augmentation.reflection_axis_x = read_xml_index(data_source_element, "RandomReflectionAxisX");
-    augmentation.reflection_axis_y = read_xml_index(data_source_element, "RandomReflectionAxisY");
-    augmentation.rotation_minimum = read_xml_type(data_source_element, "RandomRotationMinimum");
-    augmentation.rotation_maximum = read_xml_type(data_source_element, "RandomRotationMaximum");
-    augmentation.horizontal_translation_minimum = read_xml_type(data_source_element, "RandomHorizontalTranslationMinimum");
-    augmentation.horizontal_translation_maximum = read_xml_type(data_source_element, "RandomHorizontalTranslationMaximum");
-    augmentation.vertical_translation_minimum = read_xml_type(data_source_element, "RandomVerticalTranslationMinimum");
-    augmentation.vertical_translation_maximum = read_xml_type(data_source_element, "RandomVerticalTranslationMaximum");
+    augmentation.reflection_axis_x = read_json_index(data_source_element, "RandomReflectionAxisX");
+    augmentation.reflection_axis_y = read_json_index(data_source_element, "RandomReflectionAxisY");
+    augmentation.rotation_minimum = read_json_type(data_source_element, "RandomRotationMinimum");
+    augmentation.rotation_maximum = read_json_type(data_source_element, "RandomRotationMaximum");
+    augmentation.horizontal_translation_minimum = read_json_type(data_source_element, "RandomHorizontalTranslationMinimum");
+    augmentation.horizontal_translation_maximum = read_json_type(data_source_element, "RandomHorizontalTranslationMaximum");
+    augmentation.vertical_translation_minimum = read_json_type(data_source_element, "RandomVerticalTranslationMinimum");
+    augmentation.vertical_translation_maximum = read_json_type(data_source_element, "RandomVerticalTranslationMaximum");
 
-    variables_from_XML(require_xml_element(image_dataset_element, "Variables"));
-    samples_from_XML(require_xml_element(image_dataset_element, "Samples"));
+    variables_from_JSON(require_json_field(image_dataset_element, "Variables"));
+    samples_from_JSON(require_json_field(image_dataset_element, "Samples"));
 }
 
 vector<Descriptives> ImageDataset::scale_features(const string&)

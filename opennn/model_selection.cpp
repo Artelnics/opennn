@@ -90,70 +90,60 @@ InputsSelectionResults ModelSelection::perform_input_selection()
     return inputs_selection->perform_input_selection();
 }
 
-void ModelSelection::to_XML(XmlPrinter& printer) const
+void ModelSelection::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("ModelSelection");
 
     printer.open_element("NeuronSelection");
 
-    add_xml_element(printer, "NeuronsSelectionMethod", neurons_selection->get_name());
+    add_json_field(printer, "NeuronsSelectionMethod", neurons_selection->get_name());
 
-    neurons_selection->to_XML(printer);
+    neurons_selection->to_JSON(printer);
 
     printer.close_element();
 
     printer.open_element("InputsSelection");
 
-    add_xml_element(printer, "InputsSelectionMethod", inputs_selection->get_name());
+    add_json_field(printer, "InputsSelectionMethod", inputs_selection->get_name());
 
-    inputs_selection->to_XML(printer);
+    inputs_selection->to_JSON(printer);
 
     printer.close_element();
 
     printer.close_element();
 }
 
-void ModelSelection::from_XML(const XmlDocument& document)
+void ModelSelection::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "ModelSelection");
+    const Json* root_element = get_json_root(document, "ModelSelection");
 
     // Neuron selection
 
-    const XmlElement* neurons_selection_element = require_xml_element(root_element, "NeuronSelection");
+    const Json* neurons_selection_element = require_json_field(root_element, "NeuronSelection");
 
-    const string selection_method = read_xml_string(neurons_selection_element, "NeuronsSelectionMethod");
+    const string selection_method = read_json_string(neurons_selection_element, "NeuronsSelectionMethod");
     
-    const XmlElement* neurons_selection_method_element = neurons_selection_element->first_child_element(selection_method.c_str());
+    const Json* neurons_selection_method_element = neurons_selection_element->first_child(selection_method.c_str());
 
     if (neurons_selection_method_element)
     {
         set_neurons_selection(selection_method);
-
-        XmlDocument selection_method_document;
-        XmlNode* neurons_selection_method_element_copy = neurons_selection_method_element->deep_clone(&selection_method_document);
-        selection_method_document.insert_end_child(neurons_selection_method_element_copy);
-
-        neurons_selection->from_XML(selection_method_document);
+        neurons_selection->from_JSON(JsonDocument::wrap(selection_method, *neurons_selection_method_element));
     }
     else throw runtime_error(selection_method + " element is nullptr.\n");
 
     // Input Validation
 
-    const XmlElement* inputs_selection_element = require_xml_element(root_element, "InputsSelection");
+    const Json* inputs_selection_element = require_json_field(root_element, "InputsSelection");
 
-    const string inputs_method = read_xml_string(inputs_selection_element, "InputsSelectionMethod");
+    const string inputs_method = read_json_string(inputs_selection_element, "InputsSelectionMethod");
 
-    const XmlElement* inputs_selection_method_element = inputs_selection_element->first_child_element(inputs_method.c_str());
+    const Json* inputs_selection_method_element = inputs_selection_element->first_child(inputs_method.c_str());
 
     if (inputs_selection_method_element)
     {
         set_inputs_selection(inputs_method);
-
-        XmlDocument inputs_method_document;
-        XmlNode* inputs_selection_method_element_copy = inputs_selection_method_element->deep_clone(&inputs_method_document);
-        inputs_method_document.insert_end_child(inputs_selection_method_element_copy);
-
-        inputs_selection->from_XML(inputs_method_document);
+        inputs_selection->from_JSON(JsonDocument::wrap(inputs_method, *inputs_selection_method_element));
     }
     else throw runtime_error(inputs_method + " element is nullptr.\n");
 }
@@ -165,14 +155,14 @@ void ModelSelection::save(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open file: " + file_name.string());
 
-    XmlPrinter printer;
-    to_XML(printer);
+    JsonWriter printer;
+    to_JSON(printer);
     file << printer.c_str();
 }
 
 void ModelSelection::load(const filesystem::path& file_name)
 {
-    from_XML(load_xml_file(file_name));
+    from_JSON(load_json_file(file_name));
 }
 
 }

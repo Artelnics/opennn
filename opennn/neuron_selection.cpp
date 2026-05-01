@@ -89,14 +89,14 @@ void NeuronSelection::save(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open file: " + file_name.string());
 
-    XmlPrinter printer;
-    to_XML(printer);
+    JsonWriter printer;
+    to_JSON(printer);
     file << printer.c_str();
 }
 
 void NeuronSelection::load(const filesystem::path& file_name)
 {
-    from_XML(load_xml_file(file_name));
+    from_JSON(load_json_file(file_name));
 }
 
 NeuronsSelectionResults::NeuronsSelectionResults(const Index maximum_epochs)

@@ -85,17 +85,12 @@ void Recurrent::set_output_shape(const Shape& new_output_shape)
 
 void Recurrent::set_activation_function(const string& new_activation_function)
 {
-    string normalized_activation_function = new_activation_function;
-
-    if(normalized_activation_function == "Logistic")
-        normalized_activation_function = "Sigmoid";
-
-    if(normalized_activation_function == "Sigmoid"
-        || normalized_activation_function == "HyperbolicTangent"
-        || normalized_activation_function == "Linear"
-        || normalized_activation_function == "RectifiedLinear"
-        || normalized_activation_function == "ScaledExponentialLinear")
-        activation_function = normalized_activation_function;
+    if(new_activation_function == "Sigmoid"
+        || new_activation_function == "Tanh"
+        || new_activation_function == "Identity"
+        || new_activation_function == "ReLU"
+        || new_activation_function == "SELU")
+        activation_function = new_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
 }
@@ -253,21 +248,21 @@ void Recurrent::back_propagate(ForwardPropagation& /*forward_propagation*/,
 
 // Serialization
 
-void Recurrent::from_XML(const XmlDocument& document)
+void Recurrent::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* recurrent_layer_element = get_xml_root(document, "Recurrent");
+    const Json* recurrent_layer_element = get_json_root(document, "Recurrent");
 
-    set_label(read_xml_string(recurrent_layer_element,"Label"));
-    set_input_shape(string_to_shape(read_xml_string(recurrent_layer_element, "InputDimensions")));
-    set_output_shape({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
-    set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
+    set_label(read_json_string(recurrent_layer_element,"Label"));
+    set_input_shape(string_to_shape(read_json_string(recurrent_layer_element, "InputDimensions")));
+    set_output_shape({ read_json_index(recurrent_layer_element, "NeuronsNumber") });
+    set_activation_function(read_json_string(recurrent_layer_element, "Activation"));
 }
 
-void Recurrent::to_XML(XmlPrinter& printer) const
+void Recurrent::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Recurrent");
 
-    write_xml(printer, {
+    write_json(printer, {
         {"Label", get_label()},
         {"InputDimensions", shape_to_string(get_input_shape())},
         {"NeuronsNumber", to_string(get_output_shape()[0])},

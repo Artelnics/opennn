@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 
 namespace opennn
 {
@@ -61,20 +62,9 @@ private:
     bool batch_normalization = false;
     float momentum = float(0.9);
 
-    ActivationArguments activation_arguments;
-    ConvolutionArguments convolution_arguments;
-
-    cudnnFilterDescriptor_t kernel_descriptor = nullptr;
-    cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
-
-    cudnnConvolutionFwdAlgo_t convolution_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
-    cudnnConvolutionBwdDataAlgo_t algo_data = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
-    cudnnConvolutionBwdFilterAlgo_t algo_filter = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
-
-    void* cuda_workspace = nullptr;
-    size_t cuda_workspace_size = 0;
-    void* cuda_backward_filter_workspace = nullptr;
-    size_t cuda_backward_filter_workspace_size = 0;
+    Convolution convolution;
+    Activation  activation;
+    BatchNorm   batch_norm;
 
     enum Parameters {Bias, Weight, Gamma, Beta};
 
@@ -100,7 +90,7 @@ private:
         };
     }
 
-    enum Forward {Input, PaddedInput, Convolution, BatchNormMean, BatchNormInverseVariance, Output};
+    enum Forward {Input, PaddedInput, ConvolutionView, BatchNormMean, BatchNormInverseVariance, Output};
 
     vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
@@ -111,12 +101,12 @@ private:
                                     input_channels};
         const Type act = activation_dtype;
 
-        const Shape convolution_shape = batch_normalization ? output_shape           : Shape{};
+        const Shape convolution_view_shape = batch_normalization ? output_shape      : Shape{};
         const Shape bn_stat_shape     = batch_normalization ? Shape{kernels_number}  : Shape{};
 
         return {
-            /*PaddedInputs*/             {padded_shape,      act},
-            /*Convolution*/              {convolution_shape, act},
+            /*PaddedInputs*/             {padded_shape,           act},
+            /*ConvolutionView*/          {convolution_view_shape, act},
             /*BatchNormMean*/            {bn_stat_shape,     Type::FP32},
             /*BatchNormInverseVariance*/ {bn_stat_shape,     Type::FP32},
             /*Output*/                   {output_shape,      act},
@@ -138,7 +128,7 @@ public:
 
     Convolutional(const Shape& = {3, 3, 1},
                   const Shape& = {3, 3, 1, 1},
-                  const string& = "Linear",
+                  const string& = "Identity",
                   const Shape& = {1, 1},
                   const string& = "Valid",
                   bool = false,
@@ -177,19 +167,16 @@ public:
 
     ConvolutionType get_convolution_type() const { return convolution_type; }
 
-    ActivationFunction get_activation_function() const { return activation_arguments.activation_function; }
-    ActivationFunction get_output_activation() const override { return activation_arguments.activation_function; }
+    Activation::Function get_activation_function() const { return activation.function; }
+    Activation::Function get_output_activation() const override { return activation.function; }
 
     bool get_batch_normalization() const { return batch_normalization; }
-
-    cudnnFilterDescriptor_t get_kernel_descriptor() const { return kernel_descriptor; }
-    cudnnConvolutionDescriptor_t get_convolution_descriptor() const { return convolution_descriptor; }
 
     // Setters
 
     void set(const Shape& = {0, 0, 0},
              const Shape& = {3, 3, 1, 1},
-             const string& = "Linear",
+             const string& = "Identity",
              const Shape& = {1, 1},
              const string& = "Valid",
              bool = false,
@@ -197,7 +184,7 @@ public:
 
     void set_input_shape(const Shape&) override;
 
-    void load_state_from_XML(const XmlDocument&) override;
+    void load_state_from_JSON(const JsonDocument&) override;
 
     void set_row_stride(const Index);
     void set_column_stride(const Index);
@@ -213,8 +200,12 @@ public:
     void set_parameters_glorot() override;
     void set_parameters_random() override;
 
+    float* link_parameters(float* pointer) override;
+    float* link_states(float* pointer) override;
+
 private:
     void init_conv_norm_defaults();
+    void configure_operators();
 public:
 
     // Device setup
@@ -230,8 +221,8 @@ public:
 
     // Serialization
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 };
 
 }

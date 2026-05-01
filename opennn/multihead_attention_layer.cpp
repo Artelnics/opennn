@@ -44,10 +44,7 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
 float MultiHeadAttention::get_scaling_factor() const
 {
     const Index head_dimension = get_head_dimension();
-
-    return (head_dimension == 0)
-        ? 0.25
-        : float(1) / float(sqrt(head_dimension));
+    return (head_dimension == 0) ? 0.25f : float(1) / float(sqrt(head_dimension));
 }
 
 Index MultiHeadAttention::get_head_dimension() const
@@ -84,20 +81,18 @@ vector<pair<Shape, Type>> MultiHeadAttention::get_parameter_specs() const
 
 void MultiHeadAttention::set_parameters_random()
 {
-    if(embedding_dimension == 0) return;
+    if (embedding_dimension == 0) return;
 
     const float weight_limit = sqrt(float(6) / float(2 * embedding_dimension));
 
-    const int weight_slots[] = {QueryWeight, KeyWeight, ValueWeight, ProjectionWeight};
-    for(const int slot : weight_slots)
-    {
-        if(parameters[slot].empty()) continue;
-        set_random_uniform(VectorMap(parameters[slot].as<float>(), parameters[slot].size()),
-                           -weight_limit, weight_limit);
-    }
+    for (const int slot : {QueryWeight, KeyWeight, ValueWeight, ProjectionWeight})
+        if (!parameters[slot].empty())
+            set_random_uniform(VectorMap(parameters[slot].as<float>(), parameters[slot].size()),
+                               -weight_limit, weight_limit);
 
-    for(const int slot : {QueryBias, KeyBias, ValueBias, ProjectionBias})
-        if(!parameters[slot].empty()) parameters[slot].fill(0.0f);
+    for (const int slot : {QueryBias, KeyBias, ValueBias, ProjectionBias})
+        if (!parameters[slot].empty())
+            parameters[slot].fill(0.0f);
 }
 
 void MultiHeadAttention::set(Index new_query_sequence_length,
@@ -115,16 +110,16 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     heads_number = new_heads_number;
     label = new_label;
 
-    if(new_heads_number == 0 && new_embedding_dimension == 0)
+    if (new_heads_number == 0 && new_embedding_dimension == 0)
     {
         heads_number = 0;
         return;
     }
 
-    if(new_heads_number <= 0)
+    if (new_heads_number <= 0)
         throw runtime_error("MultiHeadAttention Error: Heads number must be greater than 0.");
 
-    if(new_embedding_dimension % new_heads_number != 0)
+    if (new_embedding_dimension % new_heads_number != 0)
         throw runtime_error("MultiHeadAttention Error: The embedding dimension must be divisible by the number of heads.");
 
     use_causal_mask = new_use_causal_mask;
@@ -133,49 +128,31 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     {
         causal_mask.resize(query_sequence_length, source_sequence_length);
 
-        for(Index row = 0; row < query_sequence_length; ++row)
-            for(Index column = 0; column < source_sequence_length; ++column)
+        for (Index row = 0; row < query_sequence_length; ++row)
+            for (Index column = 0; column < source_sequence_length; ++column)
                 causal_mask(row, column) = (column > row) ? NEG_INFINITY : float(0);
     }
+
+    query_projection .set(embedding_dimension, embedding_dimension, activation_dtype);
+    key_projection   .set(embedding_dimension, embedding_dimension, activation_dtype);
+    value_projection .set(embedding_dimension, embedding_dimension, activation_dtype);
+    output_projection.set(embedding_dimension, embedding_dimension, activation_dtype);
 }
 
-#ifdef OPENNN_WITH_CUDA
-
-void MultiHeadAttention::init_cuda(Index batch_size)
+float* MultiHeadAttention::link_parameters(float* pointer)
 {
-    if(dropout_rate <= float(0)) return;
-    if(heads_number == 0 || embedding_dimension == 0) return;
+    pointer = Layer::link_parameters(pointer);
 
-    if(dropout_arguments.descriptor)    { cudnnDestroyDropoutDescriptor(dropout_arguments.descriptor); dropout_arguments.descriptor = nullptr; }
-    if(dropout_arguments.states)        { cudaFree(dropout_arguments.states);        dropout_arguments.states = nullptr; }
-    if(dropout_arguments.reserve_space) { cudaFree(dropout_arguments.reserve_space); dropout_arguments.reserve_space = nullptr; }
+    if (parameters.size() > ProjectionBias)
+    {
+        query_projection .link_parameters({parameters[QueryBias],      parameters[QueryWeight]});
+        key_projection   .link_parameters({parameters[KeyBias],        parameters[KeyWeight]});
+        value_projection .link_parameters({parameters[ValueBias],      parameters[ValueWeight]});
+        output_projection.link_parameters({parameters[ProjectionBias], parameters[ProjectionWeight]});
+    }
 
-    cudnnTensorDescriptor_t temp_desc = nullptr;
-    cudnnCreateTensorDescriptor(&temp_desc);
-    // Dropout: always FP32 (cuDNN 9 rejects BFLOAT16 in DropoutForward; we
-    // up-cast around the call). See math_utilities.cpp::dropout.
-    cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
-                               static_cast<int>(batch_size),
-                               static_cast<int>(source_sequence_length),
-                               static_cast<int>(heads_number),
-                               static_cast<int>(query_sequence_length));
-
-    CHECK_CUDNN(cudnnCreateDropoutDescriptor(&dropout_arguments.descriptor));
-    CHECK_CUDNN(cudnnDropoutGetStatesSize(Device::get_cudnn_handle(), &dropout_arguments.states_size));
-    CHECK_CUDA(cudaMalloc(&dropout_arguments.states, dropout_arguments.states_size));
-    CHECK_CUDNN(cudnnSetDropoutDescriptor(dropout_arguments.descriptor, Device::get_cudnn_handle(),
-                                          static_cast<float>(dropout_rate),
-                                          dropout_arguments.states, dropout_arguments.states_size,
-                                          static_cast<unsigned long long>(random_integer(0, 1 << 30))));
-    CHECK_CUDNN(cudnnDropoutGetReserveSpaceSize(temp_desc, &dropout_arguments.reserve_size));
-    CHECK_CUDA(cudaMalloc(&dropout_arguments.reserve_space, dropout_arguments.reserve_size));
-
-    dropout_arguments.rate = dropout_rate;
-
-    cudnnDestroyTensorDescriptor(temp_desc);
+    return pointer;
 }
-
-#endif
 
 void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagation,
                                            size_t layer,
@@ -193,14 +170,27 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     TensorView& concatenated = forward_views[ConcatenatedAttentionOutputs][0];
     TensorView& output = forward_views.back()[0];
 
-    const Index batch_size = forward_propagation.batch_size;
-    const Index total_rows = batch_size * query_sequence_length;
+    const Index batch_size     = forward_propagation.batch_size;
+    const Index head_dimension = get_head_dimension();
 
     float* transpose_scratch = forward_views[TransposeScratch][0].as<float>();
 
-    projection(query_input,  parameters[QueryWeight], parameters[QueryBias], query, transpose_scratch);
-    projection(source_input, parameters[KeyWeight],   parameters[KeyBias],   key,   transpose_scratch);
-    projection(source_input, parameters[ValueWeight], parameters[ValueBias], value, transpose_scratch);
+    auto apply_qkv_projection = [&](Combination& combo, const TensorView& input,
+                                    Index seq_len, TensorView& head_output)
+    {
+        const Index rows = batch_size * seq_len;
+        TensorView input_2d   = input.reshape({rows, embedding_dimension});
+        TensorView scratch_2d(transpose_scratch, {rows, embedding_dimension}, head_output.type);
+        TensorView scratch_4d(transpose_scratch,
+                              {batch_size, seq_len, heads_number, head_dimension},
+                              head_output.type);
+        combo.apply(input_2d, scratch_2d);
+        split_heads(scratch_4d, head_output);
+    };
+
+    apply_qkv_projection(query_projection, query_input,  query_sequence_length,  query);
+    apply_qkv_projection(key_projection,   source_input, source_sequence_length, key);
+    apply_qkv_projection(value_projection, source_input, source_sequence_length, value);
 
     multiply(query, false, key, true, attention_weights, get_scaling_factor(), float(0));
 
@@ -208,15 +198,15 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
 
     softmax(attention_weights);
 
-    const bool apply_dropout = is_training && dropout_rate > float(0);
+    const bool apply_dropout = is_training && dropout.active();
     TensorView& attention_used = apply_dropout
         ? forward_views[AttentionWeightsDropped][0]
         : attention_weights;
 
-    if(apply_dropout)
+    if (apply_dropout)
     {
         copy(attention_weights, attention_used);
-        dropout(attention_used, dropout_arguments);
+        dropout.apply(attention_used);
     }
 
     TensorView attention_out_scratch = forward_views[AttentionOutputTransposed][0].reshape(heads_shape(batch_size));
@@ -225,14 +215,11 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     multiply(attention_used, false, value, false, attention_out_scratch);
     merge_heads(attention_out_scratch, concatenated_4d);
 
-    const Shape flat_shape = {total_rows, embedding_dimension};
+    const Shape flat_shape = {batch_size * query_sequence_length, embedding_dimension};
     TensorView concatenated_2d = concatenated.reshape(flat_shape);
     TensorView output_2d       = output.reshape(flat_shape);
 
-    combination(concatenated_2d,
-                parameters[ProjectionWeight],
-                parameters[ProjectionBias],
-                output_2d);
+    output_projection.apply(concatenated_2d, output_2d);
 }
 
 void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
@@ -250,21 +237,21 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     TensorView& output_delta = delta_views[OutputDelta][0];
 
     const Index batch_size = forward_propagation.batch_size;
-    const Index total_rows = batch_size * query_sequence_length;
-    const Shape flat_shape = {total_rows, embedding_dimension};
+    const Shape flat_shape = {batch_size * query_sequence_length, embedding_dimension};
 
     float* transpose_scratch = forward_views[TransposeScratch][0].as<float>();
     const float scaling_factor = get_scaling_factor();
 
     TensorView concat_grad_flat = delta_views[ConcatenatedOutputDelta][0].reshape(flat_shape);
+    TensorView output_delta_flat = output_delta.reshape(flat_shape);
+    TensorView concat_in_flat    = forward_views[ConcatenatedAttentionOutputs][0].reshape(flat_shape);
 
-    combination_gradient(output_delta.reshape(flat_shape),
-                         forward_views[ConcatenatedAttentionOutputs][0].reshape(flat_shape),
-                         parameters[ProjectionWeight],
-                         concat_grad_flat,
-                         gradient_views[ProjectionWeight],
-                         gradient_views[ProjectionBias],
-                         false);
+    output_projection.apply_delta(output_delta_flat,
+                                  concat_in_flat,
+                                  concat_grad_flat,
+                                  gradient_views[ProjectionWeight],
+                                  gradient_views[ProjectionBias],
+                                  false);
 
     const TensorView& attention_weights = forward_views[AttentionWeights][0];
     TensorView& concat_grad     = delta_views[ConcatenatedOutputDelta][0];
@@ -278,70 +265,96 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 
     split_heads(concat_grad_4d, scratch_4d);
 
-    const bool dropout_active = dropout_rate > float(0);
-    const TensorView& attention_forward_output = dropout_active
+    const TensorView& attention_forward_output = dropout.active()
         ? forward_views[AttentionWeightsDropped][0]
         : attention_weights;
 
     multiply(attention_forward_output, true, scratch_4d, false, value_grad);
-
     multiply(scratch_4d, false, forward_views[Value][0], true, att_weight_grad);
 
-    if(dropout_active)
-        dropout_delta(att_weight_grad, att_weight_grad, dropout_arguments);
+    if (dropout.active())
+        dropout.apply_delta(att_weight_grad);
 
     softmax_backward(attention_weights, att_weight_grad);
 
     multiply(att_weight_grad, false, forward_views[Key][0],   false, query_grad, scaling_factor, float(0));
-
     multiply(att_weight_grad, true,  forward_views[Query][0], false, key_grad,   scaling_factor, float(0));
 
-    projection_gradient(query_grad, query_input, parameters[QueryWeight],
-                        gradient_views[QueryBias], gradient_views[QueryWeight],
-                        delta_views[InputQueryDelta][0],
-                        transpose_scratch, /*accumulate*/ false);
+    const Index head_dimension = get_head_dimension();
+
+    auto apply_qkv_projection_grad = [&](const Combination& combo,
+                                         const TensorView& head_grad,
+                                         const TensorView& input,
+                                         Index seq_len,
+                                         TensorView& input_grad,
+                                         TensorView& weight_grad,
+                                         TensorView& bias_grad,
+                                         bool accumulate)
+    {
+        const Index rows = batch_size * seq_len;
+        TensorView scratch_4d(transpose_scratch,
+                              {batch_size, seq_len, heads_number, head_dimension},
+                              head_grad.type);
+        merge_heads(head_grad, scratch_4d);
+
+        TensorView scratch_2d(transpose_scratch, {rows, embedding_dimension}, head_grad.type);
+        TensorView input_2d      = input.reshape({rows, embedding_dimension});
+        TensorView input_grad_2d = input_grad.reshape({rows, embedding_dimension});
+
+        combo.apply_delta(scratch_2d, input_2d, input_grad_2d, weight_grad, bias_grad, accumulate);
+    };
+
+    apply_qkv_projection_grad(query_projection, query_grad, query_input,
+                              query_sequence_length,
+                              delta_views[InputQueryDelta][0],
+                              gradient_views[QueryWeight], gradient_views[QueryBias],
+                              false);
 
     TensorView& kv_input_grad = self_attention
         ? delta_views[InputQueryDelta][0]
         : delta_views[InputSourceDelta][0];
 
-    projection_gradient(key_grad, source_input, parameters[KeyWeight],
-                        gradient_views[KeyBias], gradient_views[KeyWeight],
-                        kv_input_grad,
-                        transpose_scratch, self_attention);
+    apply_qkv_projection_grad(key_projection, key_grad, source_input,
+                              source_sequence_length,
+                              kv_input_grad,
+                              gradient_views[KeyWeight], gradient_views[KeyBias],
+                              self_attention);
 
-    projection_gradient(value_grad, source_input, parameters[ValueWeight],
-                        gradient_views[ValueBias], gradient_views[ValueWeight],
-                        kv_input_grad,
-                        transpose_scratch, true);
+    apply_qkv_projection_grad(value_projection, value_grad, source_input,
+                              source_sequence_length,
+                              kv_input_grad,
+                              gradient_views[ValueWeight], gradient_views[ValueBias],
+                              true);
 }
 
-void MultiHeadAttention::from_XML(const XmlDocument& document)
+void MultiHeadAttention::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "MultiHeadAttention");
+    const Json* root_element = get_json_root(document, "MultiHeadAttention");
 
-    const string new_label = read_xml_string(root_element, "Label");
-    const Index new_query_sequence_length = read_xml_index(root_element, "QuerySequenceLength");
-    const Index new_source_sequence_length = read_xml_index(root_element, "SourceSequenceLength");
-    const Index new_embedding_dimension = read_xml_index(root_element, "EmbeddingDimension");
-    const Index new_heads_number = read_xml_index(root_element, "HeadsNumber");
-    const bool  new_use_causal_mask = read_xml_bool(root_element, "CausalMask");
+    const string new_label = read_json_string(root_element, "Label");
+    const Index new_query_sequence_length = read_json_index(root_element, "QuerySequenceLength");
+    const Index new_source_sequence_length = read_json_index(root_element, "SourceSequenceLength");
+    const Index new_embedding_dimension = read_json_index(root_element, "EmbeddingDimension");
+    const Index new_heads_number = read_json_index(root_element, "HeadsNumber");
+    const bool  new_use_causal_mask = read_json_bool(root_element, "CausalMask");
 
     set(new_query_sequence_length, new_source_sequence_length, new_embedding_dimension,
         new_heads_number, new_use_causal_mask, new_label);
 }
 
-void MultiHeadAttention::to_XML(XmlPrinter& printer) const
+void MultiHeadAttention::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("MultiHeadAttention");
-    write_xml(printer, {
+
+    write_json(printer, {
         {"Label", label},
         {"QuerySequenceLength", to_string(query_sequence_length)},
         {"SourceSequenceLength", to_string(source_sequence_length)},
         {"EmbeddingDimension", to_string(embedding_dimension)},
         {"HeadsNumber", to_string(heads_number)},
-        {"CausalMask", to_string(use_causal_mask ? 1 : 0)}
+        {"CausalMask", to_string(use_causal_mask)}
     });
+
     printer.close_element();
 }
 

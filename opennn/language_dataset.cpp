@@ -432,13 +432,13 @@ unordered_map<string, Index> LanguageDataset::create_vocabulary_map(const vector
     return vocabulary_map;
 }
 
-void LanguageDataset::to_XML(XmlPrinter& printer) const
+void LanguageDataset::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Dataset");
 
     printer.open_element("DataSource");
 
-    write_xml(printer, {
+    write_json(printer, {
         {"FileType", "csv"},
         {"Path", data_path.string()},
         {"Separator", get_separator_name()},
@@ -449,17 +449,17 @@ void LanguageDataset::to_XML(XmlPrinter& printer) const
     });
     printer.close_element();
 
-    variables_to_XML(printer);
+    variables_to_JSON(printer);
 
-    samples_to_XML(printer);
+    samples_to_JSON(printer);
 
-    missing_values_to_XML(printer);
+    missing_values_to_JSON(printer);
 
-    preview_data_to_XML(printer);
+    preview_data_to_JSON(printer);
 
     const string separator_string = get_separator_string();
 
-    write_xml(printer, {
+    write_json(printer, {
         {"InputVocabulary", vector_to_string(input_vocabulary, separator_string)},
         {"TargetVocabulary", vector_to_string(target_vocabulary, separator_string)},
         {"MaximumInputSequenceLength", to_string(maximum_input_sequence_length)},
@@ -470,56 +470,47 @@ void LanguageDataset::to_XML(XmlPrinter& printer) const
     printer.close_element();
 }
 
-void LanguageDataset::from_XML(const XmlDocument& data_set_document)
+void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
 {
-    const XmlElement* data_set_element = get_xml_root(data_set_document, "Dataset");
+    const Json* data_set_element = get_json_root(data_set_document, "Dataset");
 
-    const XmlElement* data_source_element = require_xml_element(data_set_element, "DataSource");
+    const Json* data_source_element = require_json_field(data_set_element, "DataSource");
 
-    set_data_path(read_xml_string(data_source_element, "Path"));
-    set_separator_name(read_xml_string(data_source_element, "Separator"));
-    set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
-    set_codification(read_xml_string(data_source_element, "Codification"));
-    set_has_header(read_xml_bool(data_source_element, "HasHeader"));
-    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
+    set_data_path(read_json_string(data_source_element, "Path"));
+    set_separator_name(read_json_string(data_source_element, "Separator"));
+    set_missing_values_label(read_json_string(data_source_element, "MissingValuesLabel"));
+    set_codification(read_json_string(data_source_element, "Codification"));
+    set_has_header(read_json_bool(data_source_element, "HasHeader"));
+    set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
-    const XmlElement* variables_element = data_set_element->first_child_element("Variables");
-    variables_from_XML(variables_element);
+    const Json* variables_element = data_set_element->first_child("Variables");
+    variables_from_JSON(variables_element);
 
-    const XmlElement* samples_element = data_set_element->first_child_element("Samples");
-    samples_from_XML(samples_element);
+    const Json* samples_element = data_set_element->first_child("Samples");
+    samples_from_JSON(samples_element);
 
-    const XmlElement* missing_values_element = data_set_element->first_child_element("MissingValues");
-    missing_values_from_XML(missing_values_element);
+    const Json* missing_values_element = data_set_element->first_child("MissingValues");
+    missing_values_from_JSON(missing_values_element);
 
-    const XmlElement* preview_data_element = data_set_element->first_child_element("PreviewData");
-    preview_data_from_XML(preview_data_element);
+    const Json* preview_data_element = data_set_element->first_child("PreviewData");
+    preview_data_from_JSON(preview_data_element);
 
     const string separator_string = get_separator_string();
 
-    const XmlElement* input_vocabulary_element = data_set_element->first_child_element("InputVocabulary");
-    if(input_vocabulary_element && input_vocabulary_element->get_text())
-        input_vocabulary = get_tokens(input_vocabulary_element->get_text(), separator_string);
+    const string input_vocab_text = read_json_string(data_set_element, "InputVocabulary");
+    if (!input_vocab_text.empty())
+        input_vocabulary = get_tokens(input_vocab_text, separator_string);
     else
         input_vocabulary.clear();
 
-    const XmlElement* target_vocabulary_element = data_set_element->first_child_element("TargetVocabulary");
-    if(target_vocabulary_element && target_vocabulary_element->get_text())
-        target_vocabulary = get_tokens(target_vocabulary_element->get_text(), separator_string);
+    const string target_vocab_text = read_json_string(data_set_element, "TargetVocabulary");
+    if (!target_vocab_text.empty())
+        target_vocabulary = get_tokens(target_vocab_text, separator_string);
     else
         target_vocabulary.clear();
 
-    const XmlElement* input_len_element = data_set_element->first_child_element("MaximumInputSequenceLength");
-    if(input_len_element && input_len_element->get_text())
-        maximum_input_sequence_length = atoi(input_len_element->get_text());
-    else
-        maximum_input_sequence_length = 0;
-
-    const XmlElement* target_len_element = data_set_element->first_child_element("MaximumTargetSequenceLength");
-    if(target_len_element && target_len_element->get_text())
-        maximum_target_sequence_length = atoi(target_len_element->get_text());
-    else
-        maximum_target_sequence_length = 0;
+    maximum_input_sequence_length  = read_json_index(data_set_element, "MaximumInputSequenceLength");
+    maximum_target_sequence_length = read_json_index(data_set_element, "MaximumTargetSequenceLength");
 
     input_shape = { get_maximum_input_sequence_length() };
     target_shape = { get_maximum_target_sequence_length() };
@@ -534,7 +525,7 @@ void LanguageDataset::from_XML(const XmlDocument& data_set_document)
     if(!variables.empty() && !input_vocabulary.empty())
         variables[0].categories = input_vocabulary;
 
-    set_display(read_xml_bool(data_set_element, "Display"));
+    set_display(read_json_bool(data_set_element, "Display"));
 
     ifstream file(data_path);
 

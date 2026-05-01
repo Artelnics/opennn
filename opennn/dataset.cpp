@@ -1626,12 +1626,12 @@ void Dataset::set_data_integer(const Index vocabulary_size)
     set_random_integer(data, 0, vocabulary_size - 1);
 }
 
-void Dataset::to_XML(XmlPrinter& printer) const
+void Dataset::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Dataset");
 
     printer.open_element("DataSource");
-    write_xml(printer, {
+    write_json(printer, {
         {"FileType", "csv"},
         {"Path", data_path.string()},
         {"Separator", get_separator_name()},
@@ -1642,104 +1642,107 @@ void Dataset::to_XML(XmlPrinter& printer) const
     });
     printer.close_element();
 
-    variables_to_XML(printer);
-    samples_to_XML(printer);
-    missing_values_to_XML(printer);
-    preview_data_to_XML(printer);
+    variables_to_JSON(printer);
+    samples_to_JSON(printer);
+    missing_values_to_JSON(printer);
+    preview_data_to_JSON(printer);
 
-    add_xml_element(printer, "Display", to_string(display));
+    add_json_field(printer, "Display", to_string(display));
 
     printer.close_element();
 }
 
-void Dataset::variables_to_XML(XmlPrinter &printer) const
+void Dataset::variables_to_JSON(JsonWriter &printer) const
 {
     printer.open_element("Variables");
-    add_xml_element(printer, "VariablesNumber", to_string(get_variables_number()));
+    add_json_field(printer, "VariablesNumber", to_string(get_variables_number()));
 
-    for(Index i = 0; i < get_variables_number(); ++i)
+    printer.begin_array("Variable");
+    for (Index i = 0; i < get_variables_number(); ++i)
     {
-        printer.open_element("Variable");
-        printer.push_attribute("Item", to_string(i + 1).c_str());
-        variables[i].to_XML(printer);
-        printer.close_element();
+        printer.begin_array_object();
+        variables[i].to_JSON(printer);
+        printer.end_array_object();
     }
+    printer.end_array();
 
     printer.close_element();
 }
 
-void Dataset::samples_to_XML(XmlPrinter &printer) const
+void Dataset::samples_to_JSON(JsonWriter &printer) const
 {
     printer.open_element("Samples");
 
-    add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
+    add_json_field(printer, "SamplesNumber", to_string(get_samples_number()));
 
     const string separator_string = get_separator_string();
 
     if (has_sample_ids)
-        add_xml_element(printer, "SamplesId", vector_to_string(sample_ids, separator_string));
+        add_json_field(printer, "SamplesId", vector_to_string(sample_ids, separator_string));
 
-    add_xml_element(printer, "SampleRoles", vector_to_string(get_sample_roles_vector()));
+    add_json_field(printer, "SampleRoles", vector_to_string(get_sample_roles_vector()));
     printer.close_element();
 }
 
-void Dataset::missing_values_to_XML(XmlPrinter &printer) const
+void Dataset::missing_values_to_JSON(JsonWriter &printer) const
 {
     printer.open_element("MissingValues");
 
     if (missing_values_number > 0)
-        write_xml(printer, {
+        write_json(printer, {
             {"MissingValuesNumber", to_string(missing_values_number)},
             {"MissingValuesMethod", get_missing_values_method_string()},
             {"VariablesMissingValuesNumber", vector_to_string(variables_missing_values_number)},
             {"SamplesMissingValuesNumber", to_string(rows_missing_values_number)}
         });
     else
-        add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
+        add_json_field(printer, "MissingValuesNumber", to_string(missing_values_number));
 
     printer.close_element();
 }
 
-void Dataset::preview_data_to_XML(XmlPrinter &printer) const
+void Dataset::preview_data_to_JSON(JsonWriter &printer) const
 {
     printer.open_element("PreviewData");
 
-    add_xml_element(printer, "PreviewSize", to_string(data_file_preview.size()));
+    add_json_field(printer, "PreviewSize", to_string(data_file_preview.size()));
 
-    vector<string> vector_data_file_preview = convert_string_vector(data_file_preview,",");
+    vector<string> vector_data_file_preview = convert_string_vector(data_file_preview, ",");
 
-    for(size_t i = 0; i < data_file_preview.size(); ++i){
-        printer.open_element("Row");
-        printer.push_attribute("Item", to_string(i + 1).c_str());
-        printer.push_text(vector_data_file_preview[i].data());
-        printer.close_element();
+    printer.begin_array("Row");
+    for (size_t i = 0; i < data_file_preview.size(); ++i)
+    {
+        printer.begin_array_object();
+        add_json_field(printer, "Text", vector_data_file_preview[i]);
+        printer.end_array_object();
     }
+    printer.end_array();
 
     printer.close_element();
 }
 
-void Dataset::variables_from_XML(const XmlElement *variables_element)
+void Dataset::variables_from_JSON(const Json *variables_element)
 {
     if(!variables_element)
         throw runtime_error("Variables element is nullptr.\n");
 
-    set_variables_number(read_xml_index(variables_element, "VariablesNumber"));
+    set_variables_number(read_json_index(variables_element, "VariablesNumber"));
 
-    for_xml_items(variables_element, "Variable", variables.size(), [&](Index i, const XmlElement* el)
+    for_json_items(variables_element, "Variable", variables.size(), [&](Index i, const Json* el)
     {
         Variable& variable = variables[i];
 
-        variable.name = read_xml_string(el, "Name");
-        variable.set_scaler(read_xml_string(el, "Scaler"));
-        variable.set_role(read_xml_string(el, "Role"));
-        variable.set_type(read_xml_string(el, "Type"));
+        variable.name = read_json_string(el, "Name");
+        variable.set_scaler(read_json_string(el, "Scaler"));
+        variable.set_role(read_json_string(el, "Role"));
+        variable.set_type(read_json_string(el, "Type"));
 
         if (variable.type == VariableType::Categorical || variable.type == VariableType::Binary)
         {
-            const XmlElement* categories_element = el->first_child_element("Categories");
+            const Json* categories_element = el->first_child("Categories");
 
             if (categories_element)
-                variable.categories = get_tokens(read_xml_string(el, "Categories"), ";");
+                variable.categories = get_tokens(read_json_string(el, "Categories"), ";");
             else if (variable.type == VariableType::Binary)
                 variable.categories = { "0", "1" };
             else
@@ -1748,17 +1751,17 @@ void Dataset::variables_from_XML(const XmlElement *variables_element)
     });
 }
 
-void Dataset::samples_from_XML(const XmlElement *samples_element)
+void Dataset::samples_from_JSON(const Json *samples_element)
 {
     if(!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
 
-    const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
+    const Index samples_number = read_json_index(samples_element, "SamplesNumber");
 
     if (has_sample_ids)
     {
         const string separator_string = get_separator_string();
-        sample_ids = get_tokens(read_xml_string(samples_element, "SamplesId"), separator_string);
+        sample_ids = get_tokens(read_json_string(samples_element, "SamplesId"), separator_string);
     }
 
     if (!variables.empty())
@@ -1769,24 +1772,24 @@ void Dataset::samples_from_XML(const XmlElement *samples_element)
         data = MatrixR::Zero(samples_number, last_indices.back() + 1);
 
         sample_roles.resize(samples_number, SampleRole::Training);
-        set_sample_roles(get_tokens(read_xml_string(samples_element, "SampleRoles"), " "));
+        set_sample_roles(get_tokens(read_json_string(samples_element, "SampleRoles"), " "));
     }
     else
         data.resize(0, 0);
 }
 
-void Dataset::missing_values_from_XML(const XmlElement *missing_values_element)
+void Dataset::missing_values_from_JSON(const Json *missing_values_element)
 {
     if(!missing_values_element)
         throw runtime_error("Missing values element is nullptr.\n");
 
-    missing_values_number = read_xml_index(missing_values_element, "MissingValuesNumber");
+    missing_values_number = read_json_index(missing_values_element, "MissingValuesNumber");
 
     if(missing_values_number > 0)
     {
-        set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
+        set_missing_values_method(read_json_string(missing_values_element, "MissingValuesMethod"));
 
-        const string variables_string = read_xml_string_fallback(missing_values_element,
+        const string variables_string = read_json_string_fallback(missing_values_element,
             {"VariablesMissingValuesNumber", "RawVariablesMissingValuesNumber"});
 
         const vector<string> tokens = get_tokens(variables_string, " ");
@@ -1796,48 +1799,49 @@ void Dataset::missing_values_from_XML(const XmlElement *missing_values_element)
             if(!tokens[i].empty())
                 variables_missing_values_number(i) = stoi(tokens[i]);
 
-        rows_missing_values_number = stol(read_xml_string_fallback(missing_values_element,
+        rows_missing_values_number = stol(read_json_string_fallback(missing_values_element,
             {"SamplesMissingValuesNumber", "RowsMissingValuesNumber"}));
     }
 }
-void Dataset::preview_data_from_XML(const XmlElement *preview_data_element)
+void Dataset::preview_data_from_JSON(const Json *preview_data_element)
 {
     if(!preview_data_element)
         throw runtime_error("Preview data element is nullptr.\n ");
 
-    const Index preview_size = read_xml_index(preview_data_element, "PreviewSize");
+    const Index preview_size = read_json_index(preview_data_element, "PreviewSize");
 
     if(preview_size > 0)
     {
         data_file_preview.resize(preview_size);
 
-        for_xml_items(preview_data_element, "Row", preview_size, [&](Index i, const XmlElement* row)
+        for_json_items(preview_data_element, "Row", preview_size, [&](Index i, const Json* row)
         {
-            if(row->get_text())
-                data_file_preview[i] = get_tokens(row->get_text(), ",");
+            const string text = read_json_string(row, "Text");
+            if (!text.empty())
+                data_file_preview[i] = get_tokens(text, ",");
         });
     }
 }
 
-void Dataset::from_XML(const XmlDocument& data_set_document)
+void Dataset::from_JSON(const JsonDocument& data_set_document)
 {
-    const XmlElement* root = get_xml_root(data_set_document, "Dataset");
+    const Json* root = get_json_root(data_set_document, "Dataset");
 
-    const XmlElement* src = require_xml_element(root, "DataSource");
+    const Json* src = require_json_field(root, "DataSource");
 
-    set_data_path(read_xml_string(src, "Path"));
-    set_separator_name(read_xml_string(src, "Separator"));
-    set_has_header(read_xml_bool(src, "HasHeader"));
-    set_has_ids(read_xml_bool(src, "HasSamplesId"));
-    set_missing_values_label(read_xml_string(src, "MissingValuesLabel"));
-    set_codification(read_xml_string(src, "Codification"));
+    set_data_path(read_json_string(src, "Path"));
+    set_separator_name(read_json_string(src, "Separator"));
+    set_has_header(read_json_bool(src, "HasHeader"));
+    set_has_ids(read_json_bool(src, "HasSamplesId"));
+    set_missing_values_label(read_json_string(src, "MissingValuesLabel"));
+    set_codification(read_json_string(src, "Codification"));
 
-    variables_from_XML(require_xml_element(root, "Variables"));
-    samples_from_XML(require_xml_element(root, "Samples"));
-    missing_values_from_XML(require_xml_element(root, "MissingValues"));
-    preview_data_from_XML(require_xml_element(root, "PreviewData"));
+    variables_from_JSON(require_json_field(root, "Variables"));
+    samples_from_JSON(require_json_field(root, "Samples"));
+    missing_values_from_JSON(require_json_field(root, "MissingValues"));
+    preview_data_from_JSON(require_json_field(root, "PreviewData"));
 
-    set_display(read_xml_bool(root, "Display"));
+    set_display(read_json_bool(root, "Display"));
 
     input_shape = { get_features_number("Input") };
     target_shape = { get_features_number("Target") };
@@ -1850,16 +1854,16 @@ void Dataset::save(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open file: " + file_name.string());
 
-    XmlPrinter document;
+    JsonWriter document;
 
-    to_XML(document);
+    to_JSON(document);
 
     file << document.c_str();
 }
 
 void Dataset::load(const filesystem::path& file_name)
 {
-    from_XML(load_xml_file(file_name));
+    from_JSON(load_json_file(file_name));
 }
 
 void Dataset::save_data() const

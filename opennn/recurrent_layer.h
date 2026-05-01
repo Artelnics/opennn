@@ -59,8 +59,8 @@ public:
     const TensorView& get_recurrent_weights() const { return recurrent_weights; }
     const string& get_activation_function() const { return activation_function; }
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 
 private:
 
@@ -71,7 +71,7 @@ private:
     TensorView input_weights;
     TensorView recurrent_weights;
 
-    string activation_function = "HyperbolicTangent";
+    string activation_function = "Tanh";
 };
 
 }

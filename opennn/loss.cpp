@@ -265,38 +265,23 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
         l2_regularization_gradient(parameters, regularization_weight, gradient);
 }
 
-void Loss::regularization_from_XML(const XmlDocument& document)
+void Loss::regularization_from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "Regularization");
+    const Json* root_element = get_json_root(document, "Regularization");
 
-    const string new_regularization_method = root_element->attribute("Type");
+    set_regularization(read_json_string(root_element, "Type"));
 
-    set_regularization(new_regularization_method);
-
-    const XmlElement* element = root_element->first_child_element("RegularizationWeight");
-
-    if(element)
-    {
-        const float new_regularization_weight = float(atof(element->get_text()));
-
-        set_regularization_weight(new_regularization_weight);
-    }
+    if (root_element->has("RegularizationWeight"))
+        set_regularization_weight(float(read_json_type(root_element, "RegularizationWeight")));
 }
 
-void Loss::regularization_to_XML(XmlPrinter& file_stream) const
+void Loss::regularization_to_JSON(JsonWriter& file_stream) const
 {
     file_stream.open_element("Regularization");
-
-    file_stream.push_attribute("Type", regularization_to_string(regularization_method).c_str());
-
-    // Regularization weight
-
-    file_stream.open_element("RegularizationWeight");
-    file_stream.push_text(to_string(regularization_weight).c_str());
-    file_stream.close_element();
-
-    // Close regularization
-
+    write_json(file_stream, {
+        {"Type", regularization_to_string(regularization_method)},
+        {"RegularizationWeight", to_string(regularization_weight)}
+    });
     file_stream.close_element();
 }
 
@@ -522,50 +507,50 @@ float Loss::calculate_h(const float x)
     return sqrt_eta * (float(1) + abs(x));
 }
 
-void Loss::to_XML(XmlPrinter& printer) const
+void Loss::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Loss");
-    write_xml(printer, {
+    write_json(printer, {
         {"Method", get_name()},
         {"Regularization", regularization_to_string(regularization_method)},
         {"RegularizationWeight", to_string(regularization_weight)}
     });
 
     if (error == Error::NormalizedSquaredError)
-        add_xml_element(printer, "NormalizationCoefficient", to_string(normalization_coefficient));
+        add_json_field(printer, "NormalizationCoefficient", to_string(normalization_coefficient));
 
     if (error == Error::WeightedSquaredError)
-        write_xml(printer, {
+        write_json(printer, {
             {"PositivesWeight", to_string(positives_weight)},
             {"NegativesWeight", to_string(negatives_weight)}
         });
 
     if (error == Error::MinkowskiError)
-        add_xml_element(printer, "MinkowskiParameter", to_string(minkowski_parameter));
+        add_json_field(printer, "MinkowskiParameter", to_string(minkowski_parameter));
 
     printer.close_element();
 }
 
-void Loss::from_XML(const XmlDocument& document)
+void Loss::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root = document.first_child_element("Loss");
-    if(!root) throw runtime_error("Loss::from_XML error: missing Loss element.");
+    const Json* root = document.first_child("Loss");
+    if(!root) throw runtime_error("Loss::from_JSON error: missing Loss element.");
 
-    set_error(read_xml_string(root, "Method"));
+    set_error(read_json_string(root, "Method"));
 
-    set_regularization(read_xml_string(root, "Regularization"));
-    regularization_weight = read_xml_type(root, "RegularizationWeight");
+    set_regularization(read_json_string(root, "Regularization"));
+    regularization_weight = read_json_type(root, "RegularizationWeight");
 
-    if (root->first_child_element("NormalizationCoefficient"))
-        normalization_coefficient = read_xml_type(root, "NormalizationCoefficient");
+    if (root->first_child("NormalizationCoefficient"))
+        normalization_coefficient = read_json_type(root, "NormalizationCoefficient");
 
-    if (root->first_child_element("PositivesWeight")) {
-        positives_weight = read_xml_type(root, "PositivesWeight");
-        negatives_weight = read_xml_type(root, "NegativesWeight");
+    if (root->first_child("PositivesWeight")) {
+        positives_weight = read_json_type(root, "PositivesWeight");
+        negatives_weight = read_json_type(root, "NegativesWeight");
     }
 
-    if (root->first_child_element("MinkowskiParameter"))
-        minkowski_parameter = read_xml_type(root, "MinkowskiParameter");
+    if (root->first_child("MinkowskiParameter"))
+        minkowski_parameter = read_json_type(root, "MinkowskiParameter");
 }
 
 MatrixR Loss::calculate_numerical_hessian()

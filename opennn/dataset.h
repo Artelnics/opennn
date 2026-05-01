@@ -365,8 +365,8 @@ public:
 
     // Serialization
 
-    virtual void from_XML(const XmlDocument&);
-    virtual void to_XML(XmlPrinter&) const;
+    virtual void from_JSON(const JsonDocument&);
+    virtual void to_JSON(JsonWriter&) const;
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
@@ -506,15 +506,15 @@ protected:
     const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
     const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
 
-    void variables_to_XML(XmlPrinter&) const;
-    void samples_to_XML(XmlPrinter&) const;
-    void missing_values_to_XML(XmlPrinter&) const;
-    void preview_data_to_XML(XmlPrinter&) const;
+    void variables_to_JSON(JsonWriter&) const;
+    void samples_to_JSON(JsonWriter&) const;
+    void missing_values_to_JSON(JsonWriter&) const;
+    void preview_data_to_JSON(JsonWriter&) const;
 
-    void variables_from_XML(const XmlElement*);
-    void samples_from_XML(const XmlElement*);
-    void missing_values_from_XML(const XmlElement*);
-    void preview_data_from_XML(const XmlElement*);
+    void variables_from_JSON(const Json*);
+    void samples_from_JSON(const Json*);
+    void missing_values_from_JSON(const Json*);
+    void preview_data_from_JSON(const Json*);
 };
 
 }

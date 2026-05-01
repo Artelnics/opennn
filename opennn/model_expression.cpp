@@ -477,7 +477,7 @@ string ModelExpression::write_dense_expression(const Dense& layer,
     const float* bias_data = parameters[0].as<float>();
     const float* weight_data = parameters[1].as<float>();
 
-    const string& activation_function = activation_function_map().to_string(layer.get_activation_function());
+    const string& activation_function = Activation::to_string(layer.get_activation_function());
 
     ostringstream buffer;
 
@@ -622,11 +622,11 @@ void ModelExpression::rename_spaced_var_definitions(vector<string>& lines)
 const vector<pair<string, ModelExpression::ActivationBodies>>& ModelExpression::activation_table()
 {
     static const vector<pair<string, ActivationBodies>> table = {
-        {"Linear", {
-            "float Linear (float x) {\n\treturn x;\n}\n\n",
-            "\nfunction Linear(x) {\n\treturn x;\n}\n",
-            "\t@staticmethod\n\tdef Linear(x):\n\t\treturn x\n\n",
-            "function Linear($x) { return $x; }\n"
+        {"Identity", {
+            "float Identity (float x) {\n\treturn x;\n}\n\n",
+            "\nfunction Identity(x) {\n\treturn x;\n}\n",
+            "\t@staticmethod\n\tdef Identity(x):\n\t\treturn x\n\n",
+            "function Identity($x) { return $x; }\n"
         }},
         {"Sigmoid", {
             "float Sigmoid(float x) {\n\tfloat z = 1.0f / (1.0f + expf(-x));\n\treturn z;\n}\n\n",
@@ -634,11 +634,11 @@ const vector<pair<string, ModelExpression::ActivationBodies>>& ModelExpression::
             "\t@staticmethod\n\tdef Sigmoid (x):\n\t\tz = 1/(1+np.exp(-x))\n\t\treturn z\n\n",
             "function Sigmoid($x) { return 1 / (1 + exp(-$x)); }\n"
         }},
-        {"RectifiedLinear", {
-            "float RectifiedLinear(float x) {\n\tfloat z = fmaxf(0.0f, x);\n\treturn z;\n}\n\n",
-            "function RectifiedLinear(x) {\n\tvar z = Math.max(0, x);\n\treturn z;\n}\n",
-            "\t@staticmethod\n\tdef RectifiedLinear (x):\n\t\tz = np.maximum(0, x)\n\t\treturn z\n\n",
-            "function RectifiedLinear($x) { return max(0, $x); }\n"
+        {"ReLU", {
+            "float ReLU(float x) {\n\tfloat z = fmaxf(0.0f, x);\n\treturn z;\n}\n\n",
+            "function ReLU(x) {\n\tvar z = Math.max(0, x);\n\treturn z;\n}\n",
+            "\t@staticmethod\n\tdef ReLU (x):\n\t\tz = np.maximum(0, x)\n\t\treturn z\n\n",
+            "function ReLU($x) { return max(0, $x); }\n"
         }},
         {"ExponentialLinear", {
             "float ExponentialLinear(float x) {\n\tfloat z;\n\tconst float alpha = 1.67326f;\n\tif (x > 0.0f) {\n\t\tz = x;\n\t} else {\n\t\tz = alpha * (expf(x) - 1.0f);\n\t}\n\treturn z;\n}\n\n",
@@ -652,11 +652,11 @@ const vector<pair<string, ModelExpression::ActivationBodies>>& ModelExpression::
             "\t@staticmethod\n\tdef SELU (x):\n\t\talpha = 1.67326\n\t\tlambda_val = 1.05070\n\t\treturn lambda_val * np.where(x > 0, x, alpha * (np.exp(x) - 1))\n\n",
             "function SELU($x) { $alpha = 1.67326; $lambda = 1.05070; return $lambda * (($x > 0) ? $x : $alpha * (exp($x) - 1)); }\n"
         }},
-        {"HyperbolicTangent", {
-            "float HyperbolicTangent(float x) {\n\treturn tanhf(x);\n}\n\n",
-            "function HyperbolicTangent(x) {\n\treturn Math.tanh(x);\n}\n",
-            "\t@staticmethod\n\tdef HyperbolicTangent(x):\n\t\treturn np.tanh(x)\n\n",
-            "function HyperbolicTangent($x) { return tanh($x); }\n"
+        {"Tanh", {
+            "float Tanh(float x) {\n\treturn tanhf(x);\n}\n\n",
+            "function Tanh(x) {\n\treturn Math.tanh(x);\n}\n",
+            "\t@staticmethod\n\tdef Tanh(x):\n\t\treturn np.tanh(x)\n\n",
+            "function Tanh($x) { return tanh($x); }\n"
         }},
         {"Softmax", {
             "float Softmax(float x) {\n\treturn expf(x);\n}\n\n",
@@ -702,7 +702,7 @@ void ModelExpression::emit_c_prelude(ostringstream& buffer) const
 void ModelExpression::emit_c_activations(ostringstream& buffer, const string& expression) const
 {
     for(const auto& [name, bodies] : activation_table())
-        if(name == "Linear" || expression.find(name) != string::npos)
+        if(name == "Identity" || expression.find(name) != string::npos)
             buffer << bodies.c;
 }
 
@@ -1068,7 +1068,7 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
     }
 
     for(const auto& [name, bodies] : activation_table())
-        if(name == "Linear" || name == "HyperbolicTangent" || expression.find(name) != string::npos)
+        if(name == "Identity" || name == "Tanh" || expression.find(name) != string::npos)
             buffer << bodies.javascript;
     buffer << "\n";
 
@@ -1191,7 +1191,7 @@ void ModelExpression::emit_python_class_header(ostringstream& buffer) const
 void ModelExpression::emit_python_activations(ostringstream& buffer, const string& expression) const
 {
     for(const auto& [name, bodies] : activation_table())
-        if(name == "Linear" || expression.find(name) != string::npos)
+        if(name == "Identity" || expression.find(name) != string::npos)
             buffer << bodies.python;
 }
 

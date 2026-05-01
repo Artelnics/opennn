@@ -203,7 +203,7 @@ Correlation linear_correlation(const VectorR& x,
         return Correlation();
 
     Correlation linear_correlation;
-    linear_correlation.form = Correlation::Form::Linear;
+    linear_correlation.form = Correlation::Form::Identity;
     linear_correlation.a = static_cast<float>((s_y * s_xx - s_x * s_xy) / (double(sample_count) * s_xx - s_x * s_x));
     linear_correlation.b = static_cast<float>((double(sample_count) * s_xy - s_x * s_y) / (double(sample_count) * s_xx - s_x * s_x));
     linear_correlation.r = static_cast<float>((double(sample_count) * s_xy - s_x * s_y) / denominator);
@@ -595,7 +595,7 @@ Correlation point_biserial_correlation(const VectorR& continuous,
                                        const VectorR& binary)
 {
     Correlation result;
-    result.form   = Correlation::Form::Linear;
+    result.form   = Correlation::Form::Identity;
     result.method = Correlation::Method::Pearson;
 
     const auto [x_filter, y_filter] = filter_missing_values(continuous, binary);
@@ -653,7 +653,7 @@ Correlation eta_squared_correlation(const VectorR& continuous,
                                     const MatrixR& categorical)
 {
     Correlation result;
-    result.form   = Correlation::Form::Linear;
+    result.form   = Correlation::Form::Identity;
     result.method = Correlation::Method::Pearson;
 
     const auto [x_filter, y_filter] = filter_missing_values(continuous, categorical);
@@ -730,14 +730,14 @@ void Correlation::set_perfect()
 
     upper_confidence = float(1);
     lower_confidence = float(1);
-    form = Correlation::Form::Linear;
+    form = Correlation::Form::Identity;
 }
 
 static const char* form_to_string(Correlation::Form form)
 {
     switch(form)
     {
-    case Correlation::Form::Linear:      return "linear";
+    case Correlation::Form::Identity:      return "linear";
     case Correlation::Form::Sigmoid:     return "logistic";
     case Correlation::Form::Logarithmic: return "logarithmic";
     case Correlation::Form::Exponential: return "exponential";

@@ -118,12 +118,12 @@ public:
 
     // Serialization
 
-    void from_XML(const XmlDocument&);
+    void from_JSON(const JsonDocument&);
 
-    void to_XML(XmlPrinter&) const;
+    void to_JSON(JsonWriter&) const;
 
-    void regularization_from_XML(const XmlDocument&);
-    void regularization_to_XML(XmlPrinter&) const;
+    void regularization_from_JSON(const JsonDocument&);
+    void regularization_to_JSON(JsonWriter&) const;
 
     const string& get_name() const { return name; }
 

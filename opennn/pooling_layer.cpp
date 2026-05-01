@@ -98,36 +98,21 @@ void Pooling::set(const Shape& new_input_shape,
 
     set_label(new_label);
 
-#ifdef OPENNN_WITH_CUDA
-
-    cudnnCreatePoolingDescriptor(&pooling_descriptor);
-
-    cudnnSetPooling2dDescriptor(pooling_descriptor,
-                                pooling_mode,
-                                CUDNN_PROPAGATE_NAN,
-                                pool_height, pool_width,
-                                padding_height, padding_width,
-                                row_stride, column_stride);
-
-#endif
-
-    cached_pool_args.pool_dimensions = {pool_height, pool_width};
-    cached_pool_args.stride_shape = {row_stride, column_stride};
-    cached_pool_args.padding_shape = {padding_height, padding_width};
+    pool.set(input_height, input_width, input_channels,
+             pool_height, pool_width,
+             row_stride, column_stride,
+             padding_height, padding_width,
+             pooling_method == PoolingMethod::MaxPooling ? 0 : 1);
 
 #ifdef OPENNN_WITH_CUDA
-    cached_pool_args.pooling_descriptor = pooling_descriptor;
+    pool.init_cuda();
 #endif
 }
-
-#ifdef OPENNN_WITH_CUDA
 
 void Pooling::destroy_cuda()
 {
-    if(pooling_descriptor) cudnnDestroyPoolingDescriptor(pooling_descriptor);
+    pool.destroy_cuda();
 }
-
-#endif
 
 void Pooling::set_input_shape(const Shape& new_input_shape)
 {
@@ -149,32 +134,23 @@ void Pooling::set_pool_size(const Index new_pool_rows_number,
 void Pooling::set_pooling_method(const string& new_pooling_method)
 {
     pooling_method = string_to_pooling_method(new_pooling_method);
-
-#ifdef OPENNN_WITH_CUDA
-    pooling_mode = (pooling_method == PoolingMethod::MaxPooling)
-        ? CUDNN_POOLING_MAX
-        : CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
-#endif
 }
 
 void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    // For MaxPooling: slot 1 = MaximalIndices, slot 2 = Output
-    // For AveragePooling: slot 1 = Output (no MaximalIndices)
     const size_t output_slot = forward_views.size() - 1;
 
-    if(pooling_method == PoolingMethod::MaxPooling)
-        max_pooling(forward_views[Input][0],
-                    forward_views[output_slot][0],
-                    forward_views[MaximalIndices][0],
-                    cached_pool_args,
-                    is_training);
-    else
-        average_pooling(forward_views[Input][0],
-                        forward_views[output_slot][0],
-                        cached_pool_args);
+    TensorView empty_indices;
+    TensorView& indices_view = (pooling_method == PoolingMethod::MaxPooling)
+        ? forward_views[MaximalIndices][0]
+        : empty_indices;
+
+    pool.apply(forward_views[Input][0],
+               forward_views[output_slot][0],
+               indices_view,
+               is_training);
 }
 
 void Pooling::back_propagate(ForwardPropagation& forward_propagation,
@@ -186,42 +162,39 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
 
     const size_t output_slot = forward_views.size() - 1;
 
-    if(pooling_method == PoolingMethod::MaxPooling)
-        max_pooling_backward(forward_views[Input][0],
-                             forward_views[output_slot][0],
-                             delta_views[OutputDelta][0],
-                             forward_views[MaximalIndices][0],
-                             delta_views[InputDelta][0],
-                             cached_pool_args);
-    else
-        average_pooling_backward(forward_views[Input][0],
-                                 forward_views[output_slot][0],
-                                 delta_views[OutputDelta][0],
-                                 delta_views[InputDelta][0],
-                                 cached_pool_args);
+    TensorView empty_indices;
+    TensorView& indices_view = (pooling_method == PoolingMethod::MaxPooling)
+        ? forward_views[MaximalIndices][0]
+        : empty_indices;
+
+    pool.apply_delta(forward_views[Input][0],
+                     forward_views[output_slot][0],
+                     delta_views[OutputDelta][0],
+                     indices_view,
+                     delta_views[InputDelta][0]);
 }
 
 // Serialization
 
-void Pooling::from_XML(const XmlDocument& document)
+void Pooling::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* pooling_layer_element = get_xml_root(document, "Pooling");
+    const Json* pooling_layer_element = get_json_root(document, "Pooling");
 
-    set_label(read_xml_string(pooling_layer_element, "Label"));
-    set_input_shape(string_to_shape(read_xml_string(pooling_layer_element, "InputDimensions")));
-    set_pool_size(read_xml_index(pooling_layer_element, "PoolHeight"), read_xml_index(pooling_layer_element, "PoolWidth"));
-    set_pooling_method(read_xml_string(pooling_layer_element, "PoolingMethod"));
-    set_column_stride(read_xml_index(pooling_layer_element, "ColumnStride"));
-    set_row_stride(read_xml_index(pooling_layer_element, "RowStride"));
-    set_padding_height(read_xml_index(pooling_layer_element, "PaddingHeight"));
-    set_padding_width(read_xml_index(pooling_layer_element, "PaddingWidth"));
+    set_label(read_json_string(pooling_layer_element, "Label"));
+    set_input_shape(string_to_shape(read_json_string(pooling_layer_element, "InputDimensions")));
+    set_pool_size(read_json_index(pooling_layer_element, "PoolHeight"), read_json_index(pooling_layer_element, "PoolWidth"));
+    set_pooling_method(read_json_string(pooling_layer_element, "PoolingMethod"));
+    set_column_stride(read_json_index(pooling_layer_element, "ColumnStride"));
+    set_row_stride(read_json_index(pooling_layer_element, "RowStride"));
+    set_padding_height(read_json_index(pooling_layer_element, "PaddingHeight"));
+    set_padding_width(read_json_index(pooling_layer_element, "PaddingWidth"));
 }
 
-void Pooling::to_XML(XmlPrinter& printer) const
+void Pooling::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Pooling");
 
-    write_xml(printer, {
+    write_json(printer, {
         {"Label", label},
         {"InputDimensions", shape_to_string(get_input_shape())},
         {"PoolHeight", to_string(get_pool_height())},

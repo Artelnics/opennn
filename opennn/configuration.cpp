@@ -17,20 +17,17 @@ Configuration& Configuration::instance()
     return configuration;
 }
 
-void Configuration::set(DeviceType new_device_type, TrainingPrecision new_training_precision, InferencePrecision new_inference_precision)
+void Configuration::set(Device new_device,
+                        Type new_training_type,
+                        Type new_inference_type)
 {
-    device              = new_device_type;
-    training_precision  = new_training_precision;
-    inference_precision = new_inference_precision;
-    // Invalidate the cached Resolved so a follow-up is_gpu()/resolve() re-detects
-    // hardware and applies the new user request.
+    device         = new_device;
+    training_type  = new_training_type;
+    inference_type = new_inference_type;
     cache_valid = false;
 }
 
 #ifdef OPENNN_WITH_CUDA
-// True if there's at least one CUDA device available. Wraps cudaGetDeviceCount
-// and clears any sticky error so a missing CUDA stack on the host doesn't poison
-// later cudaGetLastError() calls.
 static bool has_cuda_gpu()
 {
     int count = 0;
@@ -39,8 +36,7 @@ static bool has_cuda_gpu()
     return count > 0;
 }
 
-// Compute capability of device 0. Returns major*10+minor, or -1 on failure.
-// BF16 Tensor Cores require >= 80 (Ampere).
+// BF16 Tensor Cores require Ampere+ (CC >= 80).
 static int cuda_compute_capability()
 {
     cudaDeviceProp prop{};
@@ -58,68 +54,50 @@ const Configuration::Resolved& Configuration::resolve() const
 
     Resolved resolved;
 
-    // 1. Device.
     switch (device)
     {
-    case DeviceType::Auto:
-        resolved.device = has_cuda_gpu() ? DeviceType::CUDA : DeviceType::CPU;
+    case Device::Auto:
+        resolved.device = has_cuda_gpu() ? Device::CUDA : Device::CPU;
         break;
-    case DeviceType::CPU:
-        resolved.device = DeviceType::CPU;
+    case Device::CPU:
+        resolved.device = Device::CPU;
         break;
-    case DeviceType::CUDA:
+    case Device::CUDA:
         if (!has_cuda_gpu())
             throw runtime_error("Configuration: CUDA requested but no GPU detected.");
-        resolved.device = DeviceType::CUDA;
+        resolved.device = Device::CUDA;
         break;
     }
 
-    const bool gpu = (resolved.device == DeviceType::CUDA);
+    const bool gpu = (resolved.device == Device::CUDA);
     const int  compute_capability = gpu ? cuda_compute_capability() : -1;
-    const bool bf16_capable = gpu && (compute_capability >= 80);   // Ampere+ has BF16 Tensor Cores.
+    const bool bf16_capable = gpu && (compute_capability >= 80);
 
-    // 2. Training precision.
-    switch (training_precision)
+    auto resolve_dtype = [&](Type requested, const char* role) -> Type
     {
-    case TrainingPrecision::Auto:
-        resolved.training_precision = bf16_capable ? TrainingPrecision::BP16 : TrainingPrecision::Float32;
-        break;
-    case TrainingPrecision::Float32:
-        resolved.training_precision = TrainingPrecision::Float32;
-        break;
-    case TrainingPrecision::BP16:
-        if (!gpu)
-            throw runtime_error("Configuration: BP16 training requires CUDA.");
-        if (!bf16_capable)
-            throw runtime_error("Configuration: BP16 training requires CUDA compute capability >= 8.0 (Ampere+).");
-        resolved.training_precision = TrainingPrecision::BP16;
-        break;
-    }
+        switch (requested)
+        {
+        case Type::Auto: return bf16_capable ? Type::BF16 : Type::FP32;
+        case Type::FP32: return Type::FP32;
+        case Type::BF16:
+            if (!gpu)
+                throw runtime_error(string("Configuration: BF16 ") + role + " requires CUDA.");
+            if (!bf16_capable)
+                throw runtime_error(string("Configuration: BF16 ") + role + " requires CUDA compute capability >= 8.0 (Ampere+).");
+            return Type::BF16;
+        case Type::INT8:
+            // Placeholder: enum exists for future API; no INT8 calibration / kernels yet.
+            throw runtime_error(string("Configuration: INT8 ") + role + " not yet supported (placeholder).");
+        }
+        return Type::FP32;
+    };
 
-    // 3. Inference precision. Defaults to mirror the training precision so that the
-    //    parameters_bf16 working copy (if any) is reused for inference without re-cast.
-    switch (inference_precision)
-    {
-    case InferencePrecision::Auto:
-        resolved.inference_precision = (resolved.training_precision == TrainingPrecision::BP16)
-                                    ? InferencePrecision::BP16
-                                    : InferencePrecision::Float32;
-        break;
-    case InferencePrecision::Float32:
-        resolved.inference_precision = InferencePrecision::Float32;
-        break;
-    case InferencePrecision::BP16:
-        if (!gpu)
-            throw runtime_error("Configuration: BP16 inference requires CUDA.");
-        if (!bf16_capable)
-            throw runtime_error("Configuration: BP16 inference requires CUDA compute capability >= 8.0 (Ampere+).");
-        resolved.inference_precision = InferencePrecision::BP16;
-        break;
-    case InferencePrecision::Int8:
-        // Placeholder: enum exists so user code can be written against the future API,
-        // but no INT8 calibration / kernels are implemented. Fail loudly.
-        throw runtime_error("Configuration: INT8 inference not yet supported (placeholder).");
-    }
+    resolved.training_type = resolve_dtype(training_type, "training");
+
+    // Inference defaults to mirror training so the BF16 working copy (if any) is reused.
+    resolved.inference_type = (inference_type == Type::Auto)
+                                   ? resolved.training_type
+                                   : resolve_dtype(inference_type, "inference");
 
     cached_resolved = resolved;
     cache_valid = true;

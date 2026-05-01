@@ -357,11 +357,11 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     return input_selection_results;
 }
 
-void GrowingInputs::to_XML(XmlPrinter& printer) const
+void GrowingInputs::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("GrowingInputs");
 
-    write_xml(printer, {
+    write_json(printer, {
         {"TrialsNumber", to_string(trials_number)},
         {"SelectionErrorGoal", to_string(validation_error_goal)},
         {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
@@ -376,19 +376,19 @@ void GrowingInputs::to_XML(XmlPrinter& printer) const
     printer.close_element();  
 }
 
-void GrowingInputs::from_XML(const XmlDocument& document)
+void GrowingInputs::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "GrowingInputs");
+    const Json* root_element = get_json_root(document, "GrowingInputs");
 
-    set_trials_number(read_xml_index(root_element, "TrialsNumber"));
-    set_validation_error_goal(read_xml_type(root_element, "SelectionErrorGoal"));
-    set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
-    set_maximum_correlation(read_xml_type(root_element, "MaximumCorrelation"));
-    set_minimum_correlation(read_xml_type(root_element, "MinimumCorrelation"));
-    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
-    set_minimum_inputs_number(read_xml_index(root_element, "MinimumInputsNumber"));
-    set_maximum_inputs_number(read_xml_index(root_element, "MaximumInputsNumber"));
-    set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_trials_number(read_json_index(root_element, "TrialsNumber"));
+    set_validation_error_goal(read_json_type(root_element, "SelectionErrorGoal"));
+    set_maximum_epochs(read_json_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_correlation(read_json_type(root_element, "MaximumCorrelation"));
+    set_minimum_correlation(read_json_type(root_element, "MinimumCorrelation"));
+    set_maximum_time(read_json_type(root_element, "MaximumTime"));
+    set_minimum_inputs_number(read_json_index(root_element, "MinimumInputsNumber"));
+    set_maximum_inputs_number(read_json_index(root_element, "MaximumInputsNumber"));
+    set_maximum_validation_failures(read_json_index(root_element, "MaximumSelectionFailures"));
 }
 
 REGISTER(InputsSelection, GrowingInputs, "GrowingInputs");

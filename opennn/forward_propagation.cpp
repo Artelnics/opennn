@@ -48,12 +48,12 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             const vector<Shape>& shapes = forward_shapes[i];
             for(size_t j = 0; j < shapes.size(); ++j)
                 if(shapes[j].size() > 0)
-                    total_bytes += get_aligned_bytes(shapes[j].size() * dtype_bytes(forward_dtypes[i][j]));
+                    total_bytes += get_aligned_bytes(shapes[j].size() * type_bytes(forward_dtypes[i][j]));
         }
 
         if(total_bytes > 0)
         {
-            data.resize_bytes(total_bytes, DeviceType::CUDA);
+            data.resize_bytes(total_bytes, Device::CUDA);
             data.setZero();
         }
 
@@ -72,7 +72,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                 if(slot_shape.size() > 0)
                 {
                     views[i][j + 1][0] = TensorView(cursor, slot_shape, forward_dtypes[i][j]);
-                    if(cursor) cursor += get_aligned_bytes(slot_shape.size() * dtype_bytes(forward_dtypes[i][j]));
+                    if(cursor) cursor += get_aligned_bytes(slot_shape.size() * type_bytes(forward_dtypes[i][j]));
                 }
             }
         }
@@ -84,7 +84,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
         if(total_size > 0)
         {
-            data.resize_bytes(total_size * Index(sizeof(float)), DeviceType::CPU);
+            data.resize_bytes(total_size * Index(sizeof(float)), Device::CPU);
             data.setZero();
         }
 
@@ -147,11 +147,6 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             {
                 if(auto* dense = dynamic_cast<Dense*>(layer.get()))
                     dense->init_cuda(batch_size);
-            }
-            else if(layer->get_type() == LayerType::MultiHeadAttention)
-            {
-                if(auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
-                    mha->init_cuda(batch_size);
             }
         }
     }

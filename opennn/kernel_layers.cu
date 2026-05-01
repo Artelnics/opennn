@@ -4,6 +4,7 @@
 // templated over T = float / __nv_bfloat16.
 
 #include "kernel_common.cuh"
+#include <curand_kernel.h>
 
 // Per-feature clip: output[i] = clamp(input[i], lower[f], upper[f]) where f = i % features.
 // Input/output dtypes are independent so the boundary layers can bridge a BF16
@@ -958,3 +959,57 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
 
 template void layernorm_backward_cuda<float>        (const int, const int, const float*,         const float*,         const float*, const float*, const float*, float*,         float*, float*);
 template void layernorm_backward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, const float*, __nv_bfloat16*, float*, float*);
+
+template<typename T>
+__global__ void dropout_forward_kernel(const int n, T* __restrict__ output, uint8_t* __restrict__ mask, const float scale, const float rate, const unsigned long long seed)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= n) return;
+
+    curandStatePhilox4_32_10_t state;
+    curand_init(seed, idx, 0, &state);
+    const float r = curand_uniform(&state);
+
+    const uint8_t keep = (r >= rate) ? uint8_t(1) : uint8_t(0);
+    mask[idx] = keep;
+    output[idx] = static_cast<T>(static_cast<float>(output[idx]) * (keep * scale));
+}
+
+template<typename T>
+void dropout_forward_cuda(const Index n, T* output, uint8_t* mask, const float rate, const unsigned long long seed)
+{
+    if (n == 0) return;
+
+    const int total = static_cast<int>(n);
+    const float scale = 1.0f / (1.0f - rate);
+
+    dropout_forward_kernel<T><<<grid_size_for(total), block_size>>>(total, output, mask, scale, rate, seed);
+}
+
+template void dropout_forward_cuda<float>        (const Index, float*,         uint8_t*, const float, const unsigned long long);
+template void dropout_forward_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, uint8_t*, const float, const unsigned long long);
+
+template<typename T>
+__global__ void dropout_backward_kernel(const int n, const T* __restrict__ output_delta, T* __restrict__ input_delta, const uint8_t* __restrict__ mask, const float scale)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= n) return;
+
+    const float dy = static_cast<float>(output_delta[idx]);
+    const float m  = static_cast<float>(mask[idx]) * scale;
+    input_delta[idx] = static_cast<T>(dy * m);
+}
+
+template<typename T>
+void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta, const uint8_t* mask, const float rate)
+{
+    if (n == 0) return;
+
+    const int total = static_cast<int>(n);
+    const float scale = 1.0f / (1.0f - rate);
+
+    dropout_backward_kernel<T><<<grid_size_for(total), block_size>>>(total, output_delta, input_delta, mask, scale);
+}
+
+template void dropout_backward_cuda<float>        (const Index, const float*,         float*,         const uint8_t*, const float);
+template void dropout_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const uint8_t*, const float);

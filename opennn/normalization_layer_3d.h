@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
@@ -40,7 +41,7 @@ public:
 
     // Gamma and beta are 1-D and stay FP32: our layernorm CUDA kernels read
     // `const float* gamma`/`beta` and would not compile if these slots ever
-    // changed dtype.
+    // changed type.
     vector<pair<Shape, Type>> get_parameter_specs() const override;
 
     vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
@@ -68,18 +69,17 @@ public:
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    float* link_parameters(float* pointer) override;
 
-protected:
-
-    TensorView gammas_device;
-    TensorView betas_device;
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 
 private:
 
     Index embedding_dimension = 0;
     Index sequence_length = 0;
+
+    LayerNorm layer_norm;
 
     enum Parameters {Gamma, Beta};
 

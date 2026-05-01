@@ -69,6 +69,27 @@ float* get_fp32_upcast_scratch(Index n_elements)
     return reinterpret_cast<float*>(fp32_upcast_scratch_);
 }
 
+const void* maybe_cast(const TensorView& input, Type target_type)
+{
+    if (input.type == target_type) return input.data;
+
+    if (input.type == Type::FP32 && target_type == Type::BF16)
+    {
+        __nv_bfloat16* scratch = get_bf16_input_scratch(input.size());
+        cast_fp32_to_bf16_cuda(input.size(), input.as<float>(), scratch);
+        return scratch;
+    }
+
+    if (input.type == Type::BF16 && target_type == Type::FP32)
+    {
+        float* scratch = get_fp32_upcast_scratch(input.size());
+        cast_bf16_to_fp32_cuda(input.size(), input.as<__nv_bfloat16>(), scratch);
+        return scratch;
+    }
+
+    throw runtime_error("maybe_cast: unsupported type pair");
+}
+
 const LtMatmulPlan& get_lt_gemm_plan(
     int m, int n, int k,
     cublasOperation_t transA,
@@ -99,7 +120,7 @@ const LtMatmulPlan& get_lt_gemm_plan(
                                                 &transB, sizeof(transB)));
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_EPILOGUE,
                                                 &epilogue, sizeof(epilogue)));
-    // cuBLASLt 12.x requires bias dtype == output dtype for BF16/FP16 outputs.
+    // cuBLASLt 12.x requires bias type == output type for BF16/FP16 outputs.
     const cudaDataType_t bias_dtype = out_dtype;
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
                                                 &bias_dtype, sizeof(bias_dtype)));
@@ -122,7 +143,7 @@ const LtMatmulPlan& get_lt_gemm_plan(
 
     cublasLtMatmulHeuristicResult_t heuristic = {};
     int returned_results = 0;
-    cublasLtMatmulAlgoGetHeuristic(Device::get_cublas_lt_handle(),
+    cublasLtMatmulAlgoGetHeuristic(Backend::get_cublas_lt_handle(),
                                    plan.op_desc,
                                    plan.a_desc, plan.b_desc, plan.c_desc, plan.d_desc,
                                    pref, 1, &heuristic, &returned_results);

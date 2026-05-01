@@ -56,9 +56,9 @@ void check() const;
         return name;
     }
 
-    virtual void from_XML(const XmlDocument&) = 0;
+    virtual void from_JSON(const JsonDocument&) = 0;
 
-    virtual void to_XML(XmlPrinter&) const = 0;
+    virtual void to_JSON(JsonWriter&) const = 0;
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);

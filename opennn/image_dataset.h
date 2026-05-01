@@ -49,8 +49,8 @@ public:
 
     void read_bmp(const Shape& new_input_shape = { 0, 0, 0 });
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 
     void augment_inputs(float*, Index) const override;
 

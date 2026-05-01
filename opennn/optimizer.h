@@ -9,11 +9,9 @@
 #pragma once
 
 #include <functional>
-#include "tinyxml2.h"
+#include "json.h"
 #include "tensor_utilities.h"
 #include "thread_safe_queue.h"
-
-using namespace tinyxml2;
 
 namespace opennn
 {
@@ -73,9 +71,9 @@ public:
 
     virtual void print() const {}
 
-    virtual void from_XML(const XmlDocument&);
+    virtual void from_JSON(const JsonDocument&);
 
-    virtual void to_XML(XmlPrinter&) const;
+    virtual void to_JSON(JsonWriter&) const;
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
@@ -91,8 +89,8 @@ protected:
     bool check_stopping_condition(TrainingResults&, Index epoch, float elapsed_time,
                                    float training_error, Index validation_failures) const;
 
-    void write_common_xml(XmlPrinter&) const;
-    void read_common_xml(const XmlElement*);
+    void write_common_xml(JsonWriter&) const;
+    void read_common_xml(const Json*);
 
     void setup_device_training(ForwardPropagation& training_fp,
                                BackPropagation& training_bp,

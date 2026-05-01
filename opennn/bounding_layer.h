@@ -85,11 +85,11 @@ public:
 
     // Serialization
 
-    void from_XML(const XmlDocument&) override;
+    void from_JSON(const JsonDocument&) override;
 
-    void load_state_from_XML(const XmlDocument&) override;
+    void load_state_from_JSON(const JsonDocument&) override;
 
-    void to_XML(XmlPrinter&) const override;
+    void to_JSON(JsonWriter&) const override;
 
 private:
 

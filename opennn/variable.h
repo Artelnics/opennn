@@ -127,8 +127,8 @@ struct Variable
     void set_type(const string&);
     void set_categories(const vector<string>& new_categories) { categories = new_categories; }
 
-    void from_XML(const XmlDocument&);
-    void to_XML(XmlPrinter&) const;
+    void from_JSON(const JsonDocument&);
+    void to_JSON(JsonWriter&) const;
 
     bool is_binary() const { return type == VariableType::Binary; }
     bool is_categorical() const { return type == VariableType::Categorical; }

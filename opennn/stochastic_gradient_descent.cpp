@@ -350,11 +350,11 @@ TrainingResults StochasticGradientDescent::train()
     return results;
 }
 
-void StochasticGradientDescent::to_XML(XmlPrinter& printer) const
+void StochasticGradientDescent::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("StochasticGradientDescent");
 
-    write_xml(printer, {
+    write_json(printer, {
         {"BatchSize", to_string(batch_size)},
         {"ApplyMomentum", to_string(momentum > float(0))}
     });
@@ -363,13 +363,13 @@ void StochasticGradientDescent::to_XML(XmlPrinter& printer) const
     printer.close_element();
 }
 
-void StochasticGradientDescent::from_XML(const XmlDocument& document)
+void StochasticGradientDescent::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "StochasticGradientDescent");
+    const Json* root_element = get_json_root(document, "StochasticGradientDescent");
 
-    set_batch_size(read_xml_index(root_element, "BatchSize"));
+    set_batch_size(read_json_index(root_element, "BatchSize"));
 
-    const bool apply_momentum = read_xml_bool(root_element, "ApplyMomentum");
+    const bool apply_momentum = read_json_bool(root_element, "ApplyMomentum");
     set_momentum(apply_momentum ? float(0.9) : float(0));
 
     read_common_xml(root_element);

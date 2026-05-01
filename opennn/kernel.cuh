@@ -150,6 +150,14 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
 template<typename T>
 void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta, T* in_grad, const int S, const int F);
 
+// Dropout
+
+template<typename T>
+void dropout_forward_cuda(const Index n, T* output, uint8_t* mask, const float rate, const unsigned long long seed);
+
+template<typename T>
+void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta, const uint8_t* mask, const float rate);
+
 // Normalization Layer
 
 template<typename T>

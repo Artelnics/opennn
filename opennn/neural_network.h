@@ -32,11 +32,11 @@ public:
                   const vector<Index>& = vector<Index>());
 
     const Configuration::Resolved& get_config() const { return config; }
-    bool is_gpu() const { return config.device == DeviceType::CUDA; }
-    bool is_cpu() const { return config.device == DeviceType::CPU; }
+    bool is_gpu() const { return config.device == Device::CUDA; }
+    bool is_cpu() const { return config.device == Device::CPU; }
 
-    Type get_training_dtype()  const { return to_type(config.training_precision); }
-    Type get_inference_dtype() const { return to_type(config.inference_precision); }
+    Type get_training_type()  const { return config.training_type; }
+    Type get_inference_type() const { return config.inference_type; }
 
     vector<vector<Shape>> get_parameter_shapes() const
     {
@@ -159,7 +159,7 @@ public:
     Shape get_input_shape() const;
     Shape get_output_shape() const;
 
-    ActivationFunction get_output_activation() const;
+    Activation::Function get_output_activation() const;
 
     // Parameters
 
@@ -194,9 +194,9 @@ public:
 
     // Serialization
 
-    void from_XML(const XmlDocument&);
+    void from_JSON(const JsonDocument&);
 
-    void to_XML(XmlPrinter&) const;
+    void to_JSON(JsonWriter&) const;
 
     void save(const filesystem::path&) const;
     void save_parameters(const filesystem::path&) const;
@@ -257,7 +257,7 @@ protected:
     vector<vector<Index>> layer_input_indices;
 
     Buffer parameters;
-    Buffer parameters_bf16{DeviceType::CUDA};
+    Buffer parameters_bf16{Device::CUDA};
     vector<vector<vector<TensorView>>> parameter_views;
 
     Buffer states;

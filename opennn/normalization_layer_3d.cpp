@@ -56,14 +56,23 @@ void Normalization3d::set(const Index new_sequence_length,
     label = new_label;
     name = "Normalization3d";
     layer_type = LayerType::Normalization3d;
+
+    layer_norm.set(sequence_length, embedding_dimension);
+}
+
+float* Normalization3d::link_parameters(float* pointer)
+{
+    pointer = Layer::link_parameters(pointer);
+    if (parameters.size() > Beta)
+        layer_norm.link_parameters({parameters[Gamma], parameters[Beta]});
+    return pointer;
 }
 
 // Parameter initialization
 
 void Normalization3d::set_parameters_random()
 {
-    parameters[Gamma].fill(1.0f);
-    parameters[Beta].fill(0.0f);
+    layer_norm.init_defaults();
 }
 
 void Normalization3d::set_parameters_glorot()
@@ -77,16 +86,12 @@ void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation,
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    layernorm_forward(forward_views[Input][0], 
-                      parameters[Gamma], 
-                      parameters[Beta],
-                      forward_views[Means][0], 
-                      forward_views[StandardDeviations][0], 
-                      forward_views[NormalizedInput][0], 
-                      forward_views[Output][0],
-                      forward_propagation.batch_size, 
-                      sequence_length, 
-                      embedding_dimension);
+    layer_norm.apply(forward_views[Input][0],
+                     forward_views[Means][0],
+                     forward_views[StandardDeviations][0],
+                     forward_views[NormalizedInput][0],
+                     forward_views[Output][0],
+                     forward_propagation.batch_size);
 }
 
 void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
@@ -97,37 +102,34 @@ void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
     auto& delta_views = back_propagation.delta_views[layer];
     auto& gradient_views = back_propagation.gradient_views[layer];
 
-    layernorm_backward(forward_views[Input][0], 
-                       delta_views[OutputDelta][0],
-                       forward_views[Means][0], 
-                       forward_views[StandardDeviations][0], 
-                       forward_views[NormalizedInput][0], 
-                       parameters[Gamma],
-                       gradient_views[Gamma],
-                       gradient_views[Beta],
-                       delta_views[InputDelta][0],
-                       forward_propagation.batch_size, 
-                       sequence_length, 
-                       embedding_dimension);
+    layer_norm.apply_delta(forward_views[Input][0],
+                           delta_views[OutputDelta][0],
+                           forward_views[Means][0],
+                           forward_views[StandardDeviations][0],
+                           forward_views[NormalizedInput][0],
+                           gradient_views[Gamma],
+                           gradient_views[Beta],
+                           delta_views[InputDelta][0],
+                           forward_propagation.batch_size);
 }
 
 // Serialization
 
-void Normalization3d::from_XML(const XmlDocument& document)
+void Normalization3d::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* element = get_xml_root(document, "Normalization3d");
+    const Json* element = get_json_root(document, "Normalization3d");
 
-    const string new_name = read_xml_string(element, "Label");
-    const Index new_sequence_length = read_xml_index(element, "SequenceLength");
-    const Index new_embedding_dimension = read_xml_index(element, "EmbeddingDimension");
+    const string new_name = read_json_string(element, "Label");
+    const Index new_sequence_length = read_json_index(element, "SequenceLength");
+    const Index new_embedding_dimension = read_json_index(element, "EmbeddingDimension");
 
     set(new_sequence_length, new_embedding_dimension, new_name);
 }
 
-void Normalization3d::to_XML(XmlPrinter& printer) const
+void Normalization3d::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Normalization3d");
-    write_xml(printer, {
+    write_json(printer, {
         {"Label", label},
         {"SequenceLength", to_string(get_sequence_length())},
         {"EmbeddingDimension", to_string(get_embedding_dimension())}

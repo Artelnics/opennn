@@ -54,7 +54,7 @@ Shape string_to_shape(const string& text, const string& separator)
     return result;
 }
 
-Device::Device()
+Backend::Backend()
 {
     set_threads_number(0);
 
@@ -77,7 +77,7 @@ Device::Device()
 #endif
 }
 
-Device::~Device()
+Backend::~Backend()
 {
 #ifdef OPENNN_WITH_CUDA
     if (operator_sum_descriptor) cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
@@ -89,7 +89,7 @@ Device::~Device()
 #endif
 }
 
-void Device::set_threads_number(int num_threads)
+void Backend::set_threads_number(int num_threads)
 {
     if (num_threads <= 0)
     {
@@ -104,13 +104,13 @@ void Device::set_threads_number(int num_threads)
     omp_set_num_threads(num_threads);
 }
 
-Device& Device::instance()
+Backend& Backend::instance()
 {
-    static Device device;
+    static Backend device;
     return device;
 }
 
-ThreadPoolDevice* Device::get_thread_pool_device()
+ThreadPoolDevice* Backend::get_thread_pool_device()
 {
     return thread_pool_device.get();
 }

@@ -637,11 +637,11 @@ void GeneticAlgorithm::configure_neural_network_inputs(NeuralNetwork* neural_net
     neural_network->compile();
 }
 
-void GeneticAlgorithm::to_XML(XmlPrinter& printer) const
+void GeneticAlgorithm::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("GeneticAlgorithm");
 
-    write_xml(printer, {
+    write_json(printer, {
         {"PopulationSize", to_string(get_individuals_number())},
         {"ElitismSize", to_string(elitism_size)},
         {"MutationRate", to_string(mutation_rate)},
@@ -654,17 +654,17 @@ void GeneticAlgorithm::to_XML(XmlPrinter& printer) const
     printer.close_element();
 }
 
-void GeneticAlgorithm::from_XML(const XmlDocument& document)
+void GeneticAlgorithm::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root = get_xml_root(document, "GeneticAlgorithm");
-    set_individuals_number(read_xml_index(root, "PopulationSize"));
-    set_mutation_rate(read_xml_type(root, "MutationRate"));
-    set_elitism_size(read_xml_index(root, "ElitismSize"));
-    set_validation_error_goal(read_xml_type(root, "SelectionErrorGoal"));
-    set_minimum_inputs_number(read_xml_index(root, "MinimumInputsNumber"));
-    set_maximum_inputs_number(read_xml_index(root, "MaximumInputsNumber"));
-    set_maximum_epochs(read_xml_index(root, "MaximumGenerationsNumber"));
-    set_maximum_time(read_xml_type(root, "MaximumTime"));
+    const Json* root = get_json_root(document, "GeneticAlgorithm");
+    set_individuals_number(read_json_index(root, "PopulationSize"));
+    set_mutation_rate(read_json_type(root, "MutationRate"));
+    set_elitism_size(read_json_index(root, "ElitismSize"));
+    set_validation_error_goal(read_json_type(root, "SelectionErrorGoal"));
+    set_minimum_inputs_number(read_json_index(root, "MinimumInputsNumber"));
+    set_maximum_inputs_number(read_json_index(root, "MaximumInputsNumber"));
+    set_maximum_epochs(read_json_index(root, "MaximumGenerationsNumber"));
+    set_maximum_time(read_json_type(root, "MaximumTime"));
 }
 
 REGISTER(InputsSelection, GeneticAlgorithm, "GeneticAlgorithm");

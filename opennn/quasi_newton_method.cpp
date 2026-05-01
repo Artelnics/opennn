@@ -341,21 +341,21 @@ TrainingResults QuasiNewtonMethod::train()
     return results;
 }
 
-void QuasiNewtonMethod::to_XML(XmlPrinter& printer) const
+void QuasiNewtonMethod::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("QuasiNewtonMethod");
 
-    add_xml_element(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
+    add_json_field(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
     write_common_xml(printer);
 
     printer.close_element();
 }
 
-void QuasiNewtonMethod::from_XML(const XmlDocument& document)
+void QuasiNewtonMethod::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "QuasiNewtonMethod");
+    const Json* root_element = get_json_root(document, "QuasiNewtonMethod");
 
-    set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
+    set_minimum_loss_decrease(read_json_type(root_element, "MinimumLossDecrease"));
     read_common_xml(root_element);
 }
 

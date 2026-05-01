@@ -1507,14 +1507,14 @@ MatrixR TestingAnalysis::calculate_multiple_classification_tests() const
     return multiple_classification_tests;
 }
 
-void TestingAnalysis::to_XML(XmlPrinter& printer) const
+void TestingAnalysis::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("TestingAnalysis");
 
     printer.close_element();
 }
 
-void TestingAnalysis::from_XML(const XmlDocument& /*document*/)
+void TestingAnalysis::from_JSON(const JsonDocument& /*document*/)
 {
 }
 
@@ -1525,16 +1525,16 @@ void TestingAnalysis::save(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open file: " + file_name.string());
 
-    XmlPrinter printer;
+    JsonWriter printer;
 
-    to_XML(printer);
+    to_JSON(printer);
 
     file << printer.c_str();
 }
 
 void TestingAnalysis::load(const filesystem::path& file_name)
 {
-    from_XML(load_xml_file(file_name));
+    from_JSON(load_json_file(file_name));
 }
 
 void TestingAnalysis::GoodnessOfFitAnalysis::set(const VectorR& new_targets,

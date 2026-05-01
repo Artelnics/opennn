@@ -458,17 +458,17 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
     return H;
 }
 
-static MatrixR activation_derivative(ActivationFunction activation_function, const MatrixMap& outputs)
+static MatrixR activation_derivative(Activation::Function activation_function, const MatrixMap& outputs)
 {
     switch(activation_function)
     {
-    case ActivationFunction::Sigmoid:
+    case Activation::Function::Sigmoid:
         return outputs.array() * (float(1) - outputs.array());
-    case ActivationFunction::HyperbolicTangent:
+    case Activation::Function::Tanh:
         return float(1) - outputs.array().square();
-    case ActivationFunction::RectifiedLinear:
+    case Activation::Function::ReLU:
         return (outputs.array() > float(0)).cast<float>();
-    default:                                                  // Linear / unrecognized → identity
+    default:                                                  // Identity / unrecognized Ã¢â€ â€™ identity
         return MatrixR::Ones(outputs.rows(), outputs.cols());
     }
 }
@@ -746,11 +746,11 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
 }
 
-void LevenbergMarquardtAlgorithm::to_XML(XmlPrinter& printer) const
+void LevenbergMarquardtAlgorithm::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("LevenbergMarquardt");
 
-    write_xml(printer, {
+    write_json(printer, {
         {"DampingParameterFactor", to_string(damping_parameter_factor)},
         {"MinimumLossDecrease", to_string(minimum_loss_decrease)}
     });
@@ -759,12 +759,12 @@ void LevenbergMarquardtAlgorithm::to_XML(XmlPrinter& printer) const
     printer.close_element();
 }
 
-void LevenbergMarquardtAlgorithm::from_XML(const XmlDocument& document)
+void LevenbergMarquardtAlgorithm::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "LevenbergMarquardt");
+    const Json* root_element = get_json_root(document, "LevenbergMarquardt");
 
-    set_damping_parameter_factor(read_xml_type(root_element, "DampingParameterFactor"));
-    set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
+    set_damping_parameter_factor(read_json_type(root_element, "DampingParameterFactor"));
+    set_minimum_loss_decrease(read_json_type(root_element, "MinimumLossDecrease"));
     read_common_xml(root_element);
 }
 

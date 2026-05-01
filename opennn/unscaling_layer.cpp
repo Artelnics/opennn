@@ -175,72 +175,54 @@ void Unscaling::print() const
     cout << "Unscaling layer" << "\n";
 }
 
-void Unscaling::from_XML(const XmlDocument& document)
+void Unscaling::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "Unscaling");
+    const Json* root_element = get_json_root(document, "Unscaling");
 
-    const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
+    const Index neurons_number = read_json_index(root_element, "NeuronsNumber");
 
     set(neurons_number);
 
-    const XmlElement* start_element = root_element->first_child_element("NeuronsNumber");
+    const Json* neurons_array = root_element->find("Neurons");
+    if (!neurons_array || !neurons_array->is_array()) return;
 
-    for(Index i = 0; i < neurons_number; ++i) {
-        const XmlElement* unscaling_neuron_element = start_element->next_sibling_element("UnscalingNeuron");
-        if(!unscaling_neuron_element) {
-            throw runtime_error("Unscaling neuron " + to_string(i + 1) + " is nullptr.\n");
-        }
-
-        unsigned index = 0;
-        unscaling_neuron_element->query_unsigned_attribute("Index", &index);
-        if (index != i + 1) {
-            throw runtime_error("Index " + to_string(index) + " is not correct.\n");
-        }
-
-        scalers[i] = string_to_scaler_method(read_xml_string(unscaling_neuron_element, "Scaler"));
-
-        start_element = unscaling_neuron_element;
+    for (Index i = 0; i < neurons_number && size_t(i) < neurons_array->array_value.size(); ++i)
+    {
+        const Json* neuron = &neurons_array->array_value[size_t(i)];
+        scalers[i] = string_to_scaler_method(read_json_string(neuron, "Scaler"));
     }
 }
 
-void Unscaling::load_state_from_XML(const XmlDocument& document)
+void Unscaling::load_state_from_JSON(const JsonDocument& document)
 {
     if(ssize(states) < 5 || !states[Means].data) return;
 
-    const XmlElement* root_element = get_xml_root(document, "Unscaling");
+    const Json* root_element = get_json_root(document, "Unscaling");
 
-    const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
+    const Json* neurons_array = root_element->find("Neurons");
+    if (!neurons_array || !neurons_array->is_array()) return;
 
-    const XmlElement* start_element = root_element->first_child_element("NeuronsNumber");
-
-    for(Index i = 0; i < neurons_number; ++i) {
-        const XmlElement* unscaling_neuron_element = start_element->next_sibling_element("UnscalingNeuron");
-        if(!unscaling_neuron_element) break;
-
-        const XmlElement* descriptives_element = unscaling_neuron_element->first_child_element("Descriptives");
-        if(descriptives_element && descriptives_element->get_text())
+    for (size_t i = 0; i < neurons_array->array_value.size() && Index(i) < states[Minimums].size(); ++i)
+    {
+        const Json* neuron = &neurons_array->array_value[i];
+        const string descriptives = read_json_string(neuron, "Descriptives");
+        const vector<string> tokens = get_tokens(descriptives, " ");
+        if (tokens.size() >= 4)
         {
-            const vector<string> tokens = get_tokens(descriptives_element->get_text(), " ");
-            if(tokens.size() >= 4 && i < states[Minimums].size())
-            {
-                states[Minimums].as<float>()[i]           = float(stof(tokens[0]));
-                states[Maximums].as<float>()[i]           = float(stof(tokens[1]));
-                states[Means].as<float>()[i]              = float(stof(tokens[2]));
-                states[StandardDeviations].as<float>()[i] = float(stof(tokens[3]));
-            }
+            states[Minimums].as<float>()[i]           = float(stof(tokens[0]));
+            states[Maximums].as<float>()[i]           = float(stof(tokens[1]));
+            states[Means].as<float>()[i]              = float(stof(tokens[2]));
+            states[StandardDeviations].as<float>()[i] = float(stof(tokens[3]));
         }
-
-        start_element = unscaling_neuron_element;
     }
 }
 
-void Unscaling::to_XML(XmlPrinter& printer) const
+void Unscaling::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Unscaling");
 
     const Shape output_shape = get_output_shape();
-
-    add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
+    add_json_field(printer, "NeuronsNumber", to_string(output_shape[0]));
 
     const bool have_state = (ssize(states) > StandardDeviations && states[Means].data);
     const float* mins = have_state ? states[Minimums].as<float>()           : nullptr;
@@ -248,10 +230,10 @@ void Unscaling::to_XML(XmlPrinter& printer) const
     const float* mns  = have_state ? states[Means].as<float>()              : nullptr;
     const float* sds  = have_state ? states[StandardDeviations].as<float>() : nullptr;
 
-    for(Index i = 0; i < output_shape[0]; ++i)
+    printer.begin_array("Neurons");
+    for (Index i = 0; i < output_shape[0]; ++i)
     {
-        printer.open_element("UnscalingNeuron");
-        printer.push_attribute("Index", int(i + 1));
+        printer.begin_array_object();
 
         ostringstream descriptives_stream;
         descriptives_stream.precision(10);
@@ -259,12 +241,13 @@ void Unscaling::to_XML(XmlPrinter& printer) const
                             << (maxs ? maxs[i] : float(1))  << ' '
                             << (mns  ? mns[i]  : float(0))  << ' '
                             << (sds  ? sds[i]  : float(1));
-        add_xml_element(printer, "Descriptives", descriptives_stream.str());
 
-        add_xml_element(printer, "Scaler", scaler_method_to_string(scalers[i]));
+        add_json_field(printer, "Descriptives", descriptives_stream.str());
+        add_json_field(printer, "Scaler", scaler_method_to_string(scalers[i]));
 
-        printer.close_element();
+        printer.end_array_object();
     }
+    printer.end_array();
 
     printer.close_element();
 }

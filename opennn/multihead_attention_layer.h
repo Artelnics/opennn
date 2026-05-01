@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 #include "math_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -29,15 +30,6 @@ public:
                        const Shape&,
                        Index = 0,
                        const string& = string());
-
-    ~MultiHeadAttention() override
-    {
-#ifdef OPENNN_WITH_CUDA
-        if(dropout_arguments.descriptor)    cudnnDestroyDropoutDescriptor(dropout_arguments.descriptor);
-        if(dropout_arguments.states)        cudaFree(dropout_arguments.states);
-        if(dropout_arguments.reserve_space) cudaFree(dropout_arguments.reserve_space);
-#endif
-    }
 
     Index get_query_sequence_length() const { return query_sequence_length; }
     Index get_source_sequence_length() const { return source_sequence_length; }
@@ -69,7 +61,7 @@ public:
         const Index max_seq = max(query_sequence_length, source_sequence_length);
         const Type act = activation_dtype;
 
-        const Shape attn_drop_shape = (dropout_rate > float(0))
+        const Shape attn_drop_shape = dropout.active()
             ? Shape{batch_size, heads_number, query_sequence_length, source_sequence_length}
             : Shape{};
 
@@ -116,20 +108,18 @@ public:
              bool = false,
              const string& = "multihead_attention_layer");
 
-    void set_dropout_rate(const float new_dropout_rate) { dropout_rate = new_dropout_rate; }
+    void set_dropout_rate(float new_dropout_rate) { dropout.set_rate(new_dropout_rate); }
 
     void set_parameters_random() override;
 
-#ifdef OPENNN_WITH_CUDA
-    void init_cuda(Index batch_size);
-#endif
+    float* link_parameters(float* pointer) override;
 
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
-    void to_XML(XmlPrinter&) const override;
-    void from_XML(const XmlDocument&) override;
+    void to_JSON(JsonWriter&) const override;
+    void from_JSON(const JsonDocument&) override;
 
 private:
 
@@ -167,8 +157,11 @@ private:
     MatrixR causal_mask;
     MatrixB key_mask;
 
-    float dropout_rate = float(0);
-    DropoutArguments dropout_arguments;
+    Combination query_projection;
+    Combination key_projection;
+    Combination value_projection;
+    Combination output_projection;
+    Dropout     dropout;
 };
 
 } 

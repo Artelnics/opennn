@@ -112,12 +112,12 @@ void TimeSeriesDataset::set_multi_target(bool new_multi_target)
     multi_target = new_multi_target;
 }
 
-void TimeSeriesDataset::to_XML(XmlPrinter& printer) const
+void TimeSeriesDataset::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Dataset");
 
     printer.open_element("DataSource");
-    write_xml(printer, {
+    write_json(printer, {
         {"FileType", "csv"},
         {"Path", data_path.string()},
         {"Separator", get_separator_name()},
@@ -130,63 +130,63 @@ void TimeSeriesDataset::to_XML(XmlPrinter& printer) const
     });
     printer.close_element();
 
-    variables_to_XML(printer);
+    variables_to_JSON(printer);
 
-    samples_to_XML(printer);
+    samples_to_JSON(printer);
 
-    missing_values_to_XML(printer);
+    missing_values_to_JSON(printer);
 
-    preview_data_to_XML(printer);
+    preview_data_to_JSON(printer);
 
-    add_xml_element(printer, "Display", to_string(display));
+    add_json_field(printer, "Display", to_string(display));
 
     printer.close_element();
 }
 
-void TimeSeriesDataset::from_XML(const XmlDocument& data_set_document)
+void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
 {
-    const XmlElement* data_set_element = get_xml_root(data_set_document, "Dataset");
+    const Json* data_set_element = get_json_root(data_set_document, "Dataset");
 
     // Data file
 
-    const XmlElement* data_source_element = require_xml_element(data_set_element, "DataSource");
+    const Json* data_source_element = require_json_field(data_set_element, "DataSource");
 
-    (void)require_xml_element(data_source_element, "FileType");
+    (void)require_json_field(data_source_element, "FileType");
 
-    set_data_path(read_xml_string(data_source_element, "Path"));
-    set_separator_name(read_xml_string(data_source_element, "Separator"));
-    set_has_header(read_xml_bool(data_source_element, "HasHeader"));
-    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
-    set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
-    set_past_time_steps(stoi(read_xml_string(data_source_element, "LagsNumber")));
-    set_future_time_steps(stoi(read_xml_string(data_source_element, "StepsAhead")));
-    set_codification(read_xml_string(data_source_element, "Codification"));
+    set_data_path(read_json_string(data_source_element, "Path"));
+    set_separator_name(read_json_string(data_source_element, "Separator"));
+    set_has_header(read_json_bool(data_source_element, "HasHeader"));
+    set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
+    set_missing_values_label(read_json_string(data_source_element, "MissingValuesLabel"));
+    set_past_time_steps(stoi(read_json_string(data_source_element, "LagsNumber")));
+    set_future_time_steps(stoi(read_json_string(data_source_element, "StepsAhead")));
+    set_codification(read_json_string(data_source_element, "Codification"));
 
     // Variables
 
-    const XmlElement* variables_element = data_set_element->first_child_element("Variables");
+    const Json* variables_element = data_set_element->first_child("Variables");
 
-    variables_from_XML(variables_element);
+    variables_from_JSON(variables_element);
 
     // Samples
 
-    const XmlElement* samples_element = data_set_element->first_child_element("Samples");
+    const Json* samples_element = data_set_element->first_child("Samples");
 
-    samples_from_XML(samples_element);
+    samples_from_JSON(samples_element);
 
     // Missing values
 
-    const XmlElement* missing_values_element = data_set_element->first_child_element("MissingValues");
+    const Json* missing_values_element = data_set_element->first_child("MissingValues");
 
-    missing_values_from_XML(missing_values_element);
+    missing_values_from_JSON(missing_values_element);
 
     // Preview data
 
-    const XmlElement* preview_data_element = data_set_element->first_child_element("PreviewData");
+    const Json* preview_data_element = data_set_element->first_child("PreviewData");
 
-    preview_data_from_XML(preview_data_element);
+    preview_data_from_JSON(preview_data_element);
 
-    set_display(read_xml_bool(data_set_element, "Display"));
+    set_display(read_json_bool(data_set_element, "Display"));
 
     input_shape = { past_time_steps, get_features_number("Input") };
     target_shape = { get_features_number("Target") };

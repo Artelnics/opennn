@@ -68,42 +68,36 @@ vector<string> Layer::get_default_output_names() const
     return output_names;
 }
 
-float *Layer::link_parameters(float *pointer)
+float* Layer::link_views(float* pointer,
+                         const vector<Shape>& shapes,
+                         vector<TensorView>& views,
+                         const char* tag) const
 {
-    const vector<Shape> shapes = get_parameter_shapes();
-    parameters.resize(shapes.size());
+    views.resize(shapes.size());
 
     for (size_t i = 0; i < shapes.size(); ++i)
     {
         if (shapes[i].empty()) continue;
 
-        if(!is_aligned(pointer))
-            throw runtime_error("Layer::link_parameters: unaligned memory in layer \"" + name + "\"");
+        if (!is_aligned(pointer))
+            throw runtime_error(string("Layer::") + tag + ": unaligned memory in layer \"" + name + "\"");
 
-        parameters[i] = TensorView(pointer, shapes[i], Type::FP32);
+        views[i] = TensorView(pointer, shapes[i], Type::FP32);
 
         pointer += get_aligned_size(shapes[i].size());
     }
+
     return pointer;
 }
 
-float *Layer::link_states(float *pointer)
+float* Layer::link_parameters(float* pointer)
 {
-    const vector<Shape> shapes = get_state_shapes();
-    states.resize(shapes.size());
+    return link_views(pointer, get_parameter_shapes(), parameters, "link_parameters");
+}
 
-    for (size_t i = 0; i < shapes.size(); ++i)
-    {
-        if (shapes[i].empty()) continue;
-
-        if(!is_aligned(pointer))
-            throw runtime_error("Layer::link_states: unaligned memory in layer \"" + name + "\"");
-
-        states[i] = TensorView(pointer, shapes[i], Type::FP32);
-
-        pointer += get_aligned_size(shapes[i].size());
-    }
-    return pointer;
+float* Layer::link_states(float* pointer)
+{
+    return link_views(pointer, get_state_shapes(), states, "link_states");
 }
 
 void Layer::add_gradients(const vector<TensorView>& output_delta_views) const
@@ -123,8 +117,8 @@ void Layer::add_gradients(const vector<TensorView>& output_delta_views) const
         if(!output_delta_views[i].data) continue;
 
         // operator_sum_descriptor is configured with CUDNN_OP_TENSOR_ADD.
-        CHECK_CUDNN(cudnnOpTensor(Device::get_cudnn_handle(),
-                                  Device::get_operator_sum_descriptor(),
+        CHECK_CUDNN(cudnnOpTensor(Backend::get_cudnn_handle(),
+                                  Backend::get_operator_sum_descriptor(),
                                   &one,  accumulator.get_descriptor(),           accumulator.data,
                                   &one,  output_delta_views[i].get_descriptor(), output_delta_views[i].data,
                                   &zero, accumulator.get_descriptor(),           accumulator.data));

@@ -134,28 +134,28 @@ public:
     vector<Type> get_parameter_dtypes() const
     {
         vector<Type> dtypes;
-        for (const auto& [_, dtype] : get_parameter_specs()) dtypes.push_back(dtype);
+        for (const auto& [_, type] : get_parameter_specs()) dtypes.push_back(type);
         return dtypes;
     }
 
     vector<Type> get_state_dtypes() const
     {
         vector<Type> dtypes;
-        for (const auto& [_, dtype] : get_state_specs()) dtypes.push_back(dtype);
+        for (const auto& [_, type] : get_state_specs()) dtypes.push_back(type);
         return dtypes;
     }
 
     vector<Type> get_forward_dtypes(Index batch_size) const
     {
         vector<Type> dtypes;
-        for (const auto& [_, dtype] : get_forward_specs(batch_size)) dtypes.push_back(dtype);
+        for (const auto& [_, type] : get_forward_specs(batch_size)) dtypes.push_back(type);
         return dtypes;
     }
 
     vector<Type> get_backward_dtypes(Index batch_size) const
     {
         vector<Type> dtypes;
-        for (const auto& [_, dtype] : get_backward_specs(batch_size)) dtypes.push_back(dtype);
+        for (const auto& [_, type] : get_backward_specs(batch_size)) dtypes.push_back(type);
         return dtypes;
     }
 
@@ -163,7 +163,7 @@ public:
 
     virtual Shape get_output_shape() const = 0;
 
-    virtual ActivationFunction get_output_activation() const { return ActivationFunction::Linear; }
+    virtual Activation::Function get_output_activation() const { return Activation::Function::Identity; }
 
     Index get_inputs_number() const { return get_input_shape().size(); }
 
@@ -180,11 +180,11 @@ public:
         throw runtime_error("back_propagate not implemented for layer type: " + name);
     }
 
-    virtual void from_XML(const tinyxml2::XmlDocument&) {}
+    virtual void from_JSON(const JsonDocument&) {}
 
-    virtual void load_state_from_XML(const tinyxml2::XmlDocument&) {}
+    virtual void load_state_from_JSON(const JsonDocument&) {}
 
-    virtual void to_XML(tinyxml2::XmlPrinter&) const {}
+    virtual void to_JSON(JsonWriter&) const {}
 
     virtual void print() const {}
 
@@ -198,12 +198,12 @@ public:
 
     void set_activation_dtype(Type new_activation_dtype) { activation_dtype = new_activation_dtype; }
 
-    float* link_parameters(float* pointer);
+    virtual float* link_parameters(float* pointer);
+
+    virtual float* link_states(float* pointer);
 
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const { return parameters; }
-
-    virtual float* link_states(float* pointer);
 
     vector<TensorView>& get_state_views() { return states; }
     const vector<TensorView>& get_state_views() const { return states; }
@@ -228,8 +228,13 @@ protected:
     vector<TensorView> states;
 
     Tensor2 empty_2;
-    
+
     void add_gradients(const vector<TensorView>&) const;
+
+    float* link_views(float* pointer,
+                      const vector<Shape>& shapes,
+                      vector<TensorView>& views,
+                      const char* tag) const;
 };
 
 }

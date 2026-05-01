@@ -28,20 +28,20 @@ Optimizer::Optimizer(Loss* new_loss)
     set(new_loss);
 }
 
-void Optimizer::to_XML(XmlPrinter& printer) const
+void Optimizer::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Optimizer");
 
-    add_xml_element(printer, "Display", to_string(display));
+    add_json_field(printer, "Display", to_string(display));
 
     printer.close_element();
 }
 
-void Optimizer::from_XML(const XmlDocument& document)
+void Optimizer::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "Optimizer");
+    const Json* root_element = get_json_root(document, "Optimizer");
 
-    set_display(read_xml_bool(root_element, "Display"));
+    set_display(read_json_bool(root_element, "Display"));
 }
 
 void Optimizer::save(const filesystem::path& file_name) const
@@ -51,14 +51,14 @@ void Optimizer::save(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open file: " + file_name.string());
 
-    XmlPrinter printer;
-    to_XML(printer);
+    JsonWriter printer;
+    to_JSON(printer);
     file << printer.c_str();
 }
 
 void Optimizer::load(const filesystem::path& file_name)
 {
-    from_XML(load_xml_file(file_name));
+    from_JSON(load_json_file(file_name));
 }
 
 float Optimizer::get_elapsed_time(const time_t &beginning_time)
@@ -287,9 +287,9 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
     return true;
 }
 
-void Optimizer::write_common_xml(XmlPrinter& printer) const
+void Optimizer::write_common_xml(JsonWriter& printer) const
 {
-    write_xml(printer, {
+    write_json(printer, {
         {"LossGoal", to_string(training_loss_goal)},
         {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
         {"MaximumEpochsNumber", to_string(maximum_epochs)},
@@ -297,12 +297,12 @@ void Optimizer::write_common_xml(XmlPrinter& printer) const
     });
 }
 
-void Optimizer::read_common_xml(const XmlElement* root_element)
+void Optimizer::read_common_xml(const Json* root_element)
 {
-    set_loss_goal(read_xml_type(root_element, "LossGoal"));
-    set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
-    set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
-    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+    set_loss_goal(read_json_type(root_element, "LossGoal"));
+    set_maximum_validation_failures(read_json_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_epochs(read_json_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_json_type(root_element, "MaximumTime"));
 }
 
 TrainingResults::TrainingResults(const Index epochs_number)
@@ -455,7 +455,7 @@ void OptimizerData::set(const vector<Shape>& slot_shapes)
 {
     const Index total_size = aligned_total_elements(slot_shapes);
 
-    data.resize_bytes(total_size * Index(sizeof(float)), DeviceType::CPU);
+    data.resize_bytes(total_size * Index(sizeof(float)), Device::CPU);
     data.setZero();
 
     views.clear();
@@ -483,7 +483,7 @@ void OptimizerData::allocate_device()
 {
     if(data.size() == 0) return;
 
-    data.resize_bytes(data.size() * Index(sizeof(float)), DeviceType::CUDA);
+    data.resize_bytes(data.size() * Index(sizeof(float)), Device::CUDA);
     data.setZero();
 
     float* dev_pointer = data.as<float>();
@@ -580,7 +580,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
     if(Configuration::instance().is_gpu())
     {
         float squared_norm = 0.0f;
-        CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(),
+        CHECK_CUBLAS(cublasSdot(Backend::get_cublas_handle(),
                                 to_int(gradient_size),
                                 gradient.as<float>(), 1,
                                 gradient.as<float>(), 1,
@@ -589,7 +589,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
         if(gradient_norm > float(max_norm))
         {
             const float scale = float(max_norm) / (gradient_norm + 1e-6f);
-            CHECK_CUBLAS(cublasSscal(Device::get_cublas_handle(),
+            CHECK_CUBLAS(cublasSscal(Backend::get_cublas_handle(),
                                      to_int(gradient_size), &scale,
                                      gradient.as<float>(), 1));
         }

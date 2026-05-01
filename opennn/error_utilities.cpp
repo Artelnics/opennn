@@ -24,37 +24,35 @@ static float sum_squared_diff_cuda(const TensorView& input, const TensorView& ta
     });
 
     float sum_squared = 0.0f;
-    CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(), total_size,
+    CHECK_CUBLAS(cublasSdot(Backend::get_cublas_handle(), total_size,
                             workspace, 1, workspace, 1, &sum_squared));
     return sum_squared;
 }
 
 static void scaled_diff_cuda(const TensorView& input, const TensorView& target, float scale, TensorView& output)
 {
-    input.dispatch([&](auto in_tag) {
-        using TIn = decltype(in_tag);
-        output.dispatch([&](auto out_tag) {
-            using TOut = decltype(out_tag);
-            scaled_diff_cuda_typed<TIn, TOut>(input.size(),
-                                              input.as<TIn>(),
-                                              target.as_float(),
-                                              scale,
-                                              output.as<TOut>());
-        });
+    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
+        using TIn  = typename decltype(in)::type;
+        using TOut = typename decltype(out)::type;
+        scaled_diff_cuda_typed<TIn, TOut>(input.size(),
+                                          input.as<TIn>(),
+                                          target.as_float(),
+                                          scale,
+                                          output.as<TOut>());
     });
 }
 
 static float sum_abs_cuda(const float* data, Index size)
 {
     float sum = 0.0f;
-    CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), to_int(size), data, 1, &sum));
+    CHECK_CUBLAS(cublasSasum(Backend::get_cublas_handle(), to_int(size), data, 1, &sum));
     return sum;
 }
 
 static float squared_norm_cuda(const float* data, Index size)
 {
     float dot = 0.0f;
-    CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(), to_int(size),
+    CHECK_CUBLAS(cublasSdot(Backend::get_cublas_handle(), to_int(size),
                             data, 1, data, 1, &dot));
     return dot;
 }
@@ -368,7 +366,7 @@ void l2_regularization_gradient(const TensorView& parameters, float lambda, Tens
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
         const int total_size = to_int(parameters.size());
-        CHECK_CUBLAS(cublasAxpyEx(Device::get_cublas_handle(), total_size,
+        CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), total_size,
                                   &lambda,         CUDA_R_32F,
                                   parameters.data, CUDA_R_32F, 1,
                                   gradient.data,   CUDA_R_32F, 1,
