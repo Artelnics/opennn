@@ -65,7 +65,7 @@ private:
                                                  OptimizerData&,
                                                  float);
 
-    float first_learning_rate = float(0.01);
+    float first_learning_rate = 0.01f;
 
     // Stopping criteria
 
@@ -73,9 +73,9 @@ private:
 
     // Optimizer-specific state (not shared across optimizers, so not in OptimizerData)
 
-    float training_slope = float(0);
-    float learning_rate = float(0);
-    float old_learning_rate = float(0);
+    float training_slope = 0.0f;
+    float learning_rate = 0.0f;
+    float old_learning_rate = 0.0f;
 };
 
 }

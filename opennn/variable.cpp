@@ -62,7 +62,7 @@ string Variable::get_type_string() const
     case VariableType::DateTime:
         return "DateTime";
     default:
-        throw runtime_error("Unknown variable type");
+        return "Unknown";
     }
 }
 

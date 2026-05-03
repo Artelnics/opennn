@@ -143,7 +143,7 @@ private:
     unordered_map<Index, string> output_inverse_vocabulary_map;
 };
 
-} 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

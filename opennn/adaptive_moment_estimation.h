@@ -54,11 +54,11 @@ public:
 
 private:
 
-   float learning_rate = float(0.001);
+   float learning_rate = 0.001f;
 
-   float beta_1 = float(0.9);
+   float beta_1 = 0.9f;
 
-   float beta_2 = float(0.98);
+   float beta_2 = 0.98f;
 
    Index batch_size = 1000;
 };

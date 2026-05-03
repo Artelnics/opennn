@@ -60,7 +60,7 @@ private:
     bool use_padding = false;
 
     bool batch_normalization = false;
-    float momentum = float(0.9);
+    float momentum = 0.9f;
 
     Convolution convolution;
     Activation  activation;
@@ -68,37 +68,19 @@ private:
 
     enum Parameters {Bias, Weight, Gamma, Beta};
 
-    vector<pair<Shape, Type>> get_parameter_specs() const override
-    {
-        const Type act = activation_dtype;
-        return {
-            /*Bias*/   {{kernels_number},                                               act},
-            /*Weight*/ {{kernels_number, kernel_height, kernel_width, kernel_channels}, act},
-            /*Gamma*/  {{batch_normalization ? kernels_number : 0},                     act},
-            /*Beta*/   {{batch_normalization ? kernels_number : 0},                     act},
-        };
-    }
-
     enum States {RunningMean, RunningVariance};
-
-    vector<pair<Shape, Type>> get_state_specs() const override
-    {
-        if (!batch_normalization) return {};
-        return {
-            /*RunningMean*/     {{kernels_number}, Type::FP32},
-            /*RunningVariance*/ {{kernels_number}, Type::FP32},
-        };
-    }
 
     enum Forward {Input, PaddedInput, ConvolutionView, BatchNormMean, BatchNormInverseVariance, Output};
 
     vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
         const Shape output_shape = {batch_size, get_output_height(), get_output_width(), kernels_number};
-        const Shape padded_shape = {batch_size,
-                                    input_height + 2 * get_padding_height(),
-                                    input_width + 2 * get_padding_width(),
-                                    input_channels};
+        const Shape padded_shape = Configuration::instance().is_gpu()
+            ? Shape{}
+            : Shape{batch_size,
+                    input_height + 2 * get_padding_height(),
+                    input_width + 2 * get_padding_width(),
+                    input_channels};
         const Type act = activation_dtype;
 
         const Shape convolution_view_shape = batch_normalization ? output_shape      : Shape{};
@@ -117,11 +99,7 @@ private:
 
     vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        const Type act = activation_dtype;
-        return {
-            {{batch_size, input_height, input_width, input_channels},          act},
-            {{kernels_number, kernel_height, kernel_width, kernel_channels},   act},
-        };
+        return {{{batch_size, input_height, input_width, input_channels}, activation_dtype}};
     }
 
 public:
@@ -200,8 +178,7 @@ public:
     void set_parameters_glorot() override;
     void set_parameters_random() override;
 
-    float* link_parameters(float* pointer) override;
-    float* link_states(float* pointer) override;
+    vector<Operator*> get_operators() override;
 
 private:
     void init_conv_norm_defaults();

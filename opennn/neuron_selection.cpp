@@ -29,7 +29,7 @@ void NeuronSelection::set(TrainingStrategy* new_training_strategy)
 
 void NeuronSelection::set_default()
 {
-    if(!(training_strategy && training_strategy->get_neural_network()))
+    if (!(training_strategy && training_strategy->get_neural_network()))
         return;
 
     const Index inputs_number = training_strategy->get_neural_network()->get_inputs_number();
@@ -40,45 +40,45 @@ void NeuronSelection::set_default()
     trials_number = 1;
     display = true;
 
-    validation_error_goal = float(0);
+    validation_error_goal = 0.0f;
     maximum_epochs = 1000;
-    maximum_time = float(3600);
+    maximum_time = 3600.0f;
 }
 
 void NeuronSelection::check() const
 {
     // Optimization algorithm
 
-    if(!training_strategy)
-        throw runtime_error("NeuronSelection error: training strategy is not set.");
+    if (!training_strategy)
+        throw runtime_error("training strategy is not set.");
 
     // Loss index
 
     const Loss* loss = training_strategy->get_loss();
 
-    if(!loss)
-        throw runtime_error("NeuronSelection error: loss is not set.");
+    if (!loss)
+        throw runtime_error("loss is not set.");
 
     // Neural network
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
-    if(!neural_network)
-        throw runtime_error("NeuronSelection error: neural network is not set.");
+    if (!neural_network)
+        throw runtime_error("neural network is not set.");
 
-    if(neural_network->get_layers_number() == 1)
+    if (neural_network->get_layers_number() == 1)
         throw runtime_error("Number of layers in neural network must be greater than 1.\n");
 
     // Dataset
 
     const Dataset* dataset = loss->get_dataset();
 
-    if(!dataset)
-        throw runtime_error("NeuronSelection error: dataset is not set.");
+    if (!dataset)
+        throw runtime_error("dataset is not set.");
 
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
-    if(validation_samples_number == 0)
+    if (validation_samples_number == 0)
         throw runtime_error("Number of selection samples is zero.\n");
 }
 
@@ -86,7 +86,7 @@ void NeuronSelection::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if(!file.is_open())
+    if (!file.is_open())
         throw runtime_error("Cannot open file: " + file_name.string());
 
     JsonWriter printer;
@@ -104,10 +104,10 @@ NeuronsSelectionResults::NeuronsSelectionResults(const Index maximum_epochs)
     neurons_number_history = VectorI::Zero(maximum_epochs);
 
     training_error_history.resize(maximum_epochs);
-    training_error_history.setConstant(float(-1));
+    training_error_history.setConstant(-1.0f);
 
     validation_error_history.resize(maximum_epochs);
-    validation_error_history.setConstant(float(-1));
+    validation_error_history.setConstant(-1.0f);
 
     optimum_training_error = MAX;
     optimum_validation_error = MAX;
@@ -127,7 +127,7 @@ void NeuronsSelectionResults::resize_history(const Index new_size)
 
     const Index copy_size = min(old_size, new_size);
 
-    for(Index i = 0; i < copy_size; ++i)
+    for (Index i = 0; i < copy_size; ++i)
     {
         neurons_number_history(i) = old_neurons_number_history(i);
         training_error_history(i) = old_training_error_history(i);
@@ -137,7 +137,7 @@ void NeuronsSelectionResults::resize_history(const Index new_size)
 
 string NeuronsSelectionResults::write_stopping_condition() const
 {
-    switch(stopping_condition)
+    switch (stopping_condition)
     {
         case NeuronSelection::StoppingCondition::MaximumTime:
             return "MaximumTime";

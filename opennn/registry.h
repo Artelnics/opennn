@@ -47,7 +47,7 @@ public:
     {
         auto it = creators.find(name);
 
-        if(it == creators.end())
+        if (it == creators.end())
             throw runtime_error("Component not found: " + name);
 
         return it->second();
@@ -58,7 +58,7 @@ public:
     {
         vector<string> names;
 
-        for(const auto& pair : creators)
+        for (const auto& pair : creators)
             names.push_back(pair.first);
 
         return names;
@@ -71,7 +71,7 @@ private:
 #define REGISTER(BASE, CLASS, NAME) \
 namespace { \
     const bool CLASS##_registered = []() { \
-              Registry<BASE>::instance().register_component(NAME, [](){ \
+              Registry<BASE>::instance().register_component(NAME, []() { \
                           return std::make_unique<CLASS>(); \
                   }); \
               return true; \

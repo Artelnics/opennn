@@ -25,11 +25,11 @@ Tensor3 load_image(const filesystem::path& path)
     const string image_path_str = path.string();
 
     ifstream file(path, ios::binary | ios::ate);
-    if(!file)
+    if (!file)
         throw runtime_error("Cannot open BMP file: " + image_path_str);
 
     const streamsize size = file.tellg();
-    if(size < 54) 
+    if (size < 54)
         throw runtime_error("File too small to be a BMP: " + image_path_str);
 
     file.seekg(0, ios::beg);
@@ -37,10 +37,10 @@ Tensor3 load_image(const filesystem::path& path)
     thread_local vector<uint8_t> buffer;
     if (buffer.capacity() < size)
         buffer.reserve(size);
-    
+
     buffer.resize(size);
 
-    if(!file.read(reinterpret_cast<char*>(buffer.data()), size))
+    if (!file.read(reinterpret_cast<char*>(buffer.data()), size))
         throw runtime_error("Error reading BMP file: " + image_path_str);
     file.close();
 
@@ -80,9 +80,9 @@ Tensor3 load_image(const filesystem::path& path)
 
         palette.resize(num_palette_colors);
         is_grayscale = true;
-        
-        uint32_t pal_offset = 14 + biSize; 
-        for(uint32_t i = 0; i < num_palette_colors; ++i)
+
+        uint32_t pal_offset = 14 + biSize;
+        for (uint32_t i = 0; i < num_palette_colors; ++i)
         {
             palette[i].blue     = buffer[pal_offset++];
             palette[i].green    = buffer[pal_offset++];
@@ -108,19 +108,19 @@ Tensor3 load_image(const filesystem::path& path)
         throw runtime_error("Corrupted BMP: Pixel data exceeds file size.");
 
     const uint8_t* pixel_data = buffer.data() + bfOffBits;
-    
+
     auto* img_data = image.data();
 
-    for(Index y = 0; y < height; ++y)
+    for (Index y = 0; y < height; ++y)
     {
         const Index tensor_y = top_down ? y : (height - 1 - y);
         const uint8_t* row_ptr = pixel_data + y * row_stride;
-        
+
         const Index row_start_idx = tensor_y * width * channels;
 
         if (biBitCount == 24 || biBitCount == 32)
         {
-            for(Index x = 0; x < width; ++x)
+            for (Index x = 0; x < width; ++x)
             {
                 const uint8_t* pixel_pointer = row_ptr + x * bytes_per_pixel;
                 const Index pixel_idx = row_start_idx + x * channels;
@@ -134,16 +134,16 @@ Tensor3 load_image(const filesystem::path& path)
         {
             if (channels == 1) // 8-bit (1 channel)
             {
-                for(Index x = 0; x < width; ++x)
+                for (Index x = 0; x < width; ++x)
                     img_data[row_start_idx + x] = static_cast<float>(palette[row_ptr[x]].red);
             }
             else // 8-bit RGB (3 channels)
             {
-                for(Index x = 0; x < width; ++x)
+                for (Index x = 0; x < width; ++x)
                 {
                     const RGBQuad& color = palette[row_ptr[x]];
                     const Index pixel_idx = row_start_idx + x * 3;
-                    
+
                     img_data[pixel_idx + 0] = static_cast<float>(color.red);
                     img_data[pixel_idx + 1] = static_cast<float>(color.green);
                     img_data[pixel_idx + 2] = static_cast<float>(color.blue);
@@ -171,7 +171,7 @@ Tensor3 resize_image(const Tensor3& input_image,
     vector<Index> x0(output_width), x1(output_width);
     vector<float> x_weight(output_width);
 
-    for(Index x = 0; x < output_width; ++x)
+    for (Index x = 0; x < output_width; ++x)
     {
         const float in_x = x * scale_x;
         x0[x] = min<Index>(static_cast<Index>(in_x), input_width - 1);
@@ -180,8 +180,8 @@ Tensor3 resize_image(const Tensor3& input_image,
     }
 
     #pragma omp parallel for collapse(2)
-    for(Index y = 0; y < output_height; ++y)
-        for(Index x = 0; x < output_width; ++x)
+    for (Index y = 0; y < output_height; ++y)
+        for (Index x = 0; x < output_width; ++x)
         {
             const float in_y = y * scale_y;
             const Index y0 = min<Index>(static_cast<Index>(in_y), input_height - 1);
@@ -192,18 +192,18 @@ Tensor3 resize_image(const Tensor3& input_image,
             const Index x1_value = x1[x];
             const float x_weight_value = x_weight[x];
 
-            for(Index c = 0; c < channels; ++c)
+            for (Index c = 0; c < channels; ++c)
             {
                 const float top =
-                    (float(1) - x_weight_value) * input_image(y0, x0_value, c) +
+                    (1.0f - x_weight_value) * input_image(y0, x0_value, c) +
                     x_weight_value             * input_image(y0, x1_value, c);
 
                 const float bottom =
-                    (float(1) - x_weight_value) * input_image(y1, x0_value, c) +
+                    (1.0f - x_weight_value) * input_image(y1, x0_value, c) +
                     x_weight_value             * input_image(y1, x1_value, c);
 
                 output_image(y, x, c) =
-                    (float(1) - y_weight) * top + y_weight * bottom;
+                    (1.0f - y_weight) * top + y_weight * bottom;
             }
         }
 
@@ -226,10 +226,10 @@ void rotate_image(const Tensor3& input, Tensor3& output, float angle_degree)
     const Index width = input.dimension(1);
     const Index channels = input.dimension(2);
 
-    const float center_x = float(width) / float(2);
-    const float center_y = float(height) / float(2);
+    const float center_x = float(width) / 2.0f;
+    const float center_y = float(height) / 2.0f;
 
-    const float angle_rad = -angle_degree * float(3.1415927) / float(180.0);
+    const float angle_rad = -angle_degree * 3.1415927f / 180.0f;
     const float cos_angle = cos(angle_rad);
     const float sin_angle = sin(angle_rad);
 
@@ -237,30 +237,30 @@ void rotate_image(const Tensor3& input, Tensor3& output, float angle_degree)
 
     rotation_matrix << cos_angle, -sin_angle, center_x - cos_angle * center_x + sin_angle * center_y,
                        sin_angle, cos_angle, center_y - sin_angle * center_x - cos_angle * center_y,
-                       float(0), float(0), float(1);
+                       0.0f, 0.0f, 1.0f;
 
     using Vector3T = Matrix<float, 3, 1>;
 
     #pragma omp parallel for collapse(2)
 
-    for(Index y = 0; y < height; ++y)
+    for (Index y = 0; y < height; ++y)
     {
-        for(Index x = 0; x < width; ++x)
+        for (Index x = 0; x < width; ++x)
         {
             Vector3T coordinates;
             coordinates << static_cast<float>(x), static_cast<float>(y), 1.0f;
 
             const Vector3T transformed = rotation_matrix * coordinates;
 
-            if(transformed[0] >= 0 && transformed[0] < width
+            if (transformed[0] >= 0 && transformed[0] < width
             && transformed[1] >= 0 && transformed[1] < height)
-                for(Index c = 0; c < channels; ++c)
+                for (Index c = 0; c < channels; ++c)
                     output(y, x, c) = input(int(transformed[1]),
                                             int(transformed[0]),
                                             c);
             else
-                for(Index c = 0; c < channels; ++c)
-                    output(y, x, c) = float(0);
+                for (Index c = 0; c < channels; ++c)
+                    output(y, x, c) = 0.0f;
         }
     }
 }
@@ -281,7 +281,7 @@ void translate_image(const Tensor3& input, Tensor3& output, Index shift)
     const Index src_start = (shift >= 0) ? 0 : -shift;
     const Index src_end = (shift >= 0) ? dim_size - shift : dim_size;
 
-    for(Index i = src_start; i < src_end; ++i)
+    for (Index i = src_start; i < src_end; ++i)
         output.template chip<Dim>(i + shift) = input.template chip<Dim>(i);
 }
 
@@ -295,4 +295,4 @@ void translate_image_y(const Tensor3& input, Tensor3& output, Index shift)
     translate_image<0>(input, output, shift);
 }
 
-} 
+}

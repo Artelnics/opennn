@@ -127,18 +127,18 @@ struct Buffer
 
     void resize_bytes(Index n_bytes, Device new_device_type)
     {
-        if(n_bytes == bytes && device_type == new_device_type) return;
+        if (n_bytes == bytes && device_type == new_device_type) return;
         free_buffer();
         device_type = new_device_type;
-        if(n_bytes > 0) data = alloc(new_device_type, n_bytes);
+        if (n_bytes > 0) data = alloc(new_device_type, n_bytes);
         bytes = n_bytes;
     }
 
     void setZero()
     {
-        if(!data) return;
+        if (!data) return;
 #ifdef OPENNN_WITH_CUDA
-        if(device_type == Device::CUDA) CHECK_CUDA(cudaMemset(data, 0, bytes));
+        if (device_type == Device::CUDA) CHECK_CUDA(cudaMemset(data, 0, bytes));
         else
 #endif
             std::memset(data, 0, static_cast<size_t>(bytes));
@@ -147,7 +147,7 @@ struct Buffer
 #ifdef OPENNN_WITH_CUDA
     void migrate_to(Device target)
     {
-        if(device_type == target || !data) return;
+        if (device_type == target || !data) return;
         void* fresh = alloc(target, bytes);
         const cudaMemcpyKind kind = (target == Device::CUDA)
             ? cudaMemcpyHostToDevice : cudaMemcpyDeviceToHost;
@@ -178,7 +178,7 @@ private:
     static void* alloc(Device device_type, Index byte_count)
     {
 #ifdef OPENNN_WITH_CUDA
-        if(device_type == Device::CUDA) { void* device_pointer = nullptr; CHECK_CUDA(cudaMalloc(&device_pointer, byte_count)); return device_pointer; }
+        if (device_type == Device::CUDA) { void* device_pointer = nullptr; CHECK_CUDA(cudaMalloc(&device_pointer, byte_count)); return device_pointer; }
 #endif
         return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
     }
@@ -186,14 +186,14 @@ private:
     static void dealloc(Device device_type, void* pointer, Index byte_count)
     {
 #ifdef OPENNN_WITH_CUDA
-        if(device_type == Device::CUDA) { cudaFree(pointer); return; }
+        if (device_type == Device::CUDA) { cudaFree(pointer); return; }
 #endif
         Eigen::aligned_allocator<uint8_t>{}.deallocate(static_cast<uint8_t*>(pointer), static_cast<size_t>(byte_count));
     }
 
     void free_buffer()
     {
-        if(data) dealloc(device_type, data, bytes);
+        if (data) dealloc(device_type, data, bytes);
         data = nullptr;
         bytes = 0;
     }
@@ -293,7 +293,7 @@ struct TensorView
     {
         assert(shape.rank == Rank + 1);
         Eigen::array<Index, Rank> dims;
-        for(int i = 0; i < Rank; ++i) dims[i] = shape[i + 1];
+        for (int i = 0; i < Rank; ++i) dims[i] = shape[i + 1];
         const Index slice_size = shape.size() / shape[0];
         return TensorMapR<Rank>(as<float>() + batch_index * slice_size, dims);
     }
@@ -348,6 +348,16 @@ using array = Eigen::array<T, N>;
 string shape_to_string(const Shape&, const string& = " ");
 Shape string_to_shape(const string&, const string& = " ");
 
+// Boost-style hash combine. Mixes one or more values into a single size_t. Used
+// for plan/graph cache keys (cuBLASLt, cuDNN SDPA).
+template<typename... Vs>
+size_t hash_combine(const Vs&... values)
+{
+    size_t h = 0;
+    ((h ^= std::hash<Vs>{}(values) + 0x9e3779b9 + (h << 6) + (h >> 2)), ...);
+    return h;
+}
+
 class Backend
 {
 public:
@@ -361,7 +371,6 @@ public:
     static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn_handle; }
     static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
     static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
-    static cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor() { return instance().operator_multiplication_descriptor; }
 
 private:
     Backend();
@@ -375,7 +384,6 @@ private:
     cudnnHandle_t cudnn_handle = nullptr;
     cudaStream_t compute_stream = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
-    cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
 };
 
 inline ThreadPoolDevice& get_device()
@@ -385,7 +393,7 @@ inline ThreadPoolDevice& get_device()
 
 inline void TensorView::fill(float value)
 {
-    if(!data) return;
+    if (!data) return;
 
 #ifdef OPENNN_WITH_CUDA
     // Probe the pointer: set_parameters_random() may call fill() on host-resident
@@ -397,7 +405,7 @@ inline void TensorView::fill(float value)
 
     if (gpu_data)
     {
-        if(value == 0.0f)
+        if (value == 0.0f)
         {
             CHECK_CUDA(cudaMemset(data, 0, byte_size()));
             return;
@@ -418,7 +426,6 @@ inline void TensorView::fill(float value)
 
 inline const float one = 1.0f;
 inline const float zero = 0.0f;
-inline const float minus_one = -1.0f;
 
 #endif
 

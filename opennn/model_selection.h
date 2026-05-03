@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   M O D E L   S E L E C T I O N   C L A S S   H E A D E R               
+//   M O D E L   S E L E C T I O N   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -19,7 +19,7 @@ class TrainingStrategy;
 class ModelSelection
 {
 
-public: 
+public:
 
     // Constructors
 
@@ -45,7 +45,7 @@ public:
     InputsSelectionResults perform_input_selection();
 
     // Serialization
-    
+
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;

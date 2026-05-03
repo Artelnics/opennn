@@ -81,7 +81,7 @@ void set_random_uniform(MatrixR& tensor, float min, float max)
     {
         uniform_real_distribution<float> distribution(min, max);
         #pragma omp for
-        for(Index i = 0; i < tensor.size(); ++i)
+        for (Index i = 0; i < tensor.size(); ++i)
             tensor(i) = distribution(get_generator());
     }
 }
@@ -92,7 +92,7 @@ void set_random_uniform(VectorMap tensor, float min, float max)
     {
         uniform_real_distribution<float> distribution(min, max);
         #pragma omp for
-        for(Index i = 0; i < tensor.size(); ++i)
+        for (Index i = 0; i < tensor.size(); ++i)
             tensor(i) = distribution(get_generator());
     }
 }
@@ -103,7 +103,7 @@ void set_random_normal(MatrixMap tensor, float mean, float std_dev)
     {
         normal_distribution<float> distribution(mean, std_dev);
         #pragma omp for
-        for(Index i = 0; i < tensor.size(); ++i)
+        for (Index i = 0; i < tensor.size(); ++i)
             tensor(i) = distribution(get_generator());
     }
 }
@@ -162,7 +162,7 @@ void set_random_integer(MatrixR &tensor, Index min, Index max)
     {
         uniform_int_distribution<Index> distribution(min, max);
         #pragma omp for
-        for(Index i = 0; i < tensor.size(); ++i)
+        for (Index i = 0; i < tensor.size(); ++i)
             tensor(i) = distribution(get_generator());
     }
 }

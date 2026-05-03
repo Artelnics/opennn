@@ -36,9 +36,9 @@ Shape Embedding::get_output_shape() const
     return {sequence_length, embedding_dimension};
 }
 
-vector<pair<Shape, Type>> Embedding::get_parameter_specs() const
+vector<Operator*> Embedding::get_operators()
 {
-    return embedding_lookup.parameter_specs();
+    return {&embedding_lookup};
 }
 
 // Setters
@@ -56,46 +56,27 @@ void Embedding::set(const Index new_vocabulary_size,
     embedding_lookup.set(vocabulary_size, sequence_length, embedding_dimension);
 }
 
-float* Embedding::link_parameters(float* pointer)
-{
-    pointer = Layer::link_parameters(pointer);
-
-    if (parameters.size() > Weight)
-        embedding_lookup.link_parameters({parameters[Weight]});
-
-    return pointer;
-}
-
-float* Embedding::link_states(float* pointer)
-{
-    float* next = Layer::link_states(pointer);
-
-    if (embedding_lookup.add_positional_encoding && !states.empty())
-    {
-        embedding_lookup.link_states({states[PositionalEncoding]});
-        embedding_lookup.init_positional_encoding();
-    }
-
-    return next;
-}
+// link_parameters() and link_states() are inherited from Layer; the base
+// auto-distributes slices to embedding_lookup. init_positional_encoding() is
+// called from inside EmbeddingLookup::link_states().
 
 // Parameter initialization
 
 void Embedding::set_parameters_random()
 {
-    if(parameters[Weight].empty()) return;
+    if (parameters[Weight].empty()) return;
 
     MatrixMap weights = parameters[Weight].as_matrix();
-    set_random_normal(weights, float(0), float(1));
+    set_random_normal(weights, 0.0f, 1.0f);
 
     weights.row(0).setZero();
 }
 
 void Embedding::set_parameters_glorot()
 {
-    if(parameters[Weight].empty()) return;
+    if (parameters[Weight].empty()) return;
 
-    const float limit = sqrt(float(6.0) / (vocabulary_size + embedding_dimension));
+    const float limit = sqrt(6.0f / (vocabulary_size + embedding_dimension));
 
     MatrixMap weights = parameters[Weight].as_matrix();
 

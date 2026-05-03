@@ -31,12 +31,12 @@ void LevenbergMarquardtAlgorithm::set_default()
 
     // Stopping criteria
 
-    minimum_loss_decrease = float(0);
-    training_loss_goal = float(0);
+    minimum_loss_decrease = 0.0f;
+    training_loss_goal = 0.0f;
     maximum_validation_failures = 1000;
 
     maximum_epochs = 1000;
-    maximum_time = float(3600);
+    maximum_time = 3600.0f;
 
     // UTILITIES
 
@@ -44,12 +44,12 @@ void LevenbergMarquardtAlgorithm::set_default()
 
     // Training parameters
 
-    damping_parameter = float(1.0e-3);
+    damping_parameter = 1.0e-3f;
 
-    damping_parameter_factor = float(10.0);
+    damping_parameter_factor = 10.0f;
 
-    minimum_damping_parameter = float(1.0e-6);
-    maximum_damping_parameter = float(1.0e6);
+    minimum_damping_parameter = 1.0e-6f;
+    maximum_damping_parameter = 1.0e6f;
 }
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter(const float new_damping_parameter)
@@ -81,7 +81,7 @@ void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
                                                   const ForwardPropagation& forward_propagation,
                                                   BackPropagationLM& back_propagation_lm)
 {
-    if(batch.is_empty()) return;
+    if (batch.is_empty()) return;
 
     calculate_errors(batch, forward_propagation, back_propagation_lm);
 
@@ -93,7 +93,7 @@ void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
 
     const MatrixR& J = back_propagation_lm.squared_errors_jacobian;
     const VectorR& errors_vector = back_propagation_lm.errors;
-    const float factor = float(2) / float(errors_vector.size());
+    const float factor = 2.0f / float(errors_vector.size());
 
     back_propagation_lm.gradient.noalias() = factor * J.transpose() * errors_vector;
     back_propagation_lm.hessian.noalias() = factor * J.transpose() * J;
@@ -186,7 +186,7 @@ VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient()
 
     VectorR numerical_gradient_lm = VectorR::Zero(parameters_number);
 
-    for(Index i = 0; i < parameters_number; ++i)
+    for (Index i = 0; i < parameters_number; ++i)
     {
         h = Loss::calculate_h(parameters(i));
 
@@ -204,7 +204,7 @@ VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient()
 
         error_forward = back_propagation_lm.error;
 
-        parameters(i) -= float(2) * h;
+        parameters(i) -= 2.0f * h;
 
         neural_network->forward_propagate(batch.get_inputs(),
                                           parameters,
@@ -256,7 +256,7 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_jacobian()
 
     MatrixR jacobian(total_error_terms, parameters_number);
 
-    for(Index j = 0; j < parameters_number; ++j)
+    for (Index j = 0; j < parameters_number; ++j)
     {
         perturbation = Loss::calculate_h(parameters(j));
 
@@ -266,7 +266,7 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_jacobian()
         calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
         error_terms_backward = back_propagation_lm.squared_errors;
 
-        parameters(j) += float(2) * perturbation;
+        parameters(j) += 2.0f * perturbation;
         neural_network->forward_propagate(batch.get_inputs(), parameters, forward_propagation);
         calculate_errors(batch, forward_propagation, back_propagation_lm);
         calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
@@ -274,8 +274,8 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_jacobian()
 
         parameters(j) -= perturbation;
 
-        for(Index i = 0; i < total_error_terms; ++i)
-            jacobian(i, j) = (error_terms_forward(i) - error_terms_backward(i)) / (float(2.0) * perturbation);
+        for (Index i = 0; i < total_error_terms; ++i)
+            jacobian(i, j) = (error_terms_forward(i) - error_terms_backward(i)) / (2.0f * perturbation);
     }
 
     return jacobian;
@@ -333,11 +333,11 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
     float y_backward_i_forward_j;
     float y_forward_i_backward_j;
 
-    for(Index i = 0; i < parameters_number; ++i)
+    for (Index i = 0; i < parameters_number; ++i)
     {
         h_i = Loss::calculate_h(parameters(i));
 
-        parameters(i) -= float(2) * h_i;
+        parameters(i) -= 2.0f * h_i;
 
         neural_network->forward_propagate(batch.get_inputs(),
                                           parameters,
@@ -361,7 +361,7 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
         y_backward_i = back_propagation_lm.error;
 
-        parameters(i) += float(2) * h_i;
+        parameters(i) += 2.0f * h_i;
 
         neural_network->forward_propagate(batch.get_inputs(),
                                           parameters,
@@ -385,11 +385,11 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
         y_forward_2i = back_propagation_lm.error;
 
-        parameters(i) -= float(2) * h_i;
+        parameters(i) -= 2.0f * h_i;
 
-        H(i, i) = (-y_forward_2i + float(16.0) * y_forward_i - float(30.0) * y + float(16.0) * y_backward_i - y_backward_2i) / (float(12.0) * h_i * h_i);
+        H(i, i) = (-y_forward_2i + 16.0f * y_forward_i - 30.0f * y + 16.0f * y_backward_i - y_backward_2i) / (12.0f * h_i * h_i);
 
-        for(Index j = i; j < parameters_number; ++j)
+        for (Index j = i; j < parameters_number; ++j)
         {
             h_j = Loss::calculate_h(parameters(j));
 
@@ -406,8 +406,8 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
             y_backward_ij = back_propagation_lm.error;
 
-            parameters(i) += float(2) * h_i;
-            parameters(j) += float(2) * h_j;
+            parameters(i) += 2.0f * h_i;
+            parameters(j) += 2.0f * h_j;
 
             neural_network->forward_propagate(batch.get_inputs(),
                                               parameters,
@@ -419,7 +419,7 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
             y_forward_ij = back_propagation_lm.error;
 
-            parameters(i) -= float(2) * h_i;
+            parameters(i) -= 2.0f * h_i;
 
             neural_network->forward_propagate(batch.get_inputs(),
                                               parameters,
@@ -431,8 +431,8 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
             y_backward_i_forward_j = back_propagation_lm.error;
 
-            parameters(i) += float(2) * h_i;
-            parameters(j) -= float(2) * h_j;
+            parameters(i) += 2.0f * h_i;
+            parameters(j) -= 2.0f * h_j;
 
             neural_network->forward_propagate(batch.get_inputs(),
                                               parameters,
@@ -447,12 +447,12 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
             parameters(i) -= h_i;
             parameters(j) += h_j;
 
-            H(i, j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij) / (float(4.0) * h_i * h_j);
+            H(i, j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij) / (4.0f * h_i * h_j);
         }
     }
 
-    for(Index i = 0; i < parameters_number; ++i)
-        for(Index j = 0; j < i; ++j)
+    for (Index i = 0; i < parameters_number; ++i)
+        for (Index j = 0; j < i; ++j)
             H(i, j) = H(j, i);
 
     return H;
@@ -460,14 +460,14 @@ MatrixR LevenbergMarquardtAlgorithm::calculate_numerical_hessian()
 
 static MatrixR activation_derivative(Activation::Function activation_function, const MatrixMap& outputs)
 {
-    switch(activation_function)
+    switch (activation_function)
     {
     case Activation::Function::Sigmoid:
-        return outputs.array() * (float(1) - outputs.array());
+        return outputs.array() * (1.0f - outputs.array());
     case Activation::Function::Tanh:
-        return float(1) - outputs.array().square();
+        return 1.0f - outputs.array().square();
     case Activation::Function::ReLU:
-        return (outputs.array() > float(0)).cast<float>();
+        return (outputs.array() > 0.0f).cast<float>();
     default:                                                  // Identity / unrecognized Ã¢â€ â€™ identity
         return MatrixR::Ones(outputs.rows(), outputs.cols());
     }
@@ -496,32 +496,32 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense* layer,
     const Index weight_offset = parameter_offset + bias_aligned;
 
     // Bias derivatives: dE/db_j = act_deriv(s,j)
-    for(Index j = 0; j < num_neurons; ++j)
-        for(Index sample = 0; sample < batch_size; ++sample)
+    for (Index j = 0; j < num_neurons; ++j)
+        for (Index sample = 0; sample < batch_size; ++sample)
             jacobian(sample * num_neurons + j, parameter_offset + j) = act_deriv(sample, j);
 
     // Weight derivatives: dE/dw_{k,j} = input_k * act_deriv(s,j)
-    for(Index k = 0; k < num_inputs; ++k)
-        for(Index j = 0; j < num_neurons; ++j)
+    for (Index k = 0; k < num_inputs; ++k)
+        for (Index j = 0; j < num_neurons; ++j)
         {
             const Index col = weight_offset + k * num_neurons + j;
-            for(Index sample = 0; sample < batch_size; ++sample)
+            for (Index sample = 0; sample < batch_size; ++sample)
                 jacobian(sample * num_neurons + j, col) = inputs(sample, k) * act_deriv(sample, j);
         }
 }
 
 TrainingResults LevenbergMarquardtAlgorithm::train()
 {
-    if(loss->get_name() == "MinkowskiError")
+    if (loss->get_name() == "MinkowskiError")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
-    else if(loss->get_name() == "CrossEntropy")
+    else if (loss->get_name() == "CrossEntropy")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
-    else if(loss->get_name() == "WeightedSquaredError")
+    else if (loss->get_name() == "WeightedSquaredError")
         throw runtime_error("Levenberg-Marquard algorithm is not implemented with weighted squared error.");
 
     // Start training
 
-    if(display) cout << "Training with Levenberg-Marquardt algorithm..." << "\n";;
+    if (display) cout << "Training with Levenberg-Marquardt algorithm..." << "\n";;
 
     TrainingResults results(maximum_epochs+1);
 
@@ -561,7 +561,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     loss->set_normalization_coefficient();
 
-    float old_loss = float(0);
+    float old_loss = 0.0f;
     float loss_decrease = MAX;
 
     Index validation_failures = 0;
@@ -571,7 +571,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     time_t beginning_time;
     time(&beginning_time);
-    float elapsed_time = float(0);
+    float elapsed_time = 0.0f;
 
     const Index parameters_number = neural_network->get_parameters_size();
 
@@ -581,9 +581,9 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
+    for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
-        if(should_display(epoch)) cout << "Epoch: " << epoch << "\n";
+        if (should_display(epoch)) cout << "Epoch: " << epoch << "\n";
 
         neural_network->forward_propagate(training_batch.get_inputs(),
                                           training_forward_propagation,
@@ -595,7 +595,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
         results.training_error_history(epoch) = training_back_propagation_lm.error;
 
-        if(has_validation)
+        if (has_validation)
         {
             neural_network->forward_propagate(validation_batch.get_inputs(),
                                               validation_forward_propagation,
@@ -607,29 +607,29 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
             results.validation_error_history(epoch) = validation_back_propagation_lm.error;
 
-            if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch-1))
+            if (epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch-1))
                 ++validation_failures;
         }
 
         elapsed_time = get_elapsed_time(beginning_time);
 
-        if(epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss_value;
+        if (epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss_value;
 
         old_loss = training_back_propagation_lm.loss_value;
 
-        if(should_display(epoch))
+        if (should_display(epoch))
         {
             cout << "Training error: " << results.training_error_history(epoch) << "\n";
-            if(has_validation) cout << "Validation error: " << results.validation_error_history(epoch) << "\n";
+            if (has_validation) cout << "Validation error: " << results.validation_error_history(epoch) << "\n";
             cout << "Damping parameter: " << damping_parameter << "\n";
             cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
 
         bool stop = false;
 
-        if(loss_decrease < minimum_loss_decrease)
+        if (loss_decrease < minimum_loss_decrease)
         {
-            if(display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << "\n";
+            if (display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << "\n";
             results.stopping_condition = StoppingCondition::MinimumLossDecrease;
             stop = true;
         }
@@ -640,7 +640,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
                                             validation_failures);
         }
 
-        if(stop)
+        if (stop)
         {
             results.loss = training_back_propagation_lm.loss_value;
             results.loss_decrease = loss_decrease;
@@ -659,7 +659,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     set_unscaling();
 
-    if(display) results.print();
+    if (display) results.print();
 
     return results;
 }
@@ -689,7 +689,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
     bool success = false;
 
-    const VectorR neg_gradient = float(-1) * gradient;
+    const VectorR neg_gradient = -1.0f * gradient;
 
     do
     {
@@ -711,10 +711,10 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         float new_loss_value = error + loss->calculate_regularization(potential_parameters);
 
-        if(!isfinite(new_loss_value))
+        if (!isfinite(new_loss_value))
             new_loss_value = loss_value;
 
-        if(new_loss_value < loss_value)
+        if (new_loss_value < loss_value)
         {
             set_damping_parameter(damping_parameter/damping_parameter_factor);
 
@@ -733,12 +733,12 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
             set_damping_parameter(damping_parameter*damping_parameter_factor);
         }
 
-    }while(damping_parameter < maximum_damping_parameter);
+    }while (damping_parameter < maximum_damping_parameter);
 
-    if(!success)
+    if (!success)
     {
         parameter_updates = (gradient.array().abs() >= float(EPSILON))
-                                .select(-gradient.array().sign() * float(EPSILON), float(0));
+                                .select(-gradient.array().sign() * float(EPSILON), 0.0f);
         parameters += parameter_updates;
     }
 
@@ -780,7 +780,7 @@ void BackPropagationLM::set(const Index new_samples_number, Loss* new_loss)
     loss = new_loss;
     samples_number = new_samples_number;
 
-    if(!new_loss || !new_loss->get_neural_network() || new_samples_number == 0) return;
+    if (!new_loss || !new_loss->get_neural_network() || new_samples_number == 0) return;
 
     const NeuralNetwork* neural_network = new_loss->get_neural_network();
 
@@ -803,20 +803,6 @@ void BackPropagationLM::set(const Index new_samples_number, Loss* new_loss)
     hessian.resize(parameters_number, parameters_number);
     hessian.setZero();
 }
-void BackPropagationLM::print() const {}
-TensorView BackPropagationLM::get_output_deltas() const { return {}; }
-vector<vector<TensorView>> BackPropagationLM::get_layer_gradients() const { return {}; }
-
-vector<TensorView*> LayerBackPropagationLM::get_gradient_views() { return {}; }
-vector<TensorView*> LayerBackPropagationLM::get_workspace_views() { return {}; }
-vector<TensorView> LayerBackPropagationLM::get_input_deltas() const { return input_deltas; }
-
-NeuralNetworkBackPropagationLM::NeuralNetworkBackPropagationLM(NeuralNetwork*) {}
-void NeuralNetworkBackPropagationLM::set(const Index, NeuralNetwork*) {}
-const vector<unique_ptr<LayerBackPropagationLM>>& NeuralNetworkBackPropagationLM::get_layers() const { return layers; }
-const NeuralNetwork* NeuralNetworkBackPropagationLM::get_neural_network() const { return neural_network; }
-void NeuralNetworkBackPropagationLM::print() {}
-
 }
 
 // OpenNN: Open Neural Networks Library.

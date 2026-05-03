@@ -71,8 +71,8 @@ private:
 
     vector<ScalerMethod> scalers;
 
-    float min_range = float(-1);
-    float max_range = float(1);
+    float min_range = -1.0f;
+    float max_range = 1.0f;
 
     void flush_scalers_to_states();
 };

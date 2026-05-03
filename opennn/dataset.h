@@ -45,10 +45,10 @@ inline const string& sample_role_to_string(SampleRole role)
 
 inline SampleRole string_to_sample_role(const string& name)
 {
-    if(name == "0") return SampleRole::Training;
-    if(name == "1") return SampleRole::Validation;
-    if(name == "2") return SampleRole::Testing;
-    if(name == "3") return SampleRole::None;
+    if (name == "0") return SampleRole::Training;
+    if (name == "1") return SampleRole::Validation;
+    if (name == "2") return SampleRole::Testing;
+    if (name == "3") return SampleRole::None;
     return sample_role_map().from_string(name);
 }
 
@@ -271,23 +271,23 @@ public:
 
     // Splitting
 
-    void split_samples(const float training_ratio = float(0.6),
-                       float selection_ratio = float(0.2),
-                       float testing_ratio = float(0.2),
+    void split_samples(const float training_ratio = 0.6f,
+                       float selection_ratio = 0.2f,
+                       float testing_ratio = 0.2f,
                        bool shuffle = true);
 
-    void split_samples_sequential(const float training_ratio = float(0.6),
-                                  float selection_ratio = float(0.2),
-                                  float testing_ratio = float(0.2));
+    void split_samples_sequential(const float training_ratio = 0.6f,
+                                  float selection_ratio = 0.2f,
+                                  float testing_ratio = 0.2f);
 
-    void split_samples_random(const float training_ratio = float(0.6),
-                              float selection_ratio = float(0.2),
-                              float testing_ratio = float(0.2));
+    void split_samples_random(const float training_ratio = 0.6f,
+                              float selection_ratio = 0.2f,
+                              float testing_ratio = 0.2f);
 
     // Unusing
 
-    vector<string> unuse_uncorrelated_variables(const float = float(0.25));
-    vector<string> unuse_collinear_variables(const float = float(0.95));
+    vector<string> unuse_uncorrelated_variables(const float = 0.25f);
+    vector<string> unuse_collinear_variables(const float = 0.95f);
 
     // Initialization
 
@@ -350,11 +350,11 @@ public:
 
     // Tuckey outlier detection
 
-    vector<vector<Index>> calculate_Tukey_outliers(const float = float(1.5), bool = false);
+    vector<vector<Index>> calculate_Tukey_outliers(const float = 1.5f, bool = false);
 
-    vector<vector<Index>> replace_Tukey_outliers_with_NaN(const float = float(1.5));
+    vector<vector<Index>> replace_Tukey_outliers_with_NaN(const float = 1.5f);
 
-    void unuse_Tukey_outliers(const float = float(1.5));
+    void unuse_Tukey_outliers(const float = 1.5f);
 
     // Data generation
 

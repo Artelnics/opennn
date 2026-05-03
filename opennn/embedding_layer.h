@@ -32,11 +32,11 @@ public:
     Shape get_input_shape() const override { return {sequence_length}; }
     Shape get_output_shape() const override;
 
-    // Embedding's weight is the vocabulary lookup table [V, D]. Its gradient is
-    // accumulated via atomicAdd, which on bfloat16 requires CC ≥ 9.0 (Hopper).
-    // RTX 4080 (Ada, CC 8.9) does NOT support atomicAdd<__nv_bfloat16>, so we
-    // pin the embedding weight to FP32 even when activations are BF16.
-    vector<pair<Shape, Type>> get_parameter_specs() const override;
+    // get_parameter_specs() and get_state_specs() are inherited from Layer and
+    // auto-derived from get_operators(). EmbeddingLookup::parameter_specs()
+    // pins the weight matrix to FP32 (atomicAdd<bf16> requires CC ≥ 9.0; on
+    // pre-Hopper GPUs this avoids unsupported intrinsics).
+    vector<Operator*> get_operators() override;
 
     vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
@@ -48,13 +48,6 @@ public:
     {
         return {{{batch_size, sequence_length}, activation_dtype}};
     }
-
-    vector<pair<Shape, Type>> get_state_specs() const override
-    {
-        return embedding_lookup.state_specs();
-    }
-
-    float* link_states(float* pointer) override;
 
     void set(const Index = 0,
              Index = 0,
@@ -78,8 +71,6 @@ public:
 
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
-
-    float* link_parameters(float* pointer) override;
 
 private:
 

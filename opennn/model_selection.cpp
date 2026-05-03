@@ -47,36 +47,36 @@ void ModelSelection::check() const
 {
     // Optimization algorithm
 
-    if(!training_strategy)
-        throw runtime_error("ModelSelection error: training strategy is not set.");
+    if (!training_strategy)
+        throw runtime_error("training strategy is not set.");
 
     // Loss index
 
     const Loss* loss = training_strategy->get_loss();
 
-    if(!loss)
-        throw runtime_error("ModelSelection error: loss is not set.");
+    if (!loss)
+        throw runtime_error("loss is not set.");
 
     // Neural network
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
-    if(!neural_network)
-        throw runtime_error("ModelSelection error: neural network is not set.");
+    if (!neural_network)
+        throw runtime_error("neural network is not set.");
 
-    if(neural_network->is_empty())
+    if (neural_network->is_empty())
         throw runtime_error("Multilayer Dense is empty.\n");
 
     // Dataset
 
     const Dataset* dataset = loss->get_dataset();
 
-    if(!dataset)
-        throw runtime_error("ModelSelection error: dataset is not set.");
+    if (!dataset)
+        throw runtime_error("dataset is not set.");
 
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
-    if(validation_samples_number == 0)
+    if (validation_samples_number == 0)
         throw runtime_error("Number of selection samples is zero.\n");
 }
 
@@ -122,7 +122,7 @@ void ModelSelection::from_JSON(const JsonDocument& document)
     const Json* neurons_selection_element = require_json_field(root_element, "NeuronSelection");
 
     const string selection_method = read_json_string(neurons_selection_element, "NeuronsSelectionMethod");
-    
+
     const Json* neurons_selection_method_element = neurons_selection_element->first_child(selection_method.c_str());
 
     if (neurons_selection_method_element)
@@ -152,7 +152,7 @@ void ModelSelection::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if(!file.is_open())
+    if (!file.is_open())
         throw runtime_error("Cannot open file: " + file_name.string());
 
     JsonWriter printer;

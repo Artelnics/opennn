@@ -30,29 +30,29 @@ void KMeans::fit(const MatrixR& data)
 
     set_centers_random(data);
 
-    for(Index iterations_number = 0; iterations_number < maximum_iterations; ++iterations_number)
+    for (Index iterations_number = 0; iterations_number < maximum_iterations; ++iterations_number)
     {
-        for(Index row_index = 0; row_index < rows_number; ++row_index)
+        for (Index row_index = 0; row_index < rows_number; ++row_index)
         {
             (cluster_centers.rowwise() - data.row(row_index)).rowwise().squaredNorm().minCoeff(&rows_cluster_labels(row_index));
         }
 
-        for(Index cluster_index = 0; cluster_index < clusters_number; ++cluster_index)
+        for (Index cluster_index = 0; cluster_index < clusters_number; ++cluster_index)
         {
             center_sum.setZero();
 
             Index count = 0;
 
-            for(Index row_index = 0; row_index < rows_number; ++row_index)
+            for (Index row_index = 0; row_index < rows_number; ++row_index)
             {
-                if(rows_cluster_labels(row_index) == cluster_index)
+                if (rows_cluster_labels(row_index) == cluster_index)
                 {
                     center_sum += data.row(row_index);
                     ++count;
                 }
             }
 
-            if(count != 0)
+            if (count != 0)
                 cluster_centers.row(cluster_index) = center_sum / float(count);
         }
     }
@@ -64,7 +64,7 @@ VectorI KMeans::calculate_outputs(const MatrixR& data)
 
     VectorI predictions(rows_number);
 
-    for(Index row_index = 0; row_index < rows_number; ++row_index)
+    for (Index row_index = 0; row_index < rows_number; ++row_index)
     {
         (cluster_centers.rowwise() - data.row(row_index)).rowwise().squaredNorm().minCoeff(&predictions(row_index));
     }
@@ -81,15 +81,15 @@ VectorR KMeans::elbow_method(const MatrixR& data, Index max_clusters)
     const Index original_clusters_number = clusters_number;
     float mean_squared_error;
 
-    for(Index cluster_index = 1; cluster_index <= max_clusters; ++cluster_index)
+    for (Index cluster_index = 1; cluster_index <= max_clusters; ++cluster_index)
     {
         clusters_number = cluster_index;
 
         fit(data);
 
-        mean_squared_error = float(0);
+        mean_squared_error = 0.0f;
 
-        for(Index row_index = 0; row_index < rows_number; ++row_index)
+        for (Index row_index = 0; row_index < rows_number; ++row_index)
         {
             mean_squared_error += (data.row(row_index) - cluster_centers.row(rows_cluster_labels(row_index))).squaredNorm();
         }
@@ -107,25 +107,25 @@ Index KMeans::find_optimal_clusters(const VectorR& sum_squared_error_values) con
     const Index cluster_number = sum_squared_error_values.size();
 
     VectorR initial_endpoint(2);
-    initial_endpoint << float(1), float(sum_squared_error_values(0));
+    initial_endpoint << 1.0f, float(sum_squared_error_values(0));
 
     VectorR override_endpoint(2);
     override_endpoint << float(clusters_number), sum_squared_error_values(clusters_number - 1);
 
-    float max_distance = float(0);
+    float max_distance = 0.0f;
     Index optimal_clusters_number = 1;
 
     const float dy = override_endpoint(1) - initial_endpoint(1);
     const float dx = override_endpoint(0) - initial_endpoint(0);
     const float cross_term = override_endpoint(0) * initial_endpoint(1) - override_endpoint(1) * initial_endpoint(0);
-    const float inv_line_length = float(1) / sqrt(dy * dy + dx * dx);
+    const float inv_line_length = 1.0f / sqrt(dy * dy + dx * dx);
 
-    for(Index cluster_index = 1; cluster_index <= cluster_number; ++cluster_index)
+    for (Index cluster_index = 1; cluster_index <= cluster_number; ++cluster_index)
     {
         const float perpendicular_distance
             = abs(dy * float(cluster_index) - dx * sum_squared_error_values(cluster_index - 1) + cross_term) * inv_line_length;
 
-        if(perpendicular_distance > max_distance)
+        if (perpendicular_distance > max_distance)
         {
             max_distance = perpendicular_distance;
             optimal_clusters_number = cluster_index;
@@ -159,7 +159,7 @@ void KMeans::set_centers_random(const MatrixR& data)
 {
     const Index data_size = data.rows();
 
-    for(Index i = 0; i < clusters_number; ++i)
+    for (Index i = 0; i < clusters_number; ++i)
         cluster_centers.row(i) = data.row(random_integer(0, data_size - 1));
 }
 

@@ -6,10 +6,20 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+// cudnn-frontend uses unqualified `half` at file scope which collides with
+// `std::half_*` symbols when `using namespace std;` is in effect (pulled in by
+// pch.h transitively). Including the frontend FIRST sidesteps the ambiguity.
+#ifdef OPENNN_HAS_CUDNN_FRONTEND
+#include <cuda_fp16.h>
+#include <cudnn_frontend.h>
+namespace fe = cudnn_frontend;
+#endif
+
 #include "operators.h"
 #include "json.h"
 #include "random_utilities.h"
 #include "math_utilities.h"
+#include "cuda_dispatch.h"
 
 #ifdef OPENNN_WITH_CUDA
 #include "cuda_gemm.h"
@@ -134,7 +144,6 @@ const EnumMap<Activation::Function>& Activation::map()
         {Function::Sigmoid,  "Sigmoid"},
         {Function::Tanh,     "Tanh"},
         {Function::ReLU,     "ReLU"},
-        {Function::SELU,     "SELU"},
         {Function::Softmax,  "Softmax"}
     };
     static const EnumMap<Function> instance{entries};
@@ -158,7 +167,6 @@ cudnnActivationMode_t Activation::to_cudnn_mode(Function function)
     case Function::Sigmoid: return CUDNN_ACTIVATION_SIGMOID;
     case Function::Tanh:    return CUDNN_ACTIVATION_TANH;
     case Function::ReLU:    return CUDNN_ACTIVATION_RELU;
-    case Function::SELU:    return CUDNN_ACTIVATION_ELU;
     default:                return CUDNN_ACTIVATION_IDENTITY;
     }
 }
@@ -179,28 +187,23 @@ void Activation::set_function(const string& name)
 
 void Activation::apply(TensorView& output)
 {
-    if (function == Function::Identity) return;
-    if (output.empty()) return;
+    if (function == Function::Identity || output.empty()) return;
 
     Configuration::instance().is_gpu() ? apply_gpu(output) : apply_cpu(output);
 }
 
 void Activation::apply_delta(const TensorView& outputs, TensorView& delta) const
 {
-    if (function == Function::Identity) return;
-    if (outputs.empty()) return;
+    if (function == Function::Identity || outputs.empty()) return;
 
     Configuration::instance().is_gpu()
         ? apply_delta_gpu(outputs, delta)
         : apply_delta_cpu(outputs, delta);
 }
 
-static constexpr float SELU_ALPHA  = 1.6732632423543772848170429916717f;
-static constexpr float SELU_LAMBDA = 1.0507009873554804934193349852946f;
-
 void Activation::apply_cpu(TensorView& output)
 {
-    if (function == Activation::Function::Softmax)
+    if (function == Function::Softmax)
     {
         softmax(output);
         return;
@@ -210,17 +213,14 @@ void Activation::apply_cpu(TensorView& output)
 
     switch (function)
     {
-    case Activation::Function::Sigmoid:
+    case Function::Sigmoid:
         a = (1.0f + (-a).exp()).inverse();
         return;
-    case Activation::Function::Tanh:
+    case Function::Tanh:
         a = a.tanh();
         return;
-    case Activation::Function::ReLU:
+    case Function::ReLU:
         a = a.cwiseMax(0.0f);
-        return;
-    case Activation::Function::SELU:
-        a = SELU_LAMBDA * (a > 0.0f).select(a, SELU_ALPHA * (a.exp() - 1.0f));
         return;
     default:
         return;
@@ -234,23 +234,19 @@ void Activation::apply_delta_cpu(const TensorView& outputs, TensorView& delta) c
 
     switch (function)
     {
-    case Activation::Function::Softmax:
+    case Function::Softmax:
         return;
-    case Activation::Function::Sigmoid:
+    case Function::Sigmoid:
         d *= y * (1.0f - y);
         return;
-    case Activation::Function::Tanh:
+    case Function::Tanh:
         d *= (1.0f - y.square());
         return;
-    case Activation::Function::ReLU:
+    case Function::ReLU:
         d = (y > 0.0f).select(d, 0.0f);
         return;
-    case Activation::Function::SELU:
-        d = (y > 0.0f).select(SELU_LAMBDA * d,
-                              (y + (SELU_ALPHA * SELU_LAMBDA)) * d);
-        return;
     default:
-        throw runtime_error("Activation::apply_delta_cpu: unknown activation function.");
+        return;
     }
 }
 
@@ -258,7 +254,7 @@ void Activation::apply_delta_cpu(const TensorView& outputs, TensorView& delta) c
 
 void Activation::apply_gpu(TensorView& output)
 {
-    if (function == Activation::Function::Softmax)
+    if (function == Function::Softmax)
     {
         softmax(output);
         return;
@@ -353,10 +349,10 @@ void BatchNorm::link_states(const vector<TensorView>& views)
 
 void BatchNorm::init_defaults()
 {
-    if (gamma.data)            VectorMap(gamma.as<float>(),            gamma.size()).setOnes();
-    if (beta.data)             VectorMap(beta.as<float>(),             beta.size()).setZero();
-    if (running_mean.data)     VectorMap(running_mean.as<float>(),     running_mean.size()).setZero();
-    if (running_variance.data) VectorMap(running_variance.as<float>(), running_variance.size()).setOnes();
+    if (gamma.data)            gamma.as_vector().setOnes();
+    if (beta.data)             beta.as_vector().setZero();
+    if (running_mean.data)     running_mean.as_vector().setZero();
+    if (running_variance.data) running_variance.as_vector().setOnes();
     invalidate_inference_cache();
 }
 
@@ -421,10 +417,12 @@ void BatchNorm::apply_inference_cpu(const TensorView& input, TensorView& output)
     const MatrixMap input_matrix = input.as_flat_matrix();
     MatrixMap output_matrix = output.as_flat_matrix();
 
+    const auto scale_t = inference_scale.transpose().array();
+    const auto shift_t = inference_shift.transpose().array();
+
     #pragma omp parallel for
     for (Index i = 0; i < input_matrix.rows(); ++i)
-        output_matrix.row(i).array() = input_matrix.row(i).array() * inference_scale.transpose().array()
-                                     + inference_shift.transpose().array();
+        output_matrix.row(i).array() = input_matrix.row(i).array() * scale_t + shift_t;
 }
 
 void BatchNorm::apply_training_cpu(const TensorView& input,
@@ -451,9 +449,12 @@ void BatchNorm::apply_training_cpu(const TensorView& input,
     const VectorR scale = inverse_variances.array() * gamma.as_vector().array();
     const VectorMap betas = beta.as_vector();
 
+    const auto scale_t = scale.transpose().array();
+    const auto betas_t = betas.transpose().array();
+
     #pragma omp parallel for
     for (Index i = 0; i < output_matrix.rows(); ++i)
-        output_matrix.row(i).array() = output_matrix.row(i).array() * scale.transpose().array() + betas.transpose().array();
+        output_matrix.row(i).array() = output_matrix.row(i).array() * scale_t + betas_t;
 }
 
 void BatchNorm::apply_delta_cpu(const TensorView& input,
@@ -464,8 +465,8 @@ void BatchNorm::apply_delta_cpu(const TensorView& input,
                                 TensorView& delta) const
 {
     const Index effective_batch_size = input.size() / gamma.size();
-    const float inv_N = 1.0f / static_cast<float>(effective_batch_size);
     const float N     = static_cast<float>(effective_batch_size);
+    const float inv_N = 1.0f / N;
 
     const MatrixMap input_matrix = input.as_flat_matrix();
     MatrixMap deltas             = delta.as_flat_matrix();
@@ -479,24 +480,27 @@ void BatchNorm::apply_delta_cpu(const TensorView& input,
 
     beta_gradients.noalias() = deltas.colwise().sum();
 
+    const auto means_t            = means.transpose().array();
+    const auto inverse_variances_t = inverse_variances.transpose().array();
+
     gamma_gradients.noalias() = (deltas.array()
                                  * ((input_matrix.rowwise() - means.transpose()).array().rowwise()
-                                    * inverse_variances.transpose().array())
+                                    * inverse_variances_t)
                                 ).matrix().colwise().sum();
 
     delta_scale_scratch = (gammas.array() * inverse_variances.array() * inv_N).matrix();
+
+    const auto delta_scale_t   = delta_scale_scratch.transpose().array();
+    const auto beta_grad_t     = beta_gradients.transpose().array();
+    const auto gamma_grad_t    = gamma_gradients.transpose().array();
 
     #pragma omp parallel for
     for (Index i = 0; i < effective_batch_size; ++i)
     {
         auto       deltas_row = deltas.row(i).array();
-        const auto x_hat_row  = (input_matrix.row(i).array() - means.transpose().array())
-                              * inverse_variances.transpose().array();
+        const auto x_hat_row  = (input_matrix.row(i).array() - means_t) * inverse_variances_t;
 
-        deltas_row = delta_scale_scratch.transpose().array()
-                   * (N * deltas_row
-                      - beta_gradients.transpose().array()
-                      - x_hat_row * gamma_gradients.transpose().array());
+        deltas_row = delta_scale_t * (N * deltas_row - beta_grad_t - x_hat_row * gamma_grad_t);
     }
 }
 
@@ -506,7 +510,7 @@ void BatchNorm::apply_inference_gpu(const TensorView& input, TensorView& output)
 {
     CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
         Backend::get_cudnn_handle(),
-        CUDNN_BATCHNORM_SPATIAL,
+        CUDNN_BATCHNORM_SPATIAL_PERSISTENT,
         &one, &zero,
         input.get_descriptor(),  input.data,
         output.get_descriptor(), output.data,
@@ -521,7 +525,7 @@ void BatchNorm::apply_training_gpu(const TensorView& input,
 {
     CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
         Backend::get_cudnn_handle(),
-        CUDNN_BATCHNORM_SPATIAL,
+        CUDNN_BATCHNORM_SPATIAL_PERSISTENT,
         &one, &zero,
         input.get_descriptor(),  input.data,
         output.get_descriptor(), output.data,
@@ -541,7 +545,7 @@ void BatchNorm::apply_delta_gpu(const TensorView& input,
 {
     CHECK_CUDNN(cudnnBatchNormalizationBackward(
         Backend::get_cudnn_handle(),
-        CUDNN_BATCHNORM_SPATIAL,
+        CUDNN_BATCHNORM_SPATIAL_PERSISTENT,
         &one, &zero,
         &one, &zero,
         input.get_descriptor(), input.data,
@@ -561,7 +565,6 @@ void BatchNorm::apply_delta_gpu    (const TensorView&, const TensorView&, const 
                                     TensorView&, TensorView&, TensorView&) const                       { throw runtime_error("BatchNorm::apply_delta_gpu: CUDA support not compiled in."); }
 
 #endif
-
 
 void Combination::set(Index new_input_features, Index new_output_features, Type new_weight_type)
 {
@@ -641,12 +644,18 @@ void Combination::apply_gpu(const TensorView& input, TensorView& output, cublasL
     const void* input_for_gemm = maybe_cast(input, weights.type);
 
     const cudaDataType_t io_type = output.cuda_dtype();
-    const LtMatmulPlan& plan = get_lt_gemm_plan(output_columns, total_rows, input_columns,
-                                                CUBLAS_OP_N, CUBLAS_OP_N,
-                                                epilogue, io_type, io_type);
+    if (!fwd_plan_ || fwd_total_rows_ != total_rows || fwd_epilogue_ != epilogue)
+    {
+        fwd_plan_         = &get_lt_gemm_plan(output_columns, total_rows, input_columns,
+                                              CUBLAS_OP_N, CUBLAS_OP_N,
+                                              epilogue, io_type, io_type);
+        fwd_total_rows_   = total_rows;
+        fwd_epilogue_     = epilogue;
+    }
+    const LtMatmulPlan& plan = *fwd_plan_;
 
     const float* bias_pointer = bias.as_float();
-    
+
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
 
@@ -673,11 +682,18 @@ void Combination::apply_delta_gpu(const TensorView& output_delta, const TensorVi
 
     const void* input_for_gemm = maybe_cast(input, weights.type);
 
-    const LtMatmulPlan& plan = get_lt_gemm_plan(output_columns, input_columns, total_rows,
-                                                CUBLAS_OP_N, CUBLAS_OP_T,
-                                                CUBLASLT_EPILOGUE_BGRADA,
-                                                output_delta.cuda_dtype(),
-                                                CUDA_R_32F);
+    const int io_dtype = static_cast<int>(output_delta.cuda_dtype());
+    if (!bwd_plan_ || bwd_total_rows_ != total_rows || bwd_io_dtype_ != io_dtype)
+    {
+        bwd_plan_         = &get_lt_gemm_plan(output_columns, input_columns, total_rows,
+                                              CUBLAS_OP_N, CUBLAS_OP_T,
+                                              CUBLASLT_EPILOGUE_BGRADA,
+                                              output_delta.cuda_dtype(),
+                                              CUDA_R_32F);
+        bwd_total_rows_   = total_rows;
+        bwd_io_dtype_     = io_dtype;
+    }
+    const LtMatmulPlan& plan = *bwd_plan_;
 
     float* bias_grad_pointer = bias_gradient.as<float>();
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
@@ -754,9 +770,9 @@ void Convolution::link_parameters(const vector<TensorView>& views)
     weights = views[1];
 }
 
-void Convolution::apply(const TensorView& input, TensorView& output)
+void Convolution::apply(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation)
 {
-    Configuration::instance().is_gpu() ? apply_gpu(input, output) : apply_cpu(input, output);
+    Configuration::instance().is_gpu() ? apply_gpu(input, output, fused_activation) : apply_cpu(input, output);
 }
 
 void Convolution::apply_delta(const TensorView& input,
@@ -806,8 +822,8 @@ void Convolution::apply_delta_cpu(const TensorView& input,
                                  * output_deltas.dimension(1)
                                  * output_deltas.dimension(2);
 
-    MatrixMap output_grads_mat(output_delta.as<float>(), grads_per_kernel, kernels_number);
-    VectorMap(bias_gradient.as<float>(), kernels_number).noalias() = output_grads_mat.colwise().sum();
+    MatrixMap output_grads_mat = output_delta.as_flat_matrix();
+    bias_gradient.as_vector().noalias() = output_grads_mat.colwise().sum();
 
     float* weight_data = weight_gradient.as<float>();
 
@@ -851,7 +867,7 @@ void Convolution::apply_delta_cpu(const TensorView& input,
     #pragma omp parallel for
     for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
     {
-        auto kernel_rotated_weights = rotated_weights.chip(kernel_index, 0);
+        const auto kernel_rotated_weights = rotated_weights.chip(kernel_index, 0);
 
         for (Index channel_index = 0; channel_index < kernel_channels; ++channel_index)
             precomputed_rotated_slices[kernel_index][channel_index] = kernel_rotated_weights.chip(channel_index, 2);
@@ -861,7 +877,7 @@ void Convolution::apply_delta_cpu(const TensorView& input,
 
     for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
     {
-        auto kernel_convolution_gradients = output_deltas.chip(kernel_index, 3);
+        const auto kernel_convolution_gradients = output_deltas.chip(kernel_index, 3);
 
         #pragma omp parallel for
         for (Index image_index = 0; image_index < batch_size; ++image_index)
@@ -883,7 +899,7 @@ void Convolution::apply_delta_cpu(const TensorView& input,
 
 #ifdef OPENNN_WITH_CUDA
 
-void Convolution::init_cuda(Index batch_size, bool prefer_relu_algo)
+void Convolution::init_cuda(Index batch_size)
 {
     if (!kernel_descriptor)
         cudnnCreateFilterDescriptor(&kernel_descriptor);
@@ -903,63 +919,85 @@ void Convolution::init_cuda(Index batch_size, bool prefer_relu_algo)
                                     CUDNN_CROSS_CORRELATION,
                                     CUDNN_DATA_FLOAT);
 
-    cudnnSetConvolutionMathType(convolution_descriptor, CUDNN_TENSOR_OP_MATH);
+    cudnnSetConvolutionMathType(convolution_descriptor, CUDNN_TENSOR_OP_MATH_ALLOW_CONVERSION);
 
     cudnnTensorDescriptor_t input_desc;
     cudnnCreateTensorDescriptor(&input_desc);
     cudnnSetTensor4dDescriptor(input_desc, CUDNN_TENSOR_NHWC, to_cudnn(activation_dtype),
-                               static_cast<int>(batch_size),
-                               static_cast<int>(kernel_channels),
-                               static_cast<int>(input_height),
-                               static_cast<int>(input_width));
+                               to_int(batch_size), to_int(kernel_channels),
+                               to_int(input_height), to_int(input_width));
 
     cudnnTensorDescriptor_t output_desc;
     cudnnCreateTensorDescriptor(&output_desc);
     cudnnSetTensor4dDescriptor(output_desc, CUDNN_TENSOR_NHWC, to_cudnn(activation_dtype),
-                               static_cast<int>(batch_size),
-                               static_cast<int>(kernels_number),
-                               static_cast<int>(get_output_height()),
-                               static_cast<int>(get_output_width()));
+                               to_int(batch_size), to_int(kernels_number),
+                               to_int(get_output_height()), to_int(get_output_width()));
 
-    int returned_count;
+    constexpr int kRequestedAlgos = 8;
+    constexpr size_t kWorkspaceBudget = size_t(512) * 1024 * 1024;
 
-    if (prefer_relu_algo)
     {
+        cudnnConvolutionFwdAlgoPerf_t perfs[kRequestedAlgos];
+        int returned_count = 0;
+        CHECK_CUDNN(cudnnFindConvolutionForwardAlgorithm(
+            Backend::get_cudnn_handle(),
+            input_desc, kernel_descriptor, convolution_descriptor, output_desc,
+            kRequestedAlgos, &returned_count, perfs));
+
         algorithm_forward = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+        workspace_size = 0;
+        for (int i = 0; i < returned_count; ++i)
+        {
+            if (perfs[i].status == CUDNN_STATUS_SUCCESS && perfs[i].memory <= kWorkspaceBudget)
+            {
+                algorithm_forward = perfs[i].algo;
+                workspace_size = perfs[i].memory;
+                break;
+            }
+        }
     }
-    else
-    {
-        cudnnConvolutionFwdAlgoPerf_t fwd_perf;
-        cudnnFindConvolutionForwardAlgorithm(Backend::get_cudnn_handle(),
-                                             input_desc, kernel_descriptor, convolution_descriptor, output_desc,
-                                             1, &returned_count, &fwd_perf);
-        algorithm_forward = fwd_perf.algo;
-    }
-
-    cudnnGetConvolutionForwardWorkspaceSize(Backend::get_cudnn_handle(),
-                                            input_desc, kernel_descriptor, convolution_descriptor, output_desc,
-                                            algorithm_forward, &workspace_size);
-
-    cudnnConvolutionBwdDataAlgoPerf_t data_perf;
-    cudnnFindConvolutionBackwardDataAlgorithm(Backend::get_cudnn_handle(),
-                                              kernel_descriptor, output_desc, convolution_descriptor, input_desc,
-                                              1, &returned_count, &data_perf);
-    algorithm_data = data_perf.algo;
-
-    cudnnConvolutionBwdFilterAlgoPerf_t filter_perf;
-    cudnnFindConvolutionBackwardFilterAlgorithm(Backend::get_cudnn_handle(),
-                                                input_desc, output_desc, convolution_descriptor, kernel_descriptor,
-                                                1, &returned_count, &filter_perf);
-    algorithm_filter = filter_perf.algo;
 
     size_t bwd_data_ws = 0;
-    cudnnGetConvolutionBackwardDataWorkspaceSize(Backend::get_cudnn_handle(),
-                                                 kernel_descriptor, output_desc, convolution_descriptor, input_desc,
-                                                 algorithm_data, &bwd_data_ws);
+    {
+        cudnnConvolutionBwdDataAlgoPerf_t perfs[kRequestedAlgos];
+        int returned_count = 0;
+        CHECK_CUDNN(cudnnFindConvolutionBackwardDataAlgorithm(
+            Backend::get_cudnn_handle(),
+            kernel_descriptor, output_desc, convolution_descriptor, input_desc,
+            kRequestedAlgos, &returned_count, perfs));
 
-    cudnnGetConvolutionBackwardFilterWorkspaceSize(Backend::get_cudnn_handle(),
-                                                   input_desc, output_desc, convolution_descriptor, kernel_descriptor,
-                                                   algorithm_filter, &backward_filter_workspace_size);
+        algorithm_data = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
+        for (int i = 0; i < returned_count; ++i)
+        {
+            if (perfs[i].status == CUDNN_STATUS_SUCCESS && perfs[i].memory <= kWorkspaceBudget)
+            {
+                algorithm_data = perfs[i].algo;
+                bwd_data_ws = perfs[i].memory;
+                break;
+            }
+        }
+    }
+
+    {
+        cudnnConvolutionBwdFilterAlgoPerf_t perfs[kRequestedAlgos];
+        int returned_count = 0;
+        CHECK_CUDNN(cudnnFindConvolutionBackwardFilterAlgorithm(
+            Backend::get_cudnn_handle(),
+            input_desc, output_desc, convolution_descriptor, kernel_descriptor,
+            kRequestedAlgos, &returned_count, perfs));
+
+        algorithm_filter = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
+        backward_filter_workspace_size = 0;
+        for (int i = 0; i < returned_count; ++i)
+        {
+            if (perfs[i].status == CUDNN_STATUS_SUCCESS && perfs[i].memory <= kWorkspaceBudget)
+            {
+                algorithm_filter = perfs[i].algo;
+                backward_filter_workspace_size = perfs[i].memory;
+                break;
+            }
+        }
+    }
 
     workspace_size = max(workspace_size, bwd_data_ws);
 
@@ -980,11 +1018,29 @@ void Convolution::destroy_cuda()
     if (kernel_descriptor)        { cudnnDestroyFilterDescriptor(kernel_descriptor);            kernel_descriptor = nullptr; }
     if (convolution_descriptor)   { cudnnDestroyConvolutionDescriptor(convolution_descriptor);  convolution_descriptor = nullptr; }
     if (workspace)                { cudaFree(workspace);                                        workspace = nullptr; workspace_size = 0; }
-    if (backward_filter_workspace){ cudaFree(backward_filter_workspace);                        backward_filter_workspace = nullptr; backward_filter_workspace_size = 0; }
+    if (backward_filter_workspace) { cudaFree(backward_filter_workspace);                        backward_filter_workspace = nullptr; backward_filter_workspace_size = 0; }
 }
 
-void Convolution::apply_gpu(const TensorView& input, TensorView& output)
+void Convolution::apply_gpu(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation)
 {
+    if (fused_activation)
+    {
+        CHECK_CUDNN(cudnnConvolutionBiasActivationForward(
+            Backend::get_cudnn_handle(),
+            &one,
+            input.get_descriptor(),  input.data,
+            kernel_descriptor,        weights.data,
+            convolution_descriptor,
+            algorithm_forward,
+            workspace, workspace_size,
+            &zero,
+            output.get_descriptor(), output.data,
+            bias.get_descriptor(),   bias.data,
+            fused_activation,
+            output.get_descriptor(), output.data));
+        return;
+    }
+
     CHECK_CUDNN(cudnnConvolutionForward(Backend::get_cudnn_handle(),
                                         &one,
                                         input.get_descriptor(),  input.data,
@@ -1073,9 +1129,9 @@ void Convolution::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void Convolution::init_cuda(Index, bool)                              {}
-void Convolution::destroy_cuda()                                      {}
-void Convolution::apply_gpu(const TensorView&, TensorView&)           { throw runtime_error("Convolution::apply_gpu: CUDA support not compiled in."); }
+void Convolution::init_cuda(Index)                                                                {}
+void Convolution::destroy_cuda()                                                                  {}
+void Convolution::apply_gpu(const TensorView&, TensorView&, cudnnActivationDescriptor_t)          { throw runtime_error("Convolution::apply_gpu: CUDA support not compiled in."); }
 void Convolution::apply_delta_gpu(const TensorView&, const TensorView&,
                                   TensorView&, TensorView&, TensorView&) const { throw runtime_error("Convolution::apply_delta_gpu: CUDA support not compiled in."); }
 
@@ -1105,8 +1161,8 @@ void LayerNorm::link_parameters(const vector<TensorView>& views)
 
 void LayerNorm::init_defaults()
 {
-    if (gamma.data) VectorMap(gamma.as<float>(), gamma.size()).setOnes();
-    if (beta.data)  VectorMap(beta.as<float>(),  beta.size()).setZero();
+    if (gamma.data) gamma.as_vector().setOnes();
+    if (beta.data)  beta.as_vector().setZero();
 }
 
 void LayerNorm::apply(const TensorView& input,
@@ -1145,7 +1201,7 @@ void LayerNorm::apply_cpu(const TensorView& input,
     const float* beta_data  = beta.as<float>();
 
     const Index total_rows = batch_size * sequence_length;
-    const float inv_D = float(1) / to_type(embedding_dimension);
+    const float inv_D = 1.0f / to_type(embedding_dimension);
 
     #pragma omp parallel for
     for (Index row = 0; row < total_rows; ++row)
@@ -1166,7 +1222,7 @@ void LayerNorm::apply_cpu(const TensorView& input,
         const float mean     = sum * inv_D;
         const float variance = sum_sq * inv_D - mean * mean;
         const float std_val  = std::sqrt(variance + EPSILON);
-        const float inv_std  = float(1) / std_val;
+        const float inv_std  = 1.0f / std_val;
 
         means_data[row] = mean;
         stds_data[row]  = std_val;
@@ -1199,7 +1255,7 @@ void LayerNorm::apply_delta_cpu(const TensorView& output_delta,
     float* dx_data          = input_delta.as<float>();
 
     const Index total_rows = batch_size * sequence_length;
-    const float inv_D = float(1) / to_type(embedding_dimension);
+    const float inv_D = 1.0f / to_type(embedding_dimension);
 
     #pragma omp parallel for
     for (Index row = 0; row < total_rows; ++row)
@@ -1207,7 +1263,7 @@ void LayerNorm::apply_delta_cpu(const TensorView& output_delta,
         const float* output_delta_row = dy_data + row * embedding_dimension;
         const float* norm_row         = norm_data + row * embedding_dimension;
         float* input_delta_row        = dx_data + row * embedding_dimension;
-        const float inv_std = float(1) / std_data[row];
+        const float inv_std = 1.0f / std_data[row];
 
         float sum_scaled_grad      = 0;
         float sum_scaled_grad_norm = 0;
@@ -1271,6 +1327,749 @@ void LayerNorm::apply_delta_gpu(const TensorView&, const TensorView&, const Tens
 #endif
 
 
+void MultiHeadProjection::set(Index new_input_features, Index new_heads_number,
+                              Index new_head_dimension, Type new_activation_dtype)
+{
+    input_features   = new_input_features;
+    heads_number     = new_heads_number;
+    head_dimension   = new_head_dimension;
+    activation_dtype = new_activation_dtype;
+
+    combination.set(input_features, heads_number * head_dimension, activation_dtype);
+}
+
+void MultiHeadProjection::apply(const TensorView& input, TensorView& head_output, float* scratch)
+{
+    const Index batch_size = input.shape[0];
+    const Index seq_len    = input.shape[1];
+    const Index rows       = batch_size * seq_len;
+
+    TensorView input_2d   = input.reshape({rows, input_features});
+    TensorView scratch_2d(scratch, {rows, input_features}, head_output.type);
+    TensorView scratch_4d(scratch, {batch_size, seq_len, heads_number, head_dimension}, head_output.type);
+
+    combination.apply(input_2d, scratch_2d);
+    split_heads(scratch_4d, head_output);
+}
+
+void MultiHeadProjection::apply_delta(const TensorView& head_grad,
+                                      const TensorView& input,
+                                      TensorView& input_grad,
+                                      TensorView& weight_grad,
+                                      TensorView& bias_grad,
+                                      bool accumulate,
+                                      float* scratch) const
+{
+    const Index batch_size = input.shape[0];
+    const Index seq_len    = input.shape[1];
+    const Index rows       = batch_size * seq_len;
+
+    TensorView scratch_4d(scratch, {batch_size, seq_len, heads_number, head_dimension}, head_grad.type);
+    merge_heads(head_grad, scratch_4d);
+
+    TensorView scratch_2d(scratch, {rows, input_features}, head_grad.type);
+    TensorView input_2d      = input.reshape({rows, input_features});
+    TensorView input_grad_2d = input_grad.reshape({rows, input_features});
+
+    combination.apply_delta(scratch_2d, input_2d, input_grad_2d, weight_grad, bias_grad, accumulate);
+}
+
+
+void Attention::set(Index new_heads_number, Index new_head_dimension,
+                    Index new_query_sequence_length, Index new_source_sequence_length,
+                    bool new_use_causal_mask, Type new_activation_dtype)
+{
+    heads_number = new_heads_number;
+    head_dimension = new_head_dimension;
+    query_sequence_length = new_query_sequence_length;
+    source_sequence_length = new_source_sequence_length;
+    use_causal_mask = new_use_causal_mask;
+    activation_dtype = new_activation_dtype;
+
+    if (use_causal_mask && query_sequence_length > 0 && source_sequence_length > 0)
+    {
+        causal_mask.resize(query_sequence_length, source_sequence_length);
+        for (Index row = 0; row < query_sequence_length; ++row)
+            for (Index column = 0; column < source_sequence_length; ++column)
+                causal_mask(row, column) = (column > row) ? NEG_INFINITY : 0.0f;
+    }
+    else
+    {
+        causal_mask.resize(0, 0);
+    }
+}
+
+float Attention::scaling_factor() const
+{
+    return (head_dimension == 0) ? 0.25f : 1.0f / float(sqrt(head_dimension));
+}
+
+vector<pair<Shape, Type>> Attention::forward_scratch_specs(Index batch_size) const
+{
+    // GPU SDPA precondition: when cuDNN frontend is available, GPU is the
+    // configured device, dtype is BF16/FP16, and dropout is off, the operator
+    // dispatches to fused Flash Attention which doesn't materialize the
+    // attention-weights matrix. Skip allocating the big buffers in that case.
+    //
+    // Contract: this decision is frozen at ForwardPropagation construction
+    // time. Calling set_dropout_rate() *after* this point with a non-zero rate
+    // can put the layer in a state where apply_gpu wants to fall back to
+    // apply_cpu but the scratch buffers don't exist. Set dropout before
+    // compiling the network on GPU; the runtime guard in apply_gpu / apply_delta_gpu
+    // will throw a clear error if this contract is violated.
+    bool sdpa_will_be_used = false;
+#ifdef OPENNN_HAS_CUDNN_FRONTEND
+    sdpa_will_be_used =
+            Configuration::instance().is_gpu()
+         && activation_dtype == Type::BF16
+         && !dropout.active();
+#endif
+
+    if (sdpa_will_be_used)
+        return {
+            /*AttentionWeights*/        {Shape{}, activation_dtype},
+            /*AttentionWeightsDropped*/ {Shape{}, activation_dtype},
+        };
+
+    const Shape attention_shape = {batch_size, heads_number,
+                                   query_sequence_length, source_sequence_length};
+    const Shape dropout_shape = dropout.active() ? attention_shape : Shape{};
+    return {
+        /*AttentionWeights*/        {attention_shape, activation_dtype},
+        /*AttentionWeightsDropped*/ {dropout_shape,   activation_dtype},
+    };
+}
+
+#ifdef OPENNN_HAS_CUDNN_FRONTEND
+
+namespace
+{
+
+fe::DataType_t to_fe_dtype(Type t)
+{
+    switch (t)
+    {
+        case Type::FP32: return fe::DataType_t::FLOAT;
+        case Type::BF16: return fe::DataType_t::BFLOAT16;
+        default:         return fe::DataType_t::FLOAT;
+    }
+}
+
+}  // namespace
+
+#endif
+
+struct Attention::SDPACache
+{
+    struct CacheKey
+    {
+        Index batch_size = 0;
+        Index q_seq      = 0;
+        Index src_seq    = 0;
+        Index heads      = 0;
+        Index head_dim   = 0;
+        Type  dtype      = Type::FP32;
+        bool  dropout_active = false;
+        bool  causal         = false;
+        bool  is_training    = false;
+
+        bool operator==(const CacheKey& other) const
+        {
+            return batch_size == other.batch_size && q_seq == other.q_seq
+                && src_seq == other.src_seq && heads == other.heads
+                && head_dim == other.head_dim && dtype == other.dtype
+                && dropout_active == other.dropout_active
+                && causal == other.causal && is_training == other.is_training;
+        }
+    };
+
+    struct CacheKeyHash
+    {
+        size_t operator()(const CacheKey& k) const
+        {
+            return hash_combine(k.batch_size, k.q_seq, k.src_seq, k.heads, k.head_dim,
+                                Index(k.dtype),
+                                Index(k.dropout_active), Index(k.causal), Index(k.is_training));
+        }
+    };
+
+#ifdef OPENNN_HAS_CUDNN_FRONTEND
+    struct Entry
+    {
+        // Forward graph
+        std::shared_ptr<fe::graph::Graph> fwd_graph;
+        std::shared_ptr<fe::graph::Tensor_attributes> fwd_Q, fwd_K, fwd_V, fwd_O, fwd_Stats;
+        std::shared_ptr<fe::graph::Tensor_attributes> fwd_Seed, fwd_Offset;
+        void* fwd_workspace_buf = nullptr;
+
+        // Backward graph (built lazily on first apply_delta_gpu)
+        std::shared_ptr<fe::graph::Graph> bwd_graph;
+        std::shared_ptr<fe::graph::Tensor_attributes> bwd_Q, bwd_K, bwd_V, bwd_O, bwd_dO, bwd_Stats;
+        std::shared_ptr<fe::graph::Tensor_attributes> bwd_dQ, bwd_dK, bwd_dV;
+        void* bwd_workspace_buf = nullptr;
+
+        // Shared (forward writes, backward reads). LSE stats from softmax.
+        void* stats_buf = nullptr;
+    };
+
+    std::unordered_map<CacheKey, Entry, CacheKeyHash> entries;
+
+    // 1-element shortcut: Attention is typically called with the same shape
+    // and dtype across all training/inference steps. After the first call this
+    // skips the unordered_map hash lookup entirely.
+    mutable Entry*   last_entry_ = nullptr;
+    mutable CacheKey last_key_;
+    mutable bool     last_valid_ = false;
+
+    Entry& get_or_create_entry(const CacheKey& key)
+    {
+        if (last_valid_ && key == last_key_) return *last_entry_;
+        Entry& e = entries[key];
+        last_entry_ = &e;
+        last_key_   = key;
+        last_valid_ = true;
+        return e;
+    }
+
+    Entry* find_entry(const CacheKey& key) const
+    {
+        if (last_valid_ && key == last_key_) return last_entry_;
+        const auto it = entries.find(key);
+        if (it == entries.end()) return nullptr;
+        last_entry_ = const_cast<Entry*>(&it->second);
+        last_key_   = key;
+        last_valid_ = true;
+        return last_entry_;
+    }
+
+    ~SDPACache()
+    {
+#ifdef OPENNN_WITH_CUDA
+        for (auto& [_, e] : entries)
+        {
+            if (e.fwd_workspace_buf) cudaFree(e.fwd_workspace_buf);
+            if (e.bwd_workspace_buf) cudaFree(e.bwd_workspace_buf);
+            if (e.stats_buf)         cudaFree(e.stats_buf);
+        }
+#endif
+    }
+#endif  // OPENNN_HAS_CUDNN_FRONTEND
+};
+
+#ifdef OPENNN_HAS_CUDNN_FRONTEND
+
+namespace
+{
+
+auto sdpa_check = [](auto s, const string& what) {
+    if (s.is_bad())
+        throw runtime_error("SDPA " + what + ": " + s.get_message());
+};
+
+// {B, H, S, D} contiguous tensor input.
+std::shared_ptr<fe::graph::Tensor_attributes>
+bhsd_input(fe::graph::Graph& graph, const char* name, int64_t B, int64_t H, int64_t S, int64_t D)
+{
+    return graph.tensor(fe::graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_dim   ({B, H, S, D})
+                        .set_stride({H * S * D, S * D, D, 1}));
+}
+
+// Mark an SDPA output tensor as {B, H, S, D} contiguous.
+void bhsd_output(std::shared_ptr<fe::graph::Tensor_attributes>& T,
+                 int64_t B, int64_t H, int64_t S, int64_t D)
+{
+    T->set_output(true).set_dim({B, H, S, D}).set_stride({H * S * D, S * D, D, 1});
+}
+
+void build_sdpa_graph_common(fe::graph::Graph& graph, Type dtype)
+{
+    graph.set_io_data_type(to_fe_dtype(dtype))
+         .set_intermediate_data_type(fe::DataType_t::FLOAT)
+         .set_compute_data_type(fe::DataType_t::FLOAT);
+}
+
+// Throws if the attention-matrix scratch was elided (Phase 2e gating) but
+// the runtime needs it for a CPU fallback. Indicates a violation of the
+// contract documented in Attention::forward_scratch_specs.
+void require_attention_scratch(const TensorView& attention_weights, const string& context)
+{
+    if (attention_weights.empty())
+        throw runtime_error("Attention: " + context +
+            " — set_dropout_rate must be called before compiling the network on GPU "
+            "(see Attention::forward_scratch_specs).");
+}
+
+void finalize_sdpa_graph(fe::graph::Graph& graph, cudnnHandle_t handle, const string& tag)
+{
+    sdpa_check(graph.validate(),                                                tag + " validate");
+    sdpa_check(graph.build_operation_graph(handle),                             tag + " build_operation_graph");
+    sdpa_check(graph.create_execution_plans({fe::HeurMode_t::A}),               tag + " create_execution_plans");
+    sdpa_check(graph.build_plans(handle, fe::BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
+}
+
+}  // namespace
+
+static void build_sdpa_forward_graph(Attention::SDPACache::Entry& entry,
+                                      const Attention::SDPACache::CacheKey& k,
+                                      cudnnHandle_t handle,
+                                      float dropout_rate)
+{
+    const auto graph = std::make_shared<fe::graph::Graph>();
+    build_sdpa_graph_common(*graph, k.dtype);
+
+    entry.fwd_Q = bhsd_input(*graph, "Q", k.batch_size, k.heads, k.q_seq,   k.head_dim);
+    entry.fwd_K = bhsd_input(*graph, "K", k.batch_size, k.heads, k.src_seq, k.head_dim);
+    entry.fwd_V = bhsd_input(*graph, "V", k.batch_size, k.heads, k.src_seq, k.head_dim);
+
+    auto sdpa_options = fe::graph::SDPA_attributes()
+                        .set_name("flash_attn_fwd")
+                        .set_is_inference(!k.is_training)
+                        .set_causal_mask(k.causal)
+                        .set_attn_scale(1.0f / std::sqrt(float(k.head_dim)));
+
+    if (k.dropout_active)
+    {
+        entry.fwd_Seed   = graph->tensor(fe::graph::Tensor_attributes()
+                                         .set_name("Seed").set_dim({1,1,1,1}).set_stride({1,1,1,1})
+                                         .set_data_type(fe::DataType_t::INT64));
+        entry.fwd_Offset = graph->tensor(fe::graph::Tensor_attributes()
+                                         .set_name("Offset").set_dim({1,1,1,1}).set_stride({1,1,1,1})
+                                         .set_data_type(fe::DataType_t::INT64));
+        sdpa_options.set_dropout(dropout_rate, entry.fwd_Seed, entry.fwd_Offset);
+    }
+
+    auto [O, Stats] = graph->sdpa(entry.fwd_Q, entry.fwd_K, entry.fwd_V, sdpa_options);
+
+    bhsd_output(O, k.batch_size, k.heads, k.q_seq, k.head_dim);
+    entry.fwd_O = O;
+
+    if (k.is_training && Stats)
+    {
+        Stats->set_output(true)
+              .set_data_type(fe::DataType_t::FLOAT)
+              .set_dim({k.batch_size, k.heads, k.q_seq, 1})
+              .set_stride({k.heads * k.q_seq, k.q_seq, 1, 1});
+        entry.fwd_Stats = Stats;
+    }
+
+    finalize_sdpa_graph(*graph, handle, "fwd");
+
+    int64_t ws = 0;
+    graph->get_workspace_size(ws);
+    if (ws > 0)
+        CHECK_CUDA(cudaMalloc(&entry.fwd_workspace_buf, size_t(ws)));
+
+    if (k.is_training)
+    {
+        const size_t stats_bytes = size_t(k.batch_size * k.heads * k.q_seq) * sizeof(float);
+        CHECK_CUDA(cudaMalloc(&entry.stats_buf, stats_bytes));
+    }
+
+    entry.fwd_graph = graph;
+}
+
+static void build_sdpa_backward_graph(Attention::SDPACache::Entry& entry,
+                                       const Attention::SDPACache::CacheKey& k,
+                                       cudnnHandle_t handle)
+{
+    const auto graph = std::make_shared<fe::graph::Graph>();
+    build_sdpa_graph_common(*graph, k.dtype);
+
+    entry.bwd_Q  = bhsd_input(*graph, "Q_bwd",  k.batch_size, k.heads, k.q_seq,   k.head_dim);
+    entry.bwd_K  = bhsd_input(*graph, "K_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim);
+    entry.bwd_V  = bhsd_input(*graph, "V_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim);
+    entry.bwd_dO = bhsd_input(*graph, "dO_bwd", k.batch_size, k.heads, k.q_seq,   k.head_dim);
+
+    // O is read from the layer's ConcatenatedAttentionOutputs buffer, which is
+    // physically laid out as {B, Q_seq, H, D} (post merge_heads). Logical shape
+    // is {B, H, Q_seq, D} with non-contiguous strides:
+    //   stride[B]=Q*H*D, stride[H]=D, stride[Q]=H*D, stride[D]=1
+    entry.bwd_O = graph->tensor(fe::graph::Tensor_attributes()
+                                .set_name("O_bwd")
+                                .set_dim({k.batch_size, k.heads, k.q_seq, k.head_dim})
+                                .set_stride({k.q_seq * k.heads * k.head_dim,
+                                             k.head_dim,
+                                             k.heads * k.head_dim,
+                                             1}));
+
+    entry.bwd_Stats = graph->tensor(fe::graph::Tensor_attributes()
+                                    .set_name("Stats_bwd")
+                                    .set_data_type(fe::DataType_t::FLOAT)
+                                    .set_dim   ({k.batch_size, k.heads, k.q_seq, 1})
+                                    .set_stride({k.heads * k.q_seq, k.q_seq, 1, 1}));
+
+    const auto sdpa_bwd_options = fe::graph::SDPA_backward_attributes()
+                            .set_name("flash_attn_bwd")
+                            .set_causal_mask(k.causal)
+                            .set_attn_scale(1.0f / std::sqrt(float(k.head_dim)));
+
+    auto [dQ, dK, dV] = graph->sdpa_backward(entry.bwd_Q, entry.bwd_K, entry.bwd_V,
+                                              entry.bwd_O, entry.bwd_dO, entry.bwd_Stats,
+                                              sdpa_bwd_options);
+
+    bhsd_output(dQ, k.batch_size, k.heads, k.q_seq,   k.head_dim);
+    bhsd_output(dK, k.batch_size, k.heads, k.src_seq, k.head_dim);
+    bhsd_output(dV, k.batch_size, k.heads, k.src_seq, k.head_dim);
+
+    entry.bwd_dQ = dQ;
+    entry.bwd_dK = dK;
+    entry.bwd_dV = dV;
+
+    finalize_sdpa_graph(*graph, handle, "bwd");
+
+    int64_t ws = 0;
+    graph->get_workspace_size(ws);
+    if (ws > 0)
+        CHECK_CUDA(cudaMalloc(&entry.bwd_workspace_buf, size_t(ws)));
+
+    entry.bwd_graph = graph;
+}
+
+#endif  // OPENNN_HAS_CUDNN_FRONTEND
+
+Attention::Attention() = default;
+Attention::~Attention() { destroy_cuda(); }
+Attention::Attention(Attention&&) noexcept = default;
+Attention& Attention::operator=(Attention&&) noexcept = default;
+
+void Attention::destroy_cuda()
+{
+    sdpa_cache.reset();
+}
+
+void Attention::apply(const TensorView& query,
+                      const TensorView& key,
+                      const TensorView& value,
+                      const TensorView& source_input,
+                      TensorView& attention_weights,
+                      TensorView& attention_weights_dropped,
+                      TensorView& output,
+                      float* mask_scratch,
+                      bool is_training)
+{
+    Configuration::instance().is_gpu()
+        ? apply_gpu(query, key, value, source_input,
+                    attention_weights, attention_weights_dropped,
+                    output, mask_scratch, is_training)
+        : apply_cpu(query, key, value, source_input,
+                    attention_weights, attention_weights_dropped,
+                    output, mask_scratch, is_training);
+}
+
+void Attention::apply_cpu(const TensorView& query,
+                          const TensorView& key,
+                          const TensorView& value,
+                          const TensorView& source_input,
+                          TensorView& attention_weights,
+                          TensorView& attention_weights_dropped,
+                          TensorView& output,
+                          float* mask_scratch,
+                          bool is_training)
+{
+    multiply(query, false, key, true, attention_weights, scaling_factor(), 0.0f);
+
+    {
+        const Index batch_size = source_input.shape[0];
+        const Index source_sequence_length = source_input.shape[1];
+        const Index embedding_dimension = source_input.shape[2];
+        const Index query_sequence_length = attention_weights.shape[2];
+
+        if (!TRY_GPU_DISPATCH(attention_weights, [&](auto tag) {
+            using T = decltype(tag);
+            attention_masks_cuda<T>(to_int(batch_size),
+                                    to_int(heads_number),
+                                    to_int(query_sequence_length),
+                                    to_int(source_sequence_length),
+                                    to_int(embedding_dimension),
+                                    source_input.as<T>(),
+                                    attention_weights.as<T>(),
+                                    reinterpret_cast<T*>(mask_scratch),
+                                    use_causal_mask);
+        }))
+        {
+            const Index att_rows_per_batch = heads_number * query_sequence_length;
+
+            #pragma omp parallel for
+            for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
+            {
+                const float* source_batch = source_input.as<float>() + batch_index * source_sequence_length * embedding_dimension;
+                float*       attention_batch = attention_weights.as<float>() + batch_index * att_rows_per_batch * source_sequence_length;
+
+                for (Index source_index = 0; source_index < source_sequence_length; ++source_index)
+                {
+                    const float* source_row = source_batch + source_index * embedding_dimension;
+                    float max_abs = 0.0f;
+                    for (Index k = 0; k < embedding_dimension; ++k)
+                    {
+                        const float abs_value = std::abs(source_row[k]);
+                        if (abs_value > max_abs) max_abs = abs_value;
+                    }
+                    if (max_abs > EPSILON) continue;
+
+                    for (Index row_index = 0; row_index < att_rows_per_batch; ++row_index)
+                        attention_batch[row_index * source_sequence_length + source_index] = SOFTMAX_MASK_VALUE;
+                }
+            }
+
+            if (use_causal_mask)
+            {
+                const Index batch_heads = batch_size * heads_number;
+                MatrixMap attention_flat = attention_weights.as_flat_matrix();
+                attention_flat += causal_mask.replicate(batch_heads, 1);
+            }
+        }
+    }
+
+    softmax(attention_weights);
+
+    const bool apply_dropout = is_training && dropout.active();
+    TensorView& used = apply_dropout ? attention_weights_dropped : attention_weights;
+
+    if (apply_dropout)
+    {
+        copy(attention_weights, used);
+        dropout.apply(used);
+    }
+
+    multiply(used, false, value, false, output);
+}
+
+void Attention::apply_gpu(const TensorView& query,
+                          const TensorView& key,
+                          const TensorView& value,
+                          const TensorView& source_input,
+                          TensorView& attention_weights,
+                          TensorView& attention_weights_dropped,
+                          TensorView& output,
+                          float* mask_scratch,
+                          bool is_training)
+{
+#ifdef OPENNN_HAS_CUDNN_FRONTEND
+    // SDPA Flash Attention requires BF16 or FP16 in current cuDNN 9.x.
+    // For FP32 we fall back to the manual GPU path (still correct, no fused kernel).
+    // Padding-mask handling not yet wired through the graph (would need a per-batch
+    // seq-len tensor); for now SDPA path assumes no padding tokens.
+    // Dropout in SDPA needs device-resident seed/offset tensors (TODO); for now
+    // we fall back to CPU when training-time dropout is active.
+    const bool sdpa_supported =
+            query.type == Type::BF16
+         && !(dropout.active() && is_training);
+    if (!sdpa_supported)
+    {
+        require_attention_scratch(attention_weights, "SDPA fallback triggered (FP32 or training-time dropout)");
+        apply_cpu(query, key, value, source_input,
+                  attention_weights, attention_weights_dropped,
+                  output, mask_scratch, is_training);
+        return;
+    }
+
+    if (!sdpa_cache) sdpa_cache = std::make_unique<SDPACache>();
+
+    SDPACache::CacheKey ck{
+        query.shape[0],          // batch_size
+        query.shape[2],          // q_seq
+        key.shape[2],            // src_seq
+        heads_number,
+        head_dimension,
+        query.type,
+        dropout.active() && is_training,
+        use_causal_mask,
+        is_training
+    };
+
+    auto& entry = sdpa_cache->get_or_create_entry(ck);
+    if (!entry.fwd_graph)
+        build_sdpa_forward_graph(entry, ck, Backend::get_cudnn_handle(), dropout.rate);
+
+    std::unordered_map<std::shared_ptr<fe::graph::Tensor_attributes>, void*> tp;
+    tp[entry.fwd_Q] = query.data;
+    tp[entry.fwd_K] = key.data;
+    tp[entry.fwd_V] = value.data;
+    tp[entry.fwd_O] = output.data;
+    if (is_training && entry.fwd_Stats) tp[entry.fwd_Stats] = entry.stats_buf;
+    // Dropout in SDPA: deferred. When wired, requires device-resident seed/offset
+    // tensors (see Seed/Offset graph nodes); current support gate above never
+    // sets ck.dropout_active to true.
+
+    const auto status = entry.fwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.fwd_workspace_buf);
+    if (status.is_bad())
+        throw runtime_error("SDPA forward execute: " + status.get_message());
+#else
+    // No cudnn-frontend: fall back to the manual softmax+matmul GPU path.
+    apply_cpu(query, key, value, source_input,
+              attention_weights, attention_weights_dropped,
+              output, mask_scratch, is_training);
+#endif
+}
+
+void Attention::apply_delta(const TensorView& query,
+                            const TensorView& key,
+                            const TensorView& value,
+                            const TensorView& attention_output,
+                            const TensorView& attention_weights,
+                            const TensorView& attention_weights_dropped,
+                            const TensorView& output_grad,
+                            TensorView& attention_weight_grad,
+                            TensorView& query_grad,
+                            TensorView& key_grad,
+                            TensorView& value_grad) const
+{
+    Configuration::instance().is_gpu()
+        ? apply_delta_gpu(query, key, value, attention_output,
+                          attention_weights, attention_weights_dropped,
+                          output_grad, attention_weight_grad,
+                          query_grad, key_grad, value_grad)
+        : apply_delta_cpu(query, key, value, attention_output,
+                          attention_weights, attention_weights_dropped,
+                          output_grad, attention_weight_grad,
+                          query_grad, key_grad, value_grad);
+}
+
+void Attention::apply_delta_cpu(const TensorView& query,
+                                const TensorView& key,
+                                const TensorView& value,
+                                const TensorView& /*attention_output*/,
+                                const TensorView& attention_weights,
+                                const TensorView& attention_weights_dropped,
+                                const TensorView& output_grad,
+                                TensorView& attention_weight_grad,
+                                TensorView& query_grad,
+                                TensorView& key_grad,
+                                TensorView& value_grad) const
+{
+    const TensorView& attention_used = dropout.active()
+        ? attention_weights_dropped
+        : attention_weights;
+
+    multiply(attention_used, true, output_grad, false, value_grad);
+    multiply(output_grad, false, value, true, attention_weight_grad);
+
+    if (dropout.active())
+        dropout.apply_delta(attention_weight_grad);
+
+    if (!attention_weight_grad.empty())
+    {
+#ifdef OPENNN_WITH_CUDA
+        if (Configuration::instance().is_gpu())
+        {
+            CHECK_CUDNN(cudnnSoftmaxBackward(Backend::get_cudnn_handle(),
+                                             CUDNN_SOFTMAX_ACCURATE,
+                                             CUDNN_SOFTMAX_MODE_CHANNEL,
+                                             &one,
+                                             attention_weights.get_descriptor(),     attention_weights.data,
+                                             attention_weight_grad.get_descriptor(), attention_weight_grad.data,
+                                             &zero,
+                                             attention_weight_grad.get_descriptor(), attention_weight_grad.data));
+        }
+        else
+#endif
+        {
+            const MatrixMap y = attention_weights.as_flat_matrix();
+            MatrixMap dY = attention_weight_grad.as_flat_matrix();
+
+            const VectorR dot = (y.array() * dY.array()).rowwise().sum();
+            dY.array() = y.array() * (dY.colwise() - dot).array();
+        }
+    }
+
+    const float scale = scaling_factor();
+    multiply(attention_weight_grad, false, key,   false, query_grad, scale, 0.0f);
+    multiply(attention_weight_grad, true,  query, false, key_grad,   scale, 0.0f);
+}
+
+void Attention::apply_delta_gpu(const TensorView& query,
+                                const TensorView& key,
+                                const TensorView& value,
+                                const TensorView& attention_output,
+                                const TensorView& attention_weights,
+                                const TensorView& attention_weights_dropped,
+                                const TensorView& output_grad,
+                                TensorView& attention_weight_grad,
+                                TensorView& query_grad,
+                                TensorView& key_grad,
+                                TensorView& value_grad) const
+{
+#ifdef OPENNN_HAS_CUDNN_FRONTEND
+    // Same support gates as forward. The forward path that produced this
+    // backward call established the cache entry; if we fell back to CPU on
+    // forward, we must also fall back here (no LSE stats to use).
+    const bool sdpa_supported =
+            query.type == Type::BF16
+         && !dropout.active();
+    if (!sdpa_supported || !sdpa_cache)
+    {
+        require_attention_scratch(attention_weights, "SDPA backward fallback triggered");
+        apply_delta_cpu(query, key, value, attention_output,
+                        attention_weights, attention_weights_dropped,
+                        output_grad, attention_weight_grad,
+                        query_grad, key_grad, value_grad);
+        return;
+    }
+
+    SDPACache::CacheKey ck{
+        query.shape[0],
+        query.shape[2],
+        key.shape[2],
+        heads_number,
+        head_dimension,
+        query.type,
+        false,                  // dropout falls back, never reaches here
+        use_causal_mask,
+        true                    // backward implies training
+    };
+
+    SDPACache::Entry* entry_ptr = sdpa_cache->find_entry(ck);
+    if (!entry_ptr || !entry_ptr->fwd_graph)
+    {
+        // Forward never built an SDPA entry for this shape (e.g. fell back).
+        require_attention_scratch(attention_weights, "SDPA backward without matching forward entry");
+        apply_delta_cpu(query, key, value, attention_output,
+                        attention_weights, attention_weights_dropped,
+                        output_grad, attention_weight_grad,
+                        query_grad, key_grad, value_grad);
+        return;
+    }
+
+    auto& entry = *entry_ptr;
+    if (!entry.bwd_graph)
+        build_sdpa_backward_graph(entry, ck, Backend::get_cudnn_handle());
+
+    std::unordered_map<std::shared_ptr<fe::graph::Tensor_attributes>, void*> tp;
+    tp[entry.bwd_Q]     = const_cast<float*>(query.as<float>());
+    tp[entry.bwd_K]     = const_cast<float*>(key.as<float>());
+    tp[entry.bwd_V]     = const_cast<float*>(value.as<float>());
+    tp[entry.bwd_O]     = const_cast<float*>(attention_output.as<float>());
+    tp[entry.bwd_dO]    = const_cast<float*>(output_grad.as<float>());
+    tp[entry.bwd_Stats] = entry.stats_buf;
+    tp[entry.bwd_dQ]    = query_grad.data;
+    tp[entry.bwd_dK]    = key_grad.data;
+    tp[entry.bwd_dV]    = value_grad.data;
+
+    const auto status = entry.bwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.bwd_workspace_buf);
+    if (status.is_bad())
+        throw runtime_error("SDPA backward execute: " + status.get_message());
+#else
+    apply_delta_cpu(query, key, value, attention_output,
+                    attention_weights, attention_weights_dropped,
+                    output_grad, attention_weight_grad,
+                    query_grad, key_grad, value_grad);
+#endif
+}
+
+void Attention::to_JSON(JsonWriter&) const
+{
+    // Per-call config (heads/seqs/causal_mask/dtype) lives at the layer level.
+    // Dropout rate is a runtime knob, not serialized — preserves existing schema.
+}
+
+void Attention::from_JSON(const Json*)
+{
+    // No-op for the same reason.
+}
+
+
 void Pool::set(Index input_h, Index input_w, Index input_c,
                Index pool_h, Index pool_w,
                Index new_row_stride, Index new_column_stride,
@@ -1326,30 +2125,25 @@ void Pool::apply_cpu(const TensorView& input, TensorView& output, TensorView& ma
     const Index output_height = outputs.dimension(1);
     const Index output_width  = outputs.dimension(2);
 
-    const bool is_max = (method == 0);
-    const float inv_pool_size = float(1) / (pool_height * pool_width);
+    if (method == 0 && is_training)  // Max with argmax (training)
+    {
+        TensorMap4 maximal_indices_map = maximal_indices.as_tensor<4>();
 
-    TensorMap4 maximal_indices_map = (is_max && is_training)
-        ? maximal_indices.as_tensor<4>()
-        : TensorMap4(nullptr, 0, 0, 0, 0);
-
-    #pragma omp parallel for collapse(2)
-    for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
-            for (Index output_row = 0; output_row < output_height; ++output_row)
-            {
-                const Index input_row_start = output_row * row_stride - padding_height;
-                const Index pool_row_start  = max(Index(0), -input_row_start);
-                const Index pool_row_end    = min(pool_height, input_height - input_row_start);
-
-                for (Index output_column = 0; output_column < output_width; ++output_column)
+        #pragma omp parallel for collapse(2)
+        for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
+            for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
+                for (Index output_row = 0; output_row < output_height; ++output_row)
                 {
-                    const Index input_column_start = output_column * column_stride - padding_width;
-                    const Index pool_col_start = max(Index(0), -input_column_start);
-                    const Index pool_col_end   = min(pool_width, input_width - input_column_start);
+                    const Index input_row_start = output_row * row_stride - padding_height;
+                    const Index pool_row_start  = max(Index(0), -input_row_start);
+                    const Index pool_row_end    = min(pool_height, input_height - input_row_start);
 
-                    if (is_max)
+                    for (Index output_column = 0; output_column < output_width; ++output_column)
                     {
+                        const Index input_column_start = output_column * column_stride - padding_width;
+                        const Index pool_col_start = max(Index(0), -input_column_start);
+                        const Index pool_col_end   = min(pool_width, input_width - input_column_start);
+
                         float maximum_value = NEG_INFINITY;
                         Index maximal_index = 0;
 
@@ -1363,16 +2157,67 @@ void Pool::apply_cpu(const TensorView& input, TensorView& output, TensorView& ma
                                 if (value > maximum_value)
                                 {
                                     maximum_value = value;
-                                    if (is_training) maximal_index = pool_row * pool_width + pool_column;
+                                    maximal_index = pool_row * pool_width + pool_column;
                                 }
                             }
 
                         outputs(batch_index, output_row, output_column, channel_index) = maximum_value;
-                        if (is_training)
-                            maximal_indices_map(batch_index, output_row, output_column, channel_index) = maximal_index;
+                        maximal_indices_map(batch_index, output_row, output_column, channel_index) = maximal_index;
                     }
-                    else
+                }
+    }
+    else if (method == 0)  // Max (inference, no argmax)
+    {
+        #pragma omp parallel for collapse(2)
+        for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
+            for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
+                for (Index output_row = 0; output_row < output_height; ++output_row)
+                {
+                    const Index input_row_start = output_row * row_stride - padding_height;
+                    const Index pool_row_start  = max(Index(0), -input_row_start);
+                    const Index pool_row_end    = min(pool_height, input_height - input_row_start);
+
+                    for (Index output_column = 0; output_column < output_width; ++output_column)
                     {
+                        const Index input_column_start = output_column * column_stride - padding_width;
+                        const Index pool_col_start = max(Index(0), -input_column_start);
+                        const Index pool_col_end   = min(pool_width, input_width - input_column_start);
+
+                        float maximum_value = NEG_INFINITY;
+
+                        for (Index pool_row = pool_row_start; pool_row < pool_row_end; ++pool_row)
+                            for (Index pool_column = pool_col_start; pool_column < pool_col_end; ++pool_column)
+                            {
+                                const float value = inputs(batch_index,
+                                                           input_row_start + pool_row,
+                                                           input_column_start + pool_column,
+                                                           channel_index);
+                                if (value > maximum_value) maximum_value = value;
+                            }
+
+                        outputs(batch_index, output_row, output_column, channel_index) = maximum_value;
+                    }
+                }
+    }
+    else  // Average
+    {
+        const float inv_pool_size = 1.0f / (pool_height * pool_width);
+
+        #pragma omp parallel for collapse(2)
+        for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
+            for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
+                for (Index output_row = 0; output_row < output_height; ++output_row)
+                {
+                    const Index input_row_start = output_row * row_stride - padding_height;
+                    const Index pool_row_start  = max(Index(0), -input_row_start);
+                    const Index pool_row_end    = min(pool_height, input_height - input_row_start);
+
+                    for (Index output_column = 0; output_column < output_width; ++output_column)
+                    {
+                        const Index input_column_start = output_column * column_stride - padding_width;
+                        const Index pool_col_start = max(Index(0), -input_column_start);
+                        const Index pool_col_end   = min(pool_width, input_width - input_column_start);
+
                         float sum = 0;
                         for (Index pool_row = pool_row_start; pool_row < pool_row_end; ++pool_row)
                             for (Index pool_column = pool_col_start; pool_column < pool_col_end; ++pool_column)
@@ -1383,7 +2228,7 @@ void Pool::apply_cpu(const TensorView& input, TensorView& output, TensorView& ma
                         outputs(batch_index, output_row, output_column, channel_index) = sum * inv_pool_size;
                     }
                 }
-            }
+    }
 }
 
 void Pool::apply_delta_cpu(const TensorView& output_delta,
@@ -1425,7 +2270,7 @@ void Pool::apply_delta_cpu(const TensorView& output_delta,
     }
 
     // Average
-    const float inv_pool_size = float(1) / (pool_height * pool_width);
+    const float inv_pool_size = 1.0f / (pool_height * pool_width);
 
     #pragma omp parallel for collapse(2)
     for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
@@ -1542,6 +2387,7 @@ void EmbeddingLookup::link_states(const vector<TensorView>& views)
 {
     if (views.empty()) return;
     positional_encoding = views[0];
+    init_positional_encoding();
 }
 
 void EmbeddingLookup::init_positional_encoding()
@@ -1554,7 +2400,7 @@ void EmbeddingLookup::init_positional_encoding()
 
     VectorR divisors(embedding_dimension);
     for (Index j = 0; j < embedding_dimension; ++j)
-        divisors(j) = pow(float(10000),
+        divisors(j) = pow(10000.0f,
                           (j < Index(half_depth) ? j : j - Index(half_depth)) / half_depth);
 
     #pragma omp parallel for collapse(2)
@@ -1584,8 +2430,8 @@ void EmbeddingLookup::apply_cpu(const TensorView& indices, TensorView& output)
     const Index batch_size   = output.shape[0];
     const Index total_tokens = batch_size * sequence_length;
 
-    MatrixMap output_mat(output.as<float>(), total_tokens, embedding_dimension);
-    const MatrixMap weights_mat(weights.as<float>(), vocabulary_size, embedding_dimension);
+    MatrixMap output_mat              = output.as_flat_matrix();
+    const MatrixMap weights_mat       = weights.as_matrix();
     const float* input_indices = indices.as<float>();
 
     static std::atomic<bool> out_of_range_warned{false};
@@ -1612,7 +2458,7 @@ void EmbeddingLookup::apply_cpu(const TensorView& indices, TensorView& output)
 
         if (add_positional_encoding && token_id > 0)
         {
-            const MatrixMap pe(positional_encoding.as<float>(), sequence_length, embedding_dimension);
+            const MatrixMap pe = positional_encoding.as_matrix();
             output_mat.row(i) += pe.row(i % sequence_length);
         }
     }

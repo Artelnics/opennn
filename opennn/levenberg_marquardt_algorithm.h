@@ -20,48 +20,6 @@ namespace opennn
 
 class NeuralNetwork;
 struct ForwardPropagation;
-struct BackPropagationLM;
-
-struct LayerBackPropagationLM
-{
-    virtual void initialize() = 0;
-
-    virtual vector<TensorView*> get_gradient_views();
-
-    virtual vector<TensorView*> get_workspace_views();
-
-    vector<TensorView> get_input_deltas() const;
-
-    Index batch_size = 0;
-
-    Layer* layer = nullptr;
-
-    vector<TensorView> input_deltas;
-    vector<TensorView> output_deltas;
-};
-
-struct NeuralNetworkBackPropagationLM
-{
-    NeuralNetworkBackPropagationLM(NeuralNetwork* new_neural_network = nullptr);
-
-    void set(const Index = 0, NeuralNetwork* = nullptr);
-
-    const vector<unique_ptr<LayerBackPropagationLM>>& get_layers() const;
-
-    const NeuralNetwork* get_neural_network() const;
-
-    void print();
-
-    Index batch_size = 0;
-
-    NeuralNetwork* neural_network = nullptr;
-
-    vector<unique_ptr<LayerBackPropagationLM>> layers;
-
-    VectorR gradient;
-
-    VectorR workspace;
-};
 
 struct BackPropagationLM
 {
@@ -69,12 +27,6 @@ struct BackPropagationLM
     virtual ~BackPropagationLM() = default;
 
     void set(const Index = 0, Loss* = nullptr);
-
-    void print() const;
-
-    TensorView get_output_deltas() const;
-
-    vector<vector<TensorView>> get_layer_gradients() const;
 
     Index samples_number = 0;
 
@@ -84,10 +36,8 @@ struct BackPropagationLM
     Loss* loss = nullptr;
 
     float error;
-    float regularization = float(0);
-    float loss_value = float(0);
-
-    NeuralNetworkBackPropagationLM neural_network;
+    float regularization = 0.0f;
+    float loss_value = 0.0f;
 
     VectorR errors;
     VectorR squared_errors;
@@ -135,7 +85,7 @@ public:
    void from_JSON(const JsonDocument&) override;
 
    void to_JSON(JsonWriter&) const override;
-   
+
 private:
 
     VectorR calculate_numerical_gradient();
@@ -157,17 +107,17 @@ private:
                               Index layer_index,
                               Index parameter_offset,
                               MatrixR& jacobian);
-   float damping_parameter = float(0);
+   float damping_parameter = 0.0f;
 
-   float minimum_damping_parameter = float(0);
+   float minimum_damping_parameter = 0.0f;
 
-   float maximum_damping_parameter = float(0);
+   float maximum_damping_parameter = 0.0f;
 
-   float damping_parameter_factor = float(0);
+   float damping_parameter_factor = 0.0f;
 
-   // Stopping criteria 
+   // Stopping criteria
 
-   float minimum_loss_decrease = float(0);
+   float minimum_loss_decrease = 0.0f;
 
 };
 

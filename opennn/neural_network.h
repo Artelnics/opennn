@@ -38,49 +38,10 @@ public:
     Type get_training_type()  const { return config.training_type; }
     Type get_inference_type() const { return config.inference_type; }
 
-    vector<vector<Shape>> get_parameter_shapes() const
-    {
-        const Index layers_number = get_layers_number();
-        vector<vector<Shape>> shapes(layers_number);
-
-        for(Index i = 0; i < layers_number; ++i)
-            shapes[i] = layers[i]->get_parameter_shapes();
-
-        return shapes;
-    }
-
-    vector<vector<Shape>> get_forward_shapes(Index batch_size) const
-    {
-        const Index layers_number = get_layers_number();
-        vector<vector<Shape>> shapes(layers_number);
-
-        for(Index i = 0; i < layers_number; ++i)
-            shapes[i] = layers[i]->get_forward_shapes(batch_size);
-
-        return shapes;
-    }
-
-    vector<vector<Shape>> get_backward_shapes(Index batch_size) const
-    {
-        const Index layers_number = get_layers_number();
-        vector<vector<Shape>> shapes(layers_number);
-
-        for(Index i = 0; i < layers_number; ++i)
-            shapes[i] = layers[i]->get_backward_shapes(batch_size);
-
-        return shapes;
-    }
-
-    vector<vector<Shape>> get_state_shapes() const
-    {
-        const Index layers_number = get_layers_number();
-        vector<vector<Shape>> shapes(layers_number);
-
-        for(Index i = 0; i < layers_number; ++i)
-            shapes[i] = layers[i]->get_state_shapes();
-
-        return shapes;
-    }
+    vector<vector<Shape>> get_parameter_shapes()        const { return collect_layer_shapes([](const Layer& L)            { return L.get_parameter_shapes(); }); }
+    vector<vector<Shape>> get_state_shapes()            const { return collect_layer_shapes([](const Layer& L)            { return L.get_state_shapes(); }); }
+    vector<vector<Shape>> get_forward_shapes(Index b)   const { return collect_layer_shapes([b](const Layer& L)           { return L.get_forward_shapes(b); }); }
+    vector<vector<Shape>> get_backward_shapes(Index b)  const { return collect_layer_shapes([b](const Layer& L)           { return L.get_backward_shapes(b); }); }
 
     Index get_states_size() const     { return aligned_total_elements(get_state_shapes()); }
     Index get_forward_size(Index b)  const { return aligned_total_elements(get_forward_shapes(b));  }
@@ -114,8 +75,6 @@ public:
     const vector<vector<Index>>& get_layer_input_indices() const { return layer_input_indices; }
     vector<vector<Index>> get_layer_output_indices() const;
 
-    Index find_input_index(const vector<Index>&, Index) const;
-
     Layer* get_first(const string&);
     Layer* get_first(LayerType);
     const Layer* get_first(const string&) const;
@@ -144,7 +103,7 @@ public:
 
     // Layers
 
-    Index get_layers_number() const { return static_cast<Index>(layers.size()); }
+    Index get_layers_number() const { return ssize(layers); }
     Index get_layers_number(const string&) const;
     Index get_layers_number(LayerType) const;
 
@@ -244,6 +203,16 @@ public:
 private:
 
     void validate_type(LayerType) const;
+
+    // Gather a per-layer shape vector via the supplied accessor.
+    template<typename Fn>
+    vector<vector<Shape>> collect_layer_shapes(Fn fn) const
+    {
+        const Index n = get_layers_number();
+        vector<vector<Shape>> out(n);
+        for (Index i = 0; i < n; ++i) out[i] = fn(*layers[i]);
+        return out;
+    }
 
 protected:
 

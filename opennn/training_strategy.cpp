@@ -36,7 +36,7 @@ void TrainingStrategy::set_loss(const string& new_loss)
     loss = make_unique<Loss>(neural_network, dataset);
     loss->set_error(new_loss);
 
-    if(optimizer)
+    if (optimizer)
         optimizer->set(loss.get());
 }
 
@@ -49,12 +49,12 @@ void TrainingStrategy::set_optimization_algorithm(const string& new_optimization
 
 void TrainingStrategy::set_default()
 {
-    if(!get_neural_network())
+    if (!get_neural_network())
         return;
 
     // Forecasting
 
-    if(neural_network->has(LayerType::Recurrent))
+    if (neural_network->has(LayerType::Recurrent))
     {
         set_loss("MeanSquaredError");
         set_optimization_algorithm("AdaptiveMomentEstimation");
@@ -63,7 +63,7 @@ void TrainingStrategy::set_default()
 
     // Image Classification
 
-    if(neural_network->has(LayerType::Convolutional))
+    if (neural_network->has(LayerType::Convolutional))
     {
         set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");
@@ -76,7 +76,7 @@ void TrainingStrategy::set_default()
     bool has_seq_dense = false;
     for (const auto& layer : neural_network->get_layers())
     {
-        const auto* dense = dynamic_cast<const opennn::Dense*>(layer.get());
+        const auto* dense = dynamic_cast<const Dense*>(layer.get());
         if (dense && dense->get_input_shape().rank == 2) { has_seq_dense = true; break; }
     }
     if (has_seq_dense)
@@ -89,7 +89,7 @@ void TrainingStrategy::set_default()
 
     // Text Classification
 
-    if(neural_network->has(LayerType::Embedding) || neural_network->has(LayerType::MultiHeadAttention))
+    if (neural_network->has(LayerType::Embedding) || neural_network->has(LayerType::MultiHeadAttention))
     {
         set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");
@@ -101,7 +101,7 @@ void TrainingStrategy::set_default()
 
     const Activation::Function output_activation = neural_network->get_output_activation();
 
-    if(output_activation == Activation::Function::Softmax)
+    if (output_activation == Activation::Function::Softmax)
     {
         // Multi-class
         set_loss("CrossEntropy");
@@ -109,7 +109,7 @@ void TrainingStrategy::set_default()
         return;
     }
 
-    if(output_activation == Activation::Function::Sigmoid)
+    if (output_activation == Activation::Function::Sigmoid)
     {
         // Binary
         set_loss("WeightedSquaredError");
@@ -125,19 +125,19 @@ void TrainingStrategy::set_default()
 
 TrainingResults TrainingStrategy::train()
 {
-    if(!get_neural_network())
-        throw runtime_error("TrainingStrategy error: neural network is not set.");
+    if (!get_neural_network())
+        throw runtime_error("neural network is not set.");
 
-    if(!get_dataset())
-        throw runtime_error("TrainingStrategy error: dataset is not set.");
+    if (!get_dataset())
+        throw runtime_error("dataset is not set.");
 
-    if(!loss->get_neural_network() || !loss->get_dataset())
-        throw runtime_error("TrainingStrategy error: loss is not set.");
+    if (!loss->get_neural_network() || !loss->get_dataset())
+        throw runtime_error("loss is not set.");
 
-    if(!optimizer->get_loss())
-        throw runtime_error("TrainingStrategy error: optimizer is not set.");
+    if (!optimizer->get_loss())
+        throw runtime_error("optimizer is not set.");
 
-    if(neural_network->has(LayerType::Recurrent))
+    if (neural_network->has(LayerType::Recurrent))
         fix_forecasting();
 
     return optimizer->train();
@@ -149,30 +149,30 @@ void TrainingStrategy::fix_forecasting()
 /*
     const Index past_time_steps = 0;
 
-    if(neural_network->has("Recurrent"))
+    if (neural_network->has("Recurrent"))
         past_time_steps = static_cast<Recurrent*>(neural_network->get_first(Recurrent))->get_timesteps();
     else
         return;
 
     Index batch_size = 0;
 
-    if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
+    if (optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
         batch_size = adaptive_moment_estimation.get_samples_number();
-    else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
+    else if (optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
         batch_size = stochastic_gradient_descent.get_samples_number();
     else
         return;
 
-    if(batch_size%past_time_steps == 0)
+    if (batch_size%past_time_steps == 0)
         return;
 
     const Index constant = past_time_steps > batch_size
         ? 1
         : Index(batch_size/past_time_steps);
 
-    if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
+    if (optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
         adaptive_moment_estimation.set_batch_size(constant*past_time_steps);
-    else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
+    else if (optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
         stochastic_gradient_descent.set_batch_size(constant*past_time_steps);
 */
 }
@@ -219,7 +219,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
     const Json* loss_method_element = loss_element->first_child(loss_method.c_str());
 
-    if(loss_method_element)
+    if (loss_method_element)
     {
         set_loss(loss_method);
         loss->from_JSON(JsonDocument::wrap(loss_method, *loss_method_element));
@@ -236,7 +236,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
     const Json* optimization_method_element = optimization_algorithm_element->first_child(optimization_method.c_str());
 
-    if(optimization_method_element)
+    if (optimization_method_element)
     {
         set_optimization_algorithm(optimization_method);
         optimizer->from_JSON(JsonDocument::wrap(optimization_method, *optimization_method_element));
@@ -259,7 +259,7 @@ void TrainingStrategy::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if(!file.is_open())
+    if (!file.is_open())
         throw runtime_error("Cannot open file: " + file_name.string());
 
     JsonWriter printer;

@@ -6,6 +6,7 @@
 // TU gets its own copy without ODR conflicts.
 
 #include <cstdint>
+#include <cfloat>
 
 #include "kernel.cuh"
 

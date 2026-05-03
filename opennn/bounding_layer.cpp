@@ -34,13 +34,13 @@ Shape Bounding::get_output_shape() const
 
 VectorR Bounding::get_lower_bounds() const
 {
-    if(ssize(states) <= Lower || !states[Lower].data) return VectorR();
+    if (ssize(states) <= Lower || !states[Lower].data) return VectorR();
     return states[Lower].as_vector();
 }
 
 VectorR Bounding::get_upper_bounds() const
 {
-    if(ssize(states) <= Upper || !states[Upper].data) return VectorR();
+    if (ssize(states) <= Upper || !states[Upper].data) return VectorR();
     return states[Upper].as_vector();
 }
 
@@ -70,7 +70,7 @@ void Bounding::set_bounding_method(const string& new_method_string)
 
 void Bounding::set_input_shape(const Shape& new_input_shape)
 {
-    if(!output_shape.empty() && new_input_shape != output_shape)
+    if (!output_shape.empty() && new_input_shape != output_shape)
         throw runtime_error("Bounding: input shape mismatch with output shape.");
 }
 
@@ -83,20 +83,20 @@ float* Bounding::link_states(float* pointer)
 {
     float* next = Layer::link_states(pointer);
 
-    if(bounding_method == BoundingMethod::NoBounding) return next;
+    if (bounding_method == BoundingMethod::NoBounding) return next;
 
-    if(states[Lower].data)
-        VectorMap(states[Lower].as<float>(), states[Lower].size()).setConstant(-numeric_limits<float>::max());
+    if (states[Lower].data)
+        states[Lower].as_vector().setConstant(-numeric_limits<float>::max());
 
-    if(states[Upper].data)
-        VectorMap(states[Upper].as<float>(), states[Upper].size()).setConstant(numeric_limits<float>::max());
+    if (states[Upper].data)
+        states[Upper].as_vector().setConstant(numeric_limits<float>::max());
 
     return next;
 }
 
 void Bounding::set_lower_bound(const Index index, float new_lower_bound)
 {
-    if(ssize(states) <= Lower || !states[Lower].data)
+    if (ssize(states) <= Lower || !states[Lower].data)
         throw runtime_error("Bounding::set_lower_bound: layer not compiled yet (call NeuralNetwork::compile() first).");
 
     states[Lower].as<float>()[index] = new_lower_bound;
@@ -104,23 +104,23 @@ void Bounding::set_lower_bound(const Index index, float new_lower_bound)
 
 void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
 {
-    if(ssize(states) <= Lower || !states[Lower].data)
+    if (ssize(states) <= Lower || !states[Lower].data)
         throw runtime_error("Bounding::set_lower_bounds: layer not compiled yet (call NeuralNetwork::compile() first).");
 
-    VectorMap(states[Lower].as<float>(), states[Lower].size()) = new_lower_bounds;
+    states[Lower].as_vector() = new_lower_bounds;
 }
 
 void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
 {
-    if(ssize(states) <= Upper || !states[Upper].data)
+    if (ssize(states) <= Upper || !states[Upper].data)
         throw runtime_error("Bounding::set_upper_bounds: layer not compiled yet (call NeuralNetwork::compile() first).");
 
-    VectorMap(states[Upper].as<float>(), states[Upper].size()) = new_upper_bounds;
+    states[Upper].as_vector() = new_upper_bounds;
 }
 
 void Bounding::set_upper_bound(const Index index, float new_upper_bound)
 {
-    if(ssize(states) <= Upper || !states[Upper].data)
+    if (ssize(states) <= Upper || !states[Upper].data)
         throw runtime_error("Bounding::set_upper_bound: layer not compiled yet (call NeuralNetwork::compile() first).");
 
     states[Upper].as<float>()[index] = new_upper_bound;
@@ -130,7 +130,7 @@ void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t
 {
     auto& forward_views = forward_propagation.views[layer_index];
 
-    if(bounding_method == BoundingMethod::NoBounding)
+    if (bounding_method == BoundingMethod::NoBounding)
     {
         copy(forward_views[Input][0], forward_views[Output][0]);
         return;
@@ -149,7 +149,7 @@ void Bounding::to_JSON(JsonWriter& printer) const
     add_json_field(printer, "Label", label);
     add_json_field(printer, "NeuronsNumber", to_string(output_shape[0]));
 
-    if(bounding_method == BoundingMethod::Bounding && ssize(states) > Upper && states[Lower].data)
+    if (bounding_method == BoundingMethod::Bounding && ssize(states) > Upper && states[Lower].data)
     {
         add_json_field(printer, "LowerBounds", vector_to_string(states[Lower].as_vector()));
         add_json_field(printer, "UpperBounds", vector_to_string(states[Upper].as_vector()));
@@ -173,19 +173,19 @@ void Bounding::from_JSON(const JsonDocument& document)
 
 void Bounding::load_state_from_JSON(const JsonDocument& document)
 {
-    if(bounding_method == BoundingMethod::NoBounding) return;
-    if(ssize(states) <= Upper || !states[Lower].data) return;
+    if (bounding_method == BoundingMethod::NoBounding) return;
+    if (ssize(states) <= Upper || !states[Lower].data) return;
 
     const Json* root_element = get_json_root(document, "Bounding");
 
     VectorR tmp;
     string_to_vector(read_json_string(root_element, "LowerBounds"), tmp);
-    if(tmp.size() == states[Lower].size())
-        VectorMap(states[Lower].as<float>(), states[Lower].size()) = tmp;
+    if (tmp.size() == states[Lower].size())
+        states[Lower].as_vector() = tmp;
 
     string_to_vector(read_json_string(root_element, "UpperBounds"), tmp);
-    if(tmp.size() == states[Upper].size())
-        VectorMap(states[Upper].as<float>(), states[Upper].size()) = tmp;
+    if (tmp.size() == states[Upper].size())
+        states[Upper].as_vector() = tmp;
 }
 
 REGISTER(Layer, Bounding, "Bounding")

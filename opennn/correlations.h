@@ -25,12 +25,12 @@ struct Correlation
 
     void print() const;
 
-    float a = float(NAN);
-    float b = float(NAN);
-    float r = float(NAN);
+    float a = NAN;
+    float b = NAN;
+    float r = NAN;
 
-    float lower_confidence = float(NAN);
-    float upper_confidence = float(NAN);
+    float lower_confidence = NAN;
+    float upper_confidence = NAN;
 
     Method method = Method::Pearson;
     Form form = Form::Identity;

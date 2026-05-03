@@ -75,18 +75,9 @@ struct LtMatmulPlanKeyHash
 {
     size_t operator()(const LtMatmulPlanKey& key) const noexcept
     {
-        size_t hash_value = std::hash<int>{}(key.m);
-        const auto mix = [](size_t& acc, int value) {
-            acc ^= std::hash<int>{}(value) + 0x9e3779b9 + (acc << 6) + (acc >> 2);
-        };
-        mix(hash_value, key.n);
-        mix(hash_value, key.k);
-        mix(hash_value, key.transA);
-        mix(hash_value, key.transB);
-        mix(hash_value, key.epilogue);
-        mix(hash_value, key.io_dtype);
-        mix(hash_value, key.out_dtype);
-        return hash_value;
+        return hash_combine(key.m, key.n, key.k,
+                            key.transA, key.transB, key.epilogue,
+                            key.io_dtype, key.out_dtype);
     }
 };
 

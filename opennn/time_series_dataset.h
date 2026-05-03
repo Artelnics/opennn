@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   T I M E   S E R I E S   D A T A S E T   C L A S S   H E A D E R        
+//   T I M E   S E R I E S   D A T A S E T   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com

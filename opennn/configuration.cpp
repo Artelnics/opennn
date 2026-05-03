@@ -11,12 +11,6 @@
 namespace opennn
 {
 
-Configuration& Configuration::instance()
-{
-    static Configuration configuration;
-    return configuration;
-}
-
 void Configuration::set(Device new_device,
                         Type new_training_type,
                         Type new_inference_type)
@@ -45,13 +39,11 @@ static int cuda_compute_capability()
 }
 #else
 static bool has_cuda_gpu()           { return false; }
-static int  cuda_compute_capability(){ return -1; }
+static int  cuda_compute_capability() { return -1; }
 #endif
 
-const Configuration::Resolved& Configuration::resolve() const
+const Configuration::Resolved& Configuration::resolve_slow() const
 {
-    if (cache_valid) return cached_resolved;
-
     Resolved resolved;
 
     switch (device)

@@ -29,7 +29,7 @@ public:
 
     struct GoodnessOfFitAnalysis
     {
-        float determination = float(0);
+        float determination = 0.0f;
 
         VectorR targets;
         VectorR outputs;

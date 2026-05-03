@@ -15,10 +15,6 @@
 namespace opennn
 {
 
-static constexpr float SELU_ALPHA  = 1.6732632423543772848170429916717f;
-static constexpr float SELU_LAMBDA = 1.0507009873554804934193349852946f;
-
-
 void padding(const TensorView& input, TensorView& output)
 {
     if (Configuration::instance().is_gpu())
@@ -68,7 +64,7 @@ void bounding(const TensorView& input,
 
     MatrixMap output_matrix = output.as_matrix();
 
-    for(Index feature_index = 0; feature_index < features; ++feature_index)
+    for (Index feature_index = 0; feature_index < features; ++feature_index)
         output_matrix.col(feature_index) = input_matrix.col(feature_index)
                                                         .cwiseMax(lower_bounds_vector(feature_index))
                                                         .cwiseMin(upper_bounds_vector(feature_index));
@@ -113,12 +109,12 @@ void scale(const TensorView& input,
 
     output_matrix.noalias() = input_matrix;
 
-    for(Index feature_index = 0; feature_index < features; ++feature_index)
+    for (Index feature_index = 0; feature_index < features; ++feature_index)
     {
         const int code = static_cast<int>(scalers_vector(feature_index));
         auto column = output_matrix.col(feature_index).array();
 
-        switch(code)
+        switch (code)
         {
         case 1: // MinimumMaximum
             column = (column - minimums_vector(feature_index)) / ((maximums_vector(feature_index) - minimums_vector(feature_index)) + EPSILON)
@@ -134,7 +130,7 @@ void scale(const TensorView& input,
             column = column.log();
             break;
         case 5: // ImageMinMax
-            column /= float(255);
+            column /= 255.0f;
             break;
         default: // None
             break;
@@ -181,12 +177,12 @@ void unscale(const TensorView& input,
 
     output_matrix.noalias() = input_matrix;
 
-    for(Index feature_index = 0; feature_index < features; ++feature_index)
+    for (Index feature_index = 0; feature_index < features; ++feature_index)
     {
         const int code = static_cast<int>(scalers_vector(feature_index));
         auto column = output_matrix.col(feature_index).array();
 
-        switch(code)
+        switch (code)
         {
         case 1: // MinimumMaximum
             column = (column - min_range) / (max_range - min_range)
@@ -202,7 +198,7 @@ void unscale(const TensorView& input,
             column = column.exp();
             break;
         case 5: // ImageMinMax
-            column *= float(255);
+            column *= 255.0f;
             break;
         default: // None
             break;
@@ -212,11 +208,12 @@ void unscale(const TensorView& input,
 
 void copy(const TensorView& source, TensorView& destination)
 {
-    if(source.size() != destination.size())
-        throw runtime_error("Math Error: Tensor sizes mismatch in copy operation.");
+    if (source.size() != destination.size())
+        throw runtime_error("Tensor sizes mismatch in copy operation.");
 
     IF_GPU({
-        CHECK_CUDA(cudaMemcpy(destination.data, source.data, source.byte_size(), cudaMemcpyDeviceToDevice));
+        CHECK_CUDA(cudaMemcpyAsync(destination.data, source.data, source.byte_size(),
+                                   cudaMemcpyDeviceToDevice, Backend::get_compute_stream()));
         return;
     });
     memcpy(destination.data, source.data, source.size() * sizeof(float));
@@ -226,8 +223,8 @@ void addition(const TensorView& input_1,
               const TensorView& input_2,
               TensorView& output)
 {
-    if(input_1.size() != input_2.size() || input_1.size() != output.size())
-        throw runtime_error("Addition Error: Tensor dimensions do not match.");
+    if (input_1.size() != input_2.size() || input_1.size() != output.size())
+        throw runtime_error("Tensor dimensions do not match.");
 
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
@@ -270,7 +267,7 @@ void multiply(const TensorView& input_a, bool transpose_a,
         const long long stride_b = rows_b * cols_b;
         const long long stride_output = output.shape[rank - 2] * output.shape[rank - 1];
 
-        if(batch_count == 1)
+        if (batch_count == 1)
             gemm_cuda(operation_b, operation_a,
                       output_columns, output_rows, inner_dimension,
                       input_b.data, input_b.cuda_dtype(), cols_b,
@@ -292,7 +289,7 @@ void multiply(const TensorView& input_a, bool transpose_a,
     const Index batch_count = input_a.size() / (input_a.shape[rank - 2] * input_a.shape[rank - 1]);
 
     #pragma omp parallel for
-    for(Index batch_index = 0; batch_index < batch_count; ++batch_index)
+    for (Index batch_index = 0; batch_index < batch_count; ++batch_index)
     {
         const MatrixMap matrix_a = input_a.as_matrix(batch_index);
         const MatrixMap matrix_b = input_b.as_matrix(batch_index);
@@ -344,32 +341,6 @@ void softmax(TensorView& output)
     }
 }
 
-void softmax_backward(const TensorView& softmax_out, TensorView& output_delta)
-{
-    if (output_delta.empty()) return;
-
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
-        CHECK_CUDNN(cudnnSoftmaxBackward(Backend::get_cudnn_handle(),
-                                         CUDNN_SOFTMAX_ACCURATE,
-                                         CUDNN_SOFTMAX_MODE_CHANNEL,
-                                         &one,
-                                         softmax_out.get_descriptor(),     softmax_out.data,
-                                         output_delta.get_descriptor(), output_delta.data,
-                                         &zero,
-                                         output_delta.get_descriptor(), output_delta.data));
-        return;
-    }
-#endif
-    const MatrixMap y = softmax_out.as_flat_matrix();
-    MatrixMap dY = output_delta.as_flat_matrix();
-
-    const VectorR dot = (y.array() * dY.array()).rowwise().sum();
-    dY.array() = y.array() * (dY.colwise() - dot).array();
-}
-
-
-
 void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training)
 {
     if (TRY_GPU_DISPATCH(output, [&](auto tag) {
@@ -390,18 +361,18 @@ void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorV
     MatrixMap max_indices = maximal_indices.as_matrix();
 
     #pragma omp parallel for
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
+    for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
         outputs.row(batch_index).setConstant(NEG_INFINITY);
 
-        for(Index step = 0; step < sequence_length; ++step)
-            for(Index feature_index = 0; feature_index < features; ++feature_index)
+        for (Index step = 0; step < sequence_length; ++step)
+            for (Index feature_index = 0; feature_index < features; ++feature_index)
             {
                 const float value = inputs(batch_index, step, feature_index);
-                if(value > outputs(batch_index, feature_index))
+                if (value > outputs(batch_index, feature_index))
                 {
                     outputs(batch_index, feature_index) = value;
-                    if(is_training) max_indices(batch_index, feature_index) = to_type(step);
+                    if (is_training) max_indices(batch_index, feature_index) = to_type(step);
                 }
             }
     }
@@ -424,13 +395,13 @@ void average_pooling_3d_forward(const TensorView& input, TensorView& output)
     const Index features = inputs.dimension(2);
 
     #pragma omp parallel for
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
+    for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
         const Map<const MatrixR> seq_matrix(&inputs(batch_index, 0, 0), sequence_length, features);
 
-        const Index valid_count = ((seq_matrix.array() != float(0)).rowwise().any()).count();
+        const Index valid_count = ((seq_matrix.array() != 0.0f).rowwise().any()).count();
 
-        if(valid_count > 0)
+        if (valid_count > 0)
             outputs.row(batch_index) = seq_matrix.colwise().sum() / to_type(valid_count);
         else
             outputs.row(batch_index).setZero();
@@ -456,16 +427,16 @@ void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView
     const Index features = output_delta_matrix.cols();
 
     #pragma omp parallel for
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for(Index feature_index = 0; feature_index < features; ++feature_index)
+    for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
+        for (Index feature_index = 0; feature_index < features; ++feature_index)
         {
             const Index step = static_cast<Index>(max_indices(batch_index, feature_index));
             input_delta_map(batch_index, step, feature_index) = output_delta_matrix(batch_index, feature_index);
         }
 }
 
-void average_pooling_3d_backward(const TensorView& input, 
-                                 const TensorView& output_delta, 
+void average_pooling_3d_backward(const TensorView& input,
+                                 const TensorView& output_delta,
                                  TensorView& input_delta)
 {
     if (TRY_GPU_DISPATCH(input_delta, [&](auto tag) {
@@ -486,20 +457,20 @@ void average_pooling_3d_backward(const TensorView& input,
     const Index features = inputs.dimension(2);
 
     #pragma omp parallel for
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
+    for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
         const Map<const MatrixR> seq_matrix(&inputs(batch_index, 0, 0), sequence_length, features);
-        const auto non_padding = (seq_matrix.array() != float(0)).rowwise().any().eval();
+        const auto non_padding = (seq_matrix.array() != 0.0f).rowwise().any().eval();
         const Index valid_count = non_padding.count();
 
-        if(valid_count == 0) continue;
+        if (valid_count == 0) continue;
 
-        const float inverse_valid_count = float(1) / to_type(valid_count);
+        const float inverse_valid_count = 1.0f / to_type(valid_count);
         Map<MatrixR> grad_matrix(&input_delta_map(batch_index, 0, 0), sequence_length, features);
         const auto output_row = output_delta_matrix.row(batch_index);
 
-        for(Index step = 0; step < sequence_length; ++step)
-            if(non_padding(step))
+        for (Index step = 0; step < sequence_length; ++step)
+            if (non_padding(step))
                 grad_matrix.row(step) = output_row * inverse_valid_count;
     }
 }
@@ -553,63 +524,6 @@ void merge_heads(const TensorView& source, TensorView& destination)
     transpose_middle_axes(source.as<float>(), destination.as<float>(),
                           batch_size, heads_number, sequence_length, head_dimension);
 }
-
-void attention_masks(const TensorView& source_input,
-                           TensorView& attention_weights,
-                           const MatrixR& causal_mask,
-                           bool use_causal_mask,
-                           float* padding_mask_scratch)
-{
-    const Index batch_size = source_input.shape[0];
-    const Index source_sequence_length = source_input.shape[1];
-    const Index embedding_dimension = source_input.shape[2];
-    const Index heads_number = attention_weights.shape[1];
-    const Index query_sequence_length = attention_weights.shape[2];
-
-    if (TRY_GPU_DISPATCH(attention_weights, [&](auto tag) {
-        using T = decltype(tag);
-        attention_masks_cuda<T>(to_int(batch_size),
-                                to_int(heads_number),
-                                to_int(query_sequence_length),
-                                to_int(source_sequence_length),
-                                to_int(embedding_dimension),
-                                source_input.as<T>(),
-                                attention_weights.as<T>(),
-                                reinterpret_cast<T*>(padding_mask_scratch),
-                                use_causal_mask);
-    })) return;
-
-    const Index att_rows_per_batch = heads_number * query_sequence_length;
-
-    #pragma omp parallel for
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-    {
-        const float* source_batch = source_input.as<float>() + batch_index * source_sequence_length * embedding_dimension;
-        float*       attention_batch = attention_weights.as<float>() + batch_index * att_rows_per_batch * source_sequence_length;
-
-        for(Index source_index = 0; source_index < source_sequence_length; ++source_index)
-        {
-            const float* source_row = source_batch + source_index * embedding_dimension;
-            float max_abs = float(0);
-            for(Index k = 0; k < embedding_dimension; ++k)
-            {
-                const float abs_value = std::abs(source_row[k]);
-                if(abs_value > max_abs) max_abs = abs_value;
-            }
-            if(max_abs > EPSILON) continue;
-
-            for(Index row_index = 0; row_index < att_rows_per_batch; ++row_index)
-                attention_batch[row_index * source_sequence_length + source_index] = SOFTMAX_MASK_VALUE;
-        }
-    }
-
-    if(!use_causal_mask) return;
-
-    const Index batch_heads = batch_size * heads_number;
-    MatrixMap attention_flat(attention_weights.as<float>(), batch_heads * query_sequence_length, source_sequence_length);
-    attention_flat += causal_mask.replicate(batch_heads, 1);
-}
-
 
 }
 

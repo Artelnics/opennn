@@ -132,7 +132,7 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
         weighted_squared_error_gradient_cuda<T>(input.size(),
             input_delta.as<T>(), target.as<T>(), input.as<T>(), pos_w, neg_w, coefficient);
     })) return;
-    
+
     const auto inputs = input.as_vector().array();
     const auto targets = target.as_vector().array();
     input_delta.as_vector().array()
@@ -157,7 +157,7 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, flo
     error = -(targets.array() * clamped_outputs.log() + (1.0f - targets.array()) * (1.0f - clamped_outputs).log()).sum()
             / to_type(samples_number);
 
-    if(isnan(error) || isinf(error)) error = 10.0f;
+    if (isnan(error) || isinf(error)) error = 10.0f;
 }
 
 void categorical_cross_entropy(const TensorView& input, const TensorView& target, float& error, float* workspace_device)
@@ -175,7 +175,7 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
 
     error = (targets.array() * (outputs.array() + EPSILON).log()).sum() / to_type(-samples_number);
 
-    if(isnan(error) || isinf(error)) error = float(10);
+    if (isnan(error) || isinf(error)) error = 10.0f;
 }
 
 void cross_entropy_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta)
@@ -198,7 +198,7 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
     const MatrixMap targets = target.as_matrix();
     MatrixMap gradients = input_delta.as_matrix();
 
-    if(num_classes == 1)
+    if (num_classes == 1)
         gradients.array() = (-targets.array() / (outputs.array() + EPSILON)
                              + (1.0f - targets.array()) / (1.0f - outputs.array() + EPSILON))
                             / to_type(samples_number);
@@ -250,7 +250,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
 
         active_tokens_out = static_cast<Index>(active_count);
         correct_tokens_out = static_cast<Index>(correct_count);
-        error = active_count > 0 ? sum_loss / active_count : float(0);
+        error = active_count > 0 ? sum_loss / active_count : 0.0f;
     })) return;
 
     (void)errors_device;
@@ -264,31 +264,31 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
     Index correct_tokens = 0;
 
     #pragma omp parallel for reduction(+:total_log_loss, active_tokens, correct_tokens)
-    for(Index token_index = 0; token_index < token_count; ++token_index)
+    for (Index token_index = 0; token_index < token_count; ++token_index)
     {
         const Index target_index = static_cast<Index>(targets_flat(token_index));
-        if(target_index > 0 && target_index < vocabulary_size)
+        if (target_index > 0 && target_index < vocabulary_size)
         {
             total_log_loss -= log(outputs_flat(token_index, target_index) + EPSILON);
             ++active_tokens;
 
             Index best_index = 0;
             float best_value = outputs_flat(token_index, 0);
-            for(Index k = 1; k < vocabulary_size; ++k)
+            for (Index k = 1; k < vocabulary_size; ++k)
             {
-                if(outputs_flat(token_index, k) > best_value)
+                if (outputs_flat(token_index, k) > best_value)
                 {
                     best_value = outputs_flat(token_index, k);
                     best_index = k;
                 }
             }
-            if(best_index == target_index) ++correct_tokens;
+            if (best_index == target_index) ++correct_tokens;
         }
     }
 
     active_tokens_out = active_tokens;
     correct_tokens_out = correct_tokens;
-    error = active_tokens > 0 ? total_log_loss / to_type(active_tokens) : float(0);
+    error = active_tokens > 0 ? total_log_loss / to_type(active_tokens) : 0.0f;
 }
 
 void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta,
@@ -310,13 +310,13 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
     const MatrixMap outputs_flat = input.as_flat_matrix();
     const VectorMap targets_flat = target.as_vector();
 
-    const float scale = active_tokens_count > 0 ? float(1) / to_type(active_tokens_count) : float(0);
+    const float scale = active_tokens_count > 0 ? 1.0f / to_type(active_tokens_count) : 0.0f;
 
     #pragma omp parallel for
-    for(Index token_index = 0; token_index < token_count; ++token_index)
+    for (Index token_index = 0; token_index < token_count; ++token_index)
     {
         const Index target_index = static_cast<Index>(targets_flat(token_index));
-        if(target_index > 0 && target_index < vocabulary_size)
+        if (target_index > 0 && target_index < vocabulary_size)
         {
             gradients_flat.row(token_index).noalias() = scale * outputs_flat.row(token_index);
             gradients_flat(token_index, target_index) -= scale;

@@ -16,7 +16,7 @@ void scale_mean_standard_deviation(MatrixMap matrix,
                                    Index column_index,
                                    const Descriptives& column_descriptives)
 {
-    if(column_descriptives.standard_deviation > EPSILON)
+    if (column_descriptives.standard_deviation > EPSILON)
         matrix.col(column_index).array() = (matrix.col(column_index).array() - column_descriptives.mean) / column_descriptives.standard_deviation;
     else
         matrix.col(column_index).setZero();
@@ -27,8 +27,8 @@ void scale_standard_deviation(MatrixMap matrix,
                               const Descriptives& column_descriptives)
 {
     const float slope = (column_descriptives.standard_deviation > EPSILON)
-        ? float(1) / column_descriptives.standard_deviation
-        : float(0);
+        ? 1.0f / column_descriptives.standard_deviation
+        : 0.0f;
 
     matrix.col(column_index) *= slope;
 }
@@ -76,7 +76,7 @@ void unscale_minimum_maximum(MatrixMap matrix,
     const float minimum = column_descriptives.minimum;
     const float maximum = column_descriptives.maximum;
 
-    if(max_range - min_range < EPSILON)
+    if (max_range - min_range < EPSILON)
         throw runtime_error("The range values are not valid.");
 
     matrix.col(column_index).array() =
@@ -88,7 +88,7 @@ void unscale_mean_standard_deviation(MatrixMap matrix, Index column_index, const
     const float mean = column_descriptives.mean;
     const float standard_deviation = column_descriptives.standard_deviation;
 
-    if(standard_deviation < EPSILON)
+    if (standard_deviation < EPSILON)
     {
         matrix.col(column_index).setConstant(mean);
         return;
@@ -100,7 +100,7 @@ void unscale_mean_standard_deviation(MatrixMap matrix, Index column_index, const
 void unscale_standard_deviation(MatrixMap matrix, Index column_index, const Descriptives& column_descriptives)
 {
     const float slope = abs(column_descriptives.standard_deviation) < EPSILON
-            ? float(1)
+            ? 1.0f
             : column_descriptives.standard_deviation;
 
     matrix.col(column_index) *= slope;
@@ -113,7 +113,7 @@ void unscale_logarithmic(MatrixMap matrix, Index column_index)
 
 void unscale_image_minimum_maximum(MatrixMap matrix, Index column_index)
 {
-    matrix.col(column_index) *= float(255);
+    matrix.col(column_index) *= 255.0f;
 }
 
 }

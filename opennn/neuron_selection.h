@@ -63,7 +63,7 @@ void check() const;
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
-    virtual void print(){}
+    virtual void print() const {}
 
 protected:
 
@@ -116,9 +116,9 @@ struct NeuronsSelectionResults
 
    VectorR validation_error_history;
 
-   float optimum_training_error = float(10);
+   float optimum_training_error = 10.0f;
 
-   float optimum_validation_error = float(10);
+   float optimum_validation_error = 10.0f;
 
    // Model selection
 

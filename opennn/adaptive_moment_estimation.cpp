@@ -61,7 +61,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     const bool is_gpu = Configuration::instance().is_gpu();
 
-    if(display) cout << "Training with adaptive moment estimation \"Adam\""
+    if (display) cout << "Training with adaptive moment estimation \"Adam\""
                      << (is_gpu ? " CUDA" : "") << " ...\n";
 
     // Dataset
@@ -106,7 +106,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     ThreadSafeQueue<Batch*> ready_training_queue;
     vector<unique_ptr<Batch>> training_batch_pool;
 
-    for(int i = 0; i < pool_size; ++i)
+    for (int i = 0; i < pool_size; ++i)
     {
         training_batch_pool.push_back(make_unique<Batch>(training_batch_size, dataset));
         empty_training_queue.push(training_batch_pool.back().get());
@@ -116,8 +116,8 @@ TrainingResults AdaptiveMomentEstimation::train()
     ThreadSafeQueue<Batch*> ready_validation_queue;
     vector<unique_ptr<Batch>> validation_batch_pool;
 
-    if(has_validation)
-        for(int i = 0; i < pool_size; ++i)
+    if (has_validation)
+        for (int i = 0; i < pool_size; ++i)
         {
             validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
             empty_validation_queue.push(validation_batch_pool.back().get());
@@ -134,7 +134,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     unique_ptr<ForwardPropagation> validation_forward_propagation;
     unique_ptr<BackPropagation> validation_back_propagation;
 
-    if(has_validation)
+    if (has_validation)
     {
         validation_forward_propagation = make_unique<ForwardPropagation>(validation_batch_size, neural_network);
         validation_back_propagation = make_unique<BackPropagation>(validation_batch_size, loss);
@@ -158,10 +158,10 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     optimization_data.iteration = 1;
 
-    float training_error = float(0);
-    float training_accuracy = float(0);
-    float validation_error = float(0);
-    float validation_accuracy = float(0);
+    float training_error = 0.0f;
+    float training_accuracy = 0.0f;
+    float validation_error = 0.0f;
+    float validation_accuracy = 0.0f;
     Index validation_failures = 0;
 
     const bool is_classification_model = (loss->get_error() == Loss::Error::CrossEntropy3d);
@@ -171,7 +171,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     time_t beginning_time;
     time(&beginning_time);
-    float elapsed_time = float(0);
+    float elapsed_time = 0.0f;
 
     // Main loop
 
@@ -179,9 +179,9 @@ TrainingResults AdaptiveMomentEstimation::train()
         update_parameters(back_propagation, optimization_data);
     };
 
-    for(Index epoch = 0; epoch <= maximum_epochs; ++epoch)
+    for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
-        if(should_display(epoch)) cout << "Epoch: " << epoch << "\n";
+        if (should_display(epoch)) cout << "Epoch: " << epoch << "\n";
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
@@ -200,7 +200,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         training_accuracy = train_stats.accuracy;
         results.training_error_history(epoch) = training_error;
 
-        if(has_validation)
+        if (has_validation)
         {
             dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
 
@@ -218,18 +218,18 @@ TrainingResults AdaptiveMomentEstimation::train()
             validation_accuracy = val_stats.accuracy;
             results.validation_error_history(epoch) = validation_error;
 
-            if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
+            if (epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
                 ++validation_failures;
         }
 
         elapsed_time = get_elapsed_time(beginning_time);
 
-        if(should_display(epoch))
+        if (should_display(epoch))
         {
             cout << "Training error: " << training_error << "\n";
-            if(is_classification_model) cout << "Training accuracy: " << training_accuracy << "\n";
-            if(has_validation) cout << "Validation error: " << validation_error << "\n";
-            if(has_validation && is_classification_model) cout << "Validation accuracy: " << validation_accuracy << "\n";
+            if (is_classification_model) cout << "Training accuracy: " << training_accuracy << "\n";
+            if (has_validation) cout << "Validation error: " << validation_error << "\n";
+            if (has_validation && is_classification_model) cout << "Validation accuracy: " << validation_accuracy << "\n";
             cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
 
@@ -237,7 +237,7 @@ TrainingResults AdaptiveMomentEstimation::train()
                                                   results.training_error_history(epoch),
                                                   validation_failures);
 
-        if(stop_training)
+        if (stop_training)
         {
             results.loss = training_back_propagation.loss_value;
             results.validation_failures = validation_failures;
@@ -252,7 +252,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     set_unscaling();
 
-    if(display) results.print();
+    if (display) results.print();
 
     return results;
 }
@@ -266,13 +266,13 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     {
         PROFILE_SCOPE("optim:clip_gradient_norm");
-        clip_gradient_norm(back_propagation.gradient, float(1));
+        clip_gradient_norm(back_propagation.gradient, 1.0f);
     }
 
     const float iteration = static_cast<float>(optimization_data.iteration);
 
-    const float bias_correction_1 = float(1) - pow(beta_1, iteration);
-    const float bias_correction_2 = float(1) - pow(beta_2, iteration);
+    const float bias_correction_1 = 1.0f - pow(beta_1, iteration);
+    const float bias_correction_2 = 1.0f - pow(beta_2, iteration);
 
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu())
@@ -311,8 +311,8 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
                        back_propagation.gradient.size());
 
     const Index parameters_size = parameters.size();
-    const float one_minus_beta_1 = float(1) - beta_1;
-    const float one_minus_beta_2 = float(1) - beta_2;
+    const float one_minus_beta_1 = 1.0f - beta_1;
+    const float one_minus_beta_2 = 1.0f - beta_2;
 
     const float sqrt_bias_correction_2 = sqrt(bias_correction_2);
     const float effective_learning_rate = learning_rate * sqrt_bias_correction_2 / bias_correction_1;

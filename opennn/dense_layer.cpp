@@ -36,24 +36,11 @@ Shape Dense::get_output_shape() const
     return result;
 }
 
-vector<pair<Shape, Type>> Dense::get_parameter_specs() const
+vector<Operator*> Dense::get_operators()
 {
-    const Type act = activation_dtype;
-    return {
-        /*Bias*/   {{output_features},                           act},
-        /*Weight*/ {{get_input_features(), output_features},     act},
-        /*Gamma*/  {{batch_normalization ? output_features : 0}, Type::FP32},
-        /*Beta*/   {{batch_normalization ? output_features : 0}, Type::FP32},
-    };
-}
-
-vector<pair<Shape, Type>> Dense::get_state_specs() const
-{
-    if (!batch_normalization) return {};
-    return {
-        /*RunningMean*/     {{output_features}, Type::FP32},
-        /*RunningVariance*/ {{output_features}, Type::FP32},
-    };
+    vector<Operator*> ops = {&combination};
+    if (batch_normalization) ops.push_back(&batch_norm);
+    return ops;
 }
 
 vector<pair<Shape, Type>> Dense::get_forward_specs(Index batch_size) const
@@ -154,7 +141,7 @@ void Dense::set_activation_function(const string& name)
 
 void Dense::set_momentum(float new_momentum)
 {
-    if (new_momentum < float(0) || new_momentum >= float(1))
+    if (new_momentum < 0.0f || new_momentum >= 1.0f)
         throw runtime_error("Batch normalization momentum must be in [0,1).");
 
     momentum = new_momentum;
@@ -165,38 +152,18 @@ void Dense::set_momentum(float new_momentum)
 void Dense::set_parameters_glorot()
 {
     const float limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
-    set_random_uniform(VectorMap(parameters[Weight].as<float>(), parameters[Weight].size()), -limit, limit);
+    set_random_uniform(parameters[Weight].as_vector(), -limit, limit);
     init_dense_norm_defaults();
 }
 
 void Dense::set_parameters_random()
 {
-    set_random_uniform(VectorMap(parameters[Weight].as<float>(), parameters[Weight].size()));
+    set_random_uniform(parameters[Weight].as_vector());
     init_dense_norm_defaults();
 }
 
-float* Dense::link_parameters(float* pointer)
-{
-    pointer = Layer::link_parameters(pointer);
-
-    if (parameters.size() > Weight)
-        combination.link_parameters({parameters[Bias], parameters[Weight]});
-
-    if (batch_normalization && parameters.size() > Beta)
-        batch_norm.link_parameters({parameters[Gamma], parameters[Beta]});
-
-    return pointer;
-}
-
-float* Dense::link_states(float* pointer)
-{
-    pointer = Layer::link_states(pointer);
-
-    if (batch_normalization && states.size() > RunningVariance)
-        batch_norm.link_states({states[RunningMean], states[RunningVariance]});
-
-    return pointer;
-}
+// link_parameters() and link_states() are inherited from Layer; the base
+// auto-distributes slices to each operator returned by get_operators().
 
 void Dense::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
@@ -317,11 +284,11 @@ void Dense::load_state_from_JSON(const JsonDocument& document)
     VectorR tmp;
     string_to_vector(read_json_string(dense_layer_element, "RunningMeans"), tmp);
     if (tmp.size() == states[RunningMean].size() && states[RunningMean].data)
-        VectorMap(states[RunningMean].as<float>(), states[RunningMean].size()) = tmp;
+        states[RunningMean].as_vector() = tmp;
 
     string_to_vector(read_json_string(dense_layer_element, "RunningVariances"), tmp);
     if (tmp.size() == states[RunningVariance].size() && states[RunningVariance].data)
-        VectorMap(states[RunningVariance].as<float>(), states[RunningVariance].size()) = tmp;
+        states[RunningVariance].as_vector() = tmp;
 }
 
 void Dense::to_JSON(JsonWriter& printer) const

@@ -55,7 +55,7 @@ public:
 
     vector<pair<Shape, Type>> get_state_specs() const override
     {
-        if(bounding_method == BoundingMethod::NoBounding || output_shape.empty() || output_shape[0] == 0)
+        if (bounding_method == BoundingMethod::NoBounding || output_shape.empty() || output_shape[0] == 0)
             return {};
         return {
             /*Lower*/ {Shape{output_shape[0]}, Type::FP32},

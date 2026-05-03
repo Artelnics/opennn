@@ -25,7 +25,7 @@ Index count_non_empty_lines(const filesystem::path& data_path)
 {
     ifstream file(data_path);
 
-    if(!file.is_open())
+    if (!file.is_open())
         throw runtime_error("Cannot open file: " + data_path.string() + "\n");
 
     Index count = 0;
@@ -36,7 +36,7 @@ Index count_non_empty_lines(const filesystem::path& data_path)
     {
         prepare_line(line);
 
-        if(!line.empty())
+        if (!line.empty())
             ++count;
     }
 
@@ -49,16 +49,16 @@ Index count_tokens(const string& text, const string& separator)
 
     string::size_type position = 0;
 
-    while((position = text.find(separator, position)) != string::npos)
+    while ((position = text.find(separator, position)) != string::npos)
     {
         ++tokens_number;
         position += separator.length();
     }
 
-    if(text.find(separator, 0) == 0)
+    if (text.find(separator, 0) == 0)
         tokens_number--;
 
-    if(position == text.length())
+    if (position == text.length())
         tokens_number--;
 
     return tokens_number + 1;
@@ -69,28 +69,28 @@ vector<string> tokenize(const string& document)
     vector<string> tokens;
     string current_token;
 
-    for(const char character : document)
+    for (const char character : document)
     {
         const unsigned char unsigned_character = static_cast<unsigned char>(character);
 
-        if(isalnum(unsigned_character))
+        if (isalnum(unsigned_character))
         {
             current_token += static_cast<char>(tolower(unsigned_character));
         }
         else
         {
-            if(!current_token.empty())
+            if (!current_token.empty())
             {
                 tokens.emplace_back(std::move(current_token));
                 current_token.clear();
             }
 
-            if(ispunct(unsigned_character))
+            if (ispunct(unsigned_character))
                 tokens.emplace_back(1, character);
         }
     }
 
-    if(!current_token.empty())
+    if (!current_token.empty())
         tokens.emplace_back(std::move(current_token));
 
     return tokens;
@@ -125,12 +125,12 @@ vector<string> convert_string_vector(const vector<vector<string>>& input_vector,
     vector<string> vector_result;
     vector_result.reserve(input_vector.size());
 
-    for(const auto& subvec : input_vector)
+    for (const auto& subvec : input_vector)
     {
         string joined;
-        for(size_t i = 0; i < subvec.size(); ++i)
+        for (size_t i = 0; i < subvec.size(); ++i)
         {
-            if(i) joined += separator;
+            if (i) joined += separator;
             joined += subvec[i];
         }
         vector_result.push_back(std::move(joined));
@@ -147,7 +147,7 @@ VectorR to_type_vector(const string& text, const string& separator)
 
     VectorR type_vector(tokens_size);
 
-    for(Index i = 0; i < tokens_size; ++i)
+    for (Index i = 0; i < tokens_size; ++i)
     {
         const char* begin = tokens[i].c_str();
         char* end = nullptr;
@@ -164,14 +164,14 @@ VectorR to_type_vector(const string& text, const string& separator)
 
 bool is_numeric_string(const string& text)
 {
-    if(text.empty()) return false;
+    if (text.empty()) return false;
 
     const char* begin = text.c_str();
     char* end = nullptr;
     errno = 0;
     strtod(begin, &end);
 
-    if(end == begin || errno == ERANGE) return false;
+    if (end == begin || errno == ERANGE) return false;
 
     const size_t consumed = static_cast<size_t>(end - begin);
 
@@ -181,7 +181,7 @@ bool is_numeric_string(const string& text)
 
 bool is_date_time_string(const string& text)
 {
-    if(is_numeric_string(text))
+    if (is_numeric_string(text))
         return false;
 
     const static vector<regex> date_regexes = {
@@ -225,11 +225,11 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
     auto fill_dmy = [&](int part1, int part2)
     {
         const bool mdy = (format == MDY) || (format == AUTO && part1 <= 12 && part2 > 12);
-        if(mdy) { time_components.tm_mon = part1 - 1; time_components.tm_mday = part2; }
+        if (mdy) { time_components.tm_mon = part1 - 1; time_components.tm_mday = part2; }
         else    { time_components.tm_mday = part1;    time_components.tm_mon = part2 - 1; }
     };
 
-    if(try_ymd && regex_match(date, match, re_ymd_hms_ms))
+    if (try_ymd && regex_match(date, match, re_ymd_hms_ms))
     {
         time_components.tm_year = stoi(match[1]) - 1900;
         time_components.tm_mon  = stoi(match[2]) - 1;
@@ -239,7 +239,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_components.tm_sec  = stoi(match[6]);
         return mktime(&time_components);
     }
-    if(try_ymd && regex_match(date, match, re_ymd_hms))
+    if (try_ymd && regex_match(date, match, re_ymd_hms))
     {
         time_components.tm_year = stoi(match[1]) - 1900;
         time_components.tm_mon  = stoi(match[2]) - 1;
@@ -249,7 +249,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_components.tm_sec  = stoi(match[6]);
         return mktime(&time_components);
     }
-    if(try_ymd && regex_match(date, match, re_ymd_hm))
+    if (try_ymd && regex_match(date, match, re_ymd_hm))
     {
         time_components.tm_year = stoi(match[1]) - 1900;
         time_components.tm_mon  = stoi(match[2]) - 1;
@@ -258,31 +258,31 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_components.tm_min  = stoi(match[5]);
         return mktime(&time_components);
     }
-    if(try_ymd && regex_match(date, match, re_ymd))
+    if (try_ymd && regex_match(date, match, re_ymd))
     {
         time_components.tm_year = stoi(match[1]) - 1900;
         time_components.tm_mon  = stoi(match[2]) - 1;
         time_components.tm_mday = stoi(match[3]);
         return mktime(&time_components);
     }
-    if(try_ymd && regex_match(date, match, re_ym))
+    if (try_ymd && regex_match(date, match, re_ym))
     {
         time_components.tm_year = stoi(match[1]) - 1900;
         time_components.tm_mon  = stoi(match[2]) - 1;
         time_components.tm_mday = 1;
         return mktime(&time_components);
     }
-    if(try_dmy && regex_match(date, match, re_dmy_hms))
+    if (try_dmy && regex_match(date, match, re_dmy_hms))
     {
         fill_dmy(stoi(match[1]), stoi(match[2]));
         time_components.tm_year = stoi(match[3]) - 1900;
 
         int hour = stoi(match[4]);
-        if(match[7].matched)
+        if (match[7].matched)
         {
             const string ampm = match[7].str();
-            if(ampm == "PM" && hour < 12) hour += 12;
-            if(ampm == "AM" && hour == 12) hour = 0;
+            if (ampm == "PM" && hour < 12) hour += 12;
+            if (ampm == "AM" && hour == 12) hour = 0;
         }
 
         time_components.tm_hour = hour - gmt;
@@ -290,7 +290,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_components.tm_sec  = stoi(match[6]);
         return mktime(&time_components);
     }
-    if(try_dmy && regex_match(date, match, re_dmy_hm))
+    if (try_dmy && regex_match(date, match, re_dmy_hm))
     {
         fill_dmy(stoi(match[1]), stoi(match[2]));
         time_components.tm_year = stoi(match[3]) - 1900;
@@ -298,13 +298,13 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_components.tm_min  = stoi(match[5]);
         return mktime(&time_components);
     }
-    if(try_dmy && regex_match(date, match, re_dmy))
+    if (try_dmy && regex_match(date, match, re_dmy))
     {
         fill_dmy(stoi(match[1]), stoi(match[2]));
         time_components.tm_year = stoi(match[3]) - 1900;
         return mktime(&time_components);
     }
-    if(format == AUTO && regex_match(date, match, re_hms))
+    if (format == AUTO && regex_match(date, match, re_hms))
     {
         time_components.tm_hour = stoi(match[1]) - gmt;
         time_components.tm_min  = stoi(match[2]);
@@ -319,7 +319,7 @@ void replace_all_word_appearances(string& text, const string& to_replace, const 
 {
     size_t start_pos = 0;
 
-    while((start_pos = text.find(to_replace, start_pos)) != string::npos)
+    while ((start_pos = text.find(to_replace, start_pos)) != string::npos)
     {
         const bool is_prefix_valid = (start_pos == 0) || (!isalnum(text[start_pos - 1]) && text[start_pos - 1] != '_');
 
@@ -344,13 +344,13 @@ void replace_all_appearances(string& text, const string& to_replace, const strin
 
     buffer.reserve(text.size());
 
-    while(true)
+    while (true)
     {
         previous_position = position;
 
         position = text.find(to_replace, position);
 
-        if(position == string::npos) break;
+        if (position == string::npos) break;
 
         buffer.append(text, previous_position, position - previous_position);
 
@@ -384,12 +384,12 @@ void normalize_csv_line(string& text)
 
 void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &first_missing_label, const string &last_missing_label)
 {
-    if(str.empty()) return;
+    if (str.empty()) return;
 
-    if(str.front() == target_char)
+    if (str.front() == target_char)
         str.insert(0, first_missing_label);
 
-    if(str.back() == target_char)
+    if (str.back() == target_char)
         str.append(last_missing_label);
 }
 
@@ -416,7 +416,7 @@ void replace_substring_within_quotes(string &str, const string &target, const st
         search_start = match[0].second;
     }
 
-    result += string(search_start, str.cend()); 
+    result += string(search_start, str.cend());
     str = result;
 }
 
@@ -444,7 +444,7 @@ void replace(string& source, const string& find_what, const string& replace_with
 {
     size_t position = 0;
 
-    while((position = source.find(find_what, position)) != string::npos)
+    while ((position = source.find(find_what, position)) != string::npos)
     {
         source.replace(position, find_what.length(), replace_with);
 
@@ -481,7 +481,7 @@ void display_progress_bar(const int& completed, const int& total)
 
     cout << "[" << string(position, '=');
 
-    if(position < width)
+    if (position < width)
         cout << ">" << string(width - position - 1, ' ');
 
     cout << "] " << int(progress * 100.0) << " %\r";

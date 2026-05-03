@@ -32,25 +32,29 @@ public:
 
     void set_input_shape(const Shape& new_input_shape) override
     {
-        if(new_input_shape.rank >= 2)
+        if (new_input_shape.rank >= 2)
         {
             sequence_length = new_input_shape[0];
             embedding_dimension = new_input_shape[1];
         }
     }
 
-    // Gamma and beta are 1-D and stay FP32: our layernorm CUDA kernels read
-    // `const float* gamma`/`beta` and would not compile if these slots ever
-    // changed type.
-    vector<pair<Shape, Type>> get_parameter_specs() const override;
+    // get_parameter_specs() is inherited from Layer and auto-derived from
+    // get_operators(). LayerNorm::parameter_specs() pins gamma/beta to FP32
+    // (the cuda kernels read `const float* gamma`/`beta`).
+    vector<Operator*> get_operators() override;
 
     vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
         const Type act = activation_dtype;
+        const Shape normalized_shape = Configuration::instance().is_gpu()
+            ? Shape{}
+            : Shape{batch_size, sequence_length, embedding_dimension};
+
         return {
             /*Means*/              {{batch_size, sequence_length},                      Type::FP32},
             /*StandardDeviations*/ {{batch_size, sequence_length},                      Type::FP32},
-            /*NormalizedInputs*/   {{batch_size, sequence_length, embedding_dimension}, act},
+            /*NormalizedInputs*/   {normalized_shape,                                   act},
             /*Output*/             {{batch_size, sequence_length, embedding_dimension}, act},
         };
     }
@@ -68,8 +72,6 @@ public:
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
-
-    float* link_parameters(float* pointer) override;
 
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;

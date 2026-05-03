@@ -110,7 +110,11 @@ public:
         Type   inference_type = Type::FP32;
     };
 
-    static Configuration& instance();
+    static Configuration& instance()
+    {
+        static Configuration configuration;
+        return configuration;
+    }
 
     void set(Device new_device          = Device::Auto,
              Type   new_training_type   = Type::Auto,
@@ -120,7 +124,11 @@ public:
     Type   get_training_type()  const { return training_type; }
     Type   get_inference_type() const { return inference_type; }
 
-    const Resolved& resolve() const;
+    const Resolved& resolve() const
+    {
+        if (cache_valid) return cached_resolved;
+        return resolve_slow();
+    }
 
     bool is_gpu() const { return resolve().device == Device::CUDA; }
     bool is_cpu() const { return resolve().device == Device::CPU; }
@@ -132,12 +140,14 @@ private:
 
     Configuration() = default;
 
+    const Resolved& resolve_slow() const;
+
     Device device         = Device::Auto;
     Type   training_type  = Type::Auto;
     Type   inference_type = Type::Auto;
 
-    mutable Resolved cached_resolved;
-    mutable bool     cache_valid = false;
+    mutable Resolved             cached_resolved;
+    mutable std::atomic<bool>    cache_valid{false};
 };
 
 }

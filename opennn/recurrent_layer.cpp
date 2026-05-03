@@ -41,7 +41,7 @@ vector<pair<Shape, Type>> Recurrent::get_parameter_specs() const
 
 void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 {
-    if(new_input_shape.rank != 2)
+    if (new_input_shape.rank != 2)
         throw runtime_error("Input shape rank is not 2 for Recurrent (time_steps, inputs).");
 
     time_steps = new_input_shape[0];
@@ -85,11 +85,10 @@ void Recurrent::set_output_shape(const Shape& new_output_shape)
 
 void Recurrent::set_activation_function(const string& new_activation_function)
 {
-    if(new_activation_function == "Sigmoid"
+    if (new_activation_function == "Sigmoid"
         || new_activation_function == "Tanh"
         || new_activation_function == "Identity"
-        || new_activation_function == "ReLU"
-        || new_activation_function == "SELU")
+        || new_activation_function == "ReLU")
         activation_function = new_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
@@ -119,7 +118,7 @@ void Recurrent::forward_propagate(ForwardPropagation& /*forward_propagation*/, s
     MatrixR previous_hidden_state(batch_size, output_size);
     MatrixR step_derivatives(batch_size, output_size);
 
-    for(Index t = 0; t < past_time_steps; ++t)
+    for (Index t = 0; t < past_time_steps; ++t)
     {
         TensorMap2 step_input_tensor(step_input.data(), batch_size, input_features);
         TensorMap2 current_hidden_tensor(current_hidden_state.data(), batch_size, output_size);
@@ -133,14 +132,14 @@ void Recurrent::forward_propagate(ForwardPropagation& /*forward_propagation*/, s
             current_hidden_tensor
             );
 
-        if(t > 0)
+        if (t > 0)
         {
             TensorMap2(previous_hidden_state.data(), batch_size, output_size) = all_hidden_states.chip(t - 1, 1);
 
             current_hidden_state.noalias() += previous_hidden_state * recurrent_weights_map;
         }
 
-        if(is_training)
+        if (is_training)
         {
             TensorMap2 step_derivatives_tensor(step_derivatives.data(), batch_size, output_size);
 
@@ -164,7 +163,7 @@ void Recurrent::forward_propagate(ForwardPropagation& /*forward_propagation*/, s
         all_hidden_states.chip(t, 1) = current_hidden_tensor;
     }
 
-    if(recurrent_forward_propagation->outputs.data)
+    if (recurrent_forward_propagation->outputs.data)
     {
         TensorMap2 outputs_map(recurrent_forward_propagation->outputs.data, batch_size, output_size);
         outputs_map = all_hidden_states.chip(past_time_steps - 1, 1);
@@ -212,9 +211,9 @@ void Recurrent::back_propagate(ForwardPropagation& /*forward_propagation*/,
     MatrixR step_derivatives(batch_size, output_features);
     MatrixR step_prev_hidden(batch_size, output_features);
 
-    for(Index t = past_time_steps - 1; t >= 0; t--)
+    for (Index t = past_time_steps - 1; t >= 0; t--)
     {
-        if(t == past_time_steps - 1)
+        if (t == past_time_steps - 1)
             output_delta = external_output_deltas;
         else
             output_delta = next_step_gradient;
@@ -225,7 +224,7 @@ void Recurrent::back_propagate(ForwardPropagation& /*forward_propagation*/,
         TensorMap2(step_input.data(), batch_size, input_features) = input_sequences.chip(t, 1);
         input_weight_gradients.noalias() += step_input.transpose() * output_delta;
 
-        if(t > 0)
+        if (t > 0)
         {
             TensorMap2(step_prev_hidden.data(), batch_size, output_features) = all_hidden_states.chip(t - 1, 1);
             recurrent_weight_gradients.noalias() += step_prev_hidden.transpose() * output_delta;
@@ -233,14 +232,14 @@ void Recurrent::back_propagate(ForwardPropagation& /*forward_propagation*/,
 
         bias_gradients.noalias() += output_delta.colwise().sum();
 
-        if(!is_first_layer)
+        if (!is_first_layer)
         {
             MatrixR input_step_gradient = output_delta * W_in.transpose();
 
             input_sequence_gradient.chip(t, 1) = TensorMap2(input_step_gradient.data(), batch_size, input_features);
         }
 
-        if(t > 0)
+        if (t > 0)
             next_step_gradient.noalias() = output_delta * W_rec.transpose();
     }
 */

@@ -36,12 +36,9 @@ Shape Normalization3d::get_output_shape() const
     return { sequence_length, embedding_dimension };
 }
 
-vector<pair<Shape, Type>> Normalization3d::get_parameter_specs() const
+vector<Operator*> Normalization3d::get_operators()
 {
-    return {
-        /*Gamma*/ {{embedding_dimension}, Type::FP32},
-        /*Beta*/  {{embedding_dimension}, Type::FP32},
-    };
+    return {&layer_norm};
 }
 
 // Setters
@@ -60,13 +57,8 @@ void Normalization3d::set(const Index new_sequence_length,
     layer_norm.set(sequence_length, embedding_dimension);
 }
 
-float* Normalization3d::link_parameters(float* pointer)
-{
-    pointer = Layer::link_parameters(pointer);
-    if (parameters.size() > Beta)
-        layer_norm.link_parameters({parameters[Gamma], parameters[Beta]});
-    return pointer;
-}
+// link_parameters() is inherited from Layer; the base auto-distributes
+// {gamma, beta} to layer_norm.
 
 // Parameter initialization
 

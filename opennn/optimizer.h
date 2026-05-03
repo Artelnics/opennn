@@ -26,8 +26,8 @@ struct TrainingResults;
 
 struct EpochStats
 {
-    float error = float(0);
-    float accuracy = float(0);
+    float error = 0.0f;
+    float accuracy = 0.0f;
 };
 
 class Optimizer
@@ -131,13 +131,13 @@ protected:
 
     Loss* loss = nullptr;
 
-    float training_loss_goal = float(0);
+    float training_loss_goal = 0.0f;
 
     Index maximum_validation_failures = numeric_limits<Index>::max();
 
     Index maximum_epochs = 10000;
 
-    float maximum_time = float(360000);
+    float maximum_time = 360000.0f;
 
     Index display_period = 10;
 
@@ -169,7 +169,7 @@ struct OptimizerData
     // Shared state across all optimizers
     VectorR potential_parameters;
     VectorR training_direction;
-    float initial_learning_rate = float(0);
+    float initial_learning_rate = 0.0f;
     Index iteration = 0;
 };
 
@@ -208,7 +208,7 @@ struct TrainingResults
 
     Index validation_failures = 0;
 
-    float loss_decrease = float(0);
+    float loss_decrease = 0.0f;
 };
 
 }

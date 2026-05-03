@@ -34,7 +34,7 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Scaling>(input_shape));
 
-    for(Index i = 0; i < complexity_size; ++i)
+    for (Index i = 0; i < complexity_size; ++i)
         add_layer(make_unique<Dense>(get_output_shape(),
                                        Shape{ complexity_dimensions[i] },
                                        "Tanh",
@@ -63,7 +63,7 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Scaling>(input_shape));
 
-    for(Index i = 0; i < complexity_size; ++i)
+    for (Index i = 0; i < complexity_size; ++i)
         add_layer(make_unique<Dense>(get_output_shape(),
                                        Shape{complexity_dimensions[i]},
                                        "Tanh",
@@ -146,7 +146,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
 
     const Index complexity_size = complexity_dimensions.rank;
 
-    for(Index i = 0; i < complexity_size; ++i)
+    for (Index i = 0; i < complexity_size; ++i)
     {
         const Shape kernel_shape = { 3, 3, get_output_shape()[2], complexity_dimensions[i] };
         const Shape stride_shape = { 1, 1 };
@@ -229,9 +229,9 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
     last_layer_index = get_layers_number() - 1;
 
-    for(size_t stage = 0; stage < blocks_per_stage.size(); ++stage)
+    for (size_t stage = 0; stage < blocks_per_stage.size(); ++stage)
     {
-        for(Index block = 0; block < blocks_per_stage[stage]; ++block)
+        for (Index block = 0; block < blocks_per_stage[stage]; ++block)
         {
             const Index block_input_index = last_layer_index;
 
@@ -580,7 +580,7 @@ void Transformer::set(const Index input_sequence_length,
     layers.clear();
     layer_input_indices.clear();
 
-    if(input_sequence_length == 0 ||
+    if (input_sequence_length == 0 ||
         decoder_sequence_length == 0 ||
         input_vocabulary_size == 0 ||
         output_vocabulary_size == 0 ||
@@ -590,8 +590,8 @@ void Transformer::set(const Index input_sequence_length,
         layers_number == 0)
         return;
 
-    if(embedding_dimension % heads_number != 0)
-        throw runtime_error("Transformer Error: embedding_dimension must be divisible by heads_number.");
+    if (embedding_dimension % heads_number != 0)
+        throw runtime_error("embedding_dimension must be divisible by heads_number.");
 
     // Input embeddings
 
@@ -619,7 +619,7 @@ void Transformer::set(const Index input_sequence_length,
 
     // Encoder stack
 
-    for(Index i = 0; i < layers_number; ++i)
+    for (Index i = 0; i < layers_number; ++i)
     {
         const string suffix = "_" + to_string(i + 1);
 
@@ -687,7 +687,7 @@ void Transformer::set(const Index input_sequence_length,
 
     // Decoder stack
 
-    for(Index i = 0; i < layers_number; ++i)
+    for (Index i = 0; i < layers_number; ++i)
     {
         const string suffix = "_" + to_string(i + 1);
 
@@ -799,9 +799,9 @@ void Transformer::set(const Index input_sequence_length,
 
 void Transformer::set_dropout_rate(const float new_dropout_rate)
 {
-    for(auto& layer : get_layers())
+    for (auto& layer : get_layers())
     {
-        if(!layer) continue;
+        if (!layer) continue;
 
         const string& label = layer->get_label();
         const bool is_ffn_dense =
@@ -810,12 +810,12 @@ void Transformer::set_dropout_rate(const float new_dropout_rate)
             || label.rfind("decoder_internal_dense", 0) == 0
             || label.rfind("decoder_external_dense", 0) == 0;
 
-        if(is_ffn_dense)
+        if (is_ffn_dense)
         {
-            if(auto* dense = dynamic_cast<Dense*>(layer.get()))
+            if (auto* dense = dynamic_cast<Dense*>(layer.get()))
                 dense->set_dropout_rate(new_dropout_rate);
         }
-        else if(auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
+        else if (auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
         {
             mha->set_dropout_rate(new_dropout_rate);
         }
@@ -828,7 +828,7 @@ void Transformer::set_input_vocabulary(const vector<string>& new_input_vocabular
 
     input_vocabulary_map.clear();
 
-    for(size_t i = 0; i < input_vocabulary.size(); ++i)
+    for (size_t i = 0; i < input_vocabulary.size(); ++i)
         input_vocabulary_map[input_vocabulary[i]] = i;
 }
 
@@ -838,7 +838,7 @@ void Transformer::set_output_vocabulary(const vector<string>& new_output_vocabul
 
     output_inverse_vocabulary_map.clear();
 
-    for(size_t i = 0; i < output_vocabulary.size(); ++i)
+    for (size_t i = 0; i < output_vocabulary.size(); ++i)
         output_inverse_vocabulary_map[i] = output_vocabulary[i];
 }
 
@@ -859,8 +859,8 @@ Index Transformer::get_embedding_dimension() const
 
 Index Transformer::get_heads_number() const
 {
-    for(const auto& layer : layers)
-        if(layer->get_type() == LayerType::MultiHeadAttention)
+    for (const auto& layer : layers)
+        if (layer->get_type() == LayerType::MultiHeadAttention)
             return static_cast<MultiHeadAttention*>(layer.get())->get_heads_number();
 
     return 0;
@@ -868,7 +868,7 @@ Index Transformer::get_heads_number() const
 
 string Transformer::calculate_outputs(const string& source)
 {
-    if(input_vocabulary_map.empty() || output_inverse_vocabulary_map.empty())
+    if (input_vocabulary_map.empty() || output_inverse_vocabulary_map.empty())
         throw runtime_error("Transformer::calculate_outputs Error: Vocabularies not initialized.");
 
     constexpr float PAD   = 0.0f;
@@ -889,7 +889,7 @@ string Transformer::calculate_outputs(const string& source)
 
     Index write_index = 1;
 
-    for(size_t i = 0; i < source_tokens.size() && write_index < input_sequence_length; ++i, ++write_index)
+    for (size_t i = 0; i < source_tokens.size() && write_index < input_sequence_length; ++i, ++write_index)
     {
         const auto it = input_vocabulary_map.find(source_tokens[i]);
 
@@ -898,7 +898,7 @@ string Transformer::calculate_outputs(const string& source)
                                          : UNK;
     }
 
-    if(write_index < input_sequence_length)
+    if (write_index < input_sequence_length)
         source_ids(0, write_index) = END;
 
     Tensor2 target_ids(batch_size, decoder_sequence_length);
@@ -921,7 +921,7 @@ string Transformer::calculate_outputs(const string& source)
 
     ForwardPropagation forward_propagation(batch_size, this);
 
-    for(Index i = 1; i < decoder_sequence_length; ++i)
+    for (Index i = 1; i < decoder_sequence_length; ++i)
     {
         const vector<TensorView> inputs =
         {TensorView(target_ids.data(), {batch_size, decoder_sequence_length}),
@@ -940,7 +940,7 @@ string Transformer::calculate_outputs(const string& source)
 
         target_ids(0, i) = static_cast<float>(best_id);
 
-        if(best_id == END)
+        if (best_id == END)
             break;
     }
 
@@ -959,19 +959,19 @@ string Transformer::calculate_outputs(const string& source)
 
     string result;
 
-    for(Index i = 1; i < decoder_sequence_length; ++i)
+    for (Index i = 1; i < decoder_sequence_length; ++i)
     {
         const Index id = static_cast<Index>(target_ids(0, i));
 
-        if(id == END || id == PAD)
+        if (id == END || id == PAD)
             break;
 
         const auto it = output_inverse_vocabulary_map.find(id);
 
-        if(it == output_inverse_vocabulary_map.end())
+        if (it == output_inverse_vocabulary_map.end())
             continue;
 
-        if(!result.empty())
+        if (!result.empty())
             result += " ";
 
         result += it->second;
@@ -980,7 +980,7 @@ string Transformer::calculate_outputs(const string& source)
     return result;
 }
 
-} 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

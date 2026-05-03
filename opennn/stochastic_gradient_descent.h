@@ -49,7 +49,7 @@ private:
 
     float initial_decay;
 
-    float momentum = float(0);
+    float momentum = 0.0f;
 
     bool nesterov = false;
 

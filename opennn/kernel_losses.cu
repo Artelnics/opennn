@@ -355,7 +355,7 @@ void cross_entropy_3d_multiple_forward_cuda(const Index n,
                                             float* correct_mask,
                                             const float epsilon)
 {
-    if(n == 0) return;
+    if (n == 0) return;
 
     const int total = static_cast<int>(n);
 
@@ -400,7 +400,7 @@ void cross_entropy_3d_multiple_backward_cuda(const Index n,
                                              T* output_deltas,
                                              const float scale_factor)
 {
-    if(n == 0) return;
+    if (n == 0) return;
 
     const int total = static_cast<int>(n);
 

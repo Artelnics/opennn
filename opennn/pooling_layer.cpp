@@ -61,7 +61,7 @@ void Pooling::set(const Shape& new_input_shape,
                   const string& new_pooling_method,
                   const string& new_label)
 {
-    if(new_pool_dimensions.rank != 2)
+    if (new_pool_dimensions.rank != 2)
         throw runtime_error("Pool shape must be 2");
 
     if (new_stride_shape.rank != 2)

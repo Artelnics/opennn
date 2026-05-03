@@ -63,7 +63,7 @@ namespace opennn
     {
         ostringstream buffer;
 
-        for(size_t i = 0; i < values.size(); ++i)
+        for (size_t i = 0; i < values.size(); ++i)
         {
             buffer << values[i];
             if (i < values.size() - 1)
@@ -77,7 +77,7 @@ namespace opennn
     inline string vector_to_string(const Eigen::DenseBase<Derived>& values, const string& separator = " ")
     {
         ostringstream buffer;
-        for(Index i = 0; i < values.size(); ++i) buffer << values(i) << separator;
+        for (Index i = 0; i < values.size(); ++i) buffer << values(i) << separator;
         return buffer.str();
     }
 
@@ -88,7 +88,7 @@ namespace opennn
     {
         ostringstream buffer;
 
-        for(Index i = 0; i < values.size(); ++i)
+        for (Index i = 0; i < values.size(); ++i)
             buffer << values(i) << separator;
 
         return buffer.str();

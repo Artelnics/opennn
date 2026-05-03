@@ -36,28 +36,28 @@ void Loss::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 
 void Loss::set_normalization_coefficient()
 {
-    normalization_coefficient = float(1);
-    positives_weight = float(1);
-    negatives_weight = float(1);
+    normalization_coefficient = 1.0f;
+    positives_weight = 1.0f;
+    negatives_weight = 1.0f;
 
-    if(!dataset || dataset->get_samples_number() == 0)
+    if (!dataset || dataset->get_samples_number() == 0)
         return;
 
-    if(error == Error::WeightedSquaredError)
+    if (error == Error::WeightedSquaredError)
     {
         const Index targets_number = dataset->get_features_number("Target");
-        if(targets_number != 1) return;
+        if (targets_number != 1) return;
 
         const VectorI distribution = dataset->calculate_target_distribution();
         const Index negatives = distribution(0);
         const Index positives = distribution(1);
 
-        if(positives == 0 || negatives == 0) return;
+        if (positives == 0 || negatives == 0) return;
 
         const float total = float(positives + negatives);
-        positives_weight = total / (float(2) * float(positives));
-        negatives_weight = total / (float(2) * float(negatives));
-        normalization_coefficient = float(1);
+        positives_weight = total / (2.0f * float(positives));
+        negatives_weight = total / (2.0f * float(negatives));
+        normalization_coefficient = 1.0f;
     }
 }
 
@@ -65,7 +65,7 @@ void Loss::back_propagate(const Batch& batch,
                           ForwardPropagation& forward_propagation,
                           BackPropagation& back_propagation) const
 {
-    if(batch.is_empty()) return;
+    if (batch.is_empty()) return;
 
     calculate_error(batch, forward_propagation, back_propagation);
 
@@ -98,7 +98,7 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
     float* workspace_device = nullptr;
 #endif
 
-    switch(error)
+    switch (error)
     {
     case Error::MeanSquaredError:
         mean_squared_error(input, target, back_propagation.error, workspace_device);
@@ -122,7 +122,7 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
         cross_entropy_3d(input, target, back_propagation.error, back_propagation.active_tokens_count, correct_tokens, workspace_device);
         const Index active = back_propagation.active_tokens_count;
         back_propagation.accuracy.setValues(
-            {active > 0 ? float(correct_tokens) / float(active) : float(0)});
+            {active > 0 ? float(correct_tokens) / float(active) : 0.0f});
         break;
     }
     case Error::MinkowskiError:
@@ -137,7 +137,7 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
     const TensorView target = batch.get_targets();
     TensorView input_delta = back_propagation.get_output_deltas();
 
-    switch(error)
+    switch (error)
     {
     case Error::MeanSquaredError:
         mean_squared_error_gradient(input, target, input_delta);
@@ -162,7 +162,7 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
 
 void Loss::add_regularization(BackPropagation& back_propagation) const
 {
-    if(regularization_method == Regularization::NoRegularization) return;
+    if (regularization_method == Regularization::NoRegularization) return;
 
     check_neural_network();
 
@@ -178,7 +178,7 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
 
 float Loss::calculate_regularization(const VectorR& parameters_vec) const
 {
-    if(regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return 0.0f;
+    if (regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return 0.0f;
 
     const TensorView parameters(const_cast<float*>(parameters_vec.data()), { ssize(parameters_vec) });
     float penalty = 0.0f;
@@ -200,7 +200,7 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
     const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
     const size_t layers_number = neural_network->get_layers_number();
 
-    if(layers_number == 0) return;
+    if (layers_number == 0) return;
 
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
@@ -212,7 +212,7 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {
-        if(i != last_trainable_layer_index)
+        if (i != last_trainable_layer_index)
         {
             PROFILE_SCOPE("bwd:accumulate_output_deltas");
             back_propagation.accumulate_output_deltas(static_cast<size_t>(i));
@@ -236,13 +236,13 @@ void Loss::set_error(const Error& new_error)
 {
     error = new_error;
 
-    for(const auto& [error_value, error_name] : error_map)
+    for (const auto& [error_value, error_name] : error_map)
         if (error_value == error) { name = error_name; return; }
 }
 
 void Loss::set_error(const string& new_name)
 {
-    for(const auto& [error_value, error_name] : error_map)
+    for (const auto& [error_value, error_name] : error_map)
         if (error_name == new_name) { set_error(error_value); return; }
 
     throw runtime_error("Unknown loss method: " + new_name);
@@ -250,7 +250,7 @@ void Loss::set_error(const string& new_name)
 
 void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 {
-    if(regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return;
+    if (regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return;
 
     check_neural_network();
 
@@ -285,226 +285,11 @@ void Loss::regularization_to_JSON(JsonWriter& file_stream) const
     file_stream.close_element();
 }
 
-float Loss::calculate_numerical_error() const
-{
-    check_neural_network();
-    check_dataset();
-
-    const Index samples_number = dataset->get_samples_number("Training");
-
-    const vector<Index> training_indices = dataset->get_sample_indices("Training");
-
-    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
-    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-
-    Batch batch(samples_number, dataset);
-
-    batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
-
-    ForwardPropagation forward_propagation(samples_number, neural_network);
-
-    neural_network->forward_propagate(batch.get_inputs(), forward_propagation);
-
-    BackPropagation back_propagation(samples_number, const_cast<Loss*>(this));
-
-    calculate_error(batch, forward_propagation, back_propagation);
-
-    return back_propagation.error;
-}
-
-VectorR Loss::calculate_gradient()
-{
-    check_neural_network();
-    check_dataset();
-
-    const Index samples_number = dataset->get_samples_number("Training");
-
-    const vector<Index> training_indices = dataset->get_sample_indices("Training");
-
-    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
-    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-
-    Batch batch(samples_number, dataset);
-    batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
-
-    ForwardPropagation forward_propagation(samples_number, neural_network);
-
-    BackPropagation back_propagation(samples_number, this);
-
-    Map<const VectorR, AlignedMax> parameters(neural_network->get_parameters_data(),
-                                               neural_network->get_parameters_size());
-
-    neural_network->forward_propagate(batch.get_inputs(),
-                                      parameters,
-                                      forward_propagation);
-
-    back_propagate(batch, forward_propagation, back_propagation);
-
-    return Map<const VectorR, AlignedMax>(back_propagation.gradient.as<float>(),
-                                          back_propagation.gradient.size());
-}
-
-VectorR Loss::calculate_numerical_gradient()
-{
-    check_neural_network();
-    check_dataset();
-
-    const Index samples_number = dataset->get_samples_number("Training");
-
-    const vector<Index> training_indices = dataset->get_sample_indices("Training");
-
-    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
-    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-
-    Batch batch(samples_number, dataset);
-    batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
-
-    ForwardPropagation forward_propagation(samples_number, neural_network);
-
-    BackPropagation back_propagation(samples_number, this);
-
-    VectorMap parameters(neural_network->get_parameters_data(),
-                         neural_network->get_parameters_size());
-
-    const Index parameters_number = parameters.size();
-
-    float h = 0;
-
-    VectorR perturbed = parameters;
-
-    float error_forward = 0;
-    float error_backward = 0;
-
-    VectorR numerical_gradient = VectorR::Zero(parameters_number);
-
-    for(Index i = 0; i < parameters_number; ++i)
-    {
-        h = calculate_h(parameters(i));
-
-        perturbed(i) += h;
-
-        neural_network->forward_propagate(batch.get_inputs(),
-                                          perturbed,
-                                          forward_propagation);
-
-        calculate_error(batch, forward_propagation, back_propagation);
-
-        error_forward = back_propagation.error;
-
-        perturbed(i) -= float(2) * h;
-
-        neural_network->forward_propagate(batch.get_inputs(),
-                                          perturbed,
-                                          forward_propagation);
-
-        calculate_error(batch, forward_propagation, back_propagation);
-
-        error_backward = back_propagation.error;
-
-        perturbed(i) += h;
-
-        numerical_gradient(i) = (error_forward - error_backward)/float(2*h);
-    }
-
-    return numerical_gradient;
-}
-
-VectorR Loss::calculate_numerical_input_deltas()
-{
-    check_neural_network();
-    check_dataset();
-
-    const Index samples_number = dataset->get_samples_number("Training");
-
-    const Index values_number = neural_network->get_inputs_number()*samples_number;
-
-    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
-    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-
-    Batch batch(samples_number, dataset);
-    batch.fill(sample_indices, input_feature_indices, {}, target_feature_indices);
-
-    ForwardPropagation forward_propagation(samples_number, neural_network);
-
-    BackPropagation back_propagation(samples_number, this);
-
-    float h;
-
-    float error_forward;
-    float error_backward;
-
-    VectorR numerical_inputs_gradients = VectorR::Zero(values_number);
-
-    const vector<TensorView>& input_views = batch.get_inputs();
-
-    TensorMap4 inputs_vector = input_views[0].as_tensor<4>();
-
-    for(Index i = 0; i < values_number; ++i)
-    {
-        h = calculate_h(inputs_vector(i));
-
-        input_views[0].as<float>()[i] += h;
-
-        neural_network->forward_propagate(input_views, forward_propagation);
-
-        calculate_error(batch, forward_propagation, back_propagation);
-        error_forward = back_propagation.error;
-
-        input_views[0].as<float>()[i] -= 2*h;
-
-        neural_network->forward_propagate(input_views, forward_propagation);
-
-        calculate_error(batch, forward_propagation, back_propagation);
-        error_backward = back_propagation.error;
-
-        input_views[0].as<float>()[i] += h;
-
-        numerical_inputs_gradients(i) = (error_forward - error_backward) / float(2 * h);
-    }
-
-    return numerical_inputs_gradients;
-}
-
-MatrixR Loss::calculate_inverse_hessian()
-{
-    MatrixR numerical_hessian = calculate_numerical_hessian();
-    const Index parameters_number = numerical_hessian.rows();
-
-    using MatrixType = Matrix<float, Dynamic, Dynamic, ColMajor>;
-    Map<MatrixType> hessian_map(numerical_hessian.data(), parameters_number, parameters_number);
-
-    FullPivLU<MatrixType> const hessian_decomposition(hessian_map);
-
-    if(!hessian_decomposition.isInvertible())
-    {
-        MatrixType hessian_damped = hessian_map + MatrixType::Identity(parameters_number, parameters_number) * 1e-4;
-
-        FullPivLU<MatrixType> const hessian_decomposition_damped(hessian_damped);
-
-        const MatrixType hessian_map_inverse = hessian_decomposition_damped.inverse();
-
-        MatrixR hessian_inverse(parameters_number, parameters_number);
-        Map<MatrixType>(hessian_inverse.data(), parameters_number, parameters_number) = hessian_map_inverse;
-
-        return hessian_inverse;
-    }
-
-    const MatrixType hessian_map_inverse = hessian_decomposition.inverse();
-    MatrixR hessian_inverse(parameters_number, parameters_number);
-    Map<MatrixType>(hessian_inverse.data(), parameters_number, parameters_number) = hessian_map_inverse;
-
-    return hessian_inverse;
-}
-
 float Loss::calculate_h(const float x)
 {
-    static const float sqrt_eta = float(1e-3);
+    static const float sqrt_eta = 1e-3f;
 
-    return sqrt_eta * (float(1) + abs(x));
+    return sqrt_eta * (1.0f + abs(x));
 }
 
 void Loss::to_JSON(JsonWriter& printer) const
@@ -534,7 +319,7 @@ void Loss::to_JSON(JsonWriter& printer) const
 void Loss::from_JSON(const JsonDocument& document)
 {
     const Json* root = document.first_child("Loss");
-    if(!root) throw runtime_error("Loss::from_JSON error: missing Loss element.");
+    if (!root) throw runtime_error("Loss::from_JSON error: missing Loss element.");
 
     set_error(read_json_string(root, "Method"));
 
@@ -551,14 +336,6 @@ void Loss::from_JSON(const JsonDocument& document)
 
     if (root->first_child("MinkowskiParameter"))
         minkowski_parameter = read_json_type(root, "MinkowskiParameter");
-}
-
-MatrixR Loss::calculate_numerical_hessian()
-{
-    // @todo Stub - not yet refactored
-    const VectorR gradient = calculate_numerical_gradient();
-    const Index parameters_number = gradient.size();
-    return MatrixR::Zero(parameters_number, parameters_number);
 }
 
 }

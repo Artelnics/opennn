@@ -78,7 +78,7 @@ protected:
     Index trials_number = 1;
 
     bool display = true;
-   
+
     // Stopping criteria
 
     float validation_error_goal;

@@ -58,13 +58,13 @@ void Pooling3d::forward_propagate(ForwardPropagation& forward_propagation, size_
 {
     auto& forward_views = forward_propagation.views[layer];
 
-    if(pooling_method == PoolingMethod::MaxPooling)
-        max_pooling_3d_forward(forward_views[Input][0], 
-                               forward_views[Output][0], 
-                               forward_views[MaximalIndices][0], 
+    if (pooling_method == PoolingMethod::MaxPooling)
+        max_pooling_3d_forward(forward_views[Input][0],
+                               forward_views[Output][0],
+                               forward_views[MaximalIndices][0],
                                is_training);
     else
-        average_pooling_3d_forward(forward_views[Input][0], 
+        average_pooling_3d_forward(forward_views[Input][0],
                                    forward_views[Output][0]);
 }
 
@@ -75,7 +75,7 @@ void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
     auto& forward_views = forward_propagation.views[layer];
     auto& delta_views = back_propagation.delta_views[layer];
 
-    if(pooling_method == PoolingMethod::MaxPooling)
+    if (pooling_method == PoolingMethod::MaxPooling)
         max_pooling_3d_backward(forward_views[MaximalIndices][0],
                                 delta_views[OutputDelta][0],
                                 delta_views[InputDelta][0]);

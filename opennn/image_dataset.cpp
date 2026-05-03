@@ -56,7 +56,7 @@ void ImageDataset::set_data_random()
     Index remainder = samples_number % targets_number;
 
     VectorI images_number(targets_number);
-    for(Index i = 0; i < targets_number; ++i)
+    for (Index i = 0; i < targets_number; ++i)
     {
         images_number[i] = images_per_category + (remainder > 0 ? 1 : 0);
         if (remainder > 0) remainder--;
@@ -64,11 +64,11 @@ void ImageDataset::set_data_random()
 
     Index current_sample = 0;
 
-    for(Index k = 0; k < targets_number; ++k)
+    for (Index k = 0; k < targets_number; ++k)
     {
-        for(Index i = 0; i < images_number[k]; ++i)
+        for (Index i = 0; i < images_number[k]; ++i)
         {
-            for(Index j = 0; j < inputs_number; ++j)
+            for (Index j = 0; j < inputs_number; ++j)
                 data(current_sample, j) = random_integer(0, 255);
 
             data(current_sample, k + inputs_number) = 1;
@@ -116,7 +116,7 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
 
 void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
 {
-    if(!augmentation.enabled) return;
+    if (!augmentation.enabled) return;
 
     const Index height = input_shape[0];
     const Index width = input_shape[1];
@@ -128,23 +128,23 @@ void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
                       width,
                       channels);
 
-    for(Index i = 0; i < batch_size; ++i)
+    for (Index i = 0; i < batch_size; ++i)
     {
         Tensor3 image = inputs.chip(i, 0);
 
-        if(augmentation.reflection_axis_x)
+        if (augmentation.reflection_axis_x)
             reflect_image_horizontal(image);
 
-        if(augmentation.reflection_axis_y)
+        if (augmentation.reflection_axis_y)
             reflect_image_vertical(image);
 
-        if(augmentation.rotation_minimum != 0 && augmentation.rotation_maximum != 0)
+        if (augmentation.rotation_minimum != 0 && augmentation.rotation_maximum != 0)
             rotate_image(image, image, random_uniform(augmentation.rotation_minimum, augmentation.rotation_maximum));
 
-        if(augmentation.horizontal_translation_minimum != 0 && augmentation.horizontal_translation_maximum != 0)
+        if (augmentation.horizontal_translation_minimum != 0 && augmentation.horizontal_translation_maximum != 0)
             translate_image_x(image, image, Index(random_uniform(augmentation.horizontal_translation_minimum, augmentation.horizontal_translation_maximum)));
 
-        if(augmentation.vertical_translation_minimum != 0 && augmentation.vertical_translation_maximum != 0)
+        if (augmentation.vertical_translation_minimum != 0 && augmentation.vertical_translation_maximum != 0)
             translate_image_y(image, image, Index(random_uniform(augmentation.vertical_translation_minimum, augmentation.vertical_translation_maximum)));
 
         inputs.chip(i, 0) = image;
@@ -187,41 +187,41 @@ vector<Descriptives> ImageDataset::scale_features(const string&)
     const Index input_features_number = get_features_number("Input");
 
     #pragma omp parallel for
-    for(Index i = 0; i < samples_number; ++i)
-        for(Index j = 0; j < input_features_number; ++j)
-            data(i, j) /= float(255);
+    for (Index i = 0; i < samples_number; ++i)
+        for (Index j = 0; j < input_features_number; ++j)
+            data(i, j) /= 255.0f;
 
     return {};
 }
 
 void ImageDataset::unscale_features(const string&)
 {
-    data.leftCols(get_features_number("Input")) *= float(255);
+    data.leftCols(get_features_number("Input")) *= 255.0f;
 }
 
 void ImageDataset::read_bmp(const Shape& new_input_shape)
 {
     const chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
-    
+
     vector<filesystem::path> directory_path;
 
-    for(const filesystem::directory_entry& current_directory : filesystem::directory_iterator(data_path))
-        if(current_directory.is_directory())
+    for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(data_path))
+        if (current_directory.is_directory())
             directory_path.emplace_back(current_directory.path());
 
     const Index folders_number = directory_path.size();
 
     VectorI images_number = VectorI::Zero(folders_number + 1);
-    
+
     Index samples_number = 0;
 
     vector<string> image_path;
 
-    for(Index i = 0; i < folders_number; ++i)
+    for (Index i = 0; i < folders_number; ++i)
     {
-        for(const filesystem::directory_entry& current_directory : filesystem::directory_iterator(directory_path[i]))
+        for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(directory_path[i]))
         {
-            if(current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
+            if (current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
             {
                 image_path.emplace_back(current_directory.path().string());
                 ++samples_number;
@@ -251,17 +251,17 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     const Index pixels_number = height * width * channels;
 
-    const Index targets_number = (folders_number == 2) 
-        ? folders_number - 1 
+    const Index targets_number = (folders_number == 2)
+        ? folders_number - 1
         : folders_number;
 
     set(samples_number, { height, width, channels }, { targets_number });
 
     vector<string> categories(folders_number);
-    for(Index i = 0; i < folders_number; ++i)
+    for (Index i = 0; i < folders_number; ++i)
         categories[i] = directory_path[i].filename().string();
 
-    if(targets_number == 1)
+    if (targets_number == 1)
     {
         variables[pixels_number].name = categories[0] + "_" + categories[1];
         variables[pixels_number].role = VariableRole::Target;
@@ -285,7 +285,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     string omp_error;
 
     #pragma omp parallel for
-    for(Index i = 0; i < samples_number; ++i)
+    for (Index i = 0; i < samples_number; ++i)
     {
         Tensor3 image = load_image(image_path[i]);
 
@@ -305,7 +305,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
         copy(image.data(), image.data() + pixels_number, &data(i, 0));
 
-        for(Index k = 0; k < folders_number; ++k)
+        for (Index k = 0; k < folders_number; ++k)
         {
             if (i >= images_number(k) && i < images_number(k + 1))
             {
@@ -324,7 +324,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
             display_progress_bar(progress_counter, samples_number);
     }
 
-    if(!omp_error.empty())
+    if (!omp_error.empty())
         throw runtime_error(omp_error);
 
     if (display)

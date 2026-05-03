@@ -29,13 +29,11 @@ struct BackPropagation
     virtual ~BackPropagation()
     {
 #ifdef OPENNN_WITH_CUDA
-        if(errors_device) { cudaFree(errors_device); errors_device = nullptr; }
+        if (errors_device) { cudaFree(errors_device); errors_device = nullptr; }
 #endif
     }
 
     void set(const Index = 0, Loss* = nullptr);
-
-    const NeuralNetwork* get_neural_network() const;
 
     void accumulate_output_deltas(size_t layer_index);
 
@@ -51,8 +49,6 @@ struct BackPropagation
     vector<Shape> per_layer_output_delta_shapes;
     vector<vector<BackwardEdge>> backward_edges;
 
-    vector<vector<TensorView>> get_layer_gradients() const;
-
     TensorView get_output_deltas() const;
 
     void print() const;
@@ -61,13 +57,13 @@ struct BackPropagation
 
     Loss* loss = nullptr;
 
-    float error = float(0);
+    float error = 0.0f;
     Index active_tokens_count = 0;
     Buffer output_deltas;
     Shape output_delta_dimensions;
 
     Tensor0 accuracy;
-    float loss_value = float(0);
+    float loss_value = 0.0f;
 
 #ifdef OPENNN_WITH_CUDA
 

@@ -78,7 +78,7 @@ void Scaling::set(const Shape& new_input_shape)
 
     label = "scaling_layer";
 
-    set_min_max_range(float(-1), float(1));
+    set_min_max_range(-1.0f, 1.0f);
 }
 
 float* Scaling::link_states(float* pointer)
@@ -88,13 +88,13 @@ float* Scaling::link_states(float* pointer)
     if (ssize(states) < 5) return next;
 
     if (states[Means].data)
-        VectorMap(states[Means].as<float>(), states[Means].size()).setZero();
+        states[Means].as_vector().setZero();
     if (states[StandardDeviations].data)
-        VectorMap(states[StandardDeviations].as<float>(), states[StandardDeviations].size()).setOnes();
+        states[StandardDeviations].as_vector().setOnes();
     if (states[Minimums].data)
-        VectorMap(states[Minimums].as<float>(), states[Minimums].size()).setConstant(float(-1));
+        states[Minimums].as_vector().setConstant(-1.0f);
     if (states[Maximums].data)
-        VectorMap(states[Maximums].as<float>(), states[Maximums].size()).setOnes();
+        states[Maximums].as_vector().setOnes();
     if (states[Scalers].data && ssize(scalers) == states[Scalers].size())
         for (size_t i = 0; i < scalers.size(); ++i)
             states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
@@ -254,19 +254,19 @@ void Scaling::load_state_from_JSON(const JsonDocument& document)
     VectorR tmp;
     string_to_vector(read_json_string(scaling_layer_element, "Means"), tmp);
     if (tmp.size() == states[Means].size())
-        VectorMap(states[Means].as<float>(), states[Means].size()) = tmp;
+        states[Means].as_vector() = tmp;
 
     string_to_vector(read_json_string(scaling_layer_element, "StandardDeviations"), tmp);
     if (tmp.size() == states[StandardDeviations].size())
-        VectorMap(states[StandardDeviations].as<float>(), states[StandardDeviations].size()) = tmp;
+        states[StandardDeviations].as_vector() = tmp;
 
     string_to_vector(read_json_string(scaling_layer_element, "Minimums"), tmp);
     if (tmp.size() == states[Minimums].size())
-        VectorMap(states[Minimums].as<float>(), states[Minimums].size()) = tmp;
+        states[Minimums].as_vector() = tmp;
 
     string_to_vector(read_json_string(scaling_layer_element, "Maximums"), tmp);
     if (tmp.size() == states[Maximums].size())
-        VectorMap(states[Maximums].as<float>(), states[Maximums].size()) = tmp;
+        states[Maximums].as_vector() = tmp;
 }
 
 void Scaling::to_JSON(JsonWriter& printer) const

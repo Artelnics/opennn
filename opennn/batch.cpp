@@ -22,8 +22,8 @@ Batch::Batch(const Index new_samples_number, const Dataset* new_dataset)
 
 void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 {
-    if(!new_dataset)
-        throw runtime_error("Batch error: dataset is not set.");
+    if (!new_dataset)
+        throw runtime_error("dataset is not set.");
 
     samples_number = new_samples_number;
 
@@ -33,7 +33,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 
     const Shape& dataset_input_shape = dataset->get_shape("Input");
 
-    if(!dataset_input_shape.empty())
+    if (!dataset_input_shape.empty())
     {
         input_shape = Shape({samples_number}).append(dataset_input_shape);
 
@@ -49,16 +49,16 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
             num_input_features = dataset->get_features_number("Input");
             const Index input_size = samples_number * num_input_features;
 
-            if(input_size > inputs_host_allocated_size)
+            if (input_size > inputs_host_allocated_size)
             {
-                if(inputs_host) cudaFreeHost(inputs_host);
+                if (inputs_host) cudaFreeHost(inputs_host);
                 CHECK_CUDA(cudaMallocHost(&inputs_host, input_size * sizeof(float)));
                 inputs_host_allocated_size = input_size;
             }
 
-            if(bp16 && input_size > inputs_fp32_staging_size)
+            if (bp16 && input_size > inputs_fp32_staging_size)
             {
-                if(inputs_fp32_staging) cudaFree(inputs_fp32_staging);
+                if (inputs_fp32_staging) cudaFree(inputs_fp32_staging);
                 CHECK_CUDA(cudaMalloc(&inputs_fp32_staging, input_size * sizeof(float)));
                 inputs_fp32_staging_size = input_size;
             }
@@ -74,7 +74,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 
     const Shape& dataset_target_shape = dataset->get_shape("Target");
 
-    if(!dataset_target_shape.empty())
+    if (!dataset_target_shape.empty())
     {
         target_shape = Shape({samples_number}).append(dataset_target_shape);
 
@@ -86,9 +86,9 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
             num_target_features = dataset->get_features_number("Target");
             const Index target_size = samples_number * num_target_features;
 
-            if(target_size > targets_host_allocated_size)
+            if (target_size > targets_host_allocated_size)
             {
-                if(targets_host) cudaFreeHost(targets_host);
+                if (targets_host) cudaFreeHost(targets_host);
                 CHECK_CUDA(cudaMallocHost(&targets_host, target_size * sizeof(float)));
                 targets_host_allocated_size = target_size;
             }
@@ -104,7 +104,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 
     const Shape& dataset_decoder_shape = dataset->get_shape("Decoder");
 
-    if(!dataset_decoder_shape.empty())
+    if (!dataset_decoder_shape.empty())
     {
         decoder_shape = Shape({samples_number}).append(dataset_decoder_shape);
 
@@ -116,9 +116,9 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
             num_decoder_features = dataset->get_features_number("Decoder");
             const Index decoder_size = samples_number * num_decoder_features;
 
-            if(decoder_size > decoder_host_allocated_size)
+            if (decoder_size > decoder_host_allocated_size)
             {
-                if(decoder_host) cudaFreeHost(decoder_host);
+                if (decoder_host) cudaFreeHost(decoder_host);
                 CHECK_CUDA(cudaMallocHost(&decoder_host, decoder_size * sizeof(float)));
                 decoder_host_allocated_size = decoder_size;
             }
@@ -133,17 +133,17 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     input_views_host_cache.clear();
     input_views_host_cache.reserve(decoder_shape.empty() ? 1 : 2);
 
-    if(!decoder_shape.empty())
+    if (!decoder_shape.empty())
         input_views_host_cache.push_back(TensorView(const_cast<float*>(decoder.as<float>()), decoder_shape));
 
-    if(!input_shape.empty())
+    if (!input_shape.empty())
         input_views_host_cache.push_back(TensorView(const_cast<float*>(input.as<float>()), input_shape));
 
-    if(!target_shape.empty())
+    if (!target_shape.empty())
         target_view_host_cache = TensorView(const_cast<float*>(target.as<float>()), target_shape);
 
 #ifdef OPENNN_WITH_CUDA
-    if(!input_shape.empty() && input.as<float>())
+    if (!input_shape.empty() && input.as<float>())
     {
         const bool integer_inputs = (dynamic_cast<const LanguageDataset*>(dataset) != nullptr);
         const Type input_dtype = (Configuration::instance().is_bf16_training() && !integer_inputs)
@@ -151,7 +151,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
                                      : Type::FP32;
         TensorView in_view(input.as<float>(), input_shape, input_dtype);
 
-        if(!decoder_shape.empty() && decoder.as<float>())
+        if (!decoder_shape.empty() && decoder.as<float>())
         {
             // Decoder stays FP32: Embedding reads integer indices and produces BF16 itself.
             TensorView dec_view(decoder.as<float>(), decoder_shape, Type::FP32);
@@ -163,7 +163,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         }
     }
 
-    if(!target_shape.empty() && target.as<float>())
+    if (!target_shape.empty() && target.as<float>())
         target_view_cache = TensorView(target.as<float>(), target_shape, Type::FP32);
 #endif
 }
@@ -182,19 +182,19 @@ void Batch::fill(const vector<Index>& sample_indices,
 
     const bool parallelize = !is_gpu;
 
-    if(input_contiguous < 0 && !input_indices.empty())
+    if (input_contiguous < 0 && !input_indices.empty())
         input_contiguous = is_contiguous(input_indices) ? 1 : 0;
-    if(decoder_contiguous < 0 && !decoder_indices.empty())
+    if (decoder_contiguous < 0 && !decoder_indices.empty())
         decoder_contiguous = is_contiguous(decoder_indices) ? 1 : 0;
-    if(target_contiguous < 0 && !target_indices.empty())
+    if (target_contiguous < 0 && !target_indices.empty())
         target_contiguous = is_contiguous(target_indices) ? 1 : 0;
 
     dataset->fill_inputs(sample_indices, input_indices, input_dst, parallelize, input_contiguous);
 
-    if(augment)
+    if (augment)
         dataset->augment_inputs(input_dst, sample_indices.size());
 
-    if(!decoder_shape.empty())
+    if (!decoder_shape.empty())
         dataset->fill_decoder(sample_indices, decoder_indices, decoder_dst, parallelize, decoder_contiguous);
 
     dataset->fill_targets(sample_indices, target_indices, target_dst, parallelize, target_contiguous);
@@ -229,7 +229,7 @@ void Batch::print() const
 
     cout << "\n";
 
-    if(!decoder_shape.empty())
+    if (!decoder_shape.empty())
     {
         cout << "Decoder:" << "\n"
              << "Decoder shape:" << decoder_shape << "\n";
@@ -255,7 +255,7 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
     const Index input_size = current_batch_size * num_input_features;
     const Index target_size = current_batch_size * num_target_features;
 
-    if(inputs_fp32_staging != nullptr)
+    if (inputs_fp32_staging != nullptr)
     {
         CHECK_CUDA(cudaMemcpyAsync(inputs_fp32_staging, inputs_host,
                                    input_size * sizeof(float),
@@ -272,7 +272,7 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
                                    cudaMemcpyHostToDevice, stream));
     }
 
-    if(!decoder_shape.empty())
+    if (!decoder_shape.empty())
     {
         const Index decoder_size = current_batch_size * num_decoder_features;
         CHECK_CUDA(cudaMemcpyAsync(decoder.as<float>(), decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice, stream));

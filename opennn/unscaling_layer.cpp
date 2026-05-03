@@ -62,7 +62,7 @@ void Unscaling::set(const Index new_neurons_number, const string& new_label)
 
     label = new_label;
 
-    set_min_max_range(float(-1), float(1));
+    set_min_max_range(-1.0f, 1.0f);
 
     name = "Unscaling";
     layer_type = LayerType::Unscaling;
@@ -81,14 +81,14 @@ void Unscaling::set_output_shape(const Shape& /*new_output_shape*/)
 
 void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
-    if(ssize(states) < 5 || !states[Means].data)
+    if (ssize(states) < 5 || !states[Means].data)
         throw runtime_error("Unscaling::set_descriptives: layer not compiled yet.");
 
     const Index descriptives_count = new_descriptives.size();
-    if(descriptives_count != states[Means].size())
+    if (descriptives_count != states[Means].size())
         throw runtime_error("Unscaling::set_descriptives: size mismatch.");
 
-    for(Index i = 0; i < descriptives_count; ++i)
+    for (Index i = 0; i < descriptives_count; ++i)
     {
         states[Means].as<float>()[i]              = new_descriptives[i].mean;
         states[StandardDeviations].as<float>()[i] = new_descriptives[i].standard_deviation;
@@ -106,7 +106,7 @@ void Unscaling::set_min_max_range(const float min, const float max)
 void Unscaling::set_scalers(const vector<string>& new_scaler)
 {
     scalers.resize(new_scaler.size());
-    for(size_t i = 0; i < new_scaler.size(); ++i)
+    for (size_t i = 0; i < new_scaler.size(); ++i)
         scalers[i] = string_to_scaler_method(new_scaler[i]);
     flush_scalers_to_states();
 }
@@ -114,7 +114,7 @@ void Unscaling::set_scalers(const vector<string>& new_scaler)
 void Unscaling::set_scalers(const string& new_scalers)
 {
     const ScalerMethod method = string_to_scaler_method(new_scalers);
-    for(auto& scaler : scalers)
+    for (auto& scaler : scalers)
         scaler = method;
     flush_scalers_to_states();
 }
@@ -123,18 +123,18 @@ float* Unscaling::link_states(float* pointer)
 {
     float* next = Layer::link_states(pointer);
 
-    if(ssize(states) < 5) return next;
+    if (ssize(states) < 5) return next;
 
-    if(states[Means].data)
-        VectorMap(states[Means].as<float>(), states[Means].size()).setZero();
-    if(states[StandardDeviations].data)
-        VectorMap(states[StandardDeviations].as<float>(), states[StandardDeviations].size()).setOnes();
-    if(states[Minimums].data)
-        VectorMap(states[Minimums].as<float>(), states[Minimums].size()).setConstant(float(-1));
-    if(states[Maximums].data)
-        VectorMap(states[Maximums].as<float>(), states[Maximums].size()).setOnes();
-    if(states[Scalers].data && ssize(scalers) == states[Scalers].size())
-        for(size_t i = 0; i < scalers.size(); ++i)
+    if (states[Means].data)
+        states[Means].as_vector().setZero();
+    if (states[StandardDeviations].data)
+        states[StandardDeviations].as_vector().setOnes();
+    if (states[Minimums].data)
+        states[Minimums].as_vector().setConstant(-1.0f);
+    if (states[Maximums].data)
+        states[Maximums].as_vector().setOnes();
+    if (states[Scalers].data && ssize(scalers) == states[Scalers].size())
+        for (size_t i = 0; i < scalers.size(); ++i)
             states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
 
     return next;
@@ -142,9 +142,9 @@ float* Unscaling::link_states(float* pointer)
 
 void Unscaling::flush_scalers_to_states()
 {
-    if(ssize(states) <= Scalers || !states[Scalers].data) return;
-    if(ssize(scalers) != states[Scalers].size()) return;
-    for(size_t i = 0; i < scalers.size(); ++i)
+    if (ssize(states) <= Scalers || !states[Scalers].data) return;
+    if (ssize(scalers) != states[Scalers].size()) return;
+    for (size_t i = 0; i < scalers.size(); ++i)
         states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
 }
 
@@ -195,7 +195,7 @@ void Unscaling::from_JSON(const JsonDocument& document)
 
 void Unscaling::load_state_from_JSON(const JsonDocument& document)
 {
-    if(ssize(states) < 5 || !states[Means].data) return;
+    if (ssize(states) < 5 || !states[Means].data) return;
 
     const Json* root_element = get_json_root(document, "Unscaling");
 
@@ -237,10 +237,10 @@ void Unscaling::to_JSON(JsonWriter& printer) const
 
         ostringstream descriptives_stream;
         descriptives_stream.precision(10);
-        descriptives_stream << (mins ? mins[i] : float(-1)) << ' '
-                            << (maxs ? maxs[i] : float(1))  << ' '
-                            << (mns  ? mns[i]  : float(0))  << ' '
-                            << (sds  ? sds[i]  : float(1));
+        descriptives_stream << (mins ? mins[i] : -1.0f) << ' '
+                            << (maxs ? maxs[i] : 1.0f)  << ' '
+                            << (mns  ? mns[i]  : 0.0f)  << ' '
+                            << (sds  ? sds[i]  : 1.0f);
 
         add_json_field(printer, "Descriptives", descriptives_stream.str());
         add_json_field(printer, "Scaler", scaler_method_to_string(scalers[i]));

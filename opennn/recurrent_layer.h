@@ -71,6 +71,8 @@ private:
     TensorView input_weights;
     TensorView recurrent_weights;
 
+    Tensor2 empty_2;  // sentinel passed to calculate_activations<2>(...) when no derivative output is wanted
+
     string activation_function = "Tanh";
 };
 

@@ -56,6 +56,7 @@ public:
     // Object accessors (for objects only).
     bool         has(const std::string& key) const;
     const Json*  find(const std::string& key) const;
+    const Json*  first_child(const std::string& key) const { return find(key); }
     const Json&  at(const std::string& key) const;
     Json&        operator[](const std::string& key);
 
@@ -86,6 +87,10 @@ public:
 
     // Returns pointer to a top-level field or nullptr.
     const Json* first_child(const std::string& name) const;
+
+    // Zero-arg form: returns the root itself (used when callers wrap a single
+    // object as a document and want a pointer-form accessor for read_json_*).
+    const Json* first_child() const { return &root; }
 
     // Build a fresh document whose root is an object {tag: value}.
     static JsonDocument wrap(const std::string& tag, Json value);
@@ -151,13 +156,5 @@ void for_json_items(const Json* parent, const char* tag, long count, Func func)
 
 JsonDocument load_json_file(const std::filesystem::path& file_name);
 const Json*  get_json_root (const JsonDocument& document, const std::string& tag);
-
-template<typename T>
-void print_json(const T& object)
-{
-    JsonWriter writer;
-    object.to_JSON(writer);
-    std::cout << writer.c_str() << std::endl;
-}
 
 }

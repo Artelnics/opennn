@@ -1,13 +1,10 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   R E S P O N S E   O P T I M I Z A T I O N   C L A S S   H E A D E R   
+//   R E S P O N S E   O P T I M I Z A T I O N   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
-
-#ifndef RESPONSEOPTIMIZATION_H
-#define RESPONSEOPTIMIZATION_H
 
 #pragma once
 
@@ -132,14 +129,13 @@ private:
 
     Index min_iterations = 4;
 
-    float zoom_factor = float(0.45);
+    float zoom_factor = 0.45f;
 
-    float relative_tolerance = float(0.001);
+    float relative_tolerance = 0.001f;
 
 };
 
 }
-#endif
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

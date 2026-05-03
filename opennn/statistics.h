@@ -15,11 +15,11 @@ namespace opennn
 
 struct Descriptives
 {
-    Descriptives(const float = float(NAN), float = float(NAN), float = float(NAN), float = float(NAN));
+    Descriptives(const float = NAN, float = NAN, float = NAN, float = NAN);
 
     VectorR to_tensor() const;
 
-    void set(const float = float(NAN), float = float(NAN), float = float(NAN), float = float(NAN));
+    void set(const float = NAN, float = NAN, float = NAN, float = NAN);
 
     void save(const filesystem::path&) const;
 
@@ -27,39 +27,39 @@ struct Descriptives
 
     string name = "Descriptives";
 
-    float minimum = float(-1.0);
+    float minimum = -1.0f;
 
-    float maximum = float(1);
+    float maximum = 1.0f;
 
-    float mean = float(0);
+    float mean = 0.0f;
 
-    float standard_deviation = float(1);
+    float standard_deviation = 1.0f;
 
 };
 
 struct BoxPlot
 {
-    BoxPlot(const float = float(NAN),
-            float = float(NAN),
-            float = float(NAN),
-            float = float(NAN),
-            float = float(NAN));
+    BoxPlot(const float = NAN,
+            float = NAN,
+            float = NAN,
+            float = NAN,
+            float = NAN);
 
-    void set(const float = float(NAN),
-             float = float(NAN),
-             float = float(NAN),
-             float = float(NAN),
-             float = float(NAN));
+    void set(const float = NAN,
+             float = NAN,
+             float = NAN,
+             float = NAN,
+             float = NAN);
 
-    float minimum = float(NAN);
+    float minimum = NAN;
 
-    float first_quartile = float(NAN);
+    float first_quartile = NAN;
 
-    float median = float(NAN);
+    float median = NAN;
 
-    float third_quartile = float(NAN);
+    float third_quartile = NAN;
 
-    float maximum = float(NAN);
+    float maximum = NAN;
 };
 
 struct Histogram
@@ -158,7 +158,7 @@ vector<Descriptives> descriptives(const MatrixR&, const vector<Index>&, const ve
 
 // Histograms
 Histogram histogram(const VectorR&, Index  = 10);
-Histogram histogram_centered(const VectorR&, float = float(0), Index  = 10);
+Histogram histogram_centered(const VectorR&, float = 0.0f, Index  = 10);
 Histogram histogram(const VectorB&);
 Histogram histogram(const VectorI&, Index  = 10);
 vector<Histogram> histograms(const MatrixR&, Index = 10);
@@ -225,7 +225,7 @@ template <typename T>
 inline bool is_binary(const T& tensor)
 {
     return all_of(tensor.data(), tensor.data() + tensor.size(),
-                  [](float value) { return value == float(0) || value == float(1) || isnan(value); });
+                  [](float value) { return value == 0.0f || value == 1.0f || isnan(value); });
 }
 
 MatrixR append_rows(const MatrixR&, const MatrixR&);
@@ -266,7 +266,7 @@ inline vector<Index> get_true_indices(const VectorB& flags)
     vector<Index> indices;
     indices.reserve(flags.size());
 
-    for(Index i = 0; i < flags.size(); ++i)
+    for (Index i = 0; i < flags.size(); ++i)
         if (flags(i))
             indices.push_back(i);
 

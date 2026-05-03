@@ -18,12 +18,12 @@ struct AugmentationSettings
     bool enabled = false;
     bool reflection_axis_x = false;
     bool reflection_axis_y = false;
-    float rotation_minimum = float(0);
-    float rotation_maximum = float(0);
-    float horizontal_translation_minimum = float(0);
-    float horizontal_translation_maximum = float(0);
-    float vertical_translation_minimum = float(0);
-    float vertical_translation_maximum = float(0);
+    float rotation_minimum = 0.0f;
+    float rotation_maximum = 0.0f;
+    float horizontal_translation_minimum = 0.0f;
+    float horizontal_translation_maximum = 0.0f;
+    float vertical_translation_minimum = 0.0f;
+    float vertical_translation_maximum = 0.0f;
 };
 
 class ImageDataset : public Dataset

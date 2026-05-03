@@ -52,7 +52,7 @@ public:
 
     static Regularization string_to_regularization(const string& name)
     {
-        if(name == "NoRegularization") return Regularization::NoRegularization;
+        if (name == "NoRegularization") return Regularization::NoRegularization;
         return regularization_map().from_string(name);
     }
 
@@ -80,9 +80,6 @@ public:
         return dataset;
     }
 
-    const string& get_regularization_method() const { return regularization_to_string(regularization_method); }
-    Regularization get_regularization_type() const { return regularization_method; }
-
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
     void set_neural_network(NeuralNetwork* new_neural_network) { neural_network = new_neural_network; }
@@ -94,8 +91,6 @@ public:
     void set_regularization_weight(const float new_regularization_weight) { regularization_weight = new_regularization_weight; }
 
     void set_normalization_coefficient();
-
-    virtual float get_Minkowski_parameter() const { return minkowski_parameter; }
 
     // Back propagation
 
@@ -127,32 +122,24 @@ public:
 
     const string& get_name() const { return name; }
 
-    // Numerical differentiation
-
+    // Used by Levenberg–Marquardt for numerical jacobian/hessian. Other
+    // numerical-differentiation helpers (calculate_numerical_gradient et al.)
+    // live in tests/numerical_derivatives.{h,cpp} as free functions.
     static float calculate_h(const float);
 
-    float calculate_numerical_error() const;
-
-    VectorR calculate_gradient();
-
-    VectorR calculate_numerical_gradient();
-    VectorR calculate_numerical_input_deltas();
-    MatrixR calculate_numerical_hessian();
-    MatrixR calculate_inverse_hessian();
-
-    void print(){}
+    void print() const {}
 
 private:
 
     void check_neural_network() const
     {
-        if(!neural_network)
+        if (!neural_network)
             throw runtime_error("Loss error: neural network is not set.");
     }
 
     void check_dataset() const
     {
-        if(!dataset)
+        if (!dataset)
             throw runtime_error("Loss error: dataset is not set.");
     }
 

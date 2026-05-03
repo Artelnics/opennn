@@ -41,8 +41,6 @@ template void bounding_cuda<float,         __nv_bfloat16>(const Index, const int
 template void bounding_cuda<__nv_bfloat16, float>        (const Index, const int, const __nv_bfloat16*, const float*, const float*, float*);
 template void bounding_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, __nv_bfloat16*);
 
-static constexpr float SCALER_EPSILON = 1e-7f;
-
 // Per-feature input scaling. Method per feature is encoded in `scalers` (cast from
 // ScalerMethod enum stored as float): MinMax, MeanStd, StdDev, Logarithm, ImageMinMax.
 // Input and output dtypes are independent: the first network input often arrives
@@ -65,17 +63,17 @@ __global__ void scale_kernel(const int n, const int features,
         const float x = static_cast<float>(input[i]);
         float y = x;
 
-        switch(code)
+        switch (code)
         {
         case 1: // MinimumMaximum
-            y = (x - minimums[f]) / ((maximums[f] - minimums[f]) + SCALER_EPSILON)
+            y = (x - minimums[f]) / ((maximums[f] - minimums[f]) + FLT_EPSILON)
                 * (max_range - min_range) + min_range;
             break;
         case 2: // MeanStandardDeviation
-            y = (x - means[f]) / (stds[f] + SCALER_EPSILON);
+            y = (x - means[f]) / (stds[f] + FLT_EPSILON);
             break;
         case 3: // StandardDeviation
-            y = x / (stds[f] + SCALER_EPSILON);
+            y = x / (stds[f] + FLT_EPSILON);
             break;
         case 4: // Logarithm
             y = logf(x);
@@ -135,7 +133,7 @@ __global__ void unscale_kernel(const int n, const int features,
         const float x = static_cast<float>(input[i]);
         float y = x;
 
-        switch(code)
+        switch (code)
         {
         case 1: // MinimumMaximum
             y = (x - min_range) / (max_range - min_range)
@@ -455,7 +453,7 @@ __global__ void fused_masks_kernel(const int n, T* __restrict__ attention_weight
         const int sq = (i / source_sequence_length) % query_sequence_length;
         const int b  = i / (source_sequence_length * query_sequence_length * heads_number);
 
-        if((use_causal_mask && sk > sq) || static_cast<float>(padding_mask[b * source_sequence_length + sk]) > 0.5f)
+        if ((use_causal_mask && sk > sq) || static_cast<float>(padding_mask[b * source_sequence_length + sk]) > 0.5f)
             attention_weights[i] = static_cast<T>(-1e9f);
     }
 }
@@ -467,12 +465,12 @@ void attention_masks_cuda(const int batch_size, const int heads_number,
                           T* attention_weights, T* padding_mask, const bool use_causal_mask)
 {
     const int num_tokens = batch_size * source_sequence_length;
-    if(num_tokens > 0)
+    if (num_tokens > 0)
         padding_mask_kernel<T><<<grid_size_for(num_tokens), block_size>>>(
             num_tokens, source_input, padding_mask, embedding_dimension);
 
     const int n = batch_size * heads_number * query_sequence_length * source_sequence_length;
-    if(n > 0)
+    if (n > 0)
         fused_masks_kernel<T><<<grid_size_for(n), block_size>>>(
             n, attention_weights, padding_mask, heads_number,
             query_sequence_length, source_sequence_length, use_causal_mask);

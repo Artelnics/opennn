@@ -36,7 +36,7 @@ public:
     void from_JSON(const JsonDocument&) override;
 
     void to_JSON(JsonWriter&) const override;
-    
+
 private:
 
     Index minimum_inputs_number = 1;

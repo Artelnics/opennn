@@ -17,6 +17,12 @@ namespace opennn
 class Json;
 class JsonWriter;
 
+#ifdef OPENNN_WITH_CUDA
+// Forward decl for the cached cuBLASLt plan pointer in Combination. Full type
+// in cuda_gemm.h.
+struct LtMatmulPlan;
+#endif
+
 struct Operator
 {
     virtual ~Operator() = default;
@@ -68,7 +74,7 @@ private:
 
 struct Activation : Operator
 {
-    enum class Function { Identity, Sigmoid, Tanh, ReLU, SELU, Softmax };
+    enum class Function { Identity, Sigmoid, Tanh, ReLU, Softmax };
 
     static const EnumMap<Function>& map();
     static Function from_string(const string& name);
@@ -91,6 +97,10 @@ struct Activation : Operator
     void destroy_cuda() override;
 
     ~Activation() override { destroy_cuda(); }
+
+    Activation() = default;
+    Activation(const Activation&) = delete;
+    Activation& operator=(const Activation&) = delete;
 
 private:
     void apply_cpu(TensorView& output);
@@ -133,6 +143,20 @@ private:
     void apply_delta_gpu(const TensorView& output_delta, const TensorView& input,
                          TensorView& input_delta, TensorView& weight_gradient, TensorView& bias_gradient,
                          bool accumulate_input_delta) const;
+
+#ifdef OPENNN_WITH_CUDA
+    // 1-element plan cache per direction. Skips the global lt_gemm_plans_
+    // hash lookup in the steady state (constant batch + epilogue).
+    // input_features / output_features / weight_type are members; only the
+    // batch-dependent and direction-dependent bits need validating.
+    mutable const LtMatmulPlan* fwd_plan_ = nullptr;
+    mutable int                 fwd_total_rows_ = -1;
+    mutable cublasLtEpilogue_t  fwd_epilogue_ = CUBLASLT_EPILOGUE_DEFAULT;
+
+    mutable const LtMatmulPlan* bwd_plan_ = nullptr;
+    mutable int                 bwd_total_rows_ = -1;
+    mutable int                 bwd_io_dtype_ = -1;
+#endif
 };
 
 struct BatchNorm : Operator
@@ -247,12 +271,16 @@ struct Convolution : Operator
     vector<pair<Shape, Type>> parameter_specs() const override;
     void link_parameters(const vector<TensorView>& views) override;
 
-    void init_cuda(Index batch_size, bool prefer_relu_algo);
+    void init_cuda(Index batch_size);
     void destroy_cuda() override;
 
     ~Convolution() override { destroy_cuda(); }
 
-    void apply(const TensorView& input, TensorView& output);
+    Convolution() = default;
+    Convolution(const Convolution&) = delete;
+    Convolution& operator=(const Convolution&) = delete;
+
+    void apply(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation = nullptr);
     void apply_delta(const TensorView& input,
                      const TensorView& output_delta,
                      TensorView& weight_gradient,
@@ -261,7 +289,7 @@ struct Convolution : Operator
 
 private:
     void apply_cpu(const TensorView& input, TensorView& output);
-    void apply_gpu(const TensorView& input, TensorView& output);
+    void apply_gpu(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation);
 
     void apply_delta_cpu(const TensorView& input, const TensorView& output_delta,
                          TensorView& weight_gradient, TensorView& bias_gradient,
@@ -317,6 +345,153 @@ private:
                          TensorView& input_delta, Index batch_size) const;
 };
 
+struct MultiHeadProjection : Operator
+{
+    Combination combination;
+    Index input_features = 0;
+    Index heads_number = 0;
+    Index head_dimension = 0;
+    Type activation_dtype = Type::FP32;
+
+    void set(Index input_features, Index heads_number, Index head_dimension, Type activation_dtype);
+
+    vector<pair<Shape, Type>> parameter_specs() const override { return combination.parameter_specs(); }
+    void link_parameters(const vector<TensorView>& views) override { combination.link_parameters(views); }
+
+    // input:       {batch, seq_len, input_features}
+    // head_output: {batch, heads_number, seq_len, head_dimension}
+    // scratch:     batch * seq_len * input_features floats (caller-owned)
+    void apply(const TensorView& input, TensorView& head_output, float* scratch);
+
+    void apply_delta(const TensorView& head_grad,
+                     const TensorView& input,
+                     TensorView& input_grad,
+                     TensorView& weight_grad,
+                     TensorView& bias_grad,
+                     bool accumulate,
+                     float* scratch) const;
+};
+
+struct Attention : Operator
+{
+    Index heads_number = 0;
+    Index head_dimension = 0;
+    Index query_sequence_length = 0;
+    Index source_sequence_length = 0;
+    bool  use_causal_mask = false;
+    Type  activation_dtype = Type::FP32;
+
+    MatrixR causal_mask;
+
+    Dropout dropout;
+
+    void set(Index heads_number, Index head_dimension,
+             Index query_sequence_length, Index source_sequence_length,
+             bool use_causal_mask, Type activation_dtype);
+
+    void set_dropout_rate(float rate) { dropout.set_rate(rate); }
+
+    // Per-call scratch the operator needs in forward storage.
+    // CPU: { attention_weights, attention_weights_dropped (if dropout active) }
+    // GPU (Flash Attention): { empty, empty } — SDPA doesn't materialize the
+    // weights; LSE stats live in state_specs() instead.
+    vector<pair<Shape, Type>> forward_scratch_specs(Index batch_size) const;
+
+    void apply(const TensorView& query,                    // {B, H, Q_seq, D}
+               const TensorView& key,                      // {B, H, S_seq, D}
+               const TensorView& value,                    // {B, H, S_seq, D}
+               const TensorView& source_input,             // {B, S_seq, embed} for padding mask
+               TensorView& attention_weights,              // {B, H, Q_seq, S_seq} on CPU; empty on GPU
+               TensorView& attention_weights_dropped,      // CPU-only, optional
+               TensorView& output,                         // {B, H, Q_seq, D}
+               float* mask_scratch,
+               bool is_training);
+
+    void apply_delta(const TensorView& query,
+                     const TensorView& key,
+                     const TensorView& value,
+                     const TensorView& attention_output,   // forward output O — only read by GPU SDPA
+                     const TensorView& attention_weights,
+                     const TensorView& attention_weights_dropped,
+                     const TensorView& output_grad,        // {B, H, Q_seq, D}
+                     TensorView& attention_weight_grad,    // CPU-only scratch; empty on GPU
+                     TensorView& query_grad,
+                     TensorView& key_grad,
+                     TensorView& value_grad) const;
+
+    void to_JSON(JsonWriter& w) const override;
+    void from_JSON(const Json* parent) override;
+
+    void destroy_cuda() override;
+
+    // All special members are out-of-line because sdpa_cache is unique_ptr<SDPACache>
+    // and SDPACache is forward-declared here. Synthesizing them at the call site
+    // would require the deleter (and thus the full SDPACache definition).
+    Attention();
+    ~Attention() override;
+    Attention(Attention&&) noexcept;
+    Attention& operator=(Attention&&) noexcept;
+    Attention(const Attention&) = delete;
+    Attention& operator=(const Attention&) = delete;
+
+    // Forward-declared here so the SDPA graph builder helper in operators.cpp
+    // (a free function) can reference its nested types. Definition is in the
+    // cpp — opaque to keep cudnn-frontend out of the public header.
+    struct SDPACache;
+
+private:
+    float scaling_factor() const;
+
+    void apply_cpu(const TensorView& query,
+                   const TensorView& key,
+                   const TensorView& value,
+                   const TensorView& source_input,
+                   TensorView& attention_weights,
+                   TensorView& attention_weights_dropped,
+                   TensorView& output,
+                   float* mask_scratch,
+                   bool is_training);
+
+    void apply_gpu(const TensorView& query,
+                   const TensorView& key,
+                   const TensorView& value,
+                   const TensorView& source_input,
+                   TensorView& attention_weights,
+                   TensorView& attention_weights_dropped,
+                   TensorView& output,
+                   float* mask_scratch,
+                   bool is_training);
+
+    // Same signature as apply_delta(); CPU path ignores attention_output.
+    void apply_delta_cpu(const TensorView& query,
+                         const TensorView& key,
+                         const TensorView& value,
+                         const TensorView& attention_output,
+                         const TensorView& attention_weights,
+                         const TensorView& attention_weights_dropped,
+                         const TensorView& output_grad,
+                         TensorView& attention_weight_grad,
+                         TensorView& query_grad,
+                         TensorView& key_grad,
+                         TensorView& value_grad) const;
+
+    void apply_delta_gpu(const TensorView& query,
+                         const TensorView& key,
+                         const TensorView& value,
+                         const TensorView& attention_output,
+                         const TensorView& attention_weights,
+                         const TensorView& attention_weights_dropped,
+                         const TensorView& output_grad,
+                         TensorView& attention_weight_grad,
+                         TensorView& query_grad,
+                         TensorView& key_grad,
+                         TensorView& value_grad) const;
+
+    // SDPA graph cache: keyed on shape/dtype/flags. Built lazily on first
+    // forward/backward call with a given key, reused on shape match.
+    mutable std::unique_ptr<SDPACache> sdpa_cache;
+};
+
 struct Pool : Operator
 {
     Index input_height = 0;
@@ -347,6 +522,10 @@ struct Pool : Operator
     void destroy_cuda() override;
 
     ~Pool() override { destroy_cuda(); }
+
+    Pool() = default;
+    Pool(const Pool&) = delete;
+    Pool& operator=(const Pool&) = delete;
 
     void apply(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training);
     void apply_delta(const TensorView& input,

@@ -82,7 +82,7 @@ inline const string& variable_role_to_string(VariableRole role)
 
 inline VariableRole string_to_variable_role(const string& name)
 {
-    if(name == "Id") return VariableRole::None;
+    if (name == "Id") return VariableRole::None;
     return variable_role_map().from_string(name);
 }
 

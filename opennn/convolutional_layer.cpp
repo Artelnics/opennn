@@ -100,27 +100,11 @@ void Convolutional::configure_operators()
         batch_norm.set(kernels_number, momentum);
 }
 
-float* Convolutional::link_parameters(float* pointer)
+vector<Operator*> Convolutional::get_operators()
 {
-    pointer = Layer::link_parameters(pointer);
-
-    if (parameters.size() > Weight)
-        convolution.link_parameters({parameters[Bias], parameters[Weight]});
-
-    if (batch_normalization && parameters.size() > Beta)
-        batch_norm.link_parameters({parameters[Gamma], parameters[Beta]});
-
-    return pointer;
-}
-
-float* Convolutional::link_states(float* pointer)
-{
-    pointer = Layer::link_states(pointer);
-
-    if (batch_normalization && states.size() > RunningVariance)
-        batch_norm.link_states({states[RunningMean], states[RunningVariance]});
-
-    return pointer;
+    vector<Operator*> ops = {&convolution};
+    if (batch_normalization) ops.push_back(&batch_norm);
+    return ops;
 }
 
 void Convolutional::set_input_shape(const Shape& new_input_shape)
@@ -138,7 +122,7 @@ void Convolutional::set_input_shape(const Shape& new_input_shape)
 void Convolutional::set_row_stride(const Index new_stride_row)
 {
     if (new_stride_row <= 0)
-        throw runtime_error("EXCEPTION: new_stride_row must be a positive number");
+        throw runtime_error("Row stride must be positive.");
 
     row_stride = new_stride_row;
 }
@@ -146,7 +130,7 @@ void Convolutional::set_row_stride(const Index new_stride_row)
 void Convolutional::set_column_stride(const Index new_stride_column)
 {
     if (new_stride_column <= 0)
-        throw runtime_error("EXCEPTION: new_stride_column must be a positive number");
+        throw runtime_error("Column stride must be positive.");
 
     column_stride = new_stride_column;
 }
@@ -188,13 +172,13 @@ void Convolutional::set_parameters_glorot()
     const Index fan_out = kernel_area * kernels_number;
     const float limit = sqrt(6.0f / static_cast<float>(fan_in + fan_out));
 
-    set_random_uniform(VectorMap(parameters[Weight].as<float>(), parameters[Weight].size()), -limit, limit);
+    set_random_uniform(parameters[Weight].as_vector(), -limit, limit);
     init_conv_norm_defaults();
 }
 
 void Convolutional::set_parameters_random()
 {
-    set_random_uniform(VectorMap(parameters[Weight].as<float>(), parameters[Weight].size()));
+    set_random_uniform(parameters[Weight].as_vector());
     init_conv_norm_defaults();
 }
 
@@ -202,8 +186,7 @@ void Convolutional::set_parameters_random()
 
 void Convolutional::init_cuda(Index batch_size)
 {
-    const bool prefer_relu = (activation.function == Activation::Function::ReLU);
-    convolution.init_cuda(batch_size, prefer_relu);
+    convolution.init_cuda(batch_size);
 }
 
 void Convolutional::destroy_cuda()
@@ -231,7 +214,7 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
     if (!is_gpu)
     {
-        if(use_padding)
+        if (use_padding)
             padding(input, padded_input);
         else
             copy(input, padded_input);
@@ -239,25 +222,34 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
     const TensorView& conv_input = is_gpu ? input : padded_input;
 
+    const bool fuse_activation_into_conv = is_gpu
+                                           && !batch_normalization
+                                           && activation.function == Activation::Function::ReLU;
+
     if (batch_normalization)
     {
         TensorView& combination_output = forward_views[ConvolutionView][0];
         convolution.apply(conv_input, combination_output);
 
-        if(is_training)
+        if (is_training)
             batch_norm.apply_training(combination_output,
                                       forward_views[BatchNormMean][0],
                                       forward_views[BatchNormInverseVariance][0],
                                       output);
         else
             batch_norm.apply_inference(combination_output, output);
+
+        activation.apply(output);
+    }
+    else if (fuse_activation_into_conv)
+    {
+        convolution.apply(conv_input, output, activation.descriptor);
     }
     else
     {
         convolution.apply(conv_input, output);
+        activation.apply(output);
     }
-
-    activation.apply(output);
 }
 
 void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
@@ -331,18 +323,18 @@ void Convolutional::from_JSON(const JsonDocument& document)
 
 void Convolutional::load_state_from_JSON(const JsonDocument& document)
 {
-    if(!batch_normalization) return;
+    if (!batch_normalization) return;
 
     const Json* convolutional_layer_element = get_json_root(document, "Convolutional");
 
     VectorR tmp;
     string_to_vector(read_json_string(convolutional_layer_element, "RunningMeans"), tmp);
-    if(tmp.size() == states[RunningMean].size() && states[RunningMean].data)
-        VectorMap(states[RunningMean].as<float>(), states[RunningMean].size()) = tmp;
+    if (tmp.size() == states[RunningMean].size() && states[RunningMean].data)
+        states[RunningMean].as_vector() = tmp;
 
     string_to_vector(read_json_string(convolutional_layer_element, "RunningVariances"), tmp);
-    if(tmp.size() == states[RunningVariance].size() && states[RunningVariance].data)
-        VectorMap(states[RunningVariance].as<float>(), states[RunningVariance].size()) = tmp;
+    if (tmp.size() == states[RunningVariance].size() && states[RunningVariance].data)
+        states[RunningVariance].as_vector() = tmp;
 }
 
 void Convolutional::to_JSON(JsonWriter& printer) const

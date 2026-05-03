@@ -7,9 +7,52 @@
 //   artelnics@artelnics.com
 
 #include "layer.h"
+#include "operators.h"
 
 namespace opennn
 {
+
+vector<pair<Shape, Type>> Layer::get_parameter_specs() const
+{
+    vector<pair<Shape, Type>> result;
+    auto* self = const_cast<Layer*>(this);
+    for (Operator* op : self->get_operators())
+    {
+        const auto specs = op->parameter_specs();
+        result.insert(result.end(), specs.begin(), specs.end());
+    }
+    return result;
+}
+
+vector<pair<Shape, Type>> Layer::get_state_specs() const
+{
+    vector<pair<Shape, Type>> result;
+    auto* self = const_cast<Layer*>(this);
+    for (Operator* op : self->get_operators())
+    {
+        const auto specs = op->state_specs();
+        result.insert(result.end(), specs.begin(), specs.end());
+    }
+    return result;
+}
+
+void Layer::distribute_to_operators(
+    vector<TensorView>& views,
+    void (Operator::*link)(const vector<TensorView>&),
+    vector<pair<Shape, Type>> (Operator::*specs)() const)
+{
+    size_t offset = 0;
+    for (Operator* op : get_operators())
+    {
+        const size_t count = (op->*specs)().size();
+        if (count == 0) continue;
+        if (offset + count > views.size()) break;
+        const vector<TensorView> slice(views.begin() + offset,
+                                       views.begin() + offset + count);
+        (op->*link)(slice);
+        offset += count;
+    }
+}
 
 void Layer::set_parameters_random()
 {
@@ -27,46 +70,23 @@ void Layer::set_parameters_glorot()
 
     const float limit = (inputs_number + outputs_number > 0)
         ? sqrt(6.0 / (inputs_number + outputs_number))
-        : float(0.05);
+        : 0.05f;
 
-    for(auto& param : parameters)
+    for (auto& param : parameters)
     {
-        if(param.empty()) continue;
-        set_random_uniform(VectorMap(param.as<float>(), param.size()), -limit, limit);
+        if (param.empty()) continue;
+        set_random_uniform(param.as_vector(), -limit, limit);
     }
 }
 
 Index Layer::get_parameters_number() const
 {
     Index total = 0;
-    for(const Shape& shape : get_parameter_shapes())
+    for (const Shape& shape : get_parameter_shapes())
         total += shape.size();
     return total;
 }
 
-vector<string> Layer::get_default_feature_names() const
-{
-    const Index inputs_number = get_inputs_number();
-
-    vector<string> input_names(inputs_number);
-
-    for(Index i = 0; i < inputs_number; ++i)
-        input_names[i] = "input_" + to_string(i);
-
-    return input_names;
-}
-
-vector<string> Layer::get_default_output_names() const
-{
-    const Index outputs_number = get_outputs_number();
-
-    vector<string> output_names(outputs_number);
-
-    for(Index i = 0; i < outputs_number; ++i)
-        output_names[i] = "output_" + to_string(i);
-
-    return output_names;
-}
 
 float* Layer::link_views(float* pointer,
                          const vector<Shape>& shapes,
@@ -92,29 +112,33 @@ float* Layer::link_views(float* pointer,
 
 float* Layer::link_parameters(float* pointer)
 {
-    return link_views(pointer, get_parameter_shapes(), parameters, "link_parameters");
+    pointer = link_views(pointer, get_parameter_shapes(), parameters, "link_parameters");
+    distribute_to_operators(parameters, &Operator::link_parameters, &Operator::parameter_specs);
+    return pointer;
 }
 
 float* Layer::link_states(float* pointer)
 {
-    return link_views(pointer, get_state_shapes(), states, "link_states");
+    pointer = link_views(pointer, get_state_shapes(), states, "link_states");
+    distribute_to_operators(states, &Operator::link_states, &Operator::state_specs);
+    return pointer;
 }
 
 void Layer::add_gradients(const vector<TensorView>& output_delta_views) const
 {
-    if(output_delta_views.size() <= 1) return;
+    if (output_delta_views.size() <= 1) return;
 
 #ifndef OPENNN_WITH_CUDA
     VectorMap output_deltas = output_delta_views[0].as_vector();
 
-    for(size_t i = 1; i < output_delta_views.size(); ++i)
+    for (size_t i = 1; i < output_delta_views.size(); ++i)
         output_deltas.noalias() += output_delta_views[i].as_vector();
 #else
     const TensorView& accumulator = output_delta_views[0];
 
-    for(size_t i = 1; i < output_delta_views.size(); ++i)
+    for (size_t i = 1; i < output_delta_views.size(); ++i)
     {
-        if(!output_delta_views[i].data) continue;
+        if (!output_delta_views[i].data) continue;
 
         // operator_sum_descriptor is configured with CUDNN_OP_TENSOR_ADD.
         CHECK_CUDNN(cudnnOpTensor(Backend::get_cudnn_handle(),
@@ -136,7 +160,7 @@ void Layer::set_output_shape(const Shape&)
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }
 
-} 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

@@ -52,8 +52,7 @@ public:
     void set_parameters_glorot() override;
     void set_parameters_random() override;
 
-    float* link_parameters(float* pointer) override;
-    float* link_states(float* pointer) override;
+    vector<Operator*> get_operators() override;
 
 #ifdef OPENNN_WITH_CUDA
     void init_cuda(Index /*batch_size*/) {}
@@ -72,7 +71,7 @@ private:
     Index output_features = 0;
 
     bool batch_normalization = false;
-    float momentum = float(0.1);
+    float momentum = 0.1f;
 
     Combination combination;
     Activation  activation;
@@ -84,12 +83,12 @@ private:
     enum Forward {Input, CombinationView, BatchNormMean, BatchNormInverseVariance, ActivationView, Output};
     enum Backward {OutputDelta, InputDelta};
 
-    Index get_input_features() const { return input_shape.empty() ? 0 : input_shape.back(); }
-
-    vector<pair<Shape, Type>> get_parameter_specs() const override;
-    vector<pair<Shape, Type>> get_state_specs() const override;
+    // get_parameter_specs() and get_state_specs() are inherited from Layer and
+    // auto-derived from get_operators().
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
     vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
+
+    Index get_input_features() const { return input_shape.empty() ? 0 : input_shape.back(); }
 
     void init_dense_norm_defaults();
     void configure_operators();

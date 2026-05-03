@@ -136,7 +136,7 @@ template <typename T>
 ostream& operator<<(ostream& os, const vector<T>& vec)
 {
     os << "[ ";
-    for(size_t i = 0; i < vec.size(); ++i)
+    for (size_t i = 0; i < vec.size(); ++i)
     {
         os << vec[i];
         if (i + 1 < vec.size()) os << "; ";
@@ -160,7 +160,6 @@ using VectorMap = Map<VectorR, AlignedMax>;
 using MatrixMap = Map<MatrixR, Layout | AlignedMax>;
 
 using Tensor0 = Tensor<float, 0, Layout | AlignedMax>;
-using Tensor1 = Tensor<float, 1, Layout | AlignedMax>;
 using Tensor2 = Tensor<float, 2, Layout | AlignedMax>;
 using Tensor3 = Tensor<float, 3, Layout | AlignedMax>;
 using Tensor4 = Tensor<float, 4, Layout | AlignedMax>;
@@ -168,7 +167,6 @@ using Tensor4 = Tensor<float, 4, Layout | AlignedMax>;
 template <int Rank>
 using TensorR = Tensor<float, Rank, Layout | AlignedMax>;
 
-using TensorMap1 = TensorMap<Tensor<float, 1, Layout | AlignedMax>, AlignedMax>;
 using TensorMap2 = TensorMap<Tensor<float, 2, Layout | AlignedMax>, AlignedMax>;
 using TensorMap3 = TensorMap<Tensor<float, 3, Layout | AlignedMax>, AlignedMax>;
 using TensorMap4 = TensorMap<Tensor<float, 4, Layout | AlignedMax>, AlignedMax>;
