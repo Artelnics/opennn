@@ -43,8 +43,7 @@ void bounding(const TensorView& input,
 {
     const Index features = lower_bounds.size();
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
+    IF_GPU({
         visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
             using TIn  = typename decltype(in)::type;
             using TOut = typename decltype(out)::type;
@@ -55,8 +54,7 @@ void bounding(const TensorView& input,
                                      output.as<TOut>());
         });
         return;
-    }
-#endif
+    });
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap lower_bounds_vector = lower_bounds.as_vector();
@@ -79,8 +77,7 @@ void scale(const TensorView& input,
 {
     const Index features = scalers.size();
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
+    IF_GPU({
         visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
             using TIn  = typename decltype(in)::type;
             using TOut = typename decltype(out)::type;
@@ -95,8 +92,7 @@ void scale(const TensorView& input,
                                   output.as<TOut>());
         });
         return;
-    }
-#endif
+    });
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap minimums_vector = minimums.as_vector();
@@ -147,8 +143,7 @@ void unscale(const TensorView& input,
 {
     const Index features = scalers.size();
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
+    IF_GPU({
         visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
             using TIn  = typename decltype(in)::type;
             using TOut = typename decltype(out)::type;
@@ -163,8 +158,7 @@ void unscale(const TensorView& input,
                                     output.as<TOut>());
         });
         return;
-    }
-#endif
+    });
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap minimums_vector = minimums.as_vector();
@@ -226,16 +220,14 @@ void addition(const TensorView& input_1,
     if (input_1.size() != input_2.size() || input_1.size() != output.size())
         throw runtime_error("Tensor dimensions do not match.");
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
+    IF_GPU({
         CHECK_CUDNN(cudnnOpTensor(Backend::get_cudnn_handle(),
                                   Backend::get_operator_sum_descriptor(),
                                   &one, input_1.get_descriptor(), input_1.data,
                                   &one, input_2.get_descriptor(), input_2.data,
                                   &zero, output.get_descriptor(), output.data));
         return;
-    }
-#endif
+    });
 
     output.as_vector().noalias() = input_1.as_vector() + input_2.as_vector();
 }
@@ -247,9 +239,7 @@ void multiply(const TensorView& input_a, bool transpose_a,
 {
     const size_t rank = input_a.get_rank();
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu())
-    {
+    IF_GPU({
         const int rows_a = to_int(input_a.shape[rank - 2]);
         const int cols_a = to_int(input_a.shape[rank - 1]);
         const int rows_b = to_int(input_b.shape[rank - 2]);
@@ -284,8 +274,7 @@ void multiply(const TensorView& input_a, bool transpose_a,
                                       output.cuda_dtype(),
                                       alpha, beta);
         return;
-    }
-#endif
+    });
     const Index batch_count = input_a.size() / (input_a.shape[rank - 2] * input_a.shape[rank - 1]);
 
     #pragma omp parallel for
@@ -316,8 +305,7 @@ void softmax(TensorView& output)
 {
     if (output.empty()) return;
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
+    IF_GPU({
         CHECK_CUDNN(cudnnSoftmaxForward(Backend::get_cudnn_handle(),
                                         CUDNN_SOFTMAX_ACCURATE,
                                         CUDNN_SOFTMAX_MODE_CHANNEL,
@@ -326,8 +314,7 @@ void softmax(TensorView& output)
                                         &zero,
                                         output.get_descriptor(), output.data));
         return;
-    }
-#endif
+    });
 
     MatrixMap output_matrix = output.as_flat_matrix();
     const Index rows = output_matrix.rows();

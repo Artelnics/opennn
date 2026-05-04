@@ -13,6 +13,7 @@
 #include "loss.h"
 #include "profiler.h"
 #include "batch.h"
+#include "cuda_dispatch.h"
 #include "adaptive_moment_estimation.h"
 
 namespace opennn
@@ -272,9 +273,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const float bias_correction_1 = 1.0f - pow(beta_1, iteration);
     const float bias_correction_2 = 1.0f - pow(beta_2, iteration);
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu())
-    {
+    IF_GPU({
         PROFILE_SCOPE("optim:adam_update_cuda");
         const Index parameters_number = neural_network->get_parameters_size();
 
@@ -294,8 +293,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         neural_network->cast_parameters_to_bf16();
 
         return;
-    }
-#endif
+    });
 
     VectorMap parameters(neural_network->get_parameters_data(),
                          neural_network->get_parameters_size());

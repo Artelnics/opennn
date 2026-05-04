@@ -13,6 +13,7 @@
 #include "dense_layer.h"
 #include "scaling_layer.h"
 #include "flatten_layer.h"
+#include "cuda_dispatch.h"
 #include "convolutional_layer.h"
 #include "image_utilities.h"
 #include "addition_layer.h"
@@ -444,10 +445,7 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     const Index batch_size = input_views[0].shape[0];
     ForwardPropagation forward_propagation(batch_size, this);
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu())
-        return calculate_outputs_device(input_views, forward_propagation);
-#endif
+    IF_GPU({ return calculate_outputs_device(input_views, forward_propagation); });
 
     forward_propagate(input_views, forward_propagation, false);
 
@@ -1105,18 +1103,10 @@ void NeuralNetwork::link_parameters()
 
             if (i < param_views.size())
             {
-                if (slot_dtype == Type::BF16 && bf16_ptr != nullptr)
-                {
-                    param_views[i].data = bf16_ptr;
-                    param_views[i].type = Type::BF16;
-                    param_views[i].shape = shapes[i];
-                }
-                else
-                {
-                    param_views[i].data = fp32_ptr;
-                    param_views[i].type = Type::FP32;
-                    param_views[i].shape = shapes[i];
-                }
+                const bool use_bf16 = (slot_dtype == Type::BF16 && bf16_ptr != nullptr);
+                void* slot_ptr = use_bf16 ? static_cast<void*>(bf16_ptr)
+                                          : static_cast<void*>(fp32_ptr);
+                param_views[i] = TensorView(slot_ptr, shapes[i], use_bf16 ? Type::BF16 : Type::FP32);
             }
 
             fp32_ptr += aligned;

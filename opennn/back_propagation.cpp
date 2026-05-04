@@ -11,6 +11,7 @@
 #include "neural_network.h"
 #include "forward_propagation.h"
 #include "math_utilities.h"
+#include "cuda_dispatch.h"
 
 namespace opennn
 {
@@ -185,17 +186,14 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         }
     }
 
-#ifdef OPENNN_WITH_CUDA
-    if (is_gpu)
-    {
+    IF_GPU({
         const Index outputs_number = output_shape[0];
         errors_device.resize_bytes(batch_size * outputs_number * Index(sizeof(float)), Device::CUDA);
 
         output_deltas_view_device = TensorView(output_deltas.as<float>(),
                                                output_delta_dimensions,
                                                activation_dtype);
-    }
-#endif
+    });
 }
 
 void BackPropagation::accumulate_output_deltas(size_t layer_index)
@@ -235,15 +233,12 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
         return;
     }
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu())
-    {
+    IF_GPU({
         copy(*sources[0], destination);
         for (size_t s = 1; s < sources.size(); ++s)
             addition(destination, *sources[s], destination);
         return;
-    }
-#endif
+    });
 
     const Index n = destination.size();
     float* dst = destination.as<float>();
@@ -273,10 +268,7 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
 
 TensorView BackPropagation::get_output_deltas() const
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu())
-        return output_deltas_view_device;
-#endif
+    IF_GPU({ return output_deltas_view_device; });
     return {const_cast<float*>(output_deltas.as<float>()), output_delta_dimensions};
 }
 

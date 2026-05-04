@@ -13,6 +13,7 @@
 #include "error_utilities.h"
 #include "profiler.h"
 #include "forward_propagation.h"
+#include "cuda_dispatch.h"
 #include "back_propagation.h"
 #include <Eigen/LU>
 
@@ -166,11 +167,7 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
 
     check_neural_network();
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
-        return;
-    }
-#endif
+    IF_GPU({ return; });
     Map<const VectorR, AlignedMax> params_vec(neural_network->get_parameters_data(),
                                                neural_network->get_parameters_size());
     back_propagation.loss_value += calculate_regularization(params_vec);

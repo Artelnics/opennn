@@ -11,6 +11,7 @@
 #include "convolutional_layer.h"
 #include "dense_layer.h"
 #include "multihead_attention_layer.h"
+#include "cuda_dispatch.h"
 
 namespace opennn
 {
@@ -89,15 +90,12 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         }
     }
 
-#ifdef OPENNN_WITH_CUDA
-    if (is_gpu)
-    {
+    IF_GPU({
         for (auto& layer : layers)
             if (layer->get_type() == LayerType::Convolutional)
                 if (auto* conv = dynamic_cast<Convolutional*>(layer.get()))
                     conv->init_cuda(batch_size);
-    }
-#endif
+    });
 }
 
 TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
