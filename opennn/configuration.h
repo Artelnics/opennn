@@ -126,7 +126,9 @@ public:
 
     const Resolved& resolve() const
     {
-        if (cache_valid) return cached_resolved;
+        if (cache_valid)
+            return cached_resolved;
+
         return resolve_slow();
     }
 

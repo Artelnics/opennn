@@ -156,12 +156,7 @@ struct OptimizerData
 
     virtual void print() const;
 
-    void set(const vector<Shape>& slot_shapes);
-
-#ifdef OPENNN_WITH_CUDA
-    // After set(), call this on GPU to allocate device memory and rewrite view pointers to device.
-    void allocate_device();
-#endif
+    void set(const vector<Shape>& slot_shapes, Device device = Device::CPU);
 
     Buffer data;
     vector<TensorView> views;

@@ -113,6 +113,33 @@ inline Index aligned_total_elements(const vector<vector<Shape>>& nested)
     return total;
 }
 
+inline Index aligned_total_bytes(const vector<Shape>& shapes, const vector<Type>& dtypes)
+{
+    Index total = 0;
+    for (size_t i = 0; i < shapes.size(); ++i)
+        if (shapes[i].size() > 0)
+            total += get_aligned_bytes(shapes[i].size() * type_bytes(dtypes[i]));
+    return total;
+}
+
+inline Index aligned_total_bytes(const vector<vector<Shape>>& nested,
+                                 const vector<vector<Type>>& dtypes)
+{
+    Index total = 0;
+    for (size_t i = 0; i < nested.size(); ++i) total += aligned_total_bytes(nested[i], dtypes[i]);
+    return total;
+}
+
+inline Index aligned_total_bytes(const vector<Shape>& shapes, Type dtype)
+{
+    const Index bytes_per = type_bytes(dtype);
+    Index total = 0;
+    for (const Shape& s : shapes)
+        if (!s.empty())
+            total += get_aligned_bytes(s.size() * bytes_per);
+    return total;
+}
+
 struct Buffer
 {
     void* data = nullptr;

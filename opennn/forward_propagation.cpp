@@ -33,78 +33,40 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     views.resize(layers_number);
 
-#ifdef OPENNN_WITH_CUDA
     const bool is_gpu = Configuration::instance().is_gpu();
+    const Device device = is_gpu ? Device::CUDA : Device::CPU;
 
-    if (is_gpu)
+    vector<vector<Type>> forward_dtypes(layers_number);
+    for (Index i = 0; i < layers_number; ++i)
     {
-        vector<vector<Type>> forward_dtypes(layers_number);
-        for (Index i = 0; i < layers_number; ++i)
-            forward_dtypes[i] = layers[i]->get_forward_dtypes(batch_size);
-
-        Index total_bytes = 0;
-        for (Index i = 0; i < layers_number; ++i)
-        {
-            const vector<Shape>& shapes = forward_shapes[i];
-            for (size_t j = 0; j < shapes.size(); ++j)
-                if (shapes[j].size() > 0)
-                    total_bytes += get_aligned_bytes(shapes[j].size() * type_bytes(forward_dtypes[i][j]));
-        }
-
-        if (total_bytes > 0)
-        {
-            data.resize_bytes(total_bytes, Device::CUDA);
-            data.setZero();
-        }
-
-        uint8_t* cursor = (total_bytes > 0) ? data.as<uint8_t>() : nullptr;
-        for (Index i = 0; i < layers_number; ++i)
-        {
-            const vector<Shape>& shapes = forward_shapes[i];
-            const size_t slots = shapes.size();
-            views[i].resize(slots + 1);
-
-            for (size_t j = 0; j < slots; ++j)
-            {
-                const Shape& slot_shape = shapes[j];
-                views[i][j + 1].resize(1);
-
-                if (slot_shape.size() > 0)
-                {
-                    views[i][j + 1][0] = TensorView(cursor, slot_shape, forward_dtypes[i][j]);
-                    if (cursor) cursor += get_aligned_bytes(slot_shape.size() * type_bytes(forward_dtypes[i][j]));
-                }
-            }
-        }
+        forward_dtypes[i] = layers[i]->get_forward_dtypes(batch_size);
+        if (!is_gpu)
+            std::fill(forward_dtypes[i].begin(), forward_dtypes[i].end(), Type::FP32);
     }
-    else
-#endif
+
+    const Index total_bytes = aligned_total_bytes(forward_shapes, forward_dtypes);
+
+    if (total_bytes > 0)
     {
-        const Index total_size = aligned_total_elements(forward_shapes);
+        data.resize_bytes(total_bytes, device);
+        data.setZero();
+    }
 
-        if (total_size > 0)
+    uint8_t* cursor = data.as<uint8_t>();
+    for (Index i = 0; i < layers_number; ++i)
+    {
+        const vector<Shape>& shapes = forward_shapes[i];
+        const size_t slots = shapes.size();
+        views[i].assign(slots + 1, vector<TensorView>(1));
+
+        for (size_t j = 0; j < slots; ++j)
         {
-            data.resize_bytes(total_size * Index(sizeof(float)), Device::CPU);
-            data.setZero();
-        }
+            const Shape& slot_shape = shapes[j];
 
-        float* pointer = (total_size > 0) ? data.as<float>() : nullptr;
-        for (Index i = 0; i < layers_number; ++i)
-        {
-            const vector<Shape>& shapes = forward_shapes[i];
-            const size_t slots = shapes.size();
-            views[i].resize(slots + 1);
-
-            for (size_t j = 0; j < slots; ++j)
+            if (slot_shape.size() > 0)
             {
-                const Shape& slot_shape = shapes[j];
-                views[i][j + 1].resize(1);
-
-                if (slot_shape.size() > 0)
-                {
-                    views[i][j + 1][0] = TensorView(pointer, slot_shape);
-                    if (pointer) pointer += get_aligned_size(slot_shape.size());
-                }
+                views[i][j + 1][0] = TensorView(cursor, slot_shape, forward_dtypes[i][j]);
+                cursor += get_aligned_bytes(slot_shape.size() * type_bytes(forward_dtypes[i][j]));
             }
         }
     }
@@ -113,23 +75,17 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     for (Index i = 0; i < layers_number; ++i)
     {
         const vector<Index>& input_indices = layer_input_indices[i];
-        const size_t input_indices_size = input_indices.size();
-        views[i][0].resize(input_indices_size);
+        views[i][0].resize(input_indices.size());
 
-        for (size_t k = 0; k < input_indices_size; ++k)
+        for (size_t k = 0; k < input_indices.size(); ++k)
         {
-            const Index producer_index = input_indices[k];
+            const Index producer = input_indices[k];
+            if (producer < 0) continue;
 
-            if (producer_index >= 0)
-            {
-                const size_t output_slot = forward_shapes[producer_index].size();
+            const size_t output_slot = forward_shapes[producer].size();
+            if (output_slot == 0 || views[producer][output_slot].empty()) continue;
 
-                if (output_slot > 0 && producer_index < ssize(views)
-                    && !views[producer_index][output_slot].empty())
-                {
-                    views[i][0][k] = views[producer_index][output_slot][0];
-                }
-            }
+            views[i][0][k] = views[producer][output_slot][0];
         }
     }
 

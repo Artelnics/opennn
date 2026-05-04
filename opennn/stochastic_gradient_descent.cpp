@@ -239,12 +239,10 @@ TrainingResults StochasticGradientDescent::train()
 
     const Index parameters_number = loss->get_neural_network()->get_parameters_size();
 
-    OptimizerData optimization_data;
-    optimization_data.set({Shape{parameters_number}, Shape{parameters_number}});
+    const Device device = Configuration::instance().is_gpu() ? Device::CUDA : Device::CPU;
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) optimization_data.allocate_device();
-#endif
+    OptimizerData optimization_data;
+    optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, device);
 
     optimization_data.iteration = 1;
 
