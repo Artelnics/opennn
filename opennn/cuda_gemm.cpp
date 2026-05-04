@@ -29,6 +29,8 @@ namespace
     size_t bf16_grad_scratch_bytes_ = 0;
     void*  fp32_upcast_scratch_ = nullptr;
     size_t fp32_upcast_scratch_bytes_ = 0;
+    void*  loss_scratch_        = nullptr;
+    size_t loss_scratch_bytes_  = 0;
 
     std::unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans_;
 }
@@ -74,6 +76,18 @@ float* get_fp32_upcast_scratch(Index n_elements)
         fp32_upcast_scratch_bytes_ = needed_bytes;
     }
     return reinterpret_cast<float*>(fp32_upcast_scratch_);
+}
+
+float* get_loss_scratch(Index n_elements)
+{
+    const size_t needed_bytes = size_t(n_elements) * sizeof(float);
+    if (needed_bytes > loss_scratch_bytes_)
+    {
+        if (loss_scratch_) cudaFree(loss_scratch_);
+        CHECK_CUDA(cudaMalloc(&loss_scratch_, needed_bytes));
+        loss_scratch_bytes_ = needed_bytes;
+    }
+    return reinterpret_cast<float*>(loss_scratch_);
 }
 
 const LtMatmulPlan& get_lt_gemm_plan(

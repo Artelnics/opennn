@@ -392,7 +392,7 @@ VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
     VectorR errors(5);
 
     // 1. Mean Squared Error
-    mean_squared_error(outputs_view, targets_view, errors(1), nullptr);
+    mean_squared_error(outputs_view, targets_view, errors(1));
 
     // 0. Sum Squared Error
     errors(0) = errors(1) * static_cast<float>(targets.size());
@@ -403,10 +403,10 @@ VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
     // 3. Normalized Squared Error
     const VectorR targets_mean = mean(targets);
     const float normalization_coefficient = (targets.rowwise() - targets_mean.transpose()).squaredNorm();
-    normalized_squared_error(outputs_view, targets_view, normalization_coefficient, errors(3), nullptr);
+    normalized_squared_error(outputs_view, targets_view, normalization_coefficient, errors(3));
 
     // 4. Minkowski Error
-    minkowski_error(outputs_view, targets_view, 1.5f, errors(4), nullptr);
+    minkowski_error(outputs_view, targets_view, 1.5f, errors(4));
 
     return errors;
 }
@@ -431,7 +431,7 @@ VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sa
     errors.head(4) = std_errors.head(4);
 
     // 4. Binary Cross Entropy
-    binary_cross_entropy(outputs_view, targets_view, errors(4), nullptr);
+    binary_cross_entropy(outputs_view, targets_view, errors(4));
 
     // 5. Weighted Squared Error
     const VectorI target_distribution = dataset->calculate_target_distribution();
@@ -440,7 +440,7 @@ VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sa
                            ? 1.0f
                            : static_cast<float>(target_distribution[0]) / target_distribution[1];
 
-    weighted_squared_error(outputs_view, targets_view, pos_w, neg_w, errors(5), nullptr);
+    weighted_squared_error(outputs_view, targets_view, pos_w, neg_w, errors(5));
 
     return errors;
 }
@@ -458,7 +458,7 @@ VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& 
     errors.head(4) = std_errors.head(4);
 
     // 4. Categorical Cross Entropy
-    categorical_cross_entropy(outputs_view, targets_view, errors(4), nullptr);
+    categorical_cross_entropy(outputs_view, targets_view, errors(4));
 
     return errors;
 }

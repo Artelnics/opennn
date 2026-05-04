@@ -135,6 +135,14 @@ __nv_bfloat16* get_bf16_grad_scratch(Index n_elements);
 // which is FP/half-only as of cuDNN 9). Same lazy-grow pattern.
 float* get_fp32_upcast_scratch(Index n_elements);
 
+// FP32 scratch shared by every Loss kernel that needs an intermediate buffer
+// before reducing to a host scalar (mean_squared_error → cublasSdot,
+// binary_cross_entropy / categorical_cross_entropy / weighted_squared_error /
+// cross_entropy_3d → cublasSasum). Sized on demand so cross_entropy_3d (which
+// needs 3 × token_count slots) grows it past the single-loss size used by the
+// others. Lazy-grown across the whole training run; freed at process exit.
+float* get_loss_scratch(Index n_elements);
+
 // Returns a cached cuBLASLt plan for a GEMM with the requested epilogue.
 // Built once per unique (shape, epilogue, dtypes) and reused. The bias pointer
 // is set on the returned op_desc by the caller per call — not part of the key.

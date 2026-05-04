@@ -1059,14 +1059,8 @@ void NeuralNetwork::copy_parameters_device()
 
     parameters.migrate_to(DeviceType::CUDA);
 
-    // Allocate the BF16 working copy alongside the FP32 master and seed it from
-    // the freshly-uploaded master when the resolved precision needs it. From
-    // here every Adam step refreshes it via cast_parameters_to_bf16(); GEMMs
-    // read it instead of the master.
-    const bool needs_bf16_mirror =
-        config.training_precision  == TrainingPrecision::BP16 ||
-        config.inference_precision == InferencePrecision::BP16;
-    if (needs_bf16_mirror)
+    if(config.training_precision  == TrainingPrecision::BP16 ||
+       config.inference_precision == InferencePrecision::BP16)
     {
         parameters_bf16.resize_bytes(parameters.size() * Index(sizeof(__nv_bfloat16)), DeviceType::CUDA);
         cast_parameters_to_bf16();

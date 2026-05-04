@@ -13,23 +13,27 @@
 namespace opennn
 {
 
-void mean_squared_error(const TensorView& input, const TensorView& target, float& error, float* workspace_device);
+// On GPU these helpers internally pull a singleton FP32 scratch via
+// `get_loss_scratch()` (cuda_gemm.cpp). No workspace plumbing in the public
+// signature.
+
+void mean_squared_error(const TensorView& input, const TensorView& target, float& error);
 void mean_squared_error_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta);
 
-void normalized_squared_error(const TensorView& input, const TensorView& target, float coefficient, float& error, float* workspace_device);
+void normalized_squared_error(const TensorView& input, const TensorView& target, float coefficient, float& error);
 void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, float coefficient, TensorView& input_delta);
 
-void weighted_squared_error(const TensorView& input, const TensorView& target, float pos_w, float neg_w, float& error, float* workspace_device);
+void weighted_squared_error(const TensorView& input, const TensorView& target, float pos_w, float neg_w, float& error);
 void weighted_squared_error_gradient(const TensorView& input, const TensorView& target, float pos_w, float neg_w, float coefficient, TensorView& input_delta);
 
-void binary_cross_entropy(const TensorView& input, const TensorView& target, float& error, float* workspace_device);
-void categorical_cross_entropy(const TensorView& input, const TensorView& target, float& error, float* workspace_device);
+void binary_cross_entropy(const TensorView& input, const TensorView& target, float& error);
+void categorical_cross_entropy(const TensorView& input, const TensorView& target, float& error);
 void cross_entropy_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta);
 
-void minkowski_error(const TensorView& input, const TensorView& target, float p, float& error, float* workspace_device);
+void minkowski_error(const TensorView& input, const TensorView& target, float p, float& error);
 void minkowski_error_gradient(const TensorView& input, const TensorView& target, float p, TensorView& input_delta);
 
-void cross_entropy_3d(const TensorView& input, const TensorView& target, float& error, Index& active_tokens_out, Index& correct_tokens_out, float* errors_device = nullptr);
+void cross_entropy_3d(const TensorView& input, const TensorView& target, float& error, Index& active_tokens_out, Index& correct_tokens_out);
 void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta, Index active_tokens_count);
 
 void l1_regularization(const TensorView& parameters, float lambda, float& penalty);

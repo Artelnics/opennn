@@ -26,12 +26,7 @@ struct BackPropagation
 {
     BackPropagation(const Index = 0, Loss* = nullptr);
 
-    virtual ~BackPropagation()
-    {
-#ifdef OPENNN_WITH_CUDA
-        if(errors_device) { cudaFree(errors_device); errors_device = nullptr; }
-#endif
-    }
+    virtual ~BackPropagation() = default;
 
     void set(const Index = 0, Loss* = nullptr);
 
@@ -63,19 +58,8 @@ struct BackPropagation
 
     float error = float(0);
     Index active_tokens_count = 0;
-    Buffer output_deltas;
-    Shape output_delta_dimensions;
-
     Tensor0 accuracy;
     float loss_value = float(0);
-
-#ifdef OPENNN_WITH_CUDA
-
-    float* errors_device = nullptr;
-
-    TensorView output_deltas_view_device;
-
-#endif
 };
 
 }

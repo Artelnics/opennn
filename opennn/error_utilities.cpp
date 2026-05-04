@@ -8,6 +8,9 @@
 
 #include "error_utilities.h"
 #include "cuda_dispatch.h"
+#ifdef OPENNN_WITH_CUDA
+#include "cuda_gemm.h"   // get_loss_scratch
+#endif
 
 namespace opennn
 {
@@ -17,10 +20,12 @@ namespace opennn
 // Compute Σ (input − target)² for tensors that may have different dtypes
 // (typical case: input = model output in BF16, target = labels in FP32). cuDNN
 // OpTensor requires uniform dtypes across A/B/C, so we lower to a custom kernel
-// that materializes (input − target) in FP32 and reduce with cublasSdot.
-static float sum_squared_diff_cuda(const TensorView& input, const TensorView& target, float* workspace)
+// that materializes (input − target) in FP32 (in the singleton loss scratch)
+// and reduce with cublasSdot.
+static float sum_squared_diff_cuda(const TensorView& input, const TensorView& target)
 {
     const int total_size = to_int(input.size());
+    float* workspace = get_loss_scratch(input.size());
 
     input.dispatch([&](auto tag) {
         using TIn = decltype(tag);
@@ -70,12 +75,12 @@ static float squared_norm_cuda(const float* data, Index n)
 
 #endif
 
-void mean_squared_error(const TensorView& input, const TensorView& target, float& error, float* workspace_device)
+void mean_squared_error(const TensorView& input, const TensorView& target, float& error)
 {
     const Index batch_size = input.shape[0];
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
-        error = sum_squared_diff_cuda(input, target, workspace_device) / to_int(2 * batch_size);
+        error = sum_squared_diff_cuda(input, target) / to_int(2 * batch_size);
         return;
     }
 #endif
@@ -94,11 +99,11 @@ void mean_squared_error_gradient(const TensorView& input, const TensorView& targ
     input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) / to_type(batch_size);
 }
 
-void normalized_squared_error(const TensorView& input, const TensorView& target, float coefficient, float& error, float* workspace_device)
+void normalized_squared_error(const TensorView& input, const TensorView& target, float coefficient, float& error)
 {
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
-        error = sum_squared_diff_cuda(input, target, workspace_device) / (2.0f * (coefficient + EPSILON));
+        error = sum_squared_diff_cuda(input, target) / (2.0f * (coefficient + EPSILON));
         return;
     }
 #endif
@@ -116,10 +121,11 @@ void normalized_squared_error_gradient(const TensorView& input, const TensorView
     input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) / (coefficient + EPSILON);
 }
 
-void weighted_squared_error(const TensorView& input, const TensorView& target, float pos_w, float neg_w, float& error, float* workspace_device)
+void weighted_squared_error(const TensorView& input, const TensorView& target, float pos_w, float neg_w, float& error)
 {
     if (TRY_GPU_DISPATCH(input, [&](auto tag) {
         using T = decltype(tag);
+        float* workspace_device = get_loss_scratch(input.size());
         weighted_squared_error_cuda<T>(input.size(),
                                        workspace_device,
                                        target.as<T>(),
@@ -151,10 +157,11 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
         = (targets == 1.0f).select(pos_w * (inputs - targets), neg_w * (inputs - targets)) * coefficient;
 }
 
-void binary_cross_entropy(const TensorView& input, const TensorView& target, float& error, float* workspace_device)
+void binary_cross_entropy(const TensorView& input, const TensorView& target, float& error)
 {
     if (TRY_GPU_DISPATCH(input, [&](auto tag) {
         using T = decltype(tag);
+        float* workspace_device = get_loss_scratch(input.size());
         binary_cross_entropy_cuda<T>(input.size(),
             workspace_device, target.as<T>(), input.as<T>(), EPSILON);
         error = sum_abs_cuda(workspace_device, input.size()) / input.shape[0];
@@ -172,10 +179,11 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, flo
     if(isnan(error) || isinf(error)) error = 10.0f;
 }
 
-void categorical_cross_entropy(const TensorView& input, const TensorView& target, float& error, float* workspace_device)
+void categorical_cross_entropy(const TensorView& input, const TensorView& target, float& error)
 {
     if (TRY_GPU_DISPATCH(input, [&](auto tag) {
         using T = decltype(tag);
+        float* workspace_device = get_loss_scratch(input.size());
         multiple_cross_entropy_cuda<T>(input.size(),
             workspace_device, target.as<T>(), input.as<T>(), EPSILON);
         error = sum_abs_cuda(workspace_device, input.size()) / input.shape[0];
@@ -218,12 +226,11 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
         gradients = (outputs - targets) / to_type(samples_number);
 }
 
-void minkowski_error(const TensorView& input, const TensorView& target, float p, float& error, float* workspace_device)
+void minkowski_error(const TensorView& input, const TensorView& target, float p, float& error)
 {
     if (Configuration::instance().is_gpu())
         throw runtime_error("minkowski_error: GPU implementation not available.");
 
-    (void)workspace_device;
     const Index batch_size = input.shape[0];
     error = (input.as_vector() - target.as_vector()).array().abs().pow(p).sum() / to_type(p * batch_size);
 }
@@ -239,7 +246,7 @@ void minkowski_error_gradient(const TensorView& input, const TensorView& target,
 }
 
 void cross_entropy_3d(const TensorView& input, const TensorView& target, float& error,
-                      Index& active_tokens_out, Index& correct_tokens_out, float* errors_device)
+                      Index& active_tokens_out, Index& correct_tokens_out)
 {
     const Index vocabulary_size = input.shape.back();
     const Index sequence_length = input.shape[input.get_rank() - 2];
@@ -249,6 +256,11 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
         using T = decltype(tag);
         const size_t token_count = batch_size * sequence_length;
 
+        // 3 × token_count: per-token loss + valid mask + correct mask. The
+        // shared scratch grows to fit (this is normally the largest single-loss
+        // request in a Transformer training run, so other losses' subsequent
+        // calls reuse it without reallocating).
+        float* errors_device       = get_loss_scratch(3 * token_count);
         float* valid_mask_device   = errors_device + token_count;
         float* correct_mask_device = errors_device + 2 * token_count;
 
@@ -264,8 +276,6 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
         correct_tokens_out = static_cast<Index>(correct_count);
         error = active_count > 0 ? sum_loss / active_count : float(0);
     })) return;
-
-    (void)errors_device;
 
     const Index token_count = batch_size * sequence_length;
     const MatrixMap outputs_flat = input.as_flat_matrix();

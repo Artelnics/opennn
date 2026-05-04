@@ -41,8 +41,6 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
 
-    output_delta_dimensions = Shape({batch_size}).append(output_shape);
-
     loss_value = float(0);
     error = float(0);
     accuracy.setZero();
@@ -111,14 +109,22 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         }
 
         // -- backward (delta arena, dtype-aware) --
-        Index total_backward_bytes = 0;
+        // Layout: per-layer slots in order, then a trailing "loss slot" that
+        // holds the output delta of the last trainable layer. The loss writes
+        // there directly via get_output_deltas() and the layer's input-delta
+        // view aliases it.
+        Index total_layer_bytes = 0;
         for(Index i = 0; i < layers_number; ++i)
         {
             const vector<Shape>& shapes = backward_shapes[i];
             for(size_t j = 0; j < shapes.size(); ++j)
                 if(shapes[j].size() > 0)
-                    total_backward_bytes += get_aligned_bytes(shapes[j].size() * dtype_bytes(backward_dtypes[i][j]));
+                    total_layer_bytes += get_aligned_bytes(shapes[j].size() * dtype_bytes(backward_dtypes[i][j]));
         }
+
+        const Shape output_delta_shape = Shape({batch_size}).append(output_shape);
+        const Index loss_slot_bytes   = get_aligned_bytes(output_delta_shape.size() * activation_bytes);
+        const Index total_backward_bytes = total_layer_bytes + loss_slot_bytes;
 
         if(total_backward_bytes > 0)
         {
@@ -148,10 +154,8 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             }
         }
 
-        // -- output_deltas (final layer's delta, activation-typed) --
-        const Index total_output_delta_elems = batch_size * output_shape.size();
-        output_deltas.resize_bytes(total_output_delta_elems * activation_bytes, DeviceType::CUDA);
-        output_deltas.setZero();
+        // After the per-layer walk b_cursor sits at the start of the loss slot.
+        uint8_t* loss_slot_ptr = b_cursor;
 
         // -- per_layer_output_deltas (multi-consumer accumulation, activation-typed) --
         Index total_og_bytes = 0;
@@ -172,8 +176,8 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
             if(i == last_trainable_layer_index)
             {
-                delta_views[i][0][0] = TensorView(output_deltas.as<float>(),
-                                                  output_delta_dimensions,
+                delta_views[i][0][0] = TensorView(loss_slot_ptr,
+                                                  output_delta_shape,
                                                   to_cudnn(activation_dtype));
             }
             else if(!backward_edges[i].empty())
@@ -206,14 +210,6 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             }
         }
 
-        // -- errors_device + output_deltas_view_device (CUDA-only auxiliaries) --
-        if(errors_device) { cudaFree(errors_device); errors_device = nullptr; }
-        const Index outputs_number = output_shape[0];
-        CHECK_CUDA(cudaMalloc(&errors_device, batch_size * outputs_number * sizeof(float)));
-
-        output_deltas_view_device = TensorView(output_deltas.as<float>(),
-                                               output_delta_dimensions,
-                                               to_cudnn(activation_dtype));
         return;
     }
 #endif
@@ -243,7 +239,13 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         }
     }
 
-    const Index total_backward_size = aligned_total_elements(backward_shapes);
+    // Layout: per-layer slots, then a trailing loss slot for the output delta
+    // of the last trainable layer (entry point of backward).
+    const Index total_layer_size = aligned_total_elements(backward_shapes);
+    const Shape output_delta_shape = Shape({batch_size}).append(output_shape);
+    const Index loss_slot_size  = get_aligned_size(output_delta_shape.size());
+    const Index total_backward_size = total_layer_size + loss_slot_size;
+
     if(total_backward_size > 0)
     {
         backward.resize_bytes(total_backward_size * Index(sizeof(float)), DeviceType::CPU);
@@ -272,12 +274,8 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         }
     }
 
-    const Index total_output_elements = output_shape.size() * batch_size;
-    if(total_output_elements > 0)
-    {
-        output_deltas.resize_bytes(total_output_elements * Index(sizeof(float)), DeviceType::CPU);
-        output_deltas.setZero();
-    }
+    // After the per-layer walk b_ptr sits at the start of the loss slot.
+    float* loss_slot_ptr = b_ptr;
 
     Index total_output_delta_size = 0;
     for(Index i = 0; i < layers_number; ++i)
@@ -297,7 +295,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
         if(i == last_trainable_layer_index)
         {
-            delta_views[i][0][0] = TensorView(output_deltas.as<float>(), output_delta_dimensions);
+            delta_views[i][0][0] = TensorView(loss_slot_ptr, output_delta_shape);
         }
         else if(!backward_edges[i].empty())
         {
@@ -381,11 +379,13 @@ vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
 
 TensorView BackPropagation::get_output_deltas() const
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu())
-        return output_deltas_view_device;
-#endif
-    return {const_cast<float*>(output_deltas.as<float>()), output_delta_dimensions};
+    // The output-delta lives as the trailing slot of the `backward` arena;
+    // delta_views[last_trainable][0][0] is the alias view set up by set().
+    const Index last = loss->get_neural_network()->get_last_trainable_layer_index();
+    if(last < 0 || static_cast<size_t>(last) >= delta_views.size()
+       || delta_views[last].empty() || delta_views[last][0].empty())
+        return {};
+    return delta_views[last][0][0];
 }
 
 void BackPropagation::print() const
