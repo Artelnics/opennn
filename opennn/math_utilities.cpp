@@ -466,12 +466,12 @@ void average_pooling_3d_backward(const TensorView& input,
         if (valid_count == 0) continue;
 
         const float inverse_valid_count = 1.0f / to_type(valid_count);
-        Map<MatrixR> grad_matrix(&input_delta_map(batch_index, 0, 0), sequence_length, features);
+        Map<MatrixR> gradient_matrix(&input_delta_map(batch_index, 0, 0), sequence_length, features);
         const auto output_row = output_delta_matrix.row(batch_index);
 
         for (Index step = 0; step < sequence_length; ++step)
             if (non_padding(step))
-                grad_matrix.row(step) = output_row * inverse_valid_count;
+                gradient_matrix.row(step) = output_row * inverse_valid_count;
     }
 }
 

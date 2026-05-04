@@ -86,8 +86,7 @@ struct Batch
     Index decoder_host_allocated_size = 0;
     Index targets_host_allocated_size = 0;
 
-    void* inputs_fp32_staging = nullptr;
-    Index inputs_fp32_staging_size = 0;
+    Buffer inputs_fp32_staging{Device::CUDA};
 };
 
 }

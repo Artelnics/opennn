@@ -6,9 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// cudnn-frontend uses unqualified `half` at file scope which collides with
-// `std::half_*` symbols when `using namespace std;` is in effect (pulled in by
-// pch.h transitively). Including the frontend FIRST sidesteps the ambiguity.
 #ifdef OPENNN_HAS_CUDNN_FRONTEND
 #include <cuda_fp16.h>
 #include <cudnn_frontend.h>
@@ -85,7 +82,7 @@ void Dropout::apply_gpu(TensorView& output)
     visit_type<Type::FP32, Type::BF16>(output.type, [&](auto info)
     {
         using T = typename decltype(info)::type;
-        dropout_forward_cuda<T>(n, output.as<T>(), mask, rate, seed);
+        dropout_forward_cuda<T>(n, output.as<T>(), mask.as<uint8_t>(), rate, seed);
     });
 }
 
@@ -96,23 +93,18 @@ void Dropout::apply_delta_gpu(TensorView& delta) const
     visit_type<Type::FP32, Type::BF16>(delta.type, [&](auto info)
     {
         using T = typename decltype(info)::type;
-        dropout_backward_cuda<T>(n, delta.as<T>(), delta.as<T>(), mask, rate);
+        dropout_backward_cuda<T>(n, delta.as<T>(), delta.as<T>(), mask.as<uint8_t>(), rate);
     });
 }
 
 void Dropout::ensure_mask(Index n)
 {
-    const size_t needed = static_cast<size_t>(n);
-    if (needed <= mask_bytes) return;
-
-    if (mask) cudaFree(mask);
-    CHECK_CUDA(cudaMalloc(&mask, needed));
-    mask_bytes = needed;
+    mask.grow_to(n);
 }
 
 void Dropout::destroy_cuda()
 {
-    if (mask) { cudaFree(mask); mask = nullptr; mask_bytes = 0; }
+    mask.resize_bytes(0, Device::CUDA);
 }
 
 #else
@@ -491,8 +483,8 @@ void BatchNorm::apply_delta_cpu(const TensorView& input,
     delta_scale_scratch = (gammas.array() * inverse_variances.array() * inv_N).matrix();
 
     const auto delta_scale_t   = delta_scale_scratch.transpose().array();
-    const auto beta_grad_t     = beta_gradients.transpose().array();
-    const auto gamma_grad_t    = gamma_gradients.transpose().array();
+    const auto beta_gradient_t     = beta_gradients.transpose().array();
+    const auto gamma_gradient_t    = gamma_gradients.transpose().array();
 
     #pragma omp parallel for
     for (Index i = 0; i < effective_batch_size; ++i)
@@ -500,7 +492,7 @@ void BatchNorm::apply_delta_cpu(const TensorView& input,
         auto       deltas_row = deltas.row(i).array();
         const auto x_hat_row  = (input_matrix.row(i).array() - means_t) * inverse_variances_t;
 
-        deltas_row = delta_scale_t * (N * deltas_row - beta_grad_t - x_hat_row * gamma_grad_t);
+        deltas_row = delta_scale_t * (N * deltas_row - beta_gradient_t - x_hat_row * gamma_gradient_t);
     }
 }
 
@@ -668,7 +660,7 @@ void Combination::apply_gpu(const TensorView& input, TensorView& output, cublasL
                                 output.data,     plan.c_desc,
                                 output.data,     plan.d_desc,
                                 plan.algo_valid ? &plan.algo : nullptr,
-                                get_cublas_lt_workspace(), cublas_lt_workspace_bytes(),
+                                ensure_cublas_lt_workspace(), cublas_lt_workspace_bytes(),
                                 Backend::get_compute_stream()));
 }
 
@@ -695,9 +687,9 @@ void Combination::apply_delta_gpu(const TensorView& output_delta, const TensorVi
     }
     const LtMatmulPlan& plan = *bwd_plan_;
 
-    float* bias_grad_pointer = bias_gradient.as<float>();
+    float* bias_gradient_pointer = bias_gradient.as<float>();
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
-        CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_grad_pointer, sizeof(bias_grad_pointer)));
+        CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_gradient_pointer, sizeof(bias_gradient_pointer)));
 
     CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(),
                                 plan.op_desc,
@@ -708,7 +700,7 @@ void Combination::apply_delta_gpu(const TensorView& output_delta, const TensorVi
                                 weight_gradient.data, plan.c_desc,
                                 weight_gradient.data, plan.d_desc,
                                 plan.algo_valid ? &plan.algo : nullptr,
-                                get_cublas_lt_workspace(), cublas_lt_workspace_bytes(),
+                                ensure_cublas_lt_workspace(), cublas_lt_workspace_bytes(),
                                 Backend::get_compute_stream()));
 
     if (!input_delta.data || input_delta.size() == 0) return;
@@ -822,8 +814,8 @@ void Convolution::apply_delta_cpu(const TensorView& input,
                                  * output_deltas.dimension(1)
                                  * output_deltas.dimension(2);
 
-    MatrixMap output_grads_mat = output_delta.as_flat_matrix();
-    bias_gradient.as_vector().noalias() = output_grads_mat.colwise().sum();
+    MatrixMap output_gradients_mat = output_delta.as_flat_matrix();
+    bias_gradient.as_vector().noalias() = output_gradients_mat.colwise().sum();
 
     float* weight_data = weight_gradient.as<float>();
 
@@ -842,7 +834,7 @@ void Convolution::apply_delta_cpu(const TensorView& input,
     // Input delta (optional)
     if (!input_delta.data || input_delta.size() == 0) return;
 
-    TensorMap4 in_grad = input_delta.as_tensor<4>().setZero();
+    TensorMap4 in_gradient = input_delta.as_tensor<4>().setZero();
 
     const Index batch_size    = output_deltas.dimension(0);
     const Index output_height = output_deltas.dimension(1);
@@ -891,7 +883,7 @@ void Convolution::apply_delta_cpu(const TensorView& input,
 
                 for (Index h = 0; h < input_height; ++h)
                     for (Index w = 0; w < input_width; ++w)
-                        in_grad(image_index, h, w, channel_index) += convolution_result(h, w);
+                        in_gradient(image_index, h, w, channel_index) += convolution_result(h, w);
             }
         }
     }
@@ -936,6 +928,9 @@ void Convolution::init_cuda(Index batch_size)
     constexpr int kRequestedAlgos = 8;
     constexpr size_t kWorkspaceBudget = size_t(512) * 1024 * 1024;
 
+    size_t workspace_bytes = 0;
+    size_t backward_filter_workspace_bytes = 0;
+
     {
         cudnnConvolutionFwdAlgoPerf_t perfs[kRequestedAlgos];
         int returned_count = 0;
@@ -945,13 +940,13 @@ void Convolution::init_cuda(Index batch_size)
             kRequestedAlgos, &returned_count, perfs));
 
         algorithm_forward = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
-        workspace_size = 0;
+        workspace_bytes = 0;
         for (int i = 0; i < returned_count; ++i)
         {
             if (perfs[i].status == CUDNN_STATUS_SUCCESS && perfs[i].memory <= kWorkspaceBudget)
             {
                 algorithm_forward = perfs[i].algo;
-                workspace_size = perfs[i].memory;
+                workspace_bytes = perfs[i].memory;
                 break;
             }
         }
@@ -987,27 +982,22 @@ void Convolution::init_cuda(Index batch_size)
             kRequestedAlgos, &returned_count, perfs));
 
         algorithm_filter = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
-        backward_filter_workspace_size = 0;
+        backward_filter_workspace_bytes = 0;
         for (int i = 0; i < returned_count; ++i)
         {
             if (perfs[i].status == CUDNN_STATUS_SUCCESS && perfs[i].memory <= kWorkspaceBudget)
             {
                 algorithm_filter = perfs[i].algo;
-                backward_filter_workspace_size = perfs[i].memory;
+                backward_filter_workspace_bytes = perfs[i].memory;
                 break;
             }
         }
     }
 
-    workspace_size = max(workspace_size, bwd_data_ws);
+    workspace_bytes = max(workspace_bytes, bwd_data_ws);
 
-    if (workspace) cudaFree(workspace);
-    if (workspace_size > 0)
-        CHECK_CUDA(cudaMalloc(&workspace, workspace_size));
-
-    if (backward_filter_workspace) cudaFree(backward_filter_workspace);
-    if (backward_filter_workspace_size > 0)
-        CHECK_CUDA(cudaMalloc(&backward_filter_workspace, backward_filter_workspace_size));
+    workspace.resize_bytes(Index(workspace_bytes), Device::CUDA);
+    backward_filter_workspace.resize_bytes(Index(backward_filter_workspace_bytes), Device::CUDA);
 
     cudnnDestroyTensorDescriptor(input_desc);
     cudnnDestroyTensorDescriptor(output_desc);
@@ -1015,13 +1005,15 @@ void Convolution::init_cuda(Index batch_size)
 
 void Convolution::destroy_cuda()
 {
-    if (kernel_descriptor)        { cudnnDestroyFilterDescriptor(kernel_descriptor);            kernel_descriptor = nullptr; }
-    if (convolution_descriptor)   { cudnnDestroyConvolutionDescriptor(convolution_descriptor);  convolution_descriptor = nullptr; }
-    if (workspace)                { cudaFree(workspace);                                        workspace = nullptr; workspace_size = 0; }
-    if (backward_filter_workspace) { cudaFree(backward_filter_workspace);                        backward_filter_workspace = nullptr; backward_filter_workspace_size = 0; }
+    if (kernel_descriptor)      { cudnnDestroyFilterDescriptor(kernel_descriptor);           kernel_descriptor = nullptr; }
+    if (convolution_descriptor) { cudnnDestroyConvolutionDescriptor(convolution_descriptor); convolution_descriptor = nullptr; }
+    workspace.resize_bytes(0, Device::CUDA);
+    backward_filter_workspace.resize_bytes(0, Device::CUDA);
 }
 
-void Convolution::apply_gpu(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation)
+void Convolution::apply_gpu(const TensorView& input, 
+                            TensorView& output, 
+                            cudnnActivationDescriptor_t fused_activation)
 {
     if (fused_activation)
     {
@@ -1032,7 +1024,7 @@ void Convolution::apply_gpu(const TensorView& input, TensorView& output, cudnnAc
             kernel_descriptor,        weights.data,
             convolution_descriptor,
             algorithm_forward,
-            workspace, workspace_size,
+            workspace.data, size_t(workspace.bytes),
             &zero,
             output.get_descriptor(), output.data,
             bias.get_descriptor(),   bias.data,
@@ -1047,7 +1039,7 @@ void Convolution::apply_gpu(const TensorView& input, TensorView& output, cudnnAc
                                         kernel_descriptor,        weights.data,
                                         convolution_descriptor,
                                         algorithm_forward,
-                                        workspace, workspace_size,
+                                        workspace.data, size_t(workspace.bytes),
                                         &zero,
                                         output.get_descriptor(), output.data));
 
@@ -1064,15 +1056,18 @@ void Convolution::apply_delta_gpu(const TensorView& input,
                                   TensorView& bias_gradient,
                                   TensorView& input_delta) const
 {
-    const bool bp16 = (input.type == Type::BF16);
+    assert(output_delta.type == input.type);
+    assert(weight_gradient.type == Type::FP32);
 
-    void* dw_dst = weight_gradient.data;
-    __nv_bfloat16* dw_scratch = nullptr;
+    const bool bf16 = (input.type == Type::BF16);
 
-    if (bp16)
+    void* weight_gradient_buffer = weight_gradient.data;
+    __nv_bfloat16* weight_gradient_bf16_scratch = nullptr;
+
+    if (bf16)
     {
-        dw_scratch = get_bf16_grad_scratch(weight_gradient.size());
-        dw_dst = dw_scratch;
+        weight_gradient_bf16_scratch = ensure_bf16_gradient_scratch(weight_gradient.size());
+        weight_gradient_buffer = weight_gradient_bf16_scratch;
     }
 
     CHECK_CUDNN(cudnnConvolutionBackwardFilter(Backend::get_cudnn_handle(),
@@ -1081,29 +1076,29 @@ void Convolution::apply_delta_gpu(const TensorView& input,
         output_delta.get_descriptor(), output_delta.data,
         convolution_descriptor,
         algorithm_filter,
-        backward_filter_workspace, backward_filter_workspace_size,
+        backward_filter_workspace.data, size_t(backward_filter_workspace.bytes),
         &zero,
-        kernel_descriptor, dw_dst));
+        kernel_descriptor, weight_gradient_buffer));
 
-    if (bp16)
+    if (bf16)
     {
-        float* dy_fp32 = get_fp32_upcast_scratch(output_delta.size());
+        float* output_delta_fp32 = ensure_fp32_upcast_scratch(output_delta.size());
         cast_bf16_to_fp32_cuda(output_delta.size(),
                                reinterpret_cast<const __nv_bfloat16*>(output_delta.data),
-                               dy_fp32);
+                               output_delta_fp32);
 
-        TensorView dy_fp32_view = output_delta;
-        dy_fp32_view.data = dy_fp32;
-        dy_fp32_view.type = Type::FP32;
-        dy_fp32_view.descriptor_handle.reset();
+        TensorView output_delta_fp32_view = output_delta;
+        output_delta_fp32_view.data = output_delta_fp32;
+        output_delta_fp32_view.type = Type::FP32;
+        output_delta_fp32_view.descriptor_handle.reset();
 
         CHECK_CUDNN(cudnnConvolutionBackwardBias(Backend::get_cudnn_handle(),
             &one,
-            dy_fp32_view.get_descriptor(), dy_fp32_view.data,
+            output_delta_fp32_view.get_descriptor(), output_delta_fp32_view.data,
             &zero,
             bias_gradient.get_descriptor(), bias_gradient.data));
 
-        cast_bf16_to_fp32_cuda(weight_gradient.size(), dw_scratch, weight_gradient.as_float());
+        cast_bf16_to_fp32_cuda(weight_gradient.size(), weight_gradient_bf16_scratch, weight_gradient.as_float());
     }
     else
     {
@@ -1122,7 +1117,7 @@ void Convolution::apply_delta_gpu(const TensorView& input,
         output_delta.get_descriptor(), output_delta.data,
         convolution_descriptor,
         algorithm_data,
-        workspace, workspace_size,
+        workspace.data, size_t(workspace.bytes),
         &zero,
         input_delta.get_descriptor(), input_delta.data));
 }
@@ -1242,17 +1237,17 @@ void LayerNorm::apply_delta_cpu(const TensorView& output_delta,
                                 TensorView& gamma_gradient, TensorView& beta_gradient,
                                 TensorView& input_delta, Index batch_size) const
 {
-    const MatrixMap dy_flat   = output_delta.as_flat_matrix();
-    const MatrixMap norm_flat = normalized.as_flat_matrix();
+    const MatrixMap output_delta_flat = output_delta.as_flat_matrix();
+    const MatrixMap norm_flat         = normalized.as_flat_matrix();
 
-    beta_gradient.as_vector().noalias()  = dy_flat.colwise().sum();
-    gamma_gradient.as_vector().noalias() = (dy_flat.array() * norm_flat.array()).matrix().colwise().sum();
+    beta_gradient.as_vector().noalias()  = output_delta_flat.colwise().sum();
+    gamma_gradient.as_vector().noalias() = (output_delta_flat.array() * norm_flat.array()).matrix().colwise().sum();
 
-    const float* dy_data    = output_delta.as<float>();
-    const float* norm_data  = normalized.as<float>();
-    const float* std_data   = standard_deviations.as<float>();
-    const float* gamma_data = gamma.as<float>();
-    float* dx_data          = input_delta.as<float>();
+    const float* output_delta_data = output_delta.as<float>();
+    const float* norm_data         = normalized.as<float>();
+    const float* std_data          = standard_deviations.as<float>();
+    const float* gamma_data        = gamma.as<float>();
+    float* input_delta_data        = input_delta.as<float>();
 
     const Index total_rows = batch_size * sequence_length;
     const float inv_D = 1.0f / to_type(embedding_dimension);
@@ -1260,26 +1255,26 @@ void LayerNorm::apply_delta_cpu(const TensorView& output_delta,
     #pragma omp parallel for
     for (Index row = 0; row < total_rows; ++row)
     {
-        const float* output_delta_row = dy_data + row * embedding_dimension;
+        const float* output_delta_row = output_delta_data + row * embedding_dimension;
         const float* norm_row         = norm_data + row * embedding_dimension;
-        float* input_delta_row        = dx_data + row * embedding_dimension;
+        float* input_delta_row        = input_delta_data + row * embedding_dimension;
         const float inv_std = 1.0f / std_data[row];
 
-        float sum_scaled_grad      = 0;
-        float sum_scaled_grad_norm = 0;
+        float sum_scaled_gradient      = 0;
+        float sum_scaled_gradient_norm = 0;
         for (Index dim_index = 0; dim_index < embedding_dimension; ++dim_index)
         {
-            const float scaled_grad = gamma_data[dim_index] * output_delta_row[dim_index];
-            sum_scaled_grad      += scaled_grad;
-            sum_scaled_grad_norm += scaled_grad * norm_row[dim_index];
+            const float scaled_gradient = gamma_data[dim_index] * output_delta_row[dim_index];
+            sum_scaled_gradient      += scaled_gradient;
+            sum_scaled_gradient_norm += scaled_gradient * norm_row[dim_index];
         }
-        sum_scaled_grad      *= inv_D;
-        sum_scaled_grad_norm *= inv_D;
+        sum_scaled_gradient      *= inv_D;
+        sum_scaled_gradient_norm *= inv_D;
 
         for (Index dim_index = 0; dim_index < embedding_dimension; ++dim_index)
         {
-            const float scaled_grad = gamma_data[dim_index] * output_delta_row[dim_index];
-            input_delta_row[dim_index] = (scaled_grad - sum_scaled_grad - norm_row[dim_index] * sum_scaled_grad_norm) * inv_std;
+            const float scaled_gradient = gamma_data[dim_index] * output_delta_row[dim_index];
+            input_delta_row[dim_index] = (scaled_gradient - sum_scaled_gradient - norm_row[dim_index] * sum_scaled_gradient_norm) * inv_std;
         }
     }
 }
@@ -1352,11 +1347,11 @@ void MultiHeadProjection::apply(const TensorView& input, TensorView& head_output
     split_heads(scratch_4d, head_output);
 }
 
-void MultiHeadProjection::apply_delta(const TensorView& head_grad,
+void MultiHeadProjection::apply_delta(const TensorView& head_gradient,
                                       const TensorView& input,
-                                      TensorView& input_grad,
-                                      TensorView& weight_grad,
-                                      TensorView& bias_grad,
+                                      TensorView& input_gradient,
+                                      TensorView& weight_gradient,
+                                      TensorView& bias_gradient,
                                       bool accumulate,
                                       float* scratch) const
 {
@@ -1364,14 +1359,14 @@ void MultiHeadProjection::apply_delta(const TensorView& head_grad,
     const Index seq_len    = input.shape[1];
     const Index rows       = batch_size * seq_len;
 
-    TensorView scratch_4d(scratch, {batch_size, seq_len, heads_number, head_dimension}, head_grad.type);
-    merge_heads(head_grad, scratch_4d);
+    TensorView scratch_4d(scratch, {batch_size, seq_len, heads_number, head_dimension}, head_gradient.type);
+    merge_heads(head_gradient, scratch_4d);
 
-    TensorView scratch_2d(scratch, {rows, input_features}, head_grad.type);
-    TensorView input_2d      = input.reshape({rows, input_features});
-    TensorView input_grad_2d = input_grad.reshape({rows, input_features});
+    TensorView scratch_2d(scratch, {rows, input_features}, head_gradient.type);
+    TensorView input_2d          = input.reshape({rows, input_features});
+    TensorView input_gradient_2d = input_gradient.reshape({rows, input_features});
 
-    combination.apply_delta(scratch_2d, input_2d, input_grad_2d, weight_grad, bias_grad, accumulate);
+    combination.apply_delta(scratch_2d, input_2d, input_gradient_2d, weight_gradient, bias_gradient, accumulate);
 }
 
 
@@ -1406,17 +1401,6 @@ float Attention::scaling_factor() const
 
 vector<pair<Shape, Type>> Attention::forward_scratch_specs(Index batch_size) const
 {
-    // GPU SDPA precondition: when cuDNN frontend is available, GPU is the
-    // configured device, dtype is BF16/FP16, and dropout is off, the operator
-    // dispatches to fused Flash Attention which doesn't materialize the
-    // attention-weights matrix. Skip allocating the big buffers in that case.
-    //
-    // Contract: this decision is frozen at ForwardPropagation construction
-    // time. Calling set_dropout_rate() *after* this point with a non-zero rate
-    // can put the layer in a state where apply_gpu wants to fall back to
-    // apply_cpu but the scratch buffers don't exist. Set dropout before
-    // compiling the network on GPU; the runtime guard in apply_gpu / apply_delta_gpu
-    // will throw a clear error if this contract is violated.
     bool sdpa_will_be_used = false;
 #ifdef OPENNN_HAS_CUDNN_FRONTEND
     sdpa_will_be_used =
@@ -1803,7 +1787,7 @@ void Attention::apply_cpu(const TensorView& query,
                     float max_abs = 0.0f;
                     for (Index k = 0; k < embedding_dimension; ++k)
                     {
-                        const float abs_value = std::abs(source_row[k]);
+                        const float abs_value = abs(source_row[k]);
                         if (abs_value > max_abs) max_abs = abs_value;
                     }
                     if (max_abs > EPSILON) continue;
@@ -1910,21 +1894,21 @@ void Attention::apply_delta(const TensorView& query,
                             const TensorView& attention_output,
                             const TensorView& attention_weights,
                             const TensorView& attention_weights_dropped,
-                            const TensorView& output_grad,
-                            TensorView& attention_weight_grad,
-                            TensorView& query_grad,
-                            TensorView& key_grad,
-                            TensorView& value_grad) const
+                            const TensorView& output_gradient,
+                            TensorView& attention_weight_gradient,
+                            TensorView& query_gradient,
+                            TensorView& key_gradient,
+                            TensorView& value_gradient) const
 {
     Configuration::instance().is_gpu()
         ? apply_delta_gpu(query, key, value, attention_output,
                           attention_weights, attention_weights_dropped,
-                          output_grad, attention_weight_grad,
-                          query_grad, key_grad, value_grad)
+                          output_gradient, attention_weight_gradient,
+                          query_gradient, key_gradient, value_gradient)
         : apply_delta_cpu(query, key, value, attention_output,
                           attention_weights, attention_weights_dropped,
-                          output_grad, attention_weight_grad,
-                          query_grad, key_grad, value_grad);
+                          output_gradient, attention_weight_gradient,
+                          query_gradient, key_gradient, value_gradient);
 }
 
 void Attention::apply_delta_cpu(const TensorView& query,
@@ -1933,23 +1917,23 @@ void Attention::apply_delta_cpu(const TensorView& query,
                                 const TensorView& /*attention_output*/,
                                 const TensorView& attention_weights,
                                 const TensorView& attention_weights_dropped,
-                                const TensorView& output_grad,
-                                TensorView& attention_weight_grad,
-                                TensorView& query_grad,
-                                TensorView& key_grad,
-                                TensorView& value_grad) const
+                                const TensorView& output_gradient,
+                                TensorView& attention_weight_gradient,
+                                TensorView& query_gradient,
+                                TensorView& key_gradient,
+                                TensorView& value_gradient) const
 {
     const TensorView& attention_used = dropout.active()
         ? attention_weights_dropped
         : attention_weights;
 
-    multiply(attention_used, true, output_grad, false, value_grad);
-    multiply(output_grad, false, value, true, attention_weight_grad);
+    multiply(attention_used, true, output_gradient, false, value_gradient);
+    multiply(output_gradient, false, value, true, attention_weight_gradient);
 
     if (dropout.active())
-        dropout.apply_delta(attention_weight_grad);
+        dropout.apply_delta(attention_weight_gradient);
 
-    if (!attention_weight_grad.empty())
+    if (!attention_weight_gradient.empty())
     {
 #ifdef OPENNN_WITH_CUDA
         if (Configuration::instance().is_gpu())
@@ -1959,15 +1943,15 @@ void Attention::apply_delta_cpu(const TensorView& query,
                                              CUDNN_SOFTMAX_MODE_CHANNEL,
                                              &one,
                                              attention_weights.get_descriptor(),     attention_weights.data,
-                                             attention_weight_grad.get_descriptor(), attention_weight_grad.data,
+                                             attention_weight_gradient.get_descriptor(), attention_weight_gradient.data,
                                              &zero,
-                                             attention_weight_grad.get_descriptor(), attention_weight_grad.data));
+                                             attention_weight_gradient.get_descriptor(), attention_weight_gradient.data));
         }
         else
 #endif
         {
             const MatrixMap y = attention_weights.as_flat_matrix();
-            MatrixMap dY = attention_weight_grad.as_flat_matrix();
+            MatrixMap dY = attention_weight_gradient.as_flat_matrix();
 
             const VectorR dot = (y.array() * dY.array()).rowwise().sum();
             dY.array() = y.array() * (dY.colwise() - dot).array();
@@ -1975,8 +1959,8 @@ void Attention::apply_delta_cpu(const TensorView& query,
     }
 
     const float scale = scaling_factor();
-    multiply(attention_weight_grad, false, key,   false, query_grad, scale, 0.0f);
-    multiply(attention_weight_grad, true,  query, false, key_grad,   scale, 0.0f);
+    multiply(attention_weight_gradient, false, key,   false, query_gradient, scale, 0.0f);
+    multiply(attention_weight_gradient, true,  query, false, key_gradient,   scale, 0.0f);
 }
 
 void Attention::apply_delta_gpu(const TensorView& query,
@@ -1985,11 +1969,11 @@ void Attention::apply_delta_gpu(const TensorView& query,
                                 const TensorView& attention_output,
                                 const TensorView& attention_weights,
                                 const TensorView& attention_weights_dropped,
-                                const TensorView& output_grad,
-                                TensorView& attention_weight_grad,
-                                TensorView& query_grad,
-                                TensorView& key_grad,
-                                TensorView& value_grad) const
+                                const TensorView& output_gradient,
+                                TensorView& attention_weight_gradient,
+                                TensorView& query_gradient,
+                                TensorView& key_gradient,
+                                TensorView& value_gradient) const
 {
 #ifdef OPENNN_HAS_CUDNN_FRONTEND
     // Same support gates as forward. The forward path that produced this
@@ -2003,8 +1987,8 @@ void Attention::apply_delta_gpu(const TensorView& query,
         require_attention_scratch(attention_weights, "SDPA backward fallback triggered");
         apply_delta_cpu(query, key, value, attention_output,
                         attention_weights, attention_weights_dropped,
-                        output_grad, attention_weight_grad,
-                        query_grad, key_grad, value_grad);
+                        output_gradient, attention_weight_gradient,
+                        query_gradient, key_gradient, value_gradient);
         return;
     }
 
@@ -2027,8 +2011,8 @@ void Attention::apply_delta_gpu(const TensorView& query,
         require_attention_scratch(attention_weights, "SDPA backward without matching forward entry");
         apply_delta_cpu(query, key, value, attention_output,
                         attention_weights, attention_weights_dropped,
-                        output_grad, attention_weight_grad,
-                        query_grad, key_grad, value_grad);
+                        output_gradient, attention_weight_gradient,
+                        query_gradient, key_gradient, value_gradient);
         return;
     }
 
@@ -2041,11 +2025,11 @@ void Attention::apply_delta_gpu(const TensorView& query,
     tp[entry.bwd_K]     = const_cast<float*>(key.as<float>());
     tp[entry.bwd_V]     = const_cast<float*>(value.as<float>());
     tp[entry.bwd_O]     = const_cast<float*>(attention_output.as<float>());
-    tp[entry.bwd_dO]    = const_cast<float*>(output_grad.as<float>());
+    tp[entry.bwd_dO]    = const_cast<float*>(output_gradient.as<float>());
     tp[entry.bwd_Stats] = entry.stats_buf;
-    tp[entry.bwd_dQ]    = query_grad.data;
-    tp[entry.bwd_dK]    = key_grad.data;
-    tp[entry.bwd_dV]    = value_grad.data;
+    tp[entry.bwd_dQ]    = query_gradient.data;
+    tp[entry.bwd_dK]    = key_gradient.data;
+    tp[entry.bwd_dV]    = value_gradient.data;
 
     const auto status = entry.bwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.bwd_workspace_buf);
     if (status.is_bad())
@@ -2053,8 +2037,8 @@ void Attention::apply_delta_gpu(const TensorView& query,
 #else
     apply_delta_cpu(query, key, value, attention_output,
                     attention_weights, attention_weights_dropped,
-                    output_grad, attention_weight_grad,
-                    query_grad, key_grad, value_grad);
+                    output_gradient, attention_weight_gradient,
+                    query_gradient, key_gradient, value_gradient);
 #endif
 }
 
@@ -2236,7 +2220,7 @@ void Pool::apply_delta_cpu(const TensorView& output_delta,
                            TensorView& input_delta) const
 {
     const TensorMap4 out_grads = output_delta.as_tensor<4>();
-    TensorMap4 in_grads        = input_delta.as_tensor<4>().setZero();
+    TensorMap4 in_gradients        = input_delta.as_tensor<4>().setZero();
 
     const Index batch_size    = out_grads.dimension(0);
     const Index output_height = out_grads.dimension(1);
@@ -2259,7 +2243,7 @@ void Pool::apply_delta_cpu(const TensorView& output_delta,
                             max_indices(batch_index, output_row, output_column, channel_index));
                         const Index pool_row    = maximal_index / pool_width;
                         const Index pool_column = maximal_index % pool_width;
-                        in_grads(batch_index,
+                        in_gradients(batch_index,
                                  input_row_start + pool_row,
                                  input_column_start + pool_column,
                                  channel_index)
@@ -2291,7 +2275,7 @@ void Pool::apply_delta_cpu(const TensorView& output_delta,
 
                     for (Index pool_row = pool_row_start; pool_row < pool_row_end; ++pool_row)
                         for (Index pool_column = pool_col_start; pool_column < pool_col_end; ++pool_column)
-                            in_grads(batch_index,
+                            in_gradients(batch_index,
                                      input_row_start + pool_row,
                                      input_column_start + pool_column,
                                      channel_index) += average_gradient;

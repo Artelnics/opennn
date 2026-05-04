@@ -45,8 +45,7 @@ struct Dropout : Operator
 
     VectorR mask_cpu;
 
-    uint8_t* mask        = nullptr;
-    size_t   mask_bytes  = 0;
+    Buffer mask{Device::CUDA};
 
     bool active() const { return rate > 0.0f; }
 
@@ -254,10 +253,8 @@ struct Convolution : Operator
     cudnnConvolutionBwdDataAlgo_t   algorithm_data    = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
     cudnnConvolutionBwdFilterAlgo_t algorithm_filter  = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
 
-    void*  workspace                       = nullptr;
-    size_t workspace_size                  = 0;
-    void*  backward_filter_workspace       = nullptr;
-    size_t backward_filter_workspace_size  = 0;
+    Buffer workspace{Device::CUDA};
+    Buffer backward_filter_workspace{Device::CUDA};
 
     void set(Index input_h, Index input_w, Index input_c,
              Index kernels_n, Index kernel_h, Index kernel_w, Index kernel_c,
@@ -363,11 +360,11 @@ struct MultiHeadProjection : Operator
     // scratch:     batch * seq_len * input_features floats (caller-owned)
     void apply(const TensorView& input, TensorView& head_output, float* scratch);
 
-    void apply_delta(const TensorView& head_grad,
+    void apply_delta(const TensorView& head_gradient,
                      const TensorView& input,
-                     TensorView& input_grad,
-                     TensorView& weight_grad,
-                     TensorView& bias_grad,
+                     TensorView& input_gradient,
+                     TensorView& weight_gradient,
+                     TensorView& bias_gradient,
                      bool accumulate,
                      float* scratch) const;
 };
@@ -413,11 +410,11 @@ struct Attention : Operator
                      const TensorView& attention_output,   // forward output O — only read by GPU SDPA
                      const TensorView& attention_weights,
                      const TensorView& attention_weights_dropped,
-                     const TensorView& output_grad,        // {B, H, Q_seq, D}
-                     TensorView& attention_weight_grad,    // CPU-only scratch; empty on GPU
-                     TensorView& query_grad,
-                     TensorView& key_grad,
-                     TensorView& value_grad) const;
+                     const TensorView& output_gradient,        // {B, H, Q_seq, D}
+                     TensorView& attention_weight_gradient,    // CPU-only scratch; empty on GPU
+                     TensorView& query_gradient,
+                     TensorView& key_gradient,
+                     TensorView& value_gradient) const;
 
     void to_JSON(JsonWriter& w) const override;
     void from_JSON(const Json* parent) override;
@@ -469,11 +466,11 @@ private:
                          const TensorView& attention_output,
                          const TensorView& attention_weights,
                          const TensorView& attention_weights_dropped,
-                         const TensorView& output_grad,
-                         TensorView& attention_weight_grad,
-                         TensorView& query_grad,
-                         TensorView& key_grad,
-                         TensorView& value_grad) const;
+                         const TensorView& output_gradient,
+                         TensorView& attention_weight_gradient,
+                         TensorView& query_gradient,
+                         TensorView& key_gradient,
+                         TensorView& value_gradient) const;
 
     void apply_delta_gpu(const TensorView& query,
                          const TensorView& key,
@@ -481,11 +478,11 @@ private:
                          const TensorView& attention_output,
                          const TensorView& attention_weights,
                          const TensorView& attention_weights_dropped,
-                         const TensorView& output_grad,
-                         TensorView& attention_weight_grad,
-                         TensorView& query_grad,
-                         TensorView& key_grad,
-                         TensorView& value_grad) const;
+                         const TensorView& output_gradient,
+                         TensorView& attention_weight_gradient,
+                         TensorView& query_gradient,
+                         TensorView& key_gradient,
+                         TensorView& value_gradient) const;
 
     // SDPA graph cache: keyed on shape/dtype/flags. Built lazily on first
     // forward/backward call with a given key, reused on shape match.

@@ -134,6 +134,12 @@ struct Buffer
         bytes = n_bytes;
     }
 
+    void grow_to(Index n_bytes)
+    {
+        if (n_bytes > bytes)
+            resize_bytes(n_bytes, device_type);
+    }
+
     void setZero()
     {
         if (!data) return;

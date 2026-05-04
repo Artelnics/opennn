@@ -42,8 +42,8 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         {
             // LanguageDataset inputs are integer token IDs: BF16's 7 mantissa bits round vocab IDs > 128, so keep FP32.
             const bool integer_inputs = (dynamic_cast<const LanguageDataset*>(dataset) != nullptr);
-            const bool bp16 = Configuration::instance().is_bf16_training() && !integer_inputs;
-            const Index elem_bytes = bp16 ? Index(sizeof(__nv_bfloat16)) : Index(sizeof(float));
+            const bool bf16 = Configuration::instance().is_bf16_training() && !integer_inputs;
+            const Index elem_bytes = bf16 ? Index(sizeof(__nv_bfloat16)) : Index(sizeof(float));
             input.resize_bytes(input_shape.size() * elem_bytes, Device::CUDA);
 
             num_input_features = dataset->get_features_number("Input");
@@ -56,12 +56,8 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
                 inputs_host_allocated_size = input_size;
             }
 
-            if (bp16 && input_size > inputs_fp32_staging_size)
-            {
-                if (inputs_fp32_staging) cudaFree(inputs_fp32_staging);
-                CHECK_CUDA(cudaMalloc(&inputs_fp32_staging, input_size * sizeof(float)));
-                inputs_fp32_staging_size = input_size;
-            }
+            if (bf16)
+                inputs_fp32_staging.grow_to(input_size * Index(sizeof(float)));
         }
         else
 #endif
@@ -176,9 +172,9 @@ void Batch::fill(const vector<Index>& sample_indices,
 {
     const bool is_gpu = Configuration::instance().is_gpu();
 
-    float* input_dst   = is_gpu ? inputs_host   : input.as<float>();
-    float* decoder_dst = is_gpu ? decoder_host  : decoder.as<float>();
-    float* target_dst  = is_gpu ? targets_host  : target.as<float>();
+    float* input_buffer   = is_gpu ? inputs_host   : input.as<float>();
+    float* decoder_buffer = is_gpu ? decoder_host  : decoder.as<float>();
+    float* target_buffer  = is_gpu ? targets_host  : target.as<float>();
 
     const bool parallelize = !is_gpu;
 
@@ -189,15 +185,15 @@ void Batch::fill(const vector<Index>& sample_indices,
     if (target_contiguous < 0 && !target_indices.empty())
         target_contiguous = is_contiguous(target_indices) ? 1 : 0;
 
-    dataset->fill_inputs(sample_indices, input_indices, input_dst, parallelize, input_contiguous);
+    dataset->fill_inputs(sample_indices, input_indices, input_buffer, parallelize, input_contiguous);
 
     if (augment)
-        dataset->augment_inputs(input_dst, sample_indices.size());
+        dataset->augment_inputs(input_buffer, sample_indices.size());
 
     if (!decoder_shape.empty())
-        dataset->fill_decoder(sample_indices, decoder_indices, decoder_dst, parallelize, decoder_contiguous);
+        dataset->fill_decoder(sample_indices, decoder_indices, decoder_buffer, parallelize, decoder_contiguous);
 
-    dataset->fill_targets(sample_indices, target_indices, target_dst, parallelize, target_contiguous);
+    dataset->fill_targets(sample_indices, target_indices, target_buffer, parallelize, target_contiguous);
 }
 
 Index Batch::get_samples_number() const
@@ -255,13 +251,13 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
     const Index input_size = current_batch_size * num_input_features;
     const Index target_size = current_batch_size * num_target_features;
 
-    if (inputs_fp32_staging != nullptr)
+    if (inputs_fp32_staging.data != nullptr)
     {
-        CHECK_CUDA(cudaMemcpyAsync(inputs_fp32_staging, inputs_host,
+        CHECK_CUDA(cudaMemcpyAsync(inputs_fp32_staging.data, inputs_host,
                                    input_size * sizeof(float),
                                    cudaMemcpyHostToDevice, stream));
         cast_fp32_to_bf16_cuda(input_size,
-                               static_cast<const float*>(inputs_fp32_staging),
+                               inputs_fp32_staging.as<float>(),
                                input.as<__nv_bfloat16>(),
                                stream);
     }

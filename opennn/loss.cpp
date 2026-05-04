@@ -93,7 +93,7 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
     const TensorView target = batch.get_targets();
 
 #ifdef OPENNN_WITH_CUDA
-    float* workspace_device = Configuration::instance().is_gpu() ? back_propagation.errors_device : nullptr;
+    float* workspace_device = Configuration::instance().is_gpu() ? back_propagation.errors_device.as<float>() : nullptr;
 #else
     float* workspace_device = nullptr;
 #endif

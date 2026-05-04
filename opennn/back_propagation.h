@@ -26,12 +26,7 @@ struct BackPropagation
 {
     BackPropagation(const Index = 0, Loss* = nullptr);
 
-    virtual ~BackPropagation()
-    {
-#ifdef OPENNN_WITH_CUDA
-        if (errors_device) { cudaFree(errors_device); errors_device = nullptr; }
-#endif
-    }
+    virtual ~BackPropagation() = default;
 
     void set(const Index = 0, Loss* = nullptr);
 
@@ -67,7 +62,7 @@ struct BackPropagation
 
 #ifdef OPENNN_WITH_CUDA
 
-    float* errors_device = nullptr;
+    Buffer errors_device{Device::CUDA};
 
     TensorView output_deltas_view_device;
 

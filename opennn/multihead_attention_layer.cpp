@@ -206,33 +206,33 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 
     float* transpose_scratch = forward_views[TransposeScratch][0].as<float>();
 
-    TensorView concat_grad_flat  = delta_views[InputQueryDelta][0].reshape(flat_shape);
+    TensorView concat_gradient_flat  = delta_views[InputQueryDelta][0].reshape(flat_shape);
     TensorView output_delta_flat = output_delta.reshape(flat_shape);
     TensorView concat_in_flat    = forward_views[ConcatenatedAttentionOutputs][0].reshape(flat_shape);
 
     output_projection.apply_delta(output_delta_flat,
                                   concat_in_flat,
-                                  concat_grad_flat,
+                                  concat_gradient_flat,
                                   gradient_views[ProjectionWeight],
                                   gradient_views[ProjectionBias],
                                   false);
 
-    TensorView& att_weight_grad = delta_views[AttentionWeightDelta][0];
-    TensorView& value_grad      = delta_views[ValueDelta][0];
+    TensorView& att_weight_gradient = delta_views[AttentionWeightDelta][0];
+    TensorView& value_gradient      = delta_views[ValueDelta][0];
 
     const Index head_dimension = get_head_dimension();
 
-    TensorView query_grad(delta_views[InputQueryDelta][0].as<float>(),
+    TensorView query_gradient(delta_views[InputQueryDelta][0].as<float>(),
                           heads_shape(batch_size),
                           activation_dtype);
-    TensorView key_grad(delta_views[InputSourceDelta][0].as<float>(),
+    TensorView key_gradient(delta_views[InputSourceDelta][0].as<float>(),
                         {batch_size, heads_number, source_sequence_length, head_dimension},
                         activation_dtype);
 
-    TensorView concat_grad_4d = delta_views[InputQueryDelta][0].reshape(concat_shape(batch_size));
+    TensorView concat_gradient_4d = delta_views[InputQueryDelta][0].reshape(concat_shape(batch_size));
     TensorView scratch_4d     = forward_views[TransposeScratch][0].reshape(heads_shape(batch_size));
 
-    split_heads(concat_grad_4d, scratch_4d);
+    split_heads(concat_gradient_4d, scratch_4d);
 
     attention.apply_delta(forward_views[Query][0],
                           forward_views[Key][0],
@@ -241,27 +241,27 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
                           forward_views[AttentionWeights][0],
                           forward_views[AttentionWeightsDropped][0],
                           scratch_4d,
-                          att_weight_grad,
-                          query_grad,
-                          key_grad,
-                          value_grad);
+                          att_weight_gradient,
+                          query_gradient,
+                          key_gradient,
+                          value_gradient);
 
-    query_projection.apply_delta(query_grad, query_input,
+    query_projection.apply_delta(query_gradient, query_input,
                                  delta_views[InputQueryDelta][0],
                                  gradient_views[QueryWeight], gradient_views[QueryBias],
                                  false, transpose_scratch);
 
-    TensorView& kv_input_grad = self_attention
+    TensorView& kv_input_gradient = self_attention
         ? delta_views[InputQueryDelta][0]
         : delta_views[InputSourceDelta][0];
 
-    key_projection.apply_delta(key_grad, source_input,
-                               kv_input_grad,
+    key_projection.apply_delta(key_gradient, source_input,
+                               kv_input_gradient,
                                gradient_views[KeyWeight], gradient_views[KeyBias],
                                self_attention, transpose_scratch);
 
-    value_projection.apply_delta(value_grad, source_input,
-                                 kv_input_grad,
+    value_projection.apply_delta(value_gradient, source_input,
+                                 kv_input_gradient,
                                  gradient_views[ValueWeight], gradient_views[ValueBias],
                                  true, transpose_scratch);
 }

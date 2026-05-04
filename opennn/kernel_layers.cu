@@ -547,7 +547,7 @@ template void max_pooling_3d_backward_cuda<__nv_bfloat16>(const Index, const __n
 // Per-TU pooling scratch. Sized lazily, never freed (process-lifetime allocation).
 namespace { float* pooling_scratch_ = nullptr; size_t pooling_scratch_size_ = 0; }
 
-static float* get_pooling_scratch(size_t floats_needed)
+static float* ensure_pooling_scratch(size_t floats_needed)
 {
     if (floats_needed > pooling_scratch_size_)
     {
@@ -613,7 +613,7 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
     const int B  = static_cast<int>(n) / F;
     const int BS = B * S;
 
-    float* scratch    = get_pooling_scratch(static_cast<size_t>(BS) + B);
+    float* scratch    = ensure_pooling_scratch(static_cast<size_t>(BS) + B);
     float* valid_mask = scratch;
     float* counts     = scratch + BS;
     cudaMemset(counts, 0, B * sizeof(float));
@@ -660,7 +660,7 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
     const int B  = static_cast<int>(n) / F;
     const int BS = B * S;
 
-    float* scratch    = get_pooling_scratch(static_cast<size_t>(BS) + B);
+    float* scratch    = ensure_pooling_scratch(static_cast<size_t>(BS) + B);
     float* valid_mask = scratch;
     float* counts     = scratch + BS;
     cudaMemset(counts, 0, B * sizeof(float));

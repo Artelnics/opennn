@@ -78,7 +78,6 @@ const Configuration::Resolved& Configuration::resolve_slow() const
                 throw runtime_error(string("Configuration: BF16 ") + role + " requires CUDA compute capability >= 8.0 (Ampere+).");
             return Type::BF16;
         case Type::INT8:
-            // Placeholder: enum exists for future API; no INT8 calibration / kernels yet.
             throw runtime_error(string("Configuration: INT8 ") + role + " not yet supported (placeholder).");
         }
         return Type::FP32;
@@ -88,8 +87,8 @@ const Configuration::Resolved& Configuration::resolve_slow() const
 
     // Inference defaults to mirror training so the BF16 working copy (if any) is reused.
     resolved.inference_type = (inference_type == Type::Auto)
-                                   ? resolved.training_type
-                                   : resolve_dtype(inference_type, "inference");
+        ? resolved.training_type
+        : resolve_dtype(inference_type, "inference");
 
     cached_resolved = resolved;
     cache_valid = true;

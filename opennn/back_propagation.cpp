@@ -73,8 +73,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     delta_views.resize(layers_number);
 
 #ifdef OPENNN_WITH_CUDA
-    const bool is_gpu = Configuration::instance().is_gpu();
-    if (is_gpu)
+    if (Configuration::instance().is_gpu())
     {
         const Type activation_dtype = neural_network->get_training_type();
         const Index activation_bytes = type_bytes(activation_dtype);
@@ -196,9 +195,8 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             }
         }
 
-        if (errors_device) { cudaFree(errors_device); errors_device = nullptr; }
         const Index outputs_number = output_shape[0];
-        CHECK_CUDA(cudaMalloc(&errors_device, batch_size * outputs_number * sizeof(float)));
+        errors_device.resize_bytes(batch_size * outputs_number * Index(sizeof(float)), Device::CUDA);
 
         output_deltas_view_device = TensorView(output_deltas.as<float>(),
                                                output_delta_dimensions,
