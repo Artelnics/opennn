@@ -857,46 +857,50 @@ public:
         const Index batch_size = forward_propagation->inputs[0].size() / inputs_number;
         const Index biases_number = biases.size();
 
-        const MatrixMap inputs(forward_propagation->inputs[0].data, batch_size, inputs_number);
-        MatrixMap output_gradients(back_propagation->output_gradients[0].data, batch_size, outputs_number);
-
         DenseForwardPropagation<Rank>* dense_fp = static_cast<DenseForwardPropagation<Rank>*>(forward_propagation.get());
         DenseBackPropagationLM* dense_bp_lm = static_cast<DenseBackPropagationLM*>(back_propagation.get());
 
         MatrixMap jacobian = matrix_map(dense_bp_lm->squared_errors_Jacobian);
         jacobian.setZero();
 
+        const Index total_error_terms = jacobian.rows();
+
+        if(total_error_terms == 0 || batch_size == 0) return;
+
+        const Index network_outputs = total_error_terms / batch_size;
+
+        // Residual row index convention is outputs-major: row r = k * batch_size + s,
+        // matching errors.reshaped() which Eigen flattens column-major by default.
+
+        const MatrixMap inputs(forward_propagation->inputs[0].data, batch_size, inputs_number);
+        MatrixMap output_gradients(back_propagation->output_gradients[0].data, total_error_terms, outputs_number);
+
         if(activation_function != "Softmax")
         {
             const MatrixMap activation_derivatives(dense_fp->activation_derivatives.data, batch_size, outputs_number);
-            output_gradients.array() *= activation_derivatives.array();
-        }
 
-        const Index total_error_terms = jacobian.rows();
-        const Index network_outputs = (batch_size > 0) ? total_error_terms / batch_size : 1;
-
-        for(Index j = 0; j < outputs_number; j++)
             for(Index k = 0; k < network_outputs; ++k)
                 for(Index s = 0; s < batch_size; ++s)
-                    jacobian(s * network_outputs + k, j) = output_gradients(s, j);
+                    output_gradients.row(k * batch_size + s).array() *= activation_derivatives.row(s).array();
+        }
 
-        for(Index i = 0; i < inputs_number; i++)
+        if(biases_number > 0)
+            jacobian.block(0, 0, total_error_terms, outputs_number) = output_gradients;
+
+        for(Index i = 0; i < inputs_number; ++i)
         {
-            for(Index j = 0; j < outputs_number; j++)
+            const Index col_start = biases_number + i * outputs_number;
+
+            for(Index k = 0; k < network_outputs; ++k)
             {
-                const Index weight_col = biases_number + i * outputs_number + j;
-
-                const VectorR interaction = output_gradients.col(j).array() * inputs.col(i).array();
-
-                for(Index k = 0; k < network_outputs; ++k)
-                    for(Index s = 0; s < batch_size; ++s)
-                        jacobian(s * network_outputs + k, weight_col) = interaction(s);
+                jacobian.block(k * batch_size, col_start, batch_size, outputs_number)
+                    = output_gradients.block(k * batch_size, 0, batch_size, outputs_number).array().colwise() * inputs.col(i).array();
             }
         }
 
         if(!is_first_layer)
         {
-            MatrixMap input_gradients(dense_bp_lm->input_gradients[0].data, batch_size, inputs_number);
+            MatrixMap input_gradients(dense_bp_lm->input_gradients[0].data, total_error_terms, inputs_number);
             const MatrixMap weights_map(weights.data, inputs_number, outputs_number);
 
             input_gradients.noalias() = output_gradients * weights_map.transpose();

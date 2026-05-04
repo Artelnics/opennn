@@ -1229,10 +1229,10 @@ void BackPropagationLM::set(const Index new_samples_number,
     squared_errors.resize(total_error_terms);
 
     const Shape output_shape = neural_network_ptr->get_output_shape();
-    output_gradient_dimensions = { samples_number };
+    output_gradient_dimensions = { total_error_terms };
     output_gradient_dimensions.insert(output_gradient_dimensions.end(), output_shape.begin(), output_shape.end());
 
-    const Index total_output_size = accumulate(output_shape.begin(), output_shape.end(), samples_number, multiplies<Index>());
+    const Index total_output_size = total_error_terms * outputs_number;
     output_gradients.resize(total_output_size);
     output_gradients.setZero();
 }

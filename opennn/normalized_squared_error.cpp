@@ -166,16 +166,19 @@ void NormalizedSquaredError::calculate_output_gradients(const Batch& batch,
                                                        ForwardPropagation&,
                                                        BackPropagationLM & back_propagation) const
 {
-    // @todo Is this correct?
-
     const Index total_samples_number = dataset->get_used_samples_number();
     const Index batch_samples_number = batch.get_samples_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
     MatrixMap output_gradients = matrix_map(back_propagation.get_output_gradients());
 
     const type coefficient = sqrt(type(2.0 * total_samples_number) / (type(batch_samples_number) * normalization_coefficient));
 
-    output_gradients.setConstant(coefficient);
+    output_gradients.setZero();
+
+    for(Index k = 0; k < outputs_number; ++k)
+        for(Index s = 0; s < batch_samples_number; ++s)
+            output_gradients(k * batch_samples_number + s, k) = coefficient;
 }
 
 

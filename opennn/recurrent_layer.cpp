@@ -297,8 +297,8 @@ void Recurrent::back_propagate(unique_ptr<LayerForwardPropagation>& forward_prop
     next_delta.setZero();
 
     VectorR step_deriv_s(outputs_number);
-    VectorR step_input_s(input_size);
-    VectorR step_prev_hidden_s(outputs_number);
+    VectorR x_t_i(real_batch_size);
+    VectorR h_prev_t_i(real_batch_size);
 
     for(Index t = past_time_steps - 1; t >= 0; t--)
     {
@@ -307,45 +307,49 @@ void Recurrent::back_propagate(unique_ptr<LayerForwardPropagation>& forward_prop
         else
             delta = next_delta;
 
+        // Apply activation derivatives: for each (r, s), delta.row(r*batch + s) *= deriv[s, t, :]
         for(Index s = 0; s < real_batch_size; s++)
         {
             TensorMap1(step_deriv_s.data(), outputs_number) = all_activation_derivatives.chip(s, 0).chip(t, 0);
 
             for(Index r = 0; r < network_outputs; r++)
-                delta.row(s * network_outputs + r).array() *= step_deriv_s.transpose().array();
+                delta.row(r * real_batch_size + s).array() *= step_deriv_s.transpose().array();
         }
 
+        // Bias jacobian: jacobian.block(:, biases) += delta (same row order)
         jacobian.block(0, biases_offset, total_error_terms, outputs_number).noalias() += delta;
 
-        for(Index s = 0; s < real_batch_size; s++)
+        // Input weight jacobian:
+        //   jacobian[r*batch + s, input_weights + i*N + j] += inputs[s, t, i] * delta[r*batch + s, j]
+        for(Index i = 0; i < input_size; i++)
         {
-            TensorMap1(step_input_s.data(), input_size) = input_sequences.chip(s, 0).chip(t, 0);
+            for(Index s = 0; s < real_batch_size; s++)
+                x_t_i(s) = input_sequences(s, t, i);
 
-            const auto delta_block = delta.middleRows(s * network_outputs, network_outputs);
+            const Index col_start = input_weights_offset + i * outputs_number;
 
-            for(Index i = 0; i < input_size; i++)
+            for(Index r = 0; r < network_outputs; r++)
             {
-                const Index col_start = input_weights_offset + i * outputs_number;
-
-                jacobian.block(s * network_outputs, col_start, network_outputs, outputs_number).noalias()
-                    += step_input_s(i) * delta_block;
+                jacobian.block(r * real_batch_size, col_start, real_batch_size, outputs_number).noalias()
+                    += (delta.middleRows(r * real_batch_size, real_batch_size).array().colwise() * x_t_i.array()).matrix();
             }
         }
 
+        // Recurrent weight jacobian (only for t > 0):
+        //   jacobian[r*batch + s, recurrent_weights + i*N + j] += hidden[s, t-1, i] * delta[r*batch + s, j]
         if(t > 0)
         {
-            for(Index s = 0; s < real_batch_size; s++)
+            for(Index i = 0; i < outputs_number; i++)
             {
-                TensorMap1(step_prev_hidden_s.data(), outputs_number) = all_hidden_states.chip(s, 0).chip(t - 1, 0);
+                for(Index s = 0; s < real_batch_size; s++)
+                    h_prev_t_i(s) = all_hidden_states(s, t - 1, i);
 
-                const auto delta_block = delta.middleRows(s * network_outputs, network_outputs);
+                const Index col_start = recurrent_weights_offset + i * outputs_number;
 
-                for(Index i = 0; i < outputs_number; i++)
+                for(Index r = 0; r < network_outputs; r++)
                 {
-                    const Index col_start = recurrent_weights_offset + i * outputs_number;
-
-                    jacobian.block(s * network_outputs, col_start, network_outputs, outputs_number).noalias()
-                        += step_prev_hidden_s(i) * delta_block;
+                    jacobian.block(r * real_batch_size, col_start, real_batch_size, outputs_number).noalias()
+                        += (delta.middleRows(r * real_batch_size, real_batch_size).array().colwise() * h_prev_t_i.array()).matrix();
                 }
             }
         }

@@ -34,6 +34,10 @@ public:
                             const ForwardPropagation&,
                             BackPropagationLM&) const override;
 
+    void calculate_squared_errors(const Batch&,
+                                  const ForwardPropagation&,
+                                  BackPropagationLM&) const override;
+
     void calculate_output_gradients(const Batch&,
                                    ForwardPropagation&,
                                    BackPropagationLM&) const override;

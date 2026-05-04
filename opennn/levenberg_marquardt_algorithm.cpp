@@ -179,6 +179,8 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     if(display) cout << "Training with Levenberg-Marquardt algorithm..." << endl;
 
+    damping_parameter = type(1.0e-3);
+
     TrainingResults results(maximum_epochs+1);
 
     // Dataset
@@ -382,28 +384,32 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         potential_parameters = parameters + parameter_updates;
 
-        neural_network->forward_propagate(batch.get_inputs(),
-                                          potential_parameters,
-                                          forward_propagation);
-
-        loss->calculate_errors(batch, forward_propagation, back_propagation_lm);
-
-        loss->calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
-
-        loss->calculate_error(batch, forward_propagation, back_propagation_lm);
-
         type new_loss_value;
+        bool step_failed = false;
 
         try
         {
+            neural_network->forward_propagate(batch.get_inputs(),
+                                              potential_parameters,
+                                              forward_propagation);
+
+            loss->calculate_errors(batch, forward_propagation, back_propagation_lm);
+
+            loss->calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+
+            loss->calculate_error(batch, forward_propagation, back_propagation_lm);
+
             new_loss_value = error + loss->calculate_regularization(potential_parameters);
 
-        }catch(const exception& e)
+            if(!isfinite(new_loss_value)) step_failed = true;
+        }
+        catch(const exception&)
         {
             new_loss_value = loss_value;
+            step_failed = true;
         }
 
-        if(new_loss_value < loss_value) // succesfull step
+        if(!step_failed && new_loss_value < loss_value) // succesfull step
         {
             set_damping_parameter(damping_parameter/damping_parameter_factor);
 
@@ -442,6 +448,8 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                 parameters(i) += parameter_updates(i);
             }
         }
+
+        set_damping_parameter(type(1.0e-3));
     }
 
     neural_network->set_parameters(parameters);
@@ -471,7 +479,7 @@ void LevenbergMarquardtAlgorithm::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "DampingParameterFactor", to_string(damping_parameter_factor));
     add_xml_element(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
     add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
-    add_xml_element(printer, "MaximumValidationFailures", to_string(maximum_validation_failures));
+    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_validation_failures));
     add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
@@ -489,7 +497,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const XMLDocument& document)
     set_damping_parameter_factor(read_xml_type(root_element, "DampingParameterFactor"));
     set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
     set_loss_goal(read_xml_type(root_element, "LossGoal"));
-    set_maximum_validation_failures(read_xml_index(root_element, "MaximumValidationFailures"));
+    set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
     set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
 }

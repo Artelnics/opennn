@@ -68,6 +68,23 @@ void MeanSquaredError::calculate_error(const Batch&,
 }
 
 
+void MeanSquaredError::calculate_squared_errors(const Batch& batch,
+                                                const ForwardPropagation&,
+                                                BackPropagationLM& back_propagation_lm) const
+{
+    const Index outputs_number = neural_network->get_outputs_number();
+    const Index batch_samples_number = batch.get_samples_number();
+
+    const MatrixR& errors = back_propagation_lm.errors;
+
+    VectorR& squared_errors = back_propagation_lm.squared_errors;
+
+    const type coefficient = sqrt(type(2) / type(batch_samples_number * outputs_number));
+
+    squared_errors = errors.reshaped() * coefficient;
+}
+
+
 void MeanSquaredError::calculate_output_gradients(const Batch& batch,
                                               ForwardPropagation&,
                                               BackPropagation& back_propagation) const
@@ -88,14 +105,22 @@ void MeanSquaredError::calculate_output_gradients(const Batch& batch,
 }
 
 
-void MeanSquaredError::calculate_output_gradients(const Batch&,
+void MeanSquaredError::calculate_output_gradients(const Batch& batch,
                                                  ForwardPropagation&,
                                                  BackPropagationLM& back_propagation) const
 {
+    const Index outputs_number = neural_network->get_outputs_number();
+    const Index batch_samples_number = batch.get_samples_number();
+
     MatrixMap output_gradients = matrix_map(back_propagation.get_output_gradients());
 
-    output_gradients.array() = back_propagation.errors.array() /
-                               (back_propagation.squared_errors.array() + EPSILON);
+    const type coefficient = sqrt(type(2) / type(batch_samples_number * outputs_number));
+
+    output_gradients.setZero();
+
+    for(Index k = 0; k < outputs_number; ++k)
+        for(Index s = 0; s < batch_samples_number; ++s)
+            output_gradients(k * batch_samples_number + s, k) = coefficient;
 }
 
 

@@ -3096,7 +3096,15 @@ Index read_xml_index(const XMLElement* root, const string& element_name)
     if(!text)
         throw runtime_error("Text is nullptr " + element_name);
 
-    return Index(stoi(text));
+    try
+    {
+        return Index(stoll(text));
+    }
+    catch(const exception&)
+    {
+        throw runtime_error("stoll failed for element \"" + element_name +
+                            "\" with value \"" + string(text) + "\"");
+    }
 }
 
 bool read_xml_bool(const XMLElement* root, const string& element_name)

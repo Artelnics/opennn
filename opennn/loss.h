@@ -230,7 +230,7 @@ struct BackPropagationLM
 
     NeuralNetworkBackPropagationLM neural_network;
 
-    VectorR errors;
+    MatrixR errors;
     VectorR squared_errors;
     MatrixR squared_errors_jacobian;
 

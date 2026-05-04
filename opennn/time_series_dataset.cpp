@@ -228,8 +228,18 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
     set_has_header(read_xml_bool(data_source_element, "HasHeader"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
     set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
-    set_past_time_steps(stoi(read_xml_string(data_source_element, "LagsNumber")));
-    set_future_time_steps(stoi(read_xml_string(data_source_element, "StepsAhead")));
+
+    // LagsNumber / StepsAhead: tolerant parse — default to 0 / 1 if the tag
+    // is missing or has empty text (avoids stoi("") on legacy/ill-formed XMLs).
+    auto safe_stoi = [](const string& s, int default_value) -> int
+    {
+        if(s.empty()) return default_value;
+        try { return stoi(s); }
+        catch(...) { return default_value; }
+    };
+    set_past_time_steps(safe_stoi(read_xml_string(data_source_element, "LagsNumber"), 0));
+    set_future_time_steps(safe_stoi(read_xml_string(data_source_element, "StepsAhead"), 1));
+
     set_codification(read_xml_string(data_source_element, "Codification"));
 
     // Variables
