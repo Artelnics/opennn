@@ -137,18 +137,9 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     if (is_gpu)
     {
         for (auto& layer : layers)
-        {
             if (layer->get_type() == LayerType::Convolutional)
-            {
                 if (auto* conv = dynamic_cast<Convolutional*>(layer.get()))
                     conv->init_cuda(batch_size);
-            }
-            else if (layer->get_type() == LayerType::Dense)
-            {
-                if (auto* dense = dynamic_cast<Dense*>(layer.get()))
-                    dense->init_cuda(batch_size);
-            }
-        }
     }
 #endif
 }

@@ -54,10 +54,6 @@ public:
 
     vector<Operator*> get_operators() override;
 
-#ifdef OPENNN_WITH_CUDA
-    void init_cuda(Index /*batch_size*/) {}
-#endif
-
     void forward_propagate(ForwardPropagation&, size_t layer, bool is_training) noexcept override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t layer) const noexcept override;
 
