@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 #include "math_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -21,30 +22,80 @@ class MultiHeadAttention final : public Layer
 
 public:
 
-    MultiHeadAttention(const Shape& = Shape({0,0}),
-                       Index = 0,
-                       const string& = string());
+    MultiHeadAttention(const Shape& new_input_shape = Shape({0,0}),
+                       Index new_heads_number = 0,
+                       const string& new_name = string());
 
-    MultiHeadAttention(const Shape&,
-                       const Shape&,
-                       Index = 0,
-                       const string& = string());
-
-    ~MultiHeadAttention() override
-    {
-#ifdef OPENNN_WITH_CUDA
-        if(dropout_arguments.descriptor)    cudnnDestroyDropoutDescriptor(dropout_arguments.descriptor);
-        if(dropout_arguments.states)        cudaFree(dropout_arguments.states);
-        if(dropout_arguments.reserve_space) cudaFree(dropout_arguments.reserve_space);
-#endif
-    }
+    MultiHeadAttention(const Shape& new_query_dimensions,
+                       const Shape& new_source_dimensions,
+                       Index new_heads_number = 0,
+                       const string& new_name = string());
 
     Index get_query_sequence_length() const { return query_sequence_length; }
     Index get_source_sequence_length() const { return source_sequence_length; }
     Index get_embedding_dimension() const { return embedding_dimension; }
     Index get_heads_number() const { return heads_number; }
-    Index get_head_dimension() const;
+    Index get_head_dimension() const
+    {
+        return (heads_number == 0) ? 0 : Index(embedding_dimension / heads_number);
+    }
 
+    Shape get_input_shape() const override;
+
+    Shape get_output_shape() const override;
+
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override;
+
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
+
+    void set_input_shape(const Shape& new_input_shape) override
+    {
+        if (new_input_shape.rank != 2)
+            throw runtime_error("MultiHeadAttention input shape must have rank 2.");
+
+        query_sequence_length  = new_input_shape[0];
+        source_sequence_length = new_input_shape[0];
+        embedding_dimension    = new_input_shape[1];
+    }
+
+    void set(Index new_query_sequence_length = 0,
+             Index new_source_sequence_length = 0,
+             Index new_embedding_dimension = 0,
+             Index new_heads_number = 0,
+             bool new_use_causal_mask = false,
+             const string& new_label = "multihead_attention_layer");
+
+    void set_activation_dtype(Type new_activation_dtype) override
+    {
+        Layer::set_activation_dtype(new_activation_dtype);
+        query_projection .activation_dtype          = new_activation_dtype;
+        query_projection .combination.weight_type   = new_activation_dtype;
+        key_projection   .activation_dtype          = new_activation_dtype;
+        key_projection   .combination.weight_type   = new_activation_dtype;
+        value_projection .activation_dtype          = new_activation_dtype;
+        value_projection .combination.weight_type   = new_activation_dtype;
+        output_projection.weight_type               = new_activation_dtype;
+        attention.activation_dtype                  = new_activation_dtype;
+    }
+
+    void set_dropout_rate(float new_dropout_rate) { attention.set_dropout_rate(new_dropout_rate); }
+
+    void set_parameters_random() override;
+
+    vector<Operator*> get_operators() override;
+
+    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
+
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
+
+    void to_JSON(JsonWriter&) const override;
+    void from_JSON(const JsonDocument&) override;
+
+private:
+
+    // Layout: heads_shape is {B, H, Q, D} (logical attention layout),
+    // concat_shape is {B, Q, H, D} (physical post-merge layout the kernels
+    // emit). The swap is a contract with the merge_heads kernel — don't reorder.
     Shape heads_shape(Index batch_size) const
     {
         return {batch_size, heads_number, query_sequence_length, get_head_dimension()};
@@ -55,92 +106,20 @@ public:
         return {batch_size, query_sequence_length, heads_number, get_head_dimension()};
     }
 
-    float get_scaling_factor() const;
-
-    Shape get_input_shape() const override;
-
-    Shape get_output_shape() const override;
-
-    vector<Shape> get_parameter_shapes() const override;
-
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
-    {
-        const Index head_dimension = get_head_dimension();
-
-        const Index max_seq = max(query_sequence_length, source_sequence_length);
-
-        const Shape attn_drop_shape = (dropout_rate > float(0))
-            ? Shape{batch_size, heads_number, query_sequence_length, source_sequence_length}
-            : Shape{};
-
-        return {{batch_size, heads_number, query_sequence_length, head_dimension},         // Query
-                {batch_size, heads_number, source_sequence_length, head_dimension},        // Key
-                {batch_size, heads_number, query_sequence_length, source_sequence_length}, // AttentionWeights
-                attn_drop_shape,                                                           // AttentionWeightsDropped
-                {batch_size, query_sequence_length, embedding_dimension},                  // ConcatenatedAttentionOutputs
-                {batch_size, heads_number, source_sequence_length, head_dimension},        // Value
-                {batch_size, source_sequence_length},                                      // PaddingMask
-                {batch_size, max_seq, embedding_dimension},                                // TransposeScratch
-                {batch_size, heads_number, query_sequence_length, head_dimension},         // AttentionOutputTransposed
-                {batch_size, query_sequence_length, embedding_dimension}};                 // Output (must be last)
-    }
-
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        const Index head_dimension = get_head_dimension();
-
-        return {{batch_size, query_sequence_length, embedding_dimension},                          // InputQueryDelta
-                {batch_size, source_sequence_length, embedding_dimension},                         // InputSourceDelta
-                {batch_size, heads_number, query_sequence_length, source_sequence_length},         // AttentionWeightDelta
-                {batch_size, query_sequence_length, embedding_dimension},                          // ConcatenatedOutputDelta
-                {batch_size, heads_number, query_sequence_length, head_dimension},                 // QueryDelta (transposed)
-                {batch_size, heads_number, source_sequence_length, head_dimension},                // KeyDelta (transposed)
-                {batch_size, heads_number, source_sequence_length, head_dimension}};               // ValueDelta (transposed)
-    }
-
-    void set_input_shape(const Shape& new_input_shape) override
-    {
-        query_sequence_length = new_input_shape[0];
-        embedding_dimension = new_input_shape[1];
-    }
-
-    void set(Index = 0,
-             Index = 0,
-             Index = 0,
-             Index = 0,
-             bool = false,
-             const string& = "multihead_attention_layer");
-
-    void set_dropout_rate(const float r) { dropout_rate = r; }
-
-    void set_parameters_random() override;
-
-#ifdef OPENNN_WITH_CUDA
-    void init_cuda(Index batch_size);
-#endif
-
-    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
-
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
-
-    void to_XML(XmlPrinter&) const override;
-    void from_XML(const XmlDocument&) override;
-
-private:
-
-    Index embedding_dimension;
+    Index embedding_dimension = 0;
     Index heads_number = 0;
     Index query_sequence_length = 0;
     Index source_sequence_length = 0;
 
-    enum Parameters {QueryWeight, QueryBias, KeyWeight, KeyBias, ValueWeight, ValueBias,
-                     ProjectionWeight, ProjectionBias};
+    // Order matches MultiHeadProjection's underlying Combination::parameter_specs(),
+    // which returns {bias, weight}. The base Layer::link_parameters() distributes
+    // parameter slices to operators in this order.
+    enum Parameters {QueryBias, QueryWeight, KeyBias, KeyWeight, ValueBias, ValueWeight,
+                     ProjectionBias, ProjectionWeight};
     enum Forward {Input, Query, Key, AttentionWeights, AttentionWeightsDropped,
-                  ConcatenatedAttentionOutputs, Value,
-                  PaddingMask, TransposeScratch, AttentionOutputTransposed};
+                  ConcatenatedAttentionOutputs, Value, TransposeScratch};
     enum Backward {OutputDelta, InputQueryDelta, InputSourceDelta,
-                   AttentionWeightDelta, ConcatenatedOutputDelta,
-                   QueryDelta, KeyDelta, ValueDelta};
+                   AttentionWeightDelta, ValueDelta};
 
     static bool is_self_attention(const vector<vector<TensorView>>& forward_views)
     {
@@ -157,16 +136,14 @@ private:
         return is_self_attention(forward_views) ? forward_views[Input][0] : forward_views[Input][1];
     }
 
-    bool use_causal_mask = false;
-
-    MatrixR causal_mask;
-    MatrixB key_mask;
-
-    float dropout_rate = float(0);
-    DropoutArguments dropout_arguments;
+    MultiHeadProjection query_projection;
+    MultiHeadProjection key_projection;
+    MultiHeadProjection value_projection;
+    Combination         output_projection;
+    Attention           attention;
 };
 
-} 
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

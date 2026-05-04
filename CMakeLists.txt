@@ -11,6 +11,22 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-march=native)
+elseif(MSVC)
+    add_compile_options(/arch:AVX2)
+endif()
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT OPENNN_LTO_OK)
+if(OPENNN_LTO_OK)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+endif()
+
 # Configuración específica para macOS
 if(APPLE)
     find_path(LIBOMP_INCLUDE_DIR omp.h
@@ -58,15 +74,76 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     find_package(CUDAToolkit REQUIRED)
     set(OPENNN_WITH_CUDA ON CACHE BOOL "")
 
-    find_library(CUDNN_LIBRARY NAMES cudnn 
-                 HINTS ${CUDAToolkit_LIBRARY_DIR} 
+    find_path(CUDNN_INCLUDE_DIR
+        NAMES cudnn_version.h cudnn.h
+        HINTS ${CUDAToolkit_INCLUDE_DIRS}
+        PATHS /usr/local/cuda/include /usr/include)
+
+    find_library(CUDNN_LIBRARY NAMES cudnn
+                 HINTS ${CUDAToolkit_LIBRARY_DIR}
                  PATHS /usr/local/cuda/lib64 /usr/lib/x86_64-linux-gnu)
 
-    if(CUDNN_LIBRARY)
-        message(STATUS "Found cuDNN: ${CUDNN_LIBRARY}")
-        link_libraries(${CUDNN_LIBRARY}) 
+    if(NOT CUDNN_LIBRARY OR NOT CUDNN_INCLUDE_DIR)
+        message(FATAL_ERROR
+            "cuDNN not found (library: '${CUDNN_LIBRARY}', headers: '${CUDNN_INCLUDE_DIR}'). "
+            "Install cuDNN >= 9.0, or build CPU-only with -DOpenNN_DISABLE_CUDA=ON.")
+    endif()
+
+    set(CUDNN_VERSION_HEADER "${CUDNN_INCLUDE_DIR}/cudnn_version.h")
+    if(NOT EXISTS "${CUDNN_VERSION_HEADER}")
+        set(CUDNN_VERSION_HEADER "${CUDNN_INCLUDE_DIR}/cudnn.h")
+    endif()
+
+    file(STRINGS "${CUDNN_VERSION_HEADER}" CUDNN_VERSION_LINES
+        REGEX "^#define[ \t]+CUDNN_(MAJOR|MINOR|PATCHLEVEL)[ \t]+[0-9]+$")
+
+    foreach(line ${CUDNN_VERSION_LINES})
+        if(line MATCHES "CUDNN_MAJOR[ \t]+([0-9]+)")
+            set(CUDNN_MAJOR_VERSION "${CMAKE_MATCH_1}")
+        elseif(line MATCHES "CUDNN_MINOR[ \t]+([0-9]+)")
+            set(CUDNN_MINOR_VERSION "${CMAKE_MATCH_1}")
+        elseif(line MATCHES "CUDNN_PATCHLEVEL[ \t]+([0-9]+)")
+            set(CUDNN_PATCH_VERSION "${CMAKE_MATCH_1}")
+        endif()
+    endforeach()
+
+    set(CUDNN_VERSION "${CUDNN_MAJOR_VERSION}.${CUDNN_MINOR_VERSION}.${CUDNN_PATCH_VERSION}")
+
+    if(CUDNN_VERSION VERSION_LESS "9.0")
+        message(FATAL_ERROR
+            "cuDNN ${CUDNN_VERSION} found at ${CUDNN_LIBRARY}, but >= 9.0 is required "
+            "(SDPA / Flash Attention). Upgrade cuDNN, or build CPU-only with "
+            "-DOpenNN_DISABLE_CUDA=ON.")
+    endif()
+
+    message(STATUS "Found cuDNN ${CUDNN_VERSION}: ${CUDNN_LIBRARY}")
+    set(HAVE_CUDNN ON)
+    link_libraries(${CUDNN_LIBRARY})
+
+    # cuDNN frontend (header-only C++ wrapper for the cuDNN graph API).
+    # Required for SDPA / Flash Attention. Optional: if not found, Attention
+    # falls back to the manual softmax+matmul path (works, but materializes the
+    # attention matrix). Install v1.10+ from https://github.com/NVIDIA/cudnn-frontend
+    # or set CUDNN_FRONTEND_INCLUDE_DIR explicitly. Older v1.x releases have API
+    # breaks; we target the v1.10.x branch.
+    find_path(CUDNN_FRONTEND_INCLUDE_DIR
+        NAMES cudnn_frontend.h
+        HINTS ${CUDAToolkit_INCLUDE_DIRS}
+        PATHS /usr/local/include /usr/include
+              ${CMAKE_CURRENT_SOURCE_DIR}/../cudnn-frontend/include
+              ${CMAKE_CURRENT_SOURCE_DIR}/cudnn-frontend/include)
+
+    if(CUDNN_FRONTEND_INCLUDE_DIR)
+        message(STATUS "Found cudnn-frontend: ${CUDNN_FRONTEND_INCLUDE_DIR}")
+        set(HAVE_CUDNN_FRONTEND ON)
+        add_compile_definitions(OPENNN_HAS_CUDNN_FRONTEND)
+        include_directories(${CUDNN_FRONTEND_INCLUDE_DIR})
     else()
-        message(FATAL_ERROR "cuDNN library not found! Please install cuDNN or check paths.")
+        message(WARNING
+            "cudnn-frontend headers not found. Attention will fall back to manual "
+            "softmax+matmul (works, but no Flash Attention memory savings). "
+            "Install from https://github.com/NVIDIA/cudnn-frontend or set "
+            "CUDNN_FRONTEND_INCLUDE_DIR.")
     endif()
 else()
     set(OPENNN_WITH_CUDA OFF CACHE BOOL "")

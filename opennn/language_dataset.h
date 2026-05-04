@@ -30,8 +30,8 @@ public:
     Index get_maximum_input_sequence_length() const { return maximum_input_sequence_length; }
     Index get_maximum_target_sequence_length() const { return maximum_target_sequence_length; }
 
-    void set_input_vocabulary(const vector<string>& v) { input_vocabulary = v; }
-    void set_target_vocabulary(const vector<string>& v) { target_vocabulary = v; }
+    void set_input_vocabulary(const vector<string>& new_vocabulary) { input_vocabulary = new_vocabulary; }
+    void set_target_vocabulary(const vector<string>& new_vocabulary) { target_vocabulary = new_vocabulary; }
 
     void read_csv() override;
 
@@ -41,8 +41,8 @@ public:
     void encode_decoder_target_sequence_to_sequence(const vector<vector<string>>&);
     void encode_target_classification(const vector<vector<string>>&);
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 
     inline static const string PAD_TOKEN   = "[PAD]";     // 0
     inline static const string UNK_TOKEN   = "[UNK]";     // 1

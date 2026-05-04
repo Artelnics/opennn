@@ -4,6 +4,7 @@
 // templated over T = float / __nv_bfloat16.
 
 #include "kernel_common.cuh"
+#include <curand_kernel.h>
 
 // Per-feature clip: output[i] = clamp(input[i], lower[f], upper[f]) where f = i % features.
 // Input/output dtypes are independent so the boundary layers can bridge a BF16
@@ -32,15 +33,13 @@ void bounding_cuda(const Index n, const int features,
 
     const int total = static_cast<int>(n);
 
-    bounding_kernel<TIn, TOut><<<grid_size_for(total), block_size>>>(total, features, input, lower, upper, output);
+    bounding_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, features, input, lower, upper, output);
 }
 
 template void bounding_cuda<float,         float>        (const Index, const int, const float*,         const float*, const float*, float*);
 template void bounding_cuda<float,         __nv_bfloat16>(const Index, const int, const float*,         const float*, const float*, __nv_bfloat16*);
 template void bounding_cuda<__nv_bfloat16, float>        (const Index, const int, const __nv_bfloat16*, const float*, const float*, float*);
 template void bounding_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, __nv_bfloat16*);
-
-static constexpr float SCALER_EPSILON = 1e-7f;
 
 // Per-feature input scaling. Method per feature is encoded in `scalers` (cast from
 // ScalerMethod enum stored as float): MinMax, MeanStd, StdDev, Logarithm, ImageMinMax.
@@ -64,17 +63,17 @@ __global__ void scale_kernel(const int n, const int features,
         const float x = static_cast<float>(input[i]);
         float y = x;
 
-        switch(code)
+        switch (code)
         {
         case 1: // MinimumMaximum
-            y = (x - minimums[f]) / ((maximums[f] - minimums[f]) + SCALER_EPSILON)
+            y = (x - minimums[f]) / ((maximums[f] - minimums[f]) + FLT_EPSILON)
                 * (max_range - min_range) + min_range;
             break;
         case 2: // MeanStandardDeviation
-            y = (x - means[f]) / (stds[f] + SCALER_EPSILON);
+            y = (x - means[f]) / (stds[f] + FLT_EPSILON);
             break;
         case 3: // StandardDeviation
-            y = x / (stds[f] + SCALER_EPSILON);
+            y = x / (stds[f] + FLT_EPSILON);
             break;
         case 4: // Logarithm
             y = logf(x);
@@ -103,7 +102,7 @@ void scale_cuda(const Index n, const int features,
 
     const int total = static_cast<int>(n);
 
-    scale_kernel<TIn, TOut><<<grid_size_for(total), block_size>>>(total, features,
+    scale_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, features,
                                                                   input, minimums, maximums, means, stds, scalers,
                                                                   min_range, max_range, output);
 }
@@ -134,7 +133,7 @@ __global__ void unscale_kernel(const int n, const int features,
         const float x = static_cast<float>(input[i]);
         float y = x;
 
-        switch(code)
+        switch (code)
         {
         case 1: // MinimumMaximum
             y = (x - min_range) / (max_range - min_range)
@@ -173,7 +172,7 @@ void unscale_cuda(const Index n, const int features,
 
     const int total = static_cast<int>(n);
 
-    unscale_kernel<TIn, TOut><<<grid_size_for(total), block_size>>>(total, features,
+    unscale_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, features,
                                                                     input, minimums, maximums, means, stds, scalers,
                                                                     min_range, max_range, output);
 }
@@ -203,7 +202,7 @@ void diff_to_fp32_cuda(const Index n, const TIn* input, const float* target, flo
 {
     if (n == 0) return;
     const int total = static_cast<int>(n);
-    diff_to_fp32_kernel<TIn><<<grid_size_for(total), block_size>>>(total, input, target, output);
+    diff_to_fp32_kernel<TIn><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, input, target, output);
 }
 
 template void diff_to_fp32_cuda<float>        (const Index, const float*,         const float*, float*);
@@ -229,7 +228,7 @@ void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target
 {
     if (n == 0) return;
     const int total = static_cast<int>(n);
-    scaled_diff_kernel<TIn, TOut><<<grid_size_for(total), block_size>>>(total, input, target, scale, output);
+    scaled_diff_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, input, target, scale, output);
 }
 
 template void scaled_diff_cuda_typed<float,         float>        (const Index, const float*,         const float*, float, float*);
@@ -272,7 +271,7 @@ void embedding_forward_cuda(const Index n, const float* inputs, const float* wei
 
     const int total = static_cast<int>(n);
 
-    embedding_forward_kernel<T><<<grid_size_for(total), block_size>>>(
+    embedding_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
         total, inputs, weights, positional_encoding, outputs,
         sequence_length, embedding_dimension, vocabulary_size, scale_embedding, add_positional_encoding);
 }
@@ -306,7 +305,7 @@ void embedding_backward_cuda(const Index n, const float* inputs, const T* output
 
     const int total = static_cast<int>(n);
 
-    embedding_backward_kernel<T><<<grid_size_for(total), block_size>>>(
+    embedding_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
         total, inputs, output_deltas, weight_gradients,
         embedding_dimension, vocabulary_size, scale_embedding);
 }
@@ -353,17 +352,17 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
 {
     if (n == 0) return;
 
-    if ((static_cast<size_t>(D) * sizeof(T)) % 16 == 0)
+    if ((static_cast<size_t>(D) * sizeof(T)) % 16 == 0 && are_float4_aligned(in, out))
     {
         const int vec_width = static_cast<int>(16 / sizeof(T));
         const int D_vec     = D / vec_width;
         const int n_vec     = static_cast<int>(n) / vec_width;
-        split_heads_vec_kernel<T><<<grid_size_for(n_vec), block_size>>>(n_vec, in, out, S, H, D_vec);
+        split_heads_vec_kernel<T><<<grid_size_for(n_vec), block_size, 0, opennn::Backend::get_compute_stream()>>>(n_vec, in, out, S, H, D_vec);
     }
     else
     {
         const int total = static_cast<int>(n);
-        split_heads_scalar_kernel<T><<<grid_size_for(total), block_size>>>(total, in, out, S, H, D);
+        split_heads_scalar_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, in, out, S, H, D);
     }
 }
 
@@ -408,17 +407,17 @@ void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int
 {
     if (n == 0) return;
 
-    if ((static_cast<size_t>(D) * sizeof(T)) % 16 == 0)
+    if ((static_cast<size_t>(D) * sizeof(T)) % 16 == 0 && are_float4_aligned(in, out))
     {
         const int vec_width = static_cast<int>(16 / sizeof(T));
         const int D_vec     = D / vec_width;
         const int n_vec     = static_cast<int>(n) / vec_width;
-        merge_heads_vec_kernel<T><<<grid_size_for(n_vec), block_size>>>(n_vec, in, out, S, H, D_vec);
+        merge_heads_vec_kernel<T><<<grid_size_for(n_vec), block_size, 0, opennn::Backend::get_compute_stream()>>>(n_vec, in, out, S, H, D_vec);
     }
     else
     {
         const int total = static_cast<int>(n);
-        merge_heads_scalar_kernel<T><<<grid_size_for(total), block_size>>>(total, in, out, S, H, D);
+        merge_heads_scalar_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, in, out, S, H, D);
     }
 }
 
@@ -454,7 +453,7 @@ __global__ void fused_masks_kernel(const int n, T* __restrict__ attention_weight
         const int sq = (i / source_sequence_length) % query_sequence_length;
         const int b  = i / (source_sequence_length * query_sequence_length * heads_number);
 
-        if((use_causal_mask && sk > sq) || static_cast<float>(padding_mask[b * source_sequence_length + sk]) > 0.5f)
+        if ((use_causal_mask && sk > sq) || static_cast<float>(padding_mask[b * source_sequence_length + sk]) > 0.5f)
             attention_weights[i] = static_cast<T>(-1e9f);
     }
 }
@@ -466,13 +465,13 @@ void attention_masks_cuda(const int batch_size, const int heads_number,
                           T* attention_weights, T* padding_mask, const bool use_causal_mask)
 {
     const int num_tokens = batch_size * source_sequence_length;
-    if(num_tokens > 0)
-        padding_mask_kernel<T><<<grid_size_for(num_tokens), block_size>>>(
+    if (num_tokens > 0)
+        padding_mask_kernel<T><<<grid_size_for(num_tokens), block_size, 0, opennn::Backend::get_compute_stream()>>>(
             num_tokens, source_input, padding_mask, embedding_dimension);
 
     const int n = batch_size * heads_number * query_sequence_length * source_sequence_length;
-    if(n > 0)
-        fused_masks_kernel<T><<<grid_size_for(n), block_size>>>(
+    if (n > 0)
+        fused_masks_kernel<T><<<grid_size_for(n), block_size, 0, opennn::Backend::get_compute_stream()>>>(
             n, attention_weights, padding_mask, heads_number,
             query_sequence_length, source_sequence_length, use_causal_mask);
 }
@@ -511,7 +510,7 @@ void max_pooling_3d_forward_cuda(const Index n, const T* in, T* out, float* indi
 
     const int total = static_cast<int>(n);
 
-    max_pooling_3d_forward_kernel<T><<<grid_size_for(total), block_size>>>(total, in, out, indices, S, F);
+    max_pooling_3d_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, in, out, indices, S, F);
 }
 
 template void max_pooling_3d_forward_cuda<float>        (const Index, const float*,         float*,         float*, const int, const int);
@@ -539,7 +538,7 @@ void max_pooling_3d_backward_cuda(const Index n, const T* delta, T* in_gradient,
 
     const int total = static_cast<int>(n);
 
-    max_pooling_3d_backward_kernel<T><<<grid_size_for(total), block_size>>>(total, delta, in_gradient, indices, S, F);
+    max_pooling_3d_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, delta, in_gradient, indices, S, F);
 }
 
 template void max_pooling_3d_backward_cuda<float>        (const Index, const float*,         float*,         const float*, const int, const int);
@@ -606,23 +605,36 @@ __global__ void average_pooling_3d_forward_kernel(const int n, const T* __restri
     }
 }
 
+// Compute valid_mask + per-batch counts from the input tokens. Returns pointers
+// into the TU-private pooling scratch.
+template<typename T>
+static void prepare_pooling_valid_mask(int B, int S, int F, const T* in,
+                                       float*& valid_mask, float*& counts)
+{
+    const int BS = B * S;
+    cudaStream_t stream = opennn::Backend::get_compute_stream();
+
+    float* scratch = get_pooling_scratch(static_cast<size_t>(BS) + B);
+    valid_mask = scratch;
+    counts     = scratch + BS;
+    cudaMemsetAsync(counts, 0, B * sizeof(float), stream);
+
+    pooling_3d_valid_mask_kernel<T><<<grid_size_for(BS), block_size, 0, stream>>>(BS, S, F, in, valid_mask, counts);
+}
+
 template<typename T>
 void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const int S, const int F)
 {
     if (n == 0) return;
 
-    const int B  = static_cast<int>(n) / F;
-    const int BS = B * S;
-
-    float* scratch    = get_pooling_scratch(static_cast<size_t>(BS) + B);
-    float* valid_mask = scratch;
-    float* counts     = scratch + BS;
-    cudaMemset(counts, 0, B * sizeof(float));
-
-    pooling_3d_valid_mask_kernel<T><<<grid_size_for(BS), block_size>>>(BS, S, F, in, valid_mask, counts);
-
     const int total = static_cast<int>(n);
-    average_pooling_3d_forward_kernel<T><<<grid_size_for(total), block_size>>>(total, in, out, S, F, valid_mask, counts);
+    const int B = total / F;
+
+    float* valid_mask = nullptr;
+    float* counts     = nullptr;
+    prepare_pooling_valid_mask(B, S, F, in, valid_mask, counts);
+
+    average_pooling_3d_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, in, out, S, F, valid_mask, counts);
 }
 
 template void average_pooling_3d_forward_cuda<float>        (const Index, const float*,         float*,         const int, const int);
@@ -658,18 +670,14 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
 {
     if (n == 0) return;
 
-    const int B  = static_cast<int>(n) / F;
-    const int BS = B * S;
-
-    float* scratch    = get_pooling_scratch(static_cast<size_t>(BS) + B);
-    float* valid_mask = scratch;
-    float* counts     = scratch + BS;
-    cudaMemset(counts, 0, B * sizeof(float));
-
-    pooling_3d_valid_mask_kernel<T><<<grid_size_for(BS), block_size>>>(BS, S, F, in, valid_mask, counts);
-
     const int total = static_cast<int>(n);
-    average_pooling_3d_backward_kernel<T><<<grid_size_for(total), block_size>>>(total, delta, in_gradient, S, F, valid_mask, counts);
+    const int B = total / F;
+
+    float* valid_mask = nullptr;
+    float* counts     = nullptr;
+    prepare_pooling_valid_mask(B, S, F, in, valid_mask, counts);
+
+    average_pooling_3d_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, delta, in_gradient, S, F, valid_mask, counts);
 }
 
 template void average_pooling_3d_backward_cuda<float>        (const Index, const float*,         const float*,         float*,         const int, const int);
@@ -757,17 +765,20 @@ __global__ void layernorm_forward_kernel(const int N, const int D, const T* __re
     }
 }
 
+static inline int layernorm_threads(int D)
+{
+    if (D <= 32) return 32;
+    if (D <= 64) return 64;
+    if (D <= 128) return 128;
+    return 256;
+}
+
 template<typename T>
 void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
 {
     if (N == 0 || D == 0) return;
 
-    int threads = 256;
-    if (D <= 32) threads = 32;
-    else if (D <= 64) threads = 64;
-    else if (D <= 128) threads = 128;
-
-    layernorm_forward_kernel<T><<<N, threads>>>(N, D, X, Y, means, inv_vars, gamma, beta, eps);
+    layernorm_forward_kernel<T><<<N, layernorm_threads(D), 0, opennn::Backend::get_compute_stream()>>>(N, D, X, Y, means, inv_vars, gamma, beta, eps);
 }
 
 template void layernorm_forward_cuda<float>        (const int, const int, const float*,         float*,         float*, float*, const float*, const float*, const float);
@@ -843,45 +854,6 @@ __global__ void layernorm_backward_kernel(const int N, const int D, const T* __r
     }
 }
 
-// OLD strided version, kept for A/B perf comparison.
-template<typename T>
-__global__ void layernorm_gamma_beta_gradient_kernel_OLD(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, float* __restrict__ dGamma, float* __restrict__ dBeta)
-{
-    const int d = blockIdx.x;
-    if (d >= D) return;
-
-    float local_gamma = 0.0f;
-    float local_beta  = 0.0f;
-
-    for (int n = threadIdx.x; n < N; n += blockDim.x)
-    {
-        const float dy    = static_cast<float>(dY[n * D + d]);
-        const float x_hat = (static_cast<float>(X[n * D + d]) - means[n]) * inv_vars[n];
-        local_gamma += dy * x_hat;
-        local_beta  += dy;
-    }
-
-    warp_reduce_sum2(local_gamma, local_beta);
-
-    __shared__ float warp_gamma[32];
-    __shared__ float warp_beta[32];
-
-    const int lane    = threadIdx.x & 31;
-    const int warp_id = threadIdx.x >> 5;
-
-    if (lane == 0) { warp_gamma[warp_id] = local_gamma; warp_beta[warp_id] = local_beta; }
-    __syncthreads();
-
-    const int num_warps = (blockDim.x + 31) >> 5;
-    if (warp_id == 0)
-    {
-        float g = (threadIdx.x < num_warps) ? warp_gamma[threadIdx.x] : 0.0f;
-        float b = (threadIdx.x < num_warps) ? warp_beta[threadIdx.x]  : 0.0f;
-        warp_reduce_sum2(g, b);
-        if (threadIdx.x == 0) { dGamma[d] = g; dBeta[d] = b; }
-    }
-}
-
 // Per-feature dGamma/dBeta accumulation for layer norm, with coalesced reads.
 template<typename T, int NUM_WARPS>
 __global__ void layernorm_gamma_beta_gradient_coalesced_kernel(const int N, const int D,
@@ -940,21 +912,68 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
 {
     if (N == 0 || D == 0) return;
 
-    int dx_threads = 256;
-    if (D <= 32) dx_threads = 32;
-    else if (D <= 64) dx_threads = 64;
-    else if (D <= 128) dx_threads = 128;
+    layernorm_backward_kernel<T><<<N, layernorm_threads(D), 0, opennn::Backend::get_compute_stream()>>>(N, D, dY, X, means, inv_vars, gamma, dX);
 
-    layernorm_backward_kernel<T><<<N, dx_threads>>>(N, D, dY, X, means, inv_vars, gamma, dX);
-
-    // A/B SWITCH: comment one of the two below.
-    // layernorm_gamma_beta_gradient_kernel_OLD<T><<<D, 256>>>(N, D, dY, X, means, inv_vars, dGamma, dBeta);
     constexpr int NUM_WARPS = 8;
     const dim3 block(32, NUM_WARPS);
     const int grid_x = (D + 31) / 32;
-    layernorm_gamma_beta_gradient_coalesced_kernel<T, NUM_WARPS><<<grid_x, block>>>(
+    layernorm_gamma_beta_gradient_coalesced_kernel<T, NUM_WARPS><<<grid_x, block, 0, opennn::Backend::get_compute_stream()>>>(
         N, D, dY, X, means, inv_vars, dGamma, dBeta);
 }
 
 template void layernorm_backward_cuda<float>        (const int, const int, const float*,         const float*,         const float*, const float*, const float*, float*,         float*, float*);
 template void layernorm_backward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, const float*, __nv_bfloat16*, float*, float*);
+
+template<typename T>
+__global__ void dropout_forward_kernel(const int n, T* __restrict__ output, uint8_t* __restrict__ mask, const float scale, const float rate, const unsigned long long seed)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= n) return;
+
+    curandStatePhilox4_32_10_t state;
+    curand_init(seed, idx, 0, &state);
+    const float r = curand_uniform(&state);
+
+    const uint8_t keep = (r >= rate) ? uint8_t(1) : uint8_t(0);
+    mask[idx] = keep;
+    output[idx] = static_cast<T>(static_cast<float>(output[idx]) * (keep * scale));
+}
+
+template<typename T>
+void dropout_forward_cuda(const Index n, T* output, uint8_t* mask, const float rate, const unsigned long long seed)
+{
+    if (n == 0) return;
+
+    const int total = static_cast<int>(n);
+    const float scale = 1.0f / (1.0f - rate);
+
+    dropout_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, output, mask, scale, rate, seed);
+}
+
+template void dropout_forward_cuda<float>        (const Index, float*,         uint8_t*, const float, const unsigned long long);
+template void dropout_forward_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, uint8_t*, const float, const unsigned long long);
+
+template<typename T>
+__global__ void dropout_backward_kernel(const int n, const T* __restrict__ output_delta, T* __restrict__ input_delta, const uint8_t* __restrict__ mask, const float scale)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= n) return;
+
+    const float dy = static_cast<float>(output_delta[idx]);
+    const float m  = static_cast<float>(mask[idx]) * scale;
+    input_delta[idx] = static_cast<T>(dy * m);
+}
+
+template<typename T>
+void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta, const uint8_t* mask, const float rate)
+{
+    if (n == 0) return;
+
+    const int total = static_cast<int>(n);
+    const float scale = 1.0f / (1.0f - rate);
+
+    dropout_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, output_delta, input_delta, mask, scale);
+}
+
+template void dropout_backward_cuda<float>        (const Index, const float*,         float*,         const uint8_t*, const float);
+template void dropout_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const uint8_t*, const float);

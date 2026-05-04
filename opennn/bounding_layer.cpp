@@ -34,13 +34,13 @@ Shape Bounding::get_output_shape() const
 
 VectorR Bounding::get_lower_bounds() const
 {
-    if(ssize(states) <= Lower || !states[Lower].data) return VectorR();
+    if (ssize(states) <= Lower || !states[Lower].data) return VectorR();
     return states[Lower].as_vector();
 }
 
 VectorR Bounding::get_upper_bounds() const
 {
-    if(ssize(states) <= Upper || !states[Upper].data) return VectorR();
+    if (ssize(states) <= Upper || !states[Upper].data) return VectorR();
     return states[Upper].as_vector();
 }
 
@@ -70,7 +70,7 @@ void Bounding::set_bounding_method(const string& new_method_string)
 
 void Bounding::set_input_shape(const Shape& new_input_shape)
 {
-    if(!output_shape.empty() && new_input_shape != output_shape)
+    if (!output_shape.empty() && new_input_shape != output_shape)
         throw runtime_error("Bounding: input shape mismatch with output shape.");
 }
 
@@ -79,26 +79,27 @@ void Bounding::set_output_shape(const Shape& new_output_shape)
     output_shape = new_output_shape;
 }
 
-// States[] is allocated by NN::compile() → Layer::link_states(). This override initializes
-// the arena slots to defaults (±max) since they're zero-initialized by the base.
 float* Bounding::link_states(float* pointer)
 {
+    const bool needs_defaults = ssize(states) < 2 || states[Lower].data == nullptr;
+
     float* next = Layer::link_states(pointer);
 
-    if(bounding_method == BoundingMethod::NoBounding) return next;
+    if (!needs_defaults) return next;
+    if (bounding_method == BoundingMethod::NoBounding) return next;
 
-    if(states[Lower].data)
-        VectorMap(states[Lower].as<float>(), states[Lower].size()).setConstant(-numeric_limits<float>::max());
+    if (states[Lower].data)
+        states[Lower].as_vector().setConstant(-numeric_limits<float>::max());
 
-    if(states[Upper].data)
-        VectorMap(states[Upper].as<float>(), states[Upper].size()).setConstant(numeric_limits<float>::max());
+    if (states[Upper].data)
+        states[Upper].as_vector().setConstant(numeric_limits<float>::max());
 
     return next;
 }
 
 void Bounding::set_lower_bound(const Index index, float new_lower_bound)
 {
-    if(ssize(states) <= Lower || !states[Lower].data)
+    if (ssize(states) <= Lower || !states[Lower].data)
         throw runtime_error("Bounding::set_lower_bound: layer not compiled yet (call NeuralNetwork::compile() first).");
 
     states[Lower].as<float>()[index] = new_lower_bound;
@@ -106,23 +107,23 @@ void Bounding::set_lower_bound(const Index index, float new_lower_bound)
 
 void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
 {
-    if(ssize(states) <= Lower || !states[Lower].data)
+    if (ssize(states) <= Lower || !states[Lower].data)
         throw runtime_error("Bounding::set_lower_bounds: layer not compiled yet (call NeuralNetwork::compile() first).");
 
-    VectorMap(states[Lower].as<float>(), states[Lower].size()) = new_lower_bounds;
+    states[Lower].as_vector() = new_lower_bounds;
 }
 
 void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
 {
-    if(ssize(states) <= Upper || !states[Upper].data)
+    if (ssize(states) <= Upper || !states[Upper].data)
         throw runtime_error("Bounding::set_upper_bounds: layer not compiled yet (call NeuralNetwork::compile() first).");
 
-    VectorMap(states[Upper].as<float>(), states[Upper].size()) = new_upper_bounds;
+    states[Upper].as_vector() = new_upper_bounds;
 }
 
 void Bounding::set_upper_bound(const Index index, float new_upper_bound)
 {
-    if(ssize(states) <= Upper || !states[Upper].data)
+    if (ssize(states) <= Upper || !states[Upper].data)
         throw runtime_error("Bounding::set_upper_bound: layer not compiled yet (call NeuralNetwork::compile() first).");
 
     states[Upper].as<float>()[index] = new_upper_bound;
@@ -132,7 +133,7 @@ void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t
 {
     auto& forward_views = forward_propagation.views[layer_index];
 
-    if(bounding_method == BoundingMethod::NoBounding)
+    if (bounding_method == BoundingMethod::NoBounding)
     {
         copy(forward_views[Input][0], forward_views[Output][0]);
         return;
@@ -144,51 +145,50 @@ void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t
              forward_views[Output][0]);
 }
 
-void Bounding::to_XML(XmlPrinter& printer) const
+void Bounding::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Bounding");
 
-    add_xml_element(printer, "NeuronsNumber", to_string(output_shape[0]));
+    add_json_field(printer, "Label", label);
+    add_json_field(printer, "NeuronsNumber", to_string(output_shape[0]));
 
-    if(bounding_method == BoundingMethod::Bounding && ssize(states) > Upper && states[Lower].data)
+    if (bounding_method == BoundingMethod::Bounding && ssize(states) > Upper && states[Lower].data)
     {
-        add_xml_element(printer, "LowerBounds", vector_to_string(states[Lower].as_vector()));
-        add_xml_element(printer, "UpperBounds", vector_to_string(states[Upper].as_vector()));
+        add_json_field(printer, "LowerBounds", vector_to_string(states[Lower].as_vector()));
+        add_json_field(printer, "UpperBounds", vector_to_string(states[Upper].as_vector()));
     }
 
-    add_xml_element(printer, "BoundingMethod", bounding_method_map().to_string(bounding_method));
+    add_json_field(printer, "BoundingMethod", bounding_method_map().to_string(bounding_method));
 
     printer.close_element();
 }
 
-// Phase 1: parse config only; states[] isn't allocated yet.
-void Bounding::from_XML(const XmlDocument& document)
+void Bounding::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "Bounding");
+    const Json* root_element = get_json_root(document, "Bounding");
 
-    const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
+    const Index neurons_number = read_json_index(root_element, "NeuronsNumber");
 
-    set({ neurons_number });
+    set({ neurons_number }, read_json_string(root_element, "Label"));
 
-    set_bounding_method(read_xml_string(root_element, "BoundingMethod"));
+    set_bounding_method(read_json_string(root_element, "BoundingMethod"));
 }
 
-// Phase 2: states[] is allocated; parse bounds directly into arena.
-void Bounding::load_state_from_XML(const XmlDocument& document)
+void Bounding::load_state_from_JSON(const JsonDocument& document)
 {
-    if(bounding_method == BoundingMethod::NoBounding) return;
-    if(ssize(states) <= Upper || !states[Lower].data) return;
+    if (bounding_method == BoundingMethod::NoBounding) return;
+    if (ssize(states) <= Upper || !states[Lower].data) return;
 
-    const XmlElement* root_element = get_xml_root(document, "Bounding");
+    const Json* root_element = get_json_root(document, "Bounding");
 
     VectorR tmp;
-    string_to_vector(read_xml_string(root_element, "LowerBounds"), tmp);
-    if(tmp.size() == states[Lower].size())
-        VectorMap(states[Lower].as<float>(), states[Lower].size()) = tmp;
+    string_to_vector(read_json_string(root_element, "LowerBounds"), tmp);
+    if (tmp.size() == states[Lower].size())
+        states[Lower].as_vector() = tmp;
 
-    string_to_vector(read_xml_string(root_element, "UpperBounds"), tmp);
-    if(tmp.size() == states[Upper].size())
-        VectorMap(states[Upper].as<float>(), states[Upper].size()) = tmp;
+    string_to_vector(read_json_string(root_element, "UpperBounds"), tmp);
+    if (tmp.size() == states[Upper].size())
+        states[Upper].as_vector() = tmp;
 }
 
 REGISTER(Layer, Bounding, "Bounding")

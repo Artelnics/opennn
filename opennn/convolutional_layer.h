@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 
 namespace opennn
 {
@@ -59,108 +60,57 @@ private:
     bool use_padding = false;
 
     bool batch_normalization = false;
-    float momentum = float(0.9);
+    float momentum = 0.9f;
 
-    ActivationArguments activation_arguments;
-    ConvolutionArguments convolution_arguments;
-
-    cudnnFilterDescriptor_t kernel_descriptor = nullptr;
-    cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
-
-    cudnnConvolutionFwdAlgo_t convolution_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
-    cudnnConvolutionBwdDataAlgo_t algo_data = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
-    cudnnConvolutionBwdFilterAlgo_t algo_filter = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
-
-    void* cuda_workspace = nullptr;
-    size_t cuda_workspace_size = 0;
-    void* cuda_backward_filter_workspace = nullptr;
-    size_t cuda_backward_filter_workspace_size = 0;
+    Convolution convolution;
+    Activation  activation;
+    BatchNorm   batch_norm;
 
     enum Parameters {Bias, Weight, Gamma, Beta};
 
-    vector<Shape> get_parameter_shapes() const override
-    {
-        return {{kernels_number},                                               // Bias
-                {kernels_number, kernel_height, kernel_width, kernel_channels}, // Weight
-                {batch_normalization ? kernels_number : 0},                     // Gamma
-                {batch_normalization ? kernels_number : 0}};                    // Beta
-    }
-
-    // Filter dtype follows activation_dtype because cudnnConvolutionBiasActivationForward
-    // requires input/filter/bias/output to share dtype. In BP16 mode the filter
-    // lives in parameters_bf16. Backward filter writes the gradient via a BF16
-    // scratch + cast back to the FP32 master gradient (see math_utilities::convolution_backward_weights).
-    vector<cudnnDataType_t> get_parameter_dtypes() const override
-    {
-        return vector<cudnnDataType_t>(get_parameter_shapes().size(), to_cudnn(activation_dtype));
-    }
-
     enum States {RunningMean, RunningVariance};
 
-    vector<Shape> get_state_shapes() const override
-    {
-        if (!batch_normalization) return {};
-        return {{kernels_number},   // RunningMean
-                {kernels_number}};  // RunningVariance
-    }
+    enum Forward {Input, PaddedInput, ConvolutionView, BatchNormMean, BatchNormInverseVariance, Output};
 
-    enum Forward {Input, PaddedInput, Convolution, BatchNormMean, BatchNormInverseVariance, Output};
-
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
         const Shape output_shape = {batch_size, get_output_height(), get_output_width(), kernels_number};
-        const Shape padded_shape = {batch_size,
-                                    input_height + 2 * get_padding_height(),
-                                    input_width + 2 * get_padding_width(),
-                                    input_channels};
+        const Shape padded_shape = Configuration::instance().is_gpu()
+            ? Shape{}
+            : Shape{batch_size,
+                    input_height + 2 * get_padding_height(),
+                    input_width + 2 * get_padding_width(),
+                    input_channels};
+        const Type act = activation_dtype;
 
-        if (batch_normalization)
-            return {padded_shape,             // PaddedInputs
-                    output_shape,             // Convolution
-                    Shape{kernels_number},    // BatchNormMean
-                    Shape{kernels_number},    // BatchNormInverseVariance
-                    output_shape};            // Output
+        const Shape convolution_view_shape = batch_normalization ? output_shape      : Shape{};
+        const Shape bn_stat_shape     = batch_normalization ? Shape{kernels_number}  : Shape{};
 
-        return {padded_shape,                 // PaddedInputs
-                Shape{},                      // Convolution (unused)
-                Shape{},                      // BatchNormMean (unused)
-                Shape{},                      // BatchNormInverseVariance (unused)
-                output_shape};                // Output
-    }
-
-    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
-    {
-        return {to_cudnn(activation_dtype),  // PaddedInputs
-                to_cudnn(activation_dtype),  // Convolution
-                CUDNN_DATA_FLOAT,            // BatchNormMean
-                CUDNN_DATA_FLOAT,            // BatchNormInverseVariance
-                to_cudnn(activation_dtype)}; // Output
+        return {
+            /*PaddedInputs*/             {padded_shape,           act},
+            /*ConvolutionView*/          {convolution_view_shape, act},
+            /*BatchNormMean*/            {bn_stat_shape,     Type::FP32},
+            /*BatchNormInverseVariance*/ {bn_stat_shape,     Type::FP32},
+            /*Output*/                   {output_shape,      act},
+        };
     }
 
     enum Backward {OutputDelta, InputDelta};
 
-    vector<Shape> get_backward_shapes(Index batch_size) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{batch_size, input_height, input_width, input_channels},
-                {kernels_number, kernel_height, kernel_width, kernel_channels}};
+        return {{{batch_size, input_height, input_width, input_channels}, activation_dtype}};
     }
 
 public:
 
     Convolutional(const Shape& = {3, 3, 1},
                   const Shape& = {3, 3, 1, 1},
-                  const string& = "Linear",
+                  const string& = "Identity",
                   const Shape& = {1, 1},
                   const string& = "Valid",
                   bool = false,
                   const string& = "convolutional_layer");
-
-    ~Convolutional() override
-    {
-#ifdef OPENNN_WITH_CUDA
-        destroy_cuda();
-#endif
-    }
 
     // Getters
 
@@ -188,19 +138,16 @@ public:
 
     ConvolutionType get_convolution_type() const { return convolution_type; }
 
-    ActivationFunction get_activation_function() const { return activation_arguments.activation_function; }
-    ActivationFunction get_output_activation() const override { return activation_arguments.activation_function; }
+    Activation::Function get_activation_function() const { return activation.function; }
+    Activation::Function get_output_activation() const override { return activation.function; }
 
     bool get_batch_normalization() const { return batch_normalization; }
-
-    cudnnFilterDescriptor_t get_kernel_descriptor() const { return kernel_descriptor; }
-    cudnnConvolutionDescriptor_t get_convolution_descriptor() const { return convolution_descriptor; }
 
     // Setters
 
     void set(const Shape& = {0, 0, 0},
              const Shape& = {3, 3, 1, 1},
-             const string& = "Linear",
+             const string& = "Identity",
              const Shape& = {1, 1},
              const string& = "Valid",
              bool = false,
@@ -208,7 +155,13 @@ public:
 
     void set_input_shape(const Shape&) override;
 
-    void load_state_from_XML(const XmlDocument&) override;
+    void set_activation_dtype(Type new_activation_dtype) override
+    {
+        Layer::set_activation_dtype(new_activation_dtype);
+        configure_operators();
+    }
+
+    void load_state_from_JSON(const JsonDocument&) override;
 
     void set_row_stride(const Index);
     void set_column_stride(const Index);
@@ -224,14 +177,11 @@ public:
     void set_parameters_glorot() override;
     void set_parameters_random() override;
 
+    vector<Operator*> get_operators() override;
+
 private:
-    void init_conv_norm_defaults();
+    void configure_operators();
 public:
-
-    // Device setup
-
-    void init_cuda(Index);
-    void destroy_cuda();
 
     // Forward / back propagation
 
@@ -241,8 +191,8 @@ public:
 
     // Serialization
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 };
 
 }

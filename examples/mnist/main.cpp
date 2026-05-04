@@ -30,7 +30,8 @@ int main()
 
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
-        Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
+        set_seed(42);
+        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
 
         // Dataset
 
@@ -42,8 +43,8 @@ int main()
             {4},
             image_dataset.get_shape("Target"));
 
-        opennn::Dense<2>* hidden_dense = dynamic_cast<opennn::Dense<2>*>(image_classification_network.get_first("Dense2d"));
-        if (hidden_dense) hidden_dense->set_dropout_rate(float(0.2));
+        opennn::Dense* hidden_dense = dynamic_cast<opennn::Dense*>(image_classification_network.get_first("Dense"));
+        if (hidden_dense) hidden_dense->set_dropout_rate(float(0.0));
 
         // Training strategy
 

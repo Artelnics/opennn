@@ -22,22 +22,25 @@ public:
 
     Shape get_output_shape() const override;
 
-    vector<Shape> get_parameter_shapes() const override;
+    vector<pair<Shape, Type>> get_parameter_specs() const override;
 
     Shape get_input_shape() const override { return {time_steps, input_features}; }
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
         const Index outputs_number = get_outputs_number();
+        const Type act = activation_dtype;
 
-        return {{ batch_size, outputs_number },
-            { batch_size, time_steps, outputs_number },
-            { batch_size, time_steps, outputs_number }};
+        return {
+            {{batch_size, outputs_number},             act},
+            {{batch_size, time_steps, outputs_number}, act},
+            {{batch_size, time_steps, outputs_number}, act},
+        };
     }
 
-    vector<Shape> get_backward_shapes(Index batch_size) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{ batch_size, time_steps, input_features }};
+        return {{{batch_size, time_steps, input_features}, activation_dtype}};
     }
 
     void set(const Shape& = {}, const Shape& = {});
@@ -56,8 +59,8 @@ public:
     const TensorView& get_recurrent_weights() const { return recurrent_weights; }
     const string& get_activation_function() const { return activation_function; }
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 
 private:
 
@@ -68,7 +71,9 @@ private:
     TensorView input_weights;
     TensorView recurrent_weights;
 
-    string activation_function = "HyperbolicTangent";
+    Tensor2 empty_2;  // sentinel passed to calculate_activations<2>(...) when no derivative output is wanted
+
+    string activation_function = "Tanh";
 };
 
 }

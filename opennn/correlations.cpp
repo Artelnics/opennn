@@ -24,7 +24,7 @@ VectorR autocorrelations(const VectorR& x, Index past_time_steps)
     VectorR autocorrelation(past_time_steps);
     const Index this_size = x.size();
 
-    for(Index i = 0; i < past_time_steps; ++i)
+    for (Index i = 0; i < past_time_steps; ++i)
         autocorrelation(i) = linear_correlation(x.head(this_size - i), x.tail(this_size - i)).r;
 
     return autocorrelation;
@@ -32,7 +32,7 @@ VectorR autocorrelations(const VectorR& x, Index past_time_steps)
 
 Correlation correlation(const MatrixR& x, const MatrixR& y)
 {
-    if(is_constant(x) || is_constant(y))
+    if (is_constant(x) || is_constant(y))
         return Correlation();
 
     const Index x_columns = x.cols();
@@ -41,12 +41,12 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
     const bool x_binary = is_binary(x);
     const bool y_binary = is_binary(y);
 
-    if(x_columns == 1 && y_columns == 1)
+    if (x_columns == 1 && y_columns == 1)
     {
         const auto x_vector = x.col(0);
         const auto y_vector = y.col(0);
 
-        if(!x_binary && !y_binary)
+        if (!x_binary && !y_binary)
         {
             const Correlation linear_correlation
                 = opennn::linear_correlation(x_vector, y_vector);
@@ -66,22 +66,22 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
                        });
         }
 
-        if(y_binary && !x_binary)
+        if (y_binary && !x_binary)
             return opennn::point_biserial_correlation(x_vector, y_vector);
 
-        if(x_binary && !y_binary)
+        if (x_binary && !y_binary)
             return opennn::point_biserial_correlation(y_vector, x_vector);
 
         return opennn::linear_correlation(x_vector, y_vector);
     }
 
-    if(x_columns != 1 && y_columns == 1)
+    if (x_columns != 1 && y_columns == 1)
         return eta_squared_correlation(y.col(0), x);
 
-    if(x_columns == 1 && y_columns != 1)
+    if (x_columns == 1 && y_columns != 1)
         return eta_squared_correlation(x.col(0), y);
 
-    if(x_columns != 1 && y_columns != 1)
+    if (x_columns != 1 && y_columns != 1)
         return logistic_correlation(x, y);
 
     throw runtime_error("Correlations Exception: Unknown case.");
@@ -95,30 +95,30 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
     const bool x_binary = is_binary(x);
     const bool y_binary = is_binary(y);
 
-    if(x_columns == 1 && y_columns == 1)
+    if (x_columns == 1 && y_columns == 1)
     {
         const auto x_vector = x.col(0);
         const auto y_vector = y.col(0);
 
-        if(!x_binary && !y_binary)
+        if (!x_binary && !y_binary)
             return linear_correlation_spearman(x_vector, y_vector);
 
-        if(y_binary && !x_binary)
+        if (y_binary && !x_binary)
             return logistic_correlation_spearman(x_vector, y_vector);
 
-        if(x_binary && !y_binary)
+        if (x_binary && !y_binary)
             return logistic_correlation_spearman(y_vector, x_vector);
 
         return linear_correlation_spearman(x_vector, y_vector);
     }
 
-    if(x_columns == 1 && y_columns != 1)
+    if (x_columns == 1 && y_columns != 1)
         return logistic_correlation(VectorR(x.col(0)), y);
 
-    if(x_columns != 1 && y_columns == 1)
+    if (x_columns != 1 && y_columns == 1)
         return logistic_correlation(x, VectorR(y.col(0)));
 
-    if(x_columns != 1 && y_columns != 1)
+    if (x_columns != 1 && y_columns != 1)
         return logistic_correlation(x, y);
 
     throw runtime_error("Correlations Exception: Unknown case.");
@@ -128,14 +128,14 @@ VectorR cross_correlations(const VectorR& x,
                            const VectorR& y,
                            Index maximum_past_time_steps)
 {
-    if(y.size() != x.size())
+    if (y.size() != x.size())
         throw runtime_error("Both vectors must have the same size.\n");
 
     VectorR cross_correlation(maximum_past_time_steps);
 
     const Index this_size = x.size();
 
-    for(Index i = 0; i < maximum_past_time_steps; ++i)
+    for (Index i = 0; i < maximum_past_time_steps; ++i)
         cross_correlation[i] = linear_correlation(x.head(this_size - i), y.segment(i, this_size - i)).r;
 
     return cross_correlation;
@@ -145,7 +145,7 @@ Correlation exponential_correlation(const VectorR& x, const VectorR& y)
 {
     Correlation exponential_correlation;
 
-    if((!y.array().isNaN() && y.array() <= 0.0f).any())
+    if ((!y.array().isNaN() && y.array() <= 0.0f).any())
     {
         exponential_correlation.r = static_cast<float>(NAN);
         return exponential_correlation;
@@ -165,8 +165,8 @@ MatrixR get_correlation_values(const Tensor<Correlation, 2>& correlations)
 
     MatrixR values(rows_number, columns_number);
 
-    for(Index i = 0; i < rows_number; ++i)
-        for(Index j = 0; j < columns_number; ++j)
+    for (Index i = 0; i < rows_number; ++i)
+        for (Index j = 0; j < columns_number; ++j)
             values(i, j) = correlations(i, j).r;
 
     return values;
@@ -175,17 +175,17 @@ MatrixR get_correlation_values(const Tensor<Correlation, 2>& correlations)
 Correlation linear_correlation(const VectorR& x,
                                const VectorR& y)
 {
-    if(x.size() != y.size())
+    if (x.size() != y.size())
         throw runtime_error("Y size must be equal to X size.\n");
 
-    if(is_constant(x) || is_constant(y))
+    if (is_constant(x) || is_constant(y))
         return Correlation();
 
     const auto [x_filter, y_filter] = filter_missing_values(x, y);
 
-    const Index n = x_filter.size();
+    const Index sample_count = x_filter.size();
 
-    if(x_filter.size() == 0)
+    if (x_filter.size() == 0)
         return Correlation();
 
     const auto x_double = x_filter.cast<double>();
@@ -197,31 +197,31 @@ Correlation linear_correlation(const VectorR& x,
     const double s_yy = y_double.squaredNorm();
     const double s_xy = x_double.dot(y_double);
 
-    const double denominator = sqrt((double(n) * s_xx - s_x * s_x) * (double(n) * s_yy - s_y * s_y));
+    const double denominator = sqrt((double(sample_count) * s_xx - s_x * s_x) * (double(sample_count) * s_yy - s_y * s_y));
 
     if (denominator < static_cast<double>(EPSILON))
         return Correlation();
 
     Correlation linear_correlation;
-    linear_correlation.form = Correlation::Form::Linear;
-    linear_correlation.a = static_cast<float>((s_y * s_xx - s_x * s_xy) / (double(n) * s_xx - s_x * s_x));
-    linear_correlation.b = static_cast<float>((double(n) * s_xy - s_x * s_y) / (double(n) * s_xx - s_x * s_x));
-    linear_correlation.r = static_cast<float>((double(n) * s_xy - s_x * s_y) / denominator);
+    linear_correlation.form = Correlation::Form::Identity;
+    linear_correlation.a = static_cast<float>((s_y * s_xx - s_x * s_xy) / (double(sample_count) * s_xx - s_x * s_x));
+    linear_correlation.b = static_cast<float>((double(sample_count) * s_xy - s_x * s_y) / (double(sample_count) * s_xx - s_x * s_x));
+    linear_correlation.r = static_cast<float>((double(sample_count) * s_xy - s_x * s_y) / denominator);
 
     const float z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
 
-    const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z_correlation, n);
+    const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z_correlation, sample_count);
 
-    linear_correlation.lower_confidence = clamp(z_correlation_to_r_correlation(ci_lower), float(-1), float(1));
-    linear_correlation.upper_confidence = clamp(z_correlation_to_r_correlation(ci_upper), float(-1), float(1));
-    linear_correlation.r = clamp(linear_correlation.r, float(-1), float(1));
+    linear_correlation.lower_confidence = clamp(z_correlation_to_r_correlation(ci_lower), -1.0f, 1.0f);
+    linear_correlation.upper_confidence = clamp(z_correlation_to_r_correlation(ci_upper), -1.0f, 1.0f);
+    linear_correlation.r = clamp(linear_correlation.r, -1.0f, 1.0f);
 
     return linear_correlation;
 }
 
 float r_correlation_to_z_correlation(const float r_correlation)
 {
-    const float r_clamped = clamp(r_correlation, float(-0.9999), float(0.9999));
+    const float r_clamped = clamp(r_correlation, -0.9999f, 0.9999f);
 
     return float(0.5 * log((1 + r_clamped) / (1 - r_clamped)));
 }
@@ -231,38 +231,38 @@ float z_correlation_to_r_correlation (const float z_correlation)
     return tanh(z_correlation);
 }
 
-pair<float, float> confidence_interval_z_correlation(const float z_correlation, Index n)
+pair<float, float> confidence_interval_z_correlation(const float z_correlation, Index sample_count)
 {
-    const float margin = float(1.959964) * float(1/sqrt(n - 3));
+    const float margin = 1.959964f * float(1/sqrt(sample_count - 3));
 
     return { z_correlation - margin, z_correlation + margin };
 }
 
 VectorR calculate_spearman_ranks(const VectorR& x)
 {
-    const Index n = x.size();
+    const Index size = x.size();
 
-    if (n == 0) return {};
+    if (size == 0) return {};
 
-    VectorI sorted_indices(n);
+    VectorI sorted_indices(size);
 
-    iota(sorted_indices.data(), sorted_indices.data() + n, 0);
+    iota(sorted_indices.data(), sorted_indices.data() + size, 0);
 
-    sort(sorted_indices.data(), sorted_indices.data() + n,
+    sort(sorted_indices.data(), sorted_indices.data() + size,
          [&](Index i, Index j) { return x(i) < x(j); });
 
-    VectorR ranks(n);
+    VectorR ranks(size);
 
     Index i = 0;
-    while (i < n)
+    while (i < size)
     {
         Index j = i;
-        while (j + 1 < n && x(sorted_indices(j + 1)) == x(sorted_indices(i)))
+        while (j + 1 < size && x(sorted_indices(j + 1)) == x(sorted_indices(i)))
             ++j;
 
-        const float average_rank = (static_cast<float>(i + 1) + static_cast<float>(j + 1)) / float(2.0);
+        const float average_rank = (static_cast<float>(i + 1) + static_cast<float>(j + 1)) / 2.0f;
 
-        for(Index k = i; k <= j; ++k)
+        for (Index k = i; k <= j; ++k)
             ranks(sorted_indices(k)) = average_rank;
 
         i = j + 1;
@@ -286,9 +286,9 @@ Correlation logarithmic_correlation(const VectorR& x,
 {
     Correlation logarithmic_correlation;
 
-    if((!x.array().isNaN() && x.array() <= float(0)).any())
+    if ((!x.array().isNaN() && x.array() <= 0.0f).any())
     {
-        logarithmic_correlation.r = float(NAN);
+        logarithmic_correlation.r = NAN;
         return logarithmic_correlation;
     }
 
@@ -317,25 +317,25 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     dataset.set_display(false);
 
     NeuralNetwork neural_network;
-    const Shape dim = { 1 };
-    neural_network.add_layer(make_unique<Scaling<2>>(dim));
-    neural_network.add_layer(make_unique<Dense<2>>(dim, dim, "Sigmoid"));
+    const Shape dimensions = { 1 };
+    neural_network.add_layer(make_unique<Scaling>(dimensions));
+    neural_network.add_layer(make_unique<Dense>(dimensions, dimensions, "Sigmoid"));
     neural_network.compile();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error("MeanSquaredError");
     loss.set_regularization("None");
 
-    LevenbergMarquardtAlgorithm lm(&loss);
-    lm.set_display(false);
+    LevenbergMarquardtAlgorithm levenberg_marquardt(&loss);
+    levenberg_marquardt.set_display(false);
 
     try
     {
-        lm.train();
+        levenberg_marquardt.train();
     }
-    catch(const exception&)
+    catch (const exception&)
     {
-        correlation.r = float(0);
+        correlation.r = 0.0f;
         return correlation;
     }
 
@@ -345,9 +345,9 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
 
     correlation.r = linear_correlation(outputs.reshaped(), targets.reshaped()).r;
 
-    if(!isfinite(correlation.r))
+    if (!isfinite(correlation.r))
     {
-        correlation.r = float(0);
+        correlation.r = 0.0f;
         return correlation;
     }
 
@@ -362,9 +362,9 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
 
-    if(correlation.b < float(0))
+    if (correlation.b < 0.0f)
     {
-        correlation.r *= float(-1);
+        correlation.r *= -1.0f;
         const float old_lower = correlation.lower_confidence;
         correlation.lower_confidence = -correlation.upper_confidence;
         correlation.upper_confidence = -old_lower;
@@ -379,10 +379,10 @@ Correlation logistic_correlation(const VectorR& x, const VectorR& y)
 
     if (x_filter.size() < 2 || is_constant(x_filter) || is_constant(y_filter))
     {
-        Correlation c;
-        c.r = float(NAN);
-        c.form = Correlation::Form::Sigmoid;
-        return c;
+        Correlation correlation;
+        correlation.r = NAN;
+        correlation.form = Correlation::Form::Sigmoid;
+        return correlation;
     }
 
     return fit_logistic_correlation(x_filter, y_filter, "MeanStandardDeviation");
@@ -392,12 +392,12 @@ Correlation logistic_correlation_spearman(const VectorR& x, const VectorR& y)
 {
     const auto [x_filter, y_filter] = filter_missing_values(x, y);
 
-    if(x_filter.size() < 2)
+    if (x_filter.size() < 2)
     {
-        Correlation c;
-        c.r = float(NAN);
-        c.form = Correlation::Form::Sigmoid;
-        return c;
+        Correlation correlation;
+        correlation.r = NAN;
+        correlation.form = Correlation::Form::Sigmoid;
+        return correlation;
     }
 
     return fit_logistic_correlation(calculate_spearman_ranks(x_filter), y_filter, "MinimumMaximum");
@@ -410,18 +410,18 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
 
     const auto [x_filter, y_filter] = filter_missing_values(x, y);
 
-    if(y_filter.cols() > 50)
+    if (y_filter.cols() > 50)
     {
         cout << "Warning: Y variable has too many categories." << "\n";
 
-        correlation.r = float(NAN);
+        correlation.r = NAN;
 
         return correlation;
     }
 
-    if(x_filter.size() == 0)
+    if (x_filter.size() == 0)
     {
-        correlation.r = float(NAN);
+        correlation.r = NAN;
 
         return correlation;
     }
@@ -430,7 +430,7 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
     data << x_filter, y_filter;
 
     vector<Index> input_columns_indices(1);
-    input_columns_indices[0] = float(0);
+    input_columns_indices[0] = 0.0f;
 
     vector<Index> target_columns_indices(y_filter.cols());
     iota(target_columns_indices.begin(), target_columns_indices.end(), 1);
@@ -451,8 +451,8 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
 
     ClassificationNetwork neural_network({ input_features_number }, {1}, {target_features_number});
 
-    auto* dense_2d = dynamic_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
-    if(!dense_2d) throw runtime_error("Expected Dense<2> layer.");
+    auto* dense_2d = dynamic_cast<Dense*>(neural_network.get_first(LayerType::Dense));
+    if (!dense_2d) throw runtime_error("Expected Dense layer.");
 
     dense_2d->set_activation_function("Softmax");
 
@@ -468,9 +468,9 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
     {
         quasi_newton_method.train();
     }
-    catch(const exception&)
+    catch (const exception&)
     {
-        correlation.r = float(0);
+        correlation.r = 0.0f;
         return correlation;
     }
 
@@ -502,25 +502,25 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 
     const auto [x_filter, y_filter] = filter_missing_values(x, y);
 
-    if(x_filter.rows() == y_filter.rows() && x_filter.cols() == y_filter.cols())
-        if((x_filter.array() == y_filter.array()).all())
+    if (x_filter.rows() == y_filter.rows() && x_filter.cols() == y_filter.cols())
+        if ((x_filter.array() == y_filter.array()).all())
         {
-            correlation.r = static_cast<float>(1);
+            correlation.r = 1.0f;
             return correlation;
         }
 
-    if(x.cols() > 50 || y.cols() > 50)
+    if (x.cols() > 50 || y.cols() > 50)
     {
         cout << "Warning: One variable has too many categories." << "\n";
 
-        correlation.r = float(NAN);
+        correlation.r = NAN;
 
         return correlation;
     }
 
-    if(x_filter.size() == 0 && y_filter.size() == 0)
+    if (x_filter.size() == 0 && y_filter.size() == 0)
     {
-        correlation.r = float(NAN);
+        correlation.r = NAN;
 
         return correlation;
     }
@@ -548,8 +548,8 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 
     ClassificationNetwork neural_network({input_features_number }, {}, {target_features_number});
 
-    auto* dense_2d = dynamic_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
-    if(!dense_2d) throw runtime_error("Expected Dense<2> layer.");
+    auto* dense_2d = dynamic_cast<Dense*>(neural_network.get_first(LayerType::Dense));
+    if (!dense_2d) throw runtime_error("Expected Dense layer.");
 
     dense_2d->set_activation_function("Softmax");
 
@@ -565,9 +565,9 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
     {
         quasi_newton_method.train();
     }
-    catch(const exception&)
+    catch (const exception&)
     {
-        correlation.r = float(0);
+        correlation.r = 0.0f;
         return correlation;
     }
 
@@ -595,41 +595,41 @@ Correlation point_biserial_correlation(const VectorR& continuous,
                                        const VectorR& binary)
 {
     Correlation result;
-    result.form   = Correlation::Form::Linear;
+    result.form   = Correlation::Form::Identity;
     result.method = Correlation::Method::Pearson;
 
     const auto [x_filter, y_filter] = filter_missing_values(continuous, binary);
 
-    if(x_filter.size() < 2 || is_constant(x_filter) || is_constant(y_filter))
+    if (x_filter.size() < 2 || is_constant(x_filter) || is_constant(y_filter))
     {
-        result.r = float(0);
+        result.r = 0.0f;
         return result;
     }
 
-    const Index n = x_filter.size();
+    const Index sample_count = x_filter.size();
 
     const auto x_dbl = x_filter.cast<double>();
     const double sum_all = x_dbl.sum();
     const double sum_sq = x_dbl.squaredNorm();
 
-    const auto mask1 = (y_filter.array() > float(0.5));
+    const auto mask1 = (y_filter.array() > 0.5f);
     const Index n1 = mask1.count();
-    const Index n0 = n - n1;
+    const Index n0 = sample_count - n1;
     const double sum1 = mask1.select(x_dbl.array(), 0.0).sum();
     const double sum0 = sum_all - sum1;
 
-    if(n1 == 0 || n0 == 0)
+    if (n1 == 0 || n0 == 0)
     {
-        result.r = float(0);
+        result.r = 0.0f;
         return result;
     }
 
-    const double mean_all = sum_all / double(n);
-    const double variance  = (sum_sq / double(n)) - (mean_all * mean_all);
+    const double mean_all = sum_all / double(sample_count);
+    const double variance  = (sum_sq / double(sample_count)) - (mean_all * mean_all);
 
-    if(variance <= 0)
+    if (variance <= 0)
     {
-        result.r = float(0);
+        result.r = 0.0f;
         return result;
     }
 
@@ -637,12 +637,12 @@ Correlation point_biserial_correlation(const VectorR& continuous,
     const double M1   = sum1 / double(n1);
     const double M0   = sum0 / double(n0);
     const double r_pb = (M1 - M0) / s_x
-                        * sqrt(double(n1) * double(n0) / (double(n) * double(n)));
+                        * sqrt(double(n1) * double(n0) / (double(sample_count) * double(sample_count)));
 
     result.r = float(clamp(r_pb, -1.0, 1.0));
 
     const float z = r_correlation_to_z_correlation(result.r);
-    const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z, n);
+    const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z, sample_count);
     result.lower_confidence = z_correlation_to_r_correlation(ci_lower);
     result.upper_confidence = z_correlation_to_r_correlation(ci_upper);
 
@@ -653,39 +653,39 @@ Correlation eta_squared_correlation(const VectorR& continuous,
                                     const MatrixR& categorical)
 {
     Correlation result;
-    result.form   = Correlation::Form::Linear;
+    result.form   = Correlation::Form::Identity;
     result.method = Correlation::Method::Pearson;
 
     const auto [x_filter, y_filter] = filter_missing_values(continuous, categorical);
 
-    if(x_filter.size() < 2 || is_constant(x_filter))
+    if (x_filter.size() < 2 || is_constant(x_filter))
     {
-        result.r = float(0);
+        result.r = 0.0f;
         return result;
     }
 
-    const Index n          = x_filter.size();
+    const Index sample_count = x_filter.size();
     const Index n_cats     = y_filter.cols();
 
     const double grand_mean = x_filter.cast<double>().mean();
 
     const double ss_total = (x_filter.cast<double>().array() - grand_mean).square().sum();
 
-    if(ss_total <= 0)
+    if (ss_total <= 0)
     {
-        result.r = float(0);
+        result.r = 0.0f;
         return result;
     }
 
     double ss_between = 0;
 
-    for(Index cat = 0; cat < n_cats; ++cat)
+    for (Index cat = 0; cat < n_cats; ++cat)
     {
-        const auto mask = (y_filter.col(cat).array() > float(0.5));
+        const auto mask = (y_filter.col(cat).array() > 0.5f);
         const double group_sum = mask.select(x_filter.cast<double>().array(), 0.0).sum();
         const Index group_count = mask.count();
 
-        if(group_count == 0) continue;
+        if (group_count == 0) continue;
 
         const double group_mean = group_sum / double(group_count);
         const double diff       = group_mean - grand_mean;
@@ -697,7 +697,7 @@ Correlation eta_squared_correlation(const VectorR& continuous,
     result.r = float(clamp(sqrt(eta_sq), 0.0, 1.0));
 
     const float z = r_correlation_to_z_correlation(result.r);
-    const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z, n);
+    const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z, sample_count);
     result.lower_confidence = z_correlation_to_r_correlation(ci_lower);
     result.upper_confidence = z_correlation_to_r_correlation(ci_upper);
 
@@ -724,20 +724,20 @@ Correlation power_correlation(const VectorR& x, const VectorR& y)
 
 void Correlation::set_perfect()
 {
-    r = float(1);
-    a = float(0);
-    b = float(1);
+    r = 1.0f;
+    a = 0.0f;
+    b = 1.0f;
 
-    upper_confidence = float(1);
-    lower_confidence = float(1);
-    form = Correlation::Form::Linear;
+    upper_confidence = 1.0f;
+    lower_confidence = 1.0f;
+    form = Correlation::Form::Identity;
 }
 
 static const char* form_to_string(Correlation::Form form)
 {
-    switch(form)
+    switch (form)
     {
-    case Correlation::Form::Linear:      return "linear";
+    case Correlation::Form::Identity:      return "linear";
     case Correlation::Form::Sigmoid:     return "logistic";
     case Correlation::Form::Logarithmic: return "logarithmic";
     case Correlation::Form::Exponential: return "exponential";

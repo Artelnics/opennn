@@ -6,7 +6,9 @@
 // TU gets its own copy without ODR conflicts.
 
 #include <cstdint>
+#include <cfloat>
 
+#include "tensor_utilities.h"
 #include "kernel.cuh"
 
 static constexpr int block_size = 256;

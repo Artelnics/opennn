@@ -25,13 +25,13 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     batch_size = new_batch_size;
     loss = new_loss;
 
-    if(!loss)
-        throw runtime_error("BackPropagation error: loss is not set.");
+    if (!loss)
+        throw runtime_error("loss is not set.");
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
-    if(!neural_network)
-        throw runtime_error("BackPropagation error: neural network is not set.");
+    if (!neural_network)
+        throw runtime_error("neural network is not set.");
 
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
@@ -41,32 +41,29 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
 
-    loss_value = float(0);
-    error = float(0);
+    loss_value = 0.0f;
+    error = 0.0f;
     accuracy.setZero();
 
-    // Backward edges: for each producer layer, the list of (consumer, port) pairs
-    // that read its output. Multi-consumer producers need a private accumulation
-    // slot in `per_layer_output_deltas`. Device-independent.
     backward_edges.assign(layers_number, {});
-    for(size_t c = 0; c < layers_number; ++c)
+    for (size_t consumer_index = 0; consumer_index < layers_number; ++consumer_index)
     {
-        const vector<Index>& inputs = layer_input_indices[c];
-        for(size_t p = 0; p < inputs.size(); ++p)
+        const vector<Index>& inputs = layer_input_indices[consumer_index];
+        for (size_t port_index = 0; port_index < inputs.size(); ++port_index)
         {
-            const Index producer = inputs[p];
-            if(producer >= 0 && static_cast<size_t>(producer) < layers_number)
-                backward_edges[producer].push_back({c, p});
+            const Index producer = inputs[port_index];
+            if (producer >= 0 && static_cast<size_t>(producer) < layers_number)
+                backward_edges[producer].push_back({consumer_index, port_index});
         }
     }
 
     per_layer_output_delta_shapes.assign(layers_number, Shape());
-    for(Index i = 0; i < layers_number; ++i)
+    for (Index i = 0; i < layers_number; ++i)
     {
-        if(i == last_trainable_layer_index)        continue;
-        if(backward_edges[i].size() <= 1)          continue;
+        if (i == last_trainable_layer_index)        continue;
+        if (backward_edges[i].size() <= 1)          continue;
         const Shape output_shape_i = layers[i]->get_output_shape();
-        if(output_shape_i.empty())                 continue;
+        if (output_shape_i.empty())                 continue;
         per_layer_output_delta_shapes[i] = Shape({batch_size}).append(output_shape_i);
     }
 
@@ -75,65 +72,57 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
 #ifdef OPENNN_WITH_CUDA
     const bool is_gpu = Configuration::instance().is_gpu();
-    if(is_gpu)
+    if (is_gpu)
     {
-        // Activation dtype for output_delta / per_layer_output_delta arenas.
-        const ActivationDtype activation_dtype = neural_network->get_training_dtype();
-        const Index activation_bytes = dtype_bytes(activation_dtype);
+        const Type activation_dtype = neural_network->get_training_type();
+        const Index activation_bytes = type_bytes(activation_dtype);
 
-        // Per-slot backward dtype for the delta arena.
-        vector<vector<cudnnDataType_t>> backward_dtypes(layers_number);
-        for(Index i = 0; i < layers_number; ++i)
+        vector<vector<Type>> backward_dtypes(layers_number);
+        for (Index i = 0; i < layers_number; ++i)
             backward_dtypes[i] = layers[i]->get_backward_dtypes(batch_size);
 
-        // -- gradient (FP32 master, regardless of activation precision) --
         const Index total_gradient_floats = aligned_total_elements(parameter_shapes);
-        gradient.resize_bytes(total_gradient_floats * Index(sizeof(float)), DeviceType::CUDA);
+        gradient.resize_bytes(total_gradient_floats * Index(sizeof(float)), Device::CUDA);
         gradient.setZero();
 
         float* g_ptr = gradient.as<float>();
-        for(Index i = 0; i < layers_number; ++i)
+        for (Index i = 0; i < layers_number; ++i)
         {
             const vector<Shape>& layer_param_shapes = parameter_shapes[i];
             gradient_views[i].resize(layer_param_shapes.size());
 
-            for(size_t j = 0; j < layer_param_shapes.size(); ++j)
+            for (size_t j = 0; j < layer_param_shapes.size(); ++j)
             {
-                const Shape& s = layer_param_shapes[j];
-                if(s.size() > 0)
+                const Shape& slot_shape = layer_param_shapes[j];
+                if (slot_shape.size() > 0)
                 {
-                    gradient_views[i][j] = TensorView(g_ptr, s, CUDNN_DATA_FLOAT);
-                    g_ptr += get_aligned_size(s.size());
+                    gradient_views[i][j] = TensorView(g_ptr, slot_shape, Type::FP32);
+                    g_ptr += get_aligned_size(slot_shape.size());
                 }
             }
         }
 
-        // -- backward (delta arena, dtype-aware) --
-        // Layout: per-layer slots in order, then a trailing "loss slot" that
-        // holds the output delta of the last trainable layer. The loss writes
-        // there directly via get_output_deltas() and the layer's input-delta
-        // view aliases it.
         Index total_layer_bytes = 0;
-        for(Index i = 0; i < layers_number; ++i)
+        for (Index i = 0; i < layers_number; ++i)
         {
             const vector<Shape>& shapes = backward_shapes[i];
-            for(size_t j = 0; j < shapes.size(); ++j)
-                if(shapes[j].size() > 0)
-                    total_layer_bytes += get_aligned_bytes(shapes[j].size() * dtype_bytes(backward_dtypes[i][j]));
+            for (size_t j = 0; j < shapes.size(); ++j)
+                if (shapes[j].size() > 0)
+                    total_layer_bytes += get_aligned_bytes(shapes[j].size() * type_bytes(backward_dtypes[i][j]));
         }
 
         const Shape output_delta_shape = Shape({batch_size}).append(output_shape);
-        const Index loss_slot_bytes   = get_aligned_bytes(output_delta_shape.size() * activation_bytes);
+        const Index loss_slot_bytes = get_aligned_bytes(output_delta_shape.size() * activation_bytes);
         const Index total_backward_bytes = total_layer_bytes + loss_slot_bytes;
 
-        if(total_backward_bytes > 0)
+        if (total_backward_bytes > 0)
         {
-            backward.resize_bytes(total_backward_bytes, DeviceType::CUDA);
+            backward.resize_bytes(total_backward_bytes, Device::CUDA);
             backward.setZero();
         }
 
         uint8_t* b_cursor = (total_backward_bytes > 0) ? backward.as<uint8_t>() : nullptr;
-        for(Index i = 0; i < layers_number; ++i)
+        for (Index i = 0; i < layers_number; ++i)
         {
             const vector<Shape>& shapes = backward_shapes[i];
             const size_t slots = shapes.size();
@@ -141,66 +130,63 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             delta_views[i].resize(slots + 1);
             delta_views[i][0].resize(1);
 
-            for(size_t j = 0; j < slots; ++j)
+            for (size_t j = 0; j < slots; ++j)
             {
-                const Shape& s = shapes[j];
+                const Shape& slot_shape = shapes[j];
                 delta_views[i][j + 1].resize(1);
 
-                if(s.size() > 0)
+                if (slot_shape.size() > 0)
                 {
-                    delta_views[i][j + 1][0] = TensorView(b_cursor, s, backward_dtypes[i][j]);
-                    if(b_cursor) b_cursor += get_aligned_bytes(s.size() * dtype_bytes(backward_dtypes[i][j]));
+                    delta_views[i][j + 1][0] = TensorView(b_cursor, slot_shape, backward_dtypes[i][j]);
+                    if (b_cursor) b_cursor += get_aligned_bytes(slot_shape.size() * type_bytes(backward_dtypes[i][j]));
                 }
             }
         }
 
-        // After the per-layer walk b_cursor sits at the start of the loss slot.
         uint8_t* loss_slot_ptr = b_cursor;
 
-        // -- per_layer_output_deltas (multi-consumer accumulation, activation-typed) --
         Index total_og_bytes = 0;
-        for(Index i = 0; i < layers_number; ++i)
-            if(!per_layer_output_delta_shapes[i].empty())
+        for (Index i = 0; i < layers_number; ++i)
+            if (!per_layer_output_delta_shapes[i].empty())
                 total_og_bytes += get_aligned_bytes(per_layer_output_delta_shapes[i].size() * activation_bytes);
 
-        if(total_og_bytes > 0)
+        if (total_og_bytes > 0)
         {
-            per_layer_output_deltas.resize_bytes(total_og_bytes, DeviceType::CUDA);
+            per_layer_output_deltas.resize_bytes(total_og_bytes, Device::CUDA);
             per_layer_output_deltas.setZero();
         }
 
-        // -- wire delta_views[i][0][0] (input delta of layer i) --
-        for(Index i = 0; i < layers_number; ++i)
+        for (Index i = 0; i < layers_number; ++i)
         {
-            if(delta_views[i].empty()) continue;
+            if (delta_views[i].empty()) continue;
 
-            if(i == last_trainable_layer_index)
+            if (i == last_trainable_layer_index)
             {
                 delta_views[i][0][0] = TensorView(loss_slot_ptr,
                                                   output_delta_shape,
-                                                  to_cudnn(activation_dtype));
+                                                  activation_dtype);
             }
-            else if(!backward_edges[i].empty())
+            else if (!backward_edges[i].empty())
             {
-                if(backward_edges[i].size() > 1
+                if (backward_edges[i].size() > 1
                    && !per_layer_output_delta_shapes[i].empty()
                    && per_layer_output_deltas.as<uint8_t>())
                 {
                     uint8_t* og_cursor = per_layer_output_deltas.as<uint8_t>();
-                    for(size_t k = 0; k < i; ++k)
-                        if(!per_layer_output_delta_shapes[k].empty())
+                    for (size_t k = 0; k < i; ++k)
+                        if (!per_layer_output_delta_shapes[k].empty())
                             og_cursor += get_aligned_bytes(per_layer_output_delta_shapes[k].size()
                                                            * activation_bytes);
 
                     delta_views[i][0][0].data  = og_cursor;
                     delta_views[i][0][0].shape = per_layer_output_delta_shapes[i];
-                    delta_views[i][0][0].dtype = to_cudnn(activation_dtype);
+                    delta_views[i][0][0].type = activation_dtype;
                 }
                 else
                 {
                     const BackwardEdge& edge = backward_edges[i].front();
                     const size_t slot = 1 + edge.port;
-                    if(edge.consumer_idx < delta_views.size()
+                    if (edge.consumer_idx < delta_views.size()
                        && slot < delta_views[edge.consumer_idx].size()
                        && !delta_views[edge.consumer_idx][slot].empty())
                     {
@@ -214,46 +200,43 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     }
 #endif
 
-    // -- CPU path: everything in FP32 --
     const Index total_parameters_size = aligned_total_elements(parameter_shapes);
-    if(total_parameters_size > 0)
+    if (total_parameters_size > 0)
     {
-        gradient.resize_bytes(total_parameters_size * Index(sizeof(float)), DeviceType::CPU);
+        gradient.resize_bytes(total_parameters_size * Index(sizeof(float)), Device::CPU);
         gradient.setZero();
     }
 
     float* g_ptr = (total_parameters_size > 0) ? gradient.as<float>() : nullptr;
-    for(Index i = 0; i < layers_number; ++i)
+    for (Index i = 0; i < layers_number; ++i)
     {
         const vector<Shape>& layer_param_shapes = parameter_shapes[i];
         gradient_views[i].resize(layer_param_shapes.size());
 
-        for(size_t j = 0; j < layer_param_shapes.size(); ++j)
+        for (size_t j = 0; j < layer_param_shapes.size(); ++j)
         {
-            const Shape& s = layer_param_shapes[j];
-            if(s.size() > 0)
+            const Shape& slot_shape = layer_param_shapes[j];
+            if (slot_shape.size() > 0)
             {
-                gradient_views[i][j] = TensorView(g_ptr, s, CUDNN_DATA_FLOAT);
-                if(g_ptr) g_ptr += get_aligned_size(s.size());
+                gradient_views[i][j] = TensorView(g_ptr, slot_shape, Type::FP32);
+                if (g_ptr) g_ptr += get_aligned_size(slot_shape.size());
             }
         }
     }
 
-    // Layout: per-layer slots, then a trailing loss slot for the output delta
-    // of the last trainable layer (entry point of backward).
     const Index total_layer_size = aligned_total_elements(backward_shapes);
     const Shape output_delta_shape = Shape({batch_size}).append(output_shape);
-    const Index loss_slot_size  = get_aligned_size(output_delta_shape.size());
+    const Index loss_slot_size = get_aligned_size(output_delta_shape.size());
     const Index total_backward_size = total_layer_size + loss_slot_size;
 
-    if(total_backward_size > 0)
+    if (total_backward_size > 0)
     {
-        backward.resize_bytes(total_backward_size * Index(sizeof(float)), DeviceType::CPU);
+        backward.resize_bytes(total_backward_size * Index(sizeof(float)), Device::CPU);
         backward.setZero();
     }
 
     float* b_ptr = (total_backward_size > 0) ? backward.as<float>() : nullptr;
-    for(Index i = 0; i < layers_number; ++i)
+    for (Index i = 0; i < layers_number; ++i)
     {
         const vector<Shape>& shapes = backward_shapes[i];
         const size_t slots = shapes.size();
@@ -261,45 +244,44 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         delta_views[i].resize(slots + 1);
         delta_views[i][0].resize(1);
 
-        for(size_t j = 0; j < slots; ++j)
+        for (size_t j = 0; j < slots; ++j)
         {
-            const Shape& s = shapes[j];
+            const Shape& slot_shape = shapes[j];
             delta_views[i][j + 1].resize(1);
 
-            if(s.size() > 0)
+            if (slot_shape.size() > 0)
             {
-                delta_views[i][j + 1][0] = TensorView(b_ptr, s);
-                if(b_ptr) b_ptr += get_aligned_size(s.size());
+                delta_views[i][j + 1][0] = TensorView(b_ptr, slot_shape);
+                if (b_ptr) b_ptr += get_aligned_size(slot_shape.size());
             }
         }
     }
 
-    // After the per-layer walk b_ptr sits at the start of the loss slot.
     float* loss_slot_ptr = b_ptr;
 
     Index total_output_delta_size = 0;
-    for(Index i = 0; i < layers_number; ++i)
-        if(!per_layer_output_delta_shapes[i].empty())
+    for (Index i = 0; i < layers_number; ++i)
+        if (!per_layer_output_delta_shapes[i].empty())
             total_output_delta_size += get_aligned_size(per_layer_output_delta_shapes[i].size());
 
-    if(total_output_delta_size > 0)
+    if (total_output_delta_size > 0)
     {
-        per_layer_output_deltas.resize_bytes(total_output_delta_size * Index(sizeof(float)), DeviceType::CPU);
+        per_layer_output_deltas.resize_bytes(total_output_delta_size * Index(sizeof(float)), Device::CPU);
         per_layer_output_deltas.setZero();
     }
 
     float* og_ptr = (total_output_delta_size > 0) ? per_layer_output_deltas.as<float>() : nullptr;
-    for(Index i = 0; i < layers_number; ++i)
+    for (Index i = 0; i < layers_number; ++i)
     {
-        if(delta_views[i].empty()) continue;
+        if (delta_views[i].empty()) continue;
 
-        if(i == last_trainable_layer_index)
+        if (i == last_trainable_layer_index)
         {
             delta_views[i][0][0] = TensorView(loss_slot_ptr, output_delta_shape);
         }
-        else if(!backward_edges[i].empty())
+        else if (!backward_edges[i].empty())
         {
-            if(backward_edges[i].size() > 1 && og_ptr && !per_layer_output_delta_shapes[i].empty())
+            if (backward_edges[i].size() > 1 && og_ptr && !per_layer_output_delta_shapes[i].empty())
             {
                 delta_views[i][0][0] = TensorView(og_ptr, per_layer_output_delta_shapes[i]);
                 og_ptr += get_aligned_size(per_layer_output_delta_shapes[i].size());
@@ -308,7 +290,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             {
                 const BackwardEdge& edge = backward_edges[i].front();
                 const size_t slot = 1 + edge.port;
-                if(edge.consumer_idx < delta_views.size()
+                if (edge.consumer_idx < delta_views.size()
                    && slot < delta_views[edge.consumer_idx].size()
                    && !delta_views[edge.consumer_idx][slot].empty())
                 {
@@ -321,60 +303,57 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
 void BackPropagation::accumulate_output_deltas(size_t layer_index)
 {
-    if(layer_index >= delta_views.size()) return;
-    if(delta_views[layer_index].empty()) return;
-    if(backward_edges[layer_index].size() <= 1) return;
+    if (layer_index >= delta_views.size()) return;
+    if (delta_views[layer_index].empty()) return;
+
+    const auto& edges = backward_edges[layer_index];
+    if (edges.size() <= 1) return;
 
     TensorView& destination = delta_views[layer_index][0][0];
-    if(!destination.data) return;
+    if (!destination.data) return;
 
-    // Copy the first valid source instead of fill(0) + addition. Saves one full
-    // memset of the destination (B·S·E · sizeof(T) bytes) plus one cudnnOpTensor
-    // launch per multi-consumer layer. The remaining edges still accumulate
-    // via addition into the seeded destination.
-    bool seeded = false;
-    for(const BackwardEdge& edge : backward_edges[layer_index])
+    constexpr size_t MAX_FAN_IN = 16;
+    array<const TensorView*, MAX_FAN_IN> sources{};
+    size_t k = 0;
+
+    for (const BackwardEdge& edge : edges)
     {
+        if (k == MAX_FAN_IN) break;
         const size_t slot = 1 + edge.port;
-
-        if(edge.consumer_idx >= delta_views.size()) continue;
+        if (edge.consumer_idx >= delta_views.size()) continue;
         const auto& consumer_views = delta_views[edge.consumer_idx];
-        if(slot >= consumer_views.size() || consumer_views[slot].empty()) continue;
-
+        if (slot >= consumer_views.size() || consumer_views[slot].empty()) continue;
         const TensorView& source = consumer_views[slot][0];
-        if(!source.data || source.size() != destination.size()) continue;
-
-        if(!seeded)
-        {
-            copy(source, destination);
-            seeded = true;
-        }
-        else
-        {
-            addition(destination, source, destination);
-        }
+        if (!source.data || source.size() != destination.size()) continue;
+        sources[k++] = &source;
     }
 
-    // No edge contributed (every one was filtered out): zero the destination so
-    // downstream layers see the correct "no gradient" value. Rare path.
-    if(!seeded)
-        destination.fill(0.0f);
-}
+    if (k == 0) { destination.fill(0.0f); return; }
+    if (k == 1) { copy(*sources[0], destination); return; }
 
-const NeuralNetwork* BackPropagation::get_neural_network() const
-{
-    return neural_network;
-}
+#ifdef OPENNN_WITH_CUDA
+    if (Configuration::instance().is_gpu())
+    {
+        addition(*sources[0], *sources[1], destination);
+        for (size_t s = 2; s < k; ++s)
+            addition(destination, *sources[s], destination);
+        return;
+    }
+#endif
 
-vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
-{
-    const NeuralNetwork* neural_network_ptr = loss->get_neural_network();
+    const Index n = destination.size();
+    float* dst = destination.as<float>();
 
-    const size_t layers_number = neural_network_ptr->get_layers_number();
+    array<const float*, MAX_FAN_IN> ptrs{};
+    for (size_t s = 0; s < k; ++s) ptrs[s] = sources[s]->as<float>();
 
-    vector<vector<TensorView>> layer_gradient_views(layers_number);
-
-    return layer_gradient_views;
+    #pragma omp parallel for
+    for (Index i = 0; i < n; ++i)
+    {
+        float sum = ptrs[0][i] + ptrs[1][i];
+        for (size_t s = 2; s < k; ++s) sum += ptrs[s][i];
+        dst[i] = sum;
+    }
 }
 
 TensorView BackPropagation::get_output_deltas() const

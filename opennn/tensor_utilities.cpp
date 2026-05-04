@@ -13,53 +13,53 @@
 namespace opennn
 {
 
-string shape_to_string(const Shape& x, const string& separator)
+string shape_to_string(const Shape& shape, const string& separator)
 {
-    const Index size = x.size();
+    const Index size = shape.rank;
 
     ostringstream buffer;
 
-    if(size == 0)
-        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
+    if (size == 0)
+        throw runtime_error("Dimensions size must be greater than 0.\n");
 
-    for(Index i = 0; i < size; ++i)
-        buffer << x[i] << separator;
+    for (Index i = 0; i < size; ++i)
+        buffer << shape[i] << separator;
 
     return buffer.str();
 }
 
-Shape string_to_shape(const string& x, const string& separator)
+Shape string_to_shape(const string& text, const string& separator)
 {
     Shape result;
 
-    if (x.empty())
-        throw runtime_error("Error: Input string must not be empty.\n");
+    if (text.empty())
+        throw runtime_error("Input string must not be empty.\n");
 
-    stringstream ss(x);
+    stringstream stream(text);
     string token;
 
-    while (getline(ss, token, separator[0]))
+    while (getline(stream, token, separator[0]))
     {
         try
         {
-            if(!token.empty())
+            if (!token.empty())
                 result.push_back(stoi(token));
         }
         catch (const invalid_argument&)
         {
-            throw runtime_error("Error: Input string contains non-numeric elements.\n");
+            throw runtime_error("Input string contains non-numeric elements.\n");
         }
     }
 
     return result;
 }
 
-Device::Device()
+Backend::Backend()
 {
     set_threads_number(0);
 
 #ifdef OPENNN_WITH_CUDA
-    CHECK_CUDA(cudaStreamCreate(&compute_stream));
+    CHECK_CUDA(cudaStreamCreateWithFlags(&compute_stream, cudaStreamNonBlocking));
 
     CHECK_CUBLAS(cublasCreate(&cublas_handle));
     CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
@@ -68,23 +68,16 @@ Device::Device()
     CHECK_CUDNN(cudnnCreate(&cudnn_handle));
     CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
 
-    // Compute type for OpTensor is the precision of the elementwise op, which
-    // must be FP32 when input tensors are FP16/BF16 (cuDNN does not implement
-    // BF16/FP16 compute for these ops). Tensor data type is set per-call via
-    // the tensor descriptors, so this stays FP32 regardless of activation dtype.
+    // OpTensor compute must be FP32 when input tensors are FP16/BF16 (cuDNN does not implement BF16/FP16 compute).
     CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
     CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
-
-    CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_multiplication_descriptor));
-    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_multiplication_descriptor, CUDNN_OP_TENSOR_MUL, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
 #endif
 }
 
-Device::~Device()
+Backend::~Backend()
 {
 #ifdef OPENNN_WITH_CUDA
     if (operator_sum_descriptor) cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
-    if (operator_multiplication_descriptor) cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
     if (cublas_lt_handle) cublasLtDestroy(cublas_lt_handle);
     if (cublas_handle) cublasDestroy(cublas_handle);
     if (cudnn_handle) cudnnDestroy(cudnn_handle);
@@ -92,11 +85,12 @@ Device::~Device()
 #endif
 }
 
-void Device::set_threads_number(int num_threads)
+void Backend::set_threads_number(int num_threads)
 {
     if (num_threads <= 0)
     {
         num_threads = thread::hardware_concurrency();
+        if (num_threads > 1) num_threads /= 2;
         if (num_threads <= 0) num_threads = omp_get_max_threads();
         if (num_threads <= 0) num_threads = 1;
     }
@@ -104,16 +98,19 @@ void Device::set_threads_number(int num_threads)
     thread_pool = make_unique<ThreadPool>(num_threads);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), num_threads);
 
+    Eigen::initParallel();
+    Eigen::setNbThreads(num_threads);
     omp_set_num_threads(num_threads);
+    omp_set_dynamic(0);
 }
 
-Device& Device::instance()
+Backend& Backend::instance()
 {
-    static Device device;
+    static Backend device;
     return device;
 }
 
-ThreadPoolDevice* Device::get_thread_pool_device()
+ThreadPoolDevice* Backend::get_thread_pool_device()
 {
     return thread_pool_device.get();
 }

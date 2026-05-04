@@ -25,7 +25,7 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-        Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
+        Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
 
         // Settings
 

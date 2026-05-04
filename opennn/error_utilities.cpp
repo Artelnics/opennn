@@ -17,11 +17,6 @@ namespace opennn
 
 #ifdef OPENNN_WITH_CUDA
 
-// Compute Σ (input − target)² for tensors that may have different dtypes
-// (typical case: input = model output in BF16, target = labels in FP32). cuDNN
-// OpTensor requires uniform dtypes across A/B/C, so we lower to a custom kernel
-// that materializes (input − target) in FP32 (in the singleton loss scratch)
-// and reduce with cublasSdot.
 static float sum_squared_diff_cuda(const TensorView& input, const TensorView& target)
 {
     const int total_size = to_int(input.size());
@@ -33,42 +28,35 @@ static float sum_squared_diff_cuda(const TensorView& input, const TensorView& ta
     });
 
     float sum_squared = 0.0f;
-    CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(), total_size,
+    CHECK_CUBLAS(cublasSdot(Backend::get_cublas_handle(), total_size,
                             workspace, 1, workspace, 1, &sum_squared));
     return sum_squared;
 }
 
-// Compute output = scale * (input − target). Input/output may carry different
-// dtypes; target is always FP32 (Batch::target). Replaces the cudnnOpTensor +
-// cublasScalEx pair, which choked on mixed dtypes.
 static void scaled_diff_cuda(const TensorView& input, const TensorView& target, float scale, TensorView& output)
 {
-    input.dispatch([&](auto in_tag) {
-        using TIn = decltype(in_tag);
-        output.dispatch([&](auto out_tag) {
-            using TOut = decltype(out_tag);
-            scaled_diff_cuda_typed<TIn, TOut>(input.size(),
-                                              input.as<TIn>(),
-                                              target.as_float(),
-                                              scale,
-                                              output.as<TOut>());
-        });
+    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
+        using TIn  = typename decltype(in)::type;
+        using TOut = typename decltype(out)::type;
+        scaled_diff_cuda_typed<TIn, TOut>(input.size(),
+                                          input.as<TIn>(),
+                                          target.as_float(),
+                                          scale,
+                                          output.as<TOut>());
     });
 }
 
-static float sum_abs_cuda(const float* data, Index n)
+static float sum_abs_cuda(const float* data, Index size)
 {
     float sum = 0.0f;
-    CHECK_CUBLAS(cublasSasum(Device::get_cublas_handle(), to_int(n), data, 1, &sum));
+    CHECK_CUBLAS(cublasSasum(Backend::get_cublas_handle(), to_int(size), data, 1, &sum));
     return sum;
 }
 
-// L2 regularization sums squared FP32 master parameters. Stays FP32 even when
-// activations are BF16 — the master parameters arena is always FP32.
-static float squared_norm_cuda(const float* data, Index n)
+static float squared_norm_cuda(const float* data, Index size)
 {
     float dot = 0.0f;
-    CHECK_CUBLAS(cublasSdot(Device::get_cublas_handle(), to_int(n),
+    CHECK_CUBLAS(cublasSdot(Backend::get_cublas_handle(), to_int(size),
                             data, 1, data, 1, &dot));
     return dot;
 }
@@ -133,7 +121,6 @@ void weighted_squared_error(const TensorView& input, const TensorView& target, f
                                        pos_w,
                                        neg_w);
 
-        // 0.5 factor to match the CPU path's textbook MSE formulation: loss = 0.5·Σ(out-tgt)²·w.
         error = 0.5f * sum_abs_cuda(workspace_device, input.size());
     })) return;
 
@@ -150,7 +137,7 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
         weighted_squared_error_gradient_cuda<T>(input.size(),
             input_delta.as<T>(), target.as<T>(), input.as<T>(), pos_w, neg_w, coefficient);
     })) return;
-    
+
     const auto inputs = input.as_vector().array();
     const auto targets = target.as_vector().array();
     input_delta.as_vector().array()
@@ -176,7 +163,7 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, flo
     error = -(targets.array() * clamped_outputs.log() + (1.0f - targets.array()) * (1.0f - clamped_outputs).log()).sum()
             / to_type(samples_number);
 
-    if(isnan(error) || isinf(error)) error = 10.0f;
+    if (isnan(error) || isinf(error)) error = 10.0f;
 }
 
 void categorical_cross_entropy(const TensorView& input, const TensorView& target, float& error)
@@ -195,7 +182,7 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
 
     error = (targets.array() * (outputs.array() + EPSILON).log()).sum() / to_type(-samples_number);
 
-    if(isnan(error) || isinf(error)) error = float(10);
+    if (isnan(error) || isinf(error)) error = 10.0f;
 }
 
 void cross_entropy_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta)
@@ -218,7 +205,7 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
     const MatrixMap targets = target.as_matrix();
     MatrixMap gradients = input_delta.as_matrix();
 
-    if(num_classes == 1)
+    if (num_classes == 1)
         gradients.array() = (-targets.array() / (outputs.array() + EPSILON)
                              + (1.0f - targets.array()) / (1.0f - outputs.array() + EPSILON))
                             / to_type(samples_number);
@@ -226,23 +213,23 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
         gradients = (outputs - targets) / to_type(samples_number);
 }
 
-void minkowski_error(const TensorView& input, const TensorView& target, float p, float& error)
+void minkowski_error(const TensorView& input, const TensorView& target, float power, float& error)
 {
     if (Configuration::instance().is_gpu())
         throw runtime_error("minkowski_error: GPU implementation not available.");
 
     const Index batch_size = input.shape[0];
-    error = (input.as_vector() - target.as_vector()).array().abs().pow(p).sum() / to_type(p * batch_size);
+    error = (input.as_vector() - target.as_vector()).array().abs().pow(power).sum() / to_type(power * batch_size);
 }
 
-void minkowski_error_gradient(const TensorView& input, const TensorView& target, float p, TensorView& input_delta)
+void minkowski_error_gradient(const TensorView& input, const TensorView& target, float power, TensorView& input_delta)
 {
     if (Configuration::instance().is_gpu())
         throw runtime_error("minkowski_error_gradient: GPU implementation not available.");
 
     const Index batch_size = input.shape[0];
     const auto difference = (input.as_vector() - target.as_vector()).array();
-    input_delta.as_vector().array() = (1.0f / to_type(batch_size)) * difference.sign() * (difference.abs() + EPSILON).pow(p - 1.0f);
+    input_delta.as_vector().array() = (1.0f / to_type(batch_size)) * difference.sign() * (difference.abs() + EPSILON).pow(power - 1.0f);
 }
 
 void cross_entropy_3d(const TensorView& input, const TensorView& target, float& error,
@@ -274,7 +261,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
 
         active_tokens_out = static_cast<Index>(active_count);
         correct_tokens_out = static_cast<Index>(correct_count);
-        error = active_count > 0 ? sum_loss / active_count : float(0);
+        error = active_count > 0 ? sum_loss / active_count : 0.0f;
     })) return;
 
     const Index token_count = batch_size * sequence_length;
@@ -286,31 +273,31 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
     Index correct_tokens = 0;
 
     #pragma omp parallel for reduction(+:total_log_loss, active_tokens, correct_tokens)
-    for(Index t = 0; t < token_count; ++t)
+    for (Index token_index = 0; token_index < token_count; ++token_index)
     {
-        const Index target_index = static_cast<Index>(targets_flat(t));
-        if(target_index > 0 && target_index < vocabulary_size)
+        const Index target_index = static_cast<Index>(targets_flat(token_index));
+        if (target_index > 0 && target_index < vocabulary_size)
         {
-            total_log_loss -= log(outputs_flat(t, target_index) + EPSILON);
+            total_log_loss -= log(outputs_flat(token_index, target_index) + EPSILON);
             ++active_tokens;
 
             Index best_index = 0;
-            float best_value = outputs_flat(t, 0);
-            for(Index k = 1; k < vocabulary_size; ++k)
+            float best_value = outputs_flat(token_index, 0);
+            for (Index k = 1; k < vocabulary_size; ++k)
             {
-                if(outputs_flat(t, k) > best_value)
+                if (outputs_flat(token_index, k) > best_value)
                 {
-                    best_value = outputs_flat(t, k);
+                    best_value = outputs_flat(token_index, k);
                     best_index = k;
                 }
             }
-            if(best_index == target_index) ++correct_tokens;
+            if (best_index == target_index) ++correct_tokens;
         }
     }
 
     active_tokens_out = active_tokens;
     correct_tokens_out = correct_tokens;
-    error = active_tokens > 0 ? total_log_loss / to_type(active_tokens) : float(0);
+    error = active_tokens > 0 ? total_log_loss / to_type(active_tokens) : 0.0f;
 }
 
 void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta,
@@ -332,20 +319,20 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
     const MatrixMap outputs_flat = input.as_flat_matrix();
     const VectorMap targets_flat = target.as_vector();
 
-    const float scale = active_tokens_count > 0 ? float(1) / to_type(active_tokens_count) : float(0);
+    const float scale = active_tokens_count > 0 ? 1.0f / to_type(active_tokens_count) : 0.0f;
 
     #pragma omp parallel for
-    for(Index t = 0; t < token_count; ++t)
+    for (Index token_index = 0; token_index < token_count; ++token_index)
     {
-        const Index target_index = static_cast<Index>(targets_flat(t));
-        if(target_index > 0 && target_index < vocabulary_size)
+        const Index target_index = static_cast<Index>(targets_flat(token_index));
+        if (target_index > 0 && target_index < vocabulary_size)
         {
-            gradients_flat.row(t).noalias() = scale * outputs_flat.row(t);
-            gradients_flat(t, target_index) -= scale;
+            gradients_flat.row(token_index).noalias() = scale * outputs_flat.row(token_index);
+            gradients_flat(token_index, target_index) -= scale;
         }
         else
         {
-            gradients_flat.row(t).setZero();
+            gradients_flat.row(token_index).setZero();
         }
     }
 }
@@ -388,9 +375,7 @@ void l2_regularization_gradient(const TensorView& parameters, float lambda, Tens
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu()) {
         const int total_size = to_int(parameters.size());
-        // L2 regularization runs over the FP32 master parameters and the FP32
-        // gradient buffer; both stay FP32 regardless of TrainingPrecision.
-        CHECK_CUBLAS(cublasAxpyEx(Device::get_cublas_handle(), total_size,
+        CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), total_size,
                                   &lambda,         CUDA_R_32F,
                                   parameters.data, CUDA_R_32F, 1,
                                   gradient.data,   CUDA_R_32F, 1,

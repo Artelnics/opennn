@@ -15,6 +15,7 @@ set(PCH_HEADER pch.h)
 set(PCH_SOURCE pch.cpp)
 
 add_executable(run_tests test.cpp
+		numerical_derivatives.cpp
 		adaptive_moment_estimation_test.cpp
 		bounding_layer_test.cpp
 		convolutional_layer_test.cpp

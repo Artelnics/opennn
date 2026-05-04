@@ -48,17 +48,17 @@ public:
 
    // Serialization
 
-   void from_XML(const XmlDocument&) override;
+   void from_JSON(const JsonDocument&) override;
 
-   void to_XML(XmlPrinter&) const override;
+   void to_JSON(JsonWriter&) const override;
 
 private:
 
-   float learning_rate = float(0.001);
+   float learning_rate = 0.001f;
 
-   float beta_1 = float(0.9);
+   float beta_1 = 0.9f;
 
-   float beta_2 = float(0.98);
+   float beta_2 = 0.999f;
 
    Index batch_size = 1000;
 };

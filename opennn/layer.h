@@ -18,50 +18,40 @@
 namespace opennn
 {
 
+struct Operator;
+
 enum class LayerType
 {
-    Addition3d,
-    Addition4d,
+    Addition,
     Bounding,
     Convolutional,
-    Dense2d,
-    Dense3d,
+    Dense,
     Embedding,
-    Flatten2d,
-    Flatten3d,
-    Flatten4d,
+    Flatten,
     MultiHeadAttention,
     Normalization3d,
     Pooling,
     Pooling3d,
     Recurrent,
-    Scaling2d,
-    Scaling3d,
-    Scaling4d,
+    Scaling,
     Unscaling
 };
 
 inline const EnumMap<LayerType>& layer_type_map()
 {
     static const vector<pair<LayerType, string>> entries = {
-        {LayerType::Addition3d,         "Addition3d"},
-        {LayerType::Addition4d,         "Addition4d"},
+        {LayerType::Addition,           "Addition"},
         {LayerType::Bounding,           "Bounding"},
         {LayerType::Convolutional,      "Convolutional"},
-        {LayerType::Dense2d,            "Dense2d"},
-        {LayerType::Dense3d,            "Dense3d"},
+        {LayerType::Dense,              "Dense"},
         {LayerType::Embedding,          "Embedding"},
-        {LayerType::Flatten2d,          "Flatten2d"},
-        {LayerType::Flatten3d,          "Flatten3d"},
-        {LayerType::Flatten4d,          "Flatten4d"},
+        {LayerType::Flatten,            "Flatten"},
         {LayerType::MultiHeadAttention, "MultiHeadAttention"},
         {LayerType::Normalization3d,    "Normalization3d"},
         {LayerType::Pooling,            "Pooling"},
         {LayerType::Pooling3d,          "Pooling3d"},
         {LayerType::Recurrent,          "Recurrent"},
-        {LayerType::Scaling2d,          "Scaling2d"},
-        {LayerType::Scaling3d,          "Scaling3d"},
-        {LayerType::Scaling4d,          "Scaling4d"},
+        {LayerType::Scaling,            "Scaling"},
         {LayerType::Unscaling,          "Unscaling"}
     };
     static const EnumMap<LayerType> map{entries};
@@ -85,6 +75,24 @@ inline LayerType string_to_layer_type(const string& name)
 #else
 #define FORCE_INLINE inline
 #endif
+
+// Project the (shape, dtype) pairs returned by Layer::get_*_specs() onto one
+// component. Used by the seven public unwrappers below.
+inline vector<Shape> spec_shapes(const vector<pair<Shape, Type>>& specs)
+{
+    vector<Shape> result;
+    result.reserve(specs.size());
+    for (const auto& [shape, _] : specs) result.push_back(shape);
+    return result;
+}
+
+inline vector<Type> spec_dtypes(const vector<pair<Shape, Type>>& specs)
+{
+    vector<Type> result;
+    result.reserve(specs.size());
+    for (const auto& [_, type] : specs) result.push_back(type);
+    return result;
+}
 
 class Layer
 {
@@ -110,46 +118,34 @@ public:
 
     Index get_parameters_number() const;
 
-    virtual vector<Shape> get_parameter_shapes() const { return {}; }
+    // Override to compose the layer from operators. The list determines the
+    // ordering of get_parameter_specs() / get_state_specs(), and how
+    // link_parameters() / link_states() distribute slices. Layers without
+    // operators leave this returning empty and override get_parameter_specs()
+    // and friends directly.
+    virtual vector<Operator*> get_operators() { return {}; }
 
-    virtual vector<Shape> get_state_shapes() const { return {}; }
+    // Default: derived from get_operators(). Subclasses may still override
+    // directly when their storage layout doesn't map 1:1 onto operators.
+    virtual vector<pair<Shape, Type>> get_parameter_specs() const;
+    virtual vector<pair<Shape, Type>> get_state_specs()     const;
+    virtual vector<pair<Shape, Type>> get_forward_specs(Index) const { return {}; }
+    virtual vector<pair<Shape, Type>> get_backward_specs(Index) const { return {}; }
 
-    virtual vector<Shape> get_forward_shapes(Index) const { return {}; }
+    vector<Shape> get_parameter_shapes()        const { return spec_shapes(get_parameter_specs()); }
+    vector<Shape> get_state_shapes()            const { return spec_shapes(get_state_specs()); }
+    vector<Shape> get_forward_shapes(Index b)   const { return spec_shapes(get_forward_specs(b)); }
+    vector<Shape> get_backward_shapes(Index b)  const { return spec_shapes(get_backward_specs(b)); }
 
-    virtual vector<Shape> get_backward_shapes(Index) const { return {}; }
-
-    virtual vector<cudnnDataType_t> get_forward_dtypes(Index batch_size) const
-    {
-        return vector<cudnnDataType_t>(get_forward_shapes(batch_size).size(), to_cudnn(activation_dtype));
-    }
-
-    virtual vector<cudnnDataType_t> get_backward_dtypes(Index batch_size) const
-    {
-        return vector<cudnnDataType_t>(get_backward_shapes(batch_size).size(), to_cudnn(activation_dtype));
-    }
-
-    // Per-parameter-slot dtype. Used by NeuralNetwork::link_parameters()
-    // to decide whether each layer's TensorView slot points into the FP32
-    // master (`parameters`) or the BF16 working copy (`parameters_bf16`).
-    //
-    // Default: every slot is activation_dtype — both weights and biases
-    // go to the working copy when the BF16 flag is on. This matches cuBLASLt
-    // 12.x's BIAS-epilogue constraint that bias dtype must equal output dtype
-    // (FP32 bias on BF16 output is rejected by the heuristic).
-    //
-    // Layers whose parameters can't go BF16 override this:
-    //   - Embedding: atomicAdd<__nv_bfloat16> requires CC ≥ 9.0 (Ada is 8.9).
-    //   - LayerNorm / BatchNorm gamma/beta: cuDNN expects FP32.
-    virtual vector<cudnnDataType_t> get_parameter_dtypes() const
-    {
-        return vector<cudnnDataType_t>(get_parameter_shapes().size(), to_cudnn(activation_dtype));
-    }
+    vector<Type>  get_parameter_dtypes()        const { return spec_dtypes(get_parameter_specs()); }
+    vector<Type>  get_forward_dtypes(Index b)   const { return spec_dtypes(get_forward_specs(b)); }
+    vector<Type>  get_backward_dtypes(Index b)  const { return spec_dtypes(get_backward_specs(b)); }
 
     virtual Shape get_input_shape() const = 0;
 
     virtual Shape get_output_shape() const = 0;
 
-    virtual ActivationFunction get_output_activation() const { return ActivationFunction::Linear; }
+    virtual Activation::Function get_output_activation() const { return Activation::Function::Identity; }
 
     Index get_inputs_number() const { return get_input_shape().size(); }
 
@@ -166,39 +162,39 @@ public:
         throw runtime_error("back_propagate not implemented for layer type: " + name);
     }
 
-    // Two-phase XML deserialization:
-    //   Phase 1 (from_XML): parses layer config. Runs BEFORE NeuralNetwork::compile(),
-    //                       so it MUST NOT touch parameters[] or states[] (arenas not allocated).
-    //   Phase 2 (load_state_from_XML): parses persistent state into the arenas. Runs AFTER
-    //                                  compile(). Only layers with state-in-XML need to override.
-    virtual void from_XML(const tinyxml2::XmlDocument&) {}
+    virtual void from_JSON(const JsonDocument&) {}
 
-    virtual void load_state_from_XML(const tinyxml2::XmlDocument&) {}
+    virtual void load_state_from_JSON(const JsonDocument&) {}
 
-    virtual void to_XML(tinyxml2::XmlPrinter&) const {}
+    virtual void to_JSON(JsonWriter&) const {}
 
     virtual void print() const {}
 
-    vector<string> get_default_feature_names() const;
-
-    vector<string> get_default_output_names() const;
-
     bool get_is_trainable() const { return is_trainable; }
 
-    ActivationDtype get_activation_dtype() const { return activation_dtype; }
+    Type get_activation_dtype() const { return activation_dtype; }
 
-    // Called by NeuralNetwork::compile() after Configuration::resolve().
-    void set_activation_dtype(ActivationDtype d) { activation_dtype = d; }
+    virtual void set_activation_dtype(Type new_activation_dtype) { activation_dtype = new_activation_dtype; }
 
-    float* link_parameters(float* pointer);
+    virtual float* link_parameters(float* pointer);
+
+    virtual float* link_states(float* pointer);
 
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const { return parameters; }
 
-    virtual float* link_states(float* pointer);
-
     vector<TensorView>& get_state_views() { return states; }
     const vector<TensorView>& get_state_views() const { return states; }
+
+    void redistribute_parameters_to_operators()
+    {
+        distribute_to_operators(parameters, &Operator::link_parameters, &Operator::parameter_specs);
+    }
+
+    void redistribute_states_to_operators()
+    {
+        distribute_to_operators(states, &Operator::link_states, &Operator::state_specs);
+    }
 
 protected:
 
@@ -208,20 +204,29 @@ protected:
 
     string name = "layer";
 
-    LayerType layer_type = LayerType::Dense2d;
+    LayerType layer_type = LayerType::Dense;
 
     bool is_trainable = true;
 
     bool is_first_layer = false;
 
-    ActivationDtype activation_dtype = ActivationDtype::Float32;
+    Type activation_dtype = Type::FP32;
 
     vector<TensorView> parameters;
     vector<TensorView> states;
 
-    Tensor2 empty_2;
-    
-    void add_gradients(const vector<TensorView>&) const;
+    float* link_views(float* pointer,
+                      const vector<Shape>& shapes,
+                      vector<TensorView>& views,
+                      const char* tag) const;
+
+    // After link_views has populated `views` from a flat buffer, hand each
+    // operator its slice. The slice size for each operator is determined by
+    // the matching specs method (parameter_specs / state_specs).
+    void distribute_to_operators(
+        vector<TensorView>& views,
+        void (Operator::*link)(const vector<TensorView>&),
+        vector<pair<Shape, Type>> (Operator::*specs)() const);
 };
 
 }

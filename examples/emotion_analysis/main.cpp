@@ -24,7 +24,7 @@ int main()
     {
         cout << "OpenNN. Emotion analysis example." << endl;
 
-        Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
+        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
 
         // Settings
 

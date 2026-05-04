@@ -21,23 +21,14 @@ private:
 
     enum Forward {Input, Output};
 
-    // Scaler method is enum, not float — can't live in the arena directly.
     vector<ScalerMethod> scalers;
 
     float min_range = -1.0f;
     float max_range = 1.0f;
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
-        return {Shape{batch_size}.append(get_output_shape())};
-    }
-
-    // Boundary layer: output stays FP32 so the network's final tensor reaches
-    // the host in FP32. The mixed-dtype unscale_kernel handles the BF16→FP32
-    // cast when activations upstream are BF16.
-    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
-    {
-        return {CUDNN_DATA_FLOAT};
+        return {{Shape{batch_size}.append(get_output_shape()), Type::FP32}};
     }
 
     void flush_scalers_to_states();
@@ -51,7 +42,6 @@ public:
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;
 
-    // Return by value — zero-copy via states[].as_vector() + Eigen move on return.
     VectorR get_minimums() const;
     VectorR get_maximums() const;
     VectorR get_means() const;
@@ -62,11 +52,17 @@ public:
 
     enum States {Minimums, Maximums, Means, StandardDeviations, Scalers};
 
-    vector<Shape> get_state_shapes() const override
+    vector<pair<Shape, Type>> get_state_specs() const override
     {
         const Index features = ssize(scalers);
         if (features == 0) return {};
-        return {Shape{features}, Shape{features}, Shape{features}, Shape{features}, Shape{features}};
+        return {
+            /*Minimums*/           {Shape{features}, Type::FP32},
+            /*Maximums*/           {Shape{features}, Type::FP32},
+            /*Means*/              {Shape{features}, Type::FP32},
+            /*StandardDeviations*/ {Shape{features}, Type::FP32},
+            /*Scalers*/            {Shape{features}, Type::FP32},
+        };
     }
 
     float* link_states(float* pointer) override;
@@ -78,7 +74,6 @@ public:
     void set_input_shape(const Shape&) override;
     void set_output_shape(const Shape&) override;
 
-    // Requires NN::compile() first — writes directly into the states arena.
     void set_descriptives(const vector<Descriptives>&);
 
     void set_min_max_range(const float, const float);
@@ -90,13 +85,13 @@ public:
 
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
-    // Serialization (two-phase: from_XML parses config; load_state_from_XML parses descriptives after compile)
+    // Serialization
 
     void print() const override;
 
-    void from_XML(const XmlDocument&) override;
-    void load_state_from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    void from_JSON(const JsonDocument&) override;
+    void load_state_from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 };
 
 }

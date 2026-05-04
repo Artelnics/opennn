@@ -59,14 +59,14 @@ namespace opennn
     // Vector/tensor string conversion
 
     template <typename T>
-    string vector_to_string(const vector<T>& x, const string& separator = " ")
+    string vector_to_string(const vector<T>& values, const string& separator = " ")
     {
         ostringstream buffer;
 
-        for(size_t i = 0; i < x.size(); ++i)
+        for (size_t i = 0; i < values.size(); ++i)
         {
-            buffer << x[i];
-            if (i < x.size() - 1)
+            buffer << values[i];
+            if (i < values.size() - 1)
                 buffer << separator;
         }
 
@@ -74,35 +74,35 @@ namespace opennn
     }
 
     template <typename Derived>
-    inline string vector_to_string(const Eigen::DenseBase<Derived>& x, const string& separator = " ")
+    inline string vector_to_string(const Eigen::DenseBase<Derived>& values, const string& separator = " ")
     {
         ostringstream buffer;
-        for(Index i = 0; i < x.size(); ++i) buffer << x(i) << separator;
+        for (Index i = 0; i < values.size(); ++i) buffer << values(i) << separator;
         return buffer.str();
     }
 
-    void string_to_vector(const string& input, VectorR& x);
+    void string_to_vector(const string& input, VectorR& values);
 
     template <typename T, size_t Rank>
-    string tensor_to_string(const TensorR<Rank>& x, const string& separator = " ")
+    string tensor_to_string(const TensorR<Rank>& values, const string& separator = " ")
     {
         ostringstream buffer;
 
-        for(Index i = 0; i < x.size(); ++i)
-            buffer << x(i) << separator;
+        for (Index i = 0; i < values.size(); ++i)
+            buffer << values(i) << separator;
 
         return buffer.str();
     }
 
     template <typename T, size_t Rank>
-    void string_to_tensor(const string& input, TensorR<Rank>& x)
+    void string_to_tensor(const string& input, TensorR<Rank>& values)
     {
         istringstream stream(input);
         T value;
         Index i = 0;
 
         while (stream >> value)
-            x(i++) = value;
+            values(i++) = value;
     }
 
     bool contains(const vector<string>&, const string&);

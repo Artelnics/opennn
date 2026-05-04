@@ -261,13 +261,13 @@ vector<string> ModelExpression::split_expression_lines(const string& expression)
     stringstream ss(expression);
     string line;
 
-    while(getline(ss, line, '\n'))
+    while (getline(ss, line, '\n'))
     {
-        if(line.empty() || all_of(line.begin(), line.end(), [](char c){ return isspace(static_cast<unsigned char>(c)); }))
+        if (line.empty() || all_of(line.begin(), line.end(), [](char c) { return isspace(static_cast<unsigned char>(c)); }))
             continue;
-        if(line.find("{") != string::npos)
+        if (line.find("{") != string::npos)
             break;
-        if(line.back() != ';')
+        if (line.back() != ';')
             line += ';';
         lines.push_back(line);
     }
@@ -290,14 +290,14 @@ string ModelExpression::write_bounding_expression(const Bounding& layer,
     const VectorR& lower_bounds = layer.get_lower_bounds();
     const VectorR& upper_bounds = layer.get_upper_bounds();
 
-    for(Index i = 0; i < output_shape[0]; ++i)
+    for (Index i = 0; i < output_shape[0]; ++i)
         buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << input_names[i] << ")\n"
                << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
 
     return buffer.str();
 }
 
-string ModelExpression::write_scaling_expression(const Scaling<2>& layer,
+string ModelExpression::write_scaling_expression(const Scaling& layer,
                                                  const vector<string>& input_names,
                                                  const vector<string>& /*output_names*/)
 {
@@ -314,9 +314,9 @@ string ModelExpression::write_scaling_expression(const Scaling<2>& layer,
     const float min_range = layer.get_min_range();
     const float max_range = layer.get_max_range();
 
-    for(Index i = 0; i < outputs_number; ++i)
+    for (Index i = 0; i < outputs_number; ++i)
     {
-        switch(scalers[i])
+        switch (scalers[i])
         {
         case ScalerMethod::None:
             buffer << "scaled_" << input_names[i] << " = " << input_names[i] << ";\n";
@@ -367,15 +367,15 @@ string ModelExpression::write_unscaling_expression(const Unscaling& layer,
     const float min_range = layer.get_min_range();
     const float max_range = layer.get_max_range();
 
-    for(Index i = 0; i < outputs_number; ++i)
+    for (Index i = 0; i < outputs_number; ++i)
     {
-        switch(scalers[i])
+        switch (scalers[i])
         {
         case ScalerMethod::None:
             buffer << output_names[i] << " = " << input_names[i] << ";\n";
             break;
         case ScalerMethod::MinimumMaximum:
-            if(abs(minimums[i] - maximums[i]) < EPSILON)
+            if (abs(minimums[i] - maximums[i]) < EPSILON)
                 buffer << output_names[i] << "=" << minimums[i] << ";\n";
             else
                 buffer << output_names[i] << "=" << input_names[i] << "*"
@@ -422,15 +422,15 @@ string ModelExpression::write_recurrent_expression(const Recurrent& layer,
     ostringstream buffer;
     buffer.precision(10);
 
-    for(Index time_step = 0; time_step < time_steps; ++time_step)
+    for (Index time_step = 0; time_step < time_steps; ++time_step)
     {
-        for(Index j = 0; j < outputs_number; ++j)
+        for (Index j = 0; j < outputs_number; ++j)
         {
             string current_variable_name;
 
-            if(time_step == time_steps - 1)
+            if (time_step == time_steps - 1)
             {
-                if(j < ssize(output_names))
+                if (j < ssize(output_names))
                     current_variable_name = output_names[j];
                 else
                     current_variable_name = "recurrent_output_" + to_string(j);
@@ -440,17 +440,17 @@ string ModelExpression::write_recurrent_expression(const Recurrent& layer,
 
             buffer << current_variable_name << " = " << activation_function << "( " << biases_map(j);
 
-            for(Index i = 0; i < inputs_number; ++i)
+            for (Index i = 0; i < inputs_number; ++i)
             {
                 const Index feature_index = (time_step * inputs_number) + i;
 
-                if(feature_index < ssize(feature_names))
+                if (feature_index < ssize(feature_names))
                     buffer << " + (" << feature_names[feature_index] << "*" << input_to_hidden_weights_map(i, j) << ")";
             }
 
-            if(time_step > 0)
+            if (time_step > 0)
             {
-                for(Index previous_j = 0; previous_j < outputs_number; ++previous_j)
+                for (Index previous_j = 0; previous_j < outputs_number; ++previous_j)
                 {
                     string previous_variable_name = "recurrent_hidden_step_" + to_string(time_step - 1) + "_neuron_" + to_string(previous_j);
                     buffer << " + (" << previous_variable_name << "*" << hidden_to_hidden_weights_map(previous_j, j) << ")";
@@ -464,7 +464,7 @@ string ModelExpression::write_recurrent_expression(const Recurrent& layer,
     return buffer.str();
 }
 
-string ModelExpression::write_dense_expression(const Dense<2>& layer,
+string ModelExpression::write_dense_expression(const Dense& layer,
                                                const vector<string>& input_names,
                                                const vector<string>& output_names)
 {
@@ -477,19 +477,19 @@ string ModelExpression::write_dense_expression(const Dense<2>& layer,
     const float* bias_data = parameters[0].as<float>();
     const float* weight_data = parameters[1].as<float>();
 
-    const string& activation_function = activation_function_map().to_string(layer.get_activation_function());
+    const string& activation_function = Activation::to_string(layer.get_activation_function());
 
     ostringstream buffer;
 
-    for(Index j = 0; j < outputs_number; ++j)
+    for (Index j = 0; j < outputs_number; ++j)
     {
         buffer << output_names[j] << " = " << activation_function << "( " << bias_data[j] << " + ";
 
-        for(Index i = 0; i < inputs_number; ++i)
+        for (Index i = 0; i < inputs_number; ++i)
         {
             const Index weight_index = i * outputs_number + j;
             buffer << "(" << weight_data[weight_index] << "*" << input_names[i] << ")";
-            if(i < inputs_number - 1) buffer << " + ";
+            if (i < inputs_number - 1) buffer << " + ";
         }
 
         buffer << " );\n";
@@ -502,18 +502,18 @@ string ModelExpression::get_layer_expression(const Layer& layer,
                                              const vector<string>& input_names,
                                              const vector<string>& output_names)
 {
-    switch(layer.get_type())
+    switch (layer.get_type())
     {
     case LayerType::Bounding:
         return write_bounding_expression(static_cast<const Bounding&>(layer), input_names, output_names);
-    case LayerType::Scaling2d:
-        return write_scaling_expression(static_cast<const Scaling<2>&>(layer), input_names, output_names);
+    case LayerType::Scaling:
+        return write_scaling_expression(static_cast<const Scaling&>(layer), input_names, output_names);
     case LayerType::Unscaling:
         return write_unscaling_expression(static_cast<const Unscaling&>(layer), input_names, output_names);
     case LayerType::Recurrent:
         return write_recurrent_expression(static_cast<const Recurrent&>(layer), input_names, output_names);
-    case LayerType::Dense2d:
-        return write_dense_expression(static_cast<const Dense<2>&>(layer), input_names, output_names);
+    case LayerType::Dense:
+        return write_dense_expression(static_cast<const Dense&>(layer), input_names, output_names);
     default:
         return string();
     }
@@ -529,26 +529,26 @@ string ModelExpression::build_expression() const
 
     vector<string> new_input_names = neural_network->get_input_feature_names();
     new_input_names.resize(inputs_number);
-    for(Index i = 0; i < inputs_number; ++i)
-        if(new_input_names[i].empty())
+    for (Index i = 0; i < inputs_number; ++i)
+        if (new_input_names[i].empty())
             new_input_names[i] = "input_" + to_string(i);
 
     vector<string> new_output_names = neural_network->get_output_feature_names();
     new_output_names.resize(outputs_number);
-    for(Index i = 0; i < outputs_number; ++i)
-        if(new_output_names[i].empty())
+    for (Index i = 0; i < outputs_number; ++i)
+        if (new_output_names[i].empty())
             new_output_names[i] = "output_" + to_string(i);
 
     ostringstream buffer;
 
     const auto& layers = neural_network->get_layers();
 
-    for(size_t i = 0; i < layers_number; ++i)
+    for (size_t i = 0; i < layers_number; ++i)
     {
         const bool is_last = (i == layers_number - 1);
         vector<string> layer_output_names;
 
-        if(is_last)
+        if (is_last)
         {
             layer_output_names = new_output_names;
         }
@@ -556,7 +556,7 @@ string ModelExpression::build_expression() const
         {
             const Index layer_neurons_number = layers[i]->get_outputs_number();
             layer_output_names.resize(layer_neurons_number);
-            for(size_t j = 0; j < static_cast<size_t>(layer_neurons_number); ++j)
+            for (size_t j = 0; j < static_cast<size_t>(layer_neurons_number); ++j)
                 layer_output_names[j] = (layer_labels[i] == "scaling_layer" && j < new_input_names.size())
                                             ? "scaled_" + new_input_names[j]
                                             : layer_labels[i] + "_output_" + to_string(j);
@@ -564,7 +564,7 @@ string ModelExpression::build_expression() const
 
         buffer << get_layer_expression(*layers[i], new_input_names, layer_output_names) << "\n";
 
-        if(!is_last)
+        if (!is_last)
             new_input_names = std::move(layer_output_names);
     }
 
@@ -573,8 +573,8 @@ string ModelExpression::build_expression() const
 
 void ModelExpression::apply_name_mapping(string& text, const vector<string>& original, const vector<string>& mapped)
 {
-    const size_t n = min(original.size(), mapped.size());
-    for(size_t i = 0; i < n; ++i)
+    const size_t count = min(original.size(), mapped.size());
+    for (size_t i = 0; i < count; ++i)
         replace_all_word_appearances(text, original[i], mapped[i]);
 }
 
@@ -596,25 +596,25 @@ vector<string> ModelExpression::prepare_body_lines(const string& expression)
 
 void ModelExpression::rename_spaced_var_definitions(vector<string>& lines)
 {
-    for(size_t i = 0; i < lines.size(); ++i)
+    for (size_t i = 0; i < lines.size(); ++i)
     {
         const size_t equal_pos = lines[i].find('=');
-        if(equal_pos == string::npos) continue;
+        if (equal_pos == string::npos) continue;
 
         const string var_def = lines[i].substr(0, equal_pos);
 
         const size_t first = var_def.find_first_not_of(" \t");
-        if(first == string::npos) continue;
+        if (first == string::npos) continue;
 
         const size_t last = var_def.find_last_not_of(" \t");
         const string clean_var = var_def.substr(first, (last - first + 1));
 
-        if(clean_var.find(' ') == string::npos) continue;
+        if (clean_var.find(' ') == string::npos) continue;
 
         string fixed_var = clean_var;
         replace(fixed_var.begin(), fixed_var.end(), ' ', '_');
 
-        for(size_t j = 0; j < lines.size(); ++j)
+        for (size_t j = 0; j < lines.size(); ++j)
             replace_all_appearances(lines[j], clean_var, fixed_var);
     }
 }
@@ -622,11 +622,11 @@ void ModelExpression::rename_spaced_var_definitions(vector<string>& lines)
 const vector<pair<string, ModelExpression::ActivationBodies>>& ModelExpression::activation_table()
 {
     static const vector<pair<string, ActivationBodies>> table = {
-        {"Linear", {
-            "float Linear (float x) {\n\treturn x;\n}\n\n",
-            "\nfunction Linear(x) {\n\treturn x;\n}\n",
-            "\t@staticmethod\n\tdef Linear(x):\n\t\treturn x\n\n",
-            "function Linear($x) { return $x; }\n"
+        {"Identity", {
+            "float Identity (float x) {\n\treturn x;\n}\n\n",
+            "\nfunction Identity(x) {\n\treturn x;\n}\n",
+            "\t@staticmethod\n\tdef Identity(x):\n\t\treturn x\n\n",
+            "function Identity($x) { return $x; }\n"
         }},
         {"Sigmoid", {
             "float Sigmoid(float x) {\n\tfloat z = 1.0f / (1.0f + expf(-x));\n\treturn z;\n}\n\n",
@@ -634,29 +634,23 @@ const vector<pair<string, ModelExpression::ActivationBodies>>& ModelExpression::
             "\t@staticmethod\n\tdef Sigmoid (x):\n\t\tz = 1/(1+np.exp(-x))\n\t\treturn z\n\n",
             "function Sigmoid($x) { return 1 / (1 + exp(-$x)); }\n"
         }},
-        {"RectifiedLinear", {
-            "float RectifiedLinear(float x) {\n\tfloat z = fmaxf(0.0f, x);\n\treturn z;\n}\n\n",
-            "function RectifiedLinear(x) {\n\tvar z = Math.max(0, x);\n\treturn z;\n}\n",
-            "\t@staticmethod\n\tdef RectifiedLinear (x):\n\t\tz = np.maximum(0, x)\n\t\treturn z\n\n",
-            "function RectifiedLinear($x) { return max(0, $x); }\n"
+        {"ReLU", {
+            "float ReLU(float x) {\n\tfloat z = fmaxf(0.0f, x);\n\treturn z;\n}\n\n",
+            "function ReLU(x) {\n\tvar z = Math.max(0, x);\n\treturn z;\n}\n",
+            "\t@staticmethod\n\tdef ReLU (x):\n\t\tz = np.maximum(0, x)\n\t\treturn z\n\n",
+            "function ReLU($x) { return max(0, $x); }\n"
         }},
         {"ExponentialLinear", {
             "float ExponentialLinear(float x) {\n\tfloat z;\n\tconst float alpha = 1.67326f;\n\tif (x > 0.0f) {\n\t\tz = x;\n\t} else {\n\t\tz = alpha * (expf(x) - 1.0f);\n\t}\n\treturn z;\n}\n\n",
-            "function ExponentialLinear(x) {\n\tvar alpha = 1.67326;\n\tif(x>0){\n\t\tvar z = x;\n\t}else{\n\t\tvar z = alpha*(Math.exp(x)-1);\n\t}\n\treturn z;\n}\n",
+            "function ExponentialLinear(x) {\n\tvar alpha = 1.67326;\n\tif(x>0) {\n\t\tvar z = x;\n\t} else {\n\t\tvar z = alpha*(Math.exp(x)-1);\n\t}\n\treturn z;\n}\n",
             "\t@staticmethod\n\tdef ExponentialLinear (x):\n\t\talpha = 1.67326\n\t\treturn np.where(x > 0, x, alpha * (np.exp(x) - 1))\n\n",
             "function ExponentialLinear($x) { $alpha = 1.67326; return ($x > 0) ? $x : $alpha * (exp($x) - 1); }\n"
         }},
-        {"SELU", {
-            "float SELU(float x) {\n\tfloat z;\n\tconst float alpha = 1.67326f;\n\tconst float lambda = 1.05070f;\n\tif (x > 0.0f) {\n\t\tz = lambda * x;\n\t} else {\n\t\tz = lambda * alpha * (expf(x) - 1.0f);\n\t}\n\treturn z;\n}\n\n",
-            "function SELU(x) {\n\tvar alpha  = 1.67326;\n\tvar lambda = 1.05070;\n\tif(x>0){\n\t\tvar z = lambda*x;\n\t}else{\n\t\tvar z = lambda*alpha*(Math.exp(x)-1);\n\t}\nreturn z;\n}\n",
-            "\t@staticmethod\n\tdef SELU (x):\n\t\talpha = 1.67326\n\t\tlambda_val = 1.05070\n\t\treturn lambda_val * np.where(x > 0, x, alpha * (np.exp(x) - 1))\n\n",
-            "function SELU($x) { $alpha = 1.67326; $lambda = 1.05070; return $lambda * (($x > 0) ? $x : $alpha * (exp($x) - 1)); }\n"
-        }},
-        {"HyperbolicTangent", {
-            "float HyperbolicTangent(float x) {\n\treturn tanhf(x);\n}\n\n",
-            "function HyperbolicTangent(x) {\n\treturn Math.tanh(x);\n}\n",
-            "\t@staticmethod\n\tdef HyperbolicTangent(x):\n\t\treturn np.tanh(x)\n\n",
-            "function HyperbolicTangent($x) { return tanh($x); }\n"
+        {"Tanh", {
+            "float Tanh(float x) {\n\treturn tanhf(x);\n}\n\n",
+            "function Tanh(x) {\n\treturn Math.tanh(x);\n}\n",
+            "\t@staticmethod\n\tdef Tanh(x):\n\t\treturn np.tanh(x)\n\n",
+            "function Tanh($x) { return tanh($x); }\n"
         }},
         {"Softmax", {
             "float Softmax(float x) {\n\treturn expf(x);\n}\n\n",
@@ -691,7 +685,7 @@ void ModelExpression::emit_c_prelude(ostringstream& buffer) const
 
     buffer << c_header;
 
-    for(size_t i = 0; i < input_names.size(); ++i)
+    for (size_t i = 0; i < input_names.size(); ++i)
         buffer << "\n// \t " << i << ")  " << input_names[i];
 
     buffer << "\n \n \n#include <stdio.h>\n"
@@ -701,8 +695,8 @@ void ModelExpression::emit_c_prelude(ostringstream& buffer) const
 
 void ModelExpression::emit_c_activations(ostringstream& buffer, const string& expression) const
 {
-    for(const auto& [name, bodies] : activation_table())
-        if(name == "Linear" || expression.find(name) != string::npos)
+    for (const auto& [name, bodies] : activation_table())
+        if (name == "Identity" || expression.find(name) != string::npos)
             buffer << bodies.c;
 }
 
@@ -721,19 +715,19 @@ void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
 
     buffer << "float* calculate_outputs(const float* inputs)\n{\n";
 
-    for(Index i = 0; i < inputs_number; ++i)
+    for (Index i = 0; i < inputs_number; ++i)
         buffer << "\tconst float " << fixed_input_names[i] << " = inputs[" << i << "];\n";
 
     buffer << "\n";
 
-    for(const string& l : lines)
+    for (const string& l : lines)
         buffer << "\tdouble " << process_body_line(l, input_names, fixed_input_names) << "\n";
 
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::C);
-    if(!fixed_outputs.empty())
+    if (!fixed_outputs.empty())
     {
         buffer << "\n";
-        for(const string& l : fixed_outputs)
+        for (const string& l : fixed_outputs)
             buffer << "\t" << l << "\n";
     }
 
@@ -743,10 +737,10 @@ void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
               "\t\treturn NULL;\n"
               "\t}\n\n";
 
-    for(Index i = 0; i < outputs_number; ++i)
+    for (Index i = 0; i < outputs_number; ++i)
         buffer << "\tout[" << i << "] = " << fixed_output_names[i] << ";\n";
 
-    if(has_softmax)
+    if (has_softmax)
         buffer << "\n\t// Softmax Normalization\n"
                   "\tfloat sum = 0.0f;\n"
                   "\tfor(int i = 0; i < " << outputs_number << "; ++i) sum += out[i];\n"
@@ -771,7 +765,7 @@ void ModelExpression::emit_c_main(ostringstream& buffer) const
               "\t}\n\n"
               "\t// Please enter your values here:\n";
 
-    for(Index i = 0; i < inputs_number; ++i)
+    for (Index i = 0; i < inputs_number; ++i)
         buffer << "\tinputs[" << i << "] = 0.0f; // " << input_names[i] << "\n";
 
     buffer << "\n\tfloat* outputs;\n"
@@ -779,7 +773,7 @@ void ModelExpression::emit_c_main(ostringstream& buffer) const
               "\tif (outputs != NULL) {\n"
               "\t\tprintf(\"These are your outputs:\\n\");\n";
 
-    for(Index i = 0; i < outputs_number; ++i)
+    for (Index i = 0; i < outputs_number; ++i)
         buffer << "\t\tprintf(\""<< output_names[i] << ": %f \\n\", outputs[" << i << "]);\n";
 
     buffer << "\t}\n\n"
@@ -800,20 +794,20 @@ string ModelExpression::get_expression_php() const
 
     vector<string> all_possible_vars = fixed_output_names;
     all_possible_vars.insert(all_possible_vars.end(), fixed_input_names.begin(), fixed_input_names.end());
-    sort(all_possible_vars.begin(), all_possible_vars.end(), [](const string& a, const string& b){ return a.length() > b.length(); });
-    for(const string& var_name : all_possible_vars)
+    sort(all_possible_vars.begin(), all_possible_vars.end(), [](const string& a, const string& b) { return a.length() > b.length(); });
+    for (const string& var_name : all_possible_vars)
         replace_all_word_appearances(expression, var_name, "$" + var_name);
 
-    for(size_t i = 0; i < input_names.size(); ++i)
-        if(input_names[i] != fixed_input_names[i])
+    for (size_t i = 0; i < input_names.size(); ++i)
+        if (input_names[i] != fixed_input_names[i])
             replace_all_word_appearances(expression, input_names[i], "$" + fixed_input_names[i]);
 
-    for(size_t i = 0; i < output_names.size(); ++i)
-        if(output_names[i] != fixed_output_names[i])
+    for (size_t i = 0; i < output_names.size(); ++i)
+        if (output_names[i] != fixed_output_names[i])
             replace_all_word_appearances(expression, output_names[i], "$" + fixed_output_names[i]);
 
     vector<string> lines = split_expression_lines(expression);
-    for(string& l : lines)
+    for (string& l : lines)
     {
         replace_all_appearances(l, "[", "_");
         replace_all_appearances(l, "]", "_");
@@ -836,15 +830,15 @@ void ModelExpression::emit_php_prelude(ostringstream& buffer) const
     const vector<string> input_names = neural_network->get_input_feature_names();
 
     buffer << php_header;
-    for(size_t i = 0; i < input_names.size(); ++i)
+    for (size_t i = 0; i < input_names.size(); ++i)
         buffer << "\n\t\t" << i << ")  " << input_names[i];
     buffer << php_subheader;
 }
 
 void ModelExpression::emit_php_activations(ostringstream& buffer, const string& expression) const
 {
-    for(const auto& [name, bodies] : activation_table())
-        if(expression.find(name) != string::npos)
+    for (const auto& [name, bodies] : activation_table())
+        if (expression.find(name) != string::npos)
             buffer << bodies.php;
 }
 
@@ -853,10 +847,10 @@ void ModelExpression::emit_php_inputs_setup(ostringstream& buffer) const
     const vector<string> fixed_input_names = fix_names(neural_network->get_input_feature_names(), "input_");
 
     buffer << "\nsession_start();\n"
-              "if(isset($_GET['num0'])) { \n"
+              "if (isset($_GET['num0'])) { \n"
               "$params = $_GET;\n\n";
 
-    for(size_t i = 0; i < fixed_input_names.size(); ++i)
+    for (size_t i = 0; i < fixed_input_names.size(); ++i)
         buffer << "$" << fixed_input_names[i] << " = isset($params['num" << i << "']) ? floatval($params['num" << i << "']) : 0;\n";
 
     buffer << "\n";
@@ -866,15 +860,15 @@ void ModelExpression::emit_php_body(ostringstream& buffer, const vector<string>&
 {
     const vector<string> fixed_output_names = fix_names(neural_network->get_output_feature_names(), "output_");
 
-    for(const string& l : lines)
+    for (const string& l : lines)
         buffer << l << "\n";
 
-    if(has_softmax)
+    if (has_softmax)
     {
         buffer << "\n// Softmax Normalization\n$sum = 0;\n";
-        for(size_t i = 0; i < fixed_output_names.size(); ++i)
+        for (size_t i = 0; i < fixed_output_names.size(); ++i)
             buffer << "$sum += $" << fixed_output_names[i] << ";\n";
-        for(size_t i = 0; i < fixed_output_names.size(); ++i)
+        for (size_t i = 0; i < fixed_output_names.size(); ++i)
             buffer << "$" << fixed_output_names[i] << " /= $sum;\n";
     }
 }
@@ -886,7 +880,7 @@ void ModelExpression::emit_php_response(ostringstream& buffer) const
 
     buffer << "\n$response = ['status' => 200,  'status_message' => 'ok'";
 
-    for(size_t i = 0; i < output_names.size(); ++i)
+    for (size_t i = 0; i < output_names.size(); ++i)
         buffer << ", '" << output_names[i] << "' => $" << fixed_output_names[i];
 
     buffer << "];\n\n"
@@ -910,11 +904,11 @@ string ModelExpression::get_expression_javascript() const
     vector<string> lines;
     stringstream ss(expression);
     string token;
-    while(getline(ss, token, '\n'))
+    while (getline(ss, token, '\n'))
     {
-        if(token.empty()) continue;
-        if(token.size() > 1 && token.back() == '{') break;
-        if(token.size() > 1 && token.back() != ';') token += ';';
+        if (token.empty()) continue;
+        if (token.size() > 1 && token.back() == '{') break;
+        if (token.size() > 1 && token.back() != ';') token += ';';
         lines.push_back(token);
     }
     rename_spaced_var_definitions(lines);
@@ -935,7 +929,7 @@ void ModelExpression::emit_js_prelude(ostringstream& buffer) const
     const vector<string> input_names = neural_network->get_input_feature_names();
 
     buffer << javascript_header;
-    for(size_t i = 0; i < input_names.size(); ++i)
+    for (size_t i = 0; i < input_names.size(); ++i)
         buffer << "\n\t " << i + 1 << ")  " << input_names[i];
     buffer << javascript_subheader;
 }
@@ -945,8 +939,8 @@ void ModelExpression::emit_js_inputs_html(ostringstream& buffer) const
     const vector<string> input_names = neural_network->get_input_feature_names();
     const vector<string> fixes_feature_names = fix_names(input_names, "input_");
 
-    const Scaling<2>* scaling_layer = neural_network->has(LayerType::Scaling2d)
-        ? static_cast<const Scaling<2>*>(neural_network->get_first("Scaling2d"))
+    const Scaling* scaling_layer = neural_network->has(LayerType::Scaling)
+        ? static_cast<const Scaling*>(neural_network->get_first(LayerType::Scaling))
         : nullptr;
     const VectorR scaling_minimums = scaling_layer ? scaling_layer->get_minimums() : VectorR();
     const VectorR scaling_maximums = scaling_layer ? scaling_layer->get_maximums() : VectorR();
@@ -954,13 +948,13 @@ void ModelExpression::emit_js_inputs_html(ostringstream& buffer) const
 
     const Index inputs_number = input_names.size();
 
-    for(Index i = 0; i < inputs_number; ++i)
+    for (Index i = 0; i < inputs_number; ++i)
     {
         float min_value = -1.0f;
-        float max_value =  1.0f;
-        if(has_scaling
-           && i < static_cast<Index>(scaling_minimums.size())
-           && i < static_cast<Index>(scaling_maximums.size()))
+        float max_value = 1.0f;
+        if (has_scaling
+           && i < ssize(scaling_minimums)
+           && i < ssize(scaling_maximums))
         {
             min_value = scaling_minimums[i];
             max_value = scaling_maximums[i];
@@ -993,10 +987,10 @@ void ModelExpression::emit_js_outputs_html(ostringstream& buffer, bool use_categ
 
     const Index outputs_number = output_names.size();
 
-    if(use_category_select)
+    if (use_category_select)
     {
         buffer << "<!-- HIDDEN INPUTS -->\n";
-        for(Index i = 0; i < outputs_number; ++i)
+        for (Index i = 0; i < outputs_number; ++i)
             buffer << "<input type=\"hidden\" id=\"" << fixes_output_names[i] << "\" value=\"\">\n";
         buffer << "\n\n";
     }
@@ -1007,13 +1001,13 @@ void ModelExpression::emit_js_outputs_html(ostringstream& buffer, bool use_categ
            << "<table border=\"1px\" class=\"form-table\">\n"
            << "<h4> OUTPUTS </h4>\n";
 
-    if(use_category_select)
+    if (use_category_select)
     {
         buffer << "<tr style=\"height:3.5em\">\n"
                << "<td> Target </td>\n"
                << "<td class=\"neural-cell\">\n"
                << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">\n";
-        for(Index i = 0; i < outputs_number; ++i)
+        for (Index i = 0; i < outputs_number; ++i)
             buffer << "<option value=\"" << output_names[i] << "\">" << output_names[i] << "</option>\n";
         buffer << "</select>\n"
                << "</td>\n"
@@ -1027,7 +1021,7 @@ void ModelExpression::emit_js_outputs_html(ostringstream& buffer, bool use_categ
     }
     else
     {
-        for(Index i = 0; i < outputs_number; ++i)
+        for (Index i = 0; i < outputs_number; ++i)
             buffer << "<tr style=\"height:3.5em\">\n"
                    << "<td> " << output_names[i] << " </td>\n"
                    << "<td class=\"neural-cell\">\n"
@@ -1055,73 +1049,73 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
 
     buffer << "<script>\n";
 
-    if(use_category_select)
+    if (use_category_select)
     {
         buffer << "function updateSelectedCategory() {\n"
                << "\tvar selectedCategory = document.getElementById(\"category_select\").value;\n"
                << "\tvar selectedValueElement = document.getElementById(\"selected_value\");\n";
-        for(Index i = 0; i < outputs_number; ++i)
+        for (Index i = 0; i < outputs_number; ++i)
             buffer << "\tif(selectedCategory === \"" << fixes_output_names[i] << "\") {\n"
                    << "\t\tselectedValueElement.value = document.getElementById(\"" << fixes_output_names[i] << "\").value;\n"
                    << "\t}\n";
         buffer << "}\n\n";
     }
 
-    for(const auto& [name, bodies] : activation_table())
-        if(name == "Linear" || name == "HyperbolicTangent" || expression.find(name) != string::npos)
+    for (const auto& [name, bodies] : activation_table())
+        if (name == "Identity" || name == "Tanh" || expression.find(name) != string::npos)
             buffer << bodies.javascript;
     buffer << "\n";
 
     buffer << "function neuralNetwork()\n{\n\tvar inputs = [];\n";
-    for(Index i = 0; i < inputs_number; ++i)
+    for (Index i = 0; i < inputs_number; ++i)
     {
         buffer << "\tvar " << fixes_feature_names[i] << " = (parseFloat(document.getElementById(\"" << fixes_feature_names[i] << "_text\").value) || 0); \n";
         buffer << "\tinputs.push(" << fixes_feature_names[i] << ");\n";
     }
     buffer << "\n\tvar outputs = calculate_outputs(inputs); \n";
 
-    if(use_category_select)
+    if (use_category_select)
         buffer << "\tupdateSelectedCategory();\n";
     else
-        for(Index i = 0; i < outputs_number; ++i)
+        for (Index i = 0; i < outputs_number; ++i)
             buffer << "\tvar " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");\n"
                    << "\t" << fixes_output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);\n";
 
     buffer << "}\nfunction calculate_outputs(inputs)\n{\n";
-    for(Index i = 0; i < inputs_number; ++i)
+    for (Index i = 0; i < inputs_number; ++i)
         buffer << "\tvar " << fixes_feature_names[i] << " = +inputs[" << to_string(i) << "];\n";
     buffer << "\n";
 
     static const char* const math_keywords[] = {"exp", "tanh", "max", "min"};
 
-    for(const string& raw_line : lines)
+    for (const string& raw_line : lines)
     {
         string line = raw_line;
-        for(Index j = 0; j < inputs_number; ++j)
+        for (Index j = 0; j < inputs_number; ++j)
             replace_all_word_appearances(line, input_names[j], fixes_feature_names[j]);
 
-        if(has_softmax) replace_all_appearances(line, "Softmax", "___SOFTMAX_TOKEN___");
-        for(const char* kw : math_keywords)
+        if (has_softmax) replace_all_appearances(line, "Softmax", "___SOFTMAX_TOKEN___");
+        for (const char* kw : math_keywords)
             replace_all_appearances(line, kw, string("Math.") + kw);
-        if(has_softmax) replace_all_appearances(line, "___SOFTMAX_TOKEN___", "Softmax");
+        if (has_softmax) replace_all_appearances(line, "___SOFTMAX_TOKEN___", "Softmax");
 
         replace_all_appearances(line, "nan", "0");
         replace_all_appearances(line, "NaN", "0");
         replace_all_appearances(line, "inf", "Infinity");
 
-        if(line.size() <= 1) buffer << "\n";
+        if (line.size() <= 1) buffer << "\n";
         else                 buffer << "\tvar " << line << "\n";
     }
 
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::JavaScript);
-    for(const string& l : fixed_outputs)
+    for (const string& l : fixed_outputs)
         buffer << l << "\n";
 
     buffer << "\tvar out = [];\n";
-    for(Index i = 0; i < outputs_number; ++i)
+    for (Index i = 0; i < outputs_number; ++i)
         buffer << "\tout.push(" << fixes_output_names[i] << ");\n";
 
-    if(has_softmax)
+    if (has_softmax)
         buffer << "\n\t// Softmax Normalization\n"
                   "\tvar sum = 0;\n"
                   "\tfor(var i = 0; i < out.length; ++i) sum += out[i];\n"
@@ -1140,7 +1134,7 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
 string ModelExpression::get_expression_python() const
 {
     string expression = build_expression();
-    for(const string& name : neural_network->get_output_feature_names())
+    for (const string& name : neural_network->get_output_feature_names())
         replace_all_word_appearances(expression, name, replace_reserved_keywords(name));
 
     const vector<string> lines = prepare_body_lines(expression);
@@ -1163,7 +1157,7 @@ void ModelExpression::emit_python_prelude(ostringstream& buffer) const
     const vector<string> input_names = neural_network->get_input_feature_names();
 
     buffer << python_header;
-    for(size_t i = 0; i < input_names.size(); ++i)
+    for (size_t i = 0; i < input_names.size(); ++i)
         buffer << "\t" << i << ") " << input_names[i] << "\n";
     buffer << python_subheader;
 }
@@ -1177,9 +1171,9 @@ void ModelExpression::emit_python_class_header(ostringstream& buffer) const
               "class NeuralNetwork:\n\n";
 
     string inputs_list_str;
-    for(size_t i = 0; i < input_names.size(); ++i)
+    for (size_t i = 0; i < input_names.size(); ++i)
     {
-        if(i) inputs_list_str += ", ";
+        if (i) inputs_list_str += ", ";
         inputs_list_str += "'" + replace_reserved_keywords(input_names[i]) + "'";
     }
 
@@ -1190,8 +1184,8 @@ void ModelExpression::emit_python_class_header(ostringstream& buffer) const
 
 void ModelExpression::emit_python_activations(ostringstream& buffer, const string& expression) const
 {
-    for(const auto& [name, bodies] : activation_table())
-        if(name == "Linear" || expression.find(name) != string::npos)
+    for (const auto& [name, bodies] : activation_table())
+        if (name == "Identity" || expression.find(name) != string::npos)
             buffer << bodies.python;
 }
 
@@ -1205,19 +1199,19 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
     buffer << "\tdef calculate_outputs(self, inputs):\n";
 
     vector<string> python_mapped(input_names.size());
-    for(size_t i = 0; i < input_names.size(); ++i)
+    for (size_t i = 0; i < input_names.size(); ++i)
         python_mapped[i] = replace_reserved_keywords(input_names[i]);
 
-    for(size_t i = 0; i < input_names.size(); ++i)
+    for (size_t i = 0; i < input_names.size(); ++i)
         buffer << "\t\t" << python_mapped[i] << " = inputs[" << i << "]\n";
 
     buffer << "\n";
 
-    for(const string& l : lines)
+    for (const string& l : lines)
     {
         string processed_line = process_body_line(l, input_names, python_mapped);
 
-        for(const auto& [name, _] : activation_table())
+        for (const auto& [name, _] : activation_table())
             replace_all_word_appearances(processed_line, name, "self." + name);
 
         replace(processed_line, ";", "");
@@ -1225,15 +1219,15 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
     }
 
     string return_list = "[";
-    for(size_t i = 0; i < fixed_output_names.size(); ++i)
+    for (size_t i = 0; i < fixed_output_names.size(); ++i)
     {
-        if(i) return_list += ", ";
+        if (i) return_list += ", ";
         return_list += fixed_output_names[i];
     }
     return_list += "]";
 
     buffer << "\t\toutputs = " << return_list << "\n";
-    if(has_softmax)
+    if (has_softmax)
     {
         buffer << "\t\tsum_val = np.sum(outputs)\n";
         buffer << "\t\toutputs = [x / sum_val for x in outputs]\n";
@@ -1262,13 +1256,13 @@ void ModelExpression::emit_python_batch_and_main(ostringstream& buffer) const
 
     const vector<string> fixed_variable_names = fix_names(input_names, "input_");
 
-    for(Index i = 0; i < inputs_number; ++i)
+    for (Index i = 0; i < inputs_number; ++i)
         buffer << "\t" << fixed_variable_names[i] << " = 0  # " << input_names[i] << "\n";
 
     buffer << "\n\t# --- Data conversion (DO NOT modify) ---\n"
               "\tinputs = []\n\n";
 
-    for(Index i = 0; i < inputs_number; ++i)
+    for (Index i = 0; i < inputs_number; ++i)
         buffer << "\tinputs.append(" << fixed_variable_names[i] << ")\n";
 
     buffer << "\n\tnn = NeuralNetwork()\n"
@@ -1278,7 +1272,7 @@ void ModelExpression::emit_python_batch_and_main(ostringstream& buffer) const
               "\tmain()\n";
 }
 
-string ModelExpression::replace_reserved_keywords(const string& s)
+string ModelExpression::replace_reserved_keywords(const string& input)
 {
     static const unordered_map<char, string_view> char_replacements = {
         {' ', "_"},        {'.', "_dot_"},    {'/', "_div_"},    {'*', "_mul_"},
@@ -1293,22 +1287,22 @@ string ModelExpression::replace_reserved_keywords(const string& s)
 
     string out;
 
-    if(s[0] == '$')
-        out = s;
+    if (input[0] == '$')
+        out = input;
 
-    for(const char c : s)
+    for (const char character : input)
     {
-        const auto it = char_replacements.find(c);
-        if(it != char_replacements.end())
+        const auto it = char_replacements.find(character);
+        if (it != char_replacements.end())
             out += it->second;
-        else if(isalnum(static_cast<unsigned char>(c)) || c == '_')
-            out += c;
+        else if (isalnum(static_cast<unsigned char>(character)) || character == '_')
+            out += character;
     }
 
-    if(!out.empty() && isdigit(static_cast<unsigned char>(out[0])))
+    if (!out.empty() && isdigit(static_cast<unsigned char>(out[0])))
         out = '_' + out;
 
-    for(const auto& [search, replace_val] : special_words)
+    for (const auto& [search, replace_val] : special_words)
         replace_all_appearances(out, search, replace_val);
 
     return out;
@@ -1326,9 +1320,9 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
 
     const size_t num_outputs = outputs.size();
 
-    while(getline(ss, token, '\n'))
+    while (getline(ss, token, '\n'))
     {
-        if (token.empty() || all_of(token.begin(), token.end(), [](char c){ return isspace(c); }))
+        if (token.empty() || all_of(token.begin(), token.end(), [](char c) { return isspace(c); }))
             continue;
 
         if (token.find("{") != string::npos)
@@ -1344,7 +1338,7 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
     const vector<string> fixed_outputs = fix_names(outputs, "output_");
 
     struct DeclFormat { const char* lhs_prefix; const char* rhs_prefix; const char* suffix; };
-    static const unordered_map<ProgrammingLanguage, DeclFormat> formats = 
+    static const unordered_map<ProgrammingLanguage, DeclFormat> formats =
     {
         {ProgrammingLanguage::C,          {"double ", "",  ";"}},
         {ProgrammingLanguage::JavaScript, {"\tvar ",  "",  ";"}},
@@ -1355,12 +1349,12 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
     const DeclFormat& fmt = formats.at(programming_Language);
     const size_t tokens_count = tokens.size();
 
-    for(size_t i = 0; i < num_outputs; ++i)
+    for (size_t i = 0; i < num_outputs; ++i)
     {
         const string intermediate_var_name = get_first_word(tokens[tokens_count - num_outputs + i]);
         const string& final_output_name = fixed_outputs[i];
 
-        if(final_output_name != intermediate_var_name)
+        if (final_output_name != intermediate_var_name)
             out.push_back(fmt.lhs_prefix + final_output_name + " = " + fmt.rhs_prefix + intermediate_var_name + fmt.suffix);
     }
 
@@ -1371,7 +1365,7 @@ vector<string> ModelExpression::fix_names(const vector<string>& names, const str
 {
     vector<string> fixed(names.size());
 
-    for(size_t i = 0; i < names.size(); ++i)
+    for (size_t i = 0; i < names.size(); ++i)
         fixed[i] = names[i].empty()
             ? default_prefix + to_string(i)
             : replace_reserved_keywords(names[i]);
@@ -1383,10 +1377,10 @@ void ModelExpression::save(const filesystem::path& file_name, ProgrammingLanguag
 {
     ofstream file(file_name);
 
-    if(!file.is_open())
+    if (!file.is_open())
         throw runtime_error("Cannot open file: " + file_name.string());
 
-    switch(language)
+    switch (language)
     {
     case ProgrammingLanguage::C:          file << get_expression_c();          break;
     case ProgrammingLanguage::Python:     file << get_expression_python();     break;

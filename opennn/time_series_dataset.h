@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   T I M E   S E R I E S   D A T A S E T   C L A S S   H E A D E R        
+//   T I M E   S E R I E S   D A T A S E T   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -46,8 +46,8 @@ public:
     Tensor3 calculate_cross_correlations(const Index = 10) const;
     Tensor3 calculate_cross_correlations_spearman(const Index = 10) const;
 
-    void to_XML(XmlPrinter&) const override;
-    void from_XML(const XmlDocument&) override;
+    void to_JSON(JsonWriter&) const override;
+    void from_JSON(const JsonDocument&) override;
 
     void read_csv() override;
 

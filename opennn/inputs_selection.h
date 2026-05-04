@@ -42,16 +42,16 @@ public:
     virtual Index get_minimum_inputs_number() const = 0;
     virtual Index get_maximum_inputs_number() const = 0;
 
-    void set(TrainingStrategy* new_ts) { training_strategy = new_ts; }
+    void set(TrainingStrategy* new_training_strategy) { training_strategy = new_training_strategy; }
 
-    void set_trials_number(const Index n) { trials_number = n; }
+    void set_trials_number(const Index new_trials_number) { trials_number = new_trials_number; }
 
-    void set_display(bool d) { display = d; }
+    void set_display(bool new_display) { display = new_display; }
 
-    void set_validation_error_goal(const float v) { validation_error_goal = v; }
-    void set_maximum_epochs(const Index n) { maximum_epochs = n; }
-    void set_maximum_validation_failures(const Index n) { maximum_validation_failures = n; }
-    void set_maximum_time(const float t) { maximum_time = t; }
+    void set_validation_error_goal(const float new_validation_error_goal) { validation_error_goal = new_validation_error_goal; }
+    void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
+    void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
+    void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
     void check() const;
 
@@ -62,9 +62,9 @@ public:
         return name;
     }
 
-    virtual void from_XML(const XmlDocument&) = 0;
+    virtual void from_JSON(const JsonDocument&) = 0;
 
-    virtual void to_XML(XmlPrinter&) const = 0;
+    virtual void to_JSON(JsonWriter&) const = 0;
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
@@ -78,7 +78,7 @@ protected:
     Index trials_number = 1;
 
     bool display = true;
-   
+
     // Stopping criteria
 
     float validation_error_goal;

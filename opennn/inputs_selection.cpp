@@ -21,8 +21,8 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
 
 void InputsSelection::check() const
 {
-    if(!training_strategy)
-        throw runtime_error("InputsSelection error: training strategy is not set.");
+    if (!training_strategy)
+        throw runtime_error("training strategy is not set.");
 
     // Loss index
 
@@ -30,24 +30,24 @@ void InputsSelection::check() const
 
     // Neural network
 
-    if(!loss->get_neural_network())
-        throw runtime_error("InputsSelection error: neural network is not set.");
+    if (!loss->get_neural_network())
+        throw runtime_error("neural network is not set.");
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
-    if(neural_network->is_empty())
+    if (neural_network->is_empty())
         throw runtime_error("Neural network is empty.\n");
 
     // Dataset
 
-    if(!loss->get_dataset())
-        throw runtime_error("InputsSelection error: dataset is not set.");
+    if (!loss->get_dataset())
+        throw runtime_error("dataset is not set.");
 
     const Dataset* dataset = loss->get_dataset();
 
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
-    if(validation_samples_number == 0)
+    if (validation_samples_number == 0)
         throw runtime_error("Number of selection samples is zero.\n");
 }
 
@@ -64,21 +64,21 @@ Index InputsSelectionResults::get_epochs_number() const
 void InputsSelectionResults::set(const Index maximum_epochs)
 {
     training_error_history.resize(maximum_epochs);
-    training_error_history.setConstant(float(-1));
+    training_error_history.setConstant(-1.0f);
 
     validation_error_history.resize(maximum_epochs);
-    validation_error_history.setConstant(float(-1));
+    validation_error_history.setConstant(-1.0f);
 
     mean_validation_error_history.resize(maximum_epochs);
-    mean_validation_error_history.setConstant(float(-1));
+    mean_validation_error_history.setConstant(-1.0f);
 
     mean_training_error_history.resize(maximum_epochs);
-    mean_training_error_history.setConstant(float(-1));
+    mean_training_error_history.setConstant(-1.0f);
 }
 
 string InputsSelectionResults::write_stopping_condition() const
 {
-    switch(stopping_condition)
+    switch (stopping_condition)
     {
     case InputsSelection::StoppingCondition::MaximumTime:
         return "MaximumTime";
@@ -113,7 +113,7 @@ void InputsSelectionResults::resize_history(const Index new_size)
     mean_training_error_history.resize(new_size);
     mean_validation_error_history.resize(new_size);
 
-    for(Index i = 0; i < new_size; ++i)
+    for (Index i = 0; i < new_size; ++i)
     {
         training_error_history(i) = old_training_error_history(i);
         validation_error_history(i) = old_validation_error_history(i);
@@ -129,7 +129,7 @@ void InputsSelectionResults::print() const
          << "Optimal inputs number: " << optimal_input_variable_names.size() << "\n"
          << "Inputs: " << "\n";
 
-    for(size_t i = 0; i < optimal_input_variable_names.size(); ++i)
+    for (size_t i = 0; i < optimal_input_variable_names.size(); ++i)
         cout << "   " << optimal_input_variable_names[i] << "\n";
 
     cout << "Optimum training error: " << optimum_training_error << "\n"
@@ -140,17 +140,17 @@ void InputsSelection::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if(!file.is_open())
+    if (!file.is_open())
         throw runtime_error("Cannot open file: " + file_name.string());
 
-    XmlPrinter printer;
-    to_XML(printer);
+    JsonWriter printer;
+    to_JSON(printer);
     file << printer.c_str();
 }
 
 void InputsSelection::load(const filesystem::path& file_name)
 {
-    from_XML(load_xml_file(file_name));
+    from_JSON(load_json_file(file_name));
 }
 
 }

@@ -105,7 +105,7 @@ void adam_update_cuda(
     const int n_vec = aligned ? (total / 4) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));
 
-    adam_update_kernel<<<grid_size, block_size>>>(
+    adam_update_kernel<<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(
         n_vec,
         total,
         parameters,
@@ -198,7 +198,7 @@ void sgd_update_cuda(
     const int n_vec = aligned ? (total / 4) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));
 
-    sgd_update_kernel<<<grid_size, block_size>>>(
+    sgd_update_kernel<<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(
         n_vec,
         total,
         parameters,
@@ -244,9 +244,12 @@ void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
                             cudaStream_t stream)
 {
     if (n == 0) return;
+    if (stream == nullptr) stream = opennn::Backend::get_compute_stream();
 
     const int total = static_cast<int>(n);
-    const bool aligned = are_float4_aligned(src);
+    // Vec path needs src 16B-aligned (float4 load) and dst 4B-aligned (__nv_bfloat162 store).
+    const bool dst_aligned = (reinterpret_cast<std::uintptr_t>(dst) & 0x3) == 0;
+    const bool aligned = are_float4_aligned(src) && dst_aligned;
     const int n_vec = aligned ? (total / 4) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));
 
@@ -268,5 +271,5 @@ void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst)
     if (n == 0) return;
     const int total = static_cast<int>(n);
     const int grid_size = grid_size_for(total);
-    cast_bf16_to_fp32_kernel<<<grid_size, block_size>>>(total, src, dst);
+    cast_bf16_to_fp32_kernel<<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(total, src, dst);
 }

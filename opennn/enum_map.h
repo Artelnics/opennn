@@ -8,12 +8,6 @@
 
 #pragma once
 
-// Generic enum↔string lookup used by every layer/loss header that needs to
-// serialize an enumeration to text (XML, logs, expression generators).
-// Storage is a const reference to a vector<pair<Enum, string>>; lookups are
-// linear scans, which is fine for the small enums (≤ ~10 entries) this
-// project uses.
-
 #include "pch.h"
 
 namespace opennn
@@ -28,25 +22,25 @@ struct EnumMap
 
     const string& to_string(Enum value) const
     {
-        for(const auto& [e, s] : entries)
-            if(e == value)
-                return s;
+        for (const auto& [enum_value, name] : entries)
+            if (enum_value == value)
+                return name;
         throw runtime_error("Unknown enum value");
     }
 
     Enum from_string(const string& name) const
     {
-        for(const auto& [e, s] : entries)
-            if(s == name)
-                return e;
+        for (const auto& [enum_value, entry_name] : entries)
+            if (entry_name == name)
+                return enum_value;
         throw runtime_error("Unknown enum string: " + name);
     }
 
     Enum from_string(const string& name, Enum fallback) const
     {
-        for(const auto& [e, s] : entries)
-            if(s == name)
-                return e;
+        for (const auto& [enum_value, entry_name] : entries)
+            if (entry_name == name)
+                return enum_value;
         return fallback;
     }
 };

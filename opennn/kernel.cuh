@@ -1,24 +1,14 @@
 #ifndef KERNEL_CUH
 #define KERNEL_CUH
 
-#include "../../opennn/eigen/unsupported/Eigen/CXX11/Tensor"
+#include <cstdint>
 
-#include <device_launch_parameters.h>
-#include <cuda.h>
+#include "../eigen/Eigen/Core"
+
 #include <cuda_runtime.h>
-#include <cublas_v2.h>
-#include <cublasXt.h>
-#include <curand.h>
+#include <cuda_bf16.h>
 
-// System includes
-
-#include <iostream>
-#include <stdio.h>
-#include <string>
-#include <time.h>
-
-using namespace std;
-using namespace Eigen;
+using Eigen::Index;
 
 // Optimizer
 
@@ -29,9 +19,8 @@ void sgd_update_cuda(const Index, float*, float*, const float*, const float, con
 // Cast FP32 source buffer to a BF16 destination buffer of the same length.
 // Used to refresh the BF16 working copy of network parameters after each
 // Adam step (master FP32 → working BF16 mirror), and by Batch::copy_device_async
-// to convert FP32 inputs (pinned host) to BF16 inputs (device). `stream`
-// defaults to the default stream so existing call sites don't change; Batch
-// passes its prefetch stream for proper async ordering with the H2D copy.
+// to convert FP32 inputs (pinned host) to BF16 inputs (device). When `stream`
+// is null the host wrapper falls back to Backend::get_compute_stream().
 void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
                             cudaStream_t stream = nullptr);
 
@@ -149,6 +138,14 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
 
 template<typename T>
 void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta, T* in_grad, const int S, const int F);
+
+// Dropout
+
+template<typename T>
+void dropout_forward_cuda(const Index n, T* output, uint8_t* mask, const float rate, const unsigned long long seed);
+
+template<typename T>
+void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta, const uint8_t* mask, const float rate);
 
 // Normalization Layer
 

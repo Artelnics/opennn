@@ -15,11 +15,11 @@ namespace opennn
 
 struct Descriptives
 {
-    Descriptives(const float = float(NAN), float = float(NAN), float = float(NAN), float = float(NAN));
+    Descriptives(const float = NAN, float = NAN, float = NAN, float = NAN);
 
     VectorR to_tensor() const;
 
-    void set(const float = float(NAN), float = float(NAN), float = float(NAN), float = float(NAN));
+    void set(const float = NAN, float = NAN, float = NAN, float = NAN);
 
     void save(const filesystem::path&) const;
 
@@ -27,39 +27,39 @@ struct Descriptives
 
     string name = "Descriptives";
 
-    float minimum = float(-1.0);
+    float minimum = -1.0f;
 
-    float maximum = float(1);
+    float maximum = 1.0f;
 
-    float mean = float(0);
+    float mean = 0.0f;
 
-    float standard_deviation = float(1);
+    float standard_deviation = 1.0f;
 
 };
 
 struct BoxPlot
 {
-    BoxPlot(const float = float(NAN),
-            float = float(NAN),
-            float = float(NAN),
-            float = float(NAN),
-            float = float(NAN));
+    BoxPlot(const float = NAN,
+            float = NAN,
+            float = NAN,
+            float = NAN,
+            float = NAN);
 
-    void set(const float = float(NAN),
-             float = float(NAN),
-             float = float(NAN),
-             float = float(NAN),
-             float = float(NAN));
+    void set(const float = NAN,
+             float = NAN,
+             float = NAN,
+             float = NAN,
+             float = NAN);
 
-    float minimum = float(NAN);
+    float minimum = NAN;
 
-    float first_quartile = float(NAN);
+    float first_quartile = NAN;
 
-    float median = float(NAN);
+    float median = NAN;
 
-    float third_quartile = float(NAN);
+    float third_quartile = NAN;
 
-    float maximum = float(NAN);
+    float maximum = NAN;
 };
 
 struct Histogram
@@ -158,7 +158,7 @@ vector<Descriptives> descriptives(const MatrixR&, const vector<Index>&, const ve
 
 // Histograms
 Histogram histogram(const VectorR&, Index  = 10);
-Histogram histogram_centered(const VectorR&, float = float(0), Index  = 10);
+Histogram histogram_centered(const VectorR&, float = 0.0f, Index  = 10);
 Histogram histogram(const VectorB&);
 Histogram histogram(const VectorI&, Index  = 10);
 vector<Histogram> histograms(const MatrixR&, Index = 10);
@@ -178,21 +178,21 @@ VectorI maximal_indices(const MatrixR&);
 // Eigen Matrix/Vector data-manipulation helpers.
 // =====================================================================
 
-inline bool row_finite(const VectorR& v, Index i) { return isfinite(v(i)); }
-inline bool row_finite(const MatrixR& m, Index i) { return m.row(i).array().isFinite().all(); }
+inline bool row_finite(const VectorR& values, Index i) { return isfinite(values(i)); }
+inline bool row_finite(const MatrixR& matrix, Index i) { return matrix.row(i).array().isFinite().all(); }
 
-inline VectorR slice_rows(const VectorR& v, const vector<Index>& idx)
+inline VectorR slice_rows(const VectorR& values, const vector<Index>& indices)
 {
-    VectorR r(idx.size());
-    for (Index i = 0; i < Index(idx.size()); ++i) r(i) = v(idx[i]);
-    return r;
+    VectorR result(indices.size());
+    for (Index i = 0; i < Index(indices.size()); ++i) result(i) = values(indices[i]);
+    return result;
 }
 
-inline MatrixR slice_rows(const MatrixR& m, const vector<Index>& idx)
+inline MatrixR slice_rows(const MatrixR& matrix, const vector<Index>& indices)
 {
-    MatrixR r(idx.size(), m.cols());
-    for (Index i = 0; i < Index(idx.size()); ++i) r.row(i) = m.row(idx[i]);
-    return r;
+    MatrixR result(indices.size(), matrix.cols());
+    for (Index i = 0; i < Index(indices.size()); ++i) result.row(i) = matrix.row(indices[i]);
+    return result;
 }
 
 VectorR filter_missing_values(const VectorR&);
@@ -215,17 +215,17 @@ pair<X, Y> filter_missing_values(const X& x, const Y& y)
 
 void shuffle_rows(MatrixR& matrix);
 
-inline bool is_contiguous(const vector<Index>& v)
+inline bool is_contiguous(const vector<Index>& indices)
 {
-    return std::adjacent_find(v.begin(), v.end(),
-        [](Index a, Index b) { return b != a + 1; }) == v.end();
+    return std::adjacent_find(indices.begin(), indices.end(),
+        [](Index a, Index b) { return b != a + 1; }) == indices.end();
 }
 
 template <typename T>
 inline bool is_binary(const T& tensor)
 {
     return all_of(tensor.data(), tensor.data() + tensor.size(),
-                  [](float v) { return v == float(0) || v == float(1) || isnan(v); });
+                  [](float value) { return value == 0.0f || value == 1.0f || isnan(value); });
 }
 
 MatrixR append_rows(const MatrixR&, const MatrixR&);
@@ -250,24 +250,24 @@ inline bool is_constant(const T& tensor)
     const float* data = tensor.data();
     const float* end = data + tensor.size();
 
-    const float* first = find_if(data, end, [](float v) { return !isnan(v); });
+    const float* first = find_if(data, end, [](float value) { return !isnan(value); });
 
     if (first == end)
         return true;
 
-    const float val = *first;
+    const float reference_value = *first;
 
     return all_of(first + 1, end,
-                  [val](float v) { return isnan(v) || abs(val - v) <= numeric_limits<float>::min(); });
+                  [reference_value](float value) { return isnan(value) || abs(reference_value - value) <= numeric_limits<float>::min(); });
 }
 
-inline vector<Index> get_true_indices(const VectorB& v)
+inline vector<Index> get_true_indices(const VectorB& flags)
 {
     vector<Index> indices;
-    indices.reserve(v.size());
+    indices.reserve(flags.size());
 
-    for(Index i = 0; i < v.size(); ++i)
-        if (v(i))
+    for (Index i = 0; i < flags.size(); ++i)
+        if (flags(i))
             indices.push_back(i);
 
     return indices;

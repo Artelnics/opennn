@@ -82,7 +82,7 @@ inline const string& variable_role_to_string(VariableRole role)
 
 inline VariableRole string_to_variable_role(const string& name)
 {
-    if(name == "Id") return VariableRole::None;
+    if (name == "Id") return VariableRole::None;
     return variable_role_map().from_string(name);
 }
 
@@ -120,15 +120,15 @@ struct Variable
     string get_type_string() const;
     Index get_categories_number() const;
 
-    void set_scaler(const string& s) { scaler = string_to_scaler_method(s); }
-    void set_scaler(ScalerMethod s) { scaler = s; }
-    void set_role(const string& r) { role = string_to_variable_role(r); }
-    void set_role(VariableRole r) { role = r; }
+    void set_scaler(const string& new_scaler) { scaler = string_to_scaler_method(new_scaler); }
+    void set_scaler(ScalerMethod new_scaler) { scaler = new_scaler; }
+    void set_role(const string& new_role) { role = string_to_variable_role(new_role); }
+    void set_role(VariableRole new_role) { role = new_role; }
     void set_type(const string&);
-    void set_categories(const vector<string>& c) { categories = c; }
+    void set_categories(const vector<string>& new_categories) { categories = new_categories; }
 
-    void from_XML(const XmlDocument&);
-    void to_XML(XmlPrinter&) const;
+    void from_JSON(const JsonDocument&);
+    void to_JSON(JsonWriter&) const;
 
     bool is_binary() const { return type == VariableType::Binary; }
     bool is_categorical() const { return type == VariableType::Categorical; }

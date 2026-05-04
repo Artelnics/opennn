@@ -60,7 +60,7 @@ int main()
         //training_strategy.get_loss()->set_regularization("L1");
         training_strategy.get_loss()->set_regularization_weight(regularization_weight);
 
-        Configuration::instance().set(DeviceType::CPU, TrainingPrecision::Float32, InferencePrecision::Float32);
+        Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
 
         TrainingResults training_results = training_strategy.train();
 
@@ -204,7 +204,7 @@ int main()
         //training_strategy.get_loss()->set_regularization("L1");
         training_strategy.get_loss()->set_regularization_weight(regularization_weight);
 
-        Configuration::instance().set(DeviceType::CPU, TrainingPrecision::Float32, InferencePrecision::Float32);
+        Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
 
         TrainingResults training_results = training_strategy.train();
 

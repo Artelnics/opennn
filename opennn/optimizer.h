@@ -9,11 +9,9 @@
 #pragma once
 
 #include <functional>
-#include "tinyxml2.h"
+#include "json.h"
 #include "tensor_utilities.h"
 #include "thread_safe_queue.h"
-
-using namespace tinyxml2;
 
 namespace opennn
 {
@@ -28,8 +26,8 @@ struct TrainingResults;
 
 struct EpochStats
 {
-    float error = float(0);
-    float accuracy = float(0);
+    float error = 0.0f;
+    float accuracy = 0.0f;
 };
 
 class Optimizer
@@ -63,7 +61,7 @@ public:
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
     void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }
-    void set_maximum_validation_failures(const Index n) { maximum_validation_failures = n; }
+    void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
 
     // Training
 
@@ -73,9 +71,9 @@ public:
 
     virtual void print() const {}
 
-    virtual void from_XML(const XmlDocument&);
+    virtual void from_JSON(const JsonDocument&);
 
-    virtual void to_XML(XmlPrinter&) const;
+    virtual void to_JSON(JsonWriter&) const;
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
@@ -91,8 +89,8 @@ protected:
     bool check_stopping_condition(TrainingResults&, Index epoch, float elapsed_time,
                                    float training_error, Index validation_failures) const;
 
-    void write_common_xml(XmlPrinter&) const;
-    void read_common_xml(const XmlElement*);
+    void write_common_xml(JsonWriter&) const;
+    void read_common_xml(const Json*);
 
     void setup_device_training(ForwardPropagation& training_fp,
                                BackPropagation& training_bp,
@@ -111,8 +109,8 @@ protected:
     bool should_display(Index epoch) const { return display && epoch % display_period == 0; }
 
     EpochStats train_epoch(bool is_classification,
-                           ForwardPropagation& fp,
-                           BackPropagation& bp,
+                           ForwardPropagation& forward_propagation,
+                           BackPropagation& back_propagation,
                            ThreadSafeQueue<Batch*>& empty_queue,
                            ThreadSafeQueue<Batch*>& ready_queue,
                            const vector<vector<Index>>& batches,
@@ -122,8 +120,8 @@ protected:
                            const std::function<void(BackPropagation&)>& update);
 
     EpochStats evaluate_epoch(bool is_classification,
-                              ForwardPropagation& fp,
-                              BackPropagation& bp,
+                              ForwardPropagation& forward_propagation,
+                              BackPropagation& back_propagation,
                               ThreadSafeQueue<Batch*>& empty_queue,
                               ThreadSafeQueue<Batch*>& ready_queue,
                               const vector<vector<Index>>& batches,
@@ -133,13 +131,13 @@ protected:
 
     Loss* loss = nullptr;
 
-    float training_loss_goal = float(0);
+    float training_loss_goal = 0.0f;
 
     Index maximum_validation_failures = numeric_limits<Index>::max();
 
     Index maximum_epochs = 10000;
 
-    float maximum_time = float(360000);
+    float maximum_time = 360000.0f;
 
     Index display_period = 10;
 
@@ -171,7 +169,7 @@ struct OptimizerData
     // Shared state across all optimizers
     VectorR potential_parameters;
     VectorR training_direction;
-    float initial_learning_rate = float(0);
+    float initial_learning_rate = 0.0f;
     Index iteration = 0;
 };
 
@@ -210,7 +208,7 @@ struct TrainingResults
 
     Index validation_failures = 0;
 
-    float loss_decrease = float(0);
+    float loss_decrease = 0.0f;
 };
 
 }

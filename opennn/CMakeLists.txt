@@ -66,3 +66,27 @@ else()
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:-O3 -march=native>
     )
 endif()
+
+# Disable Eigen's internal shape/index/aliasing assertions in release builds.
+# NDEBUG (auto-added by CMake for non-Debug configs) only silences <cassert>;
+# Eigen has its own eigen_assert macro controlled separately. PUBLIC so any
+# consumer of the library sees the same Eigen behavior.
+target_compile_definitions(opennn PUBLIC
+    $<$<NOT:$<CONFIG:Debug>>:EIGEN_NO_DEBUG>
+)
+
+# Precompiled header for C++ TUs only (CUDA .cu files compile with nvcc and
+# don't reliably reuse host PCH). pch.h pulls in CUDA / cuDNN / Eigen / STL.
+target_precompile_headers(opennn PRIVATE
+    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
+)
+
+# Safe subset of -ffast-math: lets sqrt/exp/log/sin/cos vectorize without
+# preserving errno or trapping FP exceptions. Excludes -ffinite-math-only
+# (would break NaN handling in correlations.cpp / statistics.cpp) and
+# -funsafe-math-optimizations (would reorder reductions).
+if(NOT MSVC)
+    target_compile_options(opennn PRIVATE
+        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:Debug>>>:-fno-math-errno -fno-trapping-math>
+    )
+endif()

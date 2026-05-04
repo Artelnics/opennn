@@ -28,7 +28,7 @@ void binary_cross_entropy_cuda(const Index n, float* term_results, const T* targ
 
     const int total = static_cast<int>(n);
 
-    binary_cross_entropy_kernel<T><<<grid_size_for(total), block_size>>>(
+    binary_cross_entropy_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
         total, term_results, targets, outputs, epsilon);
 }
 
@@ -98,7 +98,7 @@ void binary_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targe
     const int n_vec = aligned ? (total / vec_width) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, vec_width));
 
-    binary_cross_entropy_gradient_kernel<T><<<grid_size, block_size>>>(
+    binary_cross_entropy_gradient_kernel<T><<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(
         n_vec, total, deltas, targets, outputs, epsilon, scaling_factor);
 }
 
@@ -124,7 +124,7 @@ void multiple_cross_entropy_cuda(const Index n, float* term_results, const T* ta
 
     const int total = static_cast<int>(n);
 
-    multiple_cross_entropy_kernel<T><<<grid_size_for(total), block_size>>>(
+    multiple_cross_entropy_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
         total, term_results, targets, outputs, epsilon);
 }
 
@@ -191,7 +191,7 @@ void multiple_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* tar
     const int n_vec = aligned ? (total / vec_width) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, vec_width));
 
-    multiple_cross_entropy_gradient_kernel<T><<<grid_size, block_size>>>(
+    multiple_cross_entropy_gradient_kernel<T><<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(
         n_vec, total, deltas, targets, outputs, scaling_factor);
 }
 
@@ -220,7 +220,7 @@ void weighted_squared_error_cuda(const Index n, float* term_results, const T* ta
 
     const int total = static_cast<int>(n);
 
-    weighted_squared_error_kernel<T><<<grid_size_for(total), block_size>>>(
+    weighted_squared_error_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
         total, term_results, targets, outputs, positives_weight, negatives_weight);
 }
 
@@ -297,7 +297,7 @@ void weighted_squared_error_gradient_cuda(const Index n, T* deltas, const T* tar
     const int n_vec = aligned ? (total / vec_width) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, vec_width));
 
-    weighted_squared_error_gradient_kernel<T><<<grid_size, block_size>>>(
+    weighted_squared_error_gradient_kernel<T><<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(
         n_vec, total, deltas, targets, outputs, positives_weight, negatives_weight, scaling_factor);
 }
 
@@ -355,11 +355,11 @@ void cross_entropy_3d_multiple_forward_cuda(const Index n,
                                             float* correct_mask,
                                             const float epsilon)
 {
-    if(n == 0) return;
+    if (n == 0) return;
 
     const int total = static_cast<int>(n);
 
-    cross_entropy_3d_multiple_forward_kernel<T><<<grid_size_for(total), block_size>>>(
+    cross_entropy_3d_multiple_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
         total, vocab_size, outputs, targets, errors, valid_mask, correct_mask, epsilon);
 }
 
@@ -400,11 +400,11 @@ void cross_entropy_3d_multiple_backward_cuda(const Index n,
                                              T* output_deltas,
                                              const float scale_factor)
 {
-    if(n == 0) return;
+    if (n == 0) return;
 
     const int total = static_cast<int>(n);
 
-    cross_entropy_3d_multiple_backward_kernel<T><<<grid_size_for(total), block_size>>>(
+    cross_entropy_3d_multiple_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
         total, vocab_size, outputs, targets, output_deltas, scale_factor);
 }
 
@@ -469,7 +469,7 @@ void l1_gradient_cuda(const Index n, T* deltas, const T* parameters, const float
     const int n_vec = aligned ? (total / vec_width) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, vec_width));
 
-    l1_gradient_kernel<T><<<grid_size, block_size>>>(n_vec, total, deltas, parameters, weight);
+    l1_gradient_kernel<T><<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(n_vec, total, deltas, parameters, weight);
 }
 
 template void l1_gradient_cuda<float>        (const Index, float*,         const float*,         const float);

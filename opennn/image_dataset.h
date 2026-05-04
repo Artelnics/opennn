@@ -18,12 +18,12 @@ struct AugmentationSettings
     bool enabled = false;
     bool reflection_axis_x = false;
     bool reflection_axis_y = false;
-    float rotation_minimum = float(0);
-    float rotation_maximum = float(0);
-    float horizontal_translation_minimum = float(0);
-    float horizontal_translation_maximum = float(0);
-    float vertical_translation_minimum = float(0);
-    float vertical_translation_maximum = float(0);
+    float rotation_minimum = 0.0f;
+    float rotation_maximum = 0.0f;
+    float horizontal_translation_minimum = 0.0f;
+    float horizontal_translation_maximum = 0.0f;
+    float vertical_translation_minimum = 0.0f;
+    float vertical_translation_maximum = 0.0f;
 };
 
 class ImageDataset : public Dataset
@@ -38,19 +38,19 @@ public:
     Index get_channels_number() const;
 
     const AugmentationSettings& get_augmentation() const { return augmentation; }
-    void set_augmentation(const AugmentationSettings& a) { augmentation = a; }
+    void set_augmentation(const AugmentationSettings& new_augmentation) { augmentation = new_augmentation; }
 
     void set_data_random() override;
 
-    void set_image_padding(const int& p) { padding = p; }
+    void set_image_padding(const int& new_padding) { padding = new_padding; }
 
     vector<Descriptives> scale_features(const string&) override;
     void unscale_features(const string&);
 
     void read_bmp(const Shape& new_input_shape = { 0, 0, 0 });
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 
     void augment_inputs(float*, Index) const override;
 

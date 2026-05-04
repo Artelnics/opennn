@@ -31,67 +31,18 @@ public:
     void add_layer(unique_ptr<Layer>,
                   const vector<Index>& = vector<Index>());
 
-    // Resolved runtime configuration captured by compile() — see tensor_utilities.h's
-    // `Configuration` class for how Auto values are picked.
     const Configuration::Resolved& get_config() const { return config; }
-    bool is_gpu() const { return config.device == DeviceType::CUDA; }
-    bool is_cpu() const { return config.device == DeviceType::CPU; }
+    bool is_gpu() const { return config.device == Device::CUDA; }
+    bool is_cpu() const { return config.device == Device::CPU; }
 
-    // Project-internal dtype for activations / parameters. Training and inference
-    // can differ (e.g. train Float32 but infer BP16). High-level code reads these;
-    // conversion to cuDNN/CUDA library constants happens at API boundaries via
-    // to_cudnn() / to_cuda() in configuration.h.
-    ActivationDtype get_training_dtype()  const { return to_activation_dtype(config.training_precision); }
-    ActivationDtype get_inference_dtype() const { return to_activation_dtype(config.inference_precision); }
+    Type get_training_type()  const { return config.training_type; }
+    Type get_inference_type() const { return config.inference_type; }
 
-    vector<vector<Shape>> get_parameter_shapes() const
-    {
-        const Index layers_number = get_layers_number();
-        vector<vector<Shape>> shapes(layers_number);
+    vector<vector<Shape>> get_parameter_shapes()        const { return collect_layer_shapes([](const Layer& L)            { return L.get_parameter_shapes(); }); }
+    vector<vector<Shape>> get_state_shapes()            const { return collect_layer_shapes([](const Layer& L)            { return L.get_state_shapes(); }); }
+    vector<vector<Shape>> get_forward_shapes(Index b)   const { return collect_layer_shapes([b](const Layer& L)           { return L.get_forward_shapes(b); }); }
+    vector<vector<Shape>> get_backward_shapes(Index b)  const { return collect_layer_shapes([b](const Layer& L)           { return L.get_backward_shapes(b); }); }
 
-        for(Index i = 0; i < layers_number; ++i)
-            shapes[i] = layers[i]->get_parameter_shapes();
-
-        return shapes;
-    }
-
-    vector<vector<Shape>> get_forward_shapes(Index batch_size) const
-    {
-        const Index layers_number = get_layers_number();
-        vector<vector<Shape>> shapes(layers_number);
-
-        for(Index i = 0; i < layers_number; ++i)
-            shapes[i] = layers[i]->get_forward_shapes(batch_size);
-
-        return shapes;
-    }
-
-    vector<vector<Shape>> get_backward_shapes(Index batch_size) const
-    {
-        const Index layers_number = get_layers_number();
-        vector<vector<Shape>> shapes(layers_number);
-
-        for(Index i = 0; i < layers_number; ++i)
-            shapes[i] = layers[i]->get_backward_shapes(batch_size);
-
-        return shapes;
-    }
-
-    vector<vector<Shape>> get_state_shapes() const
-    {
-        const Index layers_number = get_layers_number();
-        vector<vector<Shape>> shapes(layers_number);
-
-        for(Index i = 0; i < layers_number; ++i)
-            shapes[i] = layers[i]->get_state_shapes();
-
-        return shapes;
-    }
-
-    // Total aligned-element counts for each arena. compile() and the
-    // ForwardPropagation / BackPropagation set()/allocate_device() paths all
-    // need these to size their buffers, so they live on the network rather
-    // than being recomputed by hand at every call site.
     Index get_states_size() const     { return aligned_total_elements(get_state_shapes()); }
     Index get_forward_size(Index b)  const { return aligned_total_elements(get_forward_shapes(b));  }
     Index get_backward_size(Index b) const { return aligned_total_elements(get_backward_shapes(b)); }
@@ -124,8 +75,6 @@ public:
     const vector<vector<Index>>& get_layer_input_indices() const { return layer_input_indices; }
     vector<vector<Index>> get_layer_output_indices() const;
 
-    Index find_input_index(const vector<Index>&, Index) const;
-
     Layer* get_first(const string&);
     Layer* get_first(LayerType);
     const Layer* get_first(const string&) const;
@@ -133,17 +82,17 @@ public:
 
     // Set
 
-    void set_layers_number(const Index n) { layers.resize(n); layer_input_indices.resize(n); }
+    void set_layers_number(const Index new_layers_number) { layers.resize(new_layers_number); layer_input_indices.resize(new_layers_number); }
 
-    void set_layer_input_indices(const vector<vector<Index>>& v) { layer_input_indices = v; }
-    void set_layer_input_indices(const Index i, const vector<Index>& v) { layer_input_indices[i] = v; }
+    void set_layer_input_indices(const vector<vector<Index>>& new_layer_input_indices) { layer_input_indices = new_layer_input_indices; }
+    void set_layer_input_indices(const Index layer_index, const vector<Index>& new_input_indices) { layer_input_indices[layer_index] = new_input_indices; }
 
     void set_layer_input_indices(const string&, const vector<string>&);
     void set_layer_input_indices(const string&, initializer_list<string>);
     void set_layer_input_indices(const string&, const string&);
 
-    void set_input_variables(const vector<Variable>& v) { input_variables = v; }
-    void set_output_variables(const vector<Variable>& v) { output_variables = v; }
+    void set_input_variables(const vector<Variable>& new_input_variables) { input_variables = new_input_variables; }
+    void set_output_variables(const vector<Variable>& new_output_variables) { output_variables = new_output_variables; }
 
     void set_input_names(const vector<string>&);
     void set_output_names(const vector<string>&);
@@ -154,7 +103,7 @@ public:
 
     // Layers
 
-    Index get_layers_number() const { return static_cast<Index>(layers.size()); }
+    Index get_layers_number() const { return ssize(layers); }
     Index get_layers_number(const string&) const;
     Index get_layers_number(LayerType) const;
 
@@ -169,7 +118,7 @@ public:
     Shape get_input_shape() const;
     Shape get_output_shape() const;
 
-    ActivationFunction get_output_activation() const;
+    Activation::Function get_output_activation() const;
 
     // Parameters
 
@@ -177,7 +126,7 @@ public:
 
     vector<Index> get_layer_parameter_numbers() const;
 
-    void set_parameters(const VectorR& p);
+    void set_parameters(const VectorR& new_parameters);
 
     // Parameters initialization
 
@@ -204,9 +153,9 @@ public:
 
     // Serialization
 
-    void from_XML(const XmlDocument&);
+    void from_JSON(const JsonDocument&);
 
-    void to_XML(XmlPrinter&) const;
+    void to_JSON(JsonWriter&) const;
 
     void save(const filesystem::path&) const;
     void save_parameters(const filesystem::path&) const;
@@ -231,10 +180,6 @@ public:
 
 public:
 
-    // BF16 working copy of `parameters`. Allocated by copy_parameters_device()
-    // when the resolved Configuration sets training or inference precision to BP16.
-    // Refreshed by cast_parameters_to_bf16() after each Adam step. Empty otherwise;
-    // call sites fall back to the FP32 master.
     void cast_parameters_to_bf16();
 
     void copy_parameters_device();
@@ -259,6 +204,16 @@ private:
 
     void validate_type(LayerType) const;
 
+    // Gather a per-layer shape vector via the supplied accessor.
+    template<typename Fn>
+    vector<vector<Shape>> collect_layer_shapes(Fn fn) const
+    {
+        const Index n = get_layers_number();
+        vector<vector<Shape>> out(n);
+        for (Index i = 0; i < n; ++i) out[i] = fn(*layers[i]);
+        return out;
+    }
+
 protected:
 
     string name = "neural_network";
@@ -271,7 +226,7 @@ protected:
     vector<vector<Index>> layer_input_indices;
 
     Buffer parameters;
-    Buffer parameters_bf16{DeviceType::CUDA};
+    Buffer parameters_bf16{Device::CUDA};
     vector<vector<vector<TensorView>>> parameter_views;
 
     Buffer states;

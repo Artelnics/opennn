@@ -45,10 +45,10 @@ inline const string& sample_role_to_string(SampleRole role)
 
 inline SampleRole string_to_sample_role(const string& name)
 {
-    if(name == "0") return SampleRole::Training;
-    if(name == "1") return SampleRole::Validation;
-    if(name == "2") return SampleRole::Testing;
-    if(name == "3") return SampleRole::None;
+    if (name == "0") return SampleRole::Training;
+    if (name == "1") return SampleRole::Validation;
+    if (name == "2") return SampleRole::Testing;
+    if (name == "3") return SampleRole::None;
     return sample_role_map().from_string(name);
 }
 
@@ -196,7 +196,7 @@ public:
 
     // Variables set
 
-    void set_variables(const vector<Variable>& v) { variables = v; }
+    void set_variables(const vector<Variable>& new_variables) { variables = new_variables; }
 
     void set_default_variable_names();
 
@@ -216,7 +216,7 @@ public:
 
     void set_variable_names(const vector<string>&);
 
-    void set_variables_number(const Index n) { variables.resize(n); }
+    void set_variables_number(const Index new_size) { variables.resize(new_size); }
 
     void set_variable_scalers(const string&);
 
@@ -238,12 +238,12 @@ public:
 
     // Members set
 
-    void set_data_path(const filesystem::path& p) { data_path = p; }
+    void set_data_path(const filesystem::path& new_data_path) { data_path = new_data_path; }
 
-    void set_has_header(bool h) { has_header = h; }
-    void set_has_ids(bool h) { has_sample_ids = h; }
+    void set_has_header(bool new_has_header) { has_header = new_has_header; }
+    void set_has_ids(bool new_has_ids) { has_sample_ids = new_has_ids; }
 
-    void set_separator(const Separator& s) { separator = s; }
+    void set_separator(const Separator& new_separator) { separator = new_separator; }
     void set_separator_string(const string&);
     void set_separator_name(const string&);
 
@@ -271,23 +271,23 @@ public:
 
     // Splitting
 
-    void split_samples(const float training_ratio = float(0.6),
-                       float selection_ratio = float(0.2),
-                       float testing_ratio = float(0.2),
+    void split_samples(const float training_ratio = 0.6f,
+                       float selection_ratio = 0.2f,
+                       float testing_ratio = 0.2f,
                        bool shuffle = true);
 
-    void split_samples_sequential(const float training_ratio = float(0.6),
-                                  float selection_ratio = float(0.2),
-                                  float testing_ratio = float(0.2));
+    void split_samples_sequential(const float training_ratio = 0.6f,
+                                  float selection_ratio = 0.2f,
+                                  float testing_ratio = 0.2f);
 
-    void split_samples_random(const float training_ratio = float(0.6),
-                              float selection_ratio = float(0.2),
-                              float testing_ratio = float(0.2));
+    void split_samples_random(const float training_ratio = 0.6f,
+                              float selection_ratio = 0.2f,
+                              float testing_ratio = 0.2f);
 
     // Unusing
 
-    vector<string> unuse_uncorrelated_variables(const float = float(0.25));
-    vector<string> unuse_collinear_variables(const float = float(0.95));
+    vector<string> unuse_uncorrelated_variables(const float = 0.25f);
+    vector<string> unuse_collinear_variables(const float = 0.95f);
 
     // Initialization
 
@@ -350,11 +350,11 @@ public:
 
     // Tuckey outlier detection
 
-    vector<vector<Index>> calculate_Tukey_outliers(const float = float(1.5), bool = false);
+    vector<vector<Index>> calculate_Tukey_outliers(const float = 1.5f, bool = false);
 
-    vector<vector<Index>> replace_Tukey_outliers_with_NaN(const float = float(1.5));
+    vector<vector<Index>> replace_Tukey_outliers_with_NaN(const float = 1.5f);
 
-    void unuse_Tukey_outliers(const float = float(1.5));
+    void unuse_Tukey_outliers(const float = 1.5f);
 
     // Data generation
 
@@ -365,8 +365,8 @@ public:
 
     // Serialization
 
-    virtual void from_XML(const XmlDocument&);
-    virtual void to_XML(XmlPrinter&) const;
+    virtual void from_JSON(const JsonDocument&);
+    virtual void to_JSON(JsonWriter&) const;
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
@@ -506,15 +506,15 @@ protected:
     const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
     const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
 
-    void variables_to_XML(XmlPrinter&) const;
-    void samples_to_XML(XmlPrinter&) const;
-    void missing_values_to_XML(XmlPrinter&) const;
-    void preview_data_to_XML(XmlPrinter&) const;
+    void variables_to_JSON(JsonWriter&) const;
+    void samples_to_JSON(JsonWriter&) const;
+    void missing_values_to_JSON(JsonWriter&) const;
+    void preview_data_to_JSON(JsonWriter&) const;
 
-    void variables_from_XML(const XmlElement*);
-    void samples_from_XML(const XmlElement*);
-    void missing_values_from_XML(const XmlElement*);
-    void preview_data_from_XML(const XmlElement*);
+    void variables_from_JSON(const Json*);
+    void samples_from_JSON(const Json*);
+    void missing_values_from_JSON(const Json*);
+    void preview_data_from_JSON(const Json*);
 };
 
 }

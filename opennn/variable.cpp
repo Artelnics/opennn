@@ -62,7 +62,7 @@ string Variable::get_type_string() const
     case VariableType::DateTime:
         return "DateTime";
     default:
-        throw runtime_error("Unknown variable type");
+        return "Unknown";
     }
 }
 
@@ -71,23 +71,23 @@ Index Variable::get_categories_number() const
     return ssize(categories);
 }
 
-void Variable::from_XML(const XmlDocument& document)
+void Variable::from_JSON(const JsonDocument& document)
 {
-    name = read_xml_string(document.first_child_element(), "Name");
-    set_scaler(read_xml_string(document.first_child_element(), "Scaler"));
-    set_role(read_xml_string(document.first_child_element(), "Role"));
-    set_type(read_xml_string(document.first_child_element(), "Type"));
+    name = read_json_string(document.first_child(), "Name");
+    set_scaler(read_json_string(document.first_child(), "Scaler"));
+    set_role(read_json_string(document.first_child(), "Role"));
+    set_type(read_json_string(document.first_child(), "Type"));
 
     if (type == VariableType::Categorical)
     {
-        const string categories_text = read_xml_string(document.first_child_element(), "Categories");
+        const string categories_text = read_json_string(document.first_child(), "Categories");
         categories = get_tokens(categories_text, ";");
     }
 }
 
-void Variable::to_XML(XmlPrinter& printer) const
+void Variable::to_JSON(JsonWriter& printer) const
 {
-    write_xml(printer, {
+    write_json(printer, {
         {"Name", name},
         {"Scaler", get_scaler()},
         {"Role", get_role()},
@@ -95,7 +95,7 @@ void Variable::to_XML(XmlPrinter& printer) const
     });
 
     if (type == VariableType::Categorical || type == VariableType::Binary)
-        add_xml_element(printer, "Categories", vector_to_string(categories, ";"));
+        add_json_field(printer, "Categories", vector_to_string(categories, ";"));
 }
 
 vector<string> Variable::get_names() const

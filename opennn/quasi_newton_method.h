@@ -41,7 +41,7 @@ public:
 
     // Stopping criteria
 
-    void set_minimum_loss_decrease(const float v) { minimum_loss_decrease = v; }
+    void set_minimum_loss_decrease(const float new_minimum_loss_decrease) { minimum_loss_decrease = new_minimum_loss_decrease; }
 
     // Training
 
@@ -51,9 +51,9 @@ public:
 
     // Serialization
 
-    void from_XML(const XmlDocument&) override;
+    void from_JSON(const JsonDocument&) override;
 
-    void to_XML(XmlPrinter&) const override;
+    void to_JSON(JsonWriter&) const override;
 
 private:
 
@@ -65,7 +65,7 @@ private:
                                                  OptimizerData&,
                                                  float);
 
-    float first_learning_rate = float(0.01);
+    float first_learning_rate = 0.01f;
 
     // Stopping criteria
 
@@ -73,9 +73,9 @@ private:
 
     // Optimizer-specific state (not shared across optimizers, so not in OptimizerData)
 
-    float training_slope = float(0);
-    float learning_rate = float(0);
-    float old_learning_rate = float(0);
+    float training_slope = 0.0f;
+    float learning_rate = 0.0f;
+    float old_learning_rate = 0.0f;
 };
 
 }

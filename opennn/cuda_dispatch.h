@@ -33,7 +33,7 @@
     #define TRY_GPU_DISPATCH(view, ...) (false)
 #endif
 
-// IF_GPU(...) wraps the body in `if (Device::is_gpu()) { ... }` when CUDA is on,
+// IF_GPU(...) wraps the body in `if (Backend::is_gpu()) { ... }` when CUDA is on,
 // and discards it entirely when CUDA is off. Use for GPU branches that call
 // cuDNN / cuBLAS / cuBLASLt directly (i.e. not the templated *_cuda<T> dispatch
 // pattern that TRY_GPU_DISPATCH covers).

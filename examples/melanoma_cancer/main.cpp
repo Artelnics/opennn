@@ -31,7 +31,7 @@ int main()
 
         #ifdef OPENNN_WITH_CUDA
 
-        Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
+        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
 
         // Data set
 

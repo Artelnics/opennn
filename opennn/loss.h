@@ -45,14 +45,14 @@ public:
         return map;
     }
 
-    static const string& regularization_to_string(Regularization r)
+    static const string& regularization_to_string(Regularization regularization)
     {
-        return regularization_map().to_string(r);
+        return regularization_map().to_string(regularization);
     }
 
     static Regularization string_to_regularization(const string& name)
     {
-        if(name == "NoRegularization") return Regularization::NoRegularization;
+        if (name == "NoRegularization") return Regularization::NoRegularization;
         return regularization_map().from_string(name);
     }
 
@@ -80,22 +80,17 @@ public:
         return dataset;
     }
 
-    const string& get_regularization_method() const { return regularization_to_string(regularization_method); }
-    Regularization get_regularization_type() const { return regularization_method; }
-
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-    void set_neural_network(NeuralNetwork* nn) { neural_network = nn; }
+    void set_neural_network(NeuralNetwork* new_neural_network) { neural_network = new_neural_network; }
 
-    virtual void set_dataset(Dataset* ds) { dataset = ds; }
+    virtual void set_dataset(Dataset* new_dataset) { dataset = new_dataset; }
 
-    void set_regularization(const string& m) { regularization_method = string_to_regularization(m); }
-    void set_regularization(Regularization r) { regularization_method = r; }
-    void set_regularization_weight(const float w) { regularization_weight = w; }
+    void set_regularization(const string& new_regularization_method) { regularization_method = string_to_regularization(new_regularization_method); }
+    void set_regularization(Regularization new_regularization) { regularization_method = new_regularization; }
+    void set_regularization_weight(const float new_regularization_weight) { regularization_weight = new_regularization_weight; }
 
     void set_normalization_coefficient();
-
-    virtual float get_Minkowski_parameter() const { return minkowski_parameter; }
 
     // Back propagation
 
@@ -118,41 +113,33 @@ public:
 
     // Serialization
 
-    void from_XML(const XmlDocument&);
+    void from_JSON(const JsonDocument&);
 
-    void to_XML(XmlPrinter&) const;
+    void to_JSON(JsonWriter&) const;
 
-    void regularization_from_XML(const XmlDocument&);
-    void regularization_to_XML(XmlPrinter&) const;
+    void regularization_from_JSON(const JsonDocument&);
+    void regularization_to_JSON(JsonWriter&) const;
 
     const string& get_name() const { return name; }
 
-    // Numerical differentiation
-
+    // Used by Levenberg–Marquardt for numerical jacobian/hessian. Other
+    // numerical-differentiation helpers (calculate_numerical_gradient et al.)
+    // live in tests/numerical_derivatives.{h,cpp} as free functions.
     static float calculate_h(const float);
 
-    float calculate_numerical_error() const;
-
-    VectorR calculate_gradient();
-
-    VectorR calculate_numerical_gradient();
-    VectorR calculate_numerical_input_deltas();
-    MatrixR calculate_numerical_hessian();
-    MatrixR calculate_inverse_hessian();
-
-    void print(){}
+    void print() const {}
 
 private:
 
     void check_neural_network() const
     {
-        if(!neural_network)
+        if (!neural_network)
             throw runtime_error("Loss error: neural network is not set.");
     }
 
     void check_dataset() const
     {
-        if(!dataset)
+        if (!dataset)
             throw runtime_error("Loss error: dataset is not set.");
     }
 

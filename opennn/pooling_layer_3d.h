@@ -38,7 +38,7 @@ public:
 
     void set(const Shape&, const PoolingMethod&, const string&);
     void set_input_shape(const Shape& shape) override { sequence_length = shape[0]; input_features = shape[1]; }
-    void set_pooling_method(const PoolingMethod& m) { pooling_method = m; }
+    void set_pooling_method(const PoolingMethod& new_pooling_method) { pooling_method = new_pooling_method; }
     void set_pooling_method(const string&);
 
     // Forward / back propagation
@@ -49,31 +49,29 @@ public:
 
     // Serialization
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 
 private:
 
     enum Forward { Input, MaximalIndices, Output };
     enum Backward { OutputDelta, InputDelta };
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
-        return {(pooling_method == PoolingMethod::MaxPooling)
-                    ? Shape{batch_size, input_features}   // MaximalIndices
-                    : Shape{},
-                { batch_size, input_features }};          // Output (must be last)
+        const Type act = activation_dtype;
+        return {
+            /*MaximalIndices*/ {(pooling_method == PoolingMethod::MaxPooling)
+                                    ? Shape{batch_size, input_features}
+                                    : Shape{},
+                                Type::FP32},
+            /*Output*/         {{batch_size, input_features}, act}, // must be last
+        };
     }
 
-    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {CUDNN_DATA_FLOAT,            // MaximalIndices
-                to_cudnn(activation_dtype)}; // Output
-    }
-
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        return {{ batch_size, sequence_length, input_features }};
+        return {{{batch_size, sequence_length, input_features}, activation_dtype}};
     }
 
     Index sequence_length = 0;

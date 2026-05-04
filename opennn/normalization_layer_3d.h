@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
@@ -31,42 +32,36 @@ public:
 
     void set_input_shape(const Shape& new_input_shape) override
     {
-        if(new_input_shape.rank >= 2)
+        if (new_input_shape.rank >= 2)
         {
             sequence_length = new_input_shape[0];
             embedding_dimension = new_input_shape[1];
         }
     }
 
-    vector<Shape> get_parameter_shapes() const override;
+    // get_parameter_specs() is inherited from Layer and auto-derived from
+    // get_operators(). LayerNorm::parameter_specs() pins gamma/beta to FP32
+    // (the cuda kernels read `const float* gamma`/`beta`).
+    vector<Operator*> get_operators() override;
 
-    // Gamma and beta are 1-D and stay FP32 by the default rule, but be explicit
-    // anyway: our layernorm CUDA kernels read `const float* gamma`/`beta` and
-    // would not compile if these slots ever changed dtype.
-    vector<cudnnDataType_t> get_parameter_dtypes() const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
-        return vector<cudnnDataType_t>(get_parameter_shapes().size(), CUDNN_DATA_FLOAT);
+        const Type act = activation_dtype;
+        const Shape normalized_shape = Configuration::instance().is_gpu()
+            ? Shape{}
+            : Shape{batch_size, sequence_length, embedding_dimension};
+
+        return {
+            /*Means*/              {{batch_size, sequence_length},                      Type::FP32},
+            /*StandardDeviations*/ {{batch_size, sequence_length},                      Type::FP32},
+            /*NormalizedInputs*/   {normalized_shape,                                   act},
+            /*Output*/             {{batch_size, sequence_length, embedding_dimension}, act},
+        };
     }
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{batch_size, sequence_length },                      // Means
-                {batch_size, sequence_length },                      // StandardDeviations
-                {batch_size, sequence_length, embedding_dimension},  // NormalizedInputs
-                {batch_size, sequence_length, embedding_dimension}}; // Output
-    }
-
-    vector<cudnnDataType_t> get_forward_dtypes(Index) const override
-    {
-        return {CUDNN_DATA_FLOAT,            // Means
-                CUDNN_DATA_FLOAT,            // StandardDeviations
-                to_cudnn(activation_dtype),  // NormalizedInputs
-                to_cudnn(activation_dtype)}; // Output
-    }
-
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        return {{ batch_size, sequence_length, embedding_dimension}};
+        return {{{batch_size, sequence_length, embedding_dimension}, activation_dtype}};
     }
 
     void set(const Index = 0, Index = 0, const string& = "normalization_layer_3d");
@@ -78,18 +73,15 @@ public:
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
-
-protected:
-
-    TensorView gammas_device;
-    TensorView betas_device;
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 
 private:
 
     Index embedding_dimension = 0;
     Index sequence_length = 0;
+
+    LayerNorm layer_norm;
 
     enum Parameters {Gamma, Beta};
 

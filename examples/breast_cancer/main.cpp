@@ -25,7 +25,7 @@ int main()
     {
         cout << "OpenNN. Breast Cancer Example." << endl;
 
-        Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
+        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
 
         // Dataset
 

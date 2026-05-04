@@ -44,7 +44,7 @@ void GrowingInputs::set_default()
     minimum_inputs_number = 1;
     trials_number = 3;
     maximum_epochs = 1000;
-    maximum_time = float(3600);
+    maximum_time = 3600.0f;
 
     training_strategy && training_strategy->get_neural_network()
         ? maximum_inputs_number = training_strategy->get_dataset()->get_variables_number("Input")
@@ -82,10 +82,10 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     Dataset* dataset = training_strategy->get_dataset();
     const Index original_input_variables_number = dataset->get_variables_number("Input");
 
-    if(dataset->has_nan())
+    if (dataset->has_nan())
         dataset->scrub_missing_values();
 
-    if(display) cout << "Performing growing input selection..." << "\n";
+    if (display) cout << "Performing growing input selection..." << "\n";
 
     InputsSelectionResults input_selection_results(original_input_variables_number);
 
@@ -103,7 +103,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     const vector<string> variable_names = dataset->get_variable_names();
     vector<string> input_variable_names;
 
-    if(display) cout << "Calculating correlations..." << "\n";
+    if (display) cout << "Calculating correlations..." << "\n";
 
     const MatrixR correlations = get_correlation_values(dataset->calculate_input_target_variable_pearson_correlations());
     const VectorR total_correlations = correlations.col(0).array().abs();
@@ -140,15 +140,15 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     time_t beginning_time;
     time_t current_time;
-    float elapsed_time = float(0);
+    float elapsed_time = 0.0f;
     time(&beginning_time);
 
     bool stop = false;
     Index epoch = 0;
 
-    while(!stop)
+    while (!stop)
     {
-        if(variable_index >= correlations_rank_descending.size())
+        if (variable_index >= correlations_rank_descending.size())
         {
             if (display) cout << "\nAll the variables has been used." << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
@@ -159,7 +159,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         const Index current_variable_index = correlations_rank_descending[variable_index];
         const VariableRole current_use = dataset->get_variables()[current_variable_index].role;
 
-        if(current_use == VariableRole::InputTarget)
+        if (current_use == VariableRole::InputTarget)
             dataset->set_variable_role(current_variable_index, "InputTarget");
         else
             dataset->set_variable_role(current_variable_index, "Input");
@@ -167,13 +167,13 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         const Index input_variables_number = dataset->get_variables_number("Input");
         const Index input_features_number = dataset->get_features_number("Input");
 
-        if(input_variables_number < minimum_inputs_number)
+        if (input_variables_number < minimum_inputs_number)
         {
             ++variable_index;
             continue;
         }
 
-        if(time_series_dataset)
+        if (time_series_dataset)
         {
             const Index past_time_steps = time_series_dataset->get_past_time_steps();
             neural_network->set_input_shape({ past_time_steps, input_features_number });
@@ -187,7 +187,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
         neural_network->compile();
 
-        if(display)
+        if (display)
         {
             cout << "\n"
                 << "Epoch: " << epoch + 1 << "\n"
@@ -201,18 +201,18 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         float minimum_training_error = MAX;
         float minimum_validation_error = MAX;
 
-        for(Index j = 0; j < trials_number; ++j)
+        for (Index j = 0; j < trials_number; ++j)
         {
             neural_network->set_parameters_random();
             training_results = training_strategy->train();
 
-            if(training_results.get_validation_error() < minimum_validation_error)
+            if (training_results.get_validation_error() < minimum_validation_error)
             {
                 minimum_training_error = training_results.get_training_error();
                 minimum_validation_error = training_results.get_validation_error();
             }
 
-            if(minimum_validation_error < input_selection_results.optimum_validation_error)
+            if (minimum_validation_error < input_selection_results.optimum_validation_error)
             {
                 input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices("Input");
                 input_selection_results.optimal_input_variable_names = dataset->get_variable_names("Input");
@@ -221,18 +221,18 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                 input_selection_results.optimum_validation_error = training_results.get_validation_error();
             }
 
-            if(display)
+            if (display)
                 cout << "Trial number: " << j + 1 << "\n"
                 << "   Training error: " << training_results.get_training_error() << "\n"
                 << "   Validation error: " << training_results.get_validation_error() << "\n";
         }
 
-        if(previous_training_error < minimum_training_error)
+        if (previous_training_error < minimum_training_error)
         {
-            if(display) cout << "Validation failure" << "\n";
+            if (display) cout << "Validation failure" << "\n";
             ++validation_failures;
 
-            if(dataset->get_variables()[current_variable_index].role == VariableRole::InputTarget)
+            if (dataset->get_variables()[current_variable_index].role == VariableRole::InputTarget)
                 dataset->set_variable_role(current_variable_index, "Target");
             else
                 dataset->set_variable_role(current_variable_index, "None");
@@ -254,27 +254,27 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
         // Stopping criteria
 
-        if(elapsed_time >= maximum_time)
+        if (elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << "\nMaximum time reached: " << get_time(elapsed_time) << "\n";
+            if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << get_time(elapsed_time) << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
             stop = true;
         }
-        else if(input_selection_results.optimum_validation_error <= validation_error_goal)
+        else if (input_selection_results.optimum_validation_error <= validation_error_goal)
         {
-            if(display) cout << "\nSelection error reached: " << input_selection_results.optimum_validation_error << "\n";
+            if (display) cout << "\nSelection error reached: " << input_selection_results.optimum_validation_error << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
             stop = true;
         }
-        else if(epoch >= maximum_epochs)
+        else if (epoch >= maximum_epochs)
         {
-            if(display) cout << "\nMaximum number of epochs reached." << "\n";
+            if (display) cout << "\nMaximum number of epochs reached." << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
             stop = true;
         }
-        else if(validation_failures >= maximum_validation_failures)
+        else if (validation_failures >= maximum_validation_failures)
         {
-            if(display) cout << "\nMaximum selection failures (" << validation_failures << ") reached." << "\n";
+            if (display) cout << "\nMaximum selection failures (" << validation_failures << ") reached." << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumSelectionFailures;
             stop = true;
         }
@@ -282,9 +282,9 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         {
             const Index current_inputs = dataset->get_variables_number("Input");
 
-            if(current_inputs >= maximum_inputs_number)
+            if (current_inputs >= maximum_inputs_number)
             {
-                if(display) cout << "\nMaximum inputs (" << current_inputs << ") reached." << "\n";
+                if (display) cout << "\nMaximum inputs (" << current_inputs << ") reached." << "\n";
                 input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
                 stop = true;
             }
@@ -301,13 +301,13 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     const Index optimal_processed_variables_number = dataset->get_features_number("Input");
 
-    if(time_series_dataset)
+    if (time_series_dataset)
     {
         const Index past_time_steps = time_series_dataset->get_past_time_steps();
         dataset->set_shape("Input", { past_time_steps, optimal_processed_variables_number });
         neural_network->set_input_shape({ past_time_steps, optimal_processed_variables_number });
 
-        if(time_variable_indices.size() == 1)
+        if (time_variable_indices.size() == 1)
             dataset->set_variable_role(time_variable_indices[0], "Time");
     }
     else
@@ -325,15 +325,15 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     // Set neural network
 
-    if(time_series_dataset)
+    if (time_series_dataset)
     {
         vector<string> final_feature_names;
         const vector<string> base_names = dataset->get_variable_names("Input");
         const Index time_steps = time_series_dataset->get_past_time_steps();
         final_feature_names.reserve(base_names.size() * time_steps);
-        for(const string& base_name : base_names)
+        for (const string& base_name : base_names)
         {
-            for(Index j = 0; j < time_steps; ++j)
+            for (Index j = 0; j < time_steps; ++j)
             {
                 string name = (base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j);
                 final_feature_names.push_back(name);
@@ -344,33 +344,24 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     else
         neural_network->set_input_names(dataset->get_feature_names("Input"));
 
-    if(neural_network->has(LayerType::Scaling2d))
+    if (auto* scaling_layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
     {
-        auto* scaling_layer = dynamic_cast<Scaling<2>*>(neural_network->get_first(LayerType::Scaling2d));
-        if(!scaling_layer) throw runtime_error("Expected Scaling<2> layer.");
-        scaling_layer->set_descriptives(input_variable_descriptives);
-        scaling_layer->set_scalers(input_variable_scalers);
-    }
-    else if(neural_network->has(LayerType::Scaling3d))
-    {
-        auto* scaling_layer = dynamic_cast<Scaling<3>*>(neural_network->get_first(LayerType::Scaling3d));
-        if(!scaling_layer) throw runtime_error("Expected Scaling<3> layer.");
         scaling_layer->set_descriptives(input_variable_descriptives);
         scaling_layer->set_scalers(input_variable_scalers);
     }
 
     neural_network->set_parameters(input_selection_results.optimal_parameters);
 
-    if(display) input_selection_results.print();
+    if (display) input_selection_results.print();
 
     return input_selection_results;
 }
 
-void GrowingInputs::to_XML(XmlPrinter& printer) const
+void GrowingInputs::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("GrowingInputs");
 
-    write_xml(printer, {
+    write_json(printer, {
         {"TrialsNumber", to_string(trials_number)},
         {"SelectionErrorGoal", to_string(validation_error_goal)},
         {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
@@ -382,22 +373,22 @@ void GrowingInputs::to_XML(XmlPrinter& printer) const
         {"MaximumTime", to_string(maximum_time)}
     });
 
-    printer.close_element();  
+    printer.close_element();
 }
 
-void GrowingInputs::from_XML(const XmlDocument& document)
+void GrowingInputs::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* root_element = get_xml_root(document, "GrowingInputs");
+    const Json* root_element = get_json_root(document, "GrowingInputs");
 
-    set_trials_number(read_xml_index(root_element, "TrialsNumber"));
-    set_validation_error_goal(read_xml_type(root_element, "SelectionErrorGoal"));
-    set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
-    set_maximum_correlation(read_xml_type(root_element, "MaximumCorrelation"));
-    set_minimum_correlation(read_xml_type(root_element, "MinimumCorrelation"));
-    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
-    set_minimum_inputs_number(read_xml_index(root_element, "MinimumInputsNumber"));
-    set_maximum_inputs_number(read_xml_index(root_element, "MaximumInputsNumber"));
-    set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_trials_number(read_json_index(root_element, "TrialsNumber"));
+    set_validation_error_goal(read_json_type(root_element, "SelectionErrorGoal"));
+    set_maximum_epochs(read_json_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_correlation(read_json_type(root_element, "MaximumCorrelation"));
+    set_minimum_correlation(read_json_type(root_element, "MinimumCorrelation"));
+    set_maximum_time(read_json_type(root_element, "MaximumTime"));
+    set_minimum_inputs_number(read_json_index(root_element, "MinimumInputsNumber"));
+    set_maximum_inputs_number(read_json_index(root_element, "MaximumInputsNumber"));
+    set_maximum_validation_failures(read_json_index(root_element, "MaximumSelectionFailures"));
 }
 
 REGISTER(InputsSelection, GrowingInputs, "GrowingInputs");

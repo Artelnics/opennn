@@ -12,11 +12,6 @@
 
 namespace opennn
 {
-    // Pins a deterministic seed for the program. After set_seed(N), every
-    // thread (main + OpenMP workers) reseeds its thread_local mt19937 with
-    // `N + thread_id * 5489u` lazily on the next call to get_generator(),
-    // so OMP-parallel init helpers (set_random_uniform, etc.) are reproducible.
-    // get_seed() returns -1 when no seed has been set (default: random_device).
     void set_seed(unsigned seed);
     long long get_seed();
 
@@ -31,7 +26,7 @@ namespace opennn
 
     void set_random_integer(MatrixR&, Index, Index);
 
-    void shuffle(VectorB& v);
+    void shuffle(VectorB& vector_to_shuffle);
 
     template<typename T>
     void shuffle_vector(vector<T>&);

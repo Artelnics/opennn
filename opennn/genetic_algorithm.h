@@ -38,15 +38,15 @@ public:
 
     void set_initialization_method(string method) { initialization_method = std::move(method); }
 
-    void set_mutation_rate(const float rate) { mutation_rate = clamp(rate, float(0), float(1)); }
+    void set_mutation_rate(const float rate) { mutation_rate = clamp(rate, 0.0f, 1.0f); }
 
     void set_elitism_size(const Index size) { elitism_size = clamp<Index>(size, 0, get_individuals_number()); }
 
     InputsSelectionResults perform_input_selection() override;
 
-    void from_XML(const XmlDocument&) override;
+    void from_JSON(const JsonDocument&) override;
 
-    void to_XML(XmlPrinter&) const override;
+    void to_JSON(JsonWriter&) const override;
 
 private:
 
@@ -66,7 +66,7 @@ private:
 
     vector<Index> original_input_variable_indices;
     vector<Index> original_target_variable_indices;
-    
+
     MatrixB population;
 
     VectorR training_errors;

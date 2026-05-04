@@ -36,9 +36,9 @@ Shape Embedding::get_output_shape() const
     return {sequence_length, embedding_dimension};
 }
 
-vector<Shape> Embedding::get_parameter_shapes() const
+vector<Operator*> Embedding::get_operators()
 {
-    return {{vocabulary_size, embedding_dimension}}; // weights
+    return {&embedding_lookup};
 }
 
 // Setters
@@ -51,59 +51,32 @@ void Embedding::set(const Index new_vocabulary_size,
     sequence_length = new_sequence_length;
     vocabulary_size = new_vocabulary_size;
     embedding_dimension = new_embedding_dimension;
-    embedding_scale = sqrt(static_cast<float>(new_embedding_dimension));
     label = new_label;
 
-    // The sinusoidal positional encoding is materialized in link_states(),
-    // which runs once after NeuralNetwork::compile() has reserved its slot in
-    // the shared `states` arena. Keeping the computation there means we never
-    // hold a duplicate host MatrixR or a per-layer GPU Buffer.
+    embedding_lookup.set(vocabulary_size, sequence_length, embedding_dimension);
 }
 
-float* Embedding::link_states(float* pointer)
-{
-    float* next = Layer::link_states(pointer);
-
-    if (!add_positional_encoding) return next;
-    if (states.empty() || !states[PositionalEncoding].data) return next;
-
-    float* table = states[PositionalEncoding].as<float>();
-    if (!table) return next;
-
-    const float half_depth = float(embedding_dimension) / 2;
-
-    VectorR divisors(embedding_dimension);
-    for (Index j = 0; j < embedding_dimension; ++j)
-        divisors(j) = pow(float(10000),
-                          (j < Index(half_depth) ? j : j - Index(half_depth)) / half_depth);
-
-    #pragma omp parallel for collapse(2)
-    for (Index i = 0; i < sequence_length; ++i)
-        for (Index j = 0; j < embedding_dimension; ++j)
-            table[i * embedding_dimension + j] = (j < Index(half_depth))
-                ? sin(i / divisors(j))
-                : cos(i / divisors(j));
-
-    return next;
-}
+// link_parameters() and link_states() are inherited from Layer; the base
+// auto-distributes slices to embedding_lookup. init_positional_encoding() is
+// called from inside EmbeddingLookup::link_states().
 
 // Parameter initialization
 
 void Embedding::set_parameters_random()
 {
-    if(parameters[Weight].empty()) return;
+    if (parameters[Weight].empty()) return;
 
     MatrixMap weights = parameters[Weight].as_matrix();
-    set_random_normal(weights, float(0), float(1));
+    set_random_normal(weights, 0.0f, 1.0f);
 
     weights.row(0).setZero();
 }
 
 void Embedding::set_parameters_glorot()
 {
-    if(parameters[Weight].empty()) return;
+    if (parameters[Weight].empty()) return;
 
-    const float limit = sqrt(float(6.0) / (vocabulary_size + embedding_dimension));
+    const float limit = sqrt(6.0f / (vocabulary_size + embedding_dimension));
 
     MatrixMap weights = parameters[Weight].as_matrix();
 
@@ -113,116 +86,16 @@ void Embedding::set_parameters_glorot()
     weights.row(0).setZero();
 }
 
-#ifdef OPENNN_WITH_CUDA
-
-void Embedding::init_cuda(Index batch_size)
-{
-    if(dropout_rate <= float(0)) return;
-    if(sequence_length == 0 || embedding_dimension == 0) return;
-
-    if(dropout_arguments.descriptor)    { cudnnDestroyDropoutDescriptor(dropout_arguments.descriptor); dropout_arguments.descriptor = nullptr; }
-    if(dropout_arguments.states)        { cudaFree(dropout_arguments.states);        dropout_arguments.states = nullptr; }
-    if(dropout_arguments.reserve_space) { cudaFree(dropout_arguments.reserve_space); dropout_arguments.reserve_space = nullptr; }
-
-    cudnnTensorDescriptor_t temp_desc = nullptr;
-    cudnnCreateTensorDescriptor(&temp_desc);
-    // Dropout: always FP32 (cuDNN 9 rejects BFLOAT16 in DropoutForward).
-    cudnnSetTensor4dDescriptor(temp_desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT,
-                               static_cast<int>(batch_size),
-                               static_cast<int>(embedding_dimension),
-                               static_cast<int>(sequence_length),
-                               1);
-
-    CHECK_CUDNN(cudnnCreateDropoutDescriptor(&dropout_arguments.descriptor));
-    CHECK_CUDNN(cudnnDropoutGetStatesSize(Device::get_cudnn_handle(), &dropout_arguments.states_size));
-    CHECK_CUDA(cudaMalloc(&dropout_arguments.states, dropout_arguments.states_size));
-    CHECK_CUDNN(cudnnSetDropoutDescriptor(dropout_arguments.descriptor, Device::get_cudnn_handle(),
-                                          static_cast<float>(dropout_rate),
-                                          dropout_arguments.states, dropout_arguments.states_size,
-                                          static_cast<unsigned long long>(random_integer(0, 1 << 30))));
-    CHECK_CUDNN(cudnnDropoutGetReserveSpaceSize(temp_desc, &dropout_arguments.reserve_size));
-    CHECK_CUDA(cudaMalloc(&dropout_arguments.reserve_space, dropout_arguments.reserve_size));
-
-    dropout_arguments.rate = dropout_rate;
-
-    cudnnDestroyTensorDescriptor(temp_desc);
-}
-
-#endif
-
 // Forward / back propagation
 
 void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
-    const Index batch_size = forward_propagation.batch_size;
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
-        const Index total_elements = batch_size * sequence_length * embedding_dimension;
+    embedding_lookup.apply(forward_views[Input][0], forward_views[Output][0]);
 
-        const float* positional_encoding_data = add_positional_encoding
-            ? states[PositionalEncoding].as<float>()
-            : nullptr;
-
-        TensorView& output_view = forward_views[Output][0];
-        output_view.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            embedding_forward_cuda<T>(
-                total_elements,
-                forward_views[Input][0].as<float>(),
-                parameters[Weight].as<float>(),
-                positional_encoding_data,
-                output_view.as<T>(),
-                sequence_length, embedding_dimension, vocabulary_size,
-                scale_embedding, add_positional_encoding);
-        });
-    }
-    else
-#endif
-    {
-        const Index total_tokens = batch_size * sequence_length;
-
-        const TensorView& output_view = forward_views[Output][0];
-        MatrixMap outputs(output_view.as<float>(), total_tokens, embedding_dimension);
-
-        const MatrixMap weights(parameters[Weight].as<float>(), vocabulary_size, embedding_dimension);
-
-        const float* input_indices = forward_views[Input][0].as<float>();
-
-        static std::atomic<bool> out_of_range_warned{false};
-
-        #pragma omp parallel for
-        for(Index i = 0; i < total_tokens; ++i)
-        {
-            const Index token_id = static_cast<Index>(input_indices[i]);
-
-            if(token_id < 0 || token_id >= weights.rows())
-            {
-                if(!out_of_range_warned.exchange(true))
-                    std::cerr << "Embedding warning: token id " << token_id
-                              << " out of range [0, " << weights.rows()
-                              << "); zeroing row. Further warnings suppressed.\n";
-                outputs.row(i).setZero();
-                continue;
-            }
-
-            outputs.row(i).noalias() = weights.row(token_id);
-
-            if(scale_embedding)
-                outputs.row(i) *= embedding_scale;
-
-            if(add_positional_encoding && token_id > 0)
-            {
-                const MatrixMap pe(states[PositionalEncoding].as<float>(),
-                                   sequence_length, embedding_dimension);
-                outputs.row(i) += pe.row(i % sequence_length);
-            }
-        }
-    }
-
-    if (is_training && dropout_rate > float(0))
-        dropout(forward_views[Output][0], dropout_arguments);
+    if (is_training && dropout.active())
+        dropout.apply(forward_views[Output][0]);
 }
 
 void Embedding::back_propagate(ForwardPropagation& forward_propagation,
@@ -235,71 +108,40 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
 
     TensorView& output_delta = delta_views[OutputDelta][0];
 
-    if (dropout_rate > float(0))
-        dropout_delta(output_delta, output_delta, dropout_arguments);
+    if (dropout.active())
+        dropout.apply_delta(output_delta);
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
-        const Index total_elements = forward_propagation.batch_size * sequence_length * embedding_dimension;
-
-        // The kernel does atomicAdd into weight_gradient (multiple tokens may map
-        // to the same vocabulary row), so this slot must start at zero. Every
-        // other layer overwrites its parameter gradient via cuBLASLt/cuDNN with
-        // beta=0, so the global gradient buffer is no longer pre-zeroed by the
-        // optimizer — embedding zeroes its own slot here instead.
-        TensorView& weight_grad = gradient_views[Weight];
-        CHECK_CUDA(cudaMemsetAsync(weight_grad.data, 0, weight_grad.byte_size(),
-                                   Device::get_compute_stream()));
-
-        output_delta.dispatch([&](auto tag) {
-            using T = decltype(tag);
-            embedding_backward_cuda<T>(
-                total_elements,
-                forward_views[Input][0].as<float>(),
-                output_delta.as<T>(),
-                gradient_views[Weight].as<float>(),
-                embedding_dimension, vocabulary_size, scale_embedding);
-        });
-
-        return;
-    }
-#endif
-
-    embedding_backward(forward_views[Input][0],
-                       output_delta,
-                       gradient_views[Weight],
-                       embedding_dimension,
-                       scale_embedding);
+    embedding_lookup.apply_delta(forward_views[Input][0], output_delta, gradient_views[Weight]);
 }
 
 // Serialization
 
-void Embedding::from_XML(const XmlDocument& document)
+void Embedding::from_JSON(const JsonDocument& document)
 {
-    const XmlElement* embedding_layer_element = get_xml_root(document, "Embedding");
+    const Json* embedding_layer_element = get_json_root(document, "Embedding");
 
-    const string new_label = read_xml_string(embedding_layer_element, "Label");
-    const Index new_vocabulary_size = read_xml_index(embedding_layer_element, "VocabularySize");
-    const Index new_sequence_length = read_xml_index(embedding_layer_element, "SequenceLength");
-    const Index new_embedding_dimension = read_xml_index(embedding_layer_element, "EmbeddingSize");
+    const string new_label = read_json_string(embedding_layer_element, "Label");
+    const Index new_vocabulary_size = read_json_index(embedding_layer_element, "VocabularySize");
+    const Index new_sequence_length = read_json_index(embedding_layer_element, "SequenceLength");
+    const Index new_embedding_dimension = read_json_index(embedding_layer_element, "EmbeddingSize");
 
     set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_label);
 
-    set_scale_embedding(read_xml_bool(embedding_layer_element, "ScaleEmbedding"));
-    set_add_positional_encoding(read_xml_bool(embedding_layer_element, "AddPositionalEncoding"));
+    set_scale_embedding(read_json_bool(embedding_layer_element, "ScaleEmbedding"));
+    set_add_positional_encoding(read_json_bool(embedding_layer_element, "AddPositionalEncoding"));
 }
 
-void Embedding::to_XML(XmlPrinter& printer) const
+void Embedding::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Embedding");
 
-    write_xml(printer, {
+    write_json(printer, {
         {"Label", label},
         {"VocabularySize", to_string(get_vocabulary_size())},
         {"SequenceLength", to_string(get_sequence_length())},
         {"EmbeddingSize", to_string(get_embedding_dimension())},
-        {"ScaleEmbedding", to_string(scale_embedding)},
-        {"AddPositionalEncoding", to_string(add_positional_encoding)}
+        {"ScaleEmbedding", to_string(embedding_lookup.scale_embedding)},
+        {"AddPositionalEncoding", to_string(embedding_lookup.add_positional_encoding)}
     });
 
     printer.close_element();

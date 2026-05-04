@@ -9,7 +9,7 @@
 #pragma once
 
 #include "pch.h"
-#include "configuration.h"   // Buffer references DeviceType; existing callers expect Configuration available transitively.
+#include "configuration.h"
 
 namespace opennn
 {
@@ -20,18 +20,18 @@ static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(float);
 inline int to_int(Index value) { return static_cast<int>(value); }
 inline float to_type(Index value) { return static_cast<float>(value); }
 
-inline Index align_up(Index n, Index alignment)
+inline Index align_up(Index value, Index alignment)
 {
-    return n == 0 ? 0 : (n + alignment - 1) & ~(alignment - 1);
+    return value == 0 ? 0 : (value + alignment - 1) & ~(alignment - 1);
 }
 
 inline Index get_aligned_size(Index size)     { return align_up(size,    ALIGN_ELEMENTS); }
 inline Index get_aligned_bytes(Index n_bytes) { return align_up(n_bytes, ALIGN_BYTES); }
 
 template<typename Container>
-inline Index ssize(const Container& c) noexcept
+inline Index ssize(const Container& container) noexcept
 {
-    return static_cast<Index>(c.size());
+    return static_cast<Index>(container.size());
 }
 
 inline bool is_aligned(const void* ptr)
@@ -42,37 +42,6 @@ inline bool is_aligned(const void* ptr)
 constexpr cudaDataType_t      CUDA_REDUCTION_DTYPE   = CUDA_R_32F;
 constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_TF32;
 
-// Activation dtype used to be a compile-time constant gated by
-// `OPENNN_USE_BF16_ACTIVATIONS`. It is now a runtime field on every Layer
-// (`activation_dtype`, of float `ActivationDtype`), populated by
-// NeuralNetwork::compile() from Configuration::resolve(). Conversion to cuDNN
-// / CUDA library constants happens at API boundaries via to_cudnn() / to_cuda()
-// in configuration.h. Anything outside a network defaults to FP32.
-
-inline Index dtype_bytes(cudnnDataType_t t)
-{
-    switch (t) {
-        case CUDNN_DATA_FLOAT:    return 4;
-        case CUDNN_DATA_INT32:    return 4;
-        case CUDNN_DATA_BFLOAT16: return 2;
-        case CUDNN_DATA_HALF:     return 2;
-        case CUDNN_DATA_INT8:     return 1;
-        default:                  return 4;
-    }
-}
-
-inline cudaDataType_t cudnn_to_cuda_dtype(cudnnDataType_t t)
-{
-    switch (t) {
-        case CUDNN_DATA_FLOAT:    return CUDA_R_32F;
-        case CUDNN_DATA_INT32:    return CUDA_R_32I;
-        case CUDNN_DATA_BFLOAT16: return CUDA_R_16BF;
-        case CUDNN_DATA_HALF:     return CUDA_R_16F;
-        case CUDNN_DATA_INT8:     return CUDA_R_8I;
-        default:                  return CUDA_R_32F;
-    }
-}
-
 struct Shape
 {
     static constexpr size_t MaxRank = 4;
@@ -82,7 +51,7 @@ struct Shape
 
     Shape() noexcept = default;
 
-    Shape(size_t n, Index value) : rank(min(n, MaxRank))
+    Shape(size_t new_rank, Index value) : rank(min(new_rank, MaxRank))
     { std::fill_n(dims, rank, value); }
 
     Shape(initializer_list<Index> list) : rank(min(list.size(), MaxRank))
@@ -104,12 +73,12 @@ struct Shape
     }
 
     void clear() noexcept { rank = 0; }
-    void push_back(Index v) noexcept { if (rank < MaxRank) dims[rank++] = v; }
+    void push_back(Index value) noexcept { if (rank < MaxRank) dims[rank++] = value; }
 
-    friend ostream& operator<<(ostream& os, const Shape& s)
+    friend ostream& operator<<(ostream& os, const Shape& shape)
     {
         os << "[";
-        for (size_t i = 0; i < s.rank; ++i) os << (i ? ", " : " ") << s.dims[i];
+        for (size_t i = 0; i < shape.rank; ++i) os << (i ? ", " : " ") << shape.dims[i];
         os << " ]";
         return os;
     }
@@ -123,9 +92,9 @@ struct Shape
 
     Shape& append(const Shape& other)
     {
-        const size_t n = min(other.rank, MaxRank - rank);
-        std::copy_n(other.dims, n, dims + rank);
-        rank += n;
+        const size_t copy_count = min(other.rank, MaxRank - rank);
+        std::copy_n(other.dims, copy_count, dims + rank);
+        rank += copy_count;
         return *this;
     }
 };
@@ -148,7 +117,7 @@ struct Buffer
 {
     void* data = nullptr;
     Index bytes = 0;
-    DeviceType device_type = DeviceType::CPU;
+    Device device_type = Device::CPU;
 
     template<typename T> T*       as()       { return static_cast<T*>(data); }
     template<typename T> const T* as() const { return static_cast<const T*>(data); }
@@ -156,32 +125,31 @@ struct Buffer
     Index size()  const { return bytes / Index(sizeof(float)); }   // legacy: assumes T = float
     bool  empty() const { return bytes == 0; }
 
-    void resize_bytes(Index n_bytes, DeviceType t)
+    void resize_bytes(Index n_bytes, Device new_device_type)
     {
-        if(n_bytes == bytes && device_type == t) return;
+        if (n_bytes == bytes && device_type == new_device_type) return;
         free_buffer();
-        device_type = t;
-        if(n_bytes > 0) data = alloc(t, n_bytes);
+        device_type = new_device_type;
+        if (n_bytes > 0) data = alloc(new_device_type, n_bytes);
         bytes = n_bytes;
     }
 
     void setZero()
     {
-        if(!data) return;
+        if (!data) return;
 #ifdef OPENNN_WITH_CUDA
-        if(device_type == DeviceType::CUDA) CHECK_CUDA(cudaMemset(data, 0, bytes));
+        if (device_type == Device::CUDA) CHECK_CUDA(cudaMemset(data, 0, bytes));
         else
 #endif
             std::memset(data, 0, static_cast<size_t>(bytes));
     }
 
 #ifdef OPENNN_WITH_CUDA
-    // Migrate the buffer to the target side: alloc on target, copy, free source.
-    void migrate_to(DeviceType target)
+    void migrate_to(Device target)
     {
-        if(device_type == target || !data) return;
+        if (device_type == target || !data) return;
         void* fresh = alloc(target, bytes);
-        const cudaMemcpyKind kind = (target == DeviceType::CUDA)
+        const cudaMemcpyKind kind = (target == Device::CUDA)
             ? cudaMemcpyHostToDevice : cudaMemcpyDeviceToHost;
         CHECK_CUDA(cudaMemcpy(fresh, data, bytes, kind));
         dealloc(device_type, data, bytes);
@@ -190,42 +158,42 @@ struct Buffer
     }
 #endif
 
-    explicit Buffer(DeviceType t = DeviceType::CPU) noexcept : device_type(t) {}
+    explicit Buffer(Device new_device_type = Device::CPU) noexcept : device_type(new_device_type) {}
     Buffer(const Buffer&) = delete;
     Buffer& operator=(const Buffer&) = delete;
 
-    Buffer(Buffer&& o) noexcept : Buffer() { swap(o); }
-    Buffer& operator=(Buffer&& o) noexcept { swap(o); return *this; }
+    Buffer(Buffer&& other) noexcept : Buffer() { swap(other); }
+    Buffer& operator=(Buffer&& other) noexcept { swap(other); return *this; }
 
     ~Buffer() { free_buffer(); }
 
-    void swap(Buffer& o) noexcept
+    void swap(Buffer& other) noexcept
     {
-        std::swap(data, o.data);
-        std::swap(bytes, o.bytes);
-        std::swap(device_type, o.device_type);
+        std::swap(data, other.data);
+        std::swap(bytes, other.bytes);
+        std::swap(device_type, other.device_type);
     }
 
 private:
-    static void* alloc(DeviceType t, Index n)
+    static void* alloc(Device device_type, Index byte_count)
     {
 #ifdef OPENNN_WITH_CUDA
-        if(t == DeviceType::CUDA) { void* p = nullptr; CHECK_CUDA(cudaMalloc(&p, n)); return p; }
+        if (device_type == Device::CUDA) { void* device_pointer = nullptr; CHECK_CUDA(cudaMalloc(&device_pointer, byte_count)); return device_pointer; }
 #endif
-        return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(n));
+        return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
     }
 
-    static void dealloc(DeviceType t, void* p, Index n)
+    static void dealloc(Device device_type, void* pointer, Index byte_count)
     {
 #ifdef OPENNN_WITH_CUDA
-        if(t == DeviceType::CUDA) { cudaFree(p); return; }
+        if (device_type == Device::CUDA) { cudaFree(pointer); return; }
 #endif
-        Eigen::aligned_allocator<uint8_t>{}.deallocate(static_cast<uint8_t*>(p), static_cast<size_t>(n));
+        Eigen::aligned_allocator<uint8_t>{}.deallocate(static_cast<uint8_t*>(pointer), static_cast<size_t>(byte_count));
     }
 
     void free_buffer()
     {
-        if(data) dealloc(device_type, data, bytes);
+        if (data) dealloc(device_type, data, bytes);
         data = nullptr;
         bytes = 0;
     }
@@ -237,28 +205,20 @@ struct TensorView
 
     Shape shape;
 
-    cudnnDataType_t dtype = CUDNN_DATA_FLOAT;
+    Type type = Type::FP32;
 
     TensorView(void* new_data = nullptr, const Shape& new_shape = {},
-               cudnnDataType_t new_dtype = CUDNN_DATA_FLOAT) noexcept
-        : data(new_data), shape(new_shape), dtype(new_dtype) {}
+               Type new_dtype = Type::FP32) noexcept
+        : data(new_data), shape(new_shape), type(new_dtype) {}
 
     Index get_rank() const noexcept { return shape.rank; }
 
     Index size() const noexcept { return shape.size(); }
 
-    Index byte_size() const noexcept { return size() * dtype_bytes(dtype); }
+    Index byte_size() const noexcept { return size() * type_bytes(type); }
 
     bool empty() const noexcept { return shape.empty(); }
 
-    // Typed reinterpretation of `data`. We deliberately do NOT assert that the
-    // requested float matches `dtype`: the codebase has several call sites that
-    // pass raw byte pointers to APIs (cuBLASLt, cuDNN) which interpret the
-    // bytes via plan/descriptor metadata, so a `bias.as<float>()` on a BF16
-    // bias is legal — cuBLASLt reads the underlying bytes as BF16 because the
-    // plan was built with bias_dtype = BF16. Inlining + a single primary
-    // template avoids the "specialization after instantiation" ordering trap
-    // with the inline as_matrix/as_vector helpers below.
     template<typename T>
     T* as() const noexcept
     {
@@ -266,28 +226,24 @@ struct TensorView
         return reinterpret_cast<T*>(data);
     }
 
-    // Float-typed view of `data`. Used at CUDA dispatch sites where kernels expect
-    // raw float* regardless of the project's `float` alias (e.g. descriptive stats,
-    // scaler tables, masks). Mirrors as<T>() but skips the dtype check.
     float* as_float() const noexcept
     {
         return reinterpret_cast<float*>(data);
     }
 
-    cudaDataType_t cuda_dtype() const noexcept { return cudnn_to_cuda_dtype(dtype); }
+    cudaDataType_t cuda_dtype() const noexcept { return to_cuda(type); }
 
-    // FP16 is intentionally absent: no kernel in this project is instantiated
-    // for __half. Adding it here would generate unresolved symbols for every
-    // dispatch site (scale, unscale, bounding, layernorm, pooling, ...).
     template<typename F>
     void dispatch(F&& fn) const
     {
-        if (dtype == CUDNN_DATA_BFLOAT16) fn(__nv_bfloat16{});
-        else                              fn(float{});
+        visit_type<Type::FP32, Type::BF16>(type, [&](auto info)
+        {
+            fn(typename decltype(info)::type{});
+        });
     }
 
     TensorView reshape(const Shape& new_shape) const
-    { return TensorView(data, new_shape, dtype); }
+    { return TensorView(data, new_shape, type); }
 
     MatrixMap as_matrix() const
     {
@@ -337,7 +293,7 @@ struct TensorView
     {
         assert(shape.rank == Rank + 1);
         Eigen::array<Index, Rank> dims;
-        for(int i = 0; i < Rank; ++i) dims[i] = shape[i + 1];
+        for (int i = 0; i < Rank; ++i) dims[i] = shape[i + 1];
         const Index slice_size = shape.size() / shape[0];
         return TensorMapR<Rank>(as<float>() + batch_index * slice_size, dims);
     }
@@ -356,18 +312,17 @@ struct TensorView
     }
 
 private:
-    void set_descriptor(const Shape& s) const
+    void set_descriptor(const Shape& shape) const
     {
-        // NHWC layout: N first, then H, W, C trailing. For rank < 4 the
-        // missing leading dims default to 1.
-        int n = 1, c = 1, h = 1, w = 1;
-        const size_t r = s.rank;
-        if (r >= 1) c = static_cast<int>(s[r - 1]);
-        if (r >= 2) n = static_cast<int>(s[0]);
-        if (r >= 3) w = static_cast<int>(s[r - 2]);
-        if (r >= 4) h = static_cast<int>(s[r - 3]);
+        // NHWC layout: rank < 4 leading dims default to 1.
+        int batch_count = 1, channels = 1, height = 1, width = 1;
+        const size_t rank = shape.rank;
+        if (rank >= 1) channels    = static_cast<int>(shape[rank - 1]);
+        if (rank >= 2) batch_count = static_cast<int>(shape[0]);
+        if (rank >= 3) width       = static_cast<int>(shape[rank - 2]);
+        if (rank >= 4) height      = static_cast<int>(shape[rank - 3]);
 
-        if (n <= 0 || c <= 0 || h <= 0 || w <= 0)
+        if (batch_count <= 0 || channels <= 0 || height <= 0 || width <= 0)
             return;
 
         if (!descriptor_handle)
@@ -375,12 +330,12 @@ private:
             cudnnTensorDescriptor_t raw_desc;
             CHECK_CUDNN(cudnnCreateTensorDescriptor(&raw_desc));
 
-            descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
-                cudnnDestroyTensorDescriptor(p);
+            descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t descriptor) {
+                cudnnDestroyTensorDescriptor(descriptor);
             });
         }
 
-        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, dtype, n, c, h, w));
+        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, to_cudnn(type), batch_count, channels, height, width));
     }
 
 #endif
@@ -393,15 +348,21 @@ using array = Eigen::array<T, N>;
 string shape_to_string(const Shape&, const string& = " ");
 Shape string_to_shape(const string&, const string& = " ");
 
-// Container for CUDA/cuBLAS/cuDNN handles, streams and lazily-allocated workspaces.
-// It is *infrastructure* — owning these resources for the life of the program. The
-// "are we on GPU?" question is answered by Configuration, not here, so this class
-// no longer carries a DeviceType: that state would just duplicate Configuration's.
-class Device
+// Boost-style hash combine. Mixes one or more values into a single size_t. Used
+// for plan/graph cache keys (cuBLASLt, cuDNN SDPA).
+template<typename... Vs>
+size_t hash_combine(const Vs&... values)
+{
+    size_t h = 0;
+    ((h ^= std::hash<Vs>{}(values) + 0x9e3779b9 + (h << 6) + (h >> 2)), ...);
+    return h;
+}
+
+class Backend
 {
 public:
 
-    static Device& instance();
+    static Backend& instance();
     ThreadPoolDevice* get_thread_pool_device();
     void set_threads_number(int num_threads);
 
@@ -410,11 +371,10 @@ public:
     static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn_handle; }
     static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
     static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
-    static cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor() { return instance().operator_multiplication_descriptor; }
 
 private:
-    Device();
-    ~Device();
+    Backend();
+    ~Backend();
 
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
@@ -424,24 +384,20 @@ private:
     cudnnHandle_t cudnn_handle = nullptr;
     cudaStream_t compute_stream = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
-    cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
 };
 
 inline ThreadPoolDevice& get_device()
 {
-    return *Device::instance().get_thread_pool_device();
+    return *Backend::instance().get_thread_pool_device();
 }
 
 inline void TensorView::fill(float value)
 {
-    if(!data) return;
+    if (!data) return;
 
 #ifdef OPENNN_WITH_CUDA
-    // Decide CPU vs GPU per buffer, not per-Device. set_parameters_random()
-    // calls fill() on TensorViews that still point at host memory even when
-    // Device is already set to Gpu (params are migrated only later via
-    // copy_parameters_device). Probing the pointer keeps this dispatch
-    // independent of the global Device state.
+    // Probe the pointer: set_parameters_random() may call fill() on host-resident
+    // TensorViews even when Device is already GPU.
     cudaPointerAttributes attr{};
     const cudaError_t err = cudaPointerGetAttributes(&attr, data);
     const bool gpu_data = (err == cudaSuccess) && (attr.type == cudaMemoryTypeDevice);
@@ -449,31 +405,27 @@ inline void TensorView::fill(float value)
 
     if (gpu_data)
     {
-        if(value == 0.0f)
+        if (value == 0.0f)
         {
             CHECK_CUDA(cudaMemset(data, 0, byte_size()));
             return;
         }
 
-        CHECK_CUDNN(cudnnSetTensor(Device::get_cudnn_handle(),
+        CHECK_CUDNN(cudnnSetTensor(Backend::get_cudnn_handle(),
                                    get_descriptor(), data, &value));
         return;
     }
 #endif
 
-    assert(dtype == CUDNN_DATA_FLOAT);
-    float* p = static_cast<float*>(data);
-    std::fill(p, p + size(), value);
+    assert(type == Type::FP32);
+    float* data_pointer = static_cast<float*>(data);
+    std::fill(data_pointer, data_pointer + size(), value);
 }
 
 #ifdef OPENNN_WITH_CUDA
 
-// Scalar pointer-args used by cuDNN op-tensor calls (cudnnOpTensor sees these
-// as host scalars). Kept here because they're shared across cuDNN op sites
-// (sum, multiplication) — not GEMM-specific.
 inline const float one = 1.0f;
 inline const float zero = 0.0f;
-inline const float minus_one = -1.0f;
 
 #endif
 

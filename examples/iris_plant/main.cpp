@@ -22,7 +22,7 @@ int main()
     {
         cout << "OpenNN. Iris Plant Example." << endl;
 
-        Configuration::instance().set(DeviceType::CUDA, TrainingPrecision::BP16, InferencePrecision::BP16);
+        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
 
         // Dataset
 
@@ -44,6 +44,9 @@ int main()
         // QuasiNewton (TrainingStrategy default for classification) has no GPU
         // backend; switch to Adam to exercise the CUDA path.
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+
+        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_maximum_epochs(500);
 
         training_strategy.train();
 

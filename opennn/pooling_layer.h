@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
@@ -98,11 +99,11 @@ public:
 
     void set_pool_size(const Index, Index);
 
-    void set_row_stride(const Index s) { row_stride = s; }
-    void set_column_stride(const Index s) { column_stride = s; }
+    void set_row_stride(const Index new_row_stride) { row_stride = new_row_stride; }
+    void set_column_stride(const Index new_column_stride) { column_stride = new_column_stride; }
 
-    void set_padding_height(const Index h) { padding_height = h; }
-    void set_padding_width(const Index w) { padding_width = w; }
+    void set_padding_height(const Index new_padding_height) { padding_height = new_padding_height; }
+    void set_padding_width(const Index new_padding_width) { padding_width = new_padding_width; }
 
     void set_pooling_method(const string&);
 
@@ -114,31 +115,32 @@ public:
 
     // Serialization
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 
 private:
 
     enum Forward {Input, MaximalIndices, Output};
     enum Backward {OutputDelta, InputDelta};
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
         const Shape out_shape = get_output_shape();
+        const Type act = activation_dtype;
 
-        vector<Shape> shapes;
+        vector<pair<Shape, Type>> specs;
 
         if (pooling_method == PoolingMethod::MaxPooling)
-            shapes.push_back(Shape{batch_size}.append(out_shape)); // MaximalIndices
+            specs.push_back({Shape{batch_size}.append(out_shape), act}); // MaximalIndices
 
-        shapes.push_back(Shape{batch_size}.append(out_shape)); // Output (must be last)
+        specs.push_back({Shape{batch_size}.append(out_shape), act}); // Output (must be last)
 
-        return shapes;
+        return specs;
     }
 
-    vector<Shape> get_backward_shapes(Index batch_size) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{batch_size, input_height, input_width, input_channels}};
+        return {{{batch_size, input_height, input_width, input_channels}, activation_dtype}};
     }
 
     Index input_height = 0;
@@ -156,10 +158,7 @@ private:
 
     PoolingMethod pooling_method = PoolingMethod::MaxPooling;
 
-    PoolingArguments cached_pool_args;
-
-    cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
-    cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
+    Pool pool;
 };
 
 }

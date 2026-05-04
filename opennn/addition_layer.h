@@ -9,100 +9,30 @@
 #pragma once
 
 #include "layer.h"
-#include "math_utilities.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
 
-template<int Rank>
 class Addition final : public Layer
 {
-
 public:
 
-    Addition(const Shape& new_input_shape = {}, const string& new_name = "")
-    {
-        set(new_input_shape, new_name);
-    }
+    Addition(const Shape& = {}, const string& = "");
 
     Shape get_input_shape() const override { return input_shape; }
-
     Shape get_output_shape() const override { return input_shape; }
 
-    vector<Shape> get_forward_shapes(Index batch_size) const override
-    {
-        return {Shape{batch_size}.append(input_shape)};
-    }
+    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
 
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        return {Shape{batch_size}.append(input_shape),   // InputDelta0
-                Shape{batch_size}.append(input_shape)};  // InputDelta1
-    }
+    void set(const Shape&, const string&);
+    void set_input_shape(const Shape& shape) override { set(shape, label); }
 
-    void set(const Shape& new_input_shape, const string& new_label)
-    {
-        if(!new_input_shape.empty() && new_input_shape.rank != Rank - 1)
-            throw runtime_error("Input shape rank for AdditionLayer<" + to_string(Rank) + "> must be " + to_string(Rank - 1) + " (without batch dimension).");
+    void forward_propagate(ForwardPropagation&, size_t layer, bool) noexcept override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t layer) const noexcept override;
 
-        input_shape = new_input_shape;
-
-        label = new_label;
-
-        if constexpr (Rank == 3) {
-            name = "Addition3d";
-            layer_type = LayerType::Addition3d;
-        } else if constexpr (Rank == 4) {
-            name = "Addition4d";
-            layer_type = LayerType::Addition4d;
-        } else {
-            throw runtime_error("Addition layer not implemented for rank: " + to_string(Rank));
-        }
-    }
-
-    void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept override
-    {
-        auto& forward_views = forward_propagation.views[layer];
-
-        addition(forward_views[Input][0], forward_views[Input][1], forward_views[Output][0]);
-    }
-
-    void back_propagate(ForwardPropagation&,
-                        BackPropagation& back_propagation,
-                        size_t layer) const noexcept override
-    {
-        auto& delta_views = back_propagation.delta_views[layer];
-
-        copy(delta_views[OutputDelta][0], delta_views[InputDelta0][0]);
-        copy(delta_views[OutputDelta][0], delta_views[InputDelta1][0]);
-    }
-
-    void from_XML(const XmlDocument& document) override
-    {
-        const XmlElement* element = document.first_child_element("Addition");
-        if(!element) throw runtime_error(name + " element is nullptr.");
-
-        const string new_label = read_xml_string(element, "Label");
-        const Shape new_input_shape = string_to_shape(read_xml_string(element, "InputDimensions"));
-
-        set(new_input_shape, new_label);
-    }
-
-    void to_XML(XmlPrinter& printer) const override
-    {
-        printer.open_element("Addition");
-
-        write_xml(printer, {
-            {"Label", label},
-            {"InputDimensions", shape_to_string(input_shape)}
-        });
-
-        printer.close_element();
-    }
-
-    void set_input_shape(const Shape& shape) override { input_shape = shape; }
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 
 private:
 

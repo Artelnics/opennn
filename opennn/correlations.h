@@ -17,7 +17,7 @@ struct Correlation
 {
     enum class Method{Pearson, Spearman};
 
-    enum class Form{Linear, Sigmoid, Logarithmic, Exponential, Power};
+    enum class Form{Identity, Sigmoid, Logarithmic, Exponential, Power};
 
     Correlation() {}
 
@@ -25,15 +25,15 @@ struct Correlation
 
     void print() const;
 
-    float a = float(NAN);
-    float b = float(NAN);
-    float r = float(NAN);
+    float a = NAN;
+    float b = NAN;
+    float r = NAN;
 
-    float lower_confidence = float(NAN);
-    float upper_confidence = float(NAN);
+    float lower_confidence = NAN;
+    float upper_confidence = NAN;
 
     Method method = Method::Pearson;
-    Form form = Form::Linear;
+    Form form = Form::Identity;
 };
 
 Correlation linear_correlation(const VectorR&, const VectorR&);

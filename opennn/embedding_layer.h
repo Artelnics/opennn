@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
@@ -31,57 +32,34 @@ public:
     Shape get_input_shape() const override { return {sequence_length}; }
     Shape get_output_shape() const override;
 
-    vector<Shape> get_parameter_shapes() const override;
+    // get_parameter_specs() and get_state_specs() are inherited from Layer and
+    // auto-derived from get_operators(). EmbeddingLookup::parameter_specs()
+    // pins the weight matrix to FP32 (atomicAdd<bf16> requires CC ≥ 9.0; on
+    // pre-Hopper GPUs this avoids unsupported intrinsics).
+    vector<Operator*> get_operators() override;
 
-    // Embedding's weight is the vocabulary lookup table [V, D]. Its gradient is
-    // accumulated via atomicAdd, which on bfloat16 requires CC ≥ 9.0 (Hopper).
-    // RTX 4080 (Ada, CC 8.9) does NOT support atomicAdd<__nv_bfloat16>, so we
-    // pin the embedding weight to FP32 even when activations are BF16.
-    vector<cudnnDataType_t> get_parameter_dtypes() const override
+    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
-        return vector<cudnnDataType_t>(get_parameter_shapes().size(), CUDNN_DATA_FLOAT);
+        return {/*Output*/ {{batch_size, sequence_length, embedding_dimension},
+                            activation_dtype}};
     }
 
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{batch_size, sequence_length, embedding_dimension}}; // Output
+        return {{{batch_size, sequence_length}, activation_dtype}};
     }
-
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        return {{batch_size, sequence_length}};
-    }
-
-    // Positional encoding lives in the NN-owned `states` arena: it is read-only,
-    // independent of batch_size, and persists across iterations — same lifecycle
-    // as Scaling's descriptive stats or BatchNorm's running mean/variance.
-    // Slot is empty when add_positional_encoding=false.
-    vector<Shape> get_state_shapes() const override
-    {
-        if (!add_positional_encoding) return {};
-        return {{sequence_length, embedding_dimension}};
-    }
-
-    // Runs after NeuralNetwork::compile() allocates the states arena. Writes
-    // the sinusoidal table directly into the slot so we never need a separate
-    // Buffer/MatrixR member or an explicit H2D copy.
-    float* link_states(float* pointer) override;
 
     void set(const Index = 0,
              Index = 0,
              Index = 0,
              const string & = "embedding_layer");
 
-    void set_scale_embedding(bool enabled) { scale_embedding = enabled; }
-    void set_add_positional_encoding(bool enabled) { add_positional_encoding = enabled; }
+    void set_scale_embedding(bool enabled) { embedding_lookup.scale_embedding = enabled; }
+    void set_add_positional_encoding(bool enabled) { embedding_lookup.add_positional_encoding = enabled; }
 
     void set_dropout_rate(const float rate)
     {
-        if (rate < float(0) || rate >= float(1))
-            throw runtime_error("Dropout rate must be in [0,1).");
-
-        dropout_rate = rate;
-        dropout_arguments.rate = rate;
+        dropout.set_rate(rate);
     }
 
     void set_parameters_random() override;
@@ -91,14 +69,8 @@ public:
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t index) const noexcept override;
 
-    void from_XML(const XmlDocument&) override;
-    void to_XML(XmlPrinter&) const override;
-
-public:
-
-#ifdef OPENNN_WITH_CUDA
-    void init_cuda(Index batch_size);
-#endif
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
 
 private:
 
@@ -111,13 +83,8 @@ private:
     Index sequence_length = 0;
     Index embedding_dimension = 0;
 
-    bool scale_embedding = false;
-    bool add_positional_encoding = false;
-
-    float embedding_scale = float(1);
-
-    float dropout_rate = float(0);
-    DropoutArguments dropout_arguments;
+    EmbeddingLookup embedding_lookup;
+    Dropout         dropout;
 };
 
 }
