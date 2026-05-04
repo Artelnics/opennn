@@ -484,6 +484,21 @@ private:
                          TensorView& key_gradient,
                          TensorView& value_gradient) const;
 
+#ifdef OPENNN_WITH_CUDA
+    // Unfused GPU backward — used when SDPA isn't supported for the shape/dtype.
+    // Same op sequence as apply_delta_cpu but with cuDNN softmax backward.
+    void apply_delta_gpu_unfused(const TensorView& query,
+                                 const TensorView& key,
+                                 const TensorView& value,
+                                 const TensorView& attention_weights,
+                                 const TensorView& attention_weights_dropped,
+                                 const TensorView& output_gradient,
+                                 TensorView& attention_weight_gradient,
+                                 TensorView& query_gradient,
+                                 TensorView& key_gradient,
+                                 TensorView& value_gradient) const;
+#endif
+
     // SDPA graph cache: keyed on shape/dtype/flags. Built lazily on first
     // forward/backward call with a given key, reused on shape match.
     mutable std::unique_ptr<SDPACache> sdpa_cache;

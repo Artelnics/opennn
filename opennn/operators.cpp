@@ -1418,6 +1418,7 @@ vector<pair<Shape, Type>> Attention::forward_scratch_specs(Index batch_size) con
     const Shape attention_shape = {batch_size, heads_number,
                                    query_sequence_length, source_sequence_length};
     const Shape dropout_shape = dropout.active() ? attention_shape : Shape{};
+    
     return {
         /*AttentionWeights*/        {attention_shape, activation_dtype},
         /*AttentionWeightsDropped*/ {dropout_shape,   activation_dtype},
@@ -1935,33 +1936,59 @@ void Attention::apply_delta_cpu(const TensorView& query,
 
     if (!attention_weight_gradient.empty())
     {
-#ifdef OPENNN_WITH_CUDA
-        if (Configuration::instance().is_gpu())
-        {
-            CHECK_CUDNN(cudnnSoftmaxBackward(Backend::get_cudnn_handle(),
-                                             CUDNN_SOFTMAX_ACCURATE,
-                                             CUDNN_SOFTMAX_MODE_CHANNEL,
-                                             &one,
-                                             attention_weights.get_descriptor(),     attention_weights.data,
-                                             attention_weight_gradient.get_descriptor(), attention_weight_gradient.data,
-                                             &zero,
-                                             attention_weight_gradient.get_descriptor(), attention_weight_gradient.data));
-        }
-        else
-#endif
-        {
-            const MatrixMap y = attention_weights.as_flat_matrix();
-            MatrixMap dY = attention_weight_gradient.as_flat_matrix();
+        const MatrixMap y  = attention_weights.as_flat_matrix();
+        MatrixMap       dY = attention_weight_gradient.as_flat_matrix();
 
-            const VectorR dot = (y.array() * dY.array()).rowwise().sum();
-            dY.array() = y.array() * (dY.colwise() - dot).array();
-        }
+        const VectorR dot = (y.array() * dY.array()).rowwise().sum();
+        dY.array() = y.array() * (dY.colwise() - dot).array();
     }
 
     const float scale = scaling_factor();
     multiply(attention_weight_gradient, false, key,   false, query_gradient, scale, 0.0f);
     multiply(attention_weight_gradient, true,  query, false, key_gradient,   scale, 0.0f);
 }
+
+#ifdef OPENNN_WITH_CUDA
+
+void Attention::apply_delta_gpu_unfused(const TensorView& query,
+                                        const TensorView& key,
+                                        const TensorView& value,
+                                        const TensorView& attention_weights,
+                                        const TensorView& attention_weights_dropped,
+                                        const TensorView& output_gradient,
+                                        TensorView& attention_weight_gradient,
+                                        TensorView& query_gradient,
+                                        TensorView& key_gradient,
+                                        TensorView& value_gradient) const
+{
+    const TensorView& attention_used = dropout.active()
+        ? attention_weights_dropped
+        : attention_weights;
+
+    multiply(attention_used, true, output_gradient, false, value_gradient);
+    multiply(output_gradient, false, value, true, attention_weight_gradient);
+
+    if (dropout.active())
+        dropout.apply_delta(attention_weight_gradient);
+
+    if (!attention_weight_gradient.empty())
+    {
+        CHECK_CUDNN(cudnnSoftmaxBackward(Backend::get_cudnn_handle(),
+                                         CUDNN_SOFTMAX_ACCURATE,
+                                         CUDNN_SOFTMAX_MODE_CHANNEL,
+                                         &one,
+                                         attention_weights.get_descriptor(),     attention_weights.data,
+                                         attention_weight_gradient.get_descriptor(), attention_weight_gradient.data,
+                                         &zero,
+                                         attention_weight_gradient.get_descriptor(), attention_weight_gradient.data));
+    }
+
+    const float scale = scaling_factor();
+    multiply(attention_weight_gradient, false, key,   false, query_gradient, scale, 0.0f);
+    multiply(attention_weight_gradient, true,  query, false, key_gradient,   scale, 0.0f);
+}
+
+#endif
 
 void Attention::apply_delta_gpu(const TensorView& query,
                                 const TensorView& key,
@@ -1985,10 +2012,10 @@ void Attention::apply_delta_gpu(const TensorView& query,
     if (!sdpa_supported || !sdpa_cache)
     {
         require_attention_scratch(attention_weights, "SDPA backward fallback triggered");
-        apply_delta_cpu(query, key, value, attention_output,
-                        attention_weights, attention_weights_dropped,
-                        output_gradient, attention_weight_gradient,
-                        query_gradient, key_gradient, value_gradient);
+        apply_delta_gpu_unfused(query, key, value,
+                                attention_weights, attention_weights_dropped,
+                                output_gradient, attention_weight_gradient,
+                                query_gradient, key_gradient, value_gradient);
         return;
     }
 
@@ -2009,10 +2036,10 @@ void Attention::apply_delta_gpu(const TensorView& query,
     {
         // Forward never built an SDPA entry for this shape (e.g. fell back).
         require_attention_scratch(attention_weights, "SDPA backward without matching forward entry");
-        apply_delta_cpu(query, key, value, attention_output,
-                        attention_weights, attention_weights_dropped,
-                        output_gradient, attention_weight_gradient,
-                        query_gradient, key_gradient, value_gradient);
+        apply_delta_gpu_unfused(query, key, value,
+                                attention_weights, attention_weights_dropped,
+                                output_gradient, attention_weight_gradient,
+                                query_gradient, key_gradient, value_gradient);
         return;
     }
 
@@ -2034,6 +2061,11 @@ void Attention::apply_delta_gpu(const TensorView& query,
     const auto status = entry.bwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.bwd_workspace_buf);
     if (status.is_bad())
         throw runtime_error("SDPA backward execute: " + status.get_message());
+#elif defined(OPENNN_WITH_CUDA)
+    apply_delta_gpu_unfused(query, key, value,
+                            attention_weights, attention_weights_dropped,
+                            output_gradient, attention_weight_gradient,
+                            query_gradient, key_gradient, value_gradient);
 #else
     apply_delta_cpu(query, key, value, attention_output,
                     attention_weights, attention_weights_dropped,
