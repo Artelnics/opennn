@@ -531,7 +531,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       const VectorR& new_parameters,
                                       ForwardPropagation& forward_propagation)
 {
-    VectorMap parameters_view(parameters.as<float>(), parameters.size());
+    VectorMap parameters_view(parameters.as<float>(), parameters.size_in_floats());
 
     const VectorR saved_parameters = parameters_view;
 
@@ -748,9 +748,9 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     // Parameters
 
     printer.open_element("Parameters");
-    if (parameters.size() > 0)
+    if (parameters.size_in_floats() > 0)
     {
-        const Map<const VectorR, AlignedMax> parameters_view(parameters.as<float>(), parameters.size());
+        const Map<const VectorR, AlignedMax> parameters_view(parameters.as<float>(), parameters.size_in_floats());
         add_json_field(printer, "Values", vector_to_string(parameters_view, " "));
     }
     printer.close_element();
@@ -865,13 +865,13 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
         if (xml_parameters.size() > 0)
         {
-            if (xml_parameters.size() != parameters.size())
+            if (xml_parameters.size() != parameters.size_in_floats())
             {
                 cout << "Warning: XML parameter size (" << xml_parameters.size()
-                     << ") differs from Compiled size (" << parameters.size() << ").\n";
+                     << ") differs from Compiled size (" << parameters.size_in_floats() << ").\n";
             }
 
-            const Index elements_to_copy = min(parameters.size(), xml_parameters.size());
+            const Index elements_to_copy = min(parameters.size_in_floats(), xml_parameters.size());
             std::copy(xml_parameters.data(), xml_parameters.data() + elements_to_copy, parameters.as<float>());
         }
     }
@@ -896,7 +896,7 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
     if (!file.is_open())
         throw runtime_error("Cannot open parameters data file.\n");
 
-    const Map<const VectorR, AlignedMax> parameters_view(parameters.as<float>(), parameters.size());
+    const Map<const VectorR, AlignedMax> parameters_view(parameters.as<float>(), parameters.size_in_floats());
     file << parameters_view << "\n";
 
     file.close();
@@ -916,7 +916,7 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
     if (!file.is_open())
         throw runtime_error("Cannot open binary file: " + file_name.string() + "\n");
 
-    const Index parameters_number = parameters.size();
+    const Index parameters_number = parameters.size_in_floats();
 
     file.read(reinterpret_cast<char*>(parameters.as<float>()), parameters_number * sizeof(float));
 
@@ -1054,7 +1054,7 @@ void NeuralNetwork::copy_parameters_device()
         config.inference_type == Type::BF16;
     if (needs_bf16_mirror)
     {
-        parameters_bf16.resize_bytes(parameters.size() * Index(sizeof(__nv_bfloat16)), Device::CUDA);
+        parameters_bf16.resize_bytes(parameters.size_in_floats() * Index(sizeof(__nv_bfloat16)), Device::CUDA);
         cast_parameters_to_bf16();
     }
 }
@@ -1064,7 +1064,7 @@ void NeuralNetwork::cast_parameters_to_bf16()
     if (parameters_bf16.empty()) return;
     if (parameters.empty())      return;
 
-    cast_fp32_to_bf16_cuda(parameters.size(),
+    cast_fp32_to_bf16_cuda(parameters.size_in_floats(),
                            parameters.as<float>(),
                            parameters_bf16.as<__nv_bfloat16>());
 }

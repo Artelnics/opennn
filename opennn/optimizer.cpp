@@ -553,7 +553,7 @@ void Optimizer::sync_device()
 
 void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
 {
-    const Index gradient_size = gradient.size();
+    const Index gradient_size = gradient.size_in_floats();
     if (gradient_size <= 0) return;
 
 #ifdef OPENNN_WITH_CUDA
@@ -577,7 +577,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
     }
 #endif
 
-    VectorMap gradient_view(gradient.as<float>(), gradient.size());
+    VectorMap gradient_view(gradient.as<float>(), gradient.size_in_floats());
     const float gradient_norm = gradient_view.norm();
     if (gradient_norm > max_norm)
         gradient_view *= max_norm / (gradient_norm + 1e-6f);

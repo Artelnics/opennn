@@ -90,7 +90,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     VectorMap parameters(neural_network->get_parameters_data(),
                          neural_network->get_parameters_size());
     VectorMap gradient(back_propagation.gradient.as<float>(),
-                       back_propagation.gradient.size());
+                       back_propagation.gradient.size_in_floats());
 
     const Index parameters_number = parameters.size();
 

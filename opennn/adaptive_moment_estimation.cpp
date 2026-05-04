@@ -304,7 +304,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
                                                 optimization_data.views[SquareGradientMoment].size());
 
     VectorMap gradient(back_propagation.gradient.as<float>(),
-                       back_propagation.gradient.size());
+                       back_propagation.gradient.size_in_floats());
 
     const Index parameters_size = parameters.size();
     const float one_minus_beta_1 = 1.0f - beta_1;
