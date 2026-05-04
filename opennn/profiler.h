@@ -78,7 +78,7 @@ class ScopedTimer
     bool sync_gpu_;
 public:
     ScopedTimer(std::string key, bool sync_gpu = true)
-        : key_(std::move(key)), sync_gpu_(sync_gpu)
+        : key_(move(key)), sync_gpu_(sync_gpu)
     {
         if (!enabled()) return;
 #ifdef OPENNN_WITH_CUDA

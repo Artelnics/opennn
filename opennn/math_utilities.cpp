@@ -26,7 +26,7 @@ void padding(const TensorView& input, TensorView& output)
     const Index padding_height = (output.shape[1] - input.shape[1]) / 2;
     const Index padding_width = (output.shape[2] - input.shape[2]) / 2;
 
-    const Eigen::array<pair<Index,Index>, 4> paddings = {
+    const array<pair<Index,Index>, 4> paddings = {
         make_pair(Index(0), Index(0)),
         make_pair(padding_height, padding_height),
         make_pair(padding_width, padding_width),
@@ -412,7 +412,7 @@ void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView
 {
     if (TRY_GPU_DISPATCH(input_delta, [&](auto tag) {
         using T = decltype(tag);
-        CHECK_CUDA(cudaMemset(input_delta.data, 0, input_delta.byte_size()));
+        input_delta.set_zero_async();
         max_pooling_3d_backward_cuda<T>(to_int(output_delta.shape[0]) * to_int(output_delta.shape[1]),
                                         output_delta.as<T>(), input_delta.as<T>(),
                                         maximal_indices.as<float>(),
@@ -441,7 +441,7 @@ void average_pooling_3d_backward(const TensorView& input,
 {
     if (TRY_GPU_DISPATCH(input_delta, [&](auto tag) {
         using T = decltype(tag);
-        CHECK_CUDA(cudaMemset(input_delta.data, 0, input_delta.byte_size()));
+        input_delta.set_zero_async();
         average_pooling_3d_backward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
                                             input.as<T>(), output_delta.as<T>(),
                                             input_delta.as<T>(),

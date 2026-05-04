@@ -57,11 +57,11 @@ public:
         const Index features = ssize(scalers);
         if (features == 0) return {};
         return {
-            /*Minimums*/           {Shape{features}, Type::FP32},
-            /*Maximums*/           {Shape{features}, Type::FP32},
-            /*Means*/              {Shape{features}, Type::FP32},
-            /*StandardDeviations*/ {Shape{features}, Type::FP32},
-            /*Scalers*/            {Shape{features}, Type::FP32},
+            {Shape{features}, Type::FP32}, // Minimums
+            {Shape{features}, Type::FP32}, // Maximums
+            {Shape{features}, Type::FP32}, // Means
+            {Shape{features}, Type::FP32}, // StandardDeviations
+            {Shape{features}, Type::FP32}, // Scalers
         };
     }
 

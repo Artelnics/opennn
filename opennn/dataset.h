@@ -250,7 +250,7 @@ public:
     void set_codification(const Codification& new_codification) { codification = new_codification; }
     void set_codification(const string&);
 
-    void set_missing_values_label(string label) { missing_values_label = std::move(label); }
+    void set_missing_values_label(string label) { missing_values_label = move(label); }
     void set_missing_values_method(const MissingValuesMethod& method) { missing_values_method = method; }
     void set_missing_values_method(const string&);
 

@@ -58,8 +58,8 @@ public:
         if (bounding_method == BoundingMethod::NoBounding || output_shape.empty() || output_shape[0] == 0)
             return {};
         return {
-            /*Lower*/ {Shape{output_shape[0]}, Type::FP32},
-            /*Upper*/ {Shape{output_shape[0]}, Type::FP32},
+            {Shape{output_shape[0]}, Type::FP32}, // Lower
+            {Shape{output_shape[0]}, Type::FP32}, // Upper
         };
     }
 

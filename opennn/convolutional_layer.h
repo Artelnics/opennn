@@ -87,11 +87,11 @@ private:
         const Shape bn_stat_shape     = batch_normalization ? Shape{kernels_number}  : Shape{};
 
         return {
-            /*PaddedInputs*/             {padded_shape,           act},
-            /*ConvolutionView*/          {convolution_view_shape, act},
-            /*BatchNormMean*/            {bn_stat_shape,     Type::FP32},
-            /*BatchNormInverseVariance*/ {bn_stat_shape,     Type::FP32},
-            /*Output*/                   {output_shape,      act},
+            {padded_shape,           act},        // PaddedInputs
+            {convolution_view_shape, act},        // ConvolutionView
+            {bn_stat_shape,          Type::FP32}, // BatchNormMean
+            {bn_stat_shape,          Type::FP32}, // BatchNormInverseVariance
+            {output_shape,           act},        // Output
         };
     }
 

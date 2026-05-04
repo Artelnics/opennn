@@ -52,10 +52,10 @@ public:
             : Shape{batch_size, sequence_length, embedding_dimension};
 
         return {
-            /*Means*/              {{batch_size, sequence_length},                      Type::FP32},
-            /*StandardDeviations*/ {{batch_size, sequence_length},                      Type::FP32},
-            /*NormalizedInputs*/   {normalized_shape,                                   act},
-            /*Output*/             {{batch_size, sequence_length, embedding_dimension}, act},
+            {{batch_size, sequence_length},                      Type::FP32}, // Means
+            {{batch_size, sequence_length},                      Type::FP32}, // StandardDeviations
+            {normalized_shape,                                   act},        // NormalizedInputs
+            {{batch_size, sequence_length, embedding_dimension}, act},        // Output
         };
     }
 

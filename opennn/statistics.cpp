@@ -632,7 +632,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
 
         centers = tensor_unique;
         minimums = tensor_unique;
-        maximums = std::move(tensor_unique);
+        maximums = move(tensor_unique);
 
         frequencies = VectorR::Zero(unique_values_number);
 

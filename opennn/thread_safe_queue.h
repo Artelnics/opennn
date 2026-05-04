@@ -26,7 +26,7 @@ public:
 
     void push(T item)
     {
-        { lock_guard<mutex> lock(mutex_); queue_.push(std::move(item)); }
+        { lock_guard<mutex> lock(mutex_); queue_.push(move(item)); }
         cond_.notify_one();
     }
 
@@ -34,7 +34,7 @@ public:
     {
         unique_lock<mutex> lock(mutex_);
         cond_.wait(lock, [this] { return !queue_.empty(); });
-        T item = std::move(queue_.front());
+        T item = move(queue_.front());
         queue_.pop();
         return item;
     }

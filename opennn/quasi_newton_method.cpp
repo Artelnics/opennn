@@ -154,7 +154,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     }
 
     old_gradient = gradient;
-    std::swap(optimization_data.views[InverseHessian], optimization_data.views[OldInverseHessian]);
+    swap(optimization_data.views[InverseHessian], optimization_data.views[OldInverseHessian]);
     old_learning_rate = learning_rate;
 }
 

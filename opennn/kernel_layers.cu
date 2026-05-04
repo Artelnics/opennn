@@ -240,7 +240,7 @@ template void scaled_diff_cuda_typed<__nv_bfloat16, __nv_bfloat16>(const Index, 
 // `inputs` carries integer token ids stored as float. Out-of-vocab tokens get 0.
 // `scale_embedding` applies sqrt(D) scaling (Transformer convention).
 template<typename T>
-__global__ void embedding_forward_kernel(const int n, const float* __restrict__ inputs, const float* __restrict__ weights, const float* __restrict__ positional_encoding, T* __restrict__ outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding)
+__global__ void embedding_forward_kernel(const int n, const float* __restrict__ inputs, const float* __restrict__ weights, const float* __restrict__ positional_encoding, T* __restrict__ outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
 {
     const float scale = scale_embedding ? sqrtf(static_cast<float>(embedding_dimension)) : 1.0f;
 
@@ -254,7 +254,7 @@ __global__ void embedding_forward_kernel(const int n, const float* __restrict__ 
             ? scale * weights[token_id * embedding_dimension + dim_idx]
             : 0.0f;
 
-        if (add_positional_encoding && positional_encoding != nullptr && token_id > 0)
+        if (positional_encoding != nullptr && token_id > 0)
         {
             const int seq_idx = token_idx % sequence_length;
             val += positional_encoding[seq_idx * embedding_dimension + dim_idx];
@@ -265,7 +265,7 @@ __global__ void embedding_forward_kernel(const int n, const float* __restrict__ 
 }
 
 template<typename T>
-void embedding_forward_cuda(const Index n, const float* inputs, const float* weights, const float* positional_encoding, T* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding)
+void embedding_forward_cuda(const Index n, const float* inputs, const float* weights, const float* positional_encoding, T* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
 {
     if (n == 0) return;
 
@@ -273,11 +273,11 @@ void embedding_forward_cuda(const Index n, const float* inputs, const float* wei
 
     embedding_forward_kernel<T><<<grid_size_for(total), block_size>>>(
         total, inputs, weights, positional_encoding, outputs,
-        sequence_length, embedding_dimension, vocabulary_size, scale_embedding, add_positional_encoding);
+        sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
 }
 
-template void embedding_forward_cuda<float>        (const Index, const float*, const float*, const float*, float*,         const int, const int, const int, const bool, const bool);
-template void embedding_forward_cuda<__nv_bfloat16>(const Index, const float*, const float*, const float*, __nv_bfloat16*, const int, const int, const int, const bool, const bool);
+template void embedding_forward_cuda<float>        (const Index, const float*, const float*, const float*, float*,         const int, const int, const int, const bool);
+template void embedding_forward_cuda<__nv_bfloat16>(const Index, const float*, const float*, const float*, __nv_bfloat16*, const int, const int, const int, const bool);
 
 // Embedding weight gradient via atomicAdd into the vocabulary table.
 // Padding tokens (id 0 or out-of-range) contribute nothing.

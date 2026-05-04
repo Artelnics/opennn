@@ -175,9 +175,9 @@ struct Buffer
 
     void swap(Buffer& other) noexcept
     {
-        std::swap(data, other.data);
-        std::swap(bytes, other.bytes);
-        std::swap(device_type, other.device_type);
+        swap(data, other.data);
+        swap(bytes, other.bytes);
+        swap(device_type, other.device_type);
     }
 
 private:
@@ -308,6 +308,10 @@ struct TensorView
 
 #ifdef OPENNN_WITH_CUDA
 
+    // GPU-only: async cudaMemset on the compute stream. Caller must guarantee
+    // data is device memory and the next op runs on the same stream.
+    void set_zero_async();
+
     mutable shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
 
     cudnnTensorDescriptor_t get_descriptor() const
@@ -429,6 +433,12 @@ inline void TensorView::fill(float value)
 }
 
 #ifdef OPENNN_WITH_CUDA
+
+inline void TensorView::set_zero_async()
+{
+    if (!data || byte_size() == 0) return;
+    CHECK_CUDA(cudaMemsetAsync(data, 0, byte_size(), Backend::get_compute_stream()));
+}
 
 inline const float one = 1.0f;
 inline const float zero = 0.0f;

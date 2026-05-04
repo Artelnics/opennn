@@ -42,7 +42,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
 
     if (!layers.empty()) validate_type(layers.back()->get_type());
 
-    layers.push_back(std::move(layer));
+    layers.push_back(move(layer));
 
     layer_input_indices.push_back(input_indices.empty()
         ? vector<Index>(1, old_layers_number )
@@ -807,7 +807,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
             layer_doc.root = item;
             layer->from_JSON(layer_doc);
 
-            layers.push_back(std::move(layer));
+            layers.push_back(move(layer));
         }
     }
 

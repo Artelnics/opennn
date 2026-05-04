@@ -36,7 +36,7 @@ public:
 
     void set_individuals_number(const Index new_individuals_number = 4);
 
-    void set_initialization_method(string method) { initialization_method = std::move(method); }
+    void set_initialization_method(string method) { initialization_method = move(method); }
 
     void set_mutation_rate(const float rate) { mutation_rate = clamp(rate, 0.0f, 1.0f); }
 
