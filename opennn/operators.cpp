@@ -180,13 +180,15 @@ void Activation::set_function(const string& name)
 void Activation::apply(TensorView& output)
 {
     if (function == Function::Identity || output.empty()) return;
+    if (function == Function::Softmax) { softmax(output); return; }
 
     Configuration::instance().is_gpu() ? apply_gpu(output) : apply_cpu(output);
 }
 
 void Activation::apply_delta(const TensorView& outputs, TensorView& delta) const
 {
-    if (function == Function::Identity || outputs.empty()) return;
+    // Softmax delta is folded into Attention's softmax-backward step.
+    if (function == Function::Identity || function == Function::Softmax || outputs.empty()) return;
 
     Configuration::instance().is_gpu()
         ? apply_delta_gpu(outputs, delta)
@@ -195,12 +197,6 @@ void Activation::apply_delta(const TensorView& outputs, TensorView& delta) const
 
 void Activation::apply_cpu(TensorView& output)
 {
-    if (function == Function::Softmax)
-    {
-        softmax(output);
-        return;
-    }
-
     auto a = output.as_vector().array();
 
     switch (function)
@@ -226,8 +222,6 @@ void Activation::apply_delta_cpu(const TensorView& outputs, TensorView& delta) c
 
     switch (function)
     {
-    case Function::Softmax:
-        return;
     case Function::Sigmoid:
         d *= y * (1.0f - y);
         return;
@@ -246,12 +240,6 @@ void Activation::apply_delta_cpu(const TensorView& outputs, TensorView& delta) c
 
 void Activation::apply_gpu(TensorView& output)
 {
-    if (function == Function::Softmax)
-    {
-        softmax(output);
-        return;
-    }
-
     CHECK_CUDNN(cudnnActivationForward(Backend::get_cudnn_handle(),
                                        descriptor,
                                        &one,
@@ -262,8 +250,6 @@ void Activation::apply_gpu(TensorView& output)
 
 void Activation::apply_delta_gpu(const TensorView& outputs, TensorView& delta) const
 {
-    if (function == Function::Softmax) return;
-
     CHECK_CUDNN(cudnnActivationBackward(Backend::get_cudnn_handle(),
                                         descriptor,
                                         &one,
