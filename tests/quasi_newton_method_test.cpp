@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "numerical_derivatives.h"
 #include "../opennn/dataset.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/loss.h"
@@ -46,12 +47,12 @@ TEST(QuasiNewtonMethodTest, BFGS_Update)
 
     neural_network.set_parameters_random();
 
-    VectorR gradient_k = loss.calculate_gradient();
+    VectorR gradient_k = calculate_gradient(loss);
 
     // Just verify gradient is computable and has correct size
     EXPECT_EQ(gradient_k.size(), neural_network.get_parameters_size());
 
-    MatrixR numerical_inverse_hessian = loss.calculate_inverse_hessian();
+    MatrixR numerical_inverse_hessian = calculate_inverse_hessian(loss);
 
     EXPECT_EQ(numerical_inverse_hessian.rows(), numerical_inverse_hessian.cols());
 

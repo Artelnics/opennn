@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "numerical_derivatives.h"
 
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/neural_network.h"
@@ -46,9 +47,9 @@ TEST(MinkowskiErrorTest, BackPropagate)
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MinkowskiError);
 
-    const VectorR gradient = loss.calculate_gradient();
+    const VectorR gradient = calculate_gradient(loss);
 
-    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-2));
 }

@@ -1,10 +1,12 @@
 #include "pch.h"
+#include "numerical_derivatives.h"
 
 #include "../opennn/loss.h"
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/language_dataset.h"
 #include "../opennn/dense_layer.h"
 #include "../opennn/convolutional_layer.h"
+#include "../opennn/json.h"
 
 
 using namespace opennn;
@@ -33,7 +35,7 @@ TEST(CrossEntropyError2d, BackPropagate)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ inputs_number }, Shape{ targets_number }, "Sigmoid"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{ inputs_number }, Shape{ targets_number }, "Sigmoid"));
     neural_network.compile();
 
     neural_network.set_parameters_random();
@@ -41,9 +43,9 @@ TEST(CrossEntropyError2d, BackPropagate)
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::CrossEntropy);
 
-    const VectorR gradient = loss.calculate_gradient();
+    const VectorR gradient = calculate_gradient(loss);
 
-    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 
@@ -82,7 +84,7 @@ TEST(CrossEntropyError2d, calculate_error)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 3 }, Shape{ 1 }, "Sigmoid"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{ 3 }, Shape{ 1 }, "Sigmoid"));
 
     Batch batch(5, &dataset);
 
@@ -130,7 +132,7 @@ TEST(CrossEntropyError2d, calculate_output_gradients)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 3 }, Shape{ 1 }, "Sigmoid"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{ 3 }, Shape{ 1 }, "Sigmoid"));
 
     Batch batch(5, &dataset);
 
@@ -181,7 +183,7 @@ TEST(CrossEntropyError2d, get_name)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 2 }, Shape{ 2 }, "Sigmoid"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{ 2 }, Shape{ 2 }, "Sigmoid"));
     neural_network.compile();
 
     Loss loss(&neural_network, &dataset);
@@ -192,7 +194,7 @@ TEST(CrossEntropyError2d, get_name)
     EXPECT_EQ(name, "CrossEntropy");
 }
 
-TEST(CrossEntropyError2d, to_XML)
+TEST(CrossEntropyError2d, to_JSON)
 {
     Dataset dataset(5, { 2 }, { 1 });
     MatrixR data;
@@ -210,48 +212,45 @@ TEST(CrossEntropyError2d, to_XML)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 2 }, Shape{ 1 }, "Sigmoid"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{ 2 }, Shape{ 1 }, "Sigmoid"));
     neural_network.compile();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::CrossEntropy);
 
-    XmlPrinter printer;
-    EXPECT_NO_THROW(loss.to_XML(printer));
+    JsonWriter writer;
+    EXPECT_NO_THROW(loss.to_JSON(writer));
 
-    std::string xml_output = printer.c_str();
+    std::string json_output = writer.c_str();
 
-    // Verify we got non-empty XML output
-    EXPECT_FALSE(xml_output.empty());
+    // Verify we got non-empty JSON output
+    EXPECT_FALSE(json_output.empty());
 }
 
-// @todo Re-enable when XmlPrinter → XmlDocument round-trip is working
-TEST(CrossEntropyError2d, from_XML_valid_document)
+TEST(CrossEntropyError2d, from_JSON_valid_document)
 {
     NeuralNetwork neural_network;
     Dataset dataset;
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::CrossEntropy);
 
-    XmlPrinter printer;
-    loss.to_XML(printer);
+    JsonWriter writer;
+    loss.to_JSON(writer);
 
-    XmlDocument document;
-    ASSERT_EQ(document.parse(printer.c_str()), 0);
+    JsonDocument document;
+    document.root = Json::parse(writer.c_str());
 
     Loss loss2;
-    EXPECT_NO_THROW(loss2.from_XML(document));
+    EXPECT_NO_THROW(loss2.from_JSON(document));
 }
 
-TEST(CrossEntropyError2d, from_XML_invalid_document)
+TEST(CrossEntropyError2d, from_JSON_invalid_document)
 {
-    const char* xml_text = R"(
-    <InvalidTag></InvalidTag>
-    )";
+    const char* json_text = R"({"InvalidTag": {}})";
 
-    XmlDocument document;
-    ASSERT_EQ(document.parse(xml_text), 0);
+    JsonDocument document;
+    document.root = Json::parse(json_text);
 
     Loss loss;
-    EXPECT_THROW(loss.from_XML(document), runtime_error);
+    EXPECT_THROW(loss.from_JSON(document), runtime_error);
 }

@@ -16,6 +16,7 @@ namespace fe = cudnn_frontend;
 #include "json.h"
 #include "random_utilities.h"
 #include "math_utilities.h"
+#include "string_utilities.h"
 #include "cuda_dispatch.h"
 
 #ifdef OPENNN_WITH_CUDA

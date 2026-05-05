@@ -43,7 +43,7 @@ TEST(RecurrentLayerTest, ForwardPropagate)
     {
         NeuralNetwork neural_network;
         auto layer = make_unique<Recurrent>(Shape{time_steps, inputs_number}, Shape{outputs_number});
-        layer->set_activation_function("HyperbolicTangent");
+        layer->set_activation_function("Tanh");
         neural_network.add_layer(std::move(layer));
         neural_network.compile();
 
@@ -88,7 +88,7 @@ TEST(RecurrentLayerTest, ForwardPropagate)
     {
         NeuralNetwork neural_network;
         auto layer = make_unique<Recurrent>(Shape{time_steps, inputs_number}, Shape{outputs_number});
-        layer->set_activation_function("Linear");
+        layer->set_activation_function("Identity");
         neural_network.add_layer(std::move(layer));
         neural_network.compile();
 

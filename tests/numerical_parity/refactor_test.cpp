@@ -1,5 +1,6 @@
 // Numerical parity test — DEV-REFACTOR branch version
 #include "../opennn/pch.h"
+#include "../numerical_derivatives.h"
 #include "../opennn/dataset.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/standard_networks.h"
@@ -25,7 +26,7 @@ int main()
         const Index samples = 4, inputs_n = 3, outputs_n = 2;
 
         NeuralNetwork network;
-        network.add_layer(make_unique<opennn::Dense<2>>(Shape{inputs_n}, Shape{outputs_n}, "Linear"));
+        network.add_layer(make_unique<opennn::Dense>(Shape{inputs_n}, Shape{outputs_n}, "Identity"));
         network.compile();
         VectorMap(network.get_parameters_data(), network.get_parameters_size()).setConstant(type(0.1));
 
@@ -49,7 +50,7 @@ int main()
         const Index samples = 4, inputs_n = 2, outputs_n = 2;
 
         NeuralNetwork network;
-        network.add_layer(make_unique<opennn::Dense<2>>(Shape{inputs_n}, Shape{outputs_n}, "Sigmoid"));
+        network.add_layer(make_unique<opennn::Dense>(Shape{inputs_n}, Shape{outputs_n}, "Sigmoid"));
         network.compile();
         VectorMap(network.get_parameters_data(), network.get_parameters_size()).setConstant(type(0.5));
 
@@ -70,8 +71,8 @@ int main()
         const Index samples = 3, inputs_n = 2, hidden_n = 3, outputs_n = 1;
 
         NeuralNetwork network;
-        network.add_layer(make_unique<opennn::Dense<2>>(Shape{inputs_n}, Shape{hidden_n}, "RectifiedLinear"));
-        network.add_layer(make_unique<opennn::Dense<2>>(Shape{hidden_n}, Shape{outputs_n}, "Linear"));
+        network.add_layer(make_unique<opennn::Dense>(Shape{inputs_n}, Shape{hidden_n}, "ReLU"));
+        network.add_layer(make_unique<opennn::Dense>(Shape{hidden_n}, Shape{outputs_n}, "Identity"));
         network.compile();
         VectorMap(network.get_parameters_data(), network.get_parameters_size()).setConstant(type(0.2));
 
@@ -103,13 +104,13 @@ int main()
         dataset.set_sample_roles("Training");
 
         NeuralNetwork network;
-        network.add_layer(make_unique<opennn::Dense<2>>(Shape{inputs_n}, Shape{outputs_n}, "Linear"));
+        network.add_layer(make_unique<opennn::Dense>(Shape{inputs_n}, Shape{outputs_n}, "Identity"));
         network.compile();
         VectorMap(network.get_parameters_data(), network.get_parameters_size()).setConstant(type(0.1));
 
         Loss loss(&network, &dataset);
         loss.set_error(Loss::Error::MeanSquaredError);
-        const type error = loss.calculate_numerical_error();
+        const type error = calculate_numerical_error(loss);
 
         out << "# Test4_MSE_Error" << endl;
         out << "error " << error << endl;
@@ -132,8 +133,8 @@ int main()
 
         // Build Scaling + Dense, compile, then set descriptives
         NeuralNetwork network;
-        network.add_layer(make_unique<Scaling<2>>(Shape{inputs_n}));
-        network.add_layer(make_unique<opennn::Dense<2>>(Shape{inputs_n}, Shape{outputs_n}, "Linear"));
+        network.add_layer(make_unique<Scaling>(Shape{inputs_n}));
+        network.add_layer(make_unique<opennn::Dense>(Shape{inputs_n}, Shape{outputs_n}, "Identity"));
         network.compile();
         VectorMap(network.get_parameters_data(), network.get_parameters_size()).setConstant(type(0.1));
 
@@ -141,7 +142,7 @@ int main()
         MatrixR input_data = dataset.get_feature_data("Input");
         vector<Descriptives> desc = descriptives(input_data);
 
-        Scaling<2>* scaling = static_cast<Scaling<2>*>(network.get_layer(0).get());
+        Scaling* scaling = static_cast<Scaling*>(network.get_layer(0).get());
         scaling->set_descriptives(desc);
         scaling->set_scalers("MeanStandardDeviation");
 

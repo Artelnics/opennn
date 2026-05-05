@@ -6,23 +6,20 @@
 
 using namespace opennn;
 
-using Dense2d = opennn::Dense<2>;
-using Dense3d = opennn::Dense<3>;
-
 
 TEST(Dense2dTest, DefaultConstructor)
 {
-    Dense2d dense_layer;
+    opennn::Dense dense_layer;
 
-    EXPECT_EQ(dense_layer.get_name(), "Dense2d");
+    EXPECT_EQ(dense_layer.get_name(), "Dense");
 }
 
 
 TEST(Dense2dTest, GeneralConstructor)
 {
-    Dense2d dense_layer({10}, {3}, "Linear");
+    opennn::Dense dense_layer({10}, {3}, "Identity");
 
-    EXPECT_EQ(dense_layer.get_activation_function(), ActivationFunction::Linear);
+    EXPECT_EQ(dense_layer.get_activation_function(), Activation::Function::Identity);
 
     EXPECT_EQ(dense_layer.get_input_shape()[0], 10);
     EXPECT_EQ(dense_layer.get_output_shape()[0], 3);
@@ -38,7 +35,7 @@ TEST(Dense2dTest, ForwardPropagate)
     const Index outputs_number = 4;
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<Dense2d>(Shape{inputs_number}, Shape{outputs_number}, "Linear"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{outputs_number}, "Identity"));
     neural_network.compile();
     neural_network.set_parameters_random();
 
@@ -50,7 +47,7 @@ TEST(Dense2dTest, ForwardPropagate)
     EXPECT_EQ(result.rows(), batch_size);
     EXPECT_EQ(result.cols(), outputs_number);
 
-    EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Dense");
 }
 
 
@@ -61,7 +58,7 @@ TEST(Dense2dTest, BackPropagate)
     const Index outputs_number = 4;
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<Dense2d>(Shape{inputs_number}, Shape{outputs_number}, "Linear"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{outputs_number}, "Identity"));
     neural_network.compile();
     neural_network.set_parameters_random();
 
@@ -82,9 +79,9 @@ TEST(Dense2dTest, BackPropagate)
 
 TEST(Dense3dTest, DefaultConstructor)
 {
-    Dense3d dense_layer({1, 1}, {1});
+    opennn::Dense dense_layer({1, 1}, {1});
 
-    EXPECT_EQ(dense_layer.get_name(), "Dense3d");
+    EXPECT_EQ(dense_layer.get_name(), "Dense");
     EXPECT_EQ(dense_layer.get_input_shape()[0], 1);
     EXPECT_EQ(dense_layer.get_input_shape()[1], 1);
     EXPECT_EQ(dense_layer.get_output_shape()[0], 1);
@@ -98,9 +95,9 @@ TEST(Dense3dTest, GeneralConstructor)
     const Index input_embedding = 4;
     const Index output_embedding = 3;
 
-    Dense3d dense_layer({sequence_length, input_embedding}, {output_embedding}, "Linear");
+    opennn::Dense dense_layer({sequence_length, input_embedding}, {output_embedding}, "Identity");
 
-    EXPECT_EQ(dense_layer.get_activation_function(), ActivationFunction::Linear);
+    EXPECT_EQ(dense_layer.get_activation_function(), Activation::Function::Identity);
 
     EXPECT_EQ(dense_layer.get_input_shape()[0], sequence_length);
     EXPECT_EQ(dense_layer.get_input_shape()[1], input_embedding);
@@ -121,7 +118,7 @@ TEST(Dense3dTest, ForwardPropagate)
     const Index output_embedding = 5;
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<Dense3d>(Shape{sequence_length, input_embedding}, Shape{output_embedding}, "Linear"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{sequence_length, input_embedding}, Shape{output_embedding}, "Identity"));
     neural_network.compile();
     neural_network.set_parameters_random();
 
@@ -147,7 +144,7 @@ TEST(Dense3dTest, BackPropagate)
     const Index output_embedding = 5;
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<Dense3d>(Shape{sequence_length, input_embedding}, Shape{output_embedding}, "Linear"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{sequence_length, input_embedding}, Shape{output_embedding}, "Identity"));
     neural_network.compile();
     neural_network.set_parameters_random();
 

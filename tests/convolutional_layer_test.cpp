@@ -26,7 +26,7 @@ INSTANTIATE_TEST_SUITE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::test
                                                                                   {28, 28, 1},
                                                                                   {3, 3, 1, 16},
                                                                                   {1, 1},
-                                                                                  "Linear",
+                                                                                  "Identity",
                                                                                   "Valid",
                                                                                   false,
                                                                                   "ValidPaddingWithoutBN"
@@ -36,7 +36,7 @@ INSTANTIATE_TEST_SUITE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::test
                                                                                   {32, 32, 3},
                                                                                   {5, 5, 3, 32},
                                                                                   {1, 1},
-                                                                                  "RectifiedLinear",
+                                                                                  "ReLU",
                                                                                   "Same",
                                                                                   false,                 // Batch Normalization
                                                                                   "SamePaddingWithoutBN"
@@ -63,9 +63,9 @@ TEST_P(ConvolutionalLayerTest, Constructor) {
     EXPECT_EQ(convolutional_layer.get_kernels_number(), parameters.kernel_shape[3]);
     EXPECT_EQ(convolutional_layer.get_row_stride(), parameters.stride_shape[0]);
     EXPECT_EQ(convolutional_layer.get_column_stride(), parameters.stride_shape[1]);
-    EXPECT_EQ(convolutional_layer.get_activation_function(), string_to_activation(parameters.activation_function));
+    EXPECT_EQ(convolutional_layer.get_activation_function(), Activation::from_string(parameters.activation_function));
     EXPECT_EQ(convolutional_layer.get_batch_normalization(), parameters.batch_normalization);
-    EXPECT_EQ(convolutional_layer.get_convolution_type(), string_to_convolution_type(parameters.convolution_type));
+    // get_convolution_type() removed from API
 }
 
 
@@ -113,7 +113,7 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
     EXPECT_EQ(output_view.shape[2], expected_output_dims[1]);
     EXPECT_EQ(output_view.shape[3], expected_output_dims[2]);
 
-    if(!parameters.batch_normalization && parameters.activation_function == "Linear")
+    if(!parameters.batch_normalization && parameters.activation_function == "Identity")
     {
         const Index kernel_height = parameters.kernel_shape[0];
         const Index kernel_width = parameters.kernel_shape[1];
