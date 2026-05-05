@@ -475,16 +475,16 @@ string get_time(float time)
 
 void display_progress_bar(const int& completed, const int& total)
 {
-    const int width = 100;
+    const int width = 50;
     const float progress = static_cast<float>(completed) / total;
     const int position = min(static_cast<int>(width * progress), width);
 
-    cout << "[" << string(position, '=');
+    cout << "\r[" << string(position, '=');
 
     if (position < width)
         cout << ">" << string(width - position - 1, ' ');
 
-    cout << "] " << int(progress * 100.0) << " %\r";
+    cout << "] " << int(progress * 100.0) << " %   ";
     cout.flush();
 }
 

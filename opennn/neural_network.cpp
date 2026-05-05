@@ -476,50 +476,29 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation,
                                       bool is_training) const
 {
-    const Index layers_number = get_layers_number();
+    const Index first_layer_index = is_training ? get_first_trainable_layer_index() : 0;
+    const Index last_layer_index  = is_training ? get_last_trainable_layer_index()  : get_layers_number() - 1;
 
-    const Index first_layer_index = is_training
-                                        ? get_first_trainable_layer_index()
-                                        : 0;
+    const auto pick_input = [&](size_t k) -> const TensorView& {
+        return input_view[k < input_view.size() ? k : 0];
+    };
 
-    const Index last_layer_index = is_training
-                                       ? get_last_trainable_layer_index()
-                                       : layers_number - 1;
-
-    for (Index layer_index = first_layer_index; layer_index <= last_layer_index; ++layer_index)
+    for (Index i = first_layer_index; i <= last_layer_index; ++i)
     {
-        const vector<Index>& input_indices = layer_input_indices[layer_index];
-
-        if (static_cast<size_t>(layer_index) >= forward_propagation.views.size()
-           || forward_propagation.views[layer_index].empty())
-            continue;
-
-        auto& input_slot = forward_propagation.views[layer_index][0];
-        input_slot.resize(input_indices.size());
+        const vector<Index>& input_indices = layer_input_indices[i];
+        auto& input_slot = forward_propagation.views[i][0];
 
         for (size_t k = 0; k < input_indices.size(); ++k)
         {
             const Index current_input = input_indices[k];
 
             if (current_input < 0)
-            {
-                const size_t input_view_index = static_cast<size_t>((-current_input) - 1) < input_view.size()
-                    ? static_cast<size_t>((-current_input) - 1) : 0;
-
-                input_slot[k] = input_view[input_view_index];
-            }
+                input_slot[k] = pick_input(size_t(-current_input - 1));
             else if (is_training && current_input < first_layer_index)
-            {
-                const size_t input_view_index = (k < input_view.size()) ? k : 0;
-                input_slot[k] = input_view[input_view_index];
-            }
+                input_slot[k] = pick_input(k);
         }
-    }
 
-    for (Index i = first_layer_index; i <= last_layer_index; ++i)
-    {
-        const std::string key = "fwd:" + layers[i]->get_name();
-        PROFILE_SCOPE(key);
+        PROFILE_SCOPE("fwd:" + layers[i]->get_name());
         layers[i]->forward_propagate(forward_propagation, i, is_training);
     }
 }
@@ -1146,10 +1125,12 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     const Index input_size = input_views_cpu[0].size();
     float* input_device = nullptr;
     CHECK_CUDA(cudaMalloc(&input_device, input_size * sizeof(float)));
-    CHECK_CUDA(cudaMemcpy(input_device,
-                          input_views_cpu[0].data,
-                          input_size * sizeof(float),
-                          cudaMemcpyHostToDevice));
+    cudaStream_t stream = Backend::get_compute_stream();
+    CHECK_CUDA(cudaMemcpyAsync(input_device,
+                               input_views_cpu[0].data,
+                               input_size * sizeof(float),
+                               cudaMemcpyHostToDevice,
+                               stream));
 
     vector<TensorView> input_views_gpu = input_views_cpu;
     input_views_gpu[0].data = input_device;
@@ -1168,27 +1149,38 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     const Index out_cols = out_view.size() / batch_size;
     MatrixR result(batch_size, out_cols);
 
-    if (out_view.type == Type::BF16)
+    vector<uint16_t> staging;
+    const bool output_is_bf16 = (out_view.type == Type::BF16);
+
+    if (output_is_bf16)
     {
         const Index size = out_view.size();
-        vector<uint16_t> staging(static_cast<size_t>(size));
-        CHECK_CUDA(cudaMemcpy(staging.data(),
-                              out_view.data,
-                              size * sizeof(uint16_t),
-                              cudaMemcpyDeviceToHost));
+        staging.resize(static_cast<size_t>(size));
+        CHECK_CUDA(cudaMemcpyAsync(staging.data(),
+                                   out_view.data,
+                                   size * sizeof(uint16_t),
+                                   cudaMemcpyDeviceToHost,
+                                   stream));
+    }
+    else
+    {
+        CHECK_CUDA(cudaMemcpyAsync(result.data(),
+                                   out_view.data,
+                                   out_view.size() * sizeof(float),
+                                   cudaMemcpyDeviceToHost,
+                                   stream));
+    }
+
+    CHECK_CUDA(cudaStreamSynchronize(stream));
+
+    if (output_is_bf16)
+    {
         float* destination = result.data();
-        for (Index i = 0; i < size; ++i)
+        for (Index i = 0; i < out_view.size(); ++i)
         {
             const uint32_t bits = static_cast<uint32_t>(staging[size_t(i)]) << 16;
             std::memcpy(&destination[i], &bits, sizeof(float));
         }
-    }
-    else
-    {
-        CHECK_CUDA(cudaMemcpy(result.data(),
-                              out_view.data,
-                              out_view.size() * sizeof(float),
-                              cudaMemcpyDeviceToHost));
     }
 
     CHECK_CUDA(cudaFree(input_device));
