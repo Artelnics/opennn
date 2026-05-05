@@ -1125,7 +1125,7 @@ Tensor<string, 2> TestingAnalysis::classify_samples(const MatrixR& targets,
         ++count;
     }
 
-    return result.slice(Eigen::array<Index, 2>{0, 0}, Eigen::array<Index, 2>{count, 4});
+    return result.slice(array<Index, 2>{0, 0}, array<Index, 2>{count, 4});
 }
 
 Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const MatrixR& targets,

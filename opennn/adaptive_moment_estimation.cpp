@@ -13,6 +13,7 @@
 #include "loss.h"
 #include "profiler.h"
 #include "batch.h"
+#include "cuda_dispatch.h"
 #include "adaptive_moment_estimation.h"
 
 namespace opennn
@@ -149,12 +150,10 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     const Index parameters_number = loss->get_neural_network()->get_parameters_size();
 
-    OptimizerData optimization_data;
-    optimization_data.set({Shape{parameters_number}, Shape{parameters_number}});
+    const Device device = Configuration::instance().is_gpu() ? Device::CUDA : Device::CPU;
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) optimization_data.allocate_device();
-#endif
+    OptimizerData optimization_data;
+    optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, device);
 
     optimization_data.iteration = 1;
 
@@ -274,9 +273,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const float bias_correction_1 = 1.0f - pow(beta_1, iteration);
     const float bias_correction_2 = 1.0f - pow(beta_2, iteration);
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu())
-    {
+    IF_GPU({
         PROFILE_SCOPE("optim:adam_update_cuda");
         const Index parameters_number = neural_network->get_parameters_size();
 
@@ -296,8 +293,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         neural_network->cast_parameters_to_bf16();
 
         return;
-    }
-#endif
+    });
 
     VectorMap parameters(neural_network->get_parameters_data(),
                          neural_network->get_parameters_size());
@@ -308,7 +304,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
                                                 optimization_data.views[SquareGradientMoment].size());
 
     VectorMap gradient(back_propagation.gradient.as<float>(),
-                       back_propagation.gradient.size());
+                       back_propagation.gradient.size_in_floats());
 
     const Index parameters_size = parameters.size();
     const float one_minus_beta_1 = 1.0f - beta_1;

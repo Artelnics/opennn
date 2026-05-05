@@ -565,7 +565,7 @@ string ModelExpression::build_expression() const
         buffer << get_layer_expression(*layers[i], new_input_names, layer_output_names) << "\n";
 
         if (!is_last)
-            new_input_names = std::move(layer_output_names);
+            new_input_names = move(layer_output_names);
     }
 
     return buffer.str();

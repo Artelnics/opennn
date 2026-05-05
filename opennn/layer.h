@@ -110,7 +110,7 @@ public:
     virtual void set_input_shape(const Shape&);
     virtual void set_output_shape(const Shape&);
 
-    void set_label(string new_label) { label = std::move(new_label); }
+    void set_label(string new_label) { label = move(new_label); }
 
     virtual void set_parameters_random();
 

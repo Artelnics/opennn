@@ -40,7 +40,7 @@ public:
 
     void register_component(const string& name, Creator creator)
     {
-        creators[name] = std::move(creator);
+        creators[name] = move(creator);
     }
 
     unique_ptr<T> create(const string& name) const
@@ -72,7 +72,7 @@ private:
 namespace { \
     const bool CLASS##_registered = []() { \
               Registry<BASE>::instance().register_component(NAME, []() { \
-                          return std::make_unique<CLASS>(); \
+                          return make_unique<CLASS>(); \
                   }); \
               return true; \
       }(); \

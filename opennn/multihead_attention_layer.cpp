@@ -60,14 +60,14 @@ vector<pair<Shape, Type>> MultiHeadAttention::get_forward_specs(const Index batc
     const auto attention_scratch = attention.forward_scratch_specs(batch_size);
 
     return {
-        /*Query*/                        {{batch_size, heads_number, query_sequence_length, head_dimension},         act},
-        /*Key*/                          {{batch_size, heads_number, source_sequence_length, head_dimension},        act},
-        /*AttentionWeights*/             attention_scratch[0],
-        /*AttentionWeightsDropped*/      attention_scratch[1],
-        /*ConcatenatedAttentionOutputs*/ {{batch_size, query_sequence_length, embedding_dimension},                  act},
-        /*Value*/                        {{batch_size, heads_number, source_sequence_length, head_dimension},        act},
-        /*TransposeScratch*/             {{batch_size, max_seq, embedding_dimension},                                act},
-        /*Output*/                       {{batch_size, query_sequence_length, embedding_dimension},                  act},
+        {{batch_size, heads_number, query_sequence_length, head_dimension},  act}, // Query
+        {{batch_size, heads_number, source_sequence_length, head_dimension}, act}, // Key
+        attention_scratch[0],                                                      // AttentionWeights
+        attention_scratch[1],                                                      // AttentionWeightsDropped
+        {{batch_size, query_sequence_length, embedding_dimension},           act}, // ConcatenatedAttentionOutputs
+        {{batch_size, heads_number, source_sequence_length, head_dimension}, act}, // Value
+        {{batch_size, max_seq, embedding_dimension},                         act}, // TransposeScratch
+        {{batch_size, query_sequence_length, embedding_dimension},           act}, // Output
     };
 }
 
@@ -77,10 +77,10 @@ vector<pair<Shape, Type>> MultiHeadAttention::get_backward_specs(Index batch_siz
     const Type act = activation_dtype;
 
     return {
-        /*InputQueryDelta*/        {{batch_size, query_sequence_length, embedding_dimension},                  act},
-        /*InputSourceDelta*/       {{batch_size, source_sequence_length, embedding_dimension},                 act},
-        /*AttentionWeightDelta*/   {{batch_size, heads_number, query_sequence_length, source_sequence_length}, act},
-        /*ValueDelta (transposed)*/{{batch_size, heads_number, source_sequence_length, head_dimension},        act},
+        {{batch_size, query_sequence_length, embedding_dimension},                  act}, // InputQueryDelta
+        {{batch_size, source_sequence_length, embedding_dimension},                 act}, // InputSourceDelta
+        {{batch_size, heads_number, query_sequence_length, source_sequence_length}, act}, // AttentionWeightDelta
+        {{batch_size, heads_number, source_sequence_length, head_dimension},        act}, // ValueDelta (transposed)
     };
 }
 

@@ -113,6 +113,33 @@ inline Index aligned_total_elements(const vector<vector<Shape>>& nested)
     return total;
 }
 
+inline Index aligned_total_bytes(const vector<Shape>& shapes, const vector<Type>& dtypes)
+{
+    Index total = 0;
+    for (size_t i = 0; i < shapes.size(); ++i)
+        if (shapes[i].size() > 0)
+            total += get_aligned_bytes(shapes[i].size() * type_bytes(dtypes[i]));
+    return total;
+}
+
+inline Index aligned_total_bytes(const vector<vector<Shape>>& nested,
+                                 const vector<vector<Type>>& dtypes)
+{
+    Index total = 0;
+    for (size_t i = 0; i < nested.size(); ++i) total += aligned_total_bytes(nested[i], dtypes[i]);
+    return total;
+}
+
+inline Index aligned_total_bytes(const vector<Shape>& shapes, Type dtype)
+{
+    const Index bytes_per = type_bytes(dtype);
+    Index total = 0;
+    for (const Shape& s : shapes)
+        if (!s.empty())
+            total += get_aligned_bytes(s.size() * bytes_per);
+    return total;
+}
+
 struct Buffer
 {
     void* data = nullptr;
@@ -122,7 +149,7 @@ struct Buffer
     template<typename T> T*       as()       { return static_cast<T*>(data); }
     template<typename T> const T* as() const { return static_cast<const T*>(data); }
 
-    Index size()  const { return bytes / Index(sizeof(float)); }   // legacy: assumes T = float
+    Index size_in_floats() const { return bytes / Index(sizeof(float)); }
     bool  empty() const { return bytes == 0; }
 
     void resize_bytes(Index n_bytes, Device new_device_type)
@@ -308,6 +335,10 @@ struct TensorView
 
 #ifdef OPENNN_WITH_CUDA
 
+    // GPU-only: async cudaMemset on the compute stream. Caller must guarantee
+    // data is device memory and the next op runs on the same stream.
+    void set_zero_async();
+
     mutable shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
 
     cudnnTensorDescriptor_t get_descriptor() const
@@ -429,6 +460,12 @@ inline void TensorView::fill(float value)
 }
 
 #ifdef OPENNN_WITH_CUDA
+
+inline void TensorView::set_zero_async()
+{
+    if (!data || byte_size() == 0) return;
+    CHECK_CUDA(cudaMemsetAsync(data, 0, byte_size(), Backend::get_compute_stream()));
+}
 
 inline const float one = 1.0f;
 inline const float zero = 0.0f;

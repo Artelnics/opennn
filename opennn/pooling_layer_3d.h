@@ -61,11 +61,11 @@ private:
     {
         const Type act = activation_dtype;
         return {
-            /*MaximalIndices*/ {(pooling_method == PoolingMethod::MaxPooling)
-                                    ? Shape{batch_size, input_features}
-                                    : Shape{},
-                                Type::FP32},
-            /*Output*/         {{batch_size, input_features}, act}, // must be last
+            {(pooling_method == PoolingMethod::MaxPooling)
+                ? Shape{batch_size, input_features}
+                : Shape{},
+             Type::FP32},                          // MaximalIndices
+            {{batch_size, input_features}, act},   // Output (must be last)
         };
     }
 

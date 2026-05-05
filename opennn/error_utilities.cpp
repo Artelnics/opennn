@@ -62,46 +62,38 @@ static float squared_norm_cuda(const float* data, Index size)
 void mean_squared_error(const TensorView& input, const TensorView& target, float& error, float* workspace_device)
 {
     const Index batch_size = input.shape[0];
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
+    IF_GPU({
         error = sum_squared_diff_cuda(input, target, workspace_device) / to_int(2 * batch_size);
         return;
-    }
-#endif
+    });
     error = (input.as_vector() - target.as_vector()).squaredNorm() / to_type(2 * batch_size);
 }
 
 void mean_squared_error_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta)
 {
     const Index batch_size = input.shape[0];
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
+    IF_GPU({
         scaled_diff_cuda(input, target, 1.0f / to_int(batch_size), input_delta);
         return;
-    }
-#endif
+    });
     input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) / to_type(batch_size);
 }
 
 void normalized_squared_error(const TensorView& input, const TensorView& target, float coefficient, float& error, float* workspace_device)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
+    IF_GPU({
         error = sum_squared_diff_cuda(input, target, workspace_device) / (2.0f * (coefficient + EPSILON));
         return;
-    }
-#endif
+    });
     error = (input.as_vector() - target.as_vector()).squaredNorm() / (2.0f * (coefficient + EPSILON));
 }
 
 void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, float coefficient, TensorView& input_delta)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
+    IF_GPU({
         scaled_diff_cuda(input, target, 1.0f / (static_cast<float>(coefficient) + EPSILON), input_delta);
         return;
-    }
-#endif
+    });
     input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) / (coefficient + EPSILON);
 }
 
@@ -330,41 +322,34 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
 
 void l1_regularization(const TensorView& parameters, float lambda, float& penalty)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
+    IF_GPU({
         penalty = lambda * sum_abs_cuda(parameters.as<float>(), parameters.size());
         return;
-    }
-#endif
+    });
     penalty = lambda * parameters.as_vector().lpNorm<1>();
 }
 
 void l1_regularization_gradient(const TensorView& parameters, float lambda, TensorView& gradient)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
+    IF_GPU({
         l1_gradient_cuda<float>(parameters.size(), gradient.as<float>(), parameters.as<float>(), lambda);
         return;
-    }
-#endif
+    });
     gradient.as_vector().array() += lambda * parameters.as_vector().array().sign();
 }
 
 void l2_regularization(const TensorView& parameters, float lambda, float& penalty)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
+    IF_GPU({
         penalty = 0.5f * lambda * squared_norm_cuda(parameters.as<float>(), parameters.size());
         return;
-    }
-#endif
+    });
     penalty = 0.5f * lambda * parameters.as_vector().squaredNorm();
 }
 
 void l2_regularization_gradient(const TensorView& parameters, float lambda, TensorView& gradient)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) {
+    IF_GPU({
         const int total_size = to_int(parameters.size());
         CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), total_size,
                                   &lambda,         CUDA_R_32F,
@@ -372,8 +357,7 @@ void l2_regularization_gradient(const TensorView& parameters, float lambda, Tens
                                   gradient.data,   CUDA_R_32F, 1,
                                   CUDA_R_32F));
         return;
-    }
-#endif
+    });
     gradient.as_vector().noalias() += lambda * parameters.as_vector();
 }
 

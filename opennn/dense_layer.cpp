@@ -53,11 +53,11 @@ vector<pair<Shape, Type>> Dense::get_forward_specs(Index batch_size) const
     const Shape bn_stat_shape      = batch_normalization     ? Shape{output_features} : Shape{};
 
     return {
-        /*Combination*/              {combination_shape, act},
-        /*BatchNormMean*/            {bn_stat_shape,     Type::FP32},
-        /*BatchNormInverseVariance*/ {bn_stat_shape,     Type::FP32},
-        /*Activation*/               {activation_shape,  act},
-        /*Output*/                   {output_shape,      act},
+        {combination_shape, act},        // Combination
+        {bn_stat_shape,     Type::FP32}, // BatchNormMean
+        {bn_stat_shape,     Type::FP32}, // BatchNormInverseVariance
+        {activation_shape,  act},        // Activation
+        {output_shape,      act},        // Output
     };
 }
 

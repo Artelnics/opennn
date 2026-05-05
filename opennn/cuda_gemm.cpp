@@ -103,7 +103,6 @@ const LtMatmulPlan& get_lt_gemm_plan(
     set_desc(CUBLASLT_MATMUL_DESC_TRANSA,   transA);
     set_desc(CUBLASLT_MATMUL_DESC_TRANSB,   transB);
     set_desc(CUBLASLT_MATMUL_DESC_EPILOGUE, epilogue);
-    // cuBLASLt 12.x requires bias type == output type for BF16/FP16 outputs.
     set_desc(CUBLASLT_MATMUL_DESC_BIAS_DATA_TYPE, out_dtype);
 
     const int a_rows = (transA == CUBLAS_OP_N) ? m : k;
@@ -136,7 +135,7 @@ const LtMatmulPlan& get_lt_gemm_plan(
         plan.algo_valid = true;
     }
 
-    auto [iter, _] = lt_gemm_plans_.emplace(key, std::move(plan));
+    auto [iter, _] = lt_gemm_plans_.emplace(key, move(plan));
     return iter->second;
 }
 

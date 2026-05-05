@@ -81,7 +81,7 @@ vector<string> tokenize(const string& document)
         {
             if (!current_token.empty())
             {
-                tokens.emplace_back(std::move(current_token));
+                tokens.emplace_back(move(current_token));
                 current_token.clear();
             }
 
@@ -91,7 +91,7 @@ vector<string> tokenize(const string& document)
     }
 
     if (!current_token.empty())
-        tokens.emplace_back(std::move(current_token));
+        tokens.emplace_back(move(current_token));
 
     return tokens;
 }
@@ -133,7 +133,7 @@ vector<string> convert_string_vector(const vector<vector<string>>& input_vector,
             if (i) joined += separator;
             joined += subvec[i];
         }
-        vector_result.push_back(std::move(joined));
+        vector_result.push_back(move(joined));
     }
 
     return vector_result;

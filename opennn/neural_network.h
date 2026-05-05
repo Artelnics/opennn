@@ -58,7 +58,7 @@ public:
 
     float* get_parameters_data() { return parameters.as<float>(); }
     const float* get_parameters_data() const { return parameters.as<float>(); }
-    Index get_parameters_size() const { return parameters.size(); }
+    Index get_parameters_size() const { return parameters.size_in_floats(); }
 
     const vector<Variable>& get_input_variables() const { return input_variables; }
     const vector<string> get_input_feature_names() const;

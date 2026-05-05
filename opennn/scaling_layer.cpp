@@ -22,7 +22,7 @@ Scaling::Scaling(const Shape& new_input_shape)
 
 vector<pair<Shape, Type>> Scaling::get_forward_specs(Index batch_size) const
 {
-    return {/*Output*/ {Shape{batch_size}.append(input_shape), activation_dtype}};
+    return {{Shape{batch_size}.append(input_shape), activation_dtype}}; // Output
 }
 
 vector<pair<Shape, Type>> Scaling::get_state_specs() const
@@ -30,11 +30,11 @@ vector<pair<Shape, Type>> Scaling::get_state_specs() const
     const Index features = input_shape.size();
     if (features == 0) return {};
     return {
-        /*Minimums*/           {Shape{features}, Type::FP32},
-        /*Maximums*/           {Shape{features}, Type::FP32},
-        /*Means*/              {Shape{features}, Type::FP32},
-        /*StandardDeviations*/ {Shape{features}, Type::FP32},
-        /*Scalers*/            {Shape{features}, Type::FP32},
+        {Shape{features}, Type::FP32}, // Minimums
+        {Shape{features}, Type::FP32}, // Maximums
+        {Shape{features}, Type::FP32}, // Means
+        {Shape{features}, Type::FP32}, // StandardDeviations
+        {Shape{features}, Type::FP32}, // Scalers
     };
 }
 

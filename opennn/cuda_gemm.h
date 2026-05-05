@@ -15,7 +15,6 @@ namespace opennn
 
 #ifdef OPENNN_WITH_CUDA
 
-// Not thread-safe: bias pointer is set on cached op_desc.
 struct LtMatmulPlan
 {
     cublasLtMatmulDesc_t   op_desc = nullptr;
@@ -29,16 +28,16 @@ struct LtMatmulPlan
     LtMatmulPlan() = default;
     LtMatmulPlan(const LtMatmulPlan&) = delete;
     LtMatmulPlan& operator=(const LtMatmulPlan&) = delete;
-    LtMatmulPlan(LtMatmulPlan&& other) noexcept { *this = std::move(other); }
+    LtMatmulPlan(LtMatmulPlan&& other) noexcept { *this = move(other); }
     LtMatmulPlan& operator=(LtMatmulPlan&& other) noexcept
     {
-        std::swap(op_desc, other.op_desc);
-        std::swap(a_desc,  other.a_desc);
-        std::swap(b_desc,  other.b_desc);
-        std::swap(c_desc,  other.c_desc);
-        std::swap(d_desc,  other.d_desc);
-        std::swap(algo,    other.algo);
-        std::swap(algo_valid, other.algo_valid);
+        swap(op_desc, other.op_desc);
+        swap(a_desc,  other.a_desc);
+        swap(b_desc,  other.b_desc);
+        swap(c_desc,  other.c_desc);
+        swap(d_desc,  other.d_desc);
+        swap(algo,    other.algo);
+        swap(algo_valid, other.algo_valid);
         return *this;
     }
     ~LtMatmulPlan()

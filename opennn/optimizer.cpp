@@ -451,54 +451,34 @@ void OptimizerData::print() const
          << initial_learning_rate << "\n";
 }
 
-void OptimizerData::set(const vector<Shape>& slot_shapes)
+void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
 {
-    const Index total_size = aligned_total_elements(slot_shapes);
+    const Index total_bytes = aligned_total_elements(slot_shapes) * Index(sizeof(float));
 
-    data.resize_bytes(total_size * Index(sizeof(float)), Device::CPU);
-    data.setZero();
+    if (total_bytes > 0)
+    {
+        data.resize_bytes(total_bytes, device);
+        data.setZero();
+    }
 
     views.clear();
     views.reserve(slot_shapes.size());
 
-    float* pointer = (total_size > 0) ? data.as<float>() : nullptr;
+    uint8_t* cursor = (total_bytes > 0) ? data.as<uint8_t>() : nullptr;
 
     for (const Shape& shape : slot_shapes)
     {
-        if (shape.size() > 0 && pointer)
+        if (shape.size() > 0 && cursor)
         {
-            views.emplace_back(pointer, shape);
-            pointer += get_aligned_size(shape.size());
+            views.emplace_back(cursor, shape, Type::FP32);
+            cursor += get_aligned_bytes(shape.size() * Index(sizeof(float)));
         }
         else
         {
-            views.emplace_back();  // empty view placeholder
+            views.emplace_back();
         }
     }
 }
-
-#ifdef OPENNN_WITH_CUDA
-
-void OptimizerData::allocate_device()
-{
-    if (data.size() == 0) return;
-
-    data.resize_bytes(data.size() * Index(sizeof(float)), Device::CUDA);
-    data.setZero();
-
-    float* dev_pointer = data.as<float>();
-
-    for (TensorView& view : views)
-    {
-        if (view.shape.size() > 0 && dev_pointer)
-        {
-            view.data = dev_pointer;
-            dev_pointer += get_aligned_size(view.shape.size());
-        }
-    }
-}
-
-#endif
 
 void Optimizer::setup_device_training(ForwardPropagation& training_fp,
                                       BackPropagation& training_bp,
@@ -573,7 +553,7 @@ void Optimizer::sync_device()
 
 void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
 {
-    const Index gradient_size = gradient.size();
+    const Index gradient_size = gradient.size_in_floats();
     if (gradient_size <= 0) return;
 
 #ifdef OPENNN_WITH_CUDA
@@ -597,7 +577,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
     }
 #endif
 
-    VectorMap gradient_view(gradient.as<float>(), gradient.size());
+    VectorMap gradient_view(gradient.as<float>(), gradient.size_in_floats());
     const float gradient_norm = gradient_view.norm();
     if (gradient_norm > max_norm)
         gradient_view *= max_norm / (gradient_norm + 1e-6f);

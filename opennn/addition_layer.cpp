@@ -29,8 +29,8 @@ vector<pair<Shape, Type>> Addition::get_backward_specs(Index batch_size) const
 {
     const Type act = activation_dtype;
     return {
-        /*InputDelta0*/ {Shape{batch_size}.append(input_shape), act},
-        /*InputDelta1*/ {Shape{batch_size}.append(input_shape), act},
+        {Shape{batch_size}.append(input_shape), act}, // InputDelta0
+        {Shape{batch_size}.append(input_shape), act}, // InputDelta1
     };
 }
 

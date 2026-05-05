@@ -56,14 +56,14 @@ Json& Json::operator[](const std::string& key)
 
 Json& Json::set(const std::string& key, Json value)
 {
-    (*this)[key] = std::move(value);
+    (*this)[key] = move(value);
     return *this;
 }
 
 void Json::push_back(Json value)
 {
     if (!is_array()) { kind = Kind::Array; array_value.clear(); }
-    array_value.push_back(std::move(value));
+    array_value.push_back(move(value));
 }
 
 std::string Json::as_string() const
@@ -355,7 +355,7 @@ struct Parser
             skip_ws();
             if (i >= s.size() || s[i] != ':') fail("expected ':'");
             ++i;
-            j.object_value.emplace_back(std::move(key), parse_value());
+            j.object_value.emplace_back(move(key), parse_value());
             skip_ws();
             if (i < s.size() && s[i] == ',') { ++i; continue; }
             if (i < s.size() && s[i] == '}') { ++i; return j; }
@@ -421,7 +421,7 @@ JsonDocument JsonDocument::wrap(const std::string& tag, Json value)
 {
     JsonDocument doc;
     doc.root = Json::make_object();
-    doc.root.set(tag, std::move(value));
+    doc.root.set(tag, move(value));
     return doc;
 }
 
@@ -444,12 +444,12 @@ void JsonWriter::open_element(const std::string& name)
 
     if (parent->is_object())
     {
-        parent->object_value.emplace_back(name, std::move(child));
+        parent->object_value.emplace_back(name, move(child));
         stack.push_back(&parent->object_value.back().second);
     }
     else if (parent->is_array())
     {
-        parent->array_value.push_back(std::move(child));
+        parent->array_value.push_back(move(child));
         stack.push_back(&parent->array_value.back());
     }
     else
