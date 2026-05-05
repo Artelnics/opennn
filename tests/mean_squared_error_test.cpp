@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "numerical_derivatives.h"
 
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/dataset.h"
@@ -50,17 +51,17 @@ TEST(MeanSquaredErrorTest, BackPropagateDense2d)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ inputs_number }, Shape{ dataset.get_target_shape()}));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{ inputs_number }, Shape{ dataset.get_target_shape()}));
     neural_network.compile();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    const type error = loss.calculate_numerical_error();
+    const type error = calculate_numerical_error(loss);
     EXPECT_GE(error, 0);
 
-    const VectorR gradient = loss.calculate_gradient();
-    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
+    const VectorR gradient = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
@@ -84,11 +85,11 @@ TEST(MeanSquaredErrorTest, BackPropagateRecurrent)
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    const type error = loss.calculate_numerical_error();
+    const type error = calculate_numerical_error(loss);
     EXPECT_GE(error, 0);
 
-    const VectorR gradient = loss.calculate_gradient();
-    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
+    const VectorR gradient = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
@@ -109,19 +110,19 @@ TEST(MeanSquaredErrorTest, BackPropagateConvolutional)
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Convolutional>(input_shape, kernel_shape));
     const Shape flatten_layer_input_dimensions = neural_network.get_layer(0)->get_output_shape();
-    neural_network.add_layer(make_unique<Flatten<4>>(flatten_layer_input_dimensions));
+    neural_network.add_layer(make_unique<Flatten>(flatten_layer_input_dimensions));
     const Shape dense_layer_input_dimensions = neural_network.get_layer(1)->get_output_shape();
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(dense_layer_input_dimensions, dataset.get_target_shape()));
+    neural_network.add_layer(make_unique<opennn::Dense>(dense_layer_input_dimensions, dataset.get_target_shape()));
     neural_network.compile();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    const type error = loss.calculate_numerical_error();
+    const type error = calculate_numerical_error(loss);
     EXPECT_GE(error, 0);
 
-    const VectorR gradient = loss.calculate_gradient();
-    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
+    const VectorR gradient = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
@@ -145,19 +146,19 @@ TEST(MeanSquaredErrorTest, BackPropagatePooling)
     const Shape conv_output_dimensions = neural_network.get_layer(0)->get_output_shape();
     neural_network.add_layer(make_unique<Pooling>(conv_output_dimensions));
     const Shape pool_output_dimensions = neural_network.get_layer(1)->get_output_shape();
-    neural_network.add_layer(make_unique<Flatten<4>>(pool_output_dimensions));
+    neural_network.add_layer(make_unique<Flatten>(pool_output_dimensions));
     const Shape flatten_output_dimensions = neural_network.get_layer(2)->get_output_shape();
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(flatten_output_dimensions, dataset.get_target_shape()));
+    neural_network.add_layer(make_unique<opennn::Dense>(flatten_output_dimensions, dataset.get_target_shape()));
     neural_network.compile();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    const type error = loss.calculate_numerical_error();
+    const type error = calculate_numerical_error(loss);
     EXPECT_GE(error, 0);
 
-    const VectorR gradient = loss.calculate_gradient();
-    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
+    const VectorR gradient = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
@@ -181,19 +182,19 @@ TEST(MeanSquaredErrorTest, BackPropagateEmbedding)
 
     neural_network.add_layer(make_unique<Embedding>(Shape{ inputs_number, sequence_length }, embeding_dim));
     const Shape flatten_layer_input_dimensions = neural_network.get_layer(0)->get_output_shape();
-    neural_network.add_layer(make_unique<Flatten<3>>(Shape{ flatten_layer_input_dimensions }));
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ flattened_size }, Shape{ targets_number }));
+    neural_network.add_layer(make_unique<Flatten>(Shape{ flatten_layer_input_dimensions }));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{ flattened_size }, Shape{ targets_number }));
     neural_network.compile();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    const type error = loss.calculate_numerical_error();
+    const type error = calculate_numerical_error(loss);
     EXPECT_GE(error, 0);
 
-    const VectorR gradient = loss.calculate_gradient();
+    const VectorR gradient = calculate_gradient(loss);
 
-    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     // Embedding + Dense with large flattened sizes produces large gradients;
     // absolute tolerance must account for gradient magnitude.
@@ -218,15 +219,15 @@ TEST(MeanSquaredErrorTest, BackPropagateMultiheadAttention)
 
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<MultiHeadAttention>(dataset.get_input_shape(), heads_number));
-    neural_network.add_layer(make_unique<Flatten<3>>(neural_network.get_output_shape()));
+    neural_network.add_layer(make_unique<Flatten>(neural_network.get_output_shape()));
     neural_network.compile();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    const type error = loss.calculate_numerical_error();
-    const VectorR analytical_gradient = loss.calculate_gradient();
-    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
+    const type error = calculate_numerical_error(loss);
+    const VectorR analytical_gradient = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_GE(error, 0.0) << "MSE must be positive";
     EXPECT_LT((analytical_gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));

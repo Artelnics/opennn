@@ -76,8 +76,8 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     const bool is_gpu = Configuration::instance().is_gpu();
     const Device device = is_gpu ? Device::CUDA : Device::CPU;
 
-    const Type activation_dtype = is_gpu ? neural_network->get_training_type() : Type::FP32;
-    const Index activation_bytes = type_bytes(activation_dtype);
+    const Type compute_dtype = is_gpu ? neural_network->get_training_type() : Type::FP32;
+    const Index activation_bytes = type_bytes(compute_dtype);
 
     vector<vector<Type>> backward_dtypes(layers_number);
     for (Index i = 0; i < layers_number; ++i)
@@ -146,7 +146,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         output_deltas.setZero();
     }
 
-    const Index total_og_bytes = aligned_total_bytes(per_layer_output_delta_shapes, activation_dtype);
+    const Index total_og_bytes = aligned_total_bytes(per_layer_output_delta_shapes, compute_dtype);
 
     if (total_og_bytes > 0)
     {
@@ -162,7 +162,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         if (i == last_trainable_layer_index)
         {
             delta_views[i][0][0] = TensorView(output_deltas.as<uint8_t>(),
-                                              output_delta_dimensions, activation_dtype);
+                                              output_delta_dimensions, compute_dtype);
             continue;
         }
 
@@ -171,7 +171,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         if (backward_edges[i].size() > 1 && !per_layer_output_delta_shapes[i].empty())
         {
             delta_views[i][0][0] = TensorView(og_cursor,
-                                              per_layer_output_delta_shapes[i], activation_dtype);
+                                              per_layer_output_delta_shapes[i], compute_dtype);
             og_cursor += get_aligned_bytes(per_layer_output_delta_shapes[i].size() * activation_bytes);
             continue;
         }
@@ -192,7 +192,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
         output_deltas_view_device = TensorView(output_deltas.as<float>(),
                                                output_delta_dimensions,
-                                               activation_dtype);
+                                               compute_dtype);
     });
 }
 

@@ -172,6 +172,8 @@ struct BatchNorm : Operator
     TensorView running_mean;
     TensorView running_variance;
 
+    bool active() const { return features > 0; }
+
     void set(Index new_features, float new_momentum = 0.1f);
 
     vector<pair<Shape, Type>> parameter_specs() const override;
@@ -197,6 +199,7 @@ struct BatchNorm : Operator
 
     void to_JSON(JsonWriter& w) const override;
     void from_JSON(const Json* parent) override;
+    void load_state_from_JSON(const Json* parent);
 
 private:
     VectorR inference_scale;
@@ -239,7 +242,7 @@ struct Convolution : Operator
     Index kernel_width = 0;
     Index kernel_channels = 0;
 
-    Type activation_dtype = Type::FP32;
+    Type compute_dtype = Type::FP32;
 
     TensorView weights;
     TensorView bias;
@@ -266,7 +269,7 @@ struct Convolution : Operator
              Index kernels_n, Index kernel_h, Index kernel_w, Index kernel_c,
              Index row_stride, Index column_stride,
              Index padding_h, Index padding_w,
-             Type activation_dtype);
+             Type compute_dtype);
 
     vector<pair<Shape, Type>> parameter_specs() const override;
     void link_parameters(const vector<TensorView>& views) override;
@@ -357,9 +360,9 @@ struct MultiHeadProjection : Operator
     Index input_features = 0;
     Index heads_number = 0;
     Index head_dimension = 0;
-    Type activation_dtype = Type::FP32;
+    Type compute_dtype = Type::FP32;
 
-    void set(Index input_features, Index heads_number, Index head_dimension, Type activation_dtype);
+    void set(Index input_features, Index heads_number, Index head_dimension, Type compute_dtype);
 
     vector<pair<Shape, Type>> parameter_specs() const override { return combination.parameter_specs(); }
     void link_parameters(const vector<TensorView>& views) override { combination.link_parameters(views); }
@@ -385,7 +388,7 @@ struct Attention : Operator
     Index query_sequence_length = 0;
     Index source_sequence_length = 0;
     bool  use_causal_mask = false;
-    Type  activation_dtype = Type::FP32;
+    Type  compute_dtype = Type::FP32;
 
     MatrixR causal_mask;
 
@@ -393,7 +396,7 @@ struct Attention : Operator
 
     void set(Index heads_number, Index head_dimension,
              Index query_sequence_length, Index source_sequence_length,
-             bool use_causal_mask, Type activation_dtype);
+             bool use_causal_mask, Type compute_dtype);
 
     void set_dropout_rate(float rate) { dropout.set_rate(rate); }
 

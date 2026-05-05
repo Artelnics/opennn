@@ -55,7 +55,7 @@ Index Pooling::get_output_width() const
 vector<pair<Shape, Type>> Pooling::get_forward_specs(Index batch_size) const
 {
     const Shape out_shape = get_output_shape();
-    const Type act = activation_dtype;
+    const Type act = compute_dtype;
 
     vector<pair<Shape, Type>> specs;
 
@@ -69,7 +69,7 @@ vector<pair<Shape, Type>> Pooling::get_forward_specs(Index batch_size) const
 
 vector<pair<Shape, Type>> Pooling::get_backward_specs(Index batch_size) const
 {
-    return {{{batch_size, input_height, input_width, input_channels}, activation_dtype}};
+    return {{{batch_size, input_height, input_width, input_channels}, compute_dtype}};
 }
 
 void Pooling::update_pool_operator()

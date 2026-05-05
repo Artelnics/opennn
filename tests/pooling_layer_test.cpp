@@ -3,6 +3,7 @@
 #include "../opennn/pooling_layer.h"
 #include "../opennn/pooling_layer_3d.h"
 #include "../opennn/tensor_utilities.h"
+#include "../opennn/statistics.h"
 #include "../opennn/neural_network.h"
 
 using namespace opennn;

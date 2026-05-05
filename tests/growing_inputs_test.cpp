@@ -36,7 +36,7 @@ TEST(GrowingInputsTest, InputSelection)
     dataset.split_samples_random();
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{2}, Shape{1}));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{1}));
 
     TrainingStrategy training_strategy(&neural_network, &dataset);
 
@@ -68,7 +68,7 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
     dataset.split_samples_random();
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{1}, Shape{1}));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}));
 
     TrainingStrategy training_strategy(&neural_network, &dataset);
 

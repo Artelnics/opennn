@@ -39,7 +39,7 @@ int main()
         make_dataset(dataset);
 
         NeuralNetwork nn;
-        nn.add_layer(make_unique<opennn::Dense<2>>(Shape{2}, Shape{1}, "Linear"));
+        nn.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{1}, "Identity"));
         nn.compile();
         VectorMap(nn.get_parameters_data(), nn.get_parameters_size()).setConstant(type(0.1));
 
@@ -65,7 +65,7 @@ int main()
         make_dataset(dataset);
 
         NeuralNetwork nn;
-        nn.add_layer(make_unique<opennn::Dense<2>>(Shape{2}, Shape{1}, "Linear"));
+        nn.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{1}, "Identity"));
         nn.compile();
         VectorMap(nn.get_parameters_data(), nn.get_parameters_size()).setConstant(type(0.1));
 
@@ -91,7 +91,7 @@ int main()
         make_dataset(dataset);
 
         NeuralNetwork nn;
-        nn.add_layer(make_unique<opennn::Dense<2>>(Shape{2}, Shape{1}, "Linear"));
+        nn.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{1}, "Identity"));
         nn.compile();
         VectorMap(nn.get_parameters_data(), nn.get_parameters_size()).setConstant(type(0.1));
 
@@ -116,7 +116,7 @@ int main()
         make_dataset(dataset);
 
         NeuralNetwork nn;
-        nn.add_layer(make_unique<opennn::Dense<2>>(Shape{2}, Shape{1}, "Linear"));
+        nn.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{1}, "Identity"));
         nn.compile();
         VectorMap(nn.get_parameters_data(), nn.get_parameters_size()).setConstant(type(0.1));
 
@@ -141,7 +141,7 @@ int main()
         make_dataset(dataset);
 
         NeuralNetwork nn;
-        nn.add_layer(make_unique<opennn::Dense<2>>(Shape{2}, Shape{1}, "Linear"));
+        nn.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{1}, "Identity"));
         nn.compile();
         VectorMap(nn.get_parameters_data(), nn.get_parameters_size()).setConstant(type(0.1));
 

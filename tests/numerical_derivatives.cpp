@@ -72,7 +72,7 @@ VectorR calculate_gradient(Loss& loss)
     loss.back_propagate(batch, forward_propagation, back_propagation);
 
     return Map<const VectorR, AlignedMax>(back_propagation.gradient.as<float>(),
-                                          back_propagation.gradient.size());
+                                          back_propagation.gradient.size_in_floats());
 }
 
 VectorR calculate_numerical_gradient(Loss& loss)

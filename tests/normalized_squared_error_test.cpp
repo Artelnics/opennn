@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "numerical_derivatives.h"
 
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/dataset.h"
@@ -47,9 +48,9 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
     loss.set_normalization_coefficient();
     loss.set_regularization_weight(0.0);
 
-    const type error = loss.calculate_numerical_error();
-    const VectorR numerical_gradient = loss.calculate_numerical_gradient();
-    const VectorR gradient = loss.calculate_gradient();
+    const type error = calculate_numerical_error(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
+    const VectorR gradient = calculate_gradient(loss);
 
     EXPECT_GE(error, 0);
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));

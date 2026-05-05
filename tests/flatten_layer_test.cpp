@@ -12,11 +12,11 @@ protected:
     const Index channels = 3;
     const Shape input_shape{ height, width, channels };
 
-    unique_ptr<Flatten<4>> flatten_layer;
+    unique_ptr<Flatten> flatten_layer;
 
     void SetUp() override
     {
-        flatten_layer = make_unique<Flatten<4>>(input_shape);
+        flatten_layer = make_unique<Flatten>(input_shape);
     }
 };
 
@@ -25,7 +25,7 @@ TEST_F(FlattenLayerTest, Constructor)
 {
     EXPECT_EQ(flatten_layer->get_input_shape(), input_shape);
     EXPECT_EQ(flatten_layer->get_output_shape(), Shape{ height * width * channels });
-    EXPECT_EQ(flatten_layer->get_name(), "Flatten4d");
+    EXPECT_EQ(flatten_layer->get_name(), "Flatten");
 }
 
 
@@ -34,7 +34,7 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
     const Index batch_size = 2;
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<Flatten<4>>(input_shape));
+    neural_network.add_layer(make_unique<Flatten>(input_shape));
     neural_network.compile();
 
     Tensor4 inputs_data(batch_size, height, width, channels);
@@ -61,7 +61,7 @@ TEST_F(FlattenLayerTest, BackPropagate)
     const Index batch_size = 2;
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<Flatten<4>>(input_shape));
+    neural_network.add_layer(make_unique<Flatten>(input_shape));
     neural_network.compile();
 
     Tensor4 inputs_data(batch_size, height, width, channels);

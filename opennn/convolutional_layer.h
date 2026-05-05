@@ -53,7 +53,7 @@ public:
     Activation::Function get_activation_function() const { return activation.function; }
     Activation::Function get_output_activation() const override { return activation.function; }
 
-    bool get_batch_normalization() const { return batch_normalization; }
+    bool get_batch_normalization() const { return batch_norm.active(); }
 
     vector<Operator*> get_operators() override;
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
@@ -68,9 +68,9 @@ public:
              const string& = "convolutional_layer");
 
     void set_input_shape(const Shape&) override;
-    void set_activation_dtype(Type new_activation_dtype) override
+    void set_compute_dtype(Type new_compute_dtype) override
     {
-        Layer::set_activation_dtype(new_activation_dtype);
+        Layer::set_compute_dtype(new_compute_dtype);
         update_convolution_operator();
     }
 
@@ -105,9 +105,6 @@ private:
     Index column_stride = 1;
 
     bool use_padding = false;
-
-    bool batch_normalization = false;
-    float momentum = 0.9f;
 
     Convolution convolution;
     Activation  activation;

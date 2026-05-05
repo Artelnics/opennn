@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "numerical_derivatives.h"
 
 #include "../opennn/dense_layer.h"
 #include "../opennn/loss.h"
@@ -37,7 +38,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{inputs_n}, Shape{outputs_n}, "Linear"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_n}, Shape{outputs_n}, "Identity"));
     neural_network.compile();
 
     Loss loss(&neural_network, &dataset);
@@ -67,15 +68,15 @@ TEST(LevenbergMarquardtAlgorithmTest, TrainReducesError)
 
     // Use raw Dense network (no Scaling/Unscaling) — LM Jacobian only handles Dense<2>
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{inputs_n}, Shape{3}, "HyperbolicTangent"));
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{3}, Shape{outputs_n}, "Linear"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_n}, Shape{3}, "Tanh"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{3}, Shape{outputs_n}, "Identity"));
     neural_network.compile();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
     loss.set_regularization("None");
 
-    const type initial_error = loss.calculate_numerical_error();
+    const type initial_error = calculate_numerical_error(loss);
 
     LevenbergMarquardtAlgorithm lm(&loss);
     lm.set_display(false);

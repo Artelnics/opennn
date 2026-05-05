@@ -90,7 +90,7 @@ Index Convolutional::get_input_channels() const { return input_channels; }
 vector<Operator*> Convolutional::get_operators()
 {
     vector<Operator*> ops = {&convolution};
-    if (batch_normalization) ops.push_back(&batch_norm);
+    if (batch_norm.active()) ops.push_back(&batch_norm);
     return ops;
 }
 
@@ -103,10 +103,10 @@ vector<pair<Shape, Type>> Convolutional::get_forward_specs(Index batch_size) con
                 input_height + 2 * get_padding_height(),
                 input_width + 2 * get_padding_width(),
                 input_channels};
-    const Type act = activation_dtype;
+    const Type act = compute_dtype;
 
-    const Shape convolution_view_shape = batch_normalization ? output_shape          : Shape{};
-    const Shape bn_stat_shape          = batch_normalization ? Shape{kernels_number} : Shape{};
+    const Shape convolution_view_shape = batch_norm.active() ? output_shape          : Shape{};
+    const Shape bn_stat_shape          = batch_norm.active() ? Shape{kernels_number} : Shape{};
 
     return {
         /*PaddedInput*/              {padded_shape,           act},
@@ -119,7 +119,7 @@ vector<pair<Shape, Type>> Convolutional::get_forward_specs(Index batch_size) con
 
 vector<pair<Shape, Type>> Convolutional::get_backward_specs(Index batch_size) const
 {
-    return {{{batch_size, input_height, input_width, input_channels}, activation_dtype}};
+    return {{{batch_size, input_height, input_width, input_channels}, compute_dtype}};
 }
 
 void Convolutional::update_convolution_operator()
@@ -128,7 +128,7 @@ void Convolutional::update_convolution_operator()
                     kernels_number, kernel_height, kernel_width, kernel_channels,
                     row_stride, column_stride,
                     get_padding_height(), get_padding_width(),
-                    activation_dtype);
+                    compute_dtype);
 }
 
 // Setters
@@ -242,10 +242,10 @@ void Convolutional::set_activation_function(const string& new_activation_functio
 
 void Convolutional::set_batch_normalization(bool new_batch_normalization)
 {
-    batch_normalization = new_batch_normalization;
-
-    if (batch_normalization && kernels_number > 0)
-        batch_norm.set(kernels_number, momentum);
+    if (new_batch_normalization && kernels_number > 0)
+        batch_norm.set(kernels_number, batch_norm.momentum);
+    else
+        batch_norm.features = 0;
 }
 
 void Convolutional::set_parameters_glorot()
@@ -257,14 +257,14 @@ void Convolutional::set_parameters_glorot()
 
     set_random_uniform(parameters[Weight].as_vector(), -limit, limit);
     parameters[Bias].fill(0.0f);
-    if (batch_normalization) batch_norm.init_defaults();
+    if (batch_norm.active()) batch_norm.init_defaults();
 }
 
 void Convolutional::set_parameters_random()
 {
     set_random_uniform(parameters[Weight].as_vector());
     parameters[Bias].fill(0.0f);
-    if (batch_normalization) batch_norm.init_defaults();
+    if (batch_norm.active()) batch_norm.init_defaults();
 }
 
 // Forward / back propagation
@@ -293,7 +293,7 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
     const TensorView& conv_input = is_gpu ? input : padded_input;
 
-    if (batch_normalization)
+    if (batch_norm.active())
     {
         TensorView& combination_output = forward_views[ConvolutionView][0];
         convolution.apply(conv_input, combination_output);
@@ -335,7 +335,7 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
 
     activation.apply_delta(output, output_delta);
 
-    if (batch_normalization)
+    if (batch_norm.active())
         batch_norm.apply_delta(forward_views[ConvolutionView][0],
                                forward_views[BatchNormMean][0],
                                forward_views[BatchNormInverseVariance][0],
@@ -385,34 +385,23 @@ void Convolutional::from_JSON(const JsonDocument& document)
         throw runtime_error("Convolution type must be 'Valid' or 'Same'.");
     use_padding = (convolution_type == "Same");
 
-    batch_normalization = read_json_bool(convolutional_layer_element, "BatchNormalization");
+    const bool has_batch_norm = read_json_bool(convolutional_layer_element, "BatchNormalization");
 
     activation.from_JSON(convolutional_layer_element);
-    if (batch_normalization)
-    {
-        batch_norm.from_JSON(convolutional_layer_element);
-        momentum = batch_norm.momentum;
-    }
+    if (has_batch_norm) batch_norm.from_JSON(convolutional_layer_element);
 
     update_convolution_operator();
-    if (batch_normalization && kernels_number > 0)
-        batch_norm.set(kernels_number, momentum);
+    if (has_batch_norm && kernels_number > 0)
+        batch_norm.set(kernels_number, batch_norm.momentum);
 }
 
 void Convolutional::load_state_from_JSON(const JsonDocument& document)
 {
-    if (!batch_normalization) return;
+    if (!batch_norm.active()) return;
 
     const Json* convolutional_layer_element = get_json_root(document, "Convolutional");
 
-    VectorR tmp;
-    string_to_vector(read_json_string(convolutional_layer_element, "RunningMeans"), tmp);
-    if (tmp.size() == states[RunningMean].size() && states[RunningMean].data)
-        states[RunningMean].as_vector() = tmp;
-
-    string_to_vector(read_json_string(convolutional_layer_element, "RunningVariances"), tmp);
-    if (tmp.size() == states[RunningVariance].size() && states[RunningVariance].data)
-        states[RunningVariance].as_vector() = tmp;
+    batch_norm.load_state_from_JSON(convolutional_layer_element);
 }
 
 void Convolutional::to_JSON(JsonWriter& printer) const
@@ -428,17 +417,11 @@ void Convolutional::to_JSON(JsonWriter& printer) const
         {"KernelsChannels", to_string(get_kernel_channels())},
         {"StrideDimensions", shape_to_string({get_row_stride(), get_column_stride()})},
         {"Convolution", use_padding ? "Same" : "Valid"},
-        {"BatchNormalization", to_string(batch_normalization)}
+        {"BatchNormalization", to_string(batch_norm.active())}
     });
 
     activation.to_JSON(printer);
-    if (batch_normalization) batch_norm.to_JSON(printer);
-
-    if (batch_normalization)
-        write_json(printer, {
-            {"RunningMeans", vector_to_string(states[RunningMean].as_vector())},
-            {"RunningVariances", vector_to_string(states[RunningVariance].as_vector())}
-        });
+    if (batch_norm.active()) batch_norm.to_JSON(printer);
 
     printer.close_element();
 }

@@ -33,8 +33,8 @@ public:
     const Activation::Function& get_activation_function() const { return activation.function; }
     Activation::Function get_output_activation() const override { return activation.function; }
 
-    bool get_batch_normalization() const { return batch_normalization; }
-    float get_momentum() const { return momentum; }
+    bool get_batch_normalization() const { return batch_norm.active(); }
+    float get_momentum() const { return batch_norm.momentum; }
 
     vector<Operator*> get_operators() override;
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
@@ -48,14 +48,14 @@ public:
 
     void set_input_shape(const Shape&) override;
     void set_output_shape(const Shape&) override;
-    void set_activation_dtype(Type new_activation_dtype) override
+    void set_compute_dtype(Type new_compute_dtype) override
     {
-        Layer::set_activation_dtype(new_activation_dtype);
+        Layer::set_compute_dtype(new_compute_dtype);
         configure_operators();
     }
 
     void set_activation_function(const string&);
-    void set_batch_normalization(bool new_batch_normalization) { batch_normalization = new_batch_normalization; }
+    void set_batch_normalization(bool enable);
     void set_dropout_rate(float new_dropout_rate) { dropout.set_rate(new_dropout_rate); }
     void set_momentum(float new_momentum);
 
@@ -73,9 +73,6 @@ private:
 
     Shape input_shape;
     Index output_features = 0;
-
-    bool batch_normalization = false;
-    float momentum = 0.1f;
 
     Combination combination;
     Activation  activation;

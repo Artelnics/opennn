@@ -55,32 +55,30 @@ vector<pair<Shape, Type>> MultiHeadAttention::get_forward_specs(const Index batc
 {
     const Index head_dimension = get_head_dimension();
     const Index max_seq = max(query_sequence_length, source_sequence_length);
-    const Type act = activation_dtype;
 
     const auto attention_scratch = attention.forward_scratch_specs(batch_size);
 
     return {
-        {{batch_size, heads_number, query_sequence_length, head_dimension},  act}, // Query
-        {{batch_size, heads_number, source_sequence_length, head_dimension}, act}, // Key
-        attention_scratch[0],                                                      // AttentionWeights
-        attention_scratch[1],                                                      // AttentionWeightsDropped
-        {{batch_size, query_sequence_length, embedding_dimension},           act}, // ConcatenatedAttentionOutputs
-        {{batch_size, heads_number, source_sequence_length, head_dimension}, act}, // Value
-        {{batch_size, max_seq, embedding_dimension},                         act}, // TransposeScratch
-        {{batch_size, query_sequence_length, embedding_dimension},           act}, // Output
+        {{batch_size, heads_number, query_sequence_length, head_dimension},  compute_dtype}, // Query
+        {{batch_size, heads_number, source_sequence_length, head_dimension}, compute_dtype}, // Key
+        attention_scratch[0],                                                                   // AttentionWeights
+        attention_scratch[1],                                                                   // AttentionWeightsDropped
+        {{batch_size, query_sequence_length, embedding_dimension},           compute_dtype}, // ConcatenatedAttentionOutputs
+        {{batch_size, heads_number, source_sequence_length, head_dimension}, compute_dtype}, // Value
+        {{batch_size, max_seq, embedding_dimension},                         compute_dtype}, // TransposeScratch
+        {{batch_size, query_sequence_length, embedding_dimension},           compute_dtype}, // Output
     };
 }
 
 vector<pair<Shape, Type>> MultiHeadAttention::get_backward_specs(Index batch_size) const
 {
     const Index head_dimension = get_head_dimension();
-    const Type act = activation_dtype;
 
     return {
-        {{batch_size, query_sequence_length, embedding_dimension},                  act}, // InputQueryDelta
-        {{batch_size, source_sequence_length, embedding_dimension},                 act}, // InputSourceDelta
-        {{batch_size, heads_number, query_sequence_length, source_sequence_length}, act}, // AttentionWeightDelta
-        {{batch_size, heads_number, source_sequence_length, head_dimension},        act}, // ValueDelta (transposed)
+        {{batch_size, query_sequence_length, embedding_dimension},                  compute_dtype}, // InputQueryDelta
+        {{batch_size, source_sequence_length, embedding_dimension},                 compute_dtype}, // InputSourceDelta
+        {{batch_size, heads_number, query_sequence_length, source_sequence_length}, compute_dtype}, // AttentionWeightDelta
+        {{batch_size, heads_number, source_sequence_length, head_dimension},        compute_dtype}, // ValueDelta (transposed)
     };
 }
 
@@ -131,14 +129,14 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
 
     const Index head_dimension = get_head_dimension();
 
-    query_projection .set(embedding_dimension, heads_number, head_dimension, activation_dtype);
-    key_projection   .set(embedding_dimension, heads_number, head_dimension, activation_dtype);
-    value_projection .set(embedding_dimension, heads_number, head_dimension, activation_dtype);
-    output_projection.set(embedding_dimension, embedding_dimension, activation_dtype);
+    query_projection .set(embedding_dimension, heads_number, head_dimension, compute_dtype);
+    key_projection   .set(embedding_dimension, heads_number, head_dimension, compute_dtype);
+    value_projection .set(embedding_dimension, heads_number, head_dimension, compute_dtype);
+    output_projection.set(embedding_dimension, embedding_dimension, compute_dtype);
 
     attention.set(heads_number, head_dimension,
                   query_sequence_length, source_sequence_length,
-                  new_use_causal_mask, activation_dtype);
+                  new_use_causal_mask, compute_dtype);
 }
 
 // link_parameters() is inherited from Layer; the base auto-distributes slices
@@ -168,7 +166,7 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     key_projection  .apply(source_input, key,   transpose_scratch);
     value_projection.apply(source_input, value, transpose_scratch);
 
-    TensorView attention_out_scratch(transpose_scratch, heads_shape(batch_size), activation_dtype);
+    TensorView attention_out_scratch(transpose_scratch, heads_shape(batch_size), compute_dtype);
 
     attention.apply(query, key, value, source_input,
                     attention_weights,
@@ -224,10 +222,10 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 
     TensorView query_gradient(delta_views[InputQueryDelta][0].as<float>(),
                           heads_shape(batch_size),
-                          activation_dtype);
+                          compute_dtype);
     TensorView key_gradient(delta_views[InputSourceDelta][0].as<float>(),
                         {batch_size, heads_number, source_sequence_length, head_dimension},
-                        activation_dtype);
+                        compute_dtype);
 
     TensorView concat_gradient_4d = delta_views[InputQueryDelta][0].reshape(concat_shape(batch_size));
     TensorView scratch_4d     = forward_views[TransposeScratch][0].reshape(heads_shape(batch_size));

@@ -377,8 +377,6 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
     const VectorR& training_direction = optimization_data.training_direction;
     VectorR& potential_parameters = optimization_data.potential_parameters;
 
-    const float slope = training_slope;
-
     for (int i = 0; i < 20; ++i)
     {
         potential_parameters = parameters + training_direction * alpha;
@@ -387,7 +385,7 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
         loss->calculate_error(batch, forward_propagation, back_propagation);
         const float new_loss = back_propagation.error + loss->calculate_regularization(potential_parameters);
 
-        if (new_loss <= current_loss + armijo_constant * alpha * slope)
+        if (new_loss <= current_loss + armijo_constant * alpha * training_slope)
             return {alpha, new_loss};
 
         alpha *= rho;

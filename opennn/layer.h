@@ -172,9 +172,9 @@ public:
 
     bool get_is_trainable() const { return is_trainable; }
 
-    Type get_activation_dtype() const { return activation_dtype; }
+    Type get_compute_dtype() const { return compute_dtype; }
 
-    virtual void set_activation_dtype(Type new_activation_dtype) { activation_dtype = new_activation_dtype; }
+    virtual void set_compute_dtype(Type new_compute_dtype) { compute_dtype = new_compute_dtype; }
 
     virtual float* link_parameters(float* pointer);
 
@@ -210,7 +210,7 @@ protected:
 
     bool is_first_layer = false;
 
-    Type activation_dtype = Type::FP32;
+    Type compute_dtype = Type::FP32;
 
     vector<TensorView> parameters;
     vector<TensorView> states;

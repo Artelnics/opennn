@@ -29,18 +29,17 @@ public:
     vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
         const Index outputs_number = get_outputs_number();
-        const Type act = activation_dtype;
 
         return {
-            {{batch_size, outputs_number},             act},
-            {{batch_size, time_steps, outputs_number}, act},
-            {{batch_size, time_steps, outputs_number}, act},
+            {{batch_size, outputs_number},             compute_dtype},
+            {{batch_size, time_steps, outputs_number}, compute_dtype},
+            {{batch_size, time_steps, outputs_number}, compute_dtype},
         };
     }
 
     vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{{batch_size, time_steps, input_features}, activation_dtype}};
+        return {{{batch_size, time_steps, input_features}, compute_dtype}};
     }
 
     void set(const Shape& = {}, const Shape& = {});

@@ -65,17 +65,17 @@ public:
              bool new_use_causal_mask = false,
              const string& new_label = "multihead_attention_layer");
 
-    void set_activation_dtype(Type new_activation_dtype) override
+    void set_compute_dtype(Type new_compute_dtype) override
     {
-        Layer::set_activation_dtype(new_activation_dtype);
-        query_projection .activation_dtype          = new_activation_dtype;
-        query_projection .combination.weight_type   = new_activation_dtype;
-        key_projection   .activation_dtype          = new_activation_dtype;
-        key_projection   .combination.weight_type   = new_activation_dtype;
-        value_projection .activation_dtype          = new_activation_dtype;
-        value_projection .combination.weight_type   = new_activation_dtype;
-        output_projection.weight_type               = new_activation_dtype;
-        attention.activation_dtype                  = new_activation_dtype;
+        Layer::set_compute_dtype(new_compute_dtype);
+        query_projection .compute_dtype          = new_compute_dtype;
+        query_projection .combination.weight_type   = new_compute_dtype;
+        key_projection   .compute_dtype          = new_compute_dtype;
+        key_projection   .combination.weight_type   = new_compute_dtype;
+        value_projection .compute_dtype          = new_compute_dtype;
+        value_projection .combination.weight_type   = new_compute_dtype;
+        output_projection.weight_type               = new_compute_dtype;
+        attention.compute_dtype                  = new_compute_dtype;
     }
 
     void set_dropout_rate(float new_dropout_rate) { attention.set_dropout_rate(new_dropout_rate); }

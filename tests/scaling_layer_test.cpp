@@ -8,7 +8,7 @@ using namespace opennn;
 
 TEST(ScalingLayerTest, DefaultConstructor)
 {
-    Scaling<2> scaling_layer_2d({0});
+    Scaling scaling_layer_2d({0});
 
     EXPECT_EQ(scaling_layer_2d.get_input_shape(), Shape{0});
     EXPECT_EQ(scaling_layer_2d.get_output_shape(), Shape{0});
@@ -17,11 +17,11 @@ TEST(ScalingLayerTest, DefaultConstructor)
 
 TEST(ScalingLayerTest, GeneralConstructor)
 {
-    Scaling<2> scaling_layer_2d({1});
+    Scaling scaling_layer_2d({1});
 
     EXPECT_EQ(scaling_layer_2d.get_input_shape(), Shape{ 1 });
     EXPECT_EQ(scaling_layer_2d.get_output_shape(), Shape{ 1 });
-    EXPECT_EQ(scaling_layer_2d.get_name(), "Scaling2d");
+    EXPECT_EQ(scaling_layer_2d.get_name(), "Scaling");
 }
 
 
@@ -35,10 +35,10 @@ TEST(ScalingLayerTest, ForwardPropagate)
     // Test None: scaling layer just copies input to output
     {
         NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<Scaling<2>>(Shape{inputs_number}));
+        neural_network.add_layer(make_unique<Scaling>(Shape{inputs_number}));
         neural_network.compile();
 
-        Scaling<2>* layer = static_cast<Scaling<2>*>(neural_network.get_layer(0).get());
+        Scaling* layer = static_cast<Scaling*>(neural_network.get_layer(0).get());
         layer->set_scalers("None");
 
         Tensor2 inputs(samples_number, inputs_number);
@@ -59,10 +59,10 @@ TEST(ScalingLayerTest, ForwardPropagate)
         samples_number = 3;
 
         NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<Scaling<2>>(Shape{inputs_number}));
+        neural_network.add_layer(make_unique<Scaling>(Shape{inputs_number}));
         neural_network.compile();
 
-        Scaling<2>* layer = static_cast<Scaling<2>*>(neural_network.get_layer(0).get());
+        Scaling* layer = static_cast<Scaling*>(neural_network.get_layer(0).get());
         layer->set_scalers("MinimumMaximum");
 
         Tensor2 inputs(samples_number, inputs_number);

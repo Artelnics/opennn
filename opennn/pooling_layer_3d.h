@@ -59,19 +59,18 @@ private:
 
     vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
-        const Type act = activation_dtype;
         return {
             {(pooling_method == PoolingMethod::MaxPooling)
                 ? Shape{batch_size, input_features}
                 : Shape{},
-             Type::FP32},                          // MaximalIndices
-            {{batch_size, input_features}, act},   // Output (must be last)
+             Type::FP32},                                       // MaximalIndices
+            {{batch_size, input_features}, compute_dtype},   // Output (must be last)
         };
     }
 
     vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{{batch_size, sequence_length, input_features}, activation_dtype}};
+        return {{{batch_size, sequence_length, input_features}, compute_dtype}};
     }
 
     Index sequence_length = 0;

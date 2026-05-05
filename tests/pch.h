@@ -17,4 +17,6 @@
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "gtest/gtest.h"
 
+using type = float;
+
 #endif
