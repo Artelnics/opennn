@@ -126,21 +126,20 @@ private:
     vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
         const Shape out_shape = get_output_shape();
-        const Type act = activation_dtype;
 
         vector<pair<Shape, Type>> specs;
 
         if (pooling_method == PoolingMethod::MaxPooling)
-            specs.push_back({Shape{batch_size}.append(out_shape), act}); // MaximalIndices
+            specs.push_back({Shape{batch_size}.append(out_shape), compute_dtype}); // MaximalIndices
 
-        specs.push_back({Shape{batch_size}.append(out_shape), act}); // Output (must be last)
+        specs.push_back({Shape{batch_size}.append(out_shape), compute_dtype}); // Output (must be last)
 
         return specs;
     }
 
     vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{{batch_size, input_height, input_width, input_channels}, activation_dtype}};
+        return {{{batch_size, input_height, input_width, input_channels}, compute_dtype}};
     }
 
     Index input_height = 0;

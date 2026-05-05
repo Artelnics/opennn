@@ -30,47 +30,55 @@ Dense::Dense(const Shape& new_input_shape,
 
 Shape Dense::get_output_shape() const
 {
-    Shape result = input_shape;
-    if (result.empty()) return {output_features};
-    result.back() = output_features;
-    return result;
+    if (input_shape.empty()) return {output_features};
+    Shape output_shape = input_shape;
+    output_shape.back() = output_features;
+    return output_shape;
 }
 
 vector<Operator*> Dense::get_operators()
 {
-    vector<Operator*> ops = {&combination};
-    if (batch_normalization) ops.push_back(&batch_norm);
-    return ops;
+    vector<Operator*> operators = {&combination};
+    if (batch_norm.active()) operators.push_back(&batch_norm);
+    return operators;
 }
 
 vector<pair<Shape, Type>> Dense::get_forward_specs(Index batch_size) const
 {
     const Shape output_shape = Shape{batch_size}.append(get_output_shape());
-    const Type act = activation_dtype;
 
     const Shape activation_shape   = dropout.active()        ? output_shape           : Shape{};
-    const Shape combination_shape  = batch_normalization     ? output_shape           : Shape{};
-    const Shape bn_stat_shape      = batch_normalization     ? Shape{output_features} : Shape{};
+    const Shape combination_shape  = batch_norm.active()     ? output_shape           : Shape{};
+    const Shape bn_stat_shape      = batch_norm.active()     ? Shape{output_features} : Shape{};
 
     return {
-        {combination_shape, act},        // Combination
-        {bn_stat_shape,     Type::FP32}, // BatchNormMean
-        {bn_stat_shape,     Type::FP32}, // BatchNormInverseVariance
-        {activation_shape,  act},        // Activation
-        {output_shape,      act},        // Output
+        {combination_shape, compute_dtype}, // Combination
+        {bn_stat_shape,     Type::FP32},       // BatchNormMean
+        {bn_stat_shape,     Type::FP32},       // BatchNormInverseVariance
+        {activation_shape,  compute_dtype}, // Activation
+        {output_shape,      compute_dtype}, // Output
     };
 }
 
 vector<pair<Shape, Type>> Dense::get_backward_specs(Index batch_size) const
 {
-    return {{Shape{batch_size}.append(get_input_shape()), activation_dtype}};
+    return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
 }
 
 void Dense::configure_operators()
 {
-    combination.set(get_input_features(), output_features, activation_dtype);
-    if (batch_normalization)
-        batch_norm.set(output_features, momentum);
+    combination.set(get_input_features(), output_features, compute_dtype);
+
+    if (batch_norm.active())
+        batch_norm.set(output_features, batch_norm.momentum);
+}
+
+void Dense::set_batch_normalization(bool enable)
+{
+    if (enable)
+        batch_norm.set(output_features, batch_norm.momentum);
+    else
+        batch_norm.features = 0;
 }
 
 void Dense::set(const Shape& new_input_shape,
@@ -137,9 +145,9 @@ void Dense::set_momentum(float new_momentum)
     if (new_momentum < 0.0f || new_momentum >= 1.0f)
         throw runtime_error("Batch normalization momentum must be in [0,1).");
 
-    momentum = new_momentum;
-    if (batch_normalization)
-        batch_norm.set(output_features, momentum);
+    batch_norm.momentum = new_momentum;
+    if (batch_norm.active())
+        batch_norm.set(output_features, batch_norm.momentum);
 }
 
 void Dense::set_parameters_glorot()
@@ -147,18 +155,15 @@ void Dense::set_parameters_glorot()
     const float limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
     set_random_uniform(parameters[Weight].as_vector(), -limit, limit);
     parameters[Bias].fill(0.0f);
-    if (batch_normalization) batch_norm.init_defaults();
+    if (batch_norm.active()) batch_norm.init_defaults();
 }
 
 void Dense::set_parameters_random()
 {
     set_random_uniform(parameters[Weight].as_vector());
     parameters[Bias].fill(0.0f);
-    if (batch_normalization) batch_norm.init_defaults();
+    if (batch_norm.active()) batch_norm.init_defaults();
 }
-
-// link_parameters() and link_states() are inherited from Layer; the base
-// auto-distributes slices to each operator returned by get_operators().
 
 void Dense::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
@@ -167,7 +172,7 @@ void Dense::forward_propagate(ForwardPropagation& forward_propagation, size_t la
     const TensorView& input = forward_views[Input][0];
     TensorView& output      = forward_views[Output][0];
 
-    if (batch_normalization)
+    if (batch_norm.active())
     {
         TensorView& combination_out = forward_views[CombinationView][0];
         combination.apply(input, combination_out);
@@ -220,7 +225,7 @@ void Dense::back_propagate(ForwardPropagation& forward_propagation,
                                   : output;
     activation.apply_delta(act_outputs, output_delta);
 
-    if (batch_normalization)
+    if (batch_norm.active())
         batch_norm.apply_delta(forward_views[CombinationView][0],
                                forward_views[BatchNormMean][0],
                                forward_views[BatchNormInverseVariance][0],
@@ -258,32 +263,23 @@ void Dense::from_JSON(const JsonDocument& document)
     set_input_shape(string_to_shape(read_json_string(dense_layer_element, "InputDimensions")));
     set_output_shape({ read_json_index(dense_layer_element, "NeuronsNumber") });
 
-    set_batch_normalization(read_json_bool(dense_layer_element, "BatchNormalization"));
+    if (dense_layer_element->has("Momentum"))
+        set_batch_normalization(true);
 
     activation.from_JSON(dense_layer_element);
     dropout.from_JSON(dense_layer_element);
-    if (batch_normalization)
-    {
+    if (batch_norm.active())
         batch_norm.from_JSON(dense_layer_element);
-        momentum = batch_norm.momentum;
-    }
 }
 
 void Dense::load_state_from_JSON(const JsonDocument& document)
 {
-    if (!batch_normalization) return;
+    if (!batch_norm.active()) return;
 
     const Json* dense_layer_element = document.first_child("Dense");
     if (!dense_layer_element) throw runtime_error(name + " element is nullptr.");
 
-    VectorR tmp;
-    string_to_vector(read_json_string(dense_layer_element, "RunningMeans"), tmp);
-    if (tmp.size() == states[RunningMean].size() && states[RunningMean].data)
-        states[RunningMean].as_vector() = tmp;
-
-    string_to_vector(read_json_string(dense_layer_element, "RunningVariances"), tmp);
-    if (tmp.size() == states[RunningVariance].size() && states[RunningVariance].data)
-        states[RunningVariance].as_vector() = tmp;
+    batch_norm.load_state_from_JSON(dense_layer_element);
 }
 
 void Dense::to_JSON(JsonWriter& printer) const
@@ -293,19 +289,13 @@ void Dense::to_JSON(JsonWriter& printer) const
     write_json(printer, {
         {"Label", label},
         {"InputDimensions", shape_to_string(input_shape)},
-        {"NeuronsNumber", to_string(output_features)},
-        {"BatchNormalization", to_string(batch_normalization)}
+        {"NeuronsNumber", to_string(output_features)}
     });
 
     activation.to_JSON(printer);
     dropout.to_JSON(printer);
-    if (batch_normalization) batch_norm.to_JSON(printer);
 
-    if (batch_normalization)
-        write_json(printer, {
-            {"RunningMeans", vector_to_string(states[RunningMean].as_vector())},
-            {"RunningVariances", vector_to_string(states[RunningVariance].as_vector())}
-        });
+    if (batch_norm.active()) batch_norm.to_JSON(printer);
 
     printer.close_element();
 }

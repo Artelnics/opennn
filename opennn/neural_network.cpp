@@ -57,7 +57,7 @@ void NeuralNetwork::compile()
     config = Configuration::instance().resolve();
 
     for (auto& layer : layers)
-        layer->set_activation_dtype(get_training_type());
+        layer->set_compute_dtype(get_training_type());
 
     parameters.resize_bytes(aligned_total_elements(get_parameter_shapes()) * Index(sizeof(float)),
                             Device::CPU);

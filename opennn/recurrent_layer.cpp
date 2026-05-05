@@ -29,11 +29,10 @@ Shape Recurrent::get_output_shape() const
 
 vector<pair<Shape, Type>> Recurrent::get_parameter_specs() const
 {
-    const Type act = activation_dtype;
     return {
-        {biases.shape,            act},
-        {input_weights.shape,     act},
-        {recurrent_weights.shape, act},
+        {biases.shape,            compute_dtype},
+        {input_weights.shape,     compute_dtype},
+        {recurrent_weights.shape, compute_dtype},
     };
 }
 
@@ -47,11 +46,10 @@ void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
     time_steps = new_input_shape[0];
     input_features = new_input_shape[1];
 
-    const Index inputs_number = input_features;
     const Index outputs_number = new_output_shape[0];
 
     biases.shape = {outputs_number};
-    input_weights.shape = {inputs_number, outputs_number};
+    input_weights.shape = {input_features, outputs_number};
     recurrent_weights.shape = {outputs_number, outputs_number};
 
     label = "recurrent_layer";
@@ -67,10 +65,9 @@ void Recurrent::set_input_shape(const Shape& new_input_shape)
     time_steps = new_input_shape[0];
     input_features = new_input_shape[1];
 
-    const Index inputs_number = input_features;
     const Index outputs_number = get_outputs_number();
 
-    input_weights.shape = {inputs_number, outputs_number};
+    input_weights.shape = {input_features, outputs_number};
 }
 
 void Recurrent::set_output_shape(const Shape& new_output_shape)

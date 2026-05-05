@@ -22,15 +22,14 @@ Addition::Addition(const Shape& new_input_shape, const string& new_name)
 
 vector<pair<Shape, Type>> Addition::get_forward_specs(Index batch_size) const
 {
-    return {{Shape{batch_size}.append(input_shape), activation_dtype}};
+    return {{Shape{batch_size}.append(input_shape), compute_dtype}};
 }
 
 vector<pair<Shape, Type>> Addition::get_backward_specs(Index batch_size) const
 {
-    const Type act = activation_dtype;
     return {
-        {Shape{batch_size}.append(input_shape), act}, // InputDelta0
-        {Shape{batch_size}.append(input_shape), act}, // InputDelta1
+        {Shape{batch_size}.append(input_shape), compute_dtype}, // InputDelta0
+        {Shape{batch_size}.append(input_shape), compute_dtype}, // InputDelta1
     };
 }
 

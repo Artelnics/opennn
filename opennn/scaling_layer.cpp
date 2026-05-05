@@ -22,7 +22,7 @@ Scaling::Scaling(const Shape& new_input_shape)
 
 vector<pair<Shape, Type>> Scaling::get_forward_specs(Index batch_size) const
 {
-    return {{Shape{batch_size}.append(input_shape), activation_dtype}}; // Output
+    return {{Shape{batch_size}.append(input_shape), compute_dtype}}; // Output
 }
 
 vector<pair<Shape, Type>> Scaling::get_state_specs() const

@@ -59,9 +59,6 @@ private:
     ConvolutionType convolution_type = ConvolutionType::Valid;
     bool use_padding = false;
 
-    bool batch_normalization = false;
-    float momentum = 0.9f;
-
     Convolution convolution;
     Activation  activation;
     BatchNorm   batch_norm;
@@ -81,17 +78,15 @@ private:
                     input_height + 2 * get_padding_height(),
                     input_width + 2 * get_padding_width(),
                     input_channels};
-        const Type act = activation_dtype;
-
-        const Shape convolution_view_shape = batch_normalization ? output_shape      : Shape{};
-        const Shape bn_stat_shape     = batch_normalization ? Shape{kernels_number}  : Shape{};
+        const Shape convolution_view_shape = batch_norm.active() ? output_shape      : Shape{};
+        const Shape bn_stat_shape     = batch_norm.active() ? Shape{kernels_number}  : Shape{};
 
         return {
-            {padded_shape,           act},        // PaddedInputs
-            {convolution_view_shape, act},        // ConvolutionView
-            {bn_stat_shape,          Type::FP32}, // BatchNormMean
-            {bn_stat_shape,          Type::FP32}, // BatchNormInverseVariance
-            {output_shape,           act},        // Output
+            {padded_shape,           compute_dtype}, // PaddedInputs
+            {convolution_view_shape, compute_dtype}, // ConvolutionView
+            {bn_stat_shape,          Type::FP32},       // BatchNormMean
+            {bn_stat_shape,          Type::FP32},       // BatchNormInverseVariance
+            {output_shape,           compute_dtype}, // Output
         };
     }
 
@@ -99,7 +94,7 @@ private:
 
     vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{{batch_size, input_height, input_width, input_channels}, activation_dtype}};
+        return {{{batch_size, input_height, input_width, input_channels}, compute_dtype}};
     }
 
 public:
@@ -141,7 +136,7 @@ public:
     Activation::Function get_activation_function() const { return activation.function; }
     Activation::Function get_output_activation() const override { return activation.function; }
 
-    bool get_batch_normalization() const { return batch_normalization; }
+    bool get_batch_normalization() const { return batch_norm.active(); }
 
     // Setters
 
@@ -155,9 +150,9 @@ public:
 
     void set_input_shape(const Shape&) override;
 
-    void set_activation_dtype(Type new_activation_dtype) override
+    void set_compute_dtype(Type new_compute_dtype) override
     {
-        Layer::set_activation_dtype(new_activation_dtype);
+        Layer::set_compute_dtype(new_compute_dtype);
         configure_operators();
     }
 

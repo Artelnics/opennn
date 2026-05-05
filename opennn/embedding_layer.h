@@ -41,12 +41,12 @@ public:
     vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
         return {{{batch_size, sequence_length, embedding_dimension},
-                 activation_dtype}}; // Output
+                 compute_dtype}}; // Output
     }
 
     vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{{batch_size, sequence_length}, activation_dtype}};
+        return {{{batch_size, sequence_length}, compute_dtype}};
     }
 
     void set(const Index = 0,

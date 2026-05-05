@@ -207,6 +207,33 @@ void sgd_update_cuda(
         learning_rate, momentum, nesterov);
 }
 
+__global__ void clip_apply_kernel(const int n,
+                                  const float* __restrict__ squared_norm,
+                                  const float max_norm,
+                                  float* __restrict__ gradient)
+{
+    const float norm = sqrtf(*squared_norm);
+    if (norm <= max_norm) return;
+    const float scale = max_norm / (norm + 1e-6f);
+
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int stride = blockDim.x * gridDim.x;
+    for (int i = tid; i < n; i += stride)
+        gradient[i] *= scale;
+}
+
+void clip_gradient_norm_cuda(const Index n,
+                             float* gradient,
+                             const float* squared_norm,
+                             const float max_norm)
+{
+    if (n == 0) return;
+    const int total = static_cast<int>(n);
+    const int grid = grid_size_for(total);
+    clip_apply_kernel<<<grid, block_size, 0, opennn::Backend::get_compute_stream()>>>(
+        total, squared_norm, max_norm, gradient);
+}
+
 // Element-wise FP32 → BF16 cast. Used to refresh the BF16 working copy of
 // network parameters after each Adam step (master FP32 stays the source of
 // truth, BF16 mirror feeds GEMMs that hit BF16 Tensor Cores).

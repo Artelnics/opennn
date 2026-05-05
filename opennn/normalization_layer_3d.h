@@ -46,22 +46,21 @@ public:
 
     vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
     {
-        const Type act = activation_dtype;
         const Shape normalized_shape = Configuration::instance().is_gpu()
             ? Shape{}
             : Shape{batch_size, sequence_length, embedding_dimension};
 
         return {
-            {{batch_size, sequence_length},                      Type::FP32}, // Means
-            {{batch_size, sequence_length},                      Type::FP32}, // StandardDeviations
-            {normalized_shape,                                   act},        // NormalizedInputs
-            {{batch_size, sequence_length, embedding_dimension}, act},        // Output
+            {{batch_size, sequence_length},                      Type::FP32},      // Means
+            {{batch_size, sequence_length},                      Type::FP32},      // StandardDeviations
+            {normalized_shape,                                   compute_dtype}, // NormalizedInputs
+            {{batch_size, sequence_length, embedding_dimension}, compute_dtype}, // Output
         };
     }
 
     vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
     {
-        return {{{batch_size, sequence_length, embedding_dimension}, activation_dtype}};
+        return {{{batch_size, sequence_length, embedding_dimension}, compute_dtype}};
     }
 
     void set(const Index = 0, Index = 0, const string& = "normalization_layer_3d");

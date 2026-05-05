@@ -16,6 +16,8 @@ void adam_update_cuda(const Index, float*, float*, float*, const float*, const f
 
 void sgd_update_cuda(const Index, float*, float*, const float*, const float, const float, const bool);
 
+void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm);
+
 // Cast FP32 source buffer to a BF16 destination buffer of the same length.
 // Used to refresh the BF16 working copy of network parameters after each
 // Adam step (master FP32 → working BF16 mirror), and by Batch::copy_device_async

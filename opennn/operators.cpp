@@ -337,12 +337,38 @@ void BatchNorm::init_defaults()
 void BatchNorm::to_JSON(JsonWriter& w) const
 {
     add_json_field(w, "Momentum", to_string(momentum));
+
+    if (running_mean.data)
+        add_json_field(w, "RunningMeans", vector_to_string(running_mean.as_vector()));
+    if (running_variance.data)
+        add_json_field(w, "RunningVariances", vector_to_string(running_variance.as_vector()));
 }
 
 void BatchNorm::from_JSON(const Json* parent)
 {
     if (parent && parent->has("Momentum"))
         momentum = float(read_json_type(parent, "Momentum"));
+}
+
+void BatchNorm::load_state_from_JSON(const Json* parent)
+{
+    if (!parent) return;
+
+    VectorR tmp;
+    if (parent->has("RunningMeans"))
+    {
+        string_to_vector(read_json_string(parent, "RunningMeans"), tmp);
+        if (running_mean.data && tmp.size() == running_mean.size())
+            running_mean.as_vector() = tmp;
+    }
+    if (parent->has("RunningVariances"))
+    {
+        string_to_vector(read_json_string(parent, "RunningVariances"), tmp);
+        if (running_variance.data && tmp.size() == running_variance.size())
+            running_variance.as_vector() = tmp;
+    }
+
+    invalidate_inference_cache();
 }
 
 void BatchNorm::update_inference_cache()
@@ -706,7 +732,7 @@ void Convolution::set(Index new_input_h, Index new_input_w, Index new_input_c,
                       Index new_kernels_n, Index new_kernel_h, Index new_kernel_w, Index new_kernel_c,
                       Index new_row_stride, Index new_column_stride,
                       Index new_padding_h, Index new_padding_w,
-                      Type new_activation_dtype)
+                      Type new_compute_dtype)
 {
     input_height     = new_input_h;
     input_width      = new_input_w;
@@ -719,7 +745,7 @@ void Convolution::set(Index new_input_h, Index new_input_w, Index new_input_c,
     column_stride    = new_column_stride;
     padding_height   = new_padding_h;
     padding_width    = new_padding_w;
-    activation_dtype = new_activation_dtype;
+    compute_dtype = new_compute_dtype;
 
 #ifdef OPENNN_WITH_CUDA
     // Filter and convolution descriptors are batch_size-independent. Algorithm
@@ -729,7 +755,7 @@ void Convolution::set(Index new_input_h, Index new_input_w, Index new_input_c,
     {
         if (!kernel_descriptor) cudnnCreateFilterDescriptor(&kernel_descriptor);
         cudnnSetFilter4dDescriptor(kernel_descriptor,
-                                   to_cudnn(activation_dtype),
+                                   to_cudnn(compute_dtype),
                                    CUDNN_TENSOR_NHWC,
                                    to_int(kernels_number), to_int(kernel_channels),
                                    to_int(kernel_height),  to_int(kernel_width));
@@ -766,8 +792,8 @@ Index Convolution::get_output_width() const
 vector<pair<Shape, Type>> Convolution::parameter_specs() const
 {
     return {
-        {{kernels_number}, activation_dtype},                                                       // Bias
-        {{kernels_number, kernel_height, kernel_width, kernel_channels}, activation_dtype},         // Weight
+        {{kernels_number}, compute_dtype},                                                       // Bias
+        {{kernels_number, kernel_height, kernel_width, kernel_channels}, compute_dtype},         // Weight
     };
 }
 
@@ -1308,14 +1334,14 @@ void LayerNorm::apply_delta_gpu(const TensorView&, const TensorView&, const Tens
 
 
 void MultiHeadProjection::set(Index new_input_features, Index new_heads_number,
-                              Index new_head_dimension, Type new_activation_dtype)
+                              Index new_head_dimension, Type new_compute_dtype)
 {
     input_features   = new_input_features;
     heads_number     = new_heads_number;
     head_dimension   = new_head_dimension;
-    activation_dtype = new_activation_dtype;
+    compute_dtype = new_compute_dtype;
 
-    combination.set(input_features, heads_number * head_dimension, activation_dtype);
+    combination.set(input_features, heads_number * head_dimension, compute_dtype);
 }
 
 void MultiHeadProjection::apply(const TensorView& input, TensorView& head_output, float* scratch)
@@ -1357,14 +1383,14 @@ void MultiHeadProjection::apply_delta(const TensorView& head_gradient,
 
 void Attention::set(Index new_heads_number, Index new_head_dimension,
                     Index new_query_sequence_length, Index new_source_sequence_length,
-                    bool new_use_causal_mask, Type new_activation_dtype)
+                    bool new_use_causal_mask, Type new_compute_dtype)
 {
     heads_number = new_heads_number;
     head_dimension = new_head_dimension;
     query_sequence_length = new_query_sequence_length;
     source_sequence_length = new_source_sequence_length;
     use_causal_mask = new_use_causal_mask;
-    activation_dtype = new_activation_dtype;
+    compute_dtype = new_compute_dtype;
 
     if (use_causal_mask && query_sequence_length > 0 && source_sequence_length > 0)
     {
@@ -1390,14 +1416,14 @@ vector<pair<Shape, Type>> Attention::forward_scratch_specs(Index batch_size) con
 #ifdef OPENNN_HAS_CUDNN_FRONTEND
     sdpa_will_be_used =
             Configuration::instance().is_gpu()
-         && activation_dtype == Type::BF16
+         && compute_dtype == Type::BF16
          && !dropout.active();
 #endif
 
     if (sdpa_will_be_used)
         return {
-            {Shape{}, activation_dtype}, // AttentionWeights
-            {Shape{}, activation_dtype}, // AttentionWeightsDropped
+            {Shape{}, compute_dtype}, // AttentionWeights
+            {Shape{}, compute_dtype}, // AttentionWeightsDropped
         };
 
     const Shape attention_shape = {batch_size, heads_number,
@@ -1405,8 +1431,8 @@ vector<pair<Shape, Type>> Attention::forward_scratch_specs(Index batch_size) con
     const Shape dropout_shape = dropout.active() ? attention_shape : Shape{};
     
     return {
-        {attention_shape, activation_dtype}, // AttentionWeights
-        {dropout_shape,   activation_dtype}, // AttentionWeightsDropped
+        {attention_shape, compute_dtype}, // AttentionWeights
+        {dropout_shape,   compute_dtype}, // AttentionWeightsDropped
     };
 }
 

@@ -35,12 +35,12 @@ void Flatten::set(const Shape& new_input_shape)
 
 vector<pair<Shape, Type>> Flatten::get_forward_specs(Index batch_size) const
 {
-    return {{Shape{batch_size}.append(get_output_shape()), activation_dtype}};
+    return {{Shape{batch_size}.append(get_output_shape()), compute_dtype}};
 }
 
 vector<pair<Shape, Type>> Flatten::get_backward_specs(Index batch_size) const
 {
-    return {{Shape{batch_size}.append(input_shape), activation_dtype}};
+    return {{Shape{batch_size}.append(input_shape), compute_dtype}};
 }
 
 void Flatten::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept

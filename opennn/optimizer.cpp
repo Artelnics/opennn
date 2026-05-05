@@ -559,20 +559,20 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu())
     {
-        float squared_norm = 0.0f;
-        CHECK_CUBLAS(cublasSdot(Backend::get_cublas_handle(),
+        static float* squared_norm_device = nullptr;
+        if (!squared_norm_device)
+            CHECK_CUDA(cudaMalloc(&squared_norm_device, sizeof(float)));
+
+        cublasHandle_t handle = Backend::get_cublas_handle();
+        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
+        CHECK_CUBLAS(cublasSdot(handle,
                                 to_int(gradient_size),
                                 gradient.as<float>(), 1,
                                 gradient.as<float>(), 1,
-                                &squared_norm));
-        const float gradient_norm = std::sqrt(squared_norm);
-        if (gradient_norm > float(max_norm))
-        {
-            const float scale = float(max_norm) / (gradient_norm + 1e-6f);
-            CHECK_CUBLAS(cublasSscal(Backend::get_cublas_handle(),
-                                     to_int(gradient_size), &scale,
-                                     gradient.as<float>(), 1));
-        }
+                                squared_norm_device));
+        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
+
+        clip_gradient_norm_cuda(gradient_size, gradient.as<float>(), squared_norm_device, max_norm);
         return;
     }
 #endif

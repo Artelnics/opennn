@@ -25,6 +25,7 @@ Convolutional::Convolutional(const Shape& new_input_shape,
 {
     name = "Convolutional";
     layer_type = LayerType::Convolutional;
+    batch_norm.momentum = 0.9f;
 
     set(new_input_shape,
         new_kernel_shape,
@@ -91,9 +92,9 @@ Index Convolutional::get_input_channels() const { return input_channels; }
 
 vector<Operator*> Convolutional::get_operators()
 {
-    vector<Operator*> ops = {&convolution};
-    if (batch_normalization) ops.push_back(&batch_norm);
-    return ops;
+    vector<Operator*> operators = {&convolution};
+    if (batch_norm.active()) operators.push_back(&batch_norm);
+    return operators;
 }
 
 void Convolutional::configure_operators()
@@ -102,10 +103,18 @@ void Convolutional::configure_operators()
                     kernels_number, kernel_height, kernel_width, kernel_channels,
                     row_stride, column_stride,
                     get_padding_height(), get_padding_width(),
-                    activation_dtype);
+                    compute_dtype);
 
-    if (batch_normalization && kernels_number > 0)
-        batch_norm.set(kernels_number, momentum);
+    if (batch_norm.active() && kernels_number > 0)
+        batch_norm.set(kernels_number, batch_norm.momentum);
+}
+
+void Convolutional::set_batch_normalization(bool enable)
+{
+    if (enable)
+        batch_norm.set(kernels_number, batch_norm.momentum);
+    else
+        batch_norm.features = 0;
 }
 
 // Setters
@@ -204,11 +213,6 @@ void Convolutional::set_activation_function(const string& new_activation_functio
     activation.set_function(function);
 }
 
-void Convolutional::set_batch_normalization(bool new_batch_normalization)
-{
-    batch_normalization = new_batch_normalization;
-}
-
 void Convolutional::set_parameters_glorot()
 {
     const Index kernel_area = kernel_height * kernel_width;
@@ -218,14 +222,14 @@ void Convolutional::set_parameters_glorot()
 
     set_random_uniform(parameters[Weight].as_vector(), -limit, limit);
     parameters[Bias].fill(0.0f);
-    if (batch_normalization) batch_norm.init_defaults();
+    if (batch_norm.active()) batch_norm.init_defaults();
 }
 
 void Convolutional::set_parameters_random()
 {
     set_random_uniform(parameters[Weight].as_vector());
     parameters[Bias].fill(0.0f);
-    if (batch_normalization) batch_norm.init_defaults();
+    if (batch_norm.active()) batch_norm.init_defaults();
 }
 
 // Forward / back propagation
@@ -254,7 +258,7 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
     const TensorView& conv_input = is_gpu ? input : padded_input;
 
-    if (batch_normalization)
+    if (batch_norm.active())
     {
         TensorView& combination_output = forward_views[ConvolutionView][0];
         convolution.apply(conv_input, combination_output);
@@ -296,7 +300,7 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
 
     activation.apply_delta(output, output_delta);
 
-    if (batch_normalization)
+    if (batch_norm.active())
         batch_norm.apply_delta(forward_views[ConvolutionView][0],
                                forward_views[BatchNormMean][0],
                                forward_views[BatchNormInverseVariance][0],
@@ -336,30 +340,21 @@ void Convolutional::from_JSON(const JsonDocument& document)
     set_column_stride(stride_shape[1]);
 
     set_convolution_type(read_json_string(convolutional_layer_element, "Convolution"));
-    set_batch_normalization(read_json_bool(convolutional_layer_element, "BatchNormalization"));
+    if (convolutional_layer_element->has("Momentum"))
+        set_batch_normalization(true);
 
     activation.from_JSON(convolutional_layer_element);
-    if (batch_normalization)
-    {
+    if (batch_norm.active())
         batch_norm.from_JSON(convolutional_layer_element);
-        momentum = batch_norm.momentum;
-    }
 }
 
 void Convolutional::load_state_from_JSON(const JsonDocument& document)
 {
-    if (!batch_normalization) return;
+    if (!batch_norm.active()) return;
 
     const Json* convolutional_layer_element = get_json_root(document, "Convolutional");
 
-    VectorR tmp;
-    string_to_vector(read_json_string(convolutional_layer_element, "RunningMeans"), tmp);
-    if (tmp.size() == states[RunningMean].size() && states[RunningMean].data)
-        states[RunningMean].as_vector() = tmp;
-
-    string_to_vector(read_json_string(convolutional_layer_element, "RunningVariances"), tmp);
-    if (tmp.size() == states[RunningVariance].size() && states[RunningVariance].data)
-        states[RunningVariance].as_vector() = tmp;
+    batch_norm.load_state_from_JSON(convolutional_layer_element);
 }
 
 void Convolutional::to_JSON(JsonWriter& printer) const
@@ -374,18 +369,11 @@ void Convolutional::to_JSON(JsonWriter& printer) const
         {"KernelsWidth", to_string(get_kernel_width())},
         {"KernelsChannels", to_string(get_kernel_channels())},
         {"StrideDimensions", shape_to_string({get_row_stride(), get_column_stride()})},
-        {"Convolution", convolution_type_to_string(convolution_type)},
-        {"BatchNormalization", to_string(batch_normalization)}
+        {"Convolution", convolution_type_to_string(convolution_type)}
     });
 
     activation.to_JSON(printer);
-    if (batch_normalization) batch_norm.to_JSON(printer);
-
-    if (batch_normalization)
-        write_json(printer, {
-            {"RunningMeans", vector_to_string(states[RunningMean].as_vector())},
-            {"RunningVariances", vector_to_string(states[RunningVariance].as_vector())}
-        });
+    if (batch_norm.active()) batch_norm.to_JSON(printer);
 
     printer.close_element();
 }
