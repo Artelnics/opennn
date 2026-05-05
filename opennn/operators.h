@@ -233,23 +233,18 @@ struct Convolution : Operator
 {
     Index input_height = 0;
     Index input_width = 0;
-    Index input_channels = 0;
 
     Index kernels_number = 0;
     Index kernel_height = 0;
     Index kernel_width = 0;
     Index kernel_channels = 0;
 
-    Index row_stride = 1;
-    Index column_stride = 1;
-    Index padding_height = 0;
-    Index padding_width = 0;
-
     Type activation_dtype = Type::FP32;
 
     TensorView weights;
     TensorView bias;
 
+#ifdef OPENNN_WITH_CUDA
     cudnnFilterDescriptor_t      kernel_descriptor      = nullptr;
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
 
@@ -260,17 +255,18 @@ struct Convolution : Operator
     Buffer workspace{Device::CUDA};
     Buffer backward_filter_workspace{Device::CUDA};
 
-    Shape cuda_initialized_input_shape;
-    Shape cuda_initialized_output_shape;
+    // High-water-mark of the batch size for which the cuDNN plan
+    // (algorithms + workspaces) is currently valid. Lazy-initialized on the
+    // first apply_gpu and re-tuned only if a larger batch arrives (e.g. test
+    // batch larger than training).
+    Index planned_batch_size = 0;
+#endif
 
-    void set(Index input_h, Index input_w, Index input_c,
+    void set(Index input_h, Index input_w,
              Index kernels_n, Index kernel_h, Index kernel_w, Index kernel_c,
              Index row_stride, Index column_stride,
              Index padding_h, Index padding_w,
              Type activation_dtype);
-
-    Index get_output_height() const;
-    Index get_output_width() const;
 
     vector<pair<Shape, Type>> parameter_specs() const override;
     void link_parameters(const vector<TensorView>& views) override;
@@ -283,7 +279,10 @@ struct Convolution : Operator
     Convolution(const Convolution&) = delete;
     Convolution& operator=(const Convolution&) = delete;
 
-    void apply(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation = nullptr);
+    void apply(const TensorView& input, 
+               TensorView& output, 
+               cudnnActivationDescriptor_t fused_activation = nullptr);
+
     void apply_delta(const TensorView& input,
                      const TensorView& output_delta,
                      TensorView& weight_gradient,
@@ -302,7 +301,7 @@ private:
                          TensorView& input_delta) const;
 
 #ifdef OPENNN_WITH_CUDA
-    void ensure_cuda_initialized(const TensorView& input, const TensorView& output);
+    void plan_convolution_algorithms(const TensorView& input, const TensorView& output);
 #endif
 };
 
@@ -529,7 +528,9 @@ struct Pool : Operator
 
     int method = 0;  // 0 = Max, 1 = Average (avoids forward-decl-only enum at this point)
 
+#ifdef OPENNN_WITH_CUDA
     cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
+#endif
 
     void set(Index input_h, Index input_w, Index input_c,
              Index pool_h, Index pool_w,
@@ -537,10 +538,6 @@ struct Pool : Operator
              Index padding_h, Index padding_w,
              int method);
 
-    Index get_output_height() const;
-    Index get_output_width() const;
-
-    void init_cuda();
     void destroy_cuda() override;
 
     ~Pool() override { destroy_cuda(); }

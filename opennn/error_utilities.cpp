@@ -103,7 +103,7 @@ void weighted_squared_error(const TensorView& input, const TensorView& target, f
         using T = decltype(tag);
         weighted_squared_error_cuda<T>(input.size(),
                                        workspace_device,
-                                       target.as<T>(),
+                                       target.as<float>(),
                                        input.as<T>(),
                                        pos_w,
                                        neg_w);
@@ -122,7 +122,7 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
     if (TRY_GPU_DISPATCH(input, [&](auto tag) {
         using T = decltype(tag);
         weighted_squared_error_gradient_cuda<T>(input.size(),
-            input_delta.as<T>(), target.as<T>(), input.as<T>(), pos_w, neg_w, coefficient);
+            input_delta.as<T>(), target.as<float>(), input.as<T>(), pos_w, neg_w, coefficient);
     })) return;
 
     const auto inputs = input.as_vector().array();
@@ -136,7 +136,7 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, flo
     if (TRY_GPU_DISPATCH(input, [&](auto tag) {
         using T = decltype(tag);
         binary_cross_entropy_cuda<T>(input.size(),
-            workspace_device, target.as<T>(), input.as<T>(), EPSILON);
+            workspace_device, target.as<float>(), input.as<T>(), EPSILON);
         error = sum_abs_cuda(workspace_device, input.size()) / input.shape[0];
     })) return;
     const Index samples_number = input.shape[0];
@@ -157,7 +157,7 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
     if (TRY_GPU_DISPATCH(input, [&](auto tag) {
         using T = decltype(tag);
         multiple_cross_entropy_cuda<T>(input.size(),
-            workspace_device, target.as<T>(), input.as<T>(), EPSILON);
+            workspace_device, target.as<float>(), input.as<T>(), EPSILON);
         error = sum_abs_cuda(workspace_device, input.size()) / input.shape[0];
     })) return;
     const Index samples_number = input.shape[0];
@@ -178,10 +178,10 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
         const float scale = 1.0f / static_cast<float>(input.shape[0]);
         if (num_classes == 1)
             binary_cross_entropy_gradient_cuda<T>(input.size(),
-                input_delta.as<T>(), target.as<T>(), input.as<T>(), EPSILON, scale);
+                input_delta.as<T>(), target.as<float>(), input.as<T>(), EPSILON, scale);
         else
             multiple_cross_entropy_gradient_cuda<T>(input.size(),
-                input_delta.as<T>(), target.as<T>(), input.as<T>(), scale);
+                input_delta.as<T>(), target.as<float>(), input.as<T>(), scale);
     })) return;
     const Index samples_number = input.shape[0];
     const Index num_classes = input.shape.back();

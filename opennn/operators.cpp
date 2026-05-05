@@ -702,7 +702,7 @@ void Combination::apply_delta_gpu(const TensorView&, const TensorView&, TensorVi
 
 #endif
 
-void Convolution::set(Index new_input_h, Index new_input_w, Index new_input_c,
+void Convolution::set(Index new_input_h, Index new_input_w,
                       Index new_kernels_n, Index new_kernel_h, Index new_kernel_w, Index new_kernel_c,
                       Index new_row_stride, Index new_column_stride,
                       Index new_padding_h, Index new_padding_w,
@@ -710,57 +710,35 @@ void Convolution::set(Index new_input_h, Index new_input_w, Index new_input_c,
 {
     input_height     = new_input_h;
     input_width      = new_input_w;
-    input_channels   = new_input_c;
     kernels_number   = new_kernels_n;
     kernel_height    = new_kernel_h;
     kernel_width     = new_kernel_w;
     kernel_channels  = new_kernel_c;
-    row_stride       = new_row_stride;
-    column_stride    = new_column_stride;
-    padding_height   = new_padding_h;
-    padding_width    = new_padding_w;
     activation_dtype = new_activation_dtype;
 
 #ifdef OPENNN_WITH_CUDA
-    // Filter and convolution descriptors are batch_size-independent. Algorithm
-    // selection and workspace allocation are deferred to the first apply_gpu
-    // (see ensure_cuda_initialized).
-    if (kernels_number > 0)
-    {
-        if (!kernel_descriptor) cudnnCreateFilterDescriptor(&kernel_descriptor);
-        cudnnSetFilter4dDescriptor(kernel_descriptor,
-                                   to_cudnn(activation_dtype),
-                                   CUDNN_TENSOR_NHWC,
-                                   to_int(kernels_number), to_int(kernel_channels),
-                                   to_int(kernel_height),  to_int(kernel_width));
 
-        if (!convolution_descriptor) cudnnCreateConvolutionDescriptor(&convolution_descriptor);
-        cudnnSetConvolution2dDescriptor(convolution_descriptor,
-                                        to_int(padding_height), to_int(padding_width),
-                                        to_int(row_stride),     to_int(column_stride),
-                                        1, 1,
-                                        CUDNN_CROSS_CORRELATION,
-                                        CUDNN_DATA_FLOAT);
+    planned_batch_size = 0;
 
-        cudnnSetConvolutionMathType(convolution_descriptor, CUDNN_TENSOR_OP_MATH_ALLOW_CONVERSION);
+    if (kernels_number <= 0) return;
 
-        // Geometry changed → cached algos and workspace are stale.
-        workspace.resize_bytes(0, Device::CUDA);
-        backward_filter_workspace.resize_bytes(0, Device::CUDA);
-        cuda_initialized_input_shape  = {};
-        cuda_initialized_output_shape = {};
-    }
+    if (!kernel_descriptor) CHECK_CUDNN(cudnnCreateFilterDescriptor(&kernel_descriptor));
+    CHECK_CUDNN(cudnnSetFilter4dDescriptor(kernel_descriptor,
+                                           to_cudnn(activation_dtype),
+                                           CUDNN_TENSOR_NHWC,
+                                           to_int(kernels_number), to_int(kernel_channels),
+                                           to_int(kernel_height),  to_int(kernel_width)));
+
+    if (!convolution_descriptor) CHECK_CUDNN(cudnnCreateConvolutionDescriptor(&convolution_descriptor));
+    CHECK_CUDNN(cudnnSetConvolution2dDescriptor(convolution_descriptor,
+                                                to_int(new_padding_h), to_int(new_padding_w),
+                                                to_int(new_row_stride), to_int(new_column_stride),
+                                                1, 1,
+                                                CUDNN_CROSS_CORRELATION,
+                                                CUDNN_DATA_FLOAT));
+
+    CHECK_CUDNN(cudnnSetConvolutionMathType(convolution_descriptor, CUDNN_TENSOR_OP_MATH_ALLOW_CONVERSION));
 #endif
-}
-
-Index Convolution::get_output_height() const
-{
-    return (input_height + 2 * padding_height - kernel_height) / row_stride + 1;
-}
-
-Index Convolution::get_output_width() const
-{
-    return (input_width + 2 * padding_width - kernel_width) / column_stride + 1;
 }
 
 vector<pair<Shape, Type>> Convolution::parameter_specs() const
@@ -825,9 +803,6 @@ void Convolution::apply_delta_cpu(const TensorView& input,
     const TensorMap4 output_deltas = output_delta.as_tensor<4>();
 
     const Index kernel_size = kernel_height * kernel_width * kernel_channels;
-    const Index grads_per_kernel = output_deltas.dimension(0)
-                                 * output_deltas.dimension(1)
-                                 * output_deltas.dimension(2);
 
     MatrixMap output_gradients_mat = output_delta.as_flat_matrix();
     bias_gradient.as_vector().noalias() = output_gradients_mat.colwise().sum();
@@ -896,113 +871,75 @@ void Convolution::apply_delta_cpu(const TensorView& input,
 
 #ifdef OPENNN_WITH_CUDA
 
-// Lazy GPU init: probes cuDNN for the optimal forward / backward-data /
-// backward-filter algorithms using the actual input/output tensor descriptors,
-// then allocates the chosen workspaces. Caches by input/output shape; if the
-// caller arrives with new geometry (e.g. TestingAnalysis with a larger batch
-// than training), the algorithms and workspaces are re-Found.
-void Convolution::ensure_cuda_initialized(const TensorView& input, const TensorView& output)
-{
-    if (input.shape  == cuda_initialized_input_shape &&
-        output.shape == cuda_initialized_output_shape)
-        return;
-
-    constexpr int kRequestedAlgos = 8;
-    constexpr size_t kWorkspaceBudget = size_t(512) * 1024 * 1024;
-
-    cudnnTensorDescriptor_t input_desc  = input.get_descriptor();
-    cudnnTensorDescriptor_t output_desc = output.get_descriptor();
-
-    size_t workspace_bytes = 0;
-    size_t backward_filter_workspace_bytes = 0;
-
-    {
-        cudnnConvolutionFwdAlgoPerf_t perfs[kRequestedAlgos];
-        int returned_count = 0;
-        CHECK_CUDNN(cudnnFindConvolutionForwardAlgorithm(
-            Backend::get_cudnn_handle(),
-            input_desc, kernel_descriptor, convolution_descriptor, output_desc,
-            kRequestedAlgos, &returned_count, perfs));
-
-        algorithm_forward = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
-        workspace_bytes = 0;
-        for (int i = 0; i < returned_count; ++i)
-        {
-            if (perfs[i].status == CUDNN_STATUS_SUCCESS && perfs[i].memory <= kWorkspaceBudget)
-            {
-                algorithm_forward = perfs[i].algo;
-                workspace_bytes = perfs[i].memory;
-                break;
-            }
-        }
-    }
-
-    size_t bwd_data_ws = 0;
-    {
-        cudnnConvolutionBwdDataAlgoPerf_t perfs[kRequestedAlgos];
-        int returned_count = 0;
-        CHECK_CUDNN(cudnnFindConvolutionBackwardDataAlgorithm(
-            Backend::get_cudnn_handle(),
-            kernel_descriptor, output_desc, convolution_descriptor, input_desc,
-            kRequestedAlgos, &returned_count, perfs));
-
-        algorithm_data = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
-        for (int i = 0; i < returned_count; ++i)
-        {
-            if (perfs[i].status == CUDNN_STATUS_SUCCESS && perfs[i].memory <= kWorkspaceBudget)
-            {
-                algorithm_data = perfs[i].algo;
-                bwd_data_ws = perfs[i].memory;
-                break;
-            }
-        }
-    }
-
-    {
-        cudnnConvolutionBwdFilterAlgoPerf_t perfs[kRequestedAlgos];
-        int returned_count = 0;
-        CHECK_CUDNN(cudnnFindConvolutionBackwardFilterAlgorithm(
-            Backend::get_cudnn_handle(),
-            input_desc, output_desc, convolution_descriptor, kernel_descriptor,
-            kRequestedAlgos, &returned_count, perfs));
-
-        algorithm_filter = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
-        backward_filter_workspace_bytes = 0;
-        for (int i = 0; i < returned_count; ++i)
-        {
-            if (perfs[i].status == CUDNN_STATUS_SUCCESS && perfs[i].memory <= kWorkspaceBudget)
-            {
-                algorithm_filter = perfs[i].algo;
-                backward_filter_workspace_bytes = perfs[i].memory;
-                break;
-            }
-        }
-    }
-
-    workspace_bytes = max(workspace_bytes, bwd_data_ws);
-
-    workspace.resize_bytes(Index(workspace_bytes), Device::CUDA);
-    backward_filter_workspace.resize_bytes(Index(backward_filter_workspace_bytes), Device::CUDA);
-
-    cuda_initialized_input_shape  = input.shape;
-    cuda_initialized_output_shape = output.shape;
-}
-
 void Convolution::destroy_cuda()
 {
     if (kernel_descriptor)      { cudnnDestroyFilterDescriptor(kernel_descriptor);           kernel_descriptor = nullptr; }
     if (convolution_descriptor) { cudnnDestroyConvolutionDescriptor(convolution_descriptor); convolution_descriptor = nullptr; }
     workspace.resize_bytes(0, Device::CUDA);
     backward_filter_workspace.resize_bytes(0, Device::CUDA);
-    cuda_initialized_input_shape  = {};
-    cuda_initialized_output_shape = {};
+    planned_batch_size = 0;
+}
+
+// cuDNN-Find optimal algorithms + size workspaces for the descriptors implied
+// by `input` and `output`. Lazy-called from apply_gpu when a batch larger than
+// any seen before arrives (high-water-mark caching).
+void Convolution::plan_convolution_algorithms(const TensorView& input, const TensorView& output)
+{
+    cudnnHandle_t handle = Backend::get_cudnn_handle();
+    cudnnTensorDescriptor_t input_desc  = input.get_descriptor();
+    cudnnTensorDescriptor_t output_desc = output.get_descriptor();
+
+    // Picks the first SUCCESS entry from a Find perfs array.
+    auto pick_algo = [](auto* perfs, int count, auto fallback) {
+        for (int i = 0; i < count; ++i)
+            if (perfs[i].status == CUDNN_STATUS_SUCCESS)
+                return perfs[i].algo;
+        return fallback;
+    };
+
+    int count = 0;
+
+    cudnnConvolutionFwdAlgoPerf_t fwd_perf[CUDNN_CONVOLUTION_FWD_ALGO_COUNT];
+    CHECK_CUDNN(cudnnFindConvolutionForwardAlgorithm(
+        handle, input_desc, kernel_descriptor, convolution_descriptor, output_desc,
+        CUDNN_CONVOLUTION_FWD_ALGO_COUNT, &count, fwd_perf));
+    algorithm_forward = pick_algo(fwd_perf, count, CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM);
+
+    cudnnConvolutionBwdDataAlgoPerf_t bwd_data_perf[CUDNN_CONVOLUTION_BWD_DATA_ALGO_COUNT];
+    CHECK_CUDNN(cudnnFindConvolutionBackwardDataAlgorithm(
+        handle, kernel_descriptor, output_desc, convolution_descriptor, input_desc,
+        CUDNN_CONVOLUTION_BWD_DATA_ALGO_COUNT, &count, bwd_data_perf));
+    algorithm_data = pick_algo(bwd_data_perf, count, CUDNN_CONVOLUTION_BWD_DATA_ALGO_1);
+
+    cudnnConvolutionBwdFilterAlgoPerf_t bwd_filter_perf[CUDNN_CONVOLUTION_BWD_FILTER_ALGO_COUNT];
+    CHECK_CUDNN(cudnnFindConvolutionBackwardFilterAlgorithm(
+        handle, input_desc, output_desc, convolution_descriptor, kernel_descriptor,
+        CUDNN_CONVOLUTION_BWD_FILTER_ALGO_COUNT, &count, bwd_filter_perf));
+    algorithm_filter = pick_algo(bwd_filter_perf, count, CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1);
+
+    size_t fwd_ws = 0, bwd_data_ws = 0, bwd_filter_ws = 0;
+    CHECK_CUDNN(cudnnGetConvolutionForwardWorkspaceSize(
+        handle, input_desc, kernel_descriptor, convolution_descriptor, output_desc,
+        algorithm_forward, &fwd_ws));
+    CHECK_CUDNN(cudnnGetConvolutionBackwardDataWorkspaceSize(
+        handle, kernel_descriptor, output_desc, convolution_descriptor, input_desc,
+        algorithm_data, &bwd_data_ws));
+    CHECK_CUDNN(cudnnGetConvolutionBackwardFilterWorkspaceSize(
+        handle, input_desc, output_desc, convolution_descriptor, kernel_descriptor,
+        algorithm_filter, &bwd_filter_ws));
+
+    workspace.resize_bytes(Index(max(fwd_ws, bwd_data_ws)), Device::CUDA);
+    backward_filter_workspace.resize_bytes(Index(bwd_filter_ws), Device::CUDA);
+
+    planned_batch_size = input.shape[0];
 }
 
 void Convolution::apply_gpu(const TensorView& input,
                             TensorView& output,
                             cudnnActivationDescriptor_t fused_activation)
 {
-    ensure_cuda_initialized(input, output);
+    if (input.shape[0] > planned_batch_size)
+        plan_convolution_algorithms(input, output);
 
     if (fused_activation)
     {
@@ -2087,16 +2024,23 @@ void Pool::set(Index input_h, Index input_w, Index input_c,
     padding_height  = padding_h;
     padding_width   = padding_w;
     method          = new_method;
-}
 
-Index Pool::get_output_height() const
-{
-    return (input_height - pool_height + 2 * padding_height) / row_stride + 1;
-}
+#ifdef OPENNN_WITH_CUDA
+    if (pool_height <= 0 || pool_width <= 0) return;
 
-Index Pool::get_output_width() const
-{
-    return (input_width - pool_width + 2 * padding_width) / column_stride + 1;
+    if (!pooling_descriptor) CHECK_CUDNN(cudnnCreatePoolingDescriptor(&pooling_descriptor));
+
+    const cudnnPoolingMode_t mode = (method == 0)
+        ? CUDNN_POOLING_MAX
+        : CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
+
+    CHECK_CUDNN(cudnnSetPooling2dDescriptor(pooling_descriptor,
+                                            mode,
+                                            CUDNN_PROPAGATE_NAN,
+                                            to_int(pool_height), to_int(pool_width),
+                                            to_int(padding_height), to_int(padding_width),
+                                            to_int(row_stride), to_int(column_stride)));
+#endif
 }
 
 void Pool::apply(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training)
@@ -2302,23 +2246,6 @@ void Pool::apply_delta_cpu(const TensorView& output_delta,
 
 #ifdef OPENNN_WITH_CUDA
 
-void Pool::init_cuda()
-{
-    if (!pooling_descriptor)
-        cudnnCreatePoolingDescriptor(&pooling_descriptor);
-
-    const cudnnPoolingMode_t mode = (method == 0)
-        ? CUDNN_POOLING_MAX
-        : CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
-
-    cudnnSetPooling2dDescriptor(pooling_descriptor,
-                                mode,
-                                CUDNN_PROPAGATE_NAN,
-                                pool_height, pool_width,
-                                padding_height, padding_width,
-                                row_stride, column_stride);
-}
-
 void Pool::destroy_cuda()
 {
     if (pooling_descriptor) { cudnnDestroyPoolingDescriptor(pooling_descriptor); pooling_descriptor = nullptr; }
@@ -2351,7 +2278,6 @@ void Pool::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void Pool::init_cuda()                                                                              {}
 void Pool::destroy_cuda()                                                                           {}
 void Pool::apply_gpu(const TensorView&, TensorView&)                                                { throw runtime_error("Pool::apply_gpu: CUDA support not compiled in."); }
 void Pool::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("Pool::apply_delta_gpu: CUDA support not compiled in."); }

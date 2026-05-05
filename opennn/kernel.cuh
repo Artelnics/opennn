@@ -47,23 +47,27 @@ void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target
 
 // Errors
 
-template<typename T>
-void binary_cross_entropy_cuda(const Index, float*, const T*, const T*, const float);
+// Targets stay FP32: the Batch always allocates target buffers as FP32 (one-hot
+// or 0/1 floats) regardless of activation dtype. Reading them as T=BF16 would
+// reinterpret 4-byte FP32 elements as 2-byte BF16 → garbage every other lane.
 
 template<typename T>
-void binary_cross_entropy_gradient_cuda(const Index, T*, const T*, const T*, const float, const float);
+void binary_cross_entropy_cuda(const Index, float*, const float*, const T*, const float);
 
 template<typename T>
-void multiple_cross_entropy_cuda(const Index, float*, const T*, const T*, const float);
+void binary_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float, const float);
 
 template<typename T>
-void multiple_cross_entropy_gradient_cuda(const Index, T*, const T*, const T*, const float);
+void multiple_cross_entropy_cuda(const Index, float*, const float*, const T*, const float);
 
 template<typename T>
-void weighted_squared_error_cuda(const Index, float*, const T*, const T*, const float, const float);
+void multiple_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float);
 
 template<typename T>
-void weighted_squared_error_gradient_cuda(const Index, T*, const T*, const T*, const float, const float, const float);
+void weighted_squared_error_cuda(const Index, float*, const float*, const T*, const float, const float);
+
+template<typename T>
+void weighted_squared_error_gradient_cuda(const Index, T*, const float*, const T*, const float, const float, const float);
 
 template<typename T>
 void cross_entropy_3d_multiple_forward_cuda(const Index, const int, const T*, const float*, float*, float*, float*, const float);

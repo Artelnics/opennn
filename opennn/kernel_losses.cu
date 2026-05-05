@@ -6,13 +6,14 @@
 
 // Per-element BCE forward term: tgt*log(out+eps) + (1-tgt)*log(1-out+eps).
 // Reduced into a scalar by the host (cublasSasum on term_results).
+// Targets are always FP32 (see kernel.cuh).
 template<typename T>
-__global__ void binary_cross_entropy_kernel(const int n, float* __restrict__ term_results, const T* __restrict__ targets, const T* __restrict__ outputs, const float epsilon)
+__global__ void binary_cross_entropy_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const T* __restrict__ outputs, const float epsilon)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
         const float out = static_cast<float>(outputs[i]);
-        const float tgt = static_cast<float>(targets[i]);
+        const float tgt = targets[i];
 
         const float log_pos = logf(out + epsilon);
         const float log_neg = logf(1.0f - out + epsilon);
@@ -22,7 +23,7 @@ __global__ void binary_cross_entropy_kernel(const int n, float* __restrict__ ter
 }
 
 template<typename T>
-void binary_cross_entropy_cuda(const Index n, float* term_results, const T* targets, const T* outputs, const float epsilon)
+void binary_cross_entropy_cuda(const Index n, float* term_results, const float* targets, const T* outputs, const float epsilon)
 {
     if (n == 0) return;
 
@@ -32,93 +33,60 @@ void binary_cross_entropy_cuda(const Index n, float* term_results, const T* targ
         total, term_results, targets, outputs, epsilon);
 }
 
-template void binary_cross_entropy_cuda<float>        (const Index, float*, const float*,         const float*,         const float);
-template void binary_cross_entropy_cuda<__nv_bfloat16>(const Index, float*, const __nv_bfloat16*, const __nv_bfloat16*, const float);
-
-// Single-element BCE gradient. Used by binary_cross_entropy_gradient_kernel
-// for both the float4 vector phase (vec_width × per chunk) and the scalar tail.
-template<typename T>
-__device__ __forceinline__ void bce_gradient_one(T& d, T target, T output, float epsilon, float scaling_factor)
-{
-    const float out = static_cast<float>(output);
-    const float tgt = static_cast<float>(target);
-    d = static_cast<T>(((1.0f - tgt) / (1.0f - out + epsilon) - tgt / (out + epsilon)) * scaling_factor);
-}
+template void binary_cross_entropy_cuda<float>        (const Index, float*, const float*, const float*,         const float);
+template void binary_cross_entropy_cuda<__nv_bfloat16>(const Index, float*, const float*, const __nv_bfloat16*, const float);
 
 // BCE gradient: delta[i] = ((1 - tgt) / (1 - out + eps) - tgt / (out + eps)) * scale.
-// Vec+tail layout (see adam_update_kernel for the convention).
+// Targets stay FP32, so the float4 vectorisation that mixed targets and outputs
+// in a single chunk no longer applies — scalar loop is fine for the small
+// classification head.
 template<typename T>
 __global__ void binary_cross_entropy_gradient_kernel(
-    const int n_vec, const int n,
+    const int n,
     T* __restrict__ deltas,
-    const T* __restrict__ targets,
+    const float* __restrict__ targets,
     const T* __restrict__ outputs,
     const float epsilon, const float scaling_factor)
 {
-    constexpr int vec_width = 16 / sizeof(T);
-
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     const int stride = blockDim.x * gridDim.x;
 
-    float4* const       d_v = reinterpret_cast<float4*>(deltas);
-    const float4* const t_v = reinterpret_cast<const float4*>(targets);
-    const float4* const o_v = reinterpret_cast<const float4*>(outputs);
-
-    for (int i = tid; i < n_vec; i += stride)
+    for (int i = tid; i < n; i += stride)
     {
-        float4 d_chunk;
-        float4 t_chunk = t_v[i];
-        float4 o_chunk = o_v[i];
-        T* d_lanes = reinterpret_cast<T*>(&d_chunk);
-        const T* t_lanes = reinterpret_cast<const T*>(&t_chunk);
-        const T* o_lanes = reinterpret_cast<const T*>(&o_chunk);
-
-        #pragma unroll
-        for (int k = 0; k < vec_width; ++k)
-            bce_gradient_one(d_lanes[k], t_lanes[k], o_lanes[k], epsilon, scaling_factor);
-
-        d_v[i] = d_chunk;
+        const float out = static_cast<float>(outputs[i]);
+        const float tgt = targets[i];
+        deltas[i] = static_cast<T>(((1.0f - tgt) / (1.0f - out + epsilon) - tgt / (out + epsilon)) * scaling_factor);
     }
-
-    const int tail_start = n_vec * vec_width;
-    for (int i = tail_start + tid; i < n; i += stride)
-        bce_gradient_one(deltas[i], targets[i], outputs[i], epsilon, scaling_factor);
 }
 
 template<typename T>
-void binary_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targets, const T* outputs, const float epsilon, const float scaling_factor)
+void binary_cross_entropy_gradient_cuda(const Index n, T* deltas, const float* targets, const T* outputs, const float epsilon, const float scaling_factor)
 {
     if (n == 0) return;
 
-    constexpr int vec_width = 16 / sizeof(T);
     const int total = static_cast<int>(n);
 
-    const bool aligned = are_float4_aligned(deltas, targets, outputs);
-
-    const int n_vec = aligned ? (total / vec_width) : 0;
-    const int grid_size = grid_size_for(vector_work_size(total, n_vec, vec_width));
-
-    binary_cross_entropy_gradient_kernel<T><<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        n_vec, total, deltas, targets, outputs, epsilon, scaling_factor);
+    binary_cross_entropy_gradient_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
+        total, deltas, targets, outputs, epsilon, scaling_factor);
 }
 
-template void binary_cross_entropy_gradient_cuda<float>        (const Index, float*,         const float*,         const float*,         const float, const float);
-template void binary_cross_entropy_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, const float, const float);
+template void binary_cross_entropy_gradient_cuda<float>        (const Index, float*,         const float*, const float*,         const float, const float);
+template void binary_cross_entropy_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const float*, const __nv_bfloat16*, const float, const float);
 
 // Per-element multi-class CE forward term: tgt > 0 ? tgt*log(out+eps) : 0.
-// Reduced into a scalar by the host.
+// Reduced into a scalar by the host. Targets are always FP32.
 template<typename T>
-__global__ void multiple_cross_entropy_kernel(const int n, float* __restrict__ term_results, const T* __restrict__ targets, const T* __restrict__ outputs, const float epsilon)
+__global__ void multiple_cross_entropy_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const T* __restrict__ outputs, const float epsilon)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
-        const float tgt = static_cast<float>(targets[i]);
+        const float tgt = targets[i];
         term_results[i] = (tgt > 0.0f) ? tgt * logf(static_cast<float>(outputs[i]) + epsilon) : 0.0f;
     }
 }
 
 template<typename T>
-void multiple_cross_entropy_cuda(const Index n, float* term_results, const T* targets, const T* outputs, const float epsilon)
+void multiple_cross_entropy_cuda(const Index n, float* term_results, const float* targets, const T* outputs, const float epsilon)
 {
     if (n == 0) return;
 
@@ -128,84 +96,49 @@ void multiple_cross_entropy_cuda(const Index n, float* term_results, const T* ta
         total, term_results, targets, outputs, epsilon);
 }
 
-template void multiple_cross_entropy_cuda<float>        (const Index, float*, const float*,         const float*,         const float);
-template void multiple_cross_entropy_cuda<__nv_bfloat16>(const Index, float*, const __nv_bfloat16*, const __nv_bfloat16*, const float);
-
-// Single-element multi-class CE gradient (vec+tail callee).
-template<typename T>
-__device__ __forceinline__ void mce_gradient_one(T& d, T target, T output, float scaling_factor)
-{
-    d = static_cast<T>((static_cast<float>(output) - static_cast<float>(target)) * scaling_factor);
-}
+template void multiple_cross_entropy_cuda<float>        (const Index, float*, const float*, const float*,         const float);
+template void multiple_cross_entropy_cuda<__nv_bfloat16>(const Index, float*, const float*, const __nv_bfloat16*, const float);
 
 // Multi-class CE gradient: delta[i] = (out[i] - tgt[i]) * scale.
-// Vec+tail layout.
+// Targets stay FP32 (see kernel.cuh) so the float4 vectorisation that mixed
+// targets and outputs in a single chunk no longer applies.
 template<typename T>
 __global__ void multiple_cross_entropy_gradient_kernel(
-    const int n_vec, const int n,
+    const int n,
     T* __restrict__ deltas,
-    const T* __restrict__ targets,
+    const float* __restrict__ targets,
     const T* __restrict__ outputs,
     const float scaling_factor)
 {
-    constexpr int vec_width = 16 / sizeof(T);
-
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     const int stride = blockDim.x * gridDim.x;
 
-    float4* const       d_v = reinterpret_cast<float4*>(deltas);
-    const float4* const t_v = reinterpret_cast<const float4*>(targets);
-    const float4* const o_v = reinterpret_cast<const float4*>(outputs);
-
-    for (int i = tid; i < n_vec; i += stride)
-    {
-        float4 d_chunk;
-        float4 t_chunk = t_v[i];
-        float4 o_chunk = o_v[i];
-        T* d_lanes = reinterpret_cast<T*>(&d_chunk);
-        const T* t_lanes = reinterpret_cast<const T*>(&t_chunk);
-        const T* o_lanes = reinterpret_cast<const T*>(&o_chunk);
-
-        #pragma unroll
-        for (int k = 0; k < vec_width; ++k)
-            mce_gradient_one(d_lanes[k], t_lanes[k], o_lanes[k], scaling_factor);
-
-        d_v[i] = d_chunk;
-    }
-
-    const int tail_start = n_vec * vec_width;
-    for (int i = tail_start + tid; i < n; i += stride)
-        mce_gradient_one(deltas[i], targets[i], outputs[i], scaling_factor);
+    for (int i = tid; i < n; i += stride)
+        deltas[i] = static_cast<T>((static_cast<float>(outputs[i]) - targets[i]) * scaling_factor);
 }
 
 template<typename T>
-void multiple_cross_entropy_gradient_cuda(const Index n, T* deltas, const T* targets, const T* outputs, const float scaling_factor)
+void multiple_cross_entropy_gradient_cuda(const Index n, T* deltas, const float* targets, const T* outputs, const float scaling_factor)
 {
     if (n == 0) return;
 
-    constexpr int vec_width = 16 / sizeof(T);
     const int total = static_cast<int>(n);
 
-    const bool aligned = are_float4_aligned(deltas, targets, outputs);
-
-    const int n_vec = aligned ? (total / vec_width) : 0;
-    const int grid_size = grid_size_for(vector_work_size(total, n_vec, vec_width));
-
-    multiple_cross_entropy_gradient_kernel<T><<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        n_vec, total, deltas, targets, outputs, scaling_factor);
+    multiple_cross_entropy_gradient_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
+        total, deltas, targets, outputs, scaling_factor);
 }
 
-template void multiple_cross_entropy_gradient_cuda<float>        (const Index, float*,         const float*,         const float*,         const float);
-template void multiple_cross_entropy_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, const float);
+template void multiple_cross_entropy_gradient_cuda<float>        (const Index, float*,         const float*, const float*,         const float);
+template void multiple_cross_entropy_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const float*, const __nv_bfloat16*, const float);
 
 // Per-element weighted squared error: (out - tgt)^2 * (tgt == 0 ? neg_w : pos_w).
-// Reduced into a scalar by the host.
+// Reduced into a scalar by the host. Targets are always FP32.
 template<typename T>
-__global__ void weighted_squared_error_kernel(const int n, float* __restrict__ term_results, const T* __restrict__ targets, const T* __restrict__ outputs, const float positives_weight, const float negatives_weight)
+__global__ void weighted_squared_error_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const T* __restrict__ outputs, const float positives_weight, const float negatives_weight)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
-        const float tgt = static_cast<float>(targets[i]);
+        const float tgt = targets[i];
         const float diff = static_cast<float>(outputs[i]) - tgt;
         const float weight = (tgt == 0.0f) ? negatives_weight : positives_weight;
 
@@ -214,7 +147,7 @@ __global__ void weighted_squared_error_kernel(const int n, float* __restrict__ t
 }
 
 template<typename T>
-void weighted_squared_error_cuda(const Index n, float* term_results, const T* targets, const T* outputs, const float positives_weight, const float negatives_weight)
+void weighted_squared_error_cuda(const Index n, float* term_results, const float* targets, const T* outputs, const float positives_weight, const float negatives_weight)
 {
     if (n == 0) return;
 
@@ -224,85 +157,47 @@ void weighted_squared_error_cuda(const Index n, float* term_results, const T* ta
         total, term_results, targets, outputs, positives_weight, negatives_weight);
 }
 
-template void weighted_squared_error_cuda<float>        (const Index, float*, const float*,         const float*,         const float, const float);
-template void weighted_squared_error_cuda<__nv_bfloat16>(const Index, float*, const __nv_bfloat16*, const __nv_bfloat16*, const float, const float);
-
-// Single-element weighted squared-error gradient (vec+tail callee).
-template<typename T>
-__device__ __forceinline__ void wse_gradient_one(T& d, T target, T output,
-                                                 float positives_weight,
-                                                 float negatives_weight,
-                                                 float scaling_factor)
-{
-    const float tgt = static_cast<float>(target);
-    const float diff = static_cast<float>(output) - tgt;
-    const float weight = (tgt == 0.0f) ? negatives_weight : positives_weight;
-    d = static_cast<T>(diff * weight * scaling_factor);
-}
+template void weighted_squared_error_cuda<float>        (const Index, float*, const float*, const float*,         const float, const float);
+template void weighted_squared_error_cuda<__nv_bfloat16>(const Index, float*, const float*, const __nv_bfloat16*, const float, const float);
 
 // Weighted squared-error gradient: delta[i] = (out - tgt) * weight * scale,
-// with weight = (tgt == 0 ? neg_w : pos_w). Vec+tail layout.
+// with weight = (tgt == 0 ? neg_w : pos_w). Targets stay FP32 (see kernel.cuh)
+// so the float4 vec layout that mixed targets and outputs no longer applies.
 template<typename T>
 __global__ void weighted_squared_error_gradient_kernel(
-    const int n_vec, const int n,
+    const int n,
     T* __restrict__ deltas,
-    const T* __restrict__ targets,
+    const float* __restrict__ targets,
     const T* __restrict__ outputs,
     const float positives_weight,
     const float negatives_weight,
     const float scaling_factor)
 {
-    constexpr int vec_width = 16 / sizeof(T);
-
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     const int stride = blockDim.x * gridDim.x;
 
-    float4* const       d_v = reinterpret_cast<float4*>(deltas);
-    const float4* const t_v = reinterpret_cast<const float4*>(targets);
-    const float4* const o_v = reinterpret_cast<const float4*>(outputs);
-
-    for (int i = tid; i < n_vec; i += stride)
+    for (int i = tid; i < n; i += stride)
     {
-        float4 d_chunk;
-        float4 t_chunk = t_v[i];
-        float4 o_chunk = o_v[i];
-        T* d_lanes = reinterpret_cast<T*>(&d_chunk);
-        const T* t_lanes = reinterpret_cast<const T*>(&t_chunk);
-        const T* o_lanes = reinterpret_cast<const T*>(&o_chunk);
-
-        #pragma unroll
-        for (int k = 0; k < vec_width; ++k)
-            wse_gradient_one(d_lanes[k], t_lanes[k], o_lanes[k],
-                             positives_weight, negatives_weight, scaling_factor);
-
-        d_v[i] = d_chunk;
+        const float tgt = targets[i];
+        const float diff = static_cast<float>(outputs[i]) - tgt;
+        const float weight = (tgt == 0.0f) ? negatives_weight : positives_weight;
+        deltas[i] = static_cast<T>(diff * weight * scaling_factor);
     }
-
-    const int tail_start = n_vec * vec_width;
-    for (int i = tail_start + tid; i < n; i += stride)
-        wse_gradient_one(deltas[i], targets[i], outputs[i],
-                         positives_weight, negatives_weight, scaling_factor);
 }
 
 template<typename T>
-void weighted_squared_error_gradient_cuda(const Index n, T* deltas, const T* targets, const T* outputs, const float positives_weight, const float negatives_weight, const float scaling_factor)
+void weighted_squared_error_gradient_cuda(const Index n, T* deltas, const float* targets, const T* outputs, const float positives_weight, const float negatives_weight, const float scaling_factor)
 {
     if (n == 0) return;
 
-    constexpr int vec_width = 16 / sizeof(T);
     const int total = static_cast<int>(n);
 
-    const bool aligned = are_float4_aligned(deltas, targets, outputs);
-
-    const int n_vec = aligned ? (total / vec_width) : 0;
-    const int grid_size = grid_size_for(vector_work_size(total, n_vec, vec_width));
-
-    weighted_squared_error_gradient_kernel<T><<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        n_vec, total, deltas, targets, outputs, positives_weight, negatives_weight, scaling_factor);
+    weighted_squared_error_gradient_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
+        total, deltas, targets, outputs, positives_weight, negatives_weight, scaling_factor);
 }
 
-template void weighted_squared_error_gradient_cuda<float>        (const Index, float*,         const float*,         const float*,         const float, const float, const float);
-template void weighted_squared_error_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, const float, const float, const float);
+template void weighted_squared_error_gradient_cuda<float>        (const Index, float*,         const float*, const float*,         const float, const float, const float);
+template void weighted_squared_error_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const float*, const __nv_bfloat16*, const float, const float, const float);
 
 // Per-token CE for [batch, seq, vocab] outputs. Writes per-token error,
 // valid-token mask (target_class > 0), and correct-prediction mask to

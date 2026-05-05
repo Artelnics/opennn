@@ -52,6 +52,35 @@ Index Pooling::get_output_width() const
     return (input_width - pool_width + 2 * padding_width) / column_stride + 1;
 }
 
+vector<pair<Shape, Type>> Pooling::get_forward_specs(Index batch_size) const
+{
+    const Shape out_shape = get_output_shape();
+    const Type act = activation_dtype;
+
+    vector<pair<Shape, Type>> specs;
+
+    if (pooling_method == PoolingMethod::MaxPooling)
+        specs.push_back({Shape{batch_size}.append(out_shape), act}); // MaximalIndices
+
+    specs.push_back({Shape{batch_size}.append(out_shape), act}); // Output (must be last)
+
+    return specs;
+}
+
+vector<pair<Shape, Type>> Pooling::get_backward_specs(Index batch_size) const
+{
+    return {{{batch_size, input_height, input_width, input_channels}, activation_dtype}};
+}
+
+void Pooling::update_pool_operator()
+{
+    pool.set(input_height, input_width, input_channels,
+             pool_height, pool_width,
+             row_stride, column_stride,
+             padding_height, padding_width,
+             pooling_method == PoolingMethod::MaxPooling ? 0 : 1);
+}
+
 // Setters
 
 void Pooling::set(const Shape& new_input_shape,
@@ -74,44 +103,34 @@ void Pooling::set(const Shape& new_input_shape,
         throw runtime_error("Pool shape cannot be bigger than input shape");
 
     if (new_stride_shape[0] <= 0 || new_stride_shape[1] <= 0)
-        throw runtime_error("Stride shape cannot be 0 or lower");
+        throw runtime_error("Stride must be positive.");
 
     if (new_stride_shape[0] > new_input_shape[0] || new_stride_shape[1] > new_input_shape[1])
         throw runtime_error("Stride shape cannot be bigger than input shape");
 
     if (new_padding_dimensions[0] < 0 || new_padding_dimensions[1] < 0)
-        throw runtime_error("Padding shape cannot be lower than 0");
+        throw runtime_error("Padding shape cannot be negative");
 
-    input_height = new_input_shape[0];
-    input_width = new_input_shape[1];
-    input_channels = new_input_shape[2];
+    // Direct assignment of all geometry; setters with side-effects are deferred
+    // so we hit update_pool_operator() exactly once at the end.
+    input_height    = new_input_shape[0];
+    input_width     = new_input_shape[1];
+    input_channels  = new_input_shape[2];
 
-    set_pool_size(new_pool_dimensions[0], new_pool_dimensions[1]);
+    pool_height     = new_pool_dimensions[0];
+    pool_width      = new_pool_dimensions[1];
 
-    set_row_stride(new_stride_shape[0]);
-    set_column_stride(new_stride_shape[1]);
+    row_stride      = new_stride_shape[0];
+    column_stride   = new_stride_shape[1];
 
-    set_padding_height(new_padding_dimensions[0]);
-    set_padding_width(new_padding_dimensions[1]);
+    padding_height  = new_padding_dimensions[0];
+    padding_width   = new_padding_dimensions[1];
 
-    set_pooling_method(new_pooling_method);
+    pooling_method  = string_to_pooling_method(new_pooling_method);
 
     set_label(new_label);
 
-    pool.set(input_height, input_width, input_channels,
-             pool_height, pool_width,
-             row_stride, column_stride,
-             padding_height, padding_width,
-             pooling_method == PoolingMethod::MaxPooling ? 0 : 1);
-
-#ifdef OPENNN_WITH_CUDA
-    pool.init_cuda();
-#endif
-}
-
-void Pooling::destroy_cuda()
-{
-    pool.destroy_cuda();
+    update_pool_operator();
 }
 
 void Pooling::set_input_shape(const Shape& new_input_shape)
@@ -122,19 +141,66 @@ void Pooling::set_input_shape(const Shape& new_input_shape)
     input_height = new_input_shape[0];
     input_width = new_input_shape[1];
     input_channels = new_input_shape[2];
+
+    update_pool_operator();
 }
 
-void Pooling::set_pool_size(const Index new_pool_rows_number,
-                            Index new_pool_columns_number)
+void Pooling::set_pool_size(Index new_pool_rows_number, Index new_pool_columns_number)
 {
     pool_height = new_pool_rows_number;
     pool_width = new_pool_columns_number;
+
+    update_pool_operator();
+}
+
+void Pooling::set_row_stride(Index new_row_stride)
+{
+    if (new_row_stride <= 0)
+        throw runtime_error("Row stride must be positive.");
+
+    row_stride = new_row_stride;
+
+    update_pool_operator();
+}
+
+void Pooling::set_column_stride(Index new_column_stride)
+{
+    if (new_column_stride <= 0)
+        throw runtime_error("Column stride must be positive.");
+
+    column_stride = new_column_stride;
+
+    update_pool_operator();
+}
+
+void Pooling::set_padding_height(Index new_padding_height)
+{
+    if (new_padding_height < 0)
+        throw runtime_error("Padding height cannot be negative.");
+
+    padding_height = new_padding_height;
+
+    update_pool_operator();
+}
+
+void Pooling::set_padding_width(Index new_padding_width)
+{
+    if (new_padding_width < 0)
+        throw runtime_error("Padding width cannot be negative.");
+
+    padding_width = new_padding_width;
+
+    update_pool_operator();
 }
 
 void Pooling::set_pooling_method(const string& new_pooling_method)
 {
     pooling_method = string_to_pooling_method(new_pooling_method);
+
+    update_pool_operator();
 }
+
+// Forward / back propagation
 
 void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
@@ -181,13 +247,28 @@ void Pooling::from_JSON(const JsonDocument& document)
     const Json* pooling_layer_element = get_json_root(document, "Pooling");
 
     set_label(read_json_string(pooling_layer_element, "Label"));
-    set_input_shape(string_to_shape(read_json_string(pooling_layer_element, "InputDimensions")));
-    set_pool_size(read_json_index(pooling_layer_element, "PoolHeight"), read_json_index(pooling_layer_element, "PoolWidth"));
-    set_pooling_method(read_json_string(pooling_layer_element, "PoolingMethod"));
-    set_column_stride(read_json_index(pooling_layer_element, "ColumnStride"));
-    set_row_stride(read_json_index(pooling_layer_element, "RowStride"));
-    set_padding_height(read_json_index(pooling_layer_element, "PaddingHeight"));
-    set_padding_width(read_json_index(pooling_layer_element, "PaddingWidth"));
+
+    // Read all state into the layer first; configure the operator once at the end.
+    const Shape input_shape = string_to_shape(read_json_string(pooling_layer_element, "InputDimensions"));
+    if (input_shape.rank != 3)
+        throw runtime_error("Input shape rank must be 3");
+
+    input_height    = input_shape[0];
+    input_width     = input_shape[1];
+    input_channels  = input_shape[2];
+
+    pool_height     = read_json_index(pooling_layer_element, "PoolHeight");
+    pool_width      = read_json_index(pooling_layer_element, "PoolWidth");
+
+    row_stride      = read_json_index(pooling_layer_element, "RowStride");
+    column_stride   = read_json_index(pooling_layer_element, "ColumnStride");
+
+    padding_height  = read_json_index(pooling_layer_element, "PaddingHeight");
+    padding_width   = read_json_index(pooling_layer_element, "PaddingWidth");
+
+    pooling_method  = string_to_pooling_method(read_json_string(pooling_layer_element, "PoolingMethod"));
+
+    update_pool_operator();
 }
 
 void Pooling::to_JSON(JsonWriter& printer) const

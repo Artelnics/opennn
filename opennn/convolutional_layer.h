@@ -71,7 +71,7 @@ public:
     void set_activation_dtype(Type new_activation_dtype) override
     {
         Layer::set_activation_dtype(new_activation_dtype);
-        configure_operators();
+        update_convolution_operator();
     }
 
     void set_row_stride(const Index);
@@ -118,7 +118,7 @@ private:
     enum Forward {Input, PaddedInput, ConvolutionView, BatchNormMean, BatchNormInverseVariance, Output};
     enum Backward {OutputDelta, InputDelta};
 
-    void configure_operators();
+    void update_convolution_operator();
 };
 
 }
