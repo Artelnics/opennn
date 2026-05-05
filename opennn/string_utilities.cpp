@@ -220,6 +220,9 @@ bool is_date_time_string(const string& text)
         return false;
 
     const static vector<regex> date_regexes = {
+        // ISO 8601 with optional timezone (e.g. 2017-12-31 00:00:00+00:00, 2017-12-31T00:00:00Z)
+        regex(R"((\d{4})-(\d{1,2})-(\d{1,2})[T ](\d{1,2}):(\d{1,2}):(\d{1,2})(?:Z|[+-]\d{2}:?\d{2}))"),
+        regex(R"((\d{4})-(\d{1,2})-(\d{1,2})[T ](\d{1,2}):(\d{1,2})(?:Z|[+-]\d{2}:?\d{2}))"),
         // YMD
         regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))"), // yyyy/mm/dd hh:mm:ss.sss
         regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2}))"), // yyyy/mm/dd hh:mm:ss
@@ -248,8 +251,29 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
     struct tm time_structure = {};
     smatch matches;
 
+    // ISO 8601 with timezone, with seconds (e.g. 2017-12-31 00:00:00+00:00, ...T...Z)
+    if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})-(\d{1,2})-(\d{1,2})[T ](\d{1,2}):(\d{1,2}):(\d{1,2})(Z|[+-]\d{2}:?\d{2}))")))
+    {
+        time_structure.tm_year = stoi(matches[1].str()) - 1900;
+        time_structure.tm_mon = stoi(matches[2].str()) - 1;
+        time_structure.tm_mday = stoi(matches[3].str());
+        time_structure.tm_hour = stoi(matches[4].str()) - gmt;
+        time_structure.tm_min = stoi(matches[5].str());
+        time_structure.tm_sec = stoi(matches[6].str());
+        return mktime(&time_structure);
+    }
+    // ISO 8601 with timezone, no seconds (e.g. 2017-12-31 00:00+00:00, ...T...Z)
+    else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})-(\d{1,2})-(\d{1,2})[T ](\d{1,2}):(\d{1,2})(Z|[+-]\d{2}:?\d{2}))")))
+    {
+        time_structure.tm_year = stoi(matches[1].str()) - 1900;
+        time_structure.tm_mon = stoi(matches[2].str()) - 1;
+        time_structure.tm_mday = stoi(matches[3].str());
+        time_structure.tm_hour = stoi(matches[4].str()) - gmt;
+        time_structure.tm_min = stoi(matches[5].str());
+        return mktime(&time_structure);
+    }
     // yyyy/mm/dd hh:mm:ss.sss
-    if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))")))
+    else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))")))
     {
         time_structure.tm_year = stoi(matches[1].str()) - 1900;
         time_structure.tm_mon = stoi(matches[2].str()) - 1;
