@@ -15,72 +15,38 @@ namespace opennn
 
 namespace
 {
-    void*  cublas_lt_workspace_ = nullptr;
-    void*  bf16_input_scratch_  = nullptr;
-    size_t bf16_input_scratch_bytes_ = 0;
-    void*  bf16_grad_scratch_   = nullptr;
-    size_t bf16_grad_scratch_bytes_ = 0;
-    void*  fp32_upcast_scratch_ = nullptr;
-    size_t fp32_upcast_scratch_bytes_ = 0;
-    void*  loss_scratch_        = nullptr;
-    size_t loss_scratch_bytes_  = 0;
+    void* cublas_lt_workspace_ = nullptr;
 
-    std::unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans_;
+    Buffer bf16_input_(Device::CUDA);
+    Buffer bf16_gradient_(Device::CUDA);
+    Buffer fp32_upcast_(Device::CUDA);
+
+    unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans_;
 }
 
-void* get_cublas_lt_workspace()
+void* ensure_cublas_lt_workspace()
 {
     if (!cublas_lt_workspace_)
         CHECK_CUDA(cudaMalloc(&cublas_lt_workspace_, cublas_lt_workspace_bytes()));
     return cublas_lt_workspace_;
 }
 
-__nv_bfloat16* get_bf16_input_scratch(Index n_elements)
+__nv_bfloat16* ensure_bf16_input_scratch(Index n_elements)
 {
-    const size_t needed_bytes = size_t(n_elements) * sizeof(__nv_bfloat16);
-    if (needed_bytes > bf16_input_scratch_bytes_)
-    {
-        if (bf16_input_scratch_) cudaFree(bf16_input_scratch_);
-        CHECK_CUDA(cudaMalloc(&bf16_input_scratch_, needed_bytes));
-        bf16_input_scratch_bytes_ = needed_bytes;
-    }
-    return reinterpret_cast<__nv_bfloat16*>(bf16_input_scratch_);
+    bf16_input_.grow_to(n_elements * Index(sizeof(__nv_bfloat16)));
+    return bf16_input_.as<__nv_bfloat16>();
 }
 
-__nv_bfloat16* get_bf16_grad_scratch(Index n_elements)
+__nv_bfloat16* ensure_bf16_gradient_scratch(Index n_elements)
 {
-    const size_t needed_bytes = size_t(n_elements) * sizeof(__nv_bfloat16);
-    if (needed_bytes > bf16_grad_scratch_bytes_)
-    {
-        if (bf16_grad_scratch_) cudaFree(bf16_grad_scratch_);
-        CHECK_CUDA(cudaMalloc(&bf16_grad_scratch_, needed_bytes));
-        bf16_grad_scratch_bytes_ = needed_bytes;
-    }
-    return reinterpret_cast<__nv_bfloat16*>(bf16_grad_scratch_);
+    bf16_gradient_.grow_to(n_elements * Index(sizeof(__nv_bfloat16)));
+    return bf16_gradient_.as<__nv_bfloat16>();
 }
 
-float* get_fp32_upcast_scratch(Index n_elements)
+float* ensure_fp32_upcast_scratch(Index n_elements)
 {
-    const size_t needed_bytes = size_t(n_elements) * sizeof(float);
-    if (needed_bytes > fp32_upcast_scratch_bytes_)
-    {
-        if (fp32_upcast_scratch_) cudaFree(fp32_upcast_scratch_);
-        CHECK_CUDA(cudaMalloc(&fp32_upcast_scratch_, needed_bytes));
-        fp32_upcast_scratch_bytes_ = needed_bytes;
-    }
-    return reinterpret_cast<float*>(fp32_upcast_scratch_);
-}
-
-float* get_loss_scratch(Index n_elements)
-{
-    const size_t needed_bytes = size_t(n_elements) * sizeof(float);
-    if (needed_bytes > loss_scratch_bytes_)
-    {
-        if (loss_scratch_) cudaFree(loss_scratch_);
-        CHECK_CUDA(cudaMalloc(&loss_scratch_, needed_bytes));
-        loss_scratch_bytes_ = needed_bytes;
-    }
-    return reinterpret_cast<float*>(loss_scratch_);
+    fp32_upcast_.grow_to(n_elements * Index(sizeof(float)));
+    return fp32_upcast_.as<float>();
 }
 
 const void* maybe_cast(const TensorView& input, Type target_type)
@@ -89,14 +55,14 @@ const void* maybe_cast(const TensorView& input, Type target_type)
 
     if (input.type == Type::FP32 && target_type == Type::BF16)
     {
-        __nv_bfloat16* scratch = get_bf16_input_scratch(input.size());
+        __nv_bfloat16* scratch = ensure_bf16_input_scratch(input.size());
         cast_fp32_to_bf16_cuda(input.size(), input.as<float>(), scratch);
         return scratch;
     }
 
     if (input.type == Type::BF16 && target_type == Type::FP32)
     {
-        float* scratch = get_fp32_upcast_scratch(input.size());
+        float* scratch = ensure_fp32_upcast_scratch(input.size());
         cast_bf16_to_fp32_cuda(input.size(), input.as<__nv_bfloat16>(), scratch);
         return scratch;
     }
@@ -128,16 +94,17 @@ const LtMatmulPlan& get_lt_gemm_plan(
                                                 ? CUBLAS_COMPUTE_32F
                                                 : CUBLAS_COMPUTE_32F_FAST_TF32;
     CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.op_desc, compute_type, CUDA_R_32F));
-    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_TRANSA,
-                                                &transA, sizeof(transA)));
-    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_TRANSB,
-                                                &transB, sizeof(transB)));
-    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_EPILOGUE,
-                                                &epilogue, sizeof(epilogue)));
+
+    auto set_desc = [&](cublasLtMatmulDescAttributes_t attr, const auto& value)
+    {
+        CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, attr, &value, sizeof(value)));
+    };
+
+    set_desc(CUBLASLT_MATMUL_DESC_TRANSA,   transA);
+    set_desc(CUBLASLT_MATMUL_DESC_TRANSB,   transB);
+    set_desc(CUBLASLT_MATMUL_DESC_EPILOGUE, epilogue);
     // cuBLASLt 12.x requires bias type == output type for BF16/FP16 outputs.
-    const cudaDataType_t bias_dtype = out_dtype;
-    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc, CUBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
-                                                &bias_dtype, sizeof(bias_dtype)));
+    set_desc(CUBLASLT_MATMUL_DESC_BIAS_DATA_TYPE, out_dtype);
 
     const int a_rows = (transA == CUBLAS_OP_N) ? m : k;
     const int a_cols = (transA == CUBLAS_OP_N) ? k : m;

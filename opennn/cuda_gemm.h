@@ -83,13 +83,13 @@ struct LtMatmulPlanKeyHash
 
 constexpr size_t cublas_lt_workspace_bytes() { return 32ull * 1024 * 1024; }
 
-void* get_cublas_lt_workspace();
+void* ensure_cublas_lt_workspace();
 
-__nv_bfloat16* get_bf16_input_scratch(Index n_elements);
+__nv_bfloat16* ensure_bf16_input_scratch(Index n_elements);
 
-__nv_bfloat16* get_bf16_grad_scratch(Index n_elements);
+__nv_bfloat16* ensure_bf16_gradient_scratch(Index n_elements);
 
-float* get_fp32_upcast_scratch(Index n_elements);
+float* ensure_fp32_upcast_scratch(Index n_elements);
 
 float* get_loss_scratch(Index n_elements);
 

@@ -92,35 +92,41 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
     const TensorView target = batch.get_targets();
 
+#ifdef OPENNN_WITH_CUDA
+    float* workspace_device = Configuration::instance().is_gpu() ? back_propagation.errors_device.as<float>() : nullptr;
+#else
+    float* workspace_device = nullptr;
+#endif
+
     switch (error)
     {
     case Error::MeanSquaredError:
-        mean_squared_error(input, target, back_propagation.error);
+        mean_squared_error(input, target, back_propagation.error, workspace_device);
         break;
     case Error::NormalizedSquaredError:
-        normalized_squared_error(input, target, normalization_coefficient, back_propagation.error);
+        normalized_squared_error(input, target, normalization_coefficient, back_propagation.error, workspace_device);
         break;
     case Error::WeightedSquaredError:
-        weighted_squared_error(input, target, positives_weight, negatives_weight, back_propagation.error);
+        weighted_squared_error(input, target, positives_weight, negatives_weight, back_propagation.error, workspace_device);
         back_propagation.error *= get_weighted_coefficient(batch);
         break;
     case Error::CrossEntropy:
         if (input.shape.back() == 1)
-            binary_cross_entropy(input, target, back_propagation.error);
+            binary_cross_entropy(input, target, back_propagation.error, workspace_device);
         else
-            categorical_cross_entropy(input, target, back_propagation.error);
+            categorical_cross_entropy(input, target, back_propagation.error, workspace_device);
         break;
     case Error::CrossEntropy3d:
     {
         Index correct_tokens = 0;
-        cross_entropy_3d(input, target, back_propagation.error, back_propagation.active_tokens_count, correct_tokens);
+        cross_entropy_3d(input, target, back_propagation.error, back_propagation.active_tokens_count, correct_tokens, workspace_device);
         const Index active = back_propagation.active_tokens_count;
         back_propagation.accuracy.setValues(
             {active > 0 ? float(correct_tokens) / float(active) : 0.0f});
         break;
     }
     case Error::MinkowskiError:
-        minkowski_error(input, target, minkowski_parameter, back_propagation.error);
+        minkowski_error(input, target, minkowski_parameter, back_propagation.error, workspace_device);
         break;
     }
 }

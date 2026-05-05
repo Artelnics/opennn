@@ -41,6 +41,8 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
 
+    output_delta_dimensions = Shape({batch_size}).append(output_shape);
+
     loss_value = 0.0f;
     error = 0.0f;
     accuracy.setZero();
@@ -71,8 +73,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     delta_views.resize(layers_number);
 
 #ifdef OPENNN_WITH_CUDA
-    const bool is_gpu = Configuration::instance().is_gpu();
-    if (is_gpu)
+    if (Configuration::instance().is_gpu())
     {
         const Type activation_dtype = neural_network->get_training_type();
         const Index activation_bytes = type_bytes(activation_dtype);
@@ -102,18 +103,14 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             }
         }
 
-        Index total_layer_bytes = 0;
+        Index total_backward_bytes = 0;
         for (Index i = 0; i < layers_number; ++i)
         {
             const vector<Shape>& shapes = backward_shapes[i];
             for (size_t j = 0; j < shapes.size(); ++j)
                 if (shapes[j].size() > 0)
-                    total_layer_bytes += get_aligned_bytes(shapes[j].size() * type_bytes(backward_dtypes[i][j]));
+                    total_backward_bytes += get_aligned_bytes(shapes[j].size() * type_bytes(backward_dtypes[i][j]));
         }
-
-        const Shape output_delta_shape = Shape({batch_size}).append(output_shape);
-        const Index loss_slot_bytes = get_aligned_bytes(output_delta_shape.size() * activation_bytes);
-        const Index total_backward_bytes = total_layer_bytes + loss_slot_bytes;
 
         if (total_backward_bytes > 0)
         {
@@ -143,7 +140,9 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             }
         }
 
-        uint8_t* loss_slot_ptr = b_cursor;
+        const Index total_output_delta_elems = batch_size * output_shape.size();
+        output_deltas.resize_bytes(total_output_delta_elems * activation_bytes, Device::CUDA);
+        output_deltas.setZero();
 
         Index total_og_bytes = 0;
         for (Index i = 0; i < layers_number; ++i)
@@ -162,8 +161,8 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
             if (i == last_trainable_layer_index)
             {
-                delta_views[i][0][0] = TensorView(loss_slot_ptr,
-                                                  output_delta_shape,
+                delta_views[i][0][0] = TensorView(output_deltas.as<float>(),
+                                                  output_delta_dimensions,
                                                   activation_dtype);
             }
             else if (!backward_edges[i].empty())
@@ -196,6 +195,12 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             }
         }
 
+        const Index outputs_number = output_shape[0];
+        errors_device.resize_bytes(batch_size * outputs_number * Index(sizeof(float)), Device::CUDA);
+
+        output_deltas_view_device = TensorView(output_deltas.as<float>(),
+                                               output_delta_dimensions,
+                                               activation_dtype);
         return;
     }
 #endif
@@ -224,11 +229,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         }
     }
 
-    const Index total_layer_size = aligned_total_elements(backward_shapes);
-    const Shape output_delta_shape = Shape({batch_size}).append(output_shape);
-    const Index loss_slot_size = get_aligned_size(output_delta_shape.size());
-    const Index total_backward_size = total_layer_size + loss_slot_size;
-
+    const Index total_backward_size = aligned_total_elements(backward_shapes);
     if (total_backward_size > 0)
     {
         backward.resize_bytes(total_backward_size * Index(sizeof(float)), Device::CPU);
@@ -257,7 +258,12 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         }
     }
 
-    float* loss_slot_ptr = b_ptr;
+    const Index total_output_elements = output_shape.size() * batch_size;
+    if (total_output_elements > 0)
+    {
+        output_deltas.resize_bytes(total_output_elements * Index(sizeof(float)), Device::CPU);
+        output_deltas.setZero();
+    }
 
     Index total_output_delta_size = 0;
     for (Index i = 0; i < layers_number; ++i)
@@ -277,7 +283,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
         if (i == last_trainable_layer_index)
         {
-            delta_views[i][0][0] = TensorView(loss_slot_ptr, output_delta_shape);
+            delta_views[i][0][0] = TensorView(output_deltas.as<float>(), output_delta_dimensions);
         }
         else if (!backward_edges[i].empty())
         {
@@ -305,37 +311,44 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
 {
     if (layer_index >= delta_views.size()) return;
     if (delta_views[layer_index].empty()) return;
-
-    const auto& edges = backward_edges[layer_index];
-    if (edges.size() <= 1) return;
+    if (backward_edges[layer_index].size() <= 1) return;
 
     TensorView& destination = delta_views[layer_index][0][0];
     if (!destination.data) return;
 
-    constexpr size_t MAX_FAN_IN = 16;
-    array<const TensorView*, MAX_FAN_IN> sources{};
-    size_t k = 0;
-
-    for (const BackwardEdge& edge : edges)
+    vector<const TensorView*> sources;
+    sources.reserve(backward_edges[layer_index].size());
+    for (const BackwardEdge& edge : backward_edges[layer_index])
     {
-        if (k == MAX_FAN_IN) break;
         const size_t slot = 1 + edge.port;
+
         if (edge.consumer_idx >= delta_views.size()) continue;
         const auto& consumer_views = delta_views[edge.consumer_idx];
         if (slot >= consumer_views.size() || consumer_views[slot].empty()) continue;
+
         const TensorView& source = consumer_views[slot][0];
         if (!source.data || source.size() != destination.size()) continue;
-        sources[k++] = &source;
+
+        sources.push_back(&source);
     }
 
-    if (k == 0) { destination.fill(0.0f); return; }
-    if (k == 1) { copy(*sources[0], destination); return; }
+    if (sources.empty())
+    {
+        destination.fill(0.0f);
+        return;
+    }
+
+    if (sources.size() == 1)
+    {
+        copy(*sources[0], destination);
+        return;
+    }
 
 #ifdef OPENNN_WITH_CUDA
     if (Configuration::instance().is_gpu())
     {
-        addition(*sources[0], *sources[1], destination);
-        for (size_t s = 2; s < k; ++s)
+        copy(*sources[0], destination);
+        for (size_t s = 1; s < sources.size(); ++s)
             addition(destination, *sources[s], destination);
         return;
     }
@@ -343,28 +356,37 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
 
     const Index n = destination.size();
     float* dst = destination.as<float>();
+    const size_t k = sources.size();
 
-    array<const float*, MAX_FAN_IN> ptrs{};
-    for (size_t s = 0; s < k; ++s) ptrs[s] = sources[s]->as<float>();
+    if (k == 2)
+    {
+        const float* p0 = sources[0]->as<float>();
+        const float* p1 = sources[1]->as<float>();
+        #pragma omp parallel for
+        for (Index i = 0; i < n; ++i) dst[i] = p0[i] + p1[i];
+        return;
+    }
+
+    vector<const float*> ptrs;
+    ptrs.reserve(k);
+    for (size_t s = 0; s < k; ++s) ptrs.push_back(sources[s]->as<float>());
 
     #pragma omp parallel for
     for (Index i = 0; i < n; ++i)
     {
-        float sum = ptrs[0][i] + ptrs[1][i];
-        for (size_t s = 2; s < k; ++s) sum += ptrs[s][i];
+        float sum = ptrs[0][i];
+        for (size_t s = 1; s < k; ++s) sum += ptrs[s][i];
         dst[i] = sum;
     }
 }
 
 TensorView BackPropagation::get_output_deltas() const
 {
-    // The output-delta lives as the trailing slot of the `backward` arena;
-    // delta_views[last_trainable][0][0] is the alias view set up by set().
-    const Index last = loss->get_neural_network()->get_last_trainable_layer_index();
-    if(last < 0 || static_cast<size_t>(last) >= delta_views.size()
-       || delta_views[last].empty() || delta_views[last][0].empty())
-        return {};
-    return delta_views[last][0][0];
+#ifdef OPENNN_WITH_CUDA
+    if (Configuration::instance().is_gpu())
+        return output_deltas_view_device;
+#endif
+    return {const_cast<float*>(output_deltas.as<float>()), output_delta_dimensions};
 }
 
 void BackPropagation::print() const

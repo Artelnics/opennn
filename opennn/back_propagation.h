@@ -14,6 +14,7 @@ namespace opennn
 {
 
 class Loss;
+class NeuralNetwork;
 
 struct BackwardEdge
 {
@@ -30,6 +31,8 @@ struct BackPropagation
     void set(const Index = 0, Loss* = nullptr);
 
     void accumulate_output_deltas(size_t layer_index);
+
+    NeuralNetwork* neural_network = nullptr;
 
     Buffer gradient;
     vector<vector<TensorView>> gradient_views;
@@ -51,8 +54,19 @@ struct BackPropagation
 
     float error = 0.0f;
     Index active_tokens_count = 0;
+    Buffer output_deltas;
+    Shape output_delta_dimensions;
+
     Tensor0 accuracy;
-    float loss_value = float(0);
+    float loss_value = 0.0f;
+
+#ifdef OPENNN_WITH_CUDA
+
+    Buffer errors_device{Device::CUDA};
+
+    TensorView output_deltas_view_device;
+
+#endif
 };
 
 }
