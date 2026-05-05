@@ -146,20 +146,6 @@ private:
     void apply_delta_gpu(const TensorView& output_delta, const TensorView& input,
                          TensorView& input_delta, TensorView& weight_gradient, TensorView& bias_gradient,
                          bool accumulate_input_delta) const;
-
-#ifdef OPENNN_WITH_CUDA
-    // 1-element plan cache per direction. Skips the global lt_gemm_plans_
-    // hash lookup in the steady state (constant batch + epilogue).
-    // input_features / output_features / weight_type are members; only the
-    // batch-dependent and direction-dependent bits need validating.
-    mutable const LtMatmulPlan* fwd_plan_ = nullptr;
-    mutable int                 fwd_total_rows_ = -1;
-    mutable cublasLtEpilogue_t  fwd_epilogue_ = CUBLASLT_EPILOGUE_DEFAULT;
-
-    mutable const LtMatmulPlan* bwd_plan_ = nullptr;
-    mutable int                 bwd_total_rows_ = -1;
-    mutable int                 bwd_io_dtype_ = -1;
-#endif
 };
 
 struct BatchNorm : Operator
@@ -261,7 +247,6 @@ struct Convolution : Operator
     cudnnConvolutionBwdFilterAlgo_t algorithm_filter  = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
 
     Buffer workspace{Device::CUDA};
-    Buffer backward_filter_workspace{Device::CUDA};
 
     Shape cuda_initialized_input_shape;
     Shape cuda_initialized_output_shape;

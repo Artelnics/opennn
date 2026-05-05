@@ -64,8 +64,7 @@ void Addition::back_propagate(ForwardPropagation&,
 
 void Addition::from_JSON(const JsonDocument& document)
 {
-    const Json* element = document.first_child("Addition");
-    if (!element) throw runtime_error(name + " element is nullptr.");
+    const Json* element = get_json_root(document, "Addition");
 
     const string new_label = read_json_string(element, "Label");
     const Shape new_input_shape = string_to_shape(read_json_string(element, "InputDimensions"));

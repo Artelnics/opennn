@@ -61,8 +61,7 @@ void Flatten::back_propagate(ForwardPropagation&,
 
 void Flatten::from_JSON(const JsonDocument& document)
 {
-    const Json* element = document.first_child("Flatten");
-    if (!element) throw runtime_error(name + " element is nullptr.");
+    const Json* element = get_json_root(document, "Flatten");
 
     set(string_to_shape(read_json_string(element, "InputDimensions")));
 }

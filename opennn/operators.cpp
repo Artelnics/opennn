@@ -648,15 +648,9 @@ void Combination::apply_gpu(const TensorView& input, TensorView& output, cublasL
     const void* input_for_gemm = maybe_cast(input, weights.type);
 
     const cudaDataType_t io_type = output.cuda_dtype();
-    if (!fwd_plan_ || fwd_total_rows_ != total_rows || fwd_epilogue_ != epilogue)
-    {
-        fwd_plan_         = &get_lt_gemm_plan(output_columns, total_rows, input_columns,
-                                              CUBLAS_OP_N, CUBLAS_OP_N,
-                                              epilogue, io_type, io_type);
-        fwd_total_rows_   = total_rows;
-        fwd_epilogue_     = epilogue;
-    }
-    const LtMatmulPlan& plan = *fwd_plan_;
+    const LtMatmulPlan& plan = get_lt_gemm_plan(output_columns, total_rows, input_columns,
+                                                CUBLAS_OP_N, CUBLAS_OP_N,
+                                                epilogue, io_type, io_type);
 
     const float* bias_pointer = bias.as_float();
 
@@ -686,18 +680,11 @@ void Combination::apply_delta_gpu(const TensorView& output_delta, const TensorVi
 
     const void* input_for_gemm = maybe_cast(input, weights.type);
 
-    const int io_dtype = static_cast<int>(output_delta.cuda_dtype());
-    if (!bwd_plan_ || bwd_total_rows_ != total_rows || bwd_io_dtype_ != io_dtype)
-    {
-        bwd_plan_         = &get_lt_gemm_plan(output_columns, input_columns, total_rows,
-                                              CUBLAS_OP_N, CUBLAS_OP_T,
-                                              CUBLASLT_EPILOGUE_BGRADA,
-                                              output_delta.cuda_dtype(),
-                                              CUDA_R_32F);
-        bwd_total_rows_   = total_rows;
-        bwd_io_dtype_     = io_dtype;
-    }
-    const LtMatmulPlan& plan = *bwd_plan_;
+    const LtMatmulPlan& plan = get_lt_gemm_plan(output_columns, input_columns, total_rows,
+                                                CUBLAS_OP_N, CUBLAS_OP_T,
+                                                CUBLASLT_EPILOGUE_BGRADA,
+                                                output_delta.cuda_dtype(),
+                                                CUDA_R_32F);
 
     float* bias_gradient_pointer = bias_gradient.as<float>();
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
@@ -772,7 +759,6 @@ void Convolution::set(Index new_input_h, Index new_input_w, Index new_input_c,
 
         // Geometry changed → cached algos and workspace are stale.
         workspace.resize_bytes(0, Device::CUDA);
-        backward_filter_workspace.resize_bytes(0, Device::CUDA);
         cuda_initialized_input_shape  = {};
         cuda_initialized_output_shape = {};
     }
@@ -1005,10 +991,9 @@ void Convolution::ensure_cuda_initialized(const TensorView& input, const TensorV
         }
     }
 
-    workspace_bytes = max(workspace_bytes, bwd_data_ws);
+    workspace_bytes = max({workspace_bytes, bwd_data_ws, backward_filter_workspace_bytes});
 
     workspace.resize_bytes(Index(workspace_bytes), Device::CUDA);
-    backward_filter_workspace.resize_bytes(Index(backward_filter_workspace_bytes), Device::CUDA);
 
     cuda_initialized_input_shape  = input.shape;
     cuda_initialized_output_shape = output.shape;
@@ -1019,7 +1004,6 @@ void Convolution::destroy_cuda()
     if (kernel_descriptor)      { cudnnDestroyFilterDescriptor(kernel_descriptor);           kernel_descriptor = nullptr; }
     if (convolution_descriptor) { cudnnDestroyConvolutionDescriptor(convolution_descriptor); convolution_descriptor = nullptr; }
     workspace.resize_bytes(0, Device::CUDA);
-    backward_filter_workspace.resize_bytes(0, Device::CUDA);
     cuda_initialized_input_shape  = {};
     cuda_initialized_output_shape = {};
 }
@@ -1091,7 +1075,7 @@ void Convolution::apply_delta_gpu(const TensorView& input,
         output_delta.get_descriptor(), output_delta.data,
         convolution_descriptor,
         algorithm_filter,
-        backward_filter_workspace.data, size_t(backward_filter_workspace.bytes),
+        workspace.data, size_t(workspace.bytes),
         &zero,
         kernel_descriptor, weight_gradient_buffer));
 
@@ -1496,13 +1480,15 @@ struct Attention::SDPACache
         std::shared_ptr<fe::graph::Graph> fwd_graph;
         std::shared_ptr<fe::graph::Tensor_attributes> fwd_Q, fwd_K, fwd_V, fwd_O, fwd_Stats;
         std::shared_ptr<fe::graph::Tensor_attributes> fwd_Seed, fwd_Offset;
-        void* fwd_workspace_buf = nullptr;
 
         // Backward graph (built lazily on first apply_delta_gpu)
         std::shared_ptr<fe::graph::Graph> bwd_graph;
         std::shared_ptr<fe::graph::Tensor_attributes> bwd_Q, bwd_K, bwd_V, bwd_O, bwd_dO, bwd_Stats;
         std::shared_ptr<fe::graph::Tensor_attributes> bwd_dQ, bwd_dK, bwd_dV;
-        void* bwd_workspace_buf = nullptr;
+
+        // Shared scratch: the fwd and bwd graph executes never overlap on the
+        // compute stream, so one buffer sized to max(fwd_ws, bwd_ws) suffices.
+        Buffer workspace_buf{Device::CUDA};
 
         // Shared (forward writes, backward reads). LSE stats from softmax.
         void* stats_buf = nullptr;
@@ -1543,9 +1529,7 @@ struct Attention::SDPACache
 #ifdef OPENNN_WITH_CUDA
         for (auto& [_, e] : entries)
         {
-            if (e.fwd_workspace_buf) cudaFree(e.fwd_workspace_buf);
-            if (e.bwd_workspace_buf) cudaFree(e.bwd_workspace_buf);
-            if (e.stats_buf)         cudaFree(e.stats_buf);
+            if (e.stats_buf) cudaFree(e.stats_buf);
         }
 #endif
     }
@@ -1655,7 +1639,7 @@ static void build_sdpa_forward_graph(Attention::SDPACache::Entry& entry,
     int64_t ws = 0;
     graph->get_workspace_size(ws);
     if (ws > 0)
-        CHECK_CUDA(cudaMalloc(&entry.fwd_workspace_buf, size_t(ws)));
+        entry.workspace_buf.grow_to(Index(ws));
 
     if (k.is_training)
     {
@@ -1718,7 +1702,7 @@ static void build_sdpa_backward_graph(Attention::SDPACache::Entry& entry,
     int64_t ws = 0;
     graph->get_workspace_size(ws);
     if (ws > 0)
-        CHECK_CUDA(cudaMalloc(&entry.bwd_workspace_buf, size_t(ws)));
+        entry.workspace_buf.grow_to(Index(ws));
 
     entry.bwd_graph = graph;
 }
@@ -1889,7 +1873,7 @@ void Attention::apply_gpu(const TensorView& query,
     // tensors (see Seed/Offset graph nodes); current support gate above never
     // sets ck.dropout_active to true.
 
-    const auto status = entry.fwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.fwd_workspace_buf);
+    const auto status = entry.fwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.workspace_buf.data);
     if (status.is_bad())
         throw runtime_error("SDPA forward execute: " + status.get_message());
 #else
@@ -2069,7 +2053,7 @@ void Attention::apply_delta_gpu(const TensorView& query,
     tp[entry.bwd_dK]    = key_gradient.data;
     tp[entry.bwd_dV]    = value_gradient.data;
 
-    const auto status = entry.bwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.bwd_workspace_buf);
+    const auto status = entry.bwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.workspace_buf.data);
     if (status.is_bad())
         throw runtime_error("SDPA backward execute: " + status.get_message());
 #elif defined(OPENNN_WITH_CUDA)

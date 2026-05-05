@@ -255,8 +255,7 @@ void Dense::back_propagate(ForwardPropagation& forward_propagation,
 
 void Dense::from_JSON(const JsonDocument& document)
 {
-    const Json* dense_layer_element = document.first_child("Dense");
-    if (!dense_layer_element) throw runtime_error(name + " element is nullptr.");
+    const Json* dense_layer_element = get_json_root(document, "Dense");
 
     set_label(read_json_string(dense_layer_element, "Label"));
 
@@ -276,8 +275,7 @@ void Dense::load_state_from_JSON(const JsonDocument& document)
 {
     if (!batch_norm.active()) return;
 
-    const Json* dense_layer_element = document.first_child("Dense");
-    if (!dense_layer_element) throw runtime_error(name + " element is nullptr.");
+    const Json* dense_layer_element = get_json_root(document, "Dense");
 
     batch_norm.load_state_from_JSON(dense_layer_element);
 }

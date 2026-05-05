@@ -232,8 +232,7 @@ string Scaling::write_standard_deviation_expression(const vector<string>& input_
 
 void Scaling::from_JSON(const JsonDocument& document)
 {
-    const Json* scaling_layer_element = document.first_child("Scaling");
-    if (!scaling_layer_element) throw runtime_error(name + " element is nullptr.");
+    const Json* scaling_layer_element = get_json_root(document, "Scaling");
 
     set(string_to_shape(read_json_string(scaling_layer_element, "InputDimensions")));
 
@@ -250,8 +249,7 @@ void Scaling::load_state_from_JSON(const JsonDocument& document)
 {
     if (ssize(states) < 5 || !states[Means].data) return;
 
-    const Json* scaling_layer_element = document.first_child("Scaling");
-    if (!scaling_layer_element) throw runtime_error(name + " element is nullptr.");
+    const Json* scaling_layer_element = get_json_root(document, "Scaling");
 
     VectorR tmp;
     string_to_vector(read_json_string(scaling_layer_element, "Means"), tmp);
