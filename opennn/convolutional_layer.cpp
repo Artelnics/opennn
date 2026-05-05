@@ -45,14 +45,14 @@ Shape Convolutional::get_output_shape() const
 
 Index Convolutional::get_output_height() const
 {
-    return (convolution_type == ConvolutionType::Same)
+    return use_padding
         ? (input_height + row_stride - 1) / row_stride
         : (input_height - kernel_height) / row_stride + 1;
 }
 
 Index Convolutional::get_output_width() const
 {
-    return (convolution_type == ConvolutionType::Same)
+    return use_padding
         ? (input_width + column_stride - 1) / column_stride
         : (input_width - kernel_width) / column_stride + 1;
 }
@@ -64,8 +64,7 @@ pair<Index, Index> Convolutional::get_padding() const
 
 Index Convolutional::get_padding_height() const
 {
-    if (convolution_type == ConvolutionType::Valid)
-        return 0;
+    if (!use_padding) return 0;
 
     const Index output_height = (input_height + row_stride - 1) / row_stride;
     const Index total_padding = (output_height - 1) * row_stride + kernel_height - input_height;
@@ -75,8 +74,7 @@ Index Convolutional::get_padding_height() const
 
 Index Convolutional::get_padding_width() const
 {
-    if (convolution_type == ConvolutionType::Valid)
-        return 0;
+    if (!use_padding) return 0;
 
     const Index output_width = (input_width + column_stride - 1) / column_stride;
     const Index total_padding = (output_width - 1) * column_stride + kernel_width - input_width;
@@ -95,6 +93,32 @@ vector<Operator*> Convolutional::get_operators()
     vector<Operator*> operators = {&convolution};
     if (batch_norm.active()) operators.push_back(&batch_norm);
     return operators;
+}
+
+vector<pair<Shape, Type>> Convolutional::get_forward_specs(Index batch_size) const
+{
+    const Shape output_shape = {batch_size, get_output_height(), get_output_width(), kernels_number};
+    const Shape padded_shape = Configuration::instance().is_gpu()
+        ? Shape{}
+        : Shape{batch_size,
+                input_height + 2 * get_padding_height(),
+                input_width + 2 * get_padding_width(),
+                input_channels};
+    const Shape convolution_view_shape = batch_norm.active() ? output_shape          : Shape{};
+    const Shape bn_stat_shape          = batch_norm.active() ? Shape{kernels_number} : Shape{};
+
+    return {
+        /*PaddedInput*/              {padded_shape,           compute_dtype},
+        /*ConvolutionView*/          {convolution_view_shape, compute_dtype},
+        /*BatchNormMean*/            {bn_stat_shape,          Type::FP32},
+        /*BatchNormInverseVariance*/ {bn_stat_shape,          Type::FP32},
+        /*Output*/                   {output_shape,           compute_dtype},
+    };
+}
+
+vector<pair<Shape, Type>> Convolutional::get_backward_specs(Index batch_size) const
+{
+    return {{{batch_size, input_height, input_width, input_channels}, compute_dtype}};
 }
 
 void Convolutional::configure_operators()
@@ -142,7 +166,7 @@ void Convolutional::set(const Shape& new_input_shape,
     if (new_stride_shape[0] > new_input_shape[0] || new_stride_shape[1] > new_input_shape[1])
         throw runtime_error("Stride shape cannot be bigger than input shape");
 
-    if (string_to_convolution_type(new_convolution_type) == ConvolutionType::Same
+    if (new_convolution_type == "Same"
         && (new_kernel_shape[0] % 2 == 0 || new_kernel_shape[1] % 2 == 0))
         throw runtime_error("Kernel shape (height and width) must be odd (3x3,5x5 etc) when using 'Same' padding mode to ensure symmetric padding.");
 
@@ -199,8 +223,12 @@ void Convolutional::set_column_stride(const Index new_stride_column)
 
 void Convolutional::set_convolution_type(const string& new_convolution_type)
 {
-    convolution_type = string_to_convolution_type(new_convolution_type);
-    use_padding = (convolution_type == ConvolutionType::Same);
+    if (new_convolution_type != "Valid" && new_convolution_type != "Same")
+        throw runtime_error("Convolution type must be 'Valid' or 'Same'.");
+
+    use_padding = (new_convolution_type == "Same");
+
+    configure_operators();
 }
 
 void Convolutional::set_activation_function(const string& new_activation_function)
@@ -369,7 +397,7 @@ void Convolutional::to_JSON(JsonWriter& printer) const
         {"KernelsWidth", to_string(get_kernel_width())},
         {"KernelsChannels", to_string(get_kernel_channels())},
         {"StrideDimensions", shape_to_string({get_row_stride(), get_column_stride()})},
-        {"Convolution", convolution_type_to_string(convolution_type)}
+        {"Convolution", use_padding ? "Same" : "Valid"}
     });
 
     activation.to_JSON(printer);
