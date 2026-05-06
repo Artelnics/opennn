@@ -24,6 +24,7 @@ struct LtMatmulPlan
     cublasLtMatrixLayout_t d_desc  = nullptr;
     cublasLtMatmulAlgo_t   algo{};
     bool                   algo_valid = false;
+    size_t                 workspace_size = 0;  // bytes the chosen algo actually needs
 
     LtMatmulPlan() = default;
     LtMatmulPlan(const LtMatmulPlan&) = delete;
@@ -38,6 +39,7 @@ struct LtMatmulPlan
         swap(d_desc,  other.d_desc);
         swap(algo,    other.algo);
         swap(algo_valid, other.algo_valid);
+        swap(workspace_size, other.workspace_size);
         return *this;
     }
     ~LtMatmulPlan()
@@ -80,9 +82,15 @@ struct LtMatmulPlanKeyHash
     }
 };
 
-constexpr size_t cublas_lt_workspace_bytes() { return 32ull * 1024 * 1024; }
+// Upper bound passed to cuBLASLt's heuristic search — limits which algorithms
+// are considered. The actual VRAM allocated only grows to the max workspace
+// the chosen algorithms reported they need (see ensure_cublas_lt_workspace).
+constexpr size_t cublas_lt_workspace_search_bytes() { return 32ull * 1024 * 1024; }
 
-void* ensure_cublas_lt_workspace();
+// Grows the global cublasLt scratch buffer to at least `min_bytes`. Returns a
+// pointer to it. Initial size is 0 — the buffer only grows when a plan whose
+// chosen algorithm needs more workspace gets created.
+void* ensure_cublas_lt_workspace(size_t min_bytes = 0);
 
 __nv_bfloat16* ensure_bf16_input_scratch(Index n_elements);
 

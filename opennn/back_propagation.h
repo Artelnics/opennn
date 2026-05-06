@@ -53,20 +53,11 @@ struct BackPropagation
     Loss* loss = nullptr;
 
     float error = 0.0f;
-    Index active_tokens_count = 0;
-    Buffer output_deltas;
-    Shape output_delta_dimensions;
-
-    Tensor0 accuracy;
+    float accuracy = 0.0f;
     float loss_value = 0.0f;
+    Index active_tokens_count = 0;
 
-#ifdef OPENNN_WITH_CUDA
-
-    Buffer errors_device{Device::CUDA};
-
-    TensorView output_deltas_view_device;
-
-#endif
+    Shape output_delta_dimensions;
 };
 
 }

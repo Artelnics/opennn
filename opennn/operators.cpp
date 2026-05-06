@@ -673,7 +673,7 @@ void Combination::apply_gpu(const TensorView& input, TensorView& output, cublasL
                                 output.data,     plan.c_desc,
                                 output.data,     plan.d_desc,
                                 plan.algo_valid ? &plan.algo : nullptr,
-                                ensure_cublas_lt_workspace(), cublas_lt_workspace_bytes(),
+                                ensure_cublas_lt_workspace(plan.workspace_size), plan.workspace_size,
                                 Backend::get_compute_stream()));
 }
 
@@ -713,7 +713,7 @@ void Combination::apply_delta_gpu(const TensorView& output_delta, const TensorVi
                                 weight_gradient.data, plan.c_desc,
                                 weight_gradient.data, plan.d_desc,
                                 plan.algo_valid ? &plan.algo : nullptr,
-                                ensure_cublas_lt_workspace(), cublas_lt_workspace_bytes(),
+                                ensure_cublas_lt_workspace(plan.workspace_size), plan.workspace_size,
                                 Backend::get_compute_stream()));
 
     if (!input_delta.data || input_delta.size() == 0) return;

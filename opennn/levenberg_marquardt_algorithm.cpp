@@ -555,7 +555,19 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
     validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices);
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
-    ForwardPropagation validation_forward_propagation(validation_samples_number, neural_network);
+
+    // Reuse the training FP for validation iff sample counts match exactly.
+    // LM is full-batch so splits typically differ — separate FP is the common
+    // case, but the alias activates for symmetric splits (e.g. 50/50).
+    unique_ptr<ForwardPropagation> validation_forward_propagation;
+
+    if (has_validation && validation_samples_number != training_samples_number)
+        validation_forward_propagation = make_unique<ForwardPropagation>(
+            validation_samples_number, neural_network);
+
+    ForwardPropagation* validation_fp = has_validation
+        ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
+        : nullptr;
 
     // Loss index
 
@@ -598,12 +610,12 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
         if (has_validation)
         {
             neural_network->forward_propagate(validation_batch.get_inputs(),
-                                              validation_forward_propagation,
+                                              *validation_fp,
                                               false);
 
-            calculate_errors(validation_batch, validation_forward_propagation, validation_back_propagation_lm);
-            calculate_squared_errors(validation_batch, validation_forward_propagation, validation_back_propagation_lm);
-            calculate_error(validation_batch, validation_forward_propagation, validation_back_propagation_lm);
+            calculate_errors(validation_batch, *validation_fp, validation_back_propagation_lm);
+            calculate_squared_errors(validation_batch, *validation_fp, validation_back_propagation_lm);
+            calculate_error(validation_batch, *validation_fp, validation_back_propagation_lm);
 
             results.validation_error_history(epoch) = validation_back_propagation_lm.error;
 

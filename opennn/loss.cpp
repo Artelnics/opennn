@@ -68,7 +68,10 @@ void Loss::back_propagate(const Batch& batch,
 {
     if (batch.is_empty()) return;
 
-    calculate_error(batch, forward_propagation, back_propagation);
+    const EvaluationResult eval = calculate_error(batch, forward_propagation);
+    back_propagation.error                = eval.error;
+    back_propagation.accuracy             = eval.accuracy;
+    back_propagation.active_tokens_count  = eval.active_tokens_count;
 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
@@ -88,13 +91,26 @@ float Loss::get_weighted_coefficient(const Batch& batch) const
     return float(total) / (float(samples) * (normalization_coefficient + EPSILON));
 }
 
-void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
+Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
+                                              const ForwardPropagation& forward_propagation) const
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
     const TensorView target = batch.get_targets();
 
+    EvaluationResult result;
+
 #ifdef OPENNN_WITH_CUDA
-    float* workspace_device = Configuration::instance().is_gpu() ? back_propagation.errors_device.as<float>() : nullptr;
+    float* workspace_device = nullptr;
+    if (Configuration::instance().is_gpu())
+    {
+        // CrossEntropy3d packs three masks (errors, valid, correct) of size
+        // token_count; other losses need one float per input element.
+        const Index workspace_floats = (error == Error::CrossEntropy3d)
+            ? 3 * (input.size() / input.shape.back())
+            : input.size();
+        errors_device.grow_to(workspace_floats * Index(sizeof(float)));
+        workspace_device = errors_device.as<float>();
+    }
 #else
     float* workspace_device = nullptr;
 #endif
@@ -102,34 +118,36 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
     switch (error)
     {
     case Error::MeanSquaredError:
-        mean_squared_error(input, target, back_propagation.error, workspace_device);
+        mean_squared_error(input, target, result.error, workspace_device);
         break;
     case Error::NormalizedSquaredError:
-        normalized_squared_error(input, target, normalization_coefficient, back_propagation.error, workspace_device);
+        normalized_squared_error(input, target, normalization_coefficient, result.error, workspace_device);
         break;
     case Error::WeightedSquaredError:
-        weighted_squared_error(input, target, positives_weight, negatives_weight, back_propagation.error, workspace_device);
-        back_propagation.error *= get_weighted_coefficient(batch);
+        weighted_squared_error(input, target, positives_weight, negatives_weight, result.error, workspace_device);
+        result.error *= get_weighted_coefficient(batch);
         break;
     case Error::CrossEntropy:
         if (input.shape.back() == 1)
-            binary_cross_entropy(input, target, back_propagation.error, workspace_device);
+            binary_cross_entropy(input, target, result.error, workspace_device);
         else
-            categorical_cross_entropy(input, target, back_propagation.error, workspace_device);
+            categorical_cross_entropy(input, target, result.error, workspace_device);
         break;
     case Error::CrossEntropy3d:
     {
         Index correct_tokens = 0;
-        cross_entropy_3d(input, target, back_propagation.error, back_propagation.active_tokens_count, correct_tokens, workspace_device);
-        const Index active = back_propagation.active_tokens_count;
-        back_propagation.accuracy.setValues(
-            {active > 0 ? float(correct_tokens) / float(active) : 0.0f});
+        cross_entropy_3d(input, target, result.error, result.active_tokens_count, correct_tokens, workspace_device);
+        result.accuracy = result.active_tokens_count > 0
+            ? float(correct_tokens) / float(result.active_tokens_count)
+            : 0.0f;
         break;
     }
     case Error::MinkowskiError:
-        minkowski_error(input, target, minkowski_parameter, back_propagation.error, workspace_device);
+        minkowski_error(input, target, minkowski_parameter, result.error, workspace_device);
         break;
     }
+
+    return result;
 }
 
 void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const

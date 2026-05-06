@@ -15,7 +15,8 @@ namespace opennn
 
 namespace
 {
-    void* cublas_lt_workspace_ = nullptr;
+    void*  cublas_lt_workspace_       = nullptr;
+    size_t cublas_lt_workspace_bytes_ = 0;
 
     Buffer bf16_input_(Device::CUDA);
     Buffer bf16_gradient_(Device::CUDA);
@@ -24,10 +25,19 @@ namespace
     unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans_;
 }
 
-void* ensure_cublas_lt_workspace()
+void* ensure_cublas_lt_workspace(size_t min_bytes)
 {
-    if (!cublas_lt_workspace_)
-        CHECK_CUDA(cudaMalloc(&cublas_lt_workspace_, cublas_lt_workspace_bytes()));
+    if (cublas_lt_workspace_bytes_ >= min_bytes && cublas_lt_workspace_)
+        return cublas_lt_workspace_;
+
+    if (cublas_lt_workspace_) cudaFree(cublas_lt_workspace_);
+    cublas_lt_workspace_       = nullptr;
+    cublas_lt_workspace_bytes_ = 0;
+
+    if (min_bytes == 0) return nullptr;
+
+    CHECK_CUDA(cudaMalloc(&cublas_lt_workspace_, min_bytes));
+    cublas_lt_workspace_bytes_ = min_bytes;
     return cublas_lt_workspace_;
 }
 
@@ -117,9 +127,9 @@ const LtMatmulPlan& get_lt_gemm_plan(
 
     cublasLtMatmulPreference_t pref = nullptr;
     CHECK_CUBLAS(cublasLtMatmulPreferenceCreate(&pref));
-    const size_t max_workspace = cublas_lt_workspace_bytes();
+    const size_t search_bytes = cublas_lt_workspace_search_bytes();
     CHECK_CUBLAS(cublasLtMatmulPreferenceSetAttribute(pref,
-        CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &max_workspace, sizeof(max_workspace)));
+        CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &search_bytes, sizeof(search_bytes)));
 
     cublasLtMatmulHeuristicResult_t heuristic = {};
     int returned_results = 0;
@@ -133,6 +143,10 @@ const LtMatmulPlan& get_lt_gemm_plan(
     {
         plan.algo = heuristic.algo;
         plan.algo_valid = true;
+        plan.workspace_size = heuristic.workspaceSize;
+
+        // Grow the global scratch buffer to fit this plan's chosen algorithm.
+        ensure_cublas_lt_workspace(plan.workspace_size);
     }
 
     auto [iter, _] = lt_gemm_plans_.emplace(key, move(plan));
