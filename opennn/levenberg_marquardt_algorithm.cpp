@@ -376,9 +376,11 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
     bool success = false;
 
+    const VectorR original_diagonal = hessian.diagonal();
+
     do
     {
-        hessian.diagonal().array() += damping_parameter;
+        hessian.diagonal().array() = original_diagonal.array() + damping_parameter;
 
         parameter_updates = perform_Householder_QR_decomposition(hessian, type(-1)*gradient);
 
@@ -423,8 +425,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
         }
         else
         {
-            hessian.diagonal().array() -= damping_parameter;
-
             set_damping_parameter(damping_parameter*damping_parameter_factor);
         }
     }while(damping_parameter < maximum_damping_parameter);

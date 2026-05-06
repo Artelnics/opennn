@@ -246,6 +246,42 @@ bool is_date_time_string(const string& text)
 }
 
 
+static time_t to_unix_timestamp_utc(const struct tm& t)
+{
+    static constexpr int days_in_month_normal[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+    auto is_leap = [](int y) {
+        return (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0);
+    };
+
+    const int year = t.tm_year + 1900;
+    const int month = t.tm_mon;
+    const int day = t.tm_mday;
+    const int hour = t.tm_hour;
+    const int minute = t.tm_min;
+    const int second = t.tm_sec;
+
+    long long days = 0;
+
+    if(year >= 1970)
+        for(int y = 1970; y < year; ++y)
+            days += is_leap(y) ? 366 : 365;
+    else
+        for(int y = year; y < 1970; ++y)
+            days -= is_leap(y) ? 366 : 365;
+
+    for(int m = 0; m < month; ++m)
+    {
+        days += days_in_month_normal[m];
+        if(m == 1 && is_leap(year)) days += 1;
+    }
+
+    days += day - 1;
+
+    return time_t(days * 86400LL + hour * 3600LL + minute * 60LL + second);
+}
+
+
 time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format)
 {
     struct tm time_structure = {};
@@ -260,7 +296,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_structure.tm_hour = stoi(matches[4].str()) - gmt;
         time_structure.tm_min = stoi(matches[5].str());
         time_structure.tm_sec = stoi(matches[6].str());
-        return mktime(&time_structure);
+        return to_unix_timestamp_utc(time_structure);
     }
     // ISO 8601 with timezone, no seconds (e.g. 2017-12-31 00:00+00:00, ...T...Z)
     else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})-(\d{1,2})-(\d{1,2})[T ](\d{1,2}):(\d{1,2})(Z|[+-]\d{2}:?\d{2}))")))
@@ -270,7 +306,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_structure.tm_mday = stoi(matches[3].str());
         time_structure.tm_hour = stoi(matches[4].str()) - gmt;
         time_structure.tm_min = stoi(matches[5].str());
-        return mktime(&time_structure);
+        return to_unix_timestamp_utc(time_structure);
     }
     // yyyy/mm/dd hh:mm:ss.sss
     else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))")))
@@ -281,7 +317,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_structure.tm_hour = stoi(matches[4].str()) - gmt;
         time_structure.tm_min = stoi(matches[5].str());
         time_structure.tm_sec = stoi(matches[6].str());
-        return mktime(&time_structure);
+        return to_unix_timestamp_utc(time_structure);
     }
     // yyyy/mm/dd hh:mm:ss
     else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2}))")))
@@ -292,7 +328,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_structure.tm_hour = stoi(matches[4].str()) - gmt;
         time_structure.tm_min = stoi(matches[5].str());
         time_structure.tm_sec = stoi(matches[6].str());
-        return mktime(&time_structure);
+        return to_unix_timestamp_utc(time_structure);
     }
     // yyyy/mm/dd hh:mm
     else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}))")))
@@ -302,7 +338,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_structure.tm_mday = stoi(matches[3].str());
         time_structure.tm_hour = stoi(matches[4].str()) - gmt;
         time_structure.tm_min = stoi(matches[5].str());
-        return mktime(&time_structure);
+        return to_unix_timestamp_utc(time_structure);
     }
     // yyyy/mm/dd
     else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}))")))
@@ -310,7 +346,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_structure.tm_year = stoi(matches[1].str()) - 1900;
         time_structure.tm_mon = stoi(matches[2].str()) - 1;
         time_structure.tm_mday = stoi(matches[3].str());
-        return mktime(&time_structure);
+        return to_unix_timestamp_utc(time_structure);
     }
     // yyyy/mm
     else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2}))")))
@@ -318,7 +354,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_structure.tm_year = stoi(matches[1].str()) - 1900;
         time_structure.tm_mon = stoi(matches[2].str()) - 1;
         time_structure.tm_mday = 1;
-        return mktime(&time_structure);
+        return to_unix_timestamp_utc(time_structure);
     }
     // dd/mm/yyyy hh:mm:ss
     else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}):(\d{1,2})((?: ([AP]M))?)?)")))
@@ -356,7 +392,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_structure.tm_hour = hour - gmt;
         time_structure.tm_min = stoi(matches[5].str());
         time_structure.tm_sec = stoi(matches[6].str());
-        return mktime(&time_structure);
+        return to_unix_timestamp_utc(time_structure);
     }
     // dd/mm/yyyy hh:mm
     else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}))")))
@@ -384,7 +420,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_structure.tm_hour = stoi(matches[4].str()) - gmt;
         time_structure.tm_min = stoi(matches[5].str());
         time_structure.tm_sec = 0;
-        return mktime(&time_structure);
+        return to_unix_timestamp_utc(time_structure);
     }
     // dd/mm/yyyy
     else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))")))
@@ -394,7 +430,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         else if (format == MDY || (format == AUTO && part2 > 12)) { time_structure.tm_mon = part1 - 1; time_structure.tm_mday = part2; }
         else { time_structure.tm_mday = part1; time_structure.tm_mon = part2 - 1; } // Default
         time_structure.tm_year = stoi(matches[3].str()) - 1900;
-        return mktime(&time_structure);
+        return to_unix_timestamp_utc(time_structure);
     }
     // hh:mm:ss
     else if (format == AUTO && regex_match(date, matches, regex(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))")))
@@ -402,7 +438,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_structure.tm_hour = stoi(matches[1].str()) - gmt;
         time_structure.tm_min = stoi(matches[2].str());
         time_structure.tm_sec = stoi(matches[3].str());
-        return mktime(&time_structure);
+        return to_unix_timestamp_utc(time_structure);
     }
 
     return -1;

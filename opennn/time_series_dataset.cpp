@@ -100,8 +100,6 @@ void TimeSeriesDataset::set_past_time_steps(const Index new_past_time_steps)
 {
     past_time_steps = new_past_time_steps;
     update_shapes();
-    mark_invalid_samples();
-    split_samples_sequential(type(0.6), type(0.2), type(0.2));
 }
 
 
@@ -109,8 +107,6 @@ void TimeSeriesDataset::set_future_time_steps(const Index new_future_time_steps)
 {
     future_time_steps = new_future_time_steps;
     update_shapes();
-    mark_invalid_samples();
-    split_samples_sequential(type(0.6), type(0.2), type(0.2));
 }
 
 

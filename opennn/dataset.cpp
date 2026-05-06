@@ -3880,11 +3880,7 @@ void Dataset::read_csv()
                 else
                 {
                     const time_t timestamp = date_to_timestamp(token, gmt, date_format);
-
-                    if(timestamp == -1)
-                        throw runtime_error("Date format is unsupported or date is prior to 1970.");
-                    else
-                        data(sample_index, feature_indices[0]) = timestamp;
+                    data(sample_index, feature_indices[0]) = timestamp;
                 }
                 break;
             case VariableType::Categorical:

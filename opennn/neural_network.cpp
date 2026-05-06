@@ -343,6 +343,8 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
     }
 
     layers[get_first_trainable_layer_index()]->set_input_shape(new_input_shape);
+
+    compile();
 }
 
 
