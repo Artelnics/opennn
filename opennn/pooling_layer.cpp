@@ -55,14 +55,15 @@ Index Pooling::get_output_width() const
 vector<pair<Shape, Type>> Pooling::get_forward_specs(Index batch_size) const
 {
     const Shape out_shape = get_output_shape();
-    const Type act = compute_dtype;
 
     vector<pair<Shape, Type>> specs;
 
+    // MaximalIndices stores argmax positions (used by CPU backward and the
+    // 3D max-pool kernels). They are read as float*, never as compute_dtype.
     if (pooling_method == PoolingMethod::MaxPooling)
-        specs.push_back({Shape{batch_size}.append(out_shape), act}); // MaximalIndices
+        specs.push_back({Shape{batch_size}.append(out_shape), Type::FP32}); // MaximalIndices
 
-    specs.push_back({Shape{batch_size}.append(out_shape), act}); // Output (must be last)
+    specs.push_back({Shape{batch_size}.append(out_shape), compute_dtype}); // Output (must be last)
 
     return specs;
 }

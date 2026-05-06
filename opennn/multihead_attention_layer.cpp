@@ -30,6 +30,9 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
                                        Index new_heads_number,
                                        const string& new_name) : Layer()
 {
+    name = "MultiHeadAttention";
+    layer_type = LayerType::MultiHeadAttention;
+
     if (new_query_dimensions[1] != new_source_dimensions[1])
         throw runtime_error("embedding dimension must be the same for query and source.");
 
@@ -41,6 +44,8 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
         new_name);
 }
 
+// Getters
+
 Shape MultiHeadAttention::get_input_shape() const
 {
     return { query_sequence_length, embedding_dimension };
@@ -51,7 +56,12 @@ Shape MultiHeadAttention::get_output_shape() const
     return get_input_shape();
 }
 
-vector<pair<Shape, Type>> MultiHeadAttention::get_forward_specs(const Index batch_size) const
+vector<Operator*> MultiHeadAttention::get_operators()
+{
+    return {&query_projection, &key_projection, &value_projection, &output_projection};
+}
+
+vector<pair<Shape, Type>> MultiHeadAttention::get_forward_specs(Index batch_size) const
 {
     const Index head_dimension = get_head_dimension();
     const Index max_seq = max(query_sequence_length, source_sequence_length);
@@ -82,26 +92,7 @@ vector<pair<Shape, Type>> MultiHeadAttention::get_backward_specs(Index batch_siz
     };
 }
 
-vector<Operator*> MultiHeadAttention::get_operators()
-{
-    return {&query_projection, &key_projection, &value_projection, &output_projection};
-}
-
-void MultiHeadAttention::set_parameters_random()
-{
-    if (embedding_dimension == 0) return;
-
-    const float weight_limit = sqrt(6.0f / float(2 * embedding_dimension));
-
-    for (const int slot : {QueryWeight, KeyWeight, ValueWeight, ProjectionWeight})
-        if (!parameters[slot].empty())
-            set_random_uniform(parameters[slot].as_vector(),
-                               -weight_limit, weight_limit);
-
-    for (const int slot : {QueryBias, KeyBias, ValueBias, ProjectionBias})
-        if (!parameters[slot].empty())
-            parameters[slot].fill(0.0f);
-}
+// Setters
 
 void MultiHeadAttention::set(Index new_query_sequence_length,
                              Index new_source_sequence_length,
@@ -110,13 +101,12 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
                              bool new_use_causal_mask,
                              const string& new_label)
 {
-    name = "MultiHeadAttention";
-    layer_type = LayerType::MultiHeadAttention;
-    query_sequence_length = new_query_sequence_length;
+    query_sequence_length  = new_query_sequence_length;
     source_sequence_length = new_source_sequence_length;
-    embedding_dimension = new_embedding_dimension;
-    heads_number = new_heads_number;
-    label = new_label;
+    embedding_dimension    = new_embedding_dimension;
+    heads_number           = new_heads_number;
+
+    set_label(new_label);
 
     if (new_heads_number == 0 && new_embedding_dimension == 0)
         return;
@@ -139,8 +129,23 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
                   new_use_causal_mask, compute_dtype);
 }
 
-// link_parameters() is inherited from Layer; the base auto-distributes slices
-// to query/key/value/output projections in the order returned by get_operators().
+void MultiHeadAttention::set_parameters_random()
+{
+    if (embedding_dimension == 0) return;
+
+    const float weight_limit = sqrt(6.0f / float(2 * embedding_dimension));
+
+    for (const int slot : {QueryWeight, KeyWeight, ValueWeight, ProjectionWeight})
+        if (!parameters[slot].empty())
+            set_random_uniform(parameters[slot].as_vector(),
+                               -weight_limit, weight_limit);
+
+    for (const int slot : {QueryBias, KeyBias, ValueBias, ProjectionBias})
+        if (!parameters[slot].empty())
+            parameters[slot].fill(0.0f);
+}
+
+// Forward / back propagation
 
 void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagation,
                                            size_t layer,
@@ -166,7 +171,7 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     key_projection  .apply(source_input, key,   transpose_scratch);
     value_projection.apply(source_input, value, transpose_scratch);
 
-    TensorView attention_out_scratch(transpose_scratch, heads_shape(batch_size), compute_dtype);
+    TensorView attention_out_scratch(transpose_scratch, get_heads_shape(batch_size), compute_dtype);
 
     attention.apply(query, key, value, source_input,
                     attention_weights,
@@ -175,7 +180,7 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
                     transpose_scratch,
                     is_training);
 
-    TensorView concatenated_4d = concatenated.reshape(concat_shape(batch_size));
+    TensorView concatenated_4d = concatenated.reshape(get_concat_shape(batch_size));
     merge_heads(attention_out_scratch, concatenated_4d);
 
     const Shape flat_shape = {batch_size * query_sequence_length, embedding_dimension};
@@ -221,14 +226,14 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     const Index head_dimension = get_head_dimension();
 
     TensorView query_gradient(delta_views[InputQueryDelta][0].as<float>(),
-                          heads_shape(batch_size),
+                          get_heads_shape(batch_size),
                           compute_dtype);
     TensorView key_gradient(delta_views[InputSourceDelta][0].as<float>(),
                         {batch_size, heads_number, source_sequence_length, head_dimension},
                         compute_dtype);
 
-    TensorView concat_gradient_4d = delta_views[InputQueryDelta][0].reshape(concat_shape(batch_size));
-    TensorView scratch_4d     = forward_views[TransposeScratch][0].reshape(heads_shape(batch_size));
+    TensorView concat_gradient_4d = delta_views[InputQueryDelta][0].reshape(get_concat_shape(batch_size));
+    TensorView scratch_4d     = forward_views[TransposeScratch][0].reshape(get_heads_shape(batch_size));
 
     split_heads(concat_gradient_4d, scratch_4d);
 
@@ -264,6 +269,8 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
                                  true, transpose_scratch);
 }
 
+// Serialization
+
 void MultiHeadAttention::from_JSON(const JsonDocument& document)
 {
     const Json* root_element = get_json_root(document, "MultiHeadAttention");
@@ -296,6 +303,7 @@ void MultiHeadAttention::to_JSON(JsonWriter& printer) const
 }
 
 REGISTER(Layer, MultiHeadAttention, "MultiHeadAttention")
+
 }
 
 // OpenNN: Open Neural Networks Library.

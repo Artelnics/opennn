@@ -17,6 +17,9 @@ namespace opennn
 Recurrent::Recurrent(const Shape& new_input_shape,
                      const Shape& new_output_shape) : Layer()
 {
+    name = "Recurrent";
+    layer_type = LayerType::Recurrent;
+
     set(new_input_shape, new_output_shape);
 }
 
@@ -36,6 +39,22 @@ vector<pair<Shape, Type>> Recurrent::get_parameter_specs() const
     };
 }
 
+vector<pair<Shape, Type>> Recurrent::get_forward_specs(Index batch_size) const
+{
+    const Index outputs_number = get_outputs_number();
+
+    return {
+        {{batch_size, outputs_number},             compute_dtype},
+        {{batch_size, time_steps, outputs_number}, compute_dtype},
+        {{batch_size, time_steps, outputs_number}, compute_dtype},
+    };
+}
+
+vector<pair<Shape, Type>> Recurrent::get_backward_specs(Index batch_size) const
+{
+    return {{{batch_size, time_steps, input_features}, compute_dtype}};
+}
+
 // Setters
 
 void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
@@ -43,18 +62,16 @@ void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
     if (new_input_shape.rank != 2)
         throw runtime_error("Input shape rank is not 2 for Recurrent (time_steps, inputs).");
 
-    time_steps = new_input_shape[0];
+    time_steps     = new_input_shape[0];
     input_features = new_input_shape[1];
 
-    const Index outputs_number = new_output_shape[0];
+    const Index outputs_number = new_output_shape.empty() ? Index(0) : new_output_shape[0];
 
-    biases.shape = {outputs_number};
-    input_weights.shape = {input_features, outputs_number};
+    biases.shape            = {outputs_number};
+    input_weights.shape     = {input_features, outputs_number};
     recurrent_weights.shape = {outputs_number, outputs_number};
 
-    label = "recurrent_layer";
-    name = "Recurrent";
-    layer_type = LayerType::Recurrent;
+    set_label("recurrent_layer");
 }
 
 void Recurrent::set_input_shape(const Shape& new_input_shape)

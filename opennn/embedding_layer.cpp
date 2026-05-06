@@ -23,10 +23,10 @@ Embedding::Embedding(const Shape& new_input_shape,
                      Index new_embedding_dimension,
                      const string& new_label) : Layer()
 {
-    set(new_input_shape[0], new_input_shape[1], new_embedding_dimension, new_label);
-
     name = "Embedding";
     layer_type = LayerType::Embedding;
+
+    set(new_input_shape[0], new_input_shape[1], new_embedding_dimension, new_label);
 }
 
 // Getters
@@ -41,17 +41,28 @@ vector<Operator*> Embedding::get_operators()
     return {&embedding_lookup};
 }
 
+vector<pair<Shape, Type>> Embedding::get_forward_specs(Index batch_size) const
+{
+    return {{{batch_size, sequence_length, embedding_dimension}, compute_dtype}}; // Output
+}
+
+vector<pair<Shape, Type>> Embedding::get_backward_specs(Index batch_size) const
+{
+    return {{{batch_size, sequence_length}, compute_dtype}};
+}
+
 // Setters
 
-void Embedding::set(const Index new_vocabulary_size,
+void Embedding::set(Index new_vocabulary_size,
                     Index new_sequence_length,
                     Index new_embedding_dimension,
                     const string& new_label)
 {
-    sequence_length = new_sequence_length;
-    vocabulary_size = new_vocabulary_size;
+    vocabulary_size     = new_vocabulary_size;
+    sequence_length     = new_sequence_length;
     embedding_dimension = new_embedding_dimension;
-    label = new_label;
+
+    set_label(new_label);
 
     embedding_lookup.set(vocabulary_size, sequence_length, embedding_dimension);
 }

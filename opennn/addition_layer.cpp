@@ -15,10 +15,15 @@
 namespace opennn
 {
 
-Addition::Addition(const Shape& new_input_shape, const string& new_name)
+Addition::Addition(const Shape& new_input_shape, const string& new_name) : Layer()
 {
+    name = "Addition";
+    layer_type = LayerType::Addition;
+
     set(new_input_shape, new_name);
 }
+
+// Getters
 
 vector<pair<Shape, Type>> Addition::get_forward_specs(Index batch_size) const
 {
@@ -33,17 +38,20 @@ vector<pair<Shape, Type>> Addition::get_backward_specs(Index batch_size) const
     };
 }
 
+// Setters
+
 void Addition::set(const Shape& new_input_shape, const string& new_label)
 {
-    input_shape = new_input_shape;
-    label = new_label;
-    name = "Addition";
-    layer_type = LayerType::Addition;
-
-    if (!input_shape.empty() && input_shape.rank != 2 && input_shape.rank != 3)
+    if (!new_input_shape.empty() && new_input_shape.rank != 2 && new_input_shape.rank != 3)
         throw runtime_error("Addition layer supports input rank 2 or 3 (got "
-                            + to_string(input_shape.rank) + ").");
+                            + to_string(new_input_shape.rank) + ").");
+
+    input_shape = new_input_shape;
+
+    set_label(new_label);
 }
+
+// Forward / back propagation
 
 void Addition::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
 {
@@ -61,6 +69,8 @@ void Addition::back_propagate(ForwardPropagation&,
     copy(delta_views[OutputDelta][0], delta_views[InputDelta0][0]);
     copy(delta_views[OutputDelta][0], delta_views[InputDelta1][0]);
 }
+
+// Serialization
 
 void Addition::from_JSON(const JsonDocument& document)
 {

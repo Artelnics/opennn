@@ -15,23 +15,15 @@
 namespace opennn
 {
 
-Flatten::Flatten(const Shape& new_input_shape)
+Flatten::Flatten(const Shape& new_input_shape) : Layer()
 {
-    set(new_input_shape);
-}
-
-void Flatten::set(const Shape& new_input_shape)
-{
-    input_shape = new_input_shape;
-    set_label("flatten_layer");
     name = "Flatten";
     layer_type = LayerType::Flatten;
 
-    if (!input_shape.empty()
-        && input_shape.rank != 1 && input_shape.rank != 2 && input_shape.rank != 3)
-        throw runtime_error("Flatten layer supports input rank 1, 2 or 3 (got "
-                            + to_string(input_shape.rank) + ").");
+    set(new_input_shape);
 }
+
+// Getters
 
 vector<pair<Shape, Type>> Flatten::get_forward_specs(Index batch_size) const
 {
@@ -42,6 +34,22 @@ vector<pair<Shape, Type>> Flatten::get_backward_specs(Index batch_size) const
 {
     return {{Shape{batch_size}.append(input_shape), compute_dtype}};
 }
+
+// Setters
+
+void Flatten::set(const Shape& new_input_shape)
+{
+    if (!new_input_shape.empty()
+        && new_input_shape.rank != 1 && new_input_shape.rank != 2 && new_input_shape.rank != 3)
+        throw runtime_error("Flatten layer supports input rank 1, 2 or 3 (got "
+                            + to_string(new_input_shape.rank) + ").");
+
+    input_shape = new_input_shape;
+
+    set_label("flatten_layer");
+}
+
+// Forward / back propagation
 
 void Flatten::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
 {
@@ -58,6 +66,8 @@ void Flatten::back_propagate(ForwardPropagation&,
 
     copy(delta_views[OutputDelta][0], delta_views[InputDelta][0]);
 }
+
+// Serialization
 
 void Flatten::from_JSON(const JsonDocument& document)
 {

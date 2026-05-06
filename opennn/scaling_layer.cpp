@@ -15,28 +15,16 @@
 namespace opennn
 {
 
-Scaling::Scaling(const Shape& new_input_shape)
+Scaling::Scaling(const Shape& new_input_shape) : Layer()
 {
+    name = "Scaling";
+    layer_type = LayerType::Scaling;
+    is_trainable = false;
+
     set(new_input_shape);
 }
 
-vector<pair<Shape, Type>> Scaling::get_forward_specs(Index batch_size) const
-{
-    return {{Shape{batch_size}.append(input_shape), compute_dtype}}; // Output
-}
-
-vector<pair<Shape, Type>> Scaling::get_state_specs() const
-{
-    const Index features = input_shape.size();
-    if (features == 0) return {};
-    return {
-        {Shape{features}, Type::FP32}, // Minimums
-        {Shape{features}, Type::FP32}, // Maximums
-        {Shape{features}, Type::FP32}, // Means
-        {Shape{features}, Type::FP32}, // StandardDeviations
-        {Shape{features}, Type::FP32}, // Scalers
-    };
-}
+// Getters
 
 VectorR Scaling::get_minimums() const
 {
@@ -58,50 +46,41 @@ VectorR Scaling::get_standard_deviations() const
     return (ssize(states) > StandardDeviations && states[StandardDeviations].data) ? states[StandardDeviations].as_vector() : VectorR();
 }
 
+vector<pair<Shape, Type>> Scaling::get_forward_specs(Index batch_size) const
+{
+    return {{Shape{batch_size}.append(input_shape), compute_dtype}}; // Output
+}
+
+vector<pair<Shape, Type>> Scaling::get_state_specs() const
+{
+    const Index features = input_shape.size();
+    if (features == 0) return {};
+    return {
+        {Shape{features}, Type::FP32}, // Minimums
+        {Shape{features}, Type::FP32}, // Maximums
+        {Shape{features}, Type::FP32}, // Means
+        {Shape{features}, Type::FP32}, // StandardDeviations
+        {Shape{features}, Type::FP32}, // Scalers
+    };
+}
+
+// Setters
+
 void Scaling::set(const Shape& new_input_shape)
 {
     input_shape = new_input_shape;
-    is_trainable = false;
-    name = "Scaling";
-    layer_type = LayerType::Scaling;
 
-    if (input_shape.empty())
-        return;
+    set_label("scaling_layer");
+
+    if (input_shape.empty()) return;
 
     if (input_shape.rank != 1 && input_shape.rank != 2 && input_shape.rank != 3)
         throw runtime_error("Scaling layer supports input rank 1, 2 or 3 (got "
                             + to_string(input_shape.rank) + ").");
 
-    const Index new_inputs_number = input_shape.size();
-
-    scalers.assign(new_inputs_number, ScalerMethod::MeanStandardDeviation);
-
-    label = "scaling_layer";
+    scalers.assign(input_shape.size(), ScalerMethod::MeanStandardDeviation);
 
     set_min_max_range(-1.0f, 1.0f);
-}
-
-float* Scaling::link_states(float* pointer)
-{
-    const bool needs_defaults = ssize(states) < 5 || states[Means].data == nullptr;
-
-    float* next = Layer::link_states(pointer);
-
-    if (!needs_defaults || ssize(states) < 5) return next;
-
-    if (states[Means].data)
-        states[Means].as_vector().setZero();
-    if (states[StandardDeviations].data)
-        states[StandardDeviations].as_vector().setOnes();
-    if (states[Minimums].data)
-        states[Minimums].as_vector().setConstant(-1.0f);
-    if (states[Maximums].data)
-        states[Maximums].as_vector().setOnes();
-    if (states[Scalers].data && ssize(scalers) == states[Scalers].size())
-        for (size_t i = 0; i < scalers.size(); ++i)
-            states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
-
-    return next;
 }
 
 void Scaling::set_input_shape(const Shape& new_input_shape)
@@ -148,13 +127,30 @@ void Scaling::set_scalers(const string& new_scaler)
     flush_scalers_to_states();
 }
 
-void Scaling::flush_scalers_to_states()
+float* Scaling::link_states(float* pointer)
 {
-    if (ssize(states) <= Scalers || !states[Scalers].data) return;
-    if (ssize(scalers) != states[Scalers].size()) return;
-    for (size_t i = 0; i < scalers.size(); ++i)
-        states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
+    const bool needs_defaults = ssize(states) < 5 || states[Means].data == nullptr;
+
+    float* next = Layer::link_states(pointer);
+
+    if (!needs_defaults || ssize(states) < 5) return next;
+
+    if (states[Means].data)
+        states[Means].as_vector().setZero();
+    if (states[StandardDeviations].data)
+        states[StandardDeviations].as_vector().setOnes();
+    if (states[Minimums].data)
+        states[Minimums].as_vector().setConstant(-1.0f);
+    if (states[Maximums].data)
+        states[Maximums].as_vector().setOnes();
+    if (states[Scalers].data && ssize(scalers) == states[Scalers].size())
+        for (size_t i = 0; i < scalers.size(); ++i)
+            states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
+
+    return next;
 }
+
+// Forward propagation
 
 void Scaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
 {
@@ -173,6 +169,8 @@ void Scaling::forward_propagate(ForwardPropagation& forward_propagation, size_t 
           min_range, max_range,
           forward_views[Output][0]);
 }
+
+// Expressions
 
 string Scaling::write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
 {
@@ -229,6 +227,8 @@ string Scaling::write_standard_deviation_expression(const vector<string>& input_
 
     return buffer.str();
 }
+
+// Serialization
 
 void Scaling::from_JSON(const JsonDocument& document)
 {
@@ -289,6 +289,16 @@ void Scaling::to_JSON(JsonWriter& printer) const
     });
 
     printer.close_element();
+}
+
+// Helpers
+
+void Scaling::flush_scalers_to_states()
+{
+    if (ssize(states) <= Scalers || !states[Scalers].data) return;
+    if (ssize(scalers) != states[Scalers].size()) return;
+    for (size_t i = 0; i < scalers.size(); ++i)
+        states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
 }
 
 REGISTER(Layer, Scaling, "Scaling")

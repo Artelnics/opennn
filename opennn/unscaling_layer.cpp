@@ -16,10 +16,13 @@
 namespace opennn
 {
 
-Unscaling::Unscaling(const Shape& new_input_shape, const string& label)
-    : Layer()
+Unscaling::Unscaling(const Shape& new_input_shape, const string& new_label) : Layer()
 {
-    set(new_input_shape[0], label);
+    name = "Unscaling";
+    layer_type = LayerType::Unscaling;
+    is_trainable = false;
+
+    set(new_input_shape.empty() ? Index(0) : new_input_shape[0], new_label);
 }
 
 // Getters
@@ -54,20 +57,33 @@ VectorR Unscaling::get_standard_deviations() const
     return (ssize(states) > StandardDeviations && states[StandardDeviations].data) ? states[StandardDeviations].as_vector() : VectorR();
 }
 
+vector<pair<Shape, Type>> Unscaling::get_forward_specs(Index batch_size) const
+{
+    return {{Shape{batch_size}.append(get_output_shape()), Type::FP32}};
+}
+
+vector<pair<Shape, Type>> Unscaling::get_state_specs() const
+{
+    const Index features = ssize(scalers);
+    if (features == 0) return {};
+    return {
+        {Shape{features}, Type::FP32}, // Minimums
+        {Shape{features}, Type::FP32}, // Maximums
+        {Shape{features}, Type::FP32}, // Means
+        {Shape{features}, Type::FP32}, // StandardDeviations
+        {Shape{features}, Type::FP32}, // Scalers
+    };
+}
+
 // Setters
 
-void Unscaling::set(const Index new_neurons_number, const string& new_label)
+void Unscaling::set(Index new_neurons_number, const string& new_label)
 {
     scalers.assign(new_neurons_number, ScalerMethod::MinimumMaximum);
 
-    label = new_label;
+    set_label(new_label);
 
     set_min_max_range(-1.0f, 1.0f);
-
-    name = "Unscaling";
-    layer_type = LayerType::Unscaling;
-
-    is_trainable = false;
 }
 
 void Unscaling::set_input_shape(const Shape& new_input_shape)
@@ -97,7 +113,7 @@ void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
     }
 }
 
-void Unscaling::set_min_max_range(const float min, const float max)
+void Unscaling::set_min_max_range(float min, float max)
 {
     min_range = min;
     max_range = max;
@@ -140,14 +156,6 @@ float* Unscaling::link_states(float* pointer)
             states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
 
     return next;
-}
-
-void Unscaling::flush_scalers_to_states()
-{
-    if (ssize(states) <= Scalers || !states[Scalers].data) return;
-    if (ssize(scalers) != states[Scalers].size()) return;
-    for (size_t i = 0; i < scalers.size(); ++i)
-        states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
 }
 
 // Forward propagation
@@ -252,6 +260,16 @@ void Unscaling::to_JSON(JsonWriter& printer) const
     printer.end_array();
 
     printer.close_element();
+}
+
+// Helpers
+
+void Unscaling::flush_scalers_to_states()
+{
+    if (ssize(states) <= Scalers || !states[Scalers].data) return;
+    if (ssize(scalers) != states[Scalers].size()) return;
+    for (size_t i = 0; i < scalers.size(); ++i)
+        states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
 }
 
 REGISTER(Layer, Unscaling, "Unscaling")

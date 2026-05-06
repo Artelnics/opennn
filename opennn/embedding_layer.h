@@ -18,66 +18,43 @@ namespace opennn
 
 class Embedding final : public Layer
 {
-
 public:
 
     Embedding(const Shape& = {0, 0},
               Index = 0,
               const string& = "embedding_layer");
 
+    Shape get_input_shape() const override { return {sequence_length}; }
+    Shape get_output_shape() const override;
+
     Index get_vocabulary_size() const { return vocabulary_size; }
     Index get_sequence_length() const { return sequence_length; }
     Index get_embedding_dimension() const { return embedding_dimension; }
 
-    Shape get_input_shape() const override { return {sequence_length}; }
-    Shape get_output_shape() const override;
-
-    // get_parameter_specs() and get_state_specs() are inherited from Layer and
-    // auto-derived from get_operators(). EmbeddingLookup::parameter_specs()
-    // pins the weight matrix to FP32 (atomicAdd<bf16> requires CC ≥ 9.0; on
-    // pre-Hopper GPUs this avoids unsupported intrinsics).
     vector<Operator*> get_operators() override;
 
-    vector<pair<Shape, Type>> get_forward_specs(const Index batch_size) const override
-    {
-        return {{{batch_size, sequence_length, embedding_dimension},
-                 compute_dtype}}; // Output
-    }
+    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
+    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
 
-    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override
-    {
-        return {{{batch_size, sequence_length}, compute_dtype}};
-    }
-
-    void set(const Index = 0,
+    void set(Index = 0,
              Index = 0,
              Index = 0,
-             const string & = "embedding_layer");
+             const string& = "embedding_layer");
 
     void set_scale_embedding(bool enabled) { embedding_lookup.scale_embedding = enabled; }
     void set_add_positional_encoding(bool enabled) { embedding_lookup.add_positional_encoding = enabled; }
+    void set_dropout_rate(float rate) { dropout.set_rate(rate); }
 
-    void set_dropout_rate(const float rate)
-    {
-        dropout.set_rate(rate);
-    }
-
-    void set_parameters_random() override;
     void set_parameters_glorot() override;
+    void set_parameters_random() override;
 
-    void forward_propagate(ForwardPropagation&, size_t index, bool) noexcept override;
-
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t index) const noexcept override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
 
 private:
-
-    enum Parameters {Weight};
-    enum States {PositionalEncoding};
-    enum Forward {Input, Output};
-    enum Backward {OutputDelta};
 
     Index vocabulary_size = 0;
     Index sequence_length = 0;
@@ -85,6 +62,11 @@ private:
 
     EmbeddingLookup embedding_lookup;
     Dropout         dropout;
+
+    enum Parameters {Weight};
+    enum States {PositionalEncoding};
+    enum Forward {Input, Output};
+    enum Backward {OutputDelta};
 };
 
 }

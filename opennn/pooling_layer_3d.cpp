@@ -21,6 +21,9 @@ Pooling3d::Pooling3d(const Shape& new_input_shape,
                      const PoolingMethod& new_pooling_method,
                      const string& new_name) : Layer()
 {
+    name = "Pooling3d";
+    layer_type = LayerType::Pooling3d;
+
     set(new_input_shape, new_pooling_method, new_name);
 }
 
@@ -36,15 +39,33 @@ string Pooling3d::write_pooling_method() const
     return pooling_method_to_string(pooling_method);
 }
 
+vector<pair<Shape, Type>> Pooling3d::get_forward_specs(Index batch_size) const
+{
+    return {
+        {(pooling_method == PoolingMethod::MaxPooling)
+            ? Shape{batch_size, input_features}
+            : Shape{},
+         Type::FP32},                                  // MaximalIndices
+        {{batch_size, input_features}, compute_dtype}, // Output (must be last)
+    };
+}
+
+vector<pair<Shape, Type>> Pooling3d::get_backward_specs(Index batch_size) const
+{
+    return {{{batch_size, sequence_length, input_features}, compute_dtype}};
+}
+
 // Setters
 
-void Pooling3d::set(const Shape& new_input_shape, const PoolingMethod& new_pooling_method, const string& new_label)
+void Pooling3d::set(const Shape& new_input_shape,
+                    const PoolingMethod& new_pooling_method,
+                    const string& new_label)
 {
-    name = "Pooling3d";
-    layer_type = LayerType::Pooling3d;
-    sequence_length = new_input_shape[0];
-    input_features = new_input_shape[1];
+    sequence_length = new_input_shape.empty() ? Index(0) : new_input_shape[0];
+    input_features  = new_input_shape.rank >= 2 ? new_input_shape[1] : Index(0);
+
     pooling_method = new_pooling_method;
+
     set_label(new_label);
 }
 
@@ -53,6 +74,7 @@ void Pooling3d::set_pooling_method(const string& new_pooling_method)
     pooling_method = string_to_pooling_method(new_pooling_method);
 }
 
+// Forward / back propagation
 
 void Pooling3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
@@ -85,6 +107,8 @@ void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
                                     delta_views[InputDelta][0]);
 }
 
+// Serialization
+
 void Pooling3d::from_JSON(const JsonDocument& document)
 {
     const Json* element = get_json_root(document, "Pooling3d");
@@ -97,11 +121,13 @@ void Pooling3d::from_JSON(const JsonDocument& document)
 void Pooling3d::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Pooling3d");
+
     write_json(printer, {
         {"Label", label},
         {"InputDimensions", shape_to_string(get_input_shape())},
         {"PoolingMethod", write_pooling_method()}
     });
+
     printer.close_element();
 }
 

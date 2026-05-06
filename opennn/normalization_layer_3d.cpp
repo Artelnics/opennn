@@ -21,7 +21,13 @@ namespace opennn
 Normalization3d::Normalization3d(const Shape& new_input_shape,
                                  const string& new_name) : Layer()
 {
-    set(new_input_shape[0], new_input_shape[1], new_name);
+    name = "Normalization3d";
+    layer_type = LayerType::Normalization3d;
+
+    const Index new_sequence_length     = new_input_shape.empty() ? Index(0) : new_input_shape[0];
+    const Index new_embedding_dimension = new_input_shape.rank >= 2 ? new_input_shape[1] : Index(0);
+
+    set(new_sequence_length, new_embedding_dimension, new_name);
 }
 
 // Getters
@@ -41,26 +47,41 @@ vector<Operator*> Normalization3d::get_operators()
     return {&layer_norm};
 }
 
+vector<pair<Shape, Type>> Normalization3d::get_forward_specs(Index batch_size) const
+{
+    const Shape normalized_shape = Configuration::instance().is_gpu()
+        ? Shape{}
+        : Shape{batch_size, sequence_length, embedding_dimension};
+
+    return {
+        {{batch_size, sequence_length},                      Type::FP32},    // Means
+        {{batch_size, sequence_length},                      Type::FP32},    // StandardDeviations
+        {normalized_shape,                                   compute_dtype}, // NormalizedInputs
+        {{batch_size, sequence_length, embedding_dimension}, compute_dtype}, // Output
+    };
+}
+
+vector<pair<Shape, Type>> Normalization3d::get_backward_specs(Index batch_size) const
+{
+    return {{{batch_size, sequence_length, embedding_dimension}, compute_dtype}};
+}
+
 // Setters
 
-void Normalization3d::set(const Index new_sequence_length,
+void Normalization3d::set(Index new_sequence_length,
                           Index new_embedding_dimension,
                           const string& new_label)
 {
-    sequence_length = new_sequence_length;
+    sequence_length     = new_sequence_length;
     embedding_dimension = new_embedding_dimension;
 
-    label = new_label;
-    name = "Normalization3d";
-    layer_type = LayerType::Normalization3d;
+    set_label(new_label);
 
     layer_norm.set(sequence_length, embedding_dimension);
 }
 
 // link_parameters() is inherited from Layer; the base auto-distributes
 // {gamma, beta} to layer_norm.
-
-// Parameter initialization
 
 void Normalization3d::set_parameters_random()
 {
@@ -121,11 +142,13 @@ void Normalization3d::from_JSON(const JsonDocument& document)
 void Normalization3d::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Normalization3d");
+
     write_json(printer, {
         {"Label", label},
         {"SequenceLength", to_string(get_sequence_length())},
         {"EmbeddingDimension", to_string(get_embedding_dimension())}
     });
+
     printer.close_element();
 }
 

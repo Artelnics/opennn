@@ -19,13 +19,10 @@ class Scaling final : public Layer
 {
 public:
 
-    Scaling(const Shape& new_input_shape = {});
+    Scaling(const Shape& = {});
 
     Shape get_input_shape() const override { return input_shape; }
     Shape get_output_shape() const override { return input_shape; }
-
-    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
-    vector<pair<Shape, Type>> get_state_specs() const override;
 
     VectorR get_minimums() const;
     VectorR get_maximums() const;
@@ -37,9 +34,10 @@ public:
     float get_min_range() const { return min_range; }
     float get_max_range() const { return max_range; }
 
-    void set(const Shape& new_input_shape = {});
+    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
+    vector<pair<Shape, Type>> get_state_specs() const override;
 
-    float* link_states(float* pointer) override;
+    void set(const Shape& = {});
 
     void set_input_shape(const Shape&) override;
     void set_output_shape(const Shape&) override;
@@ -51,7 +49,9 @@ public:
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
 
-    void forward_propagate(ForwardPropagation&, size_t layer, bool) noexcept override;
+    float* link_states(float* pointer) override;
+
+    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
     string write_no_scaling_expression(const vector<string>&, const vector<string>&) const;
     string write_minimum_maximum_expression(const vector<string>&, const vector<string>&) const;
@@ -66,13 +66,13 @@ private:
 
     Shape input_shape;
 
-    enum States {Minimums, Maximums, Means, StandardDeviations, Scalers};
-    enum Forward {Input, Output};
-
     vector<ScalerMethod> scalers;
 
     float min_range = -1.0f;
     float max_range = 1.0f;
+
+    enum States {Minimums, Maximums, Means, StandardDeviations, Scalers};
+    enum Forward {Input, Output};
 
     void flush_scalers_to_states();
 };
