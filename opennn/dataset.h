@@ -74,9 +74,6 @@ public:
     enum class Separator{Space, Tab, Comma, Semicolon};
 
     enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
-
-    // Samples get
-
     Index get_samples_number() const {return data.rows();}
 
     Index get_samples_number(const string&) const;
@@ -112,9 +109,6 @@ public:
     VariableType get_variable_type(const Index index) const { return variables[index].type; }
 
     vector<VariableType> get_variable_types(const vector<Index> indices) const;
-
-    // Variables get
-
     Index get_features_number() const;
     Index get_features_number(const string&) const;
     Index get_used_features_number() const;
@@ -147,9 +141,6 @@ public:
     MatrixR get_variable_data(const string&) const;
 
     const vector<vector<string>>& get_data_file_preview() const { return data_file_preview; }
-
-    // Members get
-
     MissingValuesMethod get_missing_values_method() const { return missing_values_method; }
     string get_missing_values_method_string() const;
 
@@ -170,9 +161,6 @@ public:
 
     Shape get_input_shape() const { return input_shape; }
     Shape get_target_shape() const { return target_shape; }
-
-    // Set
-
     void set(const Index = 0, const Shape& = {}, const Shape& = {});
 
     void set(const filesystem::path&,
@@ -184,18 +172,12 @@ public:
     void set(const filesystem::path&);
 
     void set_default();
-
-    // Samples set
-
     void set_sample_roles(const string&);
 
     void set_sample_role(const Index, const string&);
 
     void set_sample_roles(const vector<string>&);
     void set_sample_roles(const vector<Index>&, const string&);
-
-    // Variables set
-
     void set_variables(const vector<Variable>& new_variables) { variables = new_variables; }
 
     void set_default_variable_names();
@@ -223,21 +205,12 @@ public:
     void set_variable_scalers(const vector<string>&);
 
     void set_binary_variables();
-
-    // Variables set
-
     void set_feature_names(const vector<string>&);
 
     void set_variable_roles(const string&);
 
     void set_shape(const string&, const Shape&);
-
-    // Dataset
-
     void set_data(const MatrixR&);
-
-    // Members set
-
     void set_data_path(const filesystem::path& new_data_path) { data_path = new_data_path; }
 
     void set_has_header(bool new_has_header) { has_header = new_has_header; }
@@ -268,9 +241,6 @@ public:
     bool has_validation() const;
 
     bool has_missing_values(const vector<string>&) const;
-
-    // Splitting
-
     void split_samples(const float training_ratio = 0.6f,
                        float selection_ratio = 0.2f,
                        float testing_ratio = 0.2f,
@@ -283,18 +253,9 @@ public:
     void split_samples_random(const float training_ratio = 0.6f,
                               float selection_ratio = 0.2f,
                               float testing_ratio = 0.2f);
-
-    // Unusing
-
     vector<string> unuse_uncorrelated_variables(const float = 0.25f);
     vector<string> unuse_collinear_variables(const float = 0.95f);
-
-    // Initialization
-
     void set_data_constant(const float);
-
-    // Descriptives
-
     vector<Descriptives> calculate_feature_descriptives() const;
 
     vector<Descriptives> calculate_variable_descriptives_positive_samples() const;
@@ -302,26 +263,14 @@ public:
     vector<Descriptives> calculate_variable_descriptives_categories(const Index) const;
 
     vector<Descriptives> calculate_feature_descriptives(const string&) const;
-
-    // Distribution
-
     vector<Histogram> calculate_variable_distributions(const Index = 10) const;
-
-    // Box plots
-
     vector<BoxPlot> calculate_variables_box_plots() const;
-
-    // Inputs correlations
-
     Tensor<Correlation, 2> calculate_input_variable_correlations(
         Correlation (*)(const MatrixR&, const MatrixR&), Correlation::Method, const string&) const;
 
     Tensor<Correlation, 2> calculate_input_variable_pearson_correlations() const;
 
     Tensor<Correlation, 2> calculate_input_variable_spearman_correlations() const;
-
-    // Input-target correlations
-
     Tensor<Correlation, 2> calculate_input_target_variable_correlations(
         Correlation (*)(const MatrixR&, const MatrixR&), const string&) const;
 
@@ -329,42 +278,21 @@ public:
     Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const;
 
     VectorI calculate_correlations_rank() const;
-
-    // Scaling2d
-
     void set_default_variable_scalers();
-
-    // Data scaling
-
     vector<Descriptives> scale_data();
 
     virtual vector<Descriptives> scale_features(const string&);
-
-    // Data unscaling
-
     void unscale_features(const string&, const vector<Descriptives>&);
-
-    // Classification
-
     VectorI calculate_target_distribution() const;
-
-    // Tuckey outlier detection
-
     vector<vector<Index>> calculate_Tukey_outliers(const float = 1.5f, bool = false);
 
     vector<vector<Index>> replace_Tukey_outliers_with_NaN(const float = 1.5f);
 
     void unuse_Tukey_outliers(const float = 1.5f);
-
-    // Data generation
-
     virtual void set_data_random();
     virtual void set_data_integer(const Index vocabulary_size);
     void set_data_rosenbrock();
     void set_data_binary_classification();
-
-    // Serialization
-
     virtual void from_JSON(const JsonDocument&);
     virtual void to_JSON(JsonWriter&) const;
 
@@ -376,9 +304,6 @@ public:
     void save_data_binary(const filesystem::path&) const;
 
     void load_data_binary();
-
-    // Missing values
-
     Index get_missing_values_number() const { return missing_values_number; }
 
     bool has_nan() const;
@@ -396,16 +321,8 @@ public:
     Index count_variables_with_nan() const;
     Index count_rows_with_nan() const;
     Index count_nan() const;
-
-    // Eigen
-
     vector<vector<Index>> split_samples(const vector<Index>&, Index) const;
 
-    //bool get_has_text_data() const;
-
-    // Reader
-
-    //void decode(string&) const;
 
     virtual void read_csv();
 

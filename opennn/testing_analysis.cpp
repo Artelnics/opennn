@@ -76,9 +76,6 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
     const Index outputs_number = neural_network->get_outputs_number();
 
     const pair<MatrixR, MatrixR> targets_outputs = get_targets_and_outputs("Testing");
-
-    // Testing analysis
-
     Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_results(outputs_number);
 
     for (Index i = 0;  i < outputs_number; ++i)
@@ -210,9 +207,6 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
     const VectorR& output_maximums = unscaling_layer->get_maximums();
 
     const MatrixR errors = (targets - outputs);
-
-    // Error data
-
     MatrixR error_data(testing_samples_number, outputs_number);
 
 #pragma omp parallel for
@@ -261,9 +255,6 @@ vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives(
     const Index outputs_number = neural_network->get_outputs_number();
 
     const Index testing_samples_number = dataset->get_samples_number("Testing");
-
-    // Testing analysis stuff
-
     vector<vector<Descriptives>> descriptives(outputs_number);
 
     Tensor3 error_data = calculate_error_data();

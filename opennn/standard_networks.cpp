@@ -911,7 +911,7 @@ string Transformer::calculate_outputs(const string& source)
         Configuration::instance().set(Device::CPU,
                                       Type::FP32,
                                       Type::FP32);
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
         copy_parameters_host();
         link_parameters();
         copy_states_host();
@@ -949,7 +949,7 @@ string Transformer::calculate_outputs(const string& source)
         Configuration::instance().set(Device::Auto,
                                       Type::Auto,
                                       Type::Auto);
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
         copy_parameters_device();
         link_parameters();
         copy_states_device();

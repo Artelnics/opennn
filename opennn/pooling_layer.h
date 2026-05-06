@@ -68,8 +68,9 @@ public:
 
     PoolingMethod get_pooling_method() const { return pooling_method; }
 
+    vector<Operator*> get_operators() override { return {&pool}; }
+
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
-    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
 
     void set(const Shape& = { 0, 0, 0 },
              const Shape& = { 1, 1 },
@@ -86,11 +87,10 @@ public:
     void set_padding_width(Index);
     void set_pooling_method(const string&);
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
-    void from_JSON(const JsonDocument&) override;
-    void to_JSON(JsonWriter&) const override;
+    void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
 
 private:
 

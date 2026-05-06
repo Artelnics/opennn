@@ -682,9 +682,6 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
 
 template void average_pooling_3d_backward_cuda<float>        (const Index, const float*,         const float*,         float*,         const int, const int);
 template void average_pooling_3d_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, const int, const int);
-
-// Two-element warp-stride reduction. Used by layernorm forward/backward to fold
-// (sum, sum_sq) and (sum_D, sum_D_xhat) pairs in a single shuffle pass.
 __device__ __forceinline__ void warp_reduce_sum2(float& a, float& b)
 {
     #pragma unroll

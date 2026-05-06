@@ -37,9 +37,6 @@ public:
 
     const Optimizer* get_optimization_algorithm() const { return optimizer.get(); }
     Optimizer* get_optimization_algorithm() { return optimizer.get(); }
-
-    // Set
-
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
     void set_default();
 
@@ -50,9 +47,6 @@ public:
     void set_optimization_algorithm(const string&);
 
     TrainingResults train();
-
-    // Serialization
-
     void from_JSON(const JsonDocument&);
     void to_JSON(JsonWriter&) const;
 

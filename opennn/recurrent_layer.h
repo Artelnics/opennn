@@ -41,8 +41,8 @@ public:
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
-    void from_JSON(const JsonDocument&) override;
-    void to_JSON(JsonWriter&) const override;
+    void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
 
 private:
 

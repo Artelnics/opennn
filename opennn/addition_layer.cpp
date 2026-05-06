@@ -21,13 +21,9 @@ Addition::Addition(const Shape& new_input_shape, const string& new_name) : Layer
     layer_type = LayerType::Addition;
 
     set(new_input_shape, new_name);
-}
 
-// Getters
-
-vector<pair<Shape, Type>> Addition::get_forward_specs(Index batch_size) const
-{
-    return {{Shape{batch_size}.append(input_shape), compute_dtype}};
+    add.input_slots  = {Input};
+    add.output_slots = {Output};
 }
 
 vector<pair<Shape, Type>> Addition::get_backward_specs(Index batch_size) const
@@ -37,8 +33,6 @@ vector<pair<Shape, Type>> Addition::get_backward_specs(Index batch_size) const
         {Shape{batch_size}.append(input_shape), compute_dtype}, // InputDelta1
     };
 }
-
-// Setters
 
 void Addition::set(const Shape& new_input_shape, const string& new_label)
 {
@@ -51,15 +45,6 @@ void Addition::set(const Shape& new_input_shape, const string& new_label)
     set_label(new_label);
 }
 
-// Forward / back propagation
-
-void Addition::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-
-    addition(forward_views[Input][0], forward_views[Input][1], forward_views[Output][0]);
-}
-
 void Addition::back_propagate(ForwardPropagation&,
                               BackPropagation& back_propagation,
                               size_t layer) const noexcept
@@ -68,30 +53,6 @@ void Addition::back_propagate(ForwardPropagation&,
 
     copy(delta_views[OutputDelta][0], delta_views[InputDelta0][0]);
     copy(delta_views[OutputDelta][0], delta_views[InputDelta1][0]);
-}
-
-// Serialization
-
-void Addition::from_JSON(const JsonDocument& document)
-{
-    const Json* element = get_json_root(document, "Addition");
-
-    const string new_label = read_json_string(element, "Label");
-    const Shape new_input_shape = string_to_shape(read_json_string(element, "InputDimensions"));
-
-    set(new_input_shape, new_label);
-}
-
-void Addition::to_JSON(JsonWriter& printer) const
-{
-    printer.open_element("Addition");
-
-    write_json(printer, {
-        {"Label", label},
-        {"InputDimensions", shape_to_string(input_shape)}
-    });
-
-    printer.close_element();
 }
 
 REGISTER(Layer, Addition, "Addition")

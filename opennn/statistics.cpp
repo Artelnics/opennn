@@ -1307,11 +1307,6 @@ VectorI maximal_indices(const MatrixR& matrix)
 
     return maximal_indices;
 }
-
-// =====================================================================
-// Eigen Matrix/Vector data-manipulation helpers.
-// =====================================================================
-
 MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
 {
     if (starting_matrix.size() == 0)

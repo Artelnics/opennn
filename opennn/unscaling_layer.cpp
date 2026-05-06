@@ -24,9 +24,6 @@ Unscaling::Unscaling(const Shape& new_input_shape, const string& new_label) : La
 
     set(new_input_shape.empty() ? Index(0) : new_input_shape[0], new_label);
 }
-
-// Getters
-
 Shape Unscaling::get_input_shape() const
 {
     return { ssize(scalers) };
@@ -39,49 +36,33 @@ Shape Unscaling::get_output_shape() const
 
 VectorR Unscaling::get_minimums() const
 {
-    return (ssize(states) > Minimums && states[Minimums].data) ? states[Minimums].as_vector() : VectorR();
+    return unscale_op.minimums.data ? unscale_op.minimums.as_vector() : VectorR();
 }
 
 VectorR Unscaling::get_maximums() const
 {
-    return (ssize(states) > Maximums && states[Maximums].data) ? states[Maximums].as_vector() : VectorR();
+    return unscale_op.maximums.data ? unscale_op.maximums.as_vector() : VectorR();
 }
 
 VectorR Unscaling::get_means() const
 {
-    return (ssize(states) > Means && states[Means].data) ? states[Means].as_vector() : VectorR();
+    return unscale_op.means.data ? unscale_op.means.as_vector() : VectorR();
 }
 
 VectorR Unscaling::get_standard_deviations() const
 {
-    return (ssize(states) > StandardDeviations && states[StandardDeviations].data) ? states[StandardDeviations].as_vector() : VectorR();
+    return unscale_op.standard_deviations.data ? unscale_op.standard_deviations.as_vector() : VectorR();
 }
-
-vector<pair<Shape, Type>> Unscaling::get_forward_specs(Index batch_size) const
-{
-    return {{Shape{batch_size}.append(get_output_shape()), Type::FP32}};
-}
-
-vector<pair<Shape, Type>> Unscaling::get_state_specs() const
-{
-    const Index features = ssize(scalers);
-    if (features == 0) return {};
-    return {
-        {Shape{features}, Type::FP32}, // Minimums
-        {Shape{features}, Type::FP32}, // Maximums
-        {Shape{features}, Type::FP32}, // Means
-        {Shape{features}, Type::FP32}, // StandardDeviations
-        {Shape{features}, Type::FP32}, // Scalers
-    };
-}
-
-// Setters
 
 void Unscaling::set(Index new_neurons_number, const string& new_label)
 {
     scalers.assign(new_neurons_number, ScalerMethod::MinimumMaximum);
 
     set_label(new_label);
+
+    unscale_op.input_slots  = {Input};
+    unscale_op.output_slots = {Output};
+    unscale_op.set(new_neurons_number);
 
     set_min_max_range(-1.0f, 1.0f);
 }
@@ -97,26 +78,26 @@ void Unscaling::set_output_shape(const Shape& /*new_output_shape*/)
 
 void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
-    if (ssize(states) < 5 || !states[Means].data)
+    if (!unscale_op.means.data)
         throw runtime_error("Unscaling::set_descriptives: layer not compiled yet.");
 
     const Index descriptives_count = new_descriptives.size();
-    if (descriptives_count != states[Means].size())
+    if (descriptives_count != unscale_op.means.size())
         throw runtime_error("Unscaling::set_descriptives: size mismatch.");
 
     for (Index i = 0; i < descriptives_count; ++i)
     {
-        states[Means].as<float>()[i]              = new_descriptives[i].mean;
-        states[StandardDeviations].as<float>()[i] = new_descriptives[i].standard_deviation;
-        states[Minimums].as<float>()[i]           = new_descriptives[i].minimum;
-        states[Maximums].as<float>()[i]           = new_descriptives[i].maximum;
+        unscale_op.means.as<float>()[i]               = new_descriptives[i].mean;
+        unscale_op.standard_deviations.as<float>()[i] = new_descriptives[i].standard_deviation;
+        unscale_op.minimums.as<float>()[i]            = new_descriptives[i].minimum;
+        unscale_op.maximums.as<float>()[i]            = new_descriptives[i].maximum;
     }
 }
 
 void Unscaling::set_min_max_range(float min, float max)
 {
-    min_range = min;
-    max_range = max;
+    unscale_op.min_range = min;
+    unscale_op.max_range = max;
 }
 
 void Unscaling::set_scalers(const vector<string>& new_scaler)
@@ -135,67 +116,23 @@ void Unscaling::set_scalers(const string& new_scalers)
     flush_scalers_to_states();
 }
 
-float* Unscaling::link_states(float* pointer)
+void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
-    const bool needs_defaults = ssize(states) < 5 || states[Means].data == nullptr;
-
-    float* next = Layer::link_states(pointer);
-
-    if (!needs_defaults || ssize(states) < 5) return next;
-
-    if (states[Means].data)
-        states[Means].as_vector().setZero();
-    if (states[StandardDeviations].data)
-        states[StandardDeviations].as_vector().setOnes();
-    if (states[Minimums].data)
-        states[Minimums].as_vector().setConstant(-1.0f);
-    if (states[Maximums].data)
-        states[Maximums].as_vector().setOnes();
-    if (states[Scalers].data && ssize(scalers) == states[Scalers].size())
-        for (size_t i = 0; i < scalers.size(); ++i)
-            states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
-
-    return next;
+    flush_scalers_to_states();
+    for (Operator* op : get_operators())
+        op->forward_propagate(forward_propagation, layer, is_training);
 }
-
-// Forward propagation
-
-void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-
-    if (states.size() < 5)
-    {
-        copy(forward_views[Input][0], forward_views[Output][0]);
-        return;
-    }
-
-    unscale(forward_views[Input][0],
-            states[Minimums], states[Maximums],
-            states[Means], states[StandardDeviations],
-            states[Scalers],
-            min_range, max_range,
-            forward_views[Output][0]);
-}
-
-// Serialization
-
 void Unscaling::print() const
 {
     cout << "Unscaling layer" << "\n";
 }
 
-void Unscaling::from_JSON(const JsonDocument& document)
+void Unscaling::read_JSON_body(const Json* root_element)
 {
-    const Json* root_element = get_json_root(document, "Unscaling");
-
-    const Index neurons_number = read_json_index(root_element, "NeuronsNumber");
-
-    set(neurons_number);
-
     const Json* neurons_array = root_element->find("Neurons");
     if (!neurons_array || !neurons_array->is_array()) return;
 
+    const Index neurons_number = ssize(scalers);
     for (Index i = 0; i < neurons_number && size_t(i) < neurons_array->array_value.size(); ++i)
     {
         const Json* neuron = &neurons_array->array_value[size_t(i)];
@@ -203,42 +140,15 @@ void Unscaling::from_JSON(const JsonDocument& document)
     }
 }
 
-void Unscaling::load_state_from_JSON(const JsonDocument& document)
+void Unscaling::write_JSON_body(JsonWriter& printer) const
 {
-    if (ssize(states) < 5 || !states[Means].data) return;
-
-    const Json* root_element = get_json_root(document, "Unscaling");
-
-    const Json* neurons_array = root_element->find("Neurons");
-    if (!neurons_array || !neurons_array->is_array()) return;
-
-    for (size_t i = 0; i < neurons_array->array_value.size() && Index(i) < states[Minimums].size(); ++i)
-    {
-        const Json* neuron = &neurons_array->array_value[i];
-        const string descriptives = read_json_string(neuron, "Descriptives");
-        const vector<string> tokens = get_tokens(descriptives, " ");
-        if (tokens.size() >= 4)
-        {
-            states[Minimums].as<float>()[i]           = float(stof(tokens[0]));
-            states[Maximums].as<float>()[i]           = float(stof(tokens[1]));
-            states[Means].as<float>()[i]              = float(stof(tokens[2]));
-            states[StandardDeviations].as<float>()[i] = float(stof(tokens[3]));
-        }
-    }
-}
-
-void Unscaling::to_JSON(JsonWriter& printer) const
-{
-    printer.open_element("Unscaling");
-
     const Shape output_shape = get_output_shape();
-    add_json_field(printer, "NeuronsNumber", to_string(output_shape[0]));
 
-    const bool have_state = (ssize(states) > StandardDeviations && states[Means].data);
-    const float* mins = have_state ? states[Minimums].as<float>()           : nullptr;
-    const float* maxs = have_state ? states[Maximums].as<float>()           : nullptr;
-    const float* mns  = have_state ? states[Means].as<float>()              : nullptr;
-    const float* sds  = have_state ? states[StandardDeviations].as<float>() : nullptr;
+    const bool have_state = unscale_op.means.data != nullptr;
+    const float* mins = have_state ? unscale_op.minimums.as<float>()            : nullptr;
+    const float* maxs = have_state ? unscale_op.maximums.as<float>()            : nullptr;
+    const float* mns  = have_state ? unscale_op.means.as<float>()               : nullptr;
+    const float* sds  = have_state ? unscale_op.standard_deviations.as<float>() : nullptr;
 
     printer.begin_array("Neurons");
     for (Index i = 0; i < output_shape[0]; ++i)
@@ -258,18 +168,13 @@ void Unscaling::to_JSON(JsonWriter& printer) const
         printer.end_array_object();
     }
     printer.end_array();
-
-    printer.close_element();
 }
-
-// Helpers
-
 void Unscaling::flush_scalers_to_states()
 {
-    if (ssize(states) <= Scalers || !states[Scalers].data) return;
-    if (ssize(scalers) != states[Scalers].size()) return;
+    if (!unscale_op.scalers.data) return;
+    if (ssize(scalers) != unscale_op.scalers.size()) return;
     for (size_t i = 0; i < scalers.size(); ++i)
-        states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
+        unscale_op.scalers.as<float>()[i] = static_cast<float>(scalers[i]);
 }
 
 REGISTER(Layer, Unscaling, "Unscaling")

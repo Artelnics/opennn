@@ -384,7 +384,7 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 {
     const Index byte_count = new_parameters.size() * Index(sizeof(float));
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     if (parameters.device_type == Device::CUDA)
     {
         parameters.resize_bytes(byte_count, Device::CUDA);
@@ -404,7 +404,8 @@ void NeuralNetwork::set_parameters_random()
     const Index layers_number = get_layers_number();
 
     for (Index i = 0; i < layers_number; ++i)
-        layers[i]->set_parameters_random();
+        for (Operator* op : layers[i]->get_operators())
+            op->set_parameters_random();
 }
 
 void NeuralNetwork::set_parameters_glorot()
@@ -413,7 +414,8 @@ void NeuralNetwork::set_parameters_glorot()
 
     #pragma omp parallel for
     for (int i = 0; i < layers_number; ++i)
-        layers[i]->set_parameters_glorot();
+        for (Operator* op : layers[i]->get_operators())
+            op->set_parameters_glorot();
 }
 
 Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
@@ -1017,7 +1019,7 @@ vector<string> NeuralNetwork::get_names_string() const
 
 
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
 void NeuralNetwork::copy_parameters_device()
 {

@@ -62,9 +62,6 @@ public:
 
     void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
-
-    // Training
-
     virtual TrainingResults train() = 0;
 
     const string& get_name() const { return name; }

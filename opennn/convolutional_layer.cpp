@@ -34,9 +34,6 @@ Convolutional::Convolutional(const Shape& new_input_shape,
         new_batch_normalization,
         new_label);
 }
-
-// Getters
-
 Shape Convolutional::get_output_shape() const
 {
     return { get_output_height(), get_output_width(), kernels_number };
@@ -91,35 +88,24 @@ vector<Operator*> Convolutional::get_operators()
 {
     vector<Operator*> ops = {&convolution};
     if (batch_norm.active()) ops.push_back(&batch_norm);
+    ops.push_back(&activation);
     return ops;
 }
 
 vector<pair<Shape, Type>> Convolutional::get_forward_specs(Index batch_size) const
 {
     const Shape output_shape = {batch_size, get_output_height(), get_output_width(), kernels_number};
-    const Shape padded_shape = Configuration::instance().is_gpu()
-        ? Shape{}
-        : Shape{batch_size,
-                input_height + 2 * get_padding_height(),
-                input_width + 2 * get_padding_width(),
-                input_channels};
     const Type act = compute_dtype;
 
     const Shape convolution_view_shape = batch_norm.active() ? output_shape          : Shape{};
     const Shape bn_stat_shape          = batch_norm.active() ? Shape{kernels_number} : Shape{};
 
     return {
-        /*PaddedInput*/              {padded_shape,           act},
         /*ConvolutionView*/          {convolution_view_shape, act},
         /*BatchNormMean*/            {bn_stat_shape,          Type::FP32},
         /*BatchNormInverseVariance*/ {bn_stat_shape,          Type::FP32},
         /*Output*/                   {output_shape,           act},
     };
-}
-
-vector<pair<Shape, Type>> Convolutional::get_backward_specs(Index batch_size) const
-{
-    return {{{batch_size, input_height, input_width, input_channels}, compute_dtype}};
 }
 
 void Convolutional::update_convolution_operator()
@@ -129,10 +115,17 @@ void Convolutional::update_convolution_operator()
                     row_stride, column_stride,
                     get_padding_height(), get_padding_width(),
                     compute_dtype);
+
+    convolution.input_slots  = {Input};
+    convolution.output_slots = batch_norm.active() ? vector<size_t>{ConvolutionView}
+                                                   : vector<size_t>{Output};
+
+    batch_norm.input_slots  = {ConvolutionView};
+    batch_norm.output_slots = {Output, BatchNormMean, BatchNormInverseVariance};
+
+    activation.input_slots  = {Output};
+    activation.output_slots = {Output};
 }
-
-// Setters
-
 void Convolutional::set(const Shape& new_input_shape,
                         const Shape& new_kernel_shape,
                         const string& new_activation_function,
@@ -182,10 +175,10 @@ void Convolutional::set(const Shape& new_input_shape,
 
     set_label(new_label);
 
-    update_convolution_operator();
-
     set_activation_function(new_activation_function);
     set_batch_normalization(new_batch_normalization);
+
+    update_convolution_operator();
 }
 
 void Convolutional::set_input_shape(const Shape& new_input_shape)
@@ -248,90 +241,15 @@ void Convolutional::set_batch_normalization(bool new_batch_normalization)
         batch_norm.features = 0;
 }
 
-void Convolutional::set_parameters_glorot()
-{
-    const Index kernel_area = kernel_height * kernel_width;
-    const Index fan_in  = kernel_area * kernel_channels;
-    const Index fan_out = kernel_area * kernels_number;
-    const float limit = sqrt(6.0f / static_cast<float>(fan_in + fan_out));
-
-    set_random_uniform(parameters[Weight].as_vector(), -limit, limit);
-    parameters[Bias].fill(0.0f);
-    if (batch_norm.active()) batch_norm.init_defaults();
-}
-
-void Convolutional::set_parameters_random()
-{
-    set_random_uniform(parameters[Weight].as_vector());
-    parameters[Bias].fill(0.0f);
-    if (batch_norm.active()) batch_norm.init_defaults();
-}
-
-// Forward / back propagation
-
-void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-
-    const TensorView& input = forward_views[Input][0];
-    TensorView& padded_input = forward_views[PaddedInput][0];
-    TensorView& output = forward_views[Output][0];
-
-#ifdef OPENNN_WITH_CUDA
-    const bool is_gpu = Configuration::instance().is_gpu();
-#else
-    constexpr bool is_gpu = false;
-#endif
-
-    if (!is_gpu)
-    {
-        if (use_padding)
-            padding(input, padded_input);
-        else
-            copy(input, padded_input);
-    }
-
-    const TensorView& conv_input = is_gpu ? input : padded_input;
-
-    if (batch_norm.active())
-    {
-        TensorView& combination_output = forward_views[ConvolutionView][0];
-        convolution.apply(conv_input, combination_output);
-
-        if (is_training)
-            batch_norm.apply_training(combination_output,
-                                      forward_views[BatchNormMean][0],
-                                      forward_views[BatchNormInverseVariance][0],
-                                      output);
-        else
-            batch_norm.apply_inference(combination_output, output);
-
-        activation.apply(output);
-        return;
-    }
-
-    const bool fuse_activation = is_gpu && activation.function == Activation::Function::ReLU;
-
-    convolution.apply(conv_input, output, fuse_activation ? activation.descriptor : nullptr);
-    if (!fuse_activation) activation.apply(output);
-}
-
 void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                    BackPropagation& back_propagation,
                                    size_t layer) const noexcept
 {
     auto& forward_views = forward_propagation.views[layer];
     auto& delta_views = back_propagation.delta_views[layer];
-    auto& gradient_views = back_propagation.gradient_views[layer];
 
     const TensorView& output = forward_views[Output][0];
     TensorView& output_delta = delta_views[OutputDelta][0];
-
-#ifdef OPENNN_WITH_CUDA
-    const bool is_gpu = Configuration::instance().is_gpu();
-#else
-    constexpr bool is_gpu = false;
-#endif
 
     activation.apply_delta(output, output_delta);
 
@@ -339,38 +257,17 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
         batch_norm.apply_delta(forward_views[ConvolutionView][0],
                                forward_views[BatchNormMean][0],
                                forward_views[BatchNormInverseVariance][0],
-                               gradient_views[Gamma],
-                               gradient_views[Beta],
                                output_delta);
-
-    const TensorView& conv_input = is_gpu ? forward_views[Input][0] : forward_views[PaddedInput][0];
 
     TensorView empty_input_delta;
     TensorView& input_delta_arg = is_first_layer ? empty_input_delta : delta_views[InputDelta][0];
 
-    convolution.apply_delta(conv_input,
+    convolution.apply_delta(forward_views[Input][0],
                             output_delta,
-                            gradient_views[Weight],
-                            gradient_views[Bias],
                             input_delta_arg);
 }
-
-// Serialization
-
-void Convolutional::from_JSON(const JsonDocument& document)
+void Convolutional::read_JSON_body(const Json* convolutional_layer_element)
 {
-    const Json* convolutional_layer_element = get_json_root(document, "Convolutional");
-
-    set_label(read_json_string(convolutional_layer_element, "Label"));
-
-    const Shape input_shape = string_to_shape(read_json_string(convolutional_layer_element, "InputDimensions"));
-    if (input_shape.rank != 3)
-        throw runtime_error("Input shape rank must be 3");
-
-    input_height    = input_shape[0];
-    input_width     = input_shape[1];
-    input_channels  = input_shape[2];
-
     kernel_height   = read_json_index(convolutional_layer_element, "KernelsHeight");
     kernel_width    = read_json_index(convolutional_layer_element, "KernelsWidth");
     kernel_channels = read_json_index(convolutional_layer_element, "KernelsChannels");
@@ -386,31 +283,15 @@ void Convolutional::from_JSON(const JsonDocument& document)
     use_padding = (convolution_type == "Same");
 
     const bool has_batch_norm = read_json_bool(convolutional_layer_element, "BatchNormalization");
-
-    activation.from_JSON(convolutional_layer_element);
-    if (has_batch_norm) batch_norm.from_JSON(convolutional_layer_element);
-
-    update_convolution_operator();
     if (has_batch_norm && kernels_number > 0)
         batch_norm.set(kernels_number, batch_norm.momentum);
+
+    update_convolution_operator();
 }
 
-void Convolutional::load_state_from_JSON(const JsonDocument& document)
+void Convolutional::write_JSON_body(JsonWriter& printer) const
 {
-    if (!batch_norm.active()) return;
-
-    const Json* convolutional_layer_element = get_json_root(document, "Convolutional");
-
-    batch_norm.load_state_from_JSON(convolutional_layer_element);
-}
-
-void Convolutional::to_JSON(JsonWriter& printer) const
-{
-    printer.open_element("Convolutional");
-
     write_json(printer, {
-        {"Label", label},
-        {"InputDimensions", shape_to_string(get_input_shape())},
         {"KernelsNumber", to_string(get_kernels_number())},
         {"KernelsHeight", to_string(get_kernel_height())},
         {"KernelsWidth", to_string(get_kernel_width())},
@@ -419,11 +300,6 @@ void Convolutional::to_JSON(JsonWriter& printer) const
         {"Convolution", use_padding ? "Same" : "Valid"},
         {"BatchNormalization", to_string(batch_norm.active())}
     });
-
-    activation.to_JSON(printer);
-    if (batch_norm.active()) batch_norm.to_JSON(printer);
-
-    printer.close_element();
 }
 
 REGISTER(Layer, Convolutional, "Convolutional")

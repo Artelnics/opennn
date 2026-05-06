@@ -123,9 +123,6 @@ TrainingResults AdaptiveMomentEstimation::train()
             validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
             empty_validation_queue.push(validation_batch_pool.back().get());
         }
-
-    // Forward / back propagation
-
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
 
     loss->set_normalization_coefficient();

@@ -23,31 +23,16 @@ public:
    enum DataSlot { GradientMoment, SquareGradientMoment };
 
    AdaptiveMomentEstimation(Loss* = nullptr);
-
-   // Set
-
    void set_batch_size(const Index new_batch_size);
 
    void set_default();
-
-   // Get
-
    Index get_samples_number() const;
-
-   // Training operators
-
    void set_learning_rate(const float);
    void set_beta_1(const float);
    void set_beta_2(const float);
-
-   // Training
-
    TrainingResults train() override;
 
    void update_parameters(BackPropagation&, OptimizerData&) const;
-
-   // Serialization
-
    void from_JSON(const JsonDocument&) override;
 
    void to_JSON(JsonWriter&) const override;

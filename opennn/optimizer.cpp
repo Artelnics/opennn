@@ -485,7 +485,7 @@ void Optimizer::setup_device_training(ForwardPropagation& training_fp,
                                       ForwardPropagation* validation_fp,
                                       BackPropagation* validation_bp)
 {
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     if (!Configuration::instance().is_gpu()) return;
 
     NeuralNetwork* neural_network = loss->get_neural_network();
@@ -505,7 +505,7 @@ void Optimizer::setup_device_training(ForwardPropagation& training_fp,
 
 void Optimizer::teardown_device_training()
 {
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     if (!Configuration::instance().is_gpu()) return;
 
     cudaStreamDestroy(memory_stream);
@@ -525,7 +525,7 @@ void Optimizer::teardown_device_training()
 
 void Optimizer::prefetch_batch(Batch& batch, Index sample_count, int slot)
 {
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     if (!Configuration::instance().is_gpu()) return;
     batch.copy_device_async(sample_count, memory_stream);
     cudaEventRecord(batch_ready_event[slot], memory_stream);
@@ -536,7 +536,7 @@ void Optimizer::prefetch_batch(Batch& batch, Index sample_count, int slot)
 
 void Optimizer::wait_prefetch(int slot)
 {
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     if (!Configuration::instance().is_gpu()) return;
     cudaStreamWaitEvent(Backend::get_compute_stream(), batch_ready_event[slot], 0);
 #else
@@ -546,7 +546,7 @@ void Optimizer::wait_prefetch(int slot)
 
 void Optimizer::sync_device()
 {
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     if (Configuration::instance().is_gpu()) cudaStreamSynchronize(Backend::get_compute_stream());
 #endif
 }
@@ -556,7 +556,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
     const Index gradient_size = gradient.size_in_floats();
     if (gradient_size <= 0) return;
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     if (Configuration::instance().is_gpu())
     {
         static float* squared_norm_device = nullptr;

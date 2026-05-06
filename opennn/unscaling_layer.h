@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 #include "scaling.h"
 #include "variable.h"
 
@@ -30,11 +31,10 @@ public:
     VectorR get_standard_deviations() const;
 
     const vector<ScalerMethod>& get_scalers() const { return scalers; }
-    float get_min_range() const { return min_range; }
-    float get_max_range() const { return max_range; }
+    float get_min_range() const { return unscale_op.min_range; }
+    float get_max_range() const { return unscale_op.max_range; }
 
-    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
-    vector<pair<Shape, Type>> get_state_specs() const override;
+    vector<Operator*> get_operators() override { return {&unscale_op}; }
 
     void set(Index = 0, const string& = "unscaling_layer");
 
@@ -48,24 +48,19 @@ public:
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
 
-    float* link_states(float* pointer) override;
-
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
     void print() const override;
 
-    void from_JSON(const JsonDocument&) override;
-    void load_state_from_JSON(const JsonDocument&) override;
-    void to_JSON(JsonWriter&) const override;
+    void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
 
 private:
 
     vector<ScalerMethod> scalers;
 
-    float min_range = -1.0f;
-    float max_range = 1.0f;
+    Unscale unscale_op;
 
-    enum States {Minimums, Maximums, Means, StandardDeviations, Scalers};
     enum Forward {Input, Output};
 
     void flush_scalers_to_states();

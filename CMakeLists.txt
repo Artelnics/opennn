@@ -16,9 +16,9 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options(-march=native)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-march=native>)
 elseif(MSVC)
-    add_compile_options(/arch:AVX2)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/arch:AVX2>)
 endif()
 
 include(CheckIPOSupported)
@@ -72,7 +72,7 @@ check_language(CUDA)
 if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     enable_language(CUDA)
     find_package(CUDAToolkit REQUIRED)
-    set(OPENNN_WITH_CUDA ON CACHE BOOL "")
+    set(OPENNN_HAS_CUDA ON CACHE BOOL "")
 
     find_path(CUDNN_INCLUDE_DIR
         NAMES cudnn_version.h cudnn.h
@@ -146,7 +146,7 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
             "CUDNN_FRONTEND_INCLUDE_DIR.")
     endif()
 else()
-    set(OPENNN_WITH_CUDA OFF CACHE BOOL "")
+    set(OPENNN_HAS_CUDA OFF CACHE BOOL "")
 endif()
 
 add_subdirectory(opennn)
@@ -156,7 +156,7 @@ if(OpenNN_BUILD_BLANK)
     add_subdirectory(blank)
 endif()
 
-if(OPENNN_WITH_CUDA)
+if(OPENNN_HAS_CUDA)
     add_subdirectory(blank_cuda)
 endif()
 

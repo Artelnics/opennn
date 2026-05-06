@@ -337,7 +337,6 @@ void GeneticAlgorithm::perform_crossover()
     vector<Index> elite_indices;
     if (elitism_size > 0)
     {
-        // Find the top elitism_size individuals by fitness
         vector<pair<float, Index>> fitness_indexed(individuals_number);
         for (Index i = 0; i < individuals_number; ++i)
             fitness_indexed[i] = {fitness(i), i};

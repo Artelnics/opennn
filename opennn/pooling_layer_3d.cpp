@@ -26,9 +26,6 @@ Pooling3d::Pooling3d(const Shape& new_input_shape,
 
     set(new_input_shape, new_pooling_method, new_name);
 }
-
-// Getters
-
 Shape Pooling3d::get_output_shape() const
 {
     return {input_features};
@@ -50,13 +47,6 @@ vector<pair<Shape, Type>> Pooling3d::get_forward_specs(Index batch_size) const
     };
 }
 
-vector<pair<Shape, Type>> Pooling3d::get_backward_specs(Index batch_size) const
-{
-    return {{{batch_size, sequence_length, input_features}, compute_dtype}};
-}
-
-// Setters
-
 void Pooling3d::set(const Shape& new_input_shape,
                     const PoolingMethod& new_pooling_method,
                     const string& new_label)
@@ -67,29 +57,17 @@ void Pooling3d::set(const Shape& new_input_shape,
     pooling_method = new_pooling_method;
 
     set_label(new_label);
+
+    pool3d.method = (pooling_method == PoolingMethod::MaxPooling) ? 0 : 1;
+    pool3d.input_slots  = {Input};
+    pool3d.output_slots = {Output, MaximalIndices};
 }
 
 void Pooling3d::set_pooling_method(const string& new_pooling_method)
 {
     pooling_method = string_to_pooling_method(new_pooling_method);
+    pool3d.method = (pooling_method == PoolingMethod::MaxPooling) ? 0 : 1;
 }
-
-// Forward / back propagation
-
-void Pooling3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-
-    if (pooling_method == PoolingMethod::MaxPooling)
-        max_pooling_3d_forward(forward_views[Input][0],
-                               forward_views[Output][0],
-                               forward_views[MaximalIndices][0],
-                               is_training);
-    else
-        average_pooling_3d_forward(forward_views[Input][0],
-                                   forward_views[Output][0]);
-}
-
 void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
                                size_t layer) const noexcept
@@ -106,29 +84,14 @@ void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
                                     delta_views[OutputDelta][0],
                                     delta_views[InputDelta][0]);
 }
-
-// Serialization
-
-void Pooling3d::from_JSON(const JsonDocument& document)
+void Pooling3d::read_JSON_body(const Json* element)
 {
-    const Json* element = get_json_root(document, "Pooling3d");
-
-    set_label(read_json_string(element, "Label"));
-    set_input_shape(string_to_shape(read_json_string(element, "InputDimensions")));
     set_pooling_method(read_json_string(element, "PoolingMethod"));
 }
 
-void Pooling3d::to_JSON(JsonWriter& printer) const
+void Pooling3d::write_JSON_body(JsonWriter& printer) const
 {
-    printer.open_element("Pooling3d");
-
-    write_json(printer, {
-        {"Label", label},
-        {"InputDimensions", shape_to_string(get_input_shape())},
-        {"PoolingMethod", write_pooling_method()}
-    });
-
-    printer.close_element();
+    add_json_field(printer, "PoolingMethod", write_pooling_method());
 }
 
 REGISTER(Layer, Pooling3d, "Pooling3d")

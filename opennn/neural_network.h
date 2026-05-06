@@ -48,9 +48,6 @@ public:
     Index get_backward_size(Index b) const { return aligned_total_elements(get_backward_shapes(b)); }
 
     void compile();
-
-    // Get
-
     bool has(const string&) const;
     bool has(LayerType) const;
 
@@ -79,9 +76,6 @@ public:
     Layer* get_first(LayerType);
     const Layer* get_first(const string&) const;
     const Layer* get_first(LayerType) const;
-
-    // Set
-
     void set_layers_number(const Index new_layers_number) { layers.resize(new_layers_number); layer_input_indices.resize(new_layers_number); }
 
     void set_layer_input_indices(const vector<vector<Index>>& new_layer_input_indices) { layer_input_indices = new_layer_input_indices; }
@@ -100,18 +94,12 @@ public:
     void set_input_shape(const Shape&);
 
     void set_default();
-
-    // Layers
-
     Index get_layers_number() const { return ssize(layers); }
     Index get_layers_number(const string&) const;
     Index get_layers_number(LayerType) const;
 
     Index get_first_trainable_layer_index() const;
     Index get_last_trainable_layer_index() const;
-
-    // Architecture
-
     Index get_inputs_number() const;
     Index get_outputs_number() const;
 
@@ -119,22 +107,13 @@ public:
     Shape get_output_shape() const;
 
     Activation::Function get_output_activation() const;
-
-    // Parameters
-
     Index get_parameters_number() const;
 
     vector<Index> get_layer_parameter_numbers() const;
 
     void set_parameters(const VectorR& new_parameters);
-
-    // Parameters initialization
-
     void set_parameters_random();
     void set_parameters_glorot();
-
-    // Output
-
     MatrixR calculate_outputs(const vector<TensorView>&);
 
     MatrixR calculate_outputs(const MatrixR&);
@@ -150,9 +129,6 @@ public:
     Index calculate_image_output(const filesystem::path&);
 
     MatrixR calculate_text_outputs(const Tensor<string, 1>&);
-
-    // Serialization
-
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;
@@ -176,7 +152,7 @@ public:
                           const VectorR&,
                           ForwardPropagation&);
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
 public:
 

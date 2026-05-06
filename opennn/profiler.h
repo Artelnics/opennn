@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -81,7 +81,7 @@ public:
         : key_(move(key)), sync_gpu_(sync_gpu)
     {
         if (!enabled()) return;
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
         if (sync_gpu_) cudaDeviceSynchronize();
 #endif
         t0_ = std::chrono::steady_clock::now();
@@ -90,7 +90,7 @@ public:
     ~ScopedTimer()
     {
         if (!enabled()) return;
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
         if (sync_gpu_) cudaDeviceSynchronize();
 #endif
         const auto end_time = std::chrono::steady_clock::now();

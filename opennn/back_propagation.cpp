@@ -109,6 +109,8 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
                 g_cursor += get_aligned_bytes(slot_shape.size() * Index(sizeof(float)));
             }
         }
+
+        layers[i]->redistribute_parameter_gradients_to_operators(gradient_views[i]);
     }
 
     const Index total_backward_bytes = aligned_total_bytes(backward_shapes, backward_dtypes);
@@ -236,7 +238,7 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     IF_GPU({
         copy(*sources[0], destination);
         for (size_t s = 1; s < sources.size(); ++s)
-            addition(destination, *sources[s], destination);
+            add(destination, *sources[s], destination);
         return;
     });
 

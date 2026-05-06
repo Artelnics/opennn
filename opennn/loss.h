@@ -91,9 +91,6 @@ public:
     void set_regularization_weight(const float new_regularization_weight) { regularization_weight = new_regularization_weight; }
 
     void set_normalization_coefficient();
-
-    // Back propagation
-
     void calculate_error(const Batch&,
                          const ForwardPropagation&,
                          BackPropagation&) const;
@@ -106,13 +103,7 @@ public:
     void back_propagate(const Batch&,
                         ForwardPropagation&,
                         BackPropagation&) const;
-
-    // Regularization
-
     float calculate_regularization(const VectorR&) const;
-
-    // Serialization
-
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;
@@ -121,10 +112,6 @@ public:
     void regularization_to_JSON(JsonWriter&) const;
 
     const string& get_name() const { return name; }
-
-    // Used by Levenberg–Marquardt for numerical jacobian/hessian. Other
-    // numerical-differentiation helpers (calculate_numerical_gradient et al.)
-    // live in tests/numerical_derivatives.{h,cpp} as free functions.
     static float calculate_h(const float);
 
     void print() const {}

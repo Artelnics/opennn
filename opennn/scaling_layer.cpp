@@ -23,54 +23,35 @@ Scaling::Scaling(const Shape& new_input_shape) : Layer()
 
     set(new_input_shape);
 }
-
-// Getters
-
 VectorR Scaling::get_minimums() const
 {
-    return (ssize(states) > Minimums && states[Minimums].data) ? states[Minimums].as_vector() : VectorR();
+    return scale_op.minimums.data ? scale_op.minimums.as_vector() : VectorR();
 }
 
 VectorR Scaling::get_maximums() const
 {
-    return (ssize(states) > Maximums && states[Maximums].data) ? states[Maximums].as_vector() : VectorR();
+    return scale_op.maximums.data ? scale_op.maximums.as_vector() : VectorR();
 }
 
 VectorR Scaling::get_means() const
 {
-    return (ssize(states) > Means && states[Means].data) ? states[Means].as_vector() : VectorR();
+    return scale_op.means.data ? scale_op.means.as_vector() : VectorR();
 }
 
 VectorR Scaling::get_standard_deviations() const
 {
-    return (ssize(states) > StandardDeviations && states[StandardDeviations].data) ? states[StandardDeviations].as_vector() : VectorR();
+    return scale_op.standard_deviations.data ? scale_op.standard_deviations.as_vector() : VectorR();
 }
-
-vector<pair<Shape, Type>> Scaling::get_forward_specs(Index batch_size) const
-{
-    return {{Shape{batch_size}.append(input_shape), compute_dtype}}; // Output
-}
-
-vector<pair<Shape, Type>> Scaling::get_state_specs() const
-{
-    const Index features = input_shape.size();
-    if (features == 0) return {};
-    return {
-        {Shape{features}, Type::FP32}, // Minimums
-        {Shape{features}, Type::FP32}, // Maximums
-        {Shape{features}, Type::FP32}, // Means
-        {Shape{features}, Type::FP32}, // StandardDeviations
-        {Shape{features}, Type::FP32}, // Scalers
-    };
-}
-
-// Setters
 
 void Scaling::set(const Shape& new_input_shape)
 {
     input_shape = new_input_shape;
 
     set_label("scaling_layer");
+
+    scale_op.input_slots  = {Input};
+    scale_op.output_slots = {Output};
+    scale_op.set(input_shape.empty() ? Index(0) : input_shape.size());
 
     if (input_shape.empty()) return;
 
@@ -95,19 +76,19 @@ void Scaling::set_output_shape(const Shape& new_output_shape)
 
 void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
-    if (ssize(states) < 5 || !states[Means].data)
+    if (!scale_op.means.data)
         throw runtime_error("Scaling::set_descriptives: layer not compiled yet.");
 
     const Index descriptives_count = new_descriptives.size();
-    if (descriptives_count != states[Means].size())
+    if (descriptives_count != scale_op.means.size())
         throw runtime_error("Scaling::set_descriptives: size mismatch.");
 
     for (Index i = 0; i < descriptives_count; ++i)
     {
-        states[Means].as<float>()[i]              = new_descriptives[i].mean;
-        states[StandardDeviations].as<float>()[i] = new_descriptives[i].standard_deviation;
-        states[Minimums].as<float>()[i]           = new_descriptives[i].minimum;
-        states[Maximums].as<float>()[i]           = new_descriptives[i].maximum;
+        scale_op.means.as<float>()[i]               = new_descriptives[i].mean;
+        scale_op.standard_deviations.as<float>()[i] = new_descriptives[i].standard_deviation;
+        scale_op.minimums.as<float>()[i]            = new_descriptives[i].minimum;
+        scale_op.maximums.as<float>()[i]            = new_descriptives[i].maximum;
     }
 }
 
@@ -127,51 +108,12 @@ void Scaling::set_scalers(const string& new_scaler)
     flush_scalers_to_states();
 }
 
-float* Scaling::link_states(float* pointer)
+void Scaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
 {
-    const bool needs_defaults = ssize(states) < 5 || states[Means].data == nullptr;
-
-    float* next = Layer::link_states(pointer);
-
-    if (!needs_defaults || ssize(states) < 5) return next;
-
-    if (states[Means].data)
-        states[Means].as_vector().setZero();
-    if (states[StandardDeviations].data)
-        states[StandardDeviations].as_vector().setOnes();
-    if (states[Minimums].data)
-        states[Minimums].as_vector().setConstant(-1.0f);
-    if (states[Maximums].data)
-        states[Maximums].as_vector().setOnes();
-    if (states[Scalers].data && ssize(scalers) == states[Scalers].size())
-        for (size_t i = 0; i < scalers.size(); ++i)
-            states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
-
-    return next;
+    flush_scalers_to_states();
+    for (Operator* op : get_operators())
+        op->forward_propagate(forward_propagation, layer, is_training);
 }
-
-// Forward propagation
-
-void Scaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-
-    if (states.size() < 5)
-    {
-        copy(forward_views[Input][0], forward_views[Output][0]);
-        return;
-    }
-
-    scale(forward_views[Input][0],
-          states[Minimums], states[Maximums],
-          states[Means], states[StandardDeviations],
-          states[Scalers],
-          min_range, max_range,
-          forward_views[Output][0]);
-}
-
-// Expressions
-
 string Scaling::write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
 {
     const Index inputs_number = get_output_shape().size();
@@ -191,8 +133,8 @@ string Scaling::write_minimum_maximum_expression(const vector<string>& input_nam
     buffer.precision(10);
 
     const Index inputs_number = get_output_shape().size();
-    const float* mins = states[Minimums].as<float>();
-    const float* maxs = states[Maximums].as<float>();
+    const float* mins = scale_op.minimums.as<float>();
+    const float* maxs = scale_op.maximums.as<float>();
     for (Index i = 0; i < inputs_number; ++i)
         buffer << output_names[i] << " = 2*(" << input_names[i] << "-(" << mins[i]
                << "))/(" << maxs[i] << "-(" << mins[i] << "))-1;\n";
@@ -206,8 +148,8 @@ string Scaling::write_mean_standard_deviation_expression(const vector<string>& i
     buffer.precision(10);
 
     const Index inputs_number = get_output_shape().size();
-    const float* mns = states[Means].as<float>();
-    const float* sds = states[StandardDeviations].as<float>();
+    const float* mns = scale_op.means.as<float>();
+    const float* sds = scale_op.standard_deviations.as<float>();
     for (Index i = 0; i < inputs_number; ++i)
         buffer << output_names[i] << " = (" << input_names[i] << "-(" << mns[i]
                << "))/" << sds[i] << ";\n";
@@ -221,84 +163,45 @@ string Scaling::write_standard_deviation_expression(const vector<string>& input_
     buffer.precision(10);
 
     const Index inputs_number = get_output_shape().size();
-    const float* sds = states[StandardDeviations].as<float>();
+    const float* sds = scale_op.standard_deviations.as<float>();
     for (Index i = 0; i < inputs_number; ++i)
         buffer << output_names[i] << " = " << input_names[i] << "/(" << sds[i] << ");\n";
 
     return buffer.str();
 }
-
-// Serialization
-
-void Scaling::from_JSON(const JsonDocument& document)
+void Scaling::read_JSON_body(const Json* scaling_layer_element)
 {
-    const Json* scaling_layer_element = get_json_root(document, "Scaling");
-
-    set(string_to_shape(read_json_string(scaling_layer_element, "InputDimensions")));
-
     const vector<string> scaler_names = get_tokens(read_json_string(scaling_layer_element, "Scalers"), " ");
     scalers.resize(scaler_names.size());
     for (size_t i = 0; i < scaler_names.size(); ++i)
         scalers[i] = string_to_scaler_method(scaler_names[i]);
 
-    min_range = float(stof(read_json_string(scaling_layer_element, "MinRange")));
-    max_range = float(stof(read_json_string(scaling_layer_element, "MaxRange")));
+    scale_op.min_range = float(stof(read_json_string(scaling_layer_element, "MinRange")));
+    scale_op.max_range = float(stof(read_json_string(scaling_layer_element, "MaxRange")));
 }
 
-void Scaling::load_state_from_JSON(const JsonDocument& document)
+void Scaling::write_JSON_body(JsonWriter& printer) const
 {
-    if (ssize(states) < 5 || !states[Means].data) return;
-
-    const Json* scaling_layer_element = get_json_root(document, "Scaling");
-
-    VectorR tmp;
-    string_to_vector(read_json_string(scaling_layer_element, "Means"), tmp);
-    if (tmp.size() == states[Means].size())
-        states[Means].as_vector() = tmp;
-
-    string_to_vector(read_json_string(scaling_layer_element, "StandardDeviations"), tmp);
-    if (tmp.size() == states[StandardDeviations].size())
-        states[StandardDeviations].as_vector() = tmp;
-
-    string_to_vector(read_json_string(scaling_layer_element, "Minimums"), tmp);
-    if (tmp.size() == states[Minimums].size())
-        states[Minimums].as_vector() = tmp;
-
-    string_to_vector(read_json_string(scaling_layer_element, "Maximums"), tmp);
-    if (tmp.size() == states[Maximums].size())
-        states[Maximums].as_vector() = tmp;
-}
-
-void Scaling::to_JSON(JsonWriter& printer) const
-{
-    printer.open_element("Scaling");
-
     vector<string> scaler_names(scalers.size());
     for (size_t i = 0; i < scalers.size(); ++i)
         scaler_names[i] = scaler_method_to_string(scalers[i]);
 
     write_json(printer, {
-        {"InputDimensions", shape_to_string(input_shape)},
-        {"Means", vector_to_string(states[Means].as_vector())},
-        {"StandardDeviations", vector_to_string(states[StandardDeviations].as_vector())},
-        {"Minimums", vector_to_string(states[Minimums].as_vector())},
-        {"Maximums", vector_to_string(states[Maximums].as_vector())},
+        {"Means", vector_to_string(scale_op.means.as_vector())},
+        {"StandardDeviations", vector_to_string(scale_op.standard_deviations.as_vector())},
+        {"Minimums", vector_to_string(scale_op.minimums.as_vector())},
+        {"Maximums", vector_to_string(scale_op.maximums.as_vector())},
         {"Scalers", vector_to_string(scaler_names)},
-        {"MinRange", to_string(min_range)},
-        {"MaxRange", to_string(max_range)}
+        {"MinRange", to_string(scale_op.min_range)},
+        {"MaxRange", to_string(scale_op.max_range)}
     });
-
-    printer.close_element();
 }
-
-// Helpers
-
 void Scaling::flush_scalers_to_states()
 {
-    if (ssize(states) <= Scalers || !states[Scalers].data) return;
-    if (ssize(scalers) != states[Scalers].size()) return;
+    if (!scale_op.scalers.data) return;
+    if (ssize(scalers) != scale_op.scalers.size()) return;
     for (size_t i = 0; i < scalers.size(); ++i)
-        states[Scalers].as<float>()[i] = static_cast<float>(scalers[i]);
+        scale_op.scalers.as<float>()[i] = static_cast<float>(scalers[i]);
 }
 
 REGISTER(Layer, Scaling, "Scaling")

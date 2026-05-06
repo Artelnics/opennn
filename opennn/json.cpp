@@ -112,9 +112,6 @@ bool Json::as_bool() const
     default:           return false;
     }
 }
-
-// -------- Serializer --------
-
 static void escape_string(std::string& out, const std::string& s)
 {
     out.push_back('"');
@@ -391,9 +388,6 @@ Json Json::parse(const std::string& text)
         throw std::runtime_error("JSON parse: trailing data");
     return v;
 }
-
-// -------- JsonDocument --------
-
 void JsonDocument::load(const std::filesystem::path& path)
 {
     std::ifstream in(path);
@@ -424,9 +418,6 @@ JsonDocument JsonDocument::wrap(const std::string& tag, Json value)
     doc.root.set(tag, move(value));
     return doc;
 }
-
-// -------- JsonWriter --------
-
 void JsonWriter::open_element(const std::string& name)
 {
     Json* parent = nullptr;
@@ -514,9 +505,6 @@ std::string JsonWriter::c_str(int indent) const
 {
     return root.dump(indent);
 }
-
-// -------- Helpers --------
-
 void add_json_field(JsonWriter& writer,
                     const std::string& name,
                     const std::string& value)

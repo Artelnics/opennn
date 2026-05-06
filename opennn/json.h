@@ -52,27 +52,17 @@ public:
     bool is_string() const { return kind == Kind::String; }
     bool is_array()  const { return kind == Kind::Array; }
     bool is_object() const { return kind == Kind::Object; }
-
-    // Object accessors (for objects only).
     bool         has(const std::string& key) const;
     const Json*  find(const std::string& key) const;
     const Json*  first_child(const std::string& key) const { return find(key); }
     const Json&  at(const std::string& key) const;
     Json&        operator[](const std::string& key);
-
-    // Append to object (preserves insertion order).
     Json& set(const std::string& key, Json value);
-
-    // Append to array.
     void push_back(Json value);
-
-    // Typed accessors with conversion (parses strings if needed).
     std::string as_string() const;
     long        as_long()   const;
     double      as_double() const;
     bool        as_bool()   const;
-
-    // Parse / serialize.
     static Json  parse(const std::string& text);
     std::string  dump(int indent = 2) const;
 };
@@ -84,15 +74,8 @@ public:
 
     void load(const std::filesystem::path& path);
     void save(const std::filesystem::path& path, int indent = 2) const;
-
-    // Returns pointer to a top-level field or nullptr.
     const Json* first_child(const std::string& name) const;
-
-    // Zero-arg form: returns the root itself (used when callers wrap a single
-    // object as a document and want a pointer-form accessor for read_json_*).
     const Json* first_child() const { return &root; }
-
-    // Build a fresh document whose root is an object {tag: value}.
     static JsonDocument wrap(const std::string& tag, Json value);
 };
 
@@ -107,8 +90,6 @@ public:
     void end_array();
     void begin_array_object();
     void end_array_object();
-
-    // Inner element of named-string form (matches XML <Name>value</Name>).
     void add_field(const std::string& name, const std::string& value);
 
     std::string c_str(int indent = 2) const;
@@ -118,18 +99,12 @@ private:
     std::vector<Json*>  stack;  // path of containers currently open
     std::vector<std::string> name_stack; // for opened named scalar/object
 };
-
-// Helpers — writing.
-
 void add_json_field(JsonWriter& writer,
                     const std::string& name,
                     const std::string& value);
 
 void write_json(JsonWriter& writer,
                 std::initializer_list<std::pair<const char*, std::string>> props);
-
-// Helpers — reading.
-
 float       read_json_type   (const Json* root, const std::string& field);
 long        read_json_index  (const Json* root, const std::string& field);
 bool        read_json_bool   (const Json* root, const std::string& field);

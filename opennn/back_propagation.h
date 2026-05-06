@@ -60,7 +60,7 @@ struct BackPropagation
     Tensor0 accuracy;
     float loss_value = 0.0f;
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
     Buffer errors_device{Device::CUDA};
 

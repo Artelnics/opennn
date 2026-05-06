@@ -12,7 +12,7 @@
 namespace opennn
 {
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
 static float sum_squared_diff_cuda(const TensorView& input, const TensorView& target, float* workspace)
 {

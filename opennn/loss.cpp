@@ -93,7 +93,7 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
     const TensorView target = batch.get_targets();
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     float* workspace_device = Configuration::instance().is_gpu() ? back_propagation.errors_device.as<float>() : nullptr;
 #else
     float* workspace_device = nullptr;
@@ -214,18 +214,18 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
             PROFILE_SCOPE("bwd:accumulate_output_deltas");
             back_propagation.accumulate_output_deltas(static_cast<size_t>(i));
         }
-        const std::string key = "bwd:" + layers[i]->get_name();
+        const string key = "bwd:" + layers[i]->get_name();
         PROFILE_SCOPE(key);
         layers[i]->back_propagate(forward_propagation, back_propagation, i);
     }
 }
 
 static const vector<pair<Loss::Error, string>> error_map = {
-    {Loss::Error::MeanSquaredError,      "MeanSquaredError"},
+    {Loss::Error::MeanSquaredError,       "MeanSquaredError"},
     {Loss::Error::NormalizedSquaredError, "NormalizedSquaredError"},
     {Loss::Error::WeightedSquaredError,   "WeightedSquaredError"},
     {Loss::Error::CrossEntropy,           "CrossEntropy"},
-    {Loss::Error::CrossEntropy3d,        "CrossEntropyError3d"},
+    {Loss::Error::CrossEntropy3d,         "CrossEntropyError3d"},
     {Loss::Error::MinkowskiError,         "MinkowskiError"}
 };
 

@@ -25,7 +25,9 @@ enum class LayerType
     Addition,
     Bounding,
     Convolutional,
+    ConvolutionalRelu,
     Dense,
+    DenseRelu,
     Embedding,
     Flatten,
     MultiHeadAttention,
@@ -43,7 +45,9 @@ inline const EnumMap<LayerType>& layer_type_map()
         {LayerType::Addition,           "Addition"},
         {LayerType::Bounding,           "Bounding"},
         {LayerType::Convolutional,      "Convolutional"},
+        {LayerType::ConvolutionalRelu,  "ConvolutionalRelu"},
         {LayerType::Dense,              "Dense"},
+        {LayerType::DenseRelu,          "DenseRelu"},
         {LayerType::Embedding,          "Embedding"},
         {LayerType::Flatten,            "Flatten"},
         {LayerType::MultiHeadAttention, "MultiHeadAttention"},
@@ -75,9 +79,6 @@ inline LayerType string_to_layer_type(const string& name)
 #else
 #define FORCE_INLINE inline
 #endif
-
-// Project the (shape, dtype) pairs returned by Layer::get_*_specs() onto one
-// component. Used by the seven public unwrappers below.
 inline vector<Shape> spec_shapes(const vector<pair<Shape, Type>>& specs)
 {
     vector<Shape> result;
@@ -112,25 +113,19 @@ public:
 
     void set_label(string new_label) { label = move(new_label); }
 
-    virtual void set_parameters_random();
-
-    virtual void set_parameters_glorot();
-
     Index get_parameters_number() const;
-
-    // Override to compose the layer from operators. The list determines the
-    // ordering of get_parameter_specs() / get_state_specs(), and how
-    // link_parameters() / link_states() distribute slices. Layers without
-    // operators leave this returning empty and override get_parameter_specs()
-    // and friends directly.
     virtual vector<Operator*> get_operators() { return {}; }
-
-    // Default: derived from get_operators(). Subclasses may still override
-    // directly when their storage layout doesn't map 1:1 onto operators.
     virtual vector<pair<Shape, Type>> get_parameter_specs() const;
     virtual vector<pair<Shape, Type>> get_state_specs()     const;
-    virtual vector<pair<Shape, Type>> get_forward_specs(Index) const { return {}; }
-    virtual vector<pair<Shape, Type>> get_backward_specs(Index) const { return {}; }
+    virtual vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const
+    {
+        return {{Shape{batch_size}.append(get_output_shape()), compute_dtype}};
+    }
+    virtual vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const
+    {
+        if (!is_trainable) return {};
+        return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
+    }
 
     vector<Shape> get_parameter_shapes()        const { return spec_shapes(get_parameter_specs()); }
     vector<Shape> get_state_shapes()            const { return spec_shapes(get_state_specs()); }
@@ -150,23 +145,27 @@ public:
     Index get_inputs_number() const { return get_input_shape().size(); }
 
     Index get_outputs_number() const { return get_output_shape().size(); }
-
-    // Forward propagation
-
-    virtual void forward_propagate(ForwardPropagation&, size_t, bool) noexcept = 0;
-
-    // Back propagation
+    
+    virtual void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept
+    {
+        for (Operator* op : get_operators())
+            op->forward_propagate(fp, layer, is_training);
+    }
 
     virtual void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept
     {
         throw runtime_error("back_propagate not implemented for layer type: " + name);
     }
 
-    virtual void from_JSON(const JsonDocument&) {}
+    virtual void from_JSON(const JsonDocument& document);
 
-    virtual void load_state_from_JSON(const JsonDocument&) {}
+    virtual void read_JSON_body(const Json*) {}
 
-    virtual void to_JSON(JsonWriter&) const {}
+    virtual void load_state_from_JSON(const JsonDocument& document);
+
+    virtual void to_JSON(JsonWriter& writer) const;
+
+    virtual void write_JSON_body(JsonWriter&) const {}
 
     virtual void print() const {}
 
@@ -174,7 +173,13 @@ public:
 
     Type get_compute_dtype() const { return compute_dtype; }
 
-    virtual void set_compute_dtype(Type new_compute_dtype) { compute_dtype = new_compute_dtype; }
+    void set_compute_dtype(Type new_compute_dtype)
+    {
+        compute_dtype = new_compute_dtype;
+        on_compute_dtype_changed();
+    }
+
+    virtual void on_compute_dtype_changed() {}
 
     virtual float* link_parameters(float* pointer);
 
@@ -189,6 +194,11 @@ public:
     void redistribute_parameters_to_operators()
     {
         distribute_to_operators(parameters, &Operator::link_parameters, &Operator::parameter_specs);
+    }
+
+    void redistribute_parameter_gradients_to_operators(vector<TensorView>& gradient_views)
+    {
+        distribute_to_operators(gradient_views, &Operator::link_gradients, &Operator::parameter_specs);
     }
 
     void redistribute_states_to_operators()
@@ -220,13 +230,13 @@ protected:
                       vector<TensorView>& views,
                       const char* tag) const;
 
-    // After link_views has populated `views` from a flat buffer, hand each
-    // operator its slice. The slice size for each operator is determined by
-    // the matching specs method (parameter_specs / state_specs).
     void distribute_to_operators(
         vector<TensorView>& views,
         void (Operator::*link)(const vector<TensorView>&),
         vector<pair<Shape, Type>> (Operator::*specs)() const);
+
+    vector<unique_ptr<Layer>> layers;
+
 };
 
 }

@@ -24,7 +24,7 @@ int main()
     {
         cout << "OpenNN. Translation benchmark (refactor)." << endl;
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
         Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
 

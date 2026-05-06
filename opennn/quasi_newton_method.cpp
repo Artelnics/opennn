@@ -191,9 +191,6 @@ TrainingResults QuasiNewtonMethod::train()
     set_names();
 
     set_scaling();
-
-    // Batch
-
     Batch training_batch(training_samples_number, dataset);
     training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices, true);
 

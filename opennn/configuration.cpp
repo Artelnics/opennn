@@ -21,7 +21,7 @@ void Configuration::set(Device new_device,
     cache_valid = false;
 }
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 static bool has_cuda_gpu()
 {
     int count = 0;
@@ -29,8 +29,6 @@ static bool has_cuda_gpu()
     if (error != cudaSuccess) { cudaGetLastError(); return false; }
     return count > 0;
 }
-
-// BF16 Tensor Cores require Ampere+ (CC >= 80).
 static int cuda_compute_capability()
 {
     cudaDeviceProp prop{};

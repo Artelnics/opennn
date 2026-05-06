@@ -22,9 +22,6 @@ Recurrent::Recurrent(const Shape& new_input_shape,
 
     set(new_input_shape, new_output_shape);
 }
-
-// Getters
-
 Shape Recurrent::get_output_shape() const
 {
     return { biases.size() };
@@ -54,9 +51,6 @@ vector<pair<Shape, Type>> Recurrent::get_backward_specs(Index batch_size) const
 {
     return {{{batch_size, time_steps, input_features}, compute_dtype}};
 }
-
-// Setters
-
 void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 {
     if (new_input_shape.rank != 2)
@@ -107,9 +101,6 @@ void Recurrent::set_activation_function(const string& new_activation_function)
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
 }
-
-// Forward / back propagation
-
 void Recurrent::forward_propagate(ForwardPropagation& /*forward_propagation*/, size_t /*index*/, bool /*is_training*/) noexcept
 {
 /*
@@ -258,31 +249,14 @@ void Recurrent::back_propagate(ForwardPropagation& /*forward_propagation*/,
     }
 */
 }
-
-// Serialization
-
-void Recurrent::from_JSON(const JsonDocument& document)
+void Recurrent::read_JSON_body(const Json* recurrent_layer_element)
 {
-    const Json* recurrent_layer_element = get_json_root(document, "Recurrent");
-
-    set_label(read_json_string(recurrent_layer_element,"Label"));
-    set_input_shape(string_to_shape(read_json_string(recurrent_layer_element, "InputDimensions")));
-    set_output_shape({ read_json_index(recurrent_layer_element, "NeuronsNumber") });
     set_activation_function(read_json_string(recurrent_layer_element, "Activation"));
 }
 
-void Recurrent::to_JSON(JsonWriter& printer) const
+void Recurrent::write_JSON_body(JsonWriter& printer) const
 {
-    printer.open_element("Recurrent");
-
-    write_json(printer, {
-        {"Label", get_label()},
-        {"InputDimensions", shape_to_string(get_input_shape())},
-        {"NeuronsNumber", to_string(get_output_shape()[0])},
-        {"Activation", activation_function}
-    });
-
-    printer.close_element();
+    add_json_field(printer, "Activation", activation_function);
 }
 
 REGISTER(Layer, Recurrent, "Recurrent")

@@ -40,29 +40,24 @@ vector<Operator*> Dense::get_operators()
 {
     vector<Operator*> operators = {&combination};
     if (batch_norm.active()) operators.push_back(&batch_norm);
+    operators.push_back(&activation);
+    if (dropout.active()) operators.push_back(&dropout);
     return operators;
 }
 
 vector<pair<Shape, Type>> Dense::get_forward_specs(Index batch_size) const
 {
-    const Shape output_shape = Shape{batch_size}.append(get_output_shape());
-
-    const Shape activation_shape   = dropout.active()        ? output_shape           : Shape{};
-    const Shape combination_shape  = batch_norm.active()     ? output_shape           : Shape{};
-    const Shape bn_stat_shape      = batch_norm.active()     ? Shape{output_features} : Shape{};
+    const Shape full   = Shape{batch_size}.append(get_output_shape());
+    const Shape stats  = Shape{output_features};
+    const Shape unused = {};
 
     return {
-        {combination_shape, compute_dtype}, // Combination
-        {bn_stat_shape,     Type::FP32},       // BatchNormMean
-        {bn_stat_shape,     Type::FP32},       // BatchNormInverseVariance
-        {activation_shape,  compute_dtype}, // Activation
-        {output_shape,      compute_dtype}, // Output
+        {batch_norm.active() ? full  : unused, compute_dtype}, // CombinationView (pre-BN)
+        {batch_norm.active() ? stats : unused, Type::FP32   }, // BatchNormMean
+        {batch_norm.active() ? stats : unused, Type::FP32   }, // BatchNormInverseVariance
+        {dropout.active()    ? full  : unused, compute_dtype}, // ActivationView (pre-dropout)
+        {full,                                 compute_dtype}, // Output
     };
-}
-
-vector<pair<Shape, Type>> Dense::get_backward_specs(Index batch_size) const
-{
-    return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
 }
 
 void Dense::configure_operators()
@@ -71,6 +66,23 @@ void Dense::configure_operators()
 
     if (batch_norm.active())
         batch_norm.set(output_features, batch_norm.momentum);
+
+    combination.input_slots  = {Input};
+    combination.output_slots = batch_norm.active() ? vector<size_t>{CombinationView}
+                                                   : vector<size_t>{Output};
+
+    if (batch_norm.active())
+    {
+        batch_norm.input_slots  = {CombinationView};
+        batch_norm.output_slots = {Output, BatchNormMean, BatchNormInverseVariance};
+    }
+
+    activation.input_slots  = {Output};
+    activation.output_slots = {Output};
+
+    dropout.input_slots  = {Output};
+    dropout.output_slots = {Output};
+    dropout.save_slots   = {ActivationView};
 }
 
 void Dense::set_batch_normalization(bool enable)
@@ -150,67 +162,12 @@ void Dense::set_momentum(float new_momentum)
         batch_norm.set(output_features, batch_norm.momentum);
 }
 
-void Dense::set_parameters_glorot()
-{
-    const float limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
-    set_random_uniform(parameters[Weight].as_vector(), -limit, limit);
-    parameters[Bias].fill(0.0f);
-    if (batch_norm.active()) batch_norm.init_defaults();
-}
-
-void Dense::set_parameters_random()
-{
-    set_random_uniform(parameters[Weight].as_vector());
-    parameters[Bias].fill(0.0f);
-    if (batch_norm.active()) batch_norm.init_defaults();
-}
-
-void Dense::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-
-    const TensorView& input = forward_views[Input][0];
-    TensorView& output      = forward_views[Output][0];
-
-    if (batch_norm.active())
-    {
-        TensorView& combination_out = forward_views[CombinationView][0];
-        combination.apply(input, combination_out);
-
-        if (is_training)
-            batch_norm.apply_training(combination_out,
-                                      forward_views[BatchNormMean][0],
-                                      forward_views[BatchNormInverseVariance][0],
-                                      output);
-        else
-            batch_norm.apply_inference(combination_out, output);
-
-        activation.apply(output);
-    }
-    else
-    {
-        const bool fused_relu = (activation.function == Activation::Function::ReLU);
-        const cublasLtEpilogue_t epilogue = fused_relu
-                                          ? CUBLASLT_EPILOGUE_RELU_BIAS
-                                          : CUBLASLT_EPILOGUE_BIAS;
-        combination.apply(input, output, epilogue);
-        if (!fused_relu) activation.apply(output);
-    }
-
-    if (is_training && dropout.active())
-    {
-        copy(output, forward_views[ActivationView][0]);
-        dropout.apply(output);
-    }
-}
-
 void Dense::back_propagate(ForwardPropagation& forward_propagation,
                            BackPropagation& back_propagation,
                            size_t layer) const noexcept
 {
     auto& forward_views   = forward_propagation.views[layer];
     auto& delta_views     = back_propagation.delta_views[layer];
-    auto& gradient_views  = back_propagation.gradient_views[layer];
 
     const TensorView& input  = forward_views[Input][0];
     const TensorView& output = forward_views[Output][0];
@@ -229,8 +186,6 @@ void Dense::back_propagate(ForwardPropagation& forward_propagation,
         batch_norm.apply_delta(forward_views[CombinationView][0],
                                forward_views[BatchNormMean][0],
                                forward_views[BatchNormInverseVariance][0],
-                               gradient_views[Gamma],
-                               gradient_views[Beta],
                                output_delta);
 
     const Index total_rows = input.size() / input.shape.back();
@@ -248,54 +203,13 @@ void Dense::back_propagate(ForwardPropagation& forward_propagation,
     combination.apply_delta(output_delta_2d,
                             input_2d,
                             input_delta_2d,
-                            gradient_views[Weight],
-                            gradient_views[Bias],
                             false);
 }
 
-void Dense::from_JSON(const JsonDocument& document)
+void Dense::read_JSON_body(const Json* dense_layer_element)
 {
-    const Json* dense_layer_element = get_json_root(document, "Dense");
-
-    set_label(read_json_string(dense_layer_element, "Label"));
-
-    set_input_shape(string_to_shape(read_json_string(dense_layer_element, "InputDimensions")));
-    set_output_shape({ read_json_index(dense_layer_element, "NeuronsNumber") });
-
     if (dense_layer_element->has("Momentum"))
         set_batch_normalization(true);
-
-    activation.from_JSON(dense_layer_element);
-    dropout.from_JSON(dense_layer_element);
-    if (batch_norm.active())
-        batch_norm.from_JSON(dense_layer_element);
-}
-
-void Dense::load_state_from_JSON(const JsonDocument& document)
-{
-    if (!batch_norm.active()) return;
-
-    const Json* dense_layer_element = get_json_root(document, "Dense");
-
-    batch_norm.load_state_from_JSON(dense_layer_element);
-}
-
-void Dense::to_JSON(JsonWriter& printer) const
-{
-    printer.open_element("Dense");
-
-    write_json(printer, {
-        {"Label", label},
-        {"InputDimensions", shape_to_string(input_shape)},
-        {"NeuronsNumber", to_string(output_features)}
-    });
-
-    activation.to_JSON(printer);
-    dropout.to_JSON(printer);
-
-    if (batch_norm.active()) batch_norm.to_JSON(printer);
-
-    printer.close_element();
 }
 
 REGISTER(Layer, Dense, "Dense")

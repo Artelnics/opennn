@@ -111,8 +111,6 @@ struct Variable
     VariableType type = VariableType::None;
     vector<string> categories;
     ScalerMethod scaler = ScalerMethod::None;
-
-    // Methods
     const string& get_role() const { return variable_role_to_string(role); }
     VariableRole get_role_type() const { return role; }
     const string& get_scaler() const { return scaler_method_to_string(scaler); }

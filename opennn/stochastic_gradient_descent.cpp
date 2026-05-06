@@ -82,7 +82,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     if (Configuration::instance().is_gpu())
     {
         const Index parameters_number = neural_network->get_parameters_size();
@@ -212,9 +212,6 @@ TrainingResults StochasticGradientDescent::train()
             empty_validation_queue.push(validation_batch_pool.back().get());
         }
     }
-
-    // Forward / back propagation
-
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
 
     loss->set_normalization_coefficient();

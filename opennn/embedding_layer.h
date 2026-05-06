@@ -34,7 +34,6 @@ public:
     vector<Operator*> get_operators() override;
 
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
-    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
 
     void set(Index = 0,
              Index = 0,
@@ -45,14 +44,10 @@ public:
     void set_add_positional_encoding(bool enabled) { embedding_lookup.add_positional_encoding = enabled; }
     void set_dropout_rate(float rate) { dropout.set_rate(rate); }
 
-    void set_parameters_glorot() override;
-    void set_parameters_random() override;
-
-    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
-    void from_JSON(const JsonDocument&) override;
-    void to_JSON(JsonWriter&) const override;
+    void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
 
 private:
 
@@ -63,8 +58,6 @@ private:
     EmbeddingLookup embedding_lookup;
     Dropout         dropout;
 
-    enum Parameters {Weight};
-    enum States {PositionalEncoding};
     enum Forward {Input, Output};
     enum Backward {OutputDelta};
 };

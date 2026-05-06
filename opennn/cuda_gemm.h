@@ -13,7 +13,7 @@
 namespace opennn
 {
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
 struct LtMatmulPlan
 {
@@ -151,7 +151,7 @@ inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_
                                             CUBLAS_GEMM_DEFAULT));
 }
 
-#endif // OPENNN_WITH_CUDA
+#endif // OPENNN_HAS_CUDA
 
 }
 

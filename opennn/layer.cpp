@@ -54,31 +54,6 @@ void Layer::distribute_to_operators(
     }
 }
 
-void Layer::set_parameters_random()
-{
-    for (auto& param : parameters)
-    {
-        if (param.empty()) continue;
-        set_random_uniform(param.as_vector());
-    }
-}
-
-void Layer::set_parameters_glorot()
-{
-    const Index inputs_number = get_inputs_number();
-    const Index outputs_number = get_outputs_number();
-
-    const float limit = (inputs_number + outputs_number > 0)
-        ? sqrt(6.0 / (inputs_number + outputs_number))
-        : 0.05f;
-
-    for (auto& param : parameters)
-    {
-        if (param.empty()) continue;
-        set_random_uniform(param.as_vector(), -limit, limit);
-    }
-}
-
 Index Layer::get_parameters_number() const
 {
     Index total = 0;
@@ -126,12 +101,50 @@ float* Layer::link_states(float* pointer)
 
 void Layer::set_input_shape(const Shape&)
 {
-    throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
+    // Default no-op: layers override to update geometry when input changes.
 }
 
 void Layer::set_output_shape(const Shape&)
 {
-    throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
+    // Default no-op: layers whose output is derived from input + config (Conv, Pool,
+    // MultiHead, etc.) don't need to do anything here. Layers whose output is a
+    // primary input (Dense, Bounding, Recurrent, ...) override.
+}
+
+void Layer::from_JSON(const JsonDocument& document)
+{
+    if (const Json* root = get_json_root(document, name))
+    {
+        set_label(read_json_string(root, "Label"));
+        set_input_shape(string_to_shape(read_json_string(root, "InputDimensions")));
+        set_output_shape(string_to_shape(read_json_string(root, "OutputDimensions")));
+        read_JSON_body(root);
+        for (Operator* op : get_operators())
+            op->from_JSON(root);
+    }
+}
+
+void Layer::load_state_from_JSON(const JsonDocument& document)
+{
+    if (const Json* root = get_json_root(document, name))
+        for (Operator* op : get_operators())
+            op->load_state_from_JSON(root);
+}
+
+void Layer::to_JSON(JsonWriter& writer) const
+{
+    writer.open_element(name);
+
+    add_json_field(writer, "Label", label);
+    add_json_field(writer, "InputDimensions", shape_to_string(get_input_shape()));
+    add_json_field(writer, "OutputDimensions", shape_to_string(get_output_shape()));
+
+    write_JSON_body(writer);
+
+    for (Operator* op : const_cast<Layer*>(this)->get_operators())
+        op->to_JSON(writer);
+
+    writer.close_element();
 }
 
 }

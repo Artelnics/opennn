@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   D E N S E   L A Y E R   C L A S S   H E A D E R
+//   D E N S E   R E L U   L A Y E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -14,15 +14,17 @@
 namespace opennn
 {
 
-class Dense final : public Layer
+// Dense + ReLU fused into a single forward op (cuBLASLt RELU_BIAS epilogue
+// on GPU; ReLU baked into Combination::apply_cpu when epilogue is RELU_BIAS).
+// No batch-norm, no dropout, activation hard-wired to ReLU — keeps
+// forward_propagate branch-free for CUDA Graph capture.
+class DenseRelu final : public Layer
 {
 public:
 
-    Dense(const Shape& = {},
-          const Shape& = {},
-          const string& = "Tanh",
-          bool = false,
-          const string& = "dense_layer");
+    DenseRelu(const Shape& = {},
+              const Shape& = {},
+              const string& = "dense_relu_layer");
 
     Shape get_input_shape() const override { return input_shape; }
     Shape get_output_shape() const override;
@@ -30,33 +32,22 @@ public:
     Index get_input_features() const { return input_shape.empty() ? 0 : input_shape.back(); }
     Index get_sequence_length() const { return (input_shape.rank == 2) ? input_shape[0] : Index(1); }
 
-    const Activation::Function& get_activation_function() const { return activation.function; }
-    Activation::Function get_output_activation() const override { return activation.function; }
+    Activation::Function get_output_activation() const override { return Activation::Function::ReLU; }
 
-    bool get_batch_normalization() const { return batch_norm.active(); }
-    float get_momentum() const { return batch_norm.momentum; }
+    vector<Operator*> get_operators() override { return {&combination}; }
 
-    vector<Operator*> get_operators() override;
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
 
     void set(const Shape& = {},
              const Shape& = {},
-             const string& = "Tanh",
-             bool = false,
-             const string& = "dense_layer");
+             const string& = "dense_relu_layer");
 
     void set_input_shape(const Shape&) override;
     void set_output_shape(const Shape&) override;
     void on_compute_dtype_changed() override { configure_operators(); }
 
-    void set_activation_function(const string&);
-    void set_batch_normalization(bool enable);
-    void set_dropout_rate(float new_dropout_rate) { dropout.set_rate(new_dropout_rate); }
-    void set_momentum(float new_momentum);
-
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t layer) const noexcept override;
 
-    void read_JSON_body(const Json*) override;
 
 private:
 
@@ -65,10 +56,8 @@ private:
 
     Combination combination;
     Activation  activation;
-    BatchNorm   batch_norm;
-    Dropout     dropout;
 
-    enum Forward {Input, CombinationView, BatchNormMean, BatchNormInverseVariance, ActivationView, Output};
+    enum Forward {Input, Output};
     enum Backward {OutputDelta, InputDelta};
 
     void configure_operators();

@@ -73,9 +73,6 @@ struct Histogram
     Histogram(const VectorR&, Index);
 
     Histogram(const VectorR&);
-
-    // Methods
-
     Index get_bins_number() const;
 
     Index count_empty_bins() const;
@@ -104,80 +101,47 @@ struct Histogram
 
     VectorR frequencies;
 };
-
-// Minimum
 float minimum(const MatrixR&);
 float minimum(const VectorR&);
 float minimum(const VectorR&, const vector<Index>&);
 VectorR column_minimums(const Tensor2&, const vector<Index>& = vector<Index>(), const vector<Index>& = vector<Index>());
-
-// Maximum
 float maximum(const MatrixR&);
 float maximum(const VectorR&);
 float maximum(const VectorR&, const vector<Index>&);
 VectorR column_maximums(const Tensor2&, const vector<Index>& = vector<Index>(), const vector<Index>& = vector<Index>());
-
-// Range
 float range(const VectorR&);
-
-// Mean
 float mean(const VectorR&);
 float mean(const MatrixR&, Index);
 VectorR mean(const MatrixR&);
 VectorR mean(const MatrixR&, const vector<Index>&, const vector<Index>&);
-
-// Median
 float median(const VectorR&);
 float median(const MatrixR&, Index);
 VectorR median(const MatrixR&);
 VectorR median(const MatrixR&, const vector<Index>&);
 VectorR median(const MatrixR&, const vector<Index>&, const vector<Index>&);
-
-// Variance
 float variance(const VectorR&);
 float variance(const VectorR&, const VectorI&);
-
-// Standard deviation
 float standard_deviation(const VectorR&);
 VectorR standard_deviation(const VectorR&, Index);
-
-// Quartiles
 VectorR quartiles(const VectorR&);
 VectorR quartiles(const VectorR&, const vector<Index>&);
-
-// Box plot
 BoxPlot box_plot(const VectorR&);
 BoxPlot box_plot(const VectorR&, const vector<Index>&);
-
-// Descriptives vector
 Descriptives vector_descriptives(const VectorR&);
-
-// Descriptives matrix
 vector<Descriptives> descriptives(const MatrixR&);
 vector<Descriptives> descriptives(const MatrixR&, const vector<Index>&, const vector<Index>&);
-
-// Histograms
 Histogram histogram(const VectorR&, Index  = 10);
 Histogram histogram_centered(const VectorR&, float = 0.0f, Index  = 10);
 Histogram histogram(const VectorB&);
 Histogram histogram(const VectorI&, Index  = 10);
 vector<Histogram> histograms(const MatrixR&, Index = 10);
 VectorI total_frequencies(const vector<Histogram>&);
-
-// Minimal indices
 Index minimal_index(const VectorR&);
 VectorI minimal_indices(const VectorR&, Index);
 VectorI minimal_indices(const MatrixR&);
-
-// Maximal indices
 Index maximal_index(const VectorR&);
 VectorI maximal_indices(const VectorR&, Index);
 VectorI maximal_indices(const MatrixR&);
-
-// =====================================================================
-// Eigen Matrix/Vector data-manipulation helpers.
-// =====================================================================
-
 inline bool row_finite(const VectorR& values, Index i) { return isfinite(values(i)); }
 inline bool row_finite(const MatrixR& matrix, Index i) { return matrix.row(i).array().isFinite().all(); }
 

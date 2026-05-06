@@ -32,7 +32,6 @@ public:
     vector<Operator*> get_operators() override;
 
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
-    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
 
     void set(Index = 0, Index = 0, const string& = "normalization_layer_3d");
 
@@ -45,14 +44,9 @@ public:
         }
     }
 
-    void set_parameters_glorot() override;
-    void set_parameters_random() override;
-
-    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
-    void from_JSON(const JsonDocument&) override;
-    void to_JSON(JsonWriter&) const override;
+    void read_JSON_body(const Json*) override;
 
 private:
 
@@ -61,7 +55,6 @@ private:
 
     LayerNorm layer_norm;
 
-    enum Parameters {Gamma, Beta};
     enum Forward {Input, Means, StandardDeviations, NormalizedInput, Output};
     enum Backward {OutputDelta, InputDelta};
 };

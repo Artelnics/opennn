@@ -44,8 +44,6 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
         new_name);
 }
 
-// Getters
-
 Shape MultiHeadAttention::get_input_shape() const
 {
     return { query_sequence_length, embedding_dimension };
@@ -92,8 +90,6 @@ vector<pair<Shape, Type>> MultiHeadAttention::get_backward_specs(Index batch_siz
     };
 }
 
-// Setters
-
 void MultiHeadAttention::set(Index new_query_sequence_length,
                              Index new_source_sequence_length,
                              Index new_embedding_dimension,
@@ -128,24 +124,6 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
                   query_sequence_length, source_sequence_length,
                   new_use_causal_mask, compute_dtype);
 }
-
-void MultiHeadAttention::set_parameters_random()
-{
-    if (embedding_dimension == 0) return;
-
-    const float weight_limit = sqrt(6.0f / float(2 * embedding_dimension));
-
-    for (const int slot : {QueryWeight, KeyWeight, ValueWeight, ProjectionWeight})
-        if (!parameters[slot].empty())
-            set_random_uniform(parameters[slot].as_vector(),
-                               -weight_limit, weight_limit);
-
-    for (const int slot : {QueryBias, KeyBias, ValueBias, ProjectionBias})
-        if (!parameters[slot].empty())
-            parameters[slot].fill(0.0f);
-}
-
-// Forward / back propagation
 
 void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagation,
                                            size_t layer,
@@ -196,7 +174,6 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 {
     auto& forward_views = forward_propagation.views[layer];
     auto& delta_views = back_propagation.delta_views[layer];
-    auto& gradient_views = back_propagation.gradient_views[layer];
 
     const TensorView& query_input = get_query_input(forward_views);
     const TensorView& source_input = get_source_input(forward_views);
@@ -216,8 +193,6 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     output_projection.apply_delta(output_delta_flat,
                                   concat_in_flat,
                                   concat_gradient_flat,
-                                  gradient_views[ProjectionWeight],
-                                  gradient_views[ProjectionBias],
                                   false);
 
     TensorView& att_weight_gradient = delta_views[AttentionWeightDelta][0];
@@ -251,7 +226,6 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 
     query_projection.apply_delta(query_gradient, query_input,
                                  delta_views[InputQueryDelta][0],
-                                 gradient_views[QueryWeight], gradient_views[QueryBias],
                                  false, transpose_scratch);
 
     TensorView& kv_input_gradient = self_attention
@@ -260,46 +234,33 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 
     key_projection.apply_delta(key_gradient, source_input,
                                kv_input_gradient,
-                               gradient_views[KeyWeight], gradient_views[KeyBias],
                                self_attention, transpose_scratch);
 
     value_projection.apply_delta(value_gradient, source_input,
                                  kv_input_gradient,
-                                 gradient_views[ValueWeight], gradient_views[ValueBias],
                                  true, transpose_scratch);
 }
-
-// Serialization
-
-void MultiHeadAttention::from_JSON(const JsonDocument& document)
+void MultiHeadAttention::read_JSON_body(const Json* root_element)
 {
-    const Json* root_element = get_json_root(document, "MultiHeadAttention");
-
     const string new_label = read_json_string(root_element, "Label");
-    const Index new_query_sequence_length = read_json_index(root_element, "QuerySequenceLength");
+    const Shape new_input_shape = string_to_shape(read_json_string(root_element, "InputDimensions"));
     const Index new_source_sequence_length = read_json_index(root_element, "SourceSequenceLength");
-    const Index new_embedding_dimension = read_json_index(root_element, "EmbeddingDimension");
     const Index new_heads_number = read_json_index(root_element, "HeadsNumber");
     const bool  new_use_causal_mask = read_json_bool(root_element, "CausalMask");
 
-    set(new_query_sequence_length, new_source_sequence_length, new_embedding_dimension,
+    set(new_input_shape.empty() ? Index(0) : new_input_shape[0],
+        new_source_sequence_length,
+        new_input_shape.rank >= 2 ? new_input_shape[1] : Index(0),
         new_heads_number, new_use_causal_mask, new_label);
 }
 
-void MultiHeadAttention::to_JSON(JsonWriter& printer) const
+void MultiHeadAttention::write_JSON_body(JsonWriter& printer) const
 {
-    printer.open_element("MultiHeadAttention");
-
     write_json(printer, {
-        {"Label", label},
-        {"QuerySequenceLength", to_string(query_sequence_length)},
         {"SourceSequenceLength", to_string(source_sequence_length)},
-        {"EmbeddingDimension", to_string(embedding_dimension)},
         {"HeadsNumber", to_string(heads_number)},
         {"CausalMask", to_string(attention.use_causal_mask)}
     });
-
-    printer.close_element();
 }
 
 REGISTER(Layer, MultiHeadAttention, "MultiHeadAttention")

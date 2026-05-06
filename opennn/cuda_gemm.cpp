@@ -8,7 +8,7 @@
 
 #include "cuda_gemm.h"
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
 namespace opennn
 {
@@ -141,7 +141,7 @@ const LtMatmulPlan& get_lt_gemm_plan(
 
 }
 
-#endif // OPENNN_WITH_CUDA
+#endif // OPENNN_HAS_CUDA
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

@@ -1,8 +1,8 @@
 #pragma once
 
-// IntelliSense-only: real builds get OPENNN_WITH_CUDA from CMake.
-#if defined(__INTELLISENSE__) && !defined(OPENNN_WITH_CUDA)
-#define OPENNN_WITH_CUDA
+// IntelliSense-only: real builds get OPENNN_HAS_CUDA from CMake.
+#if defined(__INTELLISENSE__) && !defined(OPENNN_HAS_CUDA)
+#define OPENNN_HAS_CUDA
 #endif
 
 #ifndef EIGEN_USE_THREADS
@@ -50,7 +50,7 @@
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <Eigen/src/Core/util/DisableStupidWarnings.h>
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -104,7 +104,7 @@ using cudnnOpTensorDescriptor_t    = void*;
 
 #endif
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
 #include "../opennn/kernel.cuh"
 
