@@ -168,9 +168,9 @@ int main()
         }
         else
         {
-            cout << "No saved model found. Running growing neurons (35-80, step 5, 2 trials)..." << endl;
+            cout << "No saved model found. Quick growing neurons selection (10-60, step 5, 1 trial, 5 epochs)..." << endl;
 
-            const Index initial_neurons = 35;
+            const Index initial_neurons = 10;
 
             forecasting_network = new ForecastingNetwork(time_series_dataset.get_input_shape(),
                                                           {initial_neurons},
@@ -178,10 +178,50 @@ int main()
 
             forecasting_network->set_input_names(time_series_dataset.get_feature_names("Input"));
 
-            TrainingStrategy training_strategy(forecasting_network, &time_series_dataset);
+            TrainingStrategy selection_strategy(forecasting_network, &time_series_dataset);
 
             Registry<Loss>::instance().register_component("NormalizedSquaredError",
                 [](){ return make_unique<NormalizedSquaredError>(); });
+            selection_strategy.set_loss("NormalizedSquaredError");
+
+            AdaptiveMomentEstimation* selection_adam = static_cast<AdaptiveMomentEstimation*>(selection_strategy.get_optimization_algorithm());
+            selection_adam->set_batch_size(16);
+            selection_adam->set_maximum_epochs(5);
+            selection_adam->set_display_period(1);
+            selection_adam->set_scaling();
+
+            ModelSelection model_selection(&selection_strategy);
+            model_selection.set_neurons_selection("GrowingNeurons");
+
+            GrowingNeurons* growing_neurons = static_cast<GrowingNeurons*>(model_selection.get_neurons_selection());
+            growing_neurons->set_minimum_neurons(10);
+            growing_neurons->set_maximum_neurons(60);
+            growing_neurons->set_neurons_increment(5);
+            growing_neurons->set_trials_number(1);
+            growing_neurons->set_maximum_time(1e12);
+
+            NeuronsSelectionResults neuron_results = model_selection.perform_neurons_selection();
+
+            best_neurons = neuron_results.optimal_neurons_number;
+
+            cout << "\n--- Quick Selection Results ---" << endl;
+            cout << "Best neurons: "          << best_neurons << endl;
+            cout << "Best validation error (quick): " << neuron_results.optimum_validation_error << endl;
+            cout << "Stopped by: "            << neuron_results.write_stopping_condition() << endl;
+            cout << "Elapsed: "               << neuron_results.elapsed_time << endl;
+
+            // --- FINAL FULL TRAINING with best architecture ---
+
+            cout << "\n--- Full training of best architecture ("
+                 << best_neurons << " neurons, " << max_epochs << " epochs) ---" << endl;
+
+            delete forecasting_network;
+            forecasting_network = new ForecastingNetwork(time_series_dataset.get_input_shape(),
+                                                          {best_neurons},
+                                                          time_series_dataset.get_target_shape());
+            forecasting_network->set_input_names(time_series_dataset.get_feature_names("Input"));
+
+            TrainingStrategy training_strategy(forecasting_network, &time_series_dataset);
             training_strategy.set_loss("NormalizedSquaredError");
 
             AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
@@ -190,30 +230,18 @@ int main()
             adam->set_display_period(32);
             adam->set_scaling();
 
-            ModelSelection model_selection(&training_strategy);
-            model_selection.set_neurons_selection("GrowingNeurons");
+            TrainingResults final_results = training_strategy.train();
 
-            GrowingNeurons* growing_neurons = static_cast<GrowingNeurons*>(model_selection.get_neurons_selection());
-            growing_neurons->set_minimum_neurons(35);
-            growing_neurons->set_maximum_neurons(80);
-            growing_neurons->set_neurons_increment(5);
-            growing_neurons->set_trials_number(2);
-            growing_neurons->set_maximum_time(1e12);
-
-            NeuronsSelectionResults neuron_results = model_selection.perform_neurons_selection();
-
-            best_neurons = neuron_results.optimal_neurons_number;
-
-            cout << "\n--- Growing Neurons Results ---" << endl;
-            cout << "Best neurons: "          << best_neurons << endl;
-            cout << "Best validation error: " << neuron_results.optimum_validation_error << endl;
-            cout << "Stopped by: "            << neuron_results.write_stopping_condition() << endl;
-            cout << "Elapsed: "               << neuron_results.elapsed_time << endl;
+            cout << "\n--- Full Training Results ---" << endl;
+            cout << "Training error: "   << final_results.get_training_error()   << endl;
+            cout << "Validation error: " << final_results.get_validation_error() << endl;
 
             ofstream nf(neurons_result_file);
             nf << "<GrowingNeuronsResult>\n";
             nf << "<OptimalNeuronsNumber>" << best_neurons << "</OptimalNeuronsNumber>\n";
             nf << "<OptimumValidationError>" << neuron_results.optimum_validation_error << "</OptimumValidationError>\n";
+            nf << "<FinalTrainingError>" << final_results.get_training_error() << "</FinalTrainingError>\n";
+            nf << "<FinalValidationError>" << final_results.get_validation_error() << "</FinalValidationError>\n";
             nf << "</GrowingNeuronsResult>\n";
             nf.close();
 
