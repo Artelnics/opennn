@@ -34,19 +34,19 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     if (!neural_network)
         throw runtime_error("neural network is not set.");
 
-    const auto& layers = neural_network->get_layers();
-    const size_t layers_number = layers.size();
-    const vector<vector<Shape>> parameter_shapes = neural_network->get_parameter_shapes();
-    const vector<vector<Shape>> backward_shapes  = neural_network->get_backward_shapes(batch_size);
     const Shape output_shape = neural_network->get_output_shape();
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
-
     output_delta_dimensions = Shape({batch_size}).append(output_shape);
 
     loss_value = 0.0f;
     error = 0.0f;
-    accuracy.setZero();
+    accuracy = 0.0f;
+
+    const auto& layers = neural_network->get_layers();
+    const size_t layers_number = layers.size();
+    const vector<vector<Shape>> parameter_shapes = neural_network->get_parameter_shapes();
+    const vector<vector<Shape>> backward_shapes  = neural_network->get_backward_shapes(batch_size);
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
+    const auto& layer_input_indices = neural_network->get_layer_input_indices();
 
     backward_edges.assign(layers_number, {});
     for (size_t consumer_index = 0; consumer_index < layers_number; ++consumer_index)
@@ -113,7 +113,9 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         layers[i]->redistribute_parameter_gradients_to_operators(gradient_views[i]);
     }
 
-    const Index total_backward_bytes = aligned_total_bytes(backward_shapes, backward_dtypes);
+    const Index output_deltas_bytes = batch_size * output_shape.size() * activation_bytes;
+    const Index total_backward_bytes = aligned_total_bytes(backward_shapes, backward_dtypes)
+                                     + get_aligned_bytes(output_deltas_bytes);
 
     if (total_backward_bytes > 0)
     {
@@ -141,12 +143,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         }
     }
 
-    const Index total_output_delta_elems = batch_size * output_shape.size();
-    if (total_output_delta_elems > 0)
-    {
-        output_deltas.resize_bytes(total_output_delta_elems * activation_bytes, device);
-        output_deltas.setZero();
-    }
+    uint8_t* const output_deltas_ptr = b_cursor;
 
     const Index total_og_bytes = aligned_total_bytes(per_layer_output_delta_shapes, compute_dtype);
 
@@ -163,7 +160,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
         if (i == last_trainable_layer_index)
         {
-            delta_views[i][0][0] = TensorView(output_deltas.as<uint8_t>(),
+            delta_views[i][0][0] = TensorView(output_deltas_ptr,
                                               output_delta_dimensions, compute_dtype);
             continue;
         }
@@ -187,15 +184,6 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             delta_views[i][0][0] = delta_views[edge.consumer_idx][slot][0];
         }
     }
-
-    IF_GPU({
-        const Index outputs_number = output_shape[0];
-        errors_device.resize_bytes(batch_size * outputs_number * Index(sizeof(float)), Device::CUDA);
-
-        output_deltas_view_device = TensorView(output_deltas.as<float>(),
-                                               output_delta_dimensions,
-                                               compute_dtype);
-    });
 }
 
 void BackPropagation::accumulate_output_deltas(size_t layer_index)
@@ -270,8 +258,14 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
 
 TensorView BackPropagation::get_output_deltas() const
 {
-    IF_GPU({ return output_deltas_view_device; });
-    return {const_cast<float*>(output_deltas.as<float>()), output_delta_dimensions};
+    if (!loss) return {};
+    const Index last_trainable_index = loss->get_neural_network()->get_last_trainable_layer_index();
+    if (last_trainable_index < 0
+       || size_t(last_trainable_index) >= delta_views.size()
+       || delta_views[last_trainable_index].empty())
+        return {};
+
+    return delta_views[last_trainable_index][0][0];
 }
 
 void BackPropagation::print() const

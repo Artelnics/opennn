@@ -167,8 +167,10 @@ TrainingResults StochasticGradientDescent::train()
 
     const Index training_batch_size = min(training_samples_number, batch_size);
 
+    // Cap validation_batch_size by training_batch_size so validation can reuse
+    // the training ForwardPropagation buffer when sample counts allow it.
     const Index validation_batch_size = (validation_samples_number != 0)
-        ? min(validation_samples_number, batch_size)
+        ? min(validation_samples_number, training_batch_size)
         : 0;
 
     const Index training_batches_number = (training_batch_size != 0)
@@ -218,19 +220,20 @@ TrainingResults StochasticGradientDescent::train()
 
     BackPropagation training_back_propagation(training_batch_size, loss);
 
+    // Reuse the training FP for validation iff batch sizes match exactly.
+    // Otherwise allocate a separate FP — over-sized views would corrupt loss
+    // kernels (input.shape[0] read directly), BatchNorm running stats, and
+    // MultiHeadAttention reshapes.
     unique_ptr<ForwardPropagation> validation_forward_propagation;
-    unique_ptr<BackPropagation> validation_back_propagation;
 
-    if (has_validation)
-    {
+    if (has_validation && validation_batch_size != training_batch_size)
         validation_forward_propagation = make_unique<ForwardPropagation>(validation_batch_size, neural_network);
-        validation_back_propagation = make_unique<BackPropagation>(validation_batch_size, loss);
-    }
 
-    setup_device_training(training_forward_propagation,
-                          training_back_propagation,
-                          validation_forward_propagation.get(),
-                          validation_back_propagation.get());
+    ForwardPropagation* validation_fp = has_validation
+        ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
+        : nullptr;
+
+    setup_device_training();
 
     // Optimization data
 
@@ -293,8 +296,7 @@ TrainingResults StochasticGradientDescent::train()
             dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
 
             const EpochStats val_stats = evaluate_epoch(is_classification_model,
-                                                        *validation_forward_propagation,
-                                                        *validation_back_propagation,
+                                                        *validation_fp,
                                                         empty_validation_queue,
                                                         ready_validation_queue,
                                                         validation_batches,

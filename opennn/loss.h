@@ -91,9 +91,19 @@ public:
     void set_regularization_weight(const float new_regularization_weight) { regularization_weight = new_regularization_weight; }
 
     void set_normalization_coefficient();
-    void calculate_error(const Batch&,
-                         const ForwardPropagation&,
-                         BackPropagation&) const;
+
+    // Result of calculate_error. accuracy and active_tokens_count are only
+    // meaningful for classification losses (CrossEntropy3d sets both;
+    // CrossEntropy with binary/multi-class leaves them at zero).
+    struct EvaluationResult
+    {
+        float error = 0.0f;
+        float accuracy = 0.0f;
+        Index active_tokens_count = 0;
+    };
+
+    EvaluationResult calculate_error(const Batch&,
+                                     const ForwardPropagation&) const;
 
     void set_error(const Error&);
     void set_error(const string&);
@@ -153,6 +163,13 @@ protected:
     float positives_weight = 1.0f;
     float negatives_weight = 1.0f;
     float minkowski_parameter = 1.5f;
+
+#ifdef OPENNN_HAS_CUDA
+    // Reduction workspace for cublasSasum/cudaMemcpy used by the loss kernels.
+    // mutable because calculate_error grows it lazily on the first call; the
+    // method's logical contract is still const (no observable state changes).
+    mutable Buffer errors_device{Device::CUDA};
+#endif
 
     // Regularization
     Regularization regularization_method = Regularization::L2;

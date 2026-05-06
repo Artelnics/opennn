@@ -480,10 +480,7 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
     }
 }
 
-void Optimizer::setup_device_training(ForwardPropagation& training_fp,
-                                      BackPropagation& training_bp,
-                                      ForwardPropagation* validation_fp,
-                                      BackPropagation* validation_bp)
+void Optimizer::setup_device_training()
 {
 #ifdef OPENNN_HAS_CUDA
     if (!Configuration::instance().is_gpu()) return;
@@ -498,8 +495,6 @@ void Optimizer::setup_device_training(ForwardPropagation& training_fp,
     cudaStreamCreateWithFlags(&memory_stream, cudaStreamNonBlocking);
     cudaEventCreateWithFlags(&batch_ready_event[0], cudaEventDisableTiming);
     cudaEventCreateWithFlags(&batch_ready_event[1], cudaEventDisableTiming);
-#else
-    (void)training_fp; (void)training_bp; (void)validation_fp; (void)validation_bp;
 #endif
 }
 
@@ -644,7 +639,7 @@ EpochStats Optimizer::train_epoch(bool is_classification,
         loss->back_propagate(*current_batch, forward_propagation, back_propagation);
 
         stats.error += back_propagation.error;
-        if (is_classification) stats.accuracy += back_propagation.accuracy(0);
+        if (is_classification) stats.accuracy += back_propagation.accuracy;
 
         update(back_propagation);
 
@@ -672,7 +667,6 @@ EpochStats Optimizer::train_epoch(bool is_classification,
 
 EpochStats Optimizer::evaluate_epoch(bool is_classification,
                                      ForwardPropagation& forward_propagation,
-                                     BackPropagation& back_propagation,
                                      ThreadSafeQueue<Batch*>& empty_queue,
                                      ThreadSafeQueue<Batch*>& ready_queue,
                                      const vector<vector<Index>>& batches,
@@ -717,10 +711,10 @@ EpochStats Optimizer::evaluate_epoch(bool is_classification,
         }
 
         neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, true);
-        loss->calculate_error(*current_batch, forward_propagation, back_propagation);
+        const Loss::EvaluationResult eval = loss->calculate_error(*current_batch, forward_propagation);
 
-        stats.error += back_propagation.error;
-        if (is_classification) stats.accuracy += back_propagation.accuracy(0);
+        stats.error += eval.error;
+        if (is_classification) stats.accuracy += eval.accuracy;
 
         sync_device();
 

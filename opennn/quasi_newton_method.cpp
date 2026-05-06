@@ -186,7 +186,18 @@ TrainingResults QuasiNewtonMethod::train()
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
 
-    ForwardPropagation validation_forward_propagation(validation_samples_number, neural_network);
+    // Reuse the training FP for validation iff sample counts match exactly.
+    // QN is full-batch so splits typically differ — separate FP is the common
+    // case here, but the alias path activates for symmetric splits (e.g. 50/50).
+    unique_ptr<ForwardPropagation> validation_forward_propagation;
+
+    if (has_validation && validation_samples_number != training_samples_number)
+        validation_forward_propagation = make_unique<ForwardPropagation>(
+            validation_samples_number, neural_network);
+
+    ForwardPropagation* validation_fp = has_validation
+        ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
+        : nullptr;
 
     set_names();
 
@@ -274,14 +285,16 @@ TrainingResults QuasiNewtonMethod::train()
         if (has_validation)
         {
             neural_network->forward_propagate(validation_batch.get_inputs(),
-                                              validation_forward_propagation,
+                                              *validation_fp,
                                               false);
 
             // Loss Index
 
-            loss->calculate_error(validation_batch,
-                                        validation_forward_propagation,
-                                        validation_back_propagation);
+            const Loss::EvaluationResult eval = loss->calculate_error(validation_batch,
+                                                                       *validation_fp);
+            validation_back_propagation.error = eval.error;
+            validation_back_propagation.accuracy = eval.accuracy;
+            validation_back_propagation.active_tokens_count = eval.active_tokens_count;
 
             results.validation_error_history(epoch) = validation_back_propagation.error;
 
@@ -379,7 +392,8 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
         potential_parameters = parameters + training_direction * alpha;
 
         neural_network->forward_propagate(batch.get_inputs(), potential_parameters, forward_propagation);
-        loss->calculate_error(batch, forward_propagation, back_propagation);
+        const Loss::EvaluationResult eval = loss->calculate_error(batch, forward_propagation);
+        back_propagation.error = eval.error;
         const float new_loss = back_propagation.error + loss->calculate_regularization(potential_parameters);
 
         if (new_loss <= current_loss + armijo_constant * alpha * training_slope)

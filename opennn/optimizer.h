@@ -89,10 +89,7 @@ protected:
     void write_common_xml(JsonWriter&) const;
     void read_common_xml(const Json*);
 
-    void setup_device_training(ForwardPropagation& training_fp,
-                               BackPropagation& training_bp,
-                               ForwardPropagation* validation_fp,
-                               BackPropagation* validation_bp);
+    void setup_device_training();
     void teardown_device_training();
 
     void prefetch_batch(Batch& batch, Index sample_count, int slot);
@@ -118,7 +115,6 @@ protected:
 
     EpochStats evaluate_epoch(bool is_classification,
                               ForwardPropagation& forward_propagation,
-                              BackPropagation& back_propagation,
                               ThreadSafeQueue<Batch*>& empty_queue,
                               ThreadSafeQueue<Batch*>& ready_queue,
                               const vector<vector<Index>>& batches,
