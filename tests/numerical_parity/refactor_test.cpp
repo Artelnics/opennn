@@ -14,6 +14,7 @@
 #include <random>
 
 using namespace opennn;
+using type = float;
 using namespace std;
 
 int main()
