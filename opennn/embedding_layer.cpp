@@ -62,21 +62,9 @@ void Embedding::set(Index new_vocabulary_size,
 
     dropout.input_slots  = {Output};
     dropout.output_slots = {Output};
-}
 
-void Embedding::back_propagate(ForwardPropagation& forward_propagation,
-                               BackPropagation& back_propagation,
-                               size_t layer) const noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    TensorView& output_delta = delta_views[OutputDelta][0];
-
-    if (dropout.active())
-        dropout.apply_delta(output_delta);
-
-    embedding_lookup.apply_delta(forward_views[Input][0], output_delta);
+    embedding_lookup.output_delta_slots = {OutputDelta};
+    dropout.output_delta_slots          = {OutputDelta};
 }
 
 void Embedding::read_JSON_body(const Json* embedding_layer_element)

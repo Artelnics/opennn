@@ -77,6 +77,9 @@ void Pooling::update_pool_operator()
     pool.output_slots = (pooling_method == PoolingMethod::MaxPooling)
         ? vector<size_t>{Output, MaximalIndices}
         : vector<size_t>{1};                       // {Output}; only 2 slots → Output is index 1
+
+    pool.output_delta_slots = {OutputDelta};
+    pool.input_delta_slots  = {InputDelta};
 }
 void Pooling::set(const Shape& new_input_shape,
                   const Shape& new_pool_dimensions,
@@ -193,26 +196,6 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
     pooling_method = string_to_pooling_method(new_pooling_method);
 
     update_pool_operator();
-}
-void Pooling::back_propagate(ForwardPropagation& forward_propagation,
-                             BackPropagation& back_propagation,
-                             size_t layer) const noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    const size_t output_slot = forward_views.size() - 1;
-
-    TensorView empty_indices;
-    TensorView& indices_view = (pooling_method == PoolingMethod::MaxPooling)
-        ? forward_views[MaximalIndices][0]
-        : empty_indices;
-
-    pool.apply_delta(forward_views[Input][0],
-                     forward_views[output_slot][0],
-                     delta_views[OutputDelta][0],
-                     indices_view,
-                     delta_views[InputDelta][0]);
 }
 void Pooling::read_JSON_body(const Json* pooling_layer_element)
 {

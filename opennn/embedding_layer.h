@@ -44,8 +44,6 @@ public:
     void set_add_positional_encoding(bool enabled) { embedding_lookup.add_positional_encoding = enabled; }
     void set_dropout_rate(float rate) { dropout.set_rate(rate); }
 
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
-
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 

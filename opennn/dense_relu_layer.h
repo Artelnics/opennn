@@ -14,10 +14,6 @@
 namespace opennn
 {
 
-// Dense + ReLU fused into a single forward op (cuBLASLt RELU_BIAS epilogue
-// on GPU; ReLU baked into Combination::apply_cpu when epilogue is RELU_BIAS).
-// No batch-norm, no dropout, activation hard-wired to ReLU — keeps
-// forward_propagate branch-free for CUDA Graph capture.
 class DenseRelu final : public Layer
 {
 public:
@@ -34,7 +30,7 @@ public:
 
     Activation::Function get_output_activation() const override { return Activation::Function::ReLU; }
 
-    vector<Operator*> get_operators() override { return {&combination}; }
+    vector<Operator*> get_operators() override { return {&combination_relu}; }
 
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
 
@@ -46,16 +42,12 @@ public:
     void set_output_shape(const Shape&) override;
     void on_compute_dtype_changed() override { configure_operators(); }
 
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t layer) const noexcept override;
-
-
 private:
 
     Shape input_shape;
     Index output_features = 0;
 
-    Combination combination;
-    Activation  activation;
+    CombinationRelu combination_relu;
 
     enum Forward {Input, Output};
     enum Backward {OutputDelta, InputDelta};

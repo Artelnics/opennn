@@ -83,6 +83,18 @@ void Dense::configure_operators()
     dropout.input_slots  = {Output};
     dropout.output_slots = {Output};
     dropout.save_slots   = {ActivationView};
+
+    combination.output_delta_slots = {OutputDelta};
+    combination.input_delta_slots  = is_first_layer ? vector<size_t>{} : vector<size_t>{InputDelta};
+
+    batch_norm.output_delta_slots = {OutputDelta};
+
+    activation.output_delta_slots    = {OutputDelta};
+    activation.output_slots_backward = dropout.active()
+        ? vector<size_t>{ActivationView}
+        : vector<size_t>{};
+
+    dropout.output_delta_slots = {OutputDelta};
 }
 
 void Dense::set_batch_normalization(bool enable)
@@ -160,51 +172,6 @@ void Dense::set_momentum(float new_momentum)
     batch_norm.momentum = new_momentum;
     if (batch_norm.active())
         batch_norm.set(output_features, batch_norm.momentum);
-}
-
-void Dense::back_propagate(ForwardPropagation& forward_propagation,
-                           BackPropagation& back_propagation,
-                           size_t layer) const noexcept
-{
-    auto& forward_views   = forward_propagation.views[layer];
-    auto& delta_views     = back_propagation.delta_views[layer];
-
-    const TensorView& input  = forward_views[Input][0];
-    const TensorView& output = forward_views[Output][0];
-
-    TensorView& output_delta = delta_views[OutputDelta][0];
-
-    if (dropout.active())
-        dropout.apply_delta(output_delta);
-
-    const TensorView& act_outputs = dropout.active()
-                                  ? forward_views[ActivationView][0]
-                                  : output;
-    activation.apply_delta(act_outputs, output_delta);
-
-    if (batch_norm.active())
-        batch_norm.apply_delta(forward_views[CombinationView][0],
-                               forward_views[BatchNormMean][0],
-                               forward_views[BatchNormInverseVariance][0],
-                               output_delta);
-
-    const Index total_rows = input.size() / input.shape.back();
-
-    TensorView output_delta_2d = output_delta.reshape({total_rows, output_delta.shape.back()});
-    TensorView input_2d        = input.reshape({total_rows, input.shape.back()});
-
-    TensorView input_delta_2d;
-
-    if (!is_first_layer)
-    {
-        TensorView& input_delta = delta_views[InputDelta][0];
-        input_delta_2d = input_delta.reshape({total_rows, input_delta.shape.back()});
-    }
-
-    combination.apply_delta(output_delta_2d,
-                            input_2d,
-                            input_delta_2d,
-                            false);
 }
 
 REGISTER(Layer, Dense, "Dense")

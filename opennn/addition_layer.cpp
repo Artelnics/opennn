@@ -24,14 +24,14 @@ Addition::Addition(const Shape& new_input_shape, const string& new_name) : Layer
 
     add.input_slots  = {Input};
     add.output_slots = {Output};
+
+    add.output_delta_slots = {OutputDelta};
+    add.input_delta_slots  = {InputDelta0, InputDelta1};
 }
 
 vector<pair<Shape, Type>> Addition::get_backward_specs(Index batch_size) const
 {
-    return {
-        {Shape{batch_size}.append(input_shape), compute_dtype}, // InputDelta0
-        {Shape{batch_size}.append(input_shape), compute_dtype}, // InputDelta1
-    };
+    return vector<pair<Shape, Type>>(2, {Shape{batch_size}.append(input_shape), compute_dtype});
 }
 
 void Addition::set(const Shape& new_input_shape, const string& new_label)
@@ -43,16 +43,6 @@ void Addition::set(const Shape& new_input_shape, const string& new_label)
     input_shape = new_input_shape;
 
     set_label(new_label);
-}
-
-void Addition::back_propagate(ForwardPropagation&,
-                              BackPropagation& back_propagation,
-                              size_t layer) const noexcept
-{
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    copy(delta_views[OutputDelta][0], delta_views[InputDelta0][0]);
-    copy(delta_views[OutputDelta][0], delta_views[InputDelta1][0]);
 }
 
 REGISTER(Layer, Addition, "Addition")

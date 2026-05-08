@@ -37,15 +37,13 @@ vector<pair<Shape, Type>> DenseRelu::get_forward_specs(Index batch_size) const
 
 void DenseRelu::configure_operators()
 {
-    combination.set(get_input_features(), output_features, compute_dtype);
+    combination_relu.set(get_input_features(), output_features, compute_dtype);
 
-    combination.epilogue     = CUBLASLT_EPILOGUE_RELU_BIAS;
-    combination.input_slots  = {Input};
-    combination.output_slots = {Output};
+    combination_relu.input_slots  = {Input};
+    combination_relu.output_slots = {Output};
 
-    activation.set_function(Activation::Function::ReLU);
-    activation.input_slots  = {Output};
-    activation.output_slots = {Output};
+    combination_relu.output_delta_slots = {OutputDelta};
+    combination_relu.input_delta_slots  = is_first_layer ? vector<size_t>{} : vector<size_t>{InputDelta};
 }
 
 void DenseRelu::set(const Shape& new_input_shape,
@@ -91,38 +89,6 @@ void DenseRelu::set_output_shape(const Shape& new_output_shape)
 {
     output_features = new_output_shape.back();
     configure_operators();
-}
-
-void DenseRelu::back_propagate(ForwardPropagation& forward_propagation,
-                               BackPropagation& back_propagation,
-                               size_t layer) const noexcept
-{
-    auto& forward_views   = forward_propagation.views[layer];
-    auto& delta_views     = back_propagation.delta_views[layer];
-
-    const TensorView& input  = forward_views[Input][0];
-    const TensorView& output = forward_views[Output][0];
-
-    TensorView& output_delta = delta_views[OutputDelta][0];
-
-    activation.apply_delta(output, output_delta);
-
-    const Index total_rows = input.size() / input.shape.back();
-
-    TensorView output_delta_2d = output_delta.reshape({total_rows, output_delta.shape.back()});
-    TensorView input_2d        = input.reshape({total_rows, input.shape.back()});
-
-    TensorView input_delta_2d;
-    if (!is_first_layer)
-    {
-        TensorView& input_delta = delta_views[InputDelta][0];
-        input_delta_2d = input_delta.reshape({total_rows, input_delta.shape.back()});
-    }
-
-    combination.apply_delta(output_delta_2d,
-                            input_2d,
-                            input_delta_2d,
-                            false);
 }
 
 REGISTER(Layer, DenseRelu, "DenseRelu")

@@ -125,6 +125,13 @@ void Convolutional::update_convolution_operator()
 
     activation.input_slots  = {Output};
     activation.output_slots = {Output};
+
+    convolution.output_delta_slots = {OutputDelta};
+    convolution.input_delta_slots  = is_first_layer ? vector<size_t>{} : vector<size_t>{InputDelta};
+
+    batch_norm.output_delta_slots = {OutputDelta};
+
+    activation.output_delta_slots = {OutputDelta};
 }
 void Convolutional::set(const Shape& new_input_shape,
                         const Shape& new_kernel_shape,
@@ -241,31 +248,6 @@ void Convolutional::set_batch_normalization(bool new_batch_normalization)
         batch_norm.features = 0;
 }
 
-void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
-                                   BackPropagation& back_propagation,
-                                   size_t layer) const noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    const TensorView& output = forward_views[Output][0];
-    TensorView& output_delta = delta_views[OutputDelta][0];
-
-    activation.apply_delta(output, output_delta);
-
-    if (batch_norm.active())
-        batch_norm.apply_delta(forward_views[ConvolutionView][0],
-                               forward_views[BatchNormMean][0],
-                               forward_views[BatchNormInverseVariance][0],
-                               output_delta);
-
-    TensorView empty_input_delta;
-    TensorView& input_delta_arg = is_first_layer ? empty_input_delta : delta_views[InputDelta][0];
-
-    convolution.apply_delta(forward_views[Input][0],
-                            output_delta,
-                            input_delta_arg);
-}
 void Convolutional::read_JSON_body(const Json* convolutional_layer_element)
 {
     kernel_height   = read_json_index(convolutional_layer_element, "KernelsHeight");

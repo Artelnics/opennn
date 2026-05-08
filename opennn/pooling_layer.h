@@ -87,8 +87,6 @@ public:
     void set_padding_width(Index);
     void set_pooling_method(const string&);
 
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
-
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 

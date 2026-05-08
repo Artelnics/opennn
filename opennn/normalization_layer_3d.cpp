@@ -31,6 +31,9 @@ Normalization3d::Normalization3d(const Shape& new_input_shape,
 
     layer_norm.input_slots  = {Input};
     layer_norm.output_slots = {Means, StandardDeviations, NormalizedInput, Output};
+
+    layer_norm.output_delta_slots = {OutputDelta};
+    layer_norm.input_delta_slots  = {InputDelta};
 }
 Shape Normalization3d::get_input_shape() const
 {
@@ -72,21 +75,6 @@ void Normalization3d::set(Index new_sequence_length,
 
     layer_norm.set(sequence_length, embedding_dimension);
 }
-void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
-                                     BackPropagation& back_propagation,
-                                     size_t layer) const noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    layer_norm.apply_delta(forward_views[Input][0],
-                           delta_views[OutputDelta][0],
-                           forward_views[Means][0],
-                           forward_views[StandardDeviations][0],
-                           forward_views[NormalizedInput][0],
-                           delta_views[InputDelta][0]);
-}
-
 void Normalization3d::read_JSON_body(const Json* element)
 {
     const string new_name = read_json_string(element, "Label");

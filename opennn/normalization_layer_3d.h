@@ -44,8 +44,6 @@ public:
         }
     }
 
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
-
     void read_JSON_body(const Json*) override;
 
 private:

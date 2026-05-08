@@ -54,7 +54,7 @@ public:
 
     Activation::Function get_output_activation() const override { return Activation::Function::ReLU; }
 
-    vector<Operator*> get_operators() override { return {&convolution}; }
+    vector<Operator*> get_operators() override { return {&convolution_relu}; }
 
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
 
@@ -70,9 +70,6 @@ public:
     void set_row_stride(const Index);
     void set_column_stride(const Index);
     void set_convolution_type(const string&);
-
-    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
@@ -93,8 +90,7 @@ private:
 
     bool use_padding = false;
 
-    Convolution convolution;
-    Activation  activation;
+    ConvolutionRelu convolution_relu;
 
     enum Forward {Input, Output};
     enum Backward {OutputDelta, InputDelta};

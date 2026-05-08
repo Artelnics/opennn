@@ -61,28 +61,15 @@ void Pooling3d::set(const Shape& new_input_shape,
     pool3d.method = (pooling_method == PoolingMethod::MaxPooling) ? 0 : 1;
     pool3d.input_slots  = {Input};
     pool3d.output_slots = {Output, MaximalIndices};
+
+    pool3d.output_delta_slots = {OutputDelta};
+    pool3d.input_delta_slots  = {InputDelta};
 }
 
 void Pooling3d::set_pooling_method(const string& new_pooling_method)
 {
     pooling_method = string_to_pooling_method(new_pooling_method);
     pool3d.method = (pooling_method == PoolingMethod::MaxPooling) ? 0 : 1;
-}
-void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
-                               BackPropagation& back_propagation,
-                               size_t layer) const noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    if (pooling_method == PoolingMethod::MaxPooling)
-        max_pooling_3d_backward(forward_views[MaximalIndices][0],
-                                delta_views[OutputDelta][0],
-                                delta_views[InputDelta][0]);
-    else
-        average_pooling_3d_backward(forward_views[Input][0],
-                                    delta_views[OutputDelta][0],
-                                    delta_views[InputDelta][0]);
 }
 void Pooling3d::read_JSON_body(const Json* element)
 {

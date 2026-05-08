@@ -50,8 +50,6 @@ public:
     void set_pooling_method(const PoolingMethod& new_pooling_method) { pooling_method = new_pooling_method; }
     void set_pooling_method(const string&);
 
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
-
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 

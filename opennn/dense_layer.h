@@ -54,8 +54,6 @@ public:
     void set_dropout_rate(float new_dropout_rate) { dropout.set_rate(new_dropout_rate); }
     void set_momentum(float new_momentum);
 
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t layer) const noexcept override;
-
     void read_JSON_body(const Json*) override;
 
 private:

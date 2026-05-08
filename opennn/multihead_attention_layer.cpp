@@ -56,7 +56,8 @@ Shape MultiHeadAttention::get_output_shape() const
 
 vector<Operator*> MultiHeadAttention::get_operators()
 {
-    return {&query_projection, &key_projection, &value_projection, &output_projection};
+    return {&query_projection, &key_projection, &value_projection,
+            &attention, &merge, &output_projection};
 }
 
 vector<pair<Shape, Type>> MultiHeadAttention::get_forward_specs(Index batch_size) const
@@ -123,123 +124,57 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     attention.set(heads_number, head_dimension,
                   query_sequence_length, source_sequence_length,
                   new_use_causal_mask, compute_dtype);
+
+    // Shared across all 3 projections.
+    for (auto* proj : {&query_projection, &key_projection, &value_projection})
+    {
+        proj->input_slots  = {Input};
+        proj->scratch_slots = {TransposeScratch};
+        proj->input_delta_slots_self = {InputQueryDelta};
+    }
+
+    // Per-projection differs in: forward output, source-vs-query input view, head-gradient
+    // delta source, cross-attention input-gradient destination, and accumulate flags
+    // (V→K→Q reverse order: V is first writer, K accumulates, Q accumulates if shared slot).
+    query_projection.output_slots = {Query};
+    query_projection.input_view_index = 0;
+    query_projection.output_delta_slots = {InputQueryDelta};
+    query_projection.input_delta_slots_cross = {InputQueryDelta};
+    query_projection.accumulate_input_delta_self  = true;
+    query_projection.accumulate_input_delta_cross = false;
+
+    key_projection.output_slots = {Key};
+    key_projection.input_view_index = 1;
+    key_projection.output_delta_slots = {InputSourceDelta};
+    key_projection.input_delta_slots_cross = {InputSourceDelta};
+    key_projection.accumulate_input_delta_self  = true;
+    key_projection.accumulate_input_delta_cross = true;
+
+    value_projection.output_slots = {Value};
+    value_projection.input_view_index = 1;
+    value_projection.output_delta_slots = {ValueDelta};
+    value_projection.input_delta_slots_cross = {InputSourceDelta};
+    value_projection.accumulate_input_delta_self  = false;
+    value_projection.accumulate_input_delta_cross = false;
+
+    attention.input_slots  = {Query, Key, Value, Input};
+    attention.output_slots = {AttentionWeights, AttentionWeightsDropped};
+    attention.scratch_slots = {TransposeScratch};
+    attention.source_view_index = 1;
+    attention.attention_output_slots = {ConcatenatedAttentionOutputs};
+    attention.output_delta_slots = {AttentionWeightDelta, InputQueryDelta, InputSourceDelta, ValueDelta};
+
+    output_projection.input_slots  = {ConcatenatedAttentionOutputs};
+    output_projection.output_slots = {Output};
+    output_projection.output_delta_slots = {OutputDelta};
+    output_projection.input_delta_slots  = {InputQueryDelta};
+
+    merge.set(heads_number, query_sequence_length, head_dimension, compute_dtype);
+    merge.input_slots  = {TransposeScratch};
+    merge.output_slots = {ConcatenatedAttentionOutputs};
+    merge.output_delta_slots = {InputQueryDelta};  // concat gradient is parked here by output_projection
 }
 
-void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagation,
-                                           size_t layer,
-                                           bool is_training) noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-
-    const TensorView& query_input = get_query_input(forward_views);
-    const TensorView& source_input = get_source_input(forward_views);
-
-    TensorView& query = forward_views[Query][0];
-    TensorView& key = forward_views[Key][0];
-    TensorView& value = forward_views[Value][0];
-    TensorView& attention_weights = forward_views[AttentionWeights][0];
-    TensorView& concatenated = forward_views[ConcatenatedAttentionOutputs][0];
-    TensorView& output = forward_views.back()[0];
-
-    const Index batch_size = forward_propagation.batch_size;
-
-    float* transpose_scratch = forward_views[TransposeScratch][0].as<float>();
-
-    query_projection.apply(query_input,  query, transpose_scratch);
-    key_projection  .apply(source_input, key,   transpose_scratch);
-    value_projection.apply(source_input, value, transpose_scratch);
-
-    TensorView attention_out_scratch(transpose_scratch, get_heads_shape(batch_size), compute_dtype);
-
-    attention.apply(query, key, value, source_input,
-                    attention_weights,
-                    forward_views[AttentionWeightsDropped][0],
-                    attention_out_scratch,
-                    transpose_scratch,
-                    is_training);
-
-    TensorView concatenated_4d = concatenated.reshape(get_concat_shape(batch_size));
-    merge_heads(attention_out_scratch, concatenated_4d);
-
-    const Shape flat_shape = {batch_size * query_sequence_length, embedding_dimension};
-    TensorView concatenated_2d = concatenated.reshape(flat_shape);
-    TensorView output_2d       = output.reshape(flat_shape);
-
-    output_projection.apply(concatenated_2d, output_2d);
-}
-
-void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
-                                        BackPropagation& back_propagation,
-                                        size_t layer) const noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    const TensorView& query_input = get_query_input(forward_views);
-    const TensorView& source_input = get_source_input(forward_views);
-    const bool self_attention = is_self_attention(forward_views);
-
-    TensorView& output_delta = delta_views[OutputDelta][0];
-
-    const Index batch_size = forward_propagation.batch_size;
-    const Shape flat_shape = {batch_size * query_sequence_length, embedding_dimension};
-
-    float* transpose_scratch = forward_views[TransposeScratch][0].as<float>();
-
-    TensorView concat_gradient_flat = delta_views[InputQueryDelta][0].reshape(flat_shape);
-    TensorView output_delta_flat = output_delta.reshape(flat_shape);
-    TensorView concat_in_flat = forward_views[ConcatenatedAttentionOutputs][0].reshape(flat_shape);
-
-    output_projection.apply_delta(output_delta_flat,
-                                  concat_in_flat,
-                                  concat_gradient_flat,
-                                  false);
-
-    TensorView& att_weight_gradient = delta_views[AttentionWeightDelta][0];
-    TensorView& value_gradient      = delta_views[ValueDelta][0];
-
-    const Index head_dimension = get_head_dimension();
-
-    TensorView query_gradient(delta_views[InputQueryDelta][0].as<float>(),
-                          get_heads_shape(batch_size),
-                          compute_dtype);
-    TensorView key_gradient(delta_views[InputSourceDelta][0].as<float>(),
-                        {batch_size, heads_number, source_sequence_length, head_dimension},
-                        compute_dtype);
-
-    TensorView concat_gradient_4d = delta_views[InputQueryDelta][0].reshape(get_concat_shape(batch_size));
-    TensorView scratch_4d     = forward_views[TransposeScratch][0].reshape(get_heads_shape(batch_size));
-
-    split_heads(concat_gradient_4d, scratch_4d);
-
-    attention.apply_delta(forward_views[Query][0],
-                          forward_views[Key][0],
-                          forward_views[Value][0],
-                          forward_views[ConcatenatedAttentionOutputs][0],
-                          forward_views[AttentionWeights][0],
-                          forward_views[AttentionWeightsDropped][0],
-                          scratch_4d,
-                          att_weight_gradient,
-                          query_gradient,
-                          key_gradient,
-                          value_gradient);
-
-    query_projection.apply_delta(query_gradient, query_input,
-                                 delta_views[InputQueryDelta][0],
-                                 false, transpose_scratch);
-
-    TensorView& kv_input_gradient = self_attention
-        ? delta_views[InputQueryDelta][0]
-        : delta_views[InputSourceDelta][0];
-
-    key_projection.apply_delta(key_gradient, source_input,
-                               kv_input_gradient,
-                               self_attention, transpose_scratch);
-
-    value_projection.apply_delta(value_gradient, source_input,
-                                 kv_input_gradient,
-                                 true, transpose_scratch);
-}
 void MultiHeadAttention::read_JSON_body(const Json* root_element)
 {
     const string new_label = read_json_string(root_element, "Label");

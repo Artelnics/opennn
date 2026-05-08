@@ -24,6 +24,9 @@ Flatten::Flatten(const Shape& new_input_shape) : Layer()
 
     flat.input_slots  = {Input};
     flat.output_slots = {Output};
+
+    flat.output_delta_slots = {OutputDelta};
+    flat.input_delta_slots  = {InputDelta};
 }
 void Flatten::set(const Shape& new_input_shape)
 {
@@ -36,15 +39,6 @@ void Flatten::set(const Shape& new_input_shape)
 
     set_label("flatten_layer");
 }
-void Flatten::back_propagate(ForwardPropagation&,
-                             BackPropagation& back_propagation,
-                             size_t layer) const noexcept
-{
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    copy(delta_views[OutputDelta][0], delta_views[InputDelta][0]);
-}
-
 REGISTER(Layer, Flatten, "Flatten")
 
 }

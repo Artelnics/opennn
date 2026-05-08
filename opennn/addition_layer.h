@@ -30,9 +30,6 @@ public:
     void set(const Shape&, const string&);
     void set_input_shape(const Shape& shape) override { set(shape, label); }
 
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t layer) const noexcept override;
-
-
 private:
 
     Shape input_shape;

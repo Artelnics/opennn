@@ -51,17 +51,17 @@ struct Operator
 
     vector<size_t> input_slots;
     vector<size_t> output_slots;
+
+    vector<size_t> input_delta_slots;
+    vector<size_t> output_delta_slots;
 };
 
 struct Add : Operator
 {
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
 private:
-    void apply_cpu(const vector<TensorView>& inputs, TensorView& output);
-#ifdef OPENNN_HAS_CUDA
-    void apply_gpu(const vector<TensorView>& inputs, TensorView& output);
-#endif
     void check(const vector<TensorView>& inputs, const TensorView& output) const;
 };
 
@@ -69,9 +69,7 @@ struct Dropout : Operator
 {
     float rate = 0.0f;
 
-    VectorR mask_cpu;
-
-    Buffer mask{Device::CUDA}; // @todo
+    Buffer mask;
 
     vector<size_t> save_slots;
 
@@ -80,8 +78,11 @@ struct Dropout : Operator
     void set_rate(float new_rate);
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
-    void apply(TensorView& output);
+    void apply_cpu(TensorView& output);
+    void apply_gpu(TensorView& output);
+
     void apply_delta(TensorView& delta) const;
 
     void to_JSON(JsonWriter& w) const override;
@@ -96,9 +97,6 @@ struct Dropout : Operator
     Dropout& operator=(Dropout&&) noexcept = default;
 
 private:
-    void apply_cpu(TensorView& output);
-    void apply_gpu(TensorView& output);
-
     void apply_delta_cpu(TensorView& delta) const;
     void apply_delta_gpu(TensorView& delta) const;
 
@@ -118,12 +116,20 @@ struct Activation : Operator
 
     cudnnActivationDescriptor_t descriptor = nullptr;
 
+    // Backward override: when non-empty, back_propagate reads the activation's
+    // output from this slot instead of output_slots[0]. Used when a downstream
+    // operator (e.g. Dropout) overwrites the activation's output in place.
+    vector<size_t> output_slots_backward;
+
     void set_function(Function new_function);
     void set_function(const string& name);
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
-    void apply(TensorView& output);
+    void apply_cpu(TensorView& output);
+    void apply_gpu(TensorView& output);
+
     void apply_delta(const TensorView& outputs, TensorView& delta) const;
 
     void to_JSON(JsonWriter& w) const override;
@@ -138,9 +144,6 @@ struct Activation : Operator
     Activation& operator=(const Activation&) = delete;
 
 private:
-    void apply_cpu(TensorView& output);
-    void apply_gpu(TensorView& output);
-
     void apply_delta_cpu(const TensorView& outputs, TensorView& delta) const;
     void apply_delta_gpu(const TensorView& outputs, TensorView& delta) const;
 };
@@ -150,8 +153,6 @@ struct Combination : Operator
     Index input_features  = 0;
     Index output_features = 0;
     Type  weight_type     = Type::FP32;
-
-    cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS;
 
     TensorView weights;
     TensorView bias;
@@ -169,6 +170,7 @@ struct Combination : Operator
     void set_parameters_glorot() override;
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
     void apply(const TensorView& input, TensorView& output, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS);
 
@@ -195,6 +197,24 @@ private:
     mutable int                 bwd_total_rows_ = -1;
     mutable int                 bwd_io_dtype_ = -1;
 #endif
+};
+
+struct CombinationRelu : Operator
+{
+    Combination combination;
+    Activation  activation;
+
+    void set(Index input_features, Index output_features, Type weight_type = Type::FP32);
+
+    vector<pair<Shape, Type>> parameter_specs() const override { return combination.parameter_specs(); }
+    void link_parameters(const vector<TensorView>& views) override { combination.link_parameters(views); }
+    void link_gradients (const vector<TensorView>& views) override { combination.link_gradients(views); }
+
+    void set_parameters_random() override { combination.set_parameters_random(); }
+    void set_parameters_glorot() override { combination.set_parameters_glorot(); }
+
+    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 
 struct BatchNorm : Operator
@@ -229,15 +249,12 @@ struct BatchNorm : Operator
     //   input_slots  = {input}
     //   output_slots = {output, mean, inverse_variance}
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
-    void apply_inference(const TensorView& input, TensorView& output);
-    void apply_training (const TensorView& input,
-                         TensorView& mean, TensorView& inverse_variance,
-                         TensorView& output);
-    void apply_delta    (const TensorView& input,
-                         const TensorView& mean,
-                         const TensorView& inverse_variance,
-                         TensorView& delta) const;
+    void apply_delta(const TensorView& input,
+                     const TensorView& mean,
+                     const TensorView& inverse_variance,
+                     TensorView& delta) const;
 
     void update_inference_cache();
     void invalidate_inference_cache() { inference_cache_dirty = true; }
@@ -288,9 +305,6 @@ struct Convolution : Operator
 
     Type compute_dtype = Type::FP32;
 
-    // Set by hosting layer to fuse ReLU into the cuDNN forward call (GPU only).
-    cudnnActivationDescriptor_t fused_activation = nullptr;
-
     TensorView weights;
     TensorView bias;
 
@@ -337,27 +351,52 @@ struct Convolution : Operator
     Convolution& operator=(const Convolution&) = delete;
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
-    void apply(const TensorView& input,
-               TensorView& output,
-               cudnnActivationDescriptor_t fused_activation = nullptr);
+    void apply_cpu(const TensorView& input, TensorView& output);
+    void apply_gpu(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation = nullptr);
 
     void apply_delta(const TensorView& input,
                      const TensorView& output_delta,
                      TensorView& input_delta) const;
 
 private:
-    void apply_cpu(const TensorView& input, TensorView& output);
-    void apply_gpu(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation);
 
     void apply_delta_cpu(const TensorView& input, const TensorView& output_delta,
                          TensorView& input_delta) const;
     void apply_delta_gpu(const TensorView& input, const TensorView& output_delta,
                          TensorView& input_delta) const;
 
-#ifdef OPENNN_HAS_CUDA
     void plan_convolution_algorithms(const TensorView& input, const TensorView& output);
-#endif
+};
+
+struct ConvolutionRelu : Operator
+{
+    Convolution convolution;
+    Activation  activation;
+
+    void set(Index input_h, Index input_w,
+             Index kernels_n, Index kernel_h, Index kernel_w, Index kernel_c,
+             Index row_stride, Index column_stride,
+             Index padding_h, Index padding_w,
+             Type compute_dtype);
+
+    vector<pair<Shape, Type>> parameter_specs() const override { return convolution.parameter_specs(); }
+    void link_parameters(const vector<TensorView>& views) override { convolution.link_parameters(views); }
+    void link_gradients (const vector<TensorView>& views) override { convolution.link_gradients(views); }
+
+    void set_parameters_random() override { convolution.set_parameters_random(); }
+    void set_parameters_glorot() override { convolution.set_parameters_glorot(); }
+
+    void destroy_cuda() override { convolution.destroy_cuda(); activation.destroy_cuda(); }
+    ~ConvolutionRelu() override { destroy_cuda(); }
+
+    ConvolutionRelu() = default;
+    ConvolutionRelu(const ConvolutionRelu&) = delete;
+    ConvolutionRelu& operator=(const ConvolutionRelu&) = delete;
+
+    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 
 struct LayerNorm : Operator
@@ -383,16 +422,7 @@ struct LayerNorm : Operator
     void init_defaults();
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
-
-    void apply(const TensorView& input,
-               TensorView& means, TensorView& standard_deviations, TensorView& normalized,
-               TensorView& output);
-
-    void apply_delta(const TensorView& input,
-                     const TensorView& output_delta,
-                     const TensorView& means, const TensorView& standard_deviations,
-                     const TensorView& normalized,
-                     TensorView& input_delta) const;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
 private:
     void apply_cpu(const TensorView& input,
@@ -421,6 +451,22 @@ struct MultiHeadProjection : Operator
     Index head_dimension = 0;
     Type compute_dtype = Type::FP32;
 
+    // Which view inside views[input_slots[0]] to read. 0 for query path, 1 for
+    // source path; clamped to size()-1 so self-attention (single input view)
+    // works regardless.
+    size_t input_view_index = 0;
+
+    // Slot holding the shared transpose-scratch buffer.
+    vector<size_t> scratch_slots;
+
+    // Backward configuration. Self vs cross-attention is detected per-call from
+    // forward_views[input_slots[0]].size() (1 = self, 2 = cross). The two pairs
+    // below select destination slot and accumulate flag for each mode.
+    vector<size_t> input_delta_slots_self;
+    vector<size_t> input_delta_slots_cross;
+    bool accumulate_input_delta_self  = false;
+    bool accumulate_input_delta_cross = false;
+
     void set(Index input_features, Index heads_number, Index head_dimension, Type compute_dtype);
 
     vector<pair<Shape, Type>> parameter_specs() const override { return combination.parameter_specs(); }
@@ -429,6 +475,9 @@ struct MultiHeadProjection : Operator
 
     void set_parameters_random() override { combination.set_parameters_random(); }
     void set_parameters_glorot() override { combination.set_parameters_glorot(); }
+
+    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
     void apply(const TensorView& input, TensorView& head_output, float* scratch);
 
@@ -459,6 +508,20 @@ struct Attention : Operator
     void set_dropout_rate(float rate) { dropout.set_rate(rate); }
 
     vector<pair<Shape, Type>> forward_scratch_specs(Index batch_size) const;
+
+    // Slot convention (set by hosting layer):
+    //   input_slots  = {Query, Key, Value, Input}     (Input read via source_view_index)
+    //   output_slots = {AttentionWeights, AttentionWeightsDropped}
+    //   scratch_slots = {TransposeScratch}             (used as attention_out + mask_scratch)
+    //   attention_output_slots = {ConcatenatedAttentionOutputs}  (backward-only: merged output for SDPA)
+    //   output_delta_slots = {AttentionWeightDelta, InputQueryDelta, InputSourceDelta, ValueDelta}
+    size_t source_view_index = 1;  // 1 = source path; clamped to size()-1 for self-attention
+
+    vector<size_t> scratch_slots;
+    vector<size_t> attention_output_slots;
+
+    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
     void apply(const TensorView& query,                    // {B, H, Q_seq, D}
                const TensorView& key,                      // {B, H, S_seq, D}
@@ -544,7 +607,6 @@ private:
                          TensorView& key_gradient,
                          TensorView& value_gradient) const;
 
-#ifdef OPENNN_HAS_CUDA
     void apply_delta_gpu_unfused(const TensorView& query,
                                  const TensorView& key,
                                  const TensorView& value,
@@ -555,9 +617,28 @@ private:
                                  TensorView& query_gradient,
                                  TensorView& key_gradient,
                                  TensorView& value_gradient) const;
-#endif
 
     mutable unique_ptr<SDPACache> sdpa_cache;
+};
+
+// Reshapes a (batch, heads, seq, head_dim) tensor into (batch, seq, embed)
+// by interleaving heads back into the embedding dimension. Forward = merge_heads;
+// no parameters; the layer hosts the shape configuration via set().
+struct Merge : Operator
+{
+    Index heads_number = 0;
+    Index query_sequence_length = 0;
+    Index head_dimension = 0;
+    Type  compute_dtype = Type::FP32;
+
+    void set(Index heads_number, Index query_sequence_length, Index head_dimension, Type compute_dtype);
+
+    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+
+    // Note: writes the heads gradient back to the SAME forward slot it reads from in
+    // forward (input_slots[0]). Buffer reuse for memory efficiency — the next backward
+    // op (Attention) consumes the heads gradient from that scratch slot.
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 
 struct Pool : Operator
@@ -598,13 +679,7 @@ struct Pool : Operator
     //   output_slots = {Output, MaximalIndices} for MaxPooling
     //   output_slots = {Output}                  for AveragePooling
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
-
-    void apply(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training);
-    void apply_delta(const TensorView& input,
-                     const TensorView& output,
-                     const TensorView& output_delta,
-                     const TensorView& maximal_indices,
-                     TensorView& input_delta) const;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
 private:
     void apply_cpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training);
@@ -628,6 +703,7 @@ struct Pool3d : Operator
     //   output_slots = {Output, MaximalIndices}
     //   For AveragePooling, MaximalIndices is allocated empty (Shape{}).
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 
 struct EmbeddingLookup : Operator
@@ -660,10 +736,7 @@ struct EmbeddingLookup : Operator
     void init_positional_encoding();
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
-
-    void apply(const TensorView& indices, TensorView& output);
-    void apply_delta(const TensorView& indices,
-                     const TensorView& output_delta) const;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
 private:
     void apply_cpu(const TensorView& indices, TensorView& output);
@@ -676,6 +749,7 @@ private:
 struct Flat : Operator
 {
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 
 struct Bound : Operator
@@ -688,7 +762,7 @@ struct Bound : Operator
     TensorView lower;
     TensorView upper;
 
-    void set(Method new_method, Index new_features);
+    void set(Method new_method, Index new_features) { method = new_method; features = new_features; }
 
     vector<pair<Shape, Type>> state_specs() const override;
     void link_states(const vector<TensorView>& views) override;
@@ -710,7 +784,7 @@ struct Scale : Operator
     TensorView standard_deviations;
     TensorView scalers;
 
-    void set(Index new_features);
+    void set(Index new_features) { features = new_features; }
 
     vector<pair<Shape, Type>> state_specs() const override;
     void link_states(const vector<TensorView>& views) override;
@@ -732,7 +806,7 @@ struct Unscale : Operator
     TensorView standard_deviations;
     TensorView scalers;
 
-    void set(Index new_features);
+    void set(Index new_features) { features = new_features; }
 
     vector<pair<Shape, Type>> state_specs() const override;
     void link_states(const vector<TensorView>& views) override;

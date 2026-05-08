@@ -76,8 +76,6 @@ public:
     void set_activation_function(const string&);
     void set_batch_normalization(bool);
 
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
-
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 

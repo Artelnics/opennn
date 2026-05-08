@@ -29,9 +29,6 @@ public:
 
     void set_input_shape(const Shape& new_input_shape) override { set(new_input_shape); }
 
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
-
-
 private:
 
     Shape input_shape;
