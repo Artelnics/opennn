@@ -152,9 +152,11 @@ public:
             op->forward_propagate(fp, layer, is_training);
     }
 
-    virtual void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept
+    virtual void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t i) const noexcept
     {
-        throw runtime_error("back_propagate not implemented for layer type: " + name);
+        const vector<Operator*> operators = const_cast<Layer*>(this)->get_operators();
+        for (auto it = operators.rbegin(); it != operators.rend(); ++it)
+            (*it)->back_propagate(fp, bp, i);
     }
 
     virtual void from_JSON(const JsonDocument& document);

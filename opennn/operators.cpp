@@ -162,10 +162,10 @@ void Dropout::destroy_cuda()
 
 #else
 
-void Dropout::apply_gpu(TensorView&)                                 { throw runtime_error("Dropout::apply_gpu: CUDA support not compiled in."); }
-void Dropout::apply_delta_gpu(TensorView&) const                     { throw runtime_error("Dropout::apply_delta_gpu: CUDA support not compiled in."); }
-void Dropout::ensure_mask(Index)                                     {}
-void Dropout::destroy_cuda()                                         {}
+void Dropout::apply_gpu(TensorView&)             { throw runtime_error("Dropout::apply_gpu: CUDA support not compiled in."); }
+void Dropout::apply_delta_gpu(TensorView&) const { throw runtime_error("Dropout::apply_delta_gpu: CUDA support not compiled in."); }
+void Dropout::ensure_mask(Index)                 {}
+void Dropout::destroy_cuda()                     {}
 
 #endif
 

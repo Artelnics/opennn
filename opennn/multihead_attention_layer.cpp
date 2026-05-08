@@ -186,9 +186,9 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 
     float* transpose_scratch = forward_views[TransposeScratch][0].as<float>();
 
-    TensorView concat_gradient_flat  = delta_views[InputQueryDelta][0].reshape(flat_shape);
+    TensorView concat_gradient_flat = delta_views[InputQueryDelta][0].reshape(flat_shape);
     TensorView output_delta_flat = output_delta.reshape(flat_shape);
-    TensorView concat_in_flat    = forward_views[ConcatenatedAttentionOutputs][0].reshape(flat_shape);
+    TensorView concat_in_flat = forward_views[ConcatenatedAttentionOutputs][0].reshape(flat_shape);
 
     output_projection.apply_delta(output_delta_flat,
                                   concat_in_flat,

@@ -194,6 +194,7 @@ void Dense::back_propagate(ForwardPropagation& forward_propagation,
     TensorView input_2d        = input.reshape({total_rows, input.shape.back()});
 
     TensorView input_delta_2d;
+
     if (!is_first_layer)
     {
         TensorView& input_delta = delta_views[InputDelta][0];
@@ -204,12 +205,6 @@ void Dense::back_propagate(ForwardPropagation& forward_propagation,
                             input_2d,
                             input_delta_2d,
                             false);
-}
-
-void Dense::read_JSON_body(const Json* dense_layer_element)
-{
-    if (dense_layer_element->has("Momentum"))
-        set_batch_normalization(true);
 }
 
 REGISTER(Layer, Dense, "Dense")

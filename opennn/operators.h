@@ -22,6 +22,7 @@ struct LtMatmulPlan;
 #endif
 
 struct ForwardPropagation;
+struct BackPropagation;
 
 struct Operator
 {
@@ -38,12 +39,15 @@ struct Operator
     virtual void set_parameters_glorot() {}
 
     virtual void forward_propagate(ForwardPropagation&, size_t, bool) noexcept {}
+    virtual void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept {}
 
     virtual void to_JSON  (JsonWriter&) const {}
     virtual void from_JSON(const Json*)       {}
     virtual void load_state_from_JSON(const Json*) {}
 
     virtual void destroy_cuda() {}
+
+    virtual Index get_delta_bytes() const;
 
     vector<size_t> input_slots;
     vector<size_t> output_slots;
@@ -69,8 +73,6 @@ struct Dropout : Operator
 
     Buffer mask{Device::CUDA}; // @todo
 
-    // Optional: layer needs the pre-dropout values preserved for backward
-    // (activation derivative). When empty, no copy is performed.
     vector<size_t> save_slots;
 
     bool active() const { return rate > 0.0f; }
@@ -428,9 +430,6 @@ struct MultiHeadProjection : Operator
     void set_parameters_random() override { combination.set_parameters_random(); }
     void set_parameters_glorot() override { combination.set_parameters_glorot(); }
 
-    // input:       {batch, seq_len, input_features}
-    // head_output: {batch, heads_number, seq_len, head_dimension}
-    // scratch:     batch * seq_len * input_features floats (caller-owned)
     void apply(const TensorView& input, TensorView& head_output, float* scratch);
 
     void apply_delta(const TensorView& head_gradient,
@@ -546,8 +545,6 @@ private:
                          TensorView& value_gradient) const;
 
 #ifdef OPENNN_HAS_CUDA
-    // Unfused GPU backward — used when SDPA isn't supported for the shape/dtype.
-    // Same op sequence as apply_delta_cpu but with cuDNN softmax backward.
     void apply_delta_gpu_unfused(const TensorView& query,
                                  const TensorView& key,
                                  const TensorView& value,
@@ -560,7 +557,7 @@ private:
                                  TensorView& value_gradient) const;
 #endif
 
-    mutable std::unique_ptr<SDPACache> sdpa_cache;
+    mutable unique_ptr<SDPACache> sdpa_cache;
 };
 
 struct Pool : Operator
