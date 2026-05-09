@@ -13,11 +13,6 @@
 namespace opennn
 {
 
-    void prepare_line(string&);
-    Index count_non_empty_lines(const filesystem::path&);
-
-    Index count_tokens(const string&, const string&);
-
     vector<string> get_tokens(const string&, const string&);
 
     vector<string_view> get_token_views(string_view, char);
@@ -26,9 +21,9 @@ namespace opennn
 
     vector<string> tokenize(const string&);
 
-    vector<string> convert_string_vector(const vector<vector<string>>&, const string&);
+    vector<string_view> tokenize_views(string_view);
 
-    VectorR to_type_vector(const string&, const string&);
+    vector<string> convert_string_vector(const vector<vector<string>>&, const string&);
 
     bool is_numeric_string(string_view);
     bool is_date_time_string(string_view);
@@ -40,20 +35,12 @@ namespace opennn
     void replace_all_appearances(string&, const string&, const string&);
     void replace_all_word_appearances(string&, const string&, const string&);
 
-    void trim(string&);
-    void normalize_csv_line(string&);
-    void erase(string&, char);
-
-    void replace_first_and_last_char_with_missing_label(string&, char, const string&, const string&);
-
     string get_trimmed(const string&);
 
     bool has_numbers(const vector<string>&);
     bool has_numbers(const vector<string_view>&);
 
     void replace(string&, const string&, const string&);
-    void replace_double_char_with_label(string&, const string&, const string&);
-    void replace_substring_within_quotes(string&, const string&, const string&);
 
     void display_progress_bar(const int&, const int&);
 

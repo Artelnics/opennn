@@ -122,43 +122,43 @@ LanguageDataset::LanguageDataset(const Index samples_number,
              [](Variable& variable) { variable.role = VariableRole::Input; });
 }
 
-void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_tokens,
+void LanguageDataset::create_vocabulary(const vector<vector<string_view>>& document_tokens,
                                         vector<string>& vocabulary) const
 {
-    unordered_map<string, size_t> token_count;
+    unordered_map<string_view, size_t> token_count;
 
-    for (const vector<string>& document : document_tokens)
-        for (const string& token : document)
+    for (const vector<string_view>& document : document_tokens)
+        for (string_view token : document)
             ++token_count[token];
 
-    vector<pair<string, size_t>> sorted_tokens(token_count.begin(), token_count.end());
+    vector<pair<string_view, size_t>> sorted_tokens(token_count.begin(), token_count.end());
 
     sort(sorted_tokens.begin(), sorted_tokens.end(),
-         [](const pair<string, size_t>& a, const pair<string, size_t>& b) {return a.second > b.second;});
+         [](const auto& a, const auto& b) { return a.second > b.second; });
 
     vocabulary.clear();
 
     for (const string& token : reserved_tokens)
         vocabulary.push_back(token);
 
-    for (const pair<string, size_t>& token : sorted_tokens)
+    for (const auto& [token, count] : sorted_tokens)
     {
-        if (token.second < size_t(minimum_token_frequency))
+        if (count < size_t(minimum_token_frequency))
             continue;
 
-        if (find(reserved_tokens.begin(), reserved_tokens.end(), token.first) != reserved_tokens.end())
+        if (find(reserved_tokens.begin(), reserved_tokens.end(), token) != reserved_tokens.end())
             continue;
 
         if (vocabulary.size() >= size_t(maximum_vocabulary_size))
             break;
 
-        vocabulary.push_back(token.first);
+        vocabulary.emplace_back(token);
     }
 }
 
-void LanguageDataset::encode_input(const vector<vector<string>>& input_document_tokens)
+void LanguageDataset::encode_input(const vector<vector<string_view>>& input_document_tokens)
 {
-    const unordered_map<string, Index> input_vocabulary_map = create_vocabulary_map(input_vocabulary);
+    const unordered_map<string_view, Index> input_vocabulary_map = create_vocabulary_map(input_vocabulary);
     const Index samples_number = get_samples_number();
 
     #pragma omp parallel for
@@ -167,7 +167,7 @@ void LanguageDataset::encode_input(const vector<vector<string>>& input_document_
     {
         data(sample, 0) = START_INDEX;
 
-        const vector<string>& input_tokens = input_document_tokens[sample];
+        const vector<string_view>& input_tokens = input_document_tokens[sample];
         const size_t input_tokens_number = input_tokens.size();
 
         for (size_t i = 0; i < input_tokens_number; ++i)
@@ -186,9 +186,9 @@ void LanguageDataset::encode_input(const vector<vector<string>>& input_document_
     }
 }
 
-void LanguageDataset::encode_decoder_target_sequence_to_sequence(const vector<vector<string>>& target_document_tokens)
+void LanguageDataset::encode_decoder_target_sequence_to_sequence(const vector<vector<string_view>>& target_document_tokens)
 {
-    const unordered_map<string, Index> target_vocabulary_map = create_vocabulary_map(target_vocabulary);
+    const unordered_map<string_view, Index> target_vocabulary_map = create_vocabulary_map(target_vocabulary);
     const Index samples_number = get_samples_number();
 
     const Index decoder_offset = maximum_input_sequence_length;
@@ -197,7 +197,7 @@ void LanguageDataset::encode_decoder_target_sequence_to_sequence(const vector<ve
 #pragma omp parallel for
     for (Index sample = 0; sample < samples_number; ++sample)
     {
-        const vector<string>& target_tokens = target_document_tokens[sample];
+        const vector<string_view>& target_tokens = target_document_tokens[sample];
         const Index target_tokens_number = ssize(target_tokens);
 
         data(sample, decoder_offset) = START_INDEX;
@@ -223,7 +223,7 @@ void LanguageDataset::encode_decoder_target_sequence_to_sequence(const vector<ve
     }
 }
 
-void LanguageDataset::encode_target_classification(const vector<vector<string>>& target_document_tokens)
+void LanguageDataset::encode_target_classification(const vector<vector<string_view>>& target_document_tokens)
 {
     if (maximum_target_sequence_length == 1 && target_vocabulary.size() < 6)
         throw logic_error("Encode target data: Invalid case");
@@ -234,7 +234,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
     {
         for (size_t sample_index = 0; sample_index < target_document_tokens_number; ++sample_index)
         {
-            const string& token = target_document_tokens[sample_index][0];
+            const string_view token = target_document_tokens[sample_index][0];
 
             if (contains(positive_words, token))
                 data(sample_index, maximum_input_sequence_length) = 1;
@@ -249,11 +249,11 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
 
     if (maximum_target_sequence_length == 6 && target_vocabulary.size() >= 6)
     {
-        const unordered_map<string, Index> target_vocab_map = create_vocabulary_map(target_vocabulary);
+        const unordered_map<string_view, Index> target_vocab_map = create_vocabulary_map(target_vocabulary);
 
         for (size_t sample_index = 0; sample_index < target_document_tokens_number; ++sample_index)
         {
-            const string& token = target_document_tokens[sample_index][0];
+            const string_view token = target_document_tokens[sample_index][0];
 
             auto iterator = target_vocab_map.find(token);
 
@@ -268,7 +268,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
     }
 
     {
-        const unordered_map<string, Index> target_vocabulary_map = create_vocabulary_map(target_vocabulary);
+        const unordered_map<string_view, Index> target_vocabulary_map = create_vocabulary_map(target_vocabulary);
 
         const Index samples_number = get_samples_number();
 
@@ -277,7 +277,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
         {
             data(sample, maximum_input_sequence_length) = 2;
 
-            const vector<string>& target_tokens = target_document_tokens[sample];
+            const vector<string_view>& target_tokens = target_document_tokens[sample];
 
             for (Index variable = maximum_input_sequence_length + 1;
                 variable < maximum_input_sequence_length + 1 + Index(target_tokens.size());
@@ -285,7 +285,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
             {
                 const Index token_index = variable - (maximum_input_sequence_length + 1);
 
-                const string& current_token = target_tokens[token_index];
+                const string_view current_token = target_tokens[token_index];
 
                 auto iterator = target_vocabulary_map.find(current_token);
 
@@ -301,38 +301,13 @@ void LanguageDataset::read_csv()
 {
     cout << "Reading .txt file..." << "\n";
 
-    const Index samples_number = count_non_empty_lines(data_path);
+    string buffer;
+    vector<vector<string_view>> input_document_tokens;
+    vector<vector<string_view>> target_document_tokens;
 
-    ifstream file(data_path);
+    load_documents(buffer, input_document_tokens, target_document_tokens, false, true);
 
-    if (!file.is_open())
-        throw runtime_error("Cannot open file " + data_path.string());
-
-    const string separator = get_separator_string();
-
-    vector<vector<string>> input_document_tokens(samples_number);
-    vector<vector<string>> target_document_tokens(samples_number);
-
-    string line;
-    Index sample_index = 0;
-
-    while (getline(file, line))
-    {
-        if (line.empty()) continue;
-
-        const vector<string> tokens = get_tokens(line, separator);
-
-        if (tokens.size() != 2)
-            throw runtime_error("Line must contain two fields: input and target.");
-
-        input_document_tokens[sample_index] = tokenize(tokens[0]);
-        target_document_tokens[sample_index] = tokenize(tokens[1]);
-
-        ++sample_index;
-    }
-
-    if (sample_index != samples_number)
-        throw runtime_error("Expected " + to_string(samples_number) + " samples, but " + to_string(sample_index) + " found.");
+    const Index samples_number = ssize(input_document_tokens);
 
     create_vocabulary(input_document_tokens, input_vocabulary);
     create_vocabulary(target_document_tokens, target_vocabulary);
@@ -465,14 +440,75 @@ void LanguageDataset::read_csv()
     cout << "Reading finished" << "\n";
 }
 
-unordered_map<string, Index> LanguageDataset::create_vocabulary_map(const vector<string>& vocabulary)
+unordered_map<string_view, Index> LanguageDataset::create_vocabulary_map(const vector<string>& vocabulary)
 {
-    unordered_map<string, Index> vocabulary_map;
+    unordered_map<string_view, Index> vocabulary_map;
+    vocabulary_map.reserve(vocabulary.size());
 
     for (Index i = 0; i < Index(vocabulary.size()); ++i)
-        vocabulary_map[vocabulary[i]] = i;
+        vocabulary_map.emplace(string_view(vocabulary[i]), i);
 
     return vocabulary_map;
+}
+
+void LanguageDataset::load_documents(string& buffer,
+                                     vector<vector<string_view>>& input_documents,
+                                     vector<vector<string_view>>& target_documents,
+                                     bool has_header_line,
+                                     bool strict_field_count) const
+{
+    ifstream file(data_path, ios::binary | ios::ate);
+
+    if (!file.is_open())
+        throw runtime_error("Cannot open file " + data_path.string());
+
+    const auto file_size = file.tellg();
+    file.seekg(0);
+
+    buffer.assign(static_cast<size_t>(file_size), '\0');
+    if (file_size > 0)
+        file.read(buffer.data(), file_size);
+    file.close();
+
+    for (char& c : buffer)
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+
+    const string separator_string = get_separator_string();
+    const char field_separator = separator_string.empty() ? '\t' : separator_string[0];
+
+    const size_t line_count_estimate = count(buffer.begin(), buffer.end(), '\n') + 1;
+    input_documents.reserve(line_count_estimate);
+    target_documents.reserve(line_count_estimate);
+
+    const string_view buffer_view(buffer);
+    size_t line_start = 0;
+    bool header_pending = has_header_line;
+
+    while (line_start < buffer_view.size())
+    {
+        size_t line_end = buffer_view.find('\n', line_start);
+        if (line_end == string_view::npos) line_end = buffer_view.size();
+
+        string_view line = buffer_view.substr(line_start, line_end - line_start);
+        line_start = line_end + 1;
+
+        if (!line.empty() && line.back() == '\r') line.remove_suffix(1);
+        if (line.empty()) continue;
+
+        if (header_pending) { header_pending = false; continue; }
+
+        const vector<string_view> fields = get_token_views(line, field_separator);
+
+        if (fields.size() != 2)
+        {
+            if (strict_field_count)
+                throw runtime_error("Line must contain two fields: input and target.");
+            continue;
+        }
+
+        input_documents.push_back(tokenize_views(fields[0]));
+        target_documents.push_back(tokenize_views(fields[1]));
+    }
 }
 
 void LanguageDataset::to_JSON(JsonWriter& printer) const
@@ -583,33 +619,11 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_display(read_json_bool(data_set_element, "Display"));
 
-    ifstream file(data_path);
+    string buffer;
+    vector<vector<string_view>> input_docs_tokens;
+    vector<vector<string_view>> target_docs_tokens;
 
-    if (!file.is_open())
-        throw runtime_error("Cannot open file " + data_path.string() + "\n");
-
-    vector<vector<string>> input_docs_tokens;
-    vector<vector<string>> target_docs_tokens;
-
-    string line;
-    const string separator = get_separator_string();
-
-    if (has_header)
-        getline(file, line);
-
-    while (getline(file, line))
-    {
-        if (line.empty())
-            continue;
-
-        const vector<string> tokens = get_tokens(line, separator);
-
-        if (tokens.size() != 2)
-            continue;
-
-        input_docs_tokens.push_back(tokenize(tokens[0]));
-        target_docs_tokens.push_back(tokenize(tokens[1]));
-    }
+    load_documents(buffer, input_docs_tokens, target_docs_tokens, has_header, false);
 
     if (input_docs_tokens.size() != static_cast<size_t>(get_samples_number()))
     {
@@ -627,21 +641,21 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
         encode_target_classification(target_docs_tokens);
 }
 
-void LanguageDataset::encode_streaming(const vector<vector<string>>& input_document_tokens,
-                                       const vector<vector<string>>& target_document_tokens)
+void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_document_tokens,
+                                       const vector<vector<string_view>>& target_document_tokens)
 {
     const Index samples_number = ssize(input_document_tokens);
 
     sample_input_indices.assign(samples_number, {});
     sample_target_indices.assign(samples_number, {});
 
-    const unordered_map<string, Index> input_vocabulary_map = create_vocabulary_map(input_vocabulary);
-    const unordered_map<string, Index> target_vocabulary_map = create_vocabulary_map(target_vocabulary);
+    const unordered_map<string_view, Index> input_vocabulary_map = create_vocabulary_map(input_vocabulary);
+    const unordered_map<string_view, Index> target_vocabulary_map = create_vocabulary_map(target_vocabulary);
 
     #pragma omp parallel for
     for (Index sample = 0; sample < samples_number; ++sample)
     {
-        const vector<string>& tokens = input_document_tokens[sample];
+        const vector<string_view>& tokens = input_document_tokens[sample];
         vector<Index>& dst = sample_input_indices[sample];
 
         dst.reserve(tokens.size() + 2);
@@ -666,7 +680,7 @@ void LanguageDataset::encode_streaming(const vector<vector<string>>& input_docum
         #pragma omp parallel for
         for (Index sample = 0; sample < samples_number; ++sample)
         {
-            const vector<string>& tokens = target_document_tokens[sample];
+            const vector<string_view>& tokens = target_document_tokens[sample];
             vector<Index>& dst = sample_target_indices[sample];
 
             dst.reserve(tokens.size() + 1);
@@ -686,7 +700,7 @@ void LanguageDataset::encode_streaming(const vector<vector<string>>& input_docum
     {
         for (Index sample = 0; sample < samples_number; ++sample)
         {
-            const string& token = target_document_tokens[sample][0];
+            const string_view token = target_document_tokens[sample][0];
 
             if (contains(positive_words, token))
                 sample_target_indices[sample] = {1};
@@ -704,7 +718,7 @@ void LanguageDataset::encode_streaming(const vector<vector<string>>& input_docum
         {
             sample_target_indices[sample].assign(maximum_target_sequence_length, 0);
 
-            const string& token = target_document_tokens[sample][0];
+            const string_view token = target_document_tokens[sample][0];
             const auto it = target_vocabulary_map.find(token);
             const Index vocab_index = (it != target_vocabulary_map.end()) ? it->second : Index(UNK_INDEX);
             const Index col = vocab_index - reserved_count;
@@ -718,7 +732,7 @@ void LanguageDataset::encode_streaming(const vector<vector<string>>& input_docum
         #pragma omp parallel for
         for (Index sample = 0; sample < samples_number; ++sample)
         {
-            const vector<string>& tokens = target_document_tokens[sample];
+            const vector<string_view>& tokens = target_document_tokens[sample];
             vector<Index>& dst = sample_target_indices[sample];
 
             dst.reserve(tokens.size() + 2);

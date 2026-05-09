@@ -14,56 +14,6 @@
 namespace opennn
 {
 
-void prepare_line(string& line)
-{
-    trim(line);
-    normalize_csv_line(line);
-    erase(line, '"');
-}
-
-Index count_non_empty_lines(const filesystem::path& data_path)
-{
-    ifstream file(data_path);
-
-    if (!file.is_open())
-        throw runtime_error("Cannot open file: " + data_path.string() + "\n");
-
-    Index count = 0;
-
-    string line;
-
-    while (getline(file, line))
-    {
-        prepare_line(line);
-
-        if (!line.empty())
-            ++count;
-    }
-
-    return count;
-}
-
-Index count_tokens(const string& text, const string& separator)
-{
-    Index tokens_number = 0;
-
-    string::size_type position = 0;
-
-    while ((position = text.find(separator, position)) != string::npos)
-    {
-        ++tokens_number;
-        position += separator.length();
-    }
-
-    if (text.find(separator, 0) == 0)
-        tokens_number--;
-
-    if (position == text.length())
-        tokens_number--;
-
-    return tokens_number + 1;
-}
-
 vector<string> tokenize(const string& document)
 {
     vector<string> tokens;
@@ -92,6 +42,36 @@ vector<string> tokenize(const string& document)
 
     if (!current_token.empty())
         tokens.emplace_back(move(current_token));
+
+    return tokens;
+}
+
+vector<string_view> tokenize_views(string_view document)
+{
+    vector<string_view> tokens;
+
+    size_t i = 0;
+    while (i < document.size())
+    {
+        const unsigned char c = static_cast<unsigned char>(document[i]);
+
+        if (isalnum(c))
+        {
+            const size_t start = i;
+            while (i < document.size() && isalnum(static_cast<unsigned char>(document[i])))
+                ++i;
+            tokens.emplace_back(document.substr(start, i - start));
+        }
+        else if (ispunct(c))
+        {
+            tokens.emplace_back(document.substr(i, 1));
+            ++i;
+        }
+        else
+        {
+            ++i;
+        }
+    }
 
     return tokens;
 }
@@ -170,29 +150,6 @@ vector<string> convert_string_vector(const vector<vector<string>>& input_vector,
     }
 
     return vector_result;
-}
-
-VectorR to_type_vector(const string& text, const string& separator)
-{
-    const vector<string> tokens = get_tokens(text, separator);
-
-    const Index tokens_size = tokens.size();
-
-    VectorR type_vector(tokens_size);
-
-    for (Index i = 0; i < tokens_size; ++i)
-    {
-        const char* begin = tokens[i].c_str();
-        char* end = nullptr;
-        errno = 0;
-        const float value = strtof(begin, &end);
-
-        type_vector(i) = (end == begin || errno == ERANGE || *end != '\0')
-            ? float(nan(""))
-            : float(value);
-    }
-
-    return type_vector;
 }
 
 bool is_numeric_string(string_view text)
@@ -395,67 +352,6 @@ void replace_all_appearances(string& text, const string& to_replace, const strin
     buffer.append(text, previous_position, text.size() - previous_position);
 
     text.swap(buffer);
-}
-
-void trim(string& text)
-{
-    text.erase(0, text.find_first_not_of(" \t\n\r\f\v\b"));
-    text.erase(text.find_last_not_of(" \t\n\r\f\v\b") + 1);
-}
-
-void normalize_csv_line(string& text)
-{
-    replace_first_and_last_char_with_missing_label(text, ';', "NA", "");
-    replace_first_and_last_char_with_missing_label(text, ',', "NA", "");
-
-    replace_double_char_with_label(text, ";", "NA");
-    replace_double_char_with_label(text, ",", "NA");
-
-    replace_substring_within_quotes(text, ",", "");
-    replace_substring_within_quotes(text, ";", "");
-}
-
-void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &first_missing_label, const string &last_missing_label)
-{
-    if (str.empty()) return;
-
-    if (str.front() == target_char)
-        str.insert(0, first_missing_label);
-
-    if (str.back() == target_char)
-        str.append(last_missing_label);
-}
-
-void replace_double_char_with_label(string &str, const string &target_char, const string &missing_label)
-{
-    replace(str, target_char + target_char, target_char + missing_label + target_char);
-}
-
-void replace_substring_within_quotes(string &str, const string &target, const string &replacement)
-{
-    const regex quoted_regex("\"([^\"]*)\"");
-    string result;
-    string::const_iterator search_start(str.begin());
-    smatch match;
-
-    while (regex_search(search_start, str.cend(), match, quoted_regex))
-    {
-        result += string(search_start, match[0].first);
-
-        string quoted_content = match[1].str();
-        replace(quoted_content, target, replacement);
-
-        result += "\"" + quoted_content + "\"";
-        search_start = match[0].second;
-    }
-
-    result += string(search_start, str.cend());
-    str = result;
-}
-
-void erase(string& text, char character)
-{
-    text.erase(remove(text.begin(), text.end(), character), text.end());
 }
 
 string get_trimmed(const string& text)

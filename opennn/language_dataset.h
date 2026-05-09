@@ -41,11 +41,11 @@ public:
 
     void read_csv() override;
 
-    void create_vocabulary(const vector<vector<string>>&, vector<string>&) const;
+    void create_vocabulary(const vector<vector<string_view>>&, vector<string>&) const;
 
-    void encode_input(const vector<vector<string>>&);
-    void encode_decoder_target_sequence_to_sequence(const vector<vector<string>>&);
-    void encode_target_classification(const vector<vector<string>>&);
+    void encode_input(const vector<vector<string_view>>&);
+    void encode_decoder_target_sequence_to_sequence(const vector<vector<string_view>>&);
+    void encode_target_classification(const vector<vector<string_view>>&);
 
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
@@ -81,10 +81,16 @@ public:
 
 private:
 
-    unordered_map<string, Index> create_vocabulary_map(const vector<string>& vocabulary);
+    unordered_map<string_view, Index> create_vocabulary_map(const vector<string>& vocabulary);
 
-    void encode_streaming(const vector<vector<string>>&,
-                          const vector<vector<string>>&);
+    void load_documents(string& buffer,
+                        vector<vector<string_view>>& input_documents,
+                        vector<vector<string_view>>& target_documents,
+                        bool has_header_line,
+                        bool strict_field_count) const;
+
+    void encode_streaming(const vector<vector<string_view>>&,
+                          const vector<vector<string_view>>&);
 
     vector<string> input_vocabulary;
     vector<string> target_vocabulary;
