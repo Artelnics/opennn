@@ -24,10 +24,7 @@ Normalization3d::Normalization3d(const Shape& new_input_shape,
 {
     operators = {&layer_norm};
 
-    const Index new_sequence_length     = new_input_shape.empty() ? Index(0) : new_input_shape[0];
-    const Index new_embedding_dimension = new_input_shape.rank >= 2 ? new_input_shape[1] : Index(0);
-
-    set(new_sequence_length, new_embedding_dimension, new_name);
+    set(new_input_shape.dim_or_zero(0), new_input_shape.dim_or_zero(1), new_name);
 
     layer_norm.input_slots  = {Input};
     layer_norm.output_slots = {Means, StandardDeviations, NormalizedInput, Output};
@@ -75,9 +72,7 @@ void Normalization3d::read_JSON_body(const Json* element)
     const string new_name = read_json_string(element, "Label");
     const Shape new_input_shape = string_to_shape(read_json_string(element, "InputDimensions"));
 
-    set(new_input_shape.empty() ? Index(0) : new_input_shape[0],
-        new_input_shape.rank >= 2 ? new_input_shape[1] : Index(0),
-        new_name);
+    set(new_input_shape.dim_or_zero(0), new_input_shape.dim_or_zero(1), new_name);
 }
 
 REGISTER(Layer, Normalization3d, "Normalization3d")

@@ -48,6 +48,9 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
     layer_input_indices.push_back(input_indices.empty()
         ? vector<Index>(1, old_layers_number )
         : input_indices);
+
+    first_trainable_cache_ = -1;
+    last_trainable_cache_  = -1;
 }
 
 void NeuralNetwork::compile()
@@ -73,6 +76,13 @@ void NeuralNetwork::compile()
     float* state_pointer = states.as<float>();
     for (auto& layer : layers)
         state_pointer = layer->link_states(state_pointer);
+
+    const Index first = get_first_trainable_layer_index();
+    if (first >= 0 && size_t(first) < layers.size())
+    {
+        const auto& ops = layers[first]->get_operators();
+        if (!ops.empty()) ops[0]->input_delta_slots.clear();
+    }
 }
 
 void NeuralNetwork::validate_type(LayerType type) const
@@ -349,22 +359,26 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 
 Index NeuralNetwork::get_first_trainable_layer_index() const
 {
+    if (first_trainable_cache_ >= 0) return first_trainable_cache_;
+
     auto it = find_if(layers.begin(), layers.end(),
                       [](const unique_ptr<Layer>& layer) { return layer->get_is_trainable(); });
 
-    if (it != layers.end())
-        return distance(layers.begin(), it);
+    if (it == layers.end())
+        throw runtime_error("The neural network has no trainable layers: get_first_trainable_layer_index.");
 
-    throw runtime_error("The neural network has no trainable layers: get_first_trainable_layer_index.");
+    first_trainable_cache_ = distance(layers.begin(), it);
+    return first_trainable_cache_;
 }
 
 Index NeuralNetwork::get_last_trainable_layer_index() const
 {
-    const Index layers_number = get_layers_number();
+    if (last_trainable_cache_ >= 0) return last_trainable_cache_;
 
+    const Index layers_number = get_layers_number();
     for (Index i = layers_number - 1; i >= 0; --i)
         if (layers[i]->get_is_trainable())
-            return i;
+            return last_trainable_cache_ = i;
 
     throw runtime_error("The neural network has no trainable layers: get_last_trainable_layer_index");
 }
@@ -785,6 +799,9 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
             layers.push_back(move(layer));
         }
+
+        first_trainable_cache_ = -1;
+        last_trainable_cache_  = -1;
     }
 
     const Json* connectivity_element = layers_container->find("LayerInputIndices");

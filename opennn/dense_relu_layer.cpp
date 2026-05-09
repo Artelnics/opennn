@@ -45,7 +45,7 @@ void DenseRelu::configure_operators()
     combination_relu.output_slots = {Output};
 
     combination_relu.output_delta_slots = {OutputDelta};
-    combination_relu.input_delta_slots  = is_first_layer ? vector<size_t>{} : vector<size_t>{InputDelta};
+    combination_relu.input_delta_slots  = {InputDelta};
 }
 
 void DenseRelu::set(const Shape& new_input_shape,
@@ -59,12 +59,8 @@ void DenseRelu::set(const Shape& new_input_shape,
         return;
     }
 
-    if (new_input_shape.rank != 1 && new_input_shape.rank != 2)
-        throw runtime_error("DenseRelu input shape rank must be 1 or 2 (got "
-                            + to_string(new_input_shape.rank) + ").");
-
-    if (new_output_shape.rank != 1)
-        throw runtime_error("DenseRelu output shape rank must be 1.");
+    check_rank(new_input_shape, {1, 2}, "DenseRelu", "input");
+    check_rank(new_output_shape, {1}, "DenseRelu", "output");
 
     input_shape = new_input_shape;
     output_features = new_output_shape.back();
@@ -76,9 +72,7 @@ void DenseRelu::set(const Shape& new_input_shape,
 
 void DenseRelu::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.rank != 1 && new_input_shape.rank != 2)
-        throw runtime_error("DenseRelu input shape rank must be 1 or 2.");
-
+    check_rank(new_input_shape, {1, 2}, "DenseRelu", "input");
     input_shape = new_input_shape;
     configure_operators();
 }

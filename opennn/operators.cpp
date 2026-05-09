@@ -1036,8 +1036,8 @@ void Convolution::apply_delta_cpu(const TensorView& input,
 
     const Index kernel_size = kernel_height * kernel_width * kernel_channels;
 
-    MatrixMap output_gradients_mat = output_delta.as_flat_matrix();
-    bias_gradient.as_vector().noalias() = output_gradients_mat.colwise().sum();
+    MatrixMap output_deltas_mat = output_delta.as_flat_matrix();
+    bias_gradient.as_vector().noalias() = output_deltas_mat.colwise().sum();
 
     float* weight_data = weight_gradient.as<float>();
 
@@ -1565,9 +1565,9 @@ void MultiHeadProjection::forward_propagate(ForwardPropagation& fp, size_t layer
     apply(input, output, scratch);
 }
 
-void MultiHeadProjection::apply_delta(const TensorView& head_gradient,
+void MultiHeadProjection::apply_delta(const TensorView& head_delta,
                                       const TensorView& input,
-                                      TensorView& input_gradient,
+                                      TensorView& input_delta,
                                       bool accumulate,
                                       float* scratch) const
 {
@@ -1575,14 +1575,14 @@ void MultiHeadProjection::apply_delta(const TensorView& head_gradient,
     const Index seq_len    = input.shape[1];
     const Index rows       = batch_size * seq_len;
 
-    TensorView scratch_4d(scratch, {batch_size, seq_len, heads_number, head_dimension}, head_gradient.type);
-    merge_heads(head_gradient, scratch_4d);
+    TensorView scratch_4d(scratch, {batch_size, seq_len, heads_number, head_dimension}, head_delta.type);
+    merge_heads(head_delta, scratch_4d);
 
-    TensorView scratch_2d(scratch, {rows, input_features}, head_gradient.type);
+    TensorView scratch_2d(scratch, {rows, input_features}, head_delta.type);
     TensorView input_2d          = input.reshape({rows, input_features});
-    TensorView input_gradient_2d = input_gradient.reshape({rows, input_features});
+    TensorView input_delta_2d = input_delta.reshape({rows, input_features});
 
-    combination.apply_delta(scratch_2d, input_2d, input_gradient_2d, accumulate);
+    combination.apply_delta(scratch_2d, input_2d, input_delta_2d, accumulate);
 }
 
 void MultiHeadProjection::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
@@ -1594,14 +1594,14 @@ void MultiHeadProjection::back_propagate(ForwardPropagation& fp, BackPropagation
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
     const bool self_attention = (input_views.size() == 1);
 
-    const TensorView head_gradient(dv[output_delta_slots[0]].as<float>(),
+    const TensorView head_delta(dv[output_delta_slots[0]].as<float>(),
                                    {fp.batch_size, heads_number, input.shape[1], head_dimension},
                                    compute_dtype);
 
     TensorView& input_delta = dv[(self_attention ? input_delta_slots_self : input_delta_slots_cross)[0]];
     const bool accumulate   = self_attention ? accumulate_input_delta_self : accumulate_input_delta_cross;
 
-    apply_delta(head_gradient, input, input_delta, accumulate,
+    apply_delta(head_delta, input, input_delta, accumulate,
                 fv[scratch_slots[0]][0].as<float>());
 }
 
@@ -2002,23 +2002,23 @@ void Attention::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size
     const TensorView& attention_weights = fv[output_slots[0]][0];
     const TensorView& attention_weights_dropped = fv[output_slots[1]][0];
 
-    const TensorView output_gradient = fv[scratch_slots[0]][0]
+    const TensorView output_delta = fv[scratch_slots[0]][0]
         .reshape({batch_size, heads_number, query_sequence_length, head_dimension});
 
-    TensorView& attention_weight_gradient = dv[output_delta_slots[0]];
-    TensorView  query_gradient(dv[output_delta_slots[1]].as<float>(),
+    TensorView& attention_weight_delta = dv[output_delta_slots[0]];
+    TensorView  query_delta(dv[output_delta_slots[1]].as<float>(),
                                {batch_size, heads_number, query_sequence_length, head_dimension},
                                compute_dtype);
-    TensorView  key_gradient(dv[output_delta_slots[2]].as<float>(),
+    TensorView  key_delta(dv[output_delta_slots[2]].as<float>(),
                              {batch_size, heads_number, source_sequence_length, head_dimension},
                              compute_dtype);
-    TensorView& value_gradient = dv[output_delta_slots[3]];
+    TensorView& value_delta = dv[output_delta_slots[3]];
 
     apply_delta(query, key, value, attention_output,
                 attention_weights, attention_weights_dropped,
-                output_gradient,
-                attention_weight_gradient,
-                query_gradient, key_gradient, value_gradient);
+                output_delta,
+                attention_weight_delta,
+                query_delta, key_delta, value_delta);
 }
 
 void Attention::apply_cpu(const TensorView& query,
@@ -2173,23 +2173,54 @@ void Attention::apply_delta(const TensorView& query,
                             const TensorView& attention_output,
                             const TensorView& attention_weights,
                             const TensorView& attention_weights_dropped,
-                            const TensorView& output_gradient,
-                            TensorView& attention_weight_gradient,
-                            TensorView& query_gradient,
-                            TensorView& key_gradient,
-                            TensorView& value_gradient) const
+                            const TensorView& output_delta,
+                            TensorView& attention_weight_delta,
+                            TensorView& query_delta,
+                            TensorView& key_delta,
+                            TensorView& value_delta) const
 {
     IF_GPU({
         apply_delta_gpu(query, key, value, attention_output,
                         attention_weights, attention_weights_dropped,
-                        output_gradient, attention_weight_gradient,
-                        query_gradient, key_gradient, value_gradient);
+                        output_delta, attention_weight_delta,
+                        query_delta, key_delta, value_delta);
         return;
     });
     apply_delta_cpu(query, key, value, attention_output,
                     attention_weights, attention_weights_dropped,
-                    output_gradient, attention_weight_gradient,
-                    query_gradient, key_gradient, value_gradient);
+                    output_delta, attention_weight_delta,
+                    query_delta, key_delta, value_delta);
+}
+
+template<typename SoftmaxBwd>
+void Attention::apply_delta_unfused(const TensorView& query,
+                                     const TensorView& key,
+                                     const TensorView& value,
+                                     const TensorView& attention_weights,
+                                     const TensorView& attention_weights_dropped,
+                                     const TensorView& output_delta,
+                                     TensorView& attention_weight_delta,
+                                     TensorView& query_delta,
+                                     TensorView& key_delta,
+                                     TensorView& value_delta,
+                                     SoftmaxBwd&& softmax_bwd) const
+{
+    const TensorView& attention_used = dropout.active()
+        ? attention_weights_dropped
+        : attention_weights;
+
+    multiply(attention_used, true, output_delta, false, value_delta);
+    multiply(output_delta, false, value, true, attention_weight_delta);
+
+    if (dropout.active())
+        dropout.apply_delta(attention_weight_delta);
+
+    if (!attention_weight_delta.empty())
+        softmax_bwd();
+
+    const float scale = scaling_factor();
+    multiply(attention_weight_delta, false, key,   false, query_delta, scale, 0.0f);
+    multiply(attention_weight_delta, true,  query, false, key_delta,   scale, 0.0f);
 }
 
 void Attention::apply_delta_cpu(const TensorView& query,
@@ -2198,34 +2229,22 @@ void Attention::apply_delta_cpu(const TensorView& query,
                                 const TensorView& /*attention_output*/,
                                 const TensorView& attention_weights,
                                 const TensorView& attention_weights_dropped,
-                                const TensorView& output_gradient,
-                                TensorView& attention_weight_gradient,
-                                TensorView& query_gradient,
-                                TensorView& key_gradient,
-                                TensorView& value_gradient) const
+                                const TensorView& output_delta,
+                                TensorView& attention_weight_delta,
+                                TensorView& query_delta,
+                                TensorView& key_delta,
+                                TensorView& value_delta) const
 {
-    const TensorView& attention_used = dropout.active()
-        ? attention_weights_dropped
-        : attention_weights;
-
-    multiply(attention_used, true, output_gradient, false, value_gradient);
-    multiply(output_gradient, false, value, true, attention_weight_gradient);
-
-    if (dropout.active())
-        dropout.apply_delta(attention_weight_gradient);
-
-    if (!attention_weight_gradient.empty())
-    {
-        const MatrixMap y  = attention_weights.as_flat_matrix();
-        MatrixMap       dY = attention_weight_gradient.as_flat_matrix();
-
-        const VectorR dot = (y.array() * dY.array()).rowwise().sum();
-        dY.array() = y.array() * (dY.colwise() - dot).array();
-    }
-
-    const float scale = scaling_factor();
-    multiply(attention_weight_gradient, false, key,   false, query_gradient, scale, 0.0f);
-    multiply(attention_weight_gradient, true,  query, false, key_gradient,   scale, 0.0f);
+    apply_delta_unfused(query, key, value,
+                        attention_weights, attention_weights_dropped,
+                        output_delta, attention_weight_delta,
+                        query_delta, key_delta, value_delta,
+        [&]() {
+            const MatrixMap y  = attention_weights.as_flat_matrix();
+            MatrixMap       dY = attention_weight_delta.as_flat_matrix();
+            const VectorR dot = (y.array() * dY.array()).rowwise().sum();
+            dY.array() = y.array() * (dY.colwise() - dot).array();
+        });
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -2235,37 +2254,26 @@ void Attention::apply_delta_gpu_unfused(const TensorView& query,
                                         const TensorView& value,
                                         const TensorView& attention_weights,
                                         const TensorView& attention_weights_dropped,
-                                        const TensorView& output_gradient,
-                                        TensorView& attention_weight_gradient,
-                                        TensorView& query_gradient,
-                                        TensorView& key_gradient,
-                                        TensorView& value_gradient) const
+                                        const TensorView& output_delta,
+                                        TensorView& attention_weight_delta,
+                                        TensorView& query_delta,
+                                        TensorView& key_delta,
+                                        TensorView& value_delta) const
 {
-    const TensorView& attention_used = dropout.active()
-        ? attention_weights_dropped
-        : attention_weights;
-
-    multiply(attention_used, true, output_gradient, false, value_gradient);
-    multiply(output_gradient, false, value, true, attention_weight_gradient);
-
-    if (dropout.active())
-        dropout.apply_delta(attention_weight_gradient);
-
-    if (!attention_weight_gradient.empty())
-    {
-        CHECK_CUDNN(cudnnSoftmaxBackward(Backend::get_cudnn_handle(),
-                                         CUDNN_SOFTMAX_ACCURATE,
-                                         CUDNN_SOFTMAX_MODE_CHANNEL,
-                                         &one,
-                                         attention_weights.get_descriptor(),     attention_weights.data,
-                                         attention_weight_gradient.get_descriptor(), attention_weight_gradient.data,
-                                         &zero,
-                                         attention_weight_gradient.get_descriptor(), attention_weight_gradient.data));
-    }
-
-    const float scale = scaling_factor();
-    multiply(attention_weight_gradient, false, key,   false, query_gradient, scale, 0.0f);
-    multiply(attention_weight_gradient, true,  query, false, key_gradient,   scale, 0.0f);
+    apply_delta_unfused(query, key, value,
+                        attention_weights, attention_weights_dropped,
+                        output_delta, attention_weight_delta,
+                        query_delta, key_delta, value_delta,
+        [&]() {
+            CHECK_CUDNN(cudnnSoftmaxBackward(Backend::get_cudnn_handle(),
+                                             CUDNN_SOFTMAX_ACCURATE,
+                                             CUDNN_SOFTMAX_MODE_CHANNEL,
+                                             &one,
+                                             attention_weights.get_descriptor(),         attention_weights.data,
+                                             attention_weight_delta.get_descriptor(), attention_weight_delta.data,
+                                             &zero,
+                                             attention_weight_delta.get_descriptor(), attention_weight_delta.data));
+        });
 }
 
 #endif
@@ -2276,11 +2284,11 @@ void Attention::apply_delta_gpu(const TensorView& query,
                                 const TensorView& attention_output,
                                 const TensorView& attention_weights,
                                 const TensorView& attention_weights_dropped,
-                                const TensorView& output_gradient,
-                                TensorView& attention_weight_gradient,
-                                TensorView& query_gradient,
-                                TensorView& key_gradient,
-                                TensorView& value_gradient) const
+                                const TensorView& output_delta,
+                                TensorView& attention_weight_delta,
+                                TensorView& query_delta,
+                                TensorView& key_delta,
+                                TensorView& value_delta) const
 {
 #ifdef OPENNN_HAS_CUDNN_FRONTEND
     // Same support gates as forward. The forward path that produced this
@@ -2294,8 +2302,8 @@ void Attention::apply_delta_gpu(const TensorView& query,
         require_attention_scratch(attention_weights, "SDPA backward fallback triggered");
         apply_delta_gpu_unfused(query, key, value,
                                 attention_weights, attention_weights_dropped,
-                                output_gradient, attention_weight_gradient,
-                                query_gradient, key_gradient, value_gradient);
+                                output_delta, attention_weight_delta,
+                                query_delta, key_delta, value_delta);
         return;
     }
 
@@ -2318,8 +2326,8 @@ void Attention::apply_delta_gpu(const TensorView& query,
         require_attention_scratch(attention_weights, "SDPA backward without matching forward entry");
         apply_delta_gpu_unfused(query, key, value,
                                 attention_weights, attention_weights_dropped,
-                                output_gradient, attention_weight_gradient,
-                                query_gradient, key_gradient, value_gradient);
+                                output_delta, attention_weight_delta,
+                                query_delta, key_delta, value_delta);
         return;
     }
 
@@ -2332,11 +2340,11 @@ void Attention::apply_delta_gpu(const TensorView& query,
     tp[entry.bwd_K]     = const_cast<float*>(key.as<float>());
     tp[entry.bwd_V]     = const_cast<float*>(value.as<float>());
     tp[entry.bwd_O]     = const_cast<float*>(attention_output.as<float>());
-    tp[entry.bwd_dO]    = const_cast<float*>(output_gradient.as<float>());
+    tp[entry.bwd_dO]    = const_cast<float*>(output_delta.as<float>());
     tp[entry.bwd_Stats] = entry.stats_buf;
-    tp[entry.bwd_dQ]    = query_gradient.data;
-    tp[entry.bwd_dK]    = key_gradient.data;
-    tp[entry.bwd_dV]    = value_gradient.data;
+    tp[entry.bwd_dQ]    = query_delta.data;
+    tp[entry.bwd_dK]    = key_delta.data;
+    tp[entry.bwd_dV]    = value_delta.data;
 
     const auto status = entry.bwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.bwd_workspace_buf);
     if (status.is_bad())
@@ -2344,13 +2352,13 @@ void Attention::apply_delta_gpu(const TensorView& query,
 #elif defined(OPENNN_HAS_CUDA)
     apply_delta_gpu_unfused(query, key, value,
                             attention_weights, attention_weights_dropped,
-                            output_gradient, attention_weight_gradient,
-                            query_gradient, key_gradient, value_gradient);
+                            output_delta, attention_weight_delta,
+                            query_delta, key_delta, value_delta);
 #else
     apply_delta_cpu(query, key, value, attention_output,
                     attention_weights, attention_weights_dropped,
-                    output_gradient, attention_weight_gradient,
-                    query_gradient, key_gradient, value_gradient);
+                    output_delta, attention_weight_delta,
+                    query_delta, key_delta, value_delta);
 #endif
 }
 
@@ -2407,7 +2415,7 @@ void Pool::set(Index input_h, Index input_w, Index input_c,
                Index pool_h, Index pool_w,
                Index new_row_stride, Index new_column_stride,
                Index padding_h, Index padding_w,
-               int new_method)
+               Method new_method)
 {
     input_height    = input_h;
     input_width     = input_w;
@@ -2425,7 +2433,7 @@ void Pool::set(Index input_h, Index input_w, Index input_c,
 
     if (!pooling_descriptor) CHECK_CUDNN(cudnnCreatePoolingDescriptor(&pooling_descriptor));
 
-    const cudnnPoolingMode_t mode = (method == 0)
+    const cudnnPoolingMode_t mode = (method == Max)
         ? CUDNN_POOLING_MAX
         : CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
 
@@ -2475,7 +2483,7 @@ void Pool3d::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_tra
     TensorView& output      = fv[output_slots[0]][0];
     TensorView& indices     = fv[output_slots[1]][0];
 
-    if (method == 0)
+    if (method == Max)
         max_pooling_3d_forward(input, output, indices, is_training);
     else
         average_pooling_3d_forward(input, output);
@@ -2489,10 +2497,48 @@ void Pool3d::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t 
     const TensorView& output_delta = dv[output_delta_slots[0]];
     TensorView& input_delta        = dv[input_delta_slots[0]];
 
-    if (method == 0)
+    if (method == Max)
         max_pooling_3d_backward(fv[output_slots[1]][0], output_delta, input_delta);
     else
         average_pooling_3d_backward(fv[input_slots[0]][0], output_delta, input_delta);
+}
+
+namespace {
+
+struct PoolWindow
+{
+    Index batch, channel, out_row, out_col;
+    Index in_row_start, pr_start, pr_end;
+    Index in_col_start, pc_start, pc_end;
+};
+
+template<typename Visit>
+void for_each_pool_window(const Pool& p,
+                           Index batch_size, Index output_height, Index output_width,
+                           Visit&& visit)
+{
+    #pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index c = 0; c < p.input_channels; ++c)
+            for (Index out_row = 0; out_row < output_height; ++out_row)
+            {
+                const Index in_row_start = out_row * p.row_stride - p.padding_height;
+                const Index pr_start = max(Index(0), -in_row_start);
+                const Index pr_end   = min(p.pool_height, p.input_height - in_row_start);
+
+                for (Index out_col = 0; out_col < output_width; ++out_col)
+                {
+                    const Index in_col_start = out_col * p.column_stride - p.padding_width;
+                    const Index pc_start = max(Index(0), -in_col_start);
+                    const Index pc_end   = min(p.pool_width, p.input_width - in_col_start);
+
+                    visit(PoolWindow{b, c, out_row, out_col,
+                                     in_row_start, pr_start, pr_end,
+                                     in_col_start, pc_start, pc_end});
+                }
+            }
+}
+
 }
 
 void Pool::apply_cpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training)
@@ -2504,178 +2550,98 @@ void Pool::apply_cpu(const TensorView& input, TensorView& output, TensorView& ma
     const Index output_height = outputs.dimension(1);
     const Index output_width  = outputs.dimension(2);
 
-    if (method == 0 && is_training)  // Max with argmax (training)
+    if (method == Max && is_training)
     {
-        TensorMap4 maximal_indices_map = maximal_indices.as_tensor<4>();
-
-        #pragma omp parallel for collapse(2)
-        for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
-            for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
-                for (Index output_row = 0; output_row < output_height; ++output_row)
-                {
-                    const Index input_row_start = output_row * row_stride - padding_height;
-                    const Index pool_row_start  = max(Index(0), -input_row_start);
-                    const Index pool_row_end    = min(pool_height, input_height - input_row_start);
-
-                    for (Index output_column = 0; output_column < output_width; ++output_column)
+        TensorMap4 indices_map = maximal_indices.as_tensor<4>();
+        for_each_pool_window(*this, batch_size, output_height, output_width,
+            [&](const PoolWindow& w) {
+                float best = NEG_INFINITY;
+                Index argmax = 0;
+                for (Index pr = w.pr_start; pr < w.pr_end; ++pr)
+                    for (Index pc = w.pc_start; pc < w.pc_end; ++pc)
                     {
-                        const Index input_column_start = output_column * column_stride - padding_width;
-                        const Index pool_col_start = max(Index(0), -input_column_start);
-                        const Index pool_col_end   = min(pool_width, input_width - input_column_start);
-
-                        float maximum_value = NEG_INFINITY;
-                        Index maximal_index = 0;
-
-                        for (Index pool_row = pool_row_start; pool_row < pool_row_end; ++pool_row)
-                            for (Index pool_column = pool_col_start; pool_column < pool_col_end; ++pool_column)
-                            {
-                                const float value = inputs(batch_index,
-                                                           input_row_start + pool_row,
-                                                           input_column_start + pool_column,
-                                                           channel_index);
-                                if (value > maximum_value)
-                                {
-                                    maximum_value = value;
-                                    maximal_index = pool_row * pool_width + pool_column;
-                                }
-                            }
-
-                        outputs(batch_index, output_row, output_column, channel_index) = maximum_value;
-                        maximal_indices_map(batch_index, output_row, output_column, channel_index) = maximal_index;
+                        const float v = inputs(w.batch, w.in_row_start + pr,
+                                                w.in_col_start + pc, w.channel);
+                        if (v > best) { best = v; argmax = pr * pool_width + pc; }
                     }
-                }
+                outputs(w.batch, w.out_row, w.out_col, w.channel) = best;
+                indices_map(w.batch, w.out_row, w.out_col, w.channel) = argmax;
+            });
+        return;
     }
-    else if (method == 0)  // Max (inference, no argmax)
+
+    if (method == Max)
     {
-        #pragma omp parallel for collapse(2)
-        for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
-            for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
-                for (Index output_row = 0; output_row < output_height; ++output_row)
-                {
-                    const Index input_row_start = output_row * row_stride - padding_height;
-                    const Index pool_row_start  = max(Index(0), -input_row_start);
-                    const Index pool_row_end    = min(pool_height, input_height - input_row_start);
-
-                    for (Index output_column = 0; output_column < output_width; ++output_column)
+        for_each_pool_window(*this, batch_size, output_height, output_width,
+            [&](const PoolWindow& w) {
+                float best = NEG_INFINITY;
+                for (Index pr = w.pr_start; pr < w.pr_end; ++pr)
+                    for (Index pc = w.pc_start; pc < w.pc_end; ++pc)
                     {
-                        const Index input_column_start = output_column * column_stride - padding_width;
-                        const Index pool_col_start = max(Index(0), -input_column_start);
-                        const Index pool_col_end   = min(pool_width, input_width - input_column_start);
-
-                        float maximum_value = NEG_INFINITY;
-
-                        for (Index pool_row = pool_row_start; pool_row < pool_row_end; ++pool_row)
-                            for (Index pool_column = pool_col_start; pool_column < pool_col_end; ++pool_column)
-                            {
-                                const float value = inputs(batch_index,
-                                                           input_row_start + pool_row,
-                                                           input_column_start + pool_column,
-                                                           channel_index);
-                                if (value > maximum_value) maximum_value = value;
-                            }
-
-                        outputs(batch_index, output_row, output_column, channel_index) = maximum_value;
+                        const float v = inputs(w.batch, w.in_row_start + pr,
+                                                w.in_col_start + pc, w.channel);
+                        if (v > best) best = v;
                     }
-                }
+                outputs(w.batch, w.out_row, w.out_col, w.channel) = best;
+            });
+        return;
     }
-    else  // Average
-    {
-        const float inv_pool_size = 1.0f / (pool_height * pool_width);
 
-        #pragma omp parallel for collapse(2)
-        for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
-            for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
-                for (Index output_row = 0; output_row < output_height; ++output_row)
-                {
-                    const Index input_row_start = output_row * row_stride - padding_height;
-                    const Index pool_row_start  = max(Index(0), -input_row_start);
-                    const Index pool_row_end    = min(pool_height, input_height - input_row_start);
-
-                    for (Index output_column = 0; output_column < output_width; ++output_column)
-                    {
-                        const Index input_column_start = output_column * column_stride - padding_width;
-                        const Index pool_col_start = max(Index(0), -input_column_start);
-                        const Index pool_col_end   = min(pool_width, input_width - input_column_start);
-
-                        float sum = 0;
-                        for (Index pool_row = pool_row_start; pool_row < pool_row_end; ++pool_row)
-                            for (Index pool_column = pool_col_start; pool_column < pool_col_end; ++pool_column)
-                                sum += inputs(batch_index,
-                                              input_row_start + pool_row,
-                                              input_column_start + pool_column,
-                                              channel_index);
-                        outputs(batch_index, output_row, output_column, channel_index) = sum * inv_pool_size;
-                    }
-                }
-    }
+    const float inv_pool_size = 1.0f / (pool_height * pool_width);
+    for_each_pool_window(*this, batch_size, output_height, output_width,
+        [&](const PoolWindow& w) {
+            float sum = 0;
+            for (Index pr = w.pr_start; pr < w.pr_end; ++pr)
+                for (Index pc = w.pc_start; pc < w.pc_end; ++pc)
+                    sum += inputs(w.batch, w.in_row_start + pr,
+                                  w.in_col_start + pc, w.channel);
+            outputs(w.batch, w.out_row, w.out_col, w.channel) = sum * inv_pool_size;
+        });
 }
 
 void Pool::apply_delta_cpu(const TensorView& output_delta,
                            const TensorView& maximal_indices,
                            TensorView& input_delta) const
 {
-    const TensorMap4 out_grads = output_delta.as_tensor<4>();
-    TensorMap4 in_gradients        = input_delta.as_tensor<4>().setZero();
+    const TensorMap4 output_deltas = output_delta.as_tensor<4>();
+    TensorMap4       input_deltas  = input_delta.as_tensor<4>().setZero();
 
-    const Index batch_size    = out_grads.dimension(0);
-    const Index output_height = out_grads.dimension(1);
-    const Index output_width  = out_grads.dimension(2);
+    const Index batch_size    = output_deltas.dimension(0);
+    const Index output_height = output_deltas.dimension(1);
+    const Index output_width  = output_deltas.dimension(2);
 
-    if (method == 0)  // Max
+    if (method == Max)
     {
         const TensorMap4 max_indices = maximal_indices.as_tensor<4>();
 
         #pragma omp parallel for collapse(2)
-        for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
-            for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
-                for (Index output_row = 0; output_row < output_height; ++output_row)
+        for (Index b = 0; b < batch_size; ++b)
+            for (Index c = 0; c < input_channels; ++c)
+                for (Index out_row = 0; out_row < output_height; ++out_row)
                 {
-                    const Index input_row_start = output_row * row_stride - padding_height;
-                    for (Index output_column = 0; output_column < output_width; ++output_column)
+                    const Index in_row_start = out_row * row_stride - padding_height;
+                    for (Index out_col = 0; out_col < output_width; ++out_col)
                     {
-                        const Index input_column_start = output_column * column_stride - padding_width;
-                        const Index maximal_index = static_cast<Index>(
-                            max_indices(batch_index, output_row, output_column, channel_index));
-                        const Index pool_row    = maximal_index / pool_width;
-                        const Index pool_column = maximal_index % pool_width;
-                        in_gradients(batch_index,
-                                 input_row_start + pool_row,
-                                 input_column_start + pool_column,
-                                 channel_index)
-                            += out_grads(batch_index, output_row, output_column, channel_index);
+                        const Index in_col_start = out_col * column_stride - padding_width;
+                        const Index argmax = static_cast<Index>(max_indices(b, out_row, out_col, c));
+                        const Index pr = argmax / pool_width;
+                        const Index pc = argmax % pool_width;
+                        input_deltas(b, in_row_start + pr, in_col_start + pc, c)
+                            += output_deltas(b, out_row, out_col, c);
                     }
                 }
         return;
     }
 
-    // Average
     const float inv_pool_size = 1.0f / (pool_height * pool_width);
-
-    #pragma omp parallel for collapse(2)
-    for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
-            for (Index output_row = 0; output_row < output_height; ++output_row)
-            {
-                const Index input_row_start = output_row * row_stride - padding_height;
-                const Index pool_row_start  = max(Index(0), -input_row_start);
-                const Index pool_row_end    = min(pool_height, input_height - input_row_start);
-
-                for (Index output_column = 0; output_column < output_width; ++output_column)
-                {
-                    const float average_gradient =
-                        out_grads(batch_index, output_row, output_column, channel_index) * inv_pool_size;
-                    const Index input_column_start = output_column * column_stride - padding_width;
-                    const Index pool_col_start = max(Index(0), -input_column_start);
-                    const Index pool_col_end   = min(pool_width, input_width - input_column_start);
-
-                    for (Index pool_row = pool_row_start; pool_row < pool_row_end; ++pool_row)
-                        for (Index pool_column = pool_col_start; pool_column < pool_col_end; ++pool_column)
-                            in_gradients(batch_index,
-                                     input_row_start + pool_row,
-                                     input_column_start + pool_column,
-                                     channel_index) += average_gradient;
-                }
-            }
+    for_each_pool_window(*this, batch_size, output_height, output_width,
+        [&](const PoolWindow& w) {
+            const float avg_delta = output_deltas(w.batch, w.out_row, w.out_col, w.channel) * inv_pool_size;
+            for (Index pr = w.pr_start; pr < w.pr_end; ++pr)
+                for (Index pc = w.pc_start; pc < w.pc_end; ++pc)
+                    input_deltas(w.batch, w.in_row_start + pr,
+                                 w.in_col_start + pc, w.channel) += avg_delta;
+        });
 }
 
 #ifdef OPENNN_HAS_CUDA

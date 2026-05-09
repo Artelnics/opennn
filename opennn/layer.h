@@ -88,6 +88,26 @@ inline vector<Type> spec_dtypes(const vector<pair<Shape, Type>>& specs)
     return result;
 }
 
+inline void check_rank(const Shape& shape, std::initializer_list<int> allowed,
+                       const char* layer, const char* what)
+{
+    if (shape.empty()) return;
+    for (int r : allowed) if (int(shape.rank) == r) return;
+
+    string allowed_str;
+    auto it = allowed.begin();
+    while (it != allowed.end())
+    {
+        if (!allowed_str.empty())
+            allowed_str += (it + 1 == allowed.end()) ? " or " : ", ";
+        allowed_str += to_string(*it);
+        ++it;
+    }
+
+    throw runtime_error(string(layer) + " layer supports " + what + " rank "
+                        + allowed_str + " (got " + to_string(shape.rank) + ").");
+}
+
 class Layer
 {
 
@@ -217,8 +237,6 @@ protected:
     LayerType layer_type = LayerType::Dense;
 
     bool is_trainable = true;
-
-    bool is_first_layer = false;
 
     Shape input_shape;
 

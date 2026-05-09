@@ -236,18 +236,19 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
             input.as<T>(), target.as<float>(),
             errors_device, valid_mask_device, correct_mask_device, EPSILON);
 
-        static float* device_results = nullptr;
-        if (!device_results) CHECK_CUDA(cudaMalloc(&device_results, 3 * sizeof(float)));
+        static Buffer device_results(Device::CUDA);
+        device_results.grow_to(Index(3 * sizeof(float)));
+        float* device_results_ptr = device_results.as<float>();
 
         cublasHandle_t handle = Backend::get_cublas_handle();
         CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), errors_device,       1, device_results + 0));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,   1, device_results + 1));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device, 1, device_results + 2));
+        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), errors_device,       1, device_results_ptr + 0));
+        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,   1, device_results_ptr + 1));
+        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device, 1, device_results_ptr + 2));
         CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
 
         float host_results[3];
-        CHECK_CUDA(cudaMemcpyAsync(host_results, device_results, 3 * sizeof(float),
+        CHECK_CUDA(cudaMemcpyAsync(host_results, device_results_ptr, 3 * sizeof(float),
                                    cudaMemcpyDeviceToHost, Backend::get_compute_stream()));
         CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
 

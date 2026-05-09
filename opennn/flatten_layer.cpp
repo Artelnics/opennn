@@ -30,10 +30,7 @@ Flatten::Flatten(const Shape& new_input_shape)
 }
 void Flatten::set(const Shape& new_input_shape)
 {
-    if (!new_input_shape.empty()
-        && new_input_shape.rank != 1 && new_input_shape.rank != 2 && new_input_shape.rank != 3)
-        throw runtime_error("Flatten layer supports input rank 1, 2 or 3 (got "
-                            + to_string(new_input_shape.rank) + ").");
+    check_rank(new_input_shape, {1, 2, 3}, "Flatten", "input");
 
     input_shape = new_input_shape;
 

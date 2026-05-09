@@ -178,9 +178,9 @@ void MultiHeadAttention::read_JSON_body(const Json* root_element)
     const Index new_heads_number = read_json_index(root_element, "HeadsNumber");
     const bool  new_use_causal_mask = read_json_bool(root_element, "CausalMask");
 
-    set(new_input_shape.empty() ? Index(0) : new_input_shape[0],
+    set(new_input_shape.dim_or_zero(0),
         new_source_sequence_length,
-        new_input_shape.rank >= 2 ? new_input_shape[1] : Index(0),
+        new_input_shape.dim_or_zero(1),
         new_heads_number, new_use_causal_mask, new_label);
 }
 

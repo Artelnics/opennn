@@ -33,7 +33,6 @@ public:
     void set(const Shape& = {0}, const string& = "bounding_layer");
 
     void set_input_shape(const Shape&) override;
-    void set_output_shape(const Shape&) override;
 
     void set_bounding_method(const BoundingMethod&);
     void set_bounding_method(const string&);

@@ -67,6 +67,8 @@ struct Shape
 
     bool empty() const noexcept { return rank == 0; }
 
+    Index dim_or_zero(size_t i) const noexcept { return i < rank ? dims[i] : Index(0); }
+
     Index size() const noexcept
     {
         return rank == 0 ? 0 : std::accumulate(begin(), end(), Index(1), std::multiplies<>{});

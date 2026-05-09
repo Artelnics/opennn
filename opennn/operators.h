@@ -482,9 +482,9 @@ struct MultiHeadProjection : Operator
 
     void apply(const TensorView& input, TensorView& head_output, float* scratch);
 
-    void apply_delta(const TensorView& head_gradient,
+    void apply_delta(const TensorView& head_delta,
                      const TensorView& input,
-                     TensorView& input_gradient,
+                     TensorView& input_delta,
                      bool accumulate,
                      float* scratch) const;
 };
@@ -540,11 +540,11 @@ struct Attention : Operator
                      const TensorView& attention_output,   // forward output O — only read by GPU SDPA
                      const TensorView& attention_weights,
                      const TensorView& attention_weights_dropped,
-                     const TensorView& output_gradient,        // {B, H, Q_seq, D}
-                     TensorView& attention_weight_gradient,    // CPU-only scratch; empty on GPU
-                     TensorView& query_gradient,
-                     TensorView& key_gradient,
-                     TensorView& value_gradient) const;
+                     const TensorView& output_delta,        // {B, H, Q_seq, D}
+                     TensorView& attention_weight_delta,    // CPU-only scratch; empty on GPU
+                     TensorView& query_delta,
+                     TensorView& key_delta,
+                     TensorView& value_delta) const;
 
     void to_JSON(JsonWriter& w) const override;
     void from_JSON(const Json* parent) override;
@@ -590,11 +590,11 @@ private:
                          const TensorView& attention_output,
                          const TensorView& attention_weights,
                          const TensorView& attention_weights_dropped,
-                         const TensorView& output_gradient,
-                         TensorView& attention_weight_gradient,
-                         TensorView& query_gradient,
-                         TensorView& key_gradient,
-                         TensorView& value_gradient) const;
+                         const TensorView& output_delta,
+                         TensorView& attention_weight_delta,
+                         TensorView& query_delta,
+                         TensorView& key_delta,
+                         TensorView& value_delta) const;
 
     void apply_delta_gpu(const TensorView& query,
                          const TensorView& key,
@@ -602,22 +602,37 @@ private:
                          const TensorView& attention_output,
                          const TensorView& attention_weights,
                          const TensorView& attention_weights_dropped,
-                         const TensorView& output_gradient,
-                         TensorView& attention_weight_gradient,
-                         TensorView& query_gradient,
-                         TensorView& key_gradient,
-                         TensorView& value_gradient) const;
+                         const TensorView& output_delta,
+                         TensorView& attention_weight_delta,
+                         TensorView& query_delta,
+                         TensorView& key_delta,
+                         TensorView& value_delta) const;
 
     void apply_delta_gpu_unfused(const TensorView& query,
                                  const TensorView& key,
                                  const TensorView& value,
                                  const TensorView& attention_weights,
                                  const TensorView& attention_weights_dropped,
-                                 const TensorView& output_gradient,
-                                 TensorView& attention_weight_gradient,
-                                 TensorView& query_gradient,
-                                 TensorView& key_gradient,
-                                 TensorView& value_gradient) const;
+                                 const TensorView& output_delta,
+                                 TensorView& attention_weight_delta,
+                                 TensorView& query_delta,
+                                 TensorView& key_delta,
+                                 TensorView& value_delta) const;
+
+    // Common backbone for the unfused CPU and GPU paths. The softmax-backward
+    // step differs (Eigen vs cuDNN) and is supplied as a callable.
+    template<typename SoftmaxBwd>
+    void apply_delta_unfused(const TensorView& query,
+                              const TensorView& key,
+                              const TensorView& value,
+                              const TensorView& attention_weights,
+                              const TensorView& attention_weights_dropped,
+                              const TensorView& output_delta,
+                              TensorView& attention_weight_delta,
+                              TensorView& query_delta,
+                              TensorView& key_delta,
+                              TensorView& value_delta,
+                              SoftmaxBwd&& softmax_bwd) const;
 
     mutable unique_ptr<SDPACache> sdpa_cache;
 };
@@ -644,6 +659,8 @@ struct Merge : Operator
 
 struct Pool : Operator
 {
+    enum Method { Max, Average };
+
     Index input_height = 0;
     Index input_width = 0;
     Index input_channels = 0;
@@ -655,7 +672,7 @@ struct Pool : Operator
     Index padding_height = 0;
     Index padding_width = 0;
 
-    int method = 0;  // 0 = Max, 1 = Average (avoids forward-decl-only enum at this point)
+    Method method = Max;
 
 #ifdef OPENNN_HAS_CUDA
     cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
@@ -665,7 +682,7 @@ struct Pool : Operator
              Index pool_h, Index pool_w,
              Index row_stride, Index column_stride,
              Index padding_h, Index padding_w,
-             int method);
+             Method method);
 
     void destroy_cuda() override;
 
@@ -697,7 +714,8 @@ private:
 
 struct Pool3d : Operator
 {
-    int method = 0;  // 0 = Max, 1 = Average
+    enum Method { Max, Average };
+    Method method = Max;
 
     // Slot convention (set by Pooling3d layer):
     //   input_slots  = {Input}

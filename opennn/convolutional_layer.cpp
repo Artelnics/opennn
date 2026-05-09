@@ -119,7 +119,7 @@ void Convolutional::update_convolution_operator()
     activation.output_slots = {Output};
 
     convolution.output_delta_slots = {OutputDelta};
-    convolution.input_delta_slots  = is_first_layer ? vector<size_t>{} : vector<size_t>{InputDelta};
+    convolution.input_delta_slots  = {InputDelta};
 
     batch_norm.output_delta_slots = {OutputDelta};
 

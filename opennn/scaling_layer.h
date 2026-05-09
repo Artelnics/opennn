@@ -37,7 +37,6 @@ public:
     void set(const Shape& = {});
 
     void set_input_shape(const Shape&) override;
-    void set_output_shape(const Shape&) override;
 
     void set_descriptives(const vector<Descriptives>&);
 

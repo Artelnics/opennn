@@ -79,7 +79,7 @@ void Dense::configure_operators()
     dropout.save_slots   = {ActivationView};
 
     combination.output_delta_slots = {OutputDelta};
-    combination.input_delta_slots  = is_first_layer ? vector<size_t>{} : vector<size_t>{InputDelta};
+    combination.input_delta_slots  = {InputDelta};
 
     batch_norm.output_delta_slots = {OutputDelta};
 
@@ -112,12 +112,8 @@ void Dense::set(const Shape& new_input_shape,
         return;
     }
 
-    if (new_input_shape.rank != 1 && new_input_shape.rank != 2)
-        throw runtime_error("Dense input shape rank must be 1 or 2 (got "
-                            + to_string(new_input_shape.rank) + ").");
-
-    if (new_output_shape.rank != 1)
-        throw runtime_error("Dense output shape rank must be 1.");
+    check_rank(new_input_shape, {1, 2}, "Dense", "input");
+    check_rank(new_output_shape, {1}, "Dense", "output");
 
     input_shape = new_input_shape;
     output_features = new_output_shape.back();
@@ -131,9 +127,7 @@ void Dense::set(const Shape& new_input_shape,
 
 void Dense::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.rank != 1 && new_input_shape.rank != 2)
-        throw runtime_error("Dense input shape rank must be 1 or 2.");
-
+    check_rank(new_input_shape, {1, 2}, "Dense", "input");
     input_shape = new_input_shape;
     configure_operators();
 }

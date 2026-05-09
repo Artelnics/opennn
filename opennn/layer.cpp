@@ -109,11 +109,9 @@ void Layer::set_input_shape(const Shape&)
     // Default no-op: layers override to update geometry when input changes.
 }
 
-void Layer::set_output_shape(const Shape&)
+void Layer::set_output_shape(const Shape& shape)
 {
-    // Default no-op: layers whose output is derived from input + config (Conv, Pool,
-    // MultiHead, etc.) don't need to do anything here. Layers whose output is a
-    // primary input (Dense, Bounding, Recurrent, ...) override.
+    set_input_shape(shape);
 }
 
 void Layer::from_JSON(const JsonDocument& document)

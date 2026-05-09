@@ -208,6 +208,11 @@ protected:
     Buffer states;
 
     Configuration::Resolved config;
+
+    // Cached by get_first/last_trainable_layer_index after first computation.
+    // Invalidated when the layer list changes (add_layer / clear).
+    mutable Index first_trainable_cache_ = -1;
+    mutable Index last_trainable_cache_  = -1;
 };
 
 }

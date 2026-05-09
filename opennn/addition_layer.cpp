@@ -36,9 +36,7 @@ vector<pair<Shape, Type>> Addition::get_backward_specs(Index batch_size) const
 
 void Addition::set(const Shape& new_input_shape, const string& new_label)
 {
-    if (!new_input_shape.empty() && new_input_shape.rank != 2 && new_input_shape.rank != 3)
-        throw runtime_error("Addition layer supports input rank 2 or 3 (got "
-                            + to_string(new_input_shape.rank) + ").");
+    check_rank(new_input_shape, {2, 3}, "Addition", "input");
 
     input_shape = new_input_shape;
 

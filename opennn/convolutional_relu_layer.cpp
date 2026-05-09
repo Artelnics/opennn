@@ -82,7 +82,7 @@ void ConvolutionalRelu::update_convolution_operator()
     convolution_relu.output_slots = {Output};
 
     convolution_relu.output_delta_slots = {OutputDelta};
-    convolution_relu.input_delta_slots  = is_first_layer ? vector<size_t>{} : vector<size_t>{InputDelta};
+    convolution_relu.input_delta_slots  = {InputDelta};
 }
 
 void ConvolutionalRelu::set(const Shape& new_input_shape,

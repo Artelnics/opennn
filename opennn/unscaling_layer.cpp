@@ -20,7 +20,7 @@ Unscaling::Unscaling(const Shape& new_input_shape, const string& new_label)
     : Layer("Unscaling", LayerType::Unscaling, false)
 {
     operators = {&unscale_op};
-    set(new_input_shape.empty() ? Index(0) : new_input_shape[0], new_label);
+    set(new_input_shape.dim_or_zero(0), new_label);
 }
 Shape Unscaling::get_input_shape() const
 {

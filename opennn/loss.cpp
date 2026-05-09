@@ -232,8 +232,7 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
             PROFILE_SCOPE("bwd:accumulate_output_deltas");
             back_propagation.accumulate_output_deltas(static_cast<size_t>(i));
         }
-        const string key = "bwd:" + layers[i]->get_name();
-        PROFILE_SCOPE(key);
+        PROFILE_SCOPE("bwd:" + layers[i]->get_name());
         layers[i]->back_propagate(forward_propagation, back_propagation, i);
     }
 }

@@ -70,11 +70,6 @@ void Bounding::set_input_shape(const Shape& new_input_shape)
     set(new_input_shape, label);
 }
 
-void Bounding::set_output_shape(const Shape& new_output_shape)
-{
-    set(new_output_shape, label);
-}
-
 void Bounding::set_bounding_method(const BoundingMethod& new_method)
 {
     bound.method = new_method;

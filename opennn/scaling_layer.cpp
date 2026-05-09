@@ -53,9 +53,7 @@ void Scaling::set(const Shape& new_input_shape)
 
     if (input_shape.empty()) return;
 
-    if (input_shape.rank != 1 && input_shape.rank != 2 && input_shape.rank != 3)
-        throw runtime_error("Scaling layer supports input rank 1, 2 or 3 (got "
-                            + to_string(input_shape.rank) + ").");
+    check_rank(input_shape, {1, 2, 3}, "Scaling", "input");
 
     scalers.assign(input_shape.size(), ScalerMethod::MeanStandardDeviation);
 
@@ -65,11 +63,6 @@ void Scaling::set(const Shape& new_input_shape)
 void Scaling::set_input_shape(const Shape& new_input_shape)
 {
     set(new_input_shape);
-}
-
-void Scaling::set_output_shape(const Shape& new_output_shape)
-{
-    set_input_shape(new_output_shape);
 }
 
 void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
