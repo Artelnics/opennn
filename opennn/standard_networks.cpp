@@ -203,76 +203,76 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
         throw runtime_error("blocks_per_stage and initial_filters must have the same size.");
 
     // Adds a Convolutional with explicit input index. Returns the new layer's index.
-    auto add_conv = [&](Index input_idx,
+    auto add_conv = [&](Index input_index,
                         const Shape& kernel_shape, const char* activation,
                         const Shape& stride, const string& name) -> Index {
         add_layer(make_unique<Convolutional>(
-            get_layer(input_idx)->get_output_shape(),
+            get_layer(input_index)->get_output_shape(),
             kernel_shape, activation, stride, "Same", false, name),
-            {input_idx});
+            {input_index});
         return get_layers_number() - 1;
     };
 
     // Residual block: two 3x3 convs (the first applies `stride`, the second 1x1),
     // a 1x1 skip-conv when shape changes, an Addition, and a 1x1 ReLU "activation".
-    auto add_residual_block = [&](Index input_idx, size_t stage, Index block, Index filters) -> Index {
-        const Shape input_shape  = get_layer(input_idx)->get_output_shape();
+    auto add_residual_block = [&](Index input_index, size_t stage, Index block, Index filters) -> Index {
+        const Shape input_shape  = get_layer(input_index)->get_output_shape();
         const Index stride       = (stage > 0 && block == 0) ? 2 : 1;
         const string prefix      = "s" + to_string(stage) + "b" + to_string(block);
 
-        Index main_idx = add_conv(input_idx,
+        Index main_index = add_conv(input_index,
             Shape{3, 3, input_shape[2], filters}, "ReLU",
             Shape{stride, stride}, prefix + "_conv1");
-        main_idx = add_conv(main_idx,
+        main_index = add_conv(main_index,
             Shape{3, 3, filters, filters}, "Identity",
             Shape{1, 1}, prefix + "_conv2");
 
-        Index skip_idx = input_idx;
+        Index skip_index = input_index;
         if (stride != 1 || input_shape[2] != filters)
-            skip_idx = add_conv(input_idx,
+            skip_index = add_conv(input_index,
                 Shape{1, 1, input_shape[2], filters}, "Identity",
                 Shape{stride, stride}, prefix + "_skip");
 
-        const Shape main_out = get_layer(main_idx)->get_output_shape();
+        const Shape main_out = get_layer(main_index)->get_output_shape();
         add_layer(make_unique<Addition>(main_out, prefix + "_add"),
-                  {main_idx, skip_idx});
-        const Index sum_idx = get_layers_number() - 1;
+                  {main_index, skip_index});
+        const Index sum_index = get_layers_number() - 1;
 
-        return add_conv(sum_idx,
+        return add_conv(sum_index,
             Shape{1, 1, filters, filters}, "ReLU",
             Shape{1, 1}, prefix + "_relu");
     };
 
     add_layer(make_unique<Scaling>(input_shape));
 
-    Index last_idx = add_conv(0,
+    Index last_index = add_conv(0,
         Shape{7, 7, input_shape[2], initial_filters[0]}, "ReLU",
         Shape{2, 2}, "stem_conv_1");
 
-    add_layer(make_unique<Pooling>(get_layer(last_idx)->get_output_shape(),
+    add_layer(make_unique<Pooling>(get_layer(last_index)->get_output_shape(),
                                    Shape{3, 3}, Shape{2, 2}, Shape{1, 1},
                                    "MaxPooling", "stem_pool"),
-              {last_idx});
-    last_idx = get_layers_number() - 1;
+              {last_index});
+    last_index = get_layers_number() - 1;
 
     for (size_t stage = 0; stage < blocks_per_stage.size(); ++stage)
         for (Index block = 0; block < blocks_per_stage[stage]; ++block)
-            last_idx = add_residual_block(last_idx, stage, block, initial_filters[stage]);
+            last_index = add_residual_block(last_index, stage, block, initial_filters[stage]);
 
-    const Shape pre_pool = get_layer(last_idx)->get_output_shape();
+    const Shape pre_pool = get_layer(last_index)->get_output_shape();
     add_layer(make_unique<Pooling>(pre_pool,
                                    Shape{pre_pool[0], pre_pool[1]},
                                    Shape{1, 1}, Shape{0, 0},
                                    "AveragePooling", "global_avg_pool"),
-              {last_idx});
-    last_idx = get_layers_number() - 1;
+              {last_index});
+    last_index = get_layers_number() - 1;
 
-    add_layer(make_unique<Flatten>(get_layer(last_idx)->get_output_shape()), {last_idx});
-    last_idx = get_layers_number() - 1;
+    add_layer(make_unique<Flatten>(get_layer(last_index)->get_output_shape()), {last_index});
+    last_index = get_layers_number() - 1;
 
-    add_layer(make_unique<Dense>(get_layer(last_idx)->get_output_shape(),
+    add_layer(make_unique<Dense>(get_layer(last_index)->get_output_shape(),
                                  output_shape, "Softmax", false, "dense_classifier"),
-              {last_idx});
+              {last_index});
 
     compile();
     set_parameters_random();
@@ -425,12 +425,12 @@ void Transformer::set(const Index input_sequence_length,
     if (embedding_dimension % heads_number != 0)
         throw runtime_error("embedding_dimension must be divisible by heads_number.");
 
-    // Adds: Addition(left_idx, right_idx) → Normalization3d. Returns the norm index.
+    // Adds: Addition(left_index, right_index) → Normalization3d. Returns the norm index.
     auto add_residual_and_norm = [&](const Shape& shape,
                                      const string& add_label,
                                      const string& norm_label,
-                                     Index left_idx, Index right_idx) -> Index {
-        add_layer(make_unique<Addition>(shape, add_label), {left_idx, right_idx});
+                                     Index left_index, Index right_index) -> Index {
+        add_layer(make_unique<Addition>(shape, add_label), {left_index, right_index});
         add_layer(make_unique<Normalization3d>(shape, norm_label));
         return get_layers_number() - 1;
     };
@@ -457,7 +457,7 @@ void Transformer::set(const Index input_sequence_length,
     decoder_embedding->set_scale_embedding(true);
     decoder_embedding->set_add_positional_encoding(true);
     add_layer(move(decoder_embedding), {-1});
-    Index current_decoder_idx = get_layers_number() - 1;
+    Index current_decoder_index = get_layers_number() - 1;
 
     auto encoder_embedding = make_unique<Embedding>(
         Shape{input_vocabulary_size, input_sequence_length},
@@ -465,7 +465,7 @@ void Transformer::set(const Index input_sequence_length,
     encoder_embedding->set_scale_embedding(true);
     encoder_embedding->set_add_positional_encoding(true);
     add_layer(move(encoder_embedding), {-2});
-    Index current_encoder_idx = get_layers_number() - 1;
+    Index current_encoder_index = get_layers_number() - 1;
 
     // Encoder stack: self-attention block + feed-forward block, each with residual + post-norm.
 
@@ -477,25 +477,25 @@ void Transformer::set(const Index input_sequence_length,
 
         add_layer(make_unique<MultiHeadAttention>(encoder_shape, heads_number,
                                                   "encoder_self_attention" + suffix),
-                  {current_encoder_idx});
-        const Index attn_idx = get_layers_number() - 1;
+                  {current_encoder_index});
+        const Index attn_index = get_layers_number() - 1;
 
-        const Index norm1_idx = add_residual_and_norm(encoder_shape,
+        const Index norm1_index = add_residual_and_norm(encoder_shape,
             "encoder_self_attention_addition" + suffix,
             "encoder_self_attention_normalization" + suffix,
-            current_encoder_idx, attn_idx);
+            current_encoder_index, attn_index);
 
-        const Index ff_idx = add_feed_forward(encoder_shape, feed_forward_dimension,
+        const Index ff_index = add_feed_forward(encoder_shape, feed_forward_dimension,
             "encoder_internal_dense" + suffix,
             "encoder_external_dense" + suffix);
 
-        current_encoder_idx = add_residual_and_norm(encoder_shape,
+        current_encoder_index = add_residual_and_norm(encoder_shape,
             "encoder_dense_addition" + suffix,
             "encoder_dense_normalization" + suffix,
-            norm1_idx, ff_idx);
+            norm1_index, ff_index);
     }
 
-    const Index encoder_final_output_idx = current_encoder_idx;
+    const Index encoder_final_output_index = current_encoder_index;
 
     // Decoder stack: masked self-attention block + cross-attention block + feed-forward block.
 
@@ -512,34 +512,34 @@ void Transformer::set(const Index input_sequence_length,
                                     embedding_dimension, heads_number,
                                     true,  // use_causal_mask
                                     "decoder_self_attention" + suffix);
-        add_layer(move(decoder_self_attention), {current_decoder_idx});
-        const Index self_attn_idx = get_layers_number() - 1;
+        add_layer(move(decoder_self_attention), {current_decoder_index});
+        const Index self_attn_index = get_layers_number() - 1;
 
-        const Index norm1_idx = add_residual_and_norm(decoder_shape,
+        const Index norm1_index = add_residual_and_norm(decoder_shape,
             "decoder_self_attention_addition" + suffix,
             "decoder_self_attention_normalization" + suffix,
-            current_decoder_idx, self_attn_idx);
+            current_decoder_index, self_attn_index);
 
         // Cross-attention against encoder output.
         add_layer(make_unique<MultiHeadAttention>(decoder_shape, encoder_shape,
                                                   heads_number,
                                                   "cross_attention" + suffix),
-                  {norm1_idx, encoder_final_output_idx});
-        const Index cross_attn_idx = get_layers_number() - 1;
+                  {norm1_index, encoder_final_output_index});
+        const Index cross_attn_index = get_layers_number() - 1;
 
-        const Index norm2_idx = add_residual_and_norm(decoder_shape,
+        const Index norm2_index = add_residual_and_norm(decoder_shape,
             "cross_attention_addition" + suffix,
             "cross_attention_normalization" + suffix,
-            norm1_idx, cross_attn_idx);
+            norm1_index, cross_attn_index);
 
-        const Index ff_idx = add_feed_forward(decoder_shape, feed_forward_dimension,
+        const Index ff_index = add_feed_forward(decoder_shape, feed_forward_dimension,
             "decoder_internal_dense" + suffix,
             "decoder_external_dense" + suffix);
 
-        current_decoder_idx = add_residual_and_norm(decoder_shape,
+        current_decoder_index = add_residual_and_norm(decoder_shape,
             "decoder_dense_addition" + suffix,
             "decoder_dense_normalization" + suffix,
-            norm2_idx, ff_idx);
+            norm2_index, ff_index);
     }
 
     // Final token projection.

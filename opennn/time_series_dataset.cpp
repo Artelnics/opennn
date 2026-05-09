@@ -640,10 +640,10 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations_spearman(const Index pas
 
     map<Index, VectorR> ranked_series;
 
-    for (const Index global_idx : numeric_vars_indices)
+    for (const Index global_index : numeric_vars_indices)
     {
-        const MatrixR var_data = get_variable_data(global_idx);
-        ranked_series[global_idx] = calculate_spearman_ranks(var_data.col(0));
+        const MatrixR var_data = get_variable_data(global_index);
+        ranked_series[global_index] = calculate_spearman_ranks(var_data.col(0));
     }
 
     Tensor3 cross_correlations(numeric_vars_count, numeric_vars_count, past_time_steps);

@@ -246,18 +246,18 @@ __global__ void embedding_forward_kernel(const int n, const float* __restrict__ 
 
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
-        const int token_idx = i / embedding_dimension;
-        const int dim_idx = i % embedding_dimension;
-        const int token_id = static_cast<int>(inputs[token_idx]);
+        const int token_index = i / embedding_dimension;
+        const int dim_index = i % embedding_dimension;
+        const int token_id = static_cast<int>(inputs[token_index]);
 
         float val = (token_id >= 0 && token_id < vocabulary_size)
-            ? scale * weights[token_id * embedding_dimension + dim_idx]
+            ? scale * weights[token_id * embedding_dimension + dim_index]
             : 0.0f;
 
         if (positional_encoding != nullptr && token_id > 0)
         {
-            const int seq_idx = token_idx % sequence_length;
-            val += positional_encoding[seq_idx * embedding_dimension + dim_idx];
+            const int seq_index = token_index % sequence_length;
+            val += positional_encoding[seq_index * embedding_dimension + dim_index];
         }
 
         outputs[i] = static_cast<T>(val);
@@ -288,13 +288,13 @@ __global__ void embedding_backward_kernel(const int n, const float* __restrict__
 
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
-        const int token_idx = i / embedding_dimension;
-        const int dim_idx = i % embedding_dimension;
-        const int token_id = static_cast<int>(inputs[token_idx]);
+        const int token_index = i / embedding_dimension;
+        const int dim_index = i % embedding_dimension;
+        const int token_id = static_cast<int>(inputs[token_index]);
 
         if (token_id <= 0 || token_id >= vocabulary_size) continue;
 
-        atomicAdd(&weight_gradients[token_id * embedding_dimension + dim_idx], scale * static_cast<float>(output_deltas[i]));
+        atomicAdd(&weight_gradients[token_id * embedding_dimension + dim_index], scale * static_cast<float>(output_deltas[i]));
     }
 }
 
@@ -490,16 +490,16 @@ __global__ void max_pooling_3d_forward_kernel(const int n, const T* __restrict__
         const int b = idx / F;
 
         float max_val = -1e20f;
-        int max_idx = 0;
+        int max_index = 0;
 
         for (int s = 0; s < S; ++s)
         {
             const float val = static_cast<float>(in[(b * S + s) * F + f]);
-            if (val > max_val) { max_val = val; max_idx = s; }
+            if (val > max_val) { max_val = val; max_index = s; }
         }
 
         out[idx] = static_cast<T>(max_val);
-        if (indices != nullptr) indices[idx] = static_cast<float>(max_idx);
+        if (indices != nullptr) indices[idx] = static_cast<float>(max_index);
     }
 }
 

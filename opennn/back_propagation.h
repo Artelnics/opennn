@@ -20,7 +20,7 @@ struct BackPropagation
 {
     struct BackwardEdge
     {
-        size_t consumer_idx;
+        size_t consumer_index;
         size_t port;
     };
 

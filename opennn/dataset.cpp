@@ -2331,19 +2331,19 @@ void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
 
     const size_t rows_to_check = min(size_t(100), total_rows);
 
-    for (Index col_idx = 0; col_idx < variables_number; ++col_idx)
+    for (Index col_index = 0; col_index < variables_number; ++col_index)
     {
-        Variable& variable = variables[col_idx];
+        Variable& variable = variables[col_index];
         variable.type = VariableType::None;
 
         for (size_t i = 0; i < rows_to_check; ++i)
         {
-            const size_t row_idx = row_indices[i];
+            const size_t row_index = row_indices[i];
 
-            const size_t token_idx = has_sample_ids ? col_idx + 1 : col_idx;
-            if (token_idx >= sample_rows[row_idx].size()) continue;
+            const size_t token_index = has_sample_ids ? col_index + 1 : col_index;
+            if (token_index >= sample_rows[row_index].size()) continue;
 
-            const string& token = sample_rows[row_idx][token_idx];
+            const string& token = sample_rows[row_index][token_index];
 
             if (token.empty() || token == missing_values_label) continue;
 
@@ -2367,18 +2367,18 @@ void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
             variable.type = VariableType::Numeric;
     }
 
-    for (Index col_idx = 0; col_idx < variables_number; ++col_idx)
+    for (Index col_index = 0; col_index < variables_number; ++col_index)
     {
-        if (variables[col_idx].type == VariableType::Categorical)
+        if (variables[col_index].type == VariableType::Categorical)
         {
             std::set<string> unique_categories;
             for (const vector<string>& row : sample_rows)
             {
-                const size_t token_idx = has_sample_ids ? col_idx + 1 : col_idx;
-                if (token_idx < row.size() && !row[token_idx].empty() && row[token_idx] != missing_values_label)
-                    unique_categories.insert(row[token_idx]);
+                const size_t token_index = has_sample_ids ? col_index + 1 : col_index;
+                if (token_index < row.size() && !row[token_index].empty() && row[token_index] != missing_values_label)
+                    unique_categories.insert(row[token_index]);
             }
-            variables[col_idx].categories.assign(unique_categories.begin(), unique_categories.end());
+            variables[col_index].categories.assign(unique_categories.begin(), unique_categories.end());
         }
     }
 }
@@ -2388,19 +2388,19 @@ DateFormat Dataset::infer_dataset_date_format(const vector<Variable>& variables,
                                               bool has_sample_ids,
                                               const string& missing_values_label)
 {
-    for (size_t col_idx = 0; col_idx < variables.size(); ++col_idx)
+    for (size_t col_index = 0; col_index < variables.size(); ++col_index)
     {
-        if (variables[col_idx].type != VariableType::DateTime)
+        if (variables[col_index].type != VariableType::DateTime)
             continue;
 
         for (const vector<string>& row : sample_rows)
         {
-            const size_t token_idx = has_sample_ids ? col_idx + 1 : col_idx;
+            const size_t token_index = has_sample_ids ? col_index + 1 : col_index;
 
-            if (token_idx >= row.size())
+            if (token_index >= row.size())
                 continue;
 
-            const string& token = row[token_idx];
+            const string& token = row[token_index];
 
             if (token.empty() || token == missing_values_label)
                 continue;
@@ -2595,10 +2595,10 @@ void Dataset::read_csv()
         for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
         {
             const Variable& variable = variables[variable_index];
-            const size_t token_idx = has_sample_ids ? variable_index + 1 : variable_index;
-            if (token_idx >= tokens.size())
+            const size_t token_index = has_sample_ids ? variable_index + 1 : variable_index;
+            if (token_index >= tokens.size())
                 throw runtime_error("Row " + to_string(sample_index) + " has fewer columns than expected (" + to_string(tokens.size()) + ").");
-            const string& token = tokens[token_idx];
+            const string& token = tokens[token_index];
             const vector<Index>& feature_indices = all_feature_indices[variable_index];
 
             switch (variable.type)
@@ -2621,8 +2621,8 @@ void Dataset::read_csv()
                 break;
             case VariableType::Categorical:
                 if (token.empty() || token == missing_values_label)
-                    for (const Index cat_idx : feature_indices)
-                        data(sample_index, cat_idx) = NAN;
+                    for (const Index cat_index : feature_indices)
+                        data(sample_index, cat_index) = NAN;
                 else
                 {
                     auto it = category_maps[variable_index].find(token);

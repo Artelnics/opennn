@@ -324,11 +324,11 @@ Shape NeuralNetwork::get_output_shape() const
 
 Activation::Function NeuralNetwork::get_output_activation() const
 {
-    const Index last_idx = get_last_trainable_layer_index();
-    if (last_idx < 0 || static_cast<size_t>(last_idx) >= layers.size())
+    const Index last_index = get_last_trainable_layer_index();
+    if (last_index < 0 || static_cast<size_t>(last_index) >= layers.size())
         return Activation::Function::Identity;
 
-    return layers[last_idx]->get_output_activation();
+    return layers[last_index]->get_output_activation();
 }
 
 Index NeuralNetwork::get_parameters_number() const
@@ -812,12 +812,12 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
         {
             for (const Json& entry : indices_array->array_value)
             {
-                const long layer_idx = read_json_index(&entry, "LayerIndex");
+                const long layer_index = read_json_index(&entry, "LayerIndex");
                 const string text   = read_json_string(&entry, "Text");
-                if (layer_idx >= 0 && layer_idx < ssize(layers) && !text.empty())
+                if (layer_index >= 0 && layer_index < ssize(layers) && !text.empty())
                 {
                     Shape shape = string_to_shape(text, " ");
-                    layer_input_indices[layer_idx] = vector<Index>(shape.begin(), shape.end());
+                    layer_input_indices[layer_index] = vector<Index>(shape.begin(), shape.end());
                 }
             }
         }
@@ -838,16 +838,16 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
     if (items_array && items_array->is_array())
     {
-        Index layer_idx = 0;
+        Index layer_index = 0;
         for (const Json& item : items_array->array_value)
         {
             if (!item.is_object() || item.object_value.empty()) continue;
-            if (layer_idx >= ssize(layers)) break;
+            if (layer_index >= ssize(layers)) break;
 
             JsonDocument layer_doc;
             layer_doc.root = item;
-            layers[layer_idx]->load_state_from_JSON(layer_doc);
-            ++layer_idx;
+            layers[layer_index]->load_state_from_JSON(layer_doc);
+            ++layer_index;
         }
     }
 

@@ -116,18 +116,18 @@ Tensor3 load_image(const filesystem::path& path)
         const Index tensor_y = top_down ? y : (height - 1 - y);
         const uint8_t* row_ptr = pixel_data + y * row_stride;
 
-        const Index row_start_idx = tensor_y * width * channels;
+        const Index row_start_index = tensor_y * width * channels;
 
         if (biBitCount == 24 || biBitCount == 32)
         {
             for (Index x = 0; x < width; ++x)
             {
                 const uint8_t* pixel_pointer = row_ptr + x * bytes_per_pixel;
-                const Index pixel_idx = row_start_idx + x * channels;
+                const Index pixel_index = row_start_index + x * channels;
 
-                img_data[pixel_idx + 0] = static_cast<float>(pixel_pointer[2]); // R
-                img_data[pixel_idx + 1] = static_cast<float>(pixel_pointer[1]); // G
-                img_data[pixel_idx + 2] = static_cast<float>(pixel_pointer[0]); // B
+                img_data[pixel_index + 0] = static_cast<float>(pixel_pointer[2]); // R
+                img_data[pixel_index + 1] = static_cast<float>(pixel_pointer[1]); // G
+                img_data[pixel_index + 2] = static_cast<float>(pixel_pointer[0]); // B
             }
         }
         else if (biBitCount == 8)
@@ -135,18 +135,18 @@ Tensor3 load_image(const filesystem::path& path)
             if (channels == 1) // 8-bit (1 channel)
             {
                 for (Index x = 0; x < width; ++x)
-                    img_data[row_start_idx + x] = static_cast<float>(palette[row_ptr[x]].red);
+                    img_data[row_start_index + x] = static_cast<float>(palette[row_ptr[x]].red);
             }
             else // 8-bit RGB (3 channels)
             {
                 for (Index x = 0; x < width; ++x)
                 {
                     const RGBQuad& color = palette[row_ptr[x]];
-                    const Index pixel_idx = row_start_idx + x * 3;
+                    const Index pixel_index = row_start_index + x * 3;
 
-                    img_data[pixel_idx + 0] = static_cast<float>(color.red);
-                    img_data[pixel_idx + 1] = static_cast<float>(color.green);
-                    img_data[pixel_idx + 2] = static_cast<float>(color.blue);
+                    img_data[pixel_index + 0] = static_cast<float>(color.red);
+                    img_data[pixel_index + 1] = static_cast<float>(color.green);
+                    img_data[pixel_index + 2] = static_cast<float>(color.blue);
                 }
             }
         }

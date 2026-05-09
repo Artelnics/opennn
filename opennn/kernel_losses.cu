@@ -273,9 +273,9 @@ __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
 {
     for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
     {
-        const int token_idx = idx / vocab_size;
-        const int class_idx = idx % vocab_size;
-        const int target_class = static_cast<int>(targets[token_idx]);
+        const int token_index = idx / vocab_size;
+        const int class_index = idx % vocab_size;
+        const int target_class = static_cast<int>(targets[token_index]);
 
         if (target_class <= 0 || target_class >= vocab_size)
         {
@@ -283,7 +283,7 @@ __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
             continue;
         }
 
-        output_deltas[idx] = static_cast<T>((static_cast<float>(outputs[idx]) - (class_idx == target_class ? 1.0f : 0.0f)) * scale_factor);
+        output_deltas[idx] = static_cast<T>((static_cast<float>(outputs[idx]) - (class_index == target_class ? 1.0f : 0.0f)) * scale_factor);
     }
 }
 

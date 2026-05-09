@@ -61,21 +61,21 @@ DeltaPoolPlan compute_delta_pool_plan(
 
     const Index max_step = last_trainable_layer_index - first_trainable_layer_index;
 
-    auto step_of = [&](Index layer_idx) { return last_trainable_layer_index - layer_idx; };
-    auto in_range = [&](Index layer_idx)
+    auto step_of = [&](Index layer_index) { return last_trainable_layer_index - layer_index; };
+    auto in_range = [&](Index layer_index)
     {
-        return layer_idx >= first_trainable_layer_index
-            && layer_idx <= last_trainable_layer_index;
+        return layer_index >= first_trainable_layer_index
+            && layer_index <= last_trainable_layer_index;
     };
 
     for (Index i = first_trainable_layer_index; i < last_trainable_layer_index; ++i)
     {
         if (backward_edges[i].size() != 1) continue;
         const BackwardEdge& edge = backward_edges[i].front();
-        plan.alias_target[i] = {edge.consumer_idx, edge.port + 1};
+        plan.alias_target[i] = {edge.consumer_index, edge.port + 1};
     }
 
-    struct LiveRange { Index entry_idx; Index bytes; Index birth; Index death; };
+    struct LiveRange { Index entry_index; Index bytes; Index birth; Index death; };
     vector<LiveRange> ranges;
 
     auto add = [&](Index layer, size_t slot, const Shape& shape, Type dtype,
@@ -168,12 +168,12 @@ DeltaPoolPlan compute_delta_pool_plan(
     {
         if (k > 0)
             for (size_t id : deaths_by_step[size_t(k - 1)])
-                release(plan.entries[ranges[id].entry_idx].offset, ranges[id].bytes);
+                release(plan.entries[ranges[id].entry_index].offset, ranges[id].bytes);
 
         for (size_t id : births_by_step[size_t(k)])
         {
             const Index off = acquire(ranges[id].bytes);
-            plan.entries[ranges[id].entry_idx].offset = off;
+            plan.entries[ranges[id].entry_index].offset = off;
 
             const Index end = off + ranges[id].bytes;
             if (end > peak) peak = end;
@@ -328,8 +328,8 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     {
         const size_t slot = 1 + edge.port;
 
-        if (edge.consumer_idx >= delta_views.size()) continue;
-        const auto& consumer_views = delta_views[edge.consumer_idx];
+        if (edge.consumer_index >= delta_views.size()) continue;
+        const auto& consumer_views = delta_views[edge.consumer_index];
         if (slot >= consumer_views.size() || consumer_views[slot].empty()) continue;
 
         const TensorView& source = consumer_views[slot];
