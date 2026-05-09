@@ -8,12 +8,12 @@
 
 #pragma once
 
-#include "dataset.h"
+#include "materialized_dataset.h"
 
 namespace opennn
 {
 
-class TimeSeriesDataset final : public Dataset
+class TimeSeriesDataset final : public MaterializedDataset
 {
 
 public:
@@ -65,6 +65,8 @@ public:
                             float*,
                             bool = true,
                             int contiguous = -1) const override;
+
+    void resize_input_shape(Index) override;
 
 private:
 

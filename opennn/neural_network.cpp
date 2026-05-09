@@ -91,7 +91,6 @@ void NeuralNetwork::validate_type(LayerType type) const
         throw runtime_error("No layers can be added after a bounding layer.\n");
 }
 
-
 bool NeuralNetwork::has(const string& name) const
 {
     return has(string_to_layer_type(name));
@@ -1032,9 +1031,6 @@ vector<string> NeuralNetwork::get_names_string() const
 
     return names;
 }
-
-
-
 
 #ifdef OPENNN_HAS_CUDA
 

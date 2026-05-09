@@ -26,10 +26,32 @@ size_t get_maximum_size(const vector<vector<T>>& nested_values)
     return maximum_size;
 }
 
+void copy_padded_tokens(const vector<vector<Index>>& storage,
+                        const vector<Index>& sample_indices,
+                        Index seq_len,
+                        float* out,
+                        bool parallelize)
+{
+    const Index batch_size = sample_indices.size();
+
+    std::fill_n(out, batch_size * seq_len, 0.0f);
+
+    #pragma omp parallel for if (parallelize)
+    for (Index i = 0; i < batch_size; ++i)
+    {
+        const vector<Index>& tokens = storage[sample_indices[i]];
+        const Index n = std::min(Index(tokens.size()), seq_len);
+
+        for (Index j = 0; j < n; ++j)
+            out[i * seq_len + j] = float(tokens[j]);
+    }
 }
 
-LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Dataset()
+}
+
+LanguageDataset::LanguageDataset(const filesystem::path& new_data_path, bool new_streaming) : MaterializedDataset()
 {
+    streaming = new_streaming;
     data_path = new_data_path;
     separator = Dataset::Separator::Tab;
 
@@ -37,9 +59,14 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Datase
         read_csv();
 }
 
+Index LanguageDataset::get_samples_number() const
+{
+    return streaming ? Index(sample_input_indices.size()) : data.rows();
+}
+
 LanguageDataset::LanguageDataset(const Index samples_number,
                                  Index input_sequence_length,
-                                 Index input_vocabulary_size) : Dataset()
+                                 Index input_vocabulary_size) : MaterializedDataset()
 {
     maximum_input_sequence_length = input_sequence_length;
     maximum_target_sequence_length = 1;
@@ -325,7 +352,8 @@ void LanguageDataset::read_csv()
 
         const Index features_number = maximum_input_sequence_length + maximum_target_sequence_length;
 
-        data = MatrixR::Zero(samples_number, features_number);
+        if (!streaming)
+            data = MatrixR::Zero(samples_number, features_number);
 
         variables.resize(features_number);
 
@@ -343,8 +371,15 @@ void LanguageDataset::read_csv()
         for (Index i = 0; i < maximum_input_sequence_length; ++i)
             variables[i].name = "token_" + to_string(i + 1);
 
-        encode_input(input_document_tokens);
-        encode_target_classification(target_document_tokens);
+        if (streaming)
+        {
+            encode_streaming(input_document_tokens, target_document_tokens);
+        }
+        else
+        {
+            encode_input(input_document_tokens);
+            encode_target_classification(target_document_tokens);
+        }
 
         input_shape = { get_maximum_input_sequence_length() };
         target_shape = { get_maximum_target_sequence_length() };
@@ -360,7 +395,8 @@ void LanguageDataset::read_csv()
                                       + maximum_target_sequence_length
                                       + maximum_target_sequence_length;
 
-        data = MatrixR::Zero(samples_number, features_number);
+        if (!streaming)
+            data = MatrixR::Zero(samples_number, features_number);
 
         variables.resize(features_number);
 
@@ -388,13 +424,19 @@ void LanguageDataset::read_csv()
         for (Index i = 0; i < maximum_target_sequence_length; ++i)
             variables[target_offset + i].name = "target_token_" + to_string(i + 1);
 
-        encode_input(input_document_tokens);
-
-        encode_decoder_target_sequence_to_sequence(target_document_tokens);
-
         input_shape = { get_maximum_input_sequence_length() };
         decoder_shape = { get_maximum_target_sequence_length() };
         target_shape = { get_maximum_target_sequence_length() };
+
+        if (streaming)
+        {
+            encode_streaming(input_document_tokens, target_document_tokens);
+        }
+        else
+        {
+            encode_input(input_document_tokens);
+            encode_decoder_target_sequence_to_sequence(target_document_tokens);
+        }
     }
 
     sample_roles.resize(samples_number);
@@ -402,7 +444,8 @@ void LanguageDataset::read_csv()
     set_variable_scalers("None");
     set_default_variable_names();
     split_samples_random();
-    set_binary_variables();
+    if (!streaming)
+        set_binary_variables();
 
     for (Index i = 0; i < ssize(variables); ++i)
     {
@@ -441,6 +484,7 @@ void LanguageDataset::to_JSON(JsonWriter& printer) const
     write_json(printer, {
         {"FileType", "csv"},
         {"Path", data_path.string()},
+        {"Streaming", to_string(streaming)},
         {"Separator", get_separator_name()},
         {"HasHeader", to_string(has_header)},
         {"HasSamplesId", to_string(has_sample_ids)},
@@ -477,11 +521,23 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
     const Json* data_source_element = require_json_field(data_set_element, "DataSource");
 
     set_data_path(read_json_string(data_source_element, "Path"));
+
+    streaming = data_source_element->has("Streaming")
+        ? read_json_bool(data_source_element, "Streaming")
+        : false;
+
     set_separator_name(read_json_string(data_source_element, "Separator"));
     set_missing_values_label(read_json_string(data_source_element, "MissingValuesLabel"));
     set_codification(read_json_string(data_source_element, "Codification"));
     set_has_header(read_json_bool(data_source_element, "HasHeader"));
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
+
+    if (streaming)
+    {
+        set_display(read_json_bool(data_set_element, "Display"));
+        read_csv();
+        return;
+    }
 
     const Json* variables_element = data_set_element->first_child("Variables");
     variables_from_JSON(variables_element);
@@ -569,6 +625,176 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
         encode_decoder_target_sequence_to_sequence(target_docs_tokens);
     else
         encode_target_classification(target_docs_tokens);
+}
+
+void LanguageDataset::encode_streaming(const vector<vector<string>>& input_document_tokens,
+                                       const vector<vector<string>>& target_document_tokens)
+{
+    const Index samples_number = ssize(input_document_tokens);
+
+    sample_input_indices.assign(samples_number, {});
+    sample_target_indices.assign(samples_number, {});
+
+    const unordered_map<string, Index> input_vocabulary_map = create_vocabulary_map(input_vocabulary);
+    const unordered_map<string, Index> target_vocabulary_map = create_vocabulary_map(target_vocabulary);
+
+    #pragma omp parallel for
+    for (Index sample = 0; sample < samples_number; ++sample)
+    {
+        const vector<string>& tokens = input_document_tokens[sample];
+        vector<Index>& dst = sample_input_indices[sample];
+
+        dst.reserve(tokens.size() + 2);
+        dst.push_back(Index(START_INDEX));
+
+        for (size_t i = 0; i < tokens.size(); ++i)
+        {
+            if (1 + i >= size_t(maximum_input_sequence_length)) break;
+            const auto it = input_vocabulary_map.find(tokens[i]);
+            dst.push_back(it != input_vocabulary_map.end() ? it->second : Index(UNK_INDEX));
+        }
+
+        if (1 + tokens.size() < size_t(maximum_input_sequence_length))
+            dst.push_back(Index(END_INDEX));
+    }
+
+    const bool has_decoder = !decoder_shape.empty();
+    const Index target_vocab_size = ssize(target_vocabulary);
+
+    if (has_decoder)
+    {
+        #pragma omp parallel for
+        for (Index sample = 0; sample < samples_number; ++sample)
+        {
+            const vector<string>& tokens = target_document_tokens[sample];
+            vector<Index>& dst = sample_target_indices[sample];
+
+            dst.reserve(tokens.size() + 1);
+
+            for (size_t i = 0; i < tokens.size(); ++i)
+            {
+                if (i >= size_t(maximum_target_sequence_length)) break;
+                const auto it = target_vocabulary_map.find(tokens[i]);
+                dst.push_back(it != target_vocabulary_map.end() ? it->second : Index(UNK_INDEX));
+            }
+
+            if (tokens.size() < size_t(maximum_target_sequence_length))
+                dst.push_back(Index(END_INDEX));
+        }
+    }
+    else if (maximum_target_sequence_length == 1 && target_vocab_size == 6)
+    {
+        for (Index sample = 0; sample < samples_number; ++sample)
+        {
+            const string& token = target_document_tokens[sample][0];
+
+            if (contains(positive_words, token))
+                sample_target_indices[sample] = {1};
+            else if (contains(negative_words, token))
+                sample_target_indices[sample] = {0};
+            else
+                throw runtime_error("Unknown target value");
+        }
+    }
+    else if (maximum_target_sequence_length == 6 && target_vocab_size >= 6)
+    {
+        const Index reserved_count = ssize(reserved_tokens);
+
+        for (Index sample = 0; sample < samples_number; ++sample)
+        {
+            sample_target_indices[sample].assign(maximum_target_sequence_length, 0);
+
+            const string& token = target_document_tokens[sample][0];
+            const auto it = target_vocabulary_map.find(token);
+            const Index vocab_index = (it != target_vocabulary_map.end()) ? it->second : Index(UNK_INDEX);
+            const Index col = vocab_index - reserved_count;
+
+            if (col >= 0 && col < maximum_target_sequence_length)
+                sample_target_indices[sample][col] = 1;
+        }
+    }
+    else
+    {
+        #pragma omp parallel for
+        for (Index sample = 0; sample < samples_number; ++sample)
+        {
+            const vector<string>& tokens = target_document_tokens[sample];
+            vector<Index>& dst = sample_target_indices[sample];
+
+            dst.reserve(tokens.size() + 2);
+            dst.push_back(Index(START_INDEX));
+
+            for (size_t i = 0; i < tokens.size(); ++i)
+            {
+                if (1 + i >= size_t(maximum_target_sequence_length)) break;
+                const auto it = target_vocabulary_map.find(tokens[i]);
+                dst.push_back(it != target_vocabulary_map.end() ? it->second : Index(UNK_INDEX));
+            }
+
+            if (1 + tokens.size() < size_t(maximum_target_sequence_length))
+                dst.push_back(Index(END_INDEX));
+        }
+    }
+}
+
+void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
+                                  const vector<Index>& input_indices,
+                                  float* input_data,
+                                  bool parallelize,
+                                  int contiguous) const
+{
+    if (!streaming)
+    {
+        MaterializedDataset::fill_inputs(sample_indices, input_indices, input_data, parallelize, contiguous);
+        return;
+    }
+
+    copy_padded_tokens(sample_input_indices, sample_indices, maximum_input_sequence_length, input_data, parallelize);
+}
+
+void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
+                                   const vector<Index>& target_indices,
+                                   float* target_data,
+                                   bool parallelize,
+                                   int contiguous) const
+{
+    if (!streaming)
+    {
+        MaterializedDataset::fill_targets(sample_indices, target_indices, target_data, parallelize, contiguous);
+        return;
+    }
+
+    copy_padded_tokens(sample_target_indices, sample_indices, maximum_target_sequence_length, target_data, parallelize);
+}
+
+void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
+                                   const vector<Index>& decoder_indices,
+                                   float* decoder_data,
+                                   bool parallelize,
+                                   int contiguous) const
+{
+    if (!streaming)
+    {
+        MaterializedDataset::fill_decoder(sample_indices, decoder_indices, decoder_data, parallelize, contiguous);
+        return;
+    }
+
+    const Index batch_size = sample_indices.size();
+    const Index seq_len = maximum_target_sequence_length;
+
+    std::fill_n(decoder_data, batch_size * seq_len, 0.0f);
+
+    #pragma omp parallel for if (parallelize)
+    for (Index i = 0; i < batch_size; ++i)
+    {
+        decoder_data[i * seq_len] = START_INDEX;
+
+        const vector<Index>& tokens = sample_target_indices[sample_indices[i]];
+        const Index n = std::min(Index(tokens.size()), seq_len - 1);
+
+        for (Index j = 0; j < n; ++j)
+            decoder_data[i * seq_len + 1 + j] = float(tokens[j]);
+    }
 }
 
 }

@@ -8,17 +8,17 @@
 
 #pragma once
 
-#include "dataset.h"
+#include "materialized_dataset.h"
 
 namespace opennn
 {
 
-class TabularDataset : public Dataset
+class TabularDataset : public MaterializedDataset
 {
 
 public:
 
-    using Dataset::Dataset;
+    using MaterializedDataset::MaterializedDataset;
 };
 
 }

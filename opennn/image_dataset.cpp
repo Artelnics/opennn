@@ -28,11 +28,17 @@ ImageDataset::ImageDataset(const Index new_samples_number,
     set(new_samples_number, new_input_shape, new_target_shape);
 }
 
-ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
+ImageDataset::ImageDataset(const filesystem::path& new_data_path, bool new_streaming) : MaterializedDataset()
 {
+    streaming = new_streaming;
     data_path = new_data_path;
 
     read_bmp();
+}
+
+Index ImageDataset::get_samples_number() const
+{
+    return streaming ? Index(image_paths.size()) : data.rows();
 }
 
 Index ImageDataset::get_channels_number() const
@@ -42,6 +48,9 @@ Index ImageDataset::get_channels_number() const
 
 void ImageDataset::set_data_random()
 {
+    if (streaming)
+        throw runtime_error("set_data_random is not supported in streaming mode.");
+
     const Index height = input_shape[0];
     const Index width = input_shape[1];
     const Index channels = input_shape[2];
@@ -87,6 +96,7 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
     write_json(printer, {
         {"FileType", "bmp"},
         {"Path", data_path.string()},
+        {"Streaming", to_string(streaming)},
         {"HasSamplesId", to_string(has_sample_ids)},
         {"Channels", to_string(input_shape[2])},
         {"Width", to_string(input_shape[1])},
@@ -158,6 +168,11 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
     const Json* data_source_element = require_json_field(image_dataset_element, "DataSource");
 
     set_data_path(read_json_string(data_source_element, "Path"));
+
+    streaming = data_source_element->has("Streaming")
+        ? read_json_bool(data_source_element, "Streaming")
+        : false;
+
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
     set_shape("Input", { read_json_index(data_source_element, "Height"),
@@ -177,12 +192,21 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
     augmentation.vertical_translation_minimum = read_json_type(data_source_element, "RandomVerticalTranslationMinimum");
     augmentation.vertical_translation_maximum = read_json_type(data_source_element, "RandomVerticalTranslationMaximum");
 
-    variables_from_JSON(require_json_field(image_dataset_element, "Variables"));
-    samples_from_JSON(require_json_field(image_dataset_element, "Samples"));
+    if (streaming)
+    {
+        read_bmp();
+    }
+    else
+    {
+        variables_from_JSON(require_json_field(image_dataset_element, "Variables"));
+        samples_from_JSON(require_json_field(image_dataset_element, "Samples"));
+    }
 }
 
 vector<Descriptives> ImageDataset::scale_features(const string&)
 {
+    if (streaming) return {};
+
     const Index samples_number = get_samples_number();
     const Index input_features_number = get_features_number("Input");
 
@@ -196,6 +220,8 @@ vector<Descriptives> ImageDataset::scale_features(const string&)
 
 void ImageDataset::unscale_features(const string&)
 {
+    if (streaming) return;
+
     data.leftCols(get_features_number("Input")) *= 255.0f;
 }
 
@@ -215,7 +241,8 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     Index samples_number = 0;
 
-    vector<string> image_path;
+    vector<filesystem::path> paths;
+    vector<Index> labels;
 
     for (Index i = 0; i < folders_number; ++i)
     {
@@ -223,7 +250,8 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         {
             if (current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
             {
-                image_path.emplace_back(current_directory.path().string());
+                paths.emplace_back(current_directory.path());
+                labels.push_back(i);
                 ++samples_number;
             }
         }
@@ -234,11 +262,11 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     if (samples_number == 0)
         throw runtime_error("No images in folder \n");
 
-    const Tensor3 image = load_image(image_path[0]);
+    const Tensor3 first_image = load_image(paths[0]);
 
-    Index height = image.dimension(0);
-    Index width = image.dimension(1);
-    const Index channels = image.dimension(2);
+    Index height = first_image.dimension(0);
+    Index width = first_image.dimension(1);
+    const Index channels = first_image.dimension(2);
 
     if (new_input_shape[2] != channels && new_input_shape[2] != 0)
         throw runtime_error("Different number of channels in new_input_shape \n");
@@ -255,7 +283,26 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         ? folders_number - 1
         : folders_number;
 
-    set(samples_number, { height, width, channels }, { targets_number });
+    if (streaming)
+    {
+        input_shape = { height, width, channels };
+        target_shape = { targets_number };
+
+        variables.resize(pixels_number + 1);
+
+        for (Index i = 0; i < pixels_number; ++i)
+        {
+            variables[i].type = VariableType::Numeric;
+            variables[i].name = "variable_" + to_string(i + 1);
+            variables[i].role = VariableRole::Input;
+        }
+
+        sample_roles.resize(samples_number, SampleRole::Training);
+    }
+    else
+    {
+        set(samples_number, { height, width, channels }, { targets_number });
+    }
 
     vector<string> categories(folders_number);
     for (Index i = 0; i < folders_number; ++i)
@@ -280,52 +327,62 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         variables[pixels_number].scaler = ScalerMethod::None;
     }
 
-    Index progress_counter = 0;
-
-    string omp_error;
-
-    #pragma omp parallel for
-    for (Index i = 0; i < samples_number; ++i)
+    if (streaming)
     {
-        Tensor3 image = load_image(image_path[i]);
-
-        const Index current_height = image.dimension(0);
-        const Index current_width = image.dimension(1);
-        const Index current_channels = image.dimension(2);
-
-        if (current_channels != channels)
-        {
-            #pragma omp critical
-            { omp_error = "Different number of channels in image: " + image_path[i] + "\n"; }
-            continue;
-        }
-
-        if (current_height != height || current_width != width)
-            image = resize_image(image, height, width);
-
-        copy(image.data(), image.data() + pixels_number, &data(i, 0));
-
-        for (Index k = 0; k < folders_number; ++k)
-        {
-            if (i >= images_number(k) && i < images_number(k + 1))
-            {
-                if (targets_number == 1)
-                    data(i, pixels_number) = k;
-                else
-                    data(i, k + pixels_number) = 1;
-                break;
-            }
-        }
-
-        #pragma omp atomic
-        ++progress_counter;
-
-        if (omp_get_thread_num() == 0)
-            display_progress_bar(progress_counter, samples_number);
+        image_paths = std::move(paths);
+        sample_labels = std::move(labels);
+        split_samples_random();
     }
+    else
+    {
+        Index progress_counter = 0;
+        string omp_error;
 
-    if (!omp_error.empty())
-        throw runtime_error(omp_error);
+        #pragma omp parallel for
+        for (Index i = 0; i < samples_number; ++i)
+        {
+            Tensor3 image = load_image(paths[i]);
+
+            const Index current_height = image.dimension(0);
+            const Index current_width = image.dimension(1);
+            const Index current_channels = image.dimension(2);
+
+            if (current_channels != channels)
+            {
+                #pragma omp critical
+                { omp_error = "Different number of channels in image: " + paths[i].string() + "\n"; }
+                continue;
+            }
+
+            if (current_height != height || current_width != width)
+                image = resize_image(image, height, width);
+
+            copy(image.data(), image.data() + pixels_number, &data(i, 0));
+
+            for (Index k = 0; k < folders_number; ++k)
+            {
+                if (i >= images_number(k) && i < images_number(k + 1))
+                {
+                    if (targets_number == 1)
+                        data(i, pixels_number) = k;
+                    else
+                        data(i, k + pixels_number) = 1;
+                    break;
+                }
+            }
+
+            #pragma omp atomic
+            ++progress_counter;
+
+            if (omp_get_thread_num() == 0)
+                display_progress_bar(progress_counter, samples_number);
+        }
+
+        if (!omp_error.empty())
+            throw runtime_error(omp_error);
+
+        shuffle_rows(data);
+    }
 
     if (display)
     {
@@ -342,8 +399,88 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
              << seconds << " seconds, "
              << milliseconds << " milliseconds." << "\n";
     }
+}
 
-    shuffle_rows(data);
+void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
+                               const vector<Index>& input_indices,
+                               float* input_data,
+                               bool parallelize,
+                               int contiguous) const
+{
+    if (!streaming)
+    {
+        MaterializedDataset::fill_inputs(sample_indices, input_indices, input_data, parallelize, contiguous);
+        return;
+    }
+
+    const Index batch_size = sample_indices.size();
+    const Index height = input_shape[0];
+    const Index width = input_shape[1];
+    const Index channels = input_shape[2];
+    const Index pixels_per_image = height * width * channels;
+
+    string omp_error;
+
+    #pragma omp parallel for schedule(dynamic) if (parallelize)
+    for (Index i = 0; i < batch_size; ++i)
+    {
+        const filesystem::path& path = image_paths[sample_indices[i]];
+
+        Tensor3 image = load_image(path);
+
+        if (image.dimension(2) != channels)
+        {
+            #pragma omp critical
+            { omp_error = "Channel mismatch in image: " + path.string(); }
+            continue;
+        }
+
+        if (image.dimension(0) != height || image.dimension(1) != width)
+            image = resize_image(image, height, width);
+
+        float* dest = input_data + i * pixels_per_image;
+        const float* src = image.data();
+
+        for (Index k = 0; k < pixels_per_image; ++k)
+            dest[k] = src[k] / 255.0f;
+    }
+
+    if (!omp_error.empty())
+        throw runtime_error(omp_error);
+}
+
+void ImageDataset::fill_targets(const vector<Index>& sample_indices,
+                                const vector<Index>& target_indices,
+                                float* target_data,
+                                bool parallelize,
+                                int contiguous) const
+{
+    if (!streaming)
+    {
+        MaterializedDataset::fill_targets(sample_indices, target_indices, target_data, parallelize, contiguous);
+        return;
+    }
+
+    const Index batch_size = sample_indices.size();
+    const Index targets_number = target_indices.size();
+
+    if (targets_number == 1)
+    {
+        #pragma omp parallel for if (parallelize)
+        for (Index i = 0; i < batch_size; ++i)
+            target_data[i] = float(sample_labels[sample_indices[i]]);
+    }
+    else
+    {
+        std::fill_n(target_data, batch_size * targets_number, 0.0f);
+
+        #pragma omp parallel for if (parallelize)
+        for (Index i = 0; i < batch_size; ++i)
+        {
+            const Index label = sample_labels[sample_indices[i]];
+            target_data[i * targets_number + label] = 1.0f;
+        }
+    }
 }
 
 }

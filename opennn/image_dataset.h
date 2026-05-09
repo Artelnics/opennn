@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "dataset.h"
+#include "materialized_dataset.h"
 
 namespace opennn
 {
@@ -26,19 +26,25 @@ struct AugmentationSettings
     float vertical_translation_maximum = 0.0f;
 };
 
-class ImageDataset : public Dataset
+class ImageDataset : public MaterializedDataset
 {
 
 public:
 
     ImageDataset(const Index = 0, const Shape& = {0, 0, 0}, const Shape& = {0});
 
-    ImageDataset(const filesystem::path&);
+    ImageDataset(const filesystem::path&, bool streaming = false);
 
     Index get_channels_number() const;
 
     const AugmentationSettings& get_augmentation() const { return augmentation; }
     void set_augmentation(const AugmentationSettings& new_augmentation) { augmentation = new_augmentation; }
+
+    bool is_streaming() const { return streaming; }
+    void set_streaming(bool b) { streaming = b; }
+
+    Index get_samples_number() const override;
+    using MaterializedDataset::get_samples_number;
 
     void set_data_random() override;
 
@@ -52,6 +58,18 @@ public:
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
 
+    void fill_inputs(const vector<Index>&,
+                     const vector<Index>&,
+                     float*,
+                     bool = true,
+                     int = -1) const override;
+
+    void fill_targets(const vector<Index>&,
+                      const vector<Index>&,
+                      float*,
+                      bool = true,
+                      int = -1) const override;
+
     void augment_inputs(float*, Index) const override;
 
 private:
@@ -60,7 +78,9 @@ private:
 
     AugmentationSettings augmentation;
 
-    // Object detection
+    bool streaming = false;
+    vector<filesystem::path> image_paths;
+    vector<Index> sample_labels;
 
     vector<string> labels_tokens;
 
