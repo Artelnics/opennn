@@ -301,9 +301,8 @@ void Loss::regularization_to_JSON(JsonWriter& file_stream) const
 
 float Loss::calculate_h(const float x)
 {
-    static const float sqrt_eta = 1e-3f;
-
-    return sqrt_eta * (1.0f + abs(x));
+    constexpr float finite_difference_step = 1e-3f;
+    return finite_difference_step * (1.0f + abs(x));
 }
 
 void Loss::to_JSON(JsonWriter& printer) const
