@@ -24,16 +24,16 @@ struct BackPropagation;
 
 struct TrainingResults;
 
-struct EpochStats
-{
-    float error = 0.0f;
-    float accuracy = 0.0f;
-};
-
 class Optimizer
 {
 
 public:
+
+    struct EpochStats
+    {
+        float error = 0.0f;
+        float accuracy = 0.0f;
+    };
 
     Optimizer(Loss* = nullptr);
     virtual ~Optimizer() = default;

@@ -21,10 +21,10 @@ Convolutional::Convolutional(const Shape& new_input_shape,
                              const Shape& new_stride_shape,
                              const string& new_convolution_type,
                              bool new_batch_normalization,
-                             const string& new_label) : Layer()
+                             const string& new_label)
+    : Layer("Convolutional", LayerType::Convolutional)
 {
-    name = "Convolutional";
-    layer_type = LayerType::Convolutional;
+    operators = {&convolution, &batch_norm, &activation};
 
     set(new_input_shape,
         new_kernel_shape,
@@ -83,14 +83,6 @@ Index Convolutional::get_input_height() const { return input_height; }
 Index Convolutional::get_input_width() const { return input_width; }
 
 Index Convolutional::get_input_channels() const { return input_channels; }
-
-vector<Operator*> Convolutional::get_operators()
-{
-    vector<Operator*> ops = {&convolution};
-    if (batch_norm.active()) ops.push_back(&batch_norm);
-    ops.push_back(&activation);
-    return ops;
-}
 
 vector<pair<Shape, Type>> Convolutional::get_forward_specs(Index batch_size) const
 {

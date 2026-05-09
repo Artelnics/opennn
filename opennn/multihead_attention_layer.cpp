@@ -28,10 +28,11 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_input_shape,
 MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
                                        const Shape& new_source_dimensions,
                                        Index new_heads_number,
-                                       const string& new_name) : Layer()
+                                       const string& new_name)
+    : Layer("MultiHeadAttention", LayerType::MultiHeadAttention)
 {
-    name = "MultiHeadAttention";
-    layer_type = LayerType::MultiHeadAttention;
+    operators = {&query_projection, &key_projection, &value_projection,
+                 &attention, &merge, &output_projection};
 
     if (new_query_dimensions[1] != new_source_dimensions[1])
         throw runtime_error("embedding dimension must be the same for query and source.");
@@ -52,12 +53,6 @@ Shape MultiHeadAttention::get_input_shape() const
 Shape MultiHeadAttention::get_output_shape() const
 {
     return get_input_shape();
-}
-
-vector<Operator*> MultiHeadAttention::get_operators()
-{
-    return {&query_projection, &key_projection, &value_projection,
-            &attention, &merge, &output_projection};
 }
 
 vector<pair<Shape, Type>> MultiHeadAttention::get_forward_specs(Index batch_size) const

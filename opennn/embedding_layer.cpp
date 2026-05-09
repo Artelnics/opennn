@@ -21,22 +21,16 @@ namespace opennn
 
 Embedding::Embedding(const Shape& new_input_shape,
                      Index new_embedding_dimension,
-                     const string& new_label) : Layer()
+                     const string& new_label)
+    : Layer("Embedding", LayerType::Embedding)
 {
-    name = "Embedding";
-    layer_type = LayerType::Embedding;
-
+    operators = {&embedding_lookup, &dropout};
     set(new_input_shape[0], new_input_shape[1], new_embedding_dimension, new_label);
 }
 
 Shape Embedding::get_output_shape() const
 {
     return {sequence_length, embedding_dimension};
-}
-
-vector<Operator*> Embedding::get_operators()
-{
-    return {&embedding_lookup, &dropout};
 }
 
 vector<pair<Shape, Type>> Embedding::get_forward_specs(Index batch_size) const

@@ -15,12 +15,10 @@
 namespace opennn
 {
 
-Scaling::Scaling(const Shape& new_input_shape) : Layer()
+Scaling::Scaling(const Shape& new_input_shape)
+    : Layer("Scaling", LayerType::Scaling, false)
 {
-    name = "Scaling";
-    layer_type = LayerType::Scaling;
-    is_trainable = false;
-
+    operators = {&scale_op};
     set(new_input_shape);
 }
 VectorR Scaling::get_minimums() const

@@ -54,8 +54,6 @@ public:
 
     Activation::Function get_output_activation() const override { return Activation::Function::ReLU; }
 
-    vector<Operator*> get_operators() override { return {&convolution_relu}; }
-
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
 
     void set(const Shape& = {0, 0, 0},
@@ -91,9 +89,6 @@ private:
     bool use_padding = false;
 
     ConvolutionRelu convolution_relu;
-
-    enum Forward {Input, Output};
-    enum Backward {OutputDelta, InputDelta};
 
     void update_convolution_operator();
 };

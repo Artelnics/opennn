@@ -18,12 +18,10 @@
 namespace opennn
 {
 
-Bounding::Bounding(const Shape& new_output_shape, const string& new_name) : Layer()
+Bounding::Bounding(const Shape& new_output_shape, const string& new_name)
+    : Layer("Bounding", LayerType::Bounding, false)
 {
-    name = "Bounding";
-    layer_type = LayerType::Bounding;
-    is_trainable = false;
-
+    operators = {&bound};
     set(new_output_shape, new_name);
 }
 Shape Bounding::get_output_shape() const

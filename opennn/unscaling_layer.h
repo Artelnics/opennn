@@ -34,8 +34,6 @@ public:
     float get_min_range() const { return unscale_op.min_range; }
     float get_max_range() const { return unscale_op.max_range; }
 
-    vector<Operator*> get_operators() override { return {&unscale_op}; }
-
     void set(Index = 0, const string& = "unscaling_layer");
 
     void set_input_shape(const Shape&) override;
@@ -60,8 +58,6 @@ private:
     vector<ScalerMethod> scalers;
 
     Unscale unscale_op;
-
-    enum Forward {Input, Output};
 
     void flush_scalers_to_states();
 };

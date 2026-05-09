@@ -20,10 +20,7 @@ public:
 
     Flatten(const Shape& = {});
 
-    Shape get_input_shape() const override { return input_shape; }
     Shape get_output_shape() const override { return { input_shape.size() }; }
-
-    vector<Operator*> get_operators() override { return {&flat}; }
 
     void set(const Shape&);
 
@@ -31,12 +28,7 @@ public:
 
 private:
 
-    Shape input_shape;
-
     Flat flat;
-
-    enum Forward {Input, Output};
-    enum Backward {OutputDelta, InputDelta};
 };
 
 }

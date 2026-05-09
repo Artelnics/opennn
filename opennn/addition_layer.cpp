@@ -15,10 +15,10 @@
 namespace opennn
 {
 
-Addition::Addition(const Shape& new_input_shape, const string& new_name) : Layer()
+Addition::Addition(const Shape& new_input_shape, const string& new_name)
+    : Layer("Addition", LayerType::Addition)
 {
-    name = "Addition";
-    layer_type = LayerType::Addition;
+    operators = {&add};
 
     set(new_input_shape, new_name);
 

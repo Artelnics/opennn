@@ -18,7 +18,9 @@ namespace opennn
 DenseRelu::DenseRelu(const Shape& new_input_shape,
                      const Shape& new_output_shape,
                      const string& new_label)
+    : Layer("DenseRelu", LayerType::DenseRelu)
 {
+    operators = {&combination_relu};
     set(new_input_shape, new_output_shape, new_label);
 }
 
@@ -50,10 +52,6 @@ void DenseRelu::set(const Shape& new_input_shape,
                     const Shape& new_output_shape,
                     const string& new_label)
 {
-    is_trainable = true;
-    layer_type = LayerType::DenseRelu;
-    name = "DenseRelu";
-
     if (new_input_shape.empty() && new_output_shape.empty())
     {
         input_shape = {};

@@ -22,15 +22,12 @@ public:
               const Shape& = {},
               const string& = "dense_relu_layer");
 
-    Shape get_input_shape() const override { return input_shape; }
     Shape get_output_shape() const override;
 
     Index get_input_features() const { return input_shape.empty() ? 0 : input_shape.back(); }
     Index get_sequence_length() const { return (input_shape.rank == 2) ? input_shape[0] : Index(1); }
 
     Activation::Function get_output_activation() const override { return Activation::Function::ReLU; }
-
-    vector<Operator*> get_operators() override { return {&combination_relu}; }
 
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
 
@@ -44,13 +41,9 @@ public:
 
 private:
 
-    Shape input_shape;
     Index output_features = 0;
 
     CombinationRelu combination_relu;
-
-    enum Forward {Input, Output};
-    enum Backward {OutputDelta, InputDelta};
 
     void configure_operators();
 };

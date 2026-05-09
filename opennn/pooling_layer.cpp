@@ -22,11 +22,10 @@ Pooling::Pooling(const Shape& new_input_shape,
                  const Shape& new_stride_shape,
                  const Shape& new_padding_dimensions,
                  const string& new_pooling_method,
-                 const string& new_name) : Layer()
+                 const string& new_name)
+    : Layer("Pooling", LayerType::Pooling)
 {
-    name = "Pooling";
-    layer_type = LayerType::Pooling;
-
+    operators = {&pool};
     set(new_input_shape,
         new_pool_dimensions,
         new_stride_shape,

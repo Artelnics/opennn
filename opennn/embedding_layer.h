@@ -10,8 +10,6 @@
 
 #include "layer.h"
 #include "operators.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
@@ -30,8 +28,6 @@ public:
     Index get_vocabulary_size() const { return vocabulary_size; }
     Index get_sequence_length() const { return sequence_length; }
     Index get_embedding_dimension() const { return embedding_dimension; }
-
-    vector<Operator*> get_operators() override;
 
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
 
@@ -56,7 +52,6 @@ private:
     EmbeddingLookup embedding_lookup;
     Dropout         dropout;
 
-    enum Forward {Input, Output};
     enum Backward {OutputDelta};
 };
 

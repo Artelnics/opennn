@@ -19,11 +19,10 @@ namespace opennn
 
 Pooling3d::Pooling3d(const Shape& new_input_shape,
                      const PoolingMethod& new_pooling_method,
-                     const string& new_name) : Layer()
+                     const string& new_name)
+    : Layer("Pooling3d", LayerType::Pooling3d)
 {
-    name = "Pooling3d";
-    layer_type = LayerType::Pooling3d;
-
+    operators = {&pool3d};
     set(new_input_shape, new_pooling_method, new_name);
 }
 Shape Pooling3d::get_output_shape() const

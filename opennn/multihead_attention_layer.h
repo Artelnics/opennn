@@ -11,8 +11,6 @@
 #include "layer.h"
 #include "operators.h"
 #include "math_utilities.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
@@ -66,7 +64,6 @@ public:
         return is_self_attention(forward_views) ? forward_views[Input][0] : forward_views[Input][1];
     }
 
-    vector<Operator*> get_operators() override;
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
     vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
 

@@ -20,7 +20,10 @@ Dense::Dense(const Shape& new_input_shape,
              const string& new_activation_function,
              bool new_batch_normalization,
              const string& new_label)
+    : Layer("Dense", LayerType::Dense)
 {
+    operators = {&combination, &batch_norm, &activation, &dropout};
+
     set(new_input_shape,
         new_output_shape,
         new_activation_function,
@@ -34,15 +37,6 @@ Shape Dense::get_output_shape() const
     Shape output_shape = input_shape;
     output_shape.back() = output_features;
     return output_shape;
-}
-
-vector<Operator*> Dense::get_operators()
-{
-    vector<Operator*> operators = {&combination};
-    if (batch_norm.active()) operators.push_back(&batch_norm);
-    operators.push_back(&activation);
-    if (dropout.active()) operators.push_back(&dropout);
-    return operators;
 }
 
 vector<pair<Shape, Type>> Dense::get_forward_specs(Index batch_size) const
@@ -111,10 +105,6 @@ void Dense::set(const Shape& new_input_shape,
                 bool new_batch_normalization,
                 const string& new_label)
 {
-    is_trainable = true;
-    layer_type = LayerType::Dense;
-    name = "Dense";
-
     if (new_input_shape.empty() && new_output_shape.empty())
     {
         input_shape = {};

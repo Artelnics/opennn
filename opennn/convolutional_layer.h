@@ -55,7 +55,6 @@ public:
 
     bool get_batch_normalization() const { return batch_norm.active(); }
 
-    vector<Operator*> get_operators() override;
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
 
     void set(const Shape& = {0, 0, 0},
@@ -100,7 +99,6 @@ private:
     BatchNorm   batch_norm;
 
     enum Forward {Input, ConvolutionView, BatchNormMean, BatchNormInverseVariance, Output};
-    enum Backward {OutputDelta, InputDelta};
 
     void update_convolution_operator();
 };

@@ -24,7 +24,6 @@ public:
           bool = false,
           const string& = "dense_layer");
 
-    Shape get_input_shape() const override { return input_shape; }
     Shape get_output_shape() const override;
 
     Index get_input_features() const { return input_shape.empty() ? 0 : input_shape.back(); }
@@ -36,7 +35,6 @@ public:
     bool get_batch_normalization() const { return batch_norm.active(); }
     float get_momentum() const { return batch_norm.momentum; }
 
-    vector<Operator*> get_operators() override;
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
 
     void set(const Shape& = {},
@@ -58,7 +56,6 @@ public:
 
 private:
 
-    Shape input_shape;
     Index output_features = 0;
 
     Combination combination;
@@ -67,7 +64,6 @@ private:
     Dropout     dropout;
 
     enum Forward {Input, CombinationView, BatchNormMean, BatchNormInverseVariance, ActivationView, Output};
-    enum Backward {OutputDelta, InputDelta};
 
     void configure_operators();
 };

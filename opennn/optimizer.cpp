@@ -578,7 +578,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
         gradient_view *= max_norm / (gradient_norm + 1e-6f);
 }
 
-EpochStats Optimizer::train_epoch(bool is_classification,
+Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                                   ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation,
                                   ThreadSafeQueue<Batch*>& empty_queue,
@@ -665,7 +665,7 @@ EpochStats Optimizer::train_epoch(bool is_classification,
     return stats;
 }
 
-EpochStats Optimizer::evaluate_epoch(bool is_classification,
+Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
                                      ForwardPropagation& forward_propagation,
                                      ThreadSafeQueue<Batch*>& empty_queue,
                                      ThreadSafeQueue<Batch*>& ready_queue,

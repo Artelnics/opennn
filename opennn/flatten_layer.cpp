@@ -15,10 +15,10 @@
 namespace opennn
 {
 
-Flatten::Flatten(const Shape& new_input_shape) : Layer()
+Flatten::Flatten(const Shape& new_input_shape)
+    : Layer("Flatten", LayerType::Flatten)
 {
-    name = "Flatten";
-    layer_type = LayerType::Flatten;
+    operators = {&flat};
 
     set(new_input_shape);
 

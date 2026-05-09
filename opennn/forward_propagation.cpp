@@ -12,6 +12,20 @@
 namespace opennn
 {
 
+namespace {
+
+TensorView layer_output_view(const vector<vector<vector<TensorView>>>& views, Index layer_index)
+{
+    if (layer_index < 0
+        || size_t(layer_index) >= views.size()
+        || views[layer_index].size() <= 1
+        || views[layer_index].back().empty())
+        return {};
+    return views[layer_index].back()[0];
+}
+
+}
+
 ForwardPropagation::ForwardPropagation(const Index new_batch_size, NeuralNetwork* new_neural_network)
 {
     set(new_batch_size, new_neural_network);
@@ -33,13 +47,8 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     const bool is_gpu = Configuration::instance().is_gpu();
     const Device device = is_gpu ? Device::CUDA : Device::CPU;
 
-    vector<vector<Type>> forward_dtypes(layers_number);
-    for (Index i = 0; i < layers_number; ++i)
-    {
-        forward_dtypes[i] = layers[i]->get_forward_dtypes(batch_size);
-        if (!is_gpu)
-            std::fill(forward_dtypes[i].begin(), forward_dtypes[i].end(), Type::FP32);
-    }
+    const auto forward_dtypes = collect_layer_dtypes(layers, batch_size, is_gpu,
+                                                     &Layer::get_forward_dtypes);
 
     const Index total_bytes = aligned_total_bytes(forward_shapes, forward_dtypes);
 
@@ -80,41 +89,28 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             if (producer < 0) continue;
 
             const size_t output_slot = forward_shapes[producer].size();
-            if (output_slot == 0 || views[producer][output_slot].empty()) continue;
+            if (output_slot == 0) continue;
 
-            views[i][0][k] = views[producer][output_slot][0];
+            const TensorView& source = views[producer][output_slot][0];
+            if (source.empty()) continue;
+
+            views[i][0][k] = source;
         }
     }
 }
 
 TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
 {
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
-    if (last_trainable_layer_index < 0
-       || static_cast<size_t>(last_trainable_layer_index) >= views.size()
-       || views[last_trainable_layer_index].size() <= 1
-       || views[last_trainable_layer_index].back().empty())
-        return {};
-
-    return views[last_trainable_layer_index].back()[0];
+    if (!neural_network) return {};
+    return layer_output_view(views, neural_network->get_last_trainable_layer_index());
 }
 
 TensorView ForwardPropagation::get_outputs() const
 {
-    if (!neural_network || views.empty()) return {};
-
-    const size_t layers_number = neural_network->get_layers_number();
-
-    if (layers_number == 0
-       || layers_number - 1 >= views.size()
-       || views[layers_number - 1].size() < 2
-       || views[layers_number - 1].back().empty())
-    {
-        return get_last_trainable_layer_outputs();
-    }
-
-    return views[layers_number - 1].back()[0];
+    if (!neural_network) return {};
+    const Index last = Index(neural_network->get_layers_number()) - 1;
+    const TensorView v = layer_output_view(views, last);
+    return v.empty() ? get_last_trainable_layer_outputs() : v;
 }
 
 void ForwardPropagation::print() const

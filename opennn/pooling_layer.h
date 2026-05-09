@@ -10,8 +10,6 @@
 
 #include "layer.h"
 #include "operators.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
@@ -68,8 +66,6 @@ public:
 
     PoolingMethod get_pooling_method() const { return pooling_method; }
 
-    vector<Operator*> get_operators() override { return {&pool}; }
-
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
 
     void set(const Shape& = { 0, 0, 0 },
@@ -110,7 +106,6 @@ private:
     Pool pool;
 
     enum Forward {Input, MaximalIndices, Output};
-    enum Backward {OutputDelta, InputDelta};
 
     void update_pool_operator();
 };

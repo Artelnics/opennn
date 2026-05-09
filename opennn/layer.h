@@ -72,13 +72,6 @@ inline LayerType string_to_layer_type(const string& name)
     return layer_type_map().from_string(name);
 }
 
-#ifdef _MSC_VER
-#define FORCE_INLINE __forceinline
-#elif defined(__GNUC__) || defined(__clang__)
-#define FORCE_INLINE __attribute__((always_inline)) inline
-#else
-#define FORCE_INLINE inline
-#endif
 inline vector<Shape> spec_shapes(const vector<pair<Shape, Type>>& specs)
 {
     vector<Shape> result;
@@ -114,7 +107,7 @@ public:
     void set_label(string new_label) { label = move(new_label); }
 
     Index get_parameters_number() const;
-    virtual vector<Operator*> get_operators() { return {}; }
+    const vector<Operator*>& get_operators() const { return operators; }
     virtual vector<pair<Shape, Type>> get_parameter_specs() const;
     virtual vector<pair<Shape, Type>> get_state_specs()     const;
     virtual vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const
@@ -132,11 +125,10 @@ public:
     vector<Shape> get_forward_shapes(Index b)   const { return spec_shapes(get_forward_specs(b)); }
     vector<Shape> get_backward_shapes(Index b)  const { return spec_shapes(get_backward_specs(b)); }
 
-    vector<Type>  get_parameter_dtypes()        const { return spec_dtypes(get_parameter_specs()); }
     vector<Type>  get_forward_dtypes(Index b)   const { return spec_dtypes(get_forward_specs(b)); }
     vector<Type>  get_backward_dtypes(Index b)  const { return spec_dtypes(get_backward_specs(b)); }
 
-    virtual Shape get_input_shape() const = 0;
+    virtual Shape get_input_shape() const { return input_shape; }
 
     virtual Shape get_output_shape() const = 0;
 
@@ -154,8 +146,8 @@ public:
 
     virtual void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t i) const noexcept
     {
-        const vector<Operator*> operators = const_cast<Layer*>(this)->get_operators();
-        for (auto it = operators.rbegin(); it != operators.rend(); ++it)
+        const auto& ops = get_operators();
+        for (auto it = ops.rbegin(); it != ops.rend(); ++it)
             (*it)->back_propagate(fp, bp, i);
     }
 
@@ -195,22 +187,28 @@ public:
 
     void redistribute_parameters_to_operators()
     {
-        distribute_to_operators(parameters, &Operator::link_parameters, &Operator::parameter_specs);
+        distribute_to_operators(parameters, &Operator::link_parameters, &Operator::parameter_count);
     }
 
     void redistribute_parameter_gradients_to_operators(vector<TensorView>& gradient_views)
     {
-        distribute_to_operators(gradient_views, &Operator::link_gradients, &Operator::parameter_specs);
+        distribute_to_operators(gradient_views, &Operator::link_gradients, &Operator::parameter_count);
     }
 
     void redistribute_states_to_operators()
     {
-        distribute_to_operators(states, &Operator::link_states, &Operator::state_specs);
+        distribute_to_operators(states, &Operator::link_states, &Operator::state_count);
     }
 
 protected:
 
     Layer() = default;
+
+    Layer(string n, LayerType t, bool trainable = true)
+        : name(move(n)), layer_type(t), is_trainable(trainable) {}
+
+    enum Forward {Input, Output};
+    enum Backward {OutputDelta, InputDelta};
 
     string label = "my_layer";
 
@@ -222,24 +220,39 @@ protected:
 
     bool is_first_layer = false;
 
+    Shape input_shape;
+
     Type compute_dtype = Type::FP32;
 
     vector<TensorView> parameters;
     vector<TensorView> states;
 
-    float* link_views(float* pointer,
-                      const vector<Shape>& shapes,
-                      vector<TensorView>& views,
-                      const char* tag) const;
+    vector<Operator*> operators;
 
     void distribute_to_operators(
         vector<TensorView>& views,
         void (Operator::*link)(const vector<TensorView>&),
-        vector<pair<Shape, Type>> (Operator::*specs)() const);
+        size_t (Operator::*count)() const);
 
     vector<unique_ptr<Layer>> layers;
 
 };
+
+inline vector<vector<Type>> collect_layer_dtypes(
+    const vector<unique_ptr<Layer>>& layers,
+    Index batch_size,
+    bool is_gpu,
+    vector<Type> (Layer::*getter)(Index) const)
+{
+    vector<vector<Type>> result(layers.size());
+    for (size_t i = 0; i < layers.size(); ++i)
+    {
+        result[i] = (layers[i].get()->*getter)(batch_size);
+        if (!is_gpu)
+            std::fill(result[i].begin(), result[i].end(), Type::FP32);
+    }
+    return result;
+}
 
 }
 

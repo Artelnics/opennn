@@ -19,10 +19,10 @@ namespace opennn
 {
 
 Normalization3d::Normalization3d(const Shape& new_input_shape,
-                                 const string& new_name) : Layer()
+                                 const string& new_name)
+    : Layer("Normalization3d", LayerType::Normalization3d)
 {
-    name = "Normalization3d";
-    layer_type = LayerType::Normalization3d;
+    operators = {&layer_norm};
 
     const Index new_sequence_length     = new_input_shape.empty() ? Index(0) : new_input_shape[0];
     const Index new_embedding_dimension = new_input_shape.rank >= 2 ? new_input_shape[1] : Index(0);
@@ -43,11 +43,6 @@ Shape Normalization3d::get_input_shape() const
 Shape Normalization3d::get_output_shape() const
 {
     return { sequence_length, embedding_dimension };
-}
-
-vector<Operator*> Normalization3d::get_operators()
-{
-    return {&layer_norm};
 }
 
 vector<pair<Shape, Type>> Normalization3d::get_forward_specs(Index batch_size) const

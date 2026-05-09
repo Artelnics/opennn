@@ -19,11 +19,10 @@ ConvolutionalRelu::ConvolutionalRelu(const Shape& new_input_shape,
                                      const Shape& new_kernel_shape,
                                      const Shape& new_stride_shape,
                                      const string& new_convolution_type,
-                                     const string& new_label) : Layer()
+                                     const string& new_label)
+    : Layer("ConvolutionalRelu", LayerType::ConvolutionalRelu)
 {
-    name = "ConvolutionalRelu";
-    layer_type = LayerType::ConvolutionalRelu;
-
+    operators = {&convolution_relu};
     set(new_input_shape,
         new_kernel_shape,
         new_stride_shape,

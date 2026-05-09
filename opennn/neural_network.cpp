@@ -1064,25 +1064,22 @@ void NeuralNetwork::link_parameters()
 
     for (auto& layer : layers)
     {
-        const vector<Shape> shapes = layer->get_parameter_shapes();
-        const vector<Type> dtypes = layer->get_parameter_dtypes();
+        const auto specs = layer->get_parameter_specs();
         auto& param_views = layer->get_parameter_views();
 
-        for (size_t i = 0; i < shapes.size(); ++i)
+        for (size_t i = 0; i < specs.size(); ++i)
         {
-            if (shapes[i].empty()) continue;
+            const auto& [shape, slot_dtype] = specs[i];
+            if (shape.empty()) continue;
 
-            const Index aligned = get_aligned_size(shapes[i].size());
-            const Type slot_dtype = (i < dtypes.size())
-                                        ? dtypes[i]
-                                        : Type::FP32;
+            const Index aligned = get_aligned_size(shape.size());
 
             if (i < param_views.size())
             {
                 const bool use_bf16 = (slot_dtype == Type::BF16 && bf16_ptr != nullptr);
                 void* slot_ptr = use_bf16 ? static_cast<void*>(bf16_ptr)
                                           : static_cast<void*>(fp32_ptr);
-                param_views[i] = TensorView(slot_ptr, shapes[i], use_bf16 ? Type::BF16 : Type::FP32);
+                param_views[i] = TensorView(slot_ptr, shape, use_bf16 ? Type::BF16 : Type::FP32);
             }
 
             fp32_ptr += aligned;

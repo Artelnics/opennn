@@ -10,8 +10,6 @@
 
 #include "layer.h"
 #include "operators.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
@@ -31,8 +29,6 @@ public:
 
     VectorR get_lower_bounds() const;
     VectorR get_upper_bounds() const;
-
-    vector<Operator*> get_operators() override { return {&bound}; }
 
     void set(const Shape& = {0}, const string& = "bounding_layer");
 
@@ -56,8 +52,6 @@ private:
     Shape output_shape;
 
     Bound bound;
-
-    enum Forward {Input, Output};
 
     static const EnumMap<BoundingMethod>& bounding_method_map();
 };

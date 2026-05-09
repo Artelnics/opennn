@@ -22,7 +22,6 @@ public:
 
     Scaling(const Shape& = {});
 
-    Shape get_input_shape() const override { return input_shape; }
     Shape get_output_shape() const override { return input_shape; }
 
     VectorR get_minimums() const;
@@ -34,8 +33,6 @@ public:
 
     float get_min_range() const { return scale_op.min_range; }
     float get_max_range() const { return scale_op.max_range; }
-
-    vector<Operator*> get_operators() override { return {&scale_op}; }
 
     void set(const Shape& = {});
 
@@ -61,13 +58,9 @@ public:
 
 private:
 
-    Shape input_shape;
-
     vector<ScalerMethod> scalers;
 
     Scale scale_op;
-
-    enum Forward {Input, Output};
 
     void flush_scalers_to_states();
 };
