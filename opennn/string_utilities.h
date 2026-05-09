@@ -20,14 +20,18 @@ namespace opennn
 
     vector<string> get_tokens(const string&, const string&);
 
+    vector<string_view> get_token_views(string_view, char);
+
+    string_view trim_view(string_view);
+
     vector<string> tokenize(const string&);
 
     vector<string> convert_string_vector(const vector<vector<string>>&, const string&);
 
     VectorR to_type_vector(const string&, const string&);
 
-    bool is_numeric_string(const string&);
-    bool is_date_time_string(const string&);
+    bool is_numeric_string(string_view);
+    bool is_date_time_string(string_view);
 
     enum DateFormat {AUTO, DMY, MDY, YMD};
 
@@ -45,6 +49,7 @@ namespace opennn
     string get_trimmed(const string&);
 
     bool has_numbers(const vector<string>&);
+    bool has_numbers(const vector<string_view>&);
 
     void replace(string&, const string&, const string&);
     void replace_double_char_with_label(string&, const string&, const string&);
@@ -106,6 +111,7 @@ namespace opennn
     }
 
     bool contains(const vector<string>&, const string&);
+    bool contains(const vector<string>&, string_view);
 }
 
 // OpenNN: Open Neural Networks Library.

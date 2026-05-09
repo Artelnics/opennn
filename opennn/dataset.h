@@ -210,7 +210,7 @@ public:
 
     bool has_validation() const;
 
-    bool has_missing_values(const vector<string>&) const;
+    bool has_missing_values(const vector<string_view>&) const;
     void split_samples(const float training_ratio = 0.6f,
                        float selection_ratio = 0.2f,
                        float testing_ratio = 0.2f,
@@ -259,7 +259,7 @@ public:
 
     virtual void read_csv() {}
 
-    DateFormat infer_dataset_date_format(const vector<Variable>&, const vector<vector<string>>&, bool, const string&);
+    DateFormat infer_dataset_date_format(const vector<Variable>&, const vector<vector<string_view>>&, bool, const string&);
 
     virtual void fill_inputs(const vector<Index>&,
                              const vector<Index>&,
@@ -288,9 +288,9 @@ protected:
     void set_default_variable_roles();
     void set_default_variable_roles_forecasting();
 
-    void infer_column_types(const vector<vector<string>>&);
-    void read_data_file_preview(const vector<vector<string>>&);
-    void check_separators(const string&) const;
+    void infer_column_types(const vector<vector<string_view>>&);
+    void read_data_file_preview(const vector<vector<string_view>>&);
+    void check_separators(string_view) const;
 
     string get_sample_role(const Index i) const { return sample_role_to_string(sample_roles[i]); }
     SampleRole get_sample_role_type(const Index i) const { return sample_roles[i]; }

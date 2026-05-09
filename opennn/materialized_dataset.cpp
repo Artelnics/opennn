@@ -1242,55 +1242,100 @@ void MaterializedDataset::calculate_missing_values_statistics()
     rows_missing_values_number = count_rows_with_nan();
 }
 
+namespace {
+
+float parse_float_or_nan(string_view token)
+{
+    float value;
+    auto [ptr, ec] = std::from_chars(token.data(), token.data() + token.size(), value);
+    return (ec == std::errc{} && ptr == token.data() + token.size()) ? value : float(NAN);
+}
+
+void strip_quotes_and_quoted_separators(string& buffer)
+{
+    if (buffer.find('"') == string::npos) return;
+
+    char* write = buffer.data();
+    const char* read = buffer.data();
+    const char* end = buffer.data() + buffer.size();
+    bool in_quote = false;
+
+    while (read < end)
+    {
+        const char c = *read++;
+
+        if (c == '"')
+            in_quote = !in_quote;
+        else if (in_quote && (c == ',' || c == ';'))
+            continue;
+        else
+            *write++ = c;
+    }
+
+    buffer.resize(write - buffer.data());
+}
+
+}
+
 void MaterializedDataset::read_csv()
 {
     if (data_path.empty())
         throw runtime_error("Data path is empty.\n");
 
-    ifstream file(data_path, ios::binary);
+    ifstream file(data_path, ios::binary | ios::ate);
 
     if (!file.is_open())
         throw runtime_error("Cannot open file " + data_path.string() + "\n");
 
-    // BOM
+    const auto file_size = file.tellg();
+    file.seekg(0);
 
-    char bom[3] = {0};
-    file.read(bom, 3);
+    string buffer(static_cast<size_t>(file_size), '\0');
+    if (file_size > 0)
+        file.read(buffer.data(), file_size);
+    file.close();
 
-    if (static_cast<unsigned char>(bom[0]) != 0xEF
-        || static_cast<unsigned char>(bom[1]) != 0xBB
-        || static_cast<unsigned char>(bom[2]) != 0xBF)
-        file.seekg(0);
+    if (buffer.size() >= 3
+        && static_cast<unsigned char>(buffer[0]) == 0xEF
+        && static_cast<unsigned char>(buffer[1]) == 0xBB
+        && static_cast<unsigned char>(buffer[2]) == 0xBF)
+        buffer.erase(0, 3);
 
-    // Read file
+    strip_quotes_and_quoted_separators(buffer);
 
-    vector<vector<string>> raw_file_content;
-    string line;
     const string separator_string = get_separator_string();
+    const char separator_char = separator_string.empty() ? ',' : separator_string[0];
 
-    while (getline(file, line))
+    vector<vector<string_view>> raw_file_content;
+    raw_file_content.reserve(count(buffer.begin(), buffer.end(), '\n') + 1);
+
+    const string_view buffer_view(buffer);
+    size_t line_start = 0;
+
+    while (line_start < buffer_view.size())
     {
-        if (!line.empty() && line.back() == '\r')
-            line.pop_back();
+        size_t line_end = buffer_view.find('\n', line_start);
+        if (line_end == string_view::npos) line_end = buffer_view.size();
 
-        prepare_line(line);
+        string_view line = buffer_view.substr(line_start, line_end - line_start);
+        line_start = line_end + 1;
 
-        if (line.empty())
-            continue;
+        if (!line.empty() && line.back() == '\r') line.remove_suffix(1);
+        line = trim_view(line);
+
+        if (line.empty()) continue;
 
         check_separators(line);
 
-        raw_file_content.push_back(get_tokens(line, separator_string));
+        raw_file_content.push_back(get_token_views(line, separator_char));
     }
-
-    file.close();
 
     if (raw_file_content.empty())
         throw runtime_error("File " + data_path.string() + " is empty or contains no valid data rows.");
 
     read_data_file_preview(raw_file_content);
 
-    vector<string> header_tokens = raw_file_content[0];
+    vector<string_view> header_tokens = raw_file_content[0];
     if (has_header)
     {
         if (has_numbers(header_tokens))
@@ -1302,13 +1347,13 @@ void MaterializedDataset::read_csv()
     if (raw_file_content.empty())
         throw runtime_error("Data file only contains a header.");
 
-    // Id detection
-
     const Index samples_number = raw_file_content.size();
+
+    auto is_missing = [&](string_view t) { return t.empty() || t == missing_values_label; };
 
     if (!has_sample_ids && samples_number > 0)
     {
-        std::unordered_set<string> unique_elements;
+        std::unordered_set<string_view> unique_elements;
 
         bool possible_id = true;
         bool is_numeric_column = true;
@@ -1316,12 +1361,12 @@ void MaterializedDataset::read_csv()
         Index date_check_count = 0;
         const Index max_date_checks = 20;
 
-        for (const vector<string>& row : raw_file_content)
+        for (const vector<string_view>& row : raw_file_content)
         {
             if (row.empty())
                 continue;
 
-            const string& token = row[0];
+            const string_view token = row[0];
 
             if (!unique_elements.insert(token).second)
             {
@@ -1329,11 +1374,11 @@ void MaterializedDataset::read_csv()
                 break;
             }
 
-            if (is_numeric_column && !token.empty() && token != missing_values_label)
+            if (is_numeric_column && !is_missing(token))
                 if (!is_numeric_string(token))
                     is_numeric_column = false;
 
-            if (is_date_column && date_check_count < max_date_checks && !token.empty() && token != missing_values_label)
+            if (is_date_column && date_check_count < max_date_checks && !is_missing(token))
             {
                 if (!is_date_time_string(token))
                     is_date_column = false;
@@ -1349,17 +1394,19 @@ void MaterializedDataset::read_csv()
             has_sample_ids = true;
     }
 
-    // Variables
-
     const size_t columns_number = header_tokens.size();
     const Index variables_number = has_sample_ids ? columns_number - 1 : columns_number;
     variables.resize(variables_number);
 
     if (has_header)
-        if (has_sample_ids)
-            for (Index i = 0; i < variables_number; ++i) variables[i].name = header_tokens[i + 1];
-        else
-            set_variable_names(header_tokens);
+    {
+        const size_t name_offset = has_sample_ids ? 1 : 0;
+        vector<string> names;
+        names.reserve(variables_number);
+        for (Index i = 0; i < variables_number; ++i)
+            names.emplace_back(header_tokens[i + name_offset]);
+        set_variable_names(names);
+    }
     else
         set_default_variable_names();
 
@@ -1370,8 +1417,6 @@ void MaterializedDataset::read_csv()
     for (Variable& variable : variables)
         if (variable.type == VariableType::Categorical && variable.get_categories_number() == 2)
             variable.type = VariableType::Binary;
-
-    // Samples data
 
     sample_roles.resize(samples_number, SampleRole::Training);
     sample_ids.resize(samples_number);
@@ -1386,22 +1431,26 @@ void MaterializedDataset::read_csv()
 
     variables_missing_values_number = VectorI::Zero(variables_number);
 
-    vector<unordered_map<string, Index>> category_maps(variables_number);
+    vector<unordered_map<string_view, Index>> category_maps(variables_number);
     for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
-        if (variables[variable_index].type == VariableType::Categorical)
-            for (Index category_index = 0; category_index < ssize(variables[variable_index].categories); ++category_index)
-                category_maps[variable_index][variables[variable_index].categories[category_index]] = category_index;
+    {
+        const Variable& variable = variables[variable_index];
+        if (variable.type != VariableType::Categorical) continue;
+
+        for (Index ci = 0; ci < ssize(variable.categories); ++ci)
+            category_maps[variable_index].emplace(string_view(variable.categories[ci]), ci);
+    }
 
     for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {
-        const vector<string>& tokens = raw_file_content[sample_index];
+        const vector<string_view>& tokens = raw_file_content[sample_index];
 
         if (has_missing_values(tokens))
         {
             ++rows_missing_values_number;
             for (size_t i = (has_sample_ids ? 1 : 0); i < tokens.size(); ++i)
             {
-                if (tokens[i].empty() || tokens[i] == missing_values_label)
+                if (is_missing(tokens[i]))
                 {
                     ++missing_values_number;
                     variables_missing_values_number(has_sample_ids ? i - 1 : i)++;
@@ -1410,7 +1459,7 @@ void MaterializedDataset::read_csv()
         }
 
         if (has_sample_ids)
-            sample_ids[sample_index] = tokens[0];
+            sample_ids[sample_index] = string(tokens[0]);
 
         for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
         {
@@ -1418,20 +1467,20 @@ void MaterializedDataset::read_csv()
             const size_t token_index = has_sample_ids ? variable_index + 1 : variable_index;
             if (token_index >= tokens.size())
                 throw runtime_error("Row " + to_string(sample_index) + " has fewer columns than expected (" + to_string(tokens.size()) + ").");
-            const string& token = tokens[token_index];
+            const string_view token = tokens[token_index];
             const vector<Index>& feature_indices = all_feature_indices[variable_index];
 
             switch (variable.type)
             {
             case VariableType::Numeric:
-                data(sample_index, feature_indices[0]) = (token.empty() || token == missing_values_label) ? NAN : stof(token);
+                data(sample_index, feature_indices[0]) = is_missing(token) ? float(NAN) : parse_float_or_nan(token);
                 break;
             case VariableType::DateTime:
-                if (token.empty() || token == missing_values_label)
+                if (is_missing(token))
                     data(sample_index, feature_indices[0]) = NAN;
                 else
                 {
-                    const time_t timestamp = date_to_timestamp(token, gmt, date_format);
+                    const time_t timestamp = date_to_timestamp(string(token), gmt, date_format);
 
                     if (timestamp == -1)
                         throw runtime_error("Date format is unsupported or date is prior to 1970.");
@@ -1440,7 +1489,7 @@ void MaterializedDataset::read_csv()
                 }
                 break;
             case VariableType::Categorical:
-                if (token.empty() || token == missing_values_label)
+                if (is_missing(token))
                     for (const Index cat_index : feature_indices)
                         data(sample_index, cat_index) = NAN;
                 else
@@ -1457,14 +1506,14 @@ void MaterializedDataset::read_csv()
                 {
                     const vector<string>& categories = variable.categories;
 
-                    if (token.empty() || token == missing_values_label)
+                    if (is_missing(token))
                         data(sample_index, feature_indices[0]) = NAN;
                     else if (!categories.empty() && token == categories[0])
                         data(sample_index, feature_indices[0]) = 0;
                     else if (categories.size() > 1 && token == categories[1])
                         data(sample_index, feature_indices[0]) = 1;
                     else
-                        data(sample_index, feature_indices[0]) = stof(token);
+                        data(sample_index, feature_indices[0]) = parse_float_or_nan(token);
                 }
                 break;
             default:

@@ -18,7 +18,9 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include <algorithm>
+#include <charconv>
 #include <string>
+#include <string_view>
 #include <cassert>
 #include <cmath>
 #include <ctime>

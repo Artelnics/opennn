@@ -120,6 +120,39 @@ vector<string> get_tokens(const string& text, const string& separator)
     return tokens;
 }
 
+vector<string_view> get_token_views(string_view text, char separator)
+{
+    vector<string_view> tokens;
+
+    size_t start = 0;
+    while (true)
+    {
+        const size_t end = text.find(separator, start);
+
+        if (end == string_view::npos)
+        {
+            tokens.emplace_back(text.substr(start));
+            break;
+        }
+
+        tokens.emplace_back(text.substr(start, end - start));
+        start = end + 1;
+    }
+
+    return tokens;
+}
+
+string_view trim_view(string_view text)
+{
+    constexpr string_view whitespace = " \t\n\r\f\v\b";
+
+    const size_t start = text.find_first_not_of(whitespace);
+    if (start == string_view::npos) return {};
+
+    const size_t end = text.find_last_not_of(whitespace);
+    return text.substr(start, end - start + 1);
+}
+
 vector<string> convert_string_vector(const vector<vector<string>>& input_vector, const string& separator)
 {
     vector<string> vector_result;
@@ -162,24 +195,24 @@ VectorR to_type_vector(const string& text, const string& separator)
     return type_vector;
 }
 
-bool is_numeric_string(const string& text)
+bool is_numeric_string(string_view text)
 {
     if (text.empty()) return false;
 
-    const char* begin = text.c_str();
-    char* end = nullptr;
-    errno = 0;
-    strtod(begin, &end);
+    double value;
+    const char* first = text.data();
+    const char* last  = first + text.size();
+    auto [ptr, ec] = std::from_chars(first, last, value);
 
-    if (end == begin || errno == ERANGE) return false;
+    if (ec != std::errc{} || ptr == first) return false;
 
-    const size_t consumed = static_cast<size_t>(end - begin);
+    const size_t consumed = static_cast<size_t>(ptr - first);
 
     return consumed == text.size()
-        || (text.find('%') != string::npos && consumed + 1 == text.size());
+        || (text.find('%') != string_view::npos && consumed + 1 == text.size());
 }
 
-bool is_date_time_string(const string& text)
+bool is_date_time_string(string_view text)
 {
     if (is_numeric_string(text))
         return false;
@@ -201,7 +234,7 @@ bool is_date_time_string(const string& text)
     };
 
     return any_of(date_regexes.begin(), date_regexes.end(),
-                  [&](const regex& date_regex) { return regex_match(text, date_regex); });
+                  [&](const regex& date_regex) { return regex_match(text.begin(), text.end(), date_regex); });
 }
 
 time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format)
@@ -437,6 +470,12 @@ string get_trimmed(const string& text)
 
 bool has_numbers(const vector<string>& string_list)
 {
+    return any_of(string_list.begin(), string_list.end(),
+                  [](const string& s) { return is_numeric_string(s); });
+}
+
+bool has_numbers(const vector<string_view>& string_list)
+{
     return any_of(string_list.begin(), string_list.end(), is_numeric_string);
 }
 
@@ -506,6 +545,12 @@ void string_to_vector(const string& input, VectorR& values)
 bool contains(const vector<string>& data, const string& value)
 {
     return find(data.begin(), data.end(), value) != data.end();
+}
+
+bool contains(const vector<string>& data, string_view value)
+{
+    return any_of(data.begin(), data.end(),
+                  [&](const string& s) { return s == value; });
 }
 
 }

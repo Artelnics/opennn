@@ -1070,7 +1070,7 @@ void Dataset::load(const filesystem::path& file_name)
     from_JSON(load_json_file(file_name));
 }
 
-void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
+void Dataset::infer_column_types(const vector<vector<string_view>>& sample_rows)
 {
     const Index variables_number = variables.size();
     const size_t total_rows = sample_rows.size();
@@ -1096,7 +1096,7 @@ void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
             const size_t token_index = has_sample_ids ? col_index + 1 : col_index;
             if (token_index >= sample_rows[row_index].size()) continue;
 
-            const string& token = sample_rows[row_index][token_index];
+            const string_view token = sample_rows[row_index][token_index];
 
             if (token.empty() || token == missing_values_label) continue;
 
@@ -1125,11 +1125,11 @@ void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
         if (variables[col_index].type == VariableType::Categorical)
         {
             std::set<string> unique_categories;
-            for (const vector<string>& row : sample_rows)
+            for (const vector<string_view>& row : sample_rows)
             {
                 const size_t token_index = has_sample_ids ? col_index + 1 : col_index;
                 if (token_index < row.size() && !row[token_index].empty() && row[token_index] != missing_values_label)
-                    unique_categories.insert(row[token_index]);
+                    unique_categories.emplace(row[token_index]);
             }
             variables[col_index].categories.assign(unique_categories.begin(), unique_categories.end());
         }
@@ -1137,29 +1137,31 @@ void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
 }
 
 DateFormat Dataset::infer_dataset_date_format(const vector<Variable>& variables,
-                                              const vector<vector<string>>& sample_rows,
+                                              const vector<vector<string_view>>& sample_rows,
                                               bool has_sample_ids,
                                               const string& missing_values_label)
 {
+    static const regex date_re(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}).*)");
+
     for (size_t col_index = 0; col_index < variables.size(); ++col_index)
     {
         if (variables[col_index].type != VariableType::DateTime)
             continue;
 
-        for (const vector<string>& row : sample_rows)
+        for (const vector<string_view>& row : sample_rows)
         {
             const size_t token_index = has_sample_ids ? col_index + 1 : col_index;
 
             if (token_index >= row.size())
                 continue;
 
-            const string& token = row[token_index];
+            const string_view token = row[token_index];
 
             if (token.empty() || token == missing_values_label)
                 continue;
 
-            smatch date_parts;
-            if (regex_match(token, date_parts, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}).*)")))
+            cmatch date_parts;
+            if (regex_match(token.data(), token.data() + token.size(), date_parts, date_re))
             {
                 const int part1 = stoi(date_parts[1].str());
                 const int part2 = stoi(date_parts[2].str());
@@ -1175,7 +1177,7 @@ DateFormat Dataset::infer_dataset_date_format(const vector<Variable>& variables,
     return AUTO;
 }
 
-void Dataset::read_data_file_preview(const vector<vector<string>>& all_rows)
+void Dataset::read_data_file_preview(const vector<vector<string_view>>& all_rows)
 {
     if (all_rows.empty())
         return;
@@ -1184,36 +1186,40 @@ void Dataset::read_data_file_preview(const vector<vector<string>>& all_rows)
 
     data_file_preview.clear();
 
+    auto copy_row = [](const vector<string_view>& src) {
+        vector<string> dst;
+        dst.reserve(src.size());
+        for (string_view sv : src) dst.emplace_back(sv);
+        return dst;
+    };
+
     for (Index i = 0; i < Index(min(static_cast<size_t>(num_first_rows_to_show), all_rows.size())); ++i)
-        data_file_preview.push_back(all_rows[i]);
+        data_file_preview.push_back(copy_row(all_rows[i]));
 
     if (all_rows.size() > num_first_rows_to_show)
-        data_file_preview.push_back(all_rows.back());
-    else if (all_rows.empty() && data_file_preview.size() < num_first_rows_to_show +1 )
-        while (data_file_preview.size() < num_first_rows_to_show +1)
-            data_file_preview.push_back(vector<string>());
+        data_file_preview.push_back(copy_row(all_rows.back()));
 }
 
-void Dataset::check_separators(const string& line) const
+void Dataset::check_separators(string_view line) const
 {
     const string separator_string = get_separator_string();
     const string separator_name = get_separator_name();
 
-    if (line.find(separator_string) == string::npos)
+    if (line.find(separator_string) == string_view::npos)
     {
         bool has_any_separator = false;
 
         for (const auto& [sep, str, name] : separator_map)
-            if (line.find(str) != string::npos) { has_any_separator = true; break; }
+            if (line.find(str) != string_view::npos) { has_any_separator = true; break; }
 
         if (has_any_separator)
-            throw runtime_error("Separator '" + separator_string + "' not found in line " + line + ".\n");
+            throw runtime_error("Separator '" + separator_string + "' not found in line " + string(line) + ".\n");
 
         return;
     }
 
     for (const auto& [sep, str, name] : separator_map)
-        if (sep != separator && line.find(str) != string::npos)
+        if (sep != separator && line.find(str) != string_view::npos)
             throw runtime_error("Found " + name + " ('" + str + "') in data file "
                                 + data_path.string() + ", but separator is " + separator_name + " ('" + separator_string + "').");
 }
@@ -1248,7 +1254,7 @@ bool Dataset::has_validation() const
     return get_samples_number("Validation") != 0;
 }
 
-bool Dataset::has_missing_values(const vector<string>& row) const
+bool Dataset::has_missing_values(const vector<string_view>& row) const
 {
     for (size_t i = 0; i < row.size(); ++i)
         if (row[i].empty() || row[i] == missing_values_label)
