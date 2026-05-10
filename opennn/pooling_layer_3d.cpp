@@ -25,6 +25,7 @@ Pooling3d::Pooling3d(const Shape& new_input_shape,
     operators = {&pool3d};
     set(new_input_shape, new_pooling_method, new_name);
 }
+
 Shape Pooling3d::get_output_shape() const
 {
     return {input_features};
@@ -70,6 +71,7 @@ void Pooling3d::set_pooling_method(const string& new_pooling_method)
     pooling_method = string_to_pooling_method(new_pooling_method);
     pool3d.method = (pooling_method == PoolingMethod::MaxPooling) ? Pool3d::Max : Pool3d::Average;
 }
+
 void Pooling3d::read_JSON_body(const Json* element)
 {
     set_pooling_method(read_json_string(element, "PoolingMethod"));

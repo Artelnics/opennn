@@ -32,6 +32,7 @@ Normalization3d::Normalization3d(const Shape& new_input_shape,
     layer_norm.output_delta_slots = {OutputDelta};
     layer_norm.input_delta_slots  = {InputDelta};
 }
+
 Shape Normalization3d::get_input_shape() const
 {
     return { sequence_length, embedding_dimension };
@@ -67,6 +68,7 @@ void Normalization3d::set(Index new_sequence_length,
 
     layer_norm.set(sequence_length, embedding_dimension);
 }
+
 void Normalization3d::read_JSON_body(const Json* element)
 {
     const string new_name = read_json_string(element, "Label");

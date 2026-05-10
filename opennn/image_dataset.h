@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "materialized_dataset.h"
+#include "dataset.h"
 
 namespace opennn
 {
@@ -26,7 +26,7 @@ struct AugmentationSettings
     float vertical_translation_maximum = 0.0f;
 };
 
-class ImageDataset : public MaterializedDataset
+class ImageDataset : public Dataset
 {
 
 public:
@@ -44,7 +44,7 @@ public:
     void set_streaming(bool b) { streaming = b; }
 
     Index get_samples_number() const override;
-    using MaterializedDataset::get_samples_number;
+    using Dataset::get_samples_number;
 
     void set_data_random() override;
 

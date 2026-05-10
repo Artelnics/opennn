@@ -34,6 +34,7 @@ Convolutional::Convolutional(const Shape& new_input_shape,
         new_batch_normalization,
         new_label);
 }
+
 Shape Convolutional::get_output_shape() const
 {
     return { get_output_height(), get_output_width(), kernels_number };
@@ -123,6 +124,7 @@ void Convolutional::update_convolution_operator()
 
     activation.output_delta_slots = {OutputDelta};
 }
+
 void Convolutional::set(const Shape& new_input_shape,
                         const Shape& new_kernel_shape,
                         const string& new_activation_function,

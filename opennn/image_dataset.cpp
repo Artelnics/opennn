@@ -28,7 +28,7 @@ ImageDataset::ImageDataset(const Index new_samples_number,
     set(new_samples_number, new_input_shape, new_target_shape);
 }
 
-ImageDataset::ImageDataset(const filesystem::path& new_data_path, bool new_streaming) : MaterializedDataset()
+ImageDataset::ImageDataset(const filesystem::path& new_data_path, bool new_streaming) : Dataset()
 {
     streaming = new_streaming;
     data_path = new_data_path;
@@ -368,7 +368,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
 {
     if (!streaming)
     {
-        MaterializedDataset::fill_inputs(sample_indices, input_indices, input_data, parallelize, contiguous);
+        Dataset::fill_inputs(sample_indices, input_indices, input_data, parallelize, contiguous);
         return;
     }
 
@@ -410,7 +410,7 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
 {
     if (!streaming)
     {
-        MaterializedDataset::fill_targets(sample_indices, target_indices, target_data, parallelize, contiguous);
+        Dataset::fill_targets(sample_indices, target_indices, target_data, parallelize, contiguous);
         return;
     }
 

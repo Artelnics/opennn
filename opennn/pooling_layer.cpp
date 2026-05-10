@@ -33,6 +33,7 @@ Pooling::Pooling(const Shape& new_input_shape,
         new_pooling_method,
         new_name);
 }
+
 Shape Pooling::get_output_shape() const
 {
     return { get_output_height(), get_output_width(), input_channels };
@@ -80,6 +81,7 @@ void Pooling::update_pool_operator()
     pool.output_delta_slots = {OutputDelta};
     pool.input_delta_slots  = {InputDelta};
 }
+
 void Pooling::set(const Shape& new_input_shape,
                   const Shape& new_pool_dimensions,
                   const Shape& new_stride_shape,
@@ -196,6 +198,7 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 
     update_pool_operator();
 }
+
 void Pooling::read_JSON_body(const Json* pooling_layer_element)
 {
     pool_height     = read_json_index(pooling_layer_element, "PoolHeight");

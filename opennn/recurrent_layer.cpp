@@ -20,6 +20,7 @@ Recurrent::Recurrent(const Shape& new_input_shape,
 {
     set(new_input_shape, new_output_shape);
 }
+
 Shape Recurrent::get_output_shape() const
 {
     return { biases.size() };
@@ -49,6 +50,7 @@ vector<pair<Shape, Type>> Recurrent::get_backward_specs(Index batch_size) const
 {
     return {{{batch_size, time_steps, input_features}, compute_dtype}};
 }
+
 void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 {
     if (new_input_shape.rank != 2)
@@ -91,14 +93,15 @@ void Recurrent::set_output_shape(const Shape& new_output_shape)
 
 void Recurrent::set_activation_function(const string& new_activation_function)
 {
-    if (new_activation_function == "Sigmoid"
-        || new_activation_function == "Tanh"
-        || new_activation_function == "Identity"
-        || new_activation_function == "ReLU")
-        activation_function = new_activation_function;
-    else
+    if (new_activation_function != "Sigmoid"
+        && new_activation_function != "Tanh"
+        && new_activation_function != "Identity"
+        && new_activation_function != "ReLU")
         throw runtime_error("Unknown activation function: " + new_activation_function);
+
+    activation_function = new_activation_function;
 }
+
 void Recurrent::forward_propagate(ForwardPropagation& /*forward_propagation*/, size_t /*index*/, bool /*is_training*/) noexcept
 {
 /*
@@ -247,6 +250,7 @@ void Recurrent::back_propagate(ForwardPropagation& /*forward_propagation*/,
     }
 */
 }
+
 void Recurrent::read_JSON_body(const Json* recurrent_layer_element)
 {
     set_activation_function(read_json_string(recurrent_layer_element, "Activation"));
@@ -314,6 +318,7 @@ string Recurrent::write_expression(const vector<string>& feature_names,
 }
 
 REGISTER(Layer, Recurrent, "Recurrent")
+
 }
 
 // OpenNN: Open Neural Networks Library.

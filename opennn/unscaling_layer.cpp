@@ -22,6 +22,7 @@ Unscaling::Unscaling(const Shape& new_input_shape, const string& new_label)
     operators = {&unscale_op};
     set(new_input_shape.dim_or_zero(0), new_label);
 }
+
 Shape Unscaling::get_input_shape() const
 {
     return { ssize(scalers) };
@@ -119,6 +120,7 @@ void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_
     for (Operator* op : get_operators())
         op->forward_propagate(forward_propagation, layer, is_training);
 }
+
 void Unscaling::print() const
 {
     cout << "Unscaling layer" << "\n";
@@ -166,6 +168,7 @@ void Unscaling::write_JSON_body(JsonWriter& printer) const
     }
     printer.end_array();
 }
+
 void Unscaling::flush_scalers_to_states()
 {
     if (!unscale_op.scalers.data) return;

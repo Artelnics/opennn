@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "image_dataset.h"
+#include "tabular_dataset.h"
 #include "time_series_dataset.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
@@ -98,11 +99,15 @@ void Optimizer::set_scaling()
         switch (scaling_layer->get_input_shape().rank)
         {
             case 1:
-                input_variable_scalers = dataset->get_feature_scalers("Input");
-                input_variable_descriptives = dataset->scale_features("Input");
+            {
+                auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
+                if (!tabular_dataset) throw runtime_error("Expected TabularDataset.");
+                input_variable_scalers = tabular_dataset->get_feature_scalers("Input");
+                input_variable_descriptives = tabular_dataset->scale_features("Input");
                 scaling_layer->set_descriptives(input_variable_descriptives);
                 scaling_layer->set_scalers(input_variable_scalers);
                 break;
+            }
 
             case 2:
             {
@@ -146,8 +151,10 @@ void Optimizer::set_scaling()
 
     if (has_pure_targets)
     {
-        target_variable_descriptives = dataset->scale_features("Target");
-        target_variable_scalers = dataset->get_feature_scalers("Target");
+        auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
+        if (!tabular_dataset) throw runtime_error("Expected TabularDataset for target unscaling.");
+        target_variable_descriptives = tabular_dataset->scale_features("Target");
+        target_variable_scalers = tabular_dataset->get_feature_scalers("Target");
     }
 
     vector<Descriptives> unscaling_layer_descriptives;

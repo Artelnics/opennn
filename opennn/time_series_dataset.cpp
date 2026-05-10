@@ -18,7 +18,7 @@ namespace opennn
 TimeSeriesDataset::TimeSeriesDataset(const Index new_samples_number,
                                      const Shape& new_input_shape,
                                      const Shape& new_target_shape)
-    :MaterializedDataset(new_samples_number, new_input_shape, new_target_shape)
+    :TabularDataset(new_samples_number, new_input_shape, new_target_shape)
 {
 }
 
@@ -27,7 +27,7 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
                                      bool has_header,
                                      bool has_sample_ids,
                                      const Codification& data_codification)
-    :MaterializedDataset(data_path, separator, has_header, has_sample_ids, data_codification)
+    :TabularDataset(data_path, separator, has_header, has_sample_ids, data_codification)
 {
     const Index target_index = (get_features_number() == 1)
         ? 0
@@ -195,7 +195,7 @@ void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
 
 void TimeSeriesDataset::read_csv()
 {
-    MaterializedDataset::read_csv();
+    TabularDataset::read_csv();
 
     set_default_variable_roles_forecasting();
 

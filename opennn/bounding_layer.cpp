@@ -24,6 +24,7 @@ Bounding::Bounding(const Shape& new_output_shape, const string& new_name)
     operators = {&bound};
     set(new_output_shape, new_name);
 }
+
 Shape Bounding::get_output_shape() const
 {
     return output_shape;
@@ -53,6 +54,7 @@ const EnumMap<Bounding::BoundingMethod>& Bounding::bounding_method_map()
     static const EnumMap<BoundingMethod> map{entries};
     return map;
 }
+
 void Bounding::set(const Shape& new_output_shape, const string& new_label)
 {
     output_shape = new_output_shape;

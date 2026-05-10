@@ -47,14 +47,14 @@ void copy_padded_tokens(const vector<vector<Index>>& storage,
 
 }
 
-LanguageDataset::LanguageDataset(const filesystem::path& new_data_path, bool new_streaming) : MaterializedDataset()
+LanguageDataset::LanguageDataset(const filesystem::path& new_data_path, bool new_streaming) : Dataset()
 {
     streaming = new_streaming;
     data_path = new_data_path;
     separator = Dataset::Separator::Tab;
 
     if (!data_path.empty())
-        read_csv();
+        read_txt();
 }
 
 Index LanguageDataset::get_samples_number() const
@@ -64,7 +64,7 @@ Index LanguageDataset::get_samples_number() const
 
 LanguageDataset::LanguageDataset(const Index samples_number,
                                  Index input_sequence_length,
-                                 Index input_vocabulary_size) : MaterializedDataset()
+                                 Index input_vocabulary_size) : Dataset()
 {
     maximum_input_sequence_length = input_sequence_length;
     maximum_target_sequence_length = 1;
@@ -111,7 +111,6 @@ LanguageDataset::LanguageDataset(const Index samples_number,
     target_shape = { get_maximum_target_sequence_length() };
     decoder_shape.clear();
 
-    set_variable_scalers("None");
     set_default_variable_names();
     set_binary_variables();
 
@@ -290,7 +289,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string_vi
     }
 }
 
-void LanguageDataset::read_csv()
+void LanguageDataset::read_txt()
 {
     cout << "Reading .txt file..." << "\n";
 
@@ -408,7 +407,6 @@ void LanguageDataset::read_csv()
 
     sample_roles.resize(samples_number);
 
-    set_variable_scalers("None");
     set_default_variable_names();
     split_samples_random();
     if (!streaming)
@@ -518,7 +516,6 @@ void LanguageDataset::to_JSON(JsonWriter& printer) const
         {"Separator", get_separator_name()},
         {"HasHeader", to_string(has_header)},
         {"HasSamplesId", to_string(has_sample_ids)},
-        {"MissingValuesLabel", missing_values_label},
         {"Codification", get_codification_string()}
     });
     printer.close_element();
@@ -526,8 +523,6 @@ void LanguageDataset::to_JSON(JsonWriter& printer) const
     variables_to_JSON(printer);
 
     samples_to_JSON(printer);
-
-    missing_values_to_JSON(printer);
 
     preview_data_to_JSON(printer);
 
@@ -556,7 +551,6 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
              && read_json_bool(data_source_element, "Streaming");
 
     set_separator_name(read_json_string(data_source_element, "Separator"));
-    set_missing_values_label(read_json_string(data_source_element, "MissingValuesLabel"));
     set_codification(read_json_string(data_source_element, "Codification"));
     set_has_header(read_json_bool(data_source_element, "HasHeader"));
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
@@ -564,7 +558,7 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
     if (streaming)
     {
         set_display(read_json_bool(data_set_element, "Display"));
-        read_csv();
+        read_txt();
         return;
     }
 
@@ -573,9 +567,6 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
 
     const Json* samples_element = data_set_element->first_child("Samples");
     samples_from_JSON(samples_element);
-
-    const Json* missing_values_element = data_set_element->first_child("MissingValues");
-    missing_values_from_JSON(missing_values_element);
 
     const Json* preview_data_element = data_set_element->first_child("PreviewData");
     preview_data_from_JSON(preview_data_element);
@@ -752,7 +743,7 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
 {
     if (!streaming)
     {
-        MaterializedDataset::fill_inputs(sample_indices, input_indices, input_data, parallelize, contiguous);
+        Dataset::fill_inputs(sample_indices, input_indices, input_data, parallelize, contiguous);
         return;
     }
 
@@ -767,7 +758,7 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
 {
     if (!streaming)
     {
-        MaterializedDataset::fill_targets(sample_indices, target_indices, target_data, parallelize, contiguous);
+        Dataset::fill_targets(sample_indices, target_indices, target_data, parallelize, contiguous);
         return;
     }
 
@@ -782,7 +773,7 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
 {
     if (!streaming)
     {
-        MaterializedDataset::fill_decoder(sample_indices, decoder_indices, decoder_data, parallelize, contiguous);
+        Dataset::fill_decoder(sample_indices, decoder_indices, decoder_data, parallelize, contiguous);
         return;
     }
 

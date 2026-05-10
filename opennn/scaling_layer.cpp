@@ -21,6 +21,7 @@ Scaling::Scaling(const Shape& new_input_shape)
     operators = {&scale_op};
     set(new_input_shape);
 }
+
 VectorR Scaling::get_minimums() const
 {
     return scale_op.minimums.data ? scale_op.minimums.as_vector() : VectorR();
@@ -130,6 +131,7 @@ void Scaling::write_JSON_body(JsonWriter& printer) const
         {"MaxRange", to_string(scale_op.max_range)}
     });
 }
+
 void Scaling::flush_scalers_to_states()
 {
     if (!scale_op.scalers.data) return;

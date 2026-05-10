@@ -44,6 +44,21 @@ inline TensorView& fv_slot_or_empty(vector<vector<TensorView>>& fv_layer,
     return index < slots.size() ? fv_layer[slots[index]][0] : fallback;
 }
 
+inline float glorot_limit(Index fan_in, Index fan_out)
+{
+    return sqrt(6.0f / static_cast<float>(fan_in + fan_out));
+}
+
+inline array<pair<Index, Index>, 4> nhwc_padding(Index padding_height, Index padding_width)
+{
+    return {
+        make_pair(Index(0), Index(0)),
+        make_pair(padding_height, padding_height),
+        make_pair(padding_width,  padding_width),
+        make_pair(Index(0), Index(0))
+    };
+}
+
 }
 
 void Add::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexcept
@@ -710,7 +725,7 @@ void Combination::set_parameters_random()
 void Combination::set_parameters_glorot()
 {
     if (weights.empty()) return;
-    const float limit = sqrt(6.0f / static_cast<float>(input_features + output_features));
+    const float limit = glorot_limit(input_features, output_features);
     set_random_uniform(weights.as_vector(), -limit, limit);
     if (!bias.empty()) bias.fill(0.0f);
 }
@@ -960,9 +975,7 @@ void Convolution::set_parameters_glorot()
 {
     if (weights.empty()) return;
     const Index kernel_area = kernel_height * kernel_width;
-    const Index fan_in  = kernel_area * kernel_channels;
-    const Index fan_out = kernel_area * kernels_number;
-    const float limit = sqrt(6.0f / static_cast<float>(fan_in + fan_out));
+    const float limit = glorot_limit(kernel_area * kernel_channels, kernel_area * kernels_number);
     set_random_uniform(weights.as_vector(), -limit, limit);
     if (!bias.empty()) bias.fill(0.0f);
 }
@@ -1009,12 +1022,7 @@ void Convolution::apply_cpu(const TensorView& input, TensorView& output)
     const array<Index, 3> conv_dims({1, 2, 3});
     const array<Index, 3> out_slice_shape({batch_size, output.shape[1], output.shape[2]});
 
-    const array<pair<Index, Index>, 4> input_paddings = {
-        make_pair(Index(0), Index(0)),
-        make_pair(padding_height, padding_height),
-        make_pair(padding_width,  padding_width),
-        make_pair(Index(0), Index(0))
-    };
+    const auto input_paddings = nhwc_padding(padding_height, padding_width);
 
     TensorMap4 outputs = output.as_tensor<4>();
 
@@ -1041,13 +1049,7 @@ void Convolution::apply_delta_cpu(const TensorView& input,
 
     float* weight_data = weight_gradient.as<float>();
 
-    const array<pair<Index, Index>, 4> input_paddings = {
-        make_pair(Index(0), Index(0)),
-        make_pair(padding_height, padding_height),
-        make_pair(padding_width,  padding_width),
-        make_pair(Index(0), Index(0))
-    };
-    const Tensor4 padded_inputs = inputs.pad(input_paddings);
+    const Tensor4 padded_inputs = inputs.pad(nhwc_padding(padding_height, padding_width));
 
     #pragma omp parallel for
     for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
@@ -2785,7 +2787,7 @@ void EmbeddingLookup::set_parameters_random()
 void EmbeddingLookup::set_parameters_glorot()
 {
     if (weights.empty()) return;
-    const float limit = sqrt(6.0f / static_cast<float>(vocabulary_size + embedding_dimension));
+    const float limit = glorot_limit(vocabulary_size, embedding_dimension);
     MatrixMap weights_matrix = weights.as_matrix();
     weights_matrix.setRandom();
     weights_matrix *= limit;

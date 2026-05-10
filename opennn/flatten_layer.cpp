@@ -28,6 +28,7 @@ Flatten::Flatten(const Shape& new_input_shape)
     flat.output_delta_slots = {OutputDelta};
     flat.input_delta_slots  = {InputDelta};
 }
+
 void Flatten::set(const Shape& new_input_shape)
 {
     check_rank(new_input_shape, {1, 2, 3}, "Flatten", "input");
@@ -36,6 +37,7 @@ void Flatten::set(const Shape& new_input_shape)
 
     set_label("flatten_layer");
 }
+
 REGISTER(Layer, Flatten, "Flatten")
 
 }

@@ -8,6 +8,7 @@
 
 #include "registry.h"
 #include "dataset.h"
+#include "tabular_dataset.h"
 #include "time_series_dataset.h"
 #include "growing_inputs.h"
 #include "correlations.h"
@@ -301,7 +302,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     neural_network->compile();
 
-    const vector<string> input_variable_scalers = dataset->get_feature_scalers("Input");
+    auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
+    const vector<string> input_variable_scalers = tabular_dataset ? tabular_dataset->get_feature_scalers("Input") : vector<string>{};
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_feature_descriptives("Input");
 
     set_maximum_inputs_number(dataset->get_variables_number("Input"));

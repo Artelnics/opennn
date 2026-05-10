@@ -8,7 +8,7 @@
 
 #include "tensor_utilities.h"
 #include "correlations.h"
-#include "dataset.h"
+#include "tabular_dataset.h"
 #include "scaling_layer.h"
 #include "dense_layer.h"
 #include "neural_network.h"
@@ -303,7 +303,7 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     data.col(0) = input;
     data.col(1) = target;
 
-    Dataset dataset(input.size(), {1}, {1});
+    TabularDataset dataset(input.size(), {1}, {1});
     dataset.set_data(data);
     dataset.set_sample_roles("Training");
     dataset.set_variable_scalers(scaler);
@@ -427,7 +427,7 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
     vector<Index> target_columns_indices(y_filter.cols());
     iota(target_columns_indices.begin(), target_columns_indices.end(), 1);
 
-    Dataset dataset(x_filter.size(), {1}, {y_filter.cols()});
+    TabularDataset dataset(x_filter.size(), {1}, {y_filter.cols()});
 
     dataset.set_data(data);
     dataset.set_variable_indices(input_columns_indices, target_columns_indices);
@@ -527,7 +527,7 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
     vector<Index> target_columns_indices(y_filter.cols());
     iota(target_columns_indices.begin(), target_columns_indices.end(), x_filter.cols());
 
-    Dataset dataset(x_filter.rows(), { x_filter.cols() }, { y_filter.cols() });
+    TabularDataset dataset(x_filter.rows(), { x_filter.cols() }, { y_filter.cols() });
 
     dataset.set_data(data);
 

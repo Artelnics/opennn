@@ -63,9 +63,7 @@ public:
 
     enum class Separator{Space, Tab, Comma, Semicolon};
 
-    enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
-
-    virtual Index get_samples_number() const = 0;
+    virtual Index get_samples_number() const { return data.rows(); }
 
     Index get_samples_number(const string&) const;
 
@@ -116,13 +114,9 @@ public:
 
     Shape get_shape(const string&) const;
 
-    vector<string> get_feature_scalers(const string&) const;
-
     virtual void get_batches(const vector<Index>&, Index, bool, vector<vector<Index>>&) const;
 
     const vector<vector<string>>& get_data_file_preview() const { return data_file_preview; }
-    MissingValuesMethod get_missing_values_method() const { return missing_values_method; }
-    string get_missing_values_method_string() const;
 
     const filesystem::path& get_data_path() const { return data_path; }
 
@@ -133,14 +127,16 @@ public:
     const Codification& get_codification() const { return codification; }
     string get_codification_string() const;
 
-    const string& get_missing_values_label() const { return missing_values_label; }
-
     bool get_display() const { return display; }
 
     virtual bool is_empty() const { return get_samples_number() == 0; }
 
     Shape get_input_shape() const { return input_shape; }
     Shape get_target_shape() const { return target_shape; }
+
+    const MatrixR& get_data() const { return data; }
+    void set_data(const MatrixR&);
+    void set_data_constant(const float);
 
     void set_default();
     void set_sample_roles(const string&);
@@ -153,9 +149,8 @@ public:
 
     void set_default_variable_names();
 
-    virtual void set_variable_roles(const vector<string>&);
+    void set_variable_roles(const vector<string>&);
 
-    void set_variables(const string&);
     void set_variable_indices(const vector<Index>&, const vector<Index>&);
     void set_input_variables_unused();
 
@@ -166,14 +161,11 @@ public:
     void set_variable_type(const string&, const VariableType&);
 
     void set_variable_types(const VariableType&);
+    void set_binary_variables();
 
     void set_variable_names(const vector<string>&);
 
     void set_variables_number(const Index new_size) { variables.resize(new_size); }
-
-    void set_variable_scalers(const string&);
-
-    void set_variable_scalers(const vector<string>&);
 
     void set_feature_names(const vector<string>&);
 
@@ -193,12 +185,6 @@ public:
     void set_codification(const Codification& new_codification) { codification = new_codification; }
     void set_codification(const string&);
 
-    void set_missing_values_label(string label) { missing_values_label = move(label); }
-    void set_missing_values_method(const MissingValuesMethod& method) { missing_values_method = method; }
-    void set_missing_values_method(const string&);
-
-    void set_gmt(const Index new_gmt) { gmt = new_gmt; }
-
     void set_display(bool new_display) { display = new_display; }
 
     bool is_sample_used(const Index i) const { return sample_roles[i] != SampleRole::None; }
@@ -210,7 +196,6 @@ public:
 
     bool has_validation() const;
 
-    bool has_missing_values(const vector<string_view>&) const;
     void split_samples(const float training_ratio = 0.6f,
                        float selection_ratio = 0.2f,
                        float testing_ratio = 0.2f,
@@ -224,7 +209,7 @@ public:
                               float selection_ratio = 0.2f,
                               float testing_ratio = 0.2f);
 
-    void set_default_variable_scalers();
+    vector<vector<Index>> split_samples(const vector<Index>&, Index) const;
 
     virtual vector<Descriptives> scale_features(const string&) { return {}; }
 
@@ -232,40 +217,50 @@ public:
     virtual void set_data_integer(const Index) {}
 
     virtual void from_JSON(const JsonDocument&) = 0;
-    virtual void to_JSON(JsonWriter&) const;
+    virtual void to_JSON(JsonWriter&) const {}
 
-    virtual MatrixR get_data(const string&, const string&) const = 0;
-    virtual MatrixR get_data_from_indices(const vector<Index>&, const vector<Index>&) const = 0;
+    MatrixR get_data(const string&, const string&) const;
+    MatrixR get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
 
-    virtual bool has_nan() const = 0;
-    virtual void scrub_missing_values() = 0;
+    VectorR get_sample_data(const Index) const;
 
-    virtual vector<Descriptives> calculate_feature_descriptives(const string&) const = 0;
-    virtual Tensor<Correlation, 2> calculate_input_target_variable_pearson_correlations() const = 0;
-    virtual VectorI calculate_target_distribution() const = 0;
-    virtual VectorI calculate_correlations_rank() const = 0;
+    MatrixR get_variable_data(const Index) const;
+    MatrixR get_variable_data(const Index, const vector<Index>&) const;
+    MatrixR get_variable_data(const string&) const;
 
-    virtual void unscale_features(const string&, const vector<Descriptives>&) = 0;
+    MatrixR get_feature_data(const string&) const;
+
+    void set(const Index = 0, const Shape& = {}, const Shape& = {});
+
+    bool has_nan() const;
+    bool has_nan_row(const Index) const;
+
+    VectorI count_nans_per_variable() const;
+    Index count_variables_with_nan() const;
+    Index count_rows_with_nan() const;
+    Index count_nan() const;
+
+    virtual void scrub_missing_values() {}
+
+    virtual vector<Descriptives> calculate_feature_descriptives(const string&) const { return {}; }
+    virtual Tensor<Correlation, 2> calculate_input_target_variable_pearson_correlations() const { return {}; }
+    virtual VectorI calculate_target_distribution() const { return {}; }
+    virtual VectorI calculate_correlations_rank() const { return {}; }
+
+    virtual void unscale_features(const string&, const vector<Descriptives>&) {}
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
-    Index get_missing_values_number() const { return missing_values_number; }
-
-    virtual void impute_missing_values_unuse() {}
-    virtual void impute_missing_values_interpolate() {}
-
-    vector<vector<Index>> split_samples(const vector<Index>&, Index) const;
-
-    virtual void read_csv() {}
-
-    DateFormat infer_dataset_date_format(const vector<Variable>&, const vector<vector<string_view>>&, bool, const string&);
+    void save_data() const;
+    void save_data_binary(const filesystem::path&) const;
+    void load_data_binary();
 
     virtual void fill_inputs(const vector<Index>&,
                              const vector<Index>&,
                              float*,
                              bool = true,
-                             int contiguous = -1) const = 0;
+                             int contiguous = -1) const;
 
     virtual void augment_inputs(float*, Index) const {}
 
@@ -273,13 +268,13 @@ public:
                               const vector<Index>&,
                               float*,
                               bool = true,
-                              int contiguous = -1) const = 0;
+                              int contiguous = -1) const;
 
     virtual void fill_targets(const vector<Index>&,
                               const vector<Index>&,
                               float*,
                               bool = true,
-                              int contiguous = -1) const = 0;
+                              int contiguous = -1) const;
 
 protected:
 
@@ -288,12 +283,10 @@ protected:
     void set_default_variable_roles();
     void set_default_variable_roles_forecasting();
 
-    void infer_column_types(const vector<vector<string_view>>&);
+    void infer_variable_types_from_data();
     void read_data_file_preview(const vector<vector<string_view>>&);
     void check_separators(string_view) const;
-
-    string get_sample_role(const Index i) const { return sample_role_to_string(sample_roles[i]); }
-    SampleRole get_sample_role_type(const Index i) const { return sample_roles[i]; }
+    void samples_from_JSON(const Json*);
 
     Shape input_shape;
     Shape target_shape;
@@ -304,19 +297,14 @@ protected:
 
     vector<Variable> variables;
 
+    MatrixR data;
+
     filesystem::path data_path;
     Separator separator = Separator::Comma;
-    string missing_values_label = "NA";
     bool has_header = false;
     bool has_sample_ids = false;
     Codification codification = Codification::UTF8;
     vector<vector<string>> data_file_preview;
-    Index gmt = 0;
-
-    MissingValuesMethod missing_values_method = MissingValuesMethod::Mean;
-    Index missing_values_number = 0;
-    VectorI variables_missing_values_number;
-    Index rows_missing_values_number = 0;
 
     bool display = true;
 
@@ -325,11 +313,9 @@ protected:
 
     void variables_to_JSON(JsonWriter&) const;
     void samples_to_JSON(JsonWriter&) const;
-    void missing_values_to_JSON(JsonWriter&) const;
     void preview_data_to_JSON(JsonWriter&) const;
 
     void variables_from_JSON(const Json*);
-    void missing_values_from_JSON(const Json*);
     void preview_data_from_JSON(const Json*);
 };
 

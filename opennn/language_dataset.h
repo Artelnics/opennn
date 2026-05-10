@@ -8,12 +8,12 @@
 
 #pragma once
 
-#include "materialized_dataset.h"
+#include "dataset.h"
 
 namespace opennn
 {
 
-class LanguageDataset final : public MaterializedDataset
+class LanguageDataset final : public Dataset
 {
 
 public:
@@ -37,9 +37,9 @@ public:
     void set_streaming(bool b) { streaming = b; }
 
     Index get_samples_number() const override;
-    using MaterializedDataset::get_samples_number;
+    using Dataset::get_samples_number;
 
-    void read_csv() override;
+    void read_txt();
 
     void create_vocabulary(const vector<vector<string_view>>&, vector<string>&) const;
 
