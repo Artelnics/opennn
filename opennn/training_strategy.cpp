@@ -219,12 +219,11 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
     const Json* loss_method_element = loss_element->first_child(loss_method.c_str());
 
-    if (loss_method_element)
-    {
-        set_loss(loss_method);
-        loss->from_JSON(JsonDocument::wrap(loss_method, *loss_method_element));
-    }
-    else throw runtime_error(loss_method + " element is nullptr.\n");
+    if (!loss_method_element)
+        throw runtime_error(loss_method + " element is nullptr.\n");
+
+    set_loss(loss_method);
+    loss->from_JSON(JsonDocument::wrap(loss_method, *loss_method_element));
 
     // Optimization algorithm
 
@@ -236,12 +235,11 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
     const Json* optimization_method_element = optimization_algorithm_element->first_child(optimization_method.c_str());
 
-    if (optimization_method_element)
-    {
-        set_optimization_algorithm(optimization_method);
-        optimizer->from_JSON(JsonDocument::wrap(optimization_method, *optimization_method_element));
-    }
-    else throw runtime_error(optimization_method + " element is nullptr.\n");
+    if (!optimization_method_element)
+        throw runtime_error(optimization_method + " element is nullptr.\n");
+
+    set_optimization_algorithm(optimization_method);
+    optimizer->from_JSON(JsonDocument::wrap(optimization_method, *optimization_method_element));
 
     // Regularization
 

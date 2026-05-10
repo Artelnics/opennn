@@ -47,13 +47,11 @@ public:
 
     void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
 
-    string write_no_scaling_expression(const vector<string>&, const vector<string>&) const;
-    string write_minimum_maximum_expression(const vector<string>&, const vector<string>&) const;
-    string write_mean_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
-    string write_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
-
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
+
+    string write_expression(const vector<string>& input_names,
+                            const vector<string>& output_names) const override;
 
 private:
 

@@ -29,15 +29,11 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
                                      const Codification& data_codification)
     :MaterializedDataset(data_path, separator, has_header, has_sample_ids, data_codification)
 {
-    const Index features_number = get_features_number();
+    const Index target_index = (get_features_number() == 1)
+        ? 0
+        : get_feature_indices("Target")[0];
 
-    if (features_number == 1)
-        set_variable_role(0, "InputTarget");
-    else
-    {
-        const vector<Index> target_index = get_feature_indices("Target");
-        set_variable_role(target_index[0], "InputTarget");
-    }
+    set_variable_role(target_index, "InputTarget");
 
     input_shape = {past_time_steps, get_features_number("Input")};
     target_shape = { get_features_number("Target") };
@@ -203,19 +199,16 @@ void TimeSeriesDataset::read_csv()
 
     set_default_variable_roles_forecasting();
 
-    const Index features_number = get_features_number();
-
-    if (features_number == 1)
+    if (get_features_number() == 1)
+    {
         set_variable_role(0, "InputTarget");
+    }
     else
     {
         const vector<Index> target_indices = get_feature_indices("Target");
 
         if (!target_indices.empty())
-        {
-            const Index variable_target_index = get_variable_index(target_indices[0]);
-            set_variable_role(variable_target_index, "InputTarget");
-        }
+            set_variable_role(get_variable_index(target_indices[0]), "InputTarget");
     }
 
     input_shape = {past_time_steps, get_features_number("Input")};
@@ -237,10 +230,9 @@ void TimeSeriesDataset::impute_missing_values_unuse()
     const Index samples_number = get_samples_number();
     const Index lags = get_past_time_steps();
 
-    vector<bool> row_has_nan(samples_number, false);
+    vector<bool> row_has_nan(samples_number);
     for (Index i = 0; i < samples_number; ++i)
-        if (has_nan_row(i))
-            row_has_nan[i] = true;
+        row_has_nan[i] = has_nan_row(i);
 
     const Index num_sequences = samples_number - lags;
     if (num_sequences < 0) return;
@@ -271,15 +263,8 @@ void TimeSeriesDataset::impute_missing_values_unuse()
 void TimeSeriesDataset::impute_missing_values_interpolate()
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
-    const vector<Index> used_feature_indices = get_used_feature_indices();
-    const vector<Index> input_feature_indices = get_feature_indices("Input");
-    const vector<Index> target_feature_indices = get_feature_indices("Target");
-
-    const VectorR means = mean(data, used_sample_indices, used_feature_indices);
 
     const Index used_samples_number = used_sample_indices.size();
-
-    string omp_error;
 
     #pragma omp parallel for
     for (Index feature_index = 0; feature_index < get_features_number(); ++feature_index)
@@ -318,26 +303,18 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
                     data(sample_k, feature_index) = float(next_value);
                 else if (isnan(next_value))
                     data(sample_k, feature_index) = float(prev_value);
-                else if (!isnan(prev_value) && !isnan(next_value))
+                else
                 {
                     const float fraction = float(k + 1) / float(n_missing + 1);
                     const float value_interpolated = prev_value + (next_value - prev_value) * fraction;
 
                     data(sample_k, feature_index) = value_interpolated;
                 }
-                else
-                {
-                    #pragma omp critical
-                    { omp_error = "The last " + to_string(sample_k-i+1) + " samples are all missing, delete them.\n"; }
-                }
             }
 
             i = end_missing;
         }
     }
-
-    if (!omp_error.empty())
-        throw runtime_error(omp_error);
 }
 
 void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
@@ -362,13 +339,10 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
         for (Index j = 0; j < past_time_steps; ++j)
         {
             const Index actual_row = start_row + j;
+            const bool in_range = actual_row < data_rows_number;
 
-            if (actual_row < data_rows_number)
-                for (Index k = 0; k < inputs_number; ++k)
-                    inputs(i, j, k) = data(actual_row, input_indices[k]);
-            else
-                for (Index k = 0; k < inputs_number; ++k)
-                    inputs(i, j, k) = 0.0f;
+            for (Index k = 0; k < inputs_number; ++k)
+                inputs(i, j, k) = in_range ? data(actual_row, input_indices[k]) : 0.0f;
         }
     }
 }
@@ -395,20 +369,17 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
             for (Index j = 0; j < future_time_steps; ++j)
             {
                 const Index target_row = sample_indices[i] + past_time_steps + j;
-                if (target_row < total_rows_in_data)
-                    targets(i, j) = data(target_row, target_indices[0]);
-                else
-                    targets(i, j) = 0.0f;
+                targets(i, j) = (target_row < total_rows_in_data)
+                    ? data(target_row, target_indices[0])
+                    : 0.0f;
             }
         }
         else
         {
             const Index target_row = sample_indices[i] + past_time_steps + (future_time_steps - 1);
-
-            if (target_row < total_rows_in_data)
-                targets(i, 0) = data(target_row, target_indices[0]);
-            else
-                targets(i, 0) = 0.0f;
+            targets(i, 0) = (target_row < total_rows_in_data)
+                ? data(target_row, target_indices[0])
+                : 0.0f;
         }
     }
 }
@@ -502,7 +473,6 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
          past_time_steps;
 
     MatrixR autocorrelations(input_target_numeric_variables_number, new_past_time_steps);
-    VectorR autocorrelations_vector(new_past_time_steps);
     MatrixR input_i;
     Index counter_i = 0;
 
@@ -516,10 +486,7 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
 
         const VectorMap current_input_i(input_i.data(), input_i.rows());
 
-        autocorrelations_vector = opennn::autocorrelations(current_input_i, new_past_time_steps);
-
-        for (Index j = 0; j < new_past_time_steps; ++j)
-            autocorrelations(counter_i, j) = autocorrelations_vector(j);
+        autocorrelations.row(counter_i) = opennn::autocorrelations(current_input_i, new_past_time_steps).transpose();
 
         ++counter_i;
     }

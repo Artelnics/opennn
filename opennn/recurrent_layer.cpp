@@ -57,7 +57,7 @@ void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
     time_steps     = new_input_shape[0];
     input_features = new_input_shape[1];
 
-    const Index outputs_number = new_output_shape.empty() ? Index(0) : new_output_shape[0];
+    const Index outputs_number = new_output_shape.dim_or_zero(0);
 
     biases.shape            = {outputs_number};
     input_weights.shape     = {input_features, outputs_number};
@@ -255,6 +255,65 @@ void Recurrent::read_JSON_body(const Json* recurrent_layer_element)
 void Recurrent::write_JSON_body(JsonWriter& printer) const
 {
     add_json_field(printer, "Activation", activation_function);
+}
+
+string Recurrent::write_expression(const vector<string>& feature_names,
+                                   const vector<string>& output_names) const
+{
+    const Shape input_shape_local = get_input_shape();
+    const Index time_steps_local = input_shape_local[0];
+    const Index inputs_number = input_shape_local[1];
+    const Index outputs_number = get_outputs_number();
+
+    VectorMap biases_map = get_biases().as_vector();
+    MatrixMap input_to_hidden_weights_map = get_input_weights().as_matrix();
+    MatrixMap hidden_to_hidden_weights_map = get_recurrent_weights().as_matrix();
+
+    const string& activation_function_local = get_activation_function();
+
+    ostringstream buffer;
+    buffer.precision(10);
+
+    for (Index time_step = 0; time_step < time_steps_local; ++time_step)
+    {
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            string current_variable_name;
+
+            if (time_step == time_steps_local - 1)
+            {
+                if (j < ssize(output_names))
+                    current_variable_name = output_names[j];
+                else
+                    current_variable_name = "recurrent_output_" + to_string(j);
+            }
+            else
+                current_variable_name = "recurrent_hidden_step_" + to_string(time_step) + "_neuron_" + to_string(j);
+
+            buffer << current_variable_name << " = " << activation_function_local << "( " << biases_map(j);
+
+            for (Index i = 0; i < inputs_number; ++i)
+            {
+                const Index feature_index = (time_step * inputs_number) + i;
+
+                if (feature_index < ssize(feature_names))
+                    buffer << " + (" << feature_names[feature_index] << "*" << input_to_hidden_weights_map(i, j) << ")";
+            }
+
+            if (time_step > 0)
+            {
+                for (Index previous_j = 0; previous_j < outputs_number; ++previous_j)
+                {
+                    string previous_variable_name = "recurrent_hidden_step_" + to_string(time_step - 1) + "_neuron_" + to_string(previous_j);
+                    buffer << " + (" << previous_variable_name << "*" << hidden_to_hidden_weights_map(previous_j, j) << ")";
+                }
+            }
+
+            buffer << " );\n";
+        }
+    }
+
+    return buffer.str();
 }
 
 REGISTER(Layer, Recurrent, "Recurrent")

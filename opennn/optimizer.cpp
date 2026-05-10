@@ -229,12 +229,11 @@ void Optimizer::set_unscaling()
     auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
     if (!unscaling_layer) return;
 
-    const VectorR& u_mins = unscaling_layer->get_minimums();
-    const VectorR& u_maxs = unscaling_layer->get_maximums();
-    const VectorR& u_means = unscaling_layer->get_means();
-    const VectorR& u_stds  = unscaling_layer->get_standard_deviations();
-    const vector<Descriptives> all_target_descriptives =
-        reconstruct_descriptives(u_mins, u_maxs, u_means, u_stds);
+    const vector<Descriptives> all_target_descriptives = reconstruct_descriptives(
+        unscaling_layer->get_minimums(),
+        unscaling_layer->get_maximums(),
+        unscaling_layer->get_means(),
+        unscaling_layer->get_standard_deviations());
 
     const vector<Index> input_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_indices = dataset->get_feature_indices("Target");
@@ -280,9 +279,7 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
         results.stopping_condition = StoppingCondition::MaximumTime;
     }
     else
-    {
         return false;
-    }
 
     return true;
 }
@@ -307,11 +304,8 @@ void Optimizer::read_common_xml(const Json* root_element)
 
 TrainingResults::TrainingResults(const Index epochs_number)
 {
-    training_error_history.resize(1 + epochs_number);
-    training_error_history.setConstant(-1.0f);
-
-    validation_error_history.resize(1 + epochs_number);
-    validation_error_history.setConstant(-1.0f);
+    training_error_history = VectorR::Constant(1 + epochs_number, -1.0f);
+    validation_error_history = VectorR::Constant(1 + epochs_number, -1.0f);
 }
 
 string TrainingResults::write_stopping_condition() const
@@ -422,7 +416,7 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
         return override_results;
     }
 
-    override_results(0, 1) = to_string(training_error_history.size() - 1);
+    override_results(0, 1) = to_string(size - 1);
     override_results(1, 1) = elapsed_time;
     override_results(2, 1) = write_stopping_condition();
     override_results(3, 1) = to_string(training_error_history(size - 1));
@@ -430,7 +424,6 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
     // Final selection error
 
     ostringstream buffer;
-    buffer.str("");
 
     validation_error_history.size() == 0
         ? buffer << "NAN"
@@ -483,14 +476,12 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
 void Optimizer::setup_device_training()
 {
 #ifdef OPENNN_HAS_CUDA
-    if (!Configuration::instance().is_gpu()) return;
+    if (!is_gpu()) return;
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     neural_network->copy_parameters_device();
-    neural_network->link_parameters();
     neural_network->copy_states_device();
-    neural_network->link_states();
 
     cudaStreamCreateWithFlags(&memory_stream, cudaStreamNonBlocking);
     cudaEventCreateWithFlags(&batch_ready_event[0], cudaEventDisableTiming);
@@ -501,7 +492,7 @@ void Optimizer::setup_device_training()
 void Optimizer::teardown_device_training()
 {
 #ifdef OPENNN_HAS_CUDA
-    if (!Configuration::instance().is_gpu()) return;
+    if (!is_gpu()) return;
 
     cudaStreamDestroy(memory_stream);
     cudaEventDestroy(batch_ready_event[0]);
@@ -512,16 +503,14 @@ void Optimizer::teardown_device_training()
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     neural_network->copy_parameters_host();
-    neural_network->link_parameters();
     neural_network->copy_states_host();
-    neural_network->link_states();
 #endif
 }
 
 void Optimizer::prefetch_batch(Batch& batch, Index sample_count, int slot)
 {
 #ifdef OPENNN_HAS_CUDA
-    if (!Configuration::instance().is_gpu()) return;
+    if (!is_gpu()) return;
     batch.copy_device_async(sample_count, memory_stream);
     cudaEventRecord(batch_ready_event[slot], memory_stream);
 #else
@@ -532,7 +521,7 @@ void Optimizer::prefetch_batch(Batch& batch, Index sample_count, int slot)
 void Optimizer::wait_prefetch(int slot)
 {
 #ifdef OPENNN_HAS_CUDA
-    if (!Configuration::instance().is_gpu()) return;
+    if (!is_gpu()) return;
     cudaStreamWaitEvent(Backend::get_compute_stream(), batch_ready_event[slot], 0);
 #else
     (void)slot;
@@ -542,7 +531,7 @@ void Optimizer::wait_prefetch(int slot)
 void Optimizer::sync_device()
 {
 #ifdef OPENNN_HAS_CUDA
-    if (Configuration::instance().is_gpu()) cudaStreamSynchronize(Backend::get_compute_stream());
+    if (is_gpu()) cudaStreamSynchronize(Backend::get_compute_stream());
 #endif
 }
 
@@ -552,7 +541,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
     if (gradient_size <= 0) return;
 
 #ifdef OPENNN_HAS_CUDA
-    if (Configuration::instance().is_gpu())
+    if (is_gpu())
     {
         static Buffer squared_norm_device(Device::CUDA);
         squared_norm_device.grow_to(Index(sizeof(float)));
@@ -567,7 +556,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
                                 squared_norm_ptr));
         CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
 
-        clip_gradient_norm_cuda(gradient_size, gradient.as<float>(), squared_norm_ptr, max_norm);
+        clip_gradient_norm_cuda(gradient_size, gradient.as<float>(), squared_norm_ptr, max_norm, GRADIENT_NORM_EPS);
         return;
     }
 #endif
@@ -575,7 +564,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
     VectorMap gradient_view(gradient.as<float>(), gradient.size_in_floats());
     const float gradient_norm = gradient_view.norm();
     if (gradient_norm > max_norm)
-        gradient_view *= max_norm / (gradient_norm + 1e-6f);
+        gradient_view *= max_norm / (gradient_norm + GRADIENT_NORM_EPS);
 }
 
 Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,

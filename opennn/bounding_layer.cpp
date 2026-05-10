@@ -59,7 +59,7 @@ void Bounding::set(const Shape& new_output_shape, const string& new_label)
 
     set_label(new_label);
 
-    const Index features = output_shape.empty() ? Index(0) : output_shape[0];
+    const Index features = output_shape.dim_or_zero(0);
     bound.set(BoundingMethod::Bounding, features);
     bound.input_slots  = {Input};
     bound.output_slots = {Output};
@@ -126,6 +126,26 @@ void Bounding::write_JSON_body(JsonWriter& printer) const
     }
 
     add_json_field(printer, "BoundingMethod", bounding_method_map().to_string(bound.method));
+}
+
+string Bounding::write_expression(const vector<string>& input_names,
+                                  const vector<string>& output_names) const
+{
+    if (get_bounding_method() == BoundingMethod::NoBounding)
+        return string();
+
+    ostringstream buffer;
+    buffer.precision(10);
+
+    const Shape output_shape = get_output_shape();
+    const VectorR& lower_bounds = get_lower_bounds();
+    const VectorR& upper_bounds = get_upper_bounds();
+
+    for (Index i = 0; i < output_shape[0]; ++i)
+        buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << input_names[i] << ")\n"
+               << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
+
+    return buffer.str();
 }
 
 REGISTER(Layer, Bounding, "Bounding")

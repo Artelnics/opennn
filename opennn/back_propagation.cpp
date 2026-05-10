@@ -244,12 +244,12 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     gradient_views.resize(layers_number);
 
-    const bool is_gpu = Configuration::instance().is_gpu();
-    const Device device = is_gpu ? Device::CUDA : Device::CPU;
+    const bool on_gpu = is_gpu();
+    const Device device = on_gpu ? Device::CUDA : Device::CPU;
 
-    const Type compute_dtype = is_gpu ? neural_network->get_training_type() : Type::FP32;
+    const Type compute_dtype = on_gpu ? neural_network->get_training_type() : Type::FP32;
 
-    const auto backward_dtypes = collect_layer_dtypes(layers, batch_size, is_gpu,
+    const auto backward_dtypes = collect_layer_dtypes(layers, batch_size, on_gpu,
                                                       &Layer::get_backward_dtypes);
 
     const Index total_gradient_bytes = aligned_total_elements(parameter_shapes) * Index(sizeof(float));

@@ -98,9 +98,9 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
 
     EvaluationResult result;
 
-#ifdef OPENNN_HAS_CUDA
     float* workspace_device = nullptr;
-    if (Configuration::instance().is_gpu())
+#ifdef OPENNN_HAS_CUDA
+    if (is_gpu())
     {
         // CrossEntropy3d packs three masks (errors, valid, correct) of size
         // token_count; other losses need one float per input element.
@@ -110,8 +110,6 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         errors_device.grow_to(workspace_floats * Index(sizeof(float)));
         workspace_device = errors_device.as<float>();
     }
-#else
-    float* workspace_device = nullptr;
 #endif
 
     switch (error)

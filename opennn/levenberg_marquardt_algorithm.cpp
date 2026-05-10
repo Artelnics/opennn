@@ -208,11 +208,12 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense* layer,
 
 TrainingResults LevenbergMarquardtAlgorithm::train()
 {
-    if (loss->get_name() == "MinkowskiError")
+    const string loss_name = loss->get_name();
+    if (loss_name == "MinkowskiError")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
-    else if (loss->get_name() == "CrossEntropy")
+    if (loss_name == "CrossEntropy")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
-    else if (loss->get_name() == "WeightedSquaredError")
+    if (loss_name == "WeightedSquaredError")
         throw runtime_error("Levenberg-Marquard algorithm is not implemented with weighted squared error.");
 
     // Start training
@@ -315,7 +316,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
             results.validation_error_history(epoch) = validation_back_propagation_lm.error;
 
-            if (epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch-1))
+            if (epoch != 0 && validation_back_propagation_lm.error > results.validation_error_history(epoch-1))
                 ++validation_failures;
         }
 

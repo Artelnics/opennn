@@ -1637,16 +1637,10 @@ float Attention::scaling_factor() const
 
 vector<pair<Shape, Type>> Attention::forward_scratch_specs(Index batch_size) const
 {
-    bool sdpa_will_be_used = false;
 #ifdef OPENNN_HAS_CUDNN_FRONTEND
-    sdpa_will_be_used =
-            Configuration::instance().is_gpu()
-         && compute_dtype == Type::BF16
-         && !dropout.active();
-#endif
-
-    if (sdpa_will_be_used)
+    if (is_gpu() && compute_dtype == Type::BF16 && !dropout.active())
         return vector<pair<Shape, Type>>(2, {Shape{}, compute_dtype});
+#endif
 
     const Shape attention_shape = {batch_size, heads_number,
                                    query_sequence_length, source_sequence_length};

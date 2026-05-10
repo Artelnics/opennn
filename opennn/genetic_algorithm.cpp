@@ -58,8 +58,7 @@ void GeneticAlgorithm::set_default()
 
     validation_errors.resize(individuals_number);
 
-    fitness.resize(individuals_number);
-    fitness.setConstant(-1.0f);
+    fitness = VectorR::Constant(individuals_number, -1.0f);
 
     selected.resize(individuals_number);
 
@@ -89,8 +88,7 @@ void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number
     individual_parameters.resize(new_individuals_number);
     training_errors.resize(new_individuals_number);
     validation_errors.resize(new_individuals_number);
-    fitness.resize(new_individuals_number);
-    fitness.setConstant(-1.0f);
+    fitness = VectorR::Constant(new_individuals_number, -1.0f);
     selected.resize(new_individuals_number);
 
     elitism_size = min(elitism_size, new_individuals_number);
@@ -274,10 +272,15 @@ VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& pare
     difference.reserve(genes_number);
 
     for (Index i = 0; i < genes_number; ++i)
-        if (parent_1(i) && parent_2(i))
+    {
+        const bool p1 = parent_1(i);
+        const bool p2 = parent_2(i);
+
+        if (p1 && p2)
             intersection.push_back(i);
-        else if (parent_1(i) != parent_2(i))
+        else if (p1 != p2)
             difference.push_back(i);
+    }
 
     for (const Index idx : intersection)
         descendent(idx) = true;
@@ -337,16 +340,18 @@ void GeneticAlgorithm::perform_crossover()
     vector<Index> elite_indices;
     if (elitism_size > 0)
     {
+        const Index elite_count = min(elitism_size, individuals_number);
+
         vector<pair<float, Index>> fitness_indexed(individuals_number);
         for (Index i = 0; i < individuals_number; ++i)
             fitness_indexed[i] = {fitness(i), i};
 
         partial_sort(fitness_indexed.begin(),
-                     fitness_indexed.begin() + min(elitism_size, individuals_number),
+                     fitness_indexed.begin() + elite_count,
                      fitness_indexed.end(),
                      [](const auto& a, const auto& b) { return a.first > b.first; });
 
-        for (Index i = 0; i < min(elitism_size, individuals_number); ++i)
+        for (Index i = 0; i < elite_count; ++i)
         {
             new_population.row(i) = population.row(fitness_indexed[i].second);
             elite_indices.push_back(fitness_indexed[i].second);

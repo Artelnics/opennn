@@ -32,8 +32,8 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_G
 endif()
 
 target_compile_options(opennn PRIVATE
-    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic>
-    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic -Wswitch-enum>
+    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /w14061>
 )
 
 if(OPENNN_HAS_CUDA)

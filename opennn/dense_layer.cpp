@@ -158,6 +158,39 @@ void Dense::set_momentum(float new_momentum)
         batch_norm.set(output_features, batch_norm.momentum);
 }
 
+string Dense::write_expression(const vector<string>& input_names,
+                               const vector<string>& output_names) const
+{
+    const vector<TensorView>& parameters = get_parameter_views();
+    if (parameters.size() < 2 || !parameters[0].data || !parameters[1].data) return "";
+
+    const Index inputs_number = get_inputs_number();
+    const Index outputs_number = get_outputs_number();
+
+    const float* bias_data = parameters[0].as<float>();
+    const float* weight_data = parameters[1].as<float>();
+
+    const string& activation_function_local = Activation::to_string(get_activation_function());
+
+    ostringstream buffer;
+
+    for (Index j = 0; j < outputs_number; ++j)
+    {
+        buffer << output_names[j] << " = " << activation_function_local << "( " << bias_data[j] << " + ";
+
+        for (Index i = 0; i < inputs_number; ++i)
+        {
+            const Index weight_index = i * outputs_number + j;
+            buffer << "(" << weight_data[weight_index] << "*" << input_names[i] << ")";
+            if (i < inputs_number - 1) buffer << " + ";
+        }
+
+        buffer << " );\n";
+    }
+
+    return buffer.str();
+}
+
 REGISTER(Layer, Dense, "Dense")
 
 }

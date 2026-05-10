@@ -196,11 +196,12 @@ void sgd_update_cuda(
 __global__ void clip_apply_kernel(const int n,
                                   const float* __restrict__ squared_norm,
                                   const float max_norm,
+                                  const float eps,
                                   float* __restrict__ gradient)
 {
     const float norm = sqrtf(*squared_norm);
     if (norm <= max_norm) return;
-    const float scale = max_norm / (norm + 1e-6f);
+    const float scale = max_norm / (norm + eps);
 
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     const int stride = blockDim.x * gridDim.x;
@@ -211,13 +212,14 @@ __global__ void clip_apply_kernel(const int n,
 void clip_gradient_norm_cuda(const Index n,
                              float* gradient,
                              const float* squared_norm,
-                             const float max_norm)
+                             const float max_norm,
+                             const float eps)
 {
     if (n == 0) return;
     const int total = static_cast<int>(n);
     const int grid = grid_size_for(total);
     clip_apply_kernel<<<grid, block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        total, squared_norm, max_norm, gradient);
+        total, squared_norm, max_norm, eps, gradient);
 }
 __global__ void cast_fp32_to_bf16_kernel(const int n_vec,
                                          const int n,

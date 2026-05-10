@@ -23,38 +23,32 @@ void KMeans::fit(const MatrixR& data)
     const Index rows_number = data.rows();
     const Index columns_number = data.cols();
 
-    VectorR center_sum(columns_number);
-
     cluster_centers.resize(clusters_number, columns_number);
     rows_cluster_labels.resize(rows_number);
 
     set_centers_random(data);
 
-    for (Index iterations_number = 0; iterations_number < maximum_iterations; ++iterations_number)
+    VectorI counts(clusters_number);
+
+    for (Index iter = 0; iter < maximum_iterations; ++iter)
     {
+        #pragma omp parallel for
+        for (Index row_index = 0; row_index < rows_number; ++row_index)
+            (cluster_centers.rowwise() - data.row(row_index)).rowwise().squaredNorm().minCoeff(&rows_cluster_labels(row_index));
+
+        cluster_centers.setZero();
+        counts.setZero();
+
         for (Index row_index = 0; row_index < rows_number; ++row_index)
         {
-            (cluster_centers.rowwise() - data.row(row_index)).rowwise().squaredNorm().minCoeff(&rows_cluster_labels(row_index));
+            const Index c = rows_cluster_labels(row_index);
+            cluster_centers.row(c) += data.row(row_index);
+            counts(c)++;
         }
 
         for (Index cluster_index = 0; cluster_index < clusters_number; ++cluster_index)
-        {
-            center_sum.setZero();
-
-            Index count = 0;
-
-            for (Index row_index = 0; row_index < rows_number; ++row_index)
-            {
-                if (rows_cluster_labels(row_index) == cluster_index)
-                {
-                    center_sum += data.row(row_index);
-                    ++count;
-                }
-            }
-
-            if (count != 0)
-                cluster_centers.row(cluster_index) = center_sum / float(count);
-        }
+            if (counts(cluster_index) != 0)
+                cluster_centers.row(cluster_index) /= float(counts(cluster_index));
     }
 }
 
@@ -64,10 +58,9 @@ VectorI KMeans::calculate_outputs(const MatrixR& data)
 
     VectorI predictions(rows_number);
 
+    #pragma omp parallel for
     for (Index row_index = 0; row_index < rows_number; ++row_index)
-    {
         (cluster_centers.rowwise() - data.row(row_index)).rowwise().squaredNorm().minCoeff(&predictions(row_index));
-    }
 
     return predictions;
 }
@@ -77,24 +70,19 @@ VectorR KMeans::elbow_method(const MatrixR& data, Index max_clusters)
     VectorR sum_squared_error_values(max_clusters);
 
     const Index rows_number = data.rows();
-
     const Index original_clusters_number = clusters_number;
-    float mean_squared_error;
 
     for (Index cluster_index = 1; cluster_index <= max_clusters; ++cluster_index)
     {
         clusters_number = cluster_index;
-
         fit(data);
 
-        mean_squared_error = 0.0f;
-
+        float sum_squared_error = 0.0f;
+        #pragma omp parallel for reduction(+:sum_squared_error)
         for (Index row_index = 0; row_index < rows_number; ++row_index)
-        {
-            mean_squared_error += (data.row(row_index) - cluster_centers.row(rows_cluster_labels(row_index))).squaredNorm();
-        }
+            sum_squared_error += (data.row(row_index) - cluster_centers.row(rows_cluster_labels(row_index))).squaredNorm();
 
-        sum_squared_error_values(cluster_index-1) = mean_squared_error;
+        sum_squared_error_values(cluster_index - 1) = sum_squared_error;
     }
 
     clusters_number = original_clusters_number;
@@ -106,19 +94,18 @@ Index KMeans::find_optimal_clusters(const VectorR& sum_squared_error_values) con
 {
     const Index cluster_number = sum_squared_error_values.size();
 
-    VectorR initial_endpoint(2);
-    initial_endpoint << 1.0f, float(sum_squared_error_values(0));
+    const float x1 = 1.0f;
+    const float y1 = sum_squared_error_values(0);
+    const float x2 = float(clusters_number);
+    const float y2 = sum_squared_error_values(clusters_number - 1);
 
-    VectorR override_endpoint(2);
-    override_endpoint << float(clusters_number), sum_squared_error_values(clusters_number - 1);
+    const float dx = x2 - x1;
+    const float dy = y2 - y1;
+    const float cross_term = x2 * y1 - y2 * x1;
+    const float inv_line_length = 1.0f / sqrt(dy * dy + dx * dx);
 
     float max_distance = 0.0f;
     Index optimal_clusters_number = 1;
-
-    const float dy = override_endpoint(1) - initial_endpoint(1);
-    const float dx = override_endpoint(0) - initial_endpoint(0);
-    const float cross_term = override_endpoint(0) * initial_endpoint(1) - override_endpoint(1) * initial_endpoint(0);
-    const float inv_line_length = 1.0f / sqrt(dy * dy + dx * dx);
 
     for (Index cluster_index = 1; cluster_index <= cluster_number; ++cluster_index)
     {

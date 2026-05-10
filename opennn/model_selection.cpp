@@ -125,12 +125,11 @@ void ModelSelection::from_JSON(const JsonDocument& document)
 
     const Json* neurons_selection_method_element = neurons_selection_element->first_child(selection_method.c_str());
 
-    if (neurons_selection_method_element)
-    {
-        set_neurons_selection(selection_method);
-        neurons_selection->from_JSON(JsonDocument::wrap(selection_method, *neurons_selection_method_element));
-    }
-    else throw runtime_error(selection_method + " element is nullptr.\n");
+    if (!neurons_selection_method_element)
+        throw runtime_error(selection_method + " element is nullptr.\n");
+
+    set_neurons_selection(selection_method);
+    neurons_selection->from_JSON(JsonDocument::wrap(selection_method, *neurons_selection_method_element));
 
     // Input Validation
 
@@ -140,12 +139,11 @@ void ModelSelection::from_JSON(const JsonDocument& document)
 
     const Json* inputs_selection_method_element = inputs_selection_element->first_child(inputs_method.c_str());
 
-    if (inputs_selection_method_element)
-    {
-        set_inputs_selection(inputs_method);
-        inputs_selection->from_JSON(JsonDocument::wrap(inputs_method, *inputs_selection_method_element));
-    }
-    else throw runtime_error(inputs_method + " element is nullptr.\n");
+    if (!inputs_selection_method_element)
+        throw runtime_error(inputs_method + " element is nullptr.\n");
+
+    set_inputs_selection(inputs_method);
+    inputs_selection->from_JSON(JsonDocument::wrap(inputs_method, *inputs_selection_method_element));
 }
 
 void ModelSelection::save(const filesystem::path& file_name) const

@@ -30,20 +30,20 @@ void InputsSelection::check() const
 
     // Neural network
 
-    if (!loss->get_neural_network())
-        throw runtime_error("neural network is not set.");
-
     const NeuralNetwork* neural_network = loss->get_neural_network();
+
+    if (!neural_network)
+        throw runtime_error("neural network is not set.");
 
     if (neural_network->is_empty())
         throw runtime_error("Neural network is empty.\n");
 
     // Dataset
 
-    if (!loss->get_dataset())
-        throw runtime_error("dataset is not set.");
-
     const Dataset* dataset = loss->get_dataset();
+
+    if (!dataset)
+        throw runtime_error("dataset is not set.");
 
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
@@ -63,17 +63,10 @@ Index InputsSelectionResults::get_epochs_number() const
 
 void InputsSelectionResults::set(const Index maximum_epochs)
 {
-    training_error_history.resize(maximum_epochs);
-    training_error_history.setConstant(-1.0f);
-
-    validation_error_history.resize(maximum_epochs);
-    validation_error_history.setConstant(-1.0f);
-
-    mean_validation_error_history.resize(maximum_epochs);
-    mean_validation_error_history.setConstant(-1.0f);
-
-    mean_training_error_history.resize(maximum_epochs);
-    mean_training_error_history.setConstant(-1.0f);
+    training_error_history = VectorR::Constant(maximum_epochs, -1.0f);
+    validation_error_history = VectorR::Constant(maximum_epochs, -1.0f);
+    mean_validation_error_history = VectorR::Constant(maximum_epochs, -1.0f);
+    mean_training_error_history = VectorR::Constant(maximum_epochs, -1.0f);
 }
 
 string InputsSelectionResults::write_stopping_condition() const
@@ -102,6 +95,8 @@ string InputsSelectionResults::write_stopping_condition() const
 
 void InputsSelectionResults::resize_history(const Index new_size)
 {
+    const Index old_size = training_error_history.size();
+
     const VectorR old_training_error_history(training_error_history);
     const VectorR old_validation_error_history(validation_error_history);
 
@@ -113,13 +108,12 @@ void InputsSelectionResults::resize_history(const Index new_size)
     mean_training_error_history.resize(new_size);
     mean_validation_error_history.resize(new_size);
 
-    for (Index i = 0; i < new_size; ++i)
-    {
-        training_error_history(i) = old_training_error_history(i);
-        validation_error_history(i) = old_validation_error_history(i);
-        mean_training_error_history(i) = old_mean_training_history(i);
-        mean_validation_error_history(i) = old_mean_selection_history(i);
-    }
+    const Index copy_size = min(old_size, new_size);
+
+    training_error_history.head(copy_size) = old_training_error_history.head(copy_size);
+    validation_error_history.head(copy_size) = old_validation_error_history.head(copy_size);
+    mean_training_error_history.head(copy_size) = old_mean_training_history.head(copy_size);
+    mean_validation_error_history.head(copy_size) = old_mean_selection_history.head(copy_size);
 }
 
 void InputsSelectionResults::print() const
@@ -129,8 +123,8 @@ void InputsSelectionResults::print() const
          << "Optimal inputs number: " << optimal_input_variable_names.size() << "\n"
          << "Inputs: " << "\n";
 
-    for (size_t i = 0; i < optimal_input_variable_names.size(); ++i)
-        cout << "   " << optimal_input_variable_names[i] << "\n";
+    for (const string& name : optimal_input_variable_names)
+        cout << "   " << name << "\n";
 
     cout << "Optimum training error: " << optimum_training_error << "\n"
          << "Optimum selection error: " << optimum_validation_error << "\n";

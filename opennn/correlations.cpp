@@ -81,10 +81,7 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
     if (x_columns == 1 && y_columns != 1)
         return eta_squared_correlation(x.col(0), y);
 
-    if (x_columns != 1 && y_columns != 1)
-        return logistic_correlation(x, y);
-
-    throw runtime_error("Correlations Exception: Unknown case.");
+    return logistic_correlation(x, y);
 }
 
 Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
@@ -118,10 +115,7 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
     if (x_columns != 1 && y_columns == 1)
         return logistic_correlation(x, VectorR(y.col(0)));
 
-    if (x_columns != 1 && y_columns != 1)
-        return logistic_correlation(x, y);
-
-    throw runtime_error("Correlations Exception: Unknown case.");
+    return logistic_correlation(x, y);
 }
 
 VectorR cross_correlations(const VectorR& x,
@@ -185,7 +179,7 @@ Correlation linear_correlation(const VectorR& x,
 
     const Index sample_count = x_filter.size();
 
-    if (x_filter.size() == 0)
+    if (sample_count == 0)
         return Correlation();
 
     const auto x_double = x_filter.cast<double>();
@@ -197,16 +191,21 @@ Correlation linear_correlation(const VectorR& x,
     const double s_yy = y_double.squaredNorm();
     const double s_xy = x_double.dot(y_double);
 
-    const double denominator = sqrt((double(sample_count) * s_xx - s_x * s_x) * (double(sample_count) * s_yy - s_y * s_y));
+    const double n = double(sample_count);
+    const double sx_term = n * s_xx - s_x * s_x;
+    const double sy_term = n * s_yy - s_y * s_y;
+    const double xy_term = n * s_xy - s_x * s_y;
+
+    const double denominator = sqrt(sx_term * sy_term);
 
     if (denominator < static_cast<double>(EPSILON))
         return Correlation();
 
     Correlation linear_correlation;
     linear_correlation.form = Correlation::Form::Identity;
-    linear_correlation.a = static_cast<float>((s_y * s_xx - s_x * s_xy) / (double(sample_count) * s_xx - s_x * s_x));
-    linear_correlation.b = static_cast<float>((double(sample_count) * s_xy - s_x * s_y) / (double(sample_count) * s_xx - s_x * s_x));
-    linear_correlation.r = static_cast<float>((double(sample_count) * s_xy - s_x * s_y) / denominator);
+    linear_correlation.a = static_cast<float>((s_y * s_xx - s_x * s_xy) / sx_term);
+    linear_correlation.b = static_cast<float>(xy_term / sx_term);
+    linear_correlation.r = static_cast<float>(xy_term / denominator);
 
     const float z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
 
@@ -415,22 +414,19 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
         cout << "Warning: Y variable has too many categories." << "\n";
 
         correlation.r = NAN;
-
         return correlation;
     }
 
     if (x_filter.size() == 0)
     {
         correlation.r = NAN;
-
         return correlation;
     }
 
     MatrixR data(x_filter.rows(), 1 + y_filter.cols());
     data << x_filter, y_filter;
 
-    vector<Index> input_columns_indices(1);
-    input_columns_indices[0] = 0.0f;
+    vector<Index> input_columns_indices = {0};
 
     vector<Index> target_columns_indices(y_filter.cols());
     iota(target_columns_indices.begin(), target_columns_indices.end(), 1);
@@ -514,14 +510,12 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
         cout << "Warning: One variable has too many categories." << "\n";
 
         correlation.r = NAN;
-
         return correlation;
     }
 
     if (x_filter.size() == 0 && y_filter.size() == 0)
     {
         correlation.r = NAN;
-
         return correlation;
     }
 

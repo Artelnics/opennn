@@ -127,8 +127,9 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
 
     const auto inputs = input.as_vector().array();
     const auto targets = target.as_vector().array();
+    const auto difference = inputs - targets;
     input_delta.as_vector().array()
-        = (targets == 1.0f).select(pos_w * (inputs - targets), neg_w * (inputs - targets)) * coefficient;
+        = (targets == 1.0f).select(pos_w * difference, neg_w * difference) * coefficient;
 }
 
 void binary_cross_entropy(const TensorView& input, const TensorView& target, float& error, float* workspace_device)
@@ -200,7 +201,7 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
 
 void minkowski_error(const TensorView& input, const TensorView& target, float power, float& error, float* workspace_device)
 {
-    if (Configuration::instance().is_gpu())
+    if (is_gpu())
         throw runtime_error("minkowski_error: GPU implementation not available.");
 
     (void)workspace_device;
@@ -210,7 +211,7 @@ void minkowski_error(const TensorView& input, const TensorView& target, float po
 
 void minkowski_error_gradient(const TensorView& input, const TensorView& target, float power, TensorView& input_delta)
 {
-    if (Configuration::instance().is_gpu())
+    if (is_gpu())
         throw runtime_error("minkowski_error_gradient: GPU implementation not available.");
 
     const Index batch_size = input.shape[0];
@@ -280,16 +281,8 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
             total_log_loss -= log(outputs_flat(token_index, target_index) + EPSILON);
             ++active_tokens;
 
-            Index best_index = 0;
-            float best_value = outputs_flat(token_index, 0);
-            for (Index k = 1; k < vocabulary_size; ++k)
-            {
-                if (outputs_flat(token_index, k) > best_value)
-                {
-                    best_value = outputs_flat(token_index, k);
-                    best_index = k;
-                }
-            }
+            Index best_index;
+            outputs_flat.row(token_index).maxCoeff(&best_index);
             if (best_index == target_index) ++correct_tokens;
         }
     }

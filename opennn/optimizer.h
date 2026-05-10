@@ -16,6 +16,8 @@
 namespace opennn
 {
 
+inline constexpr float GRADIENT_NORM_EPS = 1e-6f;
+
 class Loss;
 struct Batch;
 struct Buffer;

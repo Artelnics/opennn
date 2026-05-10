@@ -49,7 +49,7 @@ void Scaling::set(const Shape& new_input_shape)
 
     scale_op.input_slots  = {Input};
     scale_op.output_slots = {Output};
-    scale_op.set(input_shape.empty() ? Index(0) : input_shape.size());
+    scale_op.set(input_shape.size());
 
     if (input_shape.empty()) return;
 
@@ -86,8 +86,7 @@ void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 void Scaling::set_scalers(const vector<string>& new_scalers)
 {
     scalers.resize(new_scalers.size());
-    for (size_t i = 0; i < new_scalers.size(); ++i)
-        scalers[i] = string_to_scaler_method(new_scalers[i]);
+    transform(new_scalers.begin(), new_scalers.end(), scalers.begin(), string_to_scaler_method);
     flush_scalers_to_states();
 }
 
@@ -105,67 +104,12 @@ void Scaling::forward_propagate(ForwardPropagation& forward_propagation, size_t 
     for (Operator* op : get_operators())
         op->forward_propagate(forward_propagation, layer, is_training);
 }
-string Scaling::write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
-{
-    const Index inputs_number = get_output_shape().size();
 
-    ostringstream buffer;
-    buffer.precision(10);
-
-    for (Index i = 0; i < inputs_number; ++i)
-        buffer << output_names[i] << " = " << input_names[i] << ";\n";
-
-    return buffer.str();
-}
-
-string Scaling::write_minimum_maximum_expression(const vector<string>& input_names, const vector<string>& output_names) const
-{
-    ostringstream buffer;
-    buffer.precision(10);
-
-    const Index inputs_number = get_output_shape().size();
-    const float* mins = scale_op.minimums.as<float>();
-    const float* maxs = scale_op.maximums.as<float>();
-    for (Index i = 0; i < inputs_number; ++i)
-        buffer << output_names[i] << " = 2*(" << input_names[i] << "-(" << mins[i]
-               << "))/(" << maxs[i] << "-(" << mins[i] << "))-1;\n";
-
-    return buffer.str();
-}
-
-string Scaling::write_mean_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
-{
-    ostringstream buffer;
-    buffer.precision(10);
-
-    const Index inputs_number = get_output_shape().size();
-    const float* mns = scale_op.means.as<float>();
-    const float* sds = scale_op.standard_deviations.as<float>();
-    for (Index i = 0; i < inputs_number; ++i)
-        buffer << output_names[i] << " = (" << input_names[i] << "-(" << mns[i]
-               << "))/" << sds[i] << ";\n";
-
-    return buffer.str();
-}
-
-string Scaling::write_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
-{
-    ostringstream buffer;
-    buffer.precision(10);
-
-    const Index inputs_number = get_output_shape().size();
-    const float* sds = scale_op.standard_deviations.as<float>();
-    for (Index i = 0; i < inputs_number; ++i)
-        buffer << output_names[i] << " = " << input_names[i] << "/(" << sds[i] << ");\n";
-
-    return buffer.str();
-}
 void Scaling::read_JSON_body(const Json* scaling_layer_element)
 {
     const vector<string> scaler_names = get_tokens(read_json_string(scaling_layer_element, "Scalers"), " ");
     scalers.resize(scaler_names.size());
-    for (size_t i = 0; i < scaler_names.size(); ++i)
-        scalers[i] = string_to_scaler_method(scaler_names[i]);
+    transform(scaler_names.begin(), scaler_names.end(), scalers.begin(), string_to_scaler_method);
 
     scale_op.min_range = float(stof(read_json_string(scaling_layer_element, "MinRange")));
     scale_op.max_range = float(stof(read_json_string(scaling_layer_element, "MaxRange")));
@@ -174,8 +118,7 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
 void Scaling::write_JSON_body(JsonWriter& printer) const
 {
     vector<string> scaler_names(scalers.size());
-    for (size_t i = 0; i < scalers.size(); ++i)
-        scaler_names[i] = scaler_method_to_string(scalers[i]);
+    transform(scalers.begin(), scalers.end(), scaler_names.begin(), scaler_method_to_string);
 
     write_json(printer, {
         {"Means", vector_to_string(scale_op.means.as_vector())},
@@ -193,6 +136,57 @@ void Scaling::flush_scalers_to_states()
     if (ssize(scalers) != scale_op.scalers.size()) return;
     for (size_t i = 0; i < scalers.size(); ++i)
         scale_op.scalers.as<float>()[i] = static_cast<float>(scalers[i]);
+}
+
+string Scaling::write_expression(const vector<string>& input_names,
+                                 const vector<string>& /*output_names*/) const
+{
+    ostringstream buffer;
+    buffer.precision(10);
+
+    const Index outputs_number = get_outputs_number();
+    const VectorR& minimums = get_minimums();
+    const VectorR& maximums = get_maximums();
+    const VectorR& means = get_means();
+    const VectorR& standard_deviations = get_standard_deviations();
+    const vector<ScalerMethod>& scalers_local = get_scalers();
+    const float min_range = get_min_range();
+    const float max_range = get_max_range();
+
+    for (Index i = 0; i < outputs_number; ++i)
+    {
+        switch (scalers_local[i])
+        {
+        case ScalerMethod::None:
+            buffer << "scaled_" << input_names[i] << " = " << input_names[i] << ";\n";
+            break;
+        case ScalerMethod::MinimumMaximum:
+            buffer << "scaled_" << input_names[i]
+                   << " = " << input_names[i] << "*(" << max_range << "-" << min_range << ")/("
+                   << maximums[i] << "-(" << minimums[i] << "))-" << minimums[i] << "*("
+                   << max_range << "-" << min_range << ")/("
+                   << maximums[i] << "-" << minimums[i] << ")+" << min_range << ";\n";
+            break;
+        case ScalerMethod::MeanStandardDeviation:
+            buffer << "scaled_" << input_names[i] << " = (" << input_names[i] << "-" << means[i] << ")/" << standard_deviations[i] << ";\n";
+            break;
+        case ScalerMethod::StandardDeviation:
+            buffer << "scaled_" << input_names[i] << " = " << input_names[i] << "/(" << standard_deviations[i] << ");\n";
+            break;
+        case ScalerMethod::Logarithm:
+            buffer << "scaled_" << input_names[i] << " = log(" << input_names[i] << ");\n";
+            break;
+        default:
+            throw runtime_error("Unknown inputs scaling method.\n");
+        }
+    }
+
+    string expression = buffer.str();
+
+    expression = regex_replace(expression, regex("\\+-"), "-");
+    expression = regex_replace(expression, regex("--"), "+");
+
+    return expression;
 }
 
 REGISTER(Layer, Scaling, "Scaling")

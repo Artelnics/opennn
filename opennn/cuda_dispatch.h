@@ -14,7 +14,7 @@ namespace opennn {
 // Cached at first call (C++11 magic statics make this thread-safe). Configuration
 // is set once at startup, so the value never changes after init.
 inline bool is_gpu_cached() {
-    static const bool v = Configuration::instance().is_gpu();
+    static const bool v = is_gpu();
     return v;
 }
 }

@@ -44,7 +44,7 @@ Shape Normalization3d::get_output_shape() const
 
 vector<pair<Shape, Type>> Normalization3d::get_forward_specs(Index batch_size) const
 {
-    const Shape normalized_shape = Configuration::instance().is_gpu()
+    const Shape normalized_shape = is_gpu()
         ? Shape{}
         : Shape{batch_size, sequence_length, embedding_dimension};
 

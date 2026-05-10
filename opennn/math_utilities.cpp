@@ -17,7 +17,7 @@ namespace opennn
 
 void pad(const TensorView& input, TensorView& output)
 {
-    if (Configuration::instance().is_gpu())
+    if (is_gpu())
         throw runtime_error("pad: GPU implementation not available.");
 
     const TensorMap4 input_map = input.as_tensor<4>();

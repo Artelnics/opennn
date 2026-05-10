@@ -24,10 +24,7 @@ Json Json::make_array () { Json j; j.kind = Kind::Array;  return j; }
 
 bool Json::has(const std::string& key) const
 {
-    if (!is_object()) return false;
-    for (const auto& kv : object_value)
-        if (kv.first == key) return true;
-    return false;
+    return find(key) != nullptr;
 }
 
 const Json* Json::find(const std::string& key) const
@@ -156,9 +153,9 @@ static void dump_value(std::string& out, const Json& v, int indent, int depth)
     case Json::Kind::Bool:   out += (v.bool_value ? "true" : "false"); return;
     case Json::Kind::Number: {
         char buf[32];
-        if (v.number_value == static_cast<double>(static_cast<long long>(v.number_value))
-            && std::abs(v.number_value) < 1e15)
-            std::snprintf(buf, sizeof(buf), "%lld", static_cast<long long>(v.number_value));
+        const long long as_int = static_cast<long long>(v.number_value);
+        if (v.number_value == static_cast<double>(as_int) && std::abs(v.number_value) < 1e15)
+            std::snprintf(buf, sizeof(buf), "%lld", as_int);
         else
             std::snprintf(buf, sizeof(buf), "%.10g", v.number_value);
         out += buf;
@@ -420,16 +417,8 @@ JsonDocument JsonDocument::wrap(const std::string& tag, Json value)
 }
 void JsonWriter::open_element(const std::string& name)
 {
-    Json* parent = nullptr;
-    if (stack.empty())
-    {
-        if (root.kind == Json::Kind::Null) root = Json::make_object();
-        parent = &root;
-    }
-    else
-    {
-        parent = stack.back();
-    }
+    Json* parent = stack.empty() ? &root : stack.back();
+    if (parent == &root && root.kind == Json::Kind::Null) root = Json::make_object();
 
     Json child = Json::make_object();
 

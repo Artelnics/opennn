@@ -62,14 +62,10 @@ void ImageDataset::set_data_random()
     data.setZero();
 
     const Index images_per_category = samples_number / targets_number;
-    Index remainder = samples_number % targets_number;
+    const Index extra = samples_number % targets_number;
 
-    VectorI images_number(targets_number);
-    for (Index i = 0; i < targets_number; ++i)
-    {
-        images_number[i] = images_per_category + (remainder > 0 ? 1 : 0);
-        if (remainder > 0) remainder--;
-    }
+    VectorI images_number = VectorI::Constant(targets_number, images_per_category);
+    images_number.head(extra).array() += 1;
 
     Index current_sample = 0;
 
@@ -170,8 +166,7 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
     set_data_path(read_json_string(data_source_element, "Path"));
 
     streaming = data_source_element->has("Streaming")
-        ? read_json_bool(data_source_element, "Streaming")
-        : false;
+             && read_json_bool(data_source_element, "Streaming");
 
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
@@ -207,13 +202,7 @@ vector<Descriptives> ImageDataset::scale_features(const string&)
 {
     if (streaming) return {};
 
-    const Index samples_number = get_samples_number();
-    const Index input_features_number = get_features_number("Input");
-
-    #pragma omp parallel for
-    for (Index i = 0; i < samples_number; ++i)
-        for (Index j = 0; j < input_features_number; ++j)
-            data(i, j) /= 255.0f;
+    data.leftCols(get_features_number("Input")) /= 255.0f;
 
     return {};
 }

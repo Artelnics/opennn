@@ -101,8 +101,7 @@ void Unscaling::set_min_max_range(float min, float max)
 void Unscaling::set_scalers(const vector<string>& new_scaler)
 {
     scalers.resize(new_scaler.size());
-    for (size_t i = 0; i < new_scaler.size(); ++i)
-        scalers[i] = string_to_scaler_method(new_scaler[i]);
+    transform(new_scaler.begin(), new_scaler.end(), scalers.begin(), string_to_scaler_method);
     flush_scalers_to_states();
 }
 
@@ -173,6 +172,58 @@ void Unscaling::flush_scalers_to_states()
     if (ssize(scalers) != unscale_op.scalers.size()) return;
     for (size_t i = 0; i < scalers.size(); ++i)
         unscale_op.scalers.as<float>()[i] = static_cast<float>(scalers[i]);
+}
+
+string Unscaling::write_expression(const vector<string>& input_names,
+                                   const vector<string>& output_names) const
+{
+    ostringstream buffer;
+    buffer.precision(10);
+
+    const Index outputs_number = get_outputs_number();
+    const VectorR& minimums = get_minimums();
+    const VectorR& maximums = get_maximums();
+    const VectorR& means = get_means();
+    const VectorR& standard_deviations = get_standard_deviations();
+    const vector<ScalerMethod>& scalers_local = get_scalers();
+    const float min_range = get_min_range();
+    const float max_range = get_max_range();
+
+    for (Index i = 0; i < outputs_number; ++i)
+    {
+        switch (scalers_local[i])
+        {
+        case ScalerMethod::None:
+            buffer << output_names[i] << " = " << input_names[i] << ";\n";
+            break;
+        case ScalerMethod::MinimumMaximum:
+            if (abs(minimums[i] - maximums[i]) < EPSILON)
+                buffer << output_names[i] << "=" << minimums[i] << ";\n";
+            else
+                buffer << output_names[i] << "=" << input_names[i] << "*"
+                       << "(" << (maximums[i] - minimums[i]) / (max_range - min_range)
+                       << ")+" << (minimums[i] - min_range * (maximums[i] - minimums[i]) / (max_range - min_range)) << ";\n";
+            break;
+        case ScalerMethod::MeanStandardDeviation:
+            buffer << output_names[i] << "=" << input_names[i] << "*" << standard_deviations[i] << "+" << means[i] << ";\n";
+            break;
+        case ScalerMethod::StandardDeviation:
+            buffer << output_names[i] << "=" << input_names[i] << "*" << standard_deviations[i] << ";\n";
+            break;
+        case ScalerMethod::Logarithm:
+            buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";
+            break;
+        default:
+            throw runtime_error("Unknown inputs scaling method.\n");
+        }
+    }
+
+    string expression = buffer.str();
+
+    replace(expression, "+-", "-");
+    replace(expression, "--", "+");
+
+    return expression;
 }
 
 REGISTER(Layer, Unscaling, "Unscaling")

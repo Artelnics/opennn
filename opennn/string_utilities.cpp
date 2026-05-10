@@ -366,8 +366,7 @@ string get_trimmed(const string& text)
 
 bool has_numbers(const vector<string>& string_list)
 {
-    return any_of(string_list.begin(), string_list.end(),
-                  [](const string& s) { return is_numeric_string(s); });
+    return any_of(string_list.begin(), string_list.end(), is_numeric_string);
 }
 
 bool has_numbers(const vector<string_view>& string_list)
@@ -433,9 +432,7 @@ void string_to_vector(const string& input, VectorR& values)
         buffer.push_back(value);
 
     values.resize(static_cast<Index>(buffer.size()));
-
-    for (Index i = 0; i < values.size(); ++i)
-        values(i) = buffer[i];
+    std::copy(buffer.begin(), buffer.end(), values.data());
 }
 
 bool contains(const vector<string>& data, const string& value)

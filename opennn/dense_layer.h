@@ -54,6 +54,9 @@ public:
 
     void read_JSON_body(const Json*) override;
 
+    string write_expression(const vector<string>& input_names,
+                            const vector<string>& output_names) const override;
+
 private:
 
     Index output_features = 0;

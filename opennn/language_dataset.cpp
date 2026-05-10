@@ -136,10 +136,7 @@ void LanguageDataset::create_vocabulary(const vector<vector<string_view>>& docum
     sort(sorted_tokens.begin(), sorted_tokens.end(),
          [](const auto& a, const auto& b) { return a.second > b.second; });
 
-    vocabulary.clear();
-
-    for (const string& token : reserved_tokens)
-        vocabulary.push_back(token);
+    vocabulary = reserved_tokens;
 
     for (const auto& [token, count] : sorted_tokens)
     {
@@ -278,18 +275,16 @@ void LanguageDataset::encode_target_classification(const vector<vector<string_vi
             data(sample, maximum_input_sequence_length) = 2;
 
             const vector<string_view>& target_tokens = target_document_tokens[sample];
+            const Index target_tokens_number = ssize(target_tokens);
 
-            for (Index variable = maximum_input_sequence_length + 1;
-                variable < maximum_input_sequence_length + 1 + Index(target_tokens.size());
-                ++variable)
+            for (Index token_index = 0; token_index < target_tokens_number; ++token_index)
             {
-                const Index token_index = variable - (maximum_input_sequence_length + 1);
-
                 const string_view current_token = target_tokens[token_index];
 
                 auto iterator = target_vocabulary_map.find(current_token);
 
-                data(sample, variable) = (iterator != target_vocabulary_map.end()) ? iterator->second : 1;
+                data(sample, maximum_input_sequence_length + 1 + token_index) =
+                    (iterator != target_vocabulary_map.end()) ? iterator->second : 1;
             }
 
             data(sample, maximum_input_sequence_length + target_tokens.size() + 1) = 3;
@@ -322,8 +317,8 @@ void LanguageDataset::read_csv()
     if (is_single_token_target)
     {
         maximum_target_sequence_length = (target_vocabulary_size == 6)
-        ? 1
-        : target_vocabulary_size - 4;
+            ? 1
+            : target_vocabulary_size - 4;
 
         const Index features_number = maximum_input_sequence_length + maximum_target_sequence_length;
 
@@ -367,8 +362,7 @@ void LanguageDataset::read_csv()
         const Index decoder_offset = maximum_input_sequence_length;
         const Index target_offset = decoder_offset + maximum_target_sequence_length;
         const Index features_number = maximum_input_sequence_length
-                                      + maximum_target_sequence_length
-                                      + maximum_target_sequence_length;
+                                      + 2 * maximum_target_sequence_length;
 
         if (!streaming)
             data = MatrixR::Zero(samples_number, features_number);
@@ -424,14 +418,16 @@ void LanguageDataset::read_csv()
 
     for (Index i = 0; i < ssize(variables); ++i)
     {
-        if (i < maximum_input_sequence_length)
-            variables[i].role = VariableRole::Input;
-        else if (!decoder_shape.empty() && i < maximum_input_sequence_length + maximum_target_sequence_length)
-            variables[i].role = VariableRole::Decoder;
-        else
-            variables[i].role = VariableRole::Target;
+        Variable& variable = variables[i];
 
-        variables[i].type = VariableType::Numeric;
+        if (i < maximum_input_sequence_length)
+            variable.role = VariableRole::Input;
+        else if (!decoder_shape.empty() && i < maximum_input_sequence_length + maximum_target_sequence_length)
+            variable.role = VariableRole::Decoder;
+        else
+            variable.role = VariableRole::Target;
+
+        variable.type = VariableType::Numeric;
     }
 
     if (!variables.empty())

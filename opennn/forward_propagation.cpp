@@ -44,10 +44,10 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     views.resize(layers_number);
 
-    const bool is_gpu = Configuration::instance().is_gpu();
-    const Device device = is_gpu ? Device::CUDA : Device::CPU;
+    const bool on_gpu = is_gpu();
+    const Device device = on_gpu ? Device::CUDA : Device::CPU;
 
-    const auto forward_dtypes = collect_layer_dtypes(layers, batch_size, is_gpu,
+    const auto forward_dtypes = collect_layer_dtypes(layers, batch_size, on_gpu,
                                                      &Layer::get_forward_dtypes);
 
     const Index total_bytes = aligned_total_bytes(forward_shapes, forward_dtypes);

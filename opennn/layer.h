@@ -181,6 +181,9 @@ public:
 
     virtual void write_JSON_body(JsonWriter&) const {}
 
+    virtual string write_expression(const vector<string>& /*input_names*/,
+                                    const vector<string>& /*output_names*/) const { return string(); }
+
     virtual void print() const {}
 
     bool get_is_trainable() const { return is_trainable; }

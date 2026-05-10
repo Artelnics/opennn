@@ -15,11 +15,6 @@ namespace opennn
 
 class NeuralNetwork;
 class Layer;
-class Bounding;
-class Unscaling;
-class Recurrent;
-class Scaling;
-class Dense;
 
 class ModelExpression
 {
@@ -84,12 +79,6 @@ private:
     };
 
     static const vector<pair<string, ActivationBodies>>& activation_table();
-
-    static string write_bounding_expression(const Bounding&, const vector<string>& , const vector<string>&);
-    static string write_scaling_expression(const Scaling&, const vector<string>&, const vector<string>&);
-    static string write_unscaling_expression(const Unscaling&, const vector<string>&, const vector<string>&);
-    static string write_recurrent_expression(const Recurrent&, const vector<string>&, const vector<string>&);
-    static string write_dense_expression(const Dense&, const vector<string>&, const vector<string>&);
 };
 
 }

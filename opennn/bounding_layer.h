@@ -46,6 +46,9 @@ public:
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 
+    string write_expression(const vector<string>& input_names,
+                            const vector<string>& output_names) const override;
+
 private:
 
     Shape output_shape;

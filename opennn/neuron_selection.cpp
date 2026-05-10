@@ -29,11 +29,12 @@ void NeuronSelection::set(TrainingStrategy* new_training_strategy)
 
 void NeuronSelection::set_default()
 {
-    if (!(training_strategy && training_strategy->get_neural_network()))
+    if (!training_strategy || !training_strategy->get_neural_network())
         return;
 
-    const Index inputs_number = training_strategy->get_neural_network()->get_inputs_number();
-    const Index outputs_number = training_strategy->get_neural_network()->get_outputs_number();
+    const NeuralNetwork* neural_network = training_strategy->get_neural_network();
+    const Index inputs_number = neural_network->get_inputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
     minimum_neurons = 1;
     maximum_neurons = 2 * (inputs_number + outputs_number);
@@ -103,11 +104,8 @@ NeuronsSelectionResults::NeuronsSelectionResults(const Index maximum_epochs)
 {
     neurons_number_history = VectorI::Zero(maximum_epochs);
 
-    training_error_history.resize(maximum_epochs);
-    training_error_history.setConstant(-1.0f);
-
-    validation_error_history.resize(maximum_epochs);
-    validation_error_history.setConstant(-1.0f);
+    training_error_history = VectorR::Constant(maximum_epochs, -1.0f);
+    validation_error_history = VectorR::Constant(maximum_epochs, -1.0f);
 
     optimum_training_error = MAX;
     optimum_validation_error = MAX;
@@ -127,12 +125,9 @@ void NeuronsSelectionResults::resize_history(const Index new_size)
 
     const Index copy_size = min(old_size, new_size);
 
-    for (Index i = 0; i < copy_size; ++i)
-    {
-        neurons_number_history(i) = old_neurons_number_history(i);
-        training_error_history(i) = old_training_error_history(i);
-        validation_error_history(i) = old_validation_error_history(i);
-    }
+    neurons_number_history.head(copy_size) = old_neurons_number_history.head(copy_size);
+    training_error_history.head(copy_size) = old_training_error_history.head(copy_size);
+    validation_error_history.head(copy_size) = old_validation_error_history.head(copy_size);
 }
 
 string NeuronsSelectionResults::write_stopping_condition() const

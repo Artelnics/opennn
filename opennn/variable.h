@@ -17,6 +17,30 @@ namespace opennn
 
 enum class VariableType { None, Numeric, Binary, Categorical, DateTime, Constant };
 
+inline const EnumMap<VariableType>& variable_type_map()
+{
+    static const vector<pair<VariableType, string>> entries = {
+        {VariableType::None,        "None"},
+        {VariableType::Numeric,     "Numeric"},
+        {VariableType::Binary,      "Binary"},
+        {VariableType::Categorical, "Categorical"},
+        {VariableType::DateTime,    "DateTime"},
+        {VariableType::Constant,    "Constant"}
+    };
+    static const EnumMap<VariableType> map{entries};
+    return map;
+}
+
+inline const string& variable_type_to_string(VariableType type)
+{
+    return variable_type_map().to_string(type);
+}
+
+inline VariableType string_to_variable_type(const string& name)
+{
+    return variable_type_map().from_string(name);
+}
+
 enum class ScalerMethod
 {
     None,
@@ -131,6 +155,8 @@ struct Variable
     bool is_binary() const { return type == VariableType::Binary; }
     bool is_categorical() const { return type == VariableType::Categorical; }
     bool is_used() const { return role != VariableRole::None && role != VariableRole::Time; }
+
+    Index feature_count() const { return is_categorical() ? get_categories_number() : 1; }
 
     vector<string> get_names() const;
 

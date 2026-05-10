@@ -116,42 +116,33 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
     training_direction.noalias() = -(inverse_hessian.selfadjointView<Lower>() * gradient);
 
-    const float slope_value = gradient.dot(training_direction);
-    training_slope = slope_value;
+    training_slope = gradient.dot(training_direction);
 
-    if (slope_value >= 0.0f)
-    {
+    if (training_slope >= 0.0f)
         training_direction = -gradient;
-    }
 
     optimization_data.initial_learning_rate = (old_learning_rate > 0.0f)
         ? old_learning_rate
         : first_learning_rate;
 
-    const float current_loss_value = back_propagation.loss_value;
-
-    const pair<float, float> directional_point = calculate_directional_point(
+    tie(learning_rate, back_propagation.loss_value) = calculate_directional_point(
         batch,
         forward_propagation,
         back_propagation,
         optimization_data,
-        current_loss_value);
-
-    learning_rate = directional_point.first;
-    back_propagation.loss_value = directional_point.second;
+        back_propagation.loss_value);
 
     if (std::abs(learning_rate) > 0.0f)
     {
         parameter_updates = training_direction * learning_rate;
-        parameters += parameter_updates;
     }
     else
     {
         parameter_updates = (gradient.array().abs() >= float(EPSILON))
                                 .select(-gradient.array().sign() * float(EPSILON), 0.0f);
-        parameters += parameter_updates;
         learning_rate = optimization_data.initial_learning_rate;
     }
+    parameters += parameter_updates;
 
     old_gradient = gradient;
     swap(optimization_data.views[InverseHessian], optimization_data.views[OldInverseHessian]);
@@ -249,7 +240,7 @@ TrainingResults QuasiNewtonMethod::train()
 
     // Initialize OldParameters <- current parameters
     optimization_data.views[OldParameters].as_vector() =
-        VectorMap(neural_network->get_parameters_data(), neural_network->get_parameters_size());
+        VectorMap(neural_network->get_parameters_data(), parameters_number);
 
     // Initialize InverseHessian and OldInverseHessian to identity
     optimization_data.views[InverseHessian].as_matrix().setIdentity();
@@ -299,7 +290,7 @@ TrainingResults QuasiNewtonMethod::train()
             results.validation_error_history(epoch) = validation_back_propagation.error;
 
             if (epoch != 0
-                && results.validation_error_history(epoch) > results.validation_error_history(epoch-1))
+                && validation_back_propagation.error > results.validation_error_history(epoch-1))
                 ++validation_failures;
         }
 

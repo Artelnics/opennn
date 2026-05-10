@@ -13,7 +13,7 @@ void adam_update_cuda(const Index, float*, float*, float*, const float*, const f
 
 void sgd_update_cuda(const Index, float*, float*, const float*, const float, const float, const bool);
 
-void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm);
+void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm, const float eps);
 void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
                             cudaStream_t stream = nullptr);
 void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst);

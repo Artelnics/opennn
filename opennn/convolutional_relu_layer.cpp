@@ -52,16 +52,14 @@ Index ConvolutionalRelu::get_output_width() const
 Index ConvolutionalRelu::get_padding_height() const
 {
     if (!use_padding) return 0;
-    const Index output_height = (input_height + row_stride - 1) / row_stride;
-    const Index total_padding = (output_height - 1) * row_stride + kernel_height - input_height;
+    const Index total_padding = (get_output_height() - 1) * row_stride + kernel_height - input_height;
     return total_padding / 2;
 }
 
 Index ConvolutionalRelu::get_padding_width() const
 {
     if (!use_padding) return 0;
-    const Index output_width = (input_width + column_stride - 1) / column_stride;
-    const Index total_padding = (output_width - 1) * column_stride + kernel_width - input_width;
+    const Index total_padding = (get_output_width() - 1) * column_stride + kernel_width - input_width;
     return total_padding / 2;
 }
 

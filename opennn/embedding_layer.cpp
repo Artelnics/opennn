@@ -68,8 +68,8 @@ void Embedding::read_JSON_body(const Json* embedding_layer_element)
     const Shape new_output_shape = string_to_shape(read_json_string(embedding_layer_element, "OutputDimensions"));
 
     set(new_vocabulary_size,
-        new_output_shape.empty() ? Index(0) : new_output_shape[0],
-        new_output_shape.rank >= 2 ? new_output_shape[1] : Index(0),
+        new_output_shape.dim_or_zero(0),
+        new_output_shape.dim_or_zero(1),
         new_label);
 
     set_scale_embedding(read_json_bool(embedding_layer_element, "ScaleEmbedding"));

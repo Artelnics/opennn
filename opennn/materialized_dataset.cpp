@@ -73,9 +73,8 @@ void MaterializedDataset::set(const Index new_samples_number,
 
     const Index new_inputs_number = new_input_shape.size();
 
-    Index new_targets_number = new_target_shape.size();
-
-    new_targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
+    const Index target_size = new_target_shape.size();
+    const Index new_targets_number = (target_size == 2) ? 1 : target_size;
 
     target_shape = { new_targets_number };
 
@@ -151,12 +150,8 @@ VectorR MaterializedDataset::get_sample_data(const Index index) const
 
 MatrixR MaterializedDataset::get_variable_data(const Index variable_index) const
 {
-    Index variables_number = 1;
     const Index rows_number = data.rows();
-
-    if (variables[variable_index].type == VariableType::Categorical)
-        variables_number = variables[variable_index].get_categories_number();
-
+    const Index variables_number = variables[variable_index].feature_count();
     const Index start_column = get_feature_indices(variable_index)[0];
 
     return data.block(0, start_column, rows_number, variables_number);
@@ -187,6 +182,7 @@ void MaterializedDataset::infer_variable_types_from_data()
     for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
     {
         Variable& variable = variables[variable_index];
+        const Index advance = variable.feature_count();
 
         if (variable.type == VariableType::Numeric)
         {
@@ -199,27 +195,15 @@ void MaterializedDataset::infer_variable_types_from_data()
                 variable.type = VariableType::Binary;
                 variable.categories = { "0", "1" };
             }
-
-            ++feature_index;
         }
-        else if (variable.type == VariableType::Binary)
+        else if (variable.type == VariableType::Binary
+              || variable.type == VariableType::Categorical)
         {
             if (variable.get_categories_number() == 1)
                 variable.set(variable.name, "None", VariableType::Constant);
+        }
 
-            ++feature_index;
-        }
-        else if (variable.type == VariableType::Categorical)
-        {
-            if (variable.get_categories_number() == 1)
-                variable.set(variable.name, "None", VariableType::Constant);
-
-            feature_index += variable.get_categories_number();
-        }
-        else
-        {
-            ++feature_index;
-        }
+        feature_index += advance;
     }
 }
 
@@ -256,10 +240,12 @@ vector<string> MaterializedDataset::unuse_uncorrelated_variables(const float min
             }
         }
 
-        if (!has_significant_correlation && variables[input_variable_index].role != VariableRole::None)
+        Variable& variable = variables[input_variable_index];
+
+        if (!has_significant_correlation && variable.role != VariableRole::None)
         {
-            variables[input_variable_index].set_role("None");
-            unused_variables.push_back(variables[input_variable_index].name);
+            variable.set_role("None");
+            unused_variables.push_back(variable.name);
         }
     }
 
@@ -311,7 +297,9 @@ vector<string> MaterializedDataset::unuse_collinear_variables(const float maximu
             if (to_be_removed[i] || to_be_removed[j])
                 continue;
 
-            if (!isnan(correlations(i, j).r) && abs(correlations(i, j).r) >= maximum_correlation)
+            const float r = correlations(i, j).r;
+
+            if (!isnan(r) && abs(r) >= maximum_correlation)
             {
                 const Index index_to_flag_for_removal =
                     (high_corr_counts[i] > high_corr_counts[j]) ? i :
@@ -326,15 +314,14 @@ vector<string> MaterializedDataset::unuse_collinear_variables(const float maximu
     vector<string> unused_variables;
     for (Index i = 0; i < input_variables_number; ++i)
     {
-        if (to_be_removed[i])
-        {
-            const Index global_variable_index = input_variable_indices[i];
+        if (!to_be_removed[i]) continue;
 
-            if (variables[global_variable_index].role != VariableRole::None)
-            {
-                variables[global_variable_index].set_role("None");
-                unused_variables.push_back(variables[global_variable_index].name);
-            }
+        Variable& variable = variables[input_variable_indices[i]];
+
+        if (variable.role != VariableRole::None)
+        {
+            variable.set_role("None");
+            unused_variables.push_back(variable.name);
         }
     }
 
@@ -356,9 +343,7 @@ vector<Histogram> MaterializedDataset::calculate_variable_distributions(const In
     {
         if (variable.role == VariableRole::None)
         {
-            feature_index += (variable.type == VariableType::Categorical)
-            ? variable.get_categories_number()
-            : 1;
+            feature_index += variable.feature_count();
             continue;
         }
 
@@ -447,22 +432,11 @@ vector<BoxPlot> MaterializedDataset::calculate_variables_box_plots() const
     {
         const Variable& variable = variables[i];
 
-        if (variable.type == VariableType::Numeric
-        || variable.type == VariableType::Binary)
-        {
-            if (variable.role != VariableRole::None)
-                box_plots[i] = box_plot(data.col(feature_index), used_sample_indices);
+        if ((variable.type == VariableType::Numeric || variable.type == VariableType::Binary)
+            && variable.role != VariableRole::None)
+            box_plots[i] = box_plot(data.col(feature_index), used_sample_indices);
 
-            ++feature_index;
-        }
-        else if (variable.type == VariableType::Categorical)
-        {
-            feature_index += variable.get_categories_number();
-        }
-        else
-        {
-            ++feature_index;
-        }
+        feature_index += variable.feature_count();
     }
 
     return box_plots;
@@ -846,19 +820,15 @@ void MaterializedDataset::save_data_binary(const filesystem::path& binary_data_f
     if (!file.is_open())
         throw runtime_error("Cannot open data binary file.");
 
-    streamsize size = sizeof(Index);
+    const Index columns_number = data.cols();
+    const Index rows_number = data.rows();
 
-    Index columns_number = data.cols();
-    Index rows_number = data.rows();
-
-    file.write(reinterpret_cast<char*>(&columns_number), size);
-    file.write(reinterpret_cast<char*>(&rows_number), size);
-
-    size = sizeof(float);
+    file.write(reinterpret_cast<const char*>(&columns_number), sizeof(Index));
+    file.write(reinterpret_cast<const char*>(&rows_number), sizeof(Index));
 
     const Index total_elements = columns_number * rows_number;
 
-    file.write(reinterpret_cast<const char*>(data.data()), total_elements * size);
+    file.write(reinterpret_cast<const char*>(data.data()), total_elements * sizeof(float));
 
     file.close();
 }
@@ -870,21 +840,17 @@ void MaterializedDataset::load_data_binary()
     if (!file.is_open())
         throw runtime_error("Failed to open file: " + data_path.string());
 
-    streamsize size = sizeof(Index);
-
     Index columns_number = 0;
     Index rows_number = 0;
 
-    file.read(reinterpret_cast<char*>(&columns_number), size);
-    file.read(reinterpret_cast<char*>(&rows_number), size);
-
-    size = sizeof(float);
+    file.read(reinterpret_cast<char*>(&columns_number), sizeof(Index));
+    file.read(reinterpret_cast<char*>(&rows_number), sizeof(Index));
 
     data.resize(rows_number, columns_number);
 
     const Index total_elements = rows_number * columns_number;
 
-    file.read(reinterpret_cast<char*>(data.data()), total_elements * size);
+    file.read(reinterpret_cast<char*>(data.data()), total_elements * sizeof(float));
 
     file.close();
 }
@@ -906,11 +872,11 @@ VectorI MaterializedDataset::calculate_target_distribution() const
         Index positives = 0;
         Index negatives = 0;
 
-        for (Index sample_index = 0; sample_index < samples_number; ++sample_index) {
-            if (!isnan(data(sample_index, target_index)))
-                (data(sample_index, target_index) < 0.5f)
-                    ? negatives++
-                    : positives++;
+        for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
+        {
+            const float value = data(sample_index, target_index);
+            if (!isnan(value))
+                (value < 0.5f) ? negatives++ : positives++;
         }
 
         class_distribution(0) = negatives;
@@ -927,11 +893,10 @@ VectorI MaterializedDataset::calculate_target_distribution() const
 
             for (Index j = 0; j < targets_number; ++j)
             {
-                if (isnan(data(i, target_feature_indices[j])))
-                    continue;
+                const float value = data(i, target_feature_indices[j]);
 
-                if (data(i, target_feature_indices[j]) > 0.5f)
-                    class_distribution(j)++;
+                if (isnan(value)) continue;
+                if (value > 0.5f) class_distribution(j)++;
             }
         }
     }
@@ -961,26 +926,19 @@ vector<vector<Index>> MaterializedDataset::calculate_Tukey_outliers(const float 
     {
         const Variable& variable = variables[i];
 
-        if (variable.role == VariableRole::None
-        && variable.type == VariableType::Categorical)
+        if (variable.role == VariableRole::None)
         {
-            feature_index += variable.get_categories_number();
-            continue;
-        }
-        else if (variable.role == VariableRole::None)
-        {
-            ++feature_index;
+            feature_index += variable.feature_count();
             continue;
         }
 
-        if (variable.type == VariableType::Categorical)
+        if (variable.is_categorical())
         {
             feature_index += variable.get_categories_number();
             ++used_feature_index;
             continue;
         }
-        else if (variable.type == VariableType::Binary
-                 || variable.type == VariableType::DateTime)
+        else if (variable.is_binary() || variable.type == VariableType::DateTime)
         {
             ++feature_index;
             ++used_feature_index;
@@ -997,21 +955,24 @@ vector<vector<Index>> MaterializedDataset::calculate_Tukey_outliers(const float 
                 continue;
             }
 
+            const float lower = box_plots[i].first_quartile - cleaning_parameter * interquartile_range;
+            const float upper = box_plots[i].third_quartile + cleaning_parameter * interquartile_range;
+
             Index variables_outliers = 0;
 
             for (Index j = 0; j < samples_number; ++j)
             {
-                const VectorR sample = get_sample_data(sample_indices[Index(j)]);
+                const Index sample_idx = sample_indices[j];
+                const VectorR sample = get_sample_data(sample_idx);
+                const float value = sample(feature_index);
 
-                if (sample(feature_index) < box_plots[i].first_quartile - cleaning_parameter * interquartile_range
-                || sample(feature_index) > box_plots[i].third_quartile + cleaning_parameter * interquartile_range)
+                if (value < lower || value > upper)
                 {
                     return_values[0][j] = 1;
-
                     ++variables_outliers;
 
                     if (replace_with_nan)
-                        data(sample_indices[Index(j)], feature_index) = QUIET_NAN;
+                        data(sample_idx, feature_index) = QUIET_NAN;
                 }
             }
 
@@ -1131,7 +1092,7 @@ void MaterializedDataset::impute_missing_values_statistic(const MissingValuesMet
             const Index current_sample = used_sample_indices[i];
 
             if (isnan(data(current_sample, current_variable)))
-                set_sample_role(i, "None");
+                set_sample_role(current_sample, "None");
         }
     }
 }
@@ -1139,77 +1100,62 @@ void MaterializedDataset::impute_missing_values_statistic(const MissingValuesMet
 void MaterializedDataset::impute_missing_values_interpolate()
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
-    const vector<Index> used_feature_indices = get_used_feature_indices();
     const vector<Index> input_feature_indices = get_feature_indices("Input");
     const vector<Index> target_feature_indices = get_feature_indices("Target");
 
     const Index samples_number = used_sample_indices.size();
-    const Index features_number = used_feature_indices.size();
-    const Index target_features_number = target_feature_indices.size();
 
-    Index current_variable;
-    Index current_sample;
-
-    for (Index j = 0; j < features_number - target_features_number; ++j)
+    for (const Index current_variable : input_feature_indices)
     {
-        current_variable = input_feature_indices[j];
-
         for (Index i = 0; i < samples_number; ++i)
         {
-            current_sample = used_sample_indices[i];
+            const Index current_sample = used_sample_indices[i];
 
-            if (isnan(data(current_sample, current_variable)))
+            if (!isnan(data(current_sample, current_variable))) continue;
+
+            Index x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+            float x = 0.0f, y = 0.0f;
+
+            for (Index k = i - 1; k >= 0; k--)
             {
-                Index x1 = 0;
-                Index x2 = 0;
-                Index y1 = 0;
-                Index y2 = 0;
-                float x = 0.0f;
-                float y = 0.0f;
+                if (isnan(data(used_sample_indices[k], current_variable))) continue;
 
-                for (Index k = i - 1; k >= 0; k--)
-                {
-                    if (isnan(data(used_sample_indices[k], current_variable))) continue;
-
-                    x1 = used_sample_indices[k];
-                    y1 = data(x1, current_variable);
-                    break;
-                }
-
-                for (Index k = i + 1; k < samples_number; ++k)
-                {
-                    if (isnan(data(used_sample_indices[k], current_variable))) continue;
-
-                    x2 = used_sample_indices[k];
-                    y2 = data(x2, current_variable);
-                    break;
-                }
-
-                if (x2 != x1)
-                {
-                    x = float(current_sample);
-                    y = y1 + (x - x1) * (y2 - y1) / (x2 - x1);
-                }
-                else
-                {
-                    y = y1;
-                }
-
-                data(current_sample, current_variable) = y;
+                x1 = used_sample_indices[k];
+                y1 = data(x1, current_variable);
+                break;
             }
+
+            for (Index k = i + 1; k < samples_number; ++k)
+            {
+                if (isnan(data(used_sample_indices[k], current_variable))) continue;
+
+                x2 = used_sample_indices[k];
+                y2 = data(x2, current_variable);
+                break;
+            }
+
+            if (x2 != x1)
+            {
+                x = float(current_sample);
+                y = y1 + (x - x1) * (y2 - y1) / (x2 - x1);
+            }
+            else
+            {
+                y = y1;
+            }
+
+            data(current_sample, current_variable) = y;
         }
     }
 
-    for (Index j = 0; j < target_features_number; ++j)
+    for (const Index current_variable : target_feature_indices)
     {
-        current_variable = target_feature_indices[j];
-
         for (Index i = 0; i < samples_number; ++i)
         {
-            current_sample = used_sample_indices[i];
+            const Index current_sample = used_sample_indices[i];
 
             if (isnan(data(current_sample, current_variable)))
-                set_sample_role(i, "None");
+                set_sample_role(current_sample, "None");
         }
     }
 }
@@ -1395,16 +1341,16 @@ void MaterializedDataset::read_csv()
     }
 
     const size_t columns_number = header_tokens.size();
-    const Index variables_number = has_sample_ids ? columns_number - 1 : columns_number;
+    const size_t id_offset = has_sample_ids ? 1 : 0;
+    const Index variables_number = columns_number - id_offset;
     variables.resize(variables_number);
 
     if (has_header)
     {
-        const size_t name_offset = has_sample_ids ? 1 : 0;
         vector<string> names;
         names.reserve(variables_number);
         for (Index i = 0; i < variables_number; ++i)
-            names.emplace_back(header_tokens[i + name_offset]);
+            names.emplace_back(header_tokens[i + id_offset]);
         set_variable_names(names);
     }
     else
@@ -1415,7 +1361,7 @@ void MaterializedDataset::read_csv()
     const DateFormat date_format = infer_dataset_date_format(variables, raw_file_content, has_sample_ids, missing_values_label);
 
     for (Variable& variable : variables)
-        if (variable.type == VariableType::Categorical && variable.get_categories_number() == 2)
+        if (variable.is_categorical() && variable.get_categories_number() == 2)
             variable.type = VariableType::Binary;
 
     sample_roles.resize(samples_number, SampleRole::Training);
@@ -1435,7 +1381,7 @@ void MaterializedDataset::read_csv()
     for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
     {
         const Variable& variable = variables[variable_index];
-        if (variable.type != VariableType::Categorical) continue;
+        if (!variable.is_categorical()) continue;
 
         for (Index ci = 0; ci < ssize(variable.categories); ++ci)
             category_maps[variable_index].emplace(string_view(variable.categories[ci]), ci);
@@ -1448,12 +1394,12 @@ void MaterializedDataset::read_csv()
         if (has_missing_values(tokens))
         {
             ++rows_missing_values_number;
-            for (size_t i = (has_sample_ids ? 1 : 0); i < tokens.size(); ++i)
+            for (size_t i = id_offset; i < tokens.size(); ++i)
             {
                 if (is_missing(tokens[i]))
                 {
                     ++missing_values_number;
-                    variables_missing_values_number(has_sample_ids ? i - 1 : i)++;
+                    variables_missing_values_number(i - id_offset)++;
                 }
             }
         }
@@ -1464,7 +1410,7 @@ void MaterializedDataset::read_csv()
         for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
         {
             const Variable& variable = variables[variable_index];
-            const size_t token_index = has_sample_ids ? variable_index + 1 : variable_index;
+            const size_t token_index = variable_index + id_offset;
             if (token_index >= tokens.size())
                 throw runtime_error("Row " + to_string(sample_index) + " has fewer columns than expected (" + to_string(tokens.size()) + ").");
             const string_view token = tokens[token_index];
@@ -1484,8 +1430,8 @@ void MaterializedDataset::read_csv()
 
                     if (timestamp == -1)
                         throw runtime_error("Date format is unsupported or date is prior to 1970.");
-                    else
-                        data(sample_index, feature_indices[0]) = timestamp;
+
+                    data(sample_index, feature_indices[0]) = timestamp;
                 }
                 break;
             case VariableType::Categorical:

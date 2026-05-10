@@ -659,7 +659,7 @@ string Transformer::calculate_outputs(const string& source)
     target_ids.setConstant(PAD);
     target_ids(0, 0) = START;
 
-    const bool was_gpu = Configuration::instance().is_gpu();
+    const bool was_gpu = is_gpu();
     if (was_gpu)
     {
         Configuration::instance().set(Device::CPU,
@@ -667,9 +667,7 @@ string Transformer::calculate_outputs(const string& source)
                                       Type::FP32);
 #ifdef OPENNN_HAS_CUDA
         copy_parameters_host();
-        link_parameters();
         copy_states_host();
-        link_states();
 #endif
     }
 
@@ -705,9 +703,7 @@ string Transformer::calculate_outputs(const string& source)
                                       Type::Auto);
 #ifdef OPENNN_HAS_CUDA
         copy_parameters_device();
-        link_parameters();
         copy_states_device();
-        link_states();
 #endif
     }
 

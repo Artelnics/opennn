@@ -25,7 +25,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if (!new_dataset)
         throw runtime_error("dataset is not set.");
 
-    const bool is_gpu = Configuration::instance().is_gpu();
+    const bool on_gpu = is_gpu();
 
     samples_number = new_samples_number;
 
@@ -40,13 +40,10 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         input_shape = Shape({samples_number}).append(dataset_input_shape);
 
 #ifdef OPENNN_HAS_CUDA
-        if (is_gpu)
+        if (on_gpu)
         {
-            const bool bf16 = Configuration::instance().is_bf16_training()
+            const bool bf16 = is_bf16_training()
                         && dynamic_cast<const LanguageDataset*>(dataset) == nullptr;
-
-            const Type input_dtype = bf16 ? Type::BF16 : Type::FP32;
-
 
             const Index elem_bytes = bf16 ? Index(sizeof(__nv_bfloat16)) : Index(sizeof(float));
             input.resize_bytes(input_shape.size() * elem_bytes, Device::CUDA);
@@ -80,7 +77,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         target_shape = Shape({samples_number}).append(dataset_target_shape);
 
 #ifdef OPENNN_HAS_CUDA
-        if (is_gpu)
+        if (on_gpu)
         {
             target.resize_bytes(target_shape.size() * Index(sizeof(float)), Device::CUDA);
 
@@ -110,7 +107,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         decoder_shape = Shape({samples_number}).append(dataset_decoder_shape);
 
 #ifdef OPENNN_HAS_CUDA
-        if (is_gpu)
+        if (on_gpu)
         {
             decoder.resize_bytes(decoder_shape.size() * Index(sizeof(float)), Device::CUDA);
 
@@ -147,7 +144,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if (!input_shape.empty() && input.as<float>())
     {
         const bool integer_inputs = (dynamic_cast<const LanguageDataset*>(dataset) != nullptr);
-        const Type input_dtype = (Configuration::instance().is_bf16_training() && !integer_inputs)
+        const Type input_dtype = (is_bf16_training() && !integer_inputs)
                                      ? Type::BF16
                                      : Type::FP32;
         TensorView in_view(input.as<float>(), input_shape, input_dtype);
@@ -174,13 +171,13 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& target_indices,
                  bool augment)
 {
-    const bool is_gpu = Configuration::instance().is_gpu();
+    const bool on_gpu = is_gpu();
 
-    float* input_buffer   = is_gpu ? inputs_host   : input.as<float>();
-    float* decoder_buffer = is_gpu ? decoder_host  : decoder.as<float>();
-    float* target_buffer  = is_gpu ? targets_host  : target.as<float>();
+    float* input_buffer   = on_gpu ? inputs_host   : input.as<float>();
+    float* decoder_buffer = on_gpu ? decoder_host  : decoder.as<float>();
+    float* target_buffer  = on_gpu ? targets_host  : target.as<float>();
 
-    const bool parallelize = !is_gpu;
+    const bool parallelize = !on_gpu;
 
     if (input_contiguous < 0 && !input_indices.empty())
         input_contiguous = is_contiguous(input_indices) ? 1 : 0;
