@@ -218,7 +218,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     // Start training
 
-    if (display) cout << "Training with Levenberg-Marquardt algorithm..." << "\n";;
+    if (display) cout << "Training with Levenberg-Marquardt algorithm..." << "\n";
 
     TrainingResults results(maximum_epochs+1);
 

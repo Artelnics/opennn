@@ -139,10 +139,7 @@ void Dataset::set_sample_role(const Index index, const string& new_role)
 
 void Dataset::set_sample_roles(const vector<string>& new_roles)
 {
-    const Index samples_number = new_roles.size();
-
-    for (Index i = 0; i < samples_number; ++i)
-        sample_roles[i] = string_to_sample_role(new_roles[i]);
+    transform(new_roles.begin(), new_roles.end(), sample_roles.begin(), string_to_sample_role);
 }
 
 void Dataset::set_sample_roles(const vector<Index>& indices, const string& sample_role)
@@ -381,21 +378,15 @@ void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
         input_shape = new_shape;
     else if (role == VariableRole::Target)
         target_shape = new_shape;
-     else if (role == VariableRole::Decoder)
-         decoder_shape = new_shape;
+    else if (role == VariableRole::Decoder)
+        decoder_shape = new_shape;
     else
         throw invalid_argument("set_shape: Invalid variable role string: " + variable_role);
 }
 
 Index Dataset::get_used_features_number() const
 {
-    const Index features_number = get_features_number();
-
-    const Index unused_variables_number = get_features_number("None");
-
-    const Index time_variables_number = get_features_number("Time");
-
-    return features_number - unused_variables_number - time_variables_number;
+    return get_features_number() - get_features_number("None") - get_features_number("Time");
 }
 
 vector<Index> Dataset::get_feature_indices(const string& variable_role) const

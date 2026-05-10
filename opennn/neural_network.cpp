@@ -257,16 +257,12 @@ void NeuralNetwork::set_default()
 void NeuralNetwork::set_layer_input_indices(const string& layer_label,
                                             const vector<string>& new_layer_input_labels)
 {
-    const Index layer_index = get_layer_index(layer_label);
+    vector<Index> new_layer_input_indices(new_layer_input_labels.size());
 
-    const Index size = new_layer_input_labels.size();
+    transform(new_layer_input_labels.begin(), new_layer_input_labels.end(), new_layer_input_indices.begin(),
+              [this](const string& label) { return get_layer_index(label); });
 
-    vector<Index> new_layer_input_indices(size);
-
-    for (Index i = 0; i < size; ++i)
-        new_layer_input_indices[i] = get_layer_index(new_layer_input_labels[i]);
-
-    layer_input_indices[layer_index] = new_layer_input_indices;
+    layer_input_indices[get_layer_index(layer_label)] = new_layer_input_indices;
 }
 
 void NeuralNetwork::set_layer_input_indices(const string& layer_label,
@@ -293,9 +289,7 @@ Index NeuralNetwork::get_inputs_number() const
     if (has(LayerType::Recurrent))
         return get_first(LayerType::Recurrent)->get_input_shape()[1];
 
-    const Shape input_shape = layers[0]->get_input_shape();
-
-    return input_shape.size();
+    return layers[0]->get_input_shape().size();
 }
 
 Index NeuralNetwork::get_outputs_number() const
@@ -334,10 +328,8 @@ Index NeuralNetwork::get_parameters_number() const
 {
     Index parameters_number = 0;
 
-    const Index layers_number = get_layers_number();
-
-    for (Index i = 0; i < layers_number; ++i)
-        parameters_number += layers[i]->get_parameters_number();
+    for (const auto& layer : layers)
+        parameters_number += layer->get_parameters_number();
 
     return parameters_number;
 }
@@ -415,15 +407,13 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 
 void NeuralNetwork::set_parameters_random()
 {
-    const Index layers_number = get_layers_number();
-
 #ifdef OPENNN_HAS_CUDA
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device) copy_parameters_host();
 #endif
 
-    for (Index i = 0; i < layers_number; ++i)
-        for (Operator* op : layers[i]->get_operators())
+    for (const auto& layer : layers)
+        for (Operator* op : layer->get_operators())
             op->set_parameters_random();
 
 #ifdef OPENNN_HAS_CUDA
@@ -572,9 +562,7 @@ MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
     for (Index i = 0; i < points_number; ++i)
     {
         inputs(direction) = minimum + (maximum - minimum)*float(i)/float(points_number-1);
-
-        for (Index j = 0; j < inputs_number; ++j)
-            directional_inputs(i, j) = inputs(j);
+        directional_inputs.row(i) = inputs.transpose();
     }
 
     return directional_inputs;
@@ -615,18 +603,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     Index predicted_index = 0;
 
     if (outputs.size() > 1)
-    {
-        float max_value = outputs(0);
-
-        for (Index i = 1; i < outputs.cols(); ++i)
-        {
-            if (outputs(i) > max_value)
-            {
-                max_value = outputs(i);
-                predicted_index = i;
-            }
-        }
-    }
+        predicted_index = maximal_index(outputs.row(0));
     else
         predicted_index = outputs(0);
 

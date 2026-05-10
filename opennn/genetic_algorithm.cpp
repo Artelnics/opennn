@@ -277,13 +277,13 @@ VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& pare
         const bool p2 = parent_2(i);
 
         if (p1 && p2)
+        {
             intersection.push_back(i);
+            descendent(i) = true;
+        }
         else if (p1 != p2)
             difference.push_back(i);
     }
-
-    for (const Index idx : intersection)
-        descendent(idx) = true;
 
     const Index current_size = intersection.size();
 
@@ -405,22 +405,16 @@ void GeneticAlgorithm::perform_mutation()
             individual(to_false_mutations[k]) = false;
         }
 
-        for (size_t k = swap_count; k < to_true_mutations.size(); ++k)
+        for (size_t k = swap_count; k < to_true_mutations.size() && current_inputs_number < maximum_inputs_number; ++k)
         {
-            if (current_inputs_number < maximum_inputs_number)
-            {
-                individual(to_true_mutations[k]) = true;
-                ++current_inputs_number;
-            }
+            individual(to_true_mutations[k]) = true;
+            ++current_inputs_number;
         }
 
-        for (size_t k = swap_count; k < to_false_mutations.size(); ++k)
+        for (size_t k = swap_count; k < to_false_mutations.size() && current_inputs_number > minimum_inputs_number; ++k)
         {
-            if (current_inputs_number > minimum_inputs_number)
-            {
-                individual(to_false_mutations[k]) = false;
-                current_inputs_number--;
-            }
+            individual(to_false_mutations[k]) = false;
+            current_inputs_number--;
         }
 
         population.row(i) = individual;

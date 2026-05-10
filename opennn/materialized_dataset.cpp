@@ -121,9 +121,7 @@ void MaterializedDataset::set_data(const MatrixR& new_data)
 
 MatrixR MaterializedDataset::get_feature_data(const string& variable_role) const
 {
-    const Index samples_number = get_samples_number();
-
-    vector<Index> indices(samples_number);
+    vector<Index> indices(get_samples_number());
     iota(indices.begin(), indices.end(), 0);
 
     return get_data_from_indices(indices, get_feature_indices(variable_role));
@@ -249,11 +247,8 @@ vector<string> MaterializedDataset::unuse_uncorrelated_variables(const float min
         }
     }
 
-    const Index new_input_variables_number = get_features_number("Input");
-    const Index new_target_variables_number = get_features_number("Target");
-
-    resize_input_shape(new_input_variables_number);
-    set_shape("Target", {new_target_variables_number});
+    resize_input_shape(get_features_number("Input"));
+    set_shape("Target", { get_features_number("Target") });
 
     return unused_variables;
 }
@@ -543,22 +538,15 @@ bool MaterializedDataset::has_nan() const
     const Index rows_number = data.rows();
 
     for (Index i = 0; i < rows_number; ++i)
-        if (sample_roles[i] != SampleRole::None)
-            if (has_nan_row(i))
-                return true;
+        if (sample_roles[i] != SampleRole::None && has_nan_row(i))
+            return true;
 
     return false;
 }
 
 bool MaterializedDataset::has_nan_row(const Index row_index) const
 {
-    const Index features_number = get_features_number();
-
-    for (Index j = 0; j < features_number; ++j)
-        if (isnan(data(row_index, j)))
-            return true;
-
-    return false;
+    return data.row(row_index).array().isNaN().any();
 }
 
 Tensor<Correlation, 2> MaterializedDataset::calculate_input_variable_correlations(
