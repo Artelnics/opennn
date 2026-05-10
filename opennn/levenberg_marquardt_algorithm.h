@@ -77,10 +77,6 @@ public:
 
 private:
 
-    VectorR calculate_numerical_gradient();
-    MatrixR calculate_numerical_jacobian();
-    MatrixR calculate_numerical_hessian();
-
    void back_propagate(const Batch&, const ForwardPropagation&, BackPropagationLM&);
 
    void calculate_errors(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
