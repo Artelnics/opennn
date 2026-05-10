@@ -293,24 +293,17 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     for (Index i = 0; i < folders_number; ++i)
         categories[i] = directory_path[i].filename().string();
 
-    if (targets_number == 1)
-    {
-        variables[pixels_number].name = categories[0] + "_" + categories[1];
-        variables[pixels_number].role = VariableRole::Target;
-        variables[pixels_number].type = VariableType::Binary;
-        variables[pixels_number].set_categories(categories);
-        variables[pixels_number].scaler = ScalerMethod::None;
-    }
-    else
-    {
+    const bool single_target = (targets_number == 1);
+
+    if (!single_target)
         variables.resize(pixels_number + 1);
 
-        variables[pixels_number].name = "Class";
-        variables[pixels_number].role = VariableRole::Target;
-        variables[pixels_number].type = VariableType::Categorical;
-        variables[pixels_number].set_categories(categories);
-        variables[pixels_number].scaler = ScalerMethod::None;
-    }
+    Variable& target_variable = variables[pixels_number];
+    target_variable.name = single_target ? categories[0] + "_" + categories[1] : "Class";
+    target_variable.role = VariableRole::Target;
+    target_variable.type = single_target ? VariableType::Binary : VariableType::Categorical;
+    target_variable.set_categories(categories);
+    target_variable.scaler = ScalerMethod::None;
 
     if (streaming)
     {

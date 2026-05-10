@@ -581,7 +581,7 @@ pair<float, float> ResponseOptimization::calculate_quality_metrics(const MatrixR
     {
         const auto current_point = objective_matrix.row(i);
 
-        VectorR  distances = (objective_matrix.rowwise() - current_point).rowwise().squaredNorm();
+        VectorR distances = (objective_matrix.rowwise() - current_point).rowwise().squaredNorm();
 
         distances(i) = MAX;
 
@@ -717,7 +717,7 @@ MatrixR ResponseOptimization::perform_response_optimization() const
     if (!dataset)
         throw runtime_error("Dataset not set\n");
 
-     const Objectives objectives = build_objectives();
+    const Objectives objectives = build_objectives();
 
     if (objectives.objective_sources.cols() == 0)
         throw runtime_error("No objectives found\n");

@@ -473,7 +473,6 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
          past_time_steps;
 
     MatrixR autocorrelations(input_target_numeric_variables_number, new_past_time_steps);
-    MatrixR input_i;
     Index counter_i = 0;
 
     for (Index i = 0; i < variables_number; ++i)
@@ -481,7 +480,7 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
         if (variables[i].role == VariableRole::None || variables[i].type != VariableType::Numeric)
             continue;
 
-        input_i = get_variable_data(i);
+        const MatrixR input_i = get_variable_data(i);
         cout << "Calculating " << variables[i].name << " autocorrelations" << "\n";
 
         const VectorMap current_input_i(input_i.data(), input_i.rows());
@@ -548,22 +547,18 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
     VectorR cross_correlations_vector(new_past_time_steps);
 
-    MatrixR input_i;
-    MatrixR input_j;
-
     Index counter_i = 0;
-    Index counter_j = 0;
 
     for (Index i = 0; i < variables_number; ++i)
     {
         if (variables[i].role == VariableRole::None || variables[i].type != VariableType::Numeric)
             continue;
 
-        input_i = get_variable_data(i);
+        const MatrixR input_i = get_variable_data(i);
 
         if (display) cout << "Calculating " << variables[i].name << " cross correlations:" << "\n";
 
-        counter_j = 0;
+        Index counter_j = 0;
 
         for (Index j = 0; j < variables_number; ++j)
         {
@@ -571,7 +566,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
             || variables[j].type != VariableType::Numeric)
                 continue;
 
-            input_j = get_variable_data(j);
+            const MatrixR input_j = get_variable_data(j);
 
             if (display) cout << "  vs. " << variables[j].name << "\n";
 

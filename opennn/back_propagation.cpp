@@ -370,9 +370,9 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
         return;
     }
 
-    vector<const float*> ptrs;
-    ptrs.reserve(k);
-    for (size_t s = 0; s < k; ++s) ptrs.push_back(sources[s]->as<float>());
+    vector<const float*> ptrs(k);
+    transform(sources.begin(), sources.end(), ptrs.begin(),
+              [](const TensorView* tv) { return tv->as<float>(); });
 
     #pragma omp parallel for
     for (Index i = 0; i < n; ++i)

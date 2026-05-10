@@ -920,15 +920,9 @@ vector<vector<Index>> MaterializedDataset::calculate_Tukey_outliers(const float 
             continue;
         }
 
-        if (variable.is_categorical())
+        if (variable.is_categorical() || variable.is_binary() || variable.type == VariableType::DateTime)
         {
-            feature_index += variable.get_categories_number();
-            ++used_feature_index;
-            continue;
-        }
-        else if (variable.is_binary() || variable.type == VariableType::DateTime)
-        {
-            ++feature_index;
+            feature_index += variable.feature_count();
             ++used_feature_index;
             continue;
         }
@@ -1008,9 +1002,10 @@ void MaterializedDataset::set_data_rosenbrock()
         for (Index j = 0; j < features_number - 1; ++j)
         {
             const float value = data(i, j);
-            const float next_value = data(i, j + 1);
+            const float a = 1.0f - value;
+            const float b = data(i, j + 1) - value * value;
 
-            rosenbrock += (1.0f - value) * (1.0f - value) + 100.0f * (next_value - value * value) * (next_value - value * value);
+            rosenbrock += a * a + 100.0f * b * b;
         }
 
         data(i, features_number - 1) = rosenbrock;
@@ -1101,8 +1096,8 @@ void MaterializedDataset::impute_missing_values_interpolate()
 
             if (!isnan(data(current_sample, current_variable))) continue;
 
-            Index x1 = 0, x2 = 0, y1 = 0, y2 = 0;
-            float x = 0.0f, y = 0.0f;
+            Index x1 = 0, x2 = 0;
+            float x = 0.0f, y = 0.0f, y1 = 0.0f, y2 = 0.0f;
 
             for (Index k = i - 1; k >= 0; k--)
             {

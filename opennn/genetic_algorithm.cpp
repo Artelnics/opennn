@@ -167,8 +167,6 @@ void GeneticAlgorithm::initialize_population_correlations()
 
 void GeneticAlgorithm::evaluate_population()
 {
-    TrainingResults training_results;
-
     Loss* loss = training_strategy->get_loss();
     Dataset* dataset = training_strategy->get_dataset();
     NeuralNetwork* neural_network = loss->get_neural_network();
@@ -192,7 +190,7 @@ void GeneticAlgorithm::evaluate_population()
 
         neural_network->set_parameters_random();
 
-        training_results = training_strategy->train();
+        const TrainingResults training_results = training_strategy->train();
 
         individual_parameters(i) = VectorMap(neural_network->get_parameters_data(),
                                               neural_network->get_parameters_size());
@@ -337,7 +335,6 @@ void GeneticAlgorithm::perform_crossover()
     MatrixB new_population(individuals_number, genes_number);
 
     // Copy elite individuals unchanged (sorted by fitness, highest first)
-    vector<Index> elite_indices;
     if (elitism_size > 0)
     {
         const Index elite_count = min(elitism_size, individuals_number);
@@ -352,10 +349,7 @@ void GeneticAlgorithm::perform_crossover()
                      [](const auto& a, const auto& b) { return a.first > b.first; });
 
         for (Index i = 0; i < elite_count; ++i)
-        {
             new_population.row(i) = population.row(fitness_indexed[i].second);
-            elite_indices.push_back(fitness_indexed[i].second);
-        }
     }
 
     // Fill remaining slots with crossover children
@@ -609,14 +603,18 @@ void GeneticAlgorithm::configure_neural_network_inputs(NeuralNetwork* neural_net
 {
     const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
+    const Shape input_shape = time_series_dataset
+        ? Shape{ time_series_dataset->get_past_time_steps(), input_features_number }
+        : Shape{ input_features_number };
+    neural_network->set_input_shape(input_shape);
+    dataset->set_shape("Input", input_shape);
+
     if (time_series_dataset)
     {
         const Index past_time_steps = time_series_dataset->get_past_time_steps();
-        neural_network->set_input_shape({ past_time_steps, input_features_number });
-        dataset->set_shape("Input", { past_time_steps, input_features_number });
+        const vector<string> base_names = dataset->get_variable_names("Input");
 
         vector<string> final_feature_names;
-        const vector<string> base_names = dataset->get_variable_names("Input");
         final_feature_names.reserve(base_names.size() * past_time_steps);
 
         for (const string& base_name : base_names)
@@ -627,8 +625,6 @@ void GeneticAlgorithm::configure_neural_network_inputs(NeuralNetwork* neural_net
     }
     else
     {
-        neural_network->set_input_shape({input_features_number});
-        dataset->set_shape("Input", { input_features_number });
         neural_network->set_input_names(dataset->get_feature_names("Input"));
     }
 

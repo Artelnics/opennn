@@ -28,6 +28,9 @@ void InputsSelection::check() const
 
     const Loss* loss = training_strategy->get_loss();
 
+    if (!loss)
+        throw runtime_error("loss is not set.");
+
     // Neural network
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
@@ -95,25 +98,10 @@ string InputsSelectionResults::write_stopping_condition() const
 
 void InputsSelectionResults::resize_history(const Index new_size)
 {
-    const Index old_size = training_error_history.size();
-
-    const VectorR old_training_error_history(training_error_history);
-    const VectorR old_validation_error_history(validation_error_history);
-
-    const VectorR old_mean_selection_history(mean_validation_error_history);
-    const VectorR old_mean_training_history(mean_training_error_history);
-
-    training_error_history.resize(new_size);
-    validation_error_history.resize(new_size);
-    mean_training_error_history.resize(new_size);
-    mean_validation_error_history.resize(new_size);
-
-    const Index copy_size = min(old_size, new_size);
-
-    training_error_history.head(copy_size) = old_training_error_history.head(copy_size);
-    validation_error_history.head(copy_size) = old_validation_error_history.head(copy_size);
-    mean_training_error_history.head(copy_size) = old_mean_training_history.head(copy_size);
-    mean_validation_error_history.head(copy_size) = old_mean_selection_history.head(copy_size);
+    training_error_history.conservativeResize(new_size);
+    validation_error_history.conservativeResize(new_size);
+    mean_training_error_history.conservativeResize(new_size);
+    mean_validation_error_history.conservativeResize(new_size);
 }
 
 void InputsSelectionResults::print() const

@@ -540,8 +540,8 @@ MatrixI TestingAnalysis::calculate_confusion(const float decision_threshold) con
 
     for (const vector<Index>& current_batch_indices : testing_batches)
     {
+        if (current_batch_indices.empty()) continue;
         const Index current_batch_size = current_batch_indices.size();
-        if (current_batch_size == 0) continue;
 
         MatrixR batch_inputs_flat = dataset->get_data_from_indices(current_batch_indices, input_feature_indices);
         const MatrixR batch_targets = dataset->get_data_from_indices(current_batch_indices, target_feature_indices);
@@ -670,7 +670,7 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
 
         roc_curve(i,0) = 1.0f - float(true_positive)/float(true_positive + false_negative);
         roc_curve(i,1) = float(true_negative)/float(true_negative + false_positive);
-        roc_curve(i,2) = float(threshold);
+        roc_curve(i,2) = threshold;
 
         if (isnan(roc_curve(i,0)))
             roc_curve(i,0) = 1.0f;
@@ -779,11 +779,9 @@ MatrixR TestingAnalysis::calculate_cumulative_gain_impl(const MatrixR& targets, 
 
     MatrixR cumulative_gain = MatrixR::Zero(points_number, 2);
 
-    float percentage = 0.0f;
-
     for (Index i = 0; i < points_number - 1; ++i)
     {
-        percentage += percentage_increment;
+        const float percentage = float(i + 1) * percentage_increment;
 
         Index count = 0;
         const Index maximum_index = Index(percentage * float(testing_samples_number));
@@ -832,8 +830,9 @@ MatrixR TestingAnalysis::calculate_lift_chart(const MatrixR& cumulative_gain) co
 
     for (Index i = 1; i < rows_number; ++i)
     {
-        lift_chart(i, 0) = float(cumulative_gain(i, 0));
-        lift_chart(i, 1) = float(cumulative_gain(i, 1))/float(cumulative_gain(i, 0));
+        const float gain_x = cumulative_gain(i, 0);
+        lift_chart(i, 0) = gain_x;
+        lift_chart(i, 1) = cumulative_gain(i, 1) / gain_x;
     }
 
     return lift_chart;
@@ -862,11 +861,9 @@ VectorR TestingAnalysis::calculate_maximum_gain(const MatrixR& positive_cumulati
 
     const float percentage_increment = 0.05f;
 
-    float percentage = 0.0f;
-
     for (Index i = 0; i < points_number - 1; ++i)
     {
-        percentage += percentage_increment;
+        const float percentage = float(i + 1) * percentage_increment;
 
         const float gain_diff = positive_cumulative_gain(i+1,1) - negative_cumulative_gain(i+1,1);
 
@@ -1281,13 +1278,15 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const float decis
     const Index false_negative = confusion(0,1);
     const Index true_negative = confusion(1,1);
 
-    const float classification_accuracy = (true_positive + true_negative + false_positive + false_negative == 0)
-                                             ? 0.0f
-                                             : float(true_positive + true_negative) / float(true_positive + true_negative + false_positive + false_negative);
+    const Index total = true_positive + true_negative + false_positive + false_negative;
 
-    const float error_rate = (true_positive + true_negative + false_positive + false_negative == 0)
+    const float classification_accuracy = (total == 0)
+                                             ? 0.0f
+                                             : float(true_positive + true_negative) / float(total);
+
+    const float error_rate = (total == 0)
                                 ? 0.0f
-                                : float(false_positive + false_negative) / float(true_positive + true_negative + false_positive + false_negative);
+                                : float(false_positive + false_negative) / float(total);
 
     const float sensitivity = (true_positive + false_negative == 0)
                                  ? 0.0f
@@ -1339,9 +1338,12 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const float decis
                                                ? 0.0f
                                                : float(true_negative) / float(true_negative + false_negative);
 
-    const float Matthews_correlation_coefficient = ((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative) == 0)
+    const Index matthews_denominator_squared = (true_positive + false_positive) * (true_positive + false_negative)
+                                              * (true_negative + false_positive) * (true_negative + false_negative);
+
+    const float Matthews_correlation_coefficient = (matthews_denominator_squared == 0)
                                                       ? 0.0f
-                                                      : float(true_positive * true_negative - false_positive * false_negative) / float(sqrt((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative)));
+                                                      : float(true_positive * true_negative - false_positive * false_negative) / float(sqrt(matthews_denominator_squared));
 
     const float informedness = sensitivity + specificity - 1.0f;
 

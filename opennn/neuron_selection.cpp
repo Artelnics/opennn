@@ -33,11 +33,9 @@ void NeuronSelection::set_default()
         return;
 
     const NeuralNetwork* neural_network = training_strategy->get_neural_network();
-    const Index inputs_number = neural_network->get_inputs_number();
-    const Index outputs_number = neural_network->get_outputs_number();
 
     minimum_neurons = 1;
-    maximum_neurons = 2 * (inputs_number + outputs_number);
+    maximum_neurons = 2 * (neural_network->get_inputs_number() + neural_network->get_outputs_number());
     trials_number = 1;
     display = true;
 
@@ -113,21 +111,9 @@ NeuronsSelectionResults::NeuronsSelectionResults(const Index maximum_epochs)
 
 void NeuronsSelectionResults::resize_history(const Index new_size)
 {
-    const Index old_size = neurons_number_history.size();
-
-    const VectorI old_neurons_number_history(neurons_number_history);
-    const VectorR old_training_error_history(training_error_history);
-    const VectorR old_validation_error_history(validation_error_history);
-
-    neurons_number_history.resize(new_size);
-    training_error_history.resize(new_size);
-    validation_error_history.resize(new_size);
-
-    const Index copy_size = min(old_size, new_size);
-
-    neurons_number_history.head(copy_size) = old_neurons_number_history.head(copy_size);
-    training_error_history.head(copy_size) = old_training_error_history.head(copy_size);
-    validation_error_history.head(copy_size) = old_validation_error_history.head(copy_size);
+    neurons_number_history.conservativeResize(new_size);
+    training_error_history.conservativeResize(new_size);
+    validation_error_history.conservativeResize(new_size);
 }
 
 string NeuronsSelectionResults::write_stopping_condition() const

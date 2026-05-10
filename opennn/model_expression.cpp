@@ -958,8 +958,7 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
     buffer << "\tdef calculate_outputs(self, inputs):\n";
 
     vector<string> python_mapped(input_names.size());
-    for (size_t i = 0; i < input_names.size(); ++i)
-        python_mapped[i] = replace_reserved_keywords(input_names[i]);
+    transform(input_names.begin(), input_names.end(), python_mapped.begin(), replace_reserved_keywords);
 
     for (size_t i = 0; i < input_names.size(); ++i)
         buffer << "\t\t" << python_mapped[i] << " = inputs[" << i << "]\n";

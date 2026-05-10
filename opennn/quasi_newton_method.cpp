@@ -259,8 +259,8 @@ TrainingResults QuasiNewtonMethod::train()
         // Loss index
 
         loss->back_propagate(training_batch,
-                                   training_forward_propagation,
-                                   training_back_propagation);
+                             training_forward_propagation,
+                             training_back_propagation);
 
         results.training_error_history(epoch) = training_back_propagation.error;
 

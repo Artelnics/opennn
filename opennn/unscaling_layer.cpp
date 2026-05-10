@@ -129,8 +129,8 @@ void Unscaling::read_JSON_body(const Json* root_element)
     const Json* neurons_array = root_element->find("Neurons");
     if (!neurons_array || !neurons_array->is_array()) return;
 
-    const Index neurons_number = ssize(scalers);
-    for (Index i = 0; i < neurons_number && size_t(i) < neurons_array->array_value.size(); ++i)
+    const Index limit = std::min(ssize(scalers), Index(neurons_array->array_value.size()));
+    for (Index i = 0; i < limit; ++i)
     {
         const Json* neuron = &neurons_array->array_value[size_t(i)];
         scalers[i] = string_to_scaler_method(read_json_string(neuron, "Scaler"));

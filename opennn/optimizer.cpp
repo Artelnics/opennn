@@ -152,6 +152,8 @@ void Optimizer::set_scaling()
 
     vector<Descriptives> unscaling_layer_descriptives;
     vector<string> unscaling_layer_scalers;
+    unscaling_layer_descriptives.reserve(target_feature_indices.size());
+    unscaling_layer_scalers.reserve(target_feature_indices.size());
 
     for (size_t i = 0; i < target_feature_indices.size(); ++i)
     {
@@ -337,18 +339,14 @@ string TrainingResults::write_stopping_condition() const
 
 float TrainingResults::get_training_error() const
 {
-    const Index size = training_error_history.size();
-
-    return training_error_history(size - 1);
+    return training_error_history(training_error_history.size() - 1);
 }
 
 float TrainingResults::get_validation_error() const
 {
-    const Index size = validation_error_history.size();
+    if (validation_error_history.size() == 0) return 0.0f;
 
-    if (size == 0) return 0.0f;
-
-    return validation_error_history(size - 1);
+    return validation_error_history(validation_error_history.size() - 1);
 }
 
 Index TrainingResults::get_epochs_number() const
@@ -407,11 +405,8 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
 
     if (size == 0)
     {
-        override_results(0, 1) = "NA";
-        override_results(1, 1) = "NA";
-        override_results(2, 1) = "NA";
-        override_results(3, 1) = "NA";
-        override_results(4, 1) = "NA";
+        for (Index i = 0; i < 5; ++i)
+            override_results(i, 1) = "NA";
 
         return override_results;
     }
@@ -425,9 +420,10 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
 
     ostringstream buffer;
 
-    validation_error_history.size() == 0
-        ? buffer << "NAN"
-        : buffer << setprecision(precision) << validation_error_history(size - 1);
+    if (validation_error_history.size() == 0)
+        buffer << "NAN";
+    else
+        buffer << setprecision(precision) << validation_error_history(size - 1);
 
     override_results(4, 1) = buffer.str();
 

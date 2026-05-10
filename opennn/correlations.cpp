@@ -259,7 +259,7 @@ VectorR calculate_spearman_ranks(const VectorR& x)
         while (j + 1 < size && x(sorted_indices(j + 1)) == x(sorted_indices(i)))
             ++j;
 
-        const float average_rank = (static_cast<float>(i + 1) + static_cast<float>(j + 1)) / 2.0f;
+        const float average_rank = float(i + j + 2) / 2.0f;
 
         for (Index k = i; k <= j; ++k)
             ranks(sorted_indices(k)) = average_rank;
@@ -439,11 +439,12 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
     dataset.set_default_variable_scalers();
 
     dataset.set_sample_roles("Training");
-    dataset.set_shape("Input", {dataset.get_features_number("Input")});
-    dataset.set_shape("Target", {dataset.get_features_number("Target")});
 
     const Index input_features_number = dataset.get_features_number("Input");
     const Index target_features_number = dataset.get_features_number("Target");
+
+    dataset.set_shape("Input", { input_features_number });
+    dataset.set_shape("Target", { target_features_number });
 
     ClassificationNetwork neural_network({ input_features_number }, {1}, {target_features_number});
 
@@ -498,12 +499,13 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 
     const auto [x_filter, y_filter] = filter_missing_values(x, y);
 
-    if (x_filter.rows() == y_filter.rows() && x_filter.cols() == y_filter.cols())
-        if ((x_filter.array() == y_filter.array()).all())
-        {
-            correlation.r = 1.0f;
-            return correlation;
-        }
+    if (x_filter.rows() == y_filter.rows()
+        && x_filter.cols() == y_filter.cols()
+        && (x_filter.array() == y_filter.array()).all())
+    {
+        correlation.r = 1.0f;
+        return correlation;
+    }
 
     if (x.cols() > 50 || y.cols() > 50)
     {
@@ -661,9 +663,9 @@ Correlation eta_squared_correlation(const VectorR& continuous,
     const Index sample_count = x_filter.size();
     const Index n_cats     = y_filter.cols();
 
-    const double grand_mean = x_filter.cast<double>().mean();
-
-    const double ss_total = (x_filter.cast<double>().array() - grand_mean).square().sum();
+    const auto x_double = x_filter.cast<double>();
+    const double grand_mean = x_double.mean();
+    const double ss_total = (x_double.array() - grand_mean).square().sum();
 
     if (ss_total <= 0)
     {
@@ -676,7 +678,7 @@ Correlation eta_squared_correlation(const VectorR& continuous,
     for (Index cat = 0; cat < n_cats; ++cat)
     {
         const auto mask = (y_filter.col(cat).array() > 0.5f);
-        const double group_sum = mask.select(x_filter.cast<double>().array(), 0.0).sum();
+        const double group_sum = mask.select(x_double.array(), 0.0).sum();
         const Index group_count = mask.count();
 
         if (group_count == 0) continue;

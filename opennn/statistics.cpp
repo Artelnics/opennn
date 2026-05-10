@@ -390,8 +390,9 @@ float variance(const VectorR& vector, const VectorI& indices)
 
         if (!isnan(value))
         {
-            sum += value;
-            squared_sum += double(value) * double(value);
+            const double v = value;
+            sum += v;
+            squared_sum += v * v;
 
             ++count;
         }
@@ -439,9 +440,10 @@ VectorR quartiles(const VectorR& data)
     }
     else if (new_size == 2)
     {
-        quartiles(0) = (valid_data(0) + valid_data(1)) / 4.0f;
-        quartiles(1) = (valid_data(0) + valid_data(1)) / 2.0f;
-        quartiles(2) = (valid_data(0) + valid_data(1)) * 0.75f;
+        const float sum = valid_data(0) + valid_data(1);
+        quartiles(0) = sum / 4.0f;
+        quartiles(1) = sum / 2.0f;
+        quartiles(2) = sum * 0.75f;
     }
     else if (new_size == 3)
     {
@@ -730,10 +732,7 @@ vector<Histogram> histograms(const MatrixR& matrix, Index bins_number)
     vector<Histogram> histograms(columns_number);
 
     for (Index i = 0; i < columns_number; ++i)
-    {
-        const VectorR column = VectorR(vector_map(matrix, i));
-        histograms[i] = histogram(column, bins_number);
-    }
+        histograms[i] = histogram(VectorR(vector_map(matrix, i)), bins_number);
 
     return histograms;
 }
@@ -823,8 +822,9 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
                 if (value > current_max) current_max = value;
             }
 
-            current_sum += static_cast<double>(value);
-            current_sq_sum += static_cast<double>(value) * static_cast<double>(value);
+            const double v = static_cast<double>(value);
+            current_sum += v;
+            current_sq_sum += v * v;
             ++current_count;
         }
 
@@ -1144,28 +1144,16 @@ VectorI maximal_indices(const VectorR& data, Index count)
 
 VectorI minimal_indices(const MatrixR& matrix)
 {
-    VectorI minimal_indices(2);
-
-    Index minRow, minCol;
-
-    matrix.minCoeff(&minRow, &minCol);
-
-    minimal_indices << minRow, minCol;
-
-    return minimal_indices;
+    VectorI result(2);
+    matrix.minCoeff(&result(0), &result(1));
+    return result;
 }
 
 VectorI maximal_indices(const MatrixR& matrix)
 {
-    VectorI maximal_indices(2);
-
-    Index maxRow, maxCol;
-
-    matrix.maxCoeff(&maxRow, &maxCol);
-
-    maximal_indices << maxRow, maxCol;
-
-    return maximal_indices;
+    VectorI result(2);
+    matrix.maxCoeff(&result(0), &result(1));
+    return result;
 }
 MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
 {
@@ -1251,10 +1239,8 @@ VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neig
     partial_sort(pairs.begin(), pairs.begin() + neighbors_number, pairs.end());
 
     VectorI result(neighbors_number);
-
-    for (int i = 0; i < neighbors_number; ++i)
-        result(i) = pairs[i].second;
-
+    transform(pairs.begin(), pairs.begin() + neighbors_number, result.data(),
+              [](const auto& p) { return p.second; });
     return result;
 }
 

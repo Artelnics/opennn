@@ -131,7 +131,7 @@ public:
     string get_separator_name() const;
 
     const Codification& get_codification() const { return codification; }
-    const string get_codification_string() const;
+    string get_codification_string() const;
 
     const string& get_missing_values_label() const { return missing_values_label; }
 

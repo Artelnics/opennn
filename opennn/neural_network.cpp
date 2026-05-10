@@ -116,12 +116,12 @@ static vector<string> get_feature_names_from(const vector<Variable>& variables)
     return feature_names;
 }
 
-const vector<string> NeuralNetwork::get_input_feature_names() const
+vector<string> NeuralNetwork::get_input_feature_names() const
 {
     return get_feature_names_from(input_variables);
 }
 
-const vector<string> NeuralNetwork::get_output_feature_names() const
+vector<string> NeuralNetwork::get_output_feature_names() const
 {
     return get_feature_names_from(output_variables);
 }
@@ -1047,25 +1047,17 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
 
 vector<string> NeuralNetwork::get_layer_labels() const
 {
-    const Index layers_number = get_layers_number();
-
-    vector<string> layer_labels(layers_number);
-
-    for (Index i = 0; i < layers_number; ++i)
-        layer_labels[i] = layers[i]->get_label();
-
+    vector<string> layer_labels(layers.size());
+    transform(layers.begin(), layers.end(), layer_labels.begin(),
+              [](const unique_ptr<Layer>& layer) { return layer->get_label(); });
     return layer_labels;
 }
 
 vector<string> NeuralNetwork::get_names_string() const
 {
-    const Index layers_number = get_layers_number();
-
-    vector<string> names(layers_number);
-
-    for (Index i = 0; i < layers_number; ++i)
-        names[i] = layers[i]->get_name();
-
+    vector<string> names(layers.size());
+    transform(layers.begin(), layers.end(), names.begin(),
+              [](const unique_ptr<Layer>& layer) { return layer->get_name(); });
     return names;
 }
 

@@ -120,10 +120,7 @@ Index Dataset::get_samples_number(const string& sample_role) const
 
 Index Dataset::get_used_samples_number() const
 {
-    const Index samples_number = get_samples_number();
-    const Index unused_samples_number = get_samples_number("None");
-
-    return samples_number - unused_samples_number;
+    return get_samples_number() - get_samples_number("None");
 }
 
 void Dataset::set_sample_roles(const string& sample_role)
@@ -449,12 +446,7 @@ vector<string> Dataset::get_feature_scalers(const string& variable_role) const
     scalers.reserve(get_features_number(variable_role));
 
     for (const Variable& var : role_variables)
-    {
-        const Index count = var.feature_count();
-
-        for (Index j = 0; j < count; ++j)
-            scalers.push_back(scaler_method_to_string(var.scaler));
-    }
+        scalers.insert(scalers.end(), var.feature_count(), scaler_method_to_string(var.scaler));
 
     return scalers;
 }
@@ -487,13 +479,8 @@ Index Dataset::get_variables_number(const string& variable_role) const
 {
     const VariableRole role_type = string_to_variable_role(variable_role);
 
-    Index count = 0;
-
-    for (const Variable& variable : variables)
-        if (role_matches(variable.role, role_type))
-            ++count;
-
-    return count;
+    return count_if(variables.begin(), variables.end(),
+                    [role_type](const Variable& v) { return role_matches(v.role, role_type); });
 }
 
 Index Dataset::get_used_variables_number() const
@@ -593,11 +580,8 @@ void Dataset::set_variable_indices(const vector<Index>& input_variables,
         set_variable_role(index,
             variables[index].role == VariableRole::Input ? "InputTarget" : "Target");
 
-    const Index input_dimensions_num = get_features_number("Input");
-    const Index target_shape_num = get_features_number("Target");
-
-    set_shape("Input", {input_dimensions_num});
-    set_shape("Target", {target_shape_num});
+    set_shape("Input", { get_features_number("Input") });
+    set_shape("Target", { get_features_number("Target") });
 }
 
 void Dataset::set_input_variables_unused()
@@ -731,7 +715,7 @@ static const vector<pair<Dataset::Codification, string>> codification_map = {
     {Dataset::Codification::SHIFT_JIS, "SHIFT_JIS"}
 };
 
-const string Dataset::get_codification_string() const
+string Dataset::get_codification_string() const
 {
     for (const auto& [cod, name] : codification_map)
         if (cod == codification) return name;
@@ -741,26 +725,26 @@ const string Dataset::get_codification_string() const
 
 Index Dataset::get_variable_index(const string& variable_name) const
 {
-    const Index variables_number = get_variables_number();
+    auto it = find_if(variables.begin(), variables.end(),
+                      [&](const Variable& v) { return v.name == variable_name; });
 
-    for (Index i = 0; i < variables_number; ++i)
-        if (variables[i].name == variable_name)
-            return i;
+    if (it == variables.end())
+        throw runtime_error("Cannot find " + variable_name + "\n");
 
-    throw runtime_error("Cannot find " + variable_name + "\n");
+    return distance(variables.begin(), it);
 }
 
 Index Dataset::get_variable_index(const Index feature_index) const
 {
     const Index variables_number = get_variables_number();
 
-    Index total_variables_number = 0;
+    Index features_seen = 0;
 
     for (Index i = 0; i < variables_number; ++i)
     {
-        total_variables_number += variables[i].feature_count();
+        features_seen += variables[i].feature_count();
 
-        if (feature_index + 1 <= total_variables_number)
+        if (feature_index < features_seen)
             return i;
     }
 
@@ -786,17 +770,10 @@ vector<Index> Dataset::get_feature_indices(const Index variable_index) const
     for (Index i = 0; i < variable_index; ++i)
         index += variables[i].feature_count();
 
-    const Variable& variable = variables[variable_index];
+    vector<Index> indices(variables[variable_index].feature_count());
+    iota(indices.begin(), indices.end(), index);
 
-    if (variable.type == VariableType::Categorical)
-    {
-        vector<Index> indices(variable.categories.size());
-        iota(indices.begin(), indices.end(), index);
-
-        return indices;
-    }
-
-    return vector<Index>(1, index);
+    return indices;
 }
 
 void Dataset::set_default()
@@ -880,11 +857,13 @@ void Dataset::to_JSON(JsonWriter& printer) const
 
 void Dataset::variables_to_JSON(JsonWriter &printer) const
 {
+    const Index variables_number = get_variables_number();
+
     printer.open_element("Variables");
-    add_json_field(printer, "VariablesNumber", to_string(get_variables_number()));
+    add_json_field(printer, "VariablesNumber", to_string(variables_number));
 
     printer.begin_array("Variable");
-    for (Index i = 0; i < get_variables_number(); ++i)
+    for (Index i = 0; i < variables_number; ++i)
     {
         printer.begin_array_object();
         variables[i].to_JSON(printer);
@@ -1233,11 +1212,8 @@ bool Dataset::has_validation() const
 
 bool Dataset::has_missing_values(const vector<string_view>& row) const
 {
-    for (size_t i = 0; i < row.size(); ++i)
-        if (row[i].empty() || row[i] == missing_values_label)
-            return true;
-
-    return false;
+    return any_of(row.begin(), row.end(),
+                  [&](string_view t) { return t.empty() || t == missing_values_label; });
 }
 
 vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices, Index new_batch_size) const

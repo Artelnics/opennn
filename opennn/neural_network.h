@@ -58,10 +58,10 @@ public:
     Index get_parameters_size() const { return parameters.size_in_floats(); }
 
     const vector<Variable>& get_input_variables() const { return input_variables; }
-    const vector<string> get_input_feature_names() const;
+    vector<string> get_input_feature_names() const;
 
     const vector<Variable>& get_output_variables() const { return output_variables; }
-    const vector<string> get_output_feature_names() const;
+    vector<string> get_output_feature_names() const;
 
     const vector<unique_ptr<Layer>>& get_layers() const { return layers; }
     const unique_ptr<Layer>& get_layer(const Index i) const { return layers[i]; }

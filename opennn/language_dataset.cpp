@@ -555,8 +555,7 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
     set_data_path(read_json_string(data_source_element, "Path"));
 
     streaming = data_source_element->has("Streaming")
-        ? read_json_bool(data_source_element, "Streaming")
-        : false;
+             && read_json_bool(data_source_element, "Streaming");
 
     set_separator_name(read_json_string(data_source_element, "Separator"));
     set_missing_values_label(read_json_string(data_source_element, "MissingValuesLabel"));
