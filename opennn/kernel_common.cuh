@@ -22,11 +22,13 @@ static inline int grid_size_for(int n)
 {
     return ceil_div(n, block_size);
 }
+
 static inline int vector_work_size(int total, int n_vec, int vec_width)
 {
     const int n_tail = total - n_vec * vec_width;
     return n_vec > n_tail ? n_vec : n_tail;
 }
+
 static inline bool is_float4_aligned(const void* ptr)
 {
     return (reinterpret_cast<std::uintptr_t>(ptr) & 0xF) == 0;

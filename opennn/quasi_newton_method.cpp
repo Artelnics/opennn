@@ -92,8 +92,6 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     VectorMap gradient(back_propagation.gradient.as<float>(),
                        back_propagation.gradient.size_in_floats());
 
-    const Index parameters_number = parameters.size();
-
     VectorMap old_parameters = optimization_data.views[OldParameters].as_vector();
     VectorMap parameter_differences = optimization_data.views[ParameterDifferences].as_vector();
     VectorMap parameter_updates = optimization_data.views[ParameterUpdates].as_vector();

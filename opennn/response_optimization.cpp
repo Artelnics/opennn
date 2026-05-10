@@ -625,7 +625,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
         return MatrixR();
     }
 
-    MatrixR first_objective_matrix  = objectives.extract(first_feasible_inputs, first_feasible_outputs);
+    MatrixR first_objective_matrix = objectives.extract(first_feasible_inputs, first_feasible_outputs);
     objectives.normalize(first_objective_matrix);
 
     auto [global_pareto_inputs, global_pareto_outputs] = calculate_pareto(first_feasible_inputs, first_feasible_outputs, first_objective_matrix);
@@ -654,7 +654,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
 
             auto [local_feasible_inputs, local_feasible_outputs] = filter_feasible_points(local_random_inputs, neural_network->calculate_outputs(local_random_inputs), original_output_domain);
 
-            MatrixR local_objective_matrix  = objectives.extract(local_feasible_inputs, local_feasible_outputs);
+            MatrixR local_objective_matrix = objectives.extract(local_feasible_inputs, local_feasible_outputs);
             objectives.normalize(local_objective_matrix);
 
             auto [local_pareto_input, local_pareto_output] = calculate_pareto(local_feasible_inputs, local_feasible_outputs, local_objective_matrix);

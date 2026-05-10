@@ -122,16 +122,14 @@ void LevenbergMarquardtAlgorithm::calculate_error(const Batch&,
                                                    const ForwardPropagation&,
                                                    BackPropagationLM& back_propagation_lm) const
 {
-    const Index size = back_propagation_lm.squared_errors.size();
-
-    back_propagation_lm.error = back_propagation_lm.squared_errors.sum() / float(size);
+    back_propagation_lm.error = back_propagation_lm.squared_errors.sum()
+                              / float(back_propagation_lm.squared_errors.size());
 }
 
 void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& batch,
                                                    const ForwardPropagation& forward_propagation,
                                                    BackPropagationLM& back_propagation_lm)
 {
-
     NeuralNetwork* neural_network = loss->get_neural_network();
     const auto& layers = neural_network->get_layers();
 
@@ -164,7 +162,7 @@ static MatrixR activation_derivative(Activation::Function activation_function, c
         return 1.0f - outputs.array().square();
     case Activation::Function::ReLU:
         return (outputs.array() > 0.0f).cast<float>();
-    default:                                                  // Identity / unrecognized Ã¢â€ â€™ identity
+    default:                                                  // Identity / unrecognized -> identity
         return MatrixR::Ones(outputs.rows(), outputs.cols());
     }
 }
@@ -392,8 +390,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     VectorR& potential_parameters = optimization_data.potential_parameters;
     VectorMap parameter_updates(optimization_data.views[ParameterUpdate].as<float>(),
                                 optimization_data.views[ParameterUpdate].size());
-
-    const Index parameters_number = parameters.size();
 
     bool success = false;
 

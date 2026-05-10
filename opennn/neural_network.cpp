@@ -554,9 +554,7 @@ MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
 
     MatrixR directional_inputs(points_number, inputs_number);
 
-    VectorR inputs(inputs_number);
-
-    inputs = point;
+    VectorR inputs = point;
 
     for (Index i = 0; i < points_number; ++i)
     {
@@ -633,8 +631,7 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 
     for (Index i = 0; i < batch_size; ++i)
     {
-        const string input_data = input_documents.data()[i];
-        const vector<string> tokens = tokenize(input_data);
+        const vector<string> tokens = tokenize(input_documents.data()[i]);
         const size_t tokens_number = tokens.size();
 
         if (sequence_length > 0)
@@ -760,8 +757,7 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
 
 void NeuralNetwork::from_JSON(const JsonDocument& document)
 {
-    static const bool _layers_registered = []() { register_classes(); return true; }();
-    (void)_layers_registered;
+    [[maybe_unused]] static const bool _layers_registered = []() { register_classes(); return true; }();
 
     const Json* neural_network_element = get_json_root(document, "NeuralNetwork");
 
@@ -1103,7 +1099,7 @@ void NeuralNetwork::link_parameters()
     float* fp32_ptr           = parameters.as<float>();
     const bool use_bf16_mirror =
         is_gpu() && parameters_bf16.bytes > 0;
-    __nv_bfloat16* bf16_ptr  = use_bf16_mirror
+    __nv_bfloat16* bf16_ptr = use_bf16_mirror
                                 ? parameters_bf16.as<__nv_bfloat16>()
                                 : nullptr;
 

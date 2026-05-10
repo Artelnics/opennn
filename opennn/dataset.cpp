@@ -869,10 +869,8 @@ void Dataset::samples_to_JSON(JsonWriter &printer) const
 
     add_json_field(printer, "SamplesNumber", to_string(get_samples_number()));
 
-    const string separator_string = get_separator_string();
-
     if (has_sample_ids)
-        add_json_field(printer, "SamplesId", vector_to_string(sample_ids, separator_string));
+        add_json_field(printer, "SamplesId", vector_to_string(sample_ids, get_separator_string()));
 
     add_json_field(printer, "SampleRoles", vector_to_string(get_sample_roles_vector()));
     printer.close_element();
@@ -904,10 +902,10 @@ void Dataset::preview_data_to_JSON(JsonWriter &printer) const
     vector<string> vector_data_file_preview = convert_string_vector(data_file_preview, ",");
 
     printer.begin_array("Row");
-    for (size_t i = 0; i < data_file_preview.size(); ++i)
+    for (const string& row_text : vector_data_file_preview)
     {
         printer.begin_array_object();
-        add_json_field(printer, "Text", vector_data_file_preview[i]);
+        add_json_field(printer, "Text", row_text);
         printer.end_array_object();
     }
     printer.end_array();

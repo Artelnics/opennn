@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library+
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T R A I N I N G   S T R A T E G Y   C L A S S
@@ -72,13 +72,12 @@ void TrainingStrategy::set_default()
     }
 
     // Transformer: signaled by *any* Dense layer that consumes a rank-2 (seq, feat)
-    // input â€” i.e. the layers formerly known as Dense3d.
-    bool has_seq_dense = false;
-    for (const auto& layer : neural_network->get_layers())
-    {
+    // input -- i.e. the layers formerly known as Dense3d.
+    const auto& layers = neural_network->get_layers();
+    const bool has_seq_dense = any_of(layers.begin(), layers.end(), [](const auto& layer) {
         const auto* dense = dynamic_cast<const Dense*>(layer.get());
-        if (dense && dense->get_input_shape().rank == 2) { has_seq_dense = true; break; }
-    }
+        return dense && dense->get_input_shape().rank == 2;
+    });
     if (has_seq_dense)
     {
         set_loss("CrossEntropy");
@@ -143,7 +142,6 @@ TrainingResults TrainingStrategy::train()
     return optimizer->train();
 }
 
-
 void TrainingStrategy::fix_forecasting()
 {
 /*
@@ -179,7 +177,6 @@ void TrainingStrategy::fix_forecasting()
 
 void TrainingStrategy::to_JSON(JsonWriter& printer) const
 {
-
     printer.open_element("TrainingStrategy");
 
     printer.open_element("Loss");

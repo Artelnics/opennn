@@ -1425,10 +1425,9 @@ void LayerNorm::apply_cpu(const TensorView& input,
             sum_sq += value * value;
         }
 
-        const float mean     = sum * inv_D;
-        const float variance = sum_sq * inv_D - mean * mean;
-        const float std_val  = std::sqrt(variance + EPSILON);
-        const float inv_std  = 1.0f / std_val;
+        const float mean    = sum * inv_D;
+        const float std_val = std::sqrt(sum_sq * inv_D - mean * mean + EPSILON);
+        const float inv_std = 1.0f / std_val;
 
         means_data[row] = mean;
         stds_data[row]  = std_val;
@@ -2786,7 +2785,7 @@ void EmbeddingLookup::set_parameters_random()
 void EmbeddingLookup::set_parameters_glorot()
 {
     if (weights.empty()) return;
-    const float limit = sqrt(6.0f / (vocabulary_size + embedding_dimension));
+    const float limit = sqrt(6.0f / static_cast<float>(vocabulary_size + embedding_dimension));
     MatrixMap weights_matrix = weights.as_matrix();
     weights_matrix.setRandom();
     weights_matrix *= limit;
@@ -3000,7 +2999,7 @@ void Bound::load_state_from_JSON(const Json* parent)
         string_to_vector(read_json_string(parent, "LowerBounds"), tmp);
         if (tmp.size() == lower.size()) lower.as_vector() = tmp;
     }
-    
+
     if (parent->has("UpperBounds"))
     {
         string_to_vector(read_json_string(parent, "UpperBounds"), tmp);

@@ -100,32 +100,32 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
 {
     add_layer(make_unique<Scaling>(input_shape));
 
-    const Index mapping_neurons_number = 10;
-    const Index bottle_neck_neurons_number = complexity_dimensions[0];
+    const Shape mapping_shape{ 10 };
+    const Shape bottleneck_shape{ complexity_dimensions[0] };
 
     add_layer(make_unique<Dense>(input_shape,
-                                   Shape{mapping_neurons_number},
-                                   "Tanh",
-                                   false,
-                                   "mapping_layer"));
+                                 mapping_shape,
+                                 "Tanh",
+                                 false,
+                                 "mapping_layer"));
 
-    add_layer(make_unique<Dense>(Shape{ mapping_neurons_number },
-                                   Shape{ bottle_neck_neurons_number },
-                                   "Identity",
-                                   false,
-                                   "bottleneck_layer"));
+    add_layer(make_unique<Dense>(mapping_shape,
+                                 bottleneck_shape,
+                                 "Identity",
+                                 false,
+                                 "bottleneck_layer"));
 
-    add_layer(make_unique<Dense>(Shape{ bottle_neck_neurons_number },
-                                   Shape{ mapping_neurons_number },
-                                   "Tanh",
-                                   false,
-                                   "demapping_layer"));
+    add_layer(make_unique<Dense>(bottleneck_shape,
+                                 mapping_shape,
+                                 "Tanh",
+                                 false,
+                                 "demapping_layer"));
 
-    add_layer(make_unique<Dense>(Shape{ mapping_neurons_number },
-                                   Shape{ output_shape },
-                                   "Identity",
-                                   false,
-                                   "output_layer"));
+    add_layer(make_unique<Dense>(mapping_shape,
+                                 Shape{ output_shape },
+                                 "Identity",
+                                 false,
+                                 "output_layer"));
 
     add_layer(make_unique<Unscaling>(output_shape));
 

@@ -682,6 +682,7 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
 
 template void average_pooling_3d_backward_cuda<float>        (const Index, const float*,         const float*,         float*,         const int, const int);
 template void average_pooling_3d_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, const int, const int);
+
 __device__ __forceinline__ void warp_reduce_sum2(float& a, float& b)
 {
     #pragma unroll
@@ -742,8 +743,7 @@ __global__ void layernorm_forward_kernel(const int N, const int D, const T* __re
         {
             const float inv_D = 1.0f / static_cast<float>(D);
             const float mean = s * inv_D;
-            const float variance = s_sq * inv_D - mean * mean;
-            const float inv_var = rsqrtf(variance + eps);
+            const float inv_var = rsqrtf(s_sq * inv_D - mean * mean + eps);
             s_mean    = mean;
             s_inv_var = inv_var;
             means[idx]    = mean;

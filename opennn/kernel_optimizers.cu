@@ -6,6 +6,7 @@
 // [n_vec*4, n) tail.
 
 #include "kernel_common.cuh"
+
 __device__ __forceinline__ void adam_update_one(
     float& p,
     float& m,
@@ -22,6 +23,7 @@ __device__ __forceinline__ void adam_update_one(
     v = fmaf(beta_2, v, one_minus_beta_2 * g * g);
     p -= lr * m / (sqrtf(v) + eps);
 }
+
 __global__ void adam_update_kernel(
     const int n_vec,
     const int n,
@@ -86,7 +88,7 @@ void adam_update_cuda(
     const int total = static_cast<int>(n);
     const float sqrt_bias_correction_2 = sqrtf(bias_correction_2);
 
-    const float effective_lr  = learning_rate * sqrt_bias_correction_2 / bias_correction_1;
+    const float effective_lr = learning_rate * sqrt_bias_correction_2 / bias_correction_1;
     const float effective_eps = epsilon * sqrt_bias_correction_2;
 
     const float one_minus_beta_1 = 1.0f - beta_1;
@@ -111,6 +113,7 @@ void adam_update_cuda(
         effective_lr,
         effective_eps);
 }
+
 __device__ __forceinline__ void sgd_update_one(
     float& p,
     float& v,
@@ -126,6 +129,7 @@ __device__ __forceinline__ void sgd_update_one(
     v = v_new;
     p += nesterov ? fmaf(momentum, v_new, -lr_g) : v_new;
 }
+
 __global__ void sgd_update_kernel(
     const int n_vec,
     const int n,
@@ -221,6 +225,7 @@ void clip_gradient_norm_cuda(const Index n,
     clip_apply_kernel<<<grid, block_size, 0, opennn::Backend::get_compute_stream()>>>(
         total, squared_norm, max_norm, eps, gradient);
 }
+
 __global__ void cast_fp32_to_bf16_kernel(const int n_vec,
                                          const int n,
                                          const float* __restrict__ src,

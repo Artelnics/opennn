@@ -32,7 +32,7 @@ void Variable::set_type(const string& new_variable_type)
     type = string_to_variable_type(new_variable_type);
 }
 
-string Variable::get_type_string() const
+const string& Variable::get_type_string() const
 {
     return variable_type_to_string(type);
 }

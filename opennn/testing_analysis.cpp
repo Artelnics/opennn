@@ -496,10 +496,10 @@ vector<MatrixI> TestingAnalysis::calculate_multilabel_confusion(const float deci
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
     const Index outputs_number = neural_network->get_outputs_number();
 
-    vector<MatrixI> confusion_matrices(static_cast<size_t>(outputs_number));
+    vector<MatrixI> confusion_matrices(outputs_number);
 
     for (Index j = 0; j < outputs_number; ++j)
-        confusion_matrices[static_cast<size_t>(j)] = calculate_confusion(targets.col(j), outputs.col(j), decision_threshold);
+        confusion_matrices[j] = calculate_confusion(targets.col(j), outputs.col(j), decision_threshold);
 
     return confusion_matrices;
 }
@@ -566,8 +566,7 @@ MatrixI TestingAnalysis::calculate_confusion(const float decision_threshold) con
         else
             return {};
 
-        const MatrixI batch_confusion = calculate_confusion(batch_targets, batch_outputs, decision_threshold);
-        total_confusion_matrix += batch_confusion;
+        total_confusion_matrix += calculate_confusion(batch_targets, batch_outputs, decision_threshold);
     }
 
     if (!testing_indices.empty())

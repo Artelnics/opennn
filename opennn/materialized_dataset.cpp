@@ -710,10 +710,7 @@ void MaterializedDataset::samples_from_JSON(const Json *samples_element)
     const Index samples_number = read_json_index(samples_element, "SamplesNumber");
 
     if (has_sample_ids)
-    {
-        const string separator_string = get_separator_string();
-        sample_ids = get_tokens(read_json_string(samples_element, "SamplesId"), separator_string);
-    }
+        sample_ids = get_tokens(read_json_string(samples_element, "SamplesId"), get_separator_string());
 
     if (!variables.empty())
     {
