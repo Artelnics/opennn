@@ -635,6 +635,13 @@ private:
                               SoftmaxBwd&& softmax_bwd) const;
 
     mutable unique_ptr<SDPACache> sdpa_cache;
+
+    // SDPA dropout RNG state. Forward advances `sdpa_dropout_offset`; backward
+    // replays the previous step's offset via `sdpa_last_used_offset` so the
+    // dropout mask is reproduced. Seed is fixed per Attention instance.
+    uint64_t sdpa_dropout_seed   = 0x9E3779B97F4A7C15ULL;
+    uint64_t sdpa_dropout_offset = 0;
+    mutable uint64_t sdpa_last_used_offset = 0;
 };
 
 // Reshapes a (batch, heads, seq, head_dim) tensor into (batch, seq, embed)

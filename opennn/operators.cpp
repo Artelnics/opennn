@@ -1724,10 +1724,18 @@ struct Attention::SDPACache
         std::shared_ptr<fe::graph::Graph> bwd_graph;
         std::shared_ptr<fe::graph::Tensor_attributes> bwd_Q, bwd_K, bwd_V, bwd_O, bwd_dO, bwd_Stats;
         std::shared_ptr<fe::graph::Tensor_attributes> bwd_dQ, bwd_dK, bwd_dV;
+        std::shared_ptr<fe::graph::Tensor_attributes> bwd_Seed, bwd_Offset;
         void* bwd_workspace_buf = nullptr;
 
         // Shared (forward writes, backward reads). LSE stats from softmax.
         void* stats_buf = nullptr;
+
+        // Device-resident scalars for SDPA dropout RNG (1 INT64 each).
+        // Allocated only when the cache key has dropout_active=true. Forward
+        // writes the per-step (seed, offset); backward writes the same values
+        // so cuDNN regenerates an identical mask.
+        void* seed_buf   = nullptr;
+        void* offset_buf = nullptr;
     };
 
     std::unordered_map<CacheKey, Entry, CacheKeyHash> entries;
@@ -1768,6 +1776,8 @@ struct Attention::SDPACache
             if (e.fwd_workspace_buf) cudaFree(e.fwd_workspace_buf);
             if (e.bwd_workspace_buf) cudaFree(e.bwd_workspace_buf);
             if (e.stats_buf)         cudaFree(e.stats_buf);
+            if (e.seed_buf)          cudaFree(e.seed_buf);
+            if (e.offset_buf)        cudaFree(e.offset_buf);
         }
 #endif
     }
@@ -1850,6 +1860,9 @@ static void build_sdpa_forward_graph(Attention::SDPACache::Entry& entry,
                                          .set_name("Offset").set_dim({1,1,1,1}).set_stride({1,1,1,1})
                                          .set_data_type(fe::DataType_t::INT64));
         sdpa_options.set_dropout(dropout_rate, entry.fwd_Seed, entry.fwd_Offset);
+
+        if (!entry.seed_buf)   CHECK_CUDA(cudaMalloc(&entry.seed_buf,   sizeof(int64_t)));
+        if (!entry.offset_buf) CHECK_CUDA(cudaMalloc(&entry.offset_buf, sizeof(int64_t)));
     }
 
     auto [O, Stats] = graph->sdpa(entry.fwd_Q, entry.fwd_K, entry.fwd_V, sdpa_options);
@@ -1884,7 +1897,8 @@ static void build_sdpa_forward_graph(Attention::SDPACache::Entry& entry,
 
 static void build_sdpa_backward_graph(Attention::SDPACache::Entry& entry,
                                        const Attention::SDPACache::CacheKey& k,
-                                       cudnnHandle_t handle)
+                                       cudnnHandle_t handle,
+                                       float dropout_rate)
 {
     const auto graph = make_shared<fe::graph::Graph>();
     build_sdpa_graph_common(*graph, k.dtype);
@@ -1912,10 +1926,21 @@ static void build_sdpa_backward_graph(Attention::SDPACache::Entry& entry,
                                     .set_dim   ({k.batch_size, k.heads, k.q_seq, 1})
                                     .set_stride({k.heads * k.q_seq, k.q_seq, 1, 1}));
 
-    const auto sdpa_bwd_options = fe::graph::SDPA_backward_attributes()
+    auto sdpa_bwd_options = fe::graph::SDPA_backward_attributes()
                             .set_name("flash_attn_bwd")
                             .set_causal_mask(k.causal)
                             .set_attn_scale(1.0f / std::sqrt(float(k.head_dim)));
+
+    if (k.dropout_active)
+    {
+        entry.bwd_Seed   = graph->tensor(fe::graph::Tensor_attributes()
+                                         .set_name("Seed_bwd").set_dim({1,1,1,1}).set_stride({1,1,1,1})
+                                         .set_data_type(fe::DataType_t::INT64));
+        entry.bwd_Offset = graph->tensor(fe::graph::Tensor_attributes()
+                                         .set_name("Offset_bwd").set_dim({1,1,1,1}).set_stride({1,1,1,1})
+                                         .set_data_type(fe::DataType_t::INT64));
+        sdpa_bwd_options.set_dropout(dropout_rate, entry.bwd_Seed, entry.bwd_Offset);
+    }
 
     auto [dQ, dK, dV] = graph->sdpa_backward(entry.bwd_Q, entry.bwd_K, entry.bwd_V,
                                               entry.bwd_O, entry.bwd_dO, entry.bwd_Stats,
@@ -2114,14 +2139,10 @@ void Attention::apply_gpu(const TensorView& query,
     // For FP32 we fall back to the manual GPU path (still correct, no fused kernel).
     // Padding-mask handling not yet wired through the graph (would need a per-batch
     // seq-len tensor); for now SDPA path assumes no padding tokens.
-    // Dropout in SDPA needs device-resident seed/offset tensors (TODO); for now
-    // we fall back to CPU when training-time dropout is active.
-    const bool sdpa_supported =
-            query.type == Type::BF16
-         && !(dropout.active() && is_training);
+    const bool sdpa_supported = (query.type == Type::BF16);
     if (!sdpa_supported)
     {
-        require_attention_scratch(attention_weights, "SDPA fallback triggered (FP32 or training-time dropout)");
+        require_attention_scratch(attention_weights, "SDPA fallback triggered (FP32 only)");
         apply_cpu(query, key, value, source_input,
                   attention_weights, attention_weights_dropped,
                   output, mask_scratch, is_training);
@@ -2130,6 +2151,8 @@ void Attention::apply_gpu(const TensorView& query,
 
     if (!sdpa_cache) sdpa_cache = make_unique<SDPACache>();
 
+    const bool dropout_in_graph = dropout.active() && is_training;
+
     SDPACache::CacheKey ck{
         query.shape[0],          // batch_size
         query.shape[2],          // q_seq
@@ -2137,7 +2160,7 @@ void Attention::apply_gpu(const TensorView& query,
         heads_number,
         head_dimension,
         query.type,
-        dropout.active() && is_training,
+        dropout_in_graph,
         use_causal_mask,
         is_training
     };
@@ -2146,15 +2169,29 @@ void Attention::apply_gpu(const TensorView& query,
     if (!entry.fwd_graph)
         build_sdpa_forward_graph(entry, ck, Backend::get_cudnn_handle(), dropout.rate);
 
+    if (dropout_in_graph)
+    {
+        sdpa_last_used_offset = sdpa_dropout_offset;
+        const int64_t seed_value   = static_cast<int64_t>(sdpa_dropout_seed);
+        const int64_t offset_value = static_cast<int64_t>(sdpa_last_used_offset);
+        CHECK_CUDA(cudaMemcpyAsync(entry.seed_buf,   &seed_value,   sizeof(int64_t),
+                                   cudaMemcpyHostToDevice, Backend::get_compute_stream()));
+        CHECK_CUDA(cudaMemcpyAsync(entry.offset_buf, &offset_value, sizeof(int64_t),
+                                   cudaMemcpyHostToDevice, Backend::get_compute_stream()));
+        ++sdpa_dropout_offset;
+    }
+
     std::unordered_map<std::shared_ptr<fe::graph::Tensor_attributes>, void*> tp;
     tp[entry.fwd_Q] = query.data;
     tp[entry.fwd_K] = key.data;
     tp[entry.fwd_V] = value.data;
     tp[entry.fwd_O] = output.data;
     if (is_training && entry.fwd_Stats) tp[entry.fwd_Stats] = entry.stats_buf;
-    // Dropout in SDPA: deferred. When wired, requires device-resident seed/offset
-    // tensors (see Seed/Offset graph nodes); current support gate above never
-    // sets ck.dropout_active to true.
+    if (dropout_in_graph)
+    {
+        tp[entry.fwd_Seed]   = entry.seed_buf;
+        tp[entry.fwd_Offset] = entry.offset_buf;
+    }
 
     const auto status = entry.fwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.fwd_workspace_buf);
     if (status.is_bad())
@@ -2291,12 +2328,10 @@ void Attention::apply_delta_gpu(const TensorView& query,
                                 TensorView& value_delta) const
 {
 #ifdef OPENNN_HAS_CUDNN_FRONTEND
-    // Same support gates as forward. The forward path that produced this
-    // backward call established the cache entry; if we fell back to CPU on
+    // Same support gate as forward. The forward path that produced this backward
+    // call established the cache entry; if we fell back to the unfused path on
     // forward, we must also fall back here (no LSE stats to use).
-    const bool sdpa_supported =
-            query.type == Type::BF16
-         && !dropout.active();
+    const bool sdpa_supported = (query.type == Type::BF16);
     if (!sdpa_supported || !sdpa_cache)
     {
         require_attention_scratch(attention_weights, "SDPA backward fallback triggered");
@@ -2307,6 +2342,8 @@ void Attention::apply_delta_gpu(const TensorView& query,
         return;
     }
 
+    const bool dropout_in_graph = dropout.active();   // backward implies training
+
     SDPACache::CacheKey ck{
         query.shape[0],
         query.shape[2],
@@ -2314,7 +2351,7 @@ void Attention::apply_delta_gpu(const TensorView& query,
         heads_number,
         head_dimension,
         query.type,
-        false,                  // dropout falls back, never reaches here
+        dropout_in_graph,
         use_causal_mask,
         true                    // backward implies training
     };
@@ -2333,7 +2370,17 @@ void Attention::apply_delta_gpu(const TensorView& query,
 
     auto& entry = *entry_ptr;
     if (!entry.bwd_graph)
-        build_sdpa_backward_graph(entry, ck, Backend::get_cudnn_handle());
+        build_sdpa_backward_graph(entry, ck, Backend::get_cudnn_handle(), dropout.rate);
+
+    if (dropout_in_graph)
+    {
+        const int64_t seed_value   = static_cast<int64_t>(sdpa_dropout_seed);
+        const int64_t offset_value = static_cast<int64_t>(sdpa_last_used_offset);
+        CHECK_CUDA(cudaMemcpyAsync(entry.seed_buf,   &seed_value,   sizeof(int64_t),
+                                   cudaMemcpyHostToDevice, Backend::get_compute_stream()));
+        CHECK_CUDA(cudaMemcpyAsync(entry.offset_buf, &offset_value, sizeof(int64_t),
+                                   cudaMemcpyHostToDevice, Backend::get_compute_stream()));
+    }
 
     std::unordered_map<std::shared_ptr<fe::graph::Tensor_attributes>, void*> tp;
     tp[entry.bwd_Q]     = const_cast<float*>(query.as<float>());
@@ -2345,6 +2392,11 @@ void Attention::apply_delta_gpu(const TensorView& query,
     tp[entry.bwd_dQ]    = query_delta.data;
     tp[entry.bwd_dK]    = key_delta.data;
     tp[entry.bwd_dV]    = value_delta.data;
+    if (dropout_in_graph)
+    {
+        tp[entry.bwd_Seed]   = entry.seed_buf;
+        tp[entry.bwd_Offset] = entry.offset_buf;
+    }
 
     const auto status = entry.bwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.bwd_workspace_buf);
     if (status.is_bad())
