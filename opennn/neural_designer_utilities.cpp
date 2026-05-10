@@ -32,7 +32,7 @@ string formatNumber(float value, int precision)
 
     string str = oss.str();
 
-    auto pos = str.find('.');
+    const auto pos = str.find('.');
 
     if (pos != string::npos)
     {
