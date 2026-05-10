@@ -739,7 +739,7 @@ vector<Histogram> histograms(const MatrixR& matrix, Index bins_number)
 
 Descriptives vector_descriptives(const VectorR& x)
 {
-    if (x.size() <= 0)
+    if (x.size() == 0)
         return Descriptives();
 
     const float min = x.minCoeff();

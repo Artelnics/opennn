@@ -226,26 +226,23 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     const Index folders_number = directory_path.size();
 
-    Index samples_number = 0;
-
     vector<filesystem::path> paths;
     vector<Index> labels;
 
     for (Index i = 0; i < folders_number; ++i)
-    {
         for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(directory_path[i]))
         {
             if (current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
             {
                 paths.emplace_back(current_directory.path());
                 labels.push_back(i);
-                ++samples_number;
             }
         }
-    }
+
+    const Index samples_number = paths.size();
 
     if (samples_number == 0)
-        throw runtime_error("No images in folder \n");
+        throw runtime_error("No images in folder.");
 
     const Tensor3 first_image = load_image(paths[0]);
 
@@ -254,7 +251,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     const Index channels = first_image.dimension(2);
 
     if (new_input_shape[2] != channels && new_input_shape[2] != 0)
-        throw runtime_error("Different number of channels in new_input_shape \n");
+        throw runtime_error("Different number of channels in new_input_shape.");
 
     if (new_input_shape[0] != 0 && new_input_shape[1] != 0)
     {
@@ -290,8 +287,8 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     }
 
     vector<string> categories(folders_number);
-    for (Index i = 0; i < folders_number; ++i)
-        categories[i] = directory_path[i].filename().string();
+    transform(directory_path.begin(), directory_path.end(), categories.begin(),
+              [](const filesystem::path& p) { return p.filename().string(); });
 
     const bool single_target = (targets_number == 1);
 
@@ -349,10 +346,9 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     if (display)
     {
-        const chrono::high_resolution_clock::time_point end_time = chrono::high_resolution_clock::now();
-        const chrono::milliseconds duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
+        const long long total_milliseconds = chrono::duration_cast<chrono::milliseconds>(
+            chrono::high_resolution_clock::now() - start_time).count();
 
-        const long long total_milliseconds = duration.count();
         const long long minutes = total_milliseconds / 60000;
         const long long seconds = (total_milliseconds % 60000) / 1000;
         const long long milliseconds = total_milliseconds % 1000;

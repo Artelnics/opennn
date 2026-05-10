@@ -1177,7 +1177,7 @@ float parse_float_or_nan(string_view token)
 {
     float value;
     auto [ptr, ec] = std::from_chars(token.data(), token.data() + token.size(), value);
-    return (ec == std::errc{} && ptr == token.data() + token.size()) ? value : float(NAN);
+    return (ec == std::errc{} && ptr == token.data() + token.size()) ? value : NAN;
 }
 
 void strip_quotes_and_quoted_separators(string& buffer)
@@ -1402,7 +1402,7 @@ void MaterializedDataset::read_csv()
             switch (variable.type)
             {
             case VariableType::Numeric:
-                data(sample_index, feature_indices[0]) = is_missing(token) ? float(NAN) : parse_float_or_nan(token);
+                data(sample_index, feature_indices[0]) = is_missing(token) ? NAN : parse_float_or_nan(token);
                 break;
             case VariableType::DateTime:
                 if (is_missing(token))

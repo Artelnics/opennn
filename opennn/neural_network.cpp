@@ -226,8 +226,7 @@ void NeuralNetwork::set_output_names(const vector<string>& new_output_names)
 
 void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 {
-    const Index total_inputs = new_input_shape.size();
-    input_variables.resize(total_inputs);
+    input_variables.resize(new_input_shape.size());
 
     if (has(LayerType::Scaling))
         get_first(LayerType::Scaling)->set_input_shape(new_input_shape);

@@ -130,16 +130,13 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 {
     const vector<Index> feature_dimensions = response_optimization.dataset->get_feature_dimensions();
 
-    Index objectives_number = 0;
-
-    for (const auto& constraints : response_optimization.conditions)
-        if (constraints.condition == ConditionType::Maximize || constraints.condition == ConditionType::Minimize)
-            ++objectives_number;
+    const Index objectives_number = count_if(response_optimization.conditions.begin(), response_optimization.conditions.end(),
+        [](const auto& c) { return c.condition == ConditionType::Maximize || c.condition == ConditionType::Minimize; });
 
     if (objectives_number == 0)
         throw runtime_error("No Objectives found, make sure to set Minimize or Maximize to any variable");
 
-    objective_sources.resize(2,objectives_number);
+    objective_sources.resize(2, objectives_number);
 
     objective_normalizer.resize(2, objectives_number);
 
@@ -149,7 +146,6 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 
     auto process_role = [&](const string& role)
     {
-
         const vector<Index> variable_indices = response_optimization.dataset->get_variable_indices(role);
         const vector<Index> feature_dimensions_by_role = gather_by_index(feature_dimensions, variable_indices);
 

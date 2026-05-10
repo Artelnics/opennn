@@ -121,14 +121,14 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
                 neuron_selection_results.training_error_history(epoch) = minimum_training_error;
                 neuron_selection_results.validation_error_history(epoch) = minimum_validation_error;
-            }
 
-            if (minimum_validation_error < neuron_selection_results.optimum_validation_error)
-            {
-                neuron_selection_results.optimal_neurons_number = neurons_number;
-                //neural_network->get_parameters(neuron_selection_results.optimal_parameters);
-                neuron_selection_results.optimum_training_error = minimum_training_error;
-                neuron_selection_results.optimum_validation_error = minimum_validation_error;
+                if (minimum_validation_error < neuron_selection_results.optimum_validation_error)
+                {
+                    neuron_selection_results.optimal_neurons_number = neurons_number;
+                    //neural_network->get_parameters(neuron_selection_results.optimal_parameters);
+                    neuron_selection_results.optimum_training_error = minimum_training_error;
+                    neuron_selection_results.optimum_validation_error = minimum_validation_error;
+                }
             }
         }
 

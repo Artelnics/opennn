@@ -138,8 +138,8 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     }
     else
     {
-        parameter_updates = (gradient.array().abs() >= float(EPSILON))
-                                .select(-gradient.array().sign() * float(EPSILON), 0.0f);
+        parameter_updates = (gradient.array().abs() >= EPSILON)
+                                .select(-gradient.array().sign() * EPSILON, 0.0f);
         learning_rate = optimization_data.initial_learning_rate;
     }
     parameters += parameter_updates;

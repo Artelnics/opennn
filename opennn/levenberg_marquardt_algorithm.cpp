@@ -378,7 +378,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     BackPropagationLM& back_propagation_lm,
                                                     OptimizerData& optimization_data)
 {
-
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     VectorMap parameters(neural_network->get_parameters_data(),
@@ -398,7 +397,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
     bool success = false;
 
-    const VectorR neg_gradient = -1.0f * gradient;
+    const VectorR neg_gradient = -gradient;
 
     do
     {
@@ -442,17 +441,16 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
             set_damping_parameter(damping_parameter*damping_parameter_factor);
         }
 
-    }while (damping_parameter < maximum_damping_parameter);
+    } while (damping_parameter < maximum_damping_parameter);
 
     if (!success)
     {
-        parameter_updates = (gradient.array().abs() >= float(EPSILON))
-                                .select(-gradient.array().sign() * float(EPSILON), 0.0f);
+        parameter_updates = (gradient.array().abs() >= EPSILON)
+                                .select(-gradient.array().sign() * EPSILON, 0.0f);
         parameters += parameter_updates;
     }
 
     neural_network->set_parameters(parameters);
-
 }
 
 void LevenbergMarquardtAlgorithm::to_JSON(JsonWriter& printer) const

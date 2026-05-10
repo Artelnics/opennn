@@ -232,7 +232,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         }
     }
 
-    vector<Shape> per_layer_output_delta_shapes(layers_number, Shape());
+    vector<Shape> per_layer_output_delta_shapes(layers_number);
     for (Index i = 0; i < layers_number; ++i)
     {
         if (i == last_trainable_layer_index)        continue;

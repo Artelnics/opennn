@@ -446,10 +446,8 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    Index optimal_individual_index;
     time_t beginning_time, current_time;
     float elapsed_time = 0.0f;
-    vector<Index> best_input_indices;
     Index best_generation = 0;
 
     time(&beginning_time);
@@ -464,7 +462,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         // Optimal individual in population
 
-        optimal_individual_index = minimal_index(validation_errors);
+        const Index optimal_individual_index = minimal_index(validation_errors);
 
         const float optimal_training_error = training_errors(optimal_individual_index);
         const float optimal_validation_error = validation_errors(optimal_individual_index);
@@ -482,7 +480,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
             input_selection_results.optimal_inputs = population.row(optimal_individual_index);
 
-            best_input_indices = get_true_indices(input_selection_results.optimal_inputs);
+            const vector<Index> best_input_indices = get_true_indices(input_selection_results.optimal_inputs);
 
             dataset->set_variable_indices(best_input_indices, original_target_variable_indices);
 

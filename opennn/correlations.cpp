@@ -137,7 +137,7 @@ Correlation exponential_correlation(const VectorR& x, const VectorR& y)
 
     if ((!y.array().isNaN() && y.array() <= 0.0f).any())
     {
-        exponential_correlation.r = static_cast<float>(NAN);
+        exponential_correlation.r = NAN;
         return exponential_correlation;
     }
 
@@ -702,7 +702,7 @@ Correlation power_correlation(const VectorR& x, const VectorR& y)
 
     if ((x.array() <= 0.0f).any() || (y.array() <= 0.0f).any())
     {
-        power_correlation.r = static_cast<float>(NAN);
+        power_correlation.r = NAN;
         return power_correlation;
     }
 

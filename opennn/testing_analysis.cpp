@@ -75,13 +75,13 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const pair<MatrixR, MatrixR> targets_outputs = get_targets_and_outputs("Testing");
+    const auto [all_targets, all_outputs] = get_targets_and_outputs("Testing");
     Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_results(outputs_number);
 
-    for (Index i = 0;  i < outputs_number; ++i)
+    for (Index i = 0; i < outputs_number; ++i)
     {
-        const VectorMap targets = vector_map(targets_outputs.first, i);
-        const VectorMap outputs = vector_map(targets_outputs.second, i);
+        const VectorMap targets = vector_map(all_targets, i);
+        const VectorMap outputs = vector_map(all_outputs, i);
 
         const float determination = calculate_determination(outputs, targets);
 
@@ -173,9 +173,10 @@ Tensor3 TestingAnalysis::calculate_error_data() const
         for (Index j = 0; j < testing_samples_number; ++j)
         {
             const float abs_err = absolute_errors(j, i);
+            const float scaled = abs_err / range;
             error_data(j, 0, i) = abs_err;
-            error_data(j, 1, i) = abs_err / range;
-            error_data(j, 2, i) = abs_err / range * 100.0f;
+            error_data(j, 1, i) = scaled;
+            error_data(j, 2, i) = scaled * 100.0f;
         }
     }
 
@@ -207,14 +208,14 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
     const VectorR& output_minimums = unscaling_layer->get_minimums();
     const VectorR& output_maximums = unscaling_layer->get_maximums();
 
-    const MatrixR errors = (targets - outputs);
+    const VectorR ranges = (output_maximums - output_minimums).cwiseAbs();
+    const MatrixR errors = targets - outputs;
     MatrixR error_data(testing_samples_number, outputs_number);
 
 #pragma omp parallel for
-
     for (Index i = 0; i < testing_samples_number; ++i)
         for (Index j = 0; j < outputs_number; ++j)
-            error_data(i, j) = errors(i, j)*100.0f/abs(output_maximums(j) - output_minimums(j));
+            error_data(i, j) = errors(i, j) * 100.0f / ranges(j);
 
     return error_data;
 }
@@ -569,7 +570,7 @@ MatrixI TestingAnalysis::calculate_confusion(const float decision_threshold) con
         total_confusion_matrix += batch_confusion;
     }
 
-    if (testing_indices.size() > 0)
+    if (!testing_indices.empty())
         total_confusion_matrix(confusion_matrix_size - 1, confusion_matrix_size - 1) = testing_indices.size();
 
     return total_confusion_matrix;
@@ -1290,25 +1291,23 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const float decis
                                 ? 0.0f
                                 : float(false_positive + false_negative) / float(total);
 
-    const float sensitivity = (true_positive + false_negative == 0)
-                                 ? 0.0f
-                                 : float(true_positive) / float(true_positive + false_negative);
+    const Index tp_plus_fn = true_positive + false_negative;
+    const Index fp_plus_tn = false_positive + true_negative;
+    const Index tp_plus_fp = true_positive + false_positive;
 
-    const float false_positive_rate = (false_positive + true_negative == 0)
-                                         ? 0.0f
-                                         : float(false_positive) / float(false_positive + true_negative);
+    const float sensitivity = (tp_plus_fn == 0) ? 0.0f : float(true_positive) / float(tp_plus_fn);
 
-    const float specificity = (false_positive + true_negative == 0)
-                                 ? 0.0f
-                                 : float(true_negative) / float(true_negative + false_positive);
+    const float false_positive_rate = (fp_plus_tn == 0) ? 0.0f : float(false_positive) / float(fp_plus_tn);
 
-    const float precision = (true_positive + false_positive == 0)
-                               ? 0.0f
-                               : float(true_positive) / float(true_positive + false_positive);
+    const float specificity = (fp_plus_tn == 0) ? 0.0f : float(true_negative) / float(fp_plus_tn);
+
+    const float precision = (tp_plus_fp == 0) ? 0.0f : float(true_positive) / float(tp_plus_fp);
+
+    const bool accuracy_is_one = abs(classification_accuracy - 1.0f) < EPSILON;
 
     float positive_likelihood;
 
-    if (abs(classification_accuracy - 1.0f) < EPSILON)
+    if (accuracy_is_one)
         positive_likelihood = 1.0f;
     else if (abs(1.0f - specificity) < EPSILON)
         positive_likelihood = 0.0f;
@@ -1317,31 +1316,27 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const float decis
 
     float negative_likelihood;
 
-    if (abs(classification_accuracy - 1.0f) < EPSILON)
+    if (accuracy_is_one)
         negative_likelihood = 1.0f;
     else if (abs(1.0f - sensitivity) < EPSILON)
         negative_likelihood = 0.0f;
     else
         negative_likelihood = specificity/(1.0f - sensitivity);
 
-    const float f1_score = (2 * true_positive + false_positive + false_negative == 0)
+    const Index f1_denominator = 2 * true_positive + false_positive + false_negative;
+    const float f1_score = (f1_denominator == 0)
                               ? 0.0f
-                              : 2.0f * float(true_positive) / (2.0f * float(true_positive) + float(false_positive) + float(false_negative));
+                              : 2.0f * float(true_positive) / float(f1_denominator);
 
-    const float false_discovery_rate = (false_positive + true_positive == 0)
-                                          ? 0.0f
-                                          : float(false_positive) / float(false_positive + true_positive);
+    const float false_discovery_rate = (tp_plus_fp == 0) ? 0.0f : float(false_positive) / float(tp_plus_fp);
 
-    const float false_negative_rate = (false_negative + true_positive == 0)
-                                         ? 0.0f
-                                         : float(false_negative) / float(false_negative + true_positive);
+    const float false_negative_rate = (tp_plus_fn == 0) ? 0.0f : float(false_negative) / float(tp_plus_fn);
 
-    const float negative_predictive_value = (true_negative + false_negative == 0)
-                                               ? 0.0f
-                                               : float(true_negative) / float(true_negative + false_negative);
+    const Index tn_plus_fn = true_negative + false_negative;
 
-    const Index matthews_denominator_squared = (true_positive + false_positive) * (true_positive + false_negative)
-                                              * (true_negative + false_positive) * (true_negative + false_negative);
+    const float negative_predictive_value = (tn_plus_fn == 0) ? 0.0f : float(true_negative) / float(tn_plus_fn);
+
+    const Index matthews_denominator_squared = tp_plus_fp * tp_plus_fn * fp_plus_tn * tn_plus_fn;
 
     const float Matthews_correlation_coefficient = (matthews_denominator_squared == 0)
                                                       ? 0.0f
@@ -1349,7 +1344,7 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const float decis
 
     const float informedness = sensitivity + specificity - 1.0f;
 
-    const float markedness = (true_negative + false_positive == 0)
+    const float markedness = (fp_plus_tn == 0)
                                 ? precision - 1.0f
                                 : precision + negative_predictive_value - 1.0f;
 
@@ -1413,13 +1408,11 @@ MatrixR TestingAnalysis::calculate_multiple_classification_tests() const
         const Index false_negatives = row_sum - true_positives;
         const Index false_positives = column_sum - true_positives;
 
-        const float precision = (true_positives + false_positives == 0)
-                                   ? 1.0f
-                                   : float(true_positives) / float(true_positives + false_positives);
+        const Index tp_plus_fp = true_positives + false_positives;
+        const Index tp_plus_fn = true_positives + false_negatives;
 
-        const float recall = (true_positives + false_negatives == 0)
-                                ? 1.0f
-                                : float(true_positives) / float(true_positives + false_negatives);
+        const float precision = (tp_plus_fp == 0) ? 1.0f : float(true_positives) / float(tp_plus_fp);
+        const float recall    = (tp_plus_fn == 0) ? 1.0f : float(true_positives) / float(tp_plus_fn);
 
         const float f1_score = (precision + recall == 0)
                                   ? 0.0f

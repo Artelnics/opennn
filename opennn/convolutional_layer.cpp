@@ -181,7 +181,7 @@ void Convolutional::set(const Shape& new_input_shape,
 void Convolutional::set_input_shape(const Shape& new_input_shape)
 {
     if (new_input_shape.rank != 3)
-        throw runtime_error("Input new_input_shape.rank must be 3");
+        throw runtime_error("Input shape rank must be 3.");
 
     input_height = new_input_shape[0];
     input_width = new_input_shape[1];
