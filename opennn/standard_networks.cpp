@@ -581,6 +581,7 @@ void Transformer::set_input_vocabulary(const vector<string>& new_input_vocabular
     input_vocabulary = new_input_vocabulary;
 
     input_vocabulary_map.clear();
+    input_vocabulary_map.reserve(input_vocabulary.size());
 
     for (size_t i = 0; i < input_vocabulary.size(); ++i)
         input_vocabulary_map[input_vocabulary[i]] = i;
@@ -591,6 +592,7 @@ void Transformer::set_output_vocabulary(const vector<string>& new_output_vocabul
     output_vocabulary = new_output_vocabulary;
 
     output_inverse_vocabulary_map.clear();
+    output_inverse_vocabulary_map.reserve(output_vocabulary.size());
 
     for (size_t i = 0; i < output_vocabulary.size(); ++i)
         output_inverse_vocabulary_map[i] = output_vocabulary[i];
@@ -613,9 +615,8 @@ Index Transformer::get_embedding_dimension() const
 
 Index Transformer::get_heads_number() const
 {
-    for (const auto& layer : layers)
-        if (layer->get_type() == LayerType::MultiHeadAttention)
-            return static_cast<MultiHeadAttention*>(layer.get())->get_heads_number();
+    if (auto* mha = dynamic_cast<const MultiHeadAttention*>(get_first(LayerType::MultiHeadAttention)))
+        return mha->get_heads_number();
 
     return 0;
 }

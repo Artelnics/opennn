@@ -300,9 +300,9 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
                 const Index sample_k = used_sample_indices[start_missing + k];
 
                 if (isnan(prev_value))
-                    data(sample_k, feature_index) = float(next_value);
+                    data(sample_k, feature_index) = next_value;
                 else if (isnan(next_value))
-                    data(sample_k, feature_index) = float(prev_value);
+                    data(sample_k, feature_index) = prev_value;
                 else
                 {
                     const float fraction = float(k + 1) / float(n_missing + 1);
@@ -320,8 +320,8 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
 void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
                                     const vector<Index>& input_indices,
                                     float* input_data,
-                                     bool parallelize,
-                                     int) const
+                                    bool parallelize,
+                                    int) const
 {
     if (sample_indices.empty() || input_indices.empty()) return;
 
@@ -348,10 +348,10 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
 }
 
 void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
-                                           const vector<Index>& target_indices,
-                                           float* target_data,
-                                           bool parallelize,
-                                           int) const
+                                     const vector<Index>& target_indices,
+                                     float* target_data,
+                                     bool parallelize,
+                                     int) const
 {
     if (sample_indices.empty() || target_indices.empty()) return;
 

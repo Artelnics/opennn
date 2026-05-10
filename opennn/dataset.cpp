@@ -161,9 +161,6 @@ void Dataset::split_samples(const float training_samples_ratio,
     const Index testing_samples_number = Index((testing_samples_ratio * used_samples_number) / total_ratio);
     const Index training_samples_number = used_samples_number - validation_samples_number - testing_samples_number;
 
-    if (training_samples_number + validation_samples_number + testing_samples_number != used_samples_number)
-        throw runtime_error("Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n");
-
     const Index samples_number = get_samples_number();
 
     vector<Index> indices(samples_number);
@@ -266,9 +263,6 @@ void Dataset::set_default_variable_roles_forecasting()
 {
     const Index variables_number = variables.size();
 
-    bool target = false;
-    bool time_variable = false;
-
     if (variables_number == 0)
         return;
 
@@ -280,34 +274,29 @@ void Dataset::set_default_variable_roles_forecasting()
 
     set_variable_roles("Input");
 
+    bool target = false;
+    bool time_variable = false;
+
     for (Index i = variables_number - 1; i >= 0; i--)
     {
         if (variables[i].type == VariableType::DateTime && !time_variable)
         {
             variables[i].set_role("Time");
-
             time_variable = true;
-            continue;
         }
-
-        if (variables[i].type == VariableType::Constant)
+        else if (variables[i].type == VariableType::Constant)
         {
             variables[i].set_role("None");
-            continue;
         }
-
-        if (!target)
+        else if (!target)
         {
             variables[i].set_role("Target");
-
             target = true;
-
-            continue;
         }
     }
 }
 
-vector<VariableType> Dataset::get_variable_types(const vector<Index> indices) const
+vector<VariableType> Dataset::get_variable_types(const vector<Index>& indices) const
 {
     vector<VariableType> variable_types(indices.size());
 

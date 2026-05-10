@@ -99,7 +99,7 @@ public:
 
     VariableType get_variable_type(const Index index) const { return variables[index].type; }
 
-    vector<VariableType> get_variable_types(const vector<Index> indices) const;
+    vector<VariableType> get_variable_types(const vector<Index>& indices) const;
     Index get_features_number() const;
     Index get_features_number(const string&) const;
     Index get_used_features_number() const;

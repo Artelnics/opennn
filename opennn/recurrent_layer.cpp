@@ -281,12 +281,9 @@ string Recurrent::write_expression(const vector<string>& feature_names,
             string current_variable_name;
 
             if (time_step == time_steps_local - 1)
-            {
-                if (j < ssize(output_names))
-                    current_variable_name = output_names[j];
-                else
-                    current_variable_name = "recurrent_output_" + to_string(j);
-            }
+                current_variable_name = (j < ssize(output_names))
+                    ? output_names[j]
+                    : "recurrent_output_" + to_string(j);
             else
                 current_variable_name = "recurrent_hidden_step_" + to_string(time_step) + "_neuron_" + to_string(j);
 

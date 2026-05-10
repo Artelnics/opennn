@@ -716,9 +716,11 @@ float TestingAnalysis::calculate_area_under_curve_confidence_limit(const MatrixR
     const float Q_2 = (2.0f * area_under_curve * area_under_curve) / (1.0f + area_under_curve);
 
     constexpr float z_95 = 1.64485f;  // one-sided 95% confidence Z-score
-    return float(z_95 * sqrt((area_under_curve*(1.0f - area_under_curve)
-                              + (float(total_positives) - 1.0f)*(Q_1-area_under_curve*area_under_curve)
-                              + (float(total_negatives) - 1.0f)*(Q_2-area_under_curve*area_under_curve))/(float(total_positives*total_negatives))));
+    const float auc_squared = area_under_curve * area_under_curve;
+    return z_95 * sqrt((area_under_curve * (1.0f - area_under_curve)
+                        + (float(total_positives) - 1.0f) * (Q_1 - auc_squared)
+                        + (float(total_negatives) - 1.0f) * (Q_2 - auc_squared))
+                       / float(total_positives * total_negatives));
 }
 
 float TestingAnalysis::calculate_optimal_threshold(const MatrixR& roc_curve) const
@@ -1421,7 +1423,7 @@ MatrixR TestingAnalysis::calculate_multiple_classification_tests() const
 
         const float f1_score = (precision + recall == 0)
                                   ? 0.0f
-                                  : float(2 * precision * recall) / float(precision + recall);
+                                  : 2 * precision * recall / (precision + recall);
 
         multiple_classification_tests(target_index, 0) = precision;
         multiple_classification_tests(target_index, 1) = recall;

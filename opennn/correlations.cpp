@@ -97,16 +97,12 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
         const auto x_vector = x.col(0);
         const auto y_vector = y.col(0);
 
-        if (!x_binary && !y_binary)
+        if (x_binary == y_binary)
             return linear_correlation_spearman(x_vector, y_vector);
 
-        if (y_binary && !x_binary)
-            return logistic_correlation_spearman(x_vector, y_vector);
-
-        if (x_binary && !y_binary)
-            return logistic_correlation_spearman(y_vector, x_vector);
-
-        return linear_correlation_spearman(x_vector, y_vector);
+        return x_binary
+            ? logistic_correlation_spearman(y_vector, x_vector)
+            : logistic_correlation_spearman(x_vector, y_vector);
     }
 
     if (x_columns == 1 && y_columns != 1)
@@ -222,17 +218,17 @@ float r_correlation_to_z_correlation(const float r_correlation)
 {
     const float r_clamped = clamp(r_correlation, -0.9999f, 0.9999f);
 
-    return float(0.5 * log((1 + r_clamped) / (1 - r_clamped)));
+    return 0.5f * log((1 + r_clamped) / (1 - r_clamped));
 }
 
-float z_correlation_to_r_correlation (const float z_correlation)
+float z_correlation_to_r_correlation(const float z_correlation)
 {
     return tanh(z_correlation);
 }
 
 pair<float, float> confidence_interval_z_correlation(const float z_correlation, Index sample_count)
 {
-    const float margin = 1.959964f * float(1/sqrt(sample_count - 3));
+    const float margin = 1.959964f / float(sqrt(sample_count - 3));
 
     return { z_correlation - margin, z_correlation + margin };
 }

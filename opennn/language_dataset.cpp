@@ -19,11 +19,9 @@ namespace {
 template <typename T>
 size_t get_maximum_size(const vector<vector<T>>& nested_values)
 {
-    size_t maximum_size = 0;
-    for (const auto& inner : nested_values)
-        if (inner.size() > maximum_size)
-            maximum_size = inner.size();
-    return maximum_size;
+    const auto it = max_element(nested_values.begin(), nested_values.end(),
+                                [](const auto& a, const auto& b) { return a.size() < b.size(); });
+    return it == nested_values.end() ? 0 : it->size();
 }
 
 void copy_padded_tokens(const vector<vector<Index>>& storage,
