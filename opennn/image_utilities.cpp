@@ -20,139 +20,199 @@ struct RGBQuad
     uint8_t reserved;
 };
 
-Tensor3 load_image(const filesystem::path& path)
+namespace {
+
+struct BmpHeader
 {
-    const string image_path_str = path.string();
+    Index height = 0;
+    Index width = 0;
+    Index channels = 0;
+    uint32_t bfOffBits = 0;
+    uint16_t biBitCount = 0;
+    int bytes_per_pixel = 0;
+    long long row_stride = 0;
+    bool top_down = false;
+    bool is_grayscale = false;
+    vector<RGBQuad> palette;
+};
+
+void read_bmp_file(const filesystem::path& path, vector<uint8_t>& buffer)
+{
+    const string path_str = path.string();
 
     ifstream file(path, ios::binary | ios::ate);
     if (!file)
-        throw runtime_error("Cannot open BMP file: " + image_path_str);
+        throw runtime_error("Cannot open BMP file: " + path_str);
 
     const streamsize size = file.tellg();
     if (size < 54)
-        throw runtime_error("File too small to be a BMP: " + image_path_str);
+        throw runtime_error("File too small to be a BMP: " + path_str);
 
     file.seekg(0, ios::beg);
 
-    thread_local vector<uint8_t> buffer;
     if (buffer.capacity() < size)
         buffer.reserve(size);
-
     buffer.resize(size);
 
     if (!file.read(reinterpret_cast<char*>(buffer.data()), size))
-        throw runtime_error("Error reading BMP file: " + image_path_str);
-    file.close();
+        throw runtime_error("Error reading BMP file: " + path_str);
+}
 
+BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str)
+{
     auto read_u16 = [&](int offset) { return static_cast<uint16_t>(buffer[offset] | (buffer[offset+1] << 8)); };
     auto read_u32 = [&](int offset) { return static_cast<uint32_t>(buffer[offset] | (buffer[offset+1] << 8) | (buffer[offset+2] << 16) | (buffer[offset+3] << 24)); };
     auto read_s32 = [&](int offset) { return static_cast<int32_t>(read_u32(offset)); };
 
-    if (read_u16(0) != 0x4D42) // 'BM'
-        throw runtime_error("Not a BMP file (invalid signature 'BM'): " + image_path_str);
+    if (read_u16(0) != 0x4D42)
+        throw runtime_error("Not a BMP file (invalid signature 'BM'): " + path_str);
 
-    const uint32_t bfOffBits = read_u32(10);
-    const uint32_t biSize    = read_u32(14);
+    BmpHeader h;
+    h.bfOffBits = read_u32(10);
+    const uint32_t biSize = read_u32(14);
 
     if (biSize != 40)
-        throw runtime_error("Unsupported BMP DIB header size in file: " + image_path_str);
+        throw runtime_error("Unsupported BMP DIB header size in file: " + path_str);
 
-    const int32_t  biWidth         = read_s32(18);
-    const int32_t  biHeight_signed = read_s32(22);
-    const uint16_t biPlanes        = read_u16(26);
-    const uint16_t biBitCount      = read_u16(28);
-    const uint32_t biCompression   = read_u32(30);
-    const uint32_t biClrUsed       = read_u32(46);
+    const int32_t biWidth = read_s32(18);
+    const int32_t biHeight_signed = read_s32(22);
+    const uint16_t biPlanes = read_u16(26);
+    h.biBitCount = read_u16(28);
+    const uint32_t biCompression = read_u32(30);
+    const uint32_t biClrUsed = read_u32(46);
 
     if (biWidth <= 0 || biHeight_signed == 0 || biPlanes != 1 || biCompression != 0)
-        throw runtime_error("Invalid or unsupported BMP format in file: " + image_path_str);
-    if (biBitCount != 8 && biBitCount != 24 && biBitCount != 32)
-        throw runtime_error("Unsupported BMP bit count: " + to_string(biBitCount));
+        throw runtime_error("Invalid or unsupported BMP format in file: " + path_str);
+    if (h.biBitCount != 8 && h.biBitCount != 24 && h.biBitCount != 32)
+        throw runtime_error("Unsupported BMP bit count: " + to_string(h.biBitCount));
 
-    vector<RGBQuad> palette;
-    bool is_grayscale = false;
+    h.is_grayscale = false;
 
-    if (biBitCount == 8)
+    if (h.biBitCount == 8)
     {
         const uint32_t num_palette_colors = biClrUsed ? biClrUsed : 256;
         if (num_palette_colors > 256)
             throw runtime_error("Invalid palette size for 8-bit BMP.");
 
-        palette.resize(num_palette_colors);
-        is_grayscale = true;
+        h.palette.resize(num_palette_colors);
+        h.is_grayscale = true;
 
         uint32_t pal_offset = 14 + biSize;
         for (uint32_t i = 0; i < num_palette_colors; ++i)
         {
-            palette[i].blue     = buffer[pal_offset++];
-            palette[i].green    = buffer[pal_offset++];
-            palette[i].red      = buffer[pal_offset++];
-            palette[i].reserved = buffer[pal_offset++];
+            h.palette[i].blue     = buffer[pal_offset++];
+            h.palette[i].green    = buffer[pal_offset++];
+            h.palette[i].red      = buffer[pal_offset++];
+            h.palette[i].reserved = buffer[pal_offset++];
 
-            if (palette[i].red != palette[i].green || palette[i].red != palette[i].blue)
-                is_grayscale = false;
+            if (h.palette[i].red != h.palette[i].green || h.palette[i].red != h.palette[i].blue)
+                h.is_grayscale = false;
         }
     }
 
-    const Index height = abs(biHeight_signed);
-    const Index width = biWidth;
-    const Index channels = (biBitCount == 8 && is_grayscale) ? 1 : 3;
-    const bool top_down = (biHeight_signed < 0);
+    h.height = abs(biHeight_signed);
+    h.width = biWidth;
+    h.channels = (h.biBitCount == 8 && h.is_grayscale) ? 1 : 3;
+    h.top_down = (biHeight_signed < 0);
+    h.bytes_per_pixel = (h.biBitCount == 32) ? 4 : (h.biBitCount == 24) ? 3 : 1;
+    h.row_stride = ((h.width * h.bytes_per_pixel + 3) / 4) * 4;
 
-    Tensor3 image(height, width, channels);
-
-    const int bytes_per_pixel = (biBitCount == 32) ? 4 : (biBitCount == 24) ? 3 : 1;
-    const long long row_stride = ((width * bytes_per_pixel + 3) / 4) * 4;
-
-    if (bfOffBits + row_stride * height > size)
+    if (h.bfOffBits + h.row_stride * h.height > Index(buffer.size()))
         throw runtime_error("Corrupted BMP: Pixel data exceeds file size.");
 
-    const uint8_t* pixel_data = buffer.data() + bfOffBits;
+    return h;
+}
 
-    auto* img_data = image.data();
+void decode_bmp_pixels(const vector<uint8_t>& buffer, const BmpHeader& h, float* dst, bool divide_by_255)
+{
+    const uint8_t* pixel_data = buffer.data() + h.bfOffBits;
+    const float scale = divide_by_255 ? (1.0f / 255.0f) : 1.0f;
 
-    for (Index y = 0; y < height; ++y)
+    for (Index y = 0; y < h.height; ++y)
     {
-        const Index tensor_y = top_down ? y : (height - 1 - y);
-        const uint8_t* row_ptr = pixel_data + y * row_stride;
+        const Index tensor_y = h.top_down ? y : (h.height - 1 - y);
+        const uint8_t* row_ptr = pixel_data + y * h.row_stride;
+        const Index row_start_index = tensor_y * h.width * h.channels;
 
-        const Index row_start_index = tensor_y * width * channels;
-
-        if (biBitCount == 24 || biBitCount == 32)
+        if (h.biBitCount == 24 || h.biBitCount == 32)
         {
-            for (Index x = 0; x < width; ++x)
+            for (Index x = 0; x < h.width; ++x)
             {
-                const uint8_t* pixel_pointer = row_ptr + x * bytes_per_pixel;
-                const Index pixel_index = row_start_index + x * channels;
-
-                img_data[pixel_index + 0] = static_cast<float>(pixel_pointer[2]); // R
-                img_data[pixel_index + 1] = static_cast<float>(pixel_pointer[1]); // G
-                img_data[pixel_index + 2] = static_cast<float>(pixel_pointer[0]); // B
+                const uint8_t* p = row_ptr + x * h.bytes_per_pixel;
+                const Index pi = row_start_index + x * h.channels;
+                dst[pi + 0] = float(p[2]) * scale;
+                dst[pi + 1] = float(p[1]) * scale;
+                dst[pi + 2] = float(p[0]) * scale;
             }
         }
-        else if (biBitCount == 8)
+        else if (h.biBitCount == 8)
         {
-            if (channels == 1) // 8-bit (1 channel)
+            if (h.channels == 1)
             {
-                for (Index x = 0; x < width; ++x)
-                    img_data[row_start_index + x] = static_cast<float>(palette[row_ptr[x]].red);
+                for (Index x = 0; x < h.width; ++x)
+                    dst[row_start_index + x] = float(h.palette[row_ptr[x]].red) * scale;
             }
-            else // 8-bit RGB (3 channels)
+            else
             {
-                for (Index x = 0; x < width; ++x)
+                for (Index x = 0; x < h.width; ++x)
                 {
-                    const RGBQuad& color = palette[row_ptr[x]];
-                    const Index pixel_index = row_start_index + x * 3;
-
-                    img_data[pixel_index + 0] = static_cast<float>(color.red);
-                    img_data[pixel_index + 1] = static_cast<float>(color.green);
-                    img_data[pixel_index + 2] = static_cast<float>(color.blue);
+                    const RGBQuad& c = h.palette[row_ptr[x]];
+                    const Index pi = row_start_index + x * 3;
+                    dst[pi + 0] = float(c.red) * scale;
+                    dst[pi + 1] = float(c.green) * scale;
+                    dst[pi + 2] = float(c.blue) * scale;
                 }
             }
         }
     }
+}
+
+}
+
+Tensor3 load_image(const filesystem::path& path)
+{
+    thread_local vector<uint8_t> buffer;
+
+    read_bmp_file(path, buffer);
+    const BmpHeader h = parse_bmp_header(buffer, path.string());
+
+    Tensor3 image(h.height, h.width, h.channels);
+    decode_bmp_pixels(buffer, h, image.data(), false);
 
     return image;
+}
+
+void load_image(const filesystem::path& path,
+                float* dst,
+                Index expected_height,
+                Index expected_width,
+                Index expected_channels,
+                bool divide_by_255)
+{
+    thread_local vector<uint8_t> buffer;
+
+    read_bmp_file(path, buffer);
+    const BmpHeader h = parse_bmp_header(buffer, path.string());
+
+    if (h.channels != expected_channels)
+        throw runtime_error("Channel mismatch in image: " + path.string());
+
+    if (h.height == expected_height && h.width == expected_width)
+    {
+        decode_bmp_pixels(buffer, h, dst, divide_by_255);
+        return;
+    }
+
+    Tensor3 temp(h.height, h.width, h.channels);
+    decode_bmp_pixels(buffer, h, temp.data(), false);
+
+    const Tensor3 resized = resize_image(temp, expected_height, expected_width);
+    const Index pixels = expected_height * expected_width * expected_channels;
+
+    if (divide_by_255)
+        for (Index k = 0; k < pixels; ++k) dst[k] = resized.data()[k] / 255.0f;
+    else
+        std::copy_n(resized.data(), pixels, dst);
 }
 
 Tensor3 resize_image(const Tensor3& input_image,

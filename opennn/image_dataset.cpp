@@ -237,8 +237,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     const Index folders_number = directory_path.size();
 
-    VectorI images_number = VectorI::Zero(folders_number + 1);
-
     Index samples_number = 0;
 
     vector<filesystem::path> paths;
@@ -255,8 +253,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
                 ++samples_number;
             }
         }
-
-        images_number[i+1] = samples_number;
     }
 
     if (samples_number == 0)
@@ -341,35 +337,22 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         #pragma omp parallel for
         for (Index i = 0; i < samples_number; ++i)
         {
-            Tensor3 image = load_image(paths[i]);
-
-            const Index current_height = image.dimension(0);
-            const Index current_width = image.dimension(1);
-            const Index current_channels = image.dimension(2);
-
-            if (current_channels != channels)
+            try
+            {
+                load_image(paths[i], &data(i, 0), height, width, channels, false);
+            }
+            catch (const std::exception& e)
             {
                 #pragma omp critical
-                { omp_error = "Different number of channels in image: " + paths[i].string() + "\n"; }
+                { omp_error = e.what(); }
                 continue;
             }
 
-            if (current_height != height || current_width != width)
-                image = resize_image(image, height, width);
-
-            copy(image.data(), image.data() + pixels_number, &data(i, 0));
-
-            for (Index k = 0; k < folders_number; ++k)
-            {
-                if (i >= images_number(k) && i < images_number(k + 1))
-                {
-                    if (targets_number == 1)
-                        data(i, pixels_number) = k;
-                    else
-                        data(i, k + pixels_number) = 1;
-                    break;
-                }
-            }
+            const Index label = labels[i];
+            if (targets_number == 1)
+                data(i, pixels_number) = label;
+            else
+                data(i, label + pixels_number) = 1;
 
             #pragma omp atomic
             ++progress_counter;
@@ -380,8 +363,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
         if (!omp_error.empty())
             throw runtime_error(omp_error);
-
-        shuffle_rows(data);
     }
 
     if (display)
@@ -424,25 +405,19 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     #pragma omp parallel for schedule(dynamic) if (parallelize)
     for (Index i = 0; i < batch_size; ++i)
     {
-        const filesystem::path& path = image_paths[sample_indices[i]];
-
-        Tensor3 image = load_image(path);
-
-        if (image.dimension(2) != channels)
+        try
+        {
+            load_image(image_paths[sample_indices[i]],
+                       input_data + i * pixels_per_image,
+                       height, width, channels,
+                       /*divide_by_255*/ true);
+        }
+        catch (const std::exception& e)
         {
             #pragma omp critical
-            { omp_error = "Channel mismatch in image: " + path.string(); }
+            { omp_error = e.what(); }
             continue;
         }
-
-        if (image.dimension(0) != height || image.dimension(1) != width)
-            image = resize_image(image, height, width);
-
-        float* dest = input_data + i * pixels_per_image;
-        const float* src = image.data();
-
-        for (Index k = 0; k < pixels_per_image; ++k)
-            dest[k] = src[k] / 255.0f;
     }
 
     if (!omp_error.empty())

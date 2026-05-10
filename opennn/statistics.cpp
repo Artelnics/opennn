@@ -1447,22 +1447,6 @@ VectorMap vector_map(const MatrixR& tensor, Index index_1)
     return VectorMap(const_cast<float*>(tensor.data()) + tensor.rows()*index_1, tensor.rows());
 }
 
-void shuffle_rows(MatrixR& matrix)
-{
-    const Index rows_number = matrix.rows();
-
-    if (rows_number <= 1) return;
-
-    for (Index i = rows_number - 1; i > 0; --i)
-    {
-        const Index j = random_integer(0, i);
-
-        if (i == j) continue;
-
-        matrix.row(i).swap(matrix.row(j));
-    }
-}
-
 VectorR filter_missing_values(const VectorR& x)
 {
     vector<Index> valid;

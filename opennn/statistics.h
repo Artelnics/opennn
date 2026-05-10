@@ -177,8 +177,6 @@ pair<X, Y> filter_missing_values(const X& x, const Y& y)
     return { slice_rows(x, valid), slice_rows(y, valid) };
 }
 
-void shuffle_rows(MatrixR& matrix);
-
 inline bool is_contiguous(const vector<Index>& indices)
 {
     return std::adjacent_find(indices.begin(), indices.end(),
