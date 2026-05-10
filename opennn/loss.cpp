@@ -58,7 +58,6 @@ void Loss::set_normalization_coefficient()
         const float total = float(positives + negatives);
         positives_weight = total / (2.0f * float(positives));
         negatives_weight = total / (2.0f * float(negatives));
-        normalization_coefficient = 1.0f;
     }
 }
 
