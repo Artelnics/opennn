@@ -82,8 +82,8 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu())
+#ifdef OPENNN_HAS_CUDA
+    if (is_gpu())
     {
         const Index parameters_number = neural_network->get_parameters_size();
 
@@ -144,10 +144,10 @@ TrainingResults StochasticGradientDescent::train()
 {
     TrainingResults results(maximum_epochs + 1);
 
-    const bool is_gpu = Configuration::instance().is_gpu();
+    const bool on_gpu = is_gpu();
 
     if (display) cout << "Training with stochastic gradient descent (SGD)"
-                     << (is_gpu ? " CUDA" : "") << "...\n";
+                     << (on_gpu ? " CUDA" : "") << "...\n";
 
     // Dataset
 
@@ -190,7 +190,7 @@ TrainingResults StochasticGradientDescent::train()
     // Batch pool: minimum 2 for producer/consumer double-buffer (avoids worker-main
     // deadlock on prefetch_before_loop + pop_next). GPU uses 3 for triple-buffer H2D.
 
-    const int pool_size = is_gpu ? 3 : 2;
+    const int pool_size = on_gpu ? 3 : 2;
 
     ThreadSafeQueue<Batch*> empty_training_queue;
     ThreadSafeQueue<Batch*> ready_training_queue;
@@ -214,9 +214,6 @@ TrainingResults StochasticGradientDescent::train()
             empty_validation_queue.push(validation_batch_pool.back().get());
         }
     }
-
-    // Forward / back propagation
-
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
 
     loss->set_normalization_coefficient();
@@ -242,7 +239,7 @@ TrainingResults StochasticGradientDescent::train()
 
     const Index parameters_number = loss->get_neural_network()->get_parameters_size();
 
-    const Device device = Configuration::instance().is_gpu() ? Device::CUDA : Device::CPU;
+    const Device device = is_gpu() ? Device::CUDA : Device::CPU;
 
     OptimizerData optimization_data;
     optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, device);
@@ -314,7 +311,7 @@ TrainingResults StochasticGradientDescent::train()
             validation_accuracy = val_stats.accuracy;
             results.validation_error_history(epoch) = validation_error;
 
-            if (epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
+            if (epoch != 0 && validation_error > results.validation_error_history(epoch - 1))
                 ++validation_failures;
         }
 

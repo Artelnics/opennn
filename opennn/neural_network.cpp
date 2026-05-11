@@ -48,6 +48,9 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
     layer_input_indices.push_back(input_indices.empty()
         ? vector<Index>(1, old_layers_number )
         : input_indices);
+
+    first_trainable_cache_ = -1;
+    last_trainable_cache_  = -1;
 }
 
 void NeuralNetwork::compile()
@@ -73,6 +76,13 @@ void NeuralNetwork::compile()
     float* state_pointer = states.as<float>();
     for (auto& layer : layers)
         state_pointer = layer->link_states(state_pointer);
+
+    const Index first = get_first_trainable_layer_index();
+    if (first >= 0 && size_t(first) < layers.size())
+    {
+        const auto& ops = layers[first]->get_operators();
+        if (!ops.empty()) ops[0]->input_delta_slots.clear();
+    }
 }
 
 void NeuralNetwork::validate_type(LayerType type) const
@@ -80,7 +90,6 @@ void NeuralNetwork::validate_type(LayerType type) const
     if (type == LayerType::Bounding)
         throw runtime_error("No layers can be added after a bounding layer.\n");
 }
-
 
 bool NeuralNetwork::has(const string& name) const
 {
@@ -107,12 +116,12 @@ static vector<string> get_feature_names_from(const vector<Variable>& variables)
     return feature_names;
 }
 
-const vector<string> NeuralNetwork::get_input_feature_names() const
+vector<string> NeuralNetwork::get_input_feature_names() const
 {
     return get_feature_names_from(input_variables);
 }
 
-const vector<string> NeuralNetwork::get_output_feature_names() const
+vector<string> NeuralNetwork::get_output_feature_names() const
 {
     return get_feature_names_from(output_variables);
 }
@@ -178,12 +187,12 @@ const Layer* NeuralNetwork::get_first(LayerType type) const
 
 Layer* NeuralNetwork::get_first(const string& name)
 {
-    return const_cast<Layer*>(const_cast<const NeuralNetwork*>(this)->get_first(name));
+    return get_first(string_to_layer_type(name));
 }
 
 Layer* NeuralNetwork::get_first(LayerType type)
 {
-    return const_cast<Layer*>(const_cast<const NeuralNetwork*>(this)->get_first(type));
+    return const_cast<Layer*>(static_cast<const NeuralNetwork*>(this)->get_first(type));
 }
 
 static void set_variable_names(vector<Variable>& variables, const vector<string>& new_names)
@@ -217,8 +226,7 @@ void NeuralNetwork::set_output_names(const vector<string>& new_output_names)
 
 void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 {
-    const Index total_inputs = new_input_shape.size();
-    input_variables.resize(total_inputs);
+    input_variables.resize(new_input_shape.size());
 
     if (has(LayerType::Scaling))
         get_first(LayerType::Scaling)->set_input_shape(new_input_shape);
@@ -248,16 +256,12 @@ void NeuralNetwork::set_default()
 void NeuralNetwork::set_layer_input_indices(const string& layer_label,
                                             const vector<string>& new_layer_input_labels)
 {
-    const Index layer_index = get_layer_index(layer_label);
+    vector<Index> new_layer_input_indices(new_layer_input_labels.size());
 
-    const Index size = new_layer_input_labels.size();
+    transform(new_layer_input_labels.begin(), new_layer_input_labels.end(), new_layer_input_indices.begin(),
+              [this](const string& label) { return get_layer_index(label); });
 
-    vector<Index> new_layer_input_indices(size);
-
-    for (Index i = 0; i < size; ++i)
-        new_layer_input_indices[i] = get_layer_index(new_layer_input_labels[i]);
-
-    layer_input_indices[layer_index] = new_layer_input_indices;
+    layer_input_indices[get_layer_index(layer_label)] = new_layer_input_indices;
 }
 
 void NeuralNetwork::set_layer_input_indices(const string& layer_label,
@@ -284,9 +288,7 @@ Index NeuralNetwork::get_inputs_number() const
     if (has(LayerType::Recurrent))
         return get_first(LayerType::Recurrent)->get_input_shape()[1];
 
-    const Shape input_shape = layers[0]->get_input_shape();
-
-    return input_shape.size();
+    return layers[0]->get_input_shape().size();
 }
 
 Index NeuralNetwork::get_outputs_number() const
@@ -314,21 +316,19 @@ Shape NeuralNetwork::get_output_shape() const
 
 Activation::Function NeuralNetwork::get_output_activation() const
 {
-    const Index last_idx = get_last_trainable_layer_index();
-    if (last_idx < 0 || static_cast<size_t>(last_idx) >= layers.size())
+    const Index last_index = get_last_trainable_layer_index();
+    if (last_index < 0 || static_cast<size_t>(last_index) >= layers.size())
         return Activation::Function::Identity;
 
-    return layers[last_idx]->get_output_activation();
+    return layers[last_index]->get_output_activation();
 }
 
 Index NeuralNetwork::get_parameters_number() const
 {
     Index parameters_number = 0;
 
-    const Index layers_number = get_layers_number();
-
-    for (Index i = 0; i < layers_number; ++i)
-        parameters_number += layers[i]->get_parameters_number();
+    for (const auto& layer : layers)
+        parameters_number += layer->get_parameters_number();
 
     return parameters_number;
 }
@@ -349,22 +349,26 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 
 Index NeuralNetwork::get_first_trainable_layer_index() const
 {
+    if (first_trainable_cache_ >= 0) return first_trainable_cache_;
+
     auto it = find_if(layers.begin(), layers.end(),
                       [](const unique_ptr<Layer>& layer) { return layer->get_is_trainable(); });
 
-    if (it != layers.end())
-        return distance(layers.begin(), it);
+    if (it == layers.end())
+        throw runtime_error("The neural network has no trainable layers: get_first_trainable_layer_index.");
 
-    throw runtime_error("The neural network has no trainable layers: get_first_trainable_layer_index.");
+    first_trainable_cache_ = distance(layers.begin(), it);
+    return first_trainable_cache_;
 }
 
 Index NeuralNetwork::get_last_trainable_layer_index() const
 {
-    const Index layers_number = get_layers_number();
+    if (last_trainable_cache_ >= 0) return last_trainable_cache_;
 
+    const Index layers_number = get_layers_number();
     for (Index i = layers_number - 1; i >= 0; --i)
         if (layers[i]->get_is_trainable())
-            return i;
+            return last_trainable_cache_ = i;
 
     throw runtime_error("The neural network has no trainable layers: get_last_trainable_layer_index");
 }
@@ -384,12 +388,13 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 {
     const Index byte_count = new_parameters.size() * Index(sizeof(float));
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     if (parameters.device_type == Device::CUDA)
     {
         parameters.resize_bytes(byte_count, Device::CUDA);
         if (byte_count > 0)
             CHECK_CUDA(cudaMemcpy(parameters.data, new_parameters.data(), byte_count, cudaMemcpyHostToDevice));
+        cast_parameters_to_bf16();
         return;
     }
 #endif
@@ -401,19 +406,37 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 
 void NeuralNetwork::set_parameters_random()
 {
-    const Index layers_number = get_layers_number();
+#ifdef OPENNN_HAS_CUDA
+    const bool was_on_device = (parameters.device_type == Device::CUDA);
+    if (was_on_device) copy_parameters_host();
+#endif
 
-    for (Index i = 0; i < layers_number; ++i)
-        layers[i]->set_parameters_random();
+    for (const auto& layer : layers)
+        for (Operator* op : layer->get_operators())
+            op->set_parameters_random();
+
+#ifdef OPENNN_HAS_CUDA
+    if (was_on_device) copy_parameters_device();
+#endif
 }
 
 void NeuralNetwork::set_parameters_glorot()
 {
     const Index layers_number = get_layers_number();
 
+#ifdef OPENNN_HAS_CUDA
+    const bool was_on_device = (parameters.device_type == Device::CUDA);
+    if (was_on_device) copy_parameters_host();
+#endif
+
     #pragma omp parallel for
     for (int i = 0; i < layers_number; ++i)
-        layers[i]->set_parameters_glorot();
+        for (Operator* op : layers[i]->get_operators())
+            op->set_parameters_glorot();
+
+#ifdef OPENNN_HAS_CUDA
+    if (was_on_device) copy_parameters_device();
+#endif
 }
 
 Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
@@ -476,6 +499,9 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation,
                                       bool is_training) const
 {
+    if (parameters.size_in_floats() != aligned_total_elements(get_parameter_shapes()))
+        throw runtime_error("Network shapes changed since compile(); call compile() again.");
+
     const Index first_layer_index = is_training ? get_first_trainable_layer_index() : 0;
     const Index last_layer_index  = is_training ? get_last_trainable_layer_index()  : get_layers_number() - 1;
 
@@ -537,16 +563,12 @@ MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
 
     MatrixR directional_inputs(points_number, inputs_number);
 
-    VectorR inputs(inputs_number);
-
-    inputs = point;
+    VectorR inputs = point;
 
     for (Index i = 0; i < points_number; ++i)
     {
         inputs(direction) = minimum + (maximum - minimum)*float(i)/float(points_number-1);
-
-        for (Index j = 0; j < inputs_number; ++j)
-            directional_inputs(i, j) = inputs(j);
+        directional_inputs.row(i) = inputs.transpose();
     }
 
     return directional_inputs;
@@ -587,18 +609,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     Index predicted_index = 0;
 
     if (outputs.size() > 1)
-    {
-        float max_value = outputs(0);
-
-        for (Index i = 1; i < outputs.cols(); ++i)
-        {
-            if (outputs(i) > max_value)
-            {
-                max_value = outputs(i);
-                predicted_index = i;
-            }
-        }
-    }
+        predicted_index = maximal_index(outputs.row(0));
     else
         predicted_index = outputs(0);
 
@@ -625,13 +636,11 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
     for (size_t i = 0; i < vocabulary.size(); ++i)
         vocabulary_map[vocabulary[i]] = i;
 
-    MatrixR inputs(batch_size, sequence_length);
-    inputs.setConstant(0.0f);
+    MatrixR inputs = MatrixR::Zero(batch_size, sequence_length);
 
     for (Index i = 0; i < batch_size; ++i)
     {
-        const string input_data = input_documents.data()[i];
-        const vector<string> tokens = tokenize(input_data);
+        const vector<string> tokens = tokenize(input_documents.data()[i]);
         const size_t tokens_number = tokens.size();
 
         if (sequence_length > 0)
@@ -735,7 +744,19 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     printer.open_element("Parameters");
     if (parameters.size_in_floats() > 0)
     {
-        const Map<const VectorR, AlignedMax> parameters_view(parameters.as<float>(), parameters.size_in_floats());
+        const Index params_size = parameters.size_in_floats();
+        const float* params_data = parameters.as<float>();
+        VectorR params_host_snapshot;
+#ifdef OPENNN_HAS_CUDA
+        if (parameters.device_type == Device::CUDA)
+        {
+            params_host_snapshot.resize(params_size);
+            CHECK_CUDA(cudaMemcpy(params_host_snapshot.data(), params_data,
+                                  params_size * sizeof(float), cudaMemcpyDeviceToHost));
+            params_data = params_host_snapshot.data();
+        }
+#endif
+        const Map<const VectorR, AlignedMax> parameters_view(params_data, params_size);
         add_json_field(printer, "Values", vector_to_string(parameters_view, " "));
     }
     printer.close_element();
@@ -745,8 +766,7 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
 
 void NeuralNetwork::from_JSON(const JsonDocument& document)
 {
-    static const bool _layers_registered = []() { register_classes(); return true; }();
-    (void)_layers_registered;
+    [[maybe_unused]] static const bool _layers_registered = []() { register_classes(); return true; }();
 
     const Json* neural_network_element = get_json_root(document, "NeuralNetwork");
 
@@ -792,6 +812,9 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
             layers.push_back(move(layer));
         }
+
+        first_trainable_cache_ = -1;
+        last_trainable_cache_  = -1;
     }
 
     const Json* connectivity_element = layers_container->find("LayerInputIndices");
@@ -802,12 +825,12 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
         {
             for (const Json& entry : indices_array->array_value)
             {
-                const long layer_idx = read_json_index(&entry, "LayerIndex");
+                const long layer_index = read_json_index(&entry, "LayerIndex");
                 const string text   = read_json_string(&entry, "Text");
-                if (layer_idx >= 0 && layer_idx < ssize(layers) && !text.empty())
+                if (layer_index >= 0 && layer_index < ssize(layers) && !text.empty())
                 {
                     Shape shape = string_to_shape(text, " ");
-                    layer_input_indices[layer_idx] = vector<Index>(shape.begin(), shape.end());
+                    layer_input_indices[layer_index] = vector<Index>(shape.begin(), shape.end());
                 }
             }
         }
@@ -828,16 +851,16 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
     if (items_array && items_array->is_array())
     {
-        Index layer_idx = 0;
+        Index layer_index = 0;
         for (const Json& item : items_array->array_value)
         {
             if (!item.is_object() || item.object_value.empty()) continue;
-            if (layer_idx >= ssize(layers)) break;
+            if (layer_index >= ssize(layers)) break;
 
             JsonDocument layer_doc;
             layer_doc.root = item;
-            layers[layer_idx]->load_state_from_JSON(layer_doc);
-            ++layer_idx;
+            layers[layer_index]->load_state_from_JSON(layer_doc);
+            ++layer_index;
         }
     }
 
@@ -857,7 +880,15 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
             }
 
             const Index elements_to_copy = min(parameters.size_in_floats(), xml_parameters.size());
+
+#ifdef OPENNN_HAS_CUDA
+            const bool was_on_device = (parameters.device_type == Device::CUDA);
+            if (was_on_device) copy_parameters_host();
+#endif
             std::copy(xml_parameters.data(), xml_parameters.data() + elements_to_copy, parameters.as<float>());
+#ifdef OPENNN_HAS_CUDA
+            if (was_on_device) copy_parameters_device();
+#endif
         }
     }
 }
@@ -881,7 +912,19 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
     if (!file.is_open())
         throw runtime_error("Cannot open parameters data file.\n");
 
-    const Map<const VectorR, AlignedMax> parameters_view(parameters.as<float>(), parameters.size_in_floats());
+    const Index params_size = parameters.size_in_floats();
+    const float* params_data = parameters.as<float>();
+    VectorR params_host_snapshot;
+#ifdef OPENNN_HAS_CUDA
+    if (parameters.device_type == Device::CUDA)
+    {
+        params_host_snapshot.resize(params_size);
+        CHECK_CUDA(cudaMemcpy(params_host_snapshot.data(), params_data,
+                              params_size * sizeof(float), cudaMemcpyDeviceToHost));
+        params_data = params_host_snapshot.data();
+    }
+#endif
+    const Map<const VectorR, AlignedMax> parameters_view(params_data, params_size);
     file << parameters_view << "\n";
 
     file.close();
@@ -903,7 +946,14 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 
     const Index parameters_number = parameters.size_in_floats();
 
+#ifdef OPENNN_HAS_CUDA
+    const bool was_on_device = (parameters.device_type == Device::CUDA);
+    if (was_on_device) copy_parameters_host();
+#endif
     file.read(reinterpret_cast<char*>(parameters.as<float>()), parameters_number * sizeof(float));
+#ifdef OPENNN_HAS_CUDA
+    if (was_on_device) copy_parameters_device();
+#endif
 
     if (!file)
         throw runtime_error("Error reading binary file: " + file_name.string());
@@ -1001,32 +1051,21 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
 
 vector<string> NeuralNetwork::get_layer_labels() const
 {
-    const Index layers_number = get_layers_number();
-
-    vector<string> layer_labels(layers_number);
-
-    for (Index i = 0; i < layers_number; ++i)
-        layer_labels[i] = layers[i]->get_label();
-
+    vector<string> layer_labels(layers.size());
+    transform(layers.begin(), layers.end(), layer_labels.begin(),
+              [](const unique_ptr<Layer>& layer) { return layer->get_label(); });
     return layer_labels;
 }
 
 vector<string> NeuralNetwork::get_names_string() const
 {
-    const Index layers_number = get_layers_number();
-
-    vector<string> names(layers_number);
-
-    for (Index i = 0; i < layers_number; ++i)
-        names[i] = layers[i]->get_name();
-
+    vector<string> names(layers.size());
+    transform(layers.begin(), layers.end(), names.begin(),
+              [](const unique_ptr<Layer>& layer) { return layer->get_name(); });
     return names;
 }
 
-
-
-
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
 void NeuralNetwork::copy_parameters_device()
 {
@@ -1038,8 +1077,15 @@ void NeuralNetwork::copy_parameters_device()
        config.inference_type == Type::BF16)
     {
         parameters_bf16.resize_bytes(parameters.size_in_floats() * Index(sizeof(__nv_bfloat16)), Device::CUDA);
+        // Buffer::migrate_to runs cudaMemcpy on the per-thread default stream; compute_stream
+        // is non-blocking, so without this barrier the BF16 cast kernel can launch before the
+        // H2D writes are visible on compute_stream, leaving the mirror full of zeros for the
+        // first forward after migrate.
+        CHECK_CUDA(cudaDeviceSynchronize());
         cast_parameters_to_bf16();
     }
+
+    link_parameters();
 }
 
 void NeuralNetwork::cast_parameters_to_bf16()
@@ -1057,6 +1103,8 @@ void NeuralNetwork::copy_parameters_host()
     if (parameters.empty()) return;
 
     parameters.migrate_to(Device::CPU);
+
+    link_parameters();
 }
 
 void NeuralNetwork::link_parameters()
@@ -1064,32 +1112,29 @@ void NeuralNetwork::link_parameters()
     // Ignore the BF16 mirror when active Configuration is CPU (host can't read GPU memory).
     float* fp32_ptr           = parameters.as<float>();
     const bool use_bf16_mirror =
-        Configuration::instance().is_gpu() && parameters_bf16.bytes > 0;
-    __nv_bfloat16* bf16_ptr  = use_bf16_mirror
+        is_gpu() && parameters_bf16.bytes > 0;
+    __nv_bfloat16* bf16_ptr = use_bf16_mirror
                                 ? parameters_bf16.as<__nv_bfloat16>()
                                 : nullptr;
 
     for (auto& layer : layers)
     {
-        const vector<Shape> shapes = layer->get_parameter_shapes();
-        const vector<Type> dtypes = layer->get_parameter_dtypes();
+        const auto specs = layer->get_parameter_specs();
         auto& param_views = layer->get_parameter_views();
 
-        for (size_t i = 0; i < shapes.size(); ++i)
+        for (size_t i = 0; i < specs.size(); ++i)
         {
-            if (shapes[i].empty()) continue;
+            const auto& [shape, slot_dtype] = specs[i];
+            if (shape.empty()) continue;
 
-            const Index aligned = get_aligned_size(shapes[i].size());
-            const Type slot_dtype = (i < dtypes.size())
-                                        ? dtypes[i]
-                                        : Type::FP32;
+            const Index aligned = get_aligned_size(shape.size());
 
             if (i < param_views.size())
             {
                 const bool use_bf16 = (slot_dtype == Type::BF16 && bf16_ptr != nullptr);
                 void* slot_ptr = use_bf16 ? static_cast<void*>(bf16_ptr)
                                           : static_cast<void*>(fp32_ptr);
-                param_views[i] = TensorView(slot_ptr, shapes[i], use_bf16 ? Type::BF16 : Type::FP32);
+                param_views[i] = TensorView(slot_ptr, shape, use_bf16 ? Type::BF16 : Type::FP32);
             }
 
             fp32_ptr += aligned;
@@ -1105,6 +1150,8 @@ void NeuralNetwork::copy_states_device()
     if (states.empty()) return;
 
     states.migrate_to(Device::CUDA);
+
+    link_states();
 }
 
 void NeuralNetwork::copy_states_host()
@@ -1112,6 +1159,8 @@ void NeuralNetwork::copy_states_host()
     if (states.empty()) return;
 
     states.migrate_to(Device::CPU);
+
+    link_states();
 }
 
 void NeuralNetwork::link_states()
@@ -1127,9 +1176,7 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
                                                 ForwardPropagation& forward_propagation)
 {
     copy_parameters_device();
-    link_parameters();
     copy_states_device();
-    link_states();
 
     const Index input_size = input_views_cpu[0].size();
     float* input_device = nullptr;
@@ -1193,10 +1240,6 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     }
 
     CHECK_CUDA(cudaFree(input_device));
-    copy_parameters_host();
-    copy_states_host();
-    link_parameters();
-    link_states();
 
     return result;
 }

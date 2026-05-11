@@ -73,25 +73,13 @@ public:
 
         vector<Index> true_negatives_indices;
     };
-
-    // Get
-
     const NeuralNetwork* get_neural_network() const { return neural_network; }
     const Dataset* get_dataset() const { return dataset; }
-
-    // Set
-
     void set_neural_network(NeuralNetwork* new_neural_network) { neural_network = new_neural_network; }
     void set_dataset(Dataset* new_dataset) { dataset = new_dataset; }
     void set_batch_size(Index new_batch_size) { batch_size = new_batch_size; }
     Index get_batch_size() const { return batch_size; }
-
-    // Checking
-
     void check() const;
-
-    // Error data
-
     MatrixR calculate_error() const;
 
     Tensor3 calculate_error_data() const;
@@ -123,32 +111,20 @@ public:
     float calculate_masked_accuracy(const Tensor3&, const MatrixR&) const;
 
     float calculate_determination(const VectorR&, const VectorR&) const;
-
-    // Goodness-of-fit analysis
-
     Tensor<Correlation, 1> linear_correlation(const MatrixR&, const MatrixR&) const;
 
     void print_linear_correlations() const;
 
     Tensor<GoodnessOfFitAnalysis, 1> perform_goodness_of_fit_analysis() const;
     void print_goodness_of_fit_analysis() const;
-
-    // Binary classifcation
-
     VectorR calculate_binary_classification_tests(const float = 0.50) const;
 
     void print_binary_classification_tests() const;
-
-    // Confusion
-
     vector<MatrixI> calculate_multilabel_confusion(const float) const;
     MatrixI calculate_confusion(const MatrixR&, const MatrixR&, float = 0.50) const;
     MatrixI calculate_confusion(const float = 0.50) const;
 
     VectorI calculate_positives_negatives_rate(const MatrixR&, const MatrixR&) const;
-
-    // ROC curve
-
     RocAnalysis perform_roc_analysis() const;
 
     MatrixR calculate_roc_curve(const MatrixR&, const MatrixR&) const;
@@ -156,9 +132,6 @@ public:
     float calculate_area_under_curve(const MatrixR&) const;
     float calculate_area_under_curve_confidence_limit(const MatrixR&, const MatrixR&) const;
     float calculate_optimal_threshold(const MatrixR&) const;
-
-    // Lift Chart
-
     MatrixR perform_cumulative_gain_analysis() const;
     MatrixR calculate_cumulative_gain(const MatrixR&, const MatrixR&) const;
     MatrixR calculate_negative_cumulative_gain(const MatrixR&, const MatrixR&)const;
@@ -168,27 +141,15 @@ public:
 
     KolmogorovSmirnovResults perform_Kolmogorov_Smirnov_analysis() const;
     VectorR calculate_maximum_gain(const MatrixR&, const MatrixR&) const;
-
-    // Output histogram
-
     vector<Histogram> calculate_output_histogram(const MatrixR&, Index = 10) const;
-
-    // Binary classification rates
-
     BinaryClassificationRates calculate_binary_classification_rates(const float = 0.50) const;
 
     vector<Index> calculate_true_positive_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
     vector<Index> calculate_false_positive_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
     vector<Index> calculate_false_negative_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
     vector<Index> calculate_true_negative_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
-
-    // Multiple classification tests
-
     VectorR calculate_multiple_classification_precision() const;
     MatrixR calculate_multiple_classification_tests() const;
-
-    // Multiple classification rates
-
     Tensor<VectorI, 2> calculate_multiple_classification_rates() const;
 
     Tensor<VectorI, 2> calculate_multiple_classification_rates(const MatrixR&, const MatrixR&, const vector<Index>&) const;
@@ -196,9 +157,6 @@ public:
     Tensor<string, 2> calculate_well_classified_samples(const MatrixR&, const MatrixR&, const vector<string>&) const;
 
     Tensor<string, 2> calculate_misclassified_samples(const MatrixR&, const MatrixR&, const vector<string>&) const;
-
-    // Save
-
     void save_confusion(const filesystem::path&) const;
 
     void save_multiple_classification_tests(const filesystem::path&) const;
@@ -210,21 +168,12 @@ public:
     void save_well_classified_samples_statistics(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
 
     void save_misclassified_samples_statistics(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
-
-    // Forecasting
-
     vector<VectorR> calculate_error_autocorrelation(const Index = 10) const;
 
     vector<VectorR> calculate_inputs_errors_cross_correlation(const Index = 10) const;
-
-    // Transformer
-
     pair<float, float> test_transformer() const;
 
     string test_transformer(const vector<string>& context_string, bool imported_vocabulary) const;
-
-    // Serialization
-
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;

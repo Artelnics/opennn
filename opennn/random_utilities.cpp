@@ -144,16 +144,14 @@ void shuffle(VectorB& vector_to_shuffle)
     shuffle(vector_to_shuffle.data(), vector_to_shuffle.data() + vector_to_shuffle.size(), get_generator());
 }
 
-Index get_random_element(const vector<Index>&values)
+Index get_random_element(const vector<Index>& values)
 {
     if (values.empty())
         throw runtime_error("get_random_element: Input vector is empty.");
 
     uniform_int_distribution<size_t> distribution(0, values.size() - 1);
 
-    const size_t random_index = distribution(get_generator());
-
-    return values[random_index];
+    return values[distribution(get_generator())];
 }
 
 void set_random_integer(MatrixR &tensor, Index min, Index max)

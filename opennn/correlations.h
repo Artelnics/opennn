@@ -57,9 +57,6 @@ Correlation point_biserial_correlation(const VectorR&, const VectorR&);
 Correlation eta_squared_correlation(const VectorR&, const MatrixR&);
 
 Correlation correlation(const MatrixR&, const MatrixR&);
-
-// Spearman correlation
-
 Correlation linear_correlation_spearman(const VectorR&, const VectorR&);
 
 VectorR calculate_spearman_ranks(const VectorR&);
@@ -67,16 +64,10 @@ VectorR calculate_spearman_ranks(const VectorR&);
 Correlation logistic_correlation_spearman(const VectorR&, const VectorR&);
 
 Correlation correlation_spearman(const MatrixR&, const MatrixR&);
-
-// Confidence interval
-
 float r_correlation_to_z_correlation(const float);
 float z_correlation_to_r_correlation(const float);
 
 pair<float, float> confidence_interval_z_correlation(const float, Index);
-
-// Time series correlation
-
 VectorR autocorrelations(const VectorR&, Index  = 10);
 
 VectorR cross_correlations(const VectorR&, const VectorR&, Index);

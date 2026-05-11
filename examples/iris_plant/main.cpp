@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-#include "../../opennn/dataset.h"
+#include "../../opennn/tabular_dataset.h"
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
@@ -26,7 +26,7 @@ int main()
 
         // Dataset
 
-        Dataset dataset("../data/iris_plant_original.csv", ";", true, false);
+        TabularDataset dataset("../data/iris_plant_original.csv", ";", true, false);
 
         const Index inputs_number = dataset.get_features_number("Input");
         const Index targets_number = dataset.get_features_number("Target");

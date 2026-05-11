@@ -30,9 +30,10 @@ int main()
     {
         cout << "OpenNN. Translation Example." << endl;
 
+        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
 
         // Dataset
-        
+
         LanguageDataset language_dataset("../data/ES-EN-small.txt");
 
         const Index input_vocabulary_size  = language_dataset.get_input_vocabulary_size();
@@ -78,9 +79,7 @@ int main()
         adam->set_maximum_epochs(50);
         adam->set_display_period(5);
 
-        Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
-
-        cout << "\nTraining on CPU..." << endl;
+        cout << "\nTraining on GPU..." << endl;
         training_strategy.train();
 
         // Predictions
@@ -96,8 +95,6 @@ int main()
             };
 
         // Inference requires GPU (TransformerDecoder is GPU-only).
-        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
-
         TransformerDecoder decoder(transformer, language_dataset);
         for(Index i = 0; i < static_cast<Index>(test_sources.size()); i++)
         {

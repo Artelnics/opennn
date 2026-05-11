@@ -24,7 +24,7 @@ void sgd_update_cuda(const Index, float*, float*, const float*,
                      const float, const float, const bool,
                      __nv_bfloat16* params_bf16 = nullptr);
 
-void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm);
+void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm, const float eps);
 
 // Cast FP32 source buffer to a BF16 destination buffer of the same length.
 // Used to initialize the BF16 mirror of network parameters in
@@ -35,33 +35,16 @@ void clip_gradient_norm_cuda(const Index n, float* gradient, const float* square
 // When `stream` is null the host wrapper falls back to Backend::get_compute_stream().
 void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
                             cudaStream_t stream = nullptr);
-
-// Cast BF16 source buffer to a FP32 destination buffer of the same length.
-// Used by `convolution_backward_weights` to merge the BF16 gradient written by
-// cudnnConvolutionBackwardFilter (which requires dwDesc to match xDesc/dyDesc
-// dtype, i.e. BF16 in BP16 mode) into the FP32 master gradient that Adam
-// reads. BF16→FP32 is exact: BF16 is the high 16 bits of FP32, so this is a
-// shift, no rounding.
 void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst);
 
-// (input - target) into a FP32 buffer; input dtype templated, target/output FP32.
-// Used by the loss helpers to bridge BF16 activations and FP32 targets without
-// going through cuDNN OpTensor (which doesn't accept mixed dtypes).
 template<typename TIn>
 void diff_to_fp32_cuda(const Index n, const TIn* input, const float* target, float* output);
 
-// scale * (input - target), with input/output dtypes independent. Used for the
-// gradient of squared-error losses where output (input_delta) follows the
-// activation dtype while target stays FP32.
 template<typename TIn, typename TOut>
 void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target,
                             float scale, TOut* output);
 
 // Errors
-
-// Targets stay FP32: the Batch always allocates target buffers as FP32 (one-hot
-// or 0/1 floats) regardless of activation dtype. Reading them as T=BF16 would
-// reinterpret 4-byte FP32 elements as 2-byte BF16 → garbage every other lane.
 
 template<typename T>
 void binary_cross_entropy_cuda(const Index, float*, const float*, const T*, const float);
@@ -96,10 +79,6 @@ void l1_gradient_cuda(const Index, T*, const T*, const float);
 
 template<typename TIn, typename TOut>
 void bounding_cuda(const Index n, const int features, const TIn* input, const float* lower, const float* upper, TOut* output);
-
-// Scaling / Unscaling. Mixed-dtype: input is typically FP32 from the Batch (or
-// BF16 from the previous layer for unscale), output may follow the activation
-// dtype downstream or stay FP32 for the network's final output.
 
 template<typename TIn, typename TOut>
 void scale_cuda(const Index n, const int features,

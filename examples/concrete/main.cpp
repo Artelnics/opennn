@@ -9,7 +9,7 @@
 #include <iostream>
 #include <string>
 
-#include "../../opennn/dataset.h"
+#include "../../opennn/tabular_dataset.h"
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/bounding_layer.h"
 #include "../../opennn/training_strategy.h"
@@ -31,7 +31,7 @@ int main()
 
         cout << "OpenNN Response Optimization Example: WWTP " << endl;
 
-        Dataset dataset("../data/WWTP_Dataset.csv", ",", true, false);
+        TabularDataset dataset("../data/WWTP_Dataset.csv", ",", true, false);
 
         dataset.impute_missing_values_mean();
 
@@ -173,7 +173,7 @@ int main()
     // CONCRETE EXPERIMENT
         cout << "OpenNN Response Optimization Example: Concrete " << endl;
 
-        Dataset dataset("../data/concrete.csv", ",", true, false);
+        TabularDataset dataset("../data/concrete.csv", ",", true, false);
 
         dataset.set_variable_types(VariableType::Numeric);
 

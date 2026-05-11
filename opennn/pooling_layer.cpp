@@ -22,11 +22,10 @@ Pooling::Pooling(const Shape& new_input_shape,
                  const Shape& new_stride_shape,
                  const Shape& new_padding_dimensions,
                  const string& new_pooling_method,
-                 const string& new_name) : Layer()
+                 const string& new_name)
+    : Layer("Pooling", LayerType::Pooling)
 {
-    name = "Pooling";
-    layer_type = LayerType::Pooling;
-
+    operators = {&pool};
     set(new_input_shape,
         new_pool_dimensions,
         new_stride_shape,
@@ -34,8 +33,6 @@ Pooling::Pooling(const Shape& new_input_shape,
         new_pooling_method,
         new_name);
 }
-
-// Getters
 
 Shape Pooling::get_output_shape() const
 {
@@ -68,21 +65,22 @@ vector<pair<Shape, Type>> Pooling::get_forward_specs(Index batch_size) const
     return specs;
 }
 
-vector<pair<Shape, Type>> Pooling::get_backward_specs(Index batch_size) const
-{
-    return {{{batch_size, input_height, input_width, input_channels}, compute_dtype}};
-}
-
 void Pooling::update_pool_operator()
 {
     pool.set(input_height, input_width, input_channels,
              pool_height, pool_width,
              row_stride, column_stride,
              padding_height, padding_width,
-             pooling_method == PoolingMethod::MaxPooling ? 0 : 1);
-}
+             pooling_method == PoolingMethod::MaxPooling ? Pool::Max : Pool::Average);
 
-// Setters
+    pool.input_slots = {Input};
+    pool.output_slots = (pooling_method == PoolingMethod::MaxPooling)
+        ? vector<size_t>{Output, MaximalIndices}
+        : vector<size_t>{1};                       // {Output}; only 2 slots → Output is index 1
+
+    pool.output_delta_slots = {OutputDelta};
+    pool.input_delta_slots  = {InputDelta};
+}
 
 void Pooling::set(const Shape& new_input_shape,
                   const Shape& new_pool_dimensions,
@@ -201,63 +199,8 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
     update_pool_operator();
 }
 
-// Forward / back propagation
-
-void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
+void Pooling::read_JSON_body(const Json* pooling_layer_element)
 {
-    auto& forward_views = forward_propagation.views[layer];
-
-    const size_t output_slot = forward_views.size() - 1;
-
-    TensorView empty_indices;
-    TensorView& indices_view = (pooling_method == PoolingMethod::MaxPooling)
-        ? forward_views[MaximalIndices][0]
-        : empty_indices;
-
-    pool.apply(forward_views[Input][0],
-               forward_views[output_slot][0],
-               indices_view,
-               is_training);
-}
-
-void Pooling::back_propagate(ForwardPropagation& forward_propagation,
-                             BackPropagation& back_propagation,
-                             size_t layer) const noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    const size_t output_slot = forward_views.size() - 1;
-
-    TensorView empty_indices;
-    TensorView& indices_view = (pooling_method == PoolingMethod::MaxPooling)
-        ? forward_views[MaximalIndices][0]
-        : empty_indices;
-
-    pool.apply_delta(forward_views[Input][0],
-                     forward_views[output_slot][0],
-                     delta_views[OutputDelta][0],
-                     indices_view,
-                     delta_views[InputDelta][0]);
-}
-
-// Serialization
-
-void Pooling::from_JSON(const JsonDocument& document)
-{
-    const Json* pooling_layer_element = get_json_root(document, "Pooling");
-
-    set_label(read_json_string(pooling_layer_element, "Label"));
-
-    // Read all state into the layer first; configure the operator once at the end.
-    const Shape input_shape = string_to_shape(read_json_string(pooling_layer_element, "InputDimensions"));
-    if (input_shape.rank != 3)
-        throw runtime_error("Input shape rank must be 3");
-
-    input_height    = input_shape[0];
-    input_width     = input_shape[1];
-    input_channels  = input_shape[2];
-
     pool_height     = read_json_index(pooling_layer_element, "PoolHeight");
     pool_width      = read_json_index(pooling_layer_element, "PoolWidth");
 
@@ -272,13 +215,9 @@ void Pooling::from_JSON(const JsonDocument& document)
     update_pool_operator();
 }
 
-void Pooling::to_JSON(JsonWriter& printer) const
+void Pooling::write_JSON_body(JsonWriter& printer) const
 {
-    printer.open_element("Pooling");
-
     write_json(printer, {
-        {"Label", label},
-        {"InputDimensions", shape_to_string(get_input_shape())},
         {"PoolHeight", to_string(get_pool_height())},
         {"PoolWidth", to_string(get_pool_width())},
         {"PoolingMethod", pooling_method_to_string(pooling_method)},
@@ -287,8 +226,6 @@ void Pooling::to_JSON(JsonWriter& printer) const
         {"PaddingHeight", to_string(get_padding_height())},
         {"PaddingWidth", to_string(get_padding_width())}
     });
-
-    printer.close_element();
 }
 
 REGISTER(Layer, Pooling, "Pooling")

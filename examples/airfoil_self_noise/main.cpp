@@ -9,7 +9,7 @@
 #include <iostream>
 #include <string>
 
-#include "../../opennn/dataset.h"
+#include "../../opennn/tabular_dataset.h"
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/bounding_layer.h"
 #include "../../opennn/training_strategy.h"
@@ -30,14 +30,14 @@ int main()
 
         set_seed(42);
 
-        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
+        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
 
         const Index neurons_number = 12;
         const float regularization_weight = float(0.001);
 
         // DataSet
 
-        Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
+        TabularDataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
         dataset.split_samples_random(float(0.8), float(0.0), float(0.2));
 

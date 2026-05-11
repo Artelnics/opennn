@@ -19,18 +19,19 @@ namespace opennn
 {
 
 Normalization3d::Normalization3d(const Shape& new_input_shape,
-                                 const string& new_name) : Layer()
+                                 const string& new_name)
+    : Layer("Normalization3d", LayerType::Normalization3d)
 {
-    name = "Normalization3d";
-    layer_type = LayerType::Normalization3d;
+    operators = {&layer_norm};
 
-    const Index new_sequence_length     = new_input_shape.empty() ? Index(0) : new_input_shape[0];
-    const Index new_embedding_dimension = new_input_shape.rank >= 2 ? new_input_shape[1] : Index(0);
+    set(new_input_shape.dim_or_zero(0), new_input_shape.dim_or_zero(1), new_name);
 
-    set(new_sequence_length, new_embedding_dimension, new_name);
+    layer_norm.input_slots  = {Input};
+    layer_norm.output_slots = {Means, StandardDeviations, NormalizedInput, Output};
+
+    layer_norm.output_delta_slots = {OutputDelta};
+    layer_norm.input_delta_slots  = {InputDelta};
 }
-
-// Getters
 
 Shape Normalization3d::get_input_shape() const
 {
@@ -42,14 +43,9 @@ Shape Normalization3d::get_output_shape() const
     return { sequence_length, embedding_dimension };
 }
 
-vector<Operator*> Normalization3d::get_operators()
-{
-    return {&layer_norm};
-}
-
 vector<pair<Shape, Type>> Normalization3d::get_forward_specs(Index batch_size) const
 {
-    const Shape normalized_shape = Configuration::instance().is_gpu()
+    const Shape normalized_shape = is_gpu()
         ? Shape{}
         : Shape{batch_size, sequence_length, embedding_dimension};
 
@@ -60,13 +56,6 @@ vector<pair<Shape, Type>> Normalization3d::get_forward_specs(Index batch_size) c
         {{batch_size, sequence_length, embedding_dimension}, compute_dtype}, // Output
     };
 }
-
-vector<pair<Shape, Type>> Normalization3d::get_backward_specs(Index batch_size) const
-{
-    return {{{batch_size, sequence_length, embedding_dimension}, compute_dtype}};
-}
-
-// Setters
 
 void Normalization3d::set(Index new_sequence_length,
                           Index new_embedding_dimension,
@@ -80,76 +69,12 @@ void Normalization3d::set(Index new_sequence_length,
     layer_norm.set(sequence_length, embedding_dimension);
 }
 
-// link_parameters() is inherited from Layer; the base auto-distributes
-// {gamma, beta} to layer_norm.
-
-void Normalization3d::set_parameters_random()
+void Normalization3d::read_JSON_body(const Json* element)
 {
-    layer_norm.init_defaults();
-}
-
-void Normalization3d::set_parameters_glorot()
-{
-    set_parameters_random();
-}
-
-// Forward / back propagation
-
-void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-
-    layer_norm.apply(forward_views[Input][0],
-                     forward_views[Means][0],
-                     forward_views[StandardDeviations][0],
-                     forward_views[NormalizedInput][0],
-                     forward_views[Output][0],
-                     forward_propagation.batch_size);
-}
-
-void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
-                                     BackPropagation& back_propagation,
-                                     size_t layer) const noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-    auto& delta_views = back_propagation.delta_views[layer];
-    auto& gradient_views = back_propagation.gradient_views[layer];
-
-    layer_norm.apply_delta(forward_views[Input][0],
-                           delta_views[OutputDelta][0],
-                           forward_views[Means][0],
-                           forward_views[StandardDeviations][0],
-                           forward_views[NormalizedInput][0],
-                           gradient_views[Gamma],
-                           gradient_views[Beta],
-                           delta_views[InputDelta][0],
-                           forward_propagation.batch_size);
-}
-
-// Serialization
-
-void Normalization3d::from_JSON(const JsonDocument& document)
-{
-    const Json* element = get_json_root(document, "Normalization3d");
-
     const string new_name = read_json_string(element, "Label");
-    const Index new_sequence_length = read_json_index(element, "SequenceLength");
-    const Index new_embedding_dimension = read_json_index(element, "EmbeddingDimension");
+    const Shape new_input_shape = string_to_shape(read_json_string(element, "InputDimensions"));
 
-    set(new_sequence_length, new_embedding_dimension, new_name);
-}
-
-void Normalization3d::to_JSON(JsonWriter& printer) const
-{
-    printer.open_element("Normalization3d");
-
-    write_json(printer, {
-        {"Label", label},
-        {"SequenceLength", to_string(get_sequence_length())},
-        {"EmbeddingDimension", to_string(get_embedding_dimension())}
-    });
-
-    printer.close_element();
+    set(new_input_shape.dim_or_zero(0), new_input_shape.dim_or_zero(1), new_name);
 }
 
 REGISTER(Layer, Normalization3d, "Normalization3d")

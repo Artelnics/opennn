@@ -55,9 +55,7 @@ public:
 
     bool get_batch_normalization() const { return batch_norm.active(); }
 
-    vector<Operator*> get_operators() override;
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
-    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
 
     void set(const Shape& = {0, 0, 0},
              const Shape& = {3, 3, 1, 1},
@@ -68,11 +66,8 @@ public:
              const string& = "convolutional_layer");
 
     void set_input_shape(const Shape&) override;
-    void set_compute_dtype(Type new_compute_dtype) override
-    {
-        Layer::set_compute_dtype(new_compute_dtype);
-        update_convolution_operator();
-    }
+
+    void on_compute_dtype_changed() override { update_convolution_operator(); }
 
     void set_row_stride(const Index);
     void set_column_stride(const Index);
@@ -80,15 +75,8 @@ public:
     void set_activation_function(const string&);
     void set_batch_normalization(bool);
 
-    void set_parameters_glorot() override;
-    void set_parameters_random() override;
-
-    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
-
-    void from_JSON(const JsonDocument&) override;
-    void load_state_from_JSON(const JsonDocument&) override;
-    void to_JSON(JsonWriter&) const override;
+    void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
 
 private:
 
@@ -110,10 +98,7 @@ private:
     Activation  activation;
     BatchNorm   batch_norm;
 
-    enum Parameters {Bias, Weight, Gamma, Beta};
-    enum States {RunningMean, RunningVariance};
-    enum Forward {Input, PaddedInput, ConvolutionView, BatchNormMean, BatchNormInverseVariance, Output};
-    enum Backward {OutputDelta, InputDelta};
+    enum Forward {Input, ConvolutionView, BatchNormMean, BatchNormInverseVariance, Output};
 
     void update_convolution_operator();
 };

@@ -29,16 +29,16 @@ struct Batch
 
     const vector<TensorView>& get_inputs() const
     {
-#ifdef OPENNN_WITH_CUDA
-        if (Configuration::instance().is_gpu()) return input_views_cache;
+#ifdef OPENNN_HAS_CUDA
+        if (is_gpu()) return input_views_cache;
 #endif
         return input_views_host_cache;
     }
 
     const TensorView& get_targets() const
     {
-#ifdef OPENNN_WITH_CUDA
-        if (Configuration::instance().is_gpu()) return target_view_cache;
+#ifdef OPENNN_HAS_CUDA
+        if (is_gpu()) return target_view_cache;
 #endif
         return target_view_host_cache;
     }

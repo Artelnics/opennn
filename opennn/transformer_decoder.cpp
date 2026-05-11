@@ -159,7 +159,7 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
     if (language_dataset.get_target_inverse_vocabulary_map().empty())
         throw runtime_error("TransformerDecoder: dataset target vocabulary is empty.");
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     transformer.copy_parameters_device();
     transformer.link_parameters();
     transformer.copy_states_device();
@@ -254,7 +254,7 @@ void TransformerDecoder::reset_per_prompt_state()
     target_ids(0, 0) = start_token_id;
     history.clear();
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     // One full H2D per prompt; subsequent steps update only the new token slot.
     const Index decoder_sequence_length = transformer.get_decoder_sequence_length();
     constexpr Index batch_size = 1;
@@ -288,7 +288,7 @@ void TransformerDecoder::encode_source(const string& source)
     if (write_index < input_sequence_length)
         source_ids(0, write_index) = end_token_id;
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     cudaStream_t stream = Backend::get_compute_stream();
     CHECK_CUDA(cudaMemcpyAsync(source_ids_device.data,
                                source_ids.data(),
@@ -303,7 +303,7 @@ void TransformerDecoder::encode_source(const string& source)
 Index TransformerDecoder::decode_step(Index step_index,
                                        const SamplingConfig& config)
 {
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     cudaStream_t stream = Backend::get_compute_stream();
 #endif
 
@@ -319,7 +319,7 @@ Index TransformerDecoder::decode_step(Index step_index,
     const Index vocabulary_size = output_view.shape[2];
     const Index slice_offset = (step_index - 1) * vocabulary_size;
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     if (output_view.type == Type::BF16)
     {
         CHECK_CUDA(cudaMemcpyAsync(bf16_staging.data(),
@@ -407,7 +407,7 @@ string TransformerDecoder::decode(const string& source,
         target_ids(0, i) = static_cast<float>(next_token_id);
         history.push_back(next_token_id);
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
         cudaStream_t stream = Backend::get_compute_stream();
         CHECK_CUDA(cudaMemcpyAsync(target_ids_device.as<float>() + i,
                                    &target_ids(0, i),

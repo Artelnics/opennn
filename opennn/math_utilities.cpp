@@ -15,10 +15,10 @@
 namespace opennn
 {
 
-void padding(const TensorView& input, TensorView& output)
+void pad(const TensorView& input, TensorView& output)
 {
-    if (Configuration::instance().is_gpu())
-        throw runtime_error("padding: GPU implementation not available.");
+    if (is_gpu())
+        throw runtime_error("pad: GPU implementation not available.");
 
     const TensorMap4 input_map = input.as_tensor<4>();
     TensorMap4 output_map = output.as_tensor<4>();
@@ -36,25 +36,12 @@ void padding(const TensorView& input, TensorView& output)
     output_map.device(get_device()) = input_map.pad(paddings);
 }
 
-void bounding(const TensorView& input,
-              const TensorView& lower_bounds,
-              const TensorView& upper_bounds,
-              TensorView& output)
+void bound_cpu(const TensorView& input,
+               const TensorView& lower_bounds,
+               const TensorView& upper_bounds,
+               TensorView& output)
 {
     const Index features = lower_bounds.size();
-
-    IF_GPU({
-        visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
-            using TIn  = typename decltype(in)::type;
-            using TOut = typename decltype(out)::type;
-            bounding_cuda<TIn, TOut>(output.size(), to_int(features),
-                                     input.as<TIn>(),
-                                     lower_bounds.as_float(),
-                                     upper_bounds.as_float(),
-                                     output.as<TOut>());
-        });
-        return;
-    });
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap lower_bounds_vector = lower_bounds.as_vector();
@@ -68,31 +55,23 @@ void bounding(const TensorView& input,
                                                         .cwiseMin(upper_bounds_vector(feature_index));
 }
 
-void scale(const TensorView& input,
-           const TensorView& minimums, const TensorView& maximums,
-           const TensorView& means, const TensorView& standard_deviations,
-           const TensorView& scalers,
-           float min_range, float max_range,
+void bound(const TensorView& input,
+           const TensorView& lower_bounds,
+           const TensorView& upper_bounds,
            TensorView& output)
 {
-    const Index features = scalers.size();
+    IF_GPU({ bound_gpu(input, lower_bounds, upper_bounds, output); return; });
+    bound_cpu(input, lower_bounds, upper_bounds, output);
+}
 
-    IF_GPU({
-        visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
-            using TIn  = typename decltype(in)::type;
-            using TOut = typename decltype(out)::type;
-            scale_cuda<TIn, TOut>(output.size(), to_int(features),
-                                  input.as<TIn>(),
-                                  minimums.as_float(),
-                                  maximums.as_float(),
-                                  means.as_float(),
-                                  standard_deviations.as_float(),
-                                  scalers.as_float(),
-                                  min_range, max_range,
-                                  output.as<TOut>());
-        });
-        return;
-    });
+void scale_cpu(const TensorView& input,
+               const TensorView& minimums, const TensorView& maximums,
+               const TensorView& means, const TensorView& standard_deviations,
+               const TensorView& scalers,
+               float min_range, float max_range,
+               TensorView& output)
+{
+    const Index features = scalers.size();
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap minimums_vector = minimums.as_vector();
@@ -134,31 +113,30 @@ void scale(const TensorView& input,
     }
 }
 
-void unscale(const TensorView& input,
-             const TensorView& minimums, const TensorView& maximums,
-             const TensorView& means, const TensorView& standard_deviations,
-             const TensorView& scalers,
-             float min_range, float max_range,
-             TensorView& output)
+void scale(const TensorView& input,
+           const TensorView& minimums, const TensorView& maximums,
+           const TensorView& means, const TensorView& standard_deviations,
+           const TensorView& scalers,
+           float min_range, float max_range,
+           TensorView& output)
 {
-    const Index features = scalers.size();
-
     IF_GPU({
-        visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
-            using TIn  = typename decltype(in)::type;
-            using TOut = typename decltype(out)::type;
-            unscale_cuda<TIn, TOut>(output.size(), to_int(features),
-                                    input.as<TIn>(),
-                                    minimums.as_float(),
-                                    maximums.as_float(),
-                                    means.as_float(),
-                                    standard_deviations.as_float(),
-                                    scalers.as_float(),
-                                    min_range, max_range,
-                                    output.as<TOut>());
-        });
+        scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
+                  min_range, max_range, output);
         return;
     });
+    scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
+              min_range, max_range, output);
+}
+
+void unscale_cpu(const TensorView& input,
+                 const TensorView& minimums, const TensorView& maximums,
+                 const TensorView& means, const TensorView& standard_deviations,
+                 const TensorView& scalers,
+                 float min_range, float max_range,
+                 TensorView& output)
+{
+    const Index features = scalers.size();
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap minimums_vector = minimums.as_vector();
@@ -200,81 +178,60 @@ void unscale(const TensorView& input,
     }
 }
 
+void unscale(const TensorView& input,
+             const TensorView& minimums, const TensorView& maximums,
+             const TensorView& means, const TensorView& standard_deviations,
+             const TensorView& scalers,
+             float min_range, float max_range,
+             TensorView& output)
+{
+    IF_GPU({
+        unscale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
+                    min_range, max_range, output);
+        return;
+    });
+    unscale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
+                min_range, max_range, output);
+}
+
+void copy_cpu(const TensorView& source, TensorView& destination)
+{
+    memcpy(destination.data, source.data, source.size() * sizeof(float));
+}
+
 void copy(const TensorView& source, TensorView& destination)
 {
     if (source.size() != destination.size())
         throw runtime_error("Tensor sizes mismatch in copy operation.");
 
-    IF_GPU({
-        CHECK_CUDA(cudaMemcpyAsync(destination.data, source.data, source.byte_size(),
-                                   cudaMemcpyDeviceToDevice, Backend::get_compute_stream()));
-        return;
-    });
-    memcpy(destination.data, source.data, source.size() * sizeof(float));
+    IF_GPU({ copy_gpu(source, destination); return; });
+    copy_cpu(source, destination);
 }
 
-void addition(const TensorView& input_1,
-              const TensorView& input_2,
-              TensorView& output)
+void add_cpu(const TensorView& input_1,
+             const TensorView& input_2,
+             TensorView& output)
+{
+    output.as_vector().noalias() = input_1.as_vector() + input_2.as_vector();
+}
+
+void add(const TensorView& input_1,
+         const TensorView& input_2,
+         TensorView& output)
 {
     if (input_1.size() != input_2.size() || input_1.size() != output.size())
         throw runtime_error("Tensor dimensions do not match.");
 
-    IF_GPU({
-        CHECK_CUDNN(cudnnOpTensor(Backend::get_cudnn_handle(),
-                                  Backend::get_operator_sum_descriptor(),
-                                  &one, input_1.get_descriptor(), input_1.data,
-                                  &one, input_2.get_descriptor(), input_2.data,
-                                  &zero, output.get_descriptor(), output.data));
-        return;
-    });
-
-    output.as_vector().noalias() = input_1.as_vector() + input_2.as_vector();
+    IF_GPU({ add_gpu(input_1, input_2, output); return; });
+    add_cpu(input_1, input_2, output);
 }
 
-void multiply(const TensorView& input_a, bool transpose_a,
-              const TensorView& input_b, bool transpose_b,
-              TensorView& output,
-              float alpha, float beta)
+void multiply_cpu(const TensorView& input_a, bool transpose_a,
+                  const TensorView& input_b, bool transpose_b,
+                  TensorView& output,
+                  float alpha, float beta)
 {
     const size_t rank = input_a.get_rank();
-
-    IF_GPU({
-        const int rows_a = to_int(input_a.shape[rank - 2]);
-        const int cols_a = to_int(input_a.shape[rank - 1]);
-        const int rows_b = to_int(input_b.shape[rank - 2]);
-        const int cols_b = to_int(input_b.shape[rank - 1]);
-
-        const int output_columns = transpose_b ? rows_b : cols_b;
-        const int output_rows = transpose_a ? cols_a : rows_a;
-        const int inner_dimension = transpose_a ? rows_a : cols_a;
-
-        const cublasOperation_t operation_b = transpose_b ? CUBLAS_OP_T : CUBLAS_OP_N;
-        const cublasOperation_t operation_a = transpose_a ? CUBLAS_OP_T : CUBLAS_OP_N;
-
-        const int batch_count = to_int(input_a.size() / (rows_a * cols_a));
-        const long long stride_a = rows_a * cols_a;
-        const long long stride_b = rows_b * cols_b;
-        const long long stride_output = output.shape[rank - 2] * output.shape[rank - 1];
-
-        if (batch_count == 1)
-            gemm_cuda(operation_b, operation_a,
-                      output_columns, output_rows, inner_dimension,
-                      input_b.data, input_b.cuda_dtype(), cols_b,
-                      input_a.data, input_a.cuda_dtype(), cols_a,
-                      output.data,  output.cuda_dtype(),  output_columns,
-                      alpha, beta);
-        else
-            gemm_strided_batched_cuda(operation_b, operation_a,
-                                      output_columns, output_rows, inner_dimension,
-                                      input_b.data, cols_b, stride_b,
-                                      input_a.data, cols_a, stride_a,
-                                      output.data,  output_columns, stride_output,
-                                      batch_count,
-                                      output.cuda_dtype(),
-                                      alpha, beta);
-        return;
-    });
     const Index batch_count = input_a.size() / (input_a.shape[rank - 2] * input_a.shape[rank - 1]);
 
     #pragma omp parallel for
@@ -299,23 +256,17 @@ void multiply(const TensorView& input_a, bool transpose_a,
     }
 }
 
-
-
-void softmax(TensorView& output)
+void multiply(const TensorView& input_a, bool transpose_a,
+              const TensorView& input_b, bool transpose_b,
+              TensorView& output,
+              float alpha, float beta)
 {
-    if (output.empty()) return;
+    IF_GPU({ multiply_gpu(input_a, transpose_a, input_b, transpose_b, output, alpha, beta); return; });
+    multiply_cpu(input_a, transpose_a, input_b, transpose_b, output, alpha, beta);
+}
 
-    IF_GPU({
-        CHECK_CUDNN(cudnnSoftmaxForward(Backend::get_cudnn_handle(),
-                                        CUDNN_SOFTMAX_ACCURATE,
-                                        CUDNN_SOFTMAX_MODE_CHANNEL,
-                                        &one,
-                                        output.get_descriptor(), output.data,
-                                        &zero,
-                                        output.get_descriptor(), output.data));
-        return;
-    });
-
+void softmax_cpu(TensorView& output)
+{
     MatrixMap output_matrix = output.as_flat_matrix();
     const Index rows = output_matrix.rows();
 
@@ -328,16 +279,16 @@ void softmax(TensorView& output)
     }
 }
 
-void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training)
+void softmax(TensorView& output)
 {
-    if (TRY_GPU_DISPATCH(output, [&](auto tag) {
-        using T = decltype(tag);
-        max_pooling_3d_forward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
-                                       input.as<T>(), output.as<T>(),
-                                       maximal_indices.as<float>(),
-                                       to_int(input.shape[1]),
-                                       to_int(input.shape[2]));
-    })) return;
+    if (output.empty()) return;
+
+    IF_GPU({ softmax_gpu(output); return; });
+    softmax_cpu(output);
+}
+
+void max_pooling_3d_forward_cpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training)
+{
     const TensorMap3 inputs = input.as_tensor<3>();
     MatrixMap outputs = output.as_matrix();
 
@@ -365,15 +316,14 @@ void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorV
     }
 }
 
-void average_pooling_3d_forward(const TensorView& input, TensorView& output)
+void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training)
 {
-    if (TRY_GPU_DISPATCH(output, [&](auto tag) {
-        using T = decltype(tag);
-        average_pooling_3d_forward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
-                                           input.as<T>(), output.as<T>(),
-                                           to_int(input.shape[1]),
-                                           to_int(input.shape[2]));
-    })) return;
+    IF_GPU({ max_pooling_3d_forward_gpu(input, output, maximal_indices, is_training); return; });
+    max_pooling_3d_forward_cpu(input, output, maximal_indices, is_training);
+}
+
+void average_pooling_3d_forward_cpu(const TensorView& input, TensorView& output)
+{
     const TensorMap3 inputs = input.as_tensor<3>();
     MatrixMap outputs = output.as_matrix();
 
@@ -395,17 +345,14 @@ void average_pooling_3d_forward(const TensorView& input, TensorView& output)
     }
 }
 
-void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta)
+void average_pooling_3d_forward(const TensorView& input, TensorView& output)
 {
-    if (TRY_GPU_DISPATCH(input_delta, [&](auto tag) {
-        using T = decltype(tag);
-        input_delta.set_zero_async();
-        max_pooling_3d_backward_cuda<T>(to_int(output_delta.shape[0]) * to_int(output_delta.shape[1]),
-                                        output_delta.as<T>(), input_delta.as<T>(),
-                                        maximal_indices.as<float>(),
-                                        to_int(input_delta.shape[1]),
-                                        to_int(output_delta.shape[1]));
-    })) return;
+    IF_GPU({ average_pooling_3d_forward_gpu(input, output); return; });
+    average_pooling_3d_forward_cpu(input, output);
+}
+
+void max_pooling_3d_backward_cpu(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta)
+{
     const MatrixMap max_indices = maximal_indices.as_matrix();
     const MatrixMap output_delta_matrix = output_delta.as_matrix();
     TensorMap3 input_delta_map = input_delta.as_tensor<3>().setZero();
@@ -422,19 +369,16 @@ void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView
         }
 }
 
-void average_pooling_3d_backward(const TensorView& input,
-                                 const TensorView& output_delta,
-                                 TensorView& input_delta)
+void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta)
 {
-    if (TRY_GPU_DISPATCH(input_delta, [&](auto tag) {
-        using T = decltype(tag);
-        input_delta.set_zero_async();
-        average_pooling_3d_backward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
-                                            input.as<T>(), output_delta.as<T>(),
-                                            input_delta.as<T>(),
-                                            to_int(input.shape[1]),
-                                            to_int(input.shape[2]));
-    })) return;
+    IF_GPU({ max_pooling_3d_backward_gpu(maximal_indices, output_delta, input_delta); return; });
+    max_pooling_3d_backward_cpu(maximal_indices, output_delta, input_delta);
+}
+
+void average_pooling_3d_backward_cpu(const TensorView& input,
+                                     const TensorView& output_delta,
+                                     TensorView& input_delta)
+{
     const TensorMap3 inputs = input.as_tensor<3>();
     const MatrixMap output_delta_matrix = output_delta.as_matrix();
     TensorMap3 input_delta_map = input_delta.as_tensor<3>().setZero();
@@ -462,6 +406,14 @@ void average_pooling_3d_backward(const TensorView& input,
     }
 }
 
+void average_pooling_3d_backward(const TensorView& input,
+                                 const TensorView& output_delta,
+                                 TensorView& input_delta)
+{
+    IF_GPU({ average_pooling_3d_backward_gpu(input, output_delta, input_delta); return; });
+    average_pooling_3d_backward_cpu(input, output_delta, input_delta);
+}
+
 static void transpose_middle_axes(const float* src, float* dst,
                                   Index batch_size, Index src_m1, Index src_m2, Index D)
 {
@@ -474,43 +426,269 @@ static void transpose_middle_axes(const float* src, float* dst,
                        D * sizeof(float));
 }
 
-void split_heads(const TensorView& source, TensorView& destination)
+void split_heads_cpu(const TensorView& source, TensorView& destination)
 {
     const Index batch_size = source.shape[0];
     const Index sequence_length = source.shape[1];
     const Index heads_number = source.shape[2];
     const Index head_dimension = source.shape[3];
 
-    if (TRY_GPU_DISPATCH(destination, [&](auto tag) {
-        using T = decltype(tag);
-        split_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
-                            to_int(sequence_length),
-                            to_int(heads_number),
-                            to_int(head_dimension));
-    })) return;
-
     transpose_middle_axes(source.as<float>(), destination.as<float>(),
                           batch_size, sequence_length, heads_number, head_dimension);
 }
 
-void merge_heads(const TensorView& source, TensorView& destination)
+void split_heads(const TensorView& source, TensorView& destination)
+{
+    IF_GPU({ split_heads_gpu(source, destination); return; });
+    split_heads_cpu(source, destination);
+}
+
+void merge_heads_cpu(const TensorView& source, TensorView& destination)
 {
     const Index batch_size = source.shape[0];
     const Index heads_number = source.shape[1];
     const Index sequence_length = source.shape[2];
     const Index head_dimension = source.shape[3];
 
-    if (TRY_GPU_DISPATCH(destination, [&](auto tag) {
+    transpose_middle_axes(source.as<float>(), destination.as<float>(),
+                          batch_size, heads_number, sequence_length, head_dimension);
+}
+
+void merge_heads(const TensorView& source, TensorView& destination)
+{
+    IF_GPU({ merge_heads_gpu(source, destination); return; });
+    merge_heads_cpu(source, destination);
+}
+
+#ifdef OPENNN_HAS_CUDA
+
+void bound_gpu(const TensorView& input,
+               const TensorView& lower_bounds,
+               const TensorView& upper_bounds,
+               TensorView& output)
+{
+    const Index features = lower_bounds.size();
+
+    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
+        using TIn  = typename decltype(in)::type;
+        using TOut = typename decltype(out)::type;
+        bounding_cuda<TIn, TOut>(output.size(), to_int(features),
+                                 input.as<TIn>(),
+                                 lower_bounds.as_float(),
+                                 upper_bounds.as_float(),
+                                 output.as<TOut>());
+    });
+}
+
+void scale_gpu(const TensorView& input,
+               const TensorView& minimums, const TensorView& maximums,
+               const TensorView& means, const TensorView& standard_deviations,
+               const TensorView& scalers,
+               float min_range, float max_range,
+               TensorView& output)
+{
+    const Index features = scalers.size();
+
+    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
+        using TIn  = typename decltype(in)::type;
+        using TOut = typename decltype(out)::type;
+        scale_cuda<TIn, TOut>(output.size(), to_int(features),
+                              input.as<TIn>(),
+                              minimums.as_float(),
+                              maximums.as_float(),
+                              means.as_float(),
+                              standard_deviations.as_float(),
+                              scalers.as_float(),
+                              min_range, max_range,
+                              output.as<TOut>());
+    });
+}
+
+void unscale_gpu(const TensorView& input,
+                 const TensorView& minimums, const TensorView& maximums,
+                 const TensorView& means, const TensorView& standard_deviations,
+                 const TensorView& scalers,
+                 float min_range, float max_range,
+                 TensorView& output)
+{
+    const Index features = scalers.size();
+
+    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
+        using TIn  = typename decltype(in)::type;
+        using TOut = typename decltype(out)::type;
+        unscale_cuda<TIn, TOut>(output.size(), to_int(features),
+                                input.as<TIn>(),
+                                minimums.as_float(),
+                                maximums.as_float(),
+                                means.as_float(),
+                                standard_deviations.as_float(),
+                                scalers.as_float(),
+                                min_range, max_range,
+                                output.as<TOut>());
+    });
+}
+
+void copy_gpu(const TensorView& source, TensorView& destination)
+{
+    CHECK_CUDA(cudaMemcpyAsync(destination.data, source.data, source.byte_size(),
+                               cudaMemcpyDeviceToDevice, Backend::get_compute_stream()));
+}
+
+void add_gpu(const TensorView& input_1,
+             const TensorView& input_2,
+             TensorView& output)
+{
+    CHECK_CUDNN(cudnnOpTensor(Backend::get_cudnn_handle(),
+                              Backend::get_operator_sum_descriptor(),
+                              &one, input_1.get_descriptor(), input_1.data,
+                              &one, input_2.get_descriptor(), input_2.data,
+                              &zero, output.get_descriptor(), output.data));
+}
+
+void multiply_gpu(const TensorView& input_a, bool transpose_a,
+                  const TensorView& input_b, bool transpose_b,
+                  TensorView& output,
+                  float alpha, float beta)
+{
+    const size_t rank_a = input_a.get_rank();
+    const size_t rank_b = input_b.get_rank();
+
+    int rows_a = to_int(input_a.shape[rank_a - 2]);
+    int cols_a = to_int(input_a.shape[rank_a - 1]);
+    const int rows_b = to_int(input_b.shape[rank_b - 2]);
+    const int cols_b = to_int(input_b.shape[rank_b - 1]);
+
+    // Rank-mismatched broadcast (e.g. {B,Q,E} @ {E,E}^T from Combination::apply_delta_gpu):
+    // flatten input_a to 2D and do a single GEMM with no batching. Mirrors multiply_cpu's
+    // use of as_flat_matrix() for these calls.
+    if (rank_b == 2 && rank_a > 2)
+    {
+        rows_a = to_int(input_a.size() / cols_a);
+    }
+
+    const int output_columns = transpose_b ? rows_b : cols_b;
+    const int output_rows = transpose_a ? cols_a : rows_a;
+    const int inner_dimension = transpose_a ? rows_a : cols_a;
+
+    const cublasOperation_t operation_b = transpose_b ? CUBLAS_OP_T : CUBLAS_OP_N;
+    const cublasOperation_t operation_a = transpose_a ? CUBLAS_OP_T : CUBLAS_OP_N;
+
+    const int batch_count = to_int(input_a.size() / (rows_a * cols_a));
+    const long long stride_a = rows_a * cols_a;
+    const long long stride_b = rows_b * cols_b;
+    const long long stride_output = output.shape[output.get_rank() - 2] * output.shape[output.get_rank() - 1];
+
+    if (batch_count == 1)
+        gemm_cuda(operation_b, operation_a,
+                  output_columns, output_rows, inner_dimension,
+                  input_b.data, input_b.cuda_dtype(), cols_b,
+                  input_a.data, input_a.cuda_dtype(), cols_a,
+                  output.data,  output.cuda_dtype(),  output_columns,
+                  alpha, beta);
+    else
+        gemm_strided_batched_cuda(operation_b, operation_a,
+                                  output_columns, output_rows, inner_dimension,
+                                  input_b.data, cols_b, stride_b,
+                                  input_a.data, cols_a, stride_a,
+                                  output.data,  output_columns, stride_output,
+                                  batch_count,
+                                  output.cuda_dtype(),
+                                  alpha, beta);
+}
+
+void softmax_gpu(TensorView& output)
+{
+    CHECK_CUDNN(cudnnSoftmaxForward(Backend::get_cudnn_handle(),
+                                    CUDNN_SOFTMAX_ACCURATE,
+                                    CUDNN_SOFTMAX_MODE_CHANNEL,
+                                    &one,
+                                    output.get_descriptor(), output.data,
+                                    &zero,
+                                    output.get_descriptor(), output.data));
+}
+
+void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool /* is_training */)
+{
+    output.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        max_pooling_3d_forward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
+                                       input.as<T>(), output.as<T>(),
+                                       maximal_indices.as<float>(),
+                                       to_int(input.shape[1]),
+                                       to_int(input.shape[2]));
+    });
+}
+
+void average_pooling_3d_forward_gpu(const TensorView& input, TensorView& output)
+{
+    output.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        average_pooling_3d_forward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
+                                           input.as<T>(), output.as<T>(),
+                                           to_int(input.shape[1]),
+                                           to_int(input.shape[2]));
+    });
+}
+
+void max_pooling_3d_backward_gpu(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta)
+{
+    input_delta.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        input_delta.set_zero_async();
+        max_pooling_3d_backward_cuda<T>(to_int(output_delta.shape[0]) * to_int(output_delta.shape[1]),
+                                        output_delta.as<T>(), input_delta.as<T>(),
+                                        maximal_indices.as<float>(),
+                                        to_int(input_delta.shape[1]),
+                                        to_int(output_delta.shape[1]));
+    });
+}
+
+void average_pooling_3d_backward_gpu(const TensorView& input,
+                                     const TensorView& output_delta,
+                                     TensorView& input_delta)
+{
+    input_delta.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        input_delta.set_zero_async();
+        average_pooling_3d_backward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
+                                            input.as<T>(), output_delta.as<T>(),
+                                            input_delta.as<T>(),
+                                            to_int(input.shape[1]),
+                                            to_int(input.shape[2]));
+    });
+}
+
+void split_heads_gpu(const TensorView& source, TensorView& destination)
+{
+    const Index sequence_length = source.shape[1];
+    const Index heads_number = source.shape[2];
+    const Index head_dimension = source.shape[3];
+
+    destination.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        split_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
+                            to_int(sequence_length),
+                            to_int(heads_number),
+                            to_int(head_dimension));
+    });
+}
+
+void merge_heads_gpu(const TensorView& source, TensorView& destination)
+{
+    const Index heads_number = source.shape[1];
+    const Index sequence_length = source.shape[2];
+    const Index head_dimension = source.shape[3];
+
+    destination.dispatch([&](auto tag) {
         using T = decltype(tag);
         merge_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
                             to_int(sequence_length),
                             to_int(heads_number),
                             to_int(head_dimension));
-    })) return;
-
-    transpose_middle_axes(source.as<float>(), destination.as<float>(),
-                          batch_size, heads_number, sequence_length, head_dimension);
+    });
 }
+
+#endif // OPENNN_HAS_CUDA
 
 }
 

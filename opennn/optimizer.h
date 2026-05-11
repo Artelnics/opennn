@@ -16,6 +16,8 @@
 namespace opennn
 {
 
+inline constexpr float GRADIENT_NORM_EPS = 1e-6f;
+
 class Loss;
 struct Batch;
 struct Buffer;
@@ -24,16 +26,16 @@ struct BackPropagation;
 
 struct TrainingResults;
 
-struct EpochStats
-{
-    float error = 0.0f;
-    float accuracy = 0.0f;
-};
-
 class Optimizer
 {
 
 public:
+
+    struct EpochStats
+    {
+        float error = 0.0f;
+        float accuracy = 0.0f;
+    };
 
     Optimizer(Loss* = nullptr);
     virtual ~Optimizer() = default;
@@ -62,9 +64,6 @@ public:
 
     void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
-
-    // Training
-
     virtual TrainingResults train() = 0;
 
     const string& get_name() const { return name; }

@@ -7,8 +7,6 @@
 
 #include "kernel_common.cuh"
 
-// Adam scalar update for a single element. Used by adam_update_kernel for
-// both the float4 vector phase (called 4× per chunk) and the scalar tail.
 __device__ __forceinline__ void adam_update_one(
     float& p,
     float& m,
@@ -26,10 +24,6 @@ __device__ __forceinline__ void adam_update_one(
     p -= lr * m / (sqrtf(v) + eps);
 }
 
-// Adam optimizer step. Element-wise: m,v <- bias-corrected moments of g; then
-// parameters[i] -= lr * m[i]/(sqrt(v[i]) + eps). Vectorised via float4 over
-// [0, n_vec); the [n_vec*4, n) tail runs scalar. Caller decides n_vec based on
-// pointer alignment (0 = scalar-only).
 __global__ void adam_update_kernel(
     const int n_vec,
     const int n,
@@ -112,7 +106,7 @@ void adam_update_cuda(
     const int total = static_cast<int>(n);
     const float sqrt_bias_correction_2 = sqrtf(bias_correction_2);
 
-    const float effective_lr  = learning_rate * sqrt_bias_correction_2 / bias_correction_1;
+    const float effective_lr = learning_rate * sqrt_bias_correction_2 / bias_correction_1;
     const float effective_eps = epsilon * sqrt_bias_correction_2;
 
     const float one_minus_beta_1 = 1.0f - beta_1;
@@ -144,8 +138,6 @@ void adam_update_cuda(
         effective_eps);
 }
 
-// SGD scalar update for a single element. v is left untouched when momentum<=0
-// (caller can skip the velocity write-back in that case).
 __device__ __forceinline__ void sgd_update_one(
     float& p,
     float& v,
@@ -162,8 +154,6 @@ __device__ __forceinline__ void sgd_update_one(
     p += nesterov ? fmaf(momentum, v_new, -lr_g) : v_new;
 }
 
-// SGD step with optional momentum and Nesterov correction. Same vec+tail layout
-// as adam_update_kernel. Velocity write-back is skipped when momentum<=0.
 __global__ void sgd_update_kernel(
     const int n_vec,
     const int n,
@@ -253,11 +243,12 @@ void sgd_update_cuda(
 __global__ void clip_apply_kernel(const int n,
                                   const float* __restrict__ squared_norm,
                                   const float max_norm,
+                                  const float eps,
                                   float* __restrict__ gradient)
 {
     const float norm = sqrtf(*squared_norm);
     if (norm <= max_norm) return;
-    const float scale = max_norm / (norm + 1e-6f);
+    const float scale = max_norm / (norm + eps);
 
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     const int stride = blockDim.x * gridDim.x;
@@ -268,24 +259,16 @@ __global__ void clip_apply_kernel(const int n,
 void clip_gradient_norm_cuda(const Index n,
                              float* gradient,
                              const float* squared_norm,
-                             const float max_norm)
+                             const float max_norm,
+                             const float eps)
 {
     if (n == 0) return;
     const int total = static_cast<int>(n);
     const int grid = grid_size_for(total);
     clip_apply_kernel<<<grid, block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        total, squared_norm, max_norm, gradient);
+        total, squared_norm, max_norm, eps, gradient);
 }
 
-// Element-wise FP32 → BF16 cast. Used to refresh the BF16 working copy of
-// network parameters after each Adam step (master FP32 stays the source of
-// truth, BF16 mirror feeds GEMMs that hit BF16 Tensor Cores).
-//
-// Vec phase: each thread reads one float4 (4 fp32) and writes one
-// __nv_bfloat162-pair sequence (4 bf16 packed into 2× 32-bit stores via
-// __nv_bfloat162). Scalar tail handles the remainder when `n` isn't a
-// multiple of 4. Aligned-input path is enabled by `aligned_in_out` from the
-// host wrapper; otherwise we fall back to scalar over the whole range.
 __global__ void cast_fp32_to_bf16_kernel(const int n_vec,
                                          const int n,
                                          const float* __restrict__ src,

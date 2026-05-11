@@ -8,15 +8,14 @@
 
 #include "cuda_gemm.h"
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
 namespace opennn
 {
 
 namespace
 {
-    void*  cublas_lt_workspace_       = nullptr;
-    size_t cublas_lt_workspace_bytes_ = 0;
+    Buffer cublas_lt_workspace_(Device::CUDA);
 
     Buffer bf16_input_(Device::CUDA);
     Buffer bf16_gradient_(Device::CUDA);
@@ -27,18 +26,9 @@ namespace
 
 void* ensure_cublas_lt_workspace(size_t min_bytes)
 {
-    if (cublas_lt_workspace_bytes_ >= min_bytes && cublas_lt_workspace_)
-        return cublas_lt_workspace_;
-
-    if (cublas_lt_workspace_) cudaFree(cublas_lt_workspace_);
-    cublas_lt_workspace_       = nullptr;
-    cublas_lt_workspace_bytes_ = 0;
-
     if (min_bytes == 0) return nullptr;
-
-    CHECK_CUDA(cudaMalloc(&cublas_lt_workspace_, min_bytes));
-    cublas_lt_workspace_bytes_ = min_bytes;
-    return cublas_lt_workspace_;
+    cublas_lt_workspace_.grow_to(Index(min_bytes));
+    return cublas_lt_workspace_.data;
 }
 
 __nv_bfloat16* ensure_bf16_input_scratch(Index n_elements)
@@ -99,11 +89,7 @@ const LtMatmulPlan& get_lt_gemm_plan(
 
     LtMatmulPlan plan;
 
-    // _FAST_TF32 is FP32-input only; BF16 needs plain CUBLAS_COMPUTE_32F.
-    const cublasComputeType_t compute_type = (io_dtype == CUDA_R_16BF)
-                                                ? CUBLAS_COMPUTE_32F
-                                                : CUBLAS_COMPUTE_32F_FAST_TF32;
-    CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.op_desc, compute_type, CUDA_R_32F));
+    CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.op_desc, gemm_compute_type(io_dtype), CUDA_R_32F));
 
     auto set_desc = [&](cublasLtMatmulDescAttributes_t attr, const auto& value)
     {
@@ -120,10 +106,9 @@ const LtMatmulPlan& get_lt_gemm_plan(
     const int b_rows = (transB == CUBLAS_OP_N) ? k : n;
     const int b_cols = (transB == CUBLAS_OP_N) ? n : k;
 
-    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.a_desc, io_dtype,  a_rows, a_cols, a_rows));
-    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.b_desc, io_dtype,  b_rows, b_cols, b_rows));
-    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.c_desc, out_dtype, m, n, m));
-    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.d_desc, out_dtype, m, n, m));
+    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.a_desc,  io_dtype,  a_rows, a_cols, a_rows));
+    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.b_desc,  io_dtype,  b_rows, b_cols, b_rows));
+    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.cd_desc, out_dtype, m, n, m));
 
     cublasLtMatmulPreference_t pref = nullptr;
     CHECK_CUBLAS(cublasLtMatmulPreferenceCreate(&pref));
@@ -135,7 +120,7 @@ const LtMatmulPlan& get_lt_gemm_plan(
     int returned_results = 0;
     cublasLtMatmulAlgoGetHeuristic(Backend::get_cublas_lt_handle(),
                                    plan.op_desc,
-                                   plan.a_desc, plan.b_desc, plan.c_desc, plan.d_desc,
+                                   plan.a_desc, plan.b_desc, plan.cd_desc, plan.cd_desc,
                                    pref, 1, &heuristic, &returned_results);
     cublasLtMatmulPreferenceDestroy(pref);
 
@@ -155,7 +140,7 @@ const LtMatmulPlan& get_lt_gemm_plan(
 
 }
 
-#endif // OPENNN_WITH_CUDA
+#endif // OPENNN_HAS_CUDA
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

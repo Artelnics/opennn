@@ -68,23 +68,20 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     const Index testing_samples_number = dataset->get_samples_number("Testing");
 
-    if (testing_samples_number == Index(0))
+    if (testing_samples_number == 0)
         throw runtime_error("Number of testing samples is zero.\n");
 
     // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const pair<MatrixR, MatrixR> targets_outputs = get_targets_and_outputs("Testing");
-
-    // Testing analysis
-
+    const auto [all_targets, all_outputs] = get_targets_and_outputs("Testing");
     Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_results(outputs_number);
 
-    for (Index i = 0;  i < outputs_number; ++i)
+    for (Index i = 0; i < outputs_number; ++i)
     {
-        const VectorMap targets = vector_map(targets_outputs.first, i);
-        const VectorMap outputs = vector_map(targets_outputs.second, i);
+        const VectorMap targets = vector_map(all_targets, i);
+        const VectorMap outputs = vector_map(all_outputs, i);
 
         const float determination = calculate_determination(outputs, targets);
 
@@ -110,7 +107,7 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
 
     const Index samples_number = dataset->get_samples_number(sample_role);
 
-    if (samples_number == Index(0))
+    if (samples_number == 0)
         throw runtime_error("Number of samples is zero.\n");
 
     MatrixR output_data;
@@ -149,7 +146,7 @@ Tensor3 TestingAnalysis::calculate_error_data() const
 
     const Index testing_samples_number = dataset->get_samples_number("Testing");
 
-    if (testing_samples_number == Index(0))
+    if (testing_samples_number == 0)
         throw runtime_error("Number of testing samples is zero.\n");
 
     const Index outputs_number = neural_network->get_outputs_number();
@@ -175,9 +172,11 @@ Tensor3 TestingAnalysis::calculate_error_data() const
 
         for (Index j = 0; j < testing_samples_number; ++j)
         {
-            error_data(j, 0, i) = absolute_errors(j,i);
-            error_data(j, 1, i) = absolute_errors(j,i) / range;
-            error_data(j, 2, i) = error_data(j, 1, i) * 100.0f;
+            const float abs_err = absolute_errors(j, i);
+            const float scaled = abs_err / range;
+            error_data(j, 0, i) = abs_err;
+            error_data(j, 1, i) = scaled;
+            error_data(j, 2, i) = scaled * 100.0f;
         }
     }
 
@@ -192,7 +191,7 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 
     const Index testing_samples_number = dataset->get_samples_number("Testing");
 
-    if (testing_samples_number == Index(0))
+    if (testing_samples_number == 0)
         throw runtime_error("Number of testing samples is zero.\n");
 
     // Neural network
@@ -209,17 +208,14 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
     const VectorR& output_minimums = unscaling_layer->get_minimums();
     const VectorR& output_maximums = unscaling_layer->get_maximums();
 
-    const MatrixR errors = (targets - outputs);
-
-    // Error data
-
+    const VectorR ranges = (output_maximums - output_minimums).cwiseAbs();
+    const MatrixR errors = targets - outputs;
     MatrixR error_data(testing_samples_number, outputs_number);
 
 #pragma omp parallel for
-
     for (Index i = 0; i < testing_samples_number; ++i)
         for (Index j = 0; j < outputs_number; ++j)
-            error_data(i, j) = errors(i, j)*100.0f/abs(output_maximums(j) - output_minimums(j));
+            error_data(i, j) = errors(i, j) * 100.0f / ranges(j);
 
     return error_data;
 }
@@ -261,24 +257,16 @@ vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives(
     const Index outputs_number = neural_network->get_outputs_number();
 
     const Index testing_samples_number = dataset->get_samples_number("Testing");
-
-    // Testing analysis stuff
-
     vector<vector<Descriptives>> descriptives(outputs_number);
 
     Tensor3 error_data = calculate_error_data();
 
-    Index index = 0;
+    const Index stride = testing_samples_number * 3;
 
     for (Index i = 0; i < outputs_number; ++i)
     {
-        const MatrixMap matrix_error(error_data.data() + index, testing_samples_number, 3);
-
-        const MatrixR matrix(matrix_error);
-
-        descriptives[i] = opennn::descriptives(matrix);
-
-        index += testing_samples_number*3;
+        const MatrixMap matrix_error(error_data.data() + i * stride, testing_samples_number, 3);
+        descriptives[i] = opennn::descriptives(MatrixR(matrix_error));
     }
 
     return descriptives;
@@ -328,15 +316,12 @@ Tensor<VectorI, 1> TestingAnalysis::calculate_maximal_errors(const Index samples
 
     Tensor<VectorI, 1> maximal_errors(samples_number);
 
-    Index index = 0;
+    const Index stride = testing_samples_number * 3;
 
     for (Index i = 0; i < outputs_number; ++i)
     {
-        const MatrixMap matrix_error(error_data.data()+index, testing_samples_number, 3);
-
+        const MatrixMap matrix_error(error_data.data() + i * stride, testing_samples_number, 3);
         maximal_errors[i] = maximal_indices(matrix_error.col(0), samples_number);
-
-        index += testing_samples_number*3;
     }
 
     return maximal_errors;
@@ -355,30 +340,22 @@ MatrixR TestingAnalysis::calculate_errors() const
 
 MatrixR TestingAnalysis::calculate_binary_classification_errors() const
 {
-    const VectorR training_errors = calculate_binary_classification_errors("Training");
-    const VectorR validation_errors = calculate_binary_classification_errors("Validation");
-    const VectorR testing_errors = calculate_binary_classification_errors("Testing");
-
     MatrixR errors(6, 3);
 
-    errors.col(0) = training_errors;
-    errors.col(1) = validation_errors;
-    errors.col(2) = testing_errors;
+    errors.col(0) = calculate_binary_classification_errors("Training");
+    errors.col(1) = calculate_binary_classification_errors("Validation");
+    errors.col(2) = calculate_binary_classification_errors("Testing");
 
     return errors;
 }
 
 MatrixR TestingAnalysis::calculate_multiple_classification_errors() const
 {
-    const VectorR training_errors = calculate_multiple_classification_errors("Training");
-    const VectorR validation_errors = calculate_multiple_classification_errors("Validation");
-    const VectorR testing_errors = calculate_multiple_classification_errors("Testing");
-
     MatrixR errors(5, 3);
 
-    errors.col(0) = training_errors;
-    errors.col(1) = validation_errors;
-    errors.col(2) = testing_errors;
+    errors.col(0) = calculate_multiple_classification_errors("Training");
+    errors.col(1) = calculate_multiple_classification_errors("Validation");
+    errors.col(2) = calculate_multiple_classification_errors("Testing");
 
     return errors;
 }
@@ -494,13 +471,13 @@ float TestingAnalysis::calculate_masked_accuracy(const Tensor3& /*outputs*/, con
 
 float TestingAnalysis::calculate_determination(const VectorR& outputs, const VectorR& targets) const
 {
-    const float targets_mean = targets.mean();
-    const float outputs_mean = outputs.mean();
+    const auto targets_centered = targets.array() - targets.mean();
+    const auto outputs_centered = outputs.array() - outputs.mean();
 
-    const float numerator = ((targets.array() - targets_mean) * (outputs.array() - outputs_mean)).sum();
+    const float numerator = (targets_centered * outputs_centered).sum();
 
-    const float targets_ss = (targets.array() - targets_mean).square().sum();
-    const float outputs_ss = (outputs.array() - outputs_mean).square().sum();
+    const float targets_ss = targets_centered.square().sum();
+    const float outputs_ss = outputs_centered.square().sum();
 
     const float denominator = sqrt(targets_ss * outputs_ss);
 
@@ -519,10 +496,10 @@ vector<MatrixI> TestingAnalysis::calculate_multilabel_confusion(const float deci
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
     const Index outputs_number = neural_network->get_outputs_number();
 
-    vector<MatrixI> confusion_matrices(static_cast<size_t>(outputs_number));
+    vector<MatrixI> confusion_matrices(outputs_number);
 
     for (Index j = 0; j < outputs_number; ++j)
-        confusion_matrices[static_cast<size_t>(j)] = calculate_confusion(targets.col(j), outputs.col(j), decision_threshold);
+        confusion_matrices[j] = calculate_confusion(targets.col(j), outputs.col(j), decision_threshold);
 
     return confusion_matrices;
 }
@@ -564,8 +541,8 @@ MatrixI TestingAnalysis::calculate_confusion(const float decision_threshold) con
 
     for (const vector<Index>& current_batch_indices : testing_batches)
     {
+        if (current_batch_indices.empty()) continue;
         const Index current_batch_size = current_batch_indices.size();
-        if (current_batch_size == 0) continue;
 
         MatrixR batch_inputs_flat = dataset->get_data_from_indices(current_batch_indices, input_feature_indices);
         const MatrixR batch_targets = dataset->get_data_from_indices(current_batch_indices, target_feature_indices);
@@ -589,11 +566,10 @@ MatrixI TestingAnalysis::calculate_confusion(const float decision_threshold) con
         else
             return {};
 
-        const MatrixI batch_confusion = calculate_confusion(batch_targets, batch_outputs, decision_threshold);
-        total_confusion_matrix += batch_confusion;
+        total_confusion_matrix += calculate_confusion(batch_targets, batch_outputs, decision_threshold);
     }
 
-    if (testing_indices.size() > 0)
+    if (!testing_indices.empty())
         total_confusion_matrix(confusion_matrix_size - 1, confusion_matrix_size - 1) = testing_indices.size();
 
     return total_confusion_matrix;
@@ -681,27 +657,20 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
         Index false_positive = 0;
         Index true_negative = 0;
 
-        float target;
-        float output;
-
         for (Index j = 0; j < targets.size(); ++j)
         {
-            target = targets(j, 0);
-            output = outputs(j, 0);
+            const bool target_positive = targets(j, 0) >= threshold;
+            const bool output_positive = outputs(j, 0) >= threshold;
 
-            if (target >= threshold && output >= threshold)
-                ++true_positive;
-            else if (target >= threshold && output < threshold)
-                ++false_negative;
-            else if (target < threshold && output >= threshold)
-                ++false_positive;
-            else if (target < threshold && output < threshold)
-                ++true_negative;
+            if      (target_positive && output_positive) ++true_positive;
+            else if (target_positive)                    ++false_negative;
+            else if (output_positive)                    ++false_positive;
+            else                                         ++true_negative;
         }
 
         roc_curve(i,0) = 1.0f - float(true_positive)/float(true_positive + false_negative);
         roc_curve(i,1) = float(true_negative)/float(true_negative + false_positive);
-        roc_curve(i,2) = float(threshold);
+        roc_curve(i,2) = threshold;
 
         if (isnan(roc_curve(i,0)))
             roc_curve(i,0) = 1.0f;
@@ -710,13 +679,8 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
             roc_curve(i,1) = 0.0f;
     }
 
-    roc_curve(0,0) = 0.0f;
-    roc_curve(0,1) = 0.0f;
-    roc_curve(0,2) = 0.0f;
-
-    roc_curve(points_number,0) = 1.0f;
-    roc_curve(points_number,1) = 1.0f;
-    roc_curve(points_number,2) = 1.0f;
+    roc_curve.row(0).setZero();
+    roc_curve.row(points_number).setOnes();
 
     return roc_curve;
 }
@@ -752,9 +716,11 @@ float TestingAnalysis::calculate_area_under_curve_confidence_limit(const MatrixR
     const float Q_2 = (2.0f * area_under_curve * area_under_curve) / (1.0f + area_under_curve);
 
     constexpr float z_95 = 1.64485f;  // one-sided 95% confidence Z-score
-    return float(z_95 * sqrt((area_under_curve*(1.0f - area_under_curve)
-                              + (float(total_positives) - 1.0f)*(Q_1-area_under_curve*area_under_curve)
-                              + (float(total_negatives) - 1.0f)*(Q_2-area_under_curve*area_under_curve))/(float(total_positives*total_negatives))));
+    const float auc_squared = area_under_curve * area_under_curve;
+    return z_95 * sqrt((area_under_curve * (1.0f - area_under_curve)
+                        + (float(total_positives) - 1.0f) * (Q_1 - auc_squared)
+                        + (float(total_negatives) - 1.0f) * (Q_2 - auc_squared))
+                       / float(total_positives * total_negatives));
 }
 
 float TestingAnalysis::calculate_optimal_threshold(const MatrixR& roc_curve) const
@@ -763,17 +729,17 @@ float TestingAnalysis::calculate_optimal_threshold(const MatrixR& roc_curve) con
 
     float optimal_threshold = 0.5f;
 
-    float minimun_distance = MAX;
+    float minimum_distance = MAX;
 
     for (Index i = 0; i < points_number; ++i)
     {
         const float distance = hypot(roc_curve(i, 0), roc_curve(i, 1) - 1.0f);
 
-        if (distance < minimun_distance)
+        if (distance < minimum_distance)
         {
             optimal_threshold = roc_curve(i,2);
 
-            minimun_distance = distance;
+            minimum_distance = distance;
         }
     }
 
@@ -803,7 +769,7 @@ MatrixR TestingAnalysis::calculate_cumulative_gain_impl(const MatrixR& targets, 
 
     stable_sort(sorted_indices.data(),
                 sorted_indices.data() + sorted_indices.size(),
-                [outputs](Index i1, Index i2) { return outputs(i1, 0) > outputs(i2, 0); });
+                [&outputs](Index i1, Index i2) { return outputs(i1, 0) > outputs(i2, 0); });
 
     VectorR sorted_targets(testing_samples_number);
 
@@ -813,15 +779,11 @@ MatrixR TestingAnalysis::calculate_cumulative_gain_impl(const MatrixR& targets, 
     const Index points_number = 21;
     const float percentage_increment = 0.05f;
 
-    MatrixR cumulative_gain(points_number, 2);
-    cumulative_gain(0, 0) = 0.0f;
-    cumulative_gain(0, 1) = 0.0f;
-
-    float percentage = 0.0f;
+    MatrixR cumulative_gain = MatrixR::Zero(points_number, 2);
 
     for (Index i = 0; i < points_number - 1; ++i)
     {
-        percentage += percentage_increment;
+        const float percentage = float(i + 1) * percentage_increment;
 
         Index count = 0;
         const Index maximum_index = Index(percentage * float(testing_samples_number));
@@ -870,8 +832,9 @@ MatrixR TestingAnalysis::calculate_lift_chart(const MatrixR& cumulative_gain) co
 
     for (Index i = 1; i < rows_number; ++i)
     {
-        lift_chart(i, 0) = float(cumulative_gain(i, 0));
-        lift_chart(i, 1) = float(cumulative_gain(i, 1))/float(cumulative_gain(i, 0));
+        const float gain_x = cumulative_gain(i, 0);
+        lift_chart(i, 0) = gain_x;
+        lift_chart(i, 1) = cumulative_gain(i, 1) / gain_x;
     }
 
     return lift_chart;
@@ -900,16 +863,15 @@ VectorR TestingAnalysis::calculate_maximum_gain(const MatrixR& positive_cumulati
 
     const float percentage_increment = 0.05f;
 
-    float percentage = 0.0f;
-
     for (Index i = 0; i < points_number - 1; ++i)
     {
-        percentage += percentage_increment;
+        const float percentage = float(i + 1) * percentage_increment;
 
-        if (positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > maximum_gain[1]
-        && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > 0.0f)
+        const float gain_diff = positive_cumulative_gain(i+1,1) - negative_cumulative_gain(i+1,1);
+
+        if (gain_diff > maximum_gain[1] && gain_diff > 0.0f)
         {
-            maximum_gain(1) = positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1);
+            maximum_gain(1) = gain_diff;
             maximum_gain(0) = percentage;
         }
     }
@@ -920,12 +882,8 @@ VectorR TestingAnalysis::calculate_maximum_gain(const MatrixR& positive_cumulati
 vector<Histogram> TestingAnalysis::calculate_output_histogram(const MatrixR& outputs,
                                                               Index bins_number) const
 {
-    const VectorR output_column = outputs.col(0);
-
-    vector<Histogram> output_histogram(1);
-    output_histogram[0] = histogram(output_column, bins_number);
-
-    return output_histogram;
+    const VectorR first_column = outputs.col(0);
+    return { histogram(first_column, bins_number) };
 }
 
 TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_classification_rates(const float decision_threshold) const
@@ -1024,23 +982,14 @@ void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
     file << ",";
 
     for (Index i = 0; i < classes_number; ++i)
-    {
-        file << target_variable_names[i];
-
-        if (i != classes_number - 1)
-            file << ",";
-    }
-
-    file << "\n";
+        file << target_variable_names[i] << (i == classes_number - 1 ? "\n" : ",");
 
     for (Index i = 0; i < classes_number; ++i)
     {
         file << target_variable_names[i] << ",";
 
         for (Index j = 0; j < classes_number; ++j)
-            j == classes_number - 1
-                ? file << confusion(i, j) << "\n"
-                : file << confusion(i, j) << ",";
+            file << confusion(i, j) << (j == classes_number - 1 ? "\n" : ",");
     }
 
     file.close();
@@ -1332,33 +1281,33 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const float decis
     const Index false_negative = confusion(0,1);
     const Index true_negative = confusion(1,1);
 
-    const float classification_accuracy = (true_positive + true_negative + false_positive + false_negative == 0)
+    const Index total = true_positive + true_negative + false_positive + false_negative;
+
+    const float classification_accuracy = (total == 0)
                                              ? 0.0f
-                                             : float(true_positive + true_negative) / float(true_positive + true_negative + false_positive + false_negative);
+                                             : float(true_positive + true_negative) / float(total);
 
-    const float error_rate = (true_positive + true_negative + false_positive + false_negative == 0)
+    const float error_rate = (total == 0)
                                 ? 0.0f
-                                : float(false_positive + false_negative) / float(true_positive + true_negative + false_positive + false_negative);
+                                : float(false_positive + false_negative) / float(total);
 
-    const float sensitivity = (true_positive + false_negative == 0)
-                                 ? 0.0f
-                                 : float(true_positive) / float(true_positive + false_negative);
+    const Index tp_plus_fn = true_positive + false_negative;
+    const Index fp_plus_tn = false_positive + true_negative;
+    const Index tp_plus_fp = true_positive + false_positive;
 
-    const float false_positive_rate = (false_positive + true_negative == 0)
-                                         ? 0.0f
-                                         : float(false_positive) / float(false_positive + true_negative);
+    const float sensitivity = (tp_plus_fn == 0) ? 0.0f : float(true_positive) / float(tp_plus_fn);
 
-    const float specificity = (false_positive + true_negative == 0)
-                                 ? 0.0f
-                                 : float(true_negative) / float(true_negative + false_positive);
+    const float false_positive_rate = (fp_plus_tn == 0) ? 0.0f : float(false_positive) / float(fp_plus_tn);
 
-    const float precision = (true_positive + false_positive == 0)
-                               ? 0.0f
-                               : float(true_positive) / float(true_positive + false_positive);
+    const float specificity = (fp_plus_tn == 0) ? 0.0f : float(true_negative) / float(fp_plus_tn);
+
+    const float precision = (tp_plus_fp == 0) ? 0.0f : float(true_positive) / float(tp_plus_fp);
+
+    const bool accuracy_is_one = abs(classification_accuracy - 1.0f) < EPSILON;
 
     float positive_likelihood;
 
-    if (abs(classification_accuracy - 1.0f) < EPSILON)
+    if (accuracy_is_one)
         positive_likelihood = 1.0f;
     else if (abs(1.0f - specificity) < EPSILON)
         positive_likelihood = 0.0f;
@@ -1367,36 +1316,35 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const float decis
 
     float negative_likelihood;
 
-    if (abs(classification_accuracy - 1.0f) < EPSILON)
+    if (accuracy_is_one)
         negative_likelihood = 1.0f;
     else if (abs(1.0f - sensitivity) < EPSILON)
         negative_likelihood = 0.0f;
     else
         negative_likelihood = specificity/(1.0f - sensitivity);
 
-    const float f1_score = (2 * true_positive + false_positive + false_negative == 0)
+    const Index f1_denominator = 2 * true_positive + false_positive + false_negative;
+    const float f1_score = (f1_denominator == 0)
                               ? 0.0f
-                              : 2.0f * float(true_positive) / (2.0f * float(true_positive) + float(false_positive) + float(false_negative));
+                              : 2.0f * float(true_positive) / float(f1_denominator);
 
-    const float false_discovery_rate = (false_positive + true_positive == 0)
-                                          ? 0.0f
-                                          : float(false_positive) / float(false_positive + true_positive);
+    const float false_discovery_rate = (tp_plus_fp == 0) ? 0.0f : float(false_positive) / float(tp_plus_fp);
 
-    const float false_negative_rate = (false_negative + true_positive == 0)
-                                         ? 0.0f
-                                         : float(false_negative) / float(false_negative + true_positive);
+    const float false_negative_rate = (tp_plus_fn == 0) ? 0.0f : float(false_negative) / float(tp_plus_fn);
 
-    const float negative_predictive_value = (true_negative + false_negative == 0)
-                                               ? 0.0f
-                                               : float(true_negative) / float(true_negative + false_negative);
+    const Index tn_plus_fn = true_negative + false_negative;
 
-    const float Matthews_correlation_coefficient = ((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative) == 0)
+    const float negative_predictive_value = (tn_plus_fn == 0) ? 0.0f : float(true_negative) / float(tn_plus_fn);
+
+    const Index matthews_denominator_squared = tp_plus_fp * tp_plus_fn * fp_plus_tn * tn_plus_fn;
+
+    const float Matthews_correlation_coefficient = (matthews_denominator_squared == 0)
                                                       ? 0.0f
-                                                      : float(true_positive * true_negative - false_positive * false_negative) / float(sqrt((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative)));
+                                                      : float(true_positive * true_negative - false_positive * false_negative) / float(sqrt(matthews_denominator_squared));
 
     const float informedness = sensitivity + specificity - 1.0f;
 
-    const float markedness = (true_negative + false_positive == 0)
+    const float markedness = (fp_plus_tn == 0)
                                 ? precision - 1.0f
                                 : precision + negative_predictive_value - 1.0f;
 
@@ -1460,17 +1408,15 @@ MatrixR TestingAnalysis::calculate_multiple_classification_tests() const
         const Index false_negatives = row_sum - true_positives;
         const Index false_positives = column_sum - true_positives;
 
-        const float precision = (true_positives + false_positives == 0)
-                                   ? 1.0f
-                                   : float(true_positives) / float(true_positives + false_positives);
+        const Index tp_plus_fp = true_positives + false_positives;
+        const Index tp_plus_fn = true_positives + false_negatives;
 
-        const float recall = (true_positives + false_negatives == 0)
-                                ? 1.0f
-                                : float(true_positives) / float(true_positives + false_negatives);
+        const float precision = (tp_plus_fp == 0) ? 1.0f : float(true_positives) / float(tp_plus_fp);
+        const float recall    = (tp_plus_fn == 0) ? 1.0f : float(true_positives) / float(tp_plus_fn);
 
         const float f1_score = (precision + recall == 0)
                                   ? 0.0f
-                                  : float(2 * precision * recall) / float(precision + recall);
+                                  : 2 * precision * recall / (precision + recall);
 
         multiple_classification_tests(target_index, 0) = precision;
         multiple_classification_tests(target_index, 1) = recall;

@@ -19,9 +19,6 @@ class GeneticAlgorithm final : public InputsSelection
 public:
 
     GeneticAlgorithm(TrainingStrategy* = nullptr);
-
-    //enum class InitializationMethod{Random,Correlations};
-
     Index get_individuals_number() const { return population.rows(); }
 
     Index get_genes_number() const { return original_input_variable_indices.size(); }

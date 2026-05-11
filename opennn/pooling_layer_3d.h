@@ -9,9 +9,8 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 #include "pooling_layer.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
@@ -35,7 +34,6 @@ public:
     string write_pooling_method() const;
 
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
-    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
 
     void set(const Shape&, const PoolingMethod&, const string&);
 
@@ -48,11 +46,8 @@ public:
     void set_pooling_method(const PoolingMethod& new_pooling_method) { pooling_method = new_pooling_method; }
     void set_pooling_method(const string&);
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
-
-    void from_JSON(const JsonDocument&) override;
-    void to_JSON(JsonWriter&) const override;
+    void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
 
 private:
 
@@ -61,8 +56,9 @@ private:
 
     PoolingMethod pooling_method = PoolingMethod::MaxPooling;
 
+    Pool3d pool3d;
+
     enum Forward { Input, MaximalIndices, Output };
-    enum Backward { OutputDelta, InputDelta };
 };
 
 }

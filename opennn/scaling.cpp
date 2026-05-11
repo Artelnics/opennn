@@ -73,28 +73,24 @@ void unscale_minimum_maximum(MatrixMap matrix,
                              float min_range,
                              float max_range)
 {
-    const float minimum = column_descriptives.minimum;
-    const float maximum = column_descriptives.maximum;
-
     if (max_range - min_range < EPSILON)
         throw runtime_error("The range values are not valid.");
 
     matrix.col(column_index).array() =
-        (matrix.col(column_index).array() - min_range) / (max_range - min_range) * (maximum - minimum) + minimum;
+        (matrix.col(column_index).array() - min_range) / (max_range - min_range)
+        * (column_descriptives.maximum - column_descriptives.minimum) + column_descriptives.minimum;
 }
 
 void unscale_mean_standard_deviation(MatrixMap matrix, Index column_index, const Descriptives& column_descriptives)
 {
-    const float mean = column_descriptives.mean;
-    const float standard_deviation = column_descriptives.standard_deviation;
-
-    if (standard_deviation < EPSILON)
+    if (column_descriptives.standard_deviation < EPSILON)
     {
-        matrix.col(column_index).setConstant(mean);
+        matrix.col(column_index).setConstant(column_descriptives.mean);
         return;
     }
 
-    matrix.col(column_index).array() = mean + matrix.col(column_index).array() * standard_deviation;
+    matrix.col(column_index).array()
+        = column_descriptives.mean + matrix.col(column_index).array() * column_descriptives.standard_deviation;
 }
 
 void unscale_standard_deviation(MatrixMap matrix, Index column_index, const Descriptives& column_descriptives)

@@ -28,10 +28,19 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_input_shape,
 MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
                                        const Shape& new_source_dimensions,
                                        Index new_heads_number,
-                                       const string& new_name) : Layer()
+                                       const string& new_name)
+    : Layer("MultiHeadAttention", LayerType::MultiHeadAttention)
 {
-    name = "MultiHeadAttention";
-    layer_type = LayerType::MultiHeadAttention;
+    // Forward order is V, K, Q so that Layer::back_propagate (reverse iteration)
+    // runs the projections as Q, K, V. That order is required because Q, K, V
+    // share input-delta destination slots (InputQueryDelta in self-attention,
+    // InputSourceDelta in cross-attention for the K/V pair) and each projection
+    // reads its head-delta from a slot that another projection then overwrites.
+    // With the reverse order, the first read happens before any write to the
+    // shared destination; the second/third writers use accumulate=true to sum
+    // onto the first writer's contribution.
+    operators = {&value_projection, &key_projection, &query_projection,
+                 &attention, &merge, &output_projection};
 
     if (new_query_dimensions[1] != new_source_dimensions[1])
         throw runtime_error("embedding dimension must be the same for query and source.");
@@ -44,8 +53,6 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
         new_name);
 }
 
-// Getters
-
 Shape MultiHeadAttention::get_input_shape() const
 {
     return { query_sequence_length, embedding_dimension };
@@ -54,11 +61,6 @@ Shape MultiHeadAttention::get_input_shape() const
 Shape MultiHeadAttention::get_output_shape() const
 {
     return get_input_shape();
-}
-
-vector<Operator*> MultiHeadAttention::get_operators()
-{
-    return {&query_projection, &key_projection, &value_projection, &output_projection};
 }
 
 vector<pair<Shape, Type>> MultiHeadAttention::get_forward_specs(Index batch_size) const
@@ -91,8 +93,6 @@ vector<pair<Shape, Type>> MultiHeadAttention::get_backward_specs(Index batch_siz
         {{batch_size, heads_number, source_sequence_length, head_dimension},        compute_dtype}, // ValueDelta (transposed)
     };
 }
-
-// Setters
 
 void MultiHeadAttention::set(Index new_query_sequence_length,
                              Index new_source_sequence_length,
@@ -127,179 +127,84 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     attention.set(heads_number, head_dimension,
                   query_sequence_length, source_sequence_length,
                   new_use_causal_mask, compute_dtype);
+
+    // Shared across all 3 projections.
+    for (auto* proj : {&query_projection, &key_projection, &value_projection})
+    {
+        proj->input_slots  = {Input};
+        proj->scratch_slots = {TransposeScratch};
+        proj->input_delta_slots_self = {InputQueryDelta};
+    }
+
+    // Per-projection differs in: forward output, source-vs-query input view, head-gradient
+    // delta source, cross-attention input-gradient destination, and accumulate flags.
+    // Backward order Q→K→V (reverse of forward V→K→Q):
+    //   - Q is the first writer to InputQueryDelta in both self/cross attention.
+    //   - In self-attention K and V also write to InputQueryDelta and must accumulate.
+    //   - In cross-attention K is the first writer to InputSourceDelta and V
+    //     accumulates onto it. Each projection's read of its head-delta slot
+    //     (InputQueryDelta for Q, InputSourceDelta for K, ValueDelta for V) is
+    //     completed before any later projection writes there.
+    query_projection.output_slots = {Query};
+    query_projection.input_view_index = 0;
+    query_projection.output_delta_slots = {InputQueryDelta};
+    query_projection.input_delta_slots_cross = {InputQueryDelta};
+    query_projection.accumulate_input_delta_self  = false;
+    query_projection.accumulate_input_delta_cross = false;
+
+    key_projection.output_slots = {Key};
+    key_projection.input_view_index = 1;
+    key_projection.output_delta_slots = {InputSourceDelta};
+    key_projection.input_delta_slots_cross = {InputSourceDelta};
+    key_projection.accumulate_input_delta_self  = true;
+    key_projection.accumulate_input_delta_cross = false;
+
+    value_projection.output_slots = {Value};
+    value_projection.input_view_index = 1;
+    value_projection.output_delta_slots = {ValueDelta};
+    value_projection.input_delta_slots_cross = {InputSourceDelta};
+    value_projection.accumulate_input_delta_self  = true;
+    value_projection.accumulate_input_delta_cross = true;
+
+    attention.input_slots  = {Query, Key, Value, Input};
+    attention.output_slots = {AttentionWeights, AttentionWeightsDropped};
+    attention.scratch_slots = {TransposeScratch};
+    attention.source_view_index = 1;
+    attention.attention_output_slots = {ConcatenatedAttentionOutputs};
+    attention.output_delta_slots = {AttentionWeightDelta, InputQueryDelta, InputSourceDelta, ValueDelta};
+
+    output_projection.input_slots  = {ConcatenatedAttentionOutputs};
+    output_projection.output_slots = {Output};
+    output_projection.output_delta_slots = {OutputDelta};
+    output_projection.input_delta_slots  = {InputQueryDelta};
+
+    merge.set(heads_number, query_sequence_length, head_dimension, compute_dtype);
+    merge.input_slots  = {TransposeScratch};
+    merge.output_slots = {ConcatenatedAttentionOutputs};
+    merge.output_delta_slots = {InputQueryDelta};  // concat gradient is parked here by output_projection
 }
 
-void MultiHeadAttention::set_parameters_random()
+void MultiHeadAttention::read_JSON_body(const Json* root_element)
 {
-    if (embedding_dimension == 0) return;
-
-    const float weight_limit = sqrt(6.0f / float(2 * embedding_dimension));
-
-    for (const int slot : {QueryWeight, KeyWeight, ValueWeight, ProjectionWeight})
-        if (!parameters[slot].empty())
-            set_random_uniform(parameters[slot].as_vector(),
-                               -weight_limit, weight_limit);
-
-    for (const int slot : {QueryBias, KeyBias, ValueBias, ProjectionBias})
-        if (!parameters[slot].empty())
-            parameters[slot].fill(0.0f);
-}
-
-// Forward / back propagation
-
-void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagation,
-                                           size_t layer,
-                                           bool is_training) noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-
-    const TensorView& query_input = get_query_input(forward_views);
-    const TensorView& source_input = get_source_input(forward_views);
-
-    TensorView& query = forward_views[Query][0];
-    TensorView& key = forward_views[Key][0];
-    TensorView& value = forward_views[Value][0];
-    TensorView& attention_weights = forward_views[AttentionWeights][0];
-    TensorView& concatenated = forward_views[ConcatenatedAttentionOutputs][0];
-    TensorView& output = forward_views.back()[0];
-
-    const Index batch_size = forward_propagation.batch_size;
-
-    float* transpose_scratch = forward_views[TransposeScratch][0].as<float>();
-
-    query_projection.apply(query_input,  query, transpose_scratch);
-    key_projection  .apply(source_input, key,   transpose_scratch);
-    value_projection.apply(source_input, value, transpose_scratch);
-
-    TensorView attention_out_scratch(transpose_scratch, get_heads_shape(batch_size), compute_dtype);
-
-    attention.apply(query, key, value, source_input,
-                    attention_weights,
-                    forward_views[AttentionWeightsDropped][0],
-                    attention_out_scratch,
-                    transpose_scratch,
-                    is_training);
-
-    TensorView concatenated_4d = concatenated.reshape(get_concat_shape(batch_size));
-    merge_heads(attention_out_scratch, concatenated_4d);
-
-    const Shape flat_shape = {batch_size * query_sequence_length, embedding_dimension};
-    TensorView concatenated_2d = concatenated.reshape(flat_shape);
-    TensorView output_2d       = output.reshape(flat_shape);
-
-    output_projection.apply(concatenated_2d, output_2d);
-}
-
-void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
-                                        BackPropagation& back_propagation,
-                                        size_t layer) const noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-    auto& delta_views = back_propagation.delta_views[layer];
-    auto& gradient_views = back_propagation.gradient_views[layer];
-
-    const TensorView& query_input = get_query_input(forward_views);
-    const TensorView& source_input = get_source_input(forward_views);
-    const bool self_attention = is_self_attention(forward_views);
-
-    TensorView& output_delta = delta_views[OutputDelta][0];
-
-    const Index batch_size = forward_propagation.batch_size;
-    const Shape flat_shape = {batch_size * query_sequence_length, embedding_dimension};
-
-    float* transpose_scratch = forward_views[TransposeScratch][0].as<float>();
-
-    TensorView concat_gradient_flat  = delta_views[InputQueryDelta][0].reshape(flat_shape);
-    TensorView output_delta_flat = output_delta.reshape(flat_shape);
-    TensorView concat_in_flat    = forward_views[ConcatenatedAttentionOutputs][0].reshape(flat_shape);
-
-    output_projection.apply_delta(output_delta_flat,
-                                  concat_in_flat,
-                                  concat_gradient_flat,
-                                  gradient_views[ProjectionWeight],
-                                  gradient_views[ProjectionBias],
-                                  false);
-
-    TensorView& att_weight_gradient = delta_views[AttentionWeightDelta][0];
-    TensorView& value_gradient      = delta_views[ValueDelta][0];
-
-    const Index head_dimension = get_head_dimension();
-
-    TensorView query_gradient(delta_views[InputQueryDelta][0].as<float>(),
-                          get_heads_shape(batch_size),
-                          compute_dtype);
-    TensorView key_gradient(delta_views[InputSourceDelta][0].as<float>(),
-                        {batch_size, heads_number, source_sequence_length, head_dimension},
-                        compute_dtype);
-
-    TensorView concat_gradient_4d = delta_views[InputQueryDelta][0].reshape(get_concat_shape(batch_size));
-    TensorView scratch_4d     = forward_views[TransposeScratch][0].reshape(get_heads_shape(batch_size));
-
-    split_heads(concat_gradient_4d, scratch_4d);
-
-    attention.apply_delta(forward_views[Query][0],
-                          forward_views[Key][0],
-                          forward_views[Value][0],
-                          forward_views[ConcatenatedAttentionOutputs][0],
-                          forward_views[AttentionWeights][0],
-                          forward_views[AttentionWeightsDropped][0],
-                          scratch_4d,
-                          att_weight_gradient,
-                          query_gradient,
-                          key_gradient,
-                          value_gradient);
-
-    query_projection.apply_delta(query_gradient, query_input,
-                                 delta_views[InputQueryDelta][0],
-                                 gradient_views[QueryWeight], gradient_views[QueryBias],
-                                 false, transpose_scratch);
-
-    TensorView& kv_input_gradient = self_attention
-        ? delta_views[InputQueryDelta][0]
-        : delta_views[InputSourceDelta][0];
-
-    key_projection.apply_delta(key_gradient, source_input,
-                               kv_input_gradient,
-                               gradient_views[KeyWeight], gradient_views[KeyBias],
-                               self_attention, transpose_scratch);
-
-    value_projection.apply_delta(value_gradient, source_input,
-                                 kv_input_gradient,
-                                 gradient_views[ValueWeight], gradient_views[ValueBias],
-                                 true, transpose_scratch);
-}
-
-// Serialization
-
-void MultiHeadAttention::from_JSON(const JsonDocument& document)
-{
-    const Json* root_element = get_json_root(document, "MultiHeadAttention");
-
     const string new_label = read_json_string(root_element, "Label");
-    const Index new_query_sequence_length = read_json_index(root_element, "QuerySequenceLength");
+    const Shape new_input_shape = string_to_shape(read_json_string(root_element, "InputDimensions"));
     const Index new_source_sequence_length = read_json_index(root_element, "SourceSequenceLength");
-    const Index new_embedding_dimension = read_json_index(root_element, "EmbeddingDimension");
     const Index new_heads_number = read_json_index(root_element, "HeadsNumber");
     const bool  new_use_causal_mask = read_json_bool(root_element, "CausalMask");
 
-    set(new_query_sequence_length, new_source_sequence_length, new_embedding_dimension,
+    set(new_input_shape.dim_or_zero(0),
+        new_source_sequence_length,
+        new_input_shape.dim_or_zero(1),
         new_heads_number, new_use_causal_mask, new_label);
 }
 
-void MultiHeadAttention::to_JSON(JsonWriter& printer) const
+void MultiHeadAttention::write_JSON_body(JsonWriter& printer) const
 {
-    printer.open_element("MultiHeadAttention");
-
     write_json(printer, {
-        {"Label", label},
-        {"QuerySequenceLength", to_string(query_sequence_length)},
         {"SourceSequenceLength", to_string(source_sequence_length)},
-        {"EmbeddingDimension", to_string(embedding_dimension)},
         {"HeadsNumber", to_string(heads_number)},
         {"CausalMask", to_string(attention.use_causal_mask)}
     });
-
-    printer.close_element();
 }
 
 REGISTER(Layer, MultiHeadAttention, "MultiHeadAttention")

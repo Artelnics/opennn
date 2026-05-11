@@ -60,10 +60,10 @@ TrainingResults AdaptiveMomentEstimation::train()
 {
     TrainingResults results(maximum_epochs + 1);
 
-    const bool is_gpu = Configuration::instance().is_gpu();
+    const bool on_gpu = is_gpu();
 
     if (display) cout << "Training with adaptive moment estimation \"Adam\""
-                     << (is_gpu ? " CUDA" : "") << " ...\n";
+                     << (on_gpu ? " CUDA" : "") << " ...\n";
 
     // Dataset
 
@@ -101,7 +101,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     set_names();
     set_scaling();
 
-    const int pool_size = is_gpu ? 3 : 2;
+    const int pool_size = on_gpu ? 3 : 2;
 
     ThreadSafeQueue<Batch*> empty_training_queue;
     ThreadSafeQueue<Batch*> ready_training_queue;
@@ -123,9 +123,6 @@ TrainingResults AdaptiveMomentEstimation::train()
             validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
             empty_validation_queue.push(validation_batch_pool.back().get());
         }
-
-    // Forward / back propagation
-
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
 
     loss->set_normalization_coefficient();
@@ -147,7 +144,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     const Index parameters_number = loss->get_neural_network()->get_parameters_size();
 
-    const Device device = Configuration::instance().is_gpu() ? Device::CUDA : Device::CPU;
+    const Device device = is_gpu() ? Device::CUDA : Device::CPU;
 
     OptimizerData optimization_data;
     optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, device);
@@ -216,7 +213,7 @@ TrainingResults AdaptiveMomentEstimation::train()
             validation_accuracy = val_stats.accuracy;
             results.validation_error_history(epoch) = validation_error;
 
-            if (epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
+            if (epoch != 0 && validation_error > results.validation_error_history(epoch - 1))
                 ++validation_failures;
         }
 

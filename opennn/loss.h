@@ -102,8 +102,6 @@ public:
         Index active_tokens_count = 0;
     };
 
-    // Back propagation
-
     EvaluationResult calculate_error(const Batch&,
                                      const ForwardPropagation&) const;
 
@@ -115,13 +113,7 @@ public:
     void back_propagate(const Batch&,
                         ForwardPropagation&,
                         BackPropagation&) const;
-
-    // Regularization
-
     float calculate_regularization(const VectorR&) const;
-
-    // Serialization
-
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;
@@ -130,10 +122,6 @@ public:
     void regularization_to_JSON(JsonWriter&) const;
 
     const string& get_name() const { return name; }
-
-    // Used by Levenberg–Marquardt for numerical jacobian/hessian. Other
-    // numerical-differentiation helpers (calculate_numerical_gradient et al.)
-    // live in tests/numerical_derivatives.{h,cpp} as free functions.
     static float calculate_h(const float);
 
     void print() const {}
@@ -176,7 +164,7 @@ protected:
     float negatives_weight = 1.0f;
     float minkowski_parameter = 1.5f;
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     // Reduction workspace for cublasSasum/cudaMemcpy used by the loss kernels.
     // mutable because calculate_error grows it lazily on the first call; the
     // method's logical contract is still const (no observable state changes).

@@ -53,9 +53,6 @@ class LevenbergMarquardtAlgorithm final : public Optimizer
 public:
 
    LevenbergMarquardtAlgorithm(Loss* = nullptr);
-
-   // Set
-
    void set_default();
 
    void set_damping_parameter(const float);
@@ -64,12 +61,7 @@ public:
 
    void set_minimum_damping_parameter(const float);
    void set_maximum_damping_parameter(const float);
-
-   // Stopping criteria
-
    void set_minimum_loss_decrease(const float);
-   // Training
-
    TrainingResults train() override;
 
    enum DataSlot { ParameterUpdate };
@@ -79,18 +71,11 @@ public:
            ForwardPropagation&,
            BackPropagationLM&,
            OptimizerData&);
-
-   // Serialization
-
    void from_JSON(const JsonDocument&) override;
 
    void to_JSON(JsonWriter&) const override;
 
 private:
-
-    VectorR calculate_numerical_gradient();
-    MatrixR calculate_numerical_jacobian();
-    MatrixR calculate_numerical_hessian();
 
    void back_propagate(const Batch&, const ForwardPropagation&, BackPropagationLM&);
 

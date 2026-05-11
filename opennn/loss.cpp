@@ -58,7 +58,6 @@ void Loss::set_normalization_coefficient()
         const float total = float(positives + negatives);
         positives_weight = total / (2.0f * float(positives));
         negatives_weight = total / (2.0f * float(negatives));
-        normalization_coefficient = 1.0f;
     }
 }
 
@@ -102,9 +101,9 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
 
     EvaluationResult result;
 
-#ifdef OPENNN_WITH_CUDA
     float* workspace_device = nullptr;
-    if (Configuration::instance().is_gpu())
+#ifdef OPENNN_HAS_CUDA
+    if (is_gpu())
     {
         // CrossEntropy3d packs three masks (errors, valid, correct) of size
         // token_count; other losses need one float per input element.
@@ -114,8 +113,6 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         errors_device.grow_to(workspace_floats * Index(sizeof(float)));
         workspace_device = errors_device.as<float>();
     }
-#else
-    float* workspace_device = nullptr;
 #endif
 
     switch (error)
@@ -235,18 +232,17 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
             PROFILE_SCOPE("bwd:accumulate_output_deltas");
             back_propagation.accumulate_output_deltas(static_cast<size_t>(i));
         }
-        const std::string key = "bwd:" + layers[i]->get_name();
-        PROFILE_SCOPE(key);
+        PROFILE_SCOPE("bwd:" + layers[i]->get_name());
         layers[i]->back_propagate(forward_propagation, back_propagation, i);
     }
 }
 
 static const vector<pair<Loss::Error, string>> error_map = {
-    {Loss::Error::MeanSquaredError,      "MeanSquaredError"},
+    {Loss::Error::MeanSquaredError,       "MeanSquaredError"},
     {Loss::Error::NormalizedSquaredError, "NormalizedSquaredError"},
     {Loss::Error::WeightedSquaredError,   "WeightedSquaredError"},
     {Loss::Error::CrossEntropy,           "CrossEntropy"},
-    {Loss::Error::CrossEntropy3d,        "CrossEntropyError3d"},
+    {Loss::Error::CrossEntropy3d,         "CrossEntropyError3d"},
     {Loss::Error::MinkowskiError,         "MinkowskiError"}
 };
 
@@ -305,9 +301,8 @@ void Loss::regularization_to_JSON(JsonWriter& file_stream) const
 
 float Loss::calculate_h(const float x)
 {
-    static const float sqrt_eta = 1e-3f;
-
-    return sqrt_eta * (1.0f + abs(x));
+    constexpr float finite_difference_step = 1e-3f;
+    return finite_difference_step * (1.0f + abs(x));
 }
 
 void Loss::to_JSON(JsonWriter& printer) const

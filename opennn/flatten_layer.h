@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 
 namespace opennn
 {
@@ -19,28 +20,15 @@ public:
 
     Flatten(const Shape& = {});
 
-    Shape get_input_shape() const override { return input_shape; }
     Shape get_output_shape() const override { return { input_shape.size() }; }
-
-    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
-    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
 
     void set(const Shape&);
 
     void set_input_shape(const Shape& new_input_shape) override { set(new_input_shape); }
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
-
-    void from_JSON(const JsonDocument&) override;
-    void to_JSON(JsonWriter&) const override;
-
 private:
 
-    Shape input_shape;
-
-    enum Forward {Input, Output};
-    enum Backward {OutputDelta, InputDelta};
+    Flat flat;
 };
 
 }

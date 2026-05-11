@@ -24,28 +24,16 @@ public:
     // Constructors
 
     ModelSelection(TrainingStrategy* = nullptr);
-
-    // Get
-
     const TrainingStrategy* get_training_strategy() const { return training_strategy; }
     bool has_training_strategy() const { return training_strategy; }
-
-    // Set
-
     void set(TrainingStrategy* new_training_strategy) { training_strategy = new_training_strategy; }
 
     void set_default();
-
-    // Model selection
-
     void check() const;
 
     NeuronsSelectionResults perform_neurons_selection();
 
     InputsSelectionResults perform_input_selection();
-
-    // Serialization
-
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;

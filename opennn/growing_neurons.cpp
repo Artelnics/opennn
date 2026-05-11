@@ -84,8 +84,9 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         neurons_number = minimum_neurons + epoch*neurons_increment;
 
-        neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape({ neurons_number });
-        neural_network->get_layer(last_trainable_layer_index)->set_input_shape({ neurons_number });
+        const Shape neurons_shape = { neurons_number };
+        neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape(neurons_shape);
+        neural_network->get_layer(last_trainable_layer_index)->set_input_shape(neurons_shape);
 
         neural_network->compile();
 
@@ -105,26 +106,29 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
             training_results = training_strategy->train();
 
+            const float training_error = training_results.get_training_error();
+            const float validation_error = training_results.get_validation_error();
+
             if (display)
                 cout << "Trial: " << trial+1 << "\n"
-                     << "Training error: " << training_results.get_training_error() << "\n"
-                     << "Validation error: " << training_results.get_validation_error() << "\n";
+                     << "Training error: " << training_error << "\n"
+                     << "Validation error: " << validation_error << "\n";
 
-            if (training_results.get_validation_error() < minimum_validation_error)
+            if (validation_error < minimum_validation_error)
             {
-                minimum_training_error = training_results.get_training_error();
-                minimum_validation_error = training_results.get_validation_error();
+                minimum_training_error = training_error;
+                minimum_validation_error = validation_error;
 
                 neuron_selection_results.training_error_history(epoch) = minimum_training_error;
                 neuron_selection_results.validation_error_history(epoch) = minimum_validation_error;
-            }
 
-            if (minimum_validation_error < neuron_selection_results.optimum_validation_error)
-            {
-                neuron_selection_results.optimal_neurons_number = neurons_number;
-                //neural_network->get_parameters(neuron_selection_results.optimal_parameters);
-                neuron_selection_results.optimum_training_error = minimum_training_error;
-                neuron_selection_results.optimum_validation_error = minimum_validation_error;
+                if (minimum_validation_error < neuron_selection_results.optimum_validation_error)
+                {
+                    neuron_selection_results.optimal_neurons_number = neurons_number;
+                    //neural_network->get_parameters(neuron_selection_results.optimal_parameters);
+                    neuron_selection_results.optimum_training_error = minimum_training_error;
+                    neuron_selection_results.optimum_validation_error = minimum_validation_error;
+                }
             }
         }
 
@@ -191,8 +195,9 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     cout << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << "\n";
 
-    neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape({ neuron_selection_results.optimal_neurons_number });
-    neural_network->get_layer(last_trainable_layer_index)->set_input_shape({ neuron_selection_results.optimal_neurons_number });
+    const Shape optimal_shape = { neuron_selection_results.optimal_neurons_number };
+    neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape(optimal_shape);
+    neural_network->get_layer(last_trainable_layer_index)->set_input_shape(optimal_shape);
     neural_network->set_parameters(neuron_selection_results.optimal_parameters);
 
     if (display) neuron_selection_results.print();

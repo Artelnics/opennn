@@ -67,6 +67,8 @@ struct Shape
 
     bool empty() const noexcept { return rank == 0; }
 
+    Index dim_or_zero(size_t i) const noexcept { return i < rank ? dims[i] : Index(0); }
+
     Index size() const noexcept
     {
         return rank == 0 ? 0 : std::accumulate(begin(), end(), Index(1), std::multiplies<>{});
@@ -170,14 +172,14 @@ struct Buffer
     void setZero()
     {
         if (!data) return;
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
         if (device_type == Device::CUDA) CHECK_CUDA(cudaMemset(data, 0, bytes));
         else
 #endif
             std::memset(data, 0, static_cast<size_t>(bytes));
     }
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     void migrate_to(Device target)
     {
         if (device_type == target || !data) return;
@@ -210,7 +212,7 @@ struct Buffer
 private:
     static void* alloc(Device device_type, Index byte_count)
     {
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
         if (device_type == Device::CUDA) { void* device_pointer = nullptr; CHECK_CUDA(cudaMalloc(&device_pointer, byte_count)); return device_pointer; }
 #endif
         return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
@@ -218,7 +220,7 @@ private:
 
     static void dealloc(Device device_type, void* pointer, Index byte_count)
     {
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
         if (device_type == Device::CUDA) { cudaFree(pointer); return; }
 #endif
         Eigen::aligned_allocator<uint8_t>{}.deallocate(static_cast<uint8_t*>(pointer), static_cast<size_t>(byte_count));
@@ -333,11 +335,8 @@ struct TensorView
 
     void fill(float value);
 
-#ifdef OPENNN_WITH_CUDA
-
-    // GPU-only: async cudaMemset on the compute stream. Caller must guarantee
-    // data is device memory and the next op runs on the same stream.
-    void set_zero_async();
+#ifdef OPENNN_HAS_CUDA
+    void set_zero_async() const;
 
     mutable shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
 
@@ -432,7 +431,7 @@ inline void TensorView::fill(float value)
 {
     if (!data) return;
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     // Probe the pointer: set_parameters_random() may call fill() on host-resident
     // TensorViews even when Device is already GPU.
     cudaPointerAttributes attr{};
@@ -459,9 +458,9 @@ inline void TensorView::fill(float value)
     std::fill(data_pointer, data_pointer + size(), value);
 }
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
-inline void TensorView::set_zero_async()
+inline void TensorView::set_zero_async() const
 {
     if (!data || byte_size() == 0) return;
     CHECK_CUDA(cudaMemsetAsync(data, 0, byte_size(), Backend::get_compute_stream()));

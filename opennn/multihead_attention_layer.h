@@ -11,8 +11,6 @@
 #include "layer.h"
 #include "operators.h"
 #include "math_utilities.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
@@ -41,10 +39,6 @@ public:
     {
         return (heads_number == 0) ? 0 : Index(embedding_dimension / heads_number);
     }
-
-    // Layout: heads_shape is {B, H, Q, D} (logical attention layout),
-    // concat_shape is {B, Q, H, D} (physical post-merge layout the kernels
-    // emit). The swap is a contract with the merge_heads kernel — don't reorder.
     Shape get_heads_shape(Index batch_size) const
     {
         return {batch_size, heads_number, query_sequence_length, get_head_dimension()};
@@ -70,7 +64,6 @@ public:
         return is_self_attention(forward_views) ? forward_views[Input][0] : forward_views[Input][1];
     }
 
-    vector<Operator*> get_operators() override;
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
     vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
 
@@ -91,28 +84,23 @@ public:
         embedding_dimension    = new_input_shape[1];
     }
 
-    void set_compute_dtype(Type new_compute_dtype) override
+    void on_compute_dtype_changed() override
     {
-        Layer::set_compute_dtype(new_compute_dtype);
-        query_projection .compute_dtype           = new_compute_dtype;
-        query_projection .combination.weight_type = new_compute_dtype;
-        key_projection   .compute_dtype           = new_compute_dtype;
-        key_projection   .combination.weight_type = new_compute_dtype;
-        value_projection .compute_dtype           = new_compute_dtype;
-        value_projection .combination.weight_type = new_compute_dtype;
-        output_projection.weight_type             = new_compute_dtype;
-        attention.compute_dtype                   = new_compute_dtype;
+        query_projection .compute_dtype           = compute_dtype;
+        query_projection .combination.weight_type = compute_dtype;
+        key_projection   .compute_dtype           = compute_dtype;
+        key_projection   .combination.weight_type = compute_dtype;
+        value_projection .compute_dtype           = compute_dtype;
+        value_projection .combination.weight_type = compute_dtype;
+        output_projection.weight_type             = compute_dtype;
+        attention.compute_dtype                   = compute_dtype;
     }
 
     void set_dropout_rate(float new_dropout_rate) { attention.set_dropout_rate(new_dropout_rate); }
 
-    void set_parameters_random() override;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
-
-    void from_JSON(const JsonDocument&) override;
-    void to_JSON(JsonWriter&) const override;
+    void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
 
 private:
 
@@ -126,11 +114,10 @@ private:
     MultiHeadProjection value_projection;
     Combination         output_projection;
     Attention           attention;
+    Merge               merge;
 
-    enum Parameters {QueryBias, QueryWeight, KeyBias, KeyWeight, ValueBias, ValueWeight,
-                     ProjectionBias, ProjectionWeight};
     enum Forward {Input, Query, Key, AttentionWeights, AttentionWeightsDropped,
-                  ConcatenatedAttentionOutputs, Value, TransposeScratch};
+                  ConcatenatedAttentionOutputs, Value, TransposeScratch, Output};
     enum Backward {OutputDelta, InputQueryDelta, InputSourceDelta,
                    AttentionWeightDelta, ValueDelta};
 };

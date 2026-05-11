@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "image_dataset.h"
+#include "tabular_dataset.h"
 #include "time_series_dataset.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
@@ -99,11 +100,15 @@ void Optimizer::set_scaling()
         switch (scaling_layer->get_input_shape().rank)
         {
             case 1:
-                input_variable_scalers = dataset->get_feature_scalers("Input");
-                input_variable_descriptives = dataset->scale_features("Input");
+            {
+                auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
+                if (!tabular_dataset) throw runtime_error("Expected TabularDataset.");
+                input_variable_scalers = tabular_dataset->get_feature_scalers("Input");
+                input_variable_descriptives = tabular_dataset->scale_features("Input");
                 scaling_layer->set_descriptives(input_variable_descriptives);
                 scaling_layer->set_scalers(input_variable_scalers);
                 break;
+            }
 
             case 2:
             {
@@ -147,12 +152,16 @@ void Optimizer::set_scaling()
 
     if (has_pure_targets)
     {
-        target_variable_descriptives = dataset->scale_features("Target");
-        target_variable_scalers = dataset->get_feature_scalers("Target");
+        auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
+        if (!tabular_dataset) throw runtime_error("Expected TabularDataset for target unscaling.");
+        target_variable_descriptives = tabular_dataset->scale_features("Target");
+        target_variable_scalers = tabular_dataset->get_feature_scalers("Target");
     }
 
     vector<Descriptives> unscaling_layer_descriptives;
     vector<string> unscaling_layer_scalers;
+    unscaling_layer_descriptives.reserve(target_feature_indices.size());
+    unscaling_layer_scalers.reserve(target_feature_indices.size());
 
     for (size_t i = 0; i < target_feature_indices.size(); ++i)
     {
@@ -230,12 +239,11 @@ void Optimizer::set_unscaling()
     auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
     if (!unscaling_layer) return;
 
-    const VectorR& u_mins = unscaling_layer->get_minimums();
-    const VectorR& u_maxs = unscaling_layer->get_maximums();
-    const VectorR& u_means = unscaling_layer->get_means();
-    const VectorR& u_stds  = unscaling_layer->get_standard_deviations();
-    const vector<Descriptives> all_target_descriptives =
-        reconstruct_descriptives(u_mins, u_maxs, u_means, u_stds);
+    const vector<Descriptives> all_target_descriptives = reconstruct_descriptives(
+        unscaling_layer->get_minimums(),
+        unscaling_layer->get_maximums(),
+        unscaling_layer->get_means(),
+        unscaling_layer->get_standard_deviations());
 
     const vector<Index> input_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_indices = dataset->get_feature_indices("Target");
@@ -281,9 +289,7 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
         results.stopping_condition = StoppingCondition::MaximumTime;
     }
     else
-    {
         return false;
-    }
 
     return true;
 }
@@ -308,11 +314,8 @@ void Optimizer::read_common_xml(const Json* root_element)
 
 TrainingResults::TrainingResults(const Index epochs_number)
 {
-    training_error_history.resize(1 + epochs_number);
-    training_error_history.setConstant(-1.0f);
-
-    validation_error_history.resize(1 + epochs_number);
-    validation_error_history.setConstant(-1.0f);
+    training_error_history = VectorR::Constant(1 + epochs_number, -1.0f);
+    validation_error_history = VectorR::Constant(1 + epochs_number, -1.0f);
 }
 
 string TrainingResults::write_stopping_condition() const
@@ -344,18 +347,14 @@ string TrainingResults::write_stopping_condition() const
 
 float TrainingResults::get_training_error() const
 {
-    const Index size = training_error_history.size();
-
-    return training_error_history(size - 1);
+    return training_error_history(training_error_history.size() - 1);
 }
 
 float TrainingResults::get_validation_error() const
 {
-    const Index size = validation_error_history.size();
+    if (validation_error_history.size() == 0) return 0.0f;
 
-    if (size == 0) return 0.0f;
-
-    return validation_error_history(size - 1);
+    return validation_error_history(validation_error_history.size() - 1);
 }
 
 Index TrainingResults::get_epochs_number() const
@@ -414,16 +413,13 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
 
     if (size == 0)
     {
-        override_results(0, 1) = "NA";
-        override_results(1, 1) = "NA";
-        override_results(2, 1) = "NA";
-        override_results(3, 1) = "NA";
-        override_results(4, 1) = "NA";
+        for (Index i = 0; i < 5; ++i)
+            override_results(i, 1) = "NA";
 
         return override_results;
     }
 
-    override_results(0, 1) = to_string(training_error_history.size() - 1);
+    override_results(0, 1) = to_string(size - 1);
     override_results(1, 1) = elapsed_time;
     override_results(2, 1) = write_stopping_condition();
     override_results(3, 1) = to_string(training_error_history(size - 1));
@@ -431,11 +427,11 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
     // Final selection error
 
     ostringstream buffer;
-    buffer.str("");
 
-    validation_error_history.size() == 0
-        ? buffer << "NAN"
-        : buffer << setprecision(precision) << validation_error_history(size - 1);
+    if (validation_error_history.size() == 0)
+        buffer << "NAN";
+    else
+        buffer << setprecision(precision) << validation_error_history(size - 1);
 
     override_results(4, 1) = buffer.str();
 
@@ -483,15 +479,13 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
 
 void Optimizer::setup_device_training()
 {
-#ifdef OPENNN_WITH_CUDA
-    if (!Configuration::instance().is_gpu()) return;
+#ifdef OPENNN_HAS_CUDA
+    if (!is_gpu()) return;
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     neural_network->copy_parameters_device();
-    neural_network->link_parameters();
     neural_network->copy_states_device();
-    neural_network->link_states();
 
     cudaStreamCreateWithFlags(&memory_stream, cudaStreamNonBlocking);
     cudaEventCreateWithFlags(&batch_ready_event[0], cudaEventDisableTiming);
@@ -501,8 +495,8 @@ void Optimizer::setup_device_training()
 
 void Optimizer::teardown_device_training()
 {
-#ifdef OPENNN_WITH_CUDA
-    if (!Configuration::instance().is_gpu()) return;
+#ifdef OPENNN_HAS_CUDA
+    if (!is_gpu()) return;
 
     cudaStreamDestroy(memory_stream);
     cudaEventDestroy(batch_ready_event[0]);
@@ -513,16 +507,14 @@ void Optimizer::teardown_device_training()
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     neural_network->copy_parameters_host();
-    neural_network->link_parameters();
     neural_network->copy_states_host();
-    neural_network->link_states();
 #endif
 }
 
 void Optimizer::prefetch_batch(Batch& batch, Index sample_count, int slot)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (!Configuration::instance().is_gpu()) return;
+#ifdef OPENNN_HAS_CUDA
+    if (!is_gpu()) return;
     batch.copy_device_async(sample_count, memory_stream);
     cudaEventRecord(batch_ready_event[slot], memory_stream);
 #else
@@ -532,8 +524,8 @@ void Optimizer::prefetch_batch(Batch& batch, Index sample_count, int slot)
 
 void Optimizer::wait_prefetch(int slot)
 {
-#ifdef OPENNN_WITH_CUDA
-    if (!Configuration::instance().is_gpu()) return;
+#ifdef OPENNN_HAS_CUDA
+    if (!is_gpu()) return;
     cudaStreamWaitEvent(Backend::get_compute_stream(), batch_ready_event[slot], 0);
 #else
     (void)slot;
@@ -542,8 +534,8 @@ void Optimizer::wait_prefetch(int slot)
 
 void Optimizer::sync_device()
 {
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu()) cudaStreamSynchronize(Backend::get_compute_stream());
+#ifdef OPENNN_HAS_CUDA
+    if (is_gpu()) cudaStreamSynchronize(Backend::get_compute_stream());
 #endif
 }
 
@@ -552,12 +544,12 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
     const Index gradient_size = gradient.size_in_floats();
     if (gradient_size <= 0) return;
 
-#ifdef OPENNN_WITH_CUDA
-    if (Configuration::instance().is_gpu())
+#ifdef OPENNN_HAS_CUDA
+    if (is_gpu())
     {
-        static float* squared_norm_device = nullptr;
-        if (!squared_norm_device)
-            CHECK_CUDA(cudaMalloc(&squared_norm_device, sizeof(float)));
+        static Buffer squared_norm_device(Device::CUDA);
+        squared_norm_device.grow_to(Index(sizeof(float)));
+        float* squared_norm_ptr = squared_norm_device.as<float>();
 
         cublasHandle_t handle = Backend::get_cublas_handle();
         CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
@@ -565,10 +557,10 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
                                 to_int(gradient_size),
                                 gradient.as<float>(), 1,
                                 gradient.as<float>(), 1,
-                                squared_norm_device));
+                                squared_norm_ptr));
         CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
 
-        clip_gradient_norm_cuda(gradient_size, gradient.as<float>(), squared_norm_device, max_norm);
+        clip_gradient_norm_cuda(gradient_size, gradient.as<float>(), squared_norm_ptr, max_norm, GRADIENT_NORM_EPS);
         return;
     }
 #endif
@@ -576,10 +568,10 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
     VectorMap gradient_view(gradient.as<float>(), gradient.size_in_floats());
     const float gradient_norm = gradient_view.norm();
     if (gradient_norm > max_norm)
-        gradient_view *= max_norm / (gradient_norm + 1e-6f);
+        gradient_view *= max_norm / (gradient_norm + GRADIENT_NORM_EPS);
 }
 
-EpochStats Optimizer::train_epoch(bool tracks_accuracy,
+Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                                   ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation,
                                   ThreadSafeQueue<Batch*>& empty_queue,
@@ -653,7 +645,7 @@ EpochStats Optimizer::train_epoch(bool tracks_accuracy,
         }
 
         stats.error += back_propagation.error;
-        if (tracks_accuracy) stats.accuracy += back_propagation.accuracy;
+        if (is_classification) stats.accuracy += back_propagation.accuracy;
 
         {
             PROFILE_SCOPE("step:optim_total");
@@ -675,7 +667,7 @@ EpochStats Optimizer::train_epoch(bool tracks_accuracy,
     worker.join();
 
     stats.error /= float(batches_number);
-    if (tracks_accuracy) stats.accuracy /= float(batches_number);
+    if (is_classification) stats.accuracy /= float(batches_number);
 
     if (profile_this)
     {
@@ -689,7 +681,7 @@ EpochStats Optimizer::train_epoch(bool tracks_accuracy,
     return stats;
 }
 
-EpochStats Optimizer::evaluate_epoch(bool tracks_accuracy,
+Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
                                      ForwardPropagation& forward_propagation,
                                      ThreadSafeQueue<Batch*>& empty_queue,
                                      ThreadSafeQueue<Batch*>& ready_queue,
@@ -738,7 +730,7 @@ EpochStats Optimizer::evaluate_epoch(bool tracks_accuracy,
         const Loss::EvaluationResult eval = loss->calculate_error(*current_batch, forward_propagation);
 
         stats.error += eval.error;
-        if (tracks_accuracy) stats.accuracy += eval.accuracy;
+        if (is_classification) stats.accuracy += eval.accuracy;
 
         sync_device();
 
@@ -748,7 +740,7 @@ EpochStats Optimizer::evaluate_epoch(bool tracks_accuracy,
     worker.join();
 
     stats.error /= float(batches_number);
-    if (tracks_accuracy) stats.accuracy /= float(batches_number);
+    if (is_classification) stats.accuracy /= float(batches_number);
 
     return stats;
 }

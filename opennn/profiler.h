@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
 #endif
 
@@ -81,7 +81,7 @@ public:
         : key_(move(key)), sync_gpu_(sync_gpu)
     {
         if (!enabled()) return;
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
         if (sync_gpu_) cudaDeviceSynchronize();
 #endif
         t0_ = std::chrono::steady_clock::now();
@@ -90,7 +90,7 @@ public:
     ~ScopedTimer()
     {
         if (!enabled()) return;
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
         if (sync_gpu_) cudaDeviceSynchronize();
 #endif
         const auto end_time = std::chrono::steady_clock::now();
@@ -104,7 +104,11 @@ public:
 #define OPENNN_PROFILE_CAT_INNER(a, b) a##b
 #define OPENNN_PROFILE_CAT(a, b)       OPENNN_PROFILE_CAT_INNER(a, b)
 
+// The ternary short-circuits: when profiling is disabled, the `name` expression
+// is not evaluated and no string is built. The empty-string fallback is cheap.
 #define PROFILE_SCOPE(name) \
-    ::opennn::profiler::ScopedTimer OPENNN_PROFILE_CAT(_profile_, __LINE__)(name, true)
+    ::opennn::profiler::ScopedTimer OPENNN_PROFILE_CAT(_profile_, __LINE__)( \
+        ::opennn::profiler::enabled() ? std::string(name) : std::string{}, true)
 #define PROFILE_SCOPE_HOST(name) \
-    ::opennn::profiler::ScopedTimer OPENNN_PROFILE_CAT(_profile_, __LINE__)(name, false)
+    ::opennn::profiler::ScopedTimer OPENNN_PROFILE_CAT(_profile_, __LINE__)( \
+        ::opennn::profiler::enabled() ? std::string(name) : std::string{}, false)

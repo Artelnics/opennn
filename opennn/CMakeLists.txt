@@ -32,12 +32,12 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_G
 endif()
 
 target_compile_options(opennn PRIVATE
-    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic>
-    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic -Wswitch-enum>
+    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /w14061>
 )
 
-if(OPENNN_WITH_CUDA)
-    target_compile_definitions(opennn PUBLIC OPENNN_WITH_CUDA)
+if(OPENNN_HAS_CUDA)
+    target_compile_definitions(opennn PUBLIC OPENNN_HAS_CUDA)
     file(GLOB_RECURSE CUDA_SOURCES CONFIGURE_DEPENDS "*.cu" "*.cuh")
     target_sources(opennn PRIVATE ${CUDA_SOURCES})
     target_link_libraries(opennn PUBLIC CUDA::cudart CUDA::cublas CUDA::cublasLt)

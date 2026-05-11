@@ -16,14 +16,14 @@ namespace opennn
 class Loss;
 class NeuralNetwork;
 
-struct BackwardEdge
-{
-    size_t consumer_idx;
-    size_t port;
-};
-
 struct BackPropagation
 {
+    struct BackwardEdge
+    {
+        size_t consumer_index;
+        size_t port;
+    };
+
     BackPropagation(const Index = 0, Loss* = nullptr);
 
     virtual ~BackPropagation() = default;
@@ -37,11 +37,9 @@ struct BackPropagation
     Buffer gradient;
     vector<vector<TensorView>> gradient_views;
 
-    Buffer backward;
-    vector<vector<vector<TensorView>>> delta_views;
+    Buffer delta_pool;
+    vector<vector<TensorView>> delta_views;
 
-    Buffer per_layer_output_deltas;
-    vector<Shape> per_layer_output_delta_shapes;
     vector<vector<BackwardEdge>> backward_edges;
 
     TensorView get_output_deltas() const;

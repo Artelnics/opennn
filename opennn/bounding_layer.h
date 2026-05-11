@@ -9,8 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
+#include "operators.h"
 
 namespace opennn
 {
@@ -19,25 +18,21 @@ class Bounding final : public Layer
 {
 public:
 
-    enum class BoundingMethod{NoBounding, Bounding};
+    using BoundingMethod = Bound::Method;
 
     Bounding(const Shape& = {0}, const string& = "bounding_layer");
 
     Shape get_input_shape() const override { return output_shape; }
     Shape get_output_shape() const override;
 
-    const BoundingMethod& get_bounding_method() const;
+    const BoundingMethod& get_bounding_method() const { return bound.method; }
 
     VectorR get_lower_bounds() const;
     VectorR get_upper_bounds() const;
 
-    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
-    vector<pair<Shape, Type>> get_state_specs() const override;
-
     void set(const Shape& = {0}, const string& = "bounding_layer");
 
     void set_input_shape(const Shape&) override;
-    void set_output_shape(const Shape&) override;
 
     void set_bounding_method(const BoundingMethod&);
     void set_bounding_method(const string&);
@@ -48,22 +43,17 @@ public:
     void set_upper_bounds(const VectorR&);
     void set_upper_bound(Index, float);
 
-    float* link_states(float* pointer) override;
+    void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
-
-    void from_JSON(const JsonDocument&) override;
-    void load_state_from_JSON(const JsonDocument&) override;
-    void to_JSON(JsonWriter&) const override;
+    string write_expression(const vector<string>& input_names,
+                            const vector<string>& output_names) const override;
 
 private:
 
     Shape output_shape;
 
-    BoundingMethod bounding_method = BoundingMethod::Bounding;
-
-    enum States {Lower, Upper};
-    enum Forward {Input, Output};
+    Bound bound;
 
     static const EnumMap<BoundingMethod>& bounding_method_map();
 };

@@ -58,7 +58,7 @@ Backend::Backend()
 {
     set_threads_number(0);
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     CHECK_CUDA(cudaStreamCreateWithFlags(&compute_stream, cudaStreamNonBlocking));
 
     CHECK_CUBLAS(cublasCreate(&cublas_handle));
@@ -76,7 +76,7 @@ Backend::Backend()
 
 Backend::~Backend()
 {
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
     if (operator_sum_descriptor) cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
     if (cublas_lt_handle) cublasLtDestroy(cublas_lt_handle);
     if (cublas_handle) cublasDestroy(cublas_handle);

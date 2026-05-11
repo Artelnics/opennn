@@ -12,7 +12,7 @@
 namespace opennn
 {
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
 static float sum_squared_diff_cuda(const TensorView& input, const TensorView& target, float* workspace)
 {
@@ -127,8 +127,9 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
 
     const auto inputs = input.as_vector().array();
     const auto targets = target.as_vector().array();
+    const auto difference = inputs - targets;
     input_delta.as_vector().array()
-        = (targets == 1.0f).select(pos_w * (inputs - targets), neg_w * (inputs - targets)) * coefficient;
+        = (targets == 1.0f).select(pos_w * difference, neg_w * difference) * coefficient;
 }
 
 void binary_cross_entropy(const TensorView& input, const TensorView& target, float& error, float* workspace_device)
@@ -200,7 +201,7 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, T
 
 void minkowski_error(const TensorView& input, const TensorView& target, float power, float& error, float* workspace_device)
 {
-    if (Configuration::instance().is_gpu())
+    if (is_gpu())
         throw runtime_error("minkowski_error: GPU implementation not available.");
 
     (void)workspace_device;
@@ -210,7 +211,7 @@ void minkowski_error(const TensorView& input, const TensorView& target, float po
 
 void minkowski_error_gradient(const TensorView& input, const TensorView& target, float power, TensorView& input_delta)
 {
-    if (Configuration::instance().is_gpu())
+    if (is_gpu())
         throw runtime_error("minkowski_error_gradient: GPU implementation not available.");
 
     const Index batch_size = input.shape[0];
@@ -236,18 +237,19 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
             input.as<T>(), target.as<float>(),
             errors_device, valid_mask_device, correct_mask_device, EPSILON);
 
-        static float* device_results = nullptr;
-        if (!device_results) CHECK_CUDA(cudaMalloc(&device_results, 3 * sizeof(float)));
+        static Buffer device_results(Device::CUDA);
+        device_results.grow_to(Index(3 * sizeof(float)));
+        float* device_results_ptr = device_results.as<float>();
 
         cublasHandle_t handle = Backend::get_cublas_handle();
         CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), errors_device,       1, device_results + 0));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,   1, device_results + 1));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device, 1, device_results + 2));
+        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), errors_device,       1, device_results_ptr + 0));
+        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,   1, device_results_ptr + 1));
+        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device, 1, device_results_ptr + 2));
         CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
 
         float host_results[3];
-        CHECK_CUDA(cudaMemcpyAsync(host_results, device_results, 3 * sizeof(float),
+        CHECK_CUDA(cudaMemcpyAsync(host_results, device_results_ptr, 3 * sizeof(float),
                                    cudaMemcpyDeviceToHost, Backend::get_compute_stream()));
         CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
 
@@ -279,16 +281,8 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
             total_log_loss -= log(outputs_flat(token_index, target_index) + EPSILON);
             ++active_tokens;
 
-            Index best_index = 0;
-            float best_value = outputs_flat(token_index, 0);
-            for (Index k = 1; k < vocabulary_size; ++k)
-            {
-                if (outputs_flat(token_index, k) > best_value)
-                {
-                    best_value = outputs_flat(token_index, k);
-                    best_index = k;
-                }
-            }
+            Index best_index;
+            outputs_flat.row(token_index).maxCoeff(&best_index);
             if (best_index == target_index) ++correct_tokens;
         }
     }

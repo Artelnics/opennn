@@ -8,12 +8,12 @@
 
 #pragma once
 
-#include "dataset.h"
+#include "tabular_dataset.h"
 
 namespace opennn
 {
 
-class TimeSeriesDataset final : public Dataset
+class TimeSeriesDataset final : public TabularDataset
 {
 
 public:
@@ -49,7 +49,7 @@ public:
     void to_JSON(JsonWriter&) const override;
     void from_JSON(const JsonDocument&) override;
 
-    void read_csv() override;
+    void read_csv();
 
     void impute_missing_values_unuse() override;
     void impute_missing_values_interpolate() override;
@@ -65,6 +65,8 @@ public:
                             float*,
                             bool = true,
                             int contiguous = -1) const override;
+
+    void resize_input_shape(Index) override;
 
 private:
 

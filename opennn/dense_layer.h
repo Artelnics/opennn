@@ -24,7 +24,6 @@ public:
           bool = false,
           const string& = "dense_layer");
 
-    Shape get_input_shape() const override { return input_shape; }
     Shape get_output_shape() const override;
 
     Index get_input_features() const { return input_shape.empty() ? 0 : input_shape.back(); }
@@ -36,9 +35,7 @@ public:
     bool get_batch_normalization() const { return batch_norm.active(); }
     float get_momentum() const { return batch_norm.momentum; }
 
-    vector<Operator*> get_operators() override;
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
-    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
 
     void set(const Shape& = {},
              const Shape& = {},
@@ -48,30 +45,20 @@ public:
 
     void set_input_shape(const Shape&) override;
     void set_output_shape(const Shape&) override;
-    void set_compute_dtype(Type new_compute_dtype) override
-    {
-        Layer::set_compute_dtype(new_compute_dtype);
-        configure_operators();
-    }
+    void on_compute_dtype_changed() override { configure_operators(); }
 
     void set_activation_function(const string&);
     void set_batch_normalization(bool enable);
     void set_dropout_rate(float new_dropout_rate) { dropout.set_rate(new_dropout_rate); }
     void set_momentum(float new_momentum);
 
-    void set_parameters_glorot() override;
-    void set_parameters_random() override;
+    void read_JSON_body(const Json*) override;
 
-    void forward_propagate(ForwardPropagation&, size_t layer, bool is_training) noexcept override;
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t layer) const noexcept override;
-
-    void from_JSON(const JsonDocument&) override;
-    void load_state_from_JSON(const JsonDocument&) override;
-    void to_JSON(JsonWriter&) const override;
+    string write_expression(const vector<string>& input_names,
+                            const vector<string>& output_names) const override;
 
 private:
 
-    Shape input_shape;
     Index output_features = 0;
 
     Combination combination;
@@ -79,10 +66,7 @@ private:
     BatchNorm   batch_norm;
     Dropout     dropout;
 
-    enum Parameters {Bias, Weight, Gamma, Beta};
-    enum States {RunningMean, RunningVariance};
     enum Forward {Input, CombinationView, BatchNormMean, BatchNormInverseVariance, ActivationView, Output};
-    enum Backward {OutputDelta, InputDelta};
 
     void configure_operators();
 };

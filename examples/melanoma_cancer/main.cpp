@@ -29,9 +29,9 @@ int main()
 
         set_seed(42);
 
-        #ifdef OPENNN_WITH_CUDA
+        #ifdef OPENNN_HAS_CUDA
 
-        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
 
         // Data set
 

@@ -103,9 +103,10 @@ int main()
     {
         cout << "OpenNN. Translation benchmark (refactor)." << endl;
 
-#ifdef OPENNN_WITH_CUDA
+#ifdef OPENNN_HAS_CUDA
 
-/*
+        // ============== Original translation benchmark (translation_en_es) ==============
+
         Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
 
         set_seed(42);
@@ -191,7 +192,11 @@ int main()
 
         cout << "=========================================================\n";
 
-        */
+        // ====================  LLM experiments (commented out)  ====================
+        // The blocks below were used to fine-tune chat-style Transformers on
+        // tinychat / OASST2 / UltraChat combinations. Restored above is the
+        // canonical translation benchmark. To re-run the LLM experiments,
+        // uncomment the desired block.
 
         // ====================  TINYCHAT (instruction-tuning)  ====================
         /*
@@ -409,7 +414,7 @@ int main()
         // — bigger than the 57M proven config but conservative enough to fit in
         // 16 GB VRAM with batch=64 and vocab cap 25K. Designed for ~25-35h of
         // training on the 4080 (10 epochs). Won't OOM.
-
+        /*
         Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
 
         set_seed(42);
@@ -510,6 +515,7 @@ int main()
         decoder.chat(sampling_config);
 
         cout << "===============================================\n";
+        */
 
 #endif
 
