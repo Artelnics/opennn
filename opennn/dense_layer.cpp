@@ -191,6 +191,12 @@ string Dense::write_expression(const vector<string>& input_names,
     return buffer.str();
 }
 
+void Dense::read_JSON_body(const Json* dense_layer_element)
+{
+    if (dense_layer_element->has("Momentum"))
+        set_batch_normalization(true);
+}
+
 REGISTER(Layer, Dense, "Dense")
 
 }

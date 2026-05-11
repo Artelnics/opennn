@@ -483,7 +483,7 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
         const MatrixR input_i = get_variable_data(i);
         cout << "Calculating " << variables[i].name << " autocorrelations" << "\n";
 
-        const VectorMap current_input_i(input_i.data(), input_i.rows());
+        const Map<const VectorR> current_input_i(input_i.data(), input_i.rows());
 
         autocorrelations.row(counter_i) = opennn::autocorrelations(current_input_i, new_past_time_steps).transpose();
 
@@ -570,8 +570,8 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
             if (display) cout << "  vs. " << variables[j].name << "\n";
 
-            const VectorMap current_input_i(input_i.data(), input_i.rows());
-            const VectorMap current_input_j(input_j.data(), input_j.rows());
+            const Map<const VectorR> current_input_i(input_i.data(), input_i.rows());
+            const Map<const VectorR> current_input_j(input_j.data(), input_j.rows());
 
             cross_correlations_vector = opennn::cross_correlations(current_input_i, current_input_j, new_past_time_steps);
 

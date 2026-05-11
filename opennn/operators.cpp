@@ -28,6 +28,12 @@ namespace fe = cudnn_frontend;
 namespace opennn
 {
 
+Index Operator::get_delta_bytes() const
+{
+    return 0;
+}
+
+
 namespace {
 
 inline TensorView& delta_slot_or_empty(vector<TensorView>& dv_layer,

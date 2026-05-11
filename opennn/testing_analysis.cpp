@@ -882,7 +882,7 @@ VectorR TestingAnalysis::calculate_maximum_gain(const MatrixR& positive_cumulati
 vector<Histogram> TestingAnalysis::calculate_output_histogram(const MatrixR& outputs,
                                                               Index bins_number) const
 {
-    return { histogram(outputs.col(0), bins_number) };
+    return { histogram(VectorR(outputs.col(0)), bins_number) };
 }
 
 TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_classification_rates(const float decision_threshold) const

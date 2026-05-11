@@ -293,7 +293,7 @@ void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
         const Shape in = get_output_shape();
         add_layer(make_unique<Convolutional>(
             in, Shape{3, 3, in[2], out_channels}, "ReLU",
-            Shape{1, 1}, "Same", name));
+            Shape{1, 1}, "Same", false, name));
     };
 
     // 2x2 max pool with stride 2, no padding.
