@@ -19,6 +19,8 @@ class LanguageDataset final : public Dataset
 public:
 
     LanguageDataset(const filesystem::path& = "");
+    LanguageDataset(const filesystem::path&, Index maximum_vocabulary_size);
+    LanguageDataset(const filesystem::path&, Index maximum_vocabulary_size, Index minimum_token_frequency);
     LanguageDataset(const Index, Index, Index);
 
     const vector<string>& get_input_vocabulary() const { return input_vocabulary; }
@@ -27,11 +29,18 @@ public:
     Index get_input_vocabulary_size() const { return input_vocabulary.size(); }
     Index get_target_vocabulary_size() const { return target_vocabulary.size(); }
 
+    const unordered_map<string, Index>& get_input_vocabulary_map() const { return input_vocabulary_map; }
+    const unordered_map<string, Index>& get_target_vocabulary_map() const { return target_vocabulary_map; }
+    const unordered_map<Index, string>& get_target_inverse_vocabulary_map() const { return target_inverse_vocabulary_map; }
+
     Index get_maximum_input_sequence_length() const { return maximum_input_sequence_length; }
     Index get_maximum_target_sequence_length() const { return maximum_target_sequence_length; }
 
-    void set_input_vocabulary(const vector<string>& new_vocabulary) { input_vocabulary = new_vocabulary; }
-    void set_target_vocabulary(const vector<string>& new_vocabulary) { target_vocabulary = new_vocabulary; }
+    void set_input_vocabulary(const vector<string>&);
+    void set_target_vocabulary(const vector<string>&);
+
+    void set_maximum_vocabulary_size(Index new_maximum) { maximum_vocabulary_size = new_maximum; }
+    void set_minimum_token_frequency(Index new_minimum) { minimum_token_frequency = new_minimum; }
 
     void read_csv() override;
 
@@ -57,10 +66,15 @@ public:
 
 private:
 
-    unordered_map<string, Index> create_vocabulary_map(const vector<string>& vocabulary);
+    void update_input_vocabulary_map();
+    void update_target_vocabulary_maps();
 
     vector<string> input_vocabulary;
     vector<string> target_vocabulary;
+
+    unordered_map<string, Index> input_vocabulary_map;
+    unordered_map<string, Index> target_vocabulary_map;
+    unordered_map<Index, string> target_inverse_vocabulary_map;
 
     Index maximum_input_sequence_length = 0;
     Index maximum_target_sequence_length = 0;

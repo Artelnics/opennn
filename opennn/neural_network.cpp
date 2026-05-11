@@ -479,6 +479,15 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     const Index first_layer_index = is_training ? get_first_trainable_layer_index() : 0;
     const Index last_layer_index  = is_training ? get_last_trainable_layer_index()  : get_layers_number() - 1;
 
+    forward_propagate(input_view, forward_propagation, is_training, first_layer_index, last_layer_index);
+}
+
+void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
+                                      ForwardPropagation& forward_propagation,
+                                      bool is_training,
+                                      Index first_layer_index,
+                                      Index last_layer_index) const
+{
     const auto pick_input = [&](size_t k) -> const TensorView& {
         return input_view[k < input_view.size() ? k : 0];
     };

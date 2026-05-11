@@ -12,17 +12,27 @@ using Eigen::Index;
 
 // Optimizer
 
-void adam_update_cuda(const Index, float*, float*, float*, const float*, const float, const float, const float, const float, const float, const float);
+// `params_bf16` (last arg, default nullptr): when non-null, the kernel writes
+// the freshly-updated FP32 master into the BF16 mirror in the same pass —
+// avoids a separate cast_fp32_to_bf16_cuda call over the whole parameter set.
+void adam_update_cuda(const Index, float*, float*, float*, const float*,
+                      const float, const float, const float, const float,
+                      const float, const float,
+                      __nv_bfloat16* params_bf16 = nullptr);
 
-void sgd_update_cuda(const Index, float*, float*, const float*, const float, const float, const bool);
+void sgd_update_cuda(const Index, float*, float*, const float*,
+                     const float, const float, const bool,
+                     __nv_bfloat16* params_bf16 = nullptr);
 
 void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm);
 
 // Cast FP32 source buffer to a BF16 destination buffer of the same length.
-// Used to refresh the BF16 working copy of network parameters after each
-// Adam step (master FP32 → working BF16 mirror), and by Batch::copy_device_async
-// to convert FP32 inputs (pinned host) to BF16 inputs (device). When `stream`
-// is null the host wrapper falls back to Backend::get_compute_stream().
+// Used to initialize the BF16 mirror of network parameters in
+// NeuralNetwork::copy_parameters_device, and by Batch::copy_device_async to
+// convert FP32 inputs (pinned host) to BF16 inputs (device). The post-step
+// refresh of the mirror during Adam/SGD is folded into the optimizer kernels
+// themselves (see params_bf16 above), not into this cast.
+// When `stream` is null the host wrapper falls back to Backend::get_compute_stream().
 void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
                             cudaStream_t stream = nullptr);
 

@@ -159,6 +159,11 @@ private:
     mutable const LtMatmulPlan* bwd_plan_ = nullptr;
     mutable int                 bwd_total_rows_ = -1;
     mutable int                 bwd_io_dtype_ = -1;
+
+    mutable const LtMatmulPlan* bwd_input_plan_ = nullptr;
+    mutable int                 bwd_input_total_rows_ = -1;
+    mutable int                 bwd_input_io_dtype_ = -1;
+    mutable int                 bwd_input_out_dtype_ = -1;
 #endif
 };
 

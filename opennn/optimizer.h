@@ -105,7 +105,7 @@ protected:
 
     bool should_display(Index epoch) const { return display && epoch % display_period == 0; }
 
-    EpochStats train_epoch(bool is_classification,
+    EpochStats train_epoch(bool tracks_accuracy,
                            ForwardPropagation& forward_propagation,
                            BackPropagation& back_propagation,
                            ThreadSafeQueue<Batch*>& empty_queue,
@@ -116,7 +116,7 @@ protected:
                            const vector<Index>& target_feature_indices,
                            const std::function<void(BackPropagation&)>& update);
 
-    EpochStats evaluate_epoch(bool is_classification,
+    EpochStats evaluate_epoch(bool tracks_accuracy,
                               ForwardPropagation& forward_propagation,
                               ThreadSafeQueue<Batch*>& empty_queue,
                               ThreadSafeQueue<Batch*>& ready_queue,

@@ -37,6 +37,30 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Datase
         read_csv();
 }
 
+LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
+                                 Index new_maximum_vocabulary_size) : Dataset()
+{
+    data_path = new_data_path;
+    separator = Dataset::Separator::Tab;
+    maximum_vocabulary_size = new_maximum_vocabulary_size;
+
+    if (!data_path.empty())
+        read_csv();
+}
+
+LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
+                                 Index new_maximum_vocabulary_size,
+                                 Index new_minimum_token_frequency) : Dataset()
+{
+    data_path = new_data_path;
+    separator = Dataset::Separator::Tab;
+    maximum_vocabulary_size = new_maximum_vocabulary_size;
+    minimum_token_frequency = new_minimum_token_frequency;
+
+    if (!data_path.empty())
+        read_csv();
+}
+
 LanguageDataset::LanguageDataset(const Index samples_number,
                                  Index input_sequence_length,
                                  Index input_vocabulary_size) : Dataset()
@@ -131,7 +155,6 @@ void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_t
 
 void LanguageDataset::encode_input(const vector<vector<string>>& input_document_tokens)
 {
-    const unordered_map<string, Index> input_vocabulary_map = create_vocabulary_map(input_vocabulary);
     const Index samples_number = get_samples_number();
 
     #pragma omp parallel for
@@ -161,7 +184,6 @@ void LanguageDataset::encode_input(const vector<vector<string>>& input_document_
 
 void LanguageDataset::encode_decoder_target_sequence_to_sequence(const vector<vector<string>>& target_document_tokens)
 {
-    const unordered_map<string, Index> target_vocabulary_map = create_vocabulary_map(target_vocabulary);
     const Index samples_number = get_samples_number();
 
     const Index decoder_offset = maximum_input_sequence_length;
@@ -222,15 +244,13 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
 
     if (maximum_target_sequence_length == 6 && target_vocabulary.size() >= 6)
     {
-        const unordered_map<string, Index> target_vocab_map = create_vocabulary_map(target_vocabulary);
-
         for (size_t sample_index = 0; sample_index < target_document_tokens_number; ++sample_index)
         {
             const string& token = target_document_tokens[sample_index][0];
 
-            auto iterator = target_vocab_map.find(token);
+            auto iterator = target_vocabulary_map.find(token);
 
-            const Index token_index = (iterator != target_vocab_map.end())
+            const Index token_index = (iterator != target_vocabulary_map.end())
                                           ? iterator->second
                                           : 1;
 
@@ -241,8 +261,6 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
     }
 
     {
-        const unordered_map<string, Index> target_vocabulary_map = create_vocabulary_map(target_vocabulary);
-
         const Index samples_number = get_samples_number();
 
         #pragma omp parallel for
@@ -274,7 +292,10 @@ void LanguageDataset::read_csv()
 {
     cout << "Reading .txt file..." << "\n";
 
-    const Index samples_number = count_non_empty_lines(data_path);
+    // Total file size is the progress bar's denominator. Skips the otherwise
+    // silent pre-pass of count_non_empty_lines() — we now size the token
+    // vectors with push_back during the single read.
+    const auto file_size = filesystem::file_size(data_path);
 
     ifstream file(data_path);
 
@@ -283,11 +304,17 @@ void LanguageDataset::read_csv()
 
     const string separator = get_separator_string();
 
-    vector<vector<string>> input_document_tokens(samples_number);
-    vector<vector<string>> target_document_tokens(samples_number);
+    vector<vector<string>> input_document_tokens;
+    vector<vector<string>> target_document_tokens;
+    input_document_tokens.reserve(1 << 16);
+    target_document_tokens.reserve(1 << 16);
 
     string line;
-    Index sample_index = 0;
+    // Repaint the bar at most ~200 times across the whole file. Show 0%
+    // immediately so progress is visible from the first byte.
+    const auto progress_step_bytes = std::max<std::streamoff>(1, std::streamoff(file_size / 200));
+    std::streamoff next_progress = progress_step_bytes;
+    display_progress_bar(0, int(file_size));
 
     while (getline(file, line))
     {
@@ -298,17 +325,27 @@ void LanguageDataset::read_csv()
         if (tokens.size() != 2)
             throw runtime_error("Line must contain two fields: input and target.");
 
-        input_document_tokens[sample_index] = tokenize(tokens[0]);
-        target_document_tokens[sample_index] = tokenize(tokens[1]);
+        input_document_tokens.push_back(tokenize(tokens[0]));
+        target_document_tokens.push_back(tokenize(tokens[1]));
 
-        ++sample_index;
+        const std::streamoff pos = std::streamoff(file.tellg());
+        if (pos >= next_progress || pos < 0)
+        {
+            display_progress_bar(int(pos > 0 ? pos : std::streamoff(file_size)),
+                                 int(file_size));
+            next_progress += progress_step_bytes;
+        }
     }
+    display_progress_bar(int(file_size), int(file_size));
+    cout << "\n";
 
-    if (sample_index != samples_number)
-        throw runtime_error("Expected " + to_string(samples_number) + " samples, but " + to_string(sample_index) + " found.");
+    const Index samples_number = Index(input_document_tokens.size());
 
     create_vocabulary(input_document_tokens, input_vocabulary);
     create_vocabulary(target_document_tokens, target_vocabulary);
+
+    update_input_vocabulary_map();
+    update_target_vocabulary_maps();
 
     maximum_input_sequence_length = get_maximum_size(input_document_tokens) + 2;
 
@@ -422,14 +459,39 @@ void LanguageDataset::read_csv()
     cout << "Reading finished" << "\n";
 }
 
-unordered_map<string, Index> LanguageDataset::create_vocabulary_map(const vector<string>& vocabulary)
+void LanguageDataset::update_input_vocabulary_map()
 {
-    unordered_map<string, Index> vocabulary_map;
+    input_vocabulary_map.clear();
+    input_vocabulary_map.reserve(input_vocabulary.size());
 
-    for (Index i = 0; i < Index(vocabulary.size()); ++i)
-        vocabulary_map[vocabulary[i]] = i;
+    for (Index i = 0; i < Index(input_vocabulary.size()); ++i)
+        input_vocabulary_map[input_vocabulary[i]] = i;
+}
 
-    return vocabulary_map;
+void LanguageDataset::update_target_vocabulary_maps()
+{
+    target_vocabulary_map.clear();
+    target_inverse_vocabulary_map.clear();
+    target_vocabulary_map.reserve(target_vocabulary.size());
+    target_inverse_vocabulary_map.reserve(target_vocabulary.size());
+
+    for (Index i = 0; i < Index(target_vocabulary.size()); ++i)
+    {
+        target_vocabulary_map[target_vocabulary[i]] = i;
+        target_inverse_vocabulary_map[i] = target_vocabulary[i];
+    }
+}
+
+void LanguageDataset::set_input_vocabulary(const vector<string>& new_vocabulary)
+{
+    input_vocabulary = new_vocabulary;
+    update_input_vocabulary_map();
+}
+
+void LanguageDataset::set_target_vocabulary(const vector<string>& new_vocabulary)
+{
+    target_vocabulary = new_vocabulary;
+    update_target_vocabulary_maps();
 }
 
 void LanguageDataset::to_JSON(JsonWriter& printer) const
@@ -508,6 +570,9 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
         target_vocabulary = get_tokens(target_vocab_text, separator_string);
     else
         target_vocabulary.clear();
+
+    update_input_vocabulary_map();
+    update_target_vocabulary_maps();
 
     maximum_input_sequence_length  = read_json_index(data_set_element, "MaximumInputSequenceLength");
     maximum_target_sequence_length = read_json_index(data_set_element, "MaximumTargetSequenceLength");

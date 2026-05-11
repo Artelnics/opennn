@@ -18,6 +18,7 @@
 #include "batch.h"
 #include "neural_network.h"
 #include "profiler.h"
+#include "string_utilities.h"
 #include <chrono>
 
 namespace opennn
@@ -578,7 +579,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
         gradient_view *= max_norm / (gradient_norm + 1e-6f);
 }
 
-EpochStats Optimizer::train_epoch(bool is_classification,
+EpochStats Optimizer::train_epoch(bool tracks_accuracy,
                                   ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation,
                                   ThreadSafeQueue<Batch*>& empty_queue,
@@ -621,6 +622,13 @@ EpochStats Optimizer::train_epoch(bool is_classification,
     Batch* next_batch = ready_queue.pop();
     prefetch_batch(*next_batch, batches[0].size(), 0);
 
+    // Repaint at most ~200 times across the epoch (one ~ every 0.5%) so the
+    // bar advances visibly without spamming the console on long epochs.
+    // Show 0% immediately so the user knows the loop is alive even if the
+    // first iteration takes a while (cuDNN/cuBLAS plan warmup, allocations).
+    const Index progress_step = std::max(Index(1), batches_number / 200);
+    display_progress_bar(0, int(batches_number));
+
     for (Index iteration = 0; iteration < batches_number; ++iteration)
     {
         Batch* current_batch = next_batch;
@@ -634,24 +642,40 @@ EpochStats Optimizer::train_epoch(bool is_classification,
             prefetch_batch(*next_batch, batches[iteration + 1].size(), (iteration + 1) % 2);
         }
 
-        neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, true);
+        {
+            PROFILE_SCOPE("step:fwd_total");
+            neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, true);
+        }
 
-        loss->back_propagate(*current_batch, forward_propagation, back_propagation);
+        {
+            PROFILE_SCOPE("step:bwd_total");
+            loss->back_propagate(*current_batch, forward_propagation, back_propagation);
+        }
 
         stats.error += back_propagation.error;
-        if (is_classification) stats.accuracy += back_propagation.accuracy;
+        if (tracks_accuracy) stats.accuracy += back_propagation.accuracy;
 
-        update(back_propagation);
+        {
+            PROFILE_SCOPE("step:optim_total");
+            update(back_propagation);
+        }
 
-        sync_device();
+        {
+            PROFILE_SCOPE("step:sync_device");
+            sync_device();
+        }
 
         empty_queue.push(current_batch);
+
+        if ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number)
+            display_progress_bar(int(iteration + 1), int(batches_number));
     }
+    cout << "\n";
 
     worker.join();
 
     stats.error /= float(batches_number);
-    if (is_classification) stats.accuracy /= float(batches_number);
+    if (tracks_accuracy) stats.accuracy /= float(batches_number);
 
     if (profile_this)
     {
@@ -665,7 +689,7 @@ EpochStats Optimizer::train_epoch(bool is_classification,
     return stats;
 }
 
-EpochStats Optimizer::evaluate_epoch(bool is_classification,
+EpochStats Optimizer::evaluate_epoch(bool tracks_accuracy,
                                      ForwardPropagation& forward_propagation,
                                      ThreadSafeQueue<Batch*>& empty_queue,
                                      ThreadSafeQueue<Batch*>& ready_queue,
@@ -714,7 +738,7 @@ EpochStats Optimizer::evaluate_epoch(bool is_classification,
         const Loss::EvaluationResult eval = loss->calculate_error(*current_batch, forward_propagation);
 
         stats.error += eval.error;
-        if (is_classification) stats.accuracy += eval.accuracy;
+        if (tracks_accuracy) stats.accuracy += eval.accuracy;
 
         sync_device();
 
@@ -724,7 +748,7 @@ EpochStats Optimizer::evaluate_epoch(bool is_classification,
     worker.join();
 
     stats.error /= float(batches_number);
-    if (is_classification) stats.accuracy /= float(batches_number);
+    if (tracks_accuracy) stats.accuracy /= float(batches_number);
 
     return stats;
 }

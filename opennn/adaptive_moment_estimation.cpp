@@ -83,8 +83,6 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     const Index training_batch_size = min(training_samples_number, batch_size);
 
-    // Cap validation_batch_size by training_batch_size so validation can reuse
-    // the training ForwardPropagation buffer when sample counts allow it.
     const Index validation_batch_size = (validation_samples_number != 0)
         ? min(validation_samples_number, training_batch_size)
         : 0;
@@ -134,10 +132,6 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     BackPropagation training_back_propagation(training_batch_size, loss);
 
-    // Reuse the training FP for validation iff batch sizes match exactly.
-    // Otherwise allocate a separate FP — over-sized views would corrupt loss
-    // kernels (input.shape[0] read directly), BatchNorm running stats, and
-    // MultiHeadAttention reshapes.
     unique_ptr<ForwardPropagation> validation_forward_propagation;
 
     if (has_validation && validation_batch_size != training_batch_size)
@@ -166,7 +160,10 @@ TrainingResults AdaptiveMomentEstimation::train()
     float validation_accuracy = 0.0f;
     Index validation_failures = 0;
 
-    const bool is_classification_model = (loss->get_error() == Loss::Error::CrossEntropy3d);
+    // True for sequence/token-level cross-entropy losses (translation, language
+    // modelling, chat). Gates the per-token metrics (accuracy + perplexity)
+    // and the per-batch token-count plumbing in train_epoch / evaluate_epoch.
+    const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
     bool stop_training = false;
     const bool shuffle = !neural_network->has(LayerType::Recurrent);
@@ -187,7 +184,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
-        const EpochStats train_stats = train_epoch(is_classification_model,
+        const EpochStats train_stats = train_epoch(is_token_cross_entropy,
                                                    training_forward_propagation,
                                                    training_back_propagation,
                                                    empty_training_queue,
@@ -206,7 +203,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         {
             dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
 
-            const EpochStats val_stats = evaluate_epoch(is_classification_model,
+            const EpochStats val_stats = evaluate_epoch(is_token_cross_entropy,
                                                         *validation_fp,
                                                         empty_validation_queue,
                                                         ready_validation_queue,
@@ -228,9 +225,11 @@ TrainingResults AdaptiveMomentEstimation::train()
         if (should_display(epoch))
         {
             cout << "Training error: " << training_error << "\n";
-            if (is_classification_model) cout << "Training accuracy: " << training_accuracy << "\n";
+            if (is_token_cross_entropy) cout << "Training perplexity: " << exp(training_error) << "\n";
+            if (is_token_cross_entropy) cout << "Training accuracy: " << training_accuracy << "\n";
             if (has_validation) cout << "Validation error: " << validation_error << "\n";
-            if (has_validation && is_classification_model) cout << "Validation accuracy: " << validation_accuracy << "\n";
+            if (has_validation && is_token_cross_entropy) cout << "Validation perplexity: " << exp(validation_error) << "\n";
+            if (has_validation && is_token_cross_entropy) cout << "Validation accuracy: " << validation_accuracy << "\n";
             cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
 
@@ -290,9 +289,8 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             learning_rate,
             EPSILON,
             bias_correction_1,
-            bias_correction_2);
-
-        neural_network->cast_parameters_to_bf16();
+            bias_correction_2,
+            neural_network->get_parameters_bf16_data());
 
         return;
     });

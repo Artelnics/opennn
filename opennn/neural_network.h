@@ -173,6 +173,12 @@ public:
                           bool = false) const;
 
     void forward_propagate(const vector<TensorView>&,
+                          ForwardPropagation&,
+                          bool is_training,
+                          Index first_layer_index,
+                          Index last_layer_index) const;
+
+    void forward_propagate(const vector<TensorView>&,
                           const VectorR&,
                           ForwardPropagation&);
 
@@ -181,6 +187,13 @@ public:
 public:
 
     void cast_parameters_to_bf16();
+
+    // Returns nullptr when no BF16 mirror is allocated (FP32-only mode), so
+    // optimizer kernels can pass it straight through and skip the mirror write.
+    __nv_bfloat16* get_parameters_bf16_data()
+    {
+        return parameters_bf16.empty() ? nullptr : parameters_bf16.as<__nv_bfloat16>();
+    }
 
     void copy_parameters_device();
     void copy_parameters_host();

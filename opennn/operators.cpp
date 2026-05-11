@@ -718,8 +718,36 @@ void Combination::apply_delta_gpu(const TensorView& output_delta, const TensorVi
 
     if (!input_delta.data || input_delta.size() == 0) return;
 
-    multiply(output_delta, false, weights, true, input_delta, 1.0f,
-             accumulate_input_delta ? 1.0f : 0.0f);
+    const int input_io_dtype  = static_cast<int>(output_delta.cuda_dtype());
+    const int input_out_dtype = static_cast<int>(input_delta.cuda_dtype());
+    if (!bwd_input_plan_
+        || bwd_input_total_rows_ != total_rows
+        || bwd_input_io_dtype_   != input_io_dtype
+        || bwd_input_out_dtype_  != input_out_dtype)
+    {
+        bwd_input_plan_       = &get_lt_gemm_plan(input_columns, total_rows, output_columns,
+                                                  CUBLAS_OP_T, CUBLAS_OP_N,
+                                                  CUBLASLT_EPILOGUE_DEFAULT,
+                                                  output_delta.cuda_dtype(),
+                                                  input_delta.cuda_dtype());
+        bwd_input_total_rows_ = total_rows;
+        bwd_input_io_dtype_   = input_io_dtype;
+        bwd_input_out_dtype_  = input_out_dtype;
+    }
+    const LtMatmulPlan& input_plan = *bwd_input_plan_;
+
+    const float* beta_pointer = accumulate_input_delta ? &one : &zero;
+    CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(),
+                                input_plan.op_desc,
+                                &one,
+                                weights.data,      input_plan.a_desc,
+                                output_delta.data, input_plan.b_desc,
+                                beta_pointer,
+                                input_delta.data,  input_plan.c_desc,
+                                input_delta.data,  input_plan.d_desc,
+                                input_plan.algo_valid ? &input_plan.algo : nullptr,
+                                ensure_cublas_lt_workspace(input_plan.workspace_size), input_plan.workspace_size,
+                                Backend::get_compute_stream()));
 }
 
 #else

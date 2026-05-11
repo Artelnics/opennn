@@ -37,6 +37,7 @@ __global__ void adam_update_kernel(
     float* __restrict__ m,
     float* __restrict__ v,
     const float* __restrict__ gradients,
+    __nv_bfloat16* __restrict__ parameters_bf16,
     const float beta_1,
     const float one_minus_beta_1,
     const float beta_2,
@@ -51,6 +52,7 @@ __global__ void adam_update_kernel(
     float4* __restrict__ const       m4 = reinterpret_cast<float4*>(m);
     float4* __restrict__ const       v4 = reinterpret_cast<float4*>(v);
     const float4* __restrict__ const g4 = reinterpret_cast<const float4*>(gradients);
+    __nv_bfloat162* __restrict__ const bf2 = reinterpret_cast<__nv_bfloat162*>(parameters_bf16);
 
     for (int i = tid; i < n_vec; i += stride)
     {
@@ -67,13 +69,28 @@ __global__ void adam_update_kernel(
         p4[i] = P;
         m4[i] = M;
         v4[i] = V;
+
+        // Refresh BF16 mirror in the same kernel: P is already in registers, so
+        // this saves a separate read-modify-write pass over the whole parameter
+        // buffer. Two 32-bit stores (one per __nv_bfloat162) cover the 4 lanes.
+        if (bf2)
+        {
+            bf2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
+            bf2[i * 2 + 1] = __floats2bfloat162_rn(P.z, P.w);
+        }
     }
 
     const int tail_start = n_vec * 4;
     for (int i = tail_start + tid; i < n; i += stride)
+    {
         adam_update_one(parameters[i], m[i], v[i], gradients[i],
                         beta_1, one_minus_beta_1, beta_2, one_minus_beta_2,
                         lr, eps);
+        // Tail also writes the mirror — without this the last 0..3 weights stay
+        // stale in BF16 and the next forward reads outdated values.
+        if (parameters_bf16)
+            parameters_bf16[i] = __float2bfloat16(parameters[i]);
+    }
 }
 
 void adam_update_cuda(
@@ -87,7 +104,8 @@ void adam_update_cuda(
     const float learning_rate,
     const float epsilon,
     const float bias_correction_1,
-    const float bias_correction_2)
+    const float bias_correction_2,
+    __nv_bfloat16* parameters_bf16)
 {
     if (n == 0) return;
 
@@ -100,7 +118,12 @@ void adam_update_cuda(
     const float one_minus_beta_1 = 1.0f - beta_1;
     const float one_minus_beta_2 = 1.0f - beta_2;
 
-    const bool aligned = are_float4_aligned(parameters, m, v, gradients);
+    // BF16 mirror comes from cudaMalloc → 256-byte aligned in practice. The
+    // explicit check keeps us defensive if the buffer ever becomes non-owning.
+    const bool mirror_aligned = parameters_bf16 == nullptr
+        || (reinterpret_cast<std::uintptr_t>(parameters_bf16) & 0x3) == 0;
+
+    const bool aligned = are_float4_aligned(parameters, m, v, gradients) && mirror_aligned;
 
     const int n_vec = aligned ? (total / 4) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));
@@ -112,6 +135,7 @@ void adam_update_cuda(
         m,
         v,
         gradients,
+        parameters_bf16,
         beta_1,
         one_minus_beta_1,
         beta_2,
@@ -146,6 +170,7 @@ __global__ void sgd_update_kernel(
     float* __restrict__ parameters,
     float* __restrict__ velocity,
     const float* __restrict__ gradients,
+    __nv_bfloat16* __restrict__ parameters_bf16,
     const float learning_rate,
     const float momentum,
     const bool nesterov)
@@ -157,6 +182,7 @@ __global__ void sgd_update_kernel(
     float4* __restrict__ const       p4 = reinterpret_cast<float4*>(parameters);
     float4* __restrict__ const       v4 = reinterpret_cast<float4*>(velocity);
     const float4* __restrict__ const g4 = reinterpret_cast<const float4*>(gradients);
+    __nv_bfloat162* __restrict__ const bf2 = reinterpret_cast<__nv_bfloat162*>(parameters_bf16);
 
     for (int i = tid; i < n_vec; i += stride)
     {
@@ -172,12 +198,24 @@ __global__ void sgd_update_kernel(
         p4[i] = P;
 
         if (has_momentum) v4[i] = V;
+
+        // Refresh BF16 mirror in the same kernel — see adam_update_kernel for
+        // the rationale (P is already in registers, no extra read pass).
+        if (bf2)
+        {
+            bf2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
+            bf2[i * 2 + 1] = __floats2bfloat162_rn(P.z, P.w);
+        }
     }
 
     const int tail_start = n_vec * 4;
     for (int i = tail_start + tid; i < n; i += stride)
+    {
         sgd_update_one(parameters[i], velocity[i], gradients[i],
                        learning_rate, momentum, nesterov);
+        if (parameters_bf16)
+            parameters_bf16[i] = __float2bfloat16(parameters[i]);
+    }
 }
 
 void sgd_update_cuda(
@@ -187,13 +225,17 @@ void sgd_update_cuda(
     const float* gradients,
     const float learning_rate,
     const float momentum,
-    const bool nesterov)
+    const bool nesterov,
+    __nv_bfloat16* parameters_bf16)
 {
     if (n == 0) return;
 
     const int total = static_cast<int>(n);
 
-    const bool aligned = are_float4_aligned(parameters, velocity, gradients);
+    const bool mirror_aligned = parameters_bf16 == nullptr
+        || (reinterpret_cast<std::uintptr_t>(parameters_bf16) & 0x3) == 0;
+
+    const bool aligned = are_float4_aligned(parameters, velocity, gradients) && mirror_aligned;
 
     const int n_vec = aligned ? (total / 4) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));
@@ -204,6 +246,7 @@ void sgd_update_cuda(
         parameters,
         velocity,
         gradients,
+        parameters_bf16,
         learning_rate, momentum, nesterov);
 }
 
