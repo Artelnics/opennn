@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/genetic_algorithm.h"
@@ -31,7 +32,7 @@ TEST(GeneticAlgorithmTest, InputSelection)
     const Index inputs_number = 3;
     const Index samples_number = 30;
 
-    Dataset dataset(samples_number, {inputs_number}, {1});
+    TabularDataset dataset(samples_number, {inputs_number}, {1});
 
     // Create data where feature 0 is correlated with target, features 1-2 are noise
     MatrixR data(samples_number, inputs_number + 1);
@@ -71,7 +72,7 @@ TEST(GeneticAlgorithmTest, RequiresValidation)
 {
     const Index samples_number = 20;
 
-    Dataset dataset(samples_number, {2}, {1});
+    TabularDataset dataset(samples_number, {2}, {1});
     dataset.set_data_random();
     dataset.set_sample_roles("Training");  // No validation
 

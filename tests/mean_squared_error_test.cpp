@@ -3,6 +3,7 @@
 
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "../opennn/language_dataset.h"
 #include "../opennn/image_dataset.h"
 #include "../opennn/dense_layer.h"
@@ -31,7 +32,7 @@ TEST(MeanSquaredErrorTest, DefaultConstructor)
 TEST(MeanSquaredErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
-    Dataset dataset;
+    TabularDataset dataset;
     Loss loss(&neural_network, &dataset);
 
     EXPECT_NE(loss.get_neural_network(), nullptr);
@@ -46,7 +47,7 @@ TEST(MeanSquaredErrorTest, BackPropagateDense2d)
     const Index targets_number = random_integer(1, 10);
     const Index neurons_number = random_integer(1, 10);
 
-    Dataset dataset(samples_number, { inputs_number }, { targets_number });
+    TabularDataset dataset(samples_number, { inputs_number }, { targets_number });
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
@@ -74,7 +75,7 @@ TEST(MeanSquaredErrorTest, BackPropagateRecurrent)
     const Index targets_number = random_integer(3, 10);
     const Index time_steps = random_integer(1, 10);
 
-    Dataset dataset(samples_number, {time_steps, inputs_number}, {targets_number});
+    TabularDataset dataset(samples_number, {time_steps, inputs_number}, {targets_number});
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
@@ -174,7 +175,7 @@ TEST(MeanSquaredErrorTest, BackPropagateEmbedding)
     const Index sequence_length = random_integer(1, 10);
     const Index flattened_size = sequence_length * embeding_dim;
 
-    Dataset dataset(samples_number, { sequence_length }, { targets_number });
+    TabularDataset dataset(samples_number, { sequence_length }, { targets_number });
     dataset.set_data_integer(inputs_number);
     dataset.set_sample_roles("Training");
 
@@ -214,7 +215,7 @@ TEST(MeanSquaredErrorTest, BackPropagateMultiheadAttention)
 
     const Shape sample_target_shape = { sequence_length * embedding_dimension };
 
-    Dataset dataset(batch_size, sample_input_dimensions, sample_target_shape);
+    TabularDataset dataset(batch_size, sample_input_dimensions, sample_target_shape);
     dataset.set_data_random();
 
     NeuralNetwork neural_network;

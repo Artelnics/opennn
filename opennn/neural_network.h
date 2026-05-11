@@ -135,6 +135,7 @@ public:
 
     void save(const filesystem::path&) const;
     void save_parameters(const filesystem::path&) const;
+    void save_parameters_binary(const filesystem::path&) const;
 
     void load(const filesystem::path&);
     void load_parameters_binary(const filesystem::path&);

@@ -4,6 +4,7 @@
 #include "../opennn/dense_layer.h"
 #include "../opennn/loss.h"
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/levenberg_marquardt_algorithm.h"
 
@@ -33,7 +34,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     const Index inputs_n = 1;
     const Index outputs_n = 1;
 
-    Dataset dataset(samples, {inputs_n}, {outputs_n});
+    TabularDataset dataset(samples, {inputs_n}, {outputs_n});
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
@@ -62,7 +63,7 @@ TEST(LevenbergMarquardtAlgorithmTest, TrainReducesError)
     const Index inputs_n = 2;
     const Index outputs_n = 1;
 
-    Dataset dataset(samples, {inputs_n}, {outputs_n});
+    TabularDataset dataset(samples, {inputs_n}, {outputs_n});
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 

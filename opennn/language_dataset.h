@@ -48,6 +48,8 @@ public:
     Index get_samples_number() const override;
     using Dataset::get_samples_number;
 
+    VectorI calculate_target_distribution() const override;
+
     void read_txt();
 
     void create_vocabulary(const vector<vector<string_view>>&, vector<string>&) const;

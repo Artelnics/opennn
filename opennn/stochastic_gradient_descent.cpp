@@ -288,7 +288,8 @@ TrainingResults StochasticGradientDescent::train()
                                                    input_feature_indices,
                                                    decoder_feature_indices,
                                                    target_feature_indices,
-                                                   training_update);
+                                                   training_update,
+                                                   should_display(epoch));
 
         training_error = train_stats.error;
         training_accuracy = train_stats.accuracy;

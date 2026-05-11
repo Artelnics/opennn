@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/training_strategy.h"
@@ -18,7 +19,7 @@ TEST(TrainingStrategy, DefaultConstructor)
 
 TEST(TrainingStrategy, GeneralConstructor)
 {
-    Dataset dataset(10, {2}, {1});
+    TabularDataset dataset(10, {2}, {1});
     dataset.set_data_random();
 
     ApproximationNetwork neural_network({2}, {3}, {1});

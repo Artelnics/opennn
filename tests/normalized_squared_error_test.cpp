@@ -3,6 +3,7 @@
 
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/loss.h"
 
@@ -20,7 +21,7 @@ TEST(NormalizedSquaredErrorTest, DefaultConstructor)
 TEST(NormalizedSquaredErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
-    Dataset dataset;
+    TabularDataset dataset;
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::NormalizedSquaredError);
@@ -37,7 +38,7 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
     const Index targets_number = random_integer(1, 10);
     const Index neurons_number = random_integer(1, 10);
 
-    Dataset dataset(samples_number, { inputs_number }, { targets_number });
+    TabularDataset dataset(samples_number, { inputs_number }, { targets_number });
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 

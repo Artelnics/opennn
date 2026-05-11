@@ -2,6 +2,7 @@
 #include "numerical_derivatives.h"
 
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "../opennn/loss.h"
 #include "../opennn/standard_networks.h"
 
@@ -19,7 +20,7 @@ TEST(WeightedSquaredErrorTest, DefaultConstructor)
 TEST(WeightedSquaredErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
-    Dataset dataset;
+    TabularDataset dataset;
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::WeightedSquaredError);
@@ -36,7 +37,7 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
     const Index neurons_number = random_integer(1, 10);
     const Index outputs_number = 1;
 
-    Dataset data_set(samples_number, { inputs_number }, { outputs_number });
+    TabularDataset data_set(samples_number, { inputs_number }, { outputs_number });
     data_set.set_data_binary_classification();
 
     ClassificationNetwork neural_network({ inputs_number }, { neurons_number }, { outputs_number });

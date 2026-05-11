@@ -390,12 +390,27 @@ void TrainingResults::print(const string &message) const
 {
     const Index epochs_number = training_error_history.size();
 
+    Index best_epoch = epochs_number - 1;
+    if (validation_error_history.size() > 0)
+    {
+        float best_val = numeric_limits<float>::max();
+        for (Index e = 0; e < validation_error_history.size(); ++e)
+            if (validation_error_history(e) < best_val)
+            {
+                best_val = validation_error_history(e);
+                best_epoch = e;
+            }
+    }
+
     cout << message << "\n"
          << "Training results" << "\n"
          << "Epochs number: " << epochs_number - 1 << "\n"
-         << "Training error: " << training_error_history(epochs_number - 1) << "\n";
+         << "Training error: " << training_error_history(best_epoch) << "\n";
     if (validation_error_history.size() > 0)
-        cout << "Validation error: " << validation_error_history(epochs_number - 1) << "\n";
+        cout << "Validation error: " << validation_error_history(best_epoch) << "\n";
+    if (best_epoch != epochs_number - 1)
+        cout << "Best epoch: " << best_epoch
+             << " (restored parameters correspond to this epoch)\n";
     cout << "Stopping condition: " << write_stopping_condition() << "\n";
 }
 
@@ -580,7 +595,8 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                                   const vector<Index>& input_feature_indices,
                                   const vector<Index>& decoder_feature_indices,
                                   const vector<Index>& target_feature_indices,
-                                  const std::function<void(BackPropagation&)>& update)
+                                  const std::function<void(BackPropagation&)>& update,
+                                  bool show_progress)
 {
     EpochStats stats;
 
@@ -619,7 +635,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     // Show 0% immediately so the user knows the loop is alive even if the
     // first iteration takes a while (cuDNN/cuBLAS plan warmup, allocations).
     const Index progress_step = std::max(Index(1), batches_number / 200);
-    display_progress_bar(0, int(batches_number));
+    if (show_progress) display_progress_bar(0, int(batches_number));
 
     for (Index iteration = 0; iteration < batches_number; ++iteration)
     {
@@ -659,10 +675,11 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
 
         empty_queue.push(current_batch);
 
-        if ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number)
+        if (show_progress
+            && ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number))
             display_progress_bar(int(iteration + 1), int(batches_number));
     }
-    cout << "\n";
+    if (show_progress) cout << "\n";
 
     worker.join();
 

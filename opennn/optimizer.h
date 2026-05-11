@@ -113,7 +113,8 @@ protected:
                            const vector<Index>& input_feature_indices,
                            const vector<Index>& decoder_feature_indices,
                            const vector<Index>& target_feature_indices,
-                           const std::function<void(BackPropagation&)>& update);
+                           const std::function<void(BackPropagation&)>& update,
+                           bool show_progress = true);
 
     EpochStats evaluate_epoch(bool tracks_accuracy,
                               ForwardPropagation& forward_propagation,

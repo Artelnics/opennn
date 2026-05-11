@@ -2,6 +2,7 @@
 
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 
 using namespace opennn;
 
@@ -12,7 +13,7 @@ TEST(ScalingTest, ScaleDataMeanStandardDeviation)
     MatrixR data(samples_number, 1);
     data.setRandom();
 
-    Dataset dataset(samples_number, { 1 }, { 0 });
+    TabularDataset dataset(samples_number, { 1 }, { 0 });
 
     dataset.set_data(data);
     dataset.set_variable_scalers("MeanStandardDeviation");
@@ -33,7 +34,7 @@ TEST(ScalingTest, ScaleDataMinimumMaximum)
     MatrixR matrix(samples_number, 1);
     matrix.setRandom();
 
-    Dataset dataset(samples_number, { 1 }, { 0 });
+    TabularDataset dataset(samples_number, { 1 }, { 0 });
 
     dataset.set_data(matrix);
     dataset.set_variable_scalers("MinimumMaximum");
@@ -56,7 +57,7 @@ TEST(ScalingTest, ScaleDataNoScaling2d)
     
     MatrixR scaled_matrix;
 
-    Dataset dataset(samples_number, { samples_number }, { 0 });
+    TabularDataset dataset(samples_number, { samples_number }, { 0 });
 
     dataset.set_data(matrix);
     dataset.set_variable_scalers("None");
@@ -76,7 +77,7 @@ TEST(ScalingTest, ScaleDataStandardDeviation)
     MatrixR matrix(samples_number, 1);
     matrix.setRandom();
 
-    Dataset dataset(samples_number, { 1 }, { 0 });
+    TabularDataset dataset(samples_number, { 1 }, { 0 });
 
     dataset.set_data(matrix);
     dataset.set_variable_scalers("StandardDeviation");
@@ -100,7 +101,7 @@ TEST(ScalingTest, ScaleDataLogarithmic)
 
     matrix.array() = matrix.array().abs() + 1.0f;
 
-    Dataset dataset(samples_number, { 1 }, { 0 });
+    TabularDataset dataset(samples_number, { 1 }, { 0 });
 
     dataset.set_data(matrix);
     dataset.set_variable_scalers("Logarithm");
@@ -126,7 +127,7 @@ TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
 
     matrix.setRandom();
 
-    Dataset dataset(samples_number, { samples_number }, { 0 });
+    TabularDataset dataset(samples_number, { samples_number }, { 0 });
 
     dataset.set_data(matrix);
     dataset.set_variable_scalers("MeanStandardDeviation");
@@ -152,7 +153,7 @@ TEST(ScalingTest, UnscaleDataMinimumMaximum)
 
     matrix.setRandom();
     
-    Dataset dataset(samples_number, { samples_number }, { 0 });
+    TabularDataset dataset(samples_number, { samples_number }, { 0 });
 
     dataset.set_data(matrix);
     dataset.set_variable_scalers("MinimumMaximum");
@@ -177,7 +178,7 @@ TEST(ScalingTest, UnscaleDataNoScaling2d)
 
     matrix.setRandom();
 
-    Dataset dataset(samples_number, { samples_number }, { 0 });
+    TabularDataset dataset(samples_number, { samples_number }, { 0 });
 
     dataset.set_data(matrix);
     dataset.set_variable_scalers("None");
@@ -202,7 +203,7 @@ TEST(ScalingTest, UnscaleDataStandardDeviation)
 
     matrix.setRandom();
 
-    Dataset dataset(samples_number, { samples_number }, { 0 });
+    TabularDataset dataset(samples_number, { samples_number }, { 0 });
     dataset.set_data(matrix);
     dataset.set_variable_scalers("StandardDeviation");
 
@@ -228,7 +229,7 @@ TEST(ScalingTest, UnscaleDataLogarithmic)
 
     matrix.array() = matrix.array().abs() + 1.0f;
 
-    Dataset dataset(samples_number, { samples_number }, { 0 });
+    TabularDataset dataset(samples_number, { samples_number }, { 0 });
 
     dataset.set_data(matrix);
     dataset.set_variable_scalers("Logarithm");
