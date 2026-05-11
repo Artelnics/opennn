@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <cstring>
 #include "registry.h"
 #include "dataset.h"
 #include "forward_propagation.h"
@@ -15,6 +16,10 @@
 #include "batch.h"
 #include "cuda_dispatch.h"
 #include "adaptive_moment_estimation.h"
+
+#ifdef OPENNN_WITH_CUDA
+#include <cuda_runtime.h>
+#endif
 
 namespace opennn
 {
@@ -162,6 +167,9 @@ TrainingResults AdaptiveMomentEstimation::train()
     float validation_error = 0.0f;
     float validation_accuracy = 0.0f;
     Index validation_failures = 0;
+    float best_validation_error = numeric_limits<float>::max();
+
+    vector<float> best_parameters;
 
     const bool is_classification_model = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
@@ -216,7 +224,25 @@ TrainingResults AdaptiveMomentEstimation::train()
             validation_accuracy = val_stats.accuracy;
             results.validation_error_history(epoch) = validation_error;
 
-            if (epoch != 0 && validation_error > results.validation_error_history(epoch - 1))
+            if(validation_error < best_validation_error)
+            {
+                best_validation_error = validation_error;
+                validation_failures = 0;
+
+                const Index psize = neural_network->get_parameters_size();
+                if(Index(best_parameters.size()) != psize)
+                    best_parameters.resize(psize);
+
+                const float* src = neural_network->get_parameters_data();
+                const size_t bytes = size_t(psize) * sizeof(float);
+#ifdef OPENNN_WITH_CUDA
+                if(Configuration::instance().is_gpu())
+                    cudaMemcpy(best_parameters.data(), src, bytes, cudaMemcpyDeviceToHost);
+                else
+#endif
+                    std::memcpy(best_parameters.data(), src, bytes);
+            }
+            else
                 ++validation_failures;
         }
 
@@ -247,6 +273,17 @@ TrainingResults AdaptiveMomentEstimation::train()
     }
 
     teardown_device_training();
+
+    if(results.stopping_condition == StoppingCondition::MaximumSelectionErrorIncreases
+       && !best_parameters.empty()
+       && Index(best_parameters.size()) == neural_network->get_parameters_size())
+    {
+        if(display)
+            cout << "Restoring best parameters (validation error " << best_validation_error << ")\n";
+        std::memcpy(neural_network->get_parameters_data(),
+                    best_parameters.data(),
+                    best_parameters.size() * sizeof(float));
+    }
 
     set_unscaling();
 

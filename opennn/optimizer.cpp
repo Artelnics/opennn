@@ -389,12 +389,27 @@ void TrainingResults::print(const string &message) const
 {
     const Index epochs_number = training_error_history.size();
 
+    Index best_epoch = epochs_number - 1;
+    if (validation_error_history.size() > 0)
+    {
+        float best_val = numeric_limits<float>::max();
+        for (Index e = 0; e < validation_error_history.size(); ++e)
+            if (validation_error_history(e) < best_val)
+            {
+                best_val = validation_error_history(e);
+                best_epoch = e;
+            }
+    }
+
     cout << message << "\n"
          << "Training results" << "\n"
          << "Epochs number: " << epochs_number - 1 << "\n"
-         << "Training error: " << training_error_history(epochs_number - 1) << "\n";
+         << "Training error: " << training_error_history(best_epoch) << "\n";
     if (validation_error_history.size() > 0)
-        cout << "Validation error: " << validation_error_history(epochs_number - 1) << "\n";
+        cout << "Validation error: " << validation_error_history(best_epoch) << "\n";
+    if (best_epoch != epochs_number - 1)
+        cout << "Best epoch: " << best_epoch
+             << " (restored parameters correspond to this epoch)\n";
     cout << "Stopping condition: " << write_stopping_condition() << "\n";
 }
 

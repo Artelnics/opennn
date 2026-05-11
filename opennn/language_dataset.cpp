@@ -62,6 +62,40 @@ Index LanguageDataset::get_samples_number() const
     return streaming ? Index(sample_input_indices.size()) : data.rows();
 }
 
+VectorI LanguageDataset::calculate_target_distribution() const
+{
+    if (maximum_target_sequence_length != 1) return {};
+
+    const Index samples_number = get_samples_number();
+
+    Index positives = 0;
+    Index negatives = 0;
+
+    if (streaming)
+    {
+        for (Index sample = 0; sample < samples_number; ++sample)
+        {
+            if (sample_target_indices[sample].empty()) continue;
+            (sample_target_indices[sample][0] < 1) ? negatives++ : positives++;
+        }
+    }
+    else
+    {
+        const Index target_col = maximum_input_sequence_length;
+        for (Index sample = 0; sample < samples_number; ++sample)
+        {
+            const float value = data(sample, target_col);
+            if (!isnan(value))
+                (value < 0.5f) ? negatives++ : positives++;
+        }
+    }
+
+    VectorI distribution(2);
+    distribution(0) = negatives;
+    distribution(1) = positives;
+    return distribution;
+}
+
 LanguageDataset::LanguageDataset(const Index samples_number,
                                  Index input_sequence_length,
                                  Index input_vocabulary_size) : Dataset()

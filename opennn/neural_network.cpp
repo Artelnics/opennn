@@ -729,29 +729,6 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     }
     printer.end_array();
     printer.close_element();
-
-    // Parameters
-
-    printer.open_element("Parameters");
-    if (parameters.size_in_floats() > 0)
-    {
-        const Index params_size = parameters.size_in_floats();
-        const float* params_data = parameters.as<float>();
-        VectorR params_host_snapshot;
-#ifdef OPENNN_HAS_CUDA
-        if (parameters.device_type == Device::CUDA)
-        {
-            params_host_snapshot.resize(params_size);
-            CHECK_CUDA(cudaMemcpy(params_host_snapshot.data(), params_data,
-                                  params_size * sizeof(float), cudaMemcpyDeviceToHost));
-            params_data = params_host_snapshot.data();
-        }
-#endif
-        const Map<const VectorR, AlignedMax> parameters_view(params_data, params_size);
-        add_json_field(printer, "Values", vector_to_string(parameters_view, " "));
-    }
-    printer.close_element();
-
     printer.close_element();
 }
 
@@ -889,11 +866,16 @@ void NeuralNetwork::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open file: " + file_name.string());
+        return;
 
     JsonWriter printer;
     to_JSON(printer);
     file << printer.c_str();
+
+    filesystem::path binary_path = file_name;
+    binary_path.replace_extension(".bin");
+
+    save_parameters_binary(binary_path);
 }
 
 void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
@@ -921,11 +903,35 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
     file.close();
 }
 
+void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) const
+{
+    ofstream file(file_name, ios::binary);
+
+    if (!file.is_open())
+        throw runtime_error("Cannot open binary file for writing: " + file_name.string() + "\n");
+
+    const Index parameters_number = parameters.size_in_floats();
+
+    file.write(reinterpret_cast<const char*>(parameters.as<float>()),
+               parameters_number * sizeof(float));
+
+    if (!file)
+        throw runtime_error("Error writing binary file: " + file_name.string() + "\n");
+
+    file.close();
+}
+
 void NeuralNetwork::load(const filesystem::path& file_name)
 {
     set_default();
 
     from_JSON(load_json_file(file_name));
+
+    filesystem::path binary_path = file_name;
+    binary_path.replace_extension(".bin");
+
+    if (filesystem::exists(binary_path))
+        load_parameters_binary(binary_path);
 }
 
 void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)

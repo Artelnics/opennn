@@ -50,6 +50,9 @@ void Loss::set_normalization_coefficient()
         if (targets_number != 1) return;
 
         const VectorI distribution = dataset->calculate_target_distribution();
+
+        if (distribution.size() < 2) return;
+
         const Index negatives = distribution(0);
         const Index positives = distribution(1);
 
