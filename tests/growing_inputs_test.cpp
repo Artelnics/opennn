@@ -3,6 +3,7 @@
 #include "../opennn/growing_inputs.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "../opennn/dense_layer.h"
 #include "../opennn/standard_networks.h"
 
@@ -31,7 +32,7 @@ TEST(GrowingInputsTest, GeneralConstructor)
 
 TEST(GrowingInputsTest, InputSelection)
 {
-    Dataset dataset(20, {2}, {1});
+    TabularDataset dataset(20, {2}, {1});
     dataset.set_data_random();
     dataset.split_samples_random();
 
@@ -54,7 +55,7 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
 {
     const Index samples = 50;
 
-    Dataset dataset(samples, {2}, {1});
+    TabularDataset dataset(samples, {2}, {1});
 
     // Generamos datos donde output = input1, input2 es ruido puro
     MatrixR data(samples, 3);

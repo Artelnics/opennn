@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "../opennn/tabular_dataset.h"
 
 #include "../opennn/standard_networks.h"
 #include "../opennn/training_strategy.h"
@@ -38,7 +39,7 @@ TEST(AdaptiveMomentEstimationTest, TrainEmpty)
 
 TEST(AdaptiveMomentEstimationTest, TrainApproximation)
 {
-    Dataset dataset(1, {1}, {1});
+    TabularDataset dataset(1, {1}, {1});
     dataset.set_data_constant(type(1));
 
     ApproximationNetwork neural_network({1}, {1}, {1});
@@ -117,7 +118,7 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossError)
     const Index inputs_number = 1;
     const Index outputs_number = 1;
 
-    Dataset dataset(samples_number, {inputs_number}, {outputs_number});
+    TabularDataset dataset(samples_number, {inputs_number}, {outputs_number});
     dataset.set_data_random();
 
     ApproximationNetwork neural_network({inputs_number}, {}, {outputs_number});
@@ -149,7 +150,7 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossGoal)
     const Index inputs_number = 1;
     const Index outputs_number = 1;
 
-    Dataset dataset(samples_number, {inputs_number}, {outputs_number});
+    TabularDataset dataset(samples_number, {inputs_number}, {outputs_number});
     dataset.set_data_random();
 
     ApproximationNetwork neural_network({inputs_number}, {}, {outputs_number});

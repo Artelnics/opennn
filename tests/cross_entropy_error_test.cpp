@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "../opennn/tabular_dataset.h"
 #include "numerical_derivatives.h"
 
 #include "../opennn/loss.h"
@@ -28,7 +29,7 @@ TEST(CrossEntropyError2d, BackPropagate)
     const Index targets_number = 1;
     const Index neurons_number = random_integer(1, 10);
 
-    Dataset dataset(samples_number, { inputs_number }, { targets_number });
+    TabularDataset dataset(samples_number, { inputs_number }, { targets_number });
 
     dataset.set_data_random();
 
@@ -65,7 +66,7 @@ TEST(CrossEntropyError2d, BackPropagate)
 TEST(CrossEntropyError2d, calculate_error)
 {
     MatrixR data;
-    Dataset dataset(5, { 3 }, { 1 });
+    TabularDataset dataset(5, { 3 }, { 1 });
     data.resize(5, 4);
     data << type(0), type(1), type(0), type(1),
             type(1), type(1), type(0), type(0),
@@ -99,7 +100,7 @@ TEST(CrossEntropyError2d, calculate_error)
     const vector<TensorView> batch_input_pairs = batch.get_inputs();
     neural_network.forward_propagate(batch_input_pairs, forward_propagation, false);
 
-    loss.calculate_error(batch, forward_propagation, back_propagation);
+    back_propagation.error = loss.calculate_error(batch, forward_propagation).error;
 
     const type calculate_error = back_propagation.error;
 
@@ -111,7 +112,7 @@ TEST(CrossEntropyError2d, calculate_error)
 TEST(CrossEntropyError2d, calculate_output_gradients)
 {
     MatrixR data;
-    Dataset dataset(5, { 3 }, { 1 });
+    TabularDataset dataset(5, { 3 }, { 1 });
 
     data.resize(5, 4);
     data << type(2), type(5), type(6), type(0),
@@ -162,7 +163,7 @@ TEST(CrossEntropyError2d, calculate_output_gradients)
 TEST(CrossEntropyError2d, get_name)
 {
     MatrixR data;
-    Dataset dataset(5, { 3 }, { 1 });
+    TabularDataset dataset(5, { 3 }, { 1 });
 
     data.resize(5, 4);
     data << type(2), type(5), type(0), type(0),
@@ -196,7 +197,7 @@ TEST(CrossEntropyError2d, get_name)
 
 TEST(CrossEntropyError2d, to_JSON)
 {
-    Dataset dataset(5, { 2 }, { 1 });
+    TabularDataset dataset(5, { 2 }, { 1 });
     MatrixR data;
     data.resize(5, 3);
     data << type(0.1), type(0.2), type(1),
@@ -230,7 +231,7 @@ TEST(CrossEntropyError2d, to_JSON)
 TEST(CrossEntropyError2d, from_JSON_valid_document)
 {
     NeuralNetwork neural_network;
-    Dataset dataset;
+    TabularDataset dataset;
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::CrossEntropy);
 

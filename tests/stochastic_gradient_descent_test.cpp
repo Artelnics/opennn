@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "../opennn/tabular_dataset.h"
 
 #include "../opennn/language_dataset.h"
 #include "../opennn/standard_networks.h"
@@ -34,7 +35,7 @@ TEST(StochasticGradientDescentTest, Train)
     const Index inputs_number = 1;
     const Index outputs_number = 1;
 
-    Dataset dataset(samples_number, {inputs_number}, {outputs_number});
+    TabularDataset dataset(samples_number, {inputs_number}, {outputs_number});
     dataset.set_data_constant(type(1));
 
     ApproximationNetwork neural_network({inputs_number}, {}, {outputs_number});

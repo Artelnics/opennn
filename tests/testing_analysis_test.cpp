@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/testing_analysis.h"
@@ -14,7 +15,7 @@ TEST(TestingAnalysis, ErrorData)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    Dataset dataset(samples_number, { inputs_number }, { targets_number });
+    TabularDataset dataset(samples_number, { inputs_number }, { targets_number });
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
 
@@ -41,7 +42,7 @@ TEST(TestingAnalysis, PercentageErrorData)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    Dataset dataset;
+    TabularDataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
@@ -64,7 +65,7 @@ TEST(TestingAnalysis, AbsoluteErrorDescriptives)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    Dataset dataset;
+    TabularDataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number;
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
@@ -96,7 +97,7 @@ TEST(TestingAnalysis, PercentageErrorDescriptives)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    Dataset dataset;
+    TabularDataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
@@ -122,7 +123,7 @@ TEST(TestingAnalysis, ErrorDataDescriptives)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    Dataset dataset;
+    TabularDataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number;
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
@@ -154,7 +155,7 @@ TEST(TestingAnalysis, ErrorDataHistograms)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    Dataset dataset;
+    TabularDataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
@@ -178,7 +179,7 @@ TEST(TestingAnalysis, MaximalErrors)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    Dataset dataset;
+    TabularDataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
@@ -205,7 +206,7 @@ TEST(TestingAnalysis, LinearRegression)
     const Index neurons_number = 1;
     const Index targets_number = 1;
 
-    Dataset dataset(samples_number, {inputs_number}, {targets_number;
+    TabularDataset dataset(samples_number, {inputs_number}, {targets_number;
     dataset.set_data_random();
     dataset.set_sample_roles("Testing");
 
@@ -271,7 +272,7 @@ TEST(TestingAnalysis, BinaryClassificationTests)
     const Index inputs_number = 1;
     const Index targets_number= 1;
 
-    Dataset dataset;
+    TabularDataset dataset;
 
     dataset.set(samples_number, {inputs_number}, {targets_number});
 
