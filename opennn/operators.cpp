@@ -440,6 +440,8 @@ void BatchNorm::init_defaults()
 
 void BatchNorm::to_JSON(JsonWriter& w) const
 {
+    if (!active()) return;
+
     add_json_field(w, "Momentum", to_string(momentum));
 
     if (running_mean.data)
