@@ -112,6 +112,10 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Unscaling>(output_shape));
 
+    auto bounding_layer = make_unique<Bounding>(output_shape);
+    bounding_layer->set_bounding_method(Bounding::BoundingMethod::NoBounding);
+    add_layer(std::move(bounding_layer));
+
     this->compile();
     this->set_parameters_random();
 

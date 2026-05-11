@@ -85,7 +85,9 @@ void Bounding::set_bounding_method(const string& new_method_string)
 {
     if(new_method_string == "NoBounding" || new_method_string == "No bounding")
         bounding_method = BoundingMethod::NoBounding;
-    else if(new_method_string == "Positive outputs" || new_method_string == "Data range" || new_method_string == "Bounding")
+    else if(new_method_string == "Positive outputs"
+         || new_method_string == "Data range"
+         || new_method_string == "Bounding")
         bounding_method = BoundingMethod::Bounding;
     else
         throw runtime_error("Unknown bounding method: " + new_method_string + ".\n");
@@ -207,8 +209,11 @@ string Bounding::get_expression(const vector<string>& new_input_names, const vec
     }
 
     for(Index i = 0; i < output_shape[0]; i++)
-        buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << input_names[i] << ")\n"
-               << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
+    {
+        buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << input_names[i] << ")\n";
+        if(upper_bounds[i] < type(1e30))
+            buffer << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
+    }
 
     return buffer.str();
 }
