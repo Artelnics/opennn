@@ -89,6 +89,8 @@ public:
         MatrixR extract(const MatrixR& inputs, const MatrixR& output) const;
 
         void normalize(MatrixR& objective_matrix) const;
+
+        bool update_utopian_from_points(const MatrixR& unnormalized_objective_values);
     };
 
     ResponseOptimization(NeuralNetwork* = nullptr);
@@ -130,6 +132,9 @@ public:
     pair<vector<Variable>, vector<Descriptives>> get_variables_and_descriptives(const string& role) const;
 
     vector<type> get_utopian_point() const;
+
+    pair<Index, VectorR> get_advised_point(const MatrixR& pareto_front,
+                                           const VectorR& importance_scale = VectorR()) const;
 
     Domain get_original_domain(const string role) const;
 
@@ -193,7 +198,7 @@ private:
 
     Index evaluations_number = 2000;
 
-    Index max_iterations = 10;
+    Index max_iterations = 5;
 
     Index min_iterations = 4;
 

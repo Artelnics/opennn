@@ -1027,6 +1027,57 @@ void ResponseOptimization::Objectives::normalize(MatrixR& objective_matrix) cons
 }
 
 
+bool ResponseOptimization::Objectives::update_utopian_from_points(const MatrixR& unnormalized_objective_values)
+{
+    if (unnormalized_objective_values.rows() == 0)
+        return false;
+
+    const Index objectives_number = utopian_and_senses.cols();
+
+    if (unnormalized_objective_values.cols() != objectives_number)
+        return false;
+
+    bool any_updated = false;
+
+    for (Index j = 0; j < objectives_number; ++j)
+    {
+        const type sense = utopian_and_senses(1, j);
+        const type current_utopian = utopian_and_senses(0, j);
+
+        const type best = (sense > 0)
+            ? unnormalized_objective_values.col(j).maxCoeff()
+            : unnormalized_objective_values.col(j).minCoeff();
+
+        if (sense * (best - current_utopian) <= type(0))
+            continue;
+
+        const type scale = objective_normalizer(0, j);
+        const type offset = objective_normalizer(1, j);
+
+        if (abs(scale) < EPSILON)
+            continue;
+
+        const type old_inferior = -offset / scale;
+        const type old_superior = old_inferior + type(1) / scale;
+
+        const type new_inferior = (sense > 0) ? old_inferior : best;
+        const type new_superior = (sense > 0) ? best : old_superior;
+        const type new_range = new_superior - new_inferior;
+
+        if (new_range < EPSILON)
+            continue;
+
+        utopian_and_senses(0, j) = best;
+        objective_normalizer(0, j) = type(1) / new_range;
+        objective_normalizer(1, j) = -new_inferior / new_range;
+
+        any_updated = true;
+    }
+
+    return any_updated;
+}
+
+
 pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const MatrixR& feasible_inputs,
                                                                       const MatrixR& feasible_outputs,
                                                                       const Objectives& objectives) const
@@ -1096,7 +1147,8 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
             break;
         }
 
-        cout << "> feasible done " << endl;
+        cout << "\n> [Iteration " << i + 1 << " / " << max_iterations << "]" << endl;
+        cout << "  - Feasible points: " << feasible_inputs.rows() << endl;
 
         optimal_set = calculate_optimal_points(feasible_inputs, feasible_outputs, objectives);
 
@@ -1116,7 +1168,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 
         const type relative_error = abs((optimal_point - previous_optimal_point) / (objectives.utopian_and_senses(0,0) + 1e-6f));
 
-        cout <<  i << "-th " << "> loop " << "with relative error" << relative_error << endl;
+        cout << "  - Relative error: " << relative_error << endl;
 
         if (relative_error < relative_tolerance && i > min_iterations)
         {
@@ -1243,7 +1295,7 @@ pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& 
 
 MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 {
-    const Objectives objectives(*this);
+    Objectives objectives(*this);
 
     const auto [input_variables, input_descriptives] = get_variables_and_descriptives("Input");
 
@@ -1265,6 +1317,13 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     objectives.normalize(first_objective_matrix);
 
     auto [global_pareto_inputs, global_pareto_outputs] = calculate_pareto(first_feasible_inputs, first_feasible_outputs, first_objective_matrix);
+
+    if (global_pareto_inputs.rows() > 0)
+    {
+        const MatrixR initial_pareto_unnormalized = objectives.extract(global_pareto_inputs, global_pareto_outputs);
+        if (objectives.update_utopian_from_points(initial_pareto_unnormalized))
+            cout << "> Utopian promoted from initial Pareto front." << endl;
+    }
 
     cout << "> Initial Pareto front size: " << global_pareto_inputs.rows() << " points." << endl;
 
@@ -1314,6 +1373,17 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 
         cout << "  - New Pareto front size: " << global_pareto_inputs.rows()  << endl;
 
+        if (global_pareto_inputs.rows() > 0)
+        {
+            const MatrixR pareto_objective_unnormalized = objectives.extract(global_pareto_inputs, global_pareto_outputs);
+            if (objectives.update_utopian_from_points(pareto_objective_unnormalized))
+            {
+                cout << "  - Utopian promoted to better Pareto coordinate." << endl;
+                previous_holes_magnitude = 0.0;
+                previous_area_covered = 0.0;
+            }
+        }
+
         const pair<type, type> quality = calculate_quality_metrics(global_pareto_inputs, global_pareto_outputs, objectives);
 
         const type current_hole = quality.first;
@@ -1346,6 +1416,89 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     cout << "\n> [Optimization Complete] Assembling final results..." << endl;
 
     return assemble_matrices(global_pareto_inputs, global_pareto_outputs);
+}
+
+
+vector<type> ResponseOptimization::get_utopian_point() const
+{
+    const Objectives objectives(*this);
+
+    const Index objectives_number = objectives.utopian_and_senses.cols();
+
+    vector<type> utopian_point(static_cast<size_t>(objectives_number));
+
+    for (Index j = 0; j < objectives_number; ++j)
+        utopian_point[static_cast<size_t>(j)] = objectives.utopian_and_senses(0, j);
+
+    return utopian_point;
+}
+
+
+pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pareto_front,
+                                                             const VectorR& importance_scale) const
+{
+    if (pareto_front.rows() == 0)
+        return {-1, VectorR()};
+
+    if (pareto_front.rows() == 1)
+        return {0, pareto_front.row(0).transpose()};
+
+    const Index objectives_number = get_objectives_number();
+
+    VectorR scale = (importance_scale.size() == 0)
+        ? VectorR::Ones(objectives_number)
+        : importance_scale;
+
+    if (scale.size() != objectives_number)
+        throw runtime_error("Importance scale size must match objectives number.\n");
+
+    if (scale.minCoeff() < type(0))
+        throw runtime_error("Importance scale must be non-negative.\n");
+
+    if (scale.maxCoeff() == type(0))
+        throw runtime_error("Importance scale must contain at least one non-zero entry.\n");
+
+    const Index inputs_number = neural_network->get_inputs_number();
+
+    if (pareto_front.cols() < inputs_number)
+        throw runtime_error("Pareto front has fewer columns than the number of input features.\n");
+
+    const MatrixR pareto_inputs  = pareto_front.leftCols(inputs_number);
+    const MatrixR pareto_outputs = pareto_front.rightCols(pareto_front.cols() - inputs_number);
+
+    const Objectives objectives(*this);
+
+    MatrixR objective_matrix = objectives.extract(pareto_inputs, pareto_outputs);
+
+    VectorR normalized_utopian(objectives_number);
+
+    for (Index j = 0; j < objectives_number; ++j)
+    {
+        const type col_min = objective_matrix.col(j).minCoeff();
+        const type col_max = objective_matrix.col(j).maxCoeff();
+        const type col_range = col_max - col_min;
+
+        if (col_range > EPSILON)
+            objective_matrix.col(j).array() = (objective_matrix.col(j).array() - col_min) / col_range;
+        else
+            objective_matrix.col(j).setZero();
+
+        const type sense = objectives.utopian_and_senses(1, j);
+
+        normalized_utopian(j) = (sense > type(0)) ? type(1) : type(0);
+    }
+
+    for (Index j = 0; j < objectives_number; ++j)
+    {
+        objective_matrix.col(j) *= scale(j);
+        normalized_utopian(j)   *= scale(j);
+    }
+
+    const VectorI nearest = get_nearest_points(objective_matrix, normalized_utopian, 1);
+
+    const Index advised_row_index = nearest(0);
+
+    return {advised_row_index, pareto_front.row(advised_row_index).transpose()};
 }
 
 
