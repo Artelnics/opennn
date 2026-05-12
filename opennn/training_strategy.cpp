@@ -98,9 +98,9 @@ void TrainingStrategy::set_default()
 
     // Classification
 
-    const Activation::Function output_activation = neural_network->get_output_activation();
+    const ActivationOp::Function output_activation = neural_network->get_output_activation();
 
-    if (output_activation == Activation::Function::Softmax)
+    if (output_activation == ActivationOp::Function::Softmax)
     {
         // Multi-class
         set_loss("CrossEntropy");
@@ -108,7 +108,7 @@ void TrainingStrategy::set_default()
         return;
     }
 
-    if (output_activation == Activation::Function::Sigmoid)
+    if (output_activation == ActivationOp::Function::Sigmoid)
     {
         // Binary
         set_loss("WeightedSquaredError");

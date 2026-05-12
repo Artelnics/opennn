@@ -59,7 +59,7 @@ struct Operator
     vector<size_t> output_delta_slots;
 };
 
-struct Add : Operator
+struct AddOp : Operator
 {
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
@@ -68,7 +68,7 @@ private:
     void check(const vector<TensorView>& inputs, const TensorView& output) const;
 };
 
-struct Dropout : Operator
+struct DropoutOp : Operator
 {
     float rate = 0.0f;
 
@@ -93,11 +93,11 @@ struct Dropout : Operator
 
     void destroy_cuda() override;
 
-    ~Dropout() override { destroy_cuda(); }
+    ~DropoutOp() override { destroy_cuda(); }
 
-    Dropout() = default;
-    Dropout(Dropout&&) noexcept = default;
-    Dropout& operator=(Dropout&&) noexcept = default;
+    DropoutOp() = default;
+    DropoutOp(DropoutOp&&) noexcept = default;
+    DropoutOp& operator=(DropoutOp&&) noexcept = default;
 
 private:
     void apply_delta_cpu(TensorView& delta) const;
@@ -106,7 +106,7 @@ private:
     void ensure_mask(Index n);
 };
 
-struct Activation : Operator
+struct ActivationOp : Operator
 {
     enum class Function { Identity, Sigmoid, Tanh, ReLU, Softmax };
 
@@ -121,7 +121,7 @@ struct Activation : Operator
 
     // Backward override: when non-empty, back_propagate reads the activation's
     // output from this slot instead of output_slots[0]. Used when a downstream
-    // operator (e.g. Dropout) overwrites the activation's output in place.
+    // operator (e.g. DropoutOp) overwrites the activation's output in place.
     vector<size_t> output_slots_backward;
 
     void set_function(Function new_function);
@@ -140,18 +140,18 @@ struct Activation : Operator
 
     void destroy_cuda() override;
 
-    ~Activation() override { destroy_cuda(); }
+    ~ActivationOp() override { destroy_cuda(); }
 
-    Activation() = default;
-    Activation(const Activation&) = delete;
-    Activation& operator=(const Activation&) = delete;
+    ActivationOp() = default;
+    ActivationOp(const ActivationOp&) = delete;
+    ActivationOp& operator=(const ActivationOp&) = delete;
 
 private:
     void apply_delta_cpu(const TensorView& outputs, TensorView& delta) const;
     void apply_delta_gpu(const TensorView& outputs, TensorView& delta) const;
 };
 
-struct Combination : Operator
+struct CombinationOp : Operator
 {
     Index input_features  = 0;
     Index output_features = 0;
@@ -193,10 +193,10 @@ private:
                          TensorView& input_delta, bool accumulate_input_delta) const;
 };
 
-struct CombinationRelu : Operator
+struct CombinationReluOp : Operator
 {
-    Combination combination;
-    Activation  activation;
+    CombinationOp combination;
+    ActivationOp  activation;
 
     void set(Index input_features, Index output_features, Type weight_type = Type::FP32);
 
@@ -212,7 +212,7 @@ struct CombinationRelu : Operator
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 
-struct BatchNorm : Operator
+struct BatchNormOp : Operator
 {
     Index features = 0;
     float momentum = 0.1f;
@@ -287,7 +287,7 @@ private:
                          TensorView& delta) const;
 };
 
-struct Convolution : Operator
+struct ConvolutionOp : Operator
 {
     Index input_height = 0;
     Index input_width = 0;
@@ -342,11 +342,11 @@ struct Convolution : Operator
 
     void destroy_cuda() override;
 
-    ~Convolution() override { destroy_cuda(); }
+    ~ConvolutionOp() override { destroy_cuda(); }
 
-    Convolution() = default;
-    Convolution(const Convolution&) = delete;
-    Convolution& operator=(const Convolution&) = delete;
+    ConvolutionOp() = default;
+    ConvolutionOp(const ConvolutionOp&) = delete;
+    ConvolutionOp& operator=(const ConvolutionOp&) = delete;
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
@@ -368,10 +368,10 @@ private:
     void plan_convolution_algorithms(const TensorView& input, const TensorView& output);
 };
 
-struct ConvolutionRelu : Operator
+struct ConvolutionReluOp : Operator
 {
-    Convolution convolution;
-    Activation  activation;
+    ConvolutionOp convolution;
+    ActivationOp  activation;
 
     void set(Index input_h, Index input_w,
              Index kernels_n, Index kernel_h, Index kernel_w, Index kernel_c,
@@ -388,17 +388,17 @@ struct ConvolutionRelu : Operator
     void set_parameters_glorot() override { convolution.set_parameters_glorot(); }
 
     void destroy_cuda() override { convolution.destroy_cuda(); activation.destroy_cuda(); }
-    ~ConvolutionRelu() override { destroy_cuda(); }
+    ~ConvolutionReluOp() override { destroy_cuda(); }
 
-    ConvolutionRelu() = default;
-    ConvolutionRelu(const ConvolutionRelu&) = delete;
-    ConvolutionRelu& operator=(const ConvolutionRelu&) = delete;
+    ConvolutionReluOp() = default;
+    ConvolutionReluOp(const ConvolutionReluOp&) = delete;
+    ConvolutionReluOp& operator=(const ConvolutionReluOp&) = delete;
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 
-struct LayerNorm : Operator
+struct LayerNormOp : Operator
 {
     Index sequence_length     = 0;
     Index embedding_dimension = 0;
@@ -443,9 +443,9 @@ private:
                          TensorView& input_delta) const;
 };
 
-struct MultiHeadProjection : Operator
+struct MultiHeadProjectionOp : Operator
 {
-    Combination combination;
+    CombinationOp combination;
     Index input_features = 0;
     Index heads_number = 0;
     Index head_dimension = 0;
@@ -489,7 +489,7 @@ struct MultiHeadProjection : Operator
                      float* scratch) const;
 };
 
-struct Attention : Operator
+struct AttentionOp : Operator
 {
     Index heads_number = 0;
     Index head_dimension = 0;
@@ -500,7 +500,7 @@ struct Attention : Operator
 
     MatrixR causal_mask;
 
-    Dropout dropout;
+    DropoutOp dropout;
 
     void set(Index heads_number, Index head_dimension,
              Index query_sequence_length, Index source_sequence_length,
@@ -551,12 +551,12 @@ struct Attention : Operator
 
     void destroy_cuda() override;
 
-    Attention();
-    ~Attention() override;
-    Attention(Attention&&) noexcept;
-    Attention& operator=(Attention&&) noexcept;
-    Attention(const Attention&) = delete;
-    Attention& operator=(const Attention&) = delete;
+    AttentionOp();
+    ~AttentionOp() override;
+    AttentionOp(AttentionOp&&) noexcept;
+    AttentionOp& operator=(AttentionOp&&) noexcept;
+    AttentionOp(const AttentionOp&) = delete;
+    AttentionOp& operator=(const AttentionOp&) = delete;
 
     struct SDPACache;
 
@@ -638,7 +638,7 @@ private:
 
     // SDPA dropout RNG state. Forward advances `sdpa_dropout_offset`; backward
     // replays the previous step's offset via `sdpa_last_used_offset` so the
-    // dropout mask is reproduced. Seed is fixed per Attention instance.
+    // dropout mask is reproduced. Seed is fixed per AttentionOp instance.
     uint64_t sdpa_dropout_seed   = 0x9E3779B97F4A7C15ULL;
     uint64_t sdpa_dropout_offset = 0;
     mutable uint64_t sdpa_last_used_offset = 0;
@@ -647,7 +647,7 @@ private:
 // Reshapes a (batch, heads, seq, head_dim) tensor into (batch, seq, embed)
 // by interleaving heads back into the embedding dimension. Forward = merge_heads;
 // no parameters; the layer hosts the shape configuration via set().
-struct Merge : Operator
+struct MergeOp : Operator
 {
     Index heads_number = 0;
     Index query_sequence_length = 0;
@@ -660,11 +660,11 @@ struct Merge : Operator
 
     // Note: writes the heads gradient back to the SAME forward slot it reads from in
     // forward (input_slots[0]). Buffer reuse for memory efficiency — the next backward
-    // op (Attention) consumes the heads gradient from that scratch slot.
+    // op (AttentionOp) consumes the heads gradient from that scratch slot.
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 
-struct Pool : Operator
+struct PoolOp : Operator
 {
     enum Method { Max, Average };
 
@@ -693,11 +693,11 @@ struct Pool : Operator
 
     void destroy_cuda() override;
 
-    ~Pool() override { destroy_cuda(); }
+    ~PoolOp() override { destroy_cuda(); }
 
-    Pool() = default;
-    Pool(const Pool&) = delete;
-    Pool& operator=(const Pool&) = delete;
+    PoolOp() = default;
+    PoolOp(const PoolOp&) = delete;
+    PoolOp& operator=(const PoolOp&) = delete;
 
     // Slot convention (set by Pooling layer in update_pool_operator):
     //   input_slots  = {Input}
@@ -719,7 +719,7 @@ private:
                          TensorView& input_delta) const;
 };
 
-struct Pool3d : Operator
+struct Pool3dOp : Operator
 {
     enum Method { Max, Average };
     Method method = Max;
@@ -732,7 +732,7 @@ struct Pool3d : Operator
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 
-struct EmbeddingLookup : Operator
+struct EmbeddingLookupOp : Operator
 {
     Index vocabulary_size     = 0;
     Index sequence_length     = 0;
@@ -774,13 +774,13 @@ private:
     void apply_delta_gpu(const TensorView& indices, const TensorView& output_delta) const;
 };
 
-struct Flat : Operator
+struct FlatOp : Operator
 {
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 
-struct Bound : Operator
+struct BoundOp : Operator
 {
     enum class Method { NoBounding, Bounding };
 
@@ -801,7 +801,7 @@ struct Bound : Operator
     void load_state_from_JSON(const Json* parent) override;
 };
 
-struct Scale : Operator
+struct ScaleOp : Operator
 {
     Index features = 0;
     float min_range = -1.0f;
@@ -824,7 +824,7 @@ struct Scale : Operator
     void load_state_from_JSON(const Json* parent) override;
 };
 
-struct Unscale : Operator
+struct UnscaleOp : Operator
 {
     Index features = 0;
     float min_range = -1.0f;

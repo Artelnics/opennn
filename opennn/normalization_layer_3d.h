@@ -47,7 +47,7 @@ private:
     Index sequence_length = 0;
     Index embedding_dimension = 0;
 
-    LayerNorm layer_norm;
+    LayerNormOp layer_norm;
 
     enum Forward {Input, Means, StandardDeviations, NormalizedInput, Output};
 };

@@ -106,7 +106,7 @@ public:
     Shape get_input_shape() const;
     Shape get_output_shape() const;
 
-    Activation::Function get_output_activation() const;
+    ActivationOp::Function get_output_activation() const;
     Index get_parameters_number() const;
 
     vector<Index> get_layer_parameter_numbers() const;

@@ -52,7 +52,7 @@ public:
 
     bool get_use_padding() const { return use_padding; }
 
-    Activation::Function get_output_activation() const override { return Activation::Function::ReLU; }
+    ActivationOp::Function get_output_activation() const override { return ActivationOp::Function::ReLU; }
 
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
 
@@ -88,7 +88,7 @@ private:
 
     bool use_padding = false;
 
-    ConvolutionRelu convolution_relu;
+    ConvolutionReluOp convolution_relu;
 
     void update_convolution_operator();
 };

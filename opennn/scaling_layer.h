@@ -57,7 +57,7 @@ private:
 
     vector<ScalerMethod> scalers;
 
-    Scale scale_op;
+    ScaleOp scale_op;
 
     void flush_scalers_to_states();
 };

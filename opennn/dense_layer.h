@@ -29,8 +29,8 @@ public:
     Index get_input_features() const { return input_shape.empty() ? 0 : input_shape.back(); }
     Index get_sequence_length() const { return (input_shape.rank == 2) ? input_shape[0] : Index(1); }
 
-    const Activation::Function& get_activation_function() const { return activation.function; }
-    Activation::Function get_output_activation() const override { return activation.function; }
+    const ActivationOp::Function& get_activation_function() const { return activation.function; }
+    ActivationOp::Function get_output_activation() const override { return activation.function; }
 
     bool get_batch_normalization() const { return batch_norm.active(); }
     float get_momentum() const { return batch_norm.momentum; }
@@ -61,10 +61,10 @@ private:
 
     Index output_features = 0;
 
-    Combination combination;
-    Activation  activation;
-    BatchNorm   batch_norm;
-    Dropout     dropout;
+    CombinationOp combination;
+    ActivationOp  activation;
+    BatchNormOp   batch_norm;
+    DropoutOp     dropout;
 
     enum Forward {Input, CombinationView, BatchNormMean, BatchNormInverseVariance, ActivationView, Output};
 

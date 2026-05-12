@@ -152,15 +152,15 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& batch,
     insert_dense_jacobian(dense, forward_propagation, last_trainable_dense, parameter_offset, back_propagation_lm.squared_errors_jacobian);
 }
 
-static MatrixR activation_derivative(Activation::Function activation_function, const MatrixMap& outputs)
+static MatrixR activation_derivative(ActivationOp::Function activation_function, const MatrixMap& outputs)
 {
     switch (activation_function)
     {
-    case Activation::Function::Sigmoid:
+    case ActivationOp::Function::Sigmoid:
         return outputs.array() * (1.0f - outputs.array());
-    case Activation::Function::Tanh:
+    case ActivationOp::Function::Tanh:
         return 1.0f - outputs.array().square();
-    case Activation::Function::ReLU:
+    case ActivationOp::Function::ReLU:
         return (outputs.array() > 0.0f).cast<float>();
     default:                                                  // Identity / unrecognized -> identity
         return MatrixR::Ones(outputs.rows(), outputs.cols());

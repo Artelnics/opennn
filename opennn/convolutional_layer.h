@@ -50,8 +50,8 @@ public:
 
     bool get_use_padding() const { return use_padding; }
 
-    Activation::Function get_activation_function() const { return activation.function; }
-    Activation::Function get_output_activation() const override { return activation.function; }
+    ActivationOp::Function get_activation_function() const { return activation.function; }
+    ActivationOp::Function get_output_activation() const override { return activation.function; }
 
     bool get_batch_normalization() const { return batch_norm.active(); }
 
@@ -94,9 +94,9 @@ private:
 
     bool use_padding = false;
 
-    Convolution convolution;
-    Activation  activation;
-    BatchNorm   batch_norm;
+    ConvolutionOp convolution;
+    ActivationOp  activation;
+    BatchNormOp   batch_norm;
 
     enum Forward {Input, ConvolutionView, BatchNormMean, BatchNormInverseVariance, Output};
 

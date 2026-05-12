@@ -224,9 +224,9 @@ void Convolutional::set_convolution_type(const string& new_convolution_type)
 
 void Convolutional::set_activation_function(const string& new_activation_function)
 {
-    const Activation::Function function = Activation::from_string(new_activation_function);
+    const ActivationOp::Function function = ActivationOp::from_string(new_activation_function);
 
-    if (function == Activation::Function::Softmax)
+    if (function == ActivationOp::Function::Softmax)
         throw runtime_error("Softmax is not a valid activation for a convolutional layer.");
 
     activation.set_function(function);

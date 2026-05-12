@@ -27,7 +27,7 @@ public:
     Index get_input_features() const { return input_shape.empty() ? 0 : input_shape.back(); }
     Index get_sequence_length() const { return (input_shape.rank == 2) ? input_shape[0] : Index(1); }
 
-    Activation::Function get_output_activation() const override { return Activation::Function::ReLU; }
+    ActivationOp::Function get_output_activation() const override { return ActivationOp::Function::ReLU; }
 
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
 
@@ -43,7 +43,7 @@ private:
 
     Index output_features = 0;
 
-    CombinationRelu combination_relu;
+    CombinationReluOp combination_relu;
 
     void configure_operators();
 };
