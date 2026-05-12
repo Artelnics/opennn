@@ -88,8 +88,8 @@ protected:
     bool check_stopping_condition(TrainingResults&, Index epoch, float elapsed_time,
                                    float training_error, Index validation_failures) const;
 
-    void write_common_xml(JsonWriter&) const;
-    void read_common_xml(const Json*);
+    void write_common_json(JsonWriter&) const;
+    void read_common_json(const Json*);
 
     void setup_device_training();
     void teardown_device_training();

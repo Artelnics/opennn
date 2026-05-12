@@ -666,6 +666,16 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 
 void NeuralNetwork::to_JSON(JsonWriter& printer) const
 {
+    // Layer state serializers (e.g. Scaling::write_JSON_body) read from
+    // TensorView::data via Eigen Maps. When the network lives on CUDA those
+    // pointers reference device memory; sync to host first and restore the
+    // device mirror after.
+#ifdef OPENNN_HAS_CUDA
+    const bool was_on_device = (parameters.device_type == Device::CUDA);
+    if (was_on_device)
+        const_cast<NeuralNetwork*>(this)->copy_states_host();
+#endif
+
     const Index inputs_number = get_inputs_number();
     const Index layers_number = get_layers_number();
     const Index outputs_number = get_outputs_number();
@@ -739,6 +749,11 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     printer.end_array();
     printer.close_element();
     printer.close_element();
+
+#ifdef OPENNN_HAS_CUDA
+    if (was_on_device)
+        const_cast<NeuralNetwork*>(this)->copy_states_device();
+#endif
 }
 
 void NeuralNetwork::from_JSON(const JsonDocument& document)
@@ -845,24 +860,24 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     const string parameters_text   = parameters_element ? read_json_string(parameters_element, "Values") : string();
     if (!parameters_text.empty())
     {
-        VectorR xml_parameters;
-        string_to_vector(parameters_text, xml_parameters);
+        VectorR json_parameters;
+        string_to_vector(parameters_text, json_parameters);
 
-        if (xml_parameters.size() > 0)
+        if (json_parameters.size() > 0)
         {
-            if (xml_parameters.size() != parameters.size_in_floats())
+            if (json_parameters.size() != parameters.size_in_floats())
             {
-                cout << "Warning: XML parameter size (" << xml_parameters.size()
+                cout << "Warning: JSON parameter size (" << json_parameters.size()
                      << ") differs from Compiled size (" << parameters.size_in_floats() << ").\n";
             }
 
-            const Index elements_to_copy = min(parameters.size_in_floats(), xml_parameters.size());
+            const Index elements_to_copy = min(parameters.size_in_floats(), json_parameters.size());
 
 #ifdef OPENNN_HAS_CUDA
             const bool was_on_device = (parameters.device_type == Device::CUDA);
             if (was_on_device) copy_parameters_host();
 #endif
-            std::copy(xml_parameters.data(), xml_parameters.data() + elements_to_copy, parameters.as<float>());
+            std::copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
 #ifdef OPENNN_HAS_CUDA
             if (was_on_device) copy_parameters_device();
 #endif
@@ -919,6 +934,15 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
     if (!file.is_open())
         throw runtime_error("Cannot open binary file for writing: " + file_name.string() + "\n");
 
+    // parameters.as<float>() returns a raw pointer that can live on device when
+    // training in CUDA. Reading it from host (file.write) segfaults; sync to
+    // host first and restore the device mirror after.
+#ifdef OPENNN_HAS_CUDA
+    const bool was_on_device = (parameters.device_type == Device::CUDA);
+    if (was_on_device)
+        const_cast<NeuralNetwork*>(this)->copy_parameters_host();
+#endif
+
     const Index parameters_number = parameters.size_in_floats();
 
     file.write(reinterpret_cast<const char*>(parameters.as<float>()),
@@ -928,6 +952,11 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
         throw runtime_error("Error writing binary file: " + file_name.string() + "\n");
 
     file.close();
+
+#ifdef OPENNN_HAS_CUDA
+    if (was_on_device)
+        const_cast<NeuralNetwork*>(this)->copy_parameters_device();
+#endif
 }
 
 void NeuralNetwork::load(const filesystem::path& file_name)

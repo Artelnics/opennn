@@ -53,16 +53,17 @@ vector<pair<Shape, Type>> Pooling::get_forward_specs(Index batch_size) const
 {
     const Shape out_shape = get_output_shape();
 
-    vector<pair<Shape, Type>> specs;
+    // MaximalIndices stores argmax positions (used by CPU backward); read as
+    // float*, never as compute_dtype. Slot is reserved with an empty shape for
+    // AveragePooling so the Forward enum indices stay valid in both modes.
+    const Shape indices_shape = (pooling_method == PoolingMethod::MaxPooling)
+        ? Shape{batch_size}.append(out_shape)
+        : Shape{};
 
-    // MaximalIndices stores argmax positions (used by CPU backward and the
-    // 3D max-pool kernels). They are read as float*, never as compute_dtype.
-    if (pooling_method == PoolingMethod::MaxPooling)
-        specs.push_back({Shape{batch_size}.append(out_shape), Type::FP32}); // MaximalIndices
-
-    specs.push_back({Shape{batch_size}.append(out_shape), compute_dtype}); // Output (must be last)
-
-    return specs;
+    return {
+        {indices_shape,                           Type::FP32},   // MaximalIndices
+        {Shape{batch_size}.append(out_shape), compute_dtype}, // Output (must be last)
+    };
 }
 
 void Pooling::update_pool_operator()
@@ -73,10 +74,8 @@ void Pooling::update_pool_operator()
              padding_height, padding_width,
              pooling_method == PoolingMethod::MaxPooling ? PoolOp::Max : PoolOp::Average);
 
-    pool.input_slots = {Input};
-    pool.output_slots = (pooling_method == PoolingMethod::MaxPooling)
-        ? vector<size_t>{Output, MaximalIndices}
-        : vector<size_t>{1};                       // {Output}; only 2 slots → Output is index 1
+    pool.input_slots  = {Input};
+    pool.output_slots = {Output, MaximalIndices};
 
     pool.output_delta_slots = {OutputDelta};
     pool.input_delta_slots  = {InputDelta};

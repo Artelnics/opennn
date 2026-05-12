@@ -294,7 +294,7 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
     return true;
 }
 
-void Optimizer::write_common_xml(JsonWriter& printer) const
+void Optimizer::write_common_json(JsonWriter& printer) const
 {
     write_json(printer, {
         {"LossGoal", to_string(training_loss_goal)},
@@ -304,7 +304,7 @@ void Optimizer::write_common_xml(JsonWriter& printer) const
     });
 }
 
-void Optimizer::read_common_xml(const Json* root_element)
+void Optimizer::read_common_json(const Json* root_element)
 {
     set_loss_goal(read_json_type(root_element, "LossGoal"));
     set_maximum_validation_failures(read_json_index(root_element, "MaximumSelectionFailures"));

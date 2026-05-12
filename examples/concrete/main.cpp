@@ -33,7 +33,7 @@ int main()
 
         TabularDataset dataset("../data/WWTP_Dataset.csv", ",", true, false);
 
-        dataset.impute_missing_values_mean();
+        dataset.impute_missing_values_statistic(TabularDataset::MissingValuesMethod::Mean);
 
         //dataset.set_variable_role("SLUMP(cm)", "None");
         //dataset.set_variable_role("FLOW(cm)", "None");
@@ -177,7 +177,7 @@ int main()
 
         dataset.set_variable_types(VariableType::Numeric);
 
-        dataset.impute_missing_values_mean();
+        dataset.impute_missing_values_statistic(TabularDataset::MissingValuesMethod::Mean);
 
         //dataset.set_variable_role("SLUMP(cm)", "None");
         //dataset.set_variable_role("FLOW(cm)", "Target");

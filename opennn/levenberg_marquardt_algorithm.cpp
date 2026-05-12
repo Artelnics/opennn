@@ -457,7 +457,7 @@ void LevenbergMarquardtAlgorithm::to_JSON(JsonWriter& printer) const
         {"DampingParameterFactor", to_string(damping_parameter_factor)},
         {"MinimumLossDecrease", to_string(minimum_loss_decrease)}
     });
-    write_common_xml(printer);
+    write_common_json(printer);
 
     printer.close_element();
 }
@@ -468,7 +468,7 @@ void LevenbergMarquardtAlgorithm::from_JSON(const JsonDocument& document)
 
     set_damping_parameter_factor(read_json_type(root_element, "DampingParameterFactor"));
     set_minimum_loss_decrease(read_json_type(root_element, "MinimumLossDecrease"));
-    read_common_xml(root_element);
+    read_common_json(root_element);
 }
 
 REGISTER(Optimizer, LevenbergMarquardtAlgorithm, "LevenbergMarquardt");

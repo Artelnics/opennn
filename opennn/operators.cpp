@@ -2451,9 +2451,8 @@ void MergeOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t
 
     const TensorView concat_gradient_4d = dv[output_delta_slots[0]]
         .reshape({batch_size, query_sequence_length, heads_number, head_dimension});
-    TensorView heads_gradient_4d(fv[input_slots[0]][0].as<float>(),
-                                 {batch_size, heads_number, query_sequence_length, head_dimension},
-                                 compute_dtype);
+    TensorView heads_gradient_4d = fv[input_slots[0]][0]
+        .reshape({batch_size, heads_number, query_sequence_length, head_dimension});
 
     split_heads(concat_gradient_4d, heads_gradient_4d);
 }

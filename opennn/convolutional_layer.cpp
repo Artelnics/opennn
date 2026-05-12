@@ -111,8 +111,11 @@ void Convolutional::update_convolution_operator()
     convolution.output_slots = batch_norm.active() ? vector<size_t>{ConvolutionView}
                                                    : vector<size_t>{Output};
 
-    batch_norm.input_slots  = {ConvolutionView};
-    batch_norm.output_slots = {Output, BatchNormMean, BatchNormInverseVariance};
+    if (batch_norm.active())
+    {
+        batch_norm.input_slots  = {ConvolutionView};
+        batch_norm.output_slots = {Output, BatchNormMean, BatchNormInverseVariance};
+    }
 
     activation.input_slots  = {Output};
     activation.output_slots = {Output};

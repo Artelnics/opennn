@@ -361,7 +361,7 @@ void StochasticGradientDescent::to_JSON(JsonWriter& printer) const
         {"BatchSize", to_string(batch_size)},
         {"ApplyMomentum", to_string(momentum > 0.0f)}
     });
-    write_common_xml(printer);
+    write_common_json(printer);
 
     printer.close_element();
 }
@@ -375,7 +375,7 @@ void StochasticGradientDescent::from_JSON(const JsonDocument& document)
     const bool apply_momentum = read_json_bool(root_element, "ApplyMomentum");
     set_momentum(apply_momentum ? 0.9f : 0.0f);
 
-    read_common_xml(root_element);
+    read_common_json(root_element);
 }
 
 REGISTER(Optimizer, StochasticGradientDescent, "StochasticGradientDescent");

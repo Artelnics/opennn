@@ -31,14 +31,12 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
                                        const string& new_name)
     : Layer("MultiHeadAttention", LayerType::MultiHeadAttention)
 {
-    // Forward order is V, K, Q so that Layer::back_propagate (reverse iteration)
-    // runs the projections as Q, K, V. That order is required because Q, K, V
-    // share input-delta destination slots (InputQueryDelta in self-attention,
-    // InputSourceDelta in cross-attention for the K/V pair) and each projection
-    // reads its head-delta from a slot that another projection then overwrites.
-    // With the reverse order, the first read happens before any write to the
-    // shared destination; the second/third writers use accumulate=true to sum
-    // onto the first writer's contribution.
+    // Forward order V, K, Q ensures Layer::back_propagate (reverse iteration) runs
+    // as output_projection -> merge -> attention -> query_projection ->
+    // key_projection -> value_projection. That order is what produces correctly
+    // accumulated dQ + dK + dV input deltas in self-attention (Q overwrites,
+    // K/V accumulate) and matches the gradient computation order of the original
+    // monolithic backward.
     operators = {&value_projection, &key_projection, &query_projection,
                  &attention, &merge, &output_projection};
 
@@ -87,10 +85,13 @@ vector<pair<Shape, Type>> MultiHeadAttention::get_backward_specs(Index batch_siz
     const Index head_dimension = get_head_dimension();
 
     return {
-        {{batch_size, query_sequence_length, embedding_dimension},                  compute_dtype}, // InputQueryDelta
-        {{batch_size, source_sequence_length, embedding_dimension},                 compute_dtype}, // InputSourceDelta
-        {{batch_size, heads_number, query_sequence_length, source_sequence_length}, compute_dtype}, // AttentionWeightDelta
-        {{batch_size, heads_number, source_sequence_length, head_dimension},        compute_dtype}, // ValueDelta (transposed)
+        {{batch_size, query_sequence_length, embedding_dimension},                  compute_dtype}, // InputQueryDelta - final dInput query
+        {{batch_size, source_sequence_length, embedding_dimension},                 compute_dtype}, // InputSourceDelta - final dInput source
+        {{batch_size, heads_number, query_sequence_length, source_sequence_length}, compute_dtype}, // AttentionWeightDelta - unfused scratch
+        {{batch_size, heads_number, source_sequence_length, head_dimension},        compute_dtype}, // ValueHeadDelta - dV, head shape
+        {{batch_size, query_sequence_length, embedding_dimension},                  compute_dtype}, // ConcatenatedOutputDelta - dConcat, embed shape
+        {{batch_size, heads_number, query_sequence_length, head_dimension},         compute_dtype}, // QueryHeadDelta - dQ, head shape
+        {{batch_size, heads_number, source_sequence_length, head_dimension},        compute_dtype}, // KeyHeadDelta - dK, head shape
     };
 }
 
@@ -136,32 +137,34 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
         proj->input_delta_slots_self = {InputQueryDelta};
     }
 
-    // Per-projection differs in: forward output, source-vs-query input view, head-gradient
-    // delta source, cross-attention input-gradient destination, and accumulate flags.
-    // Backward order Q→K→V (reverse of forward V→K→Q):
-    //   - Q is the first writer to InputQueryDelta in both self/cross attention.
-    //   - In self-attention K and V also write to InputQueryDelta and must accumulate.
-    //   - In cross-attention K is the first writer to InputSourceDelta and V
-    //     accumulates onto it. Each projection's read of its head-delta slot
-    //     (InputQueryDelta for Q, InputSourceDelta for K, ValueDelta for V) is
-    //     completed before any later projection writes there.
+    // Each backward intermediate has its own dedicated slot so Layer::back_propagate
+    // (reverse iteration) works without temporal-alias contracts:
+    //   - output_projection writes ConcatenatedOutputDelta (concat-shape).
+    //   - merge reads ConcatenatedOutputDelta, writes head-shape into forward
+    //     TransposeScratch.
+    //   - attention reads forward TransposeScratch as dO, writes QueryHeadDelta,
+    //     KeyHeadDelta, ValueHeadDelta (and AttentionWeightDelta on unfused path).
+    //   - Q reads QueryHeadDelta, writes InputQueryDelta (accumulate=false).
+    //   - K reads KeyHeadDelta, writes InputQueryDelta (self, accumulate) or
+    //     InputSourceDelta (cross, overwrite).
+    //   - V reads ValueHeadDelta, accumulates onto K's destination.
     query_projection.output_slots = {Query};
     query_projection.input_view_index = 0;
-    query_projection.output_delta_slots = {InputQueryDelta};
+    query_projection.output_delta_slots = {QueryHeadDelta};
     query_projection.input_delta_slots_cross = {InputQueryDelta};
     query_projection.accumulate_input_delta_self  = false;
     query_projection.accumulate_input_delta_cross = false;
 
     key_projection.output_slots = {Key};
     key_projection.input_view_index = 1;
-    key_projection.output_delta_slots = {InputSourceDelta};
+    key_projection.output_delta_slots = {KeyHeadDelta};
     key_projection.input_delta_slots_cross = {InputSourceDelta};
     key_projection.accumulate_input_delta_self  = true;
     key_projection.accumulate_input_delta_cross = false;
 
     value_projection.output_slots = {Value};
     value_projection.input_view_index = 1;
-    value_projection.output_delta_slots = {ValueDelta};
+    value_projection.output_delta_slots = {ValueHeadDelta};
     value_projection.input_delta_slots_cross = {InputSourceDelta};
     value_projection.accumulate_input_delta_self  = true;
     value_projection.accumulate_input_delta_cross = true;
@@ -171,17 +174,17 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     attention.scratch_slots = {TransposeScratch};
     attention.source_view_index = 1;
     attention.attention_output_slots = {ConcatenatedAttentionOutputs};
-    attention.output_delta_slots = {AttentionWeightDelta, InputQueryDelta, InputSourceDelta, ValueDelta};
+    attention.output_delta_slots = {AttentionWeightDelta, QueryHeadDelta, KeyHeadDelta, ValueHeadDelta};
 
     output_projection.input_slots  = {ConcatenatedAttentionOutputs};
     output_projection.output_slots = {Output};
     output_projection.output_delta_slots = {OutputDelta};
-    output_projection.input_delta_slots  = {InputQueryDelta};
+    output_projection.input_delta_slots  = {ConcatenatedOutputDelta};
 
     merge.set(heads_number, query_sequence_length, head_dimension, compute_dtype);
     merge.input_slots  = {TransposeScratch};
     merge.output_slots = {ConcatenatedAttentionOutputs};
-    merge.output_delta_slots = {InputQueryDelta};  // concat gradient is parked here by output_projection
+    merge.output_delta_slots = {ConcatenatedOutputDelta};
 }
 
 void MultiHeadAttention::read_JSON_body(const Json* root_element)
