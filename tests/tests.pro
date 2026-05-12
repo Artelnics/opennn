@@ -34,8 +34,9 @@ win32-msvc* {
     QMAKE_CXXFLAGS += /std:c++17 /EHsc /bigobj
 }
 
-# OpenN
+# OpenNN
 INCLUDEPATH += $$PWD/../opennn
+INCLUDEPATH += $$PWD/../eigen
 DEPENDPATH += $$PWD/../opennn
 
 win32-msvc {
