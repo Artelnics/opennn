@@ -98,7 +98,6 @@ public:
 
     void set_dropout_rate(float new_dropout_rate) { attention.set_dropout_rate(new_dropout_rate); }
 
-
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 
@@ -118,8 +117,16 @@ private:
 
     enum Forward {Input, Query, Key, AttentionWeights, AttentionWeightsDropped,
                   ConcatenatedAttentionOutputs, Value, TransposeScratch, Output};
-    enum Backward {OutputDelta, InputQueryDelta, InputSourceDelta,
-                   AttentionWeightDelta, ValueDelta};
+    enum Backward {
+        OutputDelta,
+        InputQueryDelta,         // final dInput query, embed shape
+        InputSourceDelta,        // final dInput source, embed shape
+        AttentionWeightDelta,    // unfused attention scratch
+        ValueHeadDelta,          // dV, head shape
+        ConcatenatedOutputDelta, // dConcat, embed shape
+        QueryHeadDelta,          // dQ, head shape
+        KeyHeadDelta             // dK, head shape
+    };
 };
 
 }
