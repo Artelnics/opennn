@@ -82,11 +82,10 @@ void AddOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexce
 
 void AddOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const noexcept
 {
-    auto& dv = bp.delta_views[layer];
-    const TensorView& output_delta = dv[output_delta_slots[0]];
+    const TensorView& output_delta = bp.delta_views[layer][output_delta_slots[0]];
 
     for (size_t s : input_delta_slots)
-        copy(output_delta, dv[s]);
+        copy(output_delta, bp.delta_views[layer][s]);
 }
 
 void AddOp::check(const vector<TensorView>& inputs, const TensorView& output) const
@@ -2946,8 +2945,7 @@ void FlatOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_t
 
 void FlatOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const noexcept
 {
-    auto& dv = bp.delta_views[layer];
-    copy(dv[output_delta_slots[0]], dv[input_delta_slots[0]]);
+    copy(bp.delta_views[layer][output_delta_slots[0]], bp.delta_views[layer][input_delta_slots[0]]);
 }
 
 size_t BoundOp::state_count() const
