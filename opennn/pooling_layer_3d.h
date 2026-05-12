@@ -39,9 +39,10 @@ public:
 
     void set_input_shape(const Shape& new_input_shape) override
     {
-        sequence_length = new_input_shape[0];
-        input_features  = new_input_shape[1];
+        set(new_input_shape, pooling_method, get_label());
     }
+
+    void set_output_shape(const Shape&) override {}
 
     void set_pooling_method(const PoolingMethod& new_pooling_method) { pooling_method = new_pooling_method; }
     void set_pooling_method(const string&);
