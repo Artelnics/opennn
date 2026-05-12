@@ -157,7 +157,7 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
     const TensorView target = batch.get_targets();
-    const TensorView& input_delta = back_propagation.get_output_deltas();
+    const TensorView input_delta = back_propagation.get_output_deltas();
 
     switch (error)
     {

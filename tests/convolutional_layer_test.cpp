@@ -63,7 +63,7 @@ TEST_P(ConvolutionalLayerTest, Constructor) {
     EXPECT_EQ(convolutional_layer.get_kernels_number(), parameters.kernel_shape[3]);
     EXPECT_EQ(convolutional_layer.get_row_stride(), parameters.stride_shape[0]);
     EXPECT_EQ(convolutional_layer.get_column_stride(), parameters.stride_shape[1]);
-    EXPECT_EQ(convolutional_layer.get_activation_function(), Activation::from_string(parameters.activation_function));
+    EXPECT_EQ(convolutional_layer.get_activation_function(), ActivationOp::from_string(parameters.activation_function));
     EXPECT_EQ(convolutional_layer.get_batch_normalization(), parameters.batch_normalization);
     // get_convolution_type() removed from API
 }
