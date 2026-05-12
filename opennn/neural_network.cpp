@@ -860,24 +860,24 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     const string parameters_text   = parameters_element ? read_json_string(parameters_element, "Values") : string();
     if (!parameters_text.empty())
     {
-        VectorR xml_parameters;
-        string_to_vector(parameters_text, xml_parameters);
+        VectorR json_parameters;
+        string_to_vector(parameters_text, json_parameters);
 
-        if (xml_parameters.size() > 0)
+        if (json_parameters.size() > 0)
         {
-            if (xml_parameters.size() != parameters.size_in_floats())
+            if (json_parameters.size() != parameters.size_in_floats())
             {
-                cout << "Warning: XML parameter size (" << xml_parameters.size()
+                cout << "Warning: JSON parameter size (" << json_parameters.size()
                      << ") differs from Compiled size (" << parameters.size_in_floats() << ").\n";
             }
 
-            const Index elements_to_copy = min(parameters.size_in_floats(), xml_parameters.size());
+            const Index elements_to_copy = min(parameters.size_in_floats(), json_parameters.size());
 
 #ifdef OPENNN_HAS_CUDA
             const bool was_on_device = (parameters.device_type == Device::CUDA);
             if (was_on_device) copy_parameters_host();
 #endif
-            std::copy(xml_parameters.data(), xml_parameters.data() + elements_to_copy, parameters.as<float>());
+            std::copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
 #ifdef OPENNN_HAS_CUDA
             if (was_on_device) copy_parameters_device();
 #endif

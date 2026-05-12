@@ -165,9 +165,6 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     vector<float> best_parameters;
 
-    // True for sequence/token-level cross-entropy losses (translation, language
-    // modelling, chat). Gates the per-token metrics (accuracy + perplexity)
-    // and the per-batch token-count plumbing in train_epoch / evaluate_epoch.
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
     bool stop_training = false;
@@ -369,7 +366,7 @@ void AdaptiveMomentEstimation::to_JSON(JsonWriter& printer) const
     printer.open_element("AdaptiveMomentEstimation");
 
     add_json_field(printer, "BatchSize", to_string(batch_size));
-    write_common_xml(printer);
+    write_common_json(printer);
 
     printer.close_element();
 }
@@ -379,7 +376,7 @@ void AdaptiveMomentEstimation::from_JSON(const JsonDocument& document)
     const Json* root_element = get_json_root(document, "AdaptiveMomentEstimation");
 
     set_batch_size(read_json_index(root_element, "BatchSize"));
-    read_common_xml(root_element);
+    read_common_json(root_element);
 }
 
 REGISTER(Optimizer, AdaptiveMomentEstimation, "AdaptiveMomentEstimation");
