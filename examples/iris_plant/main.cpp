@@ -67,7 +67,7 @@ int main()
 
         // Export
 
-        classification_network.save("iris_model.xml");
+        classification_network.save("iris_model.json");
 
         return 0;
     }
