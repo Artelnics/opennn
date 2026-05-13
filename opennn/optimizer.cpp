@@ -25,11 +25,8 @@
 #include <chrono>
 #include <cstdlib>
 
-#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__unix__)
 #include <unistd.h>
-#endif
-#if defined(__APPLE__)
-#include <sys/sysctl.h>
 #endif
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
@@ -171,11 +168,12 @@ void Optimizer::warn_dropped_samples(Index batch_size,
     if (samples_number % batch_size == 0)       return;
 
     const Index lost = samples_number % batch_size;
-    const double pct = 100.0 * double(lost) / double(samples_number);
+    std::ostringstream pct;
+    pct << std::fixed << std::setprecision(2)
+        << (100.0 * double(lost) / double(samples_number));
     cout << "Warning: " << context << " batch_size " << batch_size
          << " does not divide " << samples_number << " samples. "
-         << lost << " sample(s) ("
-         << std::fixed << std::setprecision(2) << pct
+         << lost << " sample(s) (" << pct.str()
          << " % of total) dropped per epoch.\n";
 }
 
@@ -194,9 +192,9 @@ Index Optimizer::get_maximum_batch_size() const
 
     const Index training_samples_number = dataset->get_samples_number("Training");
     if (training_samples_number <= 0) return 0;
+    const Index validation_samples_number = dataset->get_samples_number("Validation");
 
     const bool on_gpu = is_gpu();
-    const Device device = on_gpu ? Device::CUDA : Device::CPU;
 
     // Available memory
 
@@ -233,24 +231,27 @@ Index Optimizer::get_maximum_batch_size() const
 
     const Index budget = Index(double(available_bytes) * 0.8);
 
-    // Fixed (batch-independent) memory
+    // Fixed (batch-independent) memory — use aligned shapes to match the
+    // actual allocations done in NeuralNetwork/BackPropagation/OptimizerData.
 
-    const Index parameters_number = neural_network->get_parameters_number();
+    const Index parameters_number       = neural_network->get_parameters_number();
+    const Index parameters_aligned_size = aligned_total_elements(neural_network->get_parameter_shapes());
+    const Index slot_aligned_size       = get_aligned_size(parameters_number);
     const bool bf16_train = on_gpu && is_bf16_training();
     const bool bf16_input = bf16_train && dynamic_cast<const LanguageDataset*>(dataset) == nullptr;
 
     Index fixed_bytes = 0;
     // Parameters (FP32 master)
-    fixed_bytes += parameters_number * Index(sizeof(float));
-    // BF16 mirror
-    if (bf16_train) fixed_bytes += parameters_number * Index(sizeof(__nv_bfloat16));
+    fixed_bytes += parameters_aligned_size * Index(sizeof(float));
+    // BF16 mirror (same element count, 2 bytes each)
+    if (bf16_train) fixed_bytes += parameters_aligned_size * Index(sizeof(__nv_bfloat16));
     // States buffer
     fixed_bytes += neural_network->get_states_size() * Index(sizeof(float));
     // Gradient (FP32)
-    fixed_bytes += parameters_number * Index(sizeof(float));
-    // Optimizer slots: 2 * parameters_number (worst case for Adam; SGD with
-    // momentum uses 1, vanilla SGD uses 0 — Adam dominates the budget).
-    fixed_bytes += 2 * parameters_number * Index(sizeof(float));
+    fixed_bytes += parameters_aligned_size * Index(sizeof(float));
+    // Optimizer slots: 2 × aligned(parameters_number) for Adam (worst case; SGD
+    // with momentum uses 1, vanilla SGD uses 0).
+    fixed_bytes += 2 * slot_aligned_size * Index(sizeof(float));
 
     if (fixed_bytes >= budget)
         throw runtime_error("Optimizer::get_maximum_batch_size: fixed memory ("
@@ -259,7 +260,9 @@ Index Optimizer::get_maximum_batch_size() const
 
     const Index dynamic_budget = budget - fixed_bytes;
 
-    // Per-batch memory (FP, BP, batch buffers in the training pool)
+    // Per-batch memory (FP, BP, batch buffers in the training pool; plus
+    // validation FP + pool when the chosen batch is larger than validation —
+    // Adam/SGD allocate a separate FP and pool in that case).
 
     const int batch_pool_size = on_gpu ? 3 : 2;
     const Shape input_shape   = dataset->get_shape("Input");
@@ -267,8 +270,22 @@ Index Optimizer::get_maximum_batch_size() const
     const Shape decoder_shape = dataset->get_shape("Decoder");
 
     const auto& layers = neural_network->get_layers();
+    const Shape output_shape = neural_network->get_output_shape();
+    const Type compute_dtype = bf16_train ? Type::BF16 : Type::FP32;
 
-    auto bytes_for_batch = [&](Index b) -> Index {
+    auto pool_bytes_for_batch = [&](Index b) -> Index {
+        Index single_batch = 0;
+        if (!input_shape.empty())
+            single_batch += b * input_shape.size() * (bf16_input ? Index(sizeof(__nv_bfloat16))
+                                                                 : Index(sizeof(float)));
+        if (!target_shape.empty())
+            single_batch += b * target_shape.size() * Index(sizeof(float));
+        if (!decoder_shape.empty())
+            single_batch += b * decoder_shape.size() * Index(sizeof(float));
+        return Index(batch_pool_size) * single_batch;
+    };
+
+    auto bytes_for_run = [&](Index b) -> Index {
         if (b <= 0) return 0;
 
         const auto forward_shapes  = neural_network->get_forward_shapes(b);
@@ -280,16 +297,32 @@ Index Optimizer::get_maximum_batch_size() const
         total += aligned_total_bytes(forward_shapes,  forward_dtypes);
         total += aligned_total_bytes(backward_shapes, backward_dtypes);
 
-        Index single_batch = 0;
-        if (!input_shape.empty())
-            single_batch += b * input_shape.size() * (bf16_input ? Index(sizeof(__nv_bfloat16))
-                                                                 : Index(sizeof(float)));
-        if (!target_shape.empty())
-            single_batch += b * target_shape.size() * Index(sizeof(float));
-        if (!decoder_shape.empty())
-            single_batch += b * decoder_shape.size() * Index(sizeof(float));
+        // Output-delta slot (delta_views[last][0] = Shape{b}.append(output_shape)).
+        // Approximation: per-layer extra deltas for multi-consumer branches are
+        // ignored — they are rare and rely on graph traversal.
+        if (!output_shape.empty())
+        {
+            const Index out_elems = b * output_shape.size();
+            total += get_aligned_bytes(out_elems * type_bytes(compute_dtype));
+        }
 
-        total += Index(batch_pool_size) * single_batch;
+        total += pool_bytes_for_batch(b);
+
+        // BF16 prefetch staging: a single FP32 buffer of input_elements.
+        if (bf16_input && !input_shape.empty())
+            total += get_aligned_bytes(b * input_shape.size() * Index(sizeof(float)));
+
+        return total;
+    };
+
+    auto bytes_for_batch = [&](Index b) -> Index {
+        Index total = bytes_for_run(b);
+
+        // Adam/SGD allocate a separate validation FP + pool iff
+        // validation_batch_size != training_batch_size. validation_batch_size
+        // is min(b, validation_samples_number).
+        if (validation_samples_number > 0 && b > validation_samples_number)
+            total += bytes_for_run(validation_samples_number);
 
         return total;
     };
@@ -308,7 +341,6 @@ Index Optimizer::get_maximum_batch_size() const
         else                                        hi = mid - 1;
     }
 
-    (void)device;
     return lo;
 }
 
