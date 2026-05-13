@@ -548,7 +548,7 @@ namespace { opennn::Buffer pooling_scratch_(opennn::Device::CUDA); }
 
 static float* get_pooling_scratch(size_t floats_needed)
 {
-    return pooling_scratch_.ensure<float>(opennn::Index(floats_needed));
+    return pooling_scratch_.ensure<float>(Index(floats_needed));
 }
 
 // Helper for average pooling: writes per-token validity (1 if any feature is

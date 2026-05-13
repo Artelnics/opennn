@@ -333,7 +333,7 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
     }
 }
 
-void cross_entropy_3d_gradient_device_count(const TensorView& input, const TensorView& target, TensorView& input_delta,
+void cross_entropy_3d_gradient_device_count(const TensorView& input, const TensorView& target, const TensorView& input_delta,
                                             const float* active_tokens_count_device)
 {
 #ifdef OPENNN_HAS_CUDA
