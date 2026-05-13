@@ -29,7 +29,7 @@ static float sum_squared_diff_cuda(const TensorView& input, const TensorView& ta
     return sum_squared;
 }
 
-static void scaled_diff_cuda(const TensorView& input, const TensorView& target, float scale, TensorView& output)
+static void scaled_diff_cuda(const TensorView& input, const TensorView& target, float scale, const TensorView& output)
 {
     visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
         using TIn  = typename decltype(in)::type;
