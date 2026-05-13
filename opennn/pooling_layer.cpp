@@ -72,7 +72,7 @@ void Pooling::update_pool_operator()
              pool_height, pool_width,
              row_stride, column_stride,
              padding_height, padding_width,
-             pooling_method == PoolingMethod::MaxPooling ? Pool::Max : Pool::Average);
+             pooling_method == PoolingMethod::MaxPooling ? PoolOp::Max : PoolOp::Average);
 
     pool.input_slots  = {Input};
     pool.output_slots = {Output, MaximalIndices};

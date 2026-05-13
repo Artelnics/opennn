@@ -60,7 +60,7 @@ private:
 
     vector<ScalerMethod> scalers;
 
-    Unscale unscale_op;
+    UnscaleOp unscale_op;
 
     void flush_scalers_to_states();
 };

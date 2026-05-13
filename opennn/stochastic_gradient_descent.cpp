@@ -216,7 +216,7 @@ TrainingResults StochasticGradientDescent::train()
 
     // Reuse the training FP for validation iff batch sizes match exactly.
     // Otherwise allocate a separate FP — over-sized views would corrupt loss
-    // kernels (input.shape[0] read directly), BatchNorm running stats, and
+    // kernels (input.shape[0] read directly), BatchNormOp running stats, and
     // MultiHeadAttention reshapes.
     unique_ptr<ForwardPropagation> validation_forward_propagation;
 

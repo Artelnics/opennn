@@ -383,13 +383,9 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     }
 }
 
-TensorView BackPropagation::get_output_deltas() const
+const TensorView& BackPropagation::get_output_deltas() const
 {
-    if (!loss) return {};
     const Index last_trainable_index = loss->get_neural_network()->get_last_trainable_layer_index();
-    if (last_trainable_index < 0
-       || size_t(last_trainable_index) >= delta_views.size())
-        return {};
 
     return delta_views[last_trainable_index][0];
 }

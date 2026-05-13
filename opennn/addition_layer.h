@@ -29,7 +29,7 @@ public:
 
 private:
 
-    Add add;
+    AddOp add;
 
     enum Backward {OutputDelta, InputDelta0, InputDelta1};
 };

@@ -57,7 +57,7 @@ private:
 
     PoolingMethod pooling_method = PoolingMethod::MaxPooling;
 
-    Pool3d pool3d;
+    Pool3dOp pool3d;
 
     enum Forward { Input, MaximalIndices, Output };
 };

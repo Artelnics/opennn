@@ -314,11 +314,11 @@ Shape NeuralNetwork::get_output_shape() const
     return layers.back()->get_output_shape();
 }
 
-Activation::Function NeuralNetwork::get_output_activation() const
+ActivationOp::Function NeuralNetwork::get_output_activation() const
 {
     const Index last_index = get_last_trainable_layer_index();
     if (last_index < 0 || static_cast<size_t>(last_index) >= layers.size())
-        return Activation::Function::Identity;
+        return ActivationOp::Function::Identity;
 
     return layers[last_index]->get_output_activation();
 }

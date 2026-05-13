@@ -103,7 +103,7 @@ private:
 
     PoolingMethod pooling_method = PoolingMethod::MaxPooling;
 
-    Pool pool;
+    PoolOp pool;
 
     enum Forward {Input, MaximalIndices, Output};
 

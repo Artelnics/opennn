@@ -140,10 +140,10 @@ void Dense::set_output_shape(const Shape& new_output_shape)
 
 void Dense::set_activation_function(const string& name)
 {
-    Activation::Function function = Activation::from_string(name);
+    ActivationOp::Function function = ActivationOp::from_string(name);
 
-    if (function == Activation::Function::Softmax && get_outputs_number() == 1)
-        function = Activation::Function::Sigmoid;
+    if (function == ActivationOp::Function::Softmax && get_outputs_number() == 1)
+        function = ActivationOp::Function::Sigmoid;
 
     activation.set_function(function);
 }
@@ -170,7 +170,7 @@ string Dense::write_expression(const vector<string>& input_names,
     const float* bias_data = parameters[0].as<float>();
     const float* weight_data = parameters[1].as<float>();
 
-    const string& activation_function_local = Activation::to_string(get_activation_function());
+    const string& activation_function_local = ActivationOp::to_string(get_activation_function());
 
     ostringstream buffer;
 

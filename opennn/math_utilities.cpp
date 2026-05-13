@@ -558,7 +558,7 @@ void multiply_gpu(const TensorView& input_a, bool transpose_a,
     const int rows_b = to_int(input_b.shape[rank_b - 2]);
     const int cols_b = to_int(input_b.shape[rank_b - 1]);
 
-    // Rank-mismatched broadcast (e.g. {B,Q,E} @ {E,E}^T from Combination::apply_delta_gpu):
+    // Rank-mismatched broadcast (e.g. {B,Q,E} @ {E,E}^T from CombinationOp::apply_delta_gpu):
     // flatten input_a to 2D and do a single GEMM with no batching. Mirrors multiply_cpu's
     // use of as_flat_matrix() for these calls.
     if (rank_b == 2 && rank_a > 2)

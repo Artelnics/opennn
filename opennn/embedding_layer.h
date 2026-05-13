@@ -49,8 +49,8 @@ private:
     Index sequence_length = 0;
     Index embedding_dimension = 0;
 
-    EmbeddingLookup embedding_lookup;
-    Dropout         dropout;
+    EmbeddingLookupOp embedding_lookup;
+    DropoutOp         dropout;
 
     enum Backward {OutputDelta};
 };

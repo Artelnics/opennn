@@ -28,7 +28,7 @@ public:
 
 private:
 
-    Flat flat;
+    FlatOp flat;
 };
 
 }

@@ -108,12 +108,12 @@ private:
     Index query_sequence_length = 0;
     Index source_sequence_length = 0;
 
-    MultiHeadProjection query_projection;
-    MultiHeadProjection key_projection;
-    MultiHeadProjection value_projection;
-    Combination         output_projection;
-    Attention           attention;
-    Merge               merge;
+    MultiHeadProjectionOp query_projection;
+    MultiHeadProjectionOp key_projection;
+    MultiHeadProjectionOp value_projection;
+    CombinationOp         output_projection;
+    AttentionOp           attention;
+    MergeOp               merge;
 
     enum Forward {Input, Query, Key, AttentionWeights, AttentionWeightsDropped,
                   ConcatenatedAttentionOutputs, Value, TransposeScratch, Output};

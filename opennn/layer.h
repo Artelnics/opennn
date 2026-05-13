@@ -152,7 +152,7 @@ public:
 
     virtual Shape get_output_shape() const = 0;
 
-    virtual Activation::Function get_output_activation() const { return Activation::Function::Identity; }
+    virtual ActivationOp::Function get_output_activation() const { return ActivationOp::Function::Identity; }
 
     Index get_inputs_number() const { return get_input_shape().size(); }
 

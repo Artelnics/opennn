@@ -18,7 +18,7 @@ class Bounding final : public Layer
 {
 public:
 
-    using BoundingMethod = Bound::Method;
+    using BoundingMethod = BoundOp::Method;
 
     Bounding(const Shape& = {0}, const string& = "bounding_layer");
 
@@ -53,7 +53,7 @@ private:
 
     Shape output_shape;
 
-    Bound bound;
+    BoundOp bound;
 
     static const EnumMap<BoundingMethod>& bounding_method_map();
 };
