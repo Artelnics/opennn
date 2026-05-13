@@ -169,6 +169,20 @@ struct Buffer
             resize_bytes(n_bytes, device_type);
     }
 
+    template<typename T>
+    T* ensure(Index n_elements)
+    {
+        grow_to(n_elements * Index(sizeof(T)));
+        return as<T>();
+    }
+
+    void* ensure_bytes(size_t min_bytes)
+    {
+        if (min_bytes == 0) return nullptr;
+        grow_to(Index(min_bytes));
+        return data;
+    }
+
     void setZero()
     {
         if (!data) return;
@@ -187,6 +201,21 @@ struct Buffer
         const cudaMemcpyKind kind = (target == Device::CUDA)
             ? cudaMemcpyHostToDevice : cudaMemcpyDeviceToHost;
         CHECK_CUDA(cudaMemcpy(fresh, data, bytes, kind));
+        dealloc(device_type, data, bytes);
+        data = fresh;
+        device_type = target;
+    }
+
+    void migrate_to(Device target, cudaStream_t stream)
+    {
+        if (device_type == target || !data) return;
+        if (!stream) { migrate_to(target); return; }
+
+        void* fresh = alloc(target, bytes);
+        const cudaMemcpyKind kind = (target == Device::CUDA)
+            ? cudaMemcpyHostToDevice : cudaMemcpyDeviceToHost;
+        CHECK_CUDA(cudaMemcpyAsync(fresh, data, bytes, kind, stream));
+        CHECK_CUDA(cudaStreamSynchronize(stream));
         dealloc(device_type, data, bytes);
         data = fresh;
         device_type = target;

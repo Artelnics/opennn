@@ -329,6 +329,36 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
     }
 }
 
+void cross_entropy_3d_gradient_device_count(const TensorView& input, const TensorView& target, TensorView& input_delta,
+                                            const float* active_tokens_count_device)
+{
+#ifdef OPENNN_HAS_CUDA
+    const Index vocabulary_size = input.shape.back();
+    const Index sequence_length = input.shape[input.get_rank() - 2];
+    const Index batch_size = input.size() / (sequence_length * vocabulary_size);
+
+    if (TRY_GPU_DISPATCH(input, [&](auto tag) {
+        using T = decltype(tag);
+        const size_t total = static_cast<size_t>(batch_size) * sequence_length * vocabulary_size;
+        cross_entropy_3d_multiple_backward_device_count_cuda<T>(
+            total, to_int(vocabulary_size),
+            input.as<T>(), target.as<float>(), input_delta.as<T>(),
+            active_tokens_count_device);
+    })) return;
+#endif
+
+    Index active_tokens_count = 0;
+    const Index token_count = (input.size() / input.shape.back());
+    const VectorMap targets_flat = target.as_vector();
+    for (Index token_index = 0; token_index < token_count; ++token_index)
+    {
+        const Index target_index = static_cast<Index>(targets_flat(token_index));
+        if (target_index > 0 && target_index < input.shape.back()) ++active_tokens_count;
+    }
+
+    cross_entropy_3d_gradient(input, target, input_delta, active_tokens_count);
+}
+
 void l1_regularization(const TensorView& parameters, float lambda, float& penalty)
 {
     IF_GPU({

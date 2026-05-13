@@ -20,10 +20,89 @@
 #include "neural_network.h"
 #include "profiler.h"
 #include "string_utilities.h"
+#include <cctype>
 #include <chrono>
+#include <cstdlib>
 
 namespace opennn
 {
+
+namespace
+{
+
+bool env_flag_enabled(const char* name)
+{
+    const char* value = std::getenv(name);
+    if (!value) return false;
+
+    string text(value);
+    transform(text.begin(), text.end(), text.begin(),
+              [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+    return text == "1" || text == "true" || text == "on" || text == "yes";
+}
+
+bool profile_enabled_from_env()
+{
+    static const bool enabled = env_flag_enabled("OPENNN_PROFILE");
+    return enabled;
+}
+
+bool cuda_sync_each_batch()
+{
+    static const bool enabled = env_flag_enabled("OPENNN_CUDA_SYNC_EACH_BATCH");
+    return enabled;
+}
+
+bool cuda_debug_sync()
+{
+    static const bool enabled = env_flag_enabled("OPENNN_CUDA_DEBUG_SYNC");
+    return enabled;
+}
+
+void sync_cuda_for_debug()
+{
+#ifdef OPENNN_HAS_CUDA
+    if (is_gpu() && cuda_debug_sync())
+        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
+#endif
+}
+
+#ifdef OPENNN_HAS_CUDA
+struct DeviceEpochMetrics
+{
+    Buffer values{Device::CUDA};
+
+    void reset()
+    {
+        values.grow_to(2 * Index(sizeof(float)));
+        CHECK_CUDA(cudaMemsetAsync(values.data, 0, 2 * sizeof(float),
+                                   Backend::get_compute_stream()));
+    }
+
+    float* error_sum() { return values.as<float>(); }
+    float* accuracy_sum() { return values.as<float>() + 1; }
+
+    Optimizer::EpochStats read(Index batches_number, bool include_accuracy)
+    {
+        float host[2] = {0.0f, 0.0f};
+        CHECK_CUDA(cudaMemcpyAsync(host, values.data, sizeof(host),
+                                   cudaMemcpyDeviceToHost,
+                                   Backend::get_compute_stream()));
+        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
+
+        Optimizer::EpochStats stats;
+        if (batches_number > 0)
+        {
+            stats.error = host[0] / float(batches_number);
+            if (include_accuracy) stats.accuracy = host[1] / float(batches_number);
+        }
+        return stats;
+    }
+};
+#endif
+
+}
 
 Optimizer::Optimizer(Loss* new_loss)
 {
@@ -497,6 +576,8 @@ void Optimizer::setup_device_training()
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
 
+    clear_batch_reuse_events();
+
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     neural_network->copy_parameters_device();
@@ -512,6 +593,11 @@ void Optimizer::teardown_device_training()
 {
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
+
+    if (memory_stream) CHECK_CUDA(cudaStreamSynchronize(memory_stream));
+    CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
+
+    clear_batch_reuse_events();
 
     cudaStreamDestroy(memory_stream);
     cudaEventDestroy(batch_ready_event[0]);
@@ -530,8 +616,23 @@ void Optimizer::prefetch_batch(Batch& batch, Index sample_count, int slot)
 {
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
-    batch.copy_device_async(sample_count, memory_stream);
-    cudaEventRecord(batch_ready_event[slot], memory_stream);
+
+    cudaEvent_t& reuse_event = batch_reuse_events[&batch];
+    if (!reuse_event)
+        CHECK_CUDA(cudaEventCreateWithFlags(&reuse_event, cudaEventDisableTiming));
+
+    if (batch_reuse_recorded.find(&batch) != batch_reuse_recorded.end())
+        CHECK_CUDA(cudaStreamWaitEvent(memory_stream, reuse_event, 0));
+
+    float* fp32_staging = nullptr;
+    if (batch.needs_fp32_staging)
+    {
+        prefetch_fp32_staging.grow_to(batch.get_input_elements() * Index(sizeof(float)));
+        fp32_staging = prefetch_fp32_staging.as<float>();
+    }
+
+    batch.copy_device_async(sample_count, memory_stream, fp32_staging);
+    CHECK_CUDA(cudaEventRecord(batch_ready_event[slot], memory_stream));
 #else
     (void)batch; (void)sample_count; (void)slot;
 #endif
@@ -541,16 +642,46 @@ void Optimizer::wait_prefetch(int slot)
 {
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
-    cudaStreamWaitEvent(Backend::get_compute_stream(), batch_ready_event[slot], 0);
+    CHECK_CUDA(cudaStreamWaitEvent(Backend::get_compute_stream(), batch_ready_event[slot], 0));
 #else
     (void)slot;
 #endif
 }
 
+void Optimizer::record_batch_reuse(Batch& batch)
+{
+#ifdef OPENNN_HAS_CUDA
+    if (!is_gpu()) return;
+
+    cudaEvent_t& reuse_event = batch_reuse_events[&batch];
+    if (!reuse_event)
+        CHECK_CUDA(cudaEventCreateWithFlags(&reuse_event, cudaEventDisableTiming));
+
+    CHECK_CUDA(cudaEventRecord(reuse_event, Backend::get_compute_stream()));
+    batch_reuse_recorded.insert(&batch);
+#else
+    (void)batch;
+#endif
+}
+
+void Optimizer::clear_batch_reuse_events()
+{
+#ifdef OPENNN_HAS_CUDA
+    for (auto& [batch, event] : batch_reuse_events)
+    {
+        (void)batch;
+        if (event) cudaEventDestroy(event);
+    }
+#endif
+    batch_reuse_events.clear();
+    batch_reuse_recorded.clear();
+}
+
 void Optimizer::sync_device()
 {
 #ifdef OPENNN_HAS_CUDA
-    if (is_gpu()) cudaStreamSynchronize(Backend::get_compute_stream());
+    if (is_gpu() && cuda_sync_each_batch())
+        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
 #endif
 }
 
@@ -604,8 +735,15 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     const Index batches_number = Index(batches.size());
     if (batches_number == 0) return stats;
 
-    // Profiler disabled by default; flip to true to capture per-section timings.
-    const bool profile_this = false;
+#ifdef OPENNN_HAS_CUDA
+    const bool use_device_metrics = is_gpu() && loss->supports_device_epoch_metrics();
+    DeviceEpochMetrics device_metrics;
+    if (use_device_metrics) device_metrics.reset();
+#else
+    const bool use_device_metrics = false;
+#endif
+
+    const bool profile_this = profile_enabled_from_env();
     if (profile_this)
     {
         ::opennn::profiler::enabled() = true;
@@ -654,19 +792,41 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
             PROFILE_SCOPE("step:fwd_total");
             neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, true);
         }
+        sync_cuda_for_debug();
 
         {
             PROFILE_SCOPE("step:bwd_total");
-            loss->back_propagate(*current_batch, forward_propagation, back_propagation);
+#ifdef OPENNN_HAS_CUDA
+            if (use_device_metrics)
+            {
+                if (!loss->back_propagate_device_metrics(*current_batch,
+                                                          forward_propagation,
+                                                          back_propagation,
+                                                          device_metrics.error_sum(),
+                                                          is_classification ? device_metrics.accuracy_sum() : nullptr))
+                    throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
+            }
+            else
+#endif
+            {
+                loss->back_propagate(*current_batch, forward_propagation, back_propagation);
+            }
         }
+        sync_cuda_for_debug();
 
-        stats.error += back_propagation.error;
-        if (is_classification) stats.accuracy += back_propagation.accuracy;
+        record_batch_reuse(*current_batch);
+
+        if (!use_device_metrics)
+        {
+            stats.error += back_propagation.error;
+            if (is_classification) stats.accuracy += back_propagation.accuracy;
+        }
 
         {
             PROFILE_SCOPE("step:optim_total");
             update(back_propagation);
         }
+        sync_cuda_for_debug();
 
         {
             PROFILE_SCOPE("step:sync_device");
@@ -683,8 +843,20 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
 
     worker.join();
 
-    stats.error /= float(batches_number);
-    if (is_classification) stats.accuracy /= float(batches_number);
+#ifdef OPENNN_HAS_CUDA
+    if (use_device_metrics)
+    {
+        stats = device_metrics.read(batches_number, is_classification);
+        back_propagation.error = stats.error;
+        back_propagation.accuracy = stats.accuracy;
+        back_propagation.loss_value = stats.error;
+    }
+    else
+#endif
+    {
+        stats.error /= float(batches_number);
+        if (is_classification) stats.accuracy /= float(batches_number);
+    }
 
     if (profile_this)
     {
@@ -712,6 +884,14 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index batches_number = Index(batches.size());
     if (batches_number == 0) return stats;
+
+#ifdef OPENNN_HAS_CUDA
+    const bool use_device_metrics = is_gpu() && loss->supports_device_epoch_metrics();
+    DeviceEpochMetrics device_metrics;
+    if (use_device_metrics) device_metrics.reset();
+#else
+    const bool use_device_metrics = false;
+#endif
 
     std::thread worker([&]()
     {
@@ -744,10 +924,31 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
         }
 
         neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, true);
-        const Loss::EvaluationResult eval = loss->calculate_error(*current_batch, forward_propagation);
+        sync_cuda_for_debug();
+        Loss::EvaluationResult eval;
+#ifdef OPENNN_HAS_CUDA
+        if (use_device_metrics)
+        {
+            if (!loss->calculate_error_device_metrics(*current_batch,
+                                                      forward_propagation,
+                                                      device_metrics.error_sum(),
+                                                      is_classification ? device_metrics.accuracy_sum() : nullptr))
+                throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
+        }
+        else
+#endif
+        {
+            eval = loss->calculate_error(*current_batch, forward_propagation);
+        }
+        sync_cuda_for_debug();
 
-        stats.error += eval.error;
-        if (is_classification) stats.accuracy += eval.accuracy;
+        record_batch_reuse(*current_batch);
+
+        if (!use_device_metrics)
+        {
+            stats.error += eval.error;
+            if (is_classification) stats.accuracy += eval.accuracy;
+        }
 
         sync_device();
 
@@ -756,8 +957,15 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
 
     worker.join();
 
-    stats.error /= float(batches_number);
-    if (is_classification) stats.accuracy /= float(batches_number);
+#ifdef OPENNN_HAS_CUDA
+    if (use_device_metrics)
+        stats = device_metrics.read(batches_number, is_classification);
+    else
+#endif
+    {
+        stats.error /= float(batches_number);
+        if (is_classification) stats.accuracy /= float(batches_number);
+    }
 
     return stats;
 }

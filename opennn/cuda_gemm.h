@@ -86,9 +86,9 @@ struct LtMatmulPlanKeyHash
 // the chosen algorithms reported they need (see ensure_cublas_lt_workspace).
 constexpr size_t cublas_lt_workspace_search_bytes() { return 32ull * 1024 * 1024; }
 
-// Grows the global cublasLt scratch buffer to at least `min_bytes`. Returns a
-// pointer to it. Initial size is 0 — the buffer only grows when a plan whose
-// chosen algorithm needs more workspace gets created.
+namespace scratch
+{
+
 void* ensure_cublas_lt_workspace(size_t min_bytes = 0);
 
 __nv_bfloat16* ensure_bf16_input_scratch(Index n_elements);
@@ -97,9 +97,11 @@ __nv_bfloat16* ensure_bf16_gradient_scratch(Index n_elements);
 
 float* ensure_fp32_upcast_scratch(Index n_elements);
 
-float* get_loss_scratch(Index n_elements);
+void* ensure_cudnn_conv_workspace(size_t min_bytes);
 
-const void* maybe_cast(const TensorView& input, Type target_type);
+}
+
+const void* data_for_gemm_dtype(const TensorView& input, Type target_type);
 
 
 const LtMatmulPlan& get_lt_gemm_plan(

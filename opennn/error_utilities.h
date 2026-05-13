@@ -31,6 +31,7 @@ void minkowski_error_gradient(const TensorView& input, const TensorView& target,
 
 void cross_entropy_3d(const TensorView& input, const TensorView& target, float& error, Index& active_tokens_out, Index& correct_tokens_out, float* errors_device = nullptr);
 void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta, Index active_tokens_count);
+void cross_entropy_3d_gradient_device_count(const TensorView& input, const TensorView& target, TensorView& input_delta, const float* active_tokens_count_device);
 
 void l1_regularization(const TensorView& parameters, float lambda, float& penalty);
 void l1_regularization_gradient(const TensorView& parameters, float lambda, TensorView& gradient);

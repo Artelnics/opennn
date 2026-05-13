@@ -393,7 +393,12 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
     {
         parameters.resize_bytes(byte_count, Device::CUDA);
         if (byte_count > 0)
-            CHECK_CUDA(cudaMemcpy(parameters.data, new_parameters.data(), byte_count, cudaMemcpyHostToDevice));
+        {
+            cudaStream_t stream = Backend::get_compute_stream();
+            CHECK_CUDA(cudaMemcpyAsync(parameters.data, new_parameters.data(), byte_count,
+                                       cudaMemcpyHostToDevice, stream));
+            CHECK_CUDA(cudaStreamSynchronize(stream));
+        }
         cast_parameters_to_bf16();
         return;
     }
@@ -916,6 +921,7 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
     if (parameters.device_type == Device::CUDA)
     {
         params_host_snapshot.resize(params_size);
+        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
         CHECK_CUDA(cudaMemcpy(params_host_snapshot.data(), params_data,
                               params_size * sizeof(float), cudaMemcpyDeviceToHost));
         params_data = params_host_snapshot.data();
@@ -1106,17 +1112,13 @@ void NeuralNetwork::copy_parameters_device()
 {
     if (parameters.empty()) return;
 
-    parameters.migrate_to(Device::CUDA);
+    cudaStream_t stream = Backend::get_compute_stream();
+    parameters.migrate_to(Device::CUDA, stream);
 
     if(config.training_type  == Type::BF16 ||
        config.inference_type == Type::BF16)
     {
         parameters_bf16.resize_bytes(parameters.size_in_floats() * Index(sizeof(__nv_bfloat16)), Device::CUDA);
-        // Buffer::migrate_to runs cudaMemcpy on the per-thread default stream; compute_stream
-        // is non-blocking, so without this barrier the BF16 cast kernel can launch before the
-        // H2D writes are visible on compute_stream, leaving the mirror full of zeros for the
-        // first forward after migrate.
-        CHECK_CUDA(cudaDeviceSynchronize());
         cast_parameters_to_bf16();
     }
 
@@ -1137,7 +1139,7 @@ void NeuralNetwork::copy_parameters_host()
 {
     if (parameters.empty()) return;
 
-    parameters.migrate_to(Device::CPU);
+    parameters.migrate_to(Device::CPU, Backend::get_compute_stream());
 
     link_parameters();
 }
@@ -1145,12 +1147,12 @@ void NeuralNetwork::copy_parameters_host()
 void NeuralNetwork::link_parameters()
 {
     // Ignore the BF16 mirror when active Configuration is CPU (host can't read GPU memory).
-    float* fp32_ptr           = parameters.as<float>();
-    const bool use_bf16_mirror =
-        is_gpu() && parameters_bf16.bytes > 0;
-    __nv_bfloat16* bf16_ptr = use_bf16_mirror
-                                ? parameters_bf16.as<__nv_bfloat16>()
-                                : nullptr;
+    float* fp32_base = parameters.as<float>();
+    __nv_bfloat16* bf16_base = (is_gpu() && !parameters_bf16.empty())
+        ? parameters_bf16.as<__nv_bfloat16>()
+        : nullptr;
+
+    Index offset = 0;
 
     for (auto& layer : layers)
     {
@@ -1166,14 +1168,14 @@ void NeuralNetwork::link_parameters()
 
             if (i < param_views.size())
             {
-                const bool use_bf16 = (slot_dtype == Type::BF16 && bf16_ptr != nullptr);
-                void* slot_ptr = use_bf16 ? static_cast<void*>(bf16_ptr)
-                                          : static_cast<void*>(fp32_ptr);
+                const bool use_bf16 = (slot_dtype == Type::BF16 && bf16_base != nullptr);
+                void* slot_ptr = use_bf16
+                    ? static_cast<void*>(bf16_base + offset)
+                    : static_cast<void*>(fp32_base + offset);
                 param_views[i] = TensorView(slot_ptr, shape, use_bf16 ? Type::BF16 : Type::FP32);
             }
 
-            fp32_ptr += aligned;
-            if (bf16_ptr != nullptr) bf16_ptr += aligned;
+            offset += aligned;
         }
 
         layer->redistribute_parameters_to_operators();
@@ -1184,7 +1186,7 @@ void NeuralNetwork::copy_states_device()
 {
     if (states.empty()) return;
 
-    states.migrate_to(Device::CUDA);
+    states.migrate_to(Device::CUDA, Backend::get_compute_stream());
 
     link_states();
 }
@@ -1193,7 +1195,7 @@ void NeuralNetwork::copy_states_host()
 {
     if (states.empty()) return;
 
-    states.migrate_to(Device::CPU);
+    states.migrate_to(Device::CPU, Backend::get_compute_stream());
 
     link_states();
 }
@@ -1205,6 +1207,44 @@ void NeuralNetwork::link_states()
 
     for (auto& layer : layers)
         state_pointer = layer->link_states(state_pointer);
+}
+
+namespace
+{
+
+void copy_device_output_to_matrix(const TensorView& output, MatrixR& destination, cudaStream_t stream)
+{
+    if (output.type == Type::BF16)
+    {
+        const Index size = output.size();
+        vector<uint16_t> staging(static_cast<size_t>(size));
+
+        CHECK_CUDA(cudaMemcpyAsync(staging.data(),
+                                   output.data,
+                                   size * sizeof(uint16_t),
+                                   cudaMemcpyDeviceToHost,
+                                   stream));
+
+        CHECK_CUDA(cudaStreamSynchronize(stream));
+
+        float* destination_data = destination.data();
+        for (Index i = 0; i < size; ++i)
+        {
+            const uint32_t bits = static_cast<uint32_t>(staging[size_t(i)]) << 16;
+            std::memcpy(&destination_data[i], &bits, sizeof(float));
+        }
+
+        return;
+    }
+
+    CHECK_CUDA(cudaMemcpyAsync(destination.data(),
+                               output.data,
+                               output.size() * sizeof(float),
+                               cudaMemcpyDeviceToHost,
+                               stream));
+    CHECK_CUDA(cudaStreamSynchronize(stream));
+}
+
 }
 
 MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
@@ -1240,39 +1280,7 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     const Index out_cols = out_view.size() / batch_size;
     MatrixR result(batch_size, out_cols);
 
-    vector<uint16_t> staging;
-    const bool output_is_bf16 = (out_view.type == Type::BF16);
-
-    if (output_is_bf16)
-    {
-        const Index size = out_view.size();
-        staging.resize(static_cast<size_t>(size));
-        CHECK_CUDA(cudaMemcpyAsync(staging.data(),
-                                   out_view.data,
-                                   size * sizeof(uint16_t),
-                                   cudaMemcpyDeviceToHost,
-                                   stream));
-    }
-    else
-    {
-        CHECK_CUDA(cudaMemcpyAsync(result.data(),
-                                   out_view.data,
-                                   out_view.size() * sizeof(float),
-                                   cudaMemcpyDeviceToHost,
-                                   stream));
-    }
-
-    CHECK_CUDA(cudaStreamSynchronize(stream));
-
-    if (output_is_bf16)
-    {
-        float* destination = result.data();
-        for (Index i = 0; i < out_view.size(); ++i)
-        {
-            const uint32_t bits = static_cast<uint32_t>(staging[size_t(i)]) << 16;
-            std::memcpy(&destination[i], &bits, sizeof(float));
-        }
-    }
+    copy_device_output_to_matrix(out_view, result, stream);
 
     CHECK_CUDA(cudaFree(input_device));
 

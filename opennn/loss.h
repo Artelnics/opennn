@@ -113,6 +113,22 @@ public:
     void back_propagate(const Batch&,
                         ForwardPropagation&,
                         BackPropagation&) const;
+
+#ifdef OPENNN_HAS_CUDA
+    bool supports_device_epoch_metrics() const;
+
+    bool back_propagate_device_metrics(const Batch&,
+                                       ForwardPropagation&,
+                                       BackPropagation&,
+                                       float* error_sum_device,
+                                       float* accuracy_sum_device) const;
+
+    bool calculate_error_device_metrics(const Batch&,
+                                        const ForwardPropagation&,
+                                        float* error_sum_device,
+                                        float* accuracy_sum_device) const;
+#endif
+
     float calculate_regularization(const VectorR&) const;
     void from_JSON(const JsonDocument&);
 
@@ -148,6 +164,9 @@ private:
                                          ForwardPropagation&,
                                          BackPropagation&) const;
 
+    void back_propagate_layers(ForwardPropagation&,
+                               BackPropagation&) const;
+
     void add_regularization_gradient(BackPropagation&) const;
 
     void calculate_output_deltas(const Batch&,
@@ -169,6 +188,7 @@ protected:
     // mutable because calculate_error grows it lazily on the first call; the
     // method's logical contract is still const (no observable state changes).
     mutable Buffer errors_device{Device::CUDA};
+    mutable Buffer metric_results_device{Device::CUDA};
 #endif
 
     // Regularization
