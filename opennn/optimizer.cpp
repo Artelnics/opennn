@@ -149,6 +149,62 @@ float Optimizer::get_elapsed_time(const time_t &beginning_time)
     return float(difftime(current_time, beginning_time));
 }
 
+Index Optimizer::adjust_batch_size(Index requested, Index n, const char* context) const
+{
+    if (n <= 0 || requested <= 0) return std::max(Index(1), requested);
+    if (requested >= n)           return n;
+    if (n % requested == 0)       return requested;
+
+    const Index min_acceptable = std::max(Index(1), requested / 2);
+    for (Index b = requested - 1; b >= min_acceptable; --b)
+        if (n % b == 0)
+        {
+            if (display)
+                cout << "Optimizer: " << context << " batch_size " << requested
+                     << " does not divide " << n << " samples; adjusted to " << b
+                     << " (0 samples dropped).\n";
+            return b;
+        }
+
+    if (display)
+    {
+        const Index lost = n % requested;
+        const double pct = 100.0 * double(lost) / double(n);
+        cout << "Warning: " << context << " batch_size " << requested
+             << " does not divide " << n << " samples. "
+             << lost << " sample(s) ("
+             << std::fixed << std::setprecision(2) << pct
+             << " % of total) dropped per epoch — no divisor in ["
+             << min_acceptable << ", " << requested << "].\n";
+    }
+    return requested;
+}
+
+Optimizer::BatchPlan Optimizer::plan_batches(Index requested,
+                                             Index training_samples_number,
+                                             Index validation_samples_number) const
+{
+    BatchPlan plan;
+
+    plan.training_batch_size = (training_samples_number != 0)
+        ? adjust_batch_size(requested, training_samples_number, "training")
+        : 0;
+
+    if (validation_samples_number != 0 && plan.training_batch_size != 0)
+    {
+        const Index val_requested = min(validation_samples_number,
+                                        plan.training_batch_size);
+        plan.validation_batch_size =
+            adjust_batch_size(val_requested, validation_samples_number, "validation");
+    }
+
+    plan.training_batches_number = (plan.training_batch_size != 0)
+        ? training_samples_number / plan.training_batch_size
+        : 0;
+
+    return plan;
+}
+
 void Optimizer::set_names()
 {
     const Dataset* dataset = loss->get_dataset();

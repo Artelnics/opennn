@@ -171,17 +171,11 @@ TrainingResults StochasticGradientDescent::train()
     const Index training_samples_number = dataset->get_samples_number("Training");
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
-    const Index training_batch_size = min(training_samples_number, batch_size);
-
-    // Cap validation_batch_size by training_batch_size so validation can reuse
-    // the training ForwardPropagation buffer when sample counts allow it.
-    const Index validation_batch_size = (validation_samples_number != 0)
-        ? min(validation_samples_number, training_batch_size)
-        : 0;
-
-    const Index training_batches_number = (training_batch_size != 0)
-        ? training_samples_number / training_batch_size
-        : 0;
+    // Bundled sizing: training_batch_size divides training_samples_number
+    // (largest divisor in [requested/2, requested]); validation_batch_size is
+    // capped by training_batch_size and then adjusted to divide validation.
+    const auto [training_batch_size, validation_batch_size, training_batches_number] =
+        plan_batches(batch_size, training_samples_number, validation_samples_number);
 
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> validation_batches;

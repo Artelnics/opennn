@@ -29,7 +29,7 @@ static float sum_squared_diff_cuda(const TensorView& input, const TensorView& ta
     return sum_squared;
 }
 
-static void scaled_diff_cuda(const TensorView& input, const TensorView& target, float scale, TensorView& output)
+static void scaled_diff_cuda(const TensorView& input, const TensorView& target, float scale, const TensorView& output)
 {
     visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
         using TIn  = typename decltype(in)::type;
@@ -69,7 +69,7 @@ void mean_squared_error(const TensorView& input, const TensorView& target, float
     error = (input.as_vector() - target.as_vector()).squaredNorm() / to_type(2 * batch_size);
 }
 
-void mean_squared_error_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta)
+void mean_squared_error_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta)
 {
     const Index batch_size = input.shape[0];
     IF_GPU({
@@ -88,7 +88,7 @@ void normalized_squared_error(const TensorView& input, const TensorView& target,
     error = (input.as_vector() - target.as_vector()).squaredNorm() / (2.0f * (coefficient + EPSILON));
 }
 
-void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, float coefficient, TensorView& input_delta)
+void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, float coefficient, const TensorView& input_delta)
 {
     IF_GPU({
         scaled_diff_cuda(input, target, 1.0f / (static_cast<float>(coefficient) + EPSILON), input_delta);
@@ -117,7 +117,7 @@ void weighted_squared_error(const TensorView& input, const TensorView& target, f
     error = 0.5f * (targets == 1.0f).select(squared_error * pos_w, squared_error * neg_w).sum();
 }
 
-void weighted_squared_error_gradient(const TensorView& input, const TensorView& target, float pos_w, float neg_w, float coefficient, TensorView& input_delta)
+void weighted_squared_error_gradient(const TensorView& input, const TensorView& target, float pos_w, float neg_w, float coefficient, const TensorView& input_delta)
 {
     if (TRY_GPU_DISPATCH(input, [&](auto tag) {
         using T = decltype(tag);
@@ -171,7 +171,7 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
     if (isnan(error) || isinf(error)) error = 10.0f;
 }
 
-void cross_entropy_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta)
+void cross_entropy_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta)
 {
     if (TRY_GPU_DISPATCH(input, [&](auto tag) {
         using T = decltype(tag);
@@ -209,14 +209,18 @@ void minkowski_error(const TensorView& input, const TensorView& target, float po
     error = (input.as_vector() - target.as_vector()).array().abs().pow(power).sum() / to_type(power * batch_size);
 }
 
-void minkowski_error_gradient(const TensorView& input, const TensorView& target, float power, TensorView& input_delta)
+void minkowski_error_gradient(const TensorView& input, const TensorView& target, float power, const TensorView& input_delta)
 {
     if (is_gpu())
         throw runtime_error("minkowski_error_gradient: GPU implementation not available.");
 
     const Index batch_size = input.shape[0];
-    const auto difference = (input.as_vector() - target.as_vector()).array();
-    input_delta.as_vector().array() = (1.0f / to_type(batch_size)) * difference.sign() * (difference.abs() + EPSILON).pow(power - 1.0f);
+    const VectorR difference_vec = input.as_vector() - target.as_vector();
+    const float scale = 1.0f / to_type(batch_size);
+    const float exponent = power - 1.0f;
+    input_delta.as_vector().array() = scale
+        * difference_vec.array().sign()
+        * (difference_vec.array().abs() + EPSILON).unaryExpr([exponent](float x) { return std::pow(x, exponent); });
 }
 
 void cross_entropy_3d(const TensorView& input, const TensorView& target, float& error,
@@ -292,7 +296,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
     error = active_tokens > 0 ? total_log_loss / to_type(active_tokens) : 0.0f;
 }
 
-void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, TensorView& input_delta,
+void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta,
                                Index active_tokens_count)
 {
     const Index vocabulary_size = input.shape.back();
@@ -368,7 +372,7 @@ void l1_regularization(const TensorView& parameters, float lambda, float& penalt
     penalty = lambda * parameters.as_vector().lpNorm<1>();
 }
 
-void l1_regularization_gradient(const TensorView& parameters, float lambda, TensorView& gradient)
+void l1_regularization_gradient(const TensorView& parameters, float lambda, const TensorView& gradient)
 {
     IF_GPU({
         l1_gradient_cuda<float>(parameters.size(), gradient.as<float>(), parameters.as<float>(), lambda);
@@ -386,7 +390,7 @@ void l2_regularization(const TensorView& parameters, float lambda, float& penalt
     penalty = 0.5f * lambda * parameters.as_vector().squaredNorm();
 }
 
-void l2_regularization_gradient(const TensorView& parameters, float lambda, TensorView& gradient)
+void l2_regularization_gradient(const TensorView& parameters, float lambda, const TensorView& gradient)
 {
     IF_GPU({
         const int total_size = to_int(parameters.size());
