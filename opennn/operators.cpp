@@ -811,7 +811,7 @@ void run_lt_matmul(const LtMatmulPlan& plan,
                                 c_data, plan.cd_desc,
                                 c_data, plan.cd_desc,
                                 plan.algo_valid ? &plan.algo : nullptr,
-                                ensure_cublas_lt_workspace(plan.workspace_size), plan.workspace_size,
+                                scratch::ensure_cublas_lt_workspace(plan.workspace_size), plan.workspace_size,
                                 Backend::get_compute_stream()));
 }
 
@@ -823,7 +823,7 @@ void CombinationOp::apply_gpu(const TensorView& input, TensorView& output, cubla
     const int output_columns = to_int(weights.shape.back());
     const int total_rows     = to_int(input.size() / input.shape.back());
 
-    const void* input_for_gemm = maybe_cast(input, weights.type);
+    const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
     const cudaDataType_t io_type = output.cuda_dtype();
 
     const LtMatmulPlan& plan = get_lt_gemm_plan(
@@ -831,7 +831,7 @@ void CombinationOp::apply_gpu(const TensorView& input, TensorView& output, cubla
         CUBLAS_OP_N, CUBLAS_OP_N,
         epilogue, io_type, io_type);
 
-    const float* bias_pointer = bias.as_float();
+    const void* bias_pointer = bias.data;
     run_lt_matmul(plan, weights.data, input_for_gemm, output.data, bias_pointer);
 }
 
@@ -843,7 +843,7 @@ void CombinationOp::apply_delta_gpu(const TensorView& output_delta, const Tensor
     const int output_columns = to_int(output_delta.shape.back());
     const int total_rows     = to_int(input.size() / input.shape.back());
 
-    const void* input_for_gemm = maybe_cast(input, weights.type);
+    const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
 
     const LtMatmulPlan& plan = get_lt_gemm_plan(
         output_columns, input_columns, total_rows,
@@ -1117,8 +1117,7 @@ void ConvolutionOp::destroy_cuda()
 {
     if (kernel_descriptor)      { cudnnDestroyFilterDescriptor(kernel_descriptor);           kernel_descriptor = nullptr; }
     if (convolution_descriptor) { cudnnDestroyConvolutionDescriptor(convolution_descriptor); convolution_descriptor = nullptr; }
-    workspace.resize_bytes(0, Device::CUDA);
-    backward_filter_workspace.resize_bytes(0, Device::CUDA);
+    cudnn_workspace_size_ = 0;
     planned_batch_size = 0;
 }
 void ConvolutionOp::plan_convolution_algorithms(const TensorView& input, const TensorView& output)
@@ -1166,8 +1165,8 @@ void ConvolutionOp::plan_convolution_algorithms(const TensorView& input, const T
         handle, input_desc, output_desc, convolution_descriptor, kernel_descriptor,
         algorithm_filter, &bwd_filter_ws));
 
-    workspace.resize_bytes(Index(max(fwd_ws, bwd_data_ws)), Device::CUDA);
-    backward_filter_workspace.resize_bytes(Index(bwd_filter_ws), Device::CUDA);
+    cudnn_workspace_size_ = max({fwd_ws, bwd_data_ws, bwd_filter_ws});
+    scratch::ensure_cudnn_conv_workspace(cudnn_workspace_size_);
 
     planned_batch_size = input.shape[0];
 }
@@ -1179,6 +1178,8 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
     if (input.shape[0] > planned_batch_size)
         plan_convolution_algorithms(input, output);
 
+    void* ws_ptr = scratch::ensure_cudnn_conv_workspace(cudnn_workspace_size_);
+
     if (fused_activation)
     {
         CHECK_CUDNN(cudnnConvolutionBiasActivationForward(
@@ -1188,7 +1189,7 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
             kernel_descriptor,        weights.data,
             convolution_descriptor,
             algorithm_forward,
-            workspace.data, size_t(workspace.bytes),
+            ws_ptr, cudnn_workspace_size_,
             &zero,
             output.get_descriptor(), output.data,
             bias.get_descriptor(),   bias.data,
@@ -1203,7 +1204,7 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
                                         kernel_descriptor,        weights.data,
                                         convolution_descriptor,
                                         algorithm_forward,
-                                        workspace.data, size_t(workspace.bytes),
+                                        ws_ptr, cudnn_workspace_size_,
                                         &zero,
                                         output.get_descriptor(), output.data));
 
@@ -1228,9 +1229,11 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 
     if (bf16)
     {
-        weight_gradient_bf16_scratch = ensure_bf16_gradient_scratch(weight_gradient.size());
+        weight_gradient_bf16_scratch = scratch::ensure_bf16_gradient_scratch(weight_gradient.size());
         weight_gradient_buffer = weight_gradient_bf16_scratch;
     }
+
+    void* ws_ptr = scratch::ensure_cudnn_conv_workspace(cudnn_workspace_size_);
 
     CHECK_CUDNN(cudnnConvolutionBackwardFilter(Backend::get_cudnn_handle(),
         &one,
@@ -1238,35 +1241,30 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
         output_delta.get_descriptor(), output_delta.data,
         convolution_descriptor,
         algorithm_filter,
-        backward_filter_workspace.data, size_t(backward_filter_workspace.bytes),
+        ws_ptr, cudnn_workspace_size_,
         &zero,
         kernel_descriptor, weight_gradient_buffer));
 
+    TensorView output_delta_for_bias = output_delta;
+
     if (bf16)
     {
-        float* output_delta_fp32 = ensure_fp32_upcast_scratch(output_delta.size());
+        float* output_delta_fp32 = scratch::ensure_fp32_upcast_scratch(output_delta.size());
         cast_bf16_to_fp32_cuda(output_delta.size(),
-                               reinterpret_cast<const __nv_bfloat16*>(output_delta.data),
+                               output_delta.as<__nv_bfloat16>(),
                                output_delta_fp32);
 
-        TensorView output_delta_fp32_view(output_delta_fp32, output_delta.shape, Type::FP32);
+        output_delta_for_bias = TensorView(output_delta_fp32, output_delta.shape, Type::FP32);
+    }
 
-        CHECK_CUDNN(cudnnConvolutionBackwardBias(Backend::get_cudnn_handle(),
-            &one,
-            output_delta_fp32_view.get_descriptor(), output_delta_fp32_view.data,
-            &zero,
-            bias_gradient.get_descriptor(), bias_gradient.data));
+    CHECK_CUDNN(cudnnConvolutionBackwardBias(Backend::get_cudnn_handle(),
+        &one,
+        output_delta_for_bias.get_descriptor(), output_delta_for_bias.data,
+        &zero,
+        bias_gradient.get_descriptor(), bias_gradient.data));
 
+    if (bf16)
         cast_bf16_to_fp32_cuda(weight_gradient.size(), weight_gradient_bf16_scratch, weight_gradient.as_float());
-    }
-    else
-    {
-        CHECK_CUDNN(cudnnConvolutionBackwardBias(Backend::get_cudnn_handle(),
-            &one,
-            output_delta.get_descriptor(), output_delta.data,
-            &zero,
-            bias_gradient.get_descriptor(), bias_gradient.data));
-    }
 
     if (!input_delta.data || input_delta.size() == 0) return;
 
@@ -1276,7 +1274,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
         output_delta.get_descriptor(), output_delta.data,
         convolution_descriptor,
         algorithm_data,
-        workspace.data, size_t(workspace.bytes),
+        ws_ptr, cudnn_workspace_size_,
         &zero,
         input_delta.get_descriptor(), input_delta.data));
 }

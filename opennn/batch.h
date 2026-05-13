@@ -22,6 +22,8 @@ struct Batch
 
     Batch(const Batch&)            = delete;
     Batch& operator=(const Batch&) = delete;
+    Batch(Batch&&)                 = delete;
+    Batch& operator=(Batch&&)      = delete;
 
     void set(const Index = 0, const Dataset* = nullptr);
 
@@ -70,7 +72,9 @@ struct Batch
     int decoder_contiguous = -1;
     int target_contiguous = -1;
 
-    void copy_device_async(const Index, cudaStream_t);
+    void copy_device_async(const Index, cudaStream_t, float* fp32_staging);
+
+    Index get_input_elements() const { return samples_number * num_input_features; }
 
     vector<TensorView> input_views_host_cache;
     TensorView target_view_host_cache;
@@ -90,7 +94,7 @@ struct Batch
     Index decoder_host_allocated_size = 0;
     Index targets_host_allocated_size = 0;
 
-    Buffer inputs_fp32_staging{Device::CUDA};
+    bool needs_fp32_staging = false;
 };
 
 }

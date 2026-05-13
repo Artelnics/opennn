@@ -306,6 +306,90 @@ void cross_entropy_3d_multiple_backward_cuda(const Index n,
 template void cross_entropy_3d_multiple_backward_cuda<float>        (const Index, const int, const float*,         const float*, float*,         const float);
 template void cross_entropy_3d_multiple_backward_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, __nv_bfloat16*, const float);
 
+template<typename T>
+__global__ void cross_entropy_3d_multiple_backward_device_count_kernel(const int n,
+                                                                       const int vocab_size,
+                                                                       const T* __restrict__ outputs,
+                                                                       const float* __restrict__ targets,
+                                                                       T* __restrict__ output_deltas,
+                                                                       const float* __restrict__ active_count_device)
+{
+    const float active_count = active_count_device ? active_count_device[0] : 0.0f;
+    const float scale_factor = active_count > 0.0f ? 1.0f / active_count : 0.0f;
+
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    {
+        const int token_index = idx / vocab_size;
+        const int class_index = idx % vocab_size;
+        const int target_class = static_cast<int>(targets[token_index]);
+
+        if (target_class <= 0 || target_class >= vocab_size)
+        {
+            output_deltas[idx] = static_cast<T>(0.0f);
+            continue;
+        }
+
+        output_deltas[idx] = static_cast<T>((static_cast<float>(outputs[idx]) - (class_index == target_class ? 1.0f : 0.0f)) * scale_factor);
+    }
+}
+
+template<typename T>
+void cross_entropy_3d_multiple_backward_device_count_cuda(const Index n,
+                                                          const int vocab_size,
+                                                          const T* outputs,
+                                                          const float* targets,
+                                                          T* output_deltas,
+                                                          const float* active_count_device)
+{
+    if (n == 0) return;
+
+    const int total = static_cast<int>(n);
+
+    cross_entropy_3d_multiple_backward_device_count_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
+        total, vocab_size, outputs, targets, output_deltas, active_count_device);
+}
+
+template void cross_entropy_3d_multiple_backward_device_count_cuda<float>        (const Index, const int, const float*,         const float*, float*,         const float*);
+template void cross_entropy_3d_multiple_backward_device_count_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, __nv_bfloat16*, const float*);
+
+__global__ void accumulate_scaled_metric_kernel(const float* __restrict__ value,
+                                                const float scale,
+                                                float* __restrict__ error_sum)
+{
+    if (threadIdx.x == 0 && blockIdx.x == 0)
+        error_sum[0] += value[0] * scale;
+}
+
+void accumulate_scaled_metric_cuda(const float* value, float scale, float* error_sum)
+{
+    accumulate_scaled_metric_kernel<<<1, 1, 0, opennn::Backend::get_compute_stream()>>>(value, scale, error_sum);
+}
+
+__global__ void accumulate_cross_entropy_3d_metrics_kernel(const float* __restrict__ values,
+                                                           float* __restrict__ error_sum,
+                                                           float* __restrict__ accuracy_sum)
+{
+    if (threadIdx.x != 0 || blockIdx.x != 0) return;
+
+    const float loss_sum = values[0];
+    const float active_count = values[1];
+    const float correct_count = values[2];
+
+    if (active_count > 0.0f)
+    {
+        error_sum[0] += loss_sum / active_count;
+        if (accuracy_sum) accuracy_sum[0] += correct_count / active_count;
+    }
+}
+
+void accumulate_cross_entropy_3d_metrics_cuda(const float* values,
+                                              float* error_sum,
+                                              float* accuracy_sum)
+{
+    accumulate_cross_entropy_3d_metrics_kernel<<<1, 1, 0, opennn::Backend::get_compute_stream()>>>(
+        values, error_sum, accuracy_sum);
+}
+
 // Single-element L1 gradient: d += weight * sign(p). Vec+tail callee.
 template<typename T>
 __device__ __forceinline__ void l1_gradient_one(T& d, T p, float weight)

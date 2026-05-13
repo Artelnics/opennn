@@ -174,37 +174,68 @@ __global__ void sgd_update_kernel(
     const float4* __restrict__ const g4 = reinterpret_cast<const float4*>(gradients);
     __nv_bfloat162* __restrict__ const bf2 = reinterpret_cast<__nv_bfloat162*>(parameters_bf16);
 
-    for (int i = tid; i < n_vec; i += stride)
+    if (has_momentum)
     {
-        float4 P = p4[i];
-        float4 V = v4[i];
-        const float4 G = g4[i];
-
-        sgd_update_one(P.x, V.x, G.x, learning_rate, momentum, nesterov);
-        sgd_update_one(P.y, V.y, G.y, learning_rate, momentum, nesterov);
-        sgd_update_one(P.z, V.z, G.z, learning_rate, momentum, nesterov);
-        sgd_update_one(P.w, V.w, G.w, learning_rate, momentum, nesterov);
-
-        p4[i] = P;
-
-        if (has_momentum) v4[i] = V;
-
-        // Refresh BF16 mirror in the same kernel — see adam_update_kernel for
-        // the rationale (P is already in registers, no extra read pass).
-        if (bf2)
+        for (int i = tid; i < n_vec; i += stride)
         {
-            bf2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
-            bf2[i * 2 + 1] = __floats2bfloat162_rn(P.z, P.w);
+            float4 P = p4[i];
+            float4 V = v4[i];
+            const float4 G = g4[i];
+
+            sgd_update_one(P.x, V.x, G.x, learning_rate, momentum, nesterov);
+            sgd_update_one(P.y, V.y, G.y, learning_rate, momentum, nesterov);
+            sgd_update_one(P.z, V.z, G.z, learning_rate, momentum, nesterov);
+            sgd_update_one(P.w, V.w, G.w, learning_rate, momentum, nesterov);
+
+            p4[i] = P;
+            v4[i] = V;
+
+            // Refresh BF16 mirror in the same kernel — see adam_update_kernel for
+            // the rationale (P is already in registers, no extra read pass).
+            if (bf2)
+            {
+                bf2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
+                bf2[i * 2 + 1] = __floats2bfloat162_rn(P.z, P.w);
+            }
+        }
+
+        const int tail_start = n_vec * 4;
+        for (int i = tail_start + tid; i < n; i += stride)
+        {
+            sgd_update_one(parameters[i], velocity[i], gradients[i],
+                           learning_rate, momentum, nesterov);
+            if (parameters_bf16)
+                parameters_bf16[i] = __float2bfloat16(parameters[i]);
         }
     }
-
-    const int tail_start = n_vec * 4;
-    for (int i = tail_start + tid; i < n; i += stride)
+    else
     {
-        sgd_update_one(parameters[i], velocity[i], gradients[i],
-                       learning_rate, momentum, nesterov);
-        if (parameters_bf16)
-            parameters_bf16[i] = __float2bfloat16(parameters[i]);
+        for (int i = tid; i < n_vec; i += stride)
+        {
+            float4 P = p4[i];
+            const float4 G = g4[i];
+
+            P.x -= learning_rate * G.x;
+            P.y -= learning_rate * G.y;
+            P.z -= learning_rate * G.z;
+            P.w -= learning_rate * G.w;
+
+            p4[i] = P;
+
+            if (bf2)
+            {
+                bf2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
+                bf2[i * 2 + 1] = __floats2bfloat162_rn(P.z, P.w);
+            }
+        }
+
+        const int tail_start = n_vec * 4;
+        for (int i = tail_start + tid; i < n; i += stride)
+        {
+            parameters[i] -= learning_rate * gradients[i];
+            if (parameters_bf16)
+                parameters_bf16[i] = __float2bfloat16(parameters[i]);
+        }
     }
 }
 

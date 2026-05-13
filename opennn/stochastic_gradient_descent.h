@@ -20,7 +20,7 @@ class StochasticGradientDescent final : public Optimizer
 
 public:
 
-    enum DataSlot { ParameterUpdate, LastParameterUpdate };
+    enum DataSlot { Velocity };
 
     StochasticGradientDescent(Loss* = nullptr);
 

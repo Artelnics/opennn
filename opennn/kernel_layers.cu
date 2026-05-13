@@ -544,18 +544,11 @@ void max_pooling_3d_backward_cuda(const Index n, const T* delta, T* in_gradient,
 template void max_pooling_3d_backward_cuda<float>        (const Index, const float*,         float*,         const float*, const int, const int);
 template void max_pooling_3d_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const float*, const int, const int);
 
-// Per-TU pooling scratch. Sized lazily, never freed (process-lifetime allocation).
-namespace { float* pooling_scratch_ = nullptr; size_t pooling_scratch_size_ = 0; }
+namespace { opennn::Buffer pooling_scratch_(opennn::Device::CUDA); }
 
 static float* get_pooling_scratch(size_t floats_needed)
 {
-    if (floats_needed > pooling_scratch_size_)
-    {
-        if (pooling_scratch_) cudaFree(pooling_scratch_);
-        cudaMalloc(&pooling_scratch_, floats_needed * sizeof(float));
-        pooling_scratch_size_ = floats_needed;
-    }
-    return pooling_scratch_;
+    return pooling_scratch_.ensure<float>(opennn::Index(floats_needed));
 }
 
 // Helper for average pooling: writes per-token validity (1 if any feature is

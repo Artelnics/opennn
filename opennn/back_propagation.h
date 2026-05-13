@@ -42,6 +42,7 @@ struct BackPropagation
 
     vector<vector<BackwardEdge>> backward_edges;
 
+    TensorView& get_output_deltas();
     const TensorView& get_output_deltas() const;
 
     void print() const;

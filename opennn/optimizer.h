@@ -98,6 +98,10 @@ protected:
 
     void wait_prefetch(int slot);
 
+    void record_batch_reuse(Batch& batch);
+
+    void clear_batch_reuse_events();
+
     void sync_device();
 
     static void clip_gradient_norm(Buffer& gradient, float max_norm);
@@ -154,6 +158,10 @@ protected:
 
     cudaStream_t memory_stream = nullptr;
     cudaEvent_t batch_ready_event[2] = {nullptr, nullptr};
+    unordered_map<Batch*, cudaEvent_t> batch_reuse_events;
+    unordered_set<Batch*> batch_reuse_recorded;
+
+    Buffer prefetch_fp32_staging{Device::CUDA};
 };
 
 struct OptimizerData

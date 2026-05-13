@@ -21,53 +21,41 @@ namespace
     Buffer bf16_gradient_(Device::CUDA);
     Buffer fp32_upcast_(Device::CUDA);
 
+    Buffer cudnn_conv_workspace_(Device::CUDA);
+
     unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans_;
 }
 
-void* ensure_cublas_lt_workspace(size_t min_bytes)
+namespace scratch
 {
-    if (min_bytes == 0) return nullptr;
-    cublas_lt_workspace_.grow_to(Index(min_bytes));
-    return cublas_lt_workspace_.data;
+
+void* ensure_cublas_lt_workspace(size_t min_bytes)    { return cublas_lt_workspace_.ensure_bytes(min_bytes); }
+__nv_bfloat16* ensure_bf16_input_scratch(Index n)     { return bf16_input_.ensure<__nv_bfloat16>(n); }
+__nv_bfloat16* ensure_bf16_gradient_scratch(Index n)  { return bf16_gradient_.ensure<__nv_bfloat16>(n); }
+float* ensure_fp32_upcast_scratch(Index n)            { return fp32_upcast_.ensure<float>(n); }
+void* ensure_cudnn_conv_workspace(size_t min_bytes)   { return cudnn_conv_workspace_.ensure_bytes(min_bytes); }
+
 }
 
-__nv_bfloat16* ensure_bf16_input_scratch(Index n_elements)
-{
-    bf16_input_.grow_to(n_elements * Index(sizeof(__nv_bfloat16)));
-    return bf16_input_.as<__nv_bfloat16>();
-}
-
-__nv_bfloat16* ensure_bf16_gradient_scratch(Index n_elements)
-{
-    bf16_gradient_.grow_to(n_elements * Index(sizeof(__nv_bfloat16)));
-    return bf16_gradient_.as<__nv_bfloat16>();
-}
-
-float* ensure_fp32_upcast_scratch(Index n_elements)
-{
-    fp32_upcast_.grow_to(n_elements * Index(sizeof(float)));
-    return fp32_upcast_.as<float>();
-}
-
-const void* maybe_cast(const TensorView& input, Type target_type)
+const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
 {
     if (input.type == target_type) return input.data;
 
     if (input.type == Type::FP32 && target_type == Type::BF16)
     {
-        __nv_bfloat16* scratch = ensure_bf16_input_scratch(input.size());
-        cast_fp32_to_bf16_cuda(input.size(), input.as<float>(), scratch);
-        return scratch;
+        __nv_bfloat16* dst = scratch::ensure_bf16_input_scratch(input.size());
+        cast_fp32_to_bf16_cuda(input.size(), input.as<float>(), dst);
+        return dst;
     }
 
     if (input.type == Type::BF16 && target_type == Type::FP32)
     {
-        float* scratch = ensure_fp32_upcast_scratch(input.size());
-        cast_bf16_to_fp32_cuda(input.size(), input.as<__nv_bfloat16>(), scratch);
-        return scratch;
+        float* dst = scratch::ensure_fp32_upcast_scratch(input.size());
+        cast_bf16_to_fp32_cuda(input.size(), input.as<__nv_bfloat16>(), dst);
+        return dst;
     }
 
-    throw runtime_error("maybe_cast: unsupported type pair");
+    throw runtime_error("data_for_gemm_dtype: unsupported type pair");
 }
 
 const LtMatmulPlan& get_lt_gemm_plan(
@@ -131,7 +119,7 @@ const LtMatmulPlan& get_lt_gemm_plan(
         plan.workspace_size = heuristic.workspaceSize;
 
         // Grow the global scratch buffer to fit this plan's chosen algorithm.
-        ensure_cublas_lt_workspace(plan.workspace_size);
+        scratch::ensure_cublas_lt_workspace(plan.workspace_size);
     }
 
     auto [iter, _] = lt_gemm_plans_.emplace(key, move(plan));

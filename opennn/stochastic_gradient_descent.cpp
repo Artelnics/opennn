@@ -82,17 +82,28 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
+    if (momentum > 0.0f && optimization_data.views.empty())
+    {
+        const Index parameters_number = neural_network->get_parameters_size();
+        const Device device = is_gpu() ? Device::CUDA : Device::CPU;
+        optimization_data.set({Shape{parameters_number}}, device);
+    }
+
 #ifdef OPENNN_HAS_CUDA
     if (is_gpu())
     {
         const Index parameters_number = neural_network->get_parameters_size();
+
+        float* velocity_ptr = optimization_data.views.empty()
+            ? nullptr
+            : optimization_data.views[Velocity].as<float>();
 
         // BF16 mirror (if allocated) is refreshed inside the same kernel —
         // saves a separate FP32→BF16 cast pass over the whole parameter set.
         sgd_update_cuda(
             parameters_number,
             neural_network->get_parameters_data(),
-            optimization_data.views[ParameterUpdate].as<float>(),
+            velocity_ptr,
             back_propagation.gradient.as<float>(),
             current_learning_rate,
             momentum,
@@ -109,11 +120,6 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     VectorMap gradient(back_propagation.gradient.as<float>(),
                        back_propagation.gradient.size_in_floats());
 
-    VectorMap parameter_updates(optimization_data.views[ParameterUpdate].as<float>(),
-                                optimization_data.views[ParameterUpdate].size());
-    VectorMap last_parameter_updates(optimization_data.views[LastParameterUpdate].as<float>(),
-                                     optimization_data.views[LastParameterUpdate].size());
-
     const Index parameters_size = parameters.size();
 
     if (momentum <= 0.0f)
@@ -121,21 +127,21 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         #pragma omp parallel for
         for (Index i = 0; i < parameters_size; ++i)
         {
-            const float lr_g = current_learning_rate * gradient(i);
-            parameter_updates(i) = -lr_g;
-            parameters(i) -= lr_g;
+            parameters(i) -= current_learning_rate * gradient(i);
         }
     }
     else
     {
+        VectorMap velocity(optimization_data.views[Velocity].as<float>(),
+                           optimization_data.views[Velocity].size());
+
         #pragma omp parallel for
         for (Index i = 0; i < parameters_size; ++i)
         {
             const float lr_g = current_learning_rate * gradient(i);
-            const float velocity = momentum * last_parameter_updates(i) - lr_g;
-            parameter_updates(i) = velocity;
-            last_parameter_updates(i) = velocity;
-            parameters(i) += nesterov ? momentum * velocity - lr_g : velocity;
+            const float v_new = momentum * velocity(i) - lr_g;
+            velocity(i) = v_new;
+            parameters(i) += nesterov ? momentum * v_new - lr_g : v_new;
         }
     }
 }
@@ -200,7 +206,9 @@ TrainingResults StochasticGradientDescent::train()
     ThreadSafeQueue<Batch*> ready_validation_queue;
     vector<unique_ptr<Batch>> validation_batch_pool;
 
-    if (has_validation)
+    const bool share_batch_pool = has_validation && validation_batch_size == training_batch_size;
+
+    if (has_validation && !share_batch_pool)
     {
         for (int i = 0; i < pool_size; ++i)
         {
@@ -208,6 +216,9 @@ TrainingResults StochasticGradientDescent::train()
             empty_validation_queue.push(validation_batch_pool.back().get());
         }
     }
+
+    ThreadSafeQueue<Batch*>& validation_empty_q = share_batch_pool ? empty_training_queue : empty_validation_queue;
+    ThreadSafeQueue<Batch*>& validation_ready_q = share_batch_pool ? ready_training_queue : ready_validation_queue;
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
 
     loss->set_normalization_coefficient();
@@ -231,13 +242,7 @@ TrainingResults StochasticGradientDescent::train()
 
     // Optimization data
 
-    const Index parameters_number = loss->get_neural_network()->get_parameters_size();
-
-    const Device device = is_gpu() ? Device::CUDA : Device::CPU;
-
     OptimizerData optimization_data;
-    optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, device);
-
     optimization_data.iteration = 1;
 
     float training_error = 0.0f;
@@ -295,8 +300,8 @@ TrainingResults StochasticGradientDescent::train()
 
             const EpochStats val_stats = evaluate_epoch(is_token_cross_entropy,
                                                         *validation_fp,
-                                                        empty_validation_queue,
-                                                        ready_validation_queue,
+                                                        validation_empty_q,
+                                                        validation_ready_q,
                                                         validation_batches,
                                                         input_feature_indices,
                                                         decoder_feature_indices,

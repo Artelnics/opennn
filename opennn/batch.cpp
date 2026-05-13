@@ -40,6 +40,10 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 
     dataset = new_dataset;
 
+    const bool bf16_input = on_gpu
+                         && is_bf16_training()
+                         && dynamic_cast<const LanguageDataset*>(dataset) == nullptr;
+
     // Input
 
     const Shape& dataset_input_shape = dataset->get_shape("Input");
@@ -51,10 +55,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 #ifdef OPENNN_HAS_CUDA
         if (on_gpu)
         {
-            const bool bf16 = is_bf16_training()
-                        && dynamic_cast<const LanguageDataset*>(dataset) == nullptr;
-
-            const Index elem_bytes = bf16 ? Index(sizeof(__nv_bfloat16)) : Index(sizeof(float));
+            const Index elem_bytes = bf16_input ? Index(sizeof(__nv_bfloat16)) : Index(sizeof(float));
             input.resize_bytes(input_shape.size() * elem_bytes, Device::CUDA);
 
             num_input_features = dataset->get_features_number("Input");
@@ -67,8 +68,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
                 inputs_host_allocated_size = input_size;
             }
 
-            if (bf16)
-                inputs_fp32_staging.grow_to(input_size * Index(sizeof(float)));
+            needs_fp32_staging = bf16_input;
         }
         else
 #endif
@@ -150,17 +150,14 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         target_view_host_cache = TensorView(const_cast<float*>(target.as<float>()), target_shape);
 
 #ifdef OPENNN_HAS_CUDA
-    if (!input_shape.empty() && input.as<float>())
+    if (!input_shape.empty() && input.data)
     {
-        const bool integer_inputs = (dynamic_cast<const LanguageDataset*>(dataset) != nullptr);
-        const Type input_dtype = (is_bf16_training() && !integer_inputs)
-                                     ? Type::BF16
-                                     : Type::FP32;
-        TensorView in_view(input.as<float>(), input_shape, input_dtype);
+        const Type input_dtype = bf16_input ? Type::BF16 : Type::FP32;
+        TensorView in_view(input.data, input_shape, input_dtype);
 
-        if (!decoder_shape.empty() && decoder.as<float>())
+        if (!decoder_shape.empty() && decoder.data)
         {
-            TensorView dec_view(decoder.as<float>(), decoder_shape, Type::FP32);
+            TensorView dec_view(decoder.data, decoder_shape, Type::FP32);
             input_views_cache = { dec_view, in_view };
         }
         else
@@ -169,8 +166,8 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         }
     }
 
-    if (!target_shape.empty() && target.as<float>())
-        target_view_cache = TensorView(target.as<float>(), target_shape, Type::FP32);
+    if (!target_shape.empty() && target.data)
+        target_view_cache = TensorView(target.data, target_shape, Type::FP32);
 #endif
 }
 
@@ -256,18 +253,19 @@ bool Batch::is_empty() const
 
 #ifdef OPENNN_HAS_CUDA
 
-void Batch::copy_device_async(const Index current_batch_size, cudaStream_t stream)
+void Batch::copy_device_async(const Index current_batch_size, cudaStream_t stream, float* fp32_staging)
 {
     const Index input_size = current_batch_size * num_input_features;
     const Index target_size = current_batch_size * num_target_features;
 
-    if (inputs_fp32_staging.data != nullptr)
+    if (needs_fp32_staging)
     {
-        CHECK_CUDA(cudaMemcpyAsync(inputs_fp32_staging.data, inputs_host,
+        assert(fp32_staging != nullptr);
+        CHECK_CUDA(cudaMemcpyAsync(fp32_staging, inputs_host,
                                    input_size * sizeof(float),
                                    cudaMemcpyHostToDevice, stream));
         cast_fp32_to_bf16_cuda(input_size,
-                               inputs_fp32_staging.as<float>(),
+                               fp32_staging,
                                input.as<__nv_bfloat16>(),
                                stream);
     }

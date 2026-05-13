@@ -70,6 +70,13 @@ void cross_entropy_3d_multiple_forward_cuda(const Index, const int, const T*, co
 template<typename T>
 void cross_entropy_3d_multiple_backward_cuda(const Index, const int, const T*, const float*, T*, const float);
 
+template<typename T>
+void cross_entropy_3d_multiple_backward_device_count_cuda(const Index, const int, const T*, const float*, T*, const float*);
+
+void accumulate_scaled_metric_cuda(const float*, float, float*);
+
+void accumulate_cross_entropy_3d_metrics_cuda(const float*, float*, float*);
+
 // Regularization
 
 template<typename T>

@@ -115,12 +115,17 @@ TrainingResults AdaptiveMomentEstimation::train()
     ThreadSafeQueue<Batch*> ready_validation_queue;
     vector<unique_ptr<Batch>> validation_batch_pool;
 
-    if (has_validation)
+    const bool share_batch_pool = has_validation && validation_batch_size == training_batch_size;
+
+    if (has_validation && !share_batch_pool)
         for (int i = 0; i < pool_size; ++i)
         {
             validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
             empty_validation_queue.push(validation_batch_pool.back().get());
         }
+
+    ThreadSafeQueue<Batch*>& validation_empty_q = share_batch_pool ? empty_training_queue : empty_validation_queue;
+    ThreadSafeQueue<Batch*>& validation_ready_q = share_batch_pool ? ready_training_queue : ready_validation_queue;
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
 
     loss->set_normalization_coefficient();
@@ -201,8 +206,8 @@ TrainingResults AdaptiveMomentEstimation::train()
 
             const EpochStats val_stats = evaluate_epoch(is_token_cross_entropy,
                                                         *validation_fp,
-                                                        empty_validation_queue,
-                                                        ready_validation_queue,
+                                                        validation_empty_q,
+                                                        validation_ready_q,
                                                         validation_batches,
                                                         input_feature_indices,
                                                         decoder_feature_indices,
@@ -225,7 +230,10 @@ TrainingResults AdaptiveMomentEstimation::train()
                 const size_t bytes = size_t(psize) * sizeof(float);
 #ifdef OPENNN_HAS_CUDA
                 if(Configuration::instance().is_gpu())
-                    cudaMemcpy(best_parameters.data(), src, bytes, cudaMemcpyDeviceToHost);
+                {
+                    CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
+                    CHECK_CUDA(cudaMemcpy(best_parameters.data(), src, bytes, cudaMemcpyDeviceToHost));
+                }
                 else
 #endif
                     std::memcpy(best_parameters.data(), src, bytes);

@@ -316,8 +316,7 @@ struct ConvolutionOp : Operator
     cudnnConvolutionBwdDataAlgo_t   algorithm_data    = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
     cudnnConvolutionBwdFilterAlgo_t algorithm_filter  = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
 
-    Buffer workspace{Device::CUDA};
-    Buffer backward_filter_workspace{Device::CUDA};
+    size_t cudnn_workspace_size_ = 0;
 
     // High-water-mark of the batch size for which the cuDNN plan
     // (algorithms + workspaces) is currently valid. Lazy-initialized on the
