@@ -66,6 +66,8 @@ public:
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
     virtual TrainingResults train() = 0;
 
+    Index get_maximum_batch_size() const;
+
     const string& get_name() const { return name; }
 
     virtual void print() const {}
@@ -108,16 +110,9 @@ protected:
 
     bool should_display(Index epoch) const { return display && epoch % display_period == 0; }
 
-    struct BatchPlan
-    {
-        Index training_batch_size      = 0;
-        Index validation_batch_size    = 0;
-        Index training_batches_number  = 0;
-    };
-
-    BatchPlan plan_batches(Index requested,
-                           Index training_samples_number,
-                           Index validation_samples_number) const;
+    void warn_dropped_samples(Index batch_size,
+                              Index samples_number,
+                              const char* context) const;
 
     EpochStats train_epoch(bool tracks_accuracy,
                            ForwardPropagation& forward_propagation,

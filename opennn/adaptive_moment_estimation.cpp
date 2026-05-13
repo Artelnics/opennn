@@ -86,8 +86,19 @@ TrainingResults AdaptiveMomentEstimation::train()
     const Index training_samples_number = dataset->get_samples_number("Training");
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
-    const auto [training_batch_size, validation_batch_size, training_batches_number] =
-        plan_batches(batch_size, training_samples_number, validation_samples_number);
+    const Index training_batch_size = (batch_size <= 0 || batch_size > training_samples_number)
+        ? training_samples_number
+        : batch_size;
+    const Index validation_batch_size = (batch_size <= 0 || batch_size > validation_samples_number)
+        ? validation_samples_number
+        : batch_size;
+    const Index training_batches_number = (training_batch_size > 0)
+        ? training_samples_number / training_batch_size
+        : 0;
+
+    warn_dropped_samples(training_batch_size, training_samples_number, "training");
+    if (has_validation)
+        warn_dropped_samples(validation_batch_size, validation_samples_number, "validation");
 
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> validation_batches;
