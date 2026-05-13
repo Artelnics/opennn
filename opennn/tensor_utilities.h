@@ -51,11 +51,21 @@ struct Shape
 
     Shape() noexcept = default;
 
-    Shape(size_t new_rank, Index value) : rank(min(new_rank, MaxRank))
-    { std::fill_n(dims, rank, value); }
+    Shape(size_t new_rank, Index value) : rank(new_rank)
+    {
+        if (new_rank > MaxRank)
+            throw runtime_error("Shape: rank " + to_string(new_rank)
+                                + " exceeds MaxRank=" + to_string(MaxRank) + ".");
+        std::fill_n(dims, rank, value);
+    }
 
-    Shape(initializer_list<Index> list) : rank(min(list.size(), MaxRank))
-    { std::copy_n(list.begin(), rank, dims); }
+    Shape(initializer_list<Index> list) : rank(list.size())
+    {
+        if (list.size() > MaxRank)
+            throw runtime_error("Shape: initializer rank " + to_string(list.size())
+                                + " exceeds MaxRank=" + to_string(MaxRank) + ".");
+        std::copy_n(list.begin(), rank, dims);
+    }
 
     const Index* begin() const noexcept { return dims; }
     const Index* end()   const noexcept { return dims + rank; }

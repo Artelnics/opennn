@@ -23,7 +23,7 @@ public:
     Bounding(const Shape& = {0}, const string& = "bounding_layer");
 
     Shape get_input_shape() const override { return output_shape; }
-    Shape get_output_shape() const override;
+    Shape get_output_shape() const override { return output_shape; }
 
     const BoundingMethod& get_bounding_method() const { return bound.method; }
 
@@ -43,6 +43,8 @@ public:
     void set_upper_bounds(const VectorR&);
     void set_upper_bound(Index, float);
 
+    float* link_states(float*) override;
+
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 
@@ -53,7 +55,15 @@ private:
 
     Shape output_shape;
 
+    vector<float> lower_bounds;
+    vector<float> upper_bounds;
+
+    Buffer op_storage;
+    bool   op_storage_dirty = true;
+
     BoundOp bound;
+
+    void refresh_op_storage(Device device);
 
     static const EnumMap<BoundingMethod>& bounding_method_map();
 };

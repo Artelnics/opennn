@@ -126,7 +126,7 @@ void LevenbergMarquardtAlgorithm::calculate_error(const Batch&,
                               / float(back_propagation_lm.squared_errors.size());
 }
 
-void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& batch,
+void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
                                                    const ForwardPropagation& forward_propagation,
                                                    BackPropagationLM& back_propagation_lm)
 {
@@ -208,11 +208,11 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 {
     const string loss_name = loss->get_name();
     if (loss_name == "MinkowskiError")
-        throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
+        throw runtime_error("Levenberg-Marquardt algorithm cannot work with Minkowski error.");
     if (loss_name == "CrossEntropy")
-        throw runtime_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
+        throw runtime_error("Levenberg-Marquardt algorithm cannot work with cross-entropy error.");
     if (loss_name == "WeightedSquaredError")
-        throw runtime_error("Levenberg-Marquard algorithm is not implemented with weighted squared error.");
+        throw runtime_error("Levenberg-Marquardt algorithm is not implemented with weighted squared error.");
 
     // Start training
 

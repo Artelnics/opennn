@@ -785,25 +785,15 @@ struct BoundOp : Operator
     enum class Method { NoBounding, Bounding };
 
     Method method = Method::Bounding;
-    Index features = 0;
 
     TensorView lower;
     TensorView upper;
 
-    void set(Method new_method, Index new_features) { method = new_method; features = new_features; }
-
-    vector<pair<Shape, Type>> state_specs() const override;
-    size_t state_count() const override;
-    void link_states(const vector<TensorView>& views) override;
-
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
-
-    void load_state_from_JSON(const Json* parent) override;
 };
 
 struct ScaleOp : Operator
 {
-    Index features = 0;
     float min_range = -1.0f;
     float max_range = 1.0f;
 
@@ -813,20 +803,11 @@ struct ScaleOp : Operator
     TensorView standard_deviations;
     TensorView scalers;
 
-    void set(Index new_features) { features = new_features; }
-
-    vector<pair<Shape, Type>> state_specs() const override;
-    size_t state_count() const override;
-    void link_states(const vector<TensorView>& views) override;
-
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
-
-    void load_state_from_JSON(const Json* parent) override;
 };
 
 struct UnscaleOp : Operator
 {
-    Index features = 0;
     float min_range = -1.0f;
     float max_range = 1.0f;
 
@@ -836,15 +817,7 @@ struct UnscaleOp : Operator
     TensorView standard_deviations;
     TensorView scalers;
 
-    void set(Index new_features) { features = new_features; }
-
-    vector<pair<Shape, Type>> state_specs() const override;
-    size_t state_count() const override;
-    void link_states(const vector<TensorView>& views) override;
-
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
-
-    void load_state_from_JSON(const Json* parent) override;
 };
 
 }

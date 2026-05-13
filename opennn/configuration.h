@@ -70,33 +70,36 @@ inline cudnnDataType_t to_cudnn(Type type) noexcept
 {
     switch (type)
     {
+        case Type::Auto: return TypeInfo<Type::FP32>::cudnn;
         case Type::FP32: return TypeInfo<Type::FP32>::cudnn;
         case Type::BF16: return TypeInfo<Type::BF16>::cudnn;
         case Type::INT8: return TypeInfo<Type::INT8>::cudnn;
-        default:         return TypeInfo<Type::FP32>::cudnn;
     }
+    return TypeInfo<Type::FP32>::cudnn;
 }
 
 inline cudaDataType_t to_cuda(Type type) noexcept
 {
     switch (type)
     {
+        case Type::Auto: return TypeInfo<Type::FP32>::cuda;
         case Type::FP32: return TypeInfo<Type::FP32>::cuda;
         case Type::BF16: return TypeInfo<Type::BF16>::cuda;
         case Type::INT8: return TypeInfo<Type::INT8>::cuda;
-        default:         return TypeInfo<Type::FP32>::cuda;
     }
+    return TypeInfo<Type::FP32>::cuda;
 }
 
 inline Index type_bytes(Type type) noexcept
 {
     switch (type)
     {
+        case Type::Auto: return TypeInfo<Type::FP32>::bytes;
         case Type::FP32: return TypeInfo<Type::FP32>::bytes;
         case Type::BF16: return TypeInfo<Type::BF16>::bytes;
         case Type::INT8: return TypeInfo<Type::INT8>::bytes;
-        default:         return TypeInfo<Type::FP32>::bytes;
     }
+    return TypeInfo<Type::FP32>::bytes;
 }
 
 class Configuration

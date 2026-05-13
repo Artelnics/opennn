@@ -197,21 +197,34 @@ Layer* NeuralNetwork::get_first(LayerType type)
 
 static void set_variable_names(vector<Variable>& variables, const vector<string>& new_names)
 {
-    Index name_index = 0;
+    const size_t total = new_names.size();
+    size_t name_index = 0;
     for (size_t i = 0; i < variables.size(); ++i)
     {
         if (variables[i].is_categorical())
         {
             const size_t num_cats = variables[i].get_categories_number();
-            variables[i].categories.assign(new_names.begin() + name_index, new_names.begin() + name_index + num_cats);
+            if (name_index + num_cats > total)
+                throw runtime_error("set_variable_names: not enough names for categorical variable "
+                                    + to_string(i) + " (need " + to_string(num_cats)
+                                    + ", have " + to_string(total - name_index) + ").");
+            variables[i].categories.assign(new_names.begin() + name_index,
+                                           new_names.begin() + name_index + num_cats);
             name_index += num_cats;
         }
         else
         {
+            if (name_index >= total)
+                throw runtime_error("set_variable_names: not enough names for scalar variable "
+                                    + to_string(i) + ".");
             variables[i].name = new_names[name_index];
             ++name_index;
         }
     }
+
+    if (name_index != total)
+        throw runtime_error("set_variable_names: received " + to_string(total)
+                            + " names but variables expected " + to_string(name_index) + ".");
 }
 
 void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
@@ -453,6 +466,20 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
     const vector<TensorView> input_views = {TensorView(const_cast<float*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
                                             TensorView(const_cast<float*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
 
+#ifdef OPENNN_HAS_CUDA
+    IF_GPU({
+        const MatrixR result_matrix = calculate_outputs_device(input_views, forward_propagation);
+        const TensorView out = forward_propagation.get_outputs();
+        if (out.shape.rank < 3)
+            throw runtime_error("calculate_outputs(Tensor3, Tensor3): expected rank-3 output, got rank "
+                                + to_string(out.shape.rank));
+        Tensor3 result(out.shape[0], out.shape[1], out.shape[2]);
+        std::memcpy(result.data(), result_matrix.data(),
+                    size_t(result.size()) * sizeof(float));
+        return result;
+    });
+#endif
+
     forward_propagate(input_views, forward_propagation, false);
 
     return forward_propagation.get_outputs().as_tensor<3>();
@@ -515,7 +542,11 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       Index last_layer_index) const
 {
     const auto pick_input = [&](size_t k) -> const TensorView& {
-        return input_view[k < input_view.size() ? k : 0];
+        if (k >= input_view.size())
+            throw runtime_error("NeuralNetwork::forward_propagate: input index " + to_string(k)
+                                + " out of range (have " + to_string(input_view.size())
+                                + " input views). Network wiring expects more inputs than were provided.");
+        return input_view[k];
     };
 
     for (Index i = first_layer_index; i <= last_layer_index; ++i)
@@ -1182,18 +1213,16 @@ void NeuralNetwork::link_parameters()
 
 void NeuralNetwork::copy_states_device()
 {
-    if (states.empty()) return;
-
-    states.migrate_to(Device::CUDA);
+    if (!states.empty())
+        states.migrate_to(Device::CUDA);
 
     link_states();
 }
 
 void NeuralNetwork::copy_states_host()
 {
-    if (states.empty()) return;
-
-    states.migrate_to(Device::CPU);
+    if (!states.empty())
+        states.migrate_to(Device::CPU);
 
     link_states();
 }
@@ -1201,7 +1230,6 @@ void NeuralNetwork::copy_states_host()
 void NeuralNetwork::link_states()
 {
     float* state_pointer = states.as<float>();
-    if (!state_pointer) return;
 
     for (auto& layer : layers)
         state_pointer = layer->link_states(state_pointer);
@@ -1213,18 +1241,23 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     copy_parameters_device();
     copy_states_device();
 
-    const Index input_size = input_views_cpu[0].size();
-    float* input_device = nullptr;
-    CHECK_CUDA(cudaMalloc(&input_device, input_size * sizeof(float)));
     cudaStream_t stream = Backend::get_compute_stream();
-    CHECK_CUDA(cudaMemcpyAsync(input_device,
-                               input_views_cpu[0].data,
-                               input_size * sizeof(float),
-                               cudaMemcpyHostToDevice,
-                               stream));
 
     vector<TensorView> input_views_gpu = input_views_cpu;
-    input_views_gpu[0].data = input_device;
+    vector<float*>     input_devices(input_views_cpu.size(), nullptr);
+
+    for (size_t i = 0; i < input_views_cpu.size(); ++i)
+    {
+        const Index input_size = input_views_cpu[i].size();
+        if (input_size == 0) continue;
+        CHECK_CUDA(cudaMalloc(&input_devices[i], input_size * sizeof(float)));
+        CHECK_CUDA(cudaMemcpyAsync(input_devices[i],
+                                   input_views_cpu[i].data,
+                                   input_size * sizeof(float),
+                                   cudaMemcpyHostToDevice,
+                                   stream));
+        input_views_gpu[i].data = input_devices[i];
+    }
 
     forward_propagate(input_views_gpu, forward_propagation, false);
 
@@ -1274,7 +1307,8 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
         }
     }
 
-    CHECK_CUDA(cudaFree(input_device));
+    for (float* p : input_devices)
+        if (p) CHECK_CUDA(cudaFree(p));
 
     return result;
 }

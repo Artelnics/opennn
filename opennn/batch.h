@@ -18,6 +18,10 @@ namespace opennn
 struct Batch
 {
     Batch(const Index = 0, const Dataset* = nullptr);
+    ~Batch();
+
+    Batch(const Batch&)            = delete;
+    Batch& operator=(const Batch&) = delete;
 
     void set(const Index = 0, const Dataset* = nullptr);
 

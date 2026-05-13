@@ -24,28 +24,26 @@ public:
 
     Shape get_output_shape() const override { return input_shape; }
 
-    VectorR get_minimums() const;
-    VectorR get_maximums() const;
-    VectorR get_means() const;
+    const vector<Descriptives>& get_descriptives() const { return descriptives; }
+    const vector<ScalerMethod>& get_scalers()      const { return scalers; }
+
+    VectorR get_minimums()            const;
+    VectorR get_maximums()            const;
+    VectorR get_means()               const;
     VectorR get_standard_deviations() const;
 
-    const vector<ScalerMethod>& get_scalers() const { return scalers; }
-
-    float get_min_range() const { return scale_op.min_range; }
-    float get_max_range() const { return scale_op.max_range; }
+    float get_min_range() const { return min_range; }
+    float get_max_range() const { return max_range; }
 
     void set(const Shape& = {});
-
     void set_input_shape(const Shape&) override;
 
     void set_descriptives(const vector<Descriptives>&);
-
-    void set_min_max_range(float min, float max) { scale_op.min_range = min; scale_op.max_range = max; }
-
+    void set_min_max_range(float min, float max);
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
+    float* link_states(float*) override;
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
@@ -55,11 +53,17 @@ public:
 
 private:
 
+    vector<Descriptives> descriptives;
     vector<ScalerMethod> scalers;
+    float min_range = -1.0f;
+    float max_range = 1.0f;
+
+    Buffer op_storage;
+    bool   op_storage_dirty = true;
 
     ScaleOp scale_op;
 
-    void flush_scalers_to_states();
+    void refresh_op_storage(Device device);
 };
 
 }

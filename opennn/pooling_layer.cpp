@@ -97,17 +97,21 @@ void Pooling::set(const Shape& new_input_shape,
     if (new_padding_dimensions.rank != 2)
         throw runtime_error("Padding shape must be 2");
 
-    if (new_pool_dimensions[0] > new_input_shape[0] || new_pool_dimensions[1] > new_input_shape[1])
-        throw runtime_error("Pool shape cannot be bigger than input shape");
-
     if (new_stride_shape[0] <= 0 || new_stride_shape[1] <= 0)
         throw runtime_error("Stride must be positive.");
 
-    if (new_stride_shape[0] > new_input_shape[0] || new_stride_shape[1] > new_input_shape[1])
-        throw runtime_error("Stride shape cannot be bigger than input shape");
-
     if (new_padding_dimensions[0] < 0 || new_padding_dimensions[1] < 0)
         throw runtime_error("Padding shape cannot be negative");
+
+    // Pool must fit into the padded input (input + 2*padding). Padding lets
+    // valid configurations like input=3, pool=5, padding=2 -> output=1 work.
+    if (new_pool_dimensions[0] > new_input_shape[0] + 2 * new_padding_dimensions[0]
+     || new_pool_dimensions[1] > new_input_shape[1] + 2 * new_padding_dimensions[1])
+        throw runtime_error("Pool shape cannot be bigger than padded input shape");
+
+    if (new_stride_shape[0] > new_input_shape[0] + 2 * new_padding_dimensions[0]
+     || new_stride_shape[1] > new_input_shape[1] + 2 * new_padding_dimensions[1])
+        throw runtime_error("Stride shape cannot be bigger than padded input shape");
 
     // Direct assignment of all geometry; setters with side-effects are deferred
     // so we hit update_pool_operator() exactly once at the end.

@@ -13,9 +13,34 @@
 #include "neural_network.h"
 #include "unscaling_layer.h"
 #include "cuda_dispatch.h"
+#include "json.h"
 
 namespace opennn
 {
+
+namespace
+{
+
+Device current_device()
+{
+    return Configuration::instance().is_gpu() ? Device::CUDA : Device::CPU;
+}
+
+VectorR descriptives_field(const vector<Descriptives>& descriptives,
+                           float Descriptives::* member)
+{
+    VectorR values(ssize(descriptives));
+    for (Index i = 0; i < values.size(); ++i)
+        values(i) = descriptives[size_t(i)].*member;
+    return values;
+}
+
+}
+
+VectorR Unscaling::get_minimums()            const { return descriptives_field(descriptives, &Descriptives::minimum); }
+VectorR Unscaling::get_maximums()            const { return descriptives_field(descriptives, &Descriptives::maximum); }
+VectorR Unscaling::get_means()               const { return descriptives_field(descriptives, &Descriptives::mean); }
+VectorR Unscaling::get_standard_deviations() const { return descriptives_field(descriptives, &Descriptives::standard_deviation); }
 
 Unscaling::Unscaling(const Shape& new_input_shape, const string& new_label)
     : Layer("Unscaling", LayerType::Unscaling, false)
@@ -24,52 +49,23 @@ Unscaling::Unscaling(const Shape& new_input_shape, const string& new_label)
     set(new_input_shape.dim_or_zero(0), new_label);
 }
 
-Shape Unscaling::get_input_shape() const
-{
-    return { ssize(scalers) };
-}
-
-Shape Unscaling::get_output_shape() const
-{
-    return { ssize(scalers) };
-}
-
-VectorR Unscaling::get_minimums() const
-{
-    return unscale_op.minimums.data ? unscale_op.minimums.as_vector() : VectorR();
-}
-
-VectorR Unscaling::get_maximums() const
-{
-    return unscale_op.maximums.data ? unscale_op.maximums.as_vector() : VectorR();
-}
-
-VectorR Unscaling::get_means() const
-{
-    return unscale_op.means.data ? unscale_op.means.as_vector() : VectorR();
-}
-
-VectorR Unscaling::get_standard_deviations() const
-{
-    return unscale_op.standard_deviations.data ? unscale_op.standard_deviations.as_vector() : VectorR();
-}
-
 void Unscaling::set(Index new_neurons_number, const string& new_label)
 {
-    scalers.assign(new_neurons_number, ScalerMethod::MinimumMaximum);
-
     set_label(new_label);
 
     unscale_op.input_slots  = {Input};
     unscale_op.output_slots = {Output};
-    unscale_op.set(new_neurons_number);
 
-    set_min_max_range(-1.0f, 1.0f);
+    descriptives.assign(size_t(new_neurons_number), Descriptives(-1.0f, 1.0f, 0.0f, 1.0f));
+    scalers.assign(size_t(new_neurons_number), ScalerMethod::MinimumMaximum);
+    min_range = -1.0f;
+    max_range = 1.0f;
+    op_storage_dirty = true;
 }
 
 void Unscaling::set_input_shape(const Shape& new_input_shape)
 {
-    set(new_input_shape[0]);
+    set(new_input_shape.dim_or_zero(0));
 }
 
 void Unscaling::set_output_shape(const Shape& /*new_output_shape*/)
@@ -78,163 +74,206 @@ void Unscaling::set_output_shape(const Shape& /*new_output_shape*/)
 
 void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
-    if (!unscale_op.means.data)
-        throw runtime_error("Unscaling::set_descriptives: layer not compiled yet.");
+    if (ssize(new_descriptives) != ssize(descriptives))
+        throw runtime_error("Unscaling::set_descriptives: size mismatch (expected "
+                            + to_string(descriptives.size()) + ", got "
+                            + to_string(new_descriptives.size()) + ").");
+    descriptives = new_descriptives;
+    op_storage_dirty = true;
+    refresh_op_storage(current_device());
+}
 
-    const Index descriptives_count = new_descriptives.size();
-    if (descriptives_count != unscale_op.means.size())
-        throw runtime_error("Unscaling::set_descriptives: size mismatch.");
+void Unscaling::set_min_max_range(float new_min, float new_max)
+{
+    min_range = new_min;
+    max_range = new_max;
+    unscale_op.min_range = new_min;
+    unscale_op.max_range = new_max;
+}
 
-    for (Index i = 0; i < descriptives_count; ++i)
+void Unscaling::set_scalers(const vector<string>& scalers_str)
+{
+    if (ssize(scalers_str) != ssize(scalers))
+        throw runtime_error("Unscaling::set_scalers: size mismatch (expected "
+                            + to_string(scalers.size()) + ", got "
+                            + to_string(scalers_str.size()) + ").");
+    transform(scalers_str.begin(), scalers_str.end(), scalers.begin(), string_to_scaler_method);
+    op_storage_dirty = true;
+    refresh_op_storage(current_device());
+}
+
+void Unscaling::set_scalers(const string& scaler)
+{
+    const ScalerMethod method = string_to_scaler_method(scaler);
+    fill(scalers.begin(), scalers.end(), method);
+    op_storage_dirty = true;
+    refresh_op_storage(current_device());
+}
+
+float* Unscaling::link_states(float* pointer)
+{
+    refresh_op_storage(current_device());
+    return pointer;
+}
+
+void Unscaling::refresh_op_storage(Device device)
+{
+    const Index features = ssize(descriptives);
+    const Index bytes    = 5 * features * Index(sizeof(float));
+
+    const bool needs = op_storage_dirty
+                    || op_storage.bytes       != bytes
+                    || op_storage.device_type != device;
+    if (!needs) return;
+
+    op_storage.resize_bytes(bytes, device);
+    unscale_op.min_range = min_range;
+    unscale_op.max_range = max_range;
+
+    if (features == 0)
     {
-        unscale_op.means.as<float>()[i]               = new_descriptives[i].mean;
-        unscale_op.standard_deviations.as<float>()[i] = new_descriptives[i].standard_deviation;
-        unscale_op.minimums.as<float>()[i]            = new_descriptives[i].minimum;
-        unscale_op.maximums.as<float>()[i]            = new_descriptives[i].maximum;
+        unscale_op.minimums = unscale_op.maximums = unscale_op.means =
+            unscale_op.standard_deviations = unscale_op.scalers = TensorView();
+        op_storage_dirty = false;
+        return;
     }
-}
 
-void Unscaling::set_min_max_range(float min, float max)
-{
-    unscale_op.min_range = min;
-    unscale_op.max_range = max;
-}
+    vector<float> staging(size_t(5 * features));
+    for (Index i = 0; i < features; ++i)
+    {
+        staging[size_t(0 * features + i)] = descriptives[size_t(i)].minimum;
+        staging[size_t(1 * features + i)] = descriptives[size_t(i)].maximum;
+        staging[size_t(2 * features + i)] = descriptives[size_t(i)].mean;
+        staging[size_t(3 * features + i)] = descriptives[size_t(i)].standard_deviation;
+        staging[size_t(4 * features + i)] = float(int(scalers[size_t(i)]));
+    }
 
-void Unscaling::set_scalers(const vector<string>& new_scaler)
-{
-    scalers.resize(new_scaler.size());
-    transform(new_scaler.begin(), new_scaler.end(), scalers.begin(), string_to_scaler_method);
-    flush_scalers_to_states();
-}
+#ifdef OPENNN_HAS_CUDA
+    if (device == Device::CUDA)
+    {
+        CHECK_CUDA(cudaMemcpy(op_storage.data, staging.data(),
+                              size_t(bytes), cudaMemcpyHostToDevice));
+    }
+    else
+#endif
+    {
+        std::memcpy(op_storage.data, staging.data(), size_t(bytes));
+    }
 
-void Unscaling::set_scalers(const string& new_scalers)
-{
-    const ScalerMethod method = string_to_scaler_method(new_scalers);
-    for (auto& scaler : scalers)
-        scaler = method;
-    flush_scalers_to_states();
-}
+    float* base = op_storage.as<float>();
+    const Shape shape{features};
+    unscale_op.minimums            = TensorView(base + 0 * features, shape, Type::FP32);
+    unscale_op.maximums            = TensorView(base + 1 * features, shape, Type::FP32);
+    unscale_op.means               = TensorView(base + 2 * features, shape, Type::FP32);
+    unscale_op.standard_deviations = TensorView(base + 3 * features, shape, Type::FP32);
+    unscale_op.scalers             = TensorView(base + 4 * features, shape, Type::FP32);
 
-void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
-{
-    flush_scalers_to_states();
-    for (Operator* op : get_operators())
-        op->forward_propagate(forward_propagation, layer, is_training);
-}
-
-void Unscaling::print() const
-{
-    cout << "Unscaling layer" << "\n";
+    op_storage_dirty = false;
 }
 
 void Unscaling::read_JSON_body(const Json* root_element)
 {
+    if (!root_element) return;
+
+    if (root_element->has("MinRange"))
+        min_range = float(stof(read_json_string(root_element, "MinRange")));
+    if (root_element->has("MaxRange"))
+        max_range = float(stof(read_json_string(root_element, "MaxRange")));
+
     const Json* neurons_array = root_element->find("Neurons");
     if (!neurons_array || !neurons_array->is_array()) return;
 
-    const Index limit = std::min(ssize(scalers), Index(neurons_array->array_value.size()));
-    for (Index i = 0; i < limit; ++i)
+    if (ssize(neurons_array->array_value) != ssize(scalers))
+        throw runtime_error("Unscaling::read_JSON_body: \"Neurons\" has "
+                            + to_string(neurons_array->array_value.size())
+                            + " entries, expected " + to_string(scalers.size()) + ".");
+
+    for (size_t i = 0; i < neurons_array->array_value.size(); ++i)
     {
-        const Json* neuron = &neurons_array->array_value[size_t(i)];
+        const Json* neuron = &neurons_array->array_value[i];
+
         scalers[i] = string_to_scaler_method(read_json_string(neuron, "Scaler"));
+
+        const string descriptives_text = read_json_string(neuron, "Descriptives");
+        const vector<string> tokens = get_tokens(descriptives_text, " ");
+        if (tokens.size() < 4)
+            throw runtime_error("Unscaling::read_JSON_body: neuron " + to_string(i)
+                                + " \"Descriptives\" has " + to_string(tokens.size())
+                                + " tokens, expected 4.");
+        descriptives[i].minimum            = float(stof(tokens[0]));
+        descriptives[i].maximum            = float(stof(tokens[1]));
+        descriptives[i].mean               = float(stof(tokens[2]));
+        descriptives[i].standard_deviation = float(stof(tokens[3]));
     }
+
+    op_storage_dirty = true;
+    refresh_op_storage(current_device());
 }
 
 void Unscaling::write_JSON_body(JsonWriter& printer) const
 {
-    const Shape output_shape = get_output_shape();
+    add_json_field(printer, "MinRange", to_string(min_range));
+    add_json_field(printer, "MaxRange", to_string(max_range));
 
-    const bool have_state = unscale_op.means.data != nullptr;
-    const float* mins = have_state ? unscale_op.minimums.as<float>()            : nullptr;
-    const float* maxs = have_state ? unscale_op.maximums.as<float>()            : nullptr;
-    const float* mns  = have_state ? unscale_op.means.as<float>()               : nullptr;
-    const float* sds  = have_state ? unscale_op.standard_deviations.as<float>() : nullptr;
+    const Index features = ssize(descriptives);
 
     printer.begin_array("Neurons");
-    for (Index i = 0; i < output_shape[0]; ++i)
+    for (Index i = 0; i < features; ++i)
     {
         printer.begin_array_object();
 
         ostringstream descriptives_stream;
         descriptives_stream.precision(10);
-        descriptives_stream << (mins ? mins[i] : -1.0f) << ' '
-                            << (maxs ? maxs[i] : 1.0f)  << ' '
-                            << (mns  ? mns[i]  : 0.0f)  << ' '
-                            << (sds  ? sds[i]  : 1.0f);
+        descriptives_stream << descriptives[size_t(i)].minimum << ' '
+                            << descriptives[size_t(i)].maximum << ' '
+                            << descriptives[size_t(i)].mean    << ' '
+                            << descriptives[size_t(i)].standard_deviation;
 
         add_json_field(printer, "Descriptives", descriptives_stream.str());
-        add_json_field(printer, "Scaler", scaler_method_to_string(scalers[i]));
+        add_json_field(printer, "Scaler", scaler_method_to_string(scalers[size_t(i)]));
 
         printer.end_array_object();
     }
     printer.end_array();
 }
 
-void Unscaling::flush_scalers_to_states()
-{
-    if (!unscale_op.scalers.data) return;
-    if (ssize(scalers) != unscale_op.scalers.size()) return;
-
-    vector<float> scalers_float(scalers.size());
-    for (size_t i = 0; i < scalers.size(); ++i)
-        scalers_float[i] = static_cast<float>(scalers[i]);
-
-#ifdef OPENNN_HAS_CUDA
-    cudaPointerAttributes attr{};
-    if (cudaPointerGetAttributes(&attr, unscale_op.scalers.data) == cudaSuccess
-        && attr.type == cudaMemoryTypeDevice)
-    {
-        CHECK_CUDA(cudaMemcpyAsync(unscale_op.scalers.data,
-                                   scalers_float.data(),
-                                   scalers_float.size() * sizeof(float),
-                                   cudaMemcpyHostToDevice,
-                                   Backend::get_compute_stream()));
-        return;
-    }
-    cudaGetLastError();
-#endif
-
-    memcpy(unscale_op.scalers.data, scalers_float.data(), scalers_float.size() * sizeof(float));
-}
-
 string Unscaling::write_expression(const vector<string>& input_names,
                                    const vector<string>& output_names) const
 {
+    const Index outputs_number = get_outputs_number();
+    if (outputs_number == 0 || ssize(scalers) != outputs_number)
+        throw runtime_error("Unscaling::write_expression: layer not configured.");
+
     ostringstream buffer;
     buffer.precision(10);
 
-    const Index outputs_number = get_outputs_number();
-    const VectorR& minimums = get_minimums();
-    const VectorR& maximums = get_maximums();
-    const VectorR& means = get_means();
-    const VectorR& standard_deviations = get_standard_deviations();
-    const vector<ScalerMethod>& scalers_local = get_scalers();
-    const float min_range = get_min_range();
-    const float max_range = get_max_range();
-
     for (Index i = 0; i < outputs_number; ++i)
     {
-        switch (scalers_local[i])
+        const Descriptives& d = descriptives[size_t(i)];
+        switch (scalers[size_t(i)])
         {
         case ScalerMethod::None:
             buffer << output_names[i] << " = " << input_names[i] << ";\n";
             break;
         case ScalerMethod::MinimumMaximum:
-            if (abs(minimums[i] - maximums[i]) < EPSILON)
-                buffer << output_names[i] << "=" << minimums[i] << ";\n";
+            if (abs(d.minimum - d.maximum) < EPSILON)
+                buffer << output_names[i] << "=" << d.minimum << ";\n";
             else
                 buffer << output_names[i] << "=" << input_names[i] << "*"
-                       << "(" << (maximums[i] - minimums[i]) / (max_range - min_range)
-                       << ")+" << (minimums[i] - min_range * (maximums[i] - minimums[i]) / (max_range - min_range)) << ";\n";
+                       << "(" << (d.maximum - d.minimum) / (max_range - min_range)
+                       << ")+" << (d.minimum - min_range * (d.maximum - d.minimum) / (max_range - min_range)) << ";\n";
             break;
         case ScalerMethod::MeanStandardDeviation:
-            buffer << output_names[i] << "=" << input_names[i] << "*" << standard_deviations[i] << "+" << means[i] << ";\n";
+            buffer << output_names[i] << "=" << input_names[i] << "*" << d.standard_deviation << "+" << d.mean << ";\n";
             break;
         case ScalerMethod::StandardDeviation:
-            buffer << output_names[i] << "=" << input_names[i] << "*" << standard_deviations[i] << ";\n";
+            buffer << output_names[i] << "=" << input_names[i] << "*" << d.standard_deviation << ";\n";
             break;
         case ScalerMethod::Logarithm:
             buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";
+            break;
+        case ScalerMethod::ImageMinMax:
+            buffer << output_names[i] << "=" << input_names[i] << " * 255.0;\n";
             break;
         default:
             throw runtime_error("Unknown inputs scaling method.\n");
@@ -242,7 +281,6 @@ string Unscaling::write_expression(const vector<string>& input_names,
     }
 
     string expression = buffer.str();
-
     replace(expression, "+-", "-");
     replace(expression, "--", "+");
 
@@ -252,7 +290,3 @@ string Unscaling::write_expression(const vector<string>& input_names,
 REGISTER(Layer, Unscaling, "Unscaling")
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

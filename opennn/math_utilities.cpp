@@ -190,6 +190,7 @@ void unscale(const TensorView& input,
                     min_range, max_range, output);
         return;
     });
+    
     unscale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
                 min_range, max_range, output);
 }

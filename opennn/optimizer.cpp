@@ -70,53 +70,39 @@ float Optimizer::get_elapsed_time(const time_t &beginning_time)
     return float(difftime(current_time, beginning_time));
 }
 
-Index Optimizer::adjust_batch_size(Index requested, Index n, const char* context) const
-{
-    if (n <= 0 || requested <= 0) return std::max(Index(1), requested);
-    if (requested >= n)           return n;
-    if (n % requested == 0)       return requested;
-
-    const Index min_acceptable = std::max(Index(1), requested / 2);
-    for (Index b = requested - 1; b >= min_acceptable; --b)
-        if (n % b == 0)
-        {
-            if (display)
-                cout << "Optimizer: " << context << " batch_size " << requested
-                     << " does not divide " << n << " samples; adjusted to " << b
-                     << " (0 samples dropped).\n";
-            return b;
-        }
-
-    if (display)
-    {
-        const Index lost = n % requested;
-        const double pct = 100.0 * double(lost) / double(n);
-        cout << "Warning: " << context << " batch_size " << requested
-             << " does not divide " << n << " samples. "
-             << lost << " sample(s) ("
-             << std::fixed << std::setprecision(2) << pct
-             << " % of total) dropped per epoch — no divisor in ["
-             << min_acceptable << ", " << requested << "].\n";
-    }
-    return requested;
-}
-
 Optimizer::BatchPlan Optimizer::plan_batches(Index requested,
                                              Index training_samples_number,
                                              Index validation_samples_number) const
 {
+    auto resolve = [&](Index req, Index n, const char* context) -> Index {
+        if (n <= 0 || req <= 0) return std::max(Index(1), req);
+        if (req >= n)           return n;
+        if (n % req == 0)       return req;   // perfect fit, silent
+
+        if (display)
+        {
+            const Index lost = n % req;
+            const double pct = 100.0 * double(lost) / double(n);
+            cout << "Warning: " << context << " batch_size " << req
+                 << " does not divide " << n << " samples. "
+                 << lost << " sample(s) ("
+                 << std::fixed << std::setprecision(2) << pct
+                 << " % of total) dropped per epoch.\n";
+        }
+        return req;
+    };
+
     BatchPlan plan;
 
     plan.training_batch_size = (training_samples_number != 0)
-        ? adjust_batch_size(requested, training_samples_number, "training")
+        ? resolve(requested, training_samples_number, "training")
         : 0;
 
     if (validation_samples_number != 0 && plan.training_batch_size != 0)
     {
         const Index val_requested = min(validation_samples_number,
                                         plan.training_batch_size);
-        plan.validation_batch_size =
-            adjust_batch_size(val_requested, validation_samples_number, "validation");
+        plan.validation_batch_size = resolve(val_requested, validation_samples_number, "validation");
     }
 
     plan.training_batches_number = (plan.training_batch_size != 0)
@@ -370,8 +356,8 @@ void Optimizer::read_common_json(const Json* root_element)
 
 TrainingResults::TrainingResults(const Index epochs_number)
 {
-    training_error_history = VectorR::Constant(1 + epochs_number, -1.0f);
-    validation_error_history = VectorR::Constant(1 + epochs_number, -1.0f);
+    training_error_history = VectorR::Constant(epochs_number, -1.0f);
+    validation_error_history = VectorR::Constant(epochs_number, -1.0f);
 }
 
 string TrainingResults::write_stopping_condition() const
@@ -434,7 +420,8 @@ void TrainingResults::save(const filesystem::path& file_name) const
 
     ofstream file(file_name);
 
-    if (!file) return;
+    if (!file)
+        throw runtime_error("TrainingResults::save: cannot open " + file_name.string());
 
     for (Index i = 0; i < override_results.dimension(0); ++i)
         file << override_results(i,0) << "; " << override_results(i,1) << "\n";
@@ -799,7 +786,7 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
             prefetch_batch(*next_batch, batches[iteration + 1].size(), (iteration + 1) % 2);
         }
 
-        neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, true);
+        neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, false);
         const Loss::EvaluationResult eval = loss->calculate_error(*current_batch, forward_propagation);
 
         stats.error += eval.error;

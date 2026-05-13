@@ -223,7 +223,10 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                 << "   Validation error: " << validation_error << "\n";
         }
 
-        if (previous_training_error < minimum_training_error)
+        // Input growing tracks validation error increases: if adding the
+        // current variable made the best validation error worse than the
+        // previous epoch's, count it as a failure and roll back the variable.
+        if (previous_validation_error < minimum_validation_error)
         {
             if (display) cout << "Validation failure" << "\n";
             ++validation_failures;

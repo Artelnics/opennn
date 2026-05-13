@@ -270,9 +270,14 @@ TrainingResults AdaptiveMomentEstimation::train()
     {
         if(display)
             cout << "Restoring best parameters (validation error " << best_validation_error << ")\n";
-        std::memcpy(neural_network->get_parameters_data(),
-                    best_parameters.data(),
+
+        // Use set_parameters (not memcpy) so the GPU path properly issues
+        // cudaMemcpy(H2D) and refreshes the BF16 mirror via
+        // cast_parameters_to_bf16. memcpy into a device pointer is UB.
+        VectorR best_view(best_parameters.size());
+        std::memcpy(best_view.data(), best_parameters.data(),
                     best_parameters.size() * sizeof(float));
+        neural_network->set_parameters(best_view);
     }
 
     set_unscaling();

@@ -20,6 +20,15 @@ Batch::Batch(const Index new_samples_number, const Dataset* new_dataset)
     set(new_samples_number, new_dataset);
 }
 
+Batch::~Batch()
+{
+#ifdef OPENNN_HAS_CUDA
+    if (inputs_host)  cudaFreeHost(inputs_host);
+    if (decoder_host) cudaFreeHost(decoder_host);
+    if (targets_host) cudaFreeHost(targets_host);
+#endif
+}
+
 void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 {
     if (!new_dataset)

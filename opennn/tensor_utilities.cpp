@@ -98,7 +98,8 @@ void Backend::set_threads_number(int num_threads)
     thread_pool = make_unique<ThreadPool>(num_threads);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), num_threads);
 
-    Eigen::initParallel();
+    // Eigen::initParallel() removed: deprecated in Eigen 3.4+, threading is
+    // initialised lazily on first use.
     Eigen::setNbThreads(num_threads);
     omp_set_num_threads(num_threads);
     omp_set_dynamic(0);

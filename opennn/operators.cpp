@@ -2881,8 +2881,10 @@ void EmbeddingLookupOp::apply_delta_cpu(const TensorView& indices,
 
     MatrixMap output_delta_map = output_delta.as_flat_matrix();
 
-    if (scale_embedding)
-        output_delta_map *= sqrt(to_type(embedding_dimension));
+    // Fold scale_embedding into the accumulation rather than mutating
+    // output_delta in place (which would break parity with the GPU path that
+    // bakes the scale into embedding_backward_cuda).
+    const float scale = scale_embedding ? sqrt(to_type(embedding_dimension)) : 1.0f;
 
     MatrixMap weight_gradients = weight_gradient.as_matrix().setZero();
 
@@ -2893,7 +2895,10 @@ void EmbeddingLookupOp::apply_delta_cpu(const TensorView& indices,
         if (vocabulary_index < 0 || vocabulary_index >= weight_gradients.rows())
             continue;
 
-        weight_gradients.row(vocabulary_index).noalias() += output_delta_map.row(token_index);
+        if (scale_embedding)
+            weight_gradients.row(vocabulary_index).noalias() += scale * output_delta_map.row(token_index);
+        else
+            weight_gradients.row(vocabulary_index).noalias() += output_delta_map.row(token_index);
     }
 }
 
@@ -2948,94 +2953,19 @@ void FlatOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t lay
     copy(bp.delta_views[layer][output_delta_slots[0]], bp.delta_views[layer][input_delta_slots[0]]);
 }
 
-size_t BoundOp::state_count() const
-{
-    return (method == Method::NoBounding || features == 0) ? 0 : 2;
-}
-
-vector<pair<Shape, Type>> BoundOp::state_specs() const
-{
-    if (method == Method::NoBounding || features == 0) return {};
-    return vector<pair<Shape, Type>>(2, {Shape{features}, Type::FP32});
-}
-
-void BoundOp::link_states(const vector<TensorView>& views)
-{
-    if (views.size() < 2) return;
-
-    const bool needs_defaults = (lower.data == nullptr);
-
-    lower = views[0];
-    upper = views[1];
-
-    if (!needs_defaults) return;
-
-    if (lower.data) lower.as_vector().setConstant(-numeric_limits<float>::max());
-    if (upper.data) upper.as_vector().setConstant( numeric_limits<float>::max());
-}
-
 void BoundOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
 {
     auto& fv = fp.views[layer];
     const TensorView& input = fv[input_slots[0]][0];
     TensorView& output      = fv[output_slots[0]][0];
 
-    if (method == Method::NoBounding)
+    if (method == Method::NoBounding || !lower.data)
     {
         copy(input, output);
         return;
     }
 
     bound(input, lower, upper, output);
-}
-
-void BoundOp::load_state_from_JSON(const Json* parent)
-{
-    if (!parent || method == Method::NoBounding || !lower.data) return;
-
-    VectorR tmp;
-    if (parent->has("LowerBounds"))
-    {
-        string_to_vector(read_json_string(parent, "LowerBounds"), tmp);
-        if (tmp.size() == lower.size()) lower.as_vector() = tmp;
-    }
-
-    if (parent->has("UpperBounds"))
-    {
-        string_to_vector(read_json_string(parent, "UpperBounds"), tmp);
-        if (tmp.size() == upper.size()) upper.as_vector() = tmp;
-    }
-}
-
-vector<pair<Shape, Type>> ScaleOp::state_specs() const
-{
-    if (features == 0) return {};
-    return vector<pair<Shape, Type>>(5, {Shape{features}, Type::FP32});
-}
-
-size_t ScaleOp::state_count() const
-{
-    return features == 0 ? 0 : 5;
-}
-
-void ScaleOp::link_states(const vector<TensorView>& views)
-{
-    if (views.size() < 5) return;
-
-    const bool needs_defaults = (means.data == nullptr);
-
-    minimums            = views[0];
-    maximums            = views[1];
-    means               = views[2];
-    standard_deviations = views[3];
-    scalers             = views[4];
-
-    if (!needs_defaults) return;
-
-    if (means.data)               means.as_vector().setZero();
-    if (standard_deviations.data) standard_deviations.as_vector().setOnes();
-    if (minimums.data)            minimums.as_vector().setConstant(-1.0f);
-    if (maximums.data)            maximums.as_vector().setOnes();
 }
 
 void ScaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
@@ -3054,64 +2984,6 @@ void ScaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_
           min_range, max_range, output);
 }
 
-void ScaleOp::load_state_from_JSON(const Json* parent)
-{
-    if (!parent || !means.data) return;
-
-    VectorR tmp;
-    if (parent->has("Means"))
-    {
-        string_to_vector(read_json_string(parent, "Means"), tmp);
-        if (tmp.size() == means.size()) means.as_vector() = tmp;
-    }
-    if (parent->has("StandardDeviations"))
-    {
-        string_to_vector(read_json_string(parent, "StandardDeviations"), tmp);
-        if (tmp.size() == standard_deviations.size()) standard_deviations.as_vector() = tmp;
-    }
-    if (parent->has("Minimums"))
-    {
-        string_to_vector(read_json_string(parent, "Minimums"), tmp);
-        if (tmp.size() == minimums.size()) minimums.as_vector() = tmp;
-    }
-    if (parent->has("Maximums"))
-    {
-        string_to_vector(read_json_string(parent, "Maximums"), tmp);
-        if (tmp.size() == maximums.size()) maximums.as_vector() = tmp;
-    }
-}
-
-vector<pair<Shape, Type>> UnscaleOp::state_specs() const
-{
-    if (features == 0) return {};
-    return vector<pair<Shape, Type>>(5, {Shape{features}, Type::FP32});
-}
-
-size_t UnscaleOp::state_count() const
-{
-    return features == 0 ? 0 : 5;
-}
-
-void UnscaleOp::link_states(const vector<TensorView>& views)
-{
-    if (views.size() < 5) return;
-
-    const bool needs_defaults = (means.data == nullptr);
-
-    minimums            = views[0];
-    maximums            = views[1];
-    means               = views[2];
-    standard_deviations = views[3];
-    scalers             = views[4];
-
-    if (!needs_defaults) return;
-
-    if (means.data)               means.as_vector().setZero();
-    if (standard_deviations.data) standard_deviations.as_vector().setOnes();
-    if (minimums.data)            minimums.as_vector().setConstant(-1.0f);
-    if (maximums.data)            maximums.as_vector().setOnes();
-}
-
 void UnscaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
 {
     auto& fv = fp.views[layer];
@@ -3128,27 +3000,6 @@ void UnscaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*i
             min_range, max_range, output);
 }
 
-void UnscaleOp::load_state_from_JSON(const Json* parent)
-{
-    if (!parent || !means.data) return;
-
-    const Json* neurons_array = parent->find("Neurons");
-    if (!neurons_array || !neurons_array->is_array()) return;
-
-    for (size_t i = 0; i < neurons_array->array_value.size() && Index(i) < minimums.size(); ++i)
-    {
-        const Json* neuron = &neurons_array->array_value[i];
-        const string descriptives = read_json_string(neuron, "Descriptives");
-        const vector<string> tokens = get_tokens(descriptives, " ");
-        if (tokens.size() >= 4)
-        {
-            minimums.as<float>()[i]            = float(stof(tokens[0]));
-            maximums.as<float>()[i]            = float(stof(tokens[1]));
-            means.as<float>()[i]               = float(stof(tokens[2]));
-            standard_deviations.as<float>()[i] = float(stof(tokens[3]));
-        }
-    }
-}
 
 }
 
