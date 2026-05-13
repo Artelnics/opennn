@@ -104,6 +104,24 @@ protected:
 
     bool should_display(Index epoch) const { return display && epoch % display_period == 0; }
 
+    // Bundled training/validation batch sizing for the given requested size.
+    struct BatchPlan
+    {
+        Index training_batch_size      = 0;
+        Index validation_batch_size    = 0;
+        Index training_batches_number  = 0;
+    };
+
+    // Returns the largest divisor of `n` that is in `[requested/2, requested]`.
+    // If `n % requested == 0`, returns `requested` unchanged. If no good divisor
+    // exists (e.g. `n` is prime), keeps `requested` and warns about the
+    // discarded remainder. Always rounds down — never increases batch size.
+    Index adjust_batch_size(Index requested, Index n, const char* context = "training") const;
+
+    BatchPlan plan_batches(Index requested,
+                           Index training_samples_number,
+                           Index validation_samples_number) const;
+
     EpochStats train_epoch(bool tracks_accuracy,
                            ForwardPropagation& forward_propagation,
                            BackPropagation& back_propagation,
