@@ -74,6 +74,40 @@ private:
 
 void atomic_rename(const filesystem::path& from, const filesystem::path& to);
 
+
+// CSV reader. Loads a file (or string) into a single buffer and tokenizes
+// each non-empty line into a vector of string_views into that buffer.
+// The buffer lives in Result, so the views stay valid as long as Result does.
+// Handles UTF-8 BOM, quoted fields (the separator inside quotes is ignored),
+// and CRLF line endings.
+class CsvReader
+{
+public:
+
+    struct Config
+    {
+        char separator = ',';
+        function<void(string_view)> line_validator;
+    };
+
+    struct Result
+    {
+        string                      buffer;
+        vector<vector<string_view>> rows;
+    };
+
+    explicit CsvReader(Config c) : config(std::move(c)) {}
+
+    Result read(const filesystem::path& path) const;
+    Result read_string(string_view csv_text) const;
+
+private:
+
+    Config config;
+
+    void parse(Result& out) const;
+};
+
 }
 
 // OpenNN: Open Neural Networks Library.
