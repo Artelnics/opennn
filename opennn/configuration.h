@@ -30,10 +30,10 @@ template<> struct TypeInfo<Type::FP32>
 
 template<> struct TypeInfo<Type::BF16>
 {
-    using type = __nv_bfloat16;
+    using type = bfloat16;
     static constexpr cudnnDataType_t cudnn = CUDNN_DATA_BFLOAT16;
     static constexpr cudaDataType_t  cuda  = CUDA_R_16BF;
-    static constexpr Index           bytes = Index(sizeof(__nv_bfloat16));
+    static constexpr Index           bytes = Index(sizeof(bfloat16));
     static constexpr const char*     name  = "BF16";
 };
 

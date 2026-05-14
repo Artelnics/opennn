@@ -1149,7 +1149,7 @@ void NeuralNetwork::copy_parameters_device()
     if(config.training_type  == Type::BF16 ||
        config.inference_type == Type::BF16)
     {
-        parameters_bf16.resize_bytes(parameters.size_in_floats() * Index(sizeof(__nv_bfloat16)), Device::CUDA);
+        parameters_bf16.resize_bytes(parameters.size_in_floats() * Index(sizeof(bfloat16)), Device::CUDA);
         cast_parameters_to_bf16();
     }
 
@@ -1163,7 +1163,7 @@ void NeuralNetwork::cast_parameters_to_bf16()
 
     cast_fp32_to_bf16_cuda(parameters.size_in_floats(),
                            parameters.as<float>(),
-                           parameters_bf16.as<__nv_bfloat16>());
+                           parameters_bf16.as<bfloat16>());
 }
 
 void NeuralNetwork::copy_parameters_host()
@@ -1179,8 +1179,8 @@ void NeuralNetwork::link_parameters()
 {
     // Ignore the BF16 mirror when active Configuration is CPU (host can't read GPU memory).
     float* fp32_base = parameters.as<float>();
-    __nv_bfloat16* bf16_base = (is_gpu() && !parameters_bf16.empty())
-        ? parameters_bf16.as<__nv_bfloat16>()
+    bfloat16* bf16_base = (is_gpu() && !parameters_bf16.empty())
+        ? parameters_bf16.as<bfloat16>()
         : nullptr;
 
     Index offset = 0;

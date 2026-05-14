@@ -31,7 +31,7 @@ __global__ void adam_update_kernel(
     float* __restrict__ m,
     float* __restrict__ v,
     const float* __restrict__ gradients,
-    __nv_bfloat16* __restrict__ parameters_bf16,
+    bfloat16* __restrict__ parameters_bf16,
     const float beta_1,
     const float one_minus_beta_1,
     const float beta_2,
@@ -46,7 +46,7 @@ __global__ void adam_update_kernel(
     float4* __restrict__ const       m4 = reinterpret_cast<float4*>(m);
     float4* __restrict__ const       v4 = reinterpret_cast<float4*>(v);
     const float4* __restrict__ const g4 = reinterpret_cast<const float4*>(gradients);
-    __nv_bfloat162* __restrict__ const bf2 = reinterpret_cast<__nv_bfloat162*>(parameters_bf16);
+    bfloat162* __restrict__ const bf2 = reinterpret_cast<bfloat162*>(parameters_bf16);
 
     for (int i = tid; i < n_vec; i += stride)
     {
@@ -66,7 +66,7 @@ __global__ void adam_update_kernel(
 
         // Refresh BF16 mirror in the same kernel: P is already in registers, so
         // this saves a separate read-modify-write pass over the whole parameter
-        // buffer. Two 32-bit stores (one per __nv_bfloat162) cover the 4 lanes.
+        // buffer. Two 32-bit stores (one per bfloat162) cover the 4 lanes.
         if (bf2)
         {
             bf2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
@@ -99,7 +99,7 @@ void adam_update_cuda(
     const float epsilon,
     const float bias_correction_1,
     const float bias_correction_2,
-    __nv_bfloat16* parameters_bf16)
+    bfloat16* parameters_bf16)
 {
     if (n == 0) return;
 
@@ -160,7 +160,7 @@ __global__ void sgd_update_kernel(
     float* __restrict__ parameters,
     float* __restrict__ velocity,
     const float* __restrict__ gradients,
-    __nv_bfloat16* __restrict__ parameters_bf16,
+    bfloat16* __restrict__ parameters_bf16,
     const float learning_rate,
     const float momentum,
     const bool nesterov)
@@ -172,7 +172,7 @@ __global__ void sgd_update_kernel(
     float4* __restrict__ const       p4 = reinterpret_cast<float4*>(parameters);
     float4* __restrict__ const       v4 = reinterpret_cast<float4*>(velocity);
     const float4* __restrict__ const g4 = reinterpret_cast<const float4*>(gradients);
-    __nv_bfloat162* __restrict__ const bf2 = reinterpret_cast<__nv_bfloat162*>(parameters_bf16);
+    bfloat162* __restrict__ const bf2 = reinterpret_cast<bfloat162*>(parameters_bf16);
 
     if (has_momentum)
     {
@@ -247,7 +247,7 @@ void sgd_update_cuda(
     const float learning_rate,
     const float momentum,
     const bool nesterov,
-    __nv_bfloat16* parameters_bf16)
+    bfloat16* parameters_bf16)
 {
     if (n == 0) return;
 
@@ -303,18 +303,18 @@ void clip_gradient_norm_cuda(const Index n,
 __global__ void cast_fp32_to_bf16_kernel(const int n_vec,
                                          const int n,
                                          const float* __restrict__ src,
-                                         __nv_bfloat16* __restrict__ dst)
+                                         bfloat16* __restrict__ dst)
 {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     const int stride = blockDim.x * gridDim.x;
 
     const float4* __restrict__ const src4 = reinterpret_cast<const float4*>(src);
-    __nv_bfloat162* __restrict__ const dst2 = reinterpret_cast<__nv_bfloat162*>(dst);
+    bfloat162* __restrict__ const dst2 = reinterpret_cast<bfloat162*>(dst);
 
     for (int i = tid; i < n_vec; i += stride)
     {
         const float4 in = src4[i];
-        // Pack each pair of floats into one __nv_bfloat162 (one 32-bit store).
+        // Pack each pair of floats into one bfloat162 (one 32-bit store).
         dst2[i * 2 + 0] = __floats2bfloat162_rn(in.x, in.y);
         dst2[i * 2 + 1] = __floats2bfloat162_rn(in.z, in.w);
     }
@@ -324,14 +324,14 @@ __global__ void cast_fp32_to_bf16_kernel(const int n_vec,
         dst[i] = __float2bfloat16(src[i]);
 }
 
-void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
+void cast_fp32_to_bf16_cuda(const Index n, const float* src, bfloat16* dst,
                             cudaStream_t stream)
 {
     if (n == 0) return;
     if (stream == nullptr) stream = opennn::Backend::get_compute_stream();
 
     const int total = static_cast<int>(n);
-    // Vec path needs src 16B-aligned (float4 load) and dst 4B-aligned (__nv_bfloat162 store).
+    // Vec path needs src 16B-aligned (float4 load) and dst 4B-aligned (bfloat162 store).
     const bool dst_aligned = (reinterpret_cast<std::uintptr_t>(dst) & 0x3) == 0;
     const bool aligned = are_float4_aligned(src) && dst_aligned;
     const int n_vec = aligned ? (total / 4) : 0;
@@ -341,7 +341,7 @@ void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
 }
 
 __global__ void cast_bf16_to_fp32_kernel(const int n,
-                                         const __nv_bfloat16* __restrict__ src,
+                                         const bfloat16* __restrict__ src,
                                          float* __restrict__ dst)
 {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -350,7 +350,7 @@ __global__ void cast_bf16_to_fp32_kernel(const int n,
         dst[i] = __bfloat162float(src[i]);
 }
 
-void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst)
+void cast_bf16_to_fp32_cuda(const Index n, const bfloat16* src, float* dst)
 {
     if (n == 0) return;
     const int total = static_cast<int>(n);

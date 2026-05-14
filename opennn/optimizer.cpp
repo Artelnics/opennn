@@ -244,7 +244,7 @@ Index Optimizer::get_maximum_batch_size() const
     // Parameters (FP32 master)
     fixed_bytes += parameters_aligned_size * Index(sizeof(float));
     // BF16 mirror (same element count, 2 bytes each)
-    if (bf16_train) fixed_bytes += parameters_aligned_size * Index(sizeof(__nv_bfloat16));
+    if (bf16_train) fixed_bytes += parameters_aligned_size * Index(sizeof(bfloat16));
     // States buffer
     fixed_bytes += neural_network->get_states_size() * Index(sizeof(float));
     // Gradient (FP32)
@@ -276,7 +276,7 @@ Index Optimizer::get_maximum_batch_size() const
     auto pool_bytes_for_batch = [&](Index b) -> Index {
         Index single_batch = 0;
         if (!input_shape.empty())
-            single_batch += b * input_shape.size() * (bf16_input ? Index(sizeof(__nv_bfloat16))
+            single_batch += b * input_shape.size() * (bf16_input ? Index(sizeof(bfloat16))
                                                                  : Index(sizeof(float)));
         if (!target_shape.empty())
             single_batch += b * target_shape.size() * Index(sizeof(float));

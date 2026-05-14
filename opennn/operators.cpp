@@ -1202,7 +1202,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
     const bool bf16 = (input.type == Type::BF16);
 
     void* weight_gradient_buffer = weight_gradient.data;
-    __nv_bfloat16* weight_gradient_bf16_scratch = nullptr;
+    bfloat16* weight_gradient_bf16_scratch = nullptr;
 
     if (bf16)
     {
@@ -1228,7 +1228,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
     {
         float* output_delta_fp32 = scratch::ensure_fp32_upcast_scratch(output_delta.size());
         cast_bf16_to_fp32_cuda(output_delta.size(),
-                               output_delta.as<__nv_bfloat16>(),
+                               output_delta.as<bfloat16>(),
                                output_delta_fp32);
 
         output_delta_for_bias = TensorView(output_delta_fp32, output_delta.shape, Type::FP32);
@@ -1648,11 +1648,11 @@ bool AttentionOp::get_contiguous_source_lengths(const TensorView& source_input,
     return true;
 }
 
-void AttentionOp::softmax_rows_prefix(float* matrix, Index rows, Index cols, Index prefix)
+void AttentionOp::softmax_rows_prefix(float* matrix, Index rows, Index cols, Index length)
 {
     for (Index row = 0; row < rows; ++row)
     {
-        Eigen::Map<Eigen::VectorXf> v(matrix + row * cols, prefix);
+        Eigen::Map<Eigen::VectorXf> v(matrix + row * cols, length);
         v = (v.array() - v.maxCoeff()).exp();
         v /= v.sum();
     }
@@ -1661,13 +1661,11 @@ void AttentionOp::softmax_rows_prefix(float* matrix, Index rows, Index cols, Ind
 Index AttentionOp::infer_attention_prefix_length(const TensorView& attention_weights,
                                                  Index batch_index)
 {
-    const Index heads_number           = attention_weights.shape[1];
-    const Index query_sequence_length  = attention_weights.shape[2];
-    const Index source_sequence_length = attention_weights.shape[3];
+    const auto& shape = attention_weights.shape;
     const float* first_row = attention_weights.as<float>()
-        + batch_index * heads_number * query_sequence_length * source_sequence_length;
+        + batch_index * shape[1] * shape[2] * shape[3];
 
-    Index length = source_sequence_length;
+    Index length = shape[3];
     while (length > 0 && first_row[length - 1] == 0.0f)
         --length;
 

@@ -91,9 +91,9 @@ namespace scratch
 
 void* ensure_cublas_lt_workspace(size_t min_bytes = 0);
 
-__nv_bfloat16* ensure_bf16_input_scratch(Index n_elements);
+bfloat16* ensure_bf16_input_scratch(Index n_elements);
 
-__nv_bfloat16* ensure_bf16_gradient_scratch(Index n_elements);
+bfloat16* ensure_bf16_gradient_scratch(Index n_elements);
 
 float* ensure_fp32_upcast_scratch(Index n_elements);
 

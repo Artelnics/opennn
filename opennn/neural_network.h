@@ -167,9 +167,9 @@ public:
 
     // Returns nullptr when no BF16 mirror is allocated (FP32-only mode), so
     // optimizer kernels can pass it straight through and skip the mirror write.
-    __nv_bfloat16* get_parameters_bf16_data()
+    bfloat16* get_parameters_bf16_data()
     {
-        return parameters_bf16.empty() ? nullptr : parameters_bf16.as<__nv_bfloat16>();
+        return parameters_bf16.empty() ? nullptr : parameters_bf16.as<bfloat16>();
     }
 
     void copy_parameters_device();

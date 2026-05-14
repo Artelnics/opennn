@@ -647,7 +647,7 @@ private:
     static bool get_contiguous_source_lengths(const TensorView& source_input,
                                               vector<Index>& lengths,
                                               bool& has_padding);
-    static void softmax_rows_prefix(float* matrix, Index rows, Index cols, Index prefix);
+    static void softmax_rows_prefix(float* matrix, Index rows, Index cols, Index length);
     static Index infer_attention_prefix_length(const TensorView& attention_weights,
                                                Index batch_index);
 

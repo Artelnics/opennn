@@ -323,7 +323,7 @@ Index TransformerDecoder::decode_step(Index step_index,
     if (output_view.type == Type::BF16)
     {
         CHECK_CUDA(cudaMemcpyAsync(bf16_staging.data(),
-                                   output_view.as<__nv_bfloat16>() + slice_offset,
+                                   output_view.as<bfloat16>() + slice_offset,
                                    vocabulary_size * sizeof(uint16_t),
                                    cudaMemcpyDeviceToHost, stream));
         CHECK_CUDA(cudaStreamSynchronize(stream));

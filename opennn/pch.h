@@ -126,6 +126,8 @@ void check_cuda_status(T status, const char* file, int line, const char* msg)
 
 #endif
 
+using bfloat16 = __nv_bfloat16;
+
 using namespace std;
 using namespace Eigen;
 

@@ -30,8 +30,8 @@ namespace scratch
 {
 
 void* ensure_cublas_lt_workspace(size_t min_bytes)    { return cublas_lt_workspace_.ensure_bytes(min_bytes); }
-__nv_bfloat16* ensure_bf16_input_scratch(Index n)     { return bf16_input_.ensure<__nv_bfloat16>(n); }
-__nv_bfloat16* ensure_bf16_gradient_scratch(Index n)  { return bf16_gradient_.ensure<__nv_bfloat16>(n); }
+bfloat16* ensure_bf16_input_scratch(Index n)     { return bf16_input_.ensure<bfloat16>(n); }
+bfloat16* ensure_bf16_gradient_scratch(Index n)  { return bf16_gradient_.ensure<bfloat16>(n); }
 float* ensure_fp32_upcast_scratch(Index n)            { return fp32_upcast_.ensure<float>(n); }
 void* ensure_cudnn_conv_workspace(size_t min_bytes)   { return cudnn_conv_workspace_.ensure_bytes(min_bytes); }
 
@@ -43,7 +43,7 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
 
     if (input.type == Type::FP32 && target_type == Type::BF16)
     {
-        __nv_bfloat16* dst = scratch::ensure_bf16_input_scratch(input.size());
+        bfloat16* dst = scratch::ensure_bf16_input_scratch(input.size());
         cast_fp32_to_bf16_cuda(input.size(), input.as<float>(), dst);
         return dst;
     }
@@ -51,7 +51,7 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
     if (input.type == Type::BF16 && target_type == Type::FP32)
     {
         float* dst = scratch::ensure_fp32_upcast_scratch(input.size());
-        cast_bf16_to_fp32_cuda(input.size(), input.as<__nv_bfloat16>(), dst);
+        cast_bf16_to_fp32_cuda(input.size(), input.as<bfloat16>(), dst);
         return dst;
     }
 

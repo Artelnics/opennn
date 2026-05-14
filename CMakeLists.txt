@@ -121,11 +121,9 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     link_libraries(${CUDNN_LIBRARY})
 
     # cuDNN frontend (header-only C++ wrapper for the cuDNN graph API).
-    # Required for SDPA / Flash Attention. Optional: if not found, Attention
-    # falls back to the manual softmax+matmul path (works, but materializes the
-    # attention matrix). Install v1.10+ from https://github.com/NVIDIA/cudnn-frontend
-    # or set CUDNN_FRONTEND_INCLUDE_DIR explicitly. Older v1.x releases have API
-    # breaks; we target the v1.10.x branch.
+    # Required for SDPA / Flash Attention. Install v1.10+ from
+    # https://github.com/NVIDIA/cudnn-frontend or set CUDNN_FRONTEND_INCLUDE_DIR
+    # explicitly. Older v1.x releases have API breaks; we target v1.10.x.
     find_path(CUDNN_FRONTEND_INCLUDE_DIR
         NAMES cudnn_frontend.h
         HINTS ${CUDAToolkit_INCLUDE_DIRS}
@@ -135,15 +133,6 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
 
     if(CUDNN_FRONTEND_INCLUDE_DIR)
         message(STATUS "Found cudnn-frontend: ${CUDNN_FRONTEND_INCLUDE_DIR}")
-        set(HAVE_CUDNN_FRONTEND ON)
-        add_compile_definitions(OPENNN_HAS_CUDNN_FRONTEND)
-        include_directories(${CUDNN_FRONTEND_INCLUDE_DIR})
-    else()
-        message(WARNING
-            "cudnn-frontend headers not found. Attention will fall back to manual "
-            "softmax+matmul (works, but no Flash Attention memory savings). "
-            "Install from https://github.com/NVIDIA/cudnn-frontend or set "
-            "CUDNN_FRONTEND_INCLUDE_DIR.")
     endif()
 else()
     set(OPENNN_HAS_CUDA OFF CACHE BOOL "")

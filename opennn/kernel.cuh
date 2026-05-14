@@ -18,11 +18,11 @@ using Eigen::Index;
 void adam_update_cuda(const Index, float*, float*, float*, const float*,
                       const float, const float, const float, const float,
                       const float, const float,
-                      __nv_bfloat16* params_bf16 = nullptr);
+                      bfloat16* params_bf16 = nullptr);
 
 void sgd_update_cuda(const Index, float*, float*, const float*,
                      const float, const float, const bool,
-                     __nv_bfloat16* params_bf16 = nullptr);
+                     bfloat16* params_bf16 = nullptr);
 
 void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm, const float eps);
 
@@ -33,9 +33,9 @@ void clip_gradient_norm_cuda(const Index n, float* gradient, const float* square
 // refresh of the mirror during Adam/SGD is folded into the optimizer kernels
 // themselves (see params_bf16 above), not into this cast.
 // When `stream` is null the host wrapper falls back to Backend::get_compute_stream().
-void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
+void cast_fp32_to_bf16_cuda(const Index n, const float* src, bfloat16* dst,
                             cudaStream_t stream = nullptr);
-void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst);
+void cast_bf16_to_fp32_cuda(const Index n, const bfloat16* src, float* dst);
 
 template<typename TIn>
 void diff_to_fp32_cuda(const Index n, const TIn* input, const float* target, float* output);

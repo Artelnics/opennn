@@ -55,7 +55,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 #ifdef OPENNN_HAS_CUDA
         if (on_gpu)
         {
-            const Index elem_bytes = bf16_input ? Index(sizeof(__nv_bfloat16)) : Index(sizeof(float));
+            const Index elem_bytes = bf16_input ? Index(sizeof(bfloat16)) : Index(sizeof(float));
             input.resize_bytes(input_shape.size() * elem_bytes, Device::CUDA);
 
             num_input_features = dataset->get_features_number("Input");
@@ -271,7 +271,7 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
                                    cudaMemcpyHostToDevice, stream));
         cast_fp32_to_bf16_cuda(input_size,
                                fp32_staging,
-                               input.as<__nv_bfloat16>(),
+                               input.as<bfloat16>(),
                                stream);
     }
     else
