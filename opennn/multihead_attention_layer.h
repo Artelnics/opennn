@@ -49,21 +49,6 @@ public:
         return {batch_size, query_sequence_length, heads_number, get_head_dimension()};
     }
 
-    static bool is_self_attention(const vector<vector<TensorView>>& forward_views)
-    {
-        return forward_views[Input].size() == 1;
-    }
-
-    static const TensorView& get_query_input(const vector<vector<TensorView>>& forward_views)
-    {
-        return forward_views[Input][0];
-    }
-
-    static const TensorView& get_source_input(const vector<vector<TensorView>>& forward_views)
-    {
-        return is_self_attention(forward_views) ? forward_views[Input][0] : forward_views[Input][1];
-    }
-
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
     vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
 

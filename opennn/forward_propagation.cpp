@@ -12,20 +12,6 @@
 namespace opennn
 {
 
-namespace {
-
-TensorView layer_output_view(const vector<vector<vector<TensorView>>>& views, Index layer_index)
-{
-    if (layer_index < 0
-        || size_t(layer_index) >= views.size()
-        || views[layer_index].size() <= 1
-        || views[layer_index].back().empty())
-        return {};
-    return views[layer_index].back()[0];
-}
-
-}
-
 ForwardPropagation::ForwardPropagation(const Index new_batch_size, NeuralNetwork* new_neural_network)
 {
     set(new_batch_size, new_neural_network);
@@ -40,18 +26,16 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
-    const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
-
     views.resize(layers_number);
 
-    const bool on_gpu = is_gpu();
-    const Device device = on_gpu ? Device::CUDA : Device::CPU;
+    const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
 
-    const auto forward_dtypes = collect_layer_dtypes(layers, batch_size, on_gpu,
-                                                     &Layer::get_forward_dtypes);
+    const vector<vector<Type>> forward_dtypes = neural_network->get_forward_dtypes(batch_size);
 
     const Index total_bytes = aligned_total_bytes(forward_shapes, forward_dtypes);
 
+    const Device device = is_gpu() ? Device::CUDA : Device::CPU;
+    
     if (total_bytes > 0)
     {
         data.resize_bytes(total_bytes, device);
@@ -68,12 +52,10 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         for (size_t j = 0; j < slots; ++j)
         {
             const Shape& slot_shape = shapes[j];
+            if (slot_shape.size() == 0) continue;
 
-            if (slot_shape.size() > 0)
-            {
-                views[i][j + 1][0] = TensorView(cursor, slot_shape, forward_dtypes[i][j]);
-                cursor += get_aligned_bytes(slot_shape.size() * type_bytes(forward_dtypes[i][j]));
-            }
+            views[i][j + 1][0] = TensorView(cursor, slot_shape, forward_dtypes[i][j]);
+            cursor += get_aligned_bytes(slot_shape.size() * type_bytes(forward_dtypes[i][j]));
         }
     }
 
@@ -102,15 +84,32 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
 {
     if (!neural_network) return {};
-    return layer_output_view(views, neural_network->get_last_trainable_layer_index());
+
+    const Index layer_index = neural_network->get_last_trainable_layer_index();
+    if (layer_index < 0
+        || size_t(layer_index) >= views.size()
+        || views[layer_index].size() <= 1
+        || views[layer_index].back().empty())
+        return {};
+
+    return views[layer_index].back()[0];
 }
 
 TensorView ForwardPropagation::get_outputs() const
 {
     if (!neural_network) return {};
+
     const Index last = Index(neural_network->get_layers_number()) - 1;
-    const TensorView v = layer_output_view(views, last);
-    return v.empty() ? get_last_trainable_layer_outputs() : v;
+    if (last >= 0
+        && size_t(last) < views.size()
+        && views[last].size() > 1
+        && !views[last].back().empty())
+    {
+        const TensorView v = views[last].back()[0];
+        if (!v.empty()) return v;
+    }
+
+    return get_last_trainable_layer_outputs();
 }
 
 void ForwardPropagation::print() const

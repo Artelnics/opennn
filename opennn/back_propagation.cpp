@@ -151,13 +151,11 @@ DeltaPoolPlan compute_delta_pool_plan(
     {
         for (auto it = free_list.begin(); it != free_list.end(); ++it)
         {
-            if (it->bytes >= bytes)
-            {
-                const Index off = it->offset;
-                if (it->bytes == bytes) free_list.erase(it);
-                else { it->offset += bytes; it->bytes -= bytes; }
-                return off;
-            }
+            if (it->bytes < bytes) continue;
+            const Index off = it->offset;
+            if (it->bytes == bytes) free_list.erase(it);
+            else { it->offset += bytes; it->bytes -= bytes; }
+            return off;
         }
         return Index(-1);
     };
@@ -244,13 +242,10 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     gradient_views.resize(layers_number);
 
-    const bool on_gpu = is_gpu();
-    const Device device = on_gpu ? Device::CUDA : Device::CPU;
+    const Device device = is_gpu() ? Device::CUDA : Device::CPU;
+    const Type compute_dtype = is_gpu() ? neural_network->get_training_type() : Type::FP32;
 
-    const Type compute_dtype = on_gpu ? neural_network->get_training_type() : Type::FP32;
-
-    const auto backward_dtypes = collect_layer_dtypes(layers, batch_size, on_gpu,
-                                                      &Layer::get_backward_dtypes);
+    const auto backward_dtypes = neural_network->get_backward_dtypes(batch_size);
 
     const Index total_gradient_bytes = aligned_total_elements(parameter_shapes) * Index(sizeof(float));
     if (total_gradient_bytes > 0)
@@ -268,11 +263,10 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         for (size_t j = 0; j < layer_param_shapes.size(); ++j)
         {
             const Shape& slot_shape = layer_param_shapes[j];
-            if (slot_shape.size() > 0)
-            {
-                gradient_views[i][j] = TensorView(g_cursor, slot_shape, Type::FP32);
-                g_cursor += get_aligned_bytes(slot_shape.size() * Index(sizeof(float)));
-            }
+            if (slot_shape.size() == 0) continue;
+
+            gradient_views[i][j] = TensorView(g_cursor, slot_shape, Type::FP32);
+            g_cursor += get_aligned_bytes(slot_shape.size() * Index(sizeof(float)));
         }
 
         layers[i]->redistribute_parameter_gradients_to_operators(gradient_views[i]);
@@ -361,15 +355,6 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     float* dst = destination.as<float>();
     const size_t k = sources.size();
 
-    if (k == 2)
-    {
-        const float* p0 = sources[0]->as<float>();
-        const float* p1 = sources[1]->as<float>();
-        #pragma omp parallel for
-        for (Index i = 0; i < n; ++i) dst[i] = p0[i] + p1[i];
-        return;
-    }
-
     vector<const float*> ptrs(k);
     transform(sources.begin(), sources.end(), ptrs.begin(),
               [](const TensorView* tv) { return tv->as<float>(); });
@@ -385,16 +370,12 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
 
 TensorView& BackPropagation::get_output_deltas()
 {
-    const Index last_trainable_index = loss->get_neural_network()->get_last_trainable_layer_index();
-
-    return delta_views[last_trainable_index][0];
+    return delta_views[loss->get_neural_network()->get_last_trainable_layer_index()][0];
 }
 
 const TensorView& BackPropagation::get_output_deltas() const
 {
-    const Index last_trainable_index = loss->get_neural_network()->get_last_trainable_layer_index();
-
-    return delta_views[last_trainable_index][0];
+    return delta_views[loss->get_neural_network()->get_last_trainable_layer_index()][0];
 }
 
 void BackPropagation::print() const

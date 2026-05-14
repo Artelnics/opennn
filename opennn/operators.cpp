@@ -93,7 +93,6 @@ void DropoutOp::apply_delta(TensorView& delta) const
 
 void DropoutOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const noexcept
 {
-    if (!active()) return;
     apply_delta(get_output_delta(bp, layer));
 }
 
@@ -2165,11 +2164,7 @@ void AttentionOp::apply_cpu(const TensorView& query,
                 {
                     const float* source_row = source_batch + source_index * embedding_dimension;
                     float max_abs = 0.0f;
-                    for (Index k = 0; k < embedding_dimension; ++k)
-                    {
-                        const float abs_value = abs(source_row[k]);
-                        if (abs_value > max_abs) max_abs = abs_value;
-                    }
+                    for (Index k = 0; k < embedding_dimension; ++k) max_abs = max(max_abs, abs(source_row[k]));
                     if (max_abs > EPSILON) continue;
 
                     for (Index row_index = 0; row_index < att_rows_per_batch; ++row_index)

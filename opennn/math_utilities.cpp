@@ -308,11 +308,9 @@ void max_pooling_3d_forward_cpu(const TensorView& input, TensorView& output, Ten
             for (Index feature_index = 0; feature_index < features; ++feature_index)
             {
                 const float value = inputs(batch_index, step, feature_index);
-                if (value > outputs(batch_index, feature_index))
-                {
-                    outputs(batch_index, feature_index) = value;
-                    if (is_training) max_indices(batch_index, feature_index) = to_type(step);
-                }
+                if (value <= outputs(batch_index, feature_index)) continue;
+                outputs(batch_index, feature_index) = value;
+                if (is_training) max_indices(batch_index, feature_index) = to_type(step);
             }
     }
 }
@@ -339,10 +337,8 @@ void average_pooling_3d_forward_cpu(const TensorView& input, TensorView& output)
 
         const Index valid_count = ((seq_matrix.array() != 0.0f).rowwise().any()).count();
 
-        if (valid_count > 0)
-            outputs.row(batch_index) = seq_matrix.colwise().sum() / to_type(valid_count);
-        else
-            outputs.row(batch_index).setZero();
+        if (valid_count == 0) { outputs.row(batch_index).setZero(); continue; }
+        outputs.row(batch_index) = seq_matrix.colwise().sum() / to_type(valid_count);
     }
 }
 

@@ -290,8 +290,8 @@ Index Optimizer::get_maximum_batch_size() const
 
         const auto forward_shapes  = neural_network->get_forward_shapes(b);
         const auto backward_shapes = neural_network->get_backward_shapes(b);
-        const auto forward_dtypes  = collect_layer_dtypes(layers, b, on_gpu, &Layer::get_forward_dtypes);
-        const auto backward_dtypes = collect_layer_dtypes(layers, b, on_gpu, &Layer::get_backward_dtypes);
+        const auto forward_dtypes  = neural_network->get_forward_dtypes(b);
+        const auto backward_dtypes = neural_network->get_backward_dtypes(b);
 
         Index total = 0;
         total += aligned_total_bytes(forward_shapes,  forward_dtypes);

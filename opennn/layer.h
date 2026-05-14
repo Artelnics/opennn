@@ -266,9 +266,11 @@ inline vector<vector<Type>> collect_layer_dtypes(
     vector<Type> (Layer::*getter)(Index) const)
 {
     vector<vector<Type>> result(layers.size());
+    
     for (size_t i = 0; i < layers.size(); ++i)
     {
         result[i] = (layers[i].get()->*getter)(batch_size);
+
         if (!is_gpu)
             std::fill(result[i].begin(), result[i].end(), Type::FP32);
     }

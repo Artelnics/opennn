@@ -31,11 +31,6 @@ Shape Pooling3d::get_output_shape() const
     return {input_features};
 }
 
-string Pooling3d::write_pooling_method() const
-{
-    return pooling_method_to_string(pooling_method);
-}
-
 vector<pair<Shape, Type>> Pooling3d::get_forward_specs(Index batch_size) const
 {
     return {
@@ -79,7 +74,7 @@ void Pooling3d::read_JSON_body(const Json* element)
 
 void Pooling3d::write_JSON_body(JsonWriter& printer) const
 {
-    add_json_field(printer, "PoolingMethod", write_pooling_method());
+    add_json_field(printer, "PoolingMethod", pooling_method_to_string(pooling_method));
 }
 
 REGISTER(Layer, Pooling3d, "Pooling3d")

@@ -642,14 +642,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 
     const Matrix outputs = calculate_outputs(input_data);
 
-    Index predicted_index = 0;
-
-    if (outputs.size() > 1)
-        predicted_index = maximal_index(outputs.row(0));
-    else
-        predicted_index = outputs(0);
-
-    return predicted_index;
+    return outputs.size() > 1 ? maximal_index(outputs.row(0)) : Index(outputs(0));
 }
 
 MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)
