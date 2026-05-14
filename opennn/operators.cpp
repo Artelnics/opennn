@@ -1026,12 +1026,24 @@ void ConvolutionOp::apply_cpu(const TensorView& input, TensorView& output)
 
     TensorMap4 outputs = output.as_tensor<4>();
 
+    // Pad inputs ONCE before the kernel loop. Doing inputs.pad() inside the
+    // loop would re-materialize the padded tensor per kernel (kernels_number
+    // times) and was the main forward-pass perf gap vs. master.
+    const bool needs_padding = padding_height > 0 || padding_width > 0;
+    const Tensor4 padded_inputs_storage = needs_padding
+        ? Tensor4(inputs.pad(input_paddings))
+        : Tensor4();
+    const TensorMap4 padded_inputs = needs_padding
+        ? TensorMap4(const_cast<float*>(padded_inputs_storage.data()),
+                     padded_inputs_storage.dimensions())
+        : inputs;
+
     for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
     {
         const TensorMap3 kernel_map = weights.as_tensor<3>(kernel_index);
 
         outputs.chip(kernel_index, 3).device(get_device()) =
-            inputs.pad(input_paddings).convolve(kernel_map, conv_dims).reshape(out_slice_shape) + biases(kernel_index);
+            padded_inputs.convolve(kernel_map, conv_dims).reshape(out_slice_shape) + biases(kernel_index);
     }
 }
 

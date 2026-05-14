@@ -113,21 +113,41 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
     MatrixR output_data;
     MatrixR target_data;
 
+    const vector<Index> sample_indices = dataset->get_sample_indices(sample_role);
+    const vector<Index> input_feature_indices  = dataset->get_feature_indices("Input");
+    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
+
+    target_data.resize(ssize(sample_indices), ssize(target_feature_indices));
+    dataset->fill_targets(sample_indices, target_feature_indices,
+                          target_data.data(), /*is_training=*/false, /*parallelize=*/true);
+
     if (const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset))
     {
         const Tensor3 input_data = time_series_dataset->get_data(sample_role, "Input");
         output_data = neural_network->calculate_outputs(input_data);
-
-        const vector<Index> sample_indices = time_series_dataset->get_sample_indices(sample_role);
-        const vector<Index> feature_indices = time_series_dataset->get_feature_indices("Target");
-        target_data.resize(ssize(sample_indices), ssize(feature_indices));
-        time_series_dataset->fill_targets(sample_indices, feature_indices, target_data.data());
     }
     else
     {
-        target_data = dataset->get_data(sample_role, "Target");
-        const MatrixR input_data = dataset->get_data(sample_role, "Input");
-        output_data = neural_network->calculate_outputs(input_data);
+        const Shape input_shape = dataset->get_shape("Input");
+
+        if (input_shape.rank == 1)
+        {
+            MatrixR input_data(samples_number, input_shape[0]);
+            dataset->fill_inputs(sample_indices, input_feature_indices,
+                                 input_data.data(), /*is_training=*/false, /*parallelize=*/true);
+            output_data = neural_network->calculate_outputs(input_data);
+        }
+        else if (input_shape.rank == 3)
+        {
+            Tensor4 inputs_4d(samples_number, input_shape[0], input_shape[1], input_shape[2]);
+            dataset->fill_inputs(sample_indices, input_feature_indices,
+                                 inputs_4d.data(), /*is_training=*/false, /*parallelize=*/true);
+            output_data = neural_network->calculate_outputs(inputs_4d);
+        }
+        else
+        {
+            throw runtime_error("Unsupported input rank " + to_string(input_shape.rank));
+        }
     }
 
     return {target_data, output_data};
@@ -539,28 +559,33 @@ MatrixI TestingAnalysis::calculate_confusion(const float decision_threshold) con
 
     MatrixI total_confusion_matrix = MatrixI::Zero(confusion_matrix_size, confusion_matrix_size);
 
+    Index input_elem_count = 1;
+    for (size_t d = 0; d < input_shape.rank; ++d) input_elem_count *= input_shape[d];
+
+    const Index targets_number = ssize(target_feature_indices);
+
     for (const vector<Index>& current_batch_indices : testing_batches)
     {
         if (current_batch_indices.empty()) continue;
-        const Index current_batch_size = current_batch_indices.size();
+        const Index batch_n = current_batch_indices.size();
 
-        MatrixR batch_inputs_flat = dataset->get_data_from_indices(current_batch_indices, input_feature_indices);
-        const MatrixR batch_targets = dataset->get_data_from_indices(current_batch_indices, target_feature_indices);
+        MatrixR batch_targets(batch_n, targets_number);
+        dataset->fill_targets(current_batch_indices, target_feature_indices,
+                              batch_targets.data(), /*is_training=*/false, /*parallelize=*/true);
 
         MatrixR batch_outputs;
-
         if (input_shape.rank == 1)
-            batch_outputs = neural_network->calculate_outputs(batch_inputs_flat);
+        {
+            MatrixR batch_inputs(batch_n, input_shape[0]);
+            dataset->fill_inputs(current_batch_indices, input_feature_indices,
+                                 batch_inputs.data(), /*is_training=*/false, /*parallelize=*/true);
+            batch_outputs = neural_network->calculate_outputs(batch_inputs);
+        }
         else if (input_shape.rank == 3)
         {
-            Tensor4 inputs_4d(current_batch_size,
-                              input_shape[0],
-                              input_shape[1],
-                              input_shape[2]);
-
-            memcpy(inputs_4d.data(), batch_inputs_flat.data(),
-                   current_batch_size * batch_inputs_flat.cols() * sizeof(float));
-
+            Tensor4 inputs_4d(batch_n, input_shape[0], input_shape[1], input_shape[2]);
+            dataset->fill_inputs(current_batch_indices, input_feature_indices,
+                                 inputs_4d.data(), /*is_training=*/false, /*parallelize=*/true);
             batch_outputs = neural_network->calculate_outputs(inputs_4d);
         }
         else
@@ -1176,9 +1201,17 @@ vector<VectorR> TestingAnalysis::calculate_inputs_errors_cross_correlation(const
 {
     const Index targets_number = dataset->get_features_number("Target");
 
-    const MatrixR inputs = dataset->get_data("Testing", "Input");
+    const vector<Index> sample_indices         = dataset->get_sample_indices("Testing");
+    const vector<Index> input_feature_indices  = dataset->get_feature_indices("Input");
+    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
+    const Index samples_n = ssize(sample_indices);
 
-    const MatrixR targets = dataset->get_data("Testing", "Target");
+    MatrixR inputs(samples_n, ssize(input_feature_indices));
+    MatrixR targets(samples_n, ssize(target_feature_indices));
+    dataset->fill_inputs(sample_indices, input_feature_indices,
+                         inputs.data(), /*is_training=*/false, /*parallelize=*/true);
+    dataset->fill_targets(sample_indices, target_feature_indices,
+                          targets.data(), /*is_training=*/false, /*parallelize=*/true);
 
     const MatrixR outputs = neural_network->calculate_outputs(inputs);
 
@@ -1201,9 +1234,21 @@ pair<float, float> TestingAnalysis::test_transformer() const
     const auto* language_dataset = dynamic_cast<LanguageDataset*>(dataset);
     if (!language_dataset) throw runtime_error("Expected LanguageDataset.");
 
-    const MatrixR context = language_dataset->get_data("Testing", "Input");
-    const MatrixR input = language_dataset->get_data("Testing", "Decoder");
-    const MatrixR target = language_dataset->get_data("Testing", "Target");
+    const vector<Index> sample_indices   = language_dataset->get_sample_indices("Testing");
+    const vector<Index> input_features   = language_dataset->get_feature_indices("Input");
+    const vector<Index> decoder_features = language_dataset->get_feature_indices("Decoder");
+    const vector<Index> target_features  = language_dataset->get_feature_indices("Target");
+    const Index n = ssize(sample_indices);
+
+    MatrixR context(n, ssize(input_features));
+    MatrixR input(n, ssize(decoder_features));
+    MatrixR target(n, ssize(target_features));
+    language_dataset->fill_inputs(sample_indices, input_features,
+                                  context.data(), /*is_training=*/false, /*parallelize=*/true);
+    language_dataset->fill_decoder(sample_indices, decoder_features,
+                                   input.data(), /*is_training=*/false, /*parallelize=*/true);
+    language_dataset->fill_targets(sample_indices, target_features,
+                                   target.data(), /*is_training=*/false, /*parallelize=*/true);
 
     const Index testing_batch_size = min(static_cast<Index>(2000), input.rows());
 

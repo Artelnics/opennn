@@ -11,9 +11,54 @@
 #include "tensor_utilities.h"
 #include "string_utilities.h"
 #include "random_utilities.h"
+#include "io_utilities.h"
 
 namespace opennn
 {
+
+namespace {
+
+#pragma pack(push, 1)
+struct ImageCacheHeader
+{
+    char     magic[8];        //  "OPENNNIM"
+    uint32_t version;
+    uint32_t height;
+    uint32_t width;
+    uint32_t channels;
+    uint64_t num_samples;
+    uint64_t record_bytes;    // = height * width * channels
+    uint64_t labels_off;      // = sizeof(header) + num_samples * record_bytes
+    uint32_t num_classes;
+    uint8_t  pad[12];         // pad to 64
+};
+#pragma pack(pop)
+static_assert(sizeof(ImageCacheHeader) == 64, "ImageCacheHeader must be 64 bytes");
+
+constexpr uint32_t IMAGE_CACHE_VERSION = 1;
+constexpr const char IMAGE_CACHE_MAGIC[8] = {'O','P','E','N','N','N','I','M'};
+
+bool read_header(FileReader& reader, ImageCacheHeader& header)
+{
+    if (reader.file_size() < sizeof(ImageCacheHeader)) return false;
+    reader.read_at(&header, sizeof(header), 0);
+    if (std::memcmp(header.magic, IMAGE_CACHE_MAGIC, 8) != 0) return false;
+    if (header.version != IMAGE_CACHE_VERSION) return false;
+    return true;
+}
+
+bool header_matches_request(const ImageCacheHeader& header,
+                            uint32_t expected_height,
+                            uint32_t expected_width,
+                            uint32_t expected_channels)
+{
+    if (expected_height   != 0 && header.height   != expected_height)   return false;
+    if (expected_width    != 0 && header.width    != expected_width)    return false;
+    if (expected_channels != 0 && header.channels != expected_channels) return false;
+    return true;
+}
+
+}  // namespace
 
 ImageDataset::ImageDataset(const Index new_samples_number,
                            const Shape& new_input_shape,
@@ -28,9 +73,8 @@ ImageDataset::ImageDataset(const Index new_samples_number,
     set(new_samples_number, new_input_shape, new_target_shape);
 }
 
-ImageDataset::ImageDataset(const filesystem::path& new_data_path, bool new_streaming) : Dataset()
+ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
 {
-    streaming = new_streaming;
     data_path = new_data_path;
 
     read_bmp();
@@ -38,7 +82,7 @@ ImageDataset::ImageDataset(const filesystem::path& new_data_path, bool new_strea
 
 Index ImageDataset::get_samples_number() const
 {
-    return streaming ? Index(image_paths.size()) : data.rows();
+    return Index(labels_ram.size());
 }
 
 Index ImageDataset::get_channels_number() const
@@ -48,9 +92,10 @@ Index ImageDataset::get_channels_number() const
 
 void ImageDataset::set_data_random()
 {
-    if (streaming)
-        throw runtime_error("set_data_random is not supported in streaming mode.");
-
+    // Synthetic random images: used by tests that build ImageDataset via the
+    // (samples_number, input_shape, target_shape) constructor without a real
+    // image folder. In that mode there's no binary cache; we keep `data` as
+    // the source of truth.
     const Index height = input_shape[0];
     const Index width = input_shape[1];
     const Index channels = input_shape[2];
@@ -92,7 +137,6 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
     write_json(printer, {
         {"FileType", "bmp"},
         {"Path", data_path.string()},
-        {"Streaming", to_string(streaming)},
         {"HasSamplesId", to_string(has_sample_ids)},
         {"Channels", to_string(input_shape[2])},
         {"Width", to_string(input_shape[1])},
@@ -165,8 +209,9 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_data_path(read_json_string(data_source_element, "Path"));
 
-    streaming = data_source_element->has("Streaming")
-             && read_json_bool(data_source_element, "Streaming");
+    // Legacy: "Streaming" key may exist in old JSONs — read and discard.
+    if (data_source_element->has("Streaming"))
+        (void)read_json_bool(data_source_element, "Streaming");
 
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
@@ -187,42 +232,108 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
     augmentation.vertical_translation_minimum = read_json_type(data_source_element, "RandomVerticalTranslationMinimum");
     augmentation.vertical_translation_maximum = read_json_type(data_source_element, "RandomVerticalTranslationMaximum");
 
-    if (streaming)
-    {
-        read_bmp();
-    }
-    else
-    {
-        variables_from_JSON(require_json_field(image_dataset_element, "Variables"));
-        samples_from_JSON(require_json_field(image_dataset_element, "Samples"));
-    }
+    read_bmp();
 }
 
 vector<Descriptives> ImageDataset::scale_features(const string&)
 {
-    if (streaming) return {};
-
-    data.leftCols(get_features_number("Input")) /= 255.0f;
-
+    // Streaming binary stores pixels as uint8 0..255; the model's Scaling
+    // layer (ImageMinMax) handles normalization. Nothing to do here.
     return {};
 }
 
 void ImageDataset::unscale_features(const string&)
 {
-    if (streaming) return;
-
-    data.leftCols(get_features_number("Input")) *= 255.0f;
+    // Symmetric: dataset bytes never get scaled, so nothing to undo.
 }
 
 void ImageDataset::read_bmp(const Shape& new_input_shape)
 {
     const chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
 
+    cache_path = data_path / ".cache" / "images.bin";
+
+    // 1) Try to use existing cache.
+    if (filesystem::exists(cache_path))
+    {
+        try
+        {
+            cache_reader.open(cache_path);
+            ImageCacheHeader header{};
+            const uint32_t expected_h = uint32_t(new_input_shape[0]);
+            const uint32_t expected_w = uint32_t(new_input_shape[1]);
+            const uint32_t expected_c = uint32_t(new_input_shape[2]);
+
+            if (read_header(cache_reader, header)
+                && header_matches_request(header, expected_h, expected_w, expected_c)
+                && cache_reader.file_size() == header.labels_off
+                                              + header.num_samples * sizeof(int32_t))
+            {
+                input_shape  = { Index(header.height), Index(header.width), Index(header.channels) };
+                target_shape = { Index(header.num_classes == 2 ? 1 : header.num_classes) };
+                record_bytes_ = header.record_bytes;
+                labels_off_   = header.labels_off;
+                num_classes_  = header.num_classes;
+
+                const Index pixels_number = Index(header.record_bytes);
+                const Index targets_number = target_shape[0];
+                const bool single_target = (header.num_classes == 2);
+
+                variables.resize(pixels_number + 1);
+                for (Index i = 0; i < pixels_number; ++i)
+                {
+                    variables[i].type = VariableType::Numeric;
+                    variables[i].name = "variable_" + to_string(i + 1);
+                    variables[i].role = VariableRole::Input;
+                }
+                Variable& target_variable = variables[pixels_number];
+                target_variable.role = VariableRole::Target;
+                target_variable.type = single_target ? VariableType::Binary : VariableType::Categorical;
+                target_variable.scaler = ScalerMethod::None;
+                target_variable.name = "Class";
+                // Placeholder category names; the binary cache stores only
+                // labels as int32 indices, not the original folder names.
+                // The training/loss/optimizer use the count, not the names.
+                vector<string> placeholder_categories(size_t(header.num_classes));
+                for (size_t i = 0; i < placeholder_categories.size(); ++i)
+                    placeholder_categories[i] = to_string(i);
+                target_variable.set_categories(placeholder_categories);
+
+                labels_ram.resize(size_t(header.num_samples));
+                cache_reader.read_at(labels_ram.data(),
+                                     size_t(header.num_samples) * sizeof(int32_t),
+                                     labels_off_);
+
+                sample_roles.assign(size_t(header.num_samples), SampleRole::Training);
+                split_samples_random();
+
+                if (display)
+                {
+                    const long long ms = chrono::duration_cast<chrono::milliseconds>(
+                        chrono::high_resolution_clock::now() - start_time).count();
+                    cout << "Image cache loaded in " << ms << " ms ("
+                         << header.num_samples << " samples).\n";
+                }
+                return;
+            }
+            // Header doesn't match — close and regenerate.
+            cache_reader.close();
+        }
+        catch (const std::exception&)
+        {
+            cache_reader.close();
+        }
+    }
+
+    // 2) No valid cache — scan the BMP directory and build it.
     vector<filesystem::path> directory_path;
 
     for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(data_path))
         if (current_directory.is_directory())
             directory_path.emplace_back(current_directory.path());
+
+    // Sort for reproducibility of the cache content.
+    sort(directory_path.begin(), directory_path.end());
 
     const Index folders_number = directory_path.size();
 
@@ -230,14 +341,19 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     vector<Index> labels;
 
     for (Index i = 0; i < folders_number; ++i)
+    {
+        vector<filesystem::path> folder_files;
         for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(directory_path[i]))
-        {
             if (current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
-            {
-                paths.emplace_back(current_directory.path());
-                labels.push_back(i);
-            }
+                folder_files.emplace_back(current_directory.path());
+
+        sort(folder_files.begin(), folder_files.end());
+        for (auto& p : folder_files)
+        {
+            paths.emplace_back(std::move(p));
+            labels.push_back(i);
         }
+    }
 
     const Index samples_number = paths.size();
 
@@ -265,25 +381,15 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         ? folders_number - 1
         : folders_number;
 
-    if (streaming)
+    input_shape  = { height, width, channels };
+    target_shape = { targets_number };
+
+    variables.resize(pixels_number + 1);
+    for (Index i = 0; i < pixels_number; ++i)
     {
-        input_shape = { height, width, channels };
-        target_shape = { targets_number };
-
-        variables.resize(pixels_number + 1);
-
-        for (Index i = 0; i < pixels_number; ++i)
-        {
-            variables[i].type = VariableType::Numeric;
-            variables[i].name = "variable_" + to_string(i + 1);
-            variables[i].role = VariableRole::Input;
-        }
-
-        sample_roles.resize(samples_number, SampleRole::Training);
-    }
-    else
-    {
-        set(samples_number, { height, width, channels }, { targets_number });
+        variables[i].type = VariableType::Numeric;
+        variables[i].name = "variable_" + to_string(i + 1);
+        variables[i].role = VariableRole::Input;
     }
 
     vector<string> categories(folders_number);
@@ -292,9 +398,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     const bool single_target = (targets_number == 1);
 
-    if (!single_target)
-        variables.resize(pixels_number + 1);
-
     Variable& target_variable = variables[pixels_number];
     target_variable.name = single_target ? categories[0] + "_" + categories[1] : "Class";
     target_variable.role = VariableRole::Target;
@@ -302,47 +405,85 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     target_variable.set_categories(categories);
     target_variable.scaler = ScalerMethod::None;
 
-    if (streaming)
-    {
-        image_paths = std::move(paths);
-        sample_labels = std::move(labels);
-        split_samples_random();
-    }
-    else
-    {
-        Index progress_counter = 0;
-        string omp_error;
+    sample_roles.assign(samples_number, SampleRole::Training);
 
-        #pragma omp parallel for
-        for (Index i = 0; i < samples_number; ++i)
+    // Write header (with placeholder, will rewrite after writing pixels) then
+    // pixels then labels into a tmp file, rename atomically at the end.
+    record_bytes_ = uint64_t(pixels_number);
+    labels_off_   = uint64_t(sizeof(ImageCacheHeader)) + uint64_t(samples_number) * record_bytes_;
+    num_classes_  = uint32_t(folders_number);
+
+    ImageCacheHeader header{};
+    std::memcpy(header.magic, IMAGE_CACHE_MAGIC, 8);
+    header.version      = IMAGE_CACHE_VERSION;
+    header.height       = uint32_t(height);
+    header.width        = uint32_t(width);
+    header.channels     = uint32_t(channels);
+    header.num_samples  = uint64_t(samples_number);
+    header.record_bytes = record_bytes_;
+    header.labels_off   = labels_off_;
+    header.num_classes  = num_classes_;
+
+    filesystem::create_directories(cache_path.parent_path());
+    const filesystem::path tmp_path = cache_path.string() + ".tmp";
+
+    // We can't trivially do this with FileWriter + OMP (multi-writer single-stream
+    // is not thread-safe), so we materialize the binary in memory in two pieces:
+    // (a) a contiguous pixel buffer filled in parallel by OMP, and (b) labels.
+    // For typical melanoma datasets (~10k × 32 KB) this is ~320 MB peak — fits
+    // in RAM; the cache file is the same size. For larger datasets the limit
+    // grows linearly, which is the trade-off for parallel decode.
+    vector<uint8_t> pixels(size_t(samples_number) * size_t(pixels_number));
+    vector<int32_t> labels_out;
+    labels_out.resize(size_t(samples_number));
+
+    Index progress_counter = 0;
+    string omp_error;
+
+    #pragma omp parallel for schedule(dynamic)
+    for (Index i = 0; i < samples_number; ++i)
+    {
+        try
         {
-            try
+            vector<float> tmp;
+            tmp.resize(size_t(pixels_number));
+            load_image(paths[i], tmp.data(), height, width, channels, /*divide_by_255=*/false);
+            uint8_t* dst = pixels.data() + size_t(i) * size_t(pixels_number);
+            for (Index p = 0; p < pixels_number; ++p)
             {
-                load_image(paths[i], &data(i, 0), height, width, channels, false);
+                const float v = tmp[size_t(p)];
+                const int iv = int(v < 0.0f ? 0.0f : (v > 255.0f ? 255.0f : v) + 0.5f);
+                dst[p] = uint8_t(iv);
             }
-            catch (const std::exception& e)
-            {
-                #pragma omp critical
-                { omp_error = e.what(); }
-                continue;
-            }
-
-            const Index label = labels[i];
-            if (targets_number == 1)
-                data(i, pixels_number) = label;
-            else
-                data(i, label + pixels_number) = 1;
-
-            #pragma omp atomic
-            ++progress_counter;
-
-            if (omp_get_thread_num() == 0)
-                display_progress_bar(progress_counter, samples_number);
+            labels_out[size_t(i)] = int32_t(labels[i]);
+        }
+        catch (const std::exception& e)
+        {
+            #pragma omp critical
+            { omp_error = e.what(); }
+            continue;
         }
 
-        if (!omp_error.empty())
-            throw runtime_error(omp_error);
+        #pragma omp atomic
+        ++progress_counter;
+
+        if (omp_get_thread_num() == 0)
+            display_progress_bar(progress_counter, samples_number);
     }
+
+    if (!omp_error.empty()) throw runtime_error(omp_error);
+
+    FileWriter writer;
+    writer.open(tmp_path);
+    writer.write(&header, sizeof(header));
+    writer.write(pixels.data(), pixels.size());
+    writer.write(labels_out.data(), labels_out.size() * sizeof(int32_t));
+    writer.finish_with_rename(cache_path);
+
+    labels_ram = std::move(labels_out);
+    cache_reader.open(cache_path);
+
+    split_samples_random();
 
     if (display)
     {
@@ -353,30 +494,23 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         const long long seconds = (total_milliseconds % 60000) / 1000;
         const long long milliseconds = total_milliseconds % 1000;
 
-        cout << "\nImage dataset loaded in: "
+        cout << "\nImage dataset cache built in: "
              << minutes << " minutes, "
              << seconds << " seconds, "
-             << milliseconds << " milliseconds." << "\n";
+             << milliseconds << " milliseconds.\n";
     }
 }
 
 void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
-                               const vector<Index>& input_indices,
+                               const vector<Index>& /*input_indices*/,
                                float* input_data,
+                               bool is_training,
                                bool parallelize,
-                               int contiguous) const
+                               int /*contiguous*/) const
 {
-    if (!streaming)
-    {
-        Dataset::fill_inputs(sample_indices, input_indices, input_data, parallelize, contiguous);
-        return;
-    }
-
-    const Index batch_size = sample_indices.size();
-    const Index height = input_shape[0];
-    const Index width = input_shape[1];
-    const Index channels = input_shape[2];
-    const Index pixels_per_image = height * width * channels;
+    const Index batch_size = ssize(sample_indices);
+    const Index pixels_per_image = Index(record_bytes_);
+    const float scale = is_training ? (1.0f / 255.0f) : 1.0f;
 
     string omp_error;
 
@@ -385,10 +519,17 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     {
         try
         {
-            load_image(image_paths[sample_indices[i]],
-                       input_data + i * pixels_per_image,
-                       height, width, channels,
-                       /*divide_by_255*/ true);
+            // Thread-local staging buffer to avoid heap churn per call.
+            thread_local vector<uint8_t> buf;
+            buf.resize(size_t(pixels_per_image));
+
+            const uint64_t off = uint64_t(sizeof(ImageCacheHeader))
+                                + uint64_t(sample_indices[i]) * record_bytes_;
+            cache_reader.read_at(buf.data(), size_t(pixels_per_image), off);
+
+            float* dst = input_data + i * pixels_per_image;
+            for (Index p = 0; p < pixels_per_image; ++p)
+                dst[p] = float(buf[size_t(p)]) * scale;
         }
         catch (const std::exception& e)
         {
@@ -405,23 +546,18 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
 void ImageDataset::fill_targets(const vector<Index>& sample_indices,
                                 const vector<Index>& target_indices,
                                 float* target_data,
+                                bool /*is_training*/,
                                 bool parallelize,
-                                int contiguous) const
+                                int /*contiguous*/) const
 {
-    if (!streaming)
-    {
-        Dataset::fill_targets(sample_indices, target_indices, target_data, parallelize, contiguous);
-        return;
-    }
-
-    const Index batch_size = sample_indices.size();
-    const Index targets_number = target_indices.size();
+    const Index batch_size = ssize(sample_indices);
+    const Index targets_number = ssize(target_indices);
 
     if (targets_number == 1)
     {
         #pragma omp parallel for if (parallelize)
         for (Index i = 0; i < batch_size; ++i)
-            target_data[i] = float(sample_labels[sample_indices[i]]);
+            target_data[i] = float(labels_ram[size_t(sample_indices[i])]);
     }
     else
     {
@@ -430,7 +566,7 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
         #pragma omp parallel for if (parallelize)
         for (Index i = 0; i < batch_size; ++i)
         {
-            const Index label = sample_labels[sample_indices[i]];
+            const int32_t label = labels_ram[size_t(sample_indices[i])];
             target_data[i * targets_number + label] = 1.0f;
         }
     }

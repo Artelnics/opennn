@@ -175,8 +175,10 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& input_indices,
                  const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices,
-                 bool augment)
+                 bool is_training)
 {
+    current_sample_count = ssize(sample_indices);
+
     const bool on_gpu = is_gpu();
 
     float* input_buffer   = on_gpu ? inputs_host   : input.as<float>();
@@ -192,15 +194,18 @@ void Batch::fill(const vector<Index>& sample_indices,
     if (target_contiguous < 0 && !target_indices.empty())
         target_contiguous = is_contiguous(target_indices) ? 1 : 0;
 
-    dataset->fill_inputs(sample_indices, input_indices, input_buffer, parallelize, input_contiguous);
+    dataset->fill_inputs(sample_indices, input_indices, input_buffer,
+                         is_training, parallelize, input_contiguous);
 
-    if (augment)
+    if (is_training)
         dataset->augment_inputs(input_buffer, sample_indices.size());
 
     if (!decoder_shape.empty())
-        dataset->fill_decoder(sample_indices, decoder_indices, decoder_buffer, parallelize, decoder_contiguous);
+        dataset->fill_decoder(sample_indices, decoder_indices, decoder_buffer,
+                              is_training, parallelize, decoder_contiguous);
 
-    dataset->fill_targets(sample_indices, target_indices, target_buffer, parallelize, target_contiguous);
+    dataset->fill_targets(sample_indices, target_indices, target_buffer,
+                          is_training, parallelize, target_contiguous);
 }
 
 Index Batch::get_samples_number() const

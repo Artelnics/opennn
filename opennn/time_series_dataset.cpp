@@ -78,7 +78,7 @@ Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& fea
     const VariableRole role_type = string_to_variable_role(feature_role);
 
     if (role_type == VariableRole::Input || role_type == VariableRole::InputTarget)
-        fill_inputs(sample_indices, feature_indices, data_3d.data());
+        fill_inputs(sample_indices, feature_indices, data_3d.data(), /*is_training=*/false);
     else if (role_type == VariableRole::Target)
         throw runtime_error("get_data for 3D is only implemented for 'Input' variables in TimeSeriesDataset.");
 
@@ -320,6 +320,7 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
 void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
                                     const vector<Index>& input_indices,
                                     float* input_data,
+                                    bool /*is_training*/,
                                     bool parallelize,
                                     int) const
 {
@@ -350,6 +351,7 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
 void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
                                      const vector<Index>& target_indices,
                                      float* target_data,
+                                     bool /*is_training*/,
                                      bool parallelize,
                                      int) const
 {

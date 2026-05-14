@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include <atomic>
-#include <omp.h>
+#include <thread>
 #include "random_utilities.h"
 
 namespace opennn
@@ -30,8 +30,13 @@ static void initialize_generator()
     }
     else
     {
-        const int thread_id = omp_get_thread_num();
-        generator.seed(static_cast<unsigned int>(seed + thread_id * 5489u));
+        // Hash the std::thread::id so OMP threads and std::thread workers
+        // each get a unique seed deterministic-per-thread. omp_get_thread_num()
+        // returns 0 outside an OMP region — wrong for std::thread workers.
+        const uint32_t tid_hash =
+            uint32_t(std::hash<std::thread::id>{}(std::this_thread::get_id()));
+        std::seed_seq seq{ uint32_t(seed), tid_hash };
+        generator.seed(seq);
     }
 
     local_generation = seed_generation.load(std::memory_order_acquire);

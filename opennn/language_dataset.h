@@ -9,6 +9,7 @@
 #pragma once
 
 #include "dataset.h"
+#include "io_utilities.h"
 
 namespace opennn
 {
@@ -18,7 +19,7 @@ class LanguageDataset final : public Dataset
 
 public:
 
-    LanguageDataset(const filesystem::path& = "", bool streaming = false);
+    LanguageDataset(const filesystem::path& = "");
     LanguageDataset(const filesystem::path&, Index maximum_vocabulary_size);
     LanguageDataset(const filesystem::path&, Index maximum_vocabulary_size, Index minimum_token_frequency);
     LanguageDataset(const Index, Index, Index);
@@ -42,9 +43,6 @@ public:
     void set_maximum_vocabulary_size(Index new_maximum) { maximum_vocabulary_size = new_maximum; }
     void set_minimum_token_frequency(Index new_minimum) { minimum_token_frequency = new_minimum; }
 
-    bool is_streaming() const { return streaming; }
-    void set_streaming(bool b) { streaming = b; }
-
     Index get_samples_number() const override;
     using Dataset::get_samples_number;
 
@@ -54,29 +52,28 @@ public:
 
     void create_vocabulary(const vector<vector<string_view>>&, vector<string>&) const;
 
-    void encode_input(const vector<vector<string_view>>&);
-    void encode_decoder_target_sequence_to_sequence(const vector<vector<string_view>>&);
-    void encode_target_classification(const vector<vector<string_view>>&);
-
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
 
     void fill_inputs(const vector<Index>&,
                      const vector<Index>&,
                      float*,
-                     bool = true,
+                     bool is_training,
+                     bool parallelize = true,
                      int = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
-                      bool = true,
+                      bool is_training,
+                      bool parallelize = true,
                       int = -1) const override;
 
     void fill_decoder(const vector<Index>&,
                       const vector<Index>&,
                       float*,
-                      bool = true,
+                      bool is_training,
+                      bool parallelize = true,
                       int = -1) const override;
 
     inline static const string PAD_TOKEN   = "[PAD]";     // 0
@@ -95,7 +92,7 @@ private:
     void update_input_vocabulary_map();
     void update_target_vocabulary_maps();
 
-    unordered_map<string_view, Index> create_vocabulary_map(const vector<string>& vocabulary);
+    unordered_map<string_view, Index> create_vocabulary_map(const vector<string>& vocabulary) const;
 
     void load_documents(string& buffer,
                         vector<vector<string_view>>& input_documents,
@@ -104,7 +101,15 @@ private:
                         bool strict_field_count) const;
 
     void encode_streaming(const vector<vector<string_view>>&,
-                          const vector<vector<string_view>>&);
+                          const vector<vector<string_view>>&,
+                          vector<vector<Index>>& in_idx,
+                          vector<vector<Index>>& tgt_idx) const;
+
+    void write_binary_cache(const vector<vector<Index>>& in_idx,
+                            const vector<vector<Index>>& tgt_idx,
+                            bool has_decoder);
+
+    bool try_load_binary_cache(Index expected_samples);
 
     vector<string> input_vocabulary;
     vector<string> target_vocabulary;
@@ -119,10 +124,12 @@ private:
     Index minimum_token_frequency = 1;
     Index maximum_vocabulary_size = 20000;
 
-    bool streaming = false;
-
-    vector<vector<Index>> sample_input_indices;
-    vector<vector<Index>> sample_target_indices;
+    // Binary streaming cache: <data_path>.cache/tokens.bin
+    // Header(64B) + offsets table (int64[N][4]) + concat int32 tokens.
+    filesystem::path cache_path;
+    mutable FileReader cache_reader;
+    uint64_t cache_data_off_ = 0;
+    vector<array<int64_t, 4>> offsets_table;   // (in_off, in_len, tgt_off, tgt_len)
 };
 
 }

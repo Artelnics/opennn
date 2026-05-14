@@ -52,6 +52,7 @@ void AdaptiveMomentEstimation::set_beta_2(const float new_beta_2)
 
 void AdaptiveMomentEstimation::set_default()
 {
+    batch_size = 0;
     display_period = 100;
     name = "AdaptiveMomentEstimation";
 }
@@ -86,12 +87,16 @@ TrainingResults AdaptiveMomentEstimation::train()
     const Index training_samples_number = dataset->get_samples_number("Training");
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
-    const Index training_batch_size = (batch_size <= 0 || batch_size > training_samples_number)
+    const Index effective_batch_size = batch_size <= 0
+        ? get_maximum_batch_size()
+        : batch_size;
+
+    const Index training_batch_size = (effective_batch_size <= 0 || effective_batch_size > training_samples_number)
         ? training_samples_number
-        : batch_size;
-    const Index validation_batch_size = (batch_size <= 0 || batch_size > validation_samples_number)
+        : effective_batch_size;
+    const Index validation_batch_size = (effective_batch_size <= 0 || effective_batch_size > validation_samples_number)
         ? validation_samples_number
-        : batch_size;
+        : effective_batch_size;
     const Index training_batches_number = (training_batch_size > 0)
         ? training_samples_number / training_batch_size
         : 0;
@@ -110,10 +115,9 @@ TrainingResults AdaptiveMomentEstimation::train()
     set_names();
     set_scaling();
 
-    const int pool_size = on_gpu ? 3 : 2;
+    const int pool_size = std::max(num_workers + 1, on_gpu ? 3 : 2);
 
     ThreadSafeQueue<Batch*> empty_training_queue;
-    ThreadSafeQueue<Batch*> ready_training_queue;
     vector<unique_ptr<Batch>> training_batch_pool;
 
     for (int i = 0; i < pool_size; ++i)
@@ -123,7 +127,6 @@ TrainingResults AdaptiveMomentEstimation::train()
     }
 
     ThreadSafeQueue<Batch*> empty_validation_queue;
-    ThreadSafeQueue<Batch*> ready_validation_queue;
     vector<unique_ptr<Batch>> validation_batch_pool;
 
     const bool share_batch_pool = has_validation && validation_batch_size == training_batch_size;
@@ -136,7 +139,6 @@ TrainingResults AdaptiveMomentEstimation::train()
         }
 
     ThreadSafeQueue<Batch*>& validation_empty_q = share_batch_pool ? empty_training_queue : empty_validation_queue;
-    ThreadSafeQueue<Batch*>& validation_ready_q = share_batch_pool ? ready_training_queue : ready_validation_queue;
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
 
     loss->set_normalization_coefficient();
@@ -199,7 +201,6 @@ TrainingResults AdaptiveMomentEstimation::train()
                                                    training_forward_propagation,
                                                    training_back_propagation,
                                                    empty_training_queue,
-                                                   ready_training_queue,
                                                    training_batches,
                                                    input_feature_indices,
                                                    decoder_feature_indices,
@@ -218,7 +219,6 @@ TrainingResults AdaptiveMomentEstimation::train()
             const EpochStats val_stats = evaluate_epoch(is_token_cross_entropy,
                                                         *validation_fp,
                                                         validation_empty_q,
-                                                        validation_ready_q,
                                                         validation_batches,
                                                         input_feature_indices,
                                                         decoder_feature_indices,

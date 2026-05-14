@@ -1191,21 +1191,30 @@ void Dataset::load_data_binary()
 
 void Dataset::fill_inputs(const vector<Index>& sample_indices,
                           const vector<Index>& input_indices,
-                          float* input_data, bool parallelize, int contiguous) const
+                          float* input_data,
+                          bool /*is_training*/,
+                          bool parallelize,
+                          int contiguous) const
 {
     fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize, contiguous);
 }
 
 void Dataset::fill_decoder(const vector<Index>& sample_indices,
                            const vector<Index>& decoder_indices,
-                           float* decoder_data, bool parallelize, int contiguous) const
+                           float* decoder_data,
+                           bool /*is_training*/,
+                           bool parallelize,
+                           int contiguous) const
 {
     fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, parallelize, contiguous);
 }
 
 void Dataset::fill_targets(const vector<Index>& sample_indices,
                            const vector<Index>& target_indices,
-                           float* target_data, bool parallelize, int contiguous) const
+                           float* target_data,
+                           bool /*is_training*/,
+                           bool parallelize,
+                           int contiguous) const
 {
     fill_tensor_data(data, sample_indices, target_indices, target_data, parallelize, contiguous);
 }

@@ -57,13 +57,15 @@ public:
     void fill_inputs(const vector<Index>&,
                            const vector<Index>&,
                            float*,
-                           bool = true,
+                           bool is_training,
+                           bool parallelize = true,
                            int contiguous = -1) const override;
 
     void fill_targets(const vector<Index>&,
                             const vector<Index>&,
                             float*,
-                            bool = true,
+                            bool is_training,
+                            bool parallelize = true,
                             int contiguous = -1) const override;
 
     void resize_input_shape(Index) override;

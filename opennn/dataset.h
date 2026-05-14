@@ -259,7 +259,8 @@ public:
     virtual void fill_inputs(const vector<Index>&,
                              const vector<Index>&,
                              float*,
-                             bool = true,
+                             bool is_training,
+                             bool parallelize = true,
                              int contiguous = -1) const;
 
     virtual void augment_inputs(float*, Index) const {}
@@ -267,13 +268,15 @@ public:
     virtual void fill_decoder(const vector<Index>&,
                               const vector<Index>&,
                               float*,
-                              bool = true,
+                              bool is_training,
+                              bool parallelize = true,
                               int contiguous = -1) const;
 
     virtual void fill_targets(const vector<Index>&,
                               const vector<Index>&,
                               float*,
-                              bool = true,
+                              bool is_training,
+                              bool parallelize = true,
                               int contiguous = -1) const;
 
 protected:

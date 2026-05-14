@@ -59,6 +59,9 @@ public:
 
     void set_display_period(const Index new_display_period) { display_period = new_display_period; }
 
+    void set_num_workers(int n) { num_workers = std::max(1, n); }
+    int  get_num_workers() const { return num_workers; }
+
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
@@ -118,7 +121,6 @@ protected:
                            ForwardPropagation& forward_propagation,
                            BackPropagation& back_propagation,
                            ThreadSafeQueue<Batch*>& empty_queue,
-                           ThreadSafeQueue<Batch*>& ready_queue,
                            const vector<vector<Index>>& batches,
                            const vector<Index>& input_feature_indices,
                            const vector<Index>& decoder_feature_indices,
@@ -129,7 +131,6 @@ protected:
     EpochStats evaluate_epoch(bool tracks_accuracy,
                               ForwardPropagation& forward_propagation,
                               ThreadSafeQueue<Batch*>& empty_queue,
-                              ThreadSafeQueue<Batch*>& ready_queue,
                               const vector<vector<Index>>& batches,
                               const vector<Index>& input_feature_indices,
                               const vector<Index>& decoder_feature_indices,
@@ -150,6 +151,8 @@ protected:
     bool display = true;
 
     string name;
+
+    int num_workers = 2;
 
     cudaStream_t memory_stream = nullptr;
     cudaEvent_t batch_ready_event[2] = {nullptr, nullptr};

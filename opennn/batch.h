@@ -31,7 +31,7 @@ struct Batch
               const vector<Index>&,
               const vector<Index>&,
               const vector<Index>&,
-              bool augment = false);
+              bool is_training);
 
     const vector<TensorView>& get_inputs() const
     {
@@ -56,6 +56,7 @@ struct Batch
     bool is_empty() const;
 
     Index samples_number = 0;
+    Index current_sample_count = 0;     // set by fill(); may be < samples_number
 
     const Dataset* dataset = nullptr;
 

@@ -50,7 +50,7 @@ private:
 
    float beta_2 = 0.999f;
 
-   Index batch_size = 1000;
+   Index batch_size = 0;
 };
 
 }

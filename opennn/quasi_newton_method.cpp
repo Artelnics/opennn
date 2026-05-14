@@ -195,7 +195,7 @@ TrainingResults QuasiNewtonMethod::train()
     training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices, true);
 
     Batch validation_batch(validation_samples_number, dataset);
-    validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices);
+    validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices, /*is_training=*/false);
 
     // Loss index
 
