@@ -250,7 +250,7 @@ __global__ void embedding_forward_kernel(const int n, const float* __restrict__ 
         const int dim_index = i % embedding_dimension;
         const int token_id = static_cast<int>(inputs[token_index]);
 
-        float val = (token_id >= 0 && token_id < vocabulary_size)
+        float val = (token_id > 0 && token_id < vocabulary_size)
             ? scale * weights[token_id * embedding_dimension + dim_index]
             : 0.0f;
 

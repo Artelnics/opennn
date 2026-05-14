@@ -58,6 +58,102 @@ inline array<pair<Index, Index>, 4> nhwc_padding(Index padding_height, Index pad
         make_pair(Index(0), Index(0))
     };
 }
+
+inline bool source_row_is_nonzero(const float* row, Index width)
+{
+    for (Index j = 0; j < width; ++j)
+        if (abs(row[j]) > EPSILON) return true;
+
+    return false;
+}
+
+bool get_contiguous_source_lengths(const TensorView& source_input,
+                                   vector<Index>& lengths,
+                                   bool& has_padding)
+{
+    if (source_input.shape.rank != 3 || source_input.type != Type::FP32)
+        return false;
+
+    const Index batch_size = source_input.shape[0];
+    const Index sequence_length = source_input.shape[1];
+    const Index embedding_dimension = source_input.shape[2];
+    const float* source_data = source_input.as<float>();
+
+    lengths.assign(batch_size, sequence_length);
+    has_padding = false;
+
+    for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
+    {
+        Index valid_length = 0;
+        bool seen_padding = false;
+        const float* source_batch = source_data + batch_index * sequence_length * embedding_dimension;
+
+        for (Index source_index = 0; source_index < sequence_length; ++source_index)
+        {
+            const bool nonzero = source_row_is_nonzero(source_batch + source_index * embedding_dimension,
+                                                       embedding_dimension);
+
+            if (nonzero)
+            {
+                if (seen_padding)
+                    return false;
+
+                valid_length = source_index + 1;
+            }
+            else
+            {
+                seen_padding = true;
+                has_padding = true;
+            }
+        }
+
+        if (valid_length <= 0)
+            return false;
+
+        lengths[batch_index] = valid_length;
+    }
+
+    return true;
+}
+
+inline void softmax_rows_prefix(float* matrix, Index rows, Index cols, Index prefix)
+{
+    for (Index row = 0; row < rows; ++row)
+    {
+        float* row_data = matrix + row * cols;
+        float max_val = row_data[0];
+        for (Index col = 1; col < prefix; ++col)
+            if (row_data[col] > max_val) max_val = row_data[col];
+
+        float sum = 0.0f;
+        for (Index col = 0; col < prefix; ++col)
+        {
+            const float value = exp(row_data[col] - max_val);
+            row_data[col] = value;
+            sum += value;
+        }
+
+        const float inv_sum = 1.0f / sum;
+        for (Index col = 0; col < prefix; ++col)
+            row_data[col] *= inv_sum;
+    }
+}
+
+inline Index infer_attention_prefix_length(const TensorView& attention_weights,
+                                           Index batch_index)
+{
+    const Index heads_number = attention_weights.shape[1];
+    const Index query_sequence_length = attention_weights.shape[2];
+    const Index source_sequence_length = attention_weights.shape[3];
+    const float* first_row = attention_weights.as<float>()
+        + batch_index * heads_number * query_sequence_length * source_sequence_length;
+
+    Index length = source_sequence_length;
+    while (length > 0 && first_row[length - 1] == 0.0f)
+        --length;
+
+    return length;
+}
 }
 
 void AddOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexcept
@@ -2061,6 +2157,52 @@ void AttentionOp::apply_cpu(const TensorView& query,
                           float* mask_scratch,
                           bool is_training)
 {
+    if (!use_causal_mask
+        && !dropout.active()
+        && compute_dtype == Type::FP32
+        && query.type == Type::FP32
+        && key.type == Type::FP32
+        && value.type == Type::FP32
+        && attention_weights.type == Type::FP32
+        && output.type == Type::FP32
+        && source_input.shape.rank == 3
+        && attention_weights.shape.rank == 4)
+    {
+        vector<Index> valid_lengths;
+        bool has_padding = false;
+
+        if (get_contiguous_source_lengths(source_input, valid_lengths, has_padding) && has_padding)
+        {
+            const Index batch_size = source_input.shape[0];
+            const Index query_sequence_length = query.shape[2];
+            const Index source_sequence_length = key.shape[2];
+            const Index batch_heads = batch_size * heads_number;
+            const float scale = scaling_factor();
+
+            #pragma omp parallel for
+            for (Index batch_head = 0; batch_head < batch_heads; ++batch_head)
+            {
+                const Index batch_index = batch_head / heads_number;
+                const Index valid_length = valid_lengths[batch_index];
+
+                const MatrixMap query_matrix = query.as_matrix(batch_head);
+                const MatrixMap key_matrix = key.as_matrix(batch_head);
+                const MatrixMap value_matrix = value.as_matrix(batch_head);
+                MatrixMap attention_matrix = attention_weights.as_matrix(batch_head);
+                MatrixMap output_matrix = output.as_matrix(batch_head);
+
+                auto attention_valid = attention_matrix.leftCols(valid_length);
+                attention_valid.noalias() = scale * (query_matrix * key_matrix.topRows(valid_length).transpose());
+                if (valid_length < source_sequence_length)
+                    attention_matrix.rightCols(source_sequence_length - valid_length).setZero();
+                softmax_rows_prefix(attention_matrix.data(), query_sequence_length, source_sequence_length, valid_length);
+                output_matrix.noalias() = attention_valid * value_matrix.topRows(valid_length);
+            }
+
+            return;
+        }
+    }
+
     multiply(query, false, key, true, attention_weights, scaling_factor(), 0.0f);
 
     {
@@ -2277,6 +2419,93 @@ void AttentionOp::apply_delta_cpu(const TensorView& query,
                                 TensorView& key_delta,
                                 TensorView& value_delta) const
 {
+    if (!use_causal_mask
+        && !dropout.active()
+        && compute_dtype == Type::FP32
+        && query.type == Type::FP32
+        && key.type == Type::FP32
+        && value.type == Type::FP32
+        && attention_weights.type == Type::FP32
+        && output_delta.type == Type::FP32
+        && attention_weight_delta.type == Type::FP32
+        && query_delta.type == Type::FP32
+        && key_delta.type == Type::FP32
+        && value_delta.type == Type::FP32
+        && attention_weights.shape.rank == 4
+        && attention_weight_delta.shape.rank == 4)
+    {
+        const Index batch_size = query.shape[0];
+        const Index source_sequence_length = key.shape[2];
+        vector<Index> valid_lengths(batch_size);
+        bool has_padding = false;
+        bool valid_prefixes = true;
+
+        for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
+        {
+            const Index valid_length = infer_attention_prefix_length(attention_weights, batch_index);
+            if (valid_length <= 0 || valid_length > source_sequence_length)
+            {
+                valid_prefixes = false;
+                break;
+            }
+
+            valid_lengths[batch_index] = valid_length;
+            if (valid_length < source_sequence_length)
+                has_padding = true;
+        }
+
+        if (valid_prefixes && has_padding)
+        {
+            const Index batch_heads = batch_size * heads_number;
+            const float scale = scaling_factor();
+
+            #pragma omp parallel for
+            for (Index batch_head = 0; batch_head < batch_heads; ++batch_head)
+            {
+                const Index batch_index = batch_head / heads_number;
+                const Index valid_length = valid_lengths[batch_index];
+
+                const MatrixMap query_matrix = query.as_matrix(batch_head);
+                const MatrixMap key_matrix = key.as_matrix(batch_head);
+                const MatrixMap value_matrix = value.as_matrix(batch_head);
+                const MatrixMap attention_matrix = attention_weights.as_matrix(batch_head);
+                const MatrixMap output_delta_matrix = output_delta.as_matrix(batch_head);
+
+                MatrixMap attention_delta_matrix = attention_weight_delta.as_matrix(batch_head);
+                MatrixMap query_delta_matrix = query_delta.as_matrix(batch_head);
+                MatrixMap key_delta_matrix = key_delta.as_matrix(batch_head);
+                MatrixMap value_delta_matrix = value_delta.as_matrix(batch_head);
+
+                const auto attention_valid = attention_matrix.leftCols(valid_length);
+                auto attention_delta_valid = attention_delta_matrix.leftCols(valid_length);
+
+                value_delta_matrix.topRows(valid_length).noalias() =
+                    attention_valid.transpose() * output_delta_matrix;
+
+                attention_delta_valid.noalias() =
+                    output_delta_matrix * value_matrix.topRows(valid_length).transpose();
+
+                const VectorR dot = (attention_valid.array() * attention_delta_valid.array()).rowwise().sum();
+                attention_delta_valid.array() =
+                    attention_valid.array() * (attention_delta_valid.colwise() - dot).array();
+
+                query_delta_matrix.noalias() =
+                    scale * (attention_delta_valid * key_matrix.topRows(valid_length));
+                key_delta_matrix.topRows(valid_length).noalias() =
+                    scale * (attention_delta_valid.transpose() * query_matrix);
+
+                if (valid_length < source_sequence_length)
+                {
+                    attention_delta_matrix.rightCols(source_sequence_length - valid_length).setZero();
+                    key_delta_matrix.bottomRows(source_sequence_length - valid_length).setZero();
+                    value_delta_matrix.bottomRows(source_sequence_length - valid_length).setZero();
+                }
+            }
+
+            return;
+        }
+    }
+
     apply_delta_unfused(query, key, value,
                         attention_weights, attention_weights_dropped,
                         output_delta, attention_weight_delta,
@@ -2861,6 +3090,12 @@ void EmbeddingLookupOp::apply_cpu(const TensorView& indices, TensorView& output)
     {
         const Index token_id = static_cast<Index>(input_indices[i]);
 
+        if (token_id == 0)
+        {
+            output_mat.row(i).setZero();
+            continue;
+        }
+
         if (token_id < 0 || token_id >= weights_mat.rows())
         {
             if (!out_of_range_warned.exchange(true))
@@ -2902,7 +3137,7 @@ void EmbeddingLookupOp::apply_delta_cpu(const TensorView& indices,
     {
         const Index vocabulary_index = static_cast<Index>(indices.as<float>()[token_index]);
 
-        if (vocabulary_index < 0 || vocabulary_index >= weight_gradients.rows())
+        if (vocabulary_index <= 0 || vocabulary_index >= weight_gradients.rows())
             continue;
 
         if (scale_embedding)
