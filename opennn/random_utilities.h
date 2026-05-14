@@ -34,6 +34,11 @@ namespace opennn
     void shuffle_vector_blocks(vector<Index>&, size_t = 20);
 
     Index get_random_element(const vector<Index>&);
+
+    inline float glorot_limit(Index fan_in, Index fan_out)
+    {
+        return sqrt(6.0f / static_cast<float>(fan_in + fan_out));
+    }
 }
 
 // OpenNN: Open Neural Networks Library.

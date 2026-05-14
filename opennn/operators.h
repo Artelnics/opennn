@@ -10,6 +10,8 @@
 
 #include "tensor_utilities.h"
 #include "enum_map.h"
+#include "forward_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {
@@ -20,9 +22,6 @@ class JsonWriter;
 #ifdef OPENNN_HAS_CUDA
 struct LtMatmulPlan;
 #endif
-
-struct ForwardPropagation;
-struct BackPropagation;
 
 struct Operator
 {
@@ -57,6 +56,31 @@ struct Operator
 
     vector<size_t> input_delta_slots;
     vector<size_t> output_delta_slots;
+
+    TensorView& get_input(ForwardPropagation& fp, size_t layer, size_t i = 0) const noexcept
+    {
+        return fp.views[layer][input_slots[i]][0];
+    }
+
+    vector<TensorView>& get_inputs(ForwardPropagation& fp, size_t layer, size_t i = 0) const noexcept
+    {
+        return fp.views[layer][input_slots[i]];
+    }
+
+    TensorView& get_output(ForwardPropagation& fp, size_t layer, size_t i = 0) const noexcept
+    {
+        return fp.views[layer][output_slots[i]][0];
+    }
+
+    TensorView& get_output_delta(BackPropagation& bp, size_t layer, size_t i = 0) const noexcept
+    {
+        return bp.delta_views[layer][output_delta_slots[i]];
+    }
+
+    TensorView& get_input_delta(BackPropagation& bp, size_t layer, size_t i = 0) const noexcept
+    {
+        return bp.delta_views[layer][input_delta_slots[i]];
+    }
 };
 
 struct AddOp : Operator
@@ -365,6 +389,8 @@ private:
                          TensorView& input_delta) const;
 
     void plan_convolution_algorithms(const TensorView& input, const TensorView& output);
+
+    array<pair<Index, Index>, 4> nhwc_padding() const;
 };
 
 struct ConvolutionReluOp : Operator
@@ -617,6 +643,13 @@ private:
                                  TensorView& query_delta,
                                  TensorView& key_delta,
                                  TensorView& value_delta) const;
+
+    static bool get_contiguous_source_lengths(const TensorView& source_input,
+                                              vector<Index>& lengths,
+                                              bool& has_padding);
+    static void softmax_rows_prefix(float* matrix, Index rows, Index cols, Index prefix);
+    static Index infer_attention_prefix_length(const TensorView& attention_weights,
+                                               Index batch_index);
 
     // Common backbone for the unfused CPU and GPU paths. The softmax-backward
     // step differs (Eigen vs cuDNN) and is supplied as a callable.

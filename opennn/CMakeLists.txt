@@ -46,6 +46,14 @@ if(OPENNN_HAS_CUDA)
         target_link_libraries(opennn PUBLIC ${CUDNN_LIBRARY})
         target_include_directories(opennn PUBLIC ${CUDNN_INCLUDE_DIR})
     endif()
+    find_path(CUDNN_FRONTEND_INCLUDE_DIR NAMES cudnn_frontend.h)
+    if(NOT CUDNN_FRONTEND_INCLUDE_DIR)
+        message(FATAL_ERROR
+            "OpenNN with OPENNN_HAS_CUDA=ON requires the cuDNN frontend headers "
+            "(cudnn_frontend.h). Install from https://github.com/NVIDIA/cudnn-frontend "
+            "and set CUDNN_FRONTEND_INCLUDE_DIR.")
+    endif()
+    target_include_directories(opennn PUBLIC ${CUDNN_FRONTEND_INCLUDE_DIR})
 endif()
 
 # Optimization & SIMD. Without host-native ISA flags Eigen falls back to the x86-64

@@ -417,6 +417,20 @@ private:
 
 };
 
+inline TensorView& view_at_slot_or(vector<TensorView>& views,
+                                   const vector<size_t>& slots, size_t i,
+                                   TensorView& fallback)
+{
+    return i < slots.size() ? views[slots[i]] : fallback;
+}
+
+inline TensorView& view_at_slot_or(vector<vector<TensorView>>& views,
+                                   const vector<size_t>& slots, size_t i,
+                                   TensorView& fallback)
+{
+    return i < slots.size() ? views[slots[i]][0] : fallback;
+}
+
 template<typename T, size_t N>
 using array = Eigen::array<T, N>;
 
