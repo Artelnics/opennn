@@ -126,7 +126,7 @@ Index Dataset::get_used_samples_number() const
 void Dataset::set_sample_roles(const string& sample_role)
 {
     const SampleRole role_type = string_to_sample_role(sample_role);
-    fill(sample_roles.begin(), sample_roles.end(), role_type);
+    std::fill(sample_roles.begin(), sample_roles.end(), role_type);
 }
 
 void Dataset::set_sample_role(const Index index, const string& new_role)

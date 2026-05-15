@@ -993,6 +993,10 @@ void ConvolutionOp::apply_cpu(const TensorView& input, TensorView& output)
     }
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
 void ConvolutionOp::apply_delta_cpu(const TensorView& input,
                                   const TensorView& output_delta,
                                   TensorView& input_delta) const
@@ -1068,6 +1072,9 @@ void ConvolutionOp::apply_delta_cpu(const TensorView& input,
         }
     }
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #ifdef OPENNN_HAS_CUDA
 
@@ -1668,7 +1675,7 @@ vector<pair<Shape, Type>> AttentionOp::forward_scratch_specs(Index batch_size) c
     const Shape attention_shape = {batch_size, heads_number,
                                    query_sequence_length, source_sequence_length};
     const Shape dropout_shape = dropout.active() ? attention_shape : Shape{};
-    
+
     return {
         {attention_shape, compute_dtype}, // AttentionWeights
         {dropout_shape,   compute_dtype}, // AttentionWeightsDropped

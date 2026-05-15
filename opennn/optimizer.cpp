@@ -957,6 +957,10 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
 
     vector<thread> workers;
     workers.reserve(num_workers);
+    // Batch loading is already parallelized across workers. Avoid nested OpenMP
+    // teams inside Dataset::fill_*; on MinGW this can corrupt the heap when
+    // worker threads tear down.
+    const bool parallelize_samples_within_batch = false;
     for (int w = 0; w < num_workers; ++w)
         workers.emplace_back([&]() {
             for (;;) {
@@ -969,9 +973,10 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                             input_feature_indices,
                             decoder_feature_indices,
                             target_feature_indices,
-                            /*is_training=*/true);
-                const auto t_fill1 = chrono::steady_clock::now();
-                ready[it].store(batch, memory_order_release);
+                            /*is_training=*/true,
+                            parallelize_samples_within_batch);
+                const auto t_fill1 = std::chrono::steady_clock::now();
+                ready[it].store(batch, std::memory_order_release);
 
                 if (profile_enabled_from_env())
                 {
@@ -1159,6 +1164,7 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
     atomic<Index> next_iteration{0};
     vector<thread> workers;
     workers.reserve(num_workers);
+    const bool parallelize_samples_within_batch = false;
     for (int w = 0; w < num_workers; ++w)
         workers.emplace_back([&]() {
             for (;;) {
@@ -1169,8 +1175,9 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
                             input_feature_indices,
                             decoder_feature_indices,
                             target_feature_indices,
-                            /*is_training=*/false);
-                ready[it].store(batch, memory_order_release);
+                            /*is_training=*/false,
+                            parallelize_samples_within_batch);
+                ready[it].store(batch, std::memory_order_release);
             }
         });
 
