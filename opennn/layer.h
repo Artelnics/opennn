@@ -88,7 +88,7 @@ inline vector<Type> spec_dtypes(const vector<pair<Shape, Type>>& specs)
     return result;
 }
 
-inline void check_rank(const Shape& shape, std::initializer_list<int> allowed,
+inline void check_rank(const Shape& shape, initializer_list<int> allowed,
                        const char* layer, const char* what)
 {
     if (shape.empty()) return;
@@ -272,7 +272,7 @@ inline vector<vector<Type>> collect_layer_dtypes(
         result[i] = (layers[i].get()->*getter)(batch_size);
 
         if (!is_gpu)
-            std::fill(result[i].begin(), result[i].end(), Type::FP32);
+            fill(result[i].begin(), result[i].end(), Type::FP32);
     }
     return result;
 }

@@ -751,30 +751,6 @@ void CombinationOp::apply_delta_cpu(const TensorView& output_delta,
 
 #ifdef OPENNN_HAS_CUDA
 
-namespace {
-
-void run_lt_matmul(const LtMatmulPlan& plan,
-                   const void* a_data, const void* b_data, void* c_data,
-                   const void* bias_pointer)
-{
-    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
-        CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
-
-    CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(),
-                                plan.op_desc,
-                                &one,
-                                a_data, plan.a_desc,
-                                b_data, plan.b_desc,
-                                &zero,
-                                c_data, plan.cd_desc,
-                                c_data, plan.cd_desc,
-                                plan.algo_valid ? &plan.algo : nullptr,
-                                scratch::ensure_cublas_lt_workspace(plan.workspace_size), plan.workspace_size,
-                                Backend::get_compute_stream()));
-}
-
-}
-
 void CombinationOp::apply_gpu(const TensorView& input, TensorView& output, cublasLtEpilogue_t epilogue)
 {
     const int input_columns  = to_int(input.shape.back());
@@ -1396,7 +1372,7 @@ void LayerNormOp::apply_cpu(const TensorView& input,
         }
 
         const float mean    = sum * inv_D;
-        const float std_val = std::sqrt(sum_sq * inv_D - mean * mean + EPSILON);
+        const float std_val = sqrt(sum_sq * inv_D - mean * mean + EPSILON);
         const float inv_std = 1.0f / std_val;
 
         means_data[row] = mean;
@@ -1745,16 +1721,16 @@ struct AttentionOp::SDPACache
     struct Entry
     {
         // Forward graph
-        std::shared_ptr<cudnn_frontend::graph::Graph> fwd_graph;
-        std::shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_Q, fwd_K, fwd_V, fwd_O, fwd_Stats;
-        std::shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_Seed, fwd_Offset;
+        shared_ptr<cudnn_frontend::graph::Graph> fwd_graph;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_Q, fwd_K, fwd_V, fwd_O, fwd_Stats;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_Seed, fwd_Offset;
         void* fwd_workspace_buf = nullptr;
 
         // Backward graph (built lazily on first apply_delta_gpu)
-        std::shared_ptr<cudnn_frontend::graph::Graph> bwd_graph;
-        std::shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Q, bwd_K, bwd_V, bwd_O, bwd_dO, bwd_Stats;
-        std::shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_dQ, bwd_dK, bwd_dV;
-        std::shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Seed, bwd_Offset;
+        shared_ptr<cudnn_frontend::graph::Graph> bwd_graph;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Q, bwd_K, bwd_V, bwd_O, bwd_dO, bwd_Stats;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_dQ, bwd_dK, bwd_dV;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Seed, bwd_Offset;
         void* bwd_workspace_buf = nullptr;
 
         // Shared (forward writes, backward reads). LSE stats from softmax.
@@ -1768,7 +1744,7 @@ struct AttentionOp::SDPACache
         void* offset_buf = nullptr;
     };
 
-    std::unordered_map<CacheKey, Entry, CacheKeyHash> entries;
+    unordered_map<CacheKey, Entry, CacheKeyHash> entries;
 
     // 1-element shortcut: AttentionOp is typically called with the same shape
     // and dtype across all training/inference steps. After the first call this
@@ -1825,7 +1801,7 @@ auto sdpa_check = [](auto s, const string& what) {
 };
 
 // {B, H, S, D} contiguous tensor input.
-std::shared_ptr<cudnn_frontend::graph::Tensor_attributes>
+shared_ptr<cudnn_frontend::graph::Tensor_attributes>
 bhsd_input(cudnn_frontend::graph::Graph& graph, const char* name, int64_t B, int64_t H, int64_t S, int64_t D)
 {
     return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
@@ -1833,7 +1809,7 @@ bhsd_input(cudnn_frontend::graph::Graph& graph, const char* name, int64_t B, int
                         .set_dim   ({B, H, S, D})
                         .set_stride({H * S * D, S * D, D, 1}));
 }
-void bhsd_output(std::shared_ptr<cudnn_frontend::graph::Tensor_attributes>& T,
+void bhsd_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>& T,
                  int64_t B, int64_t H, int64_t S, int64_t D)
 {
     T->set_output(true).set_dim({B, H, S, D}).set_stride({H * S * D, S * D, D, 1});
@@ -1879,7 +1855,7 @@ static void build_sdpa_forward_graph(AttentionOp::SDPACache::Entry& entry,
                         .set_name("flash_attn_fwd")
                         .set_is_inference(!k.is_training)
                         .set_causal_mask(k.causal)
-                        .set_attn_scale(1.0f / std::sqrt(float(k.head_dim)));
+                        .set_attn_scale(1.0f / sqrt(float(k.head_dim)));
 
     if (k.dropout_active)
     {
@@ -1959,7 +1935,7 @@ static void build_sdpa_backward_graph(AttentionOp::SDPACache::Entry& entry,
     auto sdpa_bwd_options = cudnn_frontend::graph::SDPA_backward_attributes()
                             .set_name("flash_attn_bwd")
                             .set_causal_mask(k.causal)
-                            .set_attn_scale(1.0f / std::sqrt(float(k.head_dim)));
+                            .set_attn_scale(1.0f / sqrt(float(k.head_dim)));
 
     if (k.dropout_active)
     {
@@ -2252,7 +2228,7 @@ void AttentionOp::apply_gpu(const TensorView& query,
         ++sdpa_dropout_offset;
     }
 
-    std::unordered_map<std::shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tp;
+    unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tp;
     tp[entry.fwd_Q] = query.data;
     tp[entry.fwd_K] = key.data;
     tp[entry.fwd_V] = value.data;
@@ -2540,7 +2516,7 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
                                    cudaMemcpyHostToDevice, Backend::get_compute_stream()));
     }
 
-    std::unordered_map<std::shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tp;
+    unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tp;
     tp[entry.bwd_Q]     = const_cast<float*>(query.as<float>());
     tp[entry.bwd_K]     = const_cast<float*>(key.as<float>());
     tp[entry.bwd_V]     = const_cast<float*>(value.as<float>());
@@ -2891,7 +2867,7 @@ void EmbeddingLookupOp::set(Index new_vocabulary_size, Index new_sequence_length
     vocabulary_size     = new_vocabulary_size;
     sequence_length     = new_sequence_length;
     embedding_dimension = new_embedding_dimension;
-    embedding_scale     = std::sqrt(static_cast<float>(new_embedding_dimension));
+    embedding_scale     = sqrt(static_cast<float>(new_embedding_dimension));
 }
 
 vector<pair<Shape, Type>> EmbeddingLookupOp::parameter_specs() const
@@ -2995,7 +2971,7 @@ void EmbeddingLookupOp::apply_cpu(const TensorView& indices, TensorView& output)
     const MatrixMap weights_mat       = weights.as_matrix();
     const float* input_indices = indices.as<float>();
 
-    static std::atomic<bool> out_of_range_warned{false};
+    static atomic<bool> out_of_range_warned{false};
 
     #pragma omp parallel for
     for (Index i = 0; i < total_tokens; ++i)
@@ -3011,7 +2987,7 @@ void EmbeddingLookupOp::apply_cpu(const TensorView& indices, TensorView& output)
         if (token_id < 0 || token_id >= weights_mat.rows())
         {
             if (!out_of_range_warned.exchange(true))
-                std::cerr << "EmbeddingLookup warning: token id " << token_id
+                cerr << "EmbeddingLookup warning: token id " << token_id
                           << " out of range [0, " << weights_mat.rows()
                           << "); zeroing row. Further warnings suppressed.\n";
             output_mat.row(i).setZero();

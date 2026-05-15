@@ -220,7 +220,7 @@ void minkowski_error_gradient(const TensorView& input, const TensorView& target,
     const float exponent = power - 1.0f;
     input_delta.as_vector().array() = scale
         * difference_vec.array().sign()
-        * (difference_vec.array().abs() + EPSILON).unaryExpr([exponent](float x) { return std::pow(x, exponent); });
+        * (difference_vec.array().abs() + EPSILON).unaryExpr([exponent](float x) { return pow(x, exponent); });
 }
 
 void cross_entropy_3d(const TensorView& input, const TensorView& target, float& error,

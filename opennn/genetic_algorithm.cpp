@@ -392,7 +392,7 @@ void GeneticAlgorithm::perform_mutation()
         shuffle_vector(to_true_mutations);
         shuffle_vector(to_false_mutations);
 
-        const Index swap_count = std::min(to_true_mutations.size(), to_false_mutations.size());
+        const Index swap_count = min(to_true_mutations.size(), to_false_mutations.size());
 
         for (Index k = 0; k < swap_count; ++k)
         {

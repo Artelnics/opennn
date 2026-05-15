@@ -30,7 +30,7 @@ public:
         Index maximum_tokens = 0;
     };
 
-    using TokenCallback = std::function<void(const string& token)>;
+    using TokenCallback = function<void(const string& token)>;
 
     TransformerDecoder(Transformer&, const LanguageDataset&);
     TransformerDecoder(const TransformerDecoder&) = delete;
@@ -42,11 +42,11 @@ public:
     string decode(const string& source, const TokenCallback& on_token);
     string decode(const string& source, const SamplingConfig& config, const TokenCallback& on_token);
 
-    string decode_to_stream(const string& source, std::ostream& out);
-    string decode_to_stream(const string& source, const SamplingConfig& config, std::ostream& out);
+    string decode_to_stream(const string& source, ostream& out);
+    string decode_to_stream(const string& source, const SamplingConfig& config, ostream& out);
 
-    // Interactive REPL: reads prompts from std::cin, streams predictions to
-    // std::cout. Empty line or Ctrl+D exits.
+    // Interactive REPL: reads prompts from cin, streams predictions to
+    // cout. Empty line or Ctrl+D exits.
     void chat();
     void chat(const SamplingConfig& config);
 

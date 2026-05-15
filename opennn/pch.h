@@ -116,8 +116,8 @@ template <typename T>
 void check_cuda_status(T status, const char* file, int line, const char* msg)
 {
     if (status != 0)
-        throw std::runtime_error(std::string(msg) + " Error: " + std::to_string(static_cast<int>(status)) +
-                                 " in " + file + ":" + std::to_string(line));
+        throw runtime_error(string(msg) + " Error: " + to_string(static_cast<int>(status)) +
+                                 " in " + file + ":" + to_string(line));
 }
 
 #define CHECK_CUDA(x) check_cuda_status(x, __FILE__, __LINE__, "CUDA")

@@ -15,10 +15,10 @@ namespace opennn::profiler {
 
 struct Stats
 {
-    std::map<std::string, double> times_ms;
-    std::map<std::string, long>   counts;
+    map<string, double> times_ms;
+    map<string, long>   counts;
 
-    void add(const std::string& key, double ms)
+    void add(const string& key, double ms)
     {
         times_ms[key] += ms;
         counts[key]   += 1;
@@ -30,29 +30,29 @@ struct Stats
         counts.clear();
     }
 
-    void print(std::ostream& os, const std::string& title, double total_ms = 0.0) const
+    void print(ostream& os, const string& title, double total_ms = 0.0) const
     {
-        std::vector<std::pair<std::string, double>> sorted(times_ms.begin(), times_ms.end());
-        std::sort(sorted.begin(), sorted.end(),
+        vector<pair<string, double>> sorted(times_ms.begin(), times_ms.end());
+        sort(sorted.begin(), sorted.end(),
                   [](const auto& a, const auto& b) { return a.second > b.second; });
 
         os << "\n[PROFILE] " << title << "\n";
-        os << "  " << std::left << std::setw(48) << "section"
-           << std::right << std::setw(12) << "total_ms"
-           << std::setw(10)  << "calls"
-           << std::setw(12) << "ms/call";
-        if (total_ms > 0.0) os << std::setw(8) << "%";
+        os << "  " << left << setw(48) << "section"
+           << right << setw(12) << "total_ms"
+           << setw(10)  << "calls"
+           << setw(12) << "ms/call";
+        if (total_ms > 0.0) os << setw(8) << "%";
         os << "\n";
 
         for (const auto& [key, total] : sorted)
         {
             const long call_count = counts.at(key);
-            os << "  " << std::left << std::setw(48) << key
-               << std::right << std::setw(12) << std::fixed << std::setprecision(2) << total
-               << std::setw(10) << call_count
-               << std::setw(12) << std::fixed << std::setprecision(3) << (total / double(call_count));
+            os << "  " << left << setw(48) << key
+               << right << setw(12) << fixed << setprecision(2) << total
+               << setw(10) << call_count
+               << setw(12) << fixed << setprecision(3) << (total / double(call_count));
             if (total_ms > 0.0)
-                os << std::setw(7) << std::fixed << std::setprecision(1) << (total / total_ms * 100.0) << "%";
+                os << setw(7) << fixed << setprecision(1) << (total / total_ms * 100.0) << "%";
             os << "\n";
         }
         os << "\n";
@@ -73,18 +73,18 @@ inline bool& enabled()
 
 class ScopedTimer
 {
-    std::string key_;
-    std::chrono::steady_clock::time_point t0_;
+    string key_;
+    chrono::steady_clock::time_point t0_;
     bool sync_gpu_;
 public:
-    ScopedTimer(std::string key, bool sync_gpu = true)
+    ScopedTimer(string key, bool sync_gpu = true)
         : key_(move(key)), sync_gpu_(sync_gpu)
     {
         if (!enabled()) return;
 #ifdef OPENNN_HAS_CUDA
         if (sync_gpu_) cudaDeviceSynchronize();
 #endif
-        t0_ = std::chrono::steady_clock::now();
+        t0_ = chrono::steady_clock::now();
     }
 
     ~ScopedTimer()
@@ -93,8 +93,8 @@ public:
 #ifdef OPENNN_HAS_CUDA
         if (sync_gpu_) cudaDeviceSynchronize();
 #endif
-        const auto end_time = std::chrono::steady_clock::now();
-        const double elapsed_ms = std::chrono::duration<double, std::milli>(end_time - t0_).count();
+        const auto end_time = chrono::steady_clock::now();
+        const double elapsed_ms = chrono::duration<double, milli>(end_time - t0_).count();
         global_stats().add(key_, elapsed_ms);
     }
 };
@@ -108,7 +108,7 @@ public:
 // is not evaluated and no string is built. The empty-string fallback is cheap.
 #define PROFILE_SCOPE(name) \
     ::opennn::profiler::ScopedTimer OPENNN_PROFILE_CAT(_profile_, __LINE__)( \
-        ::opennn::profiler::enabled() ? std::string(name) : std::string{}, true)
+        ::opennn::profiler::enabled() ? string(name) : string{}, true)
 #define PROFILE_SCOPE_HOST(name) \
     ::opennn::profiler::ScopedTimer OPENNN_PROFILE_CAT(_profile_, __LINE__)( \
-        ::opennn::profiler::enabled() ? std::string(name) : std::string{}, false)
+        ::opennn::profiler::enabled() ? string(name) : string{}, false)

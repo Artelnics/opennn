@@ -71,14 +71,14 @@ Index sample_token(VectorR& probabilities,
     {
         const float inverse_temperature = 1.0f / config.temperature;
         for (Index i = 0; i < vocabulary_size; ++i)
-            probabilities(i) = std::pow(std::max(probabilities(i), 0.0f), inverse_temperature);
+            probabilities(i) = pow(max(probabilities(i), 0.0f), inverse_temperature);
     }
 
     if (config.top_k > 0 && config.top_k < vocabulary_size)
     {
         vector<pair<float, Index>> indexed(vocabulary_size);
         for (Index i = 0; i < vocabulary_size; ++i) indexed[i] = {probabilities(i), i};
-        std::nth_element(indexed.begin(),
+        nth_element(indexed.begin(),
                          indexed.begin() + config.top_k,
                          indexed.end(),
                          [](const auto& a, const auto& b) { return a.first > b.first; });
@@ -98,7 +98,7 @@ Index sample_token(VectorR& probabilities,
         }
         if (total > 0.0f)
         {
-            std::sort(sorted_probabilities.begin(), sorted_probabilities.end(),
+            sort(sorted_probabilities.begin(), sorted_probabilities.end(),
                       [](const auto& a, const auto& b) { return a.first > b.first; });
             float cumulative_probability = 0.0f;
             vector<bool> keep(vocabulary_size, false);
@@ -330,7 +330,7 @@ Index TransformerDecoder::decode_step(Index step_index,
         for (Index k = 0; k < vocabulary_size; ++k)
         {
             const uint32_t bits = static_cast<uint32_t>(bf16_staging[size_t(k)]) << 16;
-            std::memcpy(&distribution(k), &bits, sizeof(float));
+            memcpy(&distribution(k), &bits, sizeof(float));
         }
     }
     else if (output_view.type == Type::FP32)
@@ -395,7 +395,7 @@ string TransformerDecoder::decode(const string& source,
 
     const Index decoder_sequence_length = transformer.get_decoder_sequence_length();
     const Index generation_limit = (config.maximum_tokens > 0)
-        ? std::min(config.maximum_tokens + Index(1), decoder_sequence_length)
+        ? min(config.maximum_tokens + Index(1), decoder_sequence_length)
         : decoder_sequence_length;
 
     const auto& output_inverse_vocabulary_map = language_dataset.get_target_inverse_vocabulary_map();
@@ -429,14 +429,14 @@ string TransformerDecoder::decode(const string& source,
     return assemble_output_string();
 }
 
-string TransformerDecoder::decode_to_stream(const string& source, std::ostream& out)
+string TransformerDecoder::decode_to_stream(const string& source, ostream& out)
 {
     return decode_to_stream(source, greedy_config(), out);
 }
 
 string TransformerDecoder::decode_to_stream(const string& source,
                                              const SamplingConfig& config,
-                                             std::ostream& out)
+                                             ostream& out)
 {
     bool first_token = true;
 
@@ -447,7 +447,7 @@ string TransformerDecoder::decode_to_stream(const string& source,
             && string(",.!?;:").find(token[0]) != string::npos;
 
         if (!first_token && !is_punctuation) out << ' ';
-        out << token << std::flush;
+        out << token << flush;
         first_token = false;
     });
 }
@@ -461,19 +461,19 @@ void TransformerDecoder::chat()
 
 void TransformerDecoder::chat(const SamplingConfig& config)
 {
-    std::cout << "Enter prompts. Empty line or Ctrl+D to exit.\n";
+    cout << "Enter prompts. Empty line or Ctrl+D to exit.\n";
 
     string prompt_line;
     while (true)
     {
-        std::cout << "\n> " << std::flush;
-        if (!std::getline(std::cin, prompt_line)) break;
+        cout << "\n> " << flush;
+        if (!getline(cin, prompt_line)) break;
         if (prompt_line.empty()) break;
 
-        decode_to_stream(prompt_line, config, std::cout);
-        std::cout << "\n";
+        decode_to_stream(prompt_line, config, cout);
+        cout << "\n";
     }
-    std::cout << "Bye!\n";
+    cout << "Bye!\n";
 }
 
 }

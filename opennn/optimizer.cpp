@@ -41,12 +41,12 @@ namespace
 
 bool env_flag_enabled(const char* name)
 {
-    const char* value = std::getenv(name);
+    const char* value = getenv(name);
     if (!value) return false;
 
     string text(value);
     transform(text.begin(), text.end(), text.begin(),
-              [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+              [](unsigned char c) { return static_cast<char>(tolower(c)); });
 
     return text == "1" || text == "true" || text == "on" || text == "yes";
 }
@@ -168,8 +168,8 @@ void Optimizer::warn_dropped_samples(Index batch_size,
     if (samples_number % batch_size == 0)       return;
 
     const Index lost = samples_number % batch_size;
-    std::ostringstream pct;
-    pct << std::fixed << std::setprecision(2)
+    ostringstream pct;
+    pct << fixed << setprecision(2)
         << (100.0 * double(lost) / double(samples_number));
     cout << "Warning: " << context << " batch_size " << batch_size
          << " does not divide " << samples_number << " samples. "
@@ -264,7 +264,7 @@ Index Optimizer::get_maximum_batch_size() const
     // validation FP + pool when the chosen batch is larger than validation —
     // Adam/SGD allocate a separate FP and pool in that case).
 
-    const int batch_pool_size = std::max(num_workers + 1, on_gpu ? 3 : 2);
+    const int batch_pool_size = max(num_workers + 1, on_gpu ? 3 : 2);
     const Shape input_shape   = dataset->get_shape("Input");
     const Shape target_shape  = dataset->get_shape("Target");
     const Shape decoder_shape = dataset->get_shape("Decoder");
@@ -921,7 +921,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                                   const vector<Index>& input_feature_indices,
                                   const vector<Index>& decoder_feature_indices,
                                   const vector<Index>& target_feature_indices,
-                                  const std::function<void(BackPropagation&)>& update,
+                                  const function<void(BackPropagation&)>& update,
                                   bool show_progress)
 {
     EpochStats stats;
@@ -944,56 +944,56 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
         ::opennn::profiler::enabled() = true;
         ::opennn::profiler::global_stats().clear();
     }
-    const auto epoch_t0 = std::chrono::steady_clock::now();
+    const auto epoch_t0 = chrono::steady_clock::now();
 
     // Ordered consumption: each worker stores its filled batch at ready[iter].
     // The main loop polls ready[0], ready[1], ... — so the consumer sees the
     // same iteration order regardless of num_workers, preserving reproducibility.
-    auto ready = std::make_unique<std::atomic<Batch*>[]>(batches_number);
+    auto ready = make_unique<atomic<Batch*>[]>(batches_number);
     for (Index i = 0; i < batches_number; ++i) ready[i].store(nullptr);
 
-    std::atomic<Index> next_iteration{0};
+    atomic<Index> next_iteration{0};
     // Accumulators for per-worker timing — written atomically so we avoid the
     // race that PROFILE_SCOPE would have on the global stats map.
-    std::atomic<int64_t> worker_pop_us{0};
-    std::atomic<int64_t> worker_fill_us{0};
-    std::atomic<long>    worker_fills{0};
+    atomic<int64_t> worker_pop_us{0};
+    atomic<int64_t> worker_fill_us{0};
+    atomic<long>    worker_fills{0};
 
-    std::vector<std::thread> workers;
+    vector<thread> workers;
     workers.reserve(num_workers);
     for (int w = 0; w < num_workers; ++w)
         workers.emplace_back([&]() {
             for (;;) {
                 const Index it = next_iteration.fetch_add(1);
                 if (it >= batches_number) return;
-                const auto t_pop0 = std::chrono::steady_clock::now();
+                const auto t_pop0 = chrono::steady_clock::now();
                 Batch* batch = empty_queue.pop();
-                const auto t_fill0 = std::chrono::steady_clock::now();
+                const auto t_fill0 = chrono::steady_clock::now();
                 batch->fill(batches[it],
                             input_feature_indices,
                             decoder_feature_indices,
                             target_feature_indices,
                             /*is_training=*/true);
-                const auto t_fill1 = std::chrono::steady_clock::now();
-                ready[it].store(batch, std::memory_order_release);
+                const auto t_fill1 = chrono::steady_clock::now();
+                ready[it].store(batch, memory_order_release);
 
                 if (profile_enabled_from_env())
                 {
                     worker_pop_us.fetch_add(
-                        std::chrono::duration_cast<std::chrono::microseconds>(t_fill0 - t_pop0).count(),
-                        std::memory_order_relaxed);
+                        chrono::duration_cast<chrono::microseconds>(t_fill0 - t_pop0).count(),
+                        memory_order_relaxed);
                     worker_fill_us.fetch_add(
-                        std::chrono::duration_cast<std::chrono::microseconds>(t_fill1 - t_fill0).count(),
-                        std::memory_order_relaxed);
-                    worker_fills.fetch_add(1, std::memory_order_relaxed);
+                        chrono::duration_cast<chrono::microseconds>(t_fill1 - t_fill0).count(),
+                        memory_order_relaxed);
+                    worker_fills.fetch_add(1, memory_order_relaxed);
                 }
             }
         });
 
     auto wait_for_iteration = [&](Index it) -> Batch* {
         Batch* p = nullptr;
-        while (!(p = ready[it].load(std::memory_order_acquire)))
-            std::this_thread::yield();
+        while (!(p = ready[it].load(memory_order_acquire)))
+            this_thread::yield();
         return p;
     };
 
@@ -1009,7 +1009,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
 
     // Repaint at most ~200 times across the epoch (one ~ every 0.5%) so the
     // bar advances visibly without spamming the console on long epochs.
-    const Index progress_step = std::max(Index(1), batches_number / 200);
+    const Index progress_step = max(Index(1), batches_number / 200);
     if (show_progress) display_progress_bar(0, int(batches_number));
 
     for (Index iteration = 0; iteration < batches_number; ++iteration)
@@ -1106,8 +1106,8 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
 
     if (profile_this)
     {
-        const auto epoch_t1 = std::chrono::steady_clock::now();
-        const double epoch_ms = std::chrono::duration<double, std::milli>(epoch_t1 - epoch_t0).count();
+        const auto epoch_t1 = chrono::steady_clock::now();
+        const double epoch_ms = chrono::duration<double, milli>(epoch_t1 - epoch_t0).count();
 
         // Fold worker accumulators into the global stats so they show up in
         // the unified table. Sum across all workers; per-call divides by the
@@ -1123,8 +1123,8 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
             ::opennn::profiler::global_stats().counts["worker:queue_wait"] = w_calls;
         }
 
-        ::opennn::profiler::global_stats().print(std::cout, "Epoch breakdown (training)", epoch_ms);
-        std::cout << "  Wall-clock epoch time: " << std::fixed << std::setprecision(2) << epoch_ms << " ms"
+        ::opennn::profiler::global_stats().print(cout, "Epoch breakdown (training)", epoch_ms);
+        cout << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
                   << " | num_workers=" << num_workers << "\n\n";
         // Keep the profiler enabled across epochs so the user can see
         // inter-epoch trends (data-loading hiding, cache warm-up, etc.).
@@ -1157,11 +1157,11 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
     const bool use_device_metrics = false;
 #endif
 
-    auto ready = std::make_unique<std::atomic<Batch*>[]>(batches_number);
+    auto ready = make_unique<atomic<Batch*>[]>(batches_number);
     for (Index i = 0; i < batches_number; ++i) ready[i].store(nullptr);
 
-    std::atomic<Index> next_iteration{0};
-    std::vector<std::thread> workers;
+    atomic<Index> next_iteration{0};
+    vector<thread> workers;
     workers.reserve(num_workers);
     for (int w = 0; w < num_workers; ++w)
         workers.emplace_back([&]() {
@@ -1174,14 +1174,14 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
                             decoder_feature_indices,
                             target_feature_indices,
                             /*is_training=*/false);
-                ready[it].store(batch, std::memory_order_release);
+                ready[it].store(batch, memory_order_release);
             }
         });
 
     auto wait_for_iteration = [&](Index it) -> Batch* {
         Batch* p = nullptr;
-        while (!(p = ready[it].load(std::memory_order_acquire)))
-            std::this_thread::yield();
+        while (!(p = ready[it].load(memory_order_acquire)))
+            this_thread::yield();
         return p;
     };
 

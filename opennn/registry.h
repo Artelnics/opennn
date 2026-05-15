@@ -18,12 +18,12 @@
 namespace opennn
 {
 
-using std::string;
-using std::unique_ptr;
-using std::vector;
-using std::function;
-using std::unordered_map;
-using std::runtime_error;
+using string;
+using unique_ptr;
+using vector;
+using function;
+using unordered_map;
+using runtime_error;
 
 template<typename T>
 class Registry

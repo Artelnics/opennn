@@ -176,7 +176,7 @@ void Bounding::refresh_op_storage(Device device)
     else
 #endif
     {
-        std::memcpy(op_storage.data, staging.data(), size_t(bytes));
+        memcpy(op_storage.data, staging.data(), size_t(bytes));
     }
 
     float* base = op_storage.as<float>();

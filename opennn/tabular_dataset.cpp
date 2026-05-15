@@ -747,8 +747,8 @@ namespace {
 float parse_float_or_nan(string_view token)
 {
     float value;
-    auto [ptr, ec] = std::from_chars(token.data(), token.data() + token.size(), value);
-    return (ec == std::errc{} && ptr == token.data() + token.size()) ? value : NAN;
+    auto [ptr, ec] = from_chars(token.data(), token.data() + token.size(), value);
+    return (ec == errc{} && ptr == token.data() + token.size()) ? value : NAN;
 }
 
 }
@@ -787,7 +787,7 @@ void TabularDataset::read_csv()
 
     if (!has_sample_ids && samples_number > 0)
     {
-        std::unordered_set<string_view> unique_elements;
+        unordered_set<string_view> unique_elements;
 
         bool possible_id = true;
         bool is_numeric_column = true;
@@ -1237,7 +1237,7 @@ void TabularDataset::infer_column_types(const vector<vector<string_view>>& sampl
 
         const size_t token_index = col_index + id_offset;
 
-        std::set<string> unique_categories;
+        set<string> unique_categories;
         for (const vector<string_view>& row : sample_rows)
             if (token_index < row.size() && !row[token_index].empty() && row[token_index] != missing_values_label)
                 unique_categories.emplace(row[token_index]);

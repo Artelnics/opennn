@@ -20,8 +20,8 @@ struct BackPropagation
 {
     struct BackwardEdge
     {
-        size_t consumer_index;
-        size_t port;
+        size_t consumer_layer_index;
+        size_t consumer_input_index;
     };
 
     BackPropagation(const Index = 0, Loss* = nullptr);
@@ -42,8 +42,8 @@ struct BackPropagation
 
     vector<vector<BackwardEdge>> backward_edges;
 
-    TensorView& get_output_deltas();
-    const TensorView& get_output_deltas() const;
+    TensorView& get_output_delta();
+    const TensorView& get_output_delta() const;
 
     void print() const;
 
@@ -55,8 +55,6 @@ struct BackPropagation
     float accuracy = 0.0f;
     float loss_value = 0.0f;
     Index active_tokens_count = 0;
-
-    Shape output_delta_dimensions;
 };
 
 }

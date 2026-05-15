@@ -132,7 +132,7 @@ Histogram::Histogram(const VectorR& data, Index bins_number)
         const float value = data(i);
         if (isnan(value)) continue;
 
-        const Index corresponding_bin = std::min(Index((value - data_minimum) * inv_step), bins_number - 1);
+        const Index corresponding_bin = min(Index((value - data_minimum) * inv_step), bins_number - 1);
 
         frequencies(corresponding_bin)++;
     }
@@ -550,7 +550,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
         sort(unique_values.begin(), unique_values.end());
 
         VectorR tensor_unique(unique_values.size());
-        std::copy(unique_values.begin(), unique_values.end(), tensor_unique.data());
+        copy(unique_values.begin(), unique_values.end(), tensor_unique.data());
 
         centers = tensor_unique;
         minimums = tensor_unique;

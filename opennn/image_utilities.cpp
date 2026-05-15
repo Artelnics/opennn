@@ -212,7 +212,7 @@ void load_image(const filesystem::path& path,
     if (divide_by_255)
         for (Index k = 0; k < pixels; ++k) dst[k] = resized.data()[k] / 255.0f;
     else
-        std::copy_n(resized.data(), pixels, dst);
+        copy_n(resized.data(), pixels, dst);
 }
 
 Tensor3 resize_image(const Tensor3& input_image,

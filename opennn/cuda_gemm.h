@@ -103,7 +103,6 @@ void* ensure_cudnn_conv_workspace(size_t min_bytes);
 
 const void* data_for_gemm_dtype(const TensorView& input, Type target_type);
 
-
 const LtMatmulPlan& get_lt_gemm_plan(
     int m, int n, int k,
     cublasOperation_t transA,
@@ -112,14 +111,29 @@ const LtMatmulPlan& get_lt_gemm_plan(
     cudaDataType_t io_dtype  = CUDA_R_32F,
     cudaDataType_t out_dtype = CUDA_R_32F);
 
-// CUBLAS_COMPUTE_DTYPE (= CUBLAS_COMPUTE_32F_FAST_TF32) is FP32-input only;
-// BF16 inputs require plain CUBLAS_COMPUTE_32F.
-inline cublasComputeType_t gemm_compute_type(cudaDataType_t io_dtype)
+inline void run_lt_matmul(const LtMatmulPlan& plan,
+                          const void* a_data, const void* b_data, void* c_data,
+                          const void* bias_pointer)
 {
-    return io_dtype == CUDA_R_16BF ? CUBLAS_COMPUTE_32F : CUBLAS_COMPUTE_DTYPE;
+    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
+        CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
+
+    CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(),
+                                plan.op_desc,
+                                &one,
+                                a_data, plan.a_desc,
+                                b_data, plan.b_desc,
+                                &zero,
+                                c_data, plan.cd_desc,
+                                c_data, plan.cd_desc,
+                                plan.algo_valid ? &plan.algo : nullptr,
+                                scratch::ensure_cublas_lt_workspace(plan.workspace_size), plan.workspace_size,
+                                Backend::get_compute_stream()));
 }
 
-inline cublasComputeType_t gemm_compute_type(cudaDataType_t a_type, cudaDataType_t b_type)
+// CUBLAS_COMPUTE_DTYPE (= CUBLAS_COMPUTE_32F_FAST_TF32) is FP32-input only;
+// BF16 inputs require plain CUBLAS_COMPUTE_32F.
+inline cublasComputeType_t gemm_compute_type(cudaDataType_t a_type, cudaDataType_t b_type = CUDA_R_32F)
 {
     return (a_type == CUDA_R_16BF || b_type == CUDA_R_16BF)
         ? CUBLAS_COMPUTE_32F

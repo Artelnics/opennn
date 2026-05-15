@@ -159,9 +159,9 @@ bool is_numeric_string(string_view text)
     double value;
     const char* first = text.data();
     const char* last  = first + text.size();
-    auto [ptr, ec] = std::from_chars(first, last, value);
+    auto [ptr, ec] = from_chars(first, last, value);
 
-    if (ec != std::errc{} || ptr == first) return false;
+    if (ec != errc{} || ptr == first) return false;
 
     const size_t consumed = static_cast<size_t>(ptr - first);
 
@@ -432,7 +432,7 @@ void string_to_vector(const string& input, VectorR& values)
         buffer.push_back(value);
 
     values.resize(static_cast<Index>(buffer.size()));
-    std::copy(buffer.begin(), buffer.end(), values.data());
+    copy(buffer.begin(), buffer.end(), values.data());
 }
 
 bool contains(const vector<string>& data, const string& value)
