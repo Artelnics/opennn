@@ -276,7 +276,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
                 num_classes_  = header.num_classes;
 
                 const Index pixels_number = Index(header.record_bytes);
-                const Index targets_number = target_shape[0];
                 const bool single_target = (header.num_classes == 2);
 
                 variables.resize(pixels_number + 1);

@@ -57,25 +57,22 @@ bool profile_enabled_from_env()
     return enabled;
 }
 
+void sync_cuda_for_debug()
+{
+#ifdef OPENNN_HAS_CUDA
+    static const bool enabled = env_flag_enabled("OPENNN_CUDA_DEBUG_SYNC");
+    if (is_gpu() && enabled)
+        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
+#endif
+}
+
+#ifdef OPENNN_HAS_CUDA
 bool cuda_sync_each_batch()
 {
     static const bool enabled = env_flag_enabled("OPENNN_CUDA_SYNC_EACH_BATCH");
     return enabled;
 }
-
-bool cuda_debug_sync()
-{
-    static const bool enabled = env_flag_enabled("OPENNN_CUDA_DEBUG_SYNC");
-    return enabled;
-}
-
-void sync_cuda_for_debug()
-{
-#ifdef OPENNN_HAS_CUDA
-    if (is_gpu() && cuda_debug_sync())
-        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
 #endif
-}
 
 #ifdef OPENNN_HAS_CUDA
 struct DeviceEpochMetrics
@@ -269,7 +266,6 @@ Index Optimizer::get_maximum_batch_size() const
     const Shape target_shape  = dataset->get_shape("Target");
     const Shape decoder_shape = dataset->get_shape("Decoder");
 
-    const auto& layers = neural_network->get_layers();
     const Shape output_shape = neural_network->get_output_shape();
     const Type compute_dtype = bf16_train ? Type::BF16 : Type::FP32;
 

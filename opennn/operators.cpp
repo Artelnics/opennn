@@ -210,8 +210,11 @@ cudnnActivationMode_t ActivationOp::to_cudnn_mode(Function function)
     case Function::Sigmoid: return CUDNN_ACTIVATION_SIGMOID;
     case Function::Tanh:    return CUDNN_ACTIVATION_TANH;
     case Function::ReLU:    return CUDNN_ACTIVATION_RELU;
-    default:                return CUDNN_ACTIVATION_IDENTITY;
+    case Function::Identity:
+    case Function::Softmax: return CUDNN_ACTIVATION_IDENTITY;
     }
+
+    return CUDNN_ACTIVATION_IDENTITY;
 }
 
 void ActivationOp::set_function(Function new_function)
@@ -263,6 +266,9 @@ void ActivationOp::apply_cpu(TensorView& output)
 
     switch (function)
     {
+    case Function::Identity:
+    case Function::Softmax:
+        return;
     case Function::Sigmoid:
         a = (1.0f + (-a).exp()).inverse();
         return;
@@ -271,8 +277,6 @@ void ActivationOp::apply_cpu(TensorView& output)
         return;
     case Function::ReLU:
         a = a.cwiseMax(0.0f);
-        return;
-    default:
         return;
     }
 }
@@ -284,6 +288,9 @@ void ActivationOp::apply_delta_cpu(const TensorView& outputs, TensorView& delta)
 
     switch (function)
     {
+    case Function::Identity:
+    case Function::Softmax:
+        return;
     case Function::Sigmoid:
         d *= y * (1.0f - y);
         return;
@@ -292,8 +299,6 @@ void ActivationOp::apply_delta_cpu(const TensorView& outputs, TensorView& delta)
         return;
     case Function::ReLU:
         d = (y > 0.0f).select(d, 0.0f);
-        return;
-    default:
         return;
     }
 }
@@ -859,7 +864,7 @@ void CombinationReluOp::back_propagate(ForwardPropagation& fp, BackPropagation& 
 
 void ConvolutionOp::set(Index new_input_h, Index new_input_w,
                       Index new_kernels_n, Index new_kernel_h, Index new_kernel_w, Index new_kernel_c,
-                      Index new_row_stride, Index new_column_stride,
+                      [[maybe_unused]] Index new_row_stride, [[maybe_unused]] Index new_column_stride,
                       Index new_padding_h, Index new_padding_w,
                       Type new_compute_dtype)
 {
@@ -1353,14 +1358,19 @@ void LayerNormOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /
 
 void LayerNormOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
 {
-    const TensorView& input        = get_input(fp, layer);
-    const TensorView& means        = get_output(fp, layer);
     const TensorView& stds         = get_output(fp, layer, 1);
     const TensorView& normalized   = get_output(fp, layer, 2);
     const TensorView& output_delta = get_output_delta(bp, layer);
     TensorView& input_delta        = get_input_delta(bp, layer);
 
-    IF_GPU({ apply_delta_gpu(input, output_delta, means, stds, input_delta); return; });
+#ifdef OPENNN_HAS_CUDA
+    IF_GPU({
+        const TensorView& input = get_input(fp, layer);
+        const TensorView& means = get_output(fp, layer);
+        apply_delta_gpu(input, output_delta, means, stds, input_delta);
+        return;
+    });
+#endif
     apply_delta_cpu(output_delta, stds, normalized, input_delta);
 }
 
@@ -2082,7 +2092,7 @@ void AttentionOp::apply_cpu(const TensorView& query,
                           TensorView& attention_weights,
                           TensorView& attention_weights_dropped,
                           TensorView& output,
-                          float* mask_scratch,
+                          [[maybe_unused]] float* mask_scratch,
                           bool is_training)
 {
     if (!use_causal_mask
@@ -2669,15 +2679,20 @@ void PoolOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t 
 {
     auto& fv = fp.views[layer];
 
-    const TensorView& input        = get_input(fp, layer);
-    const TensorView& output       = get_output(fp, layer);
     const TensorView& output_delta = get_output_delta(bp, layer);
     TensorView& input_delta        = get_input_delta(bp, layer);
 
     TensorView empty;
     const TensorView& indices = view_at_slot_or(fv, output_slots, 1, empty);
 
-    IF_GPU({ apply_delta_gpu(input, output, output_delta, input_delta); return; });
+#ifdef OPENNN_HAS_CUDA
+    IF_GPU({
+        const TensorView& input = get_input(fp, layer);
+        const TensorView& output = get_output(fp, layer);
+        apply_delta_gpu(input, output, output_delta, input_delta);
+        return;
+    });
+#endif
     apply_delta_cpu(output_delta, indices, input_delta);
 }
 

@@ -22,9 +22,14 @@ elseif(MSVC)
 endif()
 
 include(CheckIPOSupported)
-check_ipo_supported(RESULT OPENNN_LTO_OK)
-if(OPENNN_LTO_OK)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+option(OpenNN_ENABLE_LTO "Enable interprocedural optimization/LTO for OpenNN release builds" ON)
+if(OpenNN_ENABLE_LTO)
+    check_ipo_supported(RESULT OPENNN_LTO_OK)
+    if(OPENNN_LTO_OK)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+    endif()
+else()
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE OFF)
 endif()
 
 # Configuración específica para macOS

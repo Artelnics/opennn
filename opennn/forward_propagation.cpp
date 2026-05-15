@@ -43,7 +43,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     }
 
     uint8_t* cursor = data.as<uint8_t>();
-    for (Index i = 0; i < layers_number; ++i)
+    for (size_t i = 0; i < layers_number; ++i)
     {
         const vector<Shape>& shapes = forward_shapes[i];
         const size_t slots = shapes.size();
@@ -60,7 +60,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     }
 
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
-    for (Index i = 0; i < layers_number; ++i)
+    for (size_t i = 0; i < layers_number; ++i)
     {
         const vector<Index>& input_indices = layer_input_indices[i];
         views[i][0].resize(input_indices.size());
@@ -120,8 +120,8 @@ void ForwardPropagation::print() const
 
     cout << "Layers number: " << layers_number << "\n";
 
-    for (Index i = 0; i < layers_number; ++i)
-        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_label() << "\n";
+    for (size_t i = 0; i < layers_number; ++i)
+        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(static_cast<Index>(i))->get_label() << "\n";
 }
 
 }

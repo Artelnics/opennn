@@ -249,7 +249,7 @@ struct Buffer
     }
 
 private:
-    static void* alloc(Device device_type, Index byte_count)
+    static void* alloc([[maybe_unused]] Device device_type, Index byte_count)
     {
 #ifdef OPENNN_HAS_CUDA
         if (device_type == Device::CUDA) { void* device_pointer = nullptr; CHECK_CUDA(cudaMalloc(&device_pointer, byte_count)); return device_pointer; }
@@ -257,7 +257,7 @@ private:
         return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
     }
 
-    static void dealloc(Device device_type, void* pointer, Index byte_count)
+    static void dealloc([[maybe_unused]] Device device_type, void* pointer, Index byte_count)
     {
 #ifdef OPENNN_HAS_CUDA
         if (device_type == Device::CUDA) { cudaFree(pointer); return; }

@@ -34,15 +34,16 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if (!new_dataset)
         throw runtime_error("dataset is not set.");
 
-    const bool on_gpu = is_gpu();
-
     samples_number = new_samples_number;
 
     dataset = new_dataset;
 
+#ifdef OPENNN_HAS_CUDA
+    [[maybe_unused]] const bool on_gpu = is_gpu();
     const bool bf16_input = on_gpu
                          && is_bf16_training()
                          && dynamic_cast<const LanguageDataset*>(dataset) == nullptr;
+#endif
 
     // Input
 
