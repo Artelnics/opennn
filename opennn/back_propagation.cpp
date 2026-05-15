@@ -230,7 +230,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     vector<Shape> layer_output_delta_shapes(layers_number);
 
-    for (Index layer_index = 0; layer_index < layers_number; ++layer_index)
+    for (Index layer_index = 0; layer_index < (Index)layers_number; ++layer_index)
     {
         if (layer_index == last_trainable_layer_index) continue;
         if (backward_edges[layer_index].size() <= 1) continue;
@@ -255,7 +255,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     }
 
     uint8_t* cursor = gradient.as<uint8_t>();
-    for (Index layer_index = 0; layer_index < layers_number; ++layer_index)
+    for (Index layer_index = 0; layer_index < (Index)layers_number; ++layer_index)
     {
         const vector<Shape>& shapes = parameter_shapes[layer_index];
         gradient_views[layer_index].resize(shapes.size());
@@ -286,7 +286,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     delta_views.resize(layers_number);
 
-    for (Index layer_index = 0; layer_index < layers_number; ++layer_index)
+    for (Index layer_index = 0; layer_index < (Index)layers_number; ++layer_index)
         delta_views[layer_index].assign(backward_shapes[layer_index].size() + 1, TensorView{});
 
     if (delta_pool_plan.peak_bytes > 0)

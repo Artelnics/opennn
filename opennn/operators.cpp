@@ -992,6 +992,10 @@ void ConvolutionOp::apply_cpu(const TensorView& input, TensorView& output)
     }
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
 void ConvolutionOp::apply_delta_cpu(const TensorView& input,
                                   const TensorView& output_delta,
                                   TensorView& input_delta) const
@@ -1067,6 +1071,9 @@ void ConvolutionOp::apply_delta_cpu(const TensorView& input,
         }
     }
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #ifdef OPENNN_HAS_CUDA
 

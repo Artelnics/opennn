@@ -1065,6 +1065,10 @@ void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_n
     file.close();
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
 void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& file_name)
 {
     const MatrixR outputs = calculate_outputs(inputs_3d);
@@ -1113,6 +1117,9 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
 
     file.close();
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 vector<string> NeuralNetwork::get_layer_labels() const
 {

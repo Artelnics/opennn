@@ -164,6 +164,10 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
     printer.close_element();
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
 void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
 {
     if (!augmentation.enabled) return;
@@ -200,6 +204,9 @@ void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
         inputs.chip(i, 0) = image;
     }
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 {
