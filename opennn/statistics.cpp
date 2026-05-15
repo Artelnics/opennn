@@ -797,12 +797,11 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
     {
         const Index column_index = column_indices[j];
 
-        float current_min = 0;
-        float current_max = 0;
+        float current_min = numeric_limits<float>::infinity();
+        float current_max = -numeric_limits<float>::infinity();
         double current_sum = 0;
         double current_sq_sum = 0;
         Index current_count = 0;
-        bool first_iteration = true;
 
         for (Index i = 0; i < row_indices_size; ++i)
         {
@@ -811,22 +810,16 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
 
             if (isnan(value)) continue;
 
-            if (first_iteration)
-            {
-                current_min = value;
-                current_max = value;
-                first_iteration = false;
-            }
-            else {
-                if (value < current_min) current_min = value;
-                if (value > current_max) current_max = value;
-            }
+            if (value < current_min) current_min = value;
+            if (value > current_max) current_max = value;
 
             const double v = static_cast<double>(value);
             current_sum += v;
             current_sq_sum += v * v;
             ++current_count;
         }
+
+        if (current_count == 0) current_min = current_max = 0;
 
         minimums(j) = current_min;
         maximums(j) = current_max;

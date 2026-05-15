@@ -175,7 +175,7 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
 
     arena.resize_bytes(total_bytes, Device::CUDA);
 
-    char* base = arena.as<char>();
+    char* const base = arena.as<char>();
     source_ids_device = TensorView(base,
                                    {batch_size, input_sequence_length},
                                    Type::FP32);

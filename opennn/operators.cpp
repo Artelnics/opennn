@@ -1214,7 +1214,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 
     if (bf16)
     {
-        float* output_delta_fp32 = scratch::ensure_fp32_upcast_scratch(output_delta.size());
+        float* const output_delta_fp32 = scratch::ensure_fp32_upcast_scratch(output_delta.size());
         cast_bf16_to_fp32_cuda(output_delta.size(),
                                output_delta.as<bfloat16>(),
                                output_delta_fp32);
@@ -1524,7 +1524,7 @@ void MultiHeadProjectionOp::forward_propagate(ForwardPropagation& fp, size_t lay
     const auto& input_views = get_inputs(fp, layer);
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
     TensorView& output = get_output(fp, layer);
-    float* scratch = fv[scratch_slots[0]][0].as<float>();
+    float* const scratch = fv[scratch_slots[0]][0].as<float>();
     apply(input, output, scratch);
 }
 
@@ -2028,7 +2028,7 @@ void AttentionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
     const auto& src_views = get_inputs(fp, layer, 3);
     const TensorView& source_input = src_views[min(source_view_index, src_views.size() - 1)];
 
-    float* mask_scratch = fv[scratch_slots[0]][0].as<float>();
+    float* const mask_scratch = fv[scratch_slots[0]][0].as<float>();
     TensorView attention_out(mask_scratch,
                              {fp.batch_size, heads_number, query_sequence_length, head_dimension},
                              compute_dtype);

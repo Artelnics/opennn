@@ -220,7 +220,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         delta_pool.setZero();
     }
 
-    uint8_t* base = delta_pool.as<uint8_t>();
+    uint8_t* const base = delta_pool.as<uint8_t>();
 
     for (const DeltaPoolEntry& entry : delta_pool_plan.entries)
         delta_views[entry.layer][entry.slot] = TensorView(base + entry.offset, entry.shape, entry.dtype);

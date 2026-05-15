@@ -95,7 +95,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     {
         const Index parameters_number = neural_network->get_parameters_size();
 
-        float* velocity_ptr = optimization_data.views.empty()
+        float* const velocity_ptr = optimization_data.views.empty()
             ? nullptr
             : optimization_data.views[Velocity].as<float>();
 

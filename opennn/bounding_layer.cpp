@@ -169,7 +169,7 @@ void Bounding::refresh_op_storage(Device device)
         memcpy(op_storage.data, staging.data(), size_t(bytes));
     }
 
-    float* base = op_storage.as<float>();
+    float* const base = op_storage.as<float>();
     const Shape shape{features};
     bound.lower = TensorView(base + 0 * features, shape, Type::FP32);
     bound.upper = TensorView(base + 1 * features, shape, Type::FP32);

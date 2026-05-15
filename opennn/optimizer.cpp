@@ -887,7 +887,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
     {
         static Buffer squared_norm_device(Device::CUDA);
         squared_norm_device.grow_to(Index(sizeof(float)));
-        float* squared_norm_ptr = squared_norm_device.as<float>();
+        float* const squared_norm_ptr = squared_norm_device.as<float>();
 
         cublasHandle_t handle = Backend::get_cublas_handle();
         CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));

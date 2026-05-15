@@ -8,6 +8,7 @@
 
 #include "batch.h"
 #include "language_dataset.h"
+
 #ifdef OPENNN_HAS_CUDA
 #include "kernel.cuh"
 #endif
@@ -43,128 +44,74 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     const bool bf16_input = on_gpu
                          && is_bf16_training()
                          && dynamic_cast<const LanguageDataset*>(dataset) == nullptr;
+    const Index input_device_bytes = bf16_input ? Index(sizeof(bfloat16)) : Index(sizeof(float));
+#else
+    const Index input_device_bytes = Index(sizeof(float));
 #endif
 
-    // Input
-
-    const Shape& dataset_input_shape = dataset->get_shape("Input");
-
-    if (!dataset_input_shape.empty())
+    auto setup_buffer = [&](const string& role,
+                            Shape& shape, Buffer& buffer,
+                            [[maybe_unused]] Index& num_features,
+                            [[maybe_unused]] float*& host_buf,
+                            [[maybe_unused]] Index& host_alloc,
+                            [[maybe_unused]] Index device_elem_bytes)
     {
-        input_shape = Shape({samples_number}).append(dataset_input_shape);
+        const Shape& dataset_shape = dataset->get_shape(role);
+        if (dataset_shape.empty()) return;
+
+        shape = Shape({samples_number}).append(dataset_shape);
 
 #ifdef OPENNN_HAS_CUDA
         if (on_gpu)
         {
-            const Index elem_bytes = bf16_input ? Index(sizeof(bfloat16)) : Index(sizeof(float));
-            input.resize_bytes(input_shape.size() * elem_bytes, Device::CUDA);
+            buffer.resize_bytes(shape.size() * device_elem_bytes, Device::CUDA);
+            num_features = dataset->get_features_number(role);
 
-            num_input_features = dataset->get_features_number("Input");
-
-            if (const Index input_size = samples_number * num_input_features;
-                input_size > inputs_host_allocated_size)
+            if (const Index size = samples_number * num_features; size > host_alloc)
             {
-                if (inputs_host) cudaFreeHost(inputs_host);
-                CHECK_CUDA(cudaMallocHost(&inputs_host, input_size * sizeof(float)));
-                inputs_host_allocated_size = input_size;
+                if (host_buf) cudaFreeHost(host_buf);
+                CHECK_CUDA(cudaMallocHost(&host_buf, size * sizeof(float)));
+                host_alloc = size;
             }
-
-            needs_fp32_staging = bf16_input;
+            return;
         }
-        else
 #endif
-        {
-            input.resize_bytes(input_shape.size() * Index(sizeof(float)), Device::CPU);
-        }
-    }
+        buffer.resize_bytes(shape.size() * Index(sizeof(float)), Device::CPU);
+    };
 
-    // Target
-
-    const Shape& dataset_target_shape = dataset->get_shape("Target");
-
-    if (!dataset_target_shape.empty())
-    {
-        target_shape = Shape({samples_number}).append(dataset_target_shape);
-
-#ifdef OPENNN_HAS_CUDA
-        if (on_gpu)
-        {
-            target.resize_bytes(target_shape.size() * Index(sizeof(float)), Device::CUDA);
-
-            num_target_features = dataset->get_features_number("Target");
-
-            if (const Index target_size = samples_number * num_target_features;
-                target_size > targets_host_allocated_size)
-            {
-                if (targets_host) cudaFreeHost(targets_host);
-                CHECK_CUDA(cudaMallocHost(&targets_host, target_size * sizeof(float)));
-                targets_host_allocated_size = target_size;
-            }
-        }
-        else
-#endif
-        {
-            target.resize_bytes(target_shape.size() * Index(sizeof(float)), Device::CPU);
-        }
-    }
-
-    // Decoder
-
-    const Shape& dataset_decoder_shape = dataset->get_shape("Decoder");
-
-    if (!dataset_decoder_shape.empty())
-    {
-        decoder_shape = Shape({samples_number}).append(dataset_decoder_shape);
-
-#ifdef OPENNN_HAS_CUDA
-        if (on_gpu)
-        {
-            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(float)), Device::CUDA);
-
-            num_decoder_features = dataset->get_features_number("Decoder");
-
-            if (const Index decoder_size = samples_number * num_decoder_features;
-                decoder_size > decoder_host_allocated_size)
-            {
-                if (decoder_host) cudaFreeHost(decoder_host);
-                CHECK_CUDA(cudaMallocHost(&decoder_host, decoder_size * sizeof(float)));
-                decoder_host_allocated_size = decoder_size;
-            }
-        }
-        else
-#endif
-        {
-            decoder.resize_bytes(decoder_shape.size() * Index(sizeof(float)), Device::CPU);
-        }
-    }
+    setup_buffer("Input",   input_shape,   input,
+                 num_input_features,   inputs_host,  inputs_host_allocated_size,
+                 input_device_bytes);
+    setup_buffer("Target",  target_shape,  target,
+                 num_target_features,  targets_host, targets_host_allocated_size,
+                 Index(sizeof(float)));
+    setup_buffer("Decoder", decoder_shape, decoder,
+                 num_decoder_features, decoder_host, decoder_host_allocated_size,
+                 Index(sizeof(float)));
 
     input_views_host_cache.clear();
     input_views_host_cache.reserve(decoder_shape.empty() ? 1 : 2);
 
     if (!decoder_shape.empty())
-        input_views_host_cache.emplace_back(const_cast<float*>(decoder.as<float>()), decoder_shape);
+        input_views_host_cache.emplace_back(decoder.as<float>(), decoder_shape);
 
     if (!input_shape.empty())
-        input_views_host_cache.emplace_back(const_cast<float*>(input.as<float>()), input_shape);
+        input_views_host_cache.emplace_back(input.as<float>(), input_shape);
 
     if (!target_shape.empty())
-        target_view_host_cache = TensorView(const_cast<float*>(target.as<float>()), target_shape);
+        target_view_host_cache = TensorView(target.as<float>(), target_shape);
 
 #ifdef OPENNN_HAS_CUDA
+    needs_fp32_staging = bf16_input;
+
     if (!input_shape.empty() && input.data)
     {
-        const Type input_dtype = bf16_input ? Type::BF16 : Type::FP32;
-        TensorView in_view(input.data, input_shape, input_dtype);
+        input_views_cache.clear();
 
         if (!decoder_shape.empty() && decoder.data)
-        {
-            TensorView dec_view(decoder.data, decoder_shape, Type::FP32);
-            input_views_cache = { dec_view, in_view };
-        }
-        else
-        {
-            input_views_cache = { in_view };
-        }
+            input_views_cache.emplace_back(decoder.data, decoder_shape, Type::FP32);
+        
+            input_views_cache.emplace_back(input.data, input_shape, bf16_input ? Type::BF16 : Type::FP32);
     }
 
     if (!target_shape.empty() && target.data)
@@ -183,11 +130,9 @@ void Batch::fill(const vector<Index>& sample_indices,
 
     const bool on_gpu = is_gpu();
 
-    float* input_buffer   = on_gpu ? inputs_host   : input.as<float>();
-    float* decoder_buffer = on_gpu ? decoder_host  : decoder.as<float>();
-    float* target_buffer  = on_gpu ? targets_host  : target.as<float>();
-
-    const bool parallelize = parallelize_samples && !on_gpu;
+    float* const input_buffer   = on_gpu ? inputs_host  : input.as<float>();
+    float* const decoder_buffer = on_gpu ? decoder_host : decoder.as<float>();
+    float* const target_buffer  = on_gpu ? targets_host : target.as<float>();
 
     if (input_contiguous < 0 && !input_indices.empty())
         input_contiguous = is_contiguous(input_indices) ? 1 : 0;
@@ -195,6 +140,8 @@ void Batch::fill(const vector<Index>& sample_indices,
         decoder_contiguous = is_contiguous(decoder_indices) ? 1 : 0;
     if (target_contiguous < 0 && !target_indices.empty())
         target_contiguous = is_contiguous(target_indices) ? 1 : 0;
+
+    const bool parallelize = parallelize_samples && !on_gpu;
 
     dataset->fill_inputs(sample_indices, input_indices, input_buffer,
                          is_training, parallelize, input_contiguous);

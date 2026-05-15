@@ -157,7 +157,7 @@ void Scaling::refresh_op_storage(Device device)
         memcpy(op_storage.data, staging.data(), size_t(bytes));
     }
 
-    float* base = op_storage.as<float>();
+    float* const base = op_storage.as<float>();
     const Shape shape{features};
     scale_op.minimums            = TensorView(base + 0 * features, shape, Type::FP32);
     scale_op.maximums            = TensorView(base + 1 * features, shape, Type::FP32);

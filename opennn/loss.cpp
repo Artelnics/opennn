@@ -178,8 +178,8 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     errors_device.grow_to(workspace_floats * Index(sizeof(float)));
     metric_results_device.grow_to(Index(3 * sizeof(float)));
 
-    float* workspace = errors_device.as<float>();
-    float* results_device = metric_results_device.as<float>();
+    float* const workspace = errors_device.as<float>();
+    float* const results_device = metric_results_device.as<float>();
     cublasHandle_t handle = Backend::get_cublas_handle();
 
     auto reduce_abs_and_accumulate = [&](Index n, float scale)
