@@ -131,8 +131,6 @@ using namespace Eigen;
 
 namespace opennn {
 
-// Keep this alias inside `opennn` — at global scope it collides with
-// Eigen::bfloat16 brought in by `using namespace Eigen` above.
 using bfloat16 = __nv_bfloat16;
 
 constexpr float EPSILON = numeric_limits<float>::epsilon();
