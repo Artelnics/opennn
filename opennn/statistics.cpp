@@ -550,7 +550,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
         sort(unique_values.begin(), unique_values.end());
 
         VectorR tensor_unique(unique_values.size());
-        copy(unique_values.begin(), unique_values.end(), tensor_unique.data());
+        std::copy(unique_values.begin(), unique_values.end(), tensor_unique.data());
 
         centers = tensor_unique;
         minimums = tensor_unique;

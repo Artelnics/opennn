@@ -176,7 +176,8 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& input_indices,
                  const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices,
-                 bool is_training)
+                 bool is_training,
+                 bool parallelize_samples)
 {
     current_sample_count = ssize(sample_indices);
 
@@ -186,7 +187,7 @@ void Batch::fill(const vector<Index>& sample_indices,
     float* decoder_buffer = on_gpu ? decoder_host  : decoder.as<float>();
     float* target_buffer  = on_gpu ? targets_host  : target.as<float>();
 
-    const bool parallelize = !on_gpu;
+    const bool parallelize = parallelize_samples && !on_gpu;
 
     if (input_contiguous < 0 && !input_indices.empty())
         input_contiguous = is_contiguous(input_indices) ? 1 : 0;

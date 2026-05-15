@@ -903,7 +903,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
             const bool was_on_device = (parameters.device_type == Device::CUDA);
             if (was_on_device) copy_parameters_host();
 #endif
-            copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
+            std::copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
 #ifdef OPENNN_HAS_CUDA
             if (was_on_device) copy_parameters_device();
 #endif
@@ -1062,6 +1062,10 @@ void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_n
     file.close();
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
 void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& file_name)
 {
     const MatrixR outputs = calculate_outputs(inputs_3d);
@@ -1110,6 +1114,9 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
 
     file.close();
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 vector<string> NeuralNetwork::get_layer_labels() const
 {

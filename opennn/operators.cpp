@@ -93,6 +93,7 @@ void DropoutOp::apply_delta(TensorView& delta) const
 
 void DropoutOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const noexcept
 {
+    if (!active()) return;
     apply_delta(get_output_delta(bp, layer));
 }
 
@@ -992,6 +993,10 @@ void ConvolutionOp::apply_cpu(const TensorView& input, TensorView& output)
     }
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
 void ConvolutionOp::apply_delta_cpu(const TensorView& input,
                                   const TensorView& output_delta,
                                   TensorView& input_delta) const
@@ -1067,6 +1072,9 @@ void ConvolutionOp::apply_delta_cpu(const TensorView& input,
         }
     }
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #ifdef OPENNN_HAS_CUDA
 
@@ -1667,7 +1675,7 @@ vector<pair<Shape, Type>> AttentionOp::forward_scratch_specs(Index batch_size) c
     const Shape attention_shape = {batch_size, heads_number,
                                    query_sequence_length, source_sequence_length};
     const Shape dropout_shape = dropout.active() ? attention_shape : Shape{};
-    
+
     return {
         {attention_shape, compute_dtype}, // AttentionWeights
         {dropout_shape,   compute_dtype}, // AttentionWeightsDropped
@@ -2071,7 +2079,12 @@ void AttentionOp::apply_cpu(const TensorView& query,
                           [[maybe_unused]] float* mask_scratch,
                           bool is_training)
 {
-    if (!use_causal_mask
+    // CPU-only padding-aware fast path: uses Eigen MatrixMap directly on raw
+    // pointers, which requires host memory. Gated on !is_gpu() so that the
+    // FP32 fallback from apply_gpu (where buffers live on device) falls
+    // through to the generic GPU-dispatched path below.
+    if (!is_gpu()
+        && !use_causal_mask
         && !dropout.active()
         && compute_dtype == Type::FP32
         && query.type == Type::FP32
@@ -2150,7 +2163,11 @@ void AttentionOp::apply_cpu(const TensorView& query,
                 {
                     const float* source_row = source_batch + source_index * embedding_dimension;
                     float max_abs = 0.0f;
-                    for (Index k = 0; k < embedding_dimension; ++k) max_abs = max(max_abs, abs(source_row[k]));
+                    for (Index k = 0; k < embedding_dimension; ++k)
+                    {
+                        const float abs_value = abs(source_row[k]);
+                        if (abs_value > max_abs) max_abs = abs_value;
+                    }
                     if (max_abs > EPSILON) continue;
 
                     for (Index row_index = 0; row_index < att_rows_per_batch; ++row_index)
@@ -2250,7 +2267,7 @@ void AttentionOp::apply_gpu(const TensorView& query,
         tp[entry.fwd_Offset] = entry.offset_buf;
     }
 
-    const auto status = entry.fwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.fwd_workspace_buf);
+    auto status = entry.fwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.fwd_workspace_buf);
     if (status.is_bad())
         throw runtime_error("SDPA forward execute: " + status.get_message());
 #else
@@ -2329,7 +2346,12 @@ void AttentionOp::apply_delta_cpu(const TensorView& query,
                                 TensorView& key_delta,
                                 TensorView& value_delta) const
 {
-    if (!use_causal_mask
+    // CPU-only padding-aware fast path: uses Eigen MatrixMap directly on raw
+    // pointers, which requires host memory. Gated on !is_gpu() so that the
+    // FP32 fallback from apply_delta_gpu falls through to the unfused path
+    // below (which uses GPU-dispatched multiply/softmax).
+    if (!is_gpu()
+        && !use_causal_mask
         && !dropout.active()
         && compute_dtype == Type::FP32
         && query.type == Type::FP32
@@ -2542,7 +2564,7 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
         tp[entry.bwd_Offset] = entry.offset_buf;
     }
 
-    const auto status = entry.bwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.bwd_workspace_buf);
+    auto status = entry.bwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.bwd_workspace_buf);
     if (status.is_bad())
         throw runtime_error("SDPA backward execute: " + status.get_message());
 #elif defined(OPENNN_HAS_CUDA)

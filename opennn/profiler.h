@@ -11,30 +11,31 @@
 #include <cuda_runtime.h>
 #endif
 
-namespace opennn::profiler {
+namespace opennn {
 
 struct Stats
 {
-    map<string, double> times_ms;
-    map<string, long>   counts;
+    struct Entry { double total_ms = 0.0; long calls = 0; };
+
+    map<string, Entry> entries;
 
     void add(const string& key, double ms)
     {
-        times_ms[key] += ms;
-        counts[key]   += 1;
+        auto& e = entries[key];
+        e.total_ms += ms;
+        e.calls    += 1;
     }
 
     void clear()
     {
-        times_ms.clear();
-        counts.clear();
+        entries.clear();
     }
 
     void print(ostream& os, const string& title, double total_ms = 0.0) const
     {
-        vector<pair<string, double>> sorted(times_ms.begin(), times_ms.end());
+        vector<pair<string, Entry>> sorted(entries.begin(), entries.end());
         sort(sorted.begin(), sorted.end(),
-                  [](const auto& a, const auto& b) { return a.second > b.second; });
+                  [](const auto& a, const auto& b) { return a.second.total_ms > b.second.total_ms; });
 
         os << "\n[PROFILE] " << title << "\n";
         os << "  " << left << setw(48) << "section"
@@ -44,15 +45,14 @@ struct Stats
         if (total_ms > 0.0) os << setw(8) << "%";
         os << "\n";
 
-        for (const auto& [key, total] : sorted)
+        for (const auto& [key, entry] : sorted)
         {
-            const long call_count = counts.at(key);
             os << "  " << left << setw(48) << key
-               << right << setw(12) << fixed << setprecision(2) << total
-               << setw(10) << call_count
-               << setw(12) << fixed << setprecision(3) << (total / double(call_count));
+               << right << setw(12) << fixed << setprecision(2) << entry.total_ms
+               << setw(10) << entry.calls
+               << setw(12) << fixed << setprecision(3) << (entry.total_ms / double(entry.calls));
             if (total_ms > 0.0)
-                os << setw(7) << fixed << setprecision(1) << (total / total_ms * 100.0) << "%";
+                os << setw(7) << fixed << setprecision(1) << (entry.total_ms / total_ms * 100.0) << "%";
             os << "\n";
         }
         os << "\n";
@@ -99,16 +99,16 @@ public:
     }
 };
 
-}  // namespace opennn::profiler
+}  // namespace opennn
 
 #define OPENNN_PROFILE_CAT_INNER(a, b) a##b
 #define OPENNN_PROFILE_CAT(a, b)       OPENNN_PROFILE_CAT_INNER(a, b)
 
 // The ternary short-circuits: when profiling is disabled, the `name` expression
 // is not evaluated and no string is built. The empty-string fallback is cheap.
-#define PROFILE_SCOPE(name) \
-    ::opennn::profiler::ScopedTimer OPENNN_PROFILE_CAT(_profile_, __LINE__)( \
-        ::opennn::profiler::enabled() ? string(name) : string{}, true)
-#define PROFILE_SCOPE_HOST(name) \
-    ::opennn::profiler::ScopedTimer OPENNN_PROFILE_CAT(_profile_, __LINE__)( \
-        ::opennn::profiler::enabled() ? string(name) : string{}, false)
+#define PROFILE_SCOPE_IMPL(name, sync) \
+    ::opennn::ScopedTimer OPENNN_PROFILE_CAT(_profile_, __LINE__)( \
+        ::opennn::enabled() ? string(name) : string{}, sync)
+
+#define PROFILE_SCOPE(name)      PROFILE_SCOPE_IMPL(name, true)
+#define PROFILE_SCOPE_HOST(name) PROFILE_SCOPE_IMPL(name, false)

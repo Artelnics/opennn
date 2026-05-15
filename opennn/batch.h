@@ -31,7 +31,8 @@ struct Batch
               const vector<Index>&,
               const vector<Index>&,
               const vector<Index>&,
-              bool is_training);
+              bool is_training = true,
+              bool parallelize_samples = true);
 
     const vector<TensorView>& get_inputs() const
     {

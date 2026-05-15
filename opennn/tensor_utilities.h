@@ -243,9 +243,9 @@ struct Buffer
 
     void swap(Buffer& other) noexcept
     {
-        swap(data, other.data);
-        swap(bytes, other.bytes);
-        swap(device_type, other.device_type);
+        std::swap(data, other.data);
+        std::swap(bytes, other.bytes);
+        std::swap(device_type, other.device_type);
     }
 
 private:
@@ -508,7 +508,7 @@ inline void TensorView::fill(float value)
 
     assert(type == Type::FP32);
     float* data_pointer = static_cast<float*>(data);
-    fill(data_pointer, data_pointer + size(), value);
+    std::fill(data_pointer, data_pointer + size(), value);
 }
 
 #ifdef OPENNN_HAS_CUDA

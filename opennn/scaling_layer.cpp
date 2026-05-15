@@ -107,7 +107,7 @@ void Scaling::set_scalers(const vector<string>& scalers_str)
 void Scaling::set_scalers(const string& scaler)
 {
     const ScalerMethod method = string_to_scaler_method(scaler);
-    fill(scalers.begin(), scalers.end(), method);
+    std::fill(scalers.begin(), scalers.end(), method);
     op_storage_dirty = true;
     refresh_op_storage(current_device());
 }

@@ -188,7 +188,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     for (size_t layer_index = 0; layer_index < layers_number; ++layer_index)
     {
         const vector<Index>& input_indices = layer_input_indices[layer_index];
-        
+
         for (size_t input_index = 0; input_index < input_indices.size(); ++input_index)
         {
             const Index producer = input_indices[input_index];

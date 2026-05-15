@@ -117,9 +117,11 @@ using cudnnOpTensorDescriptor_t    = void*;
 template <typename T>
 void check_cuda_status(T status, const char* file, int line, const char* msg)
 {
+    // `using namespace std;` is declared below this point in pch.h so std::
+    // qualifications are required here.
     if (status != 0)
-        throw runtime_error(string(msg) + " Error: " + to_string(static_cast<int>(status)) +
-                                 " in " + file + ":" + to_string(line));
+        throw std::runtime_error(std::string(msg) + " Error: " + std::to_string(static_cast<int>(status)) +
+                                 " in " + file + ":" + std::to_string(line));
 }
 
 #define CHECK_CUDA(x) check_cuda_status(x, __FILE__, __LINE__, "CUDA")
@@ -132,7 +134,8 @@ using namespace std;
 using namespace Eigen;
 
 namespace opennn {
-using bfloat16 = ::__nv_bfloat16;
+
+using bfloat16 = __nv_bfloat16;
 
 constexpr float EPSILON = numeric_limits<float>::epsilon();
 constexpr float MAX = numeric_limits<float>::max();

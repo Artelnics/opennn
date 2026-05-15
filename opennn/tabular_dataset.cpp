@@ -1238,7 +1238,7 @@ void TabularDataset::infer_column_types(const vector<vector<string_view>>& sampl
 
         const size_t token_index = col_index + id_offset;
 
-        set<string> unique_categories;
+        std::set<string> unique_categories;
         for (const vector<string_view>& row : sample_rows)
             if (token_index < row.size() && !row[token_index].empty() && row[token_index] != missing_values_label)
                 unique_categories.emplace(row[token_index]);

@@ -60,8 +60,8 @@ Index Layer::get_parameters_number() const
 }
 
 float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
-                                       vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
-                                       void (Operator::*link_fn)(const vector<TensorView>&))
+                                      vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
+                                      void (Operator::*link_fn)(const vector<TensorView>&))
 {
     views.clear();
 
@@ -82,7 +82,9 @@ float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
 
             if (!is_aligned(pointer))
                 throw runtime_error("Layer::link_views_to_operators: unaligned memory in layer \"" + get_name() + "\"");
+            
             views.emplace_back(pointer, shape, Type::FP32);
+            
             pointer += get_aligned_size(shape.size());
         }
 
@@ -95,13 +97,15 @@ float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
 float* Layer::link_parameters(float* pointer)
 {
     return link_views_to_operators(parameters, pointer,
-                                   &Operator::parameter_specs, &Operator::link_parameters);
+                                   &Operator::parameter_specs, 
+                                   &Operator::link_parameters);
 }
 
 float* Layer::link_states(float* pointer)
 {
     return link_views_to_operators(states, pointer,
-                                   &Operator::state_specs, &Operator::link_states);
+                                   &Operator::state_specs, 
+                                   &Operator::link_states);
 }
 
 void Layer::set_input_shape(const Shape&)
@@ -116,15 +120,15 @@ void Layer::set_output_shape(const Shape& shape)
 
 void Layer::from_JSON(const JsonDocument& document)
 {
-    if (const Json* root = get_json_root(document, name))
-    {
-        set_label(read_json_string(root, "Label"));
-        set_input_shape(string_to_shape(read_json_string(root, "InputDimensions")));
-        set_output_shape(string_to_shape(read_json_string(root, "OutputDimensions")));
-        read_JSON_body(root);
-        for (Operator* op : get_operators())
-            op->from_JSON(root);
-    }
+    const Json* root = get_json_root(document, name);
+    if (!root) return;
+
+    set_label(read_json_string(root, "Label"));
+    set_input_shape(string_to_shape(read_json_string(root, "InputDimensions")));
+    set_output_shape(string_to_shape(read_json_string(root, "OutputDimensions")));
+    read_JSON_body(root);
+    for (Operator* op : get_operators())
+        op->from_JSON(root);
 }
 
 void Layer::load_state_from_JSON(const JsonDocument& document)

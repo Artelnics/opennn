@@ -432,7 +432,7 @@ void string_to_vector(const string& input, VectorR& values)
         buffer.push_back(value);
 
     values.resize(static_cast<Index>(buffer.size()));
-    copy(buffer.begin(), buffer.end(), values.data());
+    std::copy(buffer.begin(), buffer.end(), values.data());
 }
 
 bool contains(const vector<string>& data, const string& value)

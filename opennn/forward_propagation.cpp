@@ -34,10 +34,9 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     const Index total_bytes = aligned_total_bytes(forward_shapes, forward_dtypes);
 
-    const Device device = is_gpu() ? Device::CUDA : Device::CPU;
-    
     if (total_bytes > 0)
     {
+        const Device device = is_gpu() ? Device::CUDA : Device::CPU;
         data.resize_bytes(total_bytes, device);
         data.setZero();
     }

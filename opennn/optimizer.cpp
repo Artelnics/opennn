@@ -937,8 +937,8 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     const bool profile_this = profile_enabled_from_env();
     if (profile_this)
     {
-        ::opennn::profiler::enabled() = true;
-        ::opennn::profiler::global_stats().clear();
+        ::opennn::enabled() = true;
+        ::opennn::global_stats().clear();
     }
     const auto epoch_t0 = chrono::steady_clock::now();
 
@@ -957,6 +957,10 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
 
     vector<thread> workers;
     workers.reserve(num_workers);
+    // Batch loading is already parallelized across workers. Avoid nested OpenMP
+    // teams inside Dataset::fill_*; on MinGW this can corrupt the heap when
+    // worker threads tear down.
+    const bool parallelize_samples_within_batch = false;
     for (int w = 0; w < num_workers; ++w)
         workers.emplace_back([&]() {
             for (;;) {
@@ -969,9 +973,10 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                             input_feature_indices,
                             decoder_feature_indices,
                             target_feature_indices,
-                            /*is_training=*/true);
-                const auto t_fill1 = chrono::steady_clock::now();
-                ready[it].store(batch, memory_order_release);
+                            /*is_training=*/true,
+                            parallelize_samples_within_batch);
+                const auto t_fill1 = std::chrono::steady_clock::now();
+                ready[it].store(batch, std::memory_order_release);
 
                 if (profile_enabled_from_env())
                 {
@@ -1111,21 +1116,22 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
         const long w_calls = worker_fills.load();
         if (w_calls > 0)
         {
-            ::opennn::profiler::global_stats().times_ms["worker:fill"] =
-                double(worker_fill_us.load()) / 1000.0;
-            ::opennn::profiler::global_stats().counts["worker:fill"] = w_calls;
-            ::opennn::profiler::global_stats().times_ms["worker:queue_wait"] =
-                double(worker_pop_us.load()) / 1000.0;
-            ::opennn::profiler::global_stats().counts["worker:queue_wait"] = w_calls;
+            auto& fill_entry = ::opennn::global_stats().entries["worker:fill"];
+            fill_entry.total_ms = double(worker_fill_us.load()) / 1000.0;
+            fill_entry.calls    = w_calls;
+
+            auto& wait_entry = ::opennn::global_stats().entries["worker:queue_wait"];
+            wait_entry.total_ms = double(worker_pop_us.load()) / 1000.0;
+            wait_entry.calls    = w_calls;
         }
 
-        ::opennn::profiler::global_stats().print(cout, "Epoch breakdown (training)", epoch_ms);
+        ::opennn::global_stats().print(cout, "Epoch breakdown (training)", epoch_ms);
         cout << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
                   << " | num_workers=" << num_workers << "\n\n";
         // Keep the profiler enabled across epochs so the user can see
         // inter-epoch trends (data-loading hiding, cache warm-up, etc.).
         // Stats accumulate; reset them so the per-epoch table stays clean.
-        ::opennn::profiler::global_stats().clear();
+        ::opennn::global_stats().clear();
     }
 
     return stats;
@@ -1159,6 +1165,7 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
     atomic<Index> next_iteration{0};
     vector<thread> workers;
     workers.reserve(num_workers);
+    const bool parallelize_samples_within_batch = false;
     for (int w = 0; w < num_workers; ++w)
         workers.emplace_back([&]() {
             for (;;) {
@@ -1169,8 +1176,9 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
                             input_feature_indices,
                             decoder_feature_indices,
                             target_feature_indices,
-                            /*is_training=*/false);
-                ready[it].store(batch, memory_order_release);
+                            /*is_training=*/false,
+                            parallelize_samples_within_batch);
+                ready[it].store(batch, std::memory_order_release);
             }
         });
 

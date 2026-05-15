@@ -89,6 +89,17 @@ target_precompile_headers(opennn PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
 )
 
+# operators.cpp pulls in cudnn-frontend, which has names (`half`, `bfloat16`)
+# that collide with Eigen names brought into global scope by pch.h's
+# `using namespace Eigen`. Disable PCH on this TU so cudnn-frontend is parsed
+# in a clean scope and the file picks up Eigen/std the regular way.
+if(OPENNN_HAS_CUDA)
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/operators.cpp
+        PROPERTIES SKIP_PRECOMPILE_HEADERS ON
+    )
+endif()
+
 # Safe subset of -ffast-math: lets sqrt/exp/log/sin/cos vectorize without
 # preserving errno or trapping FP exceptions. Excludes -ffinite-math-only
 # (would break NaN handling in correlations.cpp / statistics.cpp) and

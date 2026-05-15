@@ -13,17 +13,11 @@
 #include <memory>
 #include <stdexcept>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace opennn
 {
-
-using string;
-using unique_ptr;
-using vector;
-using function;
-using unordered_map;
-using runtime_error;
 
 template<typename T>
 class Registry

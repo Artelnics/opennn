@@ -24,7 +24,7 @@ int main()
     {
         cout << "OpenNN. Emotion analysis example." << endl;
 
-        Configuration::instance().set(Device::CUDA, Type::BF16, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
 
         // Settings
 
@@ -55,6 +55,7 @@ int main()
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(200);
+        adam->set_batch_size(1000);
         adam->set_learning_rate(float(0.0001));
         adam->set_display_period(20);
 

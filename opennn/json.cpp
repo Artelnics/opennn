@@ -86,15 +86,10 @@ long Json::as_long() const
     {
     case Kind::Number: return long(number_value);
     case Kind::Bool:   return bool_value ? 1 : 0;
-<<<<<<< HEAD
-    case Kind::String: return string_value.empty() ? 0L : stol(string_value);
-    default:           return 0;
-=======
     case Kind::String: return string_value.empty() ? 0L : std::stol(string_value);
     case Kind::Null:
     case Kind::Array:
     case Kind::Object: return 0;
->>>>>>> 465f0bae364f142ffc6ab6bde76a006e2a145440
     }
 
     return 0;
@@ -106,15 +101,10 @@ double Json::as_double() const
     {
     case Kind::Number: return number_value;
     case Kind::Bool:   return bool_value ? 1.0 : 0.0;
-<<<<<<< HEAD
-    case Kind::String: return string_value.empty() ? 0.0 : stod(string_value);
-    default:           return 0.0;
-=======
     case Kind::String: return string_value.empty() ? 0.0 : std::stod(string_value);
     case Kind::Null:
     case Kind::Array:
     case Kind::Object: return 0.0;
->>>>>>> 465f0bae364f142ffc6ab6bde76a006e2a145440
     }
 
     return 0.0;
