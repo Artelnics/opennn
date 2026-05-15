@@ -160,7 +160,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     const Index parameters_number = loss->get_neural_network()->get_parameters_size();
 
-    const Device device = is_gpu() ? Device::CUDA : Device::CPU;
+    const Device device = current_device();
 
     OptimizerData optimization_data;
     optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, device);

@@ -488,13 +488,8 @@ Index Dataset::get_features_number(const string& variable_role) const
 {
     const VariableRole role_type = string_to_variable_role(variable_role);
 
-    Index count = 0;
-
-    for (const Variable& variable : variables)
-        if (role_matches(variable.role, role_type))
-            count += variable.feature_count();
-
-    return count;
+    return transform_reduce(variables.begin(), variables.end(), Index(0), plus<>{},
+        [&](const Variable& v) { return role_matches(v.role, role_type) ? v.feature_count() : Index(0); });
 }
 
 vector<Index> Dataset::get_used_feature_indices() const
@@ -697,10 +692,8 @@ vector<vector<Index>> Dataset::get_feature_indices() const
 
 vector<Index> Dataset::get_feature_indices(const Index variable_index) const
 {
-    Index index = 0;
-
-    for (Index i = 0; i < variable_index; ++i)
-        index += variables[i].feature_count();
+    const Index index = transform_reduce(variables.begin(), variables.begin() + variable_index,
+        Index(0), plus<>{}, [](const Variable& v) { return v.feature_count(); });
 
     vector<Index> indices(variables[variable_index].feature_count());
     iota(indices.begin(), indices.end(), index);

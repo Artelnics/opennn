@@ -370,6 +370,7 @@ struct TensorView
     }
 
     void fill(float value);
+    void setZero() { fill(0.0f); }
 
 #ifdef OPENNN_HAS_CUDA
     void set_zero_async() const;

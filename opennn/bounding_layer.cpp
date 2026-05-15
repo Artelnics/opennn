@@ -20,16 +20,6 @@
 namespace opennn
 {
 
-namespace
-{
-
-Device current_device()
-{
-    return Configuration::instance().is_gpu() ? Device::CUDA : Device::CPU;
-}
-
-}
-
 Bounding::Bounding(const Shape& new_output_shape, const string& new_name)
     : Layer("Bounding", LayerType::Bounding, false)
 {

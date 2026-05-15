@@ -155,10 +155,11 @@ private:
     mutable atomic<bool>    cache_valid{false};
 };
 
-inline bool is_gpu()            { return Configuration::instance().is_gpu(); }
-inline bool is_cpu()            { return Configuration::instance().is_cpu(); }
-inline bool is_bf16_training()  { return Configuration::instance().is_bf16_training(); }
-inline bool is_bf16_inference() { return Configuration::instance().is_bf16_inference(); }
+inline bool   is_gpu()            { return Configuration::instance().is_gpu(); }
+inline bool   is_cpu()            { return Configuration::instance().is_cpu(); }
+inline bool   is_bf16_training()  { return Configuration::instance().is_bf16_training(); }
+inline bool   is_bf16_inference() { return Configuration::instance().is_bf16_inference(); }
+inline Device current_device()    { return is_gpu() ? Device::CUDA : Device::CPU; }
 
 }
 

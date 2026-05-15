@@ -53,10 +53,9 @@ void Layer::distribute_to_operators(
 
 Index Layer::get_parameters_number() const
 {
-    Index total = 0;
-    for (const Shape& shape : get_parameter_shapes())
-        total += shape.size();
-    return total;
+    const vector<Shape> shapes = get_parameter_shapes();
+    return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
+        [](const Shape& s) { return s.size(); });
 }
 
 float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
@@ -104,8 +103,15 @@ float* Layer::link_parameters(float* pointer)
 float* Layer::link_states(float* pointer)
 {
     return link_views_to_operators(states, pointer,
-                                   &Operator::state_specs, 
+                                   &Operator::state_specs,
                                    &Operator::link_states);
+}
+
+float* Layer::link_gradients(float* pointer, vector<TensorView>& gradient_views)
+{
+    return link_views_to_operators(gradient_views, pointer,
+                                   &Operator::parameter_specs,
+                                   &Operator::link_gradients);
 }
 
 void Layer::set_input_shape(const Shape&)

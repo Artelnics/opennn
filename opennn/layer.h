@@ -202,6 +202,8 @@ public:
 
     virtual float* link_states(float* pointer);
 
+    float* link_gradients(float* pointer, vector<TensorView>& gradient_views);
+
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const { return parameters; }
 
@@ -211,11 +213,6 @@ public:
     void redistribute_parameters_to_operators()
     {
         distribute_to_operators(parameters, &Operator::link_parameters, &Operator::parameter_count);
-    }
-
-    void redistribute_parameter_gradients_to_operators(vector<TensorView>& gradient_views)
-    {
-        distribute_to_operators(gradient_views, &Operator::link_gradients, &Operator::parameter_count);
     }
 
 protected:

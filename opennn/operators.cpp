@@ -685,7 +685,7 @@ void CombinationOp::set_parameters_random()
 {
     if (weights.empty()) return;
     set_random_uniform(weights.as_vector());
-    if (!bias.empty()) bias.fill(0.0f);
+    if (!bias.empty()) bias.setZero();
 }
 
 void CombinationOp::set_parameters_glorot()
@@ -693,7 +693,7 @@ void CombinationOp::set_parameters_glorot()
     if (weights.empty()) return;
     const float limit = glorot_limit(input_features, output_features);
     set_random_uniform(weights.as_vector(), -limit, limit);
-    if (!bias.empty()) bias.fill(0.0f);
+    if (!bias.empty()) bias.setZero();
 }
 
 void CombinationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexcept
@@ -906,7 +906,7 @@ void ConvolutionOp::set_parameters_random()
 {
     if (weights.empty()) return;
     set_random_uniform(weights.as_vector());
-    if (!bias.empty()) bias.fill(0.0f);
+    if (!bias.empty()) bias.setZero();
 }
 
 void ConvolutionOp::set_parameters_glorot()
@@ -915,7 +915,7 @@ void ConvolutionOp::set_parameters_glorot()
     const Index kernel_area = kernel_height * kernel_width;
     const float limit = glorot_limit(kernel_area * kernel_channels, kernel_area * kernels_number);
     set_random_uniform(weights.as_vector(), -limit, limit);
-    if (!bias.empty()) bias.fill(0.0f);
+    if (!bias.empty()) bias.setZero();
 }
 
 void ConvolutionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept

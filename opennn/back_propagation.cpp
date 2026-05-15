@@ -185,21 +185,15 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     backward_edges.assign(layers_number, {});
 
-    for (size_t layer_index = 0; layer_index < layers_number; ++layer_index)
+    for (size_t i = 0; i < layers_number; ++i)
     {
-        const vector<Index>& input_indices = layer_input_indices[layer_index];
-
-        for (size_t input_index = 0; input_index < input_indices.size(); ++input_index)
-        {
-            const Index producer = input_indices[input_index];
-            if (size_t(producer) < layers_number)
-                backward_edges[producer].push_back({layer_index, input_index});
-        }
+        const vector<Index>& input_indices = layer_input_indices[i];
+        for (size_t j = 0; j < input_indices.size(); ++j)
+            if (const Index producer = input_indices[j]; size_t(producer) < layers_number)
+                backward_edges[producer].push_back({i, j});
     }
 
-    gradient_views.resize(layers_number);
-
-    const Device device = is_gpu() ? Device::CUDA : Device::CPU;
+    const Device device = current_device();
 
     if (const Index gradient_bytes = get_aligned_bytes(parameter_shapes, Type::FP32); gradient_bytes > 0)
     {
@@ -207,28 +201,18 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         gradient.setZero();
     }
 
-    uint8_t* cursor = gradient.as<uint8_t>();
-    for (Index layer_index = 0; layer_index < layers_number; ++layer_index)
-    {
-        const vector<Shape>& shapes = parameter_shapes[layer_index];
-        gradient_views[layer_index].resize(shapes.size());
+    gradient_views.resize(layers_number);
 
-        for (size_t j = 0; j < shapes.size(); ++j)
-        {
-            if (shapes[j].size() == 0) continue;
-            gradient_views[layer_index][j] = TensorView(cursor, shapes[j], Type::FP32);
-            cursor += get_aligned_bytes(shapes[j].size(), Type::FP32);
-        }
-
-        layers[layer_index]->redistribute_parameter_gradients_to_operators(gradient_views[layer_index]);
-    }
+    float* pointer = gradient.as<float>();
+    for (Index i = 0; i < layers_number; ++i)
+        pointer = layers[i]->link_gradients(pointer, gradient_views[i]);
 
     const DeltaPoolPlan delta_pool_plan = compute_delta_pool_plan(backward_shapes, backward_dtypes);
 
     delta_views.resize(layers_number);
 
-    for (Index layer_index = 0; layer_index < layers_number; ++layer_index)
-        delta_views[layer_index].assign(backward_shapes[layer_index].size() + 1, TensorView{});
+    for (Index i = 0; i < layers_number; ++i)
+        delta_views[i].assign(backward_shapes[i].size() + 1, TensorView{});
 
     if (delta_pool_plan.peak_bytes > 0)
     {
@@ -237,17 +221,16 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     }
 
     uint8_t* base = delta_pool.as<uint8_t>();
-    for (const DeltaPoolEntry& e : delta_pool_plan.entries)
-        delta_views[e.layer][e.slot] = TensorView(base + e.offset, e.shape, e.dtype);
 
-    for (Index layer_index = 0; layer_index < layers_number; ++layer_index)
-    {
-        const auto [consumer, slot] = delta_pool_plan.alias_target[layer_index];
-        if (consumer < delta_views.size()
+    for (const DeltaPoolEntry& entry : delta_pool_plan.entries)
+        delta_views[entry.layer][entry.slot] = TensorView(base + entry.offset, entry.shape, entry.dtype);
+
+    for (Index i = 0; i < layers_number; ++i)
+        if (const auto [consumer, slot] = delta_pool_plan.alias_target[i];
+            consumer < delta_views.size()
             && slot < delta_views[consumer].size()
             && !delta_views[consumer][slot].empty())
-            delta_views[layer_index][0] = delta_views[consumer][slot];
-    }
+            delta_views[i][0] = delta_views[consumer][slot];
 }
 
 void BackPropagation::accumulate_output_deltas(size_t layer_index)
@@ -260,23 +243,23 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     TensorView& destination = delta_views[layer_index][0];
     if (!destination.data) return;
 
-    bool started = false;
+    destination.setZero();
+
     for (const BackwardEdge& edge : edges)
     {
         const size_t slot = 1 + edge.consumer_input_index;
 
         if (edge.consumer_layer_index >= delta_views.size()) continue;
+
         const auto& consumer_views = delta_views[edge.consumer_layer_index];
+
         if (slot >= consumer_views.size() || consumer_views[slot].empty()) continue;
 
         const TensorView& source = consumer_views[slot];
         if (!source.data || source.size() != destination.size()) continue;
 
-        if (!started) { copy(source, destination); started = true; }
-        else          { add(destination, source, destination); }
+        add(destination, source, destination);
     }
-
-    if (!started) destination.fill(0.0f);
 }
 
 TensorView& BackPropagation::get_output_delta()

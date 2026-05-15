@@ -21,11 +21,6 @@ namespace opennn
 namespace
 {
 
-Device current_device()
-{
-    return Configuration::instance().is_gpu() ? Device::CUDA : Device::CPU;
-}
-
 VectorR descriptives_field(const vector<Descriptives>& descriptives,
                            float Descriptives::* member)
 {

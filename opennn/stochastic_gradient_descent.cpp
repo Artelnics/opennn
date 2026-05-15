@@ -86,7 +86,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     if (momentum > 0.0f && optimization_data.views.empty())
     {
         const Index parameters_number = neural_network->get_parameters_size();
-        const Device device = is_gpu() ? Device::CUDA : Device::CPU;
+        const Device device = current_device();
         optimization_data.set({Shape{parameters_number}}, device);
     }
 

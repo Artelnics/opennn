@@ -112,8 +112,7 @@ Index sample_token(VectorR& probabilities,
         }
     }
 
-    float sum = 0.0f;
-    for (Index i = 0; i < vocabulary_size; ++i) sum += probabilities(i);
+    const float sum = probabilities.sum();
     if (sum <= 0.0f)
     {
         Index best = 0;

@@ -1061,10 +1061,8 @@ VectorR median(const MatrixR& matrix,
     {
         const Index column_index = column_indices[j];
 
-        Index valid_count = 0;
-        for (Index k = 0; k < row_indices_size; ++k)
-            if (isfinite(matrix(row_indices[k], column_index)))
-                ++valid_count;
+        const Index valid_count = count_if(row_indices.data(), row_indices.data() + row_indices_size,
+            [&](Index r) { return isfinite(matrix(r, column_index)); });
 
         if (valid_count == 0)
         {

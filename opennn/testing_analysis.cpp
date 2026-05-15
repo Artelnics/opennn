@@ -810,12 +810,10 @@ MatrixR TestingAnalysis::calculate_cumulative_gain_impl(const MatrixR& targets, 
     {
         const float percentage = float(i + 1) * percentage_increment;
 
-        Index count = 0;
         const Index maximum_index = Index(percentage * float(testing_samples_number));
 
-        for (Index j = 0; j < maximum_index; ++j)
-            if (positive ? double(sorted_targets(j)) == 1.0 : sorted_targets(j) < EPSILON)
-                ++count;
+        const Index count = count_if(sorted_targets.data(), sorted_targets.data() + maximum_index,
+            [&](float t) { return positive ? double(t) == 1.0 : t < EPSILON; });
 
         cumulative_gain(i + 1, 0) = percentage;
         cumulative_gain(i + 1, 1) = float(count) / float(total);

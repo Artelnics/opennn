@@ -143,10 +143,9 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
     if (last_trainable_dense < 0) return;
 
     // Compute parameter offset up to the last trainable Dense layer
-    Index parameter_offset = 0;
-    for (size_t i = 0; i < static_cast<size_t>(last_trainable_dense); ++i)
-        if (layers[i]->get_is_trainable())
-            parameter_offset += layers[i]->get_parameters_number();
+    const Index parameter_offset = transform_reduce(
+        layers.begin(), layers.begin() + last_trainable_dense, Index(0), plus<>{},
+        [](const unique_ptr<Layer>& l) { return l->get_is_trainable() ? l->get_parameters_number() : Index(0); });
 
     auto* dense = dynamic_cast<Dense*>(layers[last_trainable_dense].get());
     insert_dense_jacobian(dense, forward_propagation, last_trainable_dense, parameter_offset, back_propagation_lm.squared_errors_jacobian);

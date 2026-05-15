@@ -334,12 +334,8 @@ ActivationOp::Function NeuralNetwork::get_output_activation() const
 
 Index NeuralNetwork::get_parameters_number() const
 {
-    Index parameters_number = 0;
-
-    for (const auto& layer : layers)
-        parameters_number += layer->get_parameters_number();
-
-    return parameters_number;
+    return transform_reduce(layers.begin(), layers.end(), Index(0), plus<>{},
+        [](const unique_ptr<Layer>& l) { return l->get_parameters_number(); });
 }
 
 vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
