@@ -126,12 +126,12 @@ void check_cuda_status(T status, const char* file, int line, const char* msg)
 
 #endif
 
-using bfloat16 = __nv_bfloat16;
-
 using namespace std;
 using namespace Eigen;
 
 namespace opennn {
+using bfloat16 = ::__nv_bfloat16;
+
 constexpr float EPSILON = numeric_limits<float>::epsilon();
 constexpr float MAX = numeric_limits<float>::max();
 constexpr float NEG_INFINITY = -numeric_limits<float>::infinity();
