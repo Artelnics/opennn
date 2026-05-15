@@ -33,13 +33,13 @@ struct LtMatmulPlan
     LtMatmulPlan(LtMatmulPlan&& other) noexcept { *this = move(other); }
     LtMatmulPlan& operator=(LtMatmulPlan&& other) noexcept
     {
-        swap(op_desc, other.op_desc);
-        swap(a_desc,  other.a_desc);
-        swap(b_desc,  other.b_desc);
-        swap(cd_desc, other.cd_desc);
-        swap(algo,    other.algo);
-        swap(algo_valid, other.algo_valid);
-        swap(workspace_size, other.workspace_size);
+        std::swap(op_desc, other.op_desc);
+        std::swap(a_desc,  other.a_desc);
+        std::swap(b_desc,  other.b_desc);
+        std::swap(cd_desc, other.cd_desc);
+        std::swap(algo,    other.algo);
+        std::swap(algo_valid, other.algo_valid);
+        std::swap(workspace_size, other.workspace_size);
         return *this;
     }
     ~LtMatmulPlan()

@@ -299,11 +299,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     for (const DeltaPoolEntry& e : delta_pool_plan.entries)
         delta_views[e.layer][e.slot] = TensorView(base + e.offset, e.shape, e.dtype);
 
-<<<<<<< HEAD
-    for (Index layer_index = 0; layer_index < layers_number; ++layer_index)
-=======
-    for (size_t i = 0; i < layers_number; ++i)
->>>>>>> 465f0bae364f142ffc6ab6bde76a006e2a145440
+    for (size_t layer_index = 0; layer_index < layers_number; ++layer_index)
     {
         const auto [consumer, slot] = delta_pool_plan.alias_target[layer_index];
         if (consumer < delta_views.size()
