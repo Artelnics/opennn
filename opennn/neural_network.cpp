@@ -78,11 +78,8 @@ void NeuralNetwork::compile()
         state_pointer = layer->link_states(state_pointer);
 
     const Index first = get_first_trainable_layer_index();
-    if (first >= 0 && size_t(first) < layers.size())
-    {
-        const auto& ops = layers[first]->get_operators();
-        if (!ops.empty()) ops[0]->input_delta_slots.clear();
-    }
+    const auto& ops = layers[first]->get_operators();
+    if (!ops.empty()) ops[0]->input_delta_slots.clear();
 }
 
 void NeuralNetwork::validate_type(LayerType type) const

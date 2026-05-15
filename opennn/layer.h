@@ -218,11 +218,6 @@ public:
         distribute_to_operators(gradient_views, &Operator::link_gradients, &Operator::parameter_count);
     }
 
-    void redistribute_states_to_operators()
-    {
-        distribute_to_operators(states, &Operator::link_states, &Operator::state_count);
-    }
-
 protected:
 
     Layer() = default;
@@ -254,6 +249,11 @@ protected:
         vector<TensorView>& views,
         void (Operator::*link)(const vector<TensorView>&),
         size_t (Operator::*count)() const);
+
+    float* link_views_to_operators(
+        vector<TensorView>& views, float* pointer,
+        vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
+        void (Operator::*link_fn)(const vector<TensorView>&));
 
     vector<unique_ptr<Layer>> layers;
 

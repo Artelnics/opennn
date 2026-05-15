@@ -32,7 +32,7 @@ struct BackPropagation
 
     void accumulate_output_deltas(size_t layer_index);
 
-    NeuralNetwork* neural_network = nullptr;
+    const NeuralNetwork* neural_network = nullptr;
 
     Buffer gradient;
     vector<vector<TensorView>> gradient_views;
@@ -55,6 +55,30 @@ struct BackPropagation
     float accuracy = 0.0f;
     float loss_value = 0.0f;
     Index active_tokens_count = 0;
+
+private:
+
+    struct DeltaPoolEntry
+    {
+        Index layer;
+        size_t slot;
+        Index offset;
+        Shape shape;
+        Type dtype;
+        Index bytes;
+        Index birth;
+        Index death;
+    };
+
+    struct DeltaPoolPlan
+    {
+        Index peak_bytes = 0;
+        vector<DeltaPoolEntry> entries;
+        vector<pair<size_t, size_t>> alias_target;
+    };
+
+    DeltaPoolPlan compute_delta_pool_plan(const vector<vector<Shape>>& backward_shapes,
+                                          const vector<vector<Type>>& backward_dtypes) const;
 };
 
 }

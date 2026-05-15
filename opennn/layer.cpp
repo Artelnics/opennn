@@ -59,48 +59,48 @@ Index Layer::get_parameters_number() const
     return total;
 }
 
-
-namespace {
-
-float* link_views_to_operators(Layer& self, vector<TensorView>& views, float* pointer,
-                                const char* tag,
-                                vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
-                                void (Operator::*link_fn)(const vector<TensorView>&))
+float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
+                                       vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
+                                       void (Operator::*link_fn)(const vector<TensorView>&))
 {
     views.clear();
 
-    for (Operator* op : self.get_operators())
+    for (Operator* op : get_operators())
     {
         const auto specs = (op->*specs_fn)();
+        if (specs.empty()) continue;
+
         const size_t start = views.size();
 
         for (const auto& [shape, dtype] : specs)
         {
-            if (shape.empty()) { views.emplace_back(); continue; }
+            if (shape.empty())
+            {
+                views.emplace_back();
+                continue;
+            }
+
             if (!is_aligned(pointer))
-                throw runtime_error(string("Layer::") + tag + ": unaligned memory in layer \"" + self.get_name() + "\"");
+                throw runtime_error("Layer::link_views_to_operators: unaligned memory in layer \"" + get_name() + "\"");
             views.emplace_back(pointer, shape, Type::FP32);
             pointer += get_aligned_size(shape.size());
         }
 
-        if (!specs.empty())
-            (op->*link_fn)(vector<TensorView>(views.begin() + start, views.end()));
+        (op->*link_fn)(vector<TensorView>(views.begin() + start, views.end()));
     }
 
     return pointer;
 }
 
-}
-
 float* Layer::link_parameters(float* pointer)
 {
-    return link_views_to_operators(*this, parameters, pointer, "link_parameters",
+    return link_views_to_operators(parameters, pointer,
                                    &Operator::parameter_specs, &Operator::link_parameters);
 }
 
 float* Layer::link_states(float* pointer)
 {
-    return link_views_to_operators(*this, states, pointer, "link_states",
+    return link_views_to_operators(states, pointer,
                                    &Operator::state_specs, &Operator::link_states);
 }
 
