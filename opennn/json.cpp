@@ -73,8 +73,11 @@ string Json::as_string() const
         ostringstream s; s.precision(10); s << number_value; return s.str();
     }
     case Kind::String: return string_value;
-    default:           return dump(0);
+    case Kind::Array:
+    case Kind::Object: return dump(0);
     }
+
+    return "";
 }
 
 long Json::as_long() const
@@ -83,9 +86,18 @@ long Json::as_long() const
     {
     case Kind::Number: return long(number_value);
     case Kind::Bool:   return bool_value ? 1 : 0;
+<<<<<<< HEAD
     case Kind::String: return string_value.empty() ? 0L : stol(string_value);
     default:           return 0;
+=======
+    case Kind::String: return string_value.empty() ? 0L : std::stol(string_value);
+    case Kind::Null:
+    case Kind::Array:
+    case Kind::Object: return 0;
+>>>>>>> 465f0bae364f142ffc6ab6bde76a006e2a145440
     }
+
+    return 0;
 }
 
 double Json::as_double() const
@@ -94,9 +106,18 @@ double Json::as_double() const
     {
     case Kind::Number: return number_value;
     case Kind::Bool:   return bool_value ? 1.0 : 0.0;
+<<<<<<< HEAD
     case Kind::String: return string_value.empty() ? 0.0 : stod(string_value);
     default:           return 0.0;
+=======
+    case Kind::String: return string_value.empty() ? 0.0 : std::stod(string_value);
+    case Kind::Null:
+    case Kind::Array:
+    case Kind::Object: return 0.0;
+>>>>>>> 465f0bae364f142ffc6ab6bde76a006e2a145440
     }
+
+    return 0.0;
 }
 
 bool Json::as_bool() const
@@ -106,8 +127,12 @@ bool Json::as_bool() const
     case Kind::Bool:   return bool_value;
     case Kind::Number: return number_value != 0.0;
     case Kind::String: return string_value == "1" || string_value == "true";
-    default:           return false;
+    case Kind::Null:
+    case Kind::Array:
+    case Kind::Object: return false;
     }
+
+    return false;
 }
 static void escape_string(string& out, const string& s)
 {

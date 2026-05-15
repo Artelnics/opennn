@@ -373,7 +373,11 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Dense>(get_output_shape(), Shape({64}), "ReLU", false, "hidden_layer"));
 
-    add_layer(make_unique<Dense>(get_output_shape(), output_shape, "Sigmoid", false, "classification_layer"));
+    add_layer(make_unique<Dense>(get_output_shape(),
+                                 output_shape,
+                                 output_shape[0] == 1 ? "Sigmoid" : "Softmax",
+                                 false,
+                                 "classification_layer"));
 
     compile();
     set_parameters_glorot();

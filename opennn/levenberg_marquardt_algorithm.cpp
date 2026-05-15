@@ -156,15 +156,18 @@ static MatrixR activation_derivative(ActivationOp::Function activation_function,
 {
     switch (activation_function)
     {
+    case ActivationOp::Function::Identity:
+    case ActivationOp::Function::Softmax:
+        return MatrixR::Ones(outputs.rows(), outputs.cols());
     case ActivationOp::Function::Sigmoid:
         return outputs.array() * (1.0f - outputs.array());
     case ActivationOp::Function::Tanh:
         return 1.0f - outputs.array().square();
     case ActivationOp::Function::ReLU:
         return (outputs.array() > 0.0f).cast<float>();
-    default:                                                  // Identity / unrecognized -> identity
-        return MatrixR::Ones(outputs.rows(), outputs.cols());
     }
+
+    return MatrixR::Ones(outputs.rows(), outputs.cols());
 }
 
 void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense* layer,

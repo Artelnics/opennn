@@ -50,9 +50,10 @@ void read_bmp_file(const filesystem::path& path, vector<uint8_t>& buffer)
 
     file.seekg(0, ios::beg);
 
-    if (buffer.capacity() < size)
-        buffer.reserve(size);
-    buffer.resize(size);
+    const size_t byte_count = static_cast<size_t>(size);
+    if (buffer.capacity() < byte_count)
+        buffer.reserve(byte_count);
+    buffer.resize(byte_count);
 
     if (!file.read(reinterpret_cast<char*>(buffer.data()), size))
         throw runtime_error("Error reading BMP file: " + path_str);

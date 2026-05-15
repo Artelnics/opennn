@@ -209,6 +209,10 @@ void ResponseOptimization::Domain::bound(const vector<Index>& feature_dimensions
 
             switch (condition.condition)
             {
+            case ConditionType::None:
+            case ConditionType::Minimize:
+            case ConditionType::Maximize:
+                break;
             case ConditionType::EqualTo:
                 inferior = max(inferior, condition.low_bound);
                 superior = min(superior, condition.low_bound);
@@ -218,13 +222,12 @@ void ResponseOptimization::Domain::bound(const vector<Index>& feature_dimensions
                 superior = min(superior, condition.up_bound);
                 break;
             case ConditionType::GreaterEqualTo:
+            case ConditionType::GreaterThan:
                 inferior = max(inferior, condition.low_bound);
                 break;
             case ConditionType::LessEqualTo:
+            case ConditionType::LessThan:
                 superior = min(superior, condition.up_bound);
-                break;
-
-            default:
                 break;
             }
         }

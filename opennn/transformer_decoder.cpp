@@ -271,7 +271,6 @@ void TransformerDecoder::encode_source(const string& source)
     const auto& input_vocabulary_map = language_dataset.get_input_vocabulary_map();
 
     const Index input_sequence_length = transformer.get_input_sequence_length();
-    constexpr Index batch_size = 1;
 
     source_ids.setConstant(pad_token_id);
     source_ids(0, 0) = start_token_id;
@@ -289,6 +288,7 @@ void TransformerDecoder::encode_source(const string& source)
         source_ids(0, write_index) = end_token_id;
 
 #ifdef OPENNN_HAS_CUDA
+    constexpr Index batch_size = 1;
     cudaStream_t stream = Backend::get_compute_stream();
     CHECK_CUDA(cudaMemcpyAsync(source_ids_device.data,
                                source_ids.data(),
@@ -300,7 +300,7 @@ void TransformerDecoder::encode_source(const string& source)
                                   encoder_last_layer_index);
 }
 
-Index TransformerDecoder::decode_step(Index step_index,
+Index TransformerDecoder::decode_step([[maybe_unused]] Index step_index,
                                        const SamplingConfig& config)
 {
 #ifdef OPENNN_HAS_CUDA
@@ -315,11 +315,10 @@ Index TransformerDecoder::decode_step(Index step_index,
                                   decoder_stack_first_layer_index,
                                   output_projection_layer_index);
 
+#ifdef OPENNN_HAS_CUDA
     const TensorView output_view = forward_propagation->get_outputs();
     const Index vocabulary_size = output_view.shape[2];
     const Index slice_offset = (step_index - 1) * vocabulary_size;
-
-#ifdef OPENNN_HAS_CUDA
     if (output_view.type == Type::BF16)
     {
         CHECK_CUDA(cudaMemcpyAsync(bf16_staging.data(),

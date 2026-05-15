@@ -96,7 +96,6 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     training_strategy->get_optimization_algorithm()->set_display(false);
 
     float previous_validation_error = MAX;
-    float previous_training_error = MAX;
 
     const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
@@ -236,7 +235,6 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         }
         else
         {
-            previous_training_error = minimum_training_error;
             previous_validation_error = minimum_validation_error;
 
             input_selection_results.training_error_history(epoch) = minimum_training_error;

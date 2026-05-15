@@ -202,6 +202,7 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
         {
 
         case VariableType::Numeric:
+        case VariableType::Constant:
         {
             VectorR variable_data(used_samples_number);
 
@@ -260,9 +261,8 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
 
             break;
 
-        default:
-
-            throw runtime_error("Unknown variable type.");
+        case VariableType::None:
+            throw runtime_error("Cannot calculate distributions for a variable with type None.");
         }
     }
 
@@ -461,6 +461,8 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
 
     switch (method)
     {
+    case ScalerMethod::None:
+        break;
     case ScalerMethod::MinimumMaximum:
         if (unscale)
             unscale_minimum_maximum(map, feature_index, desc);
@@ -487,8 +489,6 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
         break;
     case ScalerMethod::ImageMinMax:
         if (unscale) unscale_image_minimum_maximum(map, feature_index);
-        break;
-    default:
         break;
     }
 }
@@ -906,6 +906,9 @@ void TabularDataset::read_csv()
 
             switch (variable.type)
             {
+            case VariableType::None:
+            case VariableType::Constant:
+                break;
             case VariableType::Numeric:
                 data(sample_index, feature_indices[0]) = is_missing(token) ? NAN : parse_float_or_nan(token);
                 break;
@@ -949,8 +952,6 @@ void TabularDataset::read_csv()
                     else
                         data(sample_index, feature_indices[0]) = parse_float_or_nan(token);
                 }
-                break;
-            default:
                 break;
             }
         }
