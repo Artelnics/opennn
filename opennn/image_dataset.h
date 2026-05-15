@@ -48,6 +48,8 @@ public:
 
     void set_image_padding(const int& new_padding) { padding = new_padding; }
 
+    using Dataset::unscale_features;
+
     vector<Descriptives> scale_features(const string&) override;
     void unscale_features(const string&);
 

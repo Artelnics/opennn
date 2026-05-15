@@ -203,7 +203,7 @@ TrainingResults StochasticGradientDescent::train()
     // Batch pool: minimum 2 for producer/consumer double-buffer (avoids worker-main
     // deadlock on prefetch_before_loop + pop_next). GPU uses 3 for triple-buffer H2D.
 
-    const int pool_size = std::max(num_workers + 1, on_gpu ? 3 : 2);
+    const int pool_size = max(num_workers + 1, on_gpu ? 3 : 2);
 
     ThreadSafeQueue<Batch*> empty_training_queue;
     vector<unique_ptr<Batch>> training_batch_pool;

@@ -67,11 +67,8 @@ const LtMatmulPlan& get_lt_gemm_plan(
     cudaDataType_t out_dtype)
 {
     const LtMatmulPlanKey key{m, n, k,
-                              static_cast<int>(transA),
-                              static_cast<int>(transB),
-                              static_cast<int>(epilogue),
-                              static_cast<int>(io_dtype),
-                              static_cast<int>(out_dtype)};
+                              int(transA), int(transB), int(epilogue),
+                              int(io_dtype), int(out_dtype)};
     auto it = lt_gemm_plans_.find(key);
     if (it != lt_gemm_plans_.end()) return it->second;
 
@@ -122,8 +119,7 @@ const LtMatmulPlan& get_lt_gemm_plan(
         scratch::ensure_cublas_lt_workspace(plan.workspace_size);
     }
 
-    auto [iter, _] = lt_gemm_plans_.emplace(key, move(plan));
-    return iter->second;
+    return lt_gemm_plans_.emplace(key, move(plan)).first->second;
 }
 
 }

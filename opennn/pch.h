@@ -13,7 +13,9 @@
 #ifndef EIGEN_NO_DEBUG
 #define EIGEN_NO_DEBUG
 #endif
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 #define _CRT_SECURE_NO_WARNINGS
 #define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
@@ -115,6 +117,8 @@ using cudnnOpTensorDescriptor_t    = void*;
 template <typename T>
 void check_cuda_status(T status, const char* file, int line, const char* msg)
 {
+    // `using namespace std;` is declared below this point in pch.h so std::
+    // qualifications are required here.
     if (status != 0)
         throw std::runtime_error(std::string(msg) + " Error: " + std::to_string(static_cast<int>(status)) +
                                  " in " + file + ":" + std::to_string(line));

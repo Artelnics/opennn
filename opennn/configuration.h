@@ -152,7 +152,7 @@ private:
     Type   inference_type = Type::Auto;
 
     mutable Resolved             cached_resolved;
-    mutable std::atomic<bool>    cache_valid{false};
+    mutable atomic<bool>    cache_valid{false};
 };
 
 inline bool is_gpu()            { return Configuration::instance().is_gpu(); }

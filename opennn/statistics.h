@@ -179,7 +179,7 @@ pair<X, Y> filter_missing_values(const X& x, const Y& y)
 
 inline bool is_contiguous(const vector<Index>& indices)
 {
-    return std::adjacent_find(indices.begin(), indices.end(),
+    return adjacent_find(indices.begin(), indices.end(),
         [](Index a, Index b) { return b != a + 1; }) == indices.end();
 }
 

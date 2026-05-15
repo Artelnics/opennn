@@ -56,7 +56,7 @@ struct Shape
         if (new_rank > MaxRank)
             throw runtime_error("Shape: rank " + to_string(new_rank)
                                 + " exceeds MaxRank=" + to_string(MaxRank) + ".");
-        std::fill_n(dims, rank, value);
+        fill_n(dims, rank, value);
     }
 
     Shape(initializer_list<Index> list) : rank(list.size())
@@ -64,7 +64,7 @@ struct Shape
         if (list.size() > MaxRank)
             throw runtime_error("Shape: initializer rank " + to_string(list.size())
                                 + " exceeds MaxRank=" + to_string(MaxRank) + ".");
-        std::copy_n(list.begin(), rank, dims);
+        copy_n(list.begin(), rank, dims);
     }
 
     const Index* begin() const noexcept { return dims; }
@@ -81,7 +81,7 @@ struct Shape
 
     Index size() const noexcept
     {
-        return rank == 0 ? 0 : std::accumulate(begin(), end(), Index(1), std::multiplies<>{});
+        return rank == 0 ? 0 : accumulate(begin(), end(), Index(1), multiplies<>{});
     }
 
     void clear() noexcept { rank = 0; }
@@ -97,7 +97,7 @@ struct Shape
 
     bool operator==(const Shape& other) const noexcept
     {
-        return rank == other.rank && std::equal(begin(), end(), other.begin());
+        return rank == other.rank && equal(begin(), end(), other.begin());
     }
 
     bool operator!=(const Shape& other) const noexcept { return !(*this == other); }
@@ -105,7 +105,7 @@ struct Shape
     Shape& append(const Shape& other)
     {
         const size_t copy_count = min(other.rank, MaxRank - rank);
-        std::copy_n(other.dims, copy_count, dims + rank);
+        copy_n(other.dims, copy_count, dims + rank);
         rank += copy_count;
         return *this;
     }
@@ -200,7 +200,7 @@ struct Buffer
         if (device_type == Device::CUDA) CHECK_CUDA(cudaMemset(data, 0, bytes));
         else
 #endif
-            std::memset(data, 0, static_cast<size_t>(bytes));
+            memset(data, 0, static_cast<size_t>(bytes));
     }
 
 #ifdef OPENNN_HAS_CUDA
@@ -249,7 +249,7 @@ struct Buffer
     }
 
 private:
-    static void* alloc(Device device_type, Index byte_count)
+    static void* alloc([[maybe_unused]] Device device_type, Index byte_count)
     {
 #ifdef OPENNN_HAS_CUDA
         if (device_type == Device::CUDA) { void* device_pointer = nullptr; CHECK_CUDA(cudaMalloc(&device_pointer, byte_count)); return device_pointer; }
@@ -257,7 +257,7 @@ private:
         return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
     }
 
-    static void dealloc(Device device_type, void* pointer, Index byte_count)
+    static void dealloc([[maybe_unused]] Device device_type, void* pointer, Index byte_count)
     {
 #ifdef OPENNN_HAS_CUDA
         if (device_type == Device::CUDA) { cudaFree(pointer); return; }
@@ -358,7 +358,7 @@ struct TensorView
     {
         assert(shape.rank == Rank);
         Eigen::array<Index, Rank> dims;
-        std::copy_n(shape.dims, Rank, dims.begin());
+        copy_n(shape.dims, Rank, dims.begin());
         return TensorMapR<Rank>(as<float>(), dims);
     }
 
@@ -405,7 +405,7 @@ private:
             cudnnTensorDescriptor_t raw_desc;
             CHECK_CUDNN(cudnnCreateTensorDescriptor(&raw_desc));
 
-            descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t descriptor) {
+            descriptor_handle = shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t descriptor) {
                 cudnnDestroyTensorDescriptor(descriptor);
             });
         }
@@ -443,7 +443,7 @@ template<typename... Vs>
 size_t hash_combine(const Vs&... values)
 {
     size_t h = 0;
-    ((h ^= std::hash<Vs>{}(values) + 0x9e3779b9 + (h << 6) + (h >> 2)), ...);
+    ((h ^= hash<Vs>{}(values) + 0x9e3779b9 + (h << 6) + (h >> 2)), ...);
     return h;
 }
 

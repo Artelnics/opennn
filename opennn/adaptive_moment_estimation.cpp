@@ -115,7 +115,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     set_names();
     set_scaling();
 
-    const int pool_size = std::max(num_workers + 1, on_gpu ? 3 : 2);
+    const int pool_size = max(num_workers + 1, on_gpu ? 3 : 2);
 
     ThreadSafeQueue<Batch*> empty_training_queue;
     vector<unique_ptr<Batch>> training_batch_pool;
@@ -247,7 +247,7 @@ TrainingResults AdaptiveMomentEstimation::train()
                 }
                 else
 #endif
-                    std::memcpy(best_parameters.data(), src, bytes);
+                    memcpy(best_parameters.data(), src, bytes);
             }
             else
                 ++validation_failures;
@@ -294,7 +294,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         // cudaMemcpy(H2D) and refreshes the BF16 mirror via
         // cast_parameters_to_bf16. memcpy into a device pointer is UB.
         VectorR best_view(best_parameters.size());
-        std::memcpy(best_view.data(), best_parameters.data(),
+        memcpy(best_view.data(), best_parameters.data(),
                     best_parameters.size() * sizeof(float));
         neural_network->set_parameters(best_view);
     }

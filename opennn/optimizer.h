@@ -59,7 +59,7 @@ public:
 
     void set_display_period(const Index new_display_period) { display_period = new_display_period; }
 
-    void set_num_workers(int n) { num_workers = std::max(1, n); }
+    void set_num_workers(int n) { num_workers = max(1, n); }
     int  get_num_workers() const { return num_workers; }
 
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
@@ -125,7 +125,7 @@ protected:
                            const vector<Index>& input_feature_indices,
                            const vector<Index>& decoder_feature_indices,
                            const vector<Index>& target_feature_indices,
-                           const std::function<void(BackPropagation&)>& update,
+                           const function<void(BackPropagation&)>& update,
                            bool show_progress = true);
 
     EpochStats evaluate_epoch(bool tracks_accuracy,

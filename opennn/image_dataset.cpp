@@ -42,7 +42,7 @@ bool read_header(FileReader& reader, ImageCacheHeader& header)
 {
     if (reader.file_size() < sizeof(ImageCacheHeader)) return false;
     reader.read_at(&header, sizeof(header), 0);
-    if (std::memcmp(header.magic, IMAGE_CACHE_MAGIC, 8) != 0) return false;
+    if (memcmp(header.magic, IMAGE_CACHE_MAGIC, 8) != 0) return false;
     if (header.version != IMAGE_CACHE_VERSION) return false;
     return true;
 }
@@ -276,7 +276,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
                 num_classes_  = header.num_classes;
 
                 const Index pixels_number = Index(header.record_bytes);
-                const Index targets_number = target_shape[0];
                 const bool single_target = (header.num_classes == 2);
 
                 variables.resize(pixels_number + 1);
@@ -319,7 +318,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
             // Header doesn't match — close and regenerate.
             cache_reader.close();
         }
-        catch (const std::exception&)
+        catch (const exception&)
         {
             cache_reader.close();
         }
@@ -414,7 +413,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     num_classes_  = uint32_t(folders_number);
 
     ImageCacheHeader header{};
-    std::memcpy(header.magic, IMAGE_CACHE_MAGIC, 8);
+    memcpy(header.magic, IMAGE_CACHE_MAGIC, 8);
     header.version      = IMAGE_CACHE_VERSION;
     header.height       = uint32_t(height);
     header.width        = uint32_t(width);
@@ -457,7 +456,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
             }
             labels_out[size_t(i)] = int32_t(labels[i]);
         }
-        catch (const std::exception& e)
+        catch (const exception& e)
         {
             #pragma omp critical
             { omp_error = e.what(); }
@@ -531,7 +530,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
             for (Index p = 0; p < pixels_per_image; ++p)
                 dst[p] = float(buf[size_t(p)]) * scale;
         }
-        catch (const std::exception& e)
+        catch (const exception& e)
         {
             #pragma omp critical
             { omp_error = e.what(); }
@@ -561,7 +560,7 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
     }
     else
     {
-        std::fill_n(target_data, batch_size * targets_number, 0.0f);
+        fill_n(target_data, batch_size * targets_number, 0.0f);
 
         #pragma omp parallel for if (parallelize)
         for (Index i = 0; i < batch_size; ++i)

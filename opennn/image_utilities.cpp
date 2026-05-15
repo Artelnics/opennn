@@ -50,9 +50,10 @@ void read_bmp_file(const filesystem::path& path, vector<uint8_t>& buffer)
 
     file.seekg(0, ios::beg);
 
-    if (buffer.capacity() < size)
-        buffer.reserve(size);
-    buffer.resize(size);
+    const size_t byte_count = static_cast<size_t>(size);
+    if (buffer.capacity() < byte_count)
+        buffer.reserve(byte_count);
+    buffer.resize(byte_count);
 
     if (!file.read(reinterpret_cast<char*>(buffer.data()), size))
         throw runtime_error("Error reading BMP file: " + path_str);
@@ -212,7 +213,7 @@ void load_image(const filesystem::path& path,
     if (divide_by_255)
         for (Index k = 0; k < pixels; ++k) dst[k] = resized.data()[k] / 255.0f;
     else
-        std::copy_n(resized.data(), pixels, dst);
+        copy_n(resized.data(), pixels, dst);
 }
 
 Tensor3 resize_image(const Tensor3& input_image,

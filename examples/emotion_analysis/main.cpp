@@ -59,6 +59,9 @@ int main()
         adam->set_learning_rate(float(0.0001));
         adam->set_display_period(20);
 
+        cout << "Training with "
+             << (Configuration::instance().is_gpu() ? "GPU" : "CPU")
+             << ", it might take some time: " << endl;
         training_strategy.train();
 
         // Testing Analysis

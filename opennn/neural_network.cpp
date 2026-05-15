@@ -419,7 +419,7 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 
     parameters.resize_bytes(byte_count, Device::CPU);
     if (byte_count > 0)
-        std::memcpy(parameters.data, new_parameters.data(), static_cast<size_t>(byte_count));
+        memcpy(parameters.data, new_parameters.data(), static_cast<size_t>(byte_count));
 }
 
 void NeuralNetwork::set_parameters_random()
@@ -479,7 +479,7 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
             throw runtime_error("calculate_outputs(Tensor3, Tensor3): expected rank-3 output, got rank "
                                 + to_string(out.shape.rank));
         Tensor3 result(out.shape[0], out.shape[1], out.shape[2]);
-        std::memcpy(result.data(), result_matrix.data(),
+        memcpy(result.data(), result_matrix.data(),
                     size_t(result.size()) * sizeof(float));
         return result;
     });
@@ -1255,7 +1255,7 @@ void copy_device_output_to_matrix(const TensorView& output, MatrixR& destination
         for (Index i = 0; i < size; ++i)
         {
             const uint32_t bits = static_cast<uint32_t>(staging[size_t(i)]) << 16;
-            std::memcpy(&destination_data[i], &bits, sizeof(float));
+            memcpy(&destination_data[i], &bits, sizeof(float));
         }
 
         return;

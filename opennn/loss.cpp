@@ -284,7 +284,7 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
 
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
     const TensorView target = batch.get_targets();
-    TensorView& input_delta = back_propagation.get_output_deltas();
+    TensorView& input_delta = back_propagation.get_output_delta();
 
     if (error == Error::CrossEntropy3d)
     {
@@ -336,7 +336,7 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
     const TensorView target = batch.get_targets();
-    const TensorView input_delta = back_propagation.get_output_deltas();
+    const TensorView input_delta = back_propagation.get_output_delta();
 
     switch (error)
     {

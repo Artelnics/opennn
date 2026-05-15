@@ -302,7 +302,10 @@ VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& pare
     shuffle_vector(difference);
     const Index genes_to_add = target_size - current_size;
 
-    for (Index i = 0; i < genes_to_add && i < difference.size(); ++i)
+    const size_t add_count = genes_to_add > 0
+        ? min(static_cast<size_t>(genes_to_add), difference.size())
+        : size_t(0);
+    for (size_t i = 0; i < add_count; ++i)
         descendent(difference[i]) = true;
 
     const Index final_count = descendent.count();
@@ -319,7 +322,10 @@ VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& pare
 
         const Index genes_needed = minimum_inputs_number - final_count;
 
-        for (Index i = 0; i < genes_needed && i < never_true_indices.size(); ++i)
+        const size_t fill_count = genes_needed > 0
+            ? min(static_cast<size_t>(genes_needed), never_true_indices.size())
+            : size_t(0);
+        for (size_t i = 0; i < fill_count; ++i)
             descendent(never_true_indices[i]) = true;
     }
 
@@ -392,7 +398,7 @@ void GeneticAlgorithm::perform_mutation()
         shuffle_vector(to_true_mutations);
         shuffle_vector(to_false_mutations);
 
-        const Index swap_count = std::min(to_true_mutations.size(), to_false_mutations.size());
+        const Index swap_count = min(to_true_mutations.size(), to_false_mutations.size());
 
         for (Index k = 0; k < swap_count; ++k)
         {

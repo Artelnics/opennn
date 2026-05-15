@@ -67,7 +67,7 @@ public:
 
 private:
     filesystem::path tmp_path_;
-    std::ofstream stream_;
+    ofstream stream_;
     bool finalized_ = false;
 };
 

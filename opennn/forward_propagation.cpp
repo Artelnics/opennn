@@ -43,29 +43,28 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     }
 
     uint8_t* cursor = data.as<uint8_t>();
-    for (Index i = 0; i < layers_number; ++i)
+    for (size_t i = 0; i < layers_number; ++i)
     {
         const vector<Shape>& shapes = forward_shapes[i];
-        const size_t slots = shapes.size();
-        views[i].assign(slots + 1, vector<TensorView>(1));
+        const vector<Type>& dtypes = forward_dtypes[i];
+        views[i].assign(shapes.size() + 1, vector<TensorView>(1));
 
-        for (size_t j = 0; j < slots; ++j)
+        for (size_t j = 0; j < shapes.size(); ++j)
         {
-            const Shape& slot_shape = shapes[j];
-            if (slot_shape.size() == 0) continue;
-
-            views[i][j + 1][0] = TensorView(cursor, slot_shape, forward_dtypes[i][j]);
-            cursor += get_aligned_bytes(slot_shape.size() * type_bytes(forward_dtypes[i][j]));
+            if (shapes[j].size() == 0) continue;
+            views[i][j + 1][0] = TensorView(cursor, shapes[j], dtypes[j]);
+            cursor += get_aligned_bytes(shapes[j].size() * type_bytes(dtypes[j]));
         }
     }
 
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
-    for (Index i = 0; i < layers_number; ++i)
+    for (size_t i = 0; i < layers_number; ++i)
     {
         const vector<Index>& input_indices = layer_input_indices[i];
-        views[i][0].resize(input_indices.size());
+        const size_t inputs_number = input_indices.size();
+        views[i][0].resize(inputs_number);
 
-        for (size_t k = 0; k < input_indices.size(); ++k)
+        for (size_t k = 0; k < inputs_number; ++k)
         {
             const Index producer = input_indices[k];
             if (producer < 0) continue;
@@ -74,9 +73,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             if (output_slot == 0) continue;
 
             const TensorView& source = views[producer][output_slot][0];
-            if (source.empty()) continue;
-
-            views[i][0][k] = source;
+            if (!source.empty()) views[i][0][k] = source;
         }
     }
 }
@@ -86,13 +83,14 @@ TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
     if (!neural_network) return {};
 
     const Index layer_index = neural_network->get_last_trainable_layer_index();
+    
     if (layer_index < 0
         || size_t(layer_index) >= views.size()
-        || views[layer_index].size() <= 1
-        || views[layer_index].back().empty())
+        || views[layer_index].size() <= 1)
         return {};
 
-    return views[layer_index].back()[0];
+    const TensorView& v = views[layer_index].back()[0];
+    return v.empty() ? TensorView{} : v;
 }
 
 TensorView ForwardPropagation::get_outputs() const
@@ -102,10 +100,9 @@ TensorView ForwardPropagation::get_outputs() const
     const Index last = Index(neural_network->get_layers_number()) - 1;
     if (last >= 0
         && size_t(last) < views.size()
-        && views[last].size() > 1
-        && !views[last].back().empty())
+        && views[last].size() > 1)
     {
-        const TensorView v = views[last].back()[0];
+        const TensorView& v = views[last].back()[0];
         if (!v.empty()) return v;
     }
 
@@ -120,8 +117,8 @@ void ForwardPropagation::print() const
 
     cout << "Layers number: " << layers_number << "\n";
 
-    for (Index i = 0; i < layers_number; ++i)
-        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_label() << "\n";
+    for (size_t i = 0; i < layers_number; ++i)
+        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(static_cast<Index>(i))->get_label() << "\n";
 }
 
 }

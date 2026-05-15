@@ -396,7 +396,7 @@ void LanguageDataset::load_documents(string& buffer,
     file.close();
 
     for (char& c : buffer)
-        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
 
     const string separator_string = get_separator_string();
     const char field_separator = separator_string.empty() ? '\t' : separator_string[0];
@@ -634,7 +634,7 @@ void LanguageDataset::write_binary_cache(const vector<vector<Index>>& in_idx,
                     + uint64_t(N) * sizeof(array<int64_t, 4>);
 
     LangCacheHeader header{};
-    std::memcpy(header.magic, LANG_CACHE_MAGIC, 8);
+    memcpy(header.magic, LANG_CACHE_MAGIC, 8);
     header.version        = LANG_CACHE_VERSION;
     header.num_samples    = uint64_t(N);
     header.input_max_len  = uint32_t(maximum_input_sequence_length);
@@ -683,7 +683,7 @@ bool LanguageDataset::try_load_binary_cache(Index expected_samples)
         LangCacheHeader header{};
         cache_reader.read_at(&header, sizeof(header), 0);
 
-        if (std::memcmp(header.magic, LANG_CACHE_MAGIC, 8) != 0) return false;
+        if (memcmp(header.magic, LANG_CACHE_MAGIC, 8) != 0) return false;
         if (header.version != LANG_CACHE_VERSION) return false;
         if (Index(header.num_samples) != expected_samples) return false;
         if (Index(header.input_max_len)  != maximum_input_sequence_length)  return false;
@@ -697,7 +697,7 @@ bool LanguageDataset::try_load_binary_cache(Index expected_samples)
                         + uint64_t(header.num_samples) * sizeof(array<int64_t, 4>);
         return true;
     }
-    catch (const std::exception&)
+    catch (const exception&)
     {
         cache_reader.close();
         return false;
@@ -714,13 +714,13 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
     const Index batch_size = ssize(sample_indices);
     const Index seq_len = maximum_input_sequence_length;
 
-    std::fill_n(input_data, batch_size * seq_len, 0.0f);
+    fill_n(input_data, batch_size * seq_len, 0.0f);
 
     #pragma omp parallel for if (parallelize)
     for (Index i = 0; i < batch_size; ++i)
     {
         const auto& off = offsets_table[size_t(sample_indices[i])];
-        const Index n = std::min(Index(off[1]), seq_len);
+        const Index n = min(Index(off[1]), seq_len);
         if (n <= 0) continue;
 
         thread_local vector<int32_t> buf;
@@ -743,13 +743,13 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
     const Index batch_size = ssize(sample_indices);
     const Index seq_len = maximum_target_sequence_length;
 
-    std::fill_n(target_data, batch_size * seq_len, 0.0f);
+    fill_n(target_data, batch_size * seq_len, 0.0f);
 
     #pragma omp parallel for if (parallelize)
     for (Index i = 0; i < batch_size; ++i)
     {
         const auto& off = offsets_table[size_t(sample_indices[i])];
-        const Index n = std::min(Index(off[3]), seq_len);
+        const Index n = min(Index(off[3]), seq_len);
         if (n <= 0) continue;
 
         thread_local vector<int32_t> buf;
@@ -772,7 +772,7 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
     const Index batch_size = ssize(sample_indices);
     const Index seq_len = maximum_target_sequence_length;
 
-    std::fill_n(decoder_data, batch_size * seq_len, 0.0f);
+    fill_n(decoder_data, batch_size * seq_len, 0.0f);
 
     #pragma omp parallel for if (parallelize)
     for (Index i = 0; i < batch_size; ++i)
@@ -780,7 +780,7 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
         decoder_data[i * seq_len] = START_INDEX;
 
         const auto& off = offsets_table[size_t(sample_indices[i])];
-        const Index n = std::min(Index(off[3]), seq_len - 1);
+        const Index n = min(Index(off[3]), seq_len - 1);
         if (n <= 0) continue;
 
         thread_local vector<int32_t> buf;

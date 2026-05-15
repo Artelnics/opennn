@@ -161,7 +161,7 @@ FileWriter::~FileWriter()
     if (stream_.is_open()) stream_.close();
     if (!finalized_ && !tmp_path_.empty())
     {
-        std::error_code ec;
+        error_code ec;
         filesystem::remove(tmp_path_, ec);
     }
 }
@@ -183,7 +183,7 @@ bool FileWriter::is_open() const { return stream_.is_open(); }
 void FileWriter::write(const void* buffer, size_t bytes)
 {
     if (!stream_.is_open()) throw runtime_error("FileWriter::write: not open.");
-    stream_.write(reinterpret_cast<const char*>(buffer), std::streamsize(bytes));
+    stream_.write(reinterpret_cast<const char*>(buffer), streamsize(bytes));
     if (!stream_.good()) throw runtime_error("FileWriter::write: stream error.");
 }
 
@@ -205,7 +205,7 @@ void FileWriter::abort()
     if (stream_.is_open()) stream_.close();
     if (!tmp_path_.empty())
     {
-        std::error_code ec;
+        error_code ec;
         filesystem::remove(tmp_path_, ec);
         tmp_path_.clear();
     }
