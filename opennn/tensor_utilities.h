@@ -27,6 +27,7 @@ inline Index align_up(Index value, Index alignment)
 
 inline Index get_aligned_size(Index size)     { return align_up(size,    ALIGN_ELEMENTS); }
 inline Index get_aligned_bytes(Index n_bytes) { return align_up(n_bytes, ALIGN_BYTES); }
+inline Index get_aligned_bytes(Index count, Type dtype) { return get_aligned_bytes(count * type_bytes(dtype)); }
 
 template<typename Container>
 inline Index ssize(const Container& container) noexcept
@@ -111,45 +112,41 @@ struct Shape
     }
 };
 
-inline Index aligned_total_elements(const vector<Shape>& shapes)
+inline Index get_aligned_size(const vector<Shape>& shapes)
 {
-    Index total = 0;
-    for (const Shape& shape : shapes) total += get_aligned_size(shape.size());
-    return total;
+    return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
+        [](const Shape& s) { return get_aligned_size(s.size()); });
 }
 
-inline Index aligned_total_elements(const vector<vector<Shape>>& nested)
+inline Index get_aligned_size(const vector<vector<Shape>>& shapes)
 {
-    Index total = 0;
-    for (const auto& shape_vector : nested) total += aligned_total_elements(shape_vector);
-    return total;
+    return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
+        [](const vector<Shape>& s) { return get_aligned_size(s); });
 }
 
-inline Index aligned_total_bytes(const vector<Shape>& shapes, const vector<Type>& dtypes)
+inline Index get_aligned_bytes(const vector<Shape>& shapes, const vector<Type>& dtypes)
 {
-    Index total = 0;
-    for (size_t i = 0; i < shapes.size(); ++i)
-        if (shapes[i].size() > 0)
-            total += get_aligned_bytes(shapes[i].size() * type_bytes(dtypes[i]));
-    return total;
+    return transform_reduce(shapes.begin(), shapes.end(), dtypes.begin(), Index(0), plus<>{},
+        [](const Shape& s, Type t) { return get_aligned_bytes(s.size(), t); });
 }
 
-inline Index aligned_total_bytes(const vector<vector<Shape>>& nested,
-                                 const vector<vector<Type>>& dtypes)
+inline Index get_aligned_bytes(const vector<vector<Shape>>& shapes,
+                               const vector<vector<Type>>& dtypes)
 {
-    Index total = 0;
-    for (size_t i = 0; i < nested.size(); ++i) total += aligned_total_bytes(nested[i], dtypes[i]);
-    return total;
+    return transform_reduce(shapes.begin(), shapes.end(), dtypes.begin(), Index(0), plus<>{},
+        [](const vector<Shape>& s, const vector<Type>& t) { return get_aligned_bytes(s, t); });
 }
 
-inline Index aligned_total_bytes(const vector<Shape>& shapes, Type dtype)
+inline Index get_aligned_bytes(const vector<Shape>& shapes, Type dtype)
 {
-    const Index bytes_per = type_bytes(dtype);
-    Index total = 0;
-    for (const Shape& s : shapes)
-        if (!s.empty())
-            total += get_aligned_bytes(s.size() * bytes_per);
-    return total;
+    return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
+        [dtype](const Shape& s) { return get_aligned_bytes(s.size(), dtype); });
+}
+
+inline Index get_aligned_bytes(const vector<vector<Shape>>& shapes, Type dtype)
+{
+    return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
+        [dtype](const vector<Shape>& s) { return get_aligned_bytes(s, dtype); });
 }
 
 struct Buffer

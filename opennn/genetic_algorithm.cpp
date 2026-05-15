@@ -308,9 +308,7 @@ VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& pare
     for (size_t i = 0; i < add_count; ++i)
         descendent(difference[i]) = true;
 
-    const Index final_count = descendent.count();
-
-    if (final_count < minimum_inputs_number)
+    if (const Index final_count = descendent.count(); final_count < minimum_inputs_number)
     {
         vector<Index> never_true_indices;
         never_true_indices.reserve(genes_number);

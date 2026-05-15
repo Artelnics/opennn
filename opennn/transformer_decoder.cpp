@@ -170,8 +170,8 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
 
     constexpr Index batch_size = 1;
 
-    const Index source_bytes = get_aligned_bytes(batch_size * input_sequence_length * Index(sizeof(float)));
-    const Index target_bytes = get_aligned_bytes(batch_size * decoder_sequence_length * Index(sizeof(float)));
+    const Index source_bytes = get_aligned_bytes(batch_size * input_sequence_length, Type::FP32);
+    const Index target_bytes = get_aligned_bytes(batch_size * decoder_sequence_length, Type::FP32);
     const Index total_bytes  = source_bytes + target_bytes;
 
     arena.resize_bytes(total_bytes, Device::CUDA);

@@ -32,9 +32,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     const vector<vector<Type>> forward_dtypes = neural_network->get_forward_dtypes(batch_size);
 
-    const Index total_bytes = aligned_total_bytes(forward_shapes, forward_dtypes);
-
-    if (total_bytes > 0)
+    if (const Index total_bytes = get_aligned_bytes(forward_shapes, forward_dtypes); total_bytes > 0)
     {
         const Device device = is_gpu() ? Device::CUDA : Device::CPU;
         data.resize_bytes(total_bytes, device);
@@ -52,7 +50,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         {
             if (shapes[j].size() == 0) continue;
             views[i][j + 1][0] = TensorView(cursor, shapes[j], dtypes[j]);
-            cursor += get_aligned_bytes(shapes[j].size() * type_bytes(dtypes[j]));
+            cursor += get_aligned_bytes(shapes[j].size(), dtypes[j]);
         }
     }
 

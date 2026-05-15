@@ -232,7 +232,7 @@ Index Optimizer::get_maximum_batch_size() const
     // actual allocations done in NeuralNetwork/BackPropagation/OptimizerData.
 
     const Index parameters_number       = neural_network->get_parameters_number();
-    const Index parameters_aligned_size = aligned_total_elements(neural_network->get_parameter_shapes());
+    const Index parameters_aligned_size = get_aligned_size(neural_network->get_parameter_shapes());
     const Index slot_aligned_size       = get_aligned_size(parameters_number);
     const bool bf16_train = on_gpu && is_bf16_training();
     const bool bf16_input = bf16_train && dynamic_cast<const LanguageDataset*>(dataset) == nullptr;
@@ -290,8 +290,8 @@ Index Optimizer::get_maximum_batch_size() const
         const auto backward_dtypes = neural_network->get_backward_dtypes(b);
 
         Index total = 0;
-        total += aligned_total_bytes(forward_shapes,  forward_dtypes);
-        total += aligned_total_bytes(backward_shapes, backward_dtypes);
+        total += get_aligned_bytes(forward_shapes,  forward_dtypes);
+        total += get_aligned_bytes(backward_shapes, backward_dtypes);
 
         // Output-delta slot (delta_views[last][0] = Shape{b}.append(output_shape)).
         // Approximation: per-layer extra deltas for multi-consumer branches are
@@ -299,14 +299,14 @@ Index Optimizer::get_maximum_batch_size() const
         if (!output_shape.empty())
         {
             const Index out_elems = b * output_shape.size();
-            total += get_aligned_bytes(out_elems * type_bytes(compute_dtype));
+            total += get_aligned_bytes(out_elems, compute_dtype);
         }
 
         total += pool_bytes_for_batch(b);
 
         // BF16 prefetch staging: a single FP32 buffer of input_elements.
         if (bf16_input && !input_shape.empty())
-            total += get_aligned_bytes(b * input_shape.size() * Index(sizeof(float)));
+            total += get_aligned_bytes(b * input_shape.size(), Type::FP32);
 
         return total;
     };
@@ -736,7 +736,7 @@ void OptimizerData::print() const
 
 void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
 {
-    const Index total_bytes = aligned_total_elements(slot_shapes) * Index(sizeof(float));
+    const Index total_bytes = get_aligned_bytes(slot_shapes, Type::FP32);
 
     if (total_bytes > 0)
     {
@@ -754,7 +754,7 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
         if (shape.size() > 0 && cursor)
         {
             views.emplace_back(cursor, shape, Type::FP32);
-            cursor += get_aligned_bytes(shape.size() * Index(sizeof(float)));
+            cursor += get_aligned_bytes(shape.size(), Type::FP32);
         }
         else
         {
@@ -1113,8 +1113,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
         // Fold worker accumulators into the global stats so they show up in
         // the unified table. Sum across all workers; per-call divides by the
         // count of fill operations seen.
-        const long w_calls = worker_fills.load();
-        if (w_calls > 0)
+        if (const long w_calls = worker_fills.load(); w_calls > 0)
         {
             auto& fill_entry = ::opennn::global_stats().entries["worker:fill"];
             fill_entry.total_ms = double(worker_fill_us.load()) / 1000.0;

@@ -201,9 +201,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     const Device device = is_gpu() ? Device::CUDA : Device::CPU;
 
-    const Index gradient_bytes = aligned_total_elements(parameter_shapes) * Index(sizeof(float));
-
-    if (gradient_bytes > 0)
+    if (const Index gradient_bytes = get_aligned_bytes(parameter_shapes, Type::FP32); gradient_bytes > 0)
     {
         gradient.resize_bytes(gradient_bytes, device);
         gradient.setZero();
@@ -219,7 +217,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         {
             if (shapes[j].size() == 0) continue;
             gradient_views[layer_index][j] = TensorView(cursor, shapes[j], Type::FP32);
-            cursor += get_aligned_bytes(shapes[j].size() * Index(sizeof(float)));
+            cursor += get_aligned_bytes(shapes[j].size(), Type::FP32);
         }
 
         layers[layer_index]->redistribute_parameter_gradients_to_operators(gradient_views[layer_index]);

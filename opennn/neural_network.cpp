@@ -62,8 +62,7 @@ void NeuralNetwork::compile()
     for (auto& layer : layers)
         layer->set_compute_dtype(get_training_type());
 
-    parameters.resize_bytes(aligned_total_elements(get_parameter_shapes()) * Index(sizeof(float)),
-                            Device::CPU);
+    parameters.resize_bytes(get_aligned_bytes(get_parameter_shapes(), Type::FP32), Device::CPU);
     parameters.setZero();
 
     float* pointer = parameters.as<float>();
@@ -528,7 +527,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation,
                                       bool is_training) const
 {
-    if (parameters.size_in_floats() != aligned_total_elements(get_parameter_shapes()))
+    if (parameters.size_in_floats() != get_aligned_size(get_parameter_shapes()))
         throw runtime_error("Network shapes changed since compile(); call compile() again.");
 
     const Index first_layer_index = is_training ? get_first_trainable_layer_index() : 0;
@@ -788,8 +787,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
     const Json* neural_network_element = get_json_root(document, "NeuralNetwork");
 
-    const Json* inputs_element = neural_network_element->first_child("Inputs");
-    if (inputs_element)
+    if (const Json* inputs_element = neural_network_element->first_child("Inputs"); inputs_element)
     {
         const Index inputs_number = read_json_index(inputs_element, "InputsNumber");
         input_variables.resize(inputs_number);
@@ -835,8 +833,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
         last_trainable_cache_  = -1;
     }
 
-    const Json* connectivity_element = layers_container->find("LayerInputIndices");
-    if (connectivity_element)
+    if (const Json* connectivity_element = layers_container->find("LayerInputIndices"); connectivity_element)
     {
         const Json* indices_array = connectivity_element->find("LayerInputsIndices");
         if (indices_array && indices_array->is_array())
@@ -854,8 +851,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
         }
     }
 
-    const Json* outputs_element = neural_network_element->first_child("Outputs");
-    if (outputs_element)
+    if (const Json* outputs_element = neural_network_element->first_child("Outputs"); outputs_element)
     {
         const Index outputs_number = read_json_index(outputs_element, "OutputsNumber");
         output_variables.resize(outputs_number);

@@ -46,9 +46,9 @@ public:
     vector<vector<Type>>  get_forward_dtypes(Index b)   const { return collect_layer_dtypes(layers, b, is_gpu(), &Layer::get_forward_dtypes); }
     vector<vector<Type>>  get_backward_dtypes(Index b)  const { return collect_layer_dtypes(layers, b, is_gpu(), &Layer::get_backward_dtypes); }
 
-    Index get_states_size() const     { return aligned_total_elements(get_state_shapes()); }
-    Index get_forward_size(Index b)  const { return aligned_total_elements(get_forward_shapes(b));  }
-    Index get_backward_size(Index b) const { return aligned_total_elements(get_backward_shapes(b)); }
+    Index get_states_size() const     { return get_aligned_size(get_state_shapes()); }
+    Index get_forward_size(Index b)  const { return get_aligned_size(get_forward_shapes(b));  }
+    Index get_backward_size(Index b) const { return get_aligned_size(get_backward_shapes(b)); }
 
     void compile();
     bool has(const string&) const;

@@ -60,9 +60,9 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
             input.resize_bytes(input_shape.size() * elem_bytes, Device::CUDA);
 
             num_input_features = dataset->get_features_number("Input");
-            const Index input_size = samples_number * num_input_features;
 
-            if (input_size > inputs_host_allocated_size)
+            if (const Index input_size = samples_number * num_input_features;
+                input_size > inputs_host_allocated_size)
             {
                 if (inputs_host) cudaFreeHost(inputs_host);
                 CHECK_CUDA(cudaMallocHost(&inputs_host, input_size * sizeof(float)));
@@ -92,9 +92,9 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
             target.resize_bytes(target_shape.size() * Index(sizeof(float)), Device::CUDA);
 
             num_target_features = dataset->get_features_number("Target");
-            const Index target_size = samples_number * num_target_features;
 
-            if (target_size > targets_host_allocated_size)
+            if (const Index target_size = samples_number * num_target_features;
+                target_size > targets_host_allocated_size)
             {
                 if (targets_host) cudaFreeHost(targets_host);
                 CHECK_CUDA(cudaMallocHost(&targets_host, target_size * sizeof(float)));
@@ -122,9 +122,9 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
             decoder.resize_bytes(decoder_shape.size() * Index(sizeof(float)), Device::CUDA);
 
             num_decoder_features = dataset->get_features_number("Decoder");
-            const Index decoder_size = samples_number * num_decoder_features;
 
-            if (decoder_size > decoder_host_allocated_size)
+            if (const Index decoder_size = samples_number * num_decoder_features;
+                decoder_size > decoder_host_allocated_size)
             {
                 if (decoder_host) cudaFreeHost(decoder_host);
                 CHECK_CUDA(cudaMallocHost(&decoder_host, decoder_size * sizeof(float)));

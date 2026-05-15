@@ -175,9 +175,7 @@ void Dataset::split_samples(const float training_samples_ratio,
 
         while (assigned < count)
         {
-            const Index idx = indices[i++];
-
-            if (sample_roles[idx] != SampleRole::None)
+            if (const Index idx = indices[i++]; sample_roles[idx] != SampleRole::None)
             {
                 sample_roles[idx] = role;
                 ++assigned;
@@ -832,9 +830,7 @@ void Dataset::preview_data_from_JSON(const Json *preview_data_element)
     if (!preview_data_element)
         throw runtime_error("Preview data element is nullptr.\n ");
 
-    const Index preview_size = read_json_index(preview_data_element, "PreviewSize");
-
-    if (preview_size > 0)
+    if (const Index preview_size = read_json_index(preview_data_element, "PreviewSize"); preview_size > 0)
     {
         data_file_preview.resize(preview_size);
 
