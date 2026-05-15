@@ -561,9 +561,11 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
 
     if (targets_number == 1)
     {
-        #pragma omp parallel for if (parallelize)
-        for (Index i = 0; i < batch_size; ++i)
-            target_data[i] = float(labels_ram[size_t(sample_indices[i])]);
+        auto label_of = [&](Index s) { return float(labels_ram[size_t(s)]); };
+        if (parallelize)
+            transform(execution::par, sample_indices.begin(), sample_indices.begin() + batch_size, target_data, label_of);
+        else
+            transform(sample_indices.begin(), sample_indices.begin() + batch_size, target_data, label_of);
     }
     else
     {

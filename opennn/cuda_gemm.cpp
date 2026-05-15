@@ -29,11 +29,11 @@ namespace
 namespace scratch
 {
 
-void* ensure_cublas_lt_workspace(size_t min_bytes)    { return cublas_lt_workspace_.ensure_bytes(min_bytes); }
+void* ensure_cublas_lt_workspace(size_t min_bytes)    { return cublas_lt_workspace_.ensure<uint8_t>(Index(min_bytes)); }
 bfloat16* ensure_bf16_input_scratch(Index n)     { return bf16_input_.ensure<bfloat16>(n); }
 bfloat16* ensure_bf16_gradient_scratch(Index n)  { return bf16_gradient_.ensure<bfloat16>(n); }
 float* ensure_fp32_upcast_scratch(Index n)            { return fp32_upcast_.ensure<float>(n); }
-void* ensure_cudnn_conv_workspace(size_t min_bytes)   { return cudnn_conv_workspace_.ensure_bytes(min_bytes); }
+void* ensure_cudnn_conv_workspace(size_t min_bytes)   { return cudnn_conv_workspace_.ensure<uint8_t>(Index(min_bytes)); }
 
 }
 

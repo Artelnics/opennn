@@ -161,19 +161,21 @@ struct Buffer
     Index size_in_floats() const { return bytes / Index(sizeof(float)); }
     bool  empty() const { return bytes == 0; }
 
-    void resize_bytes(Index n_bytes, Device new_device_type)
+    void resize_bytes(Index new_bytes, Device new_device_type)
     {
-        if (n_bytes == bytes && device_type == new_device_type) return;
+        if (new_bytes == bytes && device_type == new_device_type) return;
         free_buffer();
+        if (new_bytes == 0) return;
+
+        data = alloc(new_device_type, new_bytes);
         device_type = new_device_type;
-        if (n_bytes > 0) data = alloc(new_device_type, n_bytes);
-        bytes = n_bytes;
+        bytes = new_bytes;
     }
 
-    void grow_to(Index n_bytes)
+    void grow_to(Index new_bytes)
     {
-        if (n_bytes > bytes)
-            resize_bytes(n_bytes, device_type);
+        if (new_bytes > bytes)
+            resize_bytes(new_bytes, device_type);
     }
 
     template<typename T>
@@ -183,46 +185,38 @@ struct Buffer
         return as<T>();
     }
 
-    void* ensure_bytes(size_t min_bytes)
-    {
-        if (min_bytes == 0) return nullptr;
-        grow_to(Index(min_bytes));
-        return data;
-    }
-
     void setZero()
     {
         if (!data) return;
 #ifdef OPENNN_HAS_CUDA
-        if (device_type == Device::CUDA) CHECK_CUDA(cudaMemset(data, 0, bytes));
-        else
+        if (device_type == Device::CUDA)
+        {
+            CHECK_CUDA(cudaMemset(data, 0, bytes));
+            return;
+        }
 #endif
-            memset(data, 0, static_cast<size_t>(bytes));
+        memset(data, 0, static_cast<size_t>(bytes));
     }
 
 #ifdef OPENNN_HAS_CUDA
-    void migrate_to(Device target)
+    void migrate_to(Device target, cudaStream_t stream = nullptr)
     {
         if (device_type == target || !data) return;
-        void* fresh = alloc(target, bytes);
-        const cudaMemcpyKind kind = (target == Device::CUDA)
-            ? cudaMemcpyHostToDevice : cudaMemcpyDeviceToHost;
-        CHECK_CUDA(cudaMemcpy(fresh, data, bytes, kind));
-        dealloc(device_type, data, bytes);
-        data = fresh;
-        device_type = target;
-    }
-
-    void migrate_to(Device target, cudaStream_t stream)
-    {
-        if (device_type == target || !data) return;
-        if (!stream) { migrate_to(target); return; }
 
         void* fresh = alloc(target, bytes);
         const cudaMemcpyKind kind = (target == Device::CUDA)
             ? cudaMemcpyHostToDevice : cudaMemcpyDeviceToHost;
-        CHECK_CUDA(cudaMemcpyAsync(fresh, data, bytes, kind, stream));
-        CHECK_CUDA(cudaStreamSynchronize(stream));
+
+        if (stream)
+        {
+            CHECK_CUDA(cudaMemcpyAsync(fresh, data, bytes, kind, stream));
+            CHECK_CUDA(cudaStreamSynchronize(stream));
+        }
+        else
+        {
+            CHECK_CUDA(cudaMemcpy(fresh, data, bytes, kind));
+        }
+
         dealloc(device_type, data, bytes);
         data = fresh;
         device_type = target;

@@ -14,7 +14,6 @@
 namespace opennn
 {
 
-
 struct Batch
 {
     Batch(const Index = 0, const Dataset* = nullptr);
@@ -74,9 +73,11 @@ struct Batch
     int decoder_contiguous = -1;
     int target_contiguous = -1;
 
+#ifdef OPENNN_HAS_CUDA
     void copy_device_async(const Index, cudaStream_t, float* fp32_staging);
+#endif
 
-    Index get_input_elements() const { return samples_number * num_input_features; }
+    Index get_input_elements() const { return samples_number * input_features_number; }
 
     vector<TensorView> input_views_host_cache;
     TensorView target_view_host_cache;
@@ -84,9 +85,9 @@ struct Batch
     vector<TensorView> input_views_cache;       // GPU views; populated only on CUDA mode
     TensorView target_view_cache;
 
-    Index num_input_features = 0;
-    Index num_decoder_features = 0;
-    Index num_target_features = 0;
+    Index input_features_number = 0;
+    Index decoder_features_number = 0;
+    Index target_features_number = 0;
 
     float* inputs_host = nullptr;
     float* decoder_host = nullptr;

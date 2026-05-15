@@ -68,9 +68,9 @@ vector<Index> Dataset::get_sample_roles_vector() const
 
     vector<Index> sample_roles_vector(samples_number);
 
-#pragma omp parallel for
-    for (Index i = 0; i < samples_number; ++i)
-        sample_roles_vector[i] = static_cast<Index>(sample_roles[i]);
+    transform(execution::par, sample_roles.begin(), sample_roles.end(),
+              sample_roles_vector.begin(),
+              [](SampleRole r) { return static_cast<Index>(r); });
 
     return sample_roles_vector;
 }

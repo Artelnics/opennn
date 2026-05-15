@@ -21,14 +21,9 @@ Batch::Batch(const Index new_samples_number, const Dataset* new_dataset)
     set(new_samples_number, new_dataset);
 }
 
-Batch::~Batch()
-{
-#ifdef OPENNN_HAS_CUDA
-    if (inputs_host)  cudaFreeHost(inputs_host);
-    if (decoder_host) cudaFreeHost(decoder_host);
-    if (targets_host) cudaFreeHost(targets_host);
+#ifndef OPENNN_HAS_CUDA
+Batch::~Batch() = default;
 #endif
-}
 
 void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 {
@@ -40,7 +35,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     dataset = new_dataset;
 
 #ifdef OPENNN_HAS_CUDA
-    [[maybe_unused]] const bool on_gpu = is_gpu();
+    const bool on_gpu = is_gpu();
     const bool bf16_input = on_gpu
                          && is_bf16_training()
                          && dynamic_cast<const LanguageDataset*>(dataset) == nullptr;
@@ -73,6 +68,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
                 CHECK_CUDA(cudaMallocHost(&host_buf, size * sizeof(float)));
                 host_alloc = size;
             }
+            
             return;
         }
 #endif
@@ -80,17 +76,16 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     };
 
     setup_buffer("Input",   input_shape,   input,
-                 num_input_features,   inputs_host,  inputs_host_allocated_size,
+                 input_features_number,   inputs_host,  inputs_host_allocated_size,
                  input_device_bytes);
     setup_buffer("Target",  target_shape,  target,
-                 num_target_features,  targets_host, targets_host_allocated_size,
+                 target_features_number,  targets_host, targets_host_allocated_size,
                  Index(sizeof(float)));
     setup_buffer("Decoder", decoder_shape, decoder,
-                 num_decoder_features, decoder_host, decoder_host_allocated_size,
+                 decoder_features_number, decoder_host, decoder_host_allocated_size,
                  Index(sizeof(float)));
 
     input_views_host_cache.clear();
-    input_views_host_cache.reserve(decoder_shape.empty() ? 1 : 2);
 
     if (!decoder_shape.empty())
         input_views_host_cache.emplace_back(decoder.as<float>(), decoder_shape);
@@ -110,8 +105,8 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 
         if (!decoder_shape.empty() && decoder.data)
             input_views_cache.emplace_back(decoder.data, decoder_shape, Type::FP32);
-        
-            input_views_cache.emplace_back(input.data, input_shape, bf16_input ? Type::BF16 : Type::FP32);
+
+        input_views_cache.emplace_back(input.data, input_shape, bf16_input ? Type::BF16 : Type::FP32);
     }
 
     if (!target_shape.empty() && target.data)
@@ -207,43 +202,40 @@ bool Batch::is_empty() const
 
 #ifdef OPENNN_HAS_CUDA
 
+Batch::~Batch()
+{
+    if (inputs_host)  cudaFreeHost(inputs_host);
+    if (decoder_host) cudaFreeHost(decoder_host);
+    if (targets_host) cudaFreeHost(targets_host);
+}
+
 void Batch::copy_device_async(const Index current_batch_size, cudaStream_t stream, float* fp32_staging)
 {
-    const Index input_size = current_batch_size * num_input_features;
-    const Index target_size = current_batch_size * num_target_features;
+    const Index input_size  = current_batch_size * input_features_number;
+    const Index target_size = current_batch_size * target_features_number;
+
+    auto copy_to_device = [&](void* destination, const void* source, Index bytes) {
+        CHECK_CUDA(cudaMemcpyAsync(destination, source, bytes, cudaMemcpyHostToDevice, stream));
+    };
 
     if (needs_fp32_staging)
     {
         assert(fp32_staging != nullptr);
-        CHECK_CUDA(cudaMemcpyAsync(fp32_staging, inputs_host,
-                                   input_size * sizeof(float),
-                                   cudaMemcpyHostToDevice, stream));
-        cast_fp32_to_bf16_cuda(input_size,
-                               fp32_staging,
-                               input.as<bfloat16>(),
-                               stream);
+        copy_to_device(fp32_staging, inputs_host, input_size * sizeof(float));
+        cast_fp32_to_bf16_cuda(input_size, fp32_staging, input.as<bfloat16>(), stream);
     }
     else
     {
-        CHECK_CUDA(cudaMemcpyAsync(input.as<float>(), inputs_host,
-                                   input_size * sizeof(float),
-                                   cudaMemcpyHostToDevice, stream));
+        copy_to_device(input.as<float>(), inputs_host, input_size * sizeof(float));
     }
 
     if (!decoder_shape.empty())
     {
-        const Index decoder_size = current_batch_size * num_decoder_features;
-        CHECK_CUDA(cudaMemcpyAsync(decoder.as<float>(), 
-                                   decoder_host, 
-                                   decoder_size * sizeof(float), 
-                                   cudaMemcpyHostToDevice, stream));
+        const Index decoder_size = current_batch_size * decoder_features_number;
+        copy_to_device(decoder.as<float>(), decoder_host, decoder_size * sizeof(float));
     }
 
-    CHECK_CUDA(cudaMemcpyAsync(target.as<float>(), 
-                               targets_host, 
-                               target_size * sizeof(float), 
-                               cudaMemcpyHostToDevice, 
-                               stream));
+    copy_to_device(target.as<float>(), targets_host, target_size * sizeof(float));
 }
 
 #endif

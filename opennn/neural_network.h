@@ -201,9 +201,9 @@ private:
     template<typename Fn>
     vector<vector<Shape>> collect_layer_shapes(Fn fn) const
     {
-        const Index n = get_layers_number();
-        vector<vector<Shape>> out(n);
-        for (Index i = 0; i < n; ++i) out[i] = fn(*layers[i]);
+        vector<vector<Shape>> out(layers.size());
+        transform(layers.begin(), layers.end(), out.begin(),
+                  [&](const unique_ptr<Layer>& l) { return fn(*l); });
         return out;
     }
 

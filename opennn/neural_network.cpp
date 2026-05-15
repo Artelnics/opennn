@@ -344,10 +344,9 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 
     vector<Index> layer_parameter_numbers(layers_number);
 
-    #pragma omp parallel for
-
-    for (int i = 0; i < layers_number; ++i)
-        layer_parameter_numbers[i] = layers[i]->get_parameters_number();
+    transform(execution::par, layers.begin(), layers.end(),
+              layer_parameter_numbers.begin(),
+              [](const unique_ptr<Layer>& l) { return l->get_parameters_number(); });
 
     return layer_parameter_numbers;
 }
