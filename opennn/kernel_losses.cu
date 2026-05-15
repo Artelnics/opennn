@@ -1,6 +1,6 @@
 // Loss-function kernels: BCE / MCE / WSE forward + gradient, the per-token
 // 3D cross-entropy used by language-model heads, and the L1 regularisation
-// gradient. All host wrappers are templated over T = float / bfloat16.
+// gradient. All host wrappers are templated over T = float / __nv_bfloat16.
 
 #include "kernel_common.cuh"
 
@@ -34,7 +34,7 @@ void binary_cross_entropy_cuda(const Index n, float* term_results, const float* 
 }
 
 template void binary_cross_entropy_cuda<float>        (const Index, float*, const float*, const float*,         const float);
-template void binary_cross_entropy_cuda<bfloat16>(const Index, float*, const float*, const bfloat16*, const float);
+template void binary_cross_entropy_cuda<__nv_bfloat16>(const Index, float*, const float*, const __nv_bfloat16*, const float);
 
 // BCE gradient: delta[i] = ((1 - tgt) / (1 - out + eps) - tgt / (out + eps)) * scale.
 // Targets stay FP32, so the float4 vectorisation that mixed targets and outputs
@@ -71,7 +71,7 @@ void binary_cross_entropy_gradient_cuda(const Index n, T* deltas, const float* t
 }
 
 template void binary_cross_entropy_gradient_cuda<float>        (const Index, float*,         const float*, const float*,         const float, const float);
-template void binary_cross_entropy_gradient_cuda<bfloat16>(const Index, bfloat16*, const float*, const bfloat16*, const float, const float);
+template void binary_cross_entropy_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const float*, const __nv_bfloat16*, const float, const float);
 
 // Per-element multi-class CE forward term: tgt > 0 ? tgt*log(out+eps) : 0.
 // Reduced into a scalar by the host. Targets are always FP32.
@@ -97,7 +97,7 @@ void multiple_cross_entropy_cuda(const Index n, float* term_results, const float
 }
 
 template void multiple_cross_entropy_cuda<float>        (const Index, float*, const float*, const float*,         const float);
-template void multiple_cross_entropy_cuda<bfloat16>(const Index, float*, const float*, const bfloat16*, const float);
+template void multiple_cross_entropy_cuda<__nv_bfloat16>(const Index, float*, const float*, const __nv_bfloat16*, const float);
 
 // Multi-class CE gradient: delta[i] = (out[i] - tgt[i]) * scale.
 // Targets stay FP32 (see kernel.cuh) so the float4 vectorisation that mixed
@@ -129,7 +129,7 @@ void multiple_cross_entropy_gradient_cuda(const Index n, T* deltas, const float*
 }
 
 template void multiple_cross_entropy_gradient_cuda<float>        (const Index, float*,         const float*, const float*,         const float);
-template void multiple_cross_entropy_gradient_cuda<bfloat16>(const Index, bfloat16*, const float*, const bfloat16*, const float);
+template void multiple_cross_entropy_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const float*, const __nv_bfloat16*, const float);
 
 // Per-element weighted squared error: (out - tgt)^2 * (tgt == 0 ? neg_w : pos_w).
 // Reduced into a scalar by the host. Targets are always FP32.
@@ -158,7 +158,7 @@ void weighted_squared_error_cuda(const Index n, float* term_results, const float
 }
 
 template void weighted_squared_error_cuda<float>        (const Index, float*, const float*, const float*,         const float, const float);
-template void weighted_squared_error_cuda<bfloat16>(const Index, float*, const float*, const bfloat16*, const float, const float);
+template void weighted_squared_error_cuda<__nv_bfloat16>(const Index, float*, const float*, const __nv_bfloat16*, const float, const float);
 
 // Weighted squared-error gradient: delta[i] = (out - tgt) * weight * scale,
 // with weight = (tgt == 0 ? neg_w : pos_w). Targets stay FP32 (see kernel.cuh)
@@ -197,7 +197,7 @@ void weighted_squared_error_gradient_cuda(const Index n, T* deltas, const float*
 }
 
 template void weighted_squared_error_gradient_cuda<float>        (const Index, float*,         const float*, const float*,         const float, const float, const float);
-template void weighted_squared_error_gradient_cuda<bfloat16>(const Index, bfloat16*, const float*, const bfloat16*, const float, const float, const float);
+template void weighted_squared_error_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const float*, const __nv_bfloat16*, const float, const float, const float);
 
 // Per-token CE for [batch, seq, vocab] outputs. Writes per-token error,
 // valid-token mask (target_class > 0), and correct-prediction mask to
@@ -259,7 +259,7 @@ void cross_entropy_3d_multiple_forward_cuda(const Index n,
 }
 
 template void cross_entropy_3d_multiple_forward_cuda<float>        (const Index, const int, const float*,         const float*, float*, float*, float*, const float);
-template void cross_entropy_3d_multiple_forward_cuda<bfloat16>(const Index, const int, const bfloat16*, const float*, float*, float*, float*, const float);
+template void cross_entropy_3d_multiple_forward_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, float*, float*, float*, const float);
 
 // CE gradient for [batch, seq, vocab]: delta = (output - one_hot(target)) * scale,
 // zero where target_class is invalid (<=0 or >=vocab).
@@ -304,7 +304,7 @@ void cross_entropy_3d_multiple_backward_cuda(const Index n,
 }
 
 template void cross_entropy_3d_multiple_backward_cuda<float>        (const Index, const int, const float*,         const float*, float*,         const float);
-template void cross_entropy_3d_multiple_backward_cuda<bfloat16>(const Index, const int, const bfloat16*, const float*, bfloat16*, const float);
+template void cross_entropy_3d_multiple_backward_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, __nv_bfloat16*, const float);
 
 template<typename T>
 __global__ void cross_entropy_3d_multiple_backward_device_count_kernel(const int n,
@@ -350,7 +350,7 @@ void cross_entropy_3d_multiple_backward_device_count_cuda(const Index n,
 }
 
 template void cross_entropy_3d_multiple_backward_device_count_cuda<float>        (const Index, const int, const float*,         const float*, float*,         const float*);
-template void cross_entropy_3d_multiple_backward_device_count_cuda<bfloat16>(const Index, const int, const bfloat16*, const float*, bfloat16*, const float*);
+template void cross_entropy_3d_multiple_backward_device_count_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, __nv_bfloat16*, const float*);
 
 __global__ void accumulate_scaled_metric_kernel(const float* __restrict__ value,
                                                 const float scale,
@@ -452,4 +452,4 @@ void l1_gradient_cuda(const Index n, T* deltas, const T* parameters, const float
 }
 
 template void l1_gradient_cuda<float>        (const Index, float*,         const float*,         const float);
-template void l1_gradient_cuda<bfloat16>(const Index, bfloat16*, const bfloat16*, const float);
+template void l1_gradient_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const __nv_bfloat16*, const float);

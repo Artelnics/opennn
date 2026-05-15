@@ -1,7 +1,7 @@
 // Layer-op kernels: bounding, scaling/unscaling, embedding, multi-head
 // attention helpers (split/merge heads, padding mask, fused mask), 3D pooling
 // (max/avg, forward/backward), and layer normalisation. All host wrappers are
-// templated over T = float / bfloat16.
+// templated over T = float / __nv_bfloat16.
 
 #include "kernel_common.cuh"
 #include <curand_kernel.h>
@@ -37,9 +37,9 @@ void bounding_cuda(const Index n, const int features,
 }
 
 template void bounding_cuda<float,         float>        (const Index, const int, const float*,         const float*, const float*, float*);
-template void bounding_cuda<float,         bfloat16>(const Index, const int, const float*,         const float*, const float*, bfloat16*);
-template void bounding_cuda<bfloat16, float>        (const Index, const int, const bfloat16*, const float*, const float*, float*);
-template void bounding_cuda<bfloat16, bfloat16>(const Index, const int, const bfloat16*, const float*, const float*, bfloat16*);
+template void bounding_cuda<float,         __nv_bfloat16>(const Index, const int, const float*,         const float*, const float*, __nv_bfloat16*);
+template void bounding_cuda<__nv_bfloat16, float>        (const Index, const int, const __nv_bfloat16*, const float*, const float*, float*);
+template void bounding_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, __nv_bfloat16*);
 
 // Per-feature input scaling. Method per feature is encoded in `scalers` (cast from
 // ScalerMethod enum stored as float): MinMax, MeanStd, StdDev, Logarithm, ImageMinMax.
@@ -108,9 +108,9 @@ void scale_cuda(const Index n, const int features,
 }
 
 template void scale_cuda<float,         float>        (const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, float*);
-template void scale_cuda<float,         bfloat16>(const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, bfloat16*);
-template void scale_cuda<bfloat16, float>        (const Index, const int, const bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, float*);
-template void scale_cuda<bfloat16, bfloat16>(const Index, const int, const bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, bfloat16*);
+template void scale_cuda<float,         __nv_bfloat16>(const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
+template void scale_cuda<__nv_bfloat16, float>        (const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, float*);
+template void scale_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
 
 // Inverse of scale_kernel: per-feature output unscaling. Same mixed-dtype
 // signature as scale_kernel — the last hidden layer's output may be BF16 while
@@ -178,9 +178,9 @@ void unscale_cuda(const Index n, const int features,
 }
 
 template void unscale_cuda<float,         float>        (const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, float*);
-template void unscale_cuda<float,         bfloat16>(const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, bfloat16*);
-template void unscale_cuda<bfloat16, float>        (const Index, const int, const bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, float*);
-template void unscale_cuda<bfloat16, bfloat16>(const Index, const int, const bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, bfloat16*);
+template void unscale_cuda<float,         __nv_bfloat16>(const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
+template void unscale_cuda<__nv_bfloat16, float>        (const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, float*);
+template void unscale_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
 
 // Mixed-dtype loss helpers. cuDNN OpTensor requires all input descriptors to
 // share dtype, which is incompatible with our BF16 activations / FP32 targets
@@ -206,7 +206,7 @@ void diff_to_fp32_cuda(const Index n, const TIn* input, const float* target, flo
 }
 
 template void diff_to_fp32_cuda<float>        (const Index, const float*,         const float*, float*);
-template void diff_to_fp32_cuda<bfloat16>(const Index, const bfloat16*, const float*, float*);
+template void diff_to_fp32_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, const float*, float*);
 
 template<typename TIn, typename TOut>
 __global__ void scaled_diff_kernel(const int n,
@@ -232,9 +232,9 @@ void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target
 }
 
 template void scaled_diff_cuda_typed<float,         float>        (const Index, const float*,         const float*, float, float*);
-template void scaled_diff_cuda_typed<float,         bfloat16>(const Index, const float*,         const float*, float, bfloat16*);
-template void scaled_diff_cuda_typed<bfloat16, float>        (const Index, const bfloat16*, const float*, float, float*);
-template void scaled_diff_cuda_typed<bfloat16, bfloat16>(const Index, const bfloat16*, const float*, float, bfloat16*);
+template void scaled_diff_cuda_typed<float,         __nv_bfloat16>(const Index, const float*,         const float*, float, __nv_bfloat16*);
+template void scaled_diff_cuda_typed<__nv_bfloat16, float>        (const Index, const __nv_bfloat16*, const float*, float, float*);
+template void scaled_diff_cuda_typed<__nv_bfloat16, __nv_bfloat16>(const Index, const __nv_bfloat16*, const float*, float, __nv_bfloat16*);
 
 // Token embedding lookup: outputs[i] = scale * weights[token_id, dim] + positional_encoding.
 // `inputs` carries integer token ids stored as float. Out-of-vocab tokens get 0.
@@ -277,7 +277,7 @@ void embedding_forward_cuda(const Index n, const float* inputs, const float* wei
 }
 
 template void embedding_forward_cuda<float>        (const Index, const float*, const float*, const float*, float*,         const int, const int, const int, const bool);
-template void embedding_forward_cuda<bfloat16>(const Index, const float*, const float*, const float*, bfloat16*, const int, const int, const int, const bool);
+template void embedding_forward_cuda<__nv_bfloat16>(const Index, const float*, const float*, const float*, __nv_bfloat16*, const int, const int, const int, const bool);
 
 // Embedding weight gradient via atomicAdd into the vocabulary table.
 // Padding tokens (id 0 or out-of-range) contribute nothing.
@@ -311,7 +311,7 @@ void embedding_backward_cuda(const Index n, const float* inputs, const T* output
 }
 
 template void embedding_backward_cuda<float>        (const Index, const float*, const float*,         float*, const int, const int, const bool);
-template void embedding_backward_cuda<bfloat16>(const Index, const float*, const bfloat16*, float*, const int, const int, const bool);
+template void embedding_backward_cuda<__nv_bfloat16>(const Index, const float*, const __nv_bfloat16*, float*, const int, const int, const bool);
 
 // [batch, seq, heads, head_dim] -> [batch, heads, seq, head_dim], scalar path.
 template<typename T>
@@ -367,7 +367,7 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
 }
 
 template void split_heads_cuda<float>        (const Index, const float*,         float*,         const int, const int, const int);
-template void split_heads_cuda<bfloat16>(const Index, const bfloat16*, bfloat16*, const int, const int, const int);
+template void split_heads_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int, const int, const int);
 
 // Inverse of split_heads: [batch, heads, seq, head_dim] -> [batch, seq, heads, head_dim].
 template<typename T>
@@ -422,7 +422,7 @@ void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int
 }
 
 template void merge_heads_cuda<float>        (const Index, const float*,         float*,         const int, const int, const int);
-template void merge_heads_cuda<bfloat16>(const Index, const bfloat16*, bfloat16*, const int, const int, const int);
+template void merge_heads_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int, const int, const int);
 
 // Per-token validity for attention: padding_mask[i] = 1 if all embedding dims of
 // token i are ~0 (treated as PAD), else 0.
@@ -477,7 +477,7 @@ void attention_masks_cuda(const int batch_size, const int heads_number,
 }
 
 template void attention_masks_cuda<float>        (int, int, int, int, int, const float*,         float*,         float*,         bool);
-template void attention_masks_cuda<bfloat16>(int, int, int, int, int, const bfloat16*, bfloat16*, bfloat16*, bool);
+template void attention_masks_cuda<__nv_bfloat16>(int, int, int, int, int, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*, bool);
 
 // Max pooling over the seq axis of [batch, seq, features]. Saves the argmax
 // position per (batch, feature) into `indices` for the backward pass.
@@ -514,7 +514,7 @@ void max_pooling_3d_forward_cuda(const Index n, const T* in, T* out, float* indi
 }
 
 template void max_pooling_3d_forward_cuda<float>        (const Index, const float*,         float*,         float*, const int, const int);
-template void max_pooling_3d_forward_cuda<bfloat16>(const Index, const bfloat16*, bfloat16*, float*, const int, const int);
+template void max_pooling_3d_forward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, float*, const int, const int);
 
 // Scatter delta back to argmax positions saved by max_pooling_3d_forward.
 // Caller must zero-initialise in_gradient first (host does cudaMemset).
@@ -542,7 +542,7 @@ void max_pooling_3d_backward_cuda(const Index n, const T* delta, T* in_gradient,
 }
 
 template void max_pooling_3d_backward_cuda<float>        (const Index, const float*,         float*,         const float*, const int, const int);
-template void max_pooling_3d_backward_cuda<bfloat16>(const Index, const bfloat16*, bfloat16*, const float*, const int, const int);
+template void max_pooling_3d_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const float*, const int, const int);
 
 namespace { opennn::Buffer pooling_scratch_(opennn::Device::CUDA); }
 
@@ -631,7 +631,7 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
 }
 
 template void average_pooling_3d_forward_cuda<float>        (const Index, const float*,         float*,         const int, const int);
-template void average_pooling_3d_forward_cuda<bfloat16>(const Index, const bfloat16*, bfloat16*, const int, const int);
+template void average_pooling_3d_forward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int, const int);
 
 // Distribute output delta uniformly across the batch's valid tokens
 // (delta_per_token = delta / valid_count, zero where invalid).
@@ -674,7 +674,7 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
 }
 
 template void average_pooling_3d_backward_cuda<float>        (const Index, const float*,         const float*,         float*,         const int, const int);
-template void average_pooling_3d_backward_cuda<bfloat16>(const Index, const bfloat16*, const bfloat16*, bfloat16*, const int, const int);
+template void average_pooling_3d_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, const int, const int);
 
 __device__ __forceinline__ void warp_reduce_sum2(float& a, float& b)
 {
@@ -772,7 +772,7 @@ void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* m
 }
 
 template void layernorm_forward_cuda<float>        (const int, const int, const float*,         float*,         float*, float*, const float*, const float*, const float);
-template void layernorm_forward_cuda<bfloat16>(const int, const int, const bfloat16*, bfloat16*, float*, float*, const float*, const float*, const float);
+template void layernorm_forward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, __nv_bfloat16*, float*, float*, const float*, const float*, const float);
 
 // Per-row dX for layer norm, one block per row of [N, D]. Uses cached mean and
 // inv_var saved by layernorm_forward_kernel.
@@ -912,7 +912,7 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
 }
 
 template void layernorm_backward_cuda<float>        (const int, const int, const float*,         const float*,         const float*, const float*, const float*, float*,         float*, float*);
-template void layernorm_backward_cuda<bfloat16>(const int, const int, const bfloat16*, const bfloat16*, const float*, const float*, const float*, bfloat16*, float*, float*);
+template void layernorm_backward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, const float*, __nv_bfloat16*, float*, float*);
 
 template<typename T>
 __global__ void dropout_forward_kernel(const int n, T* __restrict__ output, uint8_t* __restrict__ mask, const float scale, const float rate, const unsigned long long seed)
@@ -941,7 +941,7 @@ void dropout_forward_cuda(const Index n, T* output, uint8_t* mask, const float r
 }
 
 template void dropout_forward_cuda<float>        (const Index, float*,         uint8_t*, const float, const unsigned long long);
-template void dropout_forward_cuda<bfloat16>(const Index, bfloat16*, uint8_t*, const float, const unsigned long long);
+template void dropout_forward_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, uint8_t*, const float, const unsigned long long);
 
 template<typename T>
 __global__ void dropout_backward_kernel(const int n, const T* __restrict__ output_delta, T* __restrict__ input_delta, const uint8_t* __restrict__ mask, const float scale)
@@ -966,4 +966,4 @@ void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta,
 }
 
 template void dropout_backward_cuda<float>        (const Index, const float*,         float*,         const uint8_t*, const float);
-template void dropout_backward_cuda<bfloat16>(const Index, const bfloat16*, bfloat16*, const uint8_t*, const float);
+template void dropout_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const uint8_t*, const float);
