@@ -1138,12 +1138,13 @@ void ModelExpression::save(const filesystem::path& file_name, ProgrammingLanguag
     if (!file.is_open())
         throw runtime_error("Cannot open file: " + file_name.string());
 
+    using enum ProgrammingLanguage;
     switch (language)
     {
-    case ProgrammingLanguage::C:          file << get_expression_c();          break;
-    case ProgrammingLanguage::Python:     file << get_expression_python();     break;
-    case ProgrammingLanguage::JavaScript: file << get_expression_javascript(); break;
-    case ProgrammingLanguage::PHP:        file << get_expression_php();        break;
+    case C:          file << get_expression_c();          break;
+    case Python:     file << get_expression_python();     break;
+    case JavaScript: file << get_expression_javascript(); break;
+    case PHP:        file << get_expression_php();        break;
     }
 
     file.close();

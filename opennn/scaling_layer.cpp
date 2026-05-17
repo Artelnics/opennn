@@ -247,30 +247,31 @@ string Scaling::write_expression(const vector<string>& input_names,
     for (Index i = 0; i < outputs_number; ++i)
     {
         const Descriptives& d = descriptives[size_t(i)];
+        using enum ScalerMethod;
         switch (scalers[size_t(i)])
         {
-        case ScalerMethod::None:
+        case None:
             buffer << "scaled_" << input_names[i] << " = " << input_names[i] << ";\n";
             break;
-        case ScalerMethod::MinimumMaximum:
+        case MinimumMaximum:
             buffer << "scaled_" << input_names[i]
                    << " = " << input_names[i] << "*(" << max_range << "-" << min_range << ")/("
                    << d.maximum << "-(" << d.minimum << "))-" << d.minimum << "*("
                    << max_range << "-" << min_range << ")/("
                    << d.maximum << "-" << d.minimum << ")+" << min_range << ";\n";
             break;
-        case ScalerMethod::MeanStandardDeviation:
+        case MeanStandardDeviation:
             buffer << "scaled_" << input_names[i] << " = (" << input_names[i] << "-"
                    << d.mean << ")/" << d.standard_deviation << ";\n";
             break;
-        case ScalerMethod::StandardDeviation:
+        case StandardDeviation:
             buffer << "scaled_" << input_names[i] << " = " << input_names[i]
                    << "/(" << d.standard_deviation << ");\n";
             break;
-        case ScalerMethod::Logarithm:
+        case Logarithm:
             buffer << "scaled_" << input_names[i] << " = log(" << input_names[i] << ");\n";
             break;
-        case ScalerMethod::ImageMinMax:
+        case ImageMinMax:
             buffer << "scaled_" << input_names[i] << " = " << input_names[i] << " / 255.0;\n";
             break;
         default:

@@ -51,7 +51,7 @@ void visit_type(Type t, F&& f)
 {
     bool matched = false;
     ((t == Supported && (f(TypeInfo<Supported>{}), matched = true, false)) || ...);
-    if (!matched) throw runtime_error("visit_type: unsupported Type value");
+    throw_if(!matched, "visit_type: unsupported Type value");
 }
 
 template<Type... Supported, typename F>

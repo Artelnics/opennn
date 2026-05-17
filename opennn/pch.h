@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <ranges>
 #include <numbers>
+#include <source_location>
 #include <execution>
 #include <charconv>
 #include <string>
@@ -118,18 +119,19 @@ using cudnnOpTensorDescriptor_t    = void*;
 #include "../opennn/kernel.cuh"
 
 template <typename T>
-void check_cuda_status(T status, const char* file, int line, const char* msg)
+void check_cuda_status(T status, const char* msg,
+                       std::source_location loc = std::source_location::current())
 {
     // `using namespace std;` is declared below this point in pch.h so std::
     // qualifications are required here.
     if (status != 0)
         throw std::runtime_error(std::string(msg) + " Error: " + std::to_string(static_cast<int>(status)) +
-                                 " in " + file + ":" + std::to_string(line));
+                                 " in " + loc.file_name() + ":" + std::to_string(loc.line()));
 }
 
-#define CHECK_CUDA(x) check_cuda_status(x, __FILE__, __LINE__, "CUDA")
-#define CHECK_CUBLAS(x) check_cuda_status(x, __FILE__, __LINE__, "CuBLAS")
-#define CHECK_CUDNN(x) check_cuda_status(x, __FILE__, __LINE__, "cuDNN")
+#define CHECK_CUDA(x)   check_cuda_status(x, "CUDA")
+#define CHECK_CUBLAS(x) check_cuda_status(x, "CuBLAS")
+#define CHECK_CUDNN(x)  check_cuda_status(x, "cuDNN")
 
 #endif
 
@@ -139,6 +141,14 @@ using namespace Eigen;
 namespace opennn {
 
 using bfloat16 = __nv_bfloat16;
+
+inline void throw_if(bool condition, const string& message,
+                     const source_location& loc = source_location::current())
+{
+    if (condition)
+        throw runtime_error(message + " [at " + loc.file_name() + ":"
+                            + to_string(loc.line()) + "]");
+}
 
 constexpr float EPSILON = numeric_limits<float>::epsilon();
 constexpr float MAX = numeric_limits<float>::max();

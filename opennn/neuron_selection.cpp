@@ -118,21 +118,22 @@ void NeuronsSelectionResults::resize_history(const Index new_size)
 
 string NeuronsSelectionResults::write_stopping_condition() const
 {
+    using enum NeuronSelection::StoppingCondition;
     switch (stopping_condition)
     {
-        case NeuronSelection::StoppingCondition::MaximumTime:
+        case MaximumTime:
             return "MaximumTime";
 
-        case NeuronSelection::StoppingCondition::SelectionErrorGoal:
+        case SelectionErrorGoal:
             return "SelectionErrorGoal";
 
-        case NeuronSelection::StoppingCondition::MaximumEpochs:
+        case MaximumEpochs:
             return "MaximumEpochs";
 
-        case NeuronSelection::StoppingCondition::MaximumSelectionFailures:
+        case MaximumSelectionFailures:
             return "MaximumSelectionFailures";
 
-        case NeuronSelection::StoppingCondition::MaximumNeurons:
+        case MaximumNeurons:
             return "MaximumNeurons";
 
         default:

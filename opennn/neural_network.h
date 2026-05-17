@@ -124,6 +124,7 @@ public:
     void set_parameters(const VectorR& new_parameters);
     void set_parameters_random();
     void set_parameters_glorot();
+    void link_parameters();
     MatrixR calculate_outputs(const vector<TensorView>&);
 
     MatrixR calculate_outputs(const MatrixR&);
@@ -184,7 +185,6 @@ public:
 
     void copy_parameters_device();
     void copy_parameters_host();
-    void link_parameters();
 
     void copy_states_device();
     void copy_states_host();

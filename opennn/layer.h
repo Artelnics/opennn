@@ -173,8 +173,6 @@ public:
 
     virtual void on_compute_dtype_changed() {}
 
-    virtual float* link_parameters(float* pointer);
-
     virtual float* link_states(float* pointer);
 
     float* link_gradients(float* pointer, vector<TensorView>& gradient_views);
@@ -182,13 +180,7 @@ public:
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const { return parameters; }
 
-    vector<TensorView>& get_state_views() { return states; }
-    const vector<TensorView>& get_state_views() const { return states; }
-
-    void redistribute_parameters_to_operators()
-    {
-        distribute_to_operators(parameters, &Operator::parameter_specs, &Operator::link_parameters);
-    }
+    void redistribute_parameters_to_operators();
 
 protected:
 
@@ -216,11 +208,6 @@ protected:
     vector<TensorView> states;
 
     vector<Operator*> operators;
-
-    void distribute_to_operators(
-        vector<TensorView>& views,
-        vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
-        void (Operator::*link_fn)(const vector<TensorView>&));
 
     float* link_views_to_operators(
         vector<TensorView>& views, float* pointer,

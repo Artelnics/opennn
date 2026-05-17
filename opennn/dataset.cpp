@@ -21,12 +21,13 @@ VectorI Dataset::get_sample_role_numbers() const
 
     for (Index i = 0; i < samples_number; ++i)
     {
+        using enum SampleRole;
         switch (sample_roles[i])
         {
-        case SampleRole::Training:   count[0]++; break;
-        case SampleRole::Validation: count[1]++; break;
-        case SampleRole::Testing:    count[2]++; break;
-        case SampleRole::None:       count[3]++; break;
+        case Training:   count[0]++; break;
+        case Validation: count[1]++; break;
+        case Testing:    count[2]++; break;
+        case None:       count[3]++; break;
         }
     }
 

@@ -242,12 +242,13 @@ string Unscaling::write_expression(const vector<string>& input_names,
     for (Index i = 0; i < outputs_number; ++i)
     {
         const Descriptives& d = descriptives[size_t(i)];
+        using enum ScalerMethod;
         switch (scalers[size_t(i)])
         {
-        case ScalerMethod::None:
+        case None:
             buffer << output_names[i] << " = " << input_names[i] << ";\n";
             break;
-        case ScalerMethod::MinimumMaximum:
+        case MinimumMaximum:
             if (abs(d.minimum - d.maximum) < EPSILON)
                 buffer << output_names[i] << "=" << d.minimum << ";\n";
             else
@@ -255,16 +256,16 @@ string Unscaling::write_expression(const vector<string>& input_names,
                        << "(" << (d.maximum - d.minimum) / (max_range - min_range)
                        << ")+" << (d.minimum - min_range * (d.maximum - d.minimum) / (max_range - min_range)) << ";\n";
             break;
-        case ScalerMethod::MeanStandardDeviation:
+        case MeanStandardDeviation:
             buffer << output_names[i] << "=" << input_names[i] << "*" << d.standard_deviation << "+" << d.mean << ";\n";
             break;
-        case ScalerMethod::StandardDeviation:
+        case StandardDeviation:
             buffer << output_names[i] << "=" << input_names[i] << "*" << d.standard_deviation << ";\n";
             break;
-        case ScalerMethod::Logarithm:
+        case Logarithm:
             buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";
             break;
-        case ScalerMethod::ImageMinMax:
+        case ImageMinMax:
             buffer << output_names[i] << "=" << input_names[i] << " * 255.0;\n";
             break;
         default:

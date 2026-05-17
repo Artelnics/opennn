@@ -370,7 +370,7 @@ void Optimizer::set_scaling()
             case 1:
             {
                 auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
-                if (!tabular_dataset) throw runtime_error("Expected TabularDataset.");
+                throw_if(!tabular_dataset, "Expected TabularDataset.");
                 input_variable_scalers = tabular_dataset->get_feature_scalers("Input");
                 input_variable_descriptives = tabular_dataset->scale_features("Input");
                 scaling_layer->set_descriptives(input_variable_descriptives);
@@ -381,7 +381,7 @@ void Optimizer::set_scaling()
             case 2:
             {
                 auto* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
-                if (!time_series_dataset) throw runtime_error("Expected TimeSeriesDataset.");
+                throw_if(!time_series_dataset, "Expected TimeSeriesDataset.");
                 input_variable_scalers = time_series_dataset->get_feature_scalers("Input");
                 input_variable_descriptives = time_series_dataset->scale_features("Input");
                 scaling_layer->set_descriptives(input_variable_descriptives);
@@ -392,7 +392,7 @@ void Optimizer::set_scaling()
             case 3:
             {
                 auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
-                if (!image_dataset) throw runtime_error("Expected ImageDataset.");
+                throw_if(!image_dataset, "Expected ImageDataset.");
                 image_dataset->scale_features("Input");
                 scaling_layer->set_scalers("ImageMinMax");
                 break;
@@ -421,7 +421,7 @@ void Optimizer::set_scaling()
     if (has_pure_targets)
     {
         auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
-        if (!tabular_dataset) throw runtime_error("Expected TabularDataset for target unscaling.");
+        throw_if(!tabular_dataset, "Expected TabularDataset for target unscaling.");
         target_variable_descriptives = tabular_dataset->scale_features("Target");
         target_variable_scalers = tabular_dataset->get_feature_scalers("Target");
     }
@@ -452,7 +452,7 @@ void Optimizer::set_scaling()
     }
 
     auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
-    if (!unscaling_layer) throw runtime_error("Expected Unscaling layer.");
+    throw_if(!unscaling_layer, "Expected Unscaling layer.");
 
     if (ssize(unscaling_layer_descriptives) != unscaling_layer->get_outputs_number())
         throw runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
@@ -588,24 +588,25 @@ TrainingResults::TrainingResults(const Index epochs_number)
 
 string TrainingResults::write_stopping_condition() const
 {
+    using enum Optimizer::StoppingCondition;
     switch (stopping_condition)
     {
-    case Optimizer::StoppingCondition::None:
+    case None:
         return "None";
 
-    case Optimizer::StoppingCondition::MinimumLossDecrease:
+    case MinimumLossDecrease:
         return "Minimum loss decrease";
 
-    case Optimizer::StoppingCondition::LossGoal:
+    case LossGoal:
         return "Loss goal";
 
-    case Optimizer::StoppingCondition::MaximumSelectionErrorIncreases:
+    case MaximumSelectionErrorIncreases:
         return "Maximum selection error increases";
 
-    case Optimizer::StoppingCondition::MaximumEpochsNumber:
+    case MaximumEpochsNumber:
         return "Maximum epochs number";
 
-    case Optimizer::StoppingCondition::MaximumTime:
+    case MaximumTime:
         return "Maximum training time";
 
     default:

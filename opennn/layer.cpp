@@ -34,19 +34,16 @@ vector<pair<Shape, Type>> Layer::get_state_specs() const
     return result;
 }
 
-void Layer::distribute_to_operators(
-    vector<TensorView>& views,
-    vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
-    void (Operator::*link_fn)(const vector<TensorView>&))
+void Layer::redistribute_parameters_to_operators()
 {
     size_t offset = 0;
     for (Operator* op : get_operators())
     {
-        const size_t n = (op->*specs_fn)().size();
+        const size_t n = op->parameter_specs().size();
         if (n == 0) continue;
-        if (offset + n > views.size()) break;
-        (op->*link_fn)(vector<TensorView>(views.begin() + offset,
-                                          views.begin() + offset + n));
+        if (offset + n > parameters.size()) break;
+        op->link_parameters(vector<TensorView>(parameters.begin() + offset,
+                                               parameters.begin() + offset + n));
         offset += n;
     }
 }
@@ -91,13 +88,6 @@ float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
     }
 
     return pointer;
-}
-
-float* Layer::link_parameters(float* pointer)
-{
-    return link_views_to_operators(parameters, pointer,
-                                   &Operator::parameter_specs, 
-                                   &Operator::link_parameters);
 }
 
 float* Layer::link_states(float* pointer)

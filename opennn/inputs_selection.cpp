@@ -74,21 +74,22 @@ void InputsSelectionResults::set(const Index maximum_epochs)
 
 string InputsSelectionResults::write_stopping_condition() const
 {
+    using enum InputsSelection::StoppingCondition;
     switch (stopping_condition)
     {
-    case InputsSelection::StoppingCondition::MaximumTime:
+    case MaximumTime:
         return "MaximumTime";
 
-    case InputsSelection::StoppingCondition::SelectionErrorGoal:
+    case SelectionErrorGoal:
         return "SelectionErrorGoal";
 
-    case InputsSelection::StoppingCondition::MaximumInputs:
+    case MaximumInputs:
         return "MaximumInputs";
 
-    case InputsSelection::StoppingCondition::MaximumEpochs:
+    case MaximumEpochs:
         return "MaximumEpochs";
 
-    case InputsSelection::StoppingCondition::MaximumSelectionFailures:
+    case MaximumSelectionFailures:
         return "MaximumSelectionFailures";
 
     default:

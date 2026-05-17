@@ -1228,9 +1228,9 @@ pair<float, float> TestingAnalysis::test_transformer() const
     cout << "Testing transformer..." << "\n";
 
     const auto* transformer = dynamic_cast<Transformer*>(neural_network);
-    if (!transformer) throw runtime_error("Expected Transformer neural network.");
+    throw_if(!transformer, "Expected Transformer neural network.");
     const auto* language_dataset = dynamic_cast<LanguageDataset*>(dataset);
-    if (!language_dataset) throw runtime_error("Expected LanguageDataset.");
+    throw_if(!language_dataset, "Expected LanguageDataset.");
 
     const vector<Index> sample_indices   = language_dataset->get_sample_indices("Testing");
     const vector<Index> input_features   = language_dataset->get_feature_indices("Input");

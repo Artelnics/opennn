@@ -62,13 +62,7 @@ struct LtMatmulPlanKey
     int io_dtype;   // cudaDataType_t for A and B (inputs)
     int out_dtype;  // cudaDataType_t for C and D (outputs)
 
-    bool operator==(const LtMatmulPlanKey& other) const noexcept
-    {
-        return m == other.m && n == other.n && k == other.k
-            && transA == other.transA && transB == other.transB
-            && epilogue == other.epilogue
-            && io_dtype == other.io_dtype && out_dtype == other.out_dtype;
-    }
+    bool operator==(const LtMatmulPlanKey&) const noexcept = default;
 };
 
 struct LtMatmulPlanKeyHash

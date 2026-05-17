@@ -64,7 +64,7 @@ bool FileReader::is_open() const
 
 void FileReader::read_at(void* buffer, size_t bytes, uint64_t offset) const
 {
-    if (!is_open()) throw runtime_error("FileReader::read_at: file not open.");
+    throw_if(!is_open(), "FileReader::read_at: file not open.");
 
     size_t total = 0;
     auto* dst = static_cast<uint8_t*>(buffer);
@@ -89,7 +89,7 @@ void FileReader::read_at(void* buffer, size_t bytes, uint64_t offset) const
 
 uint64_t FileReader::file_size() const
 {
-    if (!is_open()) throw runtime_error("FileReader::file_size: file not open.");
+    throw_if(!is_open(), "FileReader::file_size: file not open.");
     LARGE_INTEGER size{};
     if (!::GetFileSizeEx(handle_, &size))
         throw runtime_error("FileReader::file_size: GetFileSizeEx failed.");
@@ -123,7 +123,7 @@ bool FileReader::is_open() const { return fd_ >= 0; }
 
 void FileReader::read_at(void* buffer, size_t bytes, uint64_t offset) const
 {
-    if (!is_open()) throw runtime_error("FileReader::read_at: file not open.");
+    throw_if(!is_open(), "FileReader::read_at: file not open.");
 
     size_t total = 0;
     auto* dst = static_cast<uint8_t*>(buffer);
@@ -146,7 +146,7 @@ void FileReader::read_at(void* buffer, size_t bytes, uint64_t offset) const
 
 uint64_t FileReader::file_size() const
 {
-    if (!is_open()) throw runtime_error("FileReader::file_size: file not open.");
+    throw_if(!is_open(), "FileReader::file_size: file not open.");
     struct stat st{};
     if (::fstat(fd_, &st) != 0)
         throw runtime_error("FileReader::file_size: fstat failed.");
@@ -182,14 +182,14 @@ bool FileWriter::is_open() const { return stream_.is_open(); }
 
 void FileWriter::write(const void* buffer, size_t bytes)
 {
-    if (!stream_.is_open()) throw runtime_error("FileWriter::write: not open.");
+    throw_if(!stream_.is_open(), "FileWriter::write: not open.");
     stream_.write(reinterpret_cast<const char*>(buffer), streamsize(bytes));
-    if (!stream_.good()) throw runtime_error("FileWriter::write: stream error.");
+    throw_if(!stream_.good(), "FileWriter::write: stream error.");
 }
 
 void FileWriter::finish_with_rename(const filesystem::path& final_path)
 {
-    if (!stream_.is_open()) throw runtime_error("FileWriter::finish: not open.");
+    throw_if(!stream_.is_open(), "FileWriter::finish: not open.");
     stream_.flush();
     stream_.close();
     if (!stream_.good() && stream_.eof() == false && stream_.fail())

@@ -95,8 +95,6 @@ struct Shape
         return rank == other.rank && equal(begin(), end(), other.begin());
     }
 
-    bool operator!=(const Shape& other) const noexcept { return !(*this == other); }
-
     Shape& append(const Shape& other)
     {
         const size_t copy_count = min(other.rank, MaxRank - rank);
@@ -105,18 +103,6 @@ struct Shape
         return *this;
     }
 };
-
-inline Index get_aligned_size(const vector<Shape>& shapes)
-{
-    return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
-        [](const Shape& s) { return get_aligned_size(s.size()); });
-}
-
-inline Index get_aligned_size(const vector<vector<Shape>>& shapes)
-{
-    return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
-        [](const vector<Shape>& s) { return get_aligned_size(s); });
-}
 
 inline Index get_aligned_size(const vector<pair<Shape, Type>>& specs)
 {
@@ -128,19 +114,6 @@ inline Index get_aligned_size(const vector<vector<pair<Shape, Type>>>& specs)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
         [](const auto& s) { return get_aligned_size(s); });
-}
-
-inline Index get_aligned_bytes(const vector<Shape>& shapes, const vector<Type>& dtypes)
-{
-    return transform_reduce(shapes.begin(), shapes.end(), dtypes.begin(), Index(0), plus<>{},
-        [](const Shape& s, Type t) { return get_aligned_bytes(s.size(), t); });
-}
-
-inline Index get_aligned_bytes(const vector<vector<Shape>>& shapes,
-                               const vector<vector<Type>>& dtypes)
-{
-    return transform_reduce(shapes.begin(), shapes.end(), dtypes.begin(), Index(0), plus<>{},
-        [](const vector<Shape>& s, const vector<Type>& t) { return get_aligned_bytes(s, t); });
 }
 
 inline Index get_aligned_bytes(const vector<pair<Shape, Type>>& specs)
@@ -159,12 +132,6 @@ inline Index get_aligned_bytes(const vector<Shape>& shapes, Type dtype)
 {
     return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
         [dtype](const Shape& s) { return get_aligned_bytes(s.size(), dtype); });
-}
-
-inline Index get_aligned_bytes(const vector<vector<Shape>>& shapes, Type dtype)
-{
-    return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
-        [dtype](const vector<Shape>& s) { return get_aligned_bytes(s, dtype); });
 }
 
 inline Index get_aligned_bytes(const vector<pair<Shape, Type>>& specs, Type dtype)

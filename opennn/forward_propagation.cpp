@@ -22,7 +22,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     batch_size = new_batch_size;
     neural_network = new_neural_network;
 
-    if (!neural_network) throw runtime_error("neural network is not set.");
+    throw_if(!neural_network, "neural network is not set.");
 
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();

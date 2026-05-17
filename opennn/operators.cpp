@@ -1719,14 +1719,7 @@ struct AttentionOp::SDPACache
         bool  causal         = false;
         bool  is_training    = false;
 
-        bool operator==(const CacheKey& other) const
-        {
-            return batch_size == other.batch_size && q_seq == other.q_seq
-                && src_seq == other.src_seq && heads == other.heads
-                && head_dim == other.head_dim && dtype == other.dtype
-                && dropout_active == other.dropout_active
-                && causal == other.causal && is_training == other.is_training;
-        }
+        bool operator==(const CacheKey&) const = default;
     };
 
     struct CacheKeyHash

@@ -153,16 +153,17 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
 
 static MatrixR activation_derivative(ActivationOp::Function activation_function, const MatrixMap& outputs)
 {
+    using enum ActivationOp::Function;
     switch (activation_function)
     {
-    case ActivationOp::Function::Identity:
-    case ActivationOp::Function::Softmax:
+    case Identity:
+    case Softmax:
         return MatrixR::Ones(outputs.rows(), outputs.cols());
-    case ActivationOp::Function::Sigmoid:
+    case Sigmoid:
         return outputs.array() * (1.0f - outputs.array());
-    case ActivationOp::Function::Tanh:
+    case Tanh:
         return 1.0f - outputs.array().square();
-    case ActivationOp::Function::ReLU:
+    case ReLU:
         return (outputs.array() > 0.0f).cast<float>();
     }
 

@@ -207,26 +207,27 @@ void ResponseOptimization::Domain::bound(const vector<Index>& feature_dimensions
             float& inferior = inferior_frontier(feature_index);
             float& superior = superior_frontier(feature_index);
 
+            using enum ConditionType;
             switch (condition.condition)
             {
-            case ConditionType::None:
-            case ConditionType::Minimize:
-            case ConditionType::Maximize:
+            case None:
+            case Minimize:
+            case Maximize:
                 break;
-            case ConditionType::EqualTo:
+            case EqualTo:
                 inferior = max(inferior, condition.low_bound);
                 superior = min(superior, condition.low_bound);
                 break;
-            case ConditionType::Between:
+            case Between:
                 inferior = max(inferior, condition.low_bound);
                 superior = min(superior, condition.up_bound);
                 break;
-            case ConditionType::GreaterEqualTo:
-            case ConditionType::GreaterThan:
+            case GreaterEqualTo:
+            case GreaterThan:
                 inferior = max(inferior, condition.low_bound);
                 break;
-            case ConditionType::LessEqualTo:
-            case ConditionType::LessThan:
+            case LessEqualTo:
+            case LessThan:
                 superior = min(superior, condition.up_bound);
                 break;
             }

@@ -65,9 +65,7 @@ void NeuralNetwork::compile()
     parameters.resize_bytes(get_aligned_bytes(get_parameter_specs(), Type::FP32), Device::CPU);
     parameters.setZero();
 
-    float* pointer = parameters.as<float>();
-    for (auto& layer : layers)
-        pointer = layer->link_parameters(pointer);
+    link_parameters();
 
     states.resize_bytes(get_states_size() * Index(sizeof(float)), Device::CPU);
     states.setZero();
@@ -643,7 +641,7 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 
     const Index batch_size = input_documents.size();
     const auto* embedding_layer = dynamic_cast<const Embedding*>(get_layer(0).get());
-    if (!embedding_layer) throw runtime_error("Expected Embedding layer at index 0.");
+    throw_if(!embedding_layer, "Expected Embedding layer at index 0.");
     const Index sequence_length = embedding_layer->get_sequence_length();
 
     const vector<string>& vocabulary = input_variables[0].categories;
@@ -1122,6 +1120,58 @@ vector<string> NeuralNetwork::get_names_string() const
     return names;
 }
 
+void NeuralNetwork::link_parameters()
+{
+    // Ignore the BF16 mirror when active Configuration is CPU (host can't read GPU memory).
+    float* fp32_base = parameters.as<float>();
+
+#ifdef OPENNN_HAS_CUDA
+    bfloat16* bf16_base = (is_gpu() && !parameters_bf16.empty())
+        ? parameters_bf16.as<bfloat16>()
+        : nullptr;
+#endif
+
+    Index offset = 0;
+
+    for (auto& layer : layers)
+    {
+        const auto specs = layer->get_parameter_specs();
+        auto& param_views = layer->get_parameter_views();
+        param_views.clear();
+
+        for (const auto& [shape, slot_dtype] : specs)
+        {
+            if (shape.empty())
+            {
+                param_views.emplace_back();
+                continue;
+            }
+
+            const Index aligned = get_aligned_size(shape.size());
+            float* const fp32_slot = fp32_base + offset;
+
+            if (!is_aligned(fp32_slot))
+                throw runtime_error("NeuralNetwork::link_parameters: unaligned parameter memory.");
+
+            void* slot_ptr = fp32_slot;
+            Type view_type = Type::FP32;
+
+#ifdef OPENNN_HAS_CUDA
+            if (slot_dtype == Type::BF16 && bf16_base != nullptr)
+            {
+                slot_ptr = bf16_base + offset;
+                view_type = Type::BF16;
+            }
+#endif
+
+            param_views.emplace_back(slot_ptr, shape, view_type);
+            offset += aligned;
+        }
+
+        layer->redistribute_parameters_to_operators();
+    }
+}
+
 #ifdef OPENNN_HAS_CUDA
 
 void NeuralNetwork::copy_parameters_device()
@@ -1158,44 +1208,6 @@ void NeuralNetwork::copy_parameters_host()
     parameters.migrate_to(Device::CPU, Backend::get_compute_stream());
 
     link_parameters();
-}
-
-void NeuralNetwork::link_parameters()
-{
-    // Ignore the BF16 mirror when active Configuration is CPU (host can't read GPU memory).
-    float* fp32_base = parameters.as<float>();
-    bfloat16* bf16_base = (is_gpu() && !parameters_bf16.empty())
-        ? parameters_bf16.as<bfloat16>()
-        : nullptr;
-
-    Index offset = 0;
-
-    for (auto& layer : layers)
-    {
-        const auto specs = layer->get_parameter_specs();
-        auto& param_views = layer->get_parameter_views();
-
-        for (size_t i = 0; i < specs.size(); ++i)
-        {
-            const auto& [shape, slot_dtype] = specs[i];
-            if (shape.empty()) continue;
-
-            const Index aligned = get_aligned_size(shape.size());
-
-            if (i < param_views.size())
-            {
-                const bool use_bf16 = (slot_dtype == Type::BF16 && bf16_base != nullptr);
-                void* slot_ptr = use_bf16
-                    ? static_cast<void*>(bf16_base + offset)
-                    : static_cast<void*>(fp32_base + offset);
-                param_views[i] = TensorView(slot_ptr, shape, use_bf16 ? Type::BF16 : Type::FP32);
-            }
-
-            offset += aligned;
-        }
-
-        layer->redistribute_parameters_to_operators();
-    }
 }
 
 void NeuralNetwork::copy_states_device()

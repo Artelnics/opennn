@@ -524,7 +524,7 @@ void Loss::to_JSON(JsonWriter& printer) const
 void Loss::from_JSON(const JsonDocument& document)
 {
     const Json* root = document.first_child("Loss");
-    if (!root) throw runtime_error("Loss::from_JSON error: missing Loss element.");
+    throw_if(!root, "Loss::from_JSON error: missing Loss element.");
 
     set_error(read_json_string(root, "Method"));
 
