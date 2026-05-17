@@ -31,61 +31,61 @@ public:
     void add_layer(unique_ptr<Layer>,
                   const vector<Index>& = vector<Index>());
 
-    const Configuration::Resolved& get_config() const { return config; }
-    bool is_gpu() const { return config.device == Device::CUDA; }
-    bool is_cpu() const { return config.device == Device::CPU; }
+    [[nodiscard]] const Configuration::Resolved& get_config() const { return config; }
+    [[nodiscard]] bool is_gpu() const { return config.device == Device::CUDA; }
+    [[nodiscard]] bool is_cpu() const { return config.device == Device::CPU; }
 
-    Type get_training_type()  const { return config.training_type; }
-    Type get_inference_type() const { return config.inference_type; }
+    [[nodiscard]] Type get_training_type()  const { return config.training_type; }
+    [[nodiscard]] Type get_inference_type() const { return config.inference_type; }
 
-    vector<vector<pair<Shape, Type>>> get_parameter_specs() const { return collect_layer_specs([](const Layer& L) { return L.get_parameter_specs(); }); }
-    vector<vector<pair<Shape, Type>>> get_state_specs()     const { return collect_layer_specs([](const Layer& L) { return L.get_state_specs(); }); }
-    vector<vector<pair<Shape, Type>>> get_forward_specs(Index b) const
+    [[nodiscard]] vector<vector<pair<Shape, Type>>> get_parameter_specs() const { return collect_layer_specs([](const Layer& L) { return L.get_parameter_specs(); }); }
+    [[nodiscard]] vector<vector<pair<Shape, Type>>> get_state_specs()     const { return collect_layer_specs([](const Layer& L) { return L.get_state_specs(); }); }
+    [[nodiscard]] vector<vector<pair<Shape, Type>>> get_forward_specs(Index b) const
     {
         auto specs = collect_layer_specs([b](const Layer& L) { return L.get_forward_specs(b); });
         if (!is_gpu()) force_specs_to_fp32(specs);
         return specs;
     }
-    vector<vector<pair<Shape, Type>>> get_backward_specs(Index b) const
+    [[nodiscard]] vector<vector<pair<Shape, Type>>> get_backward_specs(Index b) const
     {
         auto specs = collect_layer_specs([b](const Layer& L) { return L.get_backward_specs(b); });
         if (!is_gpu()) force_specs_to_fp32(specs);
         return specs;
     }
 
-    Index get_states_size() const     { return get_aligned_size(get_state_specs()); }
-    Index get_forward_size(Index b)  const { return get_aligned_size(get_forward_specs(b));  }
-    Index get_backward_size(Index b) const { return get_aligned_size(get_backward_specs(b)); }
+    [[nodiscard]] Index get_states_size() const     { return get_aligned_size(get_state_specs()); }
+    [[nodiscard]] Index get_forward_size(Index b)  const { return get_aligned_size(get_forward_specs(b));  }
+    [[nodiscard]] Index get_backward_size(Index b) const { return get_aligned_size(get_backward_specs(b)); }
 
     void compile();
-    bool has(const string&) const;
-    bool has(LayerType) const;
+    [[nodiscard]] bool has(const string&) const;
+    [[nodiscard]] bool has(LayerType) const;
 
-    bool is_empty() const { return layers.empty(); }
+    [[nodiscard]] bool is_empty() const { return layers.empty(); }
 
-    float* get_parameters_data() { return parameters.as<float>(); }
-    const float* get_parameters_data() const { return parameters.as<float>(); }
-    Index get_parameters_size() const { return parameters.size_in_floats(); }
+    [[nodiscard]] float* get_parameters_data() { return parameters.as<float>(); }
+    [[nodiscard]] const float* get_parameters_data() const { return parameters.as<float>(); }
+    [[nodiscard]] Index get_parameters_size() const { return parameters.size_in_floats(); }
 
-    const vector<Variable>& get_input_variables() const { return input_variables; }
-    vector<string> get_input_feature_names() const;
+    [[nodiscard]] const vector<Variable>& get_input_variables() const { return input_variables; }
+    [[nodiscard]] vector<string> get_input_feature_names() const;
 
-    const vector<Variable>& get_output_variables() const { return output_variables; }
-    vector<string> get_output_feature_names() const;
+    [[nodiscard]] const vector<Variable>& get_output_variables() const { return output_variables; }
+    [[nodiscard]] vector<string> get_output_feature_names() const;
 
-    const vector<unique_ptr<Layer>>& get_layers() const { return layers; }
-    const unique_ptr<Layer>& get_layer(const Index i) const { return layers[i]; }
-    const unique_ptr<Layer>& get_layer(const string&) const;
+    [[nodiscard]] const vector<unique_ptr<Layer>>& get_layers() const { return layers; }
+    [[nodiscard]] const unique_ptr<Layer>& get_layer(const Index i) const { return layers[i]; }
+    [[nodiscard]] const unique_ptr<Layer>& get_layer(const string&) const;
 
-    Index get_layer_index(const string&) const;
+    [[nodiscard]] Index get_layer_index(const string&) const;
 
-    const vector<vector<Index>>& get_layer_input_indices() const { return layer_input_indices; }
-    vector<vector<Index>> get_layer_output_indices() const;
+    [[nodiscard]] const vector<vector<Index>>& get_layer_input_indices() const { return layer_input_indices; }
+    [[nodiscard]] vector<vector<Index>> get_layer_output_indices() const;
 
-    Layer* get_first(const string&);
-    Layer* get_first(LayerType);
-    const Layer* get_first(const string&) const;
-    const Layer* get_first(LayerType) const;
+    [[nodiscard]] Layer* get_first(const string&);
+    [[nodiscard]] Layer* get_first(LayerType);
+    [[nodiscard]] const Layer* get_first(const string&) const;
+    [[nodiscard]] const Layer* get_first(LayerType) const;
     void set_layers_number(const Index new_layers_number) { layers.resize(new_layers_number); layer_input_indices.resize(new_layers_number); }
 
     void set_layer_input_indices(const vector<vector<Index>>& new_layer_input_indices) { layer_input_indices = new_layer_input_indices; }
@@ -104,42 +104,42 @@ public:
     void set_input_shape(const Shape&);
 
     void set_default();
-    Index get_layers_number() const { return ssize(layers); }
-    Index get_layers_number(const string&) const;
-    Index get_layers_number(LayerType) const;
+    [[nodiscard]] Index get_layers_number() const { return ssize(layers); }
+    [[nodiscard]] Index get_layers_number(const string&) const;
+    [[nodiscard]] Index get_layers_number(LayerType) const;
 
-    Index get_first_trainable_layer_index() const;
-    Index get_last_trainable_layer_index() const;
-    Index get_inputs_number() const;
-    Index get_outputs_number() const;
+    [[nodiscard]] Index get_first_trainable_layer_index() const;
+    [[nodiscard]] Index get_last_trainable_layer_index() const;
+    [[nodiscard]] Index get_inputs_number() const;
+    [[nodiscard]] Index get_outputs_number() const;
 
-    Shape get_input_shape() const;
-    Shape get_output_shape() const;
+    [[nodiscard]] Shape get_input_shape() const;
+    [[nodiscard]] Shape get_output_shape() const;
 
-    ActivationOp::Function get_output_activation() const;
-    Index get_parameters_number() const;
+    [[nodiscard]] ActivationOp::Function get_output_activation() const;
+    [[nodiscard]] Index get_parameters_number() const;
 
-    vector<Index> get_layer_parameter_numbers() const;
+    [[nodiscard]] vector<Index> get_layer_parameter_numbers() const;
 
     void set_parameters(const VectorR& new_parameters);
     void set_parameters_random();
     void set_parameters_glorot();
     void link_parameters();
-    MatrixR calculate_outputs(const vector<TensorView>&);
+    [[nodiscard]] MatrixR calculate_outputs(const vector<TensorView>&);
 
-    MatrixR calculate_outputs(const MatrixR&);
+    [[nodiscard]] MatrixR calculate_outputs(const MatrixR&);
 
-    MatrixR calculate_outputs(const Tensor3&);
+    [[nodiscard]] MatrixR calculate_outputs(const Tensor3&);
 
-    MatrixR calculate_outputs(const Tensor4&);
+    [[nodiscard]] MatrixR calculate_outputs(const Tensor4&);
 
-    MatrixR calculate_directional_inputs(const Index, const VectorR&, float, float, Index = 101) const;
+    [[nodiscard]] MatrixR calculate_directional_inputs(const Index, const VectorR&, float, float, Index = 101) const;
 
-    Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
+    [[nodiscard]] Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
 
-    Index calculate_image_output(const filesystem::path&);
+    [[nodiscard]] Index calculate_image_output(const filesystem::path&);
 
-    MatrixR calculate_text_outputs(const Tensor<string, 1>&);
+    [[nodiscard]] MatrixR calculate_text_outputs(const Tensor<string, 1>&);
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;
@@ -151,7 +151,7 @@ public:
     void load(const filesystem::path&);
     void load_parameters_binary(const filesystem::path&);
 
-    vector<string> get_names_string() const;
+    [[nodiscard]] vector<string> get_names_string() const;
 
     void save_outputs(MatrixR&, const filesystem::path&);
     void save_outputs(Tensor3&, const filesystem::path&);
@@ -178,7 +178,7 @@ public:
 
     // Returns nullptr when no BF16 mirror is allocated (FP32-only mode), so
     // optimizer kernels can pass it straight through and skip the mirror write.
-    bfloat16* get_parameters_bf16_data()
+    [[nodiscard]] bfloat16* get_parameters_bf16_data()
     {
         return parameters_bf16.empty() ? nullptr : parameters_bf16.as<bfloat16>();
     }
@@ -192,13 +192,13 @@ public:
 
 private:
 
-    MatrixR calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&);
+    [[nodiscard]] MatrixR calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&);
 
 #endif
 
 public:
 
-    vector<string> get_layer_labels() const;
+    [[nodiscard]] vector<string> get_layer_labels() const;
 
 private:
 
@@ -212,7 +212,7 @@ private:
     }
 
     template<typename Fn>
-    vector<vector<pair<Shape, Type>>> collect_layer_specs(Fn fn) const
+    [[nodiscard]] vector<vector<pair<Shape, Type>>> collect_layer_specs(Fn fn) const
     {
         vector<vector<pair<Shape, Type>>> out(layers.size());
         ranges::transform(layers, out.begin(),

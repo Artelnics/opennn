@@ -28,11 +28,11 @@ public:
 
     void open(const filesystem::path& path);
     void close();
-    bool is_open() const;
+    [[nodiscard]] bool is_open() const;
 
     void read_at(void* buffer, size_t bytes, uint64_t offset) const;
 
-    uint64_t file_size() const;
+    [[nodiscard]] uint64_t file_size() const;
 
 private:
 #if defined(_WIN32)
@@ -57,7 +57,7 @@ public:
     FileWriter& operator=(FileWriter&&)      = delete;
 
     void open(const filesystem::path& tmp_path);
-    bool is_open() const;
+    [[nodiscard]] bool is_open() const;
 
     void write(const void* buffer, size_t bytes);
 
@@ -98,8 +98,8 @@ public:
 
     explicit CsvReader(Config c) : config(std::move(c)) {}
 
-    Result read(const filesystem::path& path) const;
-    Result read_string(string_view csv_text) const;
+    [[nodiscard]] Result read(const filesystem::path& path) const;
+    [[nodiscard]] Result read_string(string_view csv_text) const;
 
 private:
 
