@@ -107,7 +107,6 @@ void Convolutional::update_convolution_operator()
                     get_padding_height(), get_padding_width(),
                     compute_dtype);
 
-    convolution.input_slots  = {Input};
     convolution.output_slots = batch_norm.active() ? vector<size_t>{ConvolutionView}
                                                    : vector<size_t>{Output};
 
@@ -120,12 +119,6 @@ void Convolutional::update_convolution_operator()
     activation.input_slots  = {Output};
     activation.output_slots = {Output};
 
-    convolution.output_delta_slots = {OutputDelta};
-    convolution.input_delta_slots  = {InputDelta};
-
-    batch_norm.output_delta_slots = {OutputDelta};
-
-    activation.output_delta_slots = {OutputDelta};
 }
 
 void Convolutional::set(const Shape& new_input_shape,

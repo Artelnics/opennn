@@ -727,13 +727,14 @@ void Correlation::set_perfect()
 
 static const char* form_to_string(Correlation::Form form)
 {
+    using enum Correlation::Form;
     switch (form)
     {
-    case Correlation::Form::Identity:      return "linear";
-    case Correlation::Form::Sigmoid:     return "logistic";
-    case Correlation::Form::Logarithmic: return "logarithmic";
-    case Correlation::Form::Exponential: return "exponential";
-    case Correlation::Form::Power:       return "power";
+    case Identity:      return "linear";
+    case Sigmoid:     return "logistic";
+    case Logarithmic: return "logarithmic";
+    case Exponential: return "exponential";
+    case Power:       return "power";
     default:                             return "";
     }
 }

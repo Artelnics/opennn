@@ -74,11 +74,7 @@ void Pooling::update_pool_operator()
              padding_height, padding_width,
              pooling_method == PoolingMethod::MaxPooling ? PoolOp::Max : PoolOp::Average);
 
-    pool.input_slots  = {Input};
     pool.output_slots = {Output, MaximalIndices};
-
-    pool.output_delta_slots = {OutputDelta};
-    pool.input_delta_slots  = {InputDelta};
 }
 
 void Pooling::set(const Shape& new_input_shape,

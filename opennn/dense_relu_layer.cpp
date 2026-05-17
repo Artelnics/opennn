@@ -40,12 +40,6 @@ vector<pair<Shape, Type>> DenseRelu::get_forward_specs(Index batch_size) const
 void DenseRelu::configure_operators()
 {
     combination_relu.set(get_input_features(), output_features, compute_dtype);
-
-    combination_relu.input_slots  = {Input};
-    combination_relu.output_slots = {Output};
-
-    combination_relu.output_delta_slots = {OutputDelta};
-    combination_relu.input_delta_slots  = {InputDelta};
 }
 
 void DenseRelu::set(const Shape& new_input_shape,

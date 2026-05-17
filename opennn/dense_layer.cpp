@@ -61,7 +61,6 @@ void Dense::configure_operators()
     if (batch_norm.active())
         batch_norm.set(output_features, batch_norm.momentum);
 
-    combination.input_slots  = {Input};
     combination.output_slots = batch_norm.active() ? vector<size_t>{CombinationView}
                                                    : vector<size_t>{Output};
 
@@ -78,17 +77,9 @@ void Dense::configure_operators()
     dropout.output_slots = {Output};
     dropout.save_slots   = {ActivationView};
 
-    combination.output_delta_slots = {OutputDelta};
-    combination.input_delta_slots  = {InputDelta};
-
-    batch_norm.output_delta_slots = {OutputDelta};
-
-    activation.output_delta_slots    = {OutputDelta};
     activation.output_slots_backward = dropout.active()
         ? vector<size_t>{ActivationView}
         : vector<size_t>{};
-
-    dropout.output_delta_slots = {OutputDelta};
 }
 
 void Dense::set_batch_normalization(bool enable)

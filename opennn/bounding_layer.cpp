@@ -58,8 +58,6 @@ void Bounding::set(const Shape& new_output_shape, const string& new_label)
 
     const Index features = output_shape.dim_or_zero(0);
     bound.method = BoundingMethod::Bounding;
-    bound.input_slots  = {Input};
-    bound.output_slots = {Output};
 
     lower_bounds.assign(size_t(features), -numeric_limits<float>::max());
     upper_bounds.assign(size_t(features),  numeric_limits<float>::max());

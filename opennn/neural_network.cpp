@@ -591,7 +591,7 @@ MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
 
     for (Index i = 0; i < points_number; ++i)
     {
-        inputs(direction) = minimum + (maximum - minimum)*float(i)/float(points_number-1);
+        inputs(direction) = lerp(minimum, maximum, float(i)/float(points_number-1));
         directional_inputs.row(i) = inputs.transpose();
     }
 

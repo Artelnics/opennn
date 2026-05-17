@@ -22,10 +22,6 @@ Addition::Addition(const Shape& new_input_shape, const string& new_name)
 
     set(new_input_shape, new_name);
 
-    add.input_slots  = {Input};
-    add.output_slots = {Output};
-
-    add.output_delta_slots = {OutputDelta};
     add.input_delta_slots  = {InputDelta0, InputDelta1};
 }
 

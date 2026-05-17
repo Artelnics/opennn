@@ -75,12 +75,6 @@ void ConvolutionalRelu::update_convolution_operator()
                          row_stride, column_stride,
                          get_padding_height(), get_padding_width(),
                          compute_dtype);
-
-    convolution_relu.input_slots  = {Input};
-    convolution_relu.output_slots = {Output};
-
-    convolution_relu.output_delta_slots = {OutputDelta};
-    convolution_relu.input_delta_slots  = {InputDelta};
 }
 
 void ConvolutionalRelu::set(const Shape& new_input_shape,

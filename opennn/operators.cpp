@@ -206,13 +206,14 @@ const string& ActivationOp::to_string(Function function)
 
 cudnnActivationMode_t ActivationOp::to_cudnn_mode(Function function)
 {
+    using enum Function;
     switch (function)
     {
-    case Function::Sigmoid: return CUDNN_ACTIVATION_SIGMOID;
-    case Function::Tanh:    return CUDNN_ACTIVATION_TANH;
-    case Function::ReLU:    return CUDNN_ACTIVATION_RELU;
-    case Function::Identity:
-    case Function::Softmax: return CUDNN_ACTIVATION_IDENTITY;
+    case Sigmoid: return CUDNN_ACTIVATION_SIGMOID;
+    case Tanh:    return CUDNN_ACTIVATION_TANH;
+    case ReLU:    return CUDNN_ACTIVATION_RELU;
+    case Identity:
+    case Softmax: return CUDNN_ACTIVATION_IDENTITY;
     }
 
     return CUDNN_ACTIVATION_IDENTITY;
@@ -265,18 +266,19 @@ void ActivationOp::apply_cpu(TensorView& output)
 {
     auto a = output.as_vector().array();
 
+    using enum Function;
     switch (function)
     {
-    case Function::Identity:
-    case Function::Softmax:
+    case Identity:
+    case Softmax:
         return;
-    case Function::Sigmoid:
+    case Sigmoid:
         a = (1.0f + (-a).exp()).inverse();
         return;
-    case Function::Tanh:
+    case Tanh:
         a = a.tanh();
         return;
-    case Function::ReLU:
+    case ReLU:
         a = a.cwiseMax(0.0f);
         return;
     }
@@ -287,18 +289,19 @@ void ActivationOp::apply_delta_cpu(const TensorView& outputs, TensorView& delta)
     const auto y = outputs.as_vector().array();
     auto       d = delta.as_vector().array();
 
+    using enum Function;
     switch (function)
     {
-    case Function::Identity:
-    case Function::Softmax:
+    case Identity:
+    case Softmax:
         return;
-    case Function::Sigmoid:
+    case Sigmoid:
         d *= y * (1.0f - y);
         return;
-    case Function::Tanh:
+    case Tanh:
         d *= (1.0f - y.square());
         return;
-    case Function::ReLU:
+    case ReLU:
         d = (y > 0.0f).select(d, 0.0f);
         return;
     }
@@ -1689,10 +1692,11 @@ namespace
 
 cudnn_frontend::DataType_t to_cudnn_frontend_dtype(Type t)
 {
+    using enum Type;
     switch (t)
     {
-        case Type::FP32: return cudnn_frontend::DataType_t::FLOAT;
-        case Type::BF16: return cudnn_frontend::DataType_t::BFLOAT16;
+        case FP32: return cudnn_frontend::DataType_t::FLOAT;
+        case BF16: return cudnn_frontend::DataType_t::BFLOAT16;
         default:         return cudnn_frontend::DataType_t::FLOAT;
     }
 }
@@ -2916,11 +2920,6 @@ vector<pair<Shape, Type>> EmbeddingLookupOp::state_specs() const
 {
     if (!add_positional_encoding) return {};
     return {{{sequence_length, embedding_dimension}, Type::FP32}};
-}
-
-size_t EmbeddingLookupOp::state_count() const
-{
-    return add_positional_encoding ? 1 : 0;
 }
 
 void EmbeddingLookupOp::link_parameters(const vector<TensorView>& views)

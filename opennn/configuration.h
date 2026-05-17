@@ -68,38 +68,41 @@ void visit_type_pair(Type t_in, Type t_out, F&& f)
 
 inline cudnnDataType_t to_cudnn(Type type) noexcept
 {
+    using enum Type;
     switch (type)
     {
-        case Type::Auto: return TypeInfo<Type::FP32>::cudnn;
-        case Type::FP32: return TypeInfo<Type::FP32>::cudnn;
-        case Type::BF16: return TypeInfo<Type::BF16>::cudnn;
-        case Type::INT8: return TypeInfo<Type::INT8>::cudnn;
+        case Auto: return TypeInfo<FP32>::cudnn;
+        case FP32: return TypeInfo<FP32>::cudnn;
+        case BF16: return TypeInfo<BF16>::cudnn;
+        case INT8: return TypeInfo<INT8>::cudnn;
     }
-    return TypeInfo<Type::FP32>::cudnn;
+    return TypeInfo<FP32>::cudnn;
 }
 
 inline cudaDataType_t to_cuda(Type type) noexcept
 {
+    using enum Type;
     switch (type)
     {
-        case Type::Auto: return TypeInfo<Type::FP32>::cuda;
-        case Type::FP32: return TypeInfo<Type::FP32>::cuda;
-        case Type::BF16: return TypeInfo<Type::BF16>::cuda;
-        case Type::INT8: return TypeInfo<Type::INT8>::cuda;
+        case Auto: return TypeInfo<FP32>::cuda;
+        case FP32: return TypeInfo<FP32>::cuda;
+        case BF16: return TypeInfo<BF16>::cuda;
+        case INT8: return TypeInfo<INT8>::cuda;
     }
-    return TypeInfo<Type::FP32>::cuda;
+    return TypeInfo<FP32>::cuda;
 }
 
 inline Index type_bytes(Type type) noexcept
 {
+    using enum Type;
     switch (type)
     {
-        case Type::Auto: return TypeInfo<Type::FP32>::bytes;
-        case Type::FP32: return TypeInfo<Type::FP32>::bytes;
-        case Type::BF16: return TypeInfo<Type::BF16>::bytes;
-        case Type::INT8: return TypeInfo<Type::INT8>::bytes;
+        case Auto: return TypeInfo<FP32>::bytes;
+        case FP32: return TypeInfo<FP32>::bytes;
+        case BF16: return TypeInfo<BF16>::bytes;
+        case INT8: return TypeInfo<INT8>::bytes;
     }
-    return TypeInfo<Type::FP32>::bytes;
+    return TypeInfo<FP32>::bytes;
 }
 
 class Configuration

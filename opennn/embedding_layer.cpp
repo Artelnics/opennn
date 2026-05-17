@@ -51,14 +51,7 @@ void Embedding::set(Index new_vocabulary_size,
 
     embedding_lookup.set(vocabulary_size, sequence_length, embedding_dimension);
 
-    embedding_lookup.input_slots  = {Input};
-    embedding_lookup.output_slots = {Output};
-
     dropout.input_slots  = {Output};
-    dropout.output_slots = {Output};
-
-    embedding_lookup.output_delta_slots = {OutputDelta};
-    dropout.output_delta_slots          = {OutputDelta};
 }
 
 void Embedding::read_JSON_body(const Json* embedding_layer_element)

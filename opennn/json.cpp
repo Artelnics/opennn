@@ -65,16 +65,17 @@ void Json::push_back(Json value)
 
 string Json::as_string() const
 {
+    using enum Kind;
     switch (kind)
     {
-    case Kind::Null:   return "";
-    case Kind::Bool:   return bool_value ? "1" : "0";
-    case Kind::Number: {
+    case Null:   return "";
+    case Bool:   return bool_value ? "1" : "0";
+    case Number: {
         ostringstream s; s.precision(10); s << number_value; return s.str();
     }
-    case Kind::String: return string_value;
-    case Kind::Array:
-    case Kind::Object: return dump(0);
+    case String: return string_value;
+    case Array:
+    case Object: return dump(0);
     }
 
     return "";
@@ -82,14 +83,15 @@ string Json::as_string() const
 
 long Json::as_long() const
 {
+    using enum Kind;
     switch (kind)
     {
-    case Kind::Number: return long(number_value);
-    case Kind::Bool:   return bool_value ? 1 : 0;
-    case Kind::String: return string_value.empty() ? 0L : std::stol(string_value);
-    case Kind::Null:
-    case Kind::Array:
-    case Kind::Object: return 0;
+    case Number: return long(number_value);
+    case Bool:   return bool_value ? 1 : 0;
+    case String: return string_value.empty() ? 0L : std::stol(string_value);
+    case Null:
+    case Array:
+    case Object: return 0;
     }
 
     return 0;
@@ -97,14 +99,15 @@ long Json::as_long() const
 
 double Json::as_double() const
 {
+    using enum Kind;
     switch (kind)
     {
-    case Kind::Number: return number_value;
-    case Kind::Bool:   return bool_value ? 1.0 : 0.0;
-    case Kind::String: return string_value.empty() ? 0.0 : std::stod(string_value);
-    case Kind::Null:
-    case Kind::Array:
-    case Kind::Object: return 0.0;
+    case Number: return number_value;
+    case Bool:   return bool_value ? 1.0 : 0.0;
+    case String: return string_value.empty() ? 0.0 : std::stod(string_value);
+    case Null:
+    case Array:
+    case Object: return 0.0;
     }
 
     return 0.0;
@@ -112,14 +115,15 @@ double Json::as_double() const
 
 bool Json::as_bool() const
 {
+    using enum Kind;
     switch (kind)
     {
-    case Kind::Bool:   return bool_value;
-    case Kind::Number: return number_value != 0.0;
-    case Kind::String: return string_value == "1" || string_value == "true";
-    case Kind::Null:
-    case Kind::Array:
-    case Kind::Object: return false;
+    case Bool:   return bool_value;
+    case Number: return number_value != 0.0;
+    case String: return string_value == "1" || string_value == "true";
+    case Null:
+    case Array:
+    case Object: return false;
     }
 
     return false;
@@ -162,11 +166,12 @@ static void dump_indent(string& out, int indent, int depth)
 
 static void dump_value(string& out, const Json& v, int indent, int depth)
 {
+    using enum Json::Kind;
     switch (v.kind)
     {
-    case Json::Kind::Null:   out += "null"; return;
-    case Json::Kind::Bool:   out += (v.bool_value ? "true" : "false"); return;
-    case Json::Kind::Number: {
+    case Null:   out += "null"; return;
+    case Bool:   out += (v.bool_value ? "true" : "false"); return;
+    case Number: {
         char buf[32];
         const long long as_int = static_cast<long long>(v.number_value);
         if (v.number_value == static_cast<double>(as_int) && abs(v.number_value) < 1e15)
@@ -176,8 +181,8 @@ static void dump_value(string& out, const Json& v, int indent, int depth)
         out += buf;
         return;
     }
-    case Json::Kind::String: escape_string(out, v.string_value); return;
-    case Json::Kind::Array:
+    case String: escape_string(out, v.string_value); return;
+    case Array:
         if (v.array_value.empty()) { out += "[]"; return; }
         out.push_back('[');
         for (size_t i = 0; i < v.array_value.size(); ++i)
@@ -189,7 +194,7 @@ static void dump_value(string& out, const Json& v, int indent, int depth)
         dump_indent(out, indent, depth);
         out.push_back(']');
         return;
-    case Json::Kind::Object:
+    case Object:
         if (v.object_value.empty()) { out += "{}"; return; }
         out.push_back('{');
         for (size_t i = 0; i < v.object_value.size(); ++i)

@@ -118,25 +118,26 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     }
 #endif
 
+    using enum Error;
     switch (error)
     {
-    case Error::MeanSquaredError:
+    case MeanSquaredError:
         mean_squared_error(input, target, result.error, workspace_device);
         break;
-    case Error::NormalizedSquaredError:
+    case NormalizedSquaredError:
         normalized_squared_error(input, target, normalization_coefficient, result.error, workspace_device);
         break;
-    case Error::WeightedSquaredError:
+    case WeightedSquaredError:
         weighted_squared_error(input, target, positives_weight, negatives_weight, result.error, workspace_device);
         result.error *= get_weighted_coefficient(batch);
         break;
-    case Error::CrossEntropy:
+    case CrossEntropy:
         if (input.shape.back() == 1)
             binary_cross_entropy(input, target, result.error, workspace_device);
         else
             categorical_cross_entropy(input, target, result.error, workspace_device);
         break;
-    case Error::CrossEntropy3d:
+    case CrossEntropy3d:
     {
         Index correct_tokens = 0;
         cross_entropy_3d(input, target, result.error, result.active_tokens_count, correct_tokens, workspace_device);
@@ -145,7 +146,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
             : 0.0f;
         break;
     }
-    case Error::MinkowskiError:
+    case MinkowskiError:
         minkowski_error(input, target, minkowski_parameter, result.error, workspace_device);
         break;
     }
@@ -198,9 +199,10 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         accumulate_scaled_metric_cuda(results_device, scale, error_sum_device);
     };
 
+    using enum Error;
     switch (error)
     {
-    case Error::MeanSquaredError:
+    case MeanSquaredError:
         input.dispatch([&](auto tag)
         {
             using TIn = decltype(tag);
@@ -209,7 +211,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         reduce_dot_and_accumulate(input.size(), 1.0f / static_cast<float>(2 * input.shape[0]));
         return true;
 
-    case Error::NormalizedSquaredError:
+    case NormalizedSquaredError:
         input.dispatch([&](auto tag)
         {
             using TIn = decltype(tag);
@@ -218,7 +220,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         reduce_dot_and_accumulate(input.size(), 1.0f / (2.0f * (normalization_coefficient + EPSILON)));
         return true;
 
-    case Error::WeightedSquaredError:
+    case WeightedSquaredError:
         input.dispatch([&](auto tag)
         {
             using T = decltype(tag);
@@ -228,7 +230,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         reduce_abs_and_accumulate(input.size(), 0.5f * get_weighted_coefficient(batch));
         return true;
 
-    case Error::CrossEntropy:
+    case CrossEntropy:
         input.dispatch([&](auto tag)
         {
             using T = decltype(tag);
@@ -240,7 +242,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         reduce_abs_and_accumulate(input.size(), 1.0f / static_cast<float>(input.shape[0]));
         return true;
 
-    case Error::CrossEntropy3d:
+    case CrossEntropy3d:
     {
         const Index vocabulary_size = input.shape.back();
         const Index sequence_length = input.shape[input.get_rank() - 2];
@@ -267,7 +269,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         return true;
     }
 
-    case Error::MinkowskiError:
+    case MinkowskiError:
         return false;
     }
 
@@ -298,23 +300,24 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
         if (!calculate_error_device_metrics(batch, forward_propagation, error_sum_device, accuracy_sum_device))
             return false;
 
+        using enum Error;
         switch (error)
         {
-        case Error::MeanSquaredError:
+        case MeanSquaredError:
             mean_squared_error_gradient(input, target, input_delta);
             break;
-        case Error::NormalizedSquaredError:
+        case NormalizedSquaredError:
             normalized_squared_error_gradient(input, target, normalization_coefficient, input_delta);
             break;
-        case Error::WeightedSquaredError:
+        case WeightedSquaredError:
             weighted_squared_error_gradient(input, target, positives_weight, negatives_weight,
                                             get_weighted_coefficient(batch), input_delta);
             break;
-        case Error::CrossEntropy:
+        case CrossEntropy:
             cross_entropy_gradient(input, target, input_delta);
             break;
-        case Error::CrossEntropy3d:
-        case Error::MinkowskiError:
+        case CrossEntropy3d:
+        case MinkowskiError:
             return false;
         }
     }
@@ -338,24 +341,25 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
     const TensorView target = batch.get_targets();
     const TensorView input_delta = back_propagation.get_output_delta();
 
+    using enum Error;
     switch (error)
     {
-    case Error::MeanSquaredError:
+    case MeanSquaredError:
         mean_squared_error_gradient(input, target, input_delta);
         break;
-    case Error::NormalizedSquaredError:
+    case NormalizedSquaredError:
         normalized_squared_error_gradient(input, target, normalization_coefficient, input_delta);
         break;
-    case Error::WeightedSquaredError:
+    case WeightedSquaredError:
         weighted_squared_error_gradient(input, target, positives_weight, negatives_weight, get_weighted_coefficient(batch), input_delta);
         break;
-    case Error::CrossEntropy:
+    case CrossEntropy:
         cross_entropy_gradient(input, target, input_delta);
         break;
-    case Error::CrossEntropy3d:
+    case CrossEntropy3d:
         cross_entropy_3d_gradient(input, target, input_delta, back_propagation.active_tokens_count);
         break;
-    case Error::MinkowskiError:
+    case MinkowskiError:
         minkowski_error_gradient(input, target, minkowski_parameter, input_delta);
         break;
     }

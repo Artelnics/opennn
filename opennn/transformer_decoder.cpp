@@ -219,7 +219,7 @@ void TransformerDecoder::identify_layer_ranges()
     for (Index i = 0; i < layers_number; ++i)
     {
         const string& name = layers[i]->get_label();
-        if (name.compare(0, 16, "cross_attention_") == 0)
+        if (name.starts_with("cross_attention_"))
         {
             first_cross_attention_index = i;
             break;

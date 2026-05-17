@@ -48,9 +48,6 @@ void Unscaling::set(Index new_neurons_number, const string& new_label)
 {
     set_label(new_label);
 
-    unscale_op.input_slots  = {Input};
-    unscale_op.output_slots = {Output};
-
     descriptives.assign(size_t(new_neurons_number), Descriptives(-1.0f, 1.0f, 0.0f, 1.0f));
     scalers.assign(size_t(new_neurons_number), ScalerMethod::MinimumMaximum);
     min_range = -1.0f;

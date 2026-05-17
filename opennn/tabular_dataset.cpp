@@ -198,11 +198,12 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
             continue;
         }
 
+        using enum VariableType;
         switch (variable.type)
         {
 
-        case VariableType::Numeric:
-        case VariableType::Constant:
+        case Numeric:
+        case Constant:
         {
             VectorR variable_data(used_samples_number);
 
@@ -215,7 +216,7 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
         }
         break;
 
-        case VariableType::Categorical:
+        case Categorical:
         {
             const Index categories_number = variable.get_categories_number();
 
@@ -240,7 +241,7 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
         }
         break;
 
-        case VariableType::Binary:
+        case Binary:
         {
             VectorR binary_frequencies = VectorR::Zero(2);
 
@@ -255,13 +256,13 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
         }
         break;
 
-        case VariableType::DateTime:
+        case DateTime:
 
             ++feature_index;
 
             break;
 
-        case VariableType::None:
+        case None:
             throw runtime_error("Cannot calculate distributions for a variable with type None.");
         }
     }
@@ -459,35 +460,36 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
 
     MatrixMap map(data.data(), data.rows(), data.cols());
 
+    using enum ScalerMethod;
     switch (method)
     {
-    case ScalerMethod::None:
+    case None:
         break;
-    case ScalerMethod::MinimumMaximum:
+    case MinimumMaximum:
         if (unscale)
             unscale_minimum_maximum(map, feature_index, desc);
         else
             scale_minimum_maximum(map, feature_index, desc);
         break;
-    case ScalerMethod::MeanStandardDeviation:
+    case MeanStandardDeviation:
         if (unscale)
             unscale_mean_standard_deviation(map, feature_index, desc);
         else
             scale_mean_standard_deviation(map, feature_index, desc);
         break;
-    case ScalerMethod::StandardDeviation:
+    case StandardDeviation:
         if (unscale)
             unscale_standard_deviation(map, feature_index, desc);
         else
             scale_standard_deviation(map, feature_index, desc);
         break;
-    case ScalerMethod::Logarithm:
+    case Logarithm:
         if (unscale)
             unscale_logarithmic(map, feature_index);
         else
             scale_logarithmic(map, feature_index);
         break;
-    case ScalerMethod::ImageMinMax:
+    case ImageMinMax:
         if (unscale) unscale_image_minimum_maximum(map, feature_index);
         break;
     }
@@ -904,15 +906,16 @@ void TabularDataset::read_csv()
             const string_view token = tokens[token_index];
             const vector<Index>& feature_indices = all_feature_indices[variable_index];
 
+            using enum VariableType;
             switch (variable.type)
             {
-            case VariableType::None:
-            case VariableType::Constant:
+            case None:
+            case Constant:
                 break;
-            case VariableType::Numeric:
+            case Numeric:
                 data(sample_index, feature_indices[0]) = is_missing(token) ? NAN : parse_float_or_nan(token);
                 break;
-            case VariableType::DateTime:
+            case DateTime:
                 if (is_missing(token))
                     data(sample_index, feature_indices[0]) = NAN;
                 else
@@ -925,7 +928,7 @@ void TabularDataset::read_csv()
                     data(sample_index, feature_indices[0]) = timestamp;
                 }
                 break;
-            case VariableType::Categorical:
+            case Categorical:
                 if (is_missing(token))
                     for (const Index cat_index : feature_indices)
                         data(sample_index, cat_index) = NAN;
@@ -936,7 +939,7 @@ void TabularDataset::read_csv()
                         data(sample_index, feature_indices[it->second]) = 1;
                 }
                 break;
-            case VariableType::Binary:
+            case Binary:
                 if (const bool is_positive = contains(positive_words, token); is_positive || contains(negative_words, token))
                     data(sample_index, feature_indices[0]) = is_positive ? 1 : 0;
                 else
@@ -1154,18 +1157,19 @@ void TabularDataset::impute_missing_values_interpolate()
 
 void TabularDataset::scrub_missing_values()
 {
+    using enum MissingValuesMethod;
     switch (missing_values_method)
     {
-    case MissingValuesMethod::Unuse:
+    case Unuse:
         impute_missing_values_unuse();
         break;
 
-    case MissingValuesMethod::Mean:
-    case MissingValuesMethod::Median:
+    case Mean:
+    case Median:
         impute_missing_values_statistic(missing_values_method);
         break;
 
-    case MissingValuesMethod::Interpolation:
+    case Interpolation:
         impute_missing_values_interpolate();
         break;
     }

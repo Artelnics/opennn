@@ -36,17 +36,17 @@ vector<pair<Shape, Type>> Layer::get_state_specs() const
 
 void Layer::distribute_to_operators(
     vector<TensorView>& views,
-    void (Operator::*link)(const vector<TensorView>&),
-    size_t (Operator::*count)() const)
+    vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
+    void (Operator::*link_fn)(const vector<TensorView>&))
 {
     size_t offset = 0;
     for (Operator* op : get_operators())
     {
-        const size_t n = (op->*count)();
+        const size_t n = (op->*specs_fn)().size();
         if (n == 0) continue;
         if (offset + n > views.size()) break;
-        (op->*link)(vector<TensorView>(views.begin() + offset,
-                                       views.begin() + offset + n));
+        (op->*link_fn)(vector<TensorView>(views.begin() + offset,
+                                          views.begin() + offset + n));
         offset += n;
     }
 }

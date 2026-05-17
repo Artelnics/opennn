@@ -811,7 +811,7 @@ void Optimizer::prefetch_batch(Batch& batch, Index sample_count, int slot)
     if (!reuse_event)
         CHECK_CUDA(cudaEventCreateWithFlags(&reuse_event, cudaEventDisableTiming));
 
-    if (batch_reuse_recorded.find(&batch) != batch_reuse_recorded.end())
+    if (batch_reuse_recorded.contains(&batch))
         CHECK_CUDA(cudaStreamWaitEvent(memory_stream, reuse_event, 0));
 
     float* fp32_staging = nullptr;

@@ -306,7 +306,7 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
                 else
                 {
                     const float fraction = float(k + 1) / float(n_missing + 1);
-                    const float value_interpolated = prev_value + (next_value - prev_value) * fraction;
+                    const float value_interpolated = lerp(prev_value, next_value, fraction);
 
                     data(sample_k, feature_index) = value_interpolated;
                 }

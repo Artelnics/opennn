@@ -187,7 +187,7 @@ public:
 
     void redistribute_parameters_to_operators()
     {
-        distribute_to_operators(parameters, &Operator::link_parameters, &Operator::parameter_count);
+        distribute_to_operators(parameters, &Operator::parameter_specs, &Operator::link_parameters);
     }
 
 protected:
@@ -219,8 +219,8 @@ protected:
 
     void distribute_to_operators(
         vector<TensorView>& views,
-        void (Operator::*link)(const vector<TensorView>&),
-        size_t (Operator::*count)() const);
+        vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
+        void (Operator::*link_fn)(const vector<TensorView>&));
 
     float* link_views_to_operators(
         vector<TensorView>& views, float* pointer,

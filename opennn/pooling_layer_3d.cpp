@@ -54,11 +54,7 @@ void Pooling3d::set(const Shape& new_input_shape,
     set_label(new_label);
 
     pool3d.method = (pooling_method == PoolingMethod::MaxPooling) ? Pool3dOp::Max : Pool3dOp::Average;
-    pool3d.input_slots  = {Input};
     pool3d.output_slots = {Output, MaximalIndices};
-
-    pool3d.output_delta_slots = {OutputDelta};
-    pool3d.input_delta_slots  = {InputDelta};
 }
 
 void Pooling3d::set_pooling_method(const string& new_pooling_method)

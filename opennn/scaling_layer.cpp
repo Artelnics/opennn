@@ -49,9 +49,6 @@ void Scaling::set(const Shape& new_input_shape)
 
     set_label("scaling_layer");
 
-    scale_op.input_slots  = {Input};
-    scale_op.output_slots = {Output};
-
     const Index features = input_shape.size();
     descriptives.assign(size_t(features), Descriptives(-1.0f, 1.0f, 0.0f, 1.0f));
     scalers.assign(size_t(features), ScalerMethod::MeanStandardDeviation);

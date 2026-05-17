@@ -26,11 +26,7 @@ Normalization3d::Normalization3d(const Shape& new_input_shape,
 
     set(new_input_shape.dim_or_zero(0), new_input_shape.dim_or_zero(1), new_name);
 
-    layer_norm.input_slots  = {Input};
     layer_norm.output_slots = {Means, StandardDeviations, NormalizedInput, Output};
-
-    layer_norm.output_delta_slots = {OutputDelta};
-    layer_norm.input_delta_slots  = {InputDelta};
 }
 
 Shape Normalization3d::get_input_shape() const

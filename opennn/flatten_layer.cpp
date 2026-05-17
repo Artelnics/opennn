@@ -21,12 +21,6 @@ Flatten::Flatten(const Shape& new_input_shape)
     operators = {&flat};
 
     set(new_input_shape);
-
-    flat.input_slots  = {Input};
-    flat.output_slots = {Output};
-
-    flat.output_delta_slots = {OutputDelta};
-    flat.input_delta_slots  = {InputDelta};
 }
 
 void Flatten::set(const Shape& new_input_shape)

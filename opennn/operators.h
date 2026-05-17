@@ -30,9 +30,6 @@ struct Operator
     virtual vector<pair<Shape, Type>> parameter_specs() const { return {}; }
     virtual vector<pair<Shape, Type>> state_specs()     const { return {}; }
 
-    virtual size_t parameter_count() const { return 0; }
-    virtual size_t state_count()     const { return 0; }
-
     virtual void link_parameters(const vector<TensorView>&) {}
     virtual void link_gradients (const vector<TensorView>&) {}
     virtual void link_states    (const vector<TensorView>&) {}
@@ -49,11 +46,11 @@ struct Operator
 
     virtual void destroy_cuda() {}
 
-    vector<size_t> input_slots;
-    vector<size_t> output_slots;
+    vector<size_t> input_slots = {0};
+    vector<size_t> output_slots = {1};
 
-    vector<size_t> input_delta_slots;
-    vector<size_t> output_delta_slots;
+    vector<size_t> input_delta_slots = {1};
+    vector<size_t> output_delta_slots = {0};
 
     TensorView& get_input(ForwardPropagation& fp, size_t layer, size_t i = 0) const noexcept
     {
@@ -188,7 +185,6 @@ struct CombinationOp : Operator
     void set(Index new_input_features, Index new_output_features, Type new_weight_type = Type::FP32);
 
     vector<pair<Shape, Type>> parameter_specs() const override;
-    size_t parameter_count() const override { return 2; }
     void link_parameters         (const vector<TensorView>& views) override;
     void link_gradients(const vector<TensorView>& views) override;
 
@@ -223,7 +219,6 @@ struct CombinationReluOp : Operator
     void set(Index input_features, Index output_features, Type weight_type = Type::FP32);
 
     vector<pair<Shape, Type>> parameter_specs() const override { return combination.parameter_specs(); }
-    size_t parameter_count() const override { return combination.parameter_count(); }
     void link_parameters(const vector<TensorView>& views) override { combination.link_parameters(views); }
     void link_gradients (const vector<TensorView>& views) override { combination.link_gradients(views); }
 
@@ -253,8 +248,6 @@ struct BatchNormOp : Operator
 
     vector<pair<Shape, Type>> parameter_specs() const override;
     vector<pair<Shape, Type>> state_specs()     const override;
-    size_t parameter_count() const override { return active() ? 2 : 0; }
-    size_t state_count()     const override { return active() ? 2 : 0; }
     void link_parameters         (const vector<TensorView>& views) override;
     void link_gradients(const vector<TensorView>& views) override;
     void link_states             (const vector<TensorView>& views) override;
@@ -354,7 +347,6 @@ struct ConvolutionOp : Operator
              Type compute_dtype);
 
     vector<pair<Shape, Type>> parameter_specs() const override;
-    size_t parameter_count() const override { return 2; }
     void link_parameters         (const vector<TensorView>& views) override;
     void link_gradients(const vector<TensorView>& views) override;
 
@@ -403,7 +395,6 @@ struct ConvolutionReluOp : Operator
              Type compute_dtype);
 
     vector<pair<Shape, Type>> parameter_specs() const override { return convolution.parameter_specs(); }
-    size_t parameter_count() const override { return convolution.parameter_count(); }
     void link_parameters(const vector<TensorView>& views) override { convolution.link_parameters(views); }
     void link_gradients (const vector<TensorView>& views) override { convolution.link_gradients(views); }
 
@@ -435,7 +426,6 @@ struct LayerNormOp : Operator
     void set(Index sequence_length, Index embedding_dimension);
 
     vector<pair<Shape, Type>> parameter_specs() const override;
-    size_t parameter_count() const override { return 2; }
     void link_parameters         (const vector<TensorView>& views) override;
     void link_gradients(const vector<TensorView>& views) override;
 
@@ -493,7 +483,6 @@ struct MultiHeadProjectionOp : Operator
     void set(Index input_features, Index heads_number, Index head_dimension, Type compute_dtype);
 
     vector<pair<Shape, Type>> parameter_specs() const override { return combination.parameter_specs(); }
-    size_t parameter_count() const override { return combination.parameter_count(); }
     void link_parameters         (const vector<TensorView>& views) override { combination.link_parameters(views); }
     void link_gradients(const vector<TensorView>& views) override { combination.link_gradients(views); }
 
@@ -782,8 +771,6 @@ struct EmbeddingLookupOp : Operator
 
     vector<pair<Shape, Type>> parameter_specs() const override;
     vector<pair<Shape, Type>> state_specs()     const override;
-    size_t parameter_count() const override { return 1; }
-    size_t state_count()     const override;
     void link_parameters         (const vector<TensorView>& views) override;
     void link_gradients(const vector<TensorView>& views) override;
     void link_states             (const vector<TensorView>& views) override;

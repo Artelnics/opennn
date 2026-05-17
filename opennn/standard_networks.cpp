@@ -563,10 +563,10 @@ void Transformer::set_dropout_rate(const float new_dropout_rate)
 
         const string& label = layer->get_label();
         const bool is_ffn_dense =
-               label.rfind("encoder_internal_dense", 0) == 0
-            || label.rfind("encoder_external_dense", 0) == 0
-            || label.rfind("decoder_internal_dense", 0) == 0
-            || label.rfind("decoder_external_dense", 0) == 0;
+               label.starts_with("encoder_internal_dense")
+            || label.starts_with("encoder_external_dense")
+            || label.starts_with("decoder_internal_dense")
+            || label.starts_with("decoder_external_dense");
 
         if (is_ffn_dense)
         {
