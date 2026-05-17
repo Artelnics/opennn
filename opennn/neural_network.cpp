@@ -783,6 +783,8 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     layer_input_indices.clear();
     layers.reserve(layers_number);
     layer_input_indices.resize(layers_number);
+    first_trainable_cache_ = -1;
+    last_trainable_cache_  = -1;
 
     const Json* items_array = layers_container->find("Items");
     if (items_array && items_array->is_array())
@@ -805,9 +807,6 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
             layers.push_back(move(layer));
         }
-
-        first_trainable_cache_ = -1;
-        last_trainable_cache_  = -1;
     }
 
     if (const Json* connectivity_element = layers_container->find("LayerInputIndices"); connectivity_element)
