@@ -371,7 +371,7 @@ void ModelExpression::rename_spaced_var_definitions(vector<string>& lines)
         if (clean_var.find(' ') == string::npos) continue;
 
         string fixed_var = clean_var;
-        replace(fixed_var.begin(), fixed_var.end(), ' ', '_');
+        ranges::replace(fixed_var, ' ', '_');
 
         for (size_t j = 0; j < lines.size(); ++j)
             replace_all_appearances(lines[j], clean_var, fixed_var);

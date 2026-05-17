@@ -358,7 +358,7 @@ string get_trimmed(const string& text)
 {
     const auto is_space = [](char character) { return isspace(static_cast<unsigned char>(character)); };
 
-    const auto start = find_if_not(text.begin(), text.end(), is_space);
+    const auto start = ranges::find_if_not(text, is_space);
     const auto end = find_if_not(text.rbegin(), text.rend(), is_space).base();
 
     return (start < end) ? string(start, end) : string();

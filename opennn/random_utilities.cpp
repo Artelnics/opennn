@@ -116,7 +116,7 @@ void set_random_normal(MatrixMap tensor, float mean, float std_dev)
 template<typename T>
 void shuffle_vector(vector<T>& vec)
 {
-    shuffle(vec.begin(), vec.end(), get_generator());
+    ranges::shuffle(vec, get_generator());
 }
 
 template void shuffle_vector<Index>(vector<Index>&);

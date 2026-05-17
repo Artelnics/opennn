@@ -157,9 +157,8 @@ LanguageDataset::LanguageDataset(const Index samples_number,
     set_default_variable_names();
     set_binary_variables();
 
-    for_each(variables.begin(),
-             variables.begin() + maximum_input_sequence_length,
-             [](Variable& variable) { variable.role = VariableRole::Input; });
+    ranges::for_each(variables | views::take(maximum_input_sequence_length),
+                     [](Variable& variable) { variable.role = VariableRole::Input; });
 }
 
 void LanguageDataset::create_vocabulary(const vector<vector<string_view>>& document_tokens,
@@ -238,13 +237,13 @@ void LanguageDataset::read_txt()
 
         variables.resize(features_number);
 
-        for_each(variables.begin(),
-                 variables.begin() + maximum_input_sequence_length,
-                 [](Variable& variable) { variable.role = VariableRole::Input; });
+        ranges::for_each(variables | views::take(maximum_input_sequence_length),
+                         [](Variable& variable) { variable.role = VariableRole::Input; });
 
-        for_each(variables.begin() + maximum_input_sequence_length,
-                 variables.begin() + maximum_input_sequence_length + maximum_target_sequence_length,
-                 [](Variable& variable) { variable.role = VariableRole::Target; });
+        ranges::for_each(variables
+                         | views::drop(maximum_input_sequence_length)
+                         | views::take(maximum_target_sequence_length),
+                         [](Variable& variable) { variable.role = VariableRole::Target; });
 
         if (!variables.empty())
             variables[0].categories = input_vocabulary;
@@ -267,17 +266,18 @@ void LanguageDataset::read_txt()
 
         variables.resize(features_number);
 
-        for_each(variables.begin(),
-                 variables.begin() + maximum_input_sequence_length,
-                 [](Variable& variable) { variable.role = VariableRole::Input; });
+        ranges::for_each(variables | views::take(maximum_input_sequence_length),
+                         [](Variable& variable) { variable.role = VariableRole::Input; });
 
-        for_each(variables.begin() + decoder_offset,
-                 variables.begin() + decoder_offset + maximum_target_sequence_length,
-                 [](Variable& variable) { variable.role = VariableRole::Decoder; });
+        ranges::for_each(variables
+                         | views::drop(decoder_offset)
+                         | views::take(maximum_target_sequence_length),
+                         [](Variable& variable) { variable.role = VariableRole::Decoder; });
 
-        for_each(variables.begin() + target_offset,
-                 variables.begin() + target_offset + maximum_target_sequence_length,
-                 [](Variable& variable) { variable.role = VariableRole::Target; });
+        ranges::for_each(variables
+                         | views::drop(target_offset)
+                         | views::take(maximum_target_sequence_length),
+                         [](Variable& variable) { variable.role = VariableRole::Target; });
 
         if (!variables.empty())
             variables[0].categories = input_vocabulary;
