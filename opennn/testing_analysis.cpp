@@ -1311,7 +1311,7 @@ string TestingAnalysis::test_transformer(const vector<string>& /*context_string*
 
     return transformer->calculate_outputs(context_string);
 */
-    return string();
+    return {};
 }
 
 VectorR TestingAnalysis::calculate_binary_classification_tests(const float decision_threshold) const

@@ -46,7 +46,7 @@ public:
 
     void set_data_random() override;
 
-    void set_image_padding(const int& new_padding) { padding = new_padding; }
+    void set_image_padding(int new_padding) { padding = new_padding; }
 
     using Dataset::unscale_features;
 

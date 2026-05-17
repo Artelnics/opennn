@@ -93,7 +93,7 @@ string InputsSelectionResults::write_stopping_condition() const
         return "MaximumSelectionFailures";
 
     default:
-        return string();
+        return {};
     }
 }
 

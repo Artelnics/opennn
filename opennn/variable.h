@@ -118,17 +118,17 @@ inline bool role_matches(VariableRole actual, VariableRole query)
 
 struct Variable
 {
-    Variable(const string& = string(),
+    Variable(const string& = {},
              const string& = "None",
              const VariableType& = VariableType::Numeric,
              const string& = "MeanStandardDeviation",
-             const vector<string>& = vector<string>());
+             const vector<string>& = {});
 
-    void set(const string& = string(),
+    void set(const string& = {},
              const string& = "None",
              const VariableType& = VariableType::Numeric,
              const string& = "MeanStandardDeviation",
-             const vector<string>& = vector<string>());
+             const vector<string>& = {});
 
     string name;
     VariableRole role = VariableRole::None;

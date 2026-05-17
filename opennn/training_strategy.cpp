@@ -82,7 +82,7 @@ void TrainingStrategy::set_default()
     {
         set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");
-        dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_learning_rate(0.0001);
+        dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_learning_rate(0.0001f);
         return;
     }
 

@@ -626,7 +626,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
     {
         cout << "!!! [Critical] Zero feasible points found. "
              << "Check if your constraints are too strict." << "\n";
-        return MatrixR();
+        return {};
     }
 
     MatrixR first_objective_matrix = objectives.extract(first_feasible_inputs, first_feasible_outputs);

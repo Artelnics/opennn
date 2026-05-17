@@ -27,7 +27,7 @@ public:
     NeuralNetwork(const filesystem::path&);
 
     void add_layer(unique_ptr<Layer>,
-                  const vector<Index>& = vector<Index>());
+                  const vector<Index>& = {});
 
     [[nodiscard]] const Configuration::Resolved& get_config() const { return config; }
     [[nodiscard]] bool is_gpu() const { return config.device == Device::CUDA; }

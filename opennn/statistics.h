@@ -104,11 +104,11 @@ struct Histogram
 [[nodiscard]] float minimum(const MatrixR&);
 [[nodiscard]] float minimum(const VectorR&);
 [[nodiscard]] float minimum(const VectorR&, const vector<Index>&);
-[[nodiscard]] VectorR column_minimums(const Tensor2&, const vector<Index>& = vector<Index>(), const vector<Index>& = vector<Index>());
+[[nodiscard]] VectorR column_minimums(const Tensor2&, const vector<Index>& = {}, const vector<Index>& = {});
 [[nodiscard]] float maximum(const MatrixR&);
 [[nodiscard]] float maximum(const VectorR&);
 [[nodiscard]] float maximum(const VectorR&, const vector<Index>&);
-[[nodiscard]] VectorR column_maximums(const Tensor2&, const vector<Index>& = vector<Index>(), const vector<Index>& = vector<Index>());
+[[nodiscard]] VectorR column_maximums(const Tensor2&, const vector<Index>& = {}, const vector<Index>& = {});
 [[nodiscard]] float range(const VectorR&);
 [[nodiscard]] float mean(const VectorR&);
 [[nodiscard]] float mean(const MatrixR&, Index);

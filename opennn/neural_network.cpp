@@ -435,7 +435,7 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
     const Index layers_number = get_layers_number();
 
     if (layers_number == 0)
-        return Tensor3();
+        return {};
 
     const Index batch_size = inputs_1.dimension(0);
 

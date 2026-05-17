@@ -67,7 +67,7 @@ Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& fea
     const vector<Index> feature_indices = get_feature_indices(feature_role);
 
     if (sample_indices.empty() || feature_indices.empty())
-        return Tensor3();
+        return {};
 
     const Index samples_number = sample_indices.size();
     const Index features_number = feature_indices.size();
@@ -607,7 +607,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations_spearman(const Index pas
     const Index numeric_vars_count = numeric_vars_indices.size();
 
     if (numeric_vars_count == 0)
-        return Tensor3();
+        return {};
 
     map<Index, VectorR> ranked_series;
 

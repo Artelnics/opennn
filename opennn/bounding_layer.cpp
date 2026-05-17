@@ -213,7 +213,7 @@ string Bounding::write_expression(const vector<string>& input_names,
                                   const vector<string>& output_names) const
 {
     if (get_bounding_method() == BoundingMethod::NoBounding)
-        return string();
+        return {};
 
     ostringstream buffer;
     buffer.precision(10);

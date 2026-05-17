@@ -42,7 +42,7 @@ namespace opennn
 
     void replace(string&, const string&, const string&);
 
-    void display_progress_bar(const int&, const int&);
+    void display_progress_bar(int, int);
 
     [[nodiscard]] string get_time(float);
 

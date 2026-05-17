@@ -196,7 +196,7 @@ struct TrainingResults
 
     void save(const filesystem::path&) const;
 
-    void print(const string& message = string()) const;
+    void print(const string& message = {}) const;
 
     Optimizer::StoppingCondition stopping_condition = Optimizer::StoppingCondition::None;
 

@@ -191,7 +191,7 @@ void FileWriter::finish_with_rename(const filesystem::path& final_path)
     throw_if(!stream_.is_open(), "FileWriter::finish: not open.");
     stream_.flush();
     stream_.close();
-    if (!stream_.good() && stream_.eof() == false && stream_.fail())
+    if (!stream_.good() && !stream_.eof() && stream_.fail())
         throw runtime_error("FileWriter::finish: flush/close failed.");
 
     atomic_rename(tmp_path_, final_path);

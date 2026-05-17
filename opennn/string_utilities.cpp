@@ -401,7 +401,7 @@ string get_time(float time)
     return format("{:02}:{:02}:{:02}", hours, minutes, seconds);
 }
 
-void display_progress_bar(const int& completed, const int& total)
+void display_progress_bar(int completed, int total)
 {
     const int width = 50;
     const float progress = static_cast<float>(completed) / total;

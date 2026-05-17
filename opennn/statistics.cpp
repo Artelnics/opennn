@@ -534,7 +534,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     {
         const float value = new_vector(i);
 
-        if (!isnan(value) && unique_set.find(value) == unique_set.end())
+        if (!isnan(value) && !unique_set.contains(value))
         {
             unique_values.push_back(value);
             unique_set.insert(value);

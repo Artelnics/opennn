@@ -137,7 +137,7 @@ string NeuronsSelectionResults::write_stopping_condition() const
             return "MaximumNeurons";
 
         default:
-            return string();
+            return {};
     }
 }
 

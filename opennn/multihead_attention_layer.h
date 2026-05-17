@@ -21,12 +21,12 @@ public:
 
     MultiHeadAttention(const Shape& = Shape({0, 0}),
                        Index = 0,
-                       const string& = string());
+                       const string& = {});
 
     MultiHeadAttention(const Shape& new_query_dimensions,
                        const Shape& new_source_dimensions,
                        Index = 0,
-                       const string& = string());
+                       const string& = {});
 
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;

@@ -157,7 +157,7 @@ public:
     virtual void write_JSON_body(JsonWriter&) const {}
 
     [[nodiscard]] virtual string write_expression(const vector<string>& /*input_names*/,
-                                    const vector<string>& /*output_names*/) const { return string(); }
+                                    const vector<string>& /*output_names*/) const { return {}; }
 
     virtual void print() const {}
 

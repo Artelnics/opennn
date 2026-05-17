@@ -627,7 +627,7 @@ string Dataset::get_separator_string() const
     for (const auto& [sep, str, name] : separator_map)
         if (sep == separator) return str;
 
-    return string();
+    return {};
 }
 
 string Dataset::get_separator_name() const
@@ -635,7 +635,7 @@ string Dataset::get_separator_name() const
     for (const auto& [sep, str, name] : separator_map)
         if (sep == separator) return name;
 
-    return string();
+    return {};
 }
 
 static const vector<pair<Dataset::Codification, string>> codification_map = {

@@ -606,7 +606,7 @@ string TrainingResults::write_stopping_condition() const
         return "Maximum training time";
 
     default:
-        return string();
+        return {};
     }
 }
 
