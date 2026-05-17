@@ -22,7 +22,7 @@ Convolutional::Convolutional(const Shape& new_input_shape,
                              const string& new_convolution_type,
                              bool new_batch_normalization,
                              const string& new_label)
-    : Layer("Convolutional", LayerType::Convolutional)
+    : Layer(LayerType::Convolutional)
 {
     operators = {&convolution, &batch_norm, &activation};
 

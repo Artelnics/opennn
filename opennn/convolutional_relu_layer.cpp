@@ -20,7 +20,7 @@ ConvolutionalRelu::ConvolutionalRelu(const Shape& new_input_shape,
                                      const Shape& new_stride_shape,
                                      const string& new_convolution_type,
                                      const string& new_label)
-    : Layer("ConvolutionalRelu", LayerType::ConvolutionalRelu)
+    : Layer(LayerType::ConvolutionalRelu)
 {
     operators = {&convolution_relu};
     set(new_input_shape,

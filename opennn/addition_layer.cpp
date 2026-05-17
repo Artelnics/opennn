@@ -16,7 +16,7 @@ namespace opennn
 {
 
 Addition::Addition(const Shape& new_input_shape, const string& new_name)
-    : Layer("Addition", LayerType::Addition)
+    : Layer(LayerType::Addition)
 {
     operators = {&add};
 

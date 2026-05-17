@@ -38,7 +38,7 @@ VectorR Unscaling::get_means()               const { return descriptives_field(d
 VectorR Unscaling::get_standard_deviations() const { return descriptives_field(descriptives, &Descriptives::standard_deviation); }
 
 Unscaling::Unscaling(const Shape& new_input_shape, const string& new_label)
-    : Layer("Unscaling", LayerType::Unscaling, false)
+    : Layer(LayerType::Unscaling, false)
 {
     operators = {&unscale_op};
     set(new_input_shape.dim_or_zero(0), new_label);

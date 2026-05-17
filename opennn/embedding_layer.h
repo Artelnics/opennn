@@ -30,6 +30,7 @@ public:
     Index get_embedding_dimension() const { return embedding_dimension; }
 
     vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
+    vector<pair<Shape, Type>> get_backward_specs(Index) const override { return {}; }
 
     void set(Index = 0,
              Index = 0,

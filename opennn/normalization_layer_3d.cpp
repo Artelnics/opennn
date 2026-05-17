@@ -20,7 +20,7 @@ namespace opennn
 
 Normalization3d::Normalization3d(const Shape& new_input_shape,
                                  const string& new_name)
-    : Layer("Normalization3d", LayerType::Normalization3d)
+    : Layer(LayerType::Normalization3d)
 {
     operators = {&layer_norm};
 

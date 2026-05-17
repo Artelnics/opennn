@@ -39,7 +39,7 @@ enum class LayerType
     Unscaling
 };
 
-inline const EnumMap<LayerType>& layer_type_map()
+[[nodiscard]] inline const EnumMap<LayerType>& layer_type_map()
 {
     static const vector<pair<LayerType, string>> entries = {
         {LayerType::Addition,           "Addition"},
@@ -62,12 +62,12 @@ inline const EnumMap<LayerType>& layer_type_map()
     return map;
 }
 
-inline const string& layer_type_to_string(LayerType type)
+[[nodiscard]] inline const string& layer_type_to_string(LayerType type)
 {
     return layer_type_map().to_string(type);
 }
 
-inline LayerType string_to_layer_type(const string& name)
+[[nodiscard]] inline LayerType string_to_layer_type(const string& name)
 {
     return layer_type_map().from_string(name);
 }
@@ -99,40 +99,40 @@ public:
 
     virtual ~Layer() = default;
 
-    const string& get_label() const { return label; }
+    [[nodiscard]] const string& get_label() const { return label; }
 
-    const string& get_name() const { return name; }
+    [[nodiscard]] const string& get_name() const { return layer_type_to_string(layer_type); }
 
-    LayerType get_type() const { return layer_type; }
+    [[nodiscard]] LayerType get_type() const { return layer_type; }
 
     virtual void set_input_shape(const Shape&);
     virtual void set_output_shape(const Shape&);
 
     void set_label(string new_label) { label = move(new_label); }
 
-    Index get_parameters_number() const;
-    const vector<Operator*>& get_operators() const { return operators; }
-    virtual vector<pair<Shape, Type>> get_parameter_specs() const;
-    virtual vector<pair<Shape, Type>> get_state_specs()     const;
-    virtual vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const
+    [[nodiscard]] Index get_parameters_number() const;
+    [[nodiscard]] const vector<Operator*>& get_operators() const { return operators; }
+    [[nodiscard]] virtual vector<pair<Shape, Type>> get_parameter_specs() const;
+    [[nodiscard]] virtual vector<pair<Shape, Type>> get_state_specs()     const;
+    [[nodiscard]] virtual vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const
     {
         return {{Shape{batch_size}.append(get_output_shape()), compute_dtype}};
     }
-    virtual vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const
+    [[nodiscard]] virtual vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const
     {
         if (!is_trainable) return {};
         return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
     }
 
-    virtual Shape get_input_shape() const { return input_shape; }
+    [[nodiscard]] virtual Shape get_input_shape() const { return input_shape; }
 
-    virtual Shape get_output_shape() const = 0;
+    [[nodiscard]] virtual Shape get_output_shape() const = 0;
 
-    virtual ActivationOp::Function get_output_activation() const { return ActivationOp::Function::Identity; }
+    [[nodiscard]] virtual ActivationOp::Function get_output_activation() const { return ActivationOp::Function::Identity; }
 
-    Index get_inputs_number() const { return get_input_shape().size(); }
+    [[nodiscard]] Index get_inputs_number() const { return get_input_shape().size(); }
 
-    Index get_outputs_number() const { return get_output_shape().size(); }
+    [[nodiscard]] Index get_outputs_number() const { return get_output_shape().size(); }
     
     virtual void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept
     {
@@ -156,14 +156,14 @@ public:
 
     virtual void write_JSON_body(JsonWriter&) const {}
 
-    virtual string write_expression(const vector<string>& /*input_names*/,
+    [[nodiscard]] virtual string write_expression(const vector<string>& /*input_names*/,
                                     const vector<string>& /*output_names*/) const { return string(); }
 
     virtual void print() const {}
 
-    bool get_is_trainable() const { return is_trainable; }
+    [[nodiscard]] bool get_is_trainable() const { return is_trainable; }
 
-    Type get_compute_dtype() const { return compute_dtype; }
+    [[nodiscard]] Type get_compute_dtype() const { return compute_dtype; }
 
     void set_compute_dtype(Type new_compute_dtype)
     {
@@ -186,15 +186,13 @@ protected:
 
     Layer() = default;
 
-    Layer(string n, LayerType t, bool trainable = true)
-        : name(move(n)), layer_type(t), is_trainable(trainable) {}
+    Layer(LayerType t, bool trainable = true)
+        : layer_type(t), is_trainable(trainable) {}
 
     enum Forward {Input, Output};
     enum Backward {OutputDelta, InputDelta};
 
     string label = "my_layer";
-
-    string name = "layer";
 
     LayerType layer_type = LayerType::Dense;
 

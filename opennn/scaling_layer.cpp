@@ -32,7 +32,7 @@ VectorR descriptives_field(const vector<Descriptives>& descriptives,
 }
 
 Scaling::Scaling(const Shape& new_input_shape)
-    : Layer("Scaling", LayerType::Scaling, false)
+    : Layer(LayerType::Scaling, false)
 {
     operators = {&scale_op};
     set(new_input_shape);

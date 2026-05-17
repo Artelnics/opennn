@@ -18,7 +18,7 @@ namespace opennn
 DenseRelu::DenseRelu(const Shape& new_input_shape,
                      const Shape& new_output_shape,
                      const string& new_label)
-    : Layer("DenseRelu", LayerType::DenseRelu)
+    : Layer(LayerType::DenseRelu)
 {
     operators = {&combination_relu};
     set(new_input_shape, new_output_shape, new_label);

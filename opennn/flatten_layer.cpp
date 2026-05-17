@@ -16,7 +16,7 @@ namespace opennn
 {
 
 Flatten::Flatten(const Shape& new_input_shape)
-    : Layer("Flatten", LayerType::Flatten)
+    : Layer(LayerType::Flatten)
 {
     operators = {&flat};
 

@@ -21,7 +21,7 @@ namespace opennn
 {
 
 Bounding::Bounding(const Shape& new_output_shape, const string& new_name)
-    : Layer("Bounding", LayerType::Bounding, false)
+    : Layer(LayerType::Bounding, false)
 {
     operators = {&bound};
     set(new_output_shape, new_name);

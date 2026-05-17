@@ -116,7 +116,7 @@ void Layer::set_output_shape(const Shape& shape)
 
 void Layer::from_JSON(const JsonDocument& document)
 {
-    const Json* root = get_json_root(document, name);
+    const Json* root = get_json_root(document, get_name());
     if (!root) return;
 
     set_label(read_json_string(root, "Label"));
@@ -129,14 +129,14 @@ void Layer::from_JSON(const JsonDocument& document)
 
 void Layer::load_state_from_JSON(const JsonDocument& document)
 {
-    if (const Json* root = get_json_root(document, name))
+    if (const Json* root = get_json_root(document, get_name()))
         for (Operator* op : get_operators())
             op->load_state_from_JSON(root);
 }
 
 void Layer::to_JSON(JsonWriter& writer) const
 {
-    writer.open_element(name);
+    writer.open_element(get_name());
 
     add_json_field(writer, "Label", label);
     add_json_field(writer, "InputDimensions", shape_to_string(get_input_shape()));

@@ -29,7 +29,7 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
                                        const Shape& new_source_dimensions,
                                        Index new_heads_number,
                                        const string& new_name)
-    : Layer("MultiHeadAttention", LayerType::MultiHeadAttention)
+    : Layer(LayerType::MultiHeadAttention)
 {
     // Forward order V, K, Q ensures Layer::back_propagate (reverse iteration) runs
     // as output_projection -> merge -> attention -> query_projection ->

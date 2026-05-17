@@ -16,7 +16,7 @@ namespace opennn
 
 Recurrent::Recurrent(const Shape& new_input_shape,
                      const Shape& new_output_shape)
-    : Layer("Recurrent", LayerType::Recurrent)
+    : Layer(LayerType::Recurrent)
 {
     set(new_input_shape, new_output_shape);
 }
