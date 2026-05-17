@@ -398,13 +398,7 @@ string get_time(float time)
     const int minutes = (total_seconds % 3600) / 60;
     const int seconds = total_seconds % 60;
 
-    ostringstream elapsed_time;
-    elapsed_time << setfill('0')
-                 << setw(2) << hours << ":"
-                 << setw(2) << minutes << ":"
-                 << setw(2) << seconds;
-
-    return elapsed_time.str();
+    return format("{:02}:{:02}:{:02}", hours, minutes, seconds);
 }
 
 void display_progress_bar(const int& completed, const int& total)

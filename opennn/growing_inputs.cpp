@@ -321,7 +321,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         {
             for (Index j = 0; j < time_steps; ++j)
             {
-                string name = (base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j);
+                string name = format("{}_lag{}", base_name.empty() ? "variable" : base_name, j);
                 final_feature_names.push_back(name);
             }
         }

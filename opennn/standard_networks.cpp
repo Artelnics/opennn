@@ -39,7 +39,7 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
                                        Shape{ complexity_dimensions[i] },
                                        "Tanh",
                                        false,
-                                       "dense2d_layer_" + to_string(i + 1)));
+                                       format("dense2d_layer_{}", i + 1)));
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,
@@ -68,7 +68,7 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                        Shape{complexity_dimensions[i]},
                                        "Tanh",
                                        false,
-                                       "dense2d_layer_" + to_string(i + 1)));
+                                       format("dense2d_layer_{}", i + 1)));
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,
@@ -157,7 +157,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                              stride_shape,
                                              "Same",
                                              false,
-                                             "convolutional_layer_" + to_string(i + 1)));
+                                             format("convolutional_layer_{}", i + 1)));
 
         const Shape pool_dimensions = { 2, 2 };
         const Shape pooling_stride_shape = { 2, 2 };
@@ -168,7 +168,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                        pooling_stride_shape,
                                        padding_dimensions,
                                        "MaxPooling",
-                                       "pooling_layer_" + to_string(i + 1)));
+                                       format("pooling_layer_{}", i + 1)));
     }
 
     add_layer(make_unique<Flatten>(get_output_shape()));
@@ -218,7 +218,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
     auto add_residual_block = [&](Index input_index, size_t stage, Index block, Index filters) -> Index {
         const Shape input_shape  = get_layer(input_index)->get_output_shape();
         const Index stride       = (stage > 0 && block == 0) ? 2 : 1;
-        const string prefix      = "s" + to_string(stage) + "b" + to_string(block);
+        const string prefix      = format("s{}b{}", stage, block);
 
         Index main_index = add_conv(input_index,
             Shape{3, 3, input_shape[2], filters}, "ReLU",
@@ -477,7 +477,7 @@ void Transformer::set(const Index input_sequence_length,
 
     for (Index i = 0; i < layers_number; ++i)
     {
-        const string suffix = "_" + to_string(i + 1);
+        const string suffix = format("_{}", i + 1);
 
         add_layer(make_unique<MultiHeadAttention>(encoder_shape, heads_number,
                                                   "encoder_self_attention" + suffix),
@@ -507,7 +507,7 @@ void Transformer::set(const Index input_sequence_length,
 
     for (Index i = 0; i < layers_number; ++i)
     {
-        const string suffix = "_" + to_string(i + 1);
+        const string suffix = format("_{}", i + 1);
 
         // Masked self-attention.
         auto decoder_self_attention = make_unique<MultiHeadAttention>(

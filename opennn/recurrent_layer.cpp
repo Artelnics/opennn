@@ -287,9 +287,9 @@ string Recurrent::write_expression(const vector<string>& feature_names,
             if (time_step == time_steps_local - 1)
                 current_variable_name = (j < ssize(output_names))
                     ? output_names[j]
-                    : "recurrent_output_" + to_string(j);
+                    : format("recurrent_output_{}", j);
             else
-                current_variable_name = "recurrent_hidden_step_" + to_string(time_step) + "_neuron_" + to_string(j);
+                current_variable_name = format("recurrent_hidden_step_{}_neuron_{}", time_step, j);
 
             buffer << current_variable_name << " = " << activation_function_local << "( " << biases_map(j);
 
@@ -305,7 +305,7 @@ string Recurrent::write_expression(const vector<string>& feature_names,
             {
                 for (Index previous_j = 0; previous_j < outputs_number; ++previous_j)
                 {
-                    string previous_variable_name = "recurrent_hidden_step_" + to_string(time_step - 1) + "_neuron_" + to_string(previous_j);
+                    string previous_variable_name = format("recurrent_hidden_step_{}_neuron_{}", time_step - 1, previous_j);
                     buffer << " + (" << previous_variable_name << "*" << hidden_to_hidden_weights_map(previous_j, j) << ")";
                 }
             }

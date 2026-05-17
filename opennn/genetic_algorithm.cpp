@@ -623,7 +623,7 @@ void GeneticAlgorithm::configure_neural_network_inputs(NeuralNetwork* neural_net
 
         for (const string& base_name : base_names)
             for (Index j = 0; j < past_time_steps; ++j)
-                final_feature_names.push_back((base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j));
+                final_feature_names.push_back(format("{}_lag{}", base_name.empty() ? "variable" : base_name, j));
 
         neural_network->set_input_names(final_feature_names);
     }

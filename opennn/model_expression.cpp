@@ -290,13 +290,13 @@ string ModelExpression::build_expression() const
     new_input_names.resize(inputs_number);
     for (Index i = 0; i < inputs_number; ++i)
         if (new_input_names[i].empty())
-            new_input_names[i] = "input_" + to_string(i);
+            new_input_names[i] = format("input_{}", i);
 
     vector<string> new_output_names = neural_network->get_output_feature_names();
     new_output_names.resize(outputs_number);
     for (Index i = 0; i < outputs_number; ++i)
         if (new_output_names[i].empty())
-            new_output_names[i] = "output_" + to_string(i);
+            new_output_names[i] = format("output_{}", i);
 
     ostringstream buffer;
 
@@ -318,7 +318,7 @@ string ModelExpression::build_expression() const
             for (size_t j = 0; j < static_cast<size_t>(layer_neurons_number); ++j)
                 layer_output_names[j] = (layer_labels[i] == "scaling_layer" && j < new_input_names.size())
                                             ? "scaled_" + new_input_names[j]
-                                            : layer_labels[i] + "_output_" + to_string(j);
+                                            : format("{}_output_{}", layer_labels[i], j);
         }
 
         buffer << get_layer_expression(*layers[i], new_input_names, layer_output_names) << "\n";
@@ -1125,7 +1125,7 @@ vector<string> ModelExpression::fix_names(const vector<string>& names, const str
 
     for (size_t i = 0; i < names.size(); ++i)
         fixed[i] = names[i].empty()
-            ? default_prefix + to_string(i)
+            ? format("{}{}", default_prefix, i)
             : replace_reserved_keywords(names[i]);
 
     return fixed;

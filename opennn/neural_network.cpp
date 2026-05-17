@@ -695,11 +695,11 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
 
     vector<string> input_names = get_input_feature_names();
     while (ssize(input_names) < inputs_number)
-        input_names.push_back("input_" + to_string(input_names.size() + 1));
+        input_names.push_back(format("input_{}", input_names.size() + 1));
 
     vector<string> output_names = get_output_feature_names();
     while (ssize(output_names) < outputs_number)
-        output_names.push_back("output_" + to_string(output_names.size() + 1));
+        output_names.push_back(format("output_{}", output_names.size() + 1));
 
     printer.open_element("NeuralNetwork");
 

@@ -310,7 +310,7 @@ void Dataset::set_default_variable_names()
     const Index variables_number = variables.size();
 
     for (Index i = 0; i < variables_number; ++i)
-        variables[i].name = "variable_" + to_string(1 + i);
+        variables[i].name = format("variable_{}", 1 + i);
 }
 
 vector<string> Dataset::get_feature_names() const
@@ -989,7 +989,7 @@ void Dataset::set(const Index new_samples_number,
         Variable& variable = variables[i];
 
         variable.type = VariableType::Numeric;
-        variable.name = "variable_" + to_string(i + 1);
+        variable.name = format("variable_{}", i + 1);
 
         variable.role = (i < new_inputs_number)
                                ? VariableRole::Input

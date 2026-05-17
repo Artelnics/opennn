@@ -70,9 +70,7 @@ string Json::as_string() const
     {
     case Null:   return "";
     case Bool:   return bool_value ? "1" : "0";
-    case Number: {
-        ostringstream s; s.precision(10); s << number_value; return s.str();
-    }
+    case Number: return format("{:.10g}", number_value);
     case String: return string_value;
     case Array:
     case Object: return dump(0);

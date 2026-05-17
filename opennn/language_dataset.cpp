@@ -124,7 +124,7 @@ LanguageDataset::LanguageDataset(const Index samples_number,
         Variable& variable = variables[i];
 
         variable.type = VariableType::Numeric;
-        variable.name = "variable_" + to_string(i + 1);
+        variable.name = format("variable_{}", i + 1);
 
         variable.role = (i < input_sequence_length)
             ? VariableRole::Input
@@ -250,7 +250,7 @@ void LanguageDataset::read_txt()
             variables[0].categories = input_vocabulary;
 
         for (Index i = 0; i < maximum_input_sequence_length; ++i)
-            variables[i].name = "token_" + to_string(i + 1);
+            variables[i].name = format("token_{}", i + 1);
 
         input_shape = { get_maximum_input_sequence_length() };
         target_shape = { get_maximum_target_sequence_length() };
@@ -283,13 +283,13 @@ void LanguageDataset::read_txt()
             variables[0].categories = input_vocabulary;
 
         for (Index i = 0; i < maximum_input_sequence_length; ++i)
-            variables[i].name = "input_token_" + to_string(i + 1);
+            variables[i].name = format("input_token_{}", i + 1);
 
         for (Index i = 0; i < maximum_target_sequence_length; ++i)
-            variables[decoder_offset + i].name = "decoder_token_" + to_string(i + 1);
+            variables[decoder_offset + i].name = format("decoder_token_{}", i + 1);
 
         for (Index i = 0; i < maximum_target_sequence_length; ++i)
-            variables[target_offset + i].name = "target_token_" + to_string(i + 1);
+            variables[target_offset + i].name = format("target_token_{}", i + 1);
 
         input_shape = { get_maximum_input_sequence_length() };
         decoder_shape = { get_maximum_target_sequence_length() };

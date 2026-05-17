@@ -289,7 +289,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
                 for (Index i = 0; i < pixels_number; ++i)
                 {
                     variables[i].type = VariableType::Numeric;
-                    variables[i].name = "variable_" + to_string(i + 1);
+                    variables[i].name = format("variable_{}", i + 1);
                     variables[i].role = VariableRole::Input;
                 }
                 Variable& target_variable = variables[pixels_number];
@@ -394,7 +394,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     for (Index i = 0; i < pixels_number; ++i)
     {
         variables[i].type = VariableType::Numeric;
-        variables[i].name = "variable_" + to_string(i + 1);
+        variables[i].name = format("variable_{}", i + 1);
         variables[i].role = VariableRole::Input;
     }
 

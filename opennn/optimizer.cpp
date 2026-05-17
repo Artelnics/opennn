@@ -165,13 +165,10 @@ void Optimizer::warn_dropped_samples(Index batch_size,
     if (samples_number % batch_size == 0)       return;
 
     const Index lost = samples_number % batch_size;
-    ostringstream pct;
-    pct << fixed << setprecision(2)
-        << (100.0 * double(lost) / double(samples_number));
-    cout << "Warning: " << context << " batch_size " << batch_size
-         << " does not divide " << samples_number << " samples. "
-         << lost << " sample(s) (" << pct.str()
-         << " % of total) dropped per epoch.\n";
+    cout << format("Warning: {} batch_size {} does not divide {} samples. "
+                   "{} sample(s) ({:.2f} % of total) dropped per epoch.\n",
+                   context, batch_size, samples_number,
+                   lost, 100.0 * double(lost) / double(samples_number));
 }
 
 Index Optimizer::get_maximum_batch_size() const
@@ -710,14 +707,9 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
 
     // Final selection error
 
-    ostringstream buffer;
-
-    if (validation_error_history.size() == 0)
-        buffer << "NAN";
-    else
-        buffer << setprecision(precision) << validation_error_history(size - 1);
-
-    override_results(4, 1) = buffer.str();
+    override_results(4, 1) = validation_error_history.size() == 0
+        ? "NAN"
+        : format("{:.{}g}", validation_error_history(size - 1), precision);
 
     return override_results;
 }
