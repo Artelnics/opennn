@@ -10,7 +10,7 @@ void sort_string_vector(vector<string>& string_vector)
         return a.length() > b.length();
     };
 
-    sort(string_vector.begin(), string_vector.end(), compare_string_length);
+    ranges::sort(string_vector, compare_string_length);
 }
 
 vector<string> concatenate_string_vectors(const vector<string>& string_vector_1,

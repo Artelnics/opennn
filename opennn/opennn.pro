@@ -11,13 +11,13 @@ QT = # Do not use qt
 TARGET = opennn
 TEMPLATE = lib
 
-CONFIG += c++17
+CONFIG += c++20
 
 CONFIG += staticlib
 CONFIG += precompile_header
 CONFIG += jumbo_build
 
-DEFINES += __Cpp17__
+DEFINES += __Cpp20__
 
 win32 {
     DEFINES += _HAS_STD_BYTE=0

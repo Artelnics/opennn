@@ -119,9 +119,9 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     VectorI correlations_rank_descending(input_variable_indices.size());
 
-    transform(correlation_indices.begin(), correlation_indices.end(),
-              correlations_rank_descending.data(),
-              [&input_variable_indices](Index idx) { return input_variable_indices[idx]; });
+    ranges::transform(correlation_indices,
+                      correlations_rank_descending.data(),
+                      [&input_variable_indices](Index idx) { return input_variable_indices[idx]; });
 
     dataset->set_input_variables_unused();
 

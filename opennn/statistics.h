@@ -179,7 +179,7 @@ pair<X, Y> filter_missing_values(const X& x, const Y& y)
 
 inline bool is_contiguous(const vector<Index>& indices)
 {
-    return adjacent_find(indices.begin(), indices.end(),
+    return ranges::adjacent_find(indices,
         [](Index a, Index b) { return b != a + 1; }) == indices.end();
 }
 
@@ -198,8 +198,8 @@ vector<T> gather_by_index(const vector<T>& data, const vector<Index>& indices)
     vector<T> result;
     result.reserve(indices.size());
 
-    transform(indices.begin(), indices.end(), back_inserter(result),
-              [&data](Index i) { return data[i]; });
+    ranges::transform(indices, back_inserter(result),
+                      [&data](Index i) { return data[i]; });
 
     return result;
 }

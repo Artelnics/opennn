@@ -259,7 +259,7 @@ vector<string> ModelExpression::split_expression_lines(const string& expression)
 
     while (getline(ss, line, '\n'))
     {
-        if (line.empty() || all_of(line.begin(), line.end(), [](char c) { return isspace(static_cast<unsigned char>(c)); }))
+        if (line.empty() || ranges::all_of(line, [](char c) { return isspace(static_cast<unsigned char>(c)); }))
             continue;
         if (line.find("{") != string::npos)
             break;
@@ -553,7 +553,7 @@ string ModelExpression::get_expression_php() const
 
     vector<string> all_possible_vars = fixed_output_names;
     all_possible_vars.insert(all_possible_vars.end(), fixed_input_names.begin(), fixed_input_names.end());
-    sort(all_possible_vars.begin(), all_possible_vars.end(), [](const string& a, const string& b) { return a.length() > b.length(); });
+    ranges::sort(all_possible_vars, [](const string& a, const string& b) { return a.length() > b.length(); });
     for (const string& var_name : all_possible_vars)
         replace_all_word_appearances(expression, var_name, "$" + var_name);
 
@@ -958,7 +958,7 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
     buffer << "\tdef calculate_outputs(self, inputs):\n";
 
     vector<string> python_mapped(input_names.size());
-    transform(input_names.begin(), input_names.end(), python_mapped.begin(), replace_reserved_keywords);
+    ranges::transform(input_names, python_mapped.begin(), replace_reserved_keywords);
 
     for (size_t i = 0; i < input_names.size(); ++i)
         buffer << "\t\t" << python_mapped[i] << " = inputs[" << i << "]\n";
@@ -1080,7 +1080,7 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
 
     while (getline(ss, token, '\n'))
     {
-        if (token.empty() || all_of(token.begin(), token.end(), [](char c) { return isspace(c); }))
+        if (token.empty() || ranges::all_of(token, [](char c) { return isspace(c); }))
             continue;
 
         if (token.find("{") != string::npos)

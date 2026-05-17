@@ -29,12 +29,6 @@ inline Index get_aligned_size(Index size)     { return align_up(size,    ALIGN_E
 inline Index get_aligned_bytes(Index n_bytes) { return align_up(n_bytes, ALIGN_BYTES); }
 inline Index get_aligned_bytes(Index count, Type dtype) { return get_aligned_bytes(count * type_bytes(dtype)); }
 
-template<typename Container>
-inline Index ssize(const Container& container) noexcept
-{
-    return static_cast<Index>(container.size());
-}
-
 inline bool is_aligned(const void* ptr)
 {
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
@@ -124,6 +118,18 @@ inline Index get_aligned_size(const vector<vector<Shape>>& shapes)
         [](const vector<Shape>& s) { return get_aligned_size(s); });
 }
 
+inline Index get_aligned_size(const vector<pair<Shape, Type>>& specs)
+{
+    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
+        [](const auto& spec) { return get_aligned_size(spec.first.size()); });
+}
+
+inline Index get_aligned_size(const vector<vector<pair<Shape, Type>>>& specs)
+{
+    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
+        [](const auto& s) { return get_aligned_size(s); });
+}
+
 inline Index get_aligned_bytes(const vector<Shape>& shapes, const vector<Type>& dtypes)
 {
     return transform_reduce(shapes.begin(), shapes.end(), dtypes.begin(), Index(0), plus<>{},
@@ -137,6 +143,18 @@ inline Index get_aligned_bytes(const vector<vector<Shape>>& shapes,
         [](const vector<Shape>& s, const vector<Type>& t) { return get_aligned_bytes(s, t); });
 }
 
+inline Index get_aligned_bytes(const vector<pair<Shape, Type>>& specs)
+{
+    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
+        [](const auto& spec) { return get_aligned_bytes(spec.first.size(), spec.second); });
+}
+
+inline Index get_aligned_bytes(const vector<vector<pair<Shape, Type>>>& specs)
+{
+    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
+        [](const auto& s) { return get_aligned_bytes(s); });
+}
+
 inline Index get_aligned_bytes(const vector<Shape>& shapes, Type dtype)
 {
     return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
@@ -147,6 +165,18 @@ inline Index get_aligned_bytes(const vector<vector<Shape>>& shapes, Type dtype)
 {
     return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
         [dtype](const vector<Shape>& s) { return get_aligned_bytes(s, dtype); });
+}
+
+inline Index get_aligned_bytes(const vector<pair<Shape, Type>>& specs, Type dtype)
+{
+    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
+        [dtype](const auto& spec) { return get_aligned_bytes(spec.first.size(), dtype); });
+}
+
+inline Index get_aligned_bytes(const vector<vector<pair<Shape, Type>>>& specs, Type dtype)
+{
+    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
+        [dtype](const auto& s) { return get_aligned_bytes(s, dtype); });
 }
 
 struct Buffer

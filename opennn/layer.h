@@ -72,22 +72,6 @@ inline LayerType string_to_layer_type(const string& name)
     return layer_type_map().from_string(name);
 }
 
-inline vector<Shape> spec_shapes(const vector<pair<Shape, Type>>& specs)
-{
-    vector<Shape> result;
-    result.reserve(specs.size());
-    for (const auto& [shape, _] : specs) result.push_back(shape);
-    return result;
-}
-
-inline vector<Type> spec_dtypes(const vector<pair<Shape, Type>>& specs)
-{
-    vector<Type> result;
-    result.reserve(specs.size());
-    for (const auto& [_, type] : specs) result.push_back(type);
-    return result;
-}
-
 inline void check_rank(const Shape& shape, initializer_list<int> allowed,
                        const char* layer, const char* what)
 {
@@ -140,14 +124,6 @@ public:
         return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
     }
 
-    vector<Shape> get_parameter_shapes()        const { return spec_shapes(get_parameter_specs()); }
-    vector<Shape> get_state_shapes()            const { return spec_shapes(get_state_specs()); }
-    vector<Shape> get_forward_shapes(Index b)   const { return spec_shapes(get_forward_specs(b)); }
-    vector<Shape> get_backward_shapes(Index b)  const { return spec_shapes(get_backward_specs(b)); }
-
-    vector<Type>  get_forward_dtypes(Index b)   const { return spec_dtypes(get_forward_specs(b)); }
-    vector<Type>  get_backward_dtypes(Index b)  const { return spec_dtypes(get_backward_specs(b)); }
-
     virtual Shape get_input_shape() const { return input_shape; }
 
     virtual Shape get_output_shape() const = 0;
@@ -166,9 +142,8 @@ public:
 
     virtual void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t i) const noexcept
     {
-        const auto& ops = get_operators();
-        for (auto it = ops.rbegin(); it != ops.rend(); ++it)
-            (*it)->back_propagate(fp, bp, i);
+        for (Operator* op : views::reverse(get_operators()))
+            op->back_propagate(fp, bp, i);
     }
 
     virtual void from_JSON(const JsonDocument& document);
@@ -252,27 +227,7 @@ protected:
         vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
         void (Operator::*link_fn)(const vector<TensorView>&));
 
-    vector<unique_ptr<Layer>> layers;
-
 };
-
-inline vector<vector<Type>> collect_layer_dtypes(
-    const vector<unique_ptr<Layer>>& layers,
-    Index batch_size,
-    bool is_gpu,
-    vector<Type> (Layer::*getter)(Index) const)
-{
-    vector<vector<Type>> result(layers.size());
-    
-    for (size_t i = 0; i < layers.size(); ++i)
-    {
-        result[i] = (layers[i].get()->*getter)(batch_size);
-
-        if (!is_gpu)
-            std::fill(result[i].begin(), result[i].end(), Type::FP32);
-    }
-    return result;
-}
 
 }
 

@@ -22,6 +22,8 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include <algorithm>
+#include <ranges>
+#include <numbers>
 #include <execution>
 #include <charconv>
 #include <string>

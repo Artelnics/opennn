@@ -547,10 +547,10 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     const Index unique_values_number = ssize(unique_values);
     if (unique_values_number <= bins_number)
     {
-        sort(unique_values.begin(), unique_values.end());
+        ranges::sort(unique_values);
 
         VectorR tensor_unique(unique_values.size());
-        std::copy(unique_values.begin(), unique_values.end(), tensor_unique.data());
+        ranges::copy(unique_values, tensor_unique.data());
 
         centers = tensor_unique;
         minimums = tensor_unique;
@@ -995,7 +995,7 @@ float median(const MatrixR& matrix, Index column_index)
 
     if (sorted_column.empty()) return NAN;
 
-    sort(sorted_column.begin(), sorted_column.end());
+    ranges::sort(sorted_column);
 
     const Index valid_count = ssize(sorted_column);
     const Index median_index = valid_count / 2;
@@ -1208,8 +1208,8 @@ VectorI calculate_rank(const VectorR& vector, bool ascending)
 vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
 {
     vector<Index> indices;
-    copy_if(data.begin(), data.end(), back_inserter(indices),
-            [bound](Index value) { return value > bound; });
+    ranges::copy_if(data, back_inserter(indices),
+                    [bound](Index value) { return value > bound; });
     return indices;
 }
 

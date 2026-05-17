@@ -276,7 +276,7 @@ void CsvReader::parse(Result& out) const
 
     strip_quotes_and_quoted_separators(buffer);
 
-    out.rows.reserve(count(buffer.begin(), buffer.end(), '\n') + 1);
+    out.rows.reserve(ranges::count(buffer, '\n') + 1);
 
     const string_view buffer_view(buffer);
     size_t line_start = 0;

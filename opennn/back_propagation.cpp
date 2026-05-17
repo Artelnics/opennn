@@ -16,144 +16,6 @@
 namespace opennn
 {
 
-BackPropagation::DeltaPoolPlan BackPropagation::compute_delta_pool_plan(
-    const vector<vector<Shape>>& backward_shapes,
-    const vector<vector<Type>>& backward_dtypes) const
-{
-    const auto& layers = neural_network->get_layers();
-    const Index layers_number = Index(layers.size());
-    const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
-    const Shape output_delta_shape = Shape({batch_size}).append(neural_network->get_output_shape());
-    const Type compute_dtype = is_gpu() ? neural_network->get_training_type() : Type::FP32;
-
-    DeltaPoolPlan delta_pool_plan;
-    delta_pool_plan.alias_target.assign(size_t(layers_number), {SIZE_MAX, SIZE_MAX});
-
-    const Index max_step = last_trainable_layer_index - first_trainable_layer_index;
-
-    auto step_of = [&](Index layer_index) { return last_trainable_layer_index - layer_index; };
-
-    auto add = [&](Index layer, size_t slot, const Shape& shape, Type dtype,
-                   Index birth, Index death)
-    {
-        const Index bytes = shape.size() * type_bytes(dtype);
-        if (bytes <= 0) return;
-        delta_pool_plan.entries.push_back({layer, slot, Index(-1), shape, dtype,
-                                get_aligned_bytes(bytes), birth, death});
-    };
-
-    add(last_trainable_layer_index, 0,
-        output_delta_shape, compute_dtype,
-        0, step_of(last_trainable_layer_index));
-
-    for (Index layer_index = first_trainable_layer_index; layer_index <= last_trainable_layer_index; ++layer_index)
-    {
-        const auto& shapes = backward_shapes[layer_index];
-        const auto& dtypes = backward_dtypes[layer_index];
-        const auto& input_indices = layer_input_indices[layer_index];
-
-        for (size_t j = 0; j < shapes.size(); ++j)
-        {
-            const Index birth = step_of(layer_index);
-            const Index producer = (j < input_indices.size()) ? input_indices[j] : Index(-1);
-            const bool producer_is_trainable = producer >= first_trainable_layer_index
-                                            && producer <= last_trainable_layer_index;
-            const Index death = producer_is_trainable ? step_of(producer) : birth;
-
-            add(layer_index, j + 1, shapes[j], dtypes[j], birth, death);
-        }
-    }
-
-    for (Index layer_index = first_trainable_layer_index; layer_index < last_trainable_layer_index; ++layer_index)
-    {
-        const auto& edges = backward_edges[layer_index];
-
-        if (edges.size() == 1)
-        {
-            const BackwardEdge& edge = edges.front();
-            delta_pool_plan.alias_target[layer_index] = {edge.consumer_layer_index, edge.consumer_input_index + 1};
-            continue;
-        }
-
-        if (edges.size() < 2) continue;
-
-        const Shape output_shape = layers[layer_index]->get_output_shape();
-        if (output_shape.empty()) continue;
-
-        add(layer_index, 0, Shape({batch_size}).append(output_shape), compute_dtype,
-            step_of(layer_index), step_of(layer_index));
-    }
-
-    vector<vector<size_t>> births_by_step(size_t(max_step + 1));
-    vector<vector<size_t>> deaths_by_step(size_t(max_step + 1));
-
-    for (size_t id = 0; id < delta_pool_plan.entries.size(); ++id)
-    {
-        births_by_step[size_t(delta_pool_plan.entries[id].birth)].push_back(id);
-        deaths_by_step[size_t(delta_pool_plan.entries[id].death)].push_back(id);
-    }
-
-    struct FreeChunk { Index offset; Index bytes; };
-    
-    vector<FreeChunk> free_list = {{0, numeric_limits<Index>::max()}};
-
-    auto release = [&](Index offset, Index bytes)
-    {
-        auto it = lower_bound(free_list.begin(), free_list.end(), offset,
-            [](const FreeChunk& c, Index off) { return c.offset < off; });
-        it = free_list.insert(it, {offset, bytes});
-
-        if (it + 1 != free_list.end() && it->offset + it->bytes == (it + 1)->offset)
-        {
-            it->bytes += (it + 1)->bytes;
-            free_list.erase(it + 1);
-        }
-        
-        if (it != free_list.begin() && (it - 1)->offset + (it - 1)->bytes == it->offset)
-        {
-            (it - 1)->bytes += it->bytes;
-            free_list.erase(it);
-        }
-    };
-
-    auto acquire = [&](Index bytes) -> Index
-    {
-        for (auto it = free_list.begin(); it != free_list.end(); ++it)
-        {
-            if (it->bytes < bytes) continue;
-            const Index off = it->offset;
-            if (it->bytes == bytes) free_list.erase(it);
-            else { it->offset += bytes; it->bytes -= bytes; }
-            return off;
-        }
-        return Index(-1);
-    };
-
-    Index peak = 0;
-
-    for (Index k = 0; k <= max_step; ++k)
-    {
-        if (k > 0)
-            for (size_t id : deaths_by_step[size_t(k - 1)])
-                release(delta_pool_plan.entries[id].offset, delta_pool_plan.entries[id].bytes);
-
-        for (size_t id : births_by_step[size_t(k)])
-        {
-            const Index off = acquire(delta_pool_plan.entries[id].bytes);
-            delta_pool_plan.entries[id].offset = off;
-
-            const Index end = off + delta_pool_plan.entries[id].bytes;
-            if (end > peak) peak = end;
-        }
-    }
-
-    delta_pool_plan.peak_bytes = peak;
-
-    return delta_pool_plan;
-}
-
 BackPropagation::BackPropagation(const Index new_batch_size, Loss* new_loss)
 {
     set(new_batch_size, new_loss);
@@ -178,9 +40,8 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
-    const vector<vector<Shape>> parameter_shapes = neural_network->get_parameter_shapes();
-    const vector<vector<Shape>> backward_shapes  = neural_network->get_backward_shapes(batch_size);
-    const vector<vector<Type>>  backward_dtypes  = neural_network->get_backward_dtypes(batch_size);
+    const auto parameter_specs = neural_network->get_parameter_specs();
+    const auto backward_specs  = neural_network->get_backward_specs(batch_size);
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
 
     backward_edges.assign(layers_number, {});
@@ -189,13 +50,19 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     {
         const vector<Index>& input_indices = layer_input_indices[i];
         for (size_t j = 0; j < input_indices.size(); ++j)
-            if (const Index producer = input_indices[j]; size_t(producer) < layers_number)
+            if (const Index producer = input_indices[j]; producer >= 0 && size_t(producer) < layers_number)
                 backward_edges[producer].push_back({i, j});
+    }
+
+    if (const Index first = neural_network->get_first_trainable_layer_index(); first >= 0)
+    {
+        const auto& ops = layers[first]->get_operators();
+        if (!ops.empty()) ops[0]->input_delta_slots.clear();
     }
 
     const Device device = current_device();
 
-    if (const Index gradient_bytes = get_aligned_bytes(parameter_shapes, Type::FP32); gradient_bytes > 0)
+    if (const Index gradient_bytes = get_aligned_bytes(parameter_specs, Type::FP32); gradient_bytes > 0)
     {
         gradient.resize_bytes(gradient_bytes, device);
         gradient.setZero();
@@ -204,58 +71,204 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     gradient_views.resize(layers_number);
 
     float* pointer = gradient.as<float>();
-    for (Index i = 0; i < layers_number; ++i)
+    for (size_t i = 0; i < layers_number; ++i)
         pointer = layers[i]->link_gradients(pointer, gradient_views[i]);
 
-    const DeltaPoolPlan delta_pool_plan = compute_delta_pool_plan(backward_shapes, backward_dtypes);
+    setup_delta_pool(backward_specs);
+}
+
+void BackPropagation::setup_delta_pool(const vector<vector<pair<Shape, Type>>>& backward_specs)
+{
+    const auto& layers = neural_network->get_layers();
+    const Index layers_number = neural_network->get_layers_number();
+    const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
+    const auto& layer_input_indices = neural_network->get_layer_input_indices();
+    const Type compute_dtype = is_gpu() ? neural_network->get_training_type() : Type::FP32;
+
+    vector<Index> entry_layers;
+    vector<size_t> entry_slots;
+    vector<Index> entry_offsets;
+    vector<Shape> entry_shapes;
+    vector<Type> entry_dtypes;
+    vector<Index> entry_births;
+    vector<Index> entry_deaths;
+    vector<Index> entry_bytes;
+
+    vector<pair<size_t, size_t>> alias_target(size_t(layers_number), {SIZE_MAX, SIZE_MAX});
+
+    Index max_step = 0;
+
+    const Shape output_delta_shape = Shape({batch_size}).append(neural_network->get_output_shape());
+    if (output_delta_shape.size() != 0)
+    {
+        entry_layers.push_back(last_trainable_layer_index);
+        entry_slots.push_back(0);
+        entry_offsets.push_back(Index(-1));
+        entry_shapes.push_back(output_delta_shape);
+        entry_dtypes.push_back(compute_dtype);
+        entry_births.push_back(0);
+        entry_deaths.push_back(0);
+        entry_bytes.push_back(get_aligned_bytes(output_delta_shape.size(), compute_dtype));
+    }
+
+    for (Index layer_index = first_trainable_layer_index; layer_index <= last_trainable_layer_index; ++layer_index)
+    {
+        const auto& specs = backward_specs[layer_index];
+        const auto& input_indices = layer_input_indices[layer_index];
+
+        for (size_t j = 0; j < specs.size(); ++j)
+        {
+            const auto& [shape, dtype] = specs[j];
+            if (shape.size() == 0) continue;
+
+            const Index birth = last_trainable_layer_index - layer_index;
+            const Index producer = (j < input_indices.size()) ? input_indices[j] : Index(-1);
+            const bool producer_is_trainable = producer >= first_trainable_layer_index
+                                            && producer <= last_trainable_layer_index;
+            const Index death = producer_is_trainable ? last_trainable_layer_index - producer : birth;
+
+            entry_layers.push_back(layer_index);
+            entry_slots.push_back(j + 1);
+            entry_offsets.push_back(Index(-1));
+            entry_shapes.push_back(shape);
+            entry_dtypes.push_back(dtype);
+            entry_births.push_back(birth);
+            entry_deaths.push_back(death);
+            entry_bytes.push_back(get_aligned_bytes(shape.size(), dtype));
+
+            max_step = max({max_step, birth, death});
+        }
+    }
+
+    for (Index layer_index = first_trainable_layer_index; layer_index < last_trainable_layer_index; ++layer_index)
+    {
+        const auto& layer_backward_edges = backward_edges[layer_index];
+
+        if (layer_backward_edges.empty()) continue;
+
+        if (layer_backward_edges.size() == 1)
+        {
+            const auto& edge = layer_backward_edges.front();
+            alias_target[layer_index] = {edge.first, edge.second + 1};
+            continue;
+        }
+
+        const Shape output_shape = layers[layer_index]->get_output_shape();
+        if (output_shape.empty()) continue;
+
+        const Shape delta_shape = Shape({batch_size}).append(output_shape);
+        const Index step = last_trainable_layer_index - layer_index;
+
+        entry_layers.push_back(layer_index);
+        entry_slots.push_back(0);
+        entry_offsets.push_back(Index(-1));
+        entry_shapes.push_back(delta_shape);
+        entry_dtypes.push_back(compute_dtype);
+        entry_births.push_back(step);
+        entry_deaths.push_back(step);
+        entry_bytes.push_back(get_aligned_bytes(delta_shape.size(), compute_dtype));
+
+        max_step = max(max_step, step);
+    }
+
+    vector<vector<size_t>> births_by_step(size_t(max_step + 1));
+    vector<vector<size_t>> deaths_by_step(size_t(max_step + 1));
+
+    for (size_t id = 0; id < entry_layers.size(); ++id)
+    {
+        births_by_step[size_t(entry_births[id])].push_back(id);
+        deaths_by_step[size_t(entry_deaths[id])].push_back(id);
+    }
+
+    vector<pair<Index, Index>> free_list = {{0, numeric_limits<Index>::max()}};
+    Index peak_bytes = 0;
+
+    for (Index step = 0; step <= max_step; ++step)
+    {
+        for (size_t id : births_by_step[size_t(step)])
+        {
+            const Index bytes = entry_bytes[id];
+            Index offset = Index(-1);
+
+            for (auto it = free_list.begin(); it != free_list.end(); ++it)
+            {
+                if (it->second < bytes) continue;
+
+                offset = it->first;
+
+                if (it->second == bytes)
+                    free_list.erase(it);
+                else
+                {
+                    it->first += bytes;
+                    it->second -= bytes;
+                }
+
+                break;
+            }
+
+            entry_offsets[id] = offset;
+            peak_bytes = max(peak_bytes, offset + bytes);
+        }
+
+        for (size_t id : deaths_by_step[size_t(step)])
+        {
+            auto it = free_list.begin();
+            while (it != free_list.end() && it->first < entry_offsets[id])
+                ++it;
+
+            it = free_list.insert(it, {entry_offsets[id], entry_bytes[id]});
+
+            if (it + 1 != free_list.end() && it->first + it->second == (it + 1)->first)
+            {
+                it->second += (it + 1)->second;
+                free_list.erase(it + 1);
+            }
+
+            if (it != free_list.begin() && (it - 1)->first + (it - 1)->second == it->first)
+            {
+                (it - 1)->second += it->second;
+                free_list.erase(it);
+            }
+        }
+    }
 
     delta_views.resize(layers_number);
-
     for (Index i = 0; i < layers_number; ++i)
-        delta_views[i].assign(backward_shapes[i].size() + 1, TensorView{});
+        delta_views[i].assign(backward_specs[i].size() + 1, TensorView{});
 
-    if (delta_pool_plan.peak_bytes > 0)
+    if (peak_bytes > 0)
     {
-        delta_pool.resize_bytes(delta_pool_plan.peak_bytes, device);
+        delta_pool.resize_bytes(peak_bytes, current_device());
         delta_pool.setZero();
     }
 
     uint8_t* const base = delta_pool.as<uint8_t>();
 
-    for (const DeltaPoolEntry& entry : delta_pool_plan.entries)
-        delta_views[entry.layer][entry.slot] = TensorView(base + entry.offset, entry.shape, entry.dtype);
+    for (size_t id = 0; id < entry_layers.size(); ++id)
+        delta_views[entry_layers[id]][entry_slots[id]] =
+            TensorView(base + entry_offsets[id], entry_shapes[id], entry_dtypes[id]);
 
     for (Index i = 0; i < layers_number; ++i)
-        if (const auto [consumer, slot] = delta_pool_plan.alias_target[i];
-            consumer < delta_views.size()
-            && slot < delta_views[consumer].size()
-            && !delta_views[consumer][slot].empty())
+        if (const auto [consumer, slot] = alias_target[i];
+            consumer != SIZE_MAX && !delta_views[consumer][slot].empty())
             delta_views[i][0] = delta_views[consumer][slot];
 }
 
 void BackPropagation::accumulate_output_deltas(size_t layer_index)
 {
-    if (layer_index >= delta_views.size()) return;
-
-    const auto& edges = backward_edges[layer_index];
-    if (edges.size() <= 1) return;
+    const auto& layer_backward_edges = backward_edges[layer_index];
+    if (layer_backward_edges.size() <= 1) return;
 
     TensorView& destination = delta_views[layer_index][0];
     if (!destination.data) return;
 
     destination.setZero();
 
-    for (const BackwardEdge& edge : edges)
+    for (const auto& edge : layer_backward_edges)
     {
-        const size_t slot = 1 + edge.consumer_input_index;
-
-        if (edge.consumer_layer_index >= delta_views.size()) continue;
-
-        const auto& consumer_views = delta_views[edge.consumer_layer_index];
-
-        if (slot >= consumer_views.size() || consumer_views[slot].empty()) continue;
-
-        const TensorView& source = consumer_views[slot];
+        const TensorView& source = delta_views[edge.first][1 + edge.second];
         if (!source.data || source.size() != destination.size()) continue;
 
         add(destination, source, destination);

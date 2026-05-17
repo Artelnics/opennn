@@ -986,8 +986,8 @@ void TabularDataset::set_missing_values_method(const string& new_missing_values_
 
 bool TabularDataset::has_missing_values(const vector<string_view>& row) const
 {
-    return any_of(row.begin(), row.end(),
-                  [&](string_view t) { return t.empty() || t == missing_values_label; });
+    return ranges::any_of(row,
+                          [&](string_view t) { return t.empty() || t == missing_values_label; });
 }
 
 void TabularDataset::missing_values_to_JSON(JsonWriter &printer) const

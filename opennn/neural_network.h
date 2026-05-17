@@ -38,17 +38,24 @@ public:
     Type get_training_type()  const { return config.training_type; }
     Type get_inference_type() const { return config.inference_type; }
 
-    vector<vector<Shape>> get_parameter_shapes()        const { return collect_layer_shapes([](const Layer& L)            { return L.get_parameter_shapes(); }); }
-    vector<vector<Shape>> get_state_shapes()            const { return collect_layer_shapes([](const Layer& L)            { return L.get_state_shapes(); }); }
-    vector<vector<Shape>> get_forward_shapes(Index b)   const { return collect_layer_shapes([b](const Layer& L)           { return L.get_forward_shapes(b); }); }
-    vector<vector<Shape>> get_backward_shapes(Index b)  const { return collect_layer_shapes([b](const Layer& L)           { return L.get_backward_shapes(b); }); }
+    vector<vector<pair<Shape, Type>>> get_parameter_specs() const { return collect_layer_specs([](const Layer& L) { return L.get_parameter_specs(); }); }
+    vector<vector<pair<Shape, Type>>> get_state_specs()     const { return collect_layer_specs([](const Layer& L) { return L.get_state_specs(); }); }
+    vector<vector<pair<Shape, Type>>> get_forward_specs(Index b) const
+    {
+        auto specs = collect_layer_specs([b](const Layer& L) { return L.get_forward_specs(b); });
+        if (!is_gpu()) force_specs_to_fp32(specs);
+        return specs;
+    }
+    vector<vector<pair<Shape, Type>>> get_backward_specs(Index b) const
+    {
+        auto specs = collect_layer_specs([b](const Layer& L) { return L.get_backward_specs(b); });
+        if (!is_gpu()) force_specs_to_fp32(specs);
+        return specs;
+    }
 
-    vector<vector<Type>>  get_forward_dtypes(Index b)   const { return collect_layer_dtypes(layers, b, is_gpu(), &Layer::get_forward_dtypes); }
-    vector<vector<Type>>  get_backward_dtypes(Index b)  const { return collect_layer_dtypes(layers, b, is_gpu(), &Layer::get_backward_dtypes); }
-
-    Index get_states_size() const     { return get_aligned_size(get_state_shapes()); }
-    Index get_forward_size(Index b)  const { return get_aligned_size(get_forward_shapes(b));  }
-    Index get_backward_size(Index b) const { return get_aligned_size(get_backward_shapes(b)); }
+    Index get_states_size() const     { return get_aligned_size(get_state_specs()); }
+    Index get_forward_size(Index b)  const { return get_aligned_size(get_forward_specs(b));  }
+    Index get_backward_size(Index b) const { return get_aligned_size(get_backward_specs(b)); }
 
     void compile();
     bool has(const string&) const;
@@ -197,13 +204,19 @@ private:
 
     void validate_type(LayerType) const;
 
-    // Gather a per-layer shape vector via the supplied accessor.
-    template<typename Fn>
-    vector<vector<Shape>> collect_layer_shapes(Fn fn) const
+    static void force_specs_to_fp32(vector<vector<pair<Shape, Type>>>& specs)
     {
-        vector<vector<Shape>> out(layers.size());
-        transform(layers.begin(), layers.end(), out.begin(),
-                  [&](const unique_ptr<Layer>& l) { return fn(*l); });
+        for (auto& layer_specs : specs)
+            for (auto& spec : layer_specs)
+                spec.second = Type::FP32;
+    }
+
+    template<typename Fn>
+    vector<vector<pair<Shape, Type>>> collect_layer_specs(Fn fn) const
+    {
+        vector<vector<pair<Shape, Type>>> out(layers.size());
+        ranges::transform(layers, out.begin(),
+                          [&](const unique_ptr<Layer>& l) { return fn(*l); });
         return out;
     }
 
@@ -220,7 +233,6 @@ protected:
 
     Buffer parameters;
     Buffer parameters_bf16{Device::CUDA};
-    vector<vector<vector<TensorView>>> parameter_views;
 
     Buffer states;
 

@@ -62,7 +62,7 @@ void NeuralNetwork::compile()
     for (auto& layer : layers)
         layer->set_compute_dtype(get_training_type());
 
-    parameters.resize_bytes(get_aligned_bytes(get_parameter_shapes(), Type::FP32), Device::CPU);
+    parameters.resize_bytes(get_aligned_bytes(get_parameter_specs(), Type::FP32), Device::CPU);
     parameters.setZero();
 
     float* pointer = parameters.as<float>();
@@ -76,9 +76,6 @@ void NeuralNetwork::compile()
     for (auto& layer : layers)
         state_pointer = layer->link_states(state_pointer);
 
-    const Index first = get_first_trainable_layer_index();
-    const auto& ops = layers[first]->get_operators();
-    if (!ops.empty()) ops[0]->input_delta_slots.clear();
 }
 
 void NeuralNetwork::validate_type(LayerType type) const
@@ -94,8 +91,8 @@ bool NeuralNetwork::has(const string& name) const
 
 bool NeuralNetwork::has(LayerType type) const
 {
-    return any_of(layers.begin(), layers.end(),
-                  [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
+    return ranges::any_of(layers,
+                          [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
 }
 
 static vector<string> get_feature_names_from(const vector<Variable>& variables)
@@ -124,8 +121,8 @@ vector<string> NeuralNetwork::get_output_feature_names() const
 
 const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& label) const
 {
-    auto it = find_if(layers.begin(), layers.end(),
-                      [&label](const unique_ptr<Layer>& layer) { return layer->get_label() == label; });
+    auto it = ranges::find_if(layers,
+                              [&label](const unique_ptr<Layer>& layer) { return layer->get_label() == label; });
 
     if (it != layers.end())
         return *it;
@@ -141,8 +138,8 @@ Index NeuralNetwork::get_layer_index(const string& new_label) const
     if (new_label == "input")
         return -2;
 
-    auto it = find_if(layers.begin(), layers.end(),
-                      [&new_label](const unique_ptr<Layer>& layer) { return layer->get_label() == new_label; });
+    auto it = ranges::find_if(layers,
+                              [&new_label](const unique_ptr<Layer>& layer) { return layer->get_label() == new_label; });
 
     if (it != layers.end())
         return distance(layers.begin(), it);
@@ -175,8 +172,8 @@ const Layer* NeuralNetwork::get_first(const string& name) const
 
 const Layer* NeuralNetwork::get_first(LayerType type) const
 {
-    auto it = find_if(layers.begin(), layers.end(),
-                      [type](const unique_ptr<Layer>& layer) { return layer->get_type() == type; });
+    auto it = ranges::find_if(layers,
+                              [type](const unique_ptr<Layer>& layer) { return layer->get_type() == type; });
 
     return it != layers.end() ? it->get() : nullptr;
 }
@@ -267,8 +264,8 @@ void NeuralNetwork::set_layer_input_indices(const string& layer_label,
 {
     vector<Index> new_layer_input_indices(new_layer_input_labels.size());
 
-    transform(new_layer_input_labels.begin(), new_layer_input_labels.end(), new_layer_input_indices.begin(),
-              [this](const string& label) { return get_layer_index(label); });
+    ranges::transform(new_layer_input_labels, new_layer_input_indices.begin(),
+                      [this](const string& label) { return get_layer_index(label); });
 
     layer_input_indices[get_layer_index(layer_label)] = new_layer_input_indices;
 }
@@ -355,8 +352,8 @@ Index NeuralNetwork::get_first_trainable_layer_index() const
 {
     if (first_trainable_cache_ >= 0) return first_trainable_cache_;
 
-    auto it = find_if(layers.begin(), layers.end(),
-                      [](const unique_ptr<Layer>& layer) { return layer->get_is_trainable(); });
+    auto it = ranges::find_if(layers,
+                              [](const unique_ptr<Layer>& layer) { return layer->get_is_trainable(); });
 
     if (it == layers.end())
         throw runtime_error("The neural network has no trainable layers: get_first_trainable_layer_index.");
@@ -384,8 +381,8 @@ Index NeuralNetwork::get_layers_number(const string& name) const
 
 Index NeuralNetwork::get_layers_number(LayerType type) const
 {
-    return count_if(layers.begin(), layers.end(),
-                    [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
+    return ranges::count_if(layers,
+                            [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
 }
 
 void NeuralNetwork::set_parameters(const VectorR& new_parameters)
@@ -522,7 +519,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation,
                                       bool is_training) const
 {
-    if (parameters.size_in_floats() != get_aligned_size(get_parameter_shapes()))
+    if (parameters.size_in_floats() != get_aligned_size(get_parameter_specs()))
         throw runtime_error("Network shapes changed since compile(); call compile() again.");
 
     const Index first_layer_index = is_training ? get_first_trainable_layer_index() : 0;
@@ -1112,16 +1109,16 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
 vector<string> NeuralNetwork::get_layer_labels() const
 {
     vector<string> layer_labels(layers.size());
-    transform(layers.begin(), layers.end(), layer_labels.begin(),
-              [](const unique_ptr<Layer>& layer) { return layer->get_label(); });
+    ranges::transform(layers, layer_labels.begin(),
+                      [](const unique_ptr<Layer>& layer) { return layer->get_label(); });
     return layer_labels;
 }
 
 vector<string> NeuralNetwork::get_names_string() const
 {
     vector<string> names(layers.size());
-    transform(layers.begin(), layers.end(), names.begin(),
-              [](const unique_ptr<Layer>& layer) { return layer->get_name(); });
+    ranges::transform(layers, names.begin(),
+                      [](const unique_ptr<Layer>& layer) { return layer->get_name(); });
     return names;
 }
 

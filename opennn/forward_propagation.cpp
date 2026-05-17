@@ -28,11 +28,9 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     const size_t layers_number = layers.size();
     views.resize(layers_number);
 
-    const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
+    const auto forward_specs = neural_network->get_forward_specs(batch_size);
 
-    const vector<vector<Type>> forward_dtypes = neural_network->get_forward_dtypes(batch_size);
-
-    if (const Index total_bytes = get_aligned_bytes(forward_shapes, forward_dtypes); total_bytes > 0)
+    if (const Index total_bytes = get_aligned_bytes(forward_specs); total_bytes > 0)
     {
         const Device device = current_device();
         data.resize_bytes(total_bytes, device);
@@ -42,15 +40,15 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     uint8_t* cursor = data.as<uint8_t>();
     for (size_t i = 0; i < layers_number; ++i)
     {
-        const vector<Shape>& shapes = forward_shapes[i];
-        const vector<Type>& dtypes = forward_dtypes[i];
-        views[i].assign(shapes.size() + 1, vector<TensorView>(1));
+        const auto& specs = forward_specs[i];
+        views[i].assign(specs.size() + 1, vector<TensorView>(1));
 
-        for (size_t j = 0; j < shapes.size(); ++j)
+        for (size_t j = 0; j < specs.size(); ++j)
         {
-            if (shapes[j].size() == 0) continue;
-            views[i][j + 1][0] = TensorView(cursor, shapes[j], dtypes[j]);
-            cursor += get_aligned_bytes(shapes[j].size(), dtypes[j]);
+            const auto& [shape, dtype] = specs[j];
+            if (shape.size() == 0) continue;
+            views[i][j + 1][0] = TensorView(cursor, shape, dtype);
+            cursor += get_aligned_bytes(shape.size(), dtype);
         }
     }
 
@@ -58,19 +56,18 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     for (size_t i = 0; i < layers_number; ++i)
     {
         const vector<Index>& input_indices = layer_input_indices[i];
-        const size_t inputs_number = input_indices.size();
-        views[i][0].resize(inputs_number);
+        views[i][0].resize(input_indices.size());
 
-        for (size_t k = 0; k < inputs_number; ++k)
+        for (size_t k = 0; k < input_indices.size(); ++k)
         {
             const Index producer = input_indices[k];
             if (producer < 0) continue;
 
-            const size_t output_slot = forward_shapes[producer].size();
+            const size_t output_slot = forward_specs[producer].size();
             if (output_slot == 0) continue;
 
-            const TensorView& source = views[producer][output_slot][0];
-            if (!source.empty()) views[i][0][k] = source;
+            if (const TensorView& source = views[producer][output_slot][0]; !source.empty())
+                views[i][0][k] = source;
         }
     }
 }

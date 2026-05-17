@@ -18,12 +18,6 @@ class NeuralNetwork;
 
 struct BackPropagation
 {
-    struct BackwardEdge
-    {
-        size_t consumer_layer_index;
-        size_t consumer_input_index;
-    };
-
     BackPropagation(const Index = 0, Loss* = nullptr);
 
     virtual ~BackPropagation() = default;
@@ -40,7 +34,7 @@ struct BackPropagation
     Buffer delta_pool;
     vector<vector<TensorView>> delta_views;
 
-    vector<vector<BackwardEdge>> backward_edges;
+    vector<vector<pair<size_t, size_t>>> backward_edges;
 
     TensorView& get_output_delta();
     const TensorView& get_output_delta() const;
@@ -58,27 +52,7 @@ struct BackPropagation
 
 private:
 
-    struct DeltaPoolEntry
-    {
-        Index layer;
-        size_t slot;
-        Index offset;
-        Shape shape;
-        Type dtype;
-        Index bytes;
-        Index birth;
-        Index death;
-    };
-
-    struct DeltaPoolPlan
-    {
-        Index peak_bytes = 0;
-        vector<DeltaPoolEntry> entries;
-        vector<pair<size_t, size_t>> alias_target;
-    };
-
-    DeltaPoolPlan compute_delta_pool_plan(const vector<vector<Shape>>& backward_shapes,
-                                          const vector<vector<Type>>& backward_dtypes) const;
+    void setup_delta_pool(const vector<vector<pair<Shape, Type>>>& backward_specs);
 };
 
 }

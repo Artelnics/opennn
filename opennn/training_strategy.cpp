@@ -74,7 +74,7 @@ void TrainingStrategy::set_default()
     // Transformer: signaled by *any* Dense layer that consumes a rank-2 (seq, feat)
     // input -- i.e. the layers formerly known as Dense3d.
     const auto& layers = neural_network->get_layers();
-    const bool has_seq_dense = any_of(layers.begin(), layers.end(), [](const auto& layer) {
+    const bool has_seq_dense = ranges::any_of(layers, [](const auto& layer) {
         const auto* dense = dynamic_cast<const Dense*>(layer.get());
         return dense && dense->get_input_shape().rank == 2;
     });

@@ -115,7 +115,7 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
 Index Dataset::get_samples_number(const string& sample_role) const
 {
     const SampleRole role_type = string_to_sample_role(sample_role);
-    return count(sample_roles.begin(), sample_roles.end(), role_type);
+    return ranges::count(sample_roles, role_type);
 }
 
 Index Dataset::get_used_samples_number() const
@@ -126,7 +126,7 @@ Index Dataset::get_used_samples_number() const
 void Dataset::set_sample_roles(const string& sample_role)
 {
     const SampleRole role_type = string_to_sample_role(sample_role);
-    std::fill(sample_roles.begin(), sample_roles.end(), role_type);
+    ranges::fill(sample_roles, role_type);
 }
 
 void Dataset::set_sample_role(const Index index, const string& new_role)
@@ -136,7 +136,7 @@ void Dataset::set_sample_role(const Index index, const string& new_role)
 
 void Dataset::set_sample_roles(const vector<string>& new_roles)
 {
-    transform(new_roles.begin(), new_roles.end(), sample_roles.begin(), string_to_sample_role);
+    ranges::transform(new_roles, sample_roles.begin(), string_to_sample_role);
 }
 
 void Dataset::set_sample_roles(const vector<Index>& indices, const string& sample_role)
@@ -298,8 +298,8 @@ vector<VariableType> Dataset::get_variable_types(const vector<Index>& indices) c
 {
     vector<VariableType> variable_types(indices.size());
 
-    transform(indices.begin(), indices.end(), variable_types.begin(),
-              [this](Index i) { return get_variable_type(i); });
+    ranges::transform(indices, variable_types.begin(),
+                      [this](Index i) { return get_variable_type(i); });
 
     return variable_types;
 }
@@ -429,8 +429,8 @@ vector<string> Dataset::get_variable_names() const
 {
     vector<string> variable_names(variables.size());
 
-    transform(variables.begin(), variables.end(), variable_names.begin(),
-              [](const Variable& var) { return var.name; });
+    ranges::transform(variables, variable_names.begin(),
+                      [](const Variable& var) { return var.name; });
 
     return variable_names;
 }
@@ -453,16 +453,16 @@ Index Dataset::get_variables_number(const string& variable_role) const
 {
     const VariableRole role_type = string_to_variable_role(variable_role);
 
-    return count_if(variables.begin(), variables.end(),
-                    [role_type](const Variable& v) { return role_matches(v.role, role_type); });
+    return ranges::count_if(variables,
+                            [role_type](const Variable& v) { return role_matches(v.role, role_type); });
 }
 
 Index Dataset::get_used_variables_number() const
 {
-    return count_if(variables.begin(), variables.end(),
-                    [](const Variable& var) {
-                          return var.is_used();
-                    });
+    return ranges::count_if(variables,
+                            [](const Variable& var) {
+                                  return var.is_used();
+                            });
 }
 
 vector<Variable> Dataset::get_variables(const string& variable_role) const
@@ -472,8 +472,8 @@ vector<Variable> Dataset::get_variables(const string& variable_role) const
 
     const VariableRole role_type = string_to_variable_role(variable_role);
 
-    copy_if(variables.begin(), variables.end(), back_inserter(this_variables),
-            [role_type](const Variable& var) { return role_matches(var.role, role_type); });
+    ranges::copy_if(variables, back_inserter(this_variables),
+                    [role_type](const Variable& var) { return role_matches(var.role, role_type); });
 
     return this_variables;
 }
@@ -652,8 +652,8 @@ string Dataset::get_codification_string() const
 
 Index Dataset::get_variable_index(const string& variable_name) const
 {
-    auto it = find_if(variables.begin(), variables.end(),
-                      [&](const Variable& v) { return v.name == variable_name; });
+    auto it = ranges::find_if(variables,
+                              [&](const Variable& v) { return v.name == variable_name; });
 
     if (it == variables.end())
         throw runtime_error("Cannot find " + variable_name + "\n");
@@ -906,27 +906,27 @@ void Dataset::check_separators(string_view line) const
 
 bool Dataset::has_binary_variables() const
 {
-    return any_of(variables.begin(), variables.end(),
-                  [](const Variable& variable) { return variable.is_binary(); });
+    return ranges::any_of(variables,
+                          [](const Variable& variable) { return variable.is_binary(); });
 }
 
 bool Dataset::has_categorical_variables() const
 {
-    return any_of(variables.begin(), variables.end(),
-                  [](const Variable& variable) { return variable.is_categorical(); });
+    return ranges::any_of(variables,
+                          [](const Variable& variable) { return variable.is_categorical(); });
 }
 
 bool Dataset::has_binary_or_categorical_variables() const
 {
-    return any_of(variables.begin(), variables.end(), [](const Variable& v) {
+    return ranges::any_of(variables, [](const Variable& v) {
         return v.is_binary() || v.is_categorical();
     });
 }
 
 bool Dataset::has_time_variable() const
 {
-    return any_of(variables.begin(), variables.end(),
-                  [](const Variable& variable) { return variable.role == VariableRole::Time; });
+    return ranges::any_of(variables,
+                          [](const Variable& variable) { return variable.role == VariableRole::Time; });
 }
 
 bool Dataset::has_validation() const

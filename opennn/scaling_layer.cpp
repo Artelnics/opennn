@@ -94,7 +94,7 @@ void Scaling::set_scalers(const vector<string>& scalers_str)
         throw runtime_error("Scaling::set_scalers: size mismatch (expected "
                             + to_string(scalers.size()) + ", got "
                             + to_string(scalers_str.size()) + ").");
-    transform(scalers_str.begin(), scalers_str.end(), scalers.begin(), string_to_scaler_method);
+    ranges::transform(scalers_str, scalers.begin(), string_to_scaler_method);
     op_storage_dirty = true;
     refresh_op_storage(current_device());
 }
@@ -102,7 +102,7 @@ void Scaling::set_scalers(const vector<string>& scalers_str)
 void Scaling::set_scalers(const string& scaler)
 {
     const ScalerMethod method = string_to_scaler_method(scaler);
-    std::fill(scalers.begin(), scalers.end(), method);
+    ranges::fill(scalers, method);
     op_storage_dirty = true;
     refresh_op_storage(current_device());
 }
@@ -198,7 +198,7 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
             throw runtime_error("Scaling::read_JSON_body: \"Scalers\" has "
                                 + to_string(tokens.size()) + " entries, expected "
                                 + to_string(scalers.size()) + ".");
-        transform(tokens.begin(), tokens.end(), scalers.begin(), string_to_scaler_method);
+        ranges::transform(tokens, scalers.begin(), string_to_scaler_method);
     }
 
     if (scaling_layer_element->has("MinRange"))
@@ -224,7 +224,7 @@ void Scaling::write_JSON_body(JsonWriter& printer) const
     }
 
     vector<string> scaler_names(scalers.size());
-    transform(scalers.begin(), scalers.end(), scaler_names.begin(), scaler_method_to_string);
+    ranges::transform(scalers, scaler_names.begin(), scaler_method_to_string);
 
     write_json(printer, {
         {"Means",              vector_to_string(mns)},

@@ -190,8 +190,8 @@ bool is_date_time_string(string_view text)
         regex(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))") // hh:mm:ss
     };
 
-    return any_of(date_regexes.begin(), date_regexes.end(),
-                  [&](const regex& date_regex) { return regex_match(text.begin(), text.end(), date_regex); });
+    return ranges::any_of(date_regexes,
+                          [&](const regex& date_regex) { return regex_match(text.begin(), text.end(), date_regex); });
 }
 
 time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format)
@@ -366,12 +366,12 @@ string get_trimmed(const string& text)
 
 bool has_numbers(const vector<string>& string_list)
 {
-    return any_of(string_list.begin(), string_list.end(), is_numeric_string);
+    return ranges::any_of(string_list, is_numeric_string);
 }
 
 bool has_numbers(const vector<string_view>& string_list)
 {
-    return any_of(string_list.begin(), string_list.end(), is_numeric_string);
+    return ranges::any_of(string_list, is_numeric_string);
 }
 
 void replace(string& source, const string& find_what, const string& replace_with)
@@ -432,18 +432,18 @@ void string_to_vector(const string& input, VectorR& values)
         buffer.push_back(value);
 
     values.resize(static_cast<Index>(buffer.size()));
-    std::copy(buffer.begin(), buffer.end(), values.data());
+    ranges::copy(buffer, values.data());
 }
 
 bool contains(const vector<string>& data, const string& value)
 {
-    return find(data.begin(), data.end(), value) != data.end();
+    return ranges::find(data, value) != data.end();
 }
 
 bool contains(const vector<string>& data, string_view value)
 {
-    return any_of(data.begin(), data.end(),
-                  [&](const string& s) { return s == value; });
+    return ranges::any_of(data,
+                          [&](const string& s) { return s == value; });
 }
 
 }

@@ -53,9 +53,9 @@ void Layer::distribute_to_operators(
 
 Index Layer::get_parameters_number() const
 {
-    const vector<Shape> shapes = get_parameter_shapes();
-    return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
-        [](const Shape& s) { return s.size(); });
+    const auto specs = get_parameter_specs();
+    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
+        [](const auto& spec) { return spec.first.size(); });
 }
 
 float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,

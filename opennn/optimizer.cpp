@@ -45,8 +45,8 @@ bool env_flag_enabled(const char* name)
     if (!value) return false;
 
     string text(value);
-    transform(text.begin(), text.end(), text.begin(),
-              [](unsigned char c) { return static_cast<char>(tolower(c)); });
+    ranges::transform(text, text.begin(),
+                      [](unsigned char c) { return static_cast<char>(tolower(c)); });
 
     return text == "1" || text == "true" || text == "on" || text == "yes";
 }
@@ -232,7 +232,7 @@ Index Optimizer::get_maximum_batch_size() const
     // actual allocations done in NeuralNetwork/BackPropagation/OptimizerData.
 
     const Index parameters_number       = neural_network->get_parameters_number();
-    const Index parameters_aligned_size = get_aligned_size(neural_network->get_parameter_shapes());
+    const Index parameters_aligned_size = get_aligned_size(neural_network->get_parameter_specs());
     const Index slot_aligned_size       = get_aligned_size(parameters_number);
     const bool bf16_train = on_gpu && is_bf16_training();
     const bool bf16_input = bf16_train && dynamic_cast<const LanguageDataset*>(dataset) == nullptr;
@@ -284,14 +284,12 @@ Index Optimizer::get_maximum_batch_size() const
     auto bytes_for_run = [&](Index b) -> Index {
         if (b <= 0) return 0;
 
-        const auto forward_shapes  = neural_network->get_forward_shapes(b);
-        const auto backward_shapes = neural_network->get_backward_shapes(b);
-        const auto forward_dtypes  = neural_network->get_forward_dtypes(b);
-        const auto backward_dtypes = neural_network->get_backward_dtypes(b);
+        const auto forward_specs  = neural_network->get_forward_specs(b);
+        const auto backward_specs = neural_network->get_backward_specs(b);
 
         Index total = 0;
-        total += get_aligned_bytes(forward_shapes,  forward_dtypes);
-        total += get_aligned_bytes(backward_shapes, backward_dtypes);
+        total += get_aligned_bytes(forward_specs);
+        total += get_aligned_bytes(backward_specs);
 
         // Output-delta slot (delta_views[last][0] = Shape{b}.append(output_shape)).
         // Approximation: per-layer extra deltas for multi-consumer branches are
@@ -414,8 +412,8 @@ void Optimizer::set_scaling()
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
-    const bool has_pure_targets = any_of(target_feature_indices.begin(), target_feature_indices.end(),
-        [&](Index target_index) { return find(input_feature_indices.begin(), input_feature_indices.end(), target_index) == input_feature_indices.end(); });
+    const bool has_pure_targets = ranges::any_of(target_feature_indices,
+        [&](Index target_index) { return ranges::find(input_feature_indices, target_index) == input_feature_indices.end(); });
 
     vector<Descriptives> target_variable_descriptives;
     vector<string> target_variable_scalers;
@@ -437,7 +435,7 @@ void Optimizer::set_scaling()
     {
         const Index target_index = target_feature_indices[i];
 
-        auto it = find(input_feature_indices.begin(), input_feature_indices.end(), target_index);
+        auto it = ranges::find(input_feature_indices, target_index);
 
         if (it != input_feature_indices.end())
         {
@@ -522,7 +520,7 @@ void Optimizer::set_unscaling()
 
     for (size_t i = 0; i < target_indices.size(); ++i)
     {
-        const bool is_input = find(input_indices.begin(), input_indices.end(), target_indices[i]) != input_indices.end();
+        const bool is_input = ranges::find(input_indices, target_indices[i]) != input_indices.end();
 
         if (!is_input && i < all_target_descriptives.size())
             unscaled_targets_descriptives.push_back(all_target_descriptives[i]);

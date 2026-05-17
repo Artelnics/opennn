@@ -290,7 +290,7 @@ void rotate_image(const Tensor3& input, Tensor3& output, float angle_degree)
     const float center_x = float(width) / 2.0f;
     const float center_y = float(height) / 2.0f;
 
-    const float angle_rad = -angle_degree * 3.1415927f / 180.0f;
+    const float angle_rad = -angle_degree * numbers::pi_v<float> / 180.0f;
     const float cos_angle = cos(angle_rad);
     const float sin_angle = sin(angle_rad);
 

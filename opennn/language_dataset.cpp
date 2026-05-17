@@ -173,8 +173,8 @@ void LanguageDataset::create_vocabulary(const vector<vector<string_view>>& docum
 
     vector<pair<string_view, size_t>> sorted_tokens(token_count.begin(), token_count.end());
 
-    sort(sorted_tokens.begin(), sorted_tokens.end(),
-         [](const auto& a, const auto& b) { return a.second > b.second; });
+    ranges::sort(sorted_tokens,
+                 [](const auto& a, const auto& b) { return a.second > b.second; });
 
     vocabulary = reserved_tokens;
 
@@ -183,7 +183,7 @@ void LanguageDataset::create_vocabulary(const vector<vector<string_view>>& docum
         if (count < size_t(minimum_token_frequency))
             continue;
 
-        if (find(reserved_tokens.begin(), reserved_tokens.end(), token) != reserved_tokens.end())
+        if (ranges::find(reserved_tokens, token) != reserved_tokens.end())
             continue;
 
         if (vocabulary.size() >= size_t(maximum_vocabulary_size))
@@ -208,8 +208,8 @@ void LanguageDataset::read_txt()
     load_documents(buffer, input_document_tokens, target_document_tokens, false, true);
 
     auto get_maximum_size = [](const auto& nested_values) {
-        const auto it = max_element(nested_values.begin(), nested_values.end(),
-                                    [](const auto& a, const auto& b) { return a.size() < b.size(); });
+        const auto it = ranges::max_element(nested_values,
+                                            [](const auto& a, const auto& b) { return a.size() < b.size(); });
         return it == nested_values.end() ? size_t(0) : it->size();
     };
 
@@ -401,7 +401,7 @@ void LanguageDataset::load_documents(string& buffer,
     const string separator_string = get_separator_string();
     const char field_separator = separator_string.empty() ? '\t' : separator_string[0];
 
-    const size_t line_count_estimate = count(buffer.begin(), buffer.end(), '\n') + 1;
+    const size_t line_count_estimate = ranges::count(buffer, '\n') + 1;
     input_documents.reserve(line_count_estimate);
     target_documents.reserve(line_count_estimate);
 

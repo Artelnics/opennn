@@ -34,8 +34,8 @@ struct Stats
     void print(ostream& os, const string& title, double total_ms = 0.0) const
     {
         vector<pair<string, Entry>> sorted(entries.begin(), entries.end());
-        sort(sorted.begin(), sorted.end(),
-                  [](const auto& a, const auto& b) { return a.second.total_ms > b.second.total_ms; });
+        ranges::sort(sorted,
+                     [](const auto& a, const auto& b) { return a.second.total_ms > b.second.total_ms; });
 
         os << "\n[PROFILE] " << title << "\n";
         os << "  " << left << setw(48) << "section"

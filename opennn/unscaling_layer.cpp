@@ -92,7 +92,7 @@ void Unscaling::set_scalers(const vector<string>& scalers_str)
         throw runtime_error("Unscaling::set_scalers: size mismatch (expected "
                             + to_string(scalers.size()) + ", got "
                             + to_string(scalers_str.size()) + ").");
-    transform(scalers_str.begin(), scalers_str.end(), scalers.begin(), string_to_scaler_method);
+    ranges::transform(scalers_str, scalers.begin(), string_to_scaler_method);
     op_storage_dirty = true;
     refresh_op_storage(current_device());
 }
@@ -100,7 +100,7 @@ void Unscaling::set_scalers(const vector<string>& scalers_str)
 void Unscaling::set_scalers(const string& scaler)
 {
     const ScalerMethod method = string_to_scaler_method(scaler);
-    std::fill(scalers.begin(), scalers.end(), method);
+    ranges::fill(scalers, method);
     op_storage_dirty = true;
     refresh_op_storage(current_device());
 }

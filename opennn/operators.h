@@ -49,8 +49,6 @@ struct Operator
 
     virtual void destroy_cuda() {}
 
-    virtual Index get_delta_bytes() const { return 0; }
-
     vector<size_t> input_slots;
     vector<size_t> output_slots;
 

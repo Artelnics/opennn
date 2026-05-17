@@ -98,8 +98,8 @@ Index sample_token(VectorR& probabilities,
         }
         if (total > 0.0f)
         {
-            sort(sorted_probabilities.begin(), sorted_probabilities.end(),
-                      [](const auto& a, const auto& b) { return a.first > b.first; });
+            ranges::sort(sorted_probabilities,
+                         [](const auto& a, const auto& b) { return a.first > b.first; });
             float cumulative_probability = 0.0f;
             vector<bool> keep(vocabulary_size, false);
             for (size_t i = 0; i < sorted_probabilities.size(); ++i)

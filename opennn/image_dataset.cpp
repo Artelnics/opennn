@@ -339,7 +339,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
             directory_path.emplace_back(current_directory.path());
 
     // Sort for reproducibility of the cache content.
-    sort(directory_path.begin(), directory_path.end());
+    ranges::sort(directory_path);
 
     const Index folders_number = directory_path.size();
 
@@ -353,7 +353,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
             if (current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
                 folder_files.emplace_back(current_directory.path());
 
-        sort(folder_files.begin(), folder_files.end());
+        ranges::sort(folder_files);
         for (auto& p : folder_files)
         {
             paths.emplace_back(std::move(p));
@@ -399,8 +399,8 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     }
 
     vector<string> categories(folders_number);
-    transform(directory_path.begin(), directory_path.end(), categories.begin(),
-              [](const filesystem::path& p) { return p.filename().string(); });
+    ranges::transform(directory_path, categories.begin(),
+                      [](const filesystem::path& p) { return p.filename().string(); });
 
     const bool single_target = (targets_number == 1);
 
