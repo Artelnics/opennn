@@ -15,8 +15,6 @@
 namespace opennn
 {
 
-#include "forward_propagation.h"
-
 class NeuralNetwork
 {
 
@@ -54,8 +52,6 @@ public:
     }
 
     [[nodiscard]] Index get_states_size() const     { return get_aligned_size(get_state_specs()); }
-    [[nodiscard]] Index get_forward_size(Index b)  const { return get_aligned_size(get_forward_specs(b));  }
-    [[nodiscard]] Index get_backward_size(Index b) const { return get_aligned_size(get_backward_specs(b)); }
 
     void compile();
     [[nodiscard]] bool has(const string&) const;
@@ -86,7 +82,6 @@ public:
     [[nodiscard]] Layer* get_first(LayerType);
     [[nodiscard]] const Layer* get_first(const string&) const;
     [[nodiscard]] const Layer* get_first(LayerType) const;
-    void set_layers_number(const Index new_layers_number) { layers.resize(new_layers_number); layer_input_indices.resize(new_layers_number); }
 
     void set_layer_input_indices(const vector<vector<Index>>& new_layer_input_indices) { layer_input_indices = new_layer_input_indices; }
     void set_layer_input_indices(const Index layer_index, const vector<Index>& new_input_indices) { layer_input_indices[layer_index] = new_input_indices; }
@@ -103,7 +98,7 @@ public:
 
     void set_input_shape(const Shape&);
 
-    void set_default();
+    void clear();
     [[nodiscard]] Index get_layers_number() const { return ssize(layers); }
     [[nodiscard]] Index get_layers_number(const string&) const;
     [[nodiscard]] Index get_layers_number(LayerType) const;
@@ -119,12 +114,11 @@ public:
     [[nodiscard]] ActivationOp::Function get_output_activation() const;
     [[nodiscard]] Index get_parameters_number() const;
 
-    [[nodiscard]] vector<Index> get_layer_parameter_numbers() const;
-
     void set_parameters(const VectorR& new_parameters);
     void set_parameters_random();
     void set_parameters_glorot();
     void link_parameters();
+    void link_states();
     [[nodiscard]] MatrixR calculate_outputs(const vector<TensorView>&);
 
     [[nodiscard]] MatrixR calculate_outputs(const MatrixR&);
@@ -188,7 +182,6 @@ public:
 
     void copy_states_device();
     void copy_states_host();
-    void link_states();
 
 private:
 
@@ -221,8 +214,6 @@ private:
     }
 
 protected:
-
-    string name = "neural_network";
 
     vector<Variable> input_variables;
     vector<Variable> output_variables;

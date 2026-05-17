@@ -84,7 +84,7 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                                        const Shape& complexity_dimensions,
                                        const Shape& output_shape) : NeuralNetwork()
 {
-    set_default();
+    clear();
 
     add_layer(make_unique<Recurrent>(input_shape, complexity_dimensions));
 
@@ -411,10 +411,7 @@ void Transformer::set(const Index input_sequence_length,
                       Index feed_forward_dimension,
                       Index layers_number)
 {
-    name = "transformer";
-
-    layers.clear();
-    layer_input_indices.clear();
+    clear();
 
     if (input_sequence_length == 0 ||
         decoder_sequence_length == 0 ||

@@ -29,8 +29,6 @@ public:
 
     ActivationOp::Function get_output_activation() const override { return ActivationOp::Function::ReLU; }
 
-    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
-
     void set(const Shape& = {},
              const Shape& = {},
              const string& = "dense_relu_layer");

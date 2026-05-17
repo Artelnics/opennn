@@ -31,14 +31,7 @@ public:
 
     void set(Index = 0, Index = 0, const string& = "normalization_layer_3d");
 
-    void set_input_shape(const Shape& new_input_shape) override
-    {
-        if (new_input_shape.rank >= 2)
-        {
-            sequence_length     = new_input_shape[0];
-            embedding_dimension = new_input_shape[1];
-        }
-    }
+    void set_input_shape(const Shape&) override;
 
     void read_JSON_body(const Json*) override;
 

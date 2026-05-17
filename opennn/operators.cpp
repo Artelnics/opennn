@@ -371,8 +371,7 @@ vector<pair<Shape, Type>> BatchNormOp::parameter_specs() const
 
 vector<pair<Shape, Type>> BatchNormOp::state_specs() const
 {
-    if (!active()) return {};
-    return vector<pair<Shape, Type>>(2, {Shape{features}, Type::FP32});
+    return parameter_specs();
 }
 
 void BatchNormOp::link_parameters(span<const TensorView> views)

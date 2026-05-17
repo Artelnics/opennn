@@ -42,22 +42,25 @@ void Layer::redistribute_parameters_to_operators()
         const size_t n = op->parameter_specs().size();
         if (n == 0) continue;
         if (offset + n > parameters.size()) break;
-        op->link_parameters(vector<TensorView>(parameters.begin() + offset,
-                                               parameters.begin() + offset + n));
+        op->link_parameters(span(parameters).subspan(offset, n));
         offset += n;
     }
 }
 
 Index Layer::get_parameters_number() const
 {
-    const auto specs = get_parameter_specs();
-    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
-        [](const auto& spec) { return spec.first.size(); });
+    Index count = 0;
+
+    for (Operator* op : get_operators())
+        for (const auto& [shape, _] : op->parameter_specs())
+            count += shape.size();
+
+    return count;
 }
 
 float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
                                       vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
-                                      void (Operator::*link_fn)(const vector<TensorView>&))
+                                      void (Operator::*link_fn)(span<const TensorView>))
 {
     views.clear();
 
@@ -68,23 +71,18 @@ float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
 
         const size_t start = views.size();
 
-        for (const auto& [shape, dtype] : specs)
+        for (const auto& [shape, _] : specs)
         {
-            if (shape.empty())
-            {
-                views.emplace_back();
-                continue;
-            }
+            if (shape.empty()) { views.emplace_back(); continue; }
 
             if (!is_aligned(pointer))
                 throw runtime_error(format("Layer::link_views_to_operators: unaligned memory in layer \"{}\"", get_name()));
-            
+
             views.emplace_back(pointer, shape, Type::FP32);
-            
             pointer += get_aligned_size(shape.size());
         }
 
-        (op->*link_fn)(vector<TensorView>(views.begin() + start, views.end()));
+        (op->*link_fn)(span(views).subspan(start));
     }
 
     return pointer;
@@ -119,9 +117,12 @@ void Layer::from_JSON(const JsonDocument& document)
     const Json* root = get_json_root(document, get_name());
     if (!root) return;
 
-    set_label(read_json_string(root, "Label"));
+    const string json_label = read_json_string(root, "Label");
+
     set_input_shape(string_to_shape(read_json_string(root, "InputDimensions")));
     set_output_shape(string_to_shape(read_json_string(root, "OutputDimensions")));
+    set_label(json_label);
+
     read_JSON_body(root);
     for (Operator* op : get_operators())
         op->from_JSON(root);

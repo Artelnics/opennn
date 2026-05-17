@@ -32,11 +32,6 @@ Shape DenseRelu::get_output_shape() const
     return output_shape;
 }
 
-vector<pair<Shape, Type>> DenseRelu::get_forward_specs(Index batch_size) const
-{
-    return {{Shape{batch_size}.append(get_output_shape()), compute_dtype}};
-}
-
 void DenseRelu::configure_operators()
 {
     combination_relu.set(get_input_features(), output_features, compute_dtype);

@@ -63,11 +63,6 @@ Index ConvolutionalRelu::get_padding_width() const
     return total_padding / 2;
 }
 
-vector<pair<Shape, Type>> ConvolutionalRelu::get_forward_specs(Index batch_size) const
-{
-    return {{{batch_size, get_output_height(), get_output_width(), kernels_number}, compute_dtype}};
-}
-
 void ConvolutionalRelu::update_convolution_operator()
 {
     convolution_relu.set(input_height, input_width,

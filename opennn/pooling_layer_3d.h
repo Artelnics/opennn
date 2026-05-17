@@ -42,7 +42,7 @@ public:
 
     void set_output_shape(const Shape&) override {}
 
-    void set_pooling_method(const PoolingMethod& new_pooling_method) { pooling_method = new_pooling_method; }
+    void set_pooling_method(PoolingMethod);
     void set_pooling_method(const string&);
 
     void read_JSON_body(const Json*) override;

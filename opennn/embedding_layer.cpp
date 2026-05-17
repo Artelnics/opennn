@@ -33,11 +33,6 @@ Shape Embedding::get_output_shape() const
     return {sequence_length, embedding_dimension};
 }
 
-vector<pair<Shape, Type>> Embedding::get_forward_specs(Index batch_size) const
-{
-    return {{{batch_size, sequence_length, embedding_dimension}, compute_dtype}}; // Output
-}
-
 void Embedding::set(Index new_vocabulary_size,
                     Index new_sequence_length,
                     Index new_embedding_dimension,
@@ -56,14 +51,13 @@ void Embedding::set(Index new_vocabulary_size,
 
 void Embedding::read_JSON_body(const Json* embedding_layer_element)
 {
-    const string new_label = read_json_string(embedding_layer_element, "Label");
     const Index new_vocabulary_size = read_json_index(embedding_layer_element, "VocabularySize");
     const Shape new_output_shape = string_to_shape(read_json_string(embedding_layer_element, "OutputDimensions"));
 
     set(new_vocabulary_size,
         new_output_shape.dim_or_zero(0),
         new_output_shape.dim_or_zero(1),
-        new_label);
+        get_label());
 
     set_scale_embedding(read_json_bool(embedding_layer_element, "ScaleEmbedding"));
     set_add_positional_encoding(read_json_bool(embedding_layer_element, "AddPositionalEncoding"));

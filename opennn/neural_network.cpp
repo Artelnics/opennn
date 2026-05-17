@@ -29,7 +29,7 @@ namespace opennn
 
 NeuralNetwork::NeuralNetwork()
 {
-    set_default();
+    clear();
 }
 
 NeuralNetwork::NeuralNetwork(const filesystem::path& file_name)
@@ -70,9 +70,7 @@ void NeuralNetwork::compile()
     states.resize_bytes(get_states_size() * Index(sizeof(float)), Device::CPU);
     states.setZero();
 
-    float* state_pointer = states.as<float>();
-    for (auto& layer : layers)
-        state_pointer = layer->link_states(state_pointer);
+    link_states();
 
 }
 
@@ -231,8 +229,8 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 {
     input_variables.resize(new_input_shape.size());
 
-    if (has(LayerType::Scaling))
-        get_first(LayerType::Scaling)->set_input_shape(new_input_shape);
+    if (Layer* scaling = get_first(LayerType::Scaling))
+        scaling->set_input_shape(new_input_shape);
 
     layers[get_first_trainable_layer_index()]->set_input_shape(new_input_shape);
 
@@ -245,7 +243,7 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
     }
 }
 
-void NeuralNetwork::set_default()
+void NeuralNetwork::clear()
 {
     layers.clear();
 
@@ -254,6 +252,9 @@ void NeuralNetwork::set_default()
     input_variables.clear();
 
     output_variables.clear();
+
+    first_trainable_cache_ = -1;
+    last_trainable_cache_  = -1;
 }
 
 void NeuralNetwork::set_layer_input_indices(const string& layer_label,
@@ -285,11 +286,11 @@ Index NeuralNetwork::get_inputs_number() const
     if (layers.empty())
         return 0;
 
-    if (has(LayerType::Embedding))
+    if (get_first(LayerType::Embedding))
         return get_layer(0)->get_inputs_number();
 
-    if (has(LayerType::Recurrent))
-        return get_first(LayerType::Recurrent)->get_input_shape()[1];
+    if (const Layer* recurrent = get_first(LayerType::Recurrent))
+        return recurrent->get_input_shape()[1];
 
     return layers[0]->get_input_shape().size();
 }
@@ -330,19 +331,6 @@ Index NeuralNetwork::get_parameters_number() const
 {
     return transform_reduce(layers.begin(), layers.end(), Index(0), plus<>{},
         [](const unique_ptr<Layer>& l) { return l->get_parameters_number(); });
-}
-
-vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
-{
-    const Index layers_number = get_layers_number();
-
-    vector<Index> layer_parameter_numbers(layers_number);
-
-    transform(execution::par, layers.begin(), layers.end(),
-              layer_parameter_numbers.begin(),
-              [](const unique_ptr<Layer>& l) { return l->get_parameters_number(); });
-
-    return layer_parameter_numbers;
 }
 
 Index NeuralNetwork::get_first_trainable_layer_index() const
@@ -834,7 +822,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
                 if (layer_index >= 0 && layer_index < ssize(layers) && !text.empty())
                 {
                     Shape shape = string_to_shape(text, " ");
-                    layer_input_indices[layer_index] = vector<Index>(shape.begin(), shape.end());
+                    layer_input_indices[layer_index].assign(shape.begin(), shape.end());
                 }
             }
         }
@@ -973,7 +961,7 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
 
 void NeuralNetwork::load(const filesystem::path& file_name)
 {
-    set_default();
+    clear();
 
     from_JSON(load_json_file(file_name));
 
@@ -1171,6 +1159,14 @@ void NeuralNetwork::link_parameters()
     }
 }
 
+void NeuralNetwork::link_states()
+{
+    float* state_pointer = states.as<float>();
+
+    for (auto& layer : layers)
+        state_pointer = layer->link_states(state_pointer);
+}
+
 #ifdef OPENNN_HAS_CUDA
 
 void NeuralNetwork::copy_parameters_device()
@@ -1228,52 +1224,6 @@ void NeuralNetwork::copy_states_host()
     link_states();
 }
 
-void NeuralNetwork::link_states()
-{
-    float* state_pointer = states.as<float>();
-
-    for (auto& layer : layers)
-        state_pointer = layer->link_states(state_pointer);
-}
-
-namespace
-{
-
-void copy_device_output_to_matrix(const TensorView& output, MatrixR& destination, cudaStream_t stream)
-{
-    if (output.type == Type::BF16)
-    {
-        const Index size = output.size();
-        vector<uint16_t> staging(static_cast<size_t>(size));
-
-        CHECK_CUDA(cudaMemcpyAsync(staging.data(),
-                                   output.data,
-                                   size * sizeof(uint16_t),
-                                   cudaMemcpyDeviceToHost,
-                                   stream));
-
-        CHECK_CUDA(cudaStreamSynchronize(stream));
-
-        float* destination_data = destination.data();
-        for (Index i = 0; i < size; ++i)
-        {
-            const uint32_t bits = static_cast<uint32_t>(staging[size_t(i)]) << 16;
-            memcpy(&destination_data[i], &bits, sizeof(float));
-        }
-
-        return;
-    }
-
-    CHECK_CUDA(cudaMemcpyAsync(destination.data(),
-                               output.data,
-                               output.size() * sizeof(float),
-                               cudaMemcpyDeviceToHost,
-                               stream));
-    CHECK_CUDA(cudaStreamSynchronize(stream));
-}
-
-}
-
 MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
                                                 ForwardPropagation& forward_propagation)
 {
@@ -1312,7 +1262,8 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     const Index out_cols = out_view.size() / batch_size;
     MatrixR result(batch_size, out_cols);
 
-    copy_device_output_to_matrix(out_view, result, stream);
+    copy_device_to_host_float(out_view.data, out_view.type, out_view.size(),
+                              result.data(), stream);
 
     for (float* p : input_devices)
         if (p) CHECK_CUDA(cudaFree(p));

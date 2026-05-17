@@ -511,6 +511,14 @@ inline void TensorView::set_zero_async() const
 inline const float one = 1.0f;
 inline const float zero = 0.0f;
 
+// Sync D2H copy of a contiguous device buffer into an FP32 host buffer,
+// upcasting BF16 -> FP32 inline. Blocks on `stream`. Throws on unsupported
+// dtype. Allocates a uint16_t staging buffer for BF16 sources, so callers on
+// hot paths may prefer an inline version with a pre-allocated staging buffer.
+void copy_device_to_host_float(const void* device_src, Type src_dtype,
+                               Index element_count, float* host_dst,
+                               cudaStream_t stream);
+
 #endif
 
 }

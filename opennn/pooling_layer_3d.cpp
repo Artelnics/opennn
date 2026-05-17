@@ -49,18 +49,21 @@ void Pooling3d::set(const Shape& new_input_shape,
     sequence_length = new_input_shape.dim_or_zero(0);
     input_features  = new_input_shape.dim_or_zero(1);
 
-    pooling_method = new_pooling_method;
-
     set_label(new_label);
 
-    pool3d.method = (pooling_method == PoolingMethod::MaxPooling) ? Pool3dOp::Max : Pool3dOp::Average;
+    set_pooling_method(new_pooling_method);
     pool3d.output_slots = {Output, MaximalIndices};
+}
+
+void Pooling3d::set_pooling_method(PoolingMethod new_pooling_method)
+{
+    pooling_method = new_pooling_method;
+    pool3d.method = (pooling_method == PoolingMethod::MaxPooling) ? Pool3dOp::Max : Pool3dOp::Average;
 }
 
 void Pooling3d::set_pooling_method(const string& new_pooling_method)
 {
-    pooling_method = string_to_pooling_method(new_pooling_method);
-    pool3d.method = (pooling_method == PoolingMethod::MaxPooling) ? Pool3dOp::Max : Pool3dOp::Average;
+    set_pooling_method(string_to_pooling_method(new_pooling_method));
 }
 
 void Pooling3d::read_JSON_body(const Json* element)

@@ -59,27 +59,8 @@ public:
              bool = false,
              const string& = "multihead_attention_layer");
 
-    void set_input_shape(const Shape& new_input_shape) override
-    {
-        if (new_input_shape.rank != 2)
-            throw runtime_error("MultiHeadAttention input shape must have rank 2.");
-
-        query_sequence_length  = new_input_shape[0];
-        source_sequence_length = new_input_shape[0];
-        embedding_dimension    = new_input_shape[1];
-    }
-
-    void on_compute_dtype_changed() override
-    {
-        query_projection .compute_dtype           = compute_dtype;
-        query_projection .combination.weight_type = compute_dtype;
-        key_projection   .compute_dtype           = compute_dtype;
-        key_projection   .combination.weight_type = compute_dtype;
-        value_projection .compute_dtype           = compute_dtype;
-        value_projection .combination.weight_type = compute_dtype;
-        output_projection.weight_type             = compute_dtype;
-        attention.compute_dtype                   = compute_dtype;
-    }
+    void set_input_shape(const Shape&) override;
+    void on_compute_dtype_changed() override;
 
     void set_dropout_rate(float new_dropout_rate) { attention.set_dropout_rate(new_dropout_rate); }
 

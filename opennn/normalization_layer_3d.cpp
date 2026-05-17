@@ -65,12 +65,17 @@ void Normalization3d::set(Index new_sequence_length,
     layer_norm.set(sequence_length, embedding_dimension);
 }
 
+void Normalization3d::set_input_shape(const Shape& new_input_shape)
+{
+    if (new_input_shape.rank < 2) return;
+    set(new_input_shape[0], new_input_shape[1], label);
+}
+
 void Normalization3d::read_JSON_body(const Json* element)
 {
-    const string new_name = read_json_string(element, "Label");
     const Shape new_input_shape = string_to_shape(read_json_string(element, "InputDimensions"));
 
-    set(new_input_shape.dim_or_zero(0), new_input_shape.dim_or_zero(1), new_name);
+    set(new_input_shape.dim_or_zero(0), new_input_shape.dim_or_zero(1), get_label());
 }
 
 REGISTER(Layer, Normalization3d, "Normalization3d")

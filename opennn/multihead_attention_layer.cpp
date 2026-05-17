@@ -187,9 +187,41 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     merge.output_delta_slots = {ConcatenatedOutputDelta};
 }
 
+void MultiHeadAttention::set_input_shape(const Shape& new_input_shape)
+{
+    if (new_input_shape.rank != 2)
+        throw runtime_error("MultiHeadAttention input shape must have rank 2.");
+
+    if (heads_number <= 0)
+    {
+        query_sequence_length  = new_input_shape[0];
+        source_sequence_length = new_input_shape[0];
+        embedding_dimension    = new_input_shape[1];
+        return;
+    }
+
+    set(new_input_shape[0],
+        new_input_shape[0],
+        new_input_shape[1],
+        heads_number,
+        attention.use_causal_mask,
+        label);
+}
+
+void MultiHeadAttention::on_compute_dtype_changed()
+{
+    if (heads_number <= 0) return;
+
+    set(query_sequence_length,
+        source_sequence_length,
+        embedding_dimension,
+        heads_number,
+        attention.use_causal_mask,
+        label);
+}
+
 void MultiHeadAttention::read_JSON_body(const Json* root_element)
 {
-    const string new_label = read_json_string(root_element, "Label");
     const Shape new_input_shape = string_to_shape(read_json_string(root_element, "InputDimensions"));
     const Index new_source_sequence_length = read_json_index(root_element, "SourceSequenceLength");
     const Index new_heads_number = read_json_index(root_element, "HeadsNumber");
@@ -198,7 +230,7 @@ void MultiHeadAttention::read_JSON_body(const Json* root_element)
     set(new_input_shape.dim_or_zero(0),
         new_source_sequence_length,
         new_input_shape.dim_or_zero(1),
-        new_heads_number, new_use_causal_mask, new_label);
+        new_heads_number, new_use_causal_mask, get_label());
 }
 
 void MultiHeadAttention::write_JSON_body(JsonWriter& printer) const
