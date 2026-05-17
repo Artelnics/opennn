@@ -375,7 +375,7 @@ vector<pair<Shape, Type>> BatchNormOp::state_specs() const
     return vector<pair<Shape, Type>>(2, {Shape{features}, Type::FP32});
 }
 
-void BatchNormOp::link_parameters(const vector<TensorView>& views)
+void BatchNormOp::link_parameters(span<const TensorView> views)
 {
     if (views.size() < 2) return;
     gamma = views[0];
@@ -383,14 +383,14 @@ void BatchNormOp::link_parameters(const vector<TensorView>& views)
     invalidate_inference_cache();
 }
 
-void BatchNormOp::link_gradients(const vector<TensorView>& views)
+void BatchNormOp::link_gradients(span<const TensorView> views)
 {
     if (views.size() < 2) return;
     gamma_gradient = views[0];
     beta_gradient  = views[1];
 }
 
-void BatchNormOp::link_states(const vector<TensorView>& views)
+void BatchNormOp::link_states(span<const TensorView> views)
 {
     if (views.size() < 2) return;
     running_mean     = views[0];
@@ -670,14 +670,14 @@ vector<pair<Shape, Type>> CombinationOp::parameter_specs() const
     };
 }
 
-void CombinationOp::link_parameters(const vector<TensorView>& views)
+void CombinationOp::link_parameters(span<const TensorView> views)
 {
     if (views.size() < 2) return;
     bias    = views[0];
     weights = views[1];
 }
 
-void CombinationOp::link_gradients(const vector<TensorView>& views)
+void CombinationOp::link_gradients(span<const TensorView> views)
 {
     if (views.size() < 2) return;
     bias_gradient   = views[0];
@@ -891,14 +891,14 @@ vector<pair<Shape, Type>> ConvolutionOp::parameter_specs() const
     };
 }
 
-void ConvolutionOp::link_parameters(const vector<TensorView>& views)
+void ConvolutionOp::link_parameters(span<const TensorView> views)
 {
     if (views.size() < 2) return;
     bias    = views[0];
     weights = views[1];
 }
 
-void ConvolutionOp::link_gradients(const vector<TensorView>& views)
+void ConvolutionOp::link_gradients(span<const TensorView> views)
 {
     if (views.size() < 2) return;
     bias_gradient   = views[0];
@@ -1311,14 +1311,14 @@ vector<pair<Shape, Type>> LayerNormOp::parameter_specs() const
     return vector<pair<Shape, Type>>(2, {Shape{embedding_dimension}, Type::FP32});
 }
 
-void LayerNormOp::link_parameters(const vector<TensorView>& views)
+void LayerNormOp::link_parameters(span<const TensorView> views)
 {
     if (views.size() < 2) return;
     gamma = views[0];
     beta  = views[1];
 }
 
-void LayerNormOp::link_gradients(const vector<TensorView>& views)
+void LayerNormOp::link_gradients(span<const TensorView> views)
 {
     if (views.size() < 2) return;
     gamma_gradient = views[0];
@@ -2915,19 +2915,19 @@ vector<pair<Shape, Type>> EmbeddingLookupOp::state_specs() const
     return {{{sequence_length, embedding_dimension}, Type::FP32}};
 }
 
-void EmbeddingLookupOp::link_parameters(const vector<TensorView>& views)
+void EmbeddingLookupOp::link_parameters(span<const TensorView> views)
 {
     if (views.empty()) return;
     weights = views[0];
 }
 
-void EmbeddingLookupOp::link_gradients(const vector<TensorView>& views)
+void EmbeddingLookupOp::link_gradients(span<const TensorView> views)
 {
     if (views.empty()) return;
     weight_gradient = views[0];
 }
 
-void EmbeddingLookupOp::link_states(const vector<TensorView>& views)
+void EmbeddingLookupOp::link_states(span<const TensorView> views)
 {
     if (views.empty()) return;
     const bool needs_init = positional_encoding.data == nullptr;

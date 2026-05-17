@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <ranges>
+#include <span>
 #include <numbers>
 #include <source_location>
 #include <execution>

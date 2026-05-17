@@ -210,7 +210,7 @@ protected:
     float* link_views_to_operators(
         vector<TensorView>& views, float* pointer,
         vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
-        void (Operator::*link_fn)(const vector<TensorView>&));
+        void (Operator::*link_fn)(span<const TensorView>));
 
 };
 

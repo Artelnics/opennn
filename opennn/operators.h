@@ -30,9 +30,9 @@ struct Operator
     virtual vector<pair<Shape, Type>> parameter_specs() const { return {}; }
     virtual vector<pair<Shape, Type>> state_specs()     const { return {}; }
 
-    virtual void link_parameters(const vector<TensorView>&) {}
-    virtual void link_gradients (const vector<TensorView>&) {}
-    virtual void link_states    (const vector<TensorView>&) {}
+    virtual void link_parameters(span<const TensorView>) {}
+    virtual void link_gradients (span<const TensorView>) {}
+    virtual void link_states    (span<const TensorView>) {}
 
     virtual void set_parameters_random() {}
     virtual void set_parameters_glorot() {}
@@ -185,8 +185,8 @@ struct CombinationOp : Operator
     void set(Index new_input_features, Index new_output_features, Type new_weight_type = Type::FP32);
 
     vector<pair<Shape, Type>> parameter_specs() const override;
-    void link_parameters         (const vector<TensorView>& views) override;
-    void link_gradients(const vector<TensorView>& views) override;
+    void link_parameters(span<const TensorView> views) override;
+    void link_gradients (span<const TensorView> views) override;
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;
@@ -219,8 +219,8 @@ struct CombinationReluOp : Operator
     void set(Index input_features, Index output_features, Type weight_type = Type::FP32);
 
     vector<pair<Shape, Type>> parameter_specs() const override { return combination.parameter_specs(); }
-    void link_parameters(const vector<TensorView>& views) override { combination.link_parameters(views); }
-    void link_gradients (const vector<TensorView>& views) override { combination.link_gradients(views); }
+    void link_parameters(span<const TensorView> views) override { combination.link_parameters(views); }
+    void link_gradients (span<const TensorView> views) override { combination.link_gradients(views); }
 
     void set_parameters_random() override { combination.set_parameters_random(); }
     void set_parameters_glorot() override { combination.set_parameters_glorot(); }
@@ -248,9 +248,9 @@ struct BatchNormOp : Operator
 
     vector<pair<Shape, Type>> parameter_specs() const override;
     vector<pair<Shape, Type>> state_specs()     const override;
-    void link_parameters         (const vector<TensorView>& views) override;
-    void link_gradients(const vector<TensorView>& views) override;
-    void link_states             (const vector<TensorView>& views) override;
+    void link_parameters(span<const TensorView> views) override;
+    void link_gradients (span<const TensorView> views) override;
+    void link_states    (span<const TensorView> views) override;
 
     void set_parameters_random() override { init_defaults(); }
     void set_parameters_glorot() override { init_defaults(); }
@@ -347,8 +347,8 @@ struct ConvolutionOp : Operator
              Type compute_dtype);
 
     vector<pair<Shape, Type>> parameter_specs() const override;
-    void link_parameters         (const vector<TensorView>& views) override;
-    void link_gradients(const vector<TensorView>& views) override;
+    void link_parameters(span<const TensorView> views) override;
+    void link_gradients (span<const TensorView> views) override;
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;
@@ -395,8 +395,8 @@ struct ConvolutionReluOp : Operator
              Type compute_dtype);
 
     vector<pair<Shape, Type>> parameter_specs() const override { return convolution.parameter_specs(); }
-    void link_parameters(const vector<TensorView>& views) override { convolution.link_parameters(views); }
-    void link_gradients (const vector<TensorView>& views) override { convolution.link_gradients(views); }
+    void link_parameters(span<const TensorView> views) override { convolution.link_parameters(views); }
+    void link_gradients (span<const TensorView> views) override { convolution.link_gradients(views); }
 
     void set_parameters_random() override { convolution.set_parameters_random(); }
     void set_parameters_glorot() override { convolution.set_parameters_glorot(); }
@@ -426,8 +426,8 @@ struct LayerNormOp : Operator
     void set(Index sequence_length, Index embedding_dimension);
 
     vector<pair<Shape, Type>> parameter_specs() const override;
-    void link_parameters         (const vector<TensorView>& views) override;
-    void link_gradients(const vector<TensorView>& views) override;
+    void link_parameters(span<const TensorView> views) override;
+    void link_gradients (span<const TensorView> views) override;
 
     void set_parameters_random() override { init_defaults(); }
     void set_parameters_glorot() override { init_defaults(); }
@@ -483,8 +483,8 @@ struct MultiHeadProjectionOp : Operator
     void set(Index input_features, Index heads_number, Index head_dimension, Type compute_dtype);
 
     vector<pair<Shape, Type>> parameter_specs() const override { return combination.parameter_specs(); }
-    void link_parameters         (const vector<TensorView>& views) override { combination.link_parameters(views); }
-    void link_gradients(const vector<TensorView>& views) override { combination.link_gradients(views); }
+    void link_parameters(span<const TensorView> views) override { combination.link_parameters(views); }
+    void link_gradients (span<const TensorView> views) override { combination.link_gradients(views); }
 
     void set_parameters_random() override { combination.set_parameters_random(); }
     void set_parameters_glorot() override { combination.set_parameters_glorot(); }
@@ -771,9 +771,9 @@ struct EmbeddingLookupOp : Operator
 
     vector<pair<Shape, Type>> parameter_specs() const override;
     vector<pair<Shape, Type>> state_specs()     const override;
-    void link_parameters         (const vector<TensorView>& views) override;
-    void link_gradients(const vector<TensorView>& views) override;
-    void link_states             (const vector<TensorView>& views) override;
+    void link_parameters(span<const TensorView> views) override;
+    void link_gradients (span<const TensorView> views) override;
+    void link_states    (span<const TensorView> views) override;
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;
