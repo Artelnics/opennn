@@ -1154,9 +1154,8 @@ MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
         return starting_matrix;
 
     if (starting_matrix.cols() != block.cols())
-        throw runtime_error("append_rows: Column mismatch (" +
-                                to_string(starting_matrix.cols()) + " vs " +
-                                to_string(block.cols()) + ")");
+        throw runtime_error(format("append_rows: Column mismatch ({} vs {})",
+                                   starting_matrix.cols(), block.cols()));
 
     MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
 

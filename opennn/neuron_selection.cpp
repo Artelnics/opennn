@@ -86,7 +86,7 @@ void NeuronSelection::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open file: " + file_name.string());
+        throw runtime_error(format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
     to_JSON(printer);

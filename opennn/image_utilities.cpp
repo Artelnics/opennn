@@ -42,11 +42,11 @@ void read_bmp_file(const filesystem::path& path, vector<uint8_t>& buffer)
 
     ifstream file(path, ios::binary | ios::ate);
     if (!file)
-        throw runtime_error("Cannot open BMP file: " + path_str);
+        throw runtime_error(format("Cannot open BMP file: {}", path_str));
 
     const streamsize size = file.tellg();
     if (size < 54)
-        throw runtime_error("File too small to be a BMP: " + path_str);
+        throw runtime_error(format("File too small to be a BMP: {}", path_str));
 
     file.seekg(0, ios::beg);
 
@@ -56,7 +56,7 @@ void read_bmp_file(const filesystem::path& path, vector<uint8_t>& buffer)
     buffer.resize(byte_count);
 
     if (!file.read(reinterpret_cast<char*>(buffer.data()), size))
-        throw runtime_error("Error reading BMP file: " + path_str);
+        throw runtime_error(format("Error reading BMP file: {}", path_str));
 }
 
 BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str)
@@ -66,14 +66,14 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
     auto read_s32 = [&](int offset) { return static_cast<int32_t>(read_u32(offset)); };
 
     if (read_u16(0) != 0x4D42)
-        throw runtime_error("Not a BMP file (invalid signature 'BM'): " + path_str);
+        throw runtime_error(format("Not a BMP file (invalid signature 'BM'): {}", path_str));
 
     BmpHeader h;
     h.bfOffBits = read_u32(10);
     const uint32_t biSize = read_u32(14);
 
     if (biSize != 40)
-        throw runtime_error("Unsupported BMP DIB header size in file: " + path_str);
+        throw runtime_error(format("Unsupported BMP DIB header size in file: {}", path_str));
 
     const int32_t biWidth = read_s32(18);
     const int32_t biHeight_signed = read_s32(22);
@@ -83,9 +83,9 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
     const uint32_t biClrUsed = read_u32(46);
 
     if (biWidth <= 0 || biHeight_signed == 0 || biPlanes != 1 || biCompression != 0)
-        throw runtime_error("Invalid or unsupported BMP format in file: " + path_str);
+        throw runtime_error(format("Invalid or unsupported BMP format in file: {}", path_str));
     if (h.biBitCount != 8 && h.biBitCount != 24 && h.biBitCount != 32)
-        throw runtime_error("Unsupported BMP bit count: " + to_string(h.biBitCount));
+        throw runtime_error(format("Unsupported BMP bit count: {}", h.biBitCount));
 
     h.is_grayscale = false;
 
@@ -196,7 +196,7 @@ void load_image(const filesystem::path& path,
     const BmpHeader h = parse_bmp_header(buffer, path.string());
 
     if (h.channels != expected_channels)
-        throw runtime_error("Channel mismatch in image: " + path.string());
+        throw runtime_error(format("Channel mismatch in image: {}", path.string()));
 
     if (h.height == expected_height && h.width == expected_width)
     {

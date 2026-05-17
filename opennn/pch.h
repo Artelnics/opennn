@@ -27,6 +27,7 @@
 #include <source_location>
 #include <execution>
 #include <charconv>
+#include <format>
 #include <string>
 #include <string_view>
 #include <cassert>
@@ -146,8 +147,8 @@ inline void throw_if(bool condition, const string& message,
                      const source_location& loc = source_location::current())
 {
     if (condition)
-        throw runtime_error(message + " [at " + loc.file_name() + ":"
-                            + to_string(loc.line()) + "]");
+        throw runtime_error(std::format("{} [at {}:{}]",
+                                        message, loc.file_name(), loc.line()));
 }
 
 constexpr float EPSILON = numeric_limits<float>::epsilon();

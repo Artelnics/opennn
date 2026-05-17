@@ -145,13 +145,11 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
     const Index decoder_sequence_length = transformer.get_decoder_sequence_length();
 
     if (input_sequence_length != language_dataset.get_maximum_input_sequence_length())
-        throw runtime_error("TransformerDecoder: input sequence length mismatch (transformer="
-                            + to_string(input_sequence_length) + ", dataset="
-                            + to_string(language_dataset.get_maximum_input_sequence_length()) + ").");
+        throw runtime_error(format("TransformerDecoder: input sequence length mismatch (transformer={}, dataset={}).",
+                                   input_sequence_length, language_dataset.get_maximum_input_sequence_length()));
     if (decoder_sequence_length != language_dataset.get_maximum_target_sequence_length())
-        throw runtime_error("TransformerDecoder: decoder sequence length mismatch (transformer="
-                            + to_string(decoder_sequence_length) + ", dataset="
-                            + to_string(language_dataset.get_maximum_target_sequence_length()) + ").");
+        throw runtime_error(format("TransformerDecoder: decoder sequence length mismatch (transformer={}, dataset={}).",
+                                   decoder_sequence_length, language_dataset.get_maximum_target_sequence_length()));
 
     if (language_dataset.get_input_vocabulary_map().empty())
         throw runtime_error("TransformerDecoder: dataset input vocabulary is empty.");
@@ -203,15 +201,15 @@ void TransformerDecoder::identify_layer_ranges()
     const Index layers_number = static_cast<Index>(layers.size());
 
     if (layers_number < 4)
-        throw runtime_error("TransformerDecoder: unexpected layer count (" +
-                            to_string(layers_number) + "). Transformer must have at least decoder_embedding + encoder_embedding + cross_attention + output_projection.");
+        throw runtime_error(format("TransformerDecoder: unexpected layer count ({}). Transformer must have at least decoder_embedding + encoder_embedding + cross_attention + output_projection.",
+                                   layers_number));
 
     if (layers[0]->get_label() != "decoder_embedding")
-        throw runtime_error("TransformerDecoder: layer 0 expected to be 'decoder_embedding', found '" + layers[0]->get_label() + "'.");
+        throw runtime_error(format("TransformerDecoder: layer 0 expected to be 'decoder_embedding', found '{}'.", layers[0]->get_label()));
     decoder_embedding_layer_index = 0;
 
     if (layers[1]->get_label() != "encoder_embedding")
-        throw runtime_error("TransformerDecoder: layer 1 expected to be 'encoder_embedding', found '" + layers[1]->get_label() + "'.");
+        throw runtime_error(format("TransformerDecoder: layer 1 expected to be 'encoder_embedding', found '{}'.", layers[1]->get_label()));
     encoder_embedding_layer_index = 1;
 
     const auto& layer_input_indices = transformer.get_layer_input_indices();
@@ -238,13 +236,13 @@ void TransformerDecoder::identify_layer_ranges()
     if (decoder_stack_first_layer_index >= layers_number)
         throw runtime_error("TransformerDecoder: decoder stack first index out of range.");
     if (layers[decoder_stack_first_layer_index]->get_label() != "decoder_self_attention_1")
-        throw runtime_error("TransformerDecoder: layer after encoder expected to be 'decoder_self_attention_1', found '" +
-                            layers[decoder_stack_first_layer_index]->get_label() + "'.");
+        throw runtime_error(format("TransformerDecoder: layer after encoder expected to be 'decoder_self_attention_1', found '{}'.",
+                                   layers[decoder_stack_first_layer_index]->get_label()));
 
     output_projection_layer_index = layers_number - 1;
     if (layers[output_projection_layer_index]->get_label() != "output_projection")
-        throw runtime_error("TransformerDecoder: last layer expected to be 'output_projection', found '" +
-                            layers[output_projection_layer_index]->get_label() + "'.");
+        throw runtime_error(format("TransformerDecoder: last layer expected to be 'output_projection', found '{}'.",
+                                   layers[output_projection_layer_index]->get_label()));
 }
 
 void TransformerDecoder::reset_per_prompt_state()

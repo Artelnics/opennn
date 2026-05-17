@@ -38,7 +38,7 @@ const Json* Json::find(const string& key) const
 const Json& Json::at(const string& key) const
 {
     const Json* v = find(key);
-    if (!v) throw runtime_error("JSON: missing key '" + key + "'");
+    if (!v) throw runtime_error(format("JSON: missing key '{}'", key));
     return *v;
 }
 
@@ -241,7 +241,7 @@ struct Parser
 
     [[noreturn]] void fail(const string& msg) const
     {
-        throw runtime_error("JSON parse error at " + to_string(i) + ": " + msg);
+        throw runtime_error(format("JSON parse error at {}: {}", i, msg));
     }
 
     char peek()
@@ -409,7 +409,7 @@ void JsonDocument::load(const filesystem::path& path)
 {
     ifstream in(path);
     if (!in.is_open())
-        throw runtime_error("Cannot open JSON file: " + path.string());
+        throw runtime_error(format("Cannot open JSON file: {}", path.string()));
     stringstream ss;
     ss << in.rdbuf();
     root = Json::parse(ss.str());
@@ -419,7 +419,7 @@ void JsonDocument::save(const filesystem::path& path, int indent) const
 {
     ofstream out(path);
     if (!out.is_open())
-        throw runtime_error("Cannot open JSON file: " + path.string());
+        throw runtime_error(format("Cannot open JSON file: {}", path.string()));
     out << root.dump(indent);
 }
 
@@ -570,9 +570,9 @@ string read_json_string_fallback(const Json* root,
 
 const Json* require_json_field(const Json* root, const string& field)
 {
-    if (!root) throw runtime_error("JSON: missing root for field '" + field + "'");
+    if (!root) throw runtime_error(format("JSON: missing root for field '{}'", field));
     const Json* v = root->find(field);
-    if (!v) throw runtime_error("JSON: missing required field '" + field + "'");
+    if (!v) throw runtime_error(format("JSON: missing required field '{}'", field));
     return v;
 }
 
@@ -586,7 +586,7 @@ JsonDocument load_json_file(const filesystem::path& file_name)
 const Json* get_json_root(const JsonDocument& document, const string& tag)
 {
     const Json* v = document.first_child(tag);
-    if (!v) throw runtime_error("JSON: missing root tag '" + tag + "'");
+    if (!v) throw runtime_error(format("JSON: missing root tag '{}'", tag));
     return v;
 }
 

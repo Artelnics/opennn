@@ -97,7 +97,7 @@ void Recurrent::set_activation_function(const string& new_activation_function)
         && new_activation_function != "Tanh"
         && new_activation_function != "Identity"
         && new_activation_function != "ReLU")
-        throw runtime_error("Unknown activation function: " + new_activation_function);
+        throw runtime_error(format("Unknown activation function: {}", new_activation_function));
 
     activation_function = new_activation_function;
 }

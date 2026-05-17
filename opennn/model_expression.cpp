@@ -1136,7 +1136,7 @@ void ModelExpression::save(const filesystem::path& file_name, ProgrammingLanguag
     ofstream file(file_name);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open file: " + file_name.string());
+        throw runtime_error(format("Cannot open file: {}", file_name.string()));
 
     using enum ProgrammingLanguage;
     switch (language)

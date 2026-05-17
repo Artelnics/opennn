@@ -88,8 +88,8 @@ inline void check_rank(const Shape& shape, initializer_list<int> allowed,
         ++it;
     }
 
-    throw runtime_error(string(layer) + " layer supports " + what + " rank "
-                        + allowed_str + " (got " + to_string(shape.rank) + ").");
+    throw runtime_error(format("{} layer supports {} rank {} (got {}).",
+                               layer, what, allowed_str, shape.rank));
 }
 
 class Layer

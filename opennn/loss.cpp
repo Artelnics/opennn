@@ -451,7 +451,7 @@ void Loss::set_error(const string& new_name)
     for (const auto& [error_value, error_name] : error_map)
         if (error_name == new_name) { set_error(error_value); return; }
 
-    throw runtime_error("Unknown loss method: " + new_name);
+    throw runtime_error(format("Unknown loss method: {}", new_name));
 }
 
 void Loss::add_regularization_gradient(BackPropagation& back_propagation) const

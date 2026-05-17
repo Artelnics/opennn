@@ -385,7 +385,7 @@ void LanguageDataset::load_documents(string& buffer,
     ifstream file(data_path, ios::binary | ios::ate);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open file " + data_path.string());
+        throw runtime_error(format("Cannot open file {}", data_path.string()));
 
     const auto file_size = file.tellg();
     file.seekg(0);

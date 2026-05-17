@@ -31,7 +31,7 @@ inline PoolingMethod string_to_pooling_method(const string& name)
 {
     if (name == "MaxPooling")     return PoolingMethod::MaxPooling;
     if (name == "AveragePooling") return PoolingMethod::AveragePooling;
-    throw runtime_error("Unknown pooling method: " + name);
+    throw runtime_error(format("Unknown pooling method: {}", name));
 }
 
 class Pooling final : public Layer

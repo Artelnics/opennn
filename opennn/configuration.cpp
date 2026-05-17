@@ -75,12 +75,12 @@ const Configuration::Resolved& Configuration::resolve_slow() const
         case FP32: return FP32;
         case BF16:
             if (!gpu)
-                throw runtime_error(string("Configuration: BF16 ") + role + " requires CUDA.");
+                throw runtime_error(format("Configuration: BF16 {} requires CUDA.", role));
             if (!bf16_capable)
-                throw runtime_error(string("Configuration: BF16 ") + role + " requires CUDA compute capability >= 8.0 (Ampere+).");
+                throw runtime_error(format("Configuration: BF16 {} requires CUDA compute capability >= 8.0 (Ampere+).", role));
             return BF16;
         case INT8:
-            throw runtime_error(string("Configuration: INT8 ") + role + " not yet supported (placeholder).");
+            throw runtime_error(format("Configuration: INT8 {} not yet supported (placeholder).", role));
         }
         return FP32;
     };

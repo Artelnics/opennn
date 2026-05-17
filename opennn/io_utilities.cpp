@@ -44,7 +44,7 @@ void FileReader::open(const filesystem::path& path)
     if (handle_ == INVALID_HANDLE_VALUE)
     {
         handle_ = nullptr;
-        throw runtime_error("FileReader: cannot open " + path.string());
+        throw runtime_error(format("FileReader: cannot open {}", path.string()));
     }
 }
 
@@ -81,8 +81,8 @@ void FileReader::read_at(void* buffer, size_t bytes, uint64_t offset) const
         DWORD read_bytes = 0;
         const BOOL ok = ::ReadFile(handle_, dst + total, chunk, &read_bytes, &ov);
         if (!ok || read_bytes == 0)
-            throw runtime_error("FileReader::read_at: ReadFile failed (offset="
-                                + to_string(current) + ", n=" + to_string(chunk) + ").");
+            throw runtime_error(format("FileReader::read_at: ReadFile failed (offset={}, n={}).",
+                                       current, chunk));
         total += read_bytes;
     }
 }
@@ -106,8 +106,8 @@ void FileReader::open(const filesystem::path& path)
 
     fd_ = ::open(path.c_str(), O_RDONLY);
     if (fd_ < 0)
-        throw runtime_error("FileReader: cannot open " + path.string()
-                            + " (errno=" + to_string(errno) + ").");
+        throw runtime_error(format("FileReader: cannot open {} (errno={}).",
+                                   path.string(), errno));
 }
 
 void FileReader::close()
@@ -133,13 +133,12 @@ void FileReader::read_at(void* buffer, size_t bytes, uint64_t offset) const
         if (n < 0)
         {
             if (errno == EINTR) continue;
-            throw runtime_error("FileReader::read_at: pread failed (errno="
-                                + to_string(errno) + ", offset="
-                                + to_string(offset + total) + ").");
+            throw runtime_error(format("FileReader::read_at: pread failed (errno={}, offset={}).",
+                                       errno, offset + total));
         }
         if (n == 0)
-            throw runtime_error("FileReader::read_at: unexpected EOF at offset "
-                                + to_string(offset + total) + ".");
+            throw runtime_error(format("FileReader::read_at: unexpected EOF at offset {}.",
+                                       offset + total));
         total += size_t(n);
     }
 }
@@ -175,7 +174,7 @@ void FileWriter::open(const filesystem::path& tmp_path)
 
     stream_.open(tmp_path, ios::binary | ios::trunc);
     if (!stream_.is_open())
-        throw runtime_error("FileWriter: cannot open " + tmp_path.string());
+        throw runtime_error(format("FileWriter: cannot open {}", tmp_path.string()));
 }
 
 bool FileWriter::is_open() const { return stream_.is_open(); }
@@ -219,12 +218,12 @@ void atomic_rename(const filesystem::path& from, const filesystem::path& to)
     if (!::MoveFileExW(from.wstring().c_str(),
                        to.wstring().c_str(),
                        MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
-        throw runtime_error("atomic_rename: MoveFileExW failed for " + from.string()
-                            + " -> " + to.string());
+        throw runtime_error(format("atomic_rename: MoveFileExW failed for {} -> {}",
+                                   from.string(), to.string()));
 #else
     if (::rename(from.c_str(), to.c_str()) != 0)
-        throw runtime_error("atomic_rename: rename failed for " + from.string()
-                            + " -> " + to.string() + " (errno=" + to_string(errno) + ").");
+        throw runtime_error(format("atomic_rename: rename failed for {} -> {} (errno={}).",
+                                   from.string(), to.string(), errno));
 #endif
 }
 
@@ -308,7 +307,7 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
     ifstream file(path, ios::binary | ios::ate);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open file " + path.string() + "\n");
+        throw runtime_error(format("Cannot open file {}\n", path.string()));
 
     const auto file_size = file.tellg();
     file.seekg(0);

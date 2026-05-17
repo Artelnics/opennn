@@ -146,7 +146,7 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
         }
         else
         {
-            throw runtime_error("Unsupported input rank " + to_string(input_shape.rank));
+            throw runtime_error(format("Unsupported input rank {}", input_shape.rank));
         }
     }
 
@@ -656,18 +656,18 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
     const Index total_negatives = positives_negatives_rate(1);
 
     if (total_positives == 0)
-        throw runtime_error("Number of positive samples (" + to_string(total_positives) + ") must be greater than zero.\n");
+        throw runtime_error(format("Number of positive samples ({}) must be greater than zero.\n", total_positives));
 
     if (total_negatives == 0)
-        throw runtime_error("Number of negative samples (" + to_string(total_negatives) + ") must be greater than zero.\n");
+        throw runtime_error(format("Number of negative samples ({}) must be greater than zero.\n", total_negatives));
 
     const Index points_number = 100;
 
     if (targets.cols() != 1)
-        throw runtime_error("Number of of target variables (" +  to_string(targets.cols()) + ") must be one.\n");
+        throw runtime_error(format("Number of of target variables ({}) must be one.\n", targets.cols()));
 
     if (outputs.cols() != 1)
-        throw runtime_error("Number of of output variables (" + to_string(outputs.cols()) + ") must be one.\n");
+        throw runtime_error(format("Number of of output variables ({}) must be one.\n", outputs.cols()));
 
     MatrixR roc_curve = MatrixR::Zero(points_number + 1, 3);
 
@@ -728,10 +728,10 @@ float TestingAnalysis::calculate_area_under_curve_confidence_limit(const MatrixR
     const Index total_negatives = positives_negatives_rate[1];
 
     if (total_positives == 0)
-        throw runtime_error("Number of positive samples(" + to_string(total_positives) + ") must be greater than zero.\n");
+        throw runtime_error(format("Number of positive samples({}) must be greater than zero.\n", total_positives));
 
     if (total_negatives == 0)
-        throw runtime_error("Number of negative samples(" + to_string(total_negatives) + ") must be greater than zero.\n");
+        throw runtime_error(format("Number of negative samples({}) must be greater than zero.\n", total_negatives));
 
     const MatrixR roc_curve = calculate_roc_curve(targets, outputs);
 
@@ -785,7 +785,7 @@ MatrixR TestingAnalysis::calculate_cumulative_gain_impl(const MatrixR& targets, 
     const string label = positive ? "positive" : "negative";
 
     if (total == 0)
-        throw runtime_error("Number of " + label + " samples(" + to_string(total) + ") must be greater than zero.\n");
+        throw runtime_error(format("Number of {} samples({}) must be greater than zero.\n", label, total));
 
     const Index testing_samples_number = targets.rows();
 
@@ -1510,7 +1510,7 @@ void TestingAnalysis::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open file: " + file_name.string());
+        throw runtime_error(format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
 

@@ -142,7 +142,7 @@ Index NeuralNetwork::get_layer_index(const string& new_label) const
     if (it != layers.end())
         return distance(layers.begin(), it);
 
-    throw runtime_error("Layer not found: " + new_label);
+    throw runtime_error(format("Layer not found: {}", new_label));
 }
 
 vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
@@ -196,9 +196,8 @@ static void set_variable_names(vector<Variable>& variables, const vector<string>
         {
             const size_t num_cats = variables[i].get_categories_number();
             if (name_index + num_cats > total)
-                throw runtime_error("set_variable_names: not enough names for categorical variable "
-                                    + to_string(i) + " (need " + to_string(num_cats)
-                                    + ", have " + to_string(total - name_index) + ").");
+                throw runtime_error(format("set_variable_names: not enough names for categorical variable {} (need {}, have {}).",
+                                           i, num_cats, total - name_index));
             variables[i].categories.assign(new_names.begin() + name_index,
                                            new_names.begin() + name_index + num_cats);
             name_index += num_cats;
@@ -206,16 +205,16 @@ static void set_variable_names(vector<Variable>& variables, const vector<string>
         else
         {
             if (name_index >= total)
-                throw runtime_error("set_variable_names: not enough names for scalar variable "
-                                    + to_string(i) + ".");
+                throw runtime_error(format("set_variable_names: not enough names for scalar variable {}.",
+                                           i));
             variables[i].name = new_names[name_index];
             ++name_index;
         }
     }
 
     if (name_index != total)
-        throw runtime_error("set_variable_names: received " + to_string(total)
-                            + " names but variables expected " + to_string(name_index) + ".");
+        throw runtime_error(format("set_variable_names: received {} names but variables expected {}.",
+                                   total, name_index));
 }
 
 void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
@@ -462,8 +461,8 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
         const MatrixR result_matrix = calculate_outputs_device(input_views, forward_propagation);
         const TensorView out = forward_propagation.get_outputs();
         if (out.shape.rank < 3)
-            throw runtime_error("calculate_outputs(Tensor3, Tensor3): expected rank-3 output, got rank "
-                                + to_string(out.shape.rank));
+            throw runtime_error(format("calculate_outputs(Tensor3, Tensor3): expected rank-3 output, got rank {}",
+                                       out.shape.rank));
         Tensor3 result(out.shape[0], out.shape[1], out.shape[2]);
         memcpy(result.data(), result_matrix.data(),
                     size_t(result.size()) * sizeof(float));
@@ -534,9 +533,8 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 {
     const auto pick_input = [&](size_t k) -> const TensorView& {
         if (k >= input_view.size())
-            throw runtime_error("NeuralNetwork::forward_propagate: input index " + to_string(k)
-                                + " out of range (have " + to_string(input_view.size())
-                                + " input views). Network wiring expects more inputs than were provided.");
+            throw runtime_error(format("NeuralNetwork::forward_propagate: input index {} out of range (have {} input views). Network wiring expects more inputs than were provided.",
+                                       k, input_view.size()));
         return input_view[k];
     };
 
@@ -613,7 +611,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     const Index current_channels = image.dimension(2);
 
     if (current_channels != channels)
-        throw runtime_error("Different channels number " + image_path.string() + "\n");
+        throw runtime_error(format("Different channels number {}\n", image_path.string()));
 
     if (current_height != height || current_width != width)
         image = resize_image(image, height, width);
@@ -809,8 +807,9 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
             unique_ptr<Layer> layer = Registry<Layer>::instance().create(tag_name);
             if (!layer)
-                throw runtime_error("Layer '" + tag_name + "' not found in Registry. "
-                                                          "Ensure the layer file is linked and REGISTER macro is used.");
+                throw runtime_error(format("Layer '{}' not found in Registry. "
+                                           "Ensure the layer file is linked and REGISTER macro is used.",
+                                           tag_name));
 
             JsonDocument layer_doc;
             layer_doc.root = item;
@@ -945,7 +944,7 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
     ofstream file(file_name, ios::binary);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open binary file for writing: " + file_name.string() + "\n");
+        throw runtime_error(format("Cannot open binary file for writing: {}\n", file_name.string()));
 
     // parameters.as<float>() returns a raw pointer that can live on device when
     // training in CUDA. Reading it from host (file.write) segfaults; sync to
@@ -962,7 +961,7 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
                parameters_number * sizeof(float));
 
     if (!file)
-        throw runtime_error("Error writing binary file: " + file_name.string() + "\n");
+        throw runtime_error(format("Error writing binary file: {}\n", file_name.string()));
 
     file.close();
 
@@ -990,7 +989,7 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
     ifstream file(file_name, ios::binary);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open binary file: " + file_name.string() + "\n");
+        throw runtime_error(format("Cannot open binary file: {}\n", file_name.string()));
 
     const Index parameters_number = parameters.size_in_floats();
 
@@ -1004,7 +1003,7 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 #endif
 
     if (!file)
-        throw runtime_error("Error reading binary file: " + file_name.string());
+        throw runtime_error(format("Error reading binary file: {}", file_name.string()));
 
 }
 
@@ -1015,7 +1014,7 @@ void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_n
     ofstream file(file_name);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open " + file_name.string() + " file.\n");
+        throw runtime_error(format("Cannot open {} file.\n", file_name.string()));
 
     const vector<string> output_names = get_output_feature_names();
 
@@ -1067,7 +1066,7 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
     ofstream file(file_name);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open " + file_name.string() + " file.\n");
+        throw runtime_error(format("Cannot open {} file.\n", file_name.string()));
 
     const vector<string> output_names = get_output_feature_names();
     const Index outputs_number = get_outputs_number();

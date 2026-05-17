@@ -67,9 +67,8 @@ void Unscaling::set_output_shape(const Shape& /*new_output_shape*/)
 void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
     if (ssize(new_descriptives) != ssize(descriptives))
-        throw runtime_error("Unscaling::set_descriptives: size mismatch (expected "
-                            + to_string(descriptives.size()) + ", got "
-                            + to_string(new_descriptives.size()) + ").");
+        throw runtime_error(format("Unscaling::set_descriptives: size mismatch (expected {}, got {}).",
+                                   descriptives.size(), new_descriptives.size()));
     descriptives = new_descriptives;
     op_storage_dirty = true;
     refresh_op_storage(current_device());
@@ -86,9 +85,8 @@ void Unscaling::set_min_max_range(float new_min, float new_max)
 void Unscaling::set_scalers(const vector<string>& scalers_str)
 {
     if (ssize(scalers_str) != ssize(scalers))
-        throw runtime_error("Unscaling::set_scalers: size mismatch (expected "
-                            + to_string(scalers.size()) + ", got "
-                            + to_string(scalers_str.size()) + ").");
+        throw runtime_error(format("Unscaling::set_scalers: size mismatch (expected {}, got {}).",
+                                   scalers.size(), scalers_str.size()));
     ranges::transform(scalers_str, scalers.begin(), string_to_scaler_method);
     op_storage_dirty = true;
     refresh_op_storage(current_device());
@@ -176,9 +174,8 @@ void Unscaling::read_JSON_body(const Json* root_element)
     if (!neurons_array || !neurons_array->is_array()) return;
 
     if (ssize(neurons_array->array_value) != ssize(scalers))
-        throw runtime_error("Unscaling::read_JSON_body: \"Neurons\" has "
-                            + to_string(neurons_array->array_value.size())
-                            + " entries, expected " + to_string(scalers.size()) + ".");
+        throw runtime_error(format("Unscaling::read_JSON_body: \"Neurons\" has {} entries, expected {}.",
+                                   neurons_array->array_value.size(), scalers.size()));
 
     for (size_t i = 0; i < neurons_array->array_value.size(); ++i)
     {
@@ -189,9 +186,8 @@ void Unscaling::read_JSON_body(const Json* root_element)
         const string descriptives_text = read_json_string(neuron, "Descriptives");
         const vector<string> tokens = get_tokens(descriptives_text, " ");
         if (tokens.size() < 4)
-            throw runtime_error("Unscaling::read_JSON_body: neuron " + to_string(i)
-                                + " \"Descriptives\" has " + to_string(tokens.size())
-                                + " tokens, expected 4.");
+            throw runtime_error(format("Unscaling::read_JSON_body: neuron {} \"Descriptives\" has {} tokens, expected 4.",
+                                       i, tokens.size()));
         descriptives[i].minimum            = float(stof(tokens[0]));
         descriptives[i].maximum            = float(stof(tokens[1]));
         descriptives[i].mean               = float(stof(tokens[2]));

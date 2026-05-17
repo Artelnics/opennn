@@ -767,7 +767,7 @@ void TabularDataset::read_csv()
     vector<vector<string_view>>& raw_file_content = parsed.rows;
 
     if (raw_file_content.empty())
-        throw runtime_error("File " + data_path.string() + " is empty or contains no valid data rows.");
+        throw runtime_error(format("File {} is empty or contains no valid data rows.", data_path.string()));
 
     read_data_file_preview(raw_file_content);
 
@@ -902,7 +902,7 @@ void TabularDataset::read_csv()
             const Variable& variable = variables[variable_index];
             const size_t token_index = variable_index + id_offset;
             if (token_index >= tokens.size())
-                throw runtime_error("Row " + to_string(sample_index) + " has fewer columns than expected (" + to_string(tokens.size()) + ").");
+                throw runtime_error(format("Row {} has fewer columns than expected ({}).", sample_index, tokens.size()));
             const string_view token = tokens[token_index];
             const vector<Index>& feature_indices = all_feature_indices[variable_index];
 
@@ -1276,8 +1276,8 @@ void TabularDataset::set_variable_scalers(const vector<string>& new_scalers)
     const size_t variables_number = get_variables_number();
 
     if (new_scalers.size() != variables_number)
-        throw runtime_error("Size of variable scalers(" + to_string(new_scalers.size()) + ") "
-                            "has to be the same as variables numbers(" + to_string(variables_number) + ").\n");
+        throw runtime_error(format("Size of variable scalers({}) has to be the same as variables numbers({}).\n",
+                                   new_scalers.size(), variables_number));
 
     for (size_t i = 0; i < variables_number; ++i)
         variables[i].set_scaler(new_scalers[i]);

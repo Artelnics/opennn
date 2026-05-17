@@ -523,8 +523,8 @@ void Dataset::set_variable_roles(const vector<string>& new_variables_roles)
     const size_t new_variables_roles_size = new_variables_roles.size();
 
     if (new_variables_roles_size != variables.size())
-        throw runtime_error("Size of variables uses (" + to_string(new_variables_roles_size) + ") "
-                            "must be equal to variables size (" + to_string(variables.size()) + ").\n");
+        throw runtime_error(format("Size of variables uses ({}) must be equal to variables size ({}).\n",
+                                   new_variables_roles_size, variables.size()));
 
     for (size_t i = 0; i < new_variables_roles.size(); ++i)
         variables[i].set_role(new_variables_roles[i]);
@@ -599,8 +599,8 @@ void Dataset::set_variable_names(const vector<string>& new_names)
     const Index variables_number = get_variables_number();
 
     if (new_names_size != variables_number)
-        throw runtime_error("Size of names (" + to_string(new_names.size()) + ") "
-                            "is not equal to variables number (" + to_string(variables_number) + ").\n");
+        throw runtime_error(format("Size of names ({}) is not equal to variables number ({}).\n",
+                                   new_names.size(), variables_number));
 
     for (Index i = 0; i < variables_number; ++i)
         variables[i].name = get_trimmed(new_names[i]);
@@ -657,7 +657,7 @@ Index Dataset::get_variable_index(const string& variable_name) const
                               [&](const Variable& v) { return v.name == variable_name; });
 
     if (it == variables.end())
-        throw runtime_error("Cannot find " + variable_name + "\n");
+        throw runtime_error(format("Cannot find {}\n", variable_name));
 
     return distance(variables.begin(), it);
 }
@@ -676,7 +676,7 @@ Index Dataset::get_variable_index(const Index feature_index) const
             return i;
     }
 
-    throw runtime_error("Cannot find variable index: " + to_string(feature_index) + ".\n");
+    throw runtime_error(format("Cannot find variable index: {}.\n", feature_index));
 }
 
 vector<vector<Index>> Dataset::get_feature_indices() const
@@ -718,7 +718,7 @@ void Dataset::set_separator_string(const string& new_separator_string)
     for (const auto& [sep, str, name] : separator_map)
         if (str == new_separator_string) { separator = sep; return; }
 
-    throw runtime_error("Unknown separator: " + new_separator_string);
+    throw runtime_error(format("Unknown separator: {}", new_separator_string));
 }
 
 void Dataset::set_separator_name(const string& new_separator_name)
@@ -726,7 +726,7 @@ void Dataset::set_separator_name(const string& new_separator_name)
     for (const auto& [sep, str, name] : separator_map)
         if (name == new_separator_name) { separator = sep; return; }
 
-    throw runtime_error("Unknown separator: " + new_separator_name + ".\n");
+    throw runtime_error(format("Unknown separator: {}.\n", new_separator_name));
 }
 
 void Dataset::set_codification(const string& new_codification_string)
@@ -734,7 +734,7 @@ void Dataset::set_codification(const string& new_codification_string)
     for (const auto& [cod, name] : codification_map)
         if (name == new_codification_string) { codification = cod; return; }
 
-    throw runtime_error("Unknown codification: " + new_codification_string + ".\n");
+    throw runtime_error(format("Unknown codification: {}.\n", new_codification_string));
 }
 
 void Dataset::variables_to_JSON(JsonWriter &printer) const
@@ -842,7 +842,7 @@ void Dataset::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open file: " + file_name.string());
+        throw runtime_error(format("Cannot open file: {}", file_name.string()));
 
     JsonWriter document;
 
@@ -894,15 +894,15 @@ void Dataset::check_separators(string_view line) const
             if (line.find(str) != string_view::npos) { has_any_separator = true; break; }
 
         if (has_any_separator)
-            throw runtime_error("Separator '" + separator_string + "' not found in line " + string(line) + ".\n");
+            throw runtime_error(format("Separator '{}' not found in line {}.\n", separator_string, line));
 
         return;
     }
 
     for (const auto& [sep, str, name] : separator_map)
         if (sep != separator && line.find(str) != string_view::npos)
-            throw runtime_error("Found " + name + " ('" + str + "') in data file "
-                                + data_path.string() + ", but separator is " + separator_name + " ('" + separator_string + "').");
+            throw runtime_error(format("Found {} ('{}') in data file {}, but separator is {} ('{}').",
+                                       name, str, data_path.string(), separator_name, separator_string));
 }
 
 bool Dataset::has_binary_variables() const
@@ -1094,7 +1094,7 @@ void Dataset::save_data() const
     ofstream file(data_path);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open matrix data file: " + data_path.string() + "\n");
+        throw runtime_error(format("Cannot open matrix data file: {}\n", data_path.string()));
 
     file.precision(20);
 
@@ -1162,7 +1162,7 @@ void Dataset::load_data_binary()
     ifstream file(data_path, ios::binary);
 
     if (!file.is_open())
-        throw runtime_error("Failed to open file: " + data_path.string());
+        throw runtime_error(format("Failed to open file: {}", data_path.string()));
 
     Index columns_number = 0;
     Index rows_number = 0;

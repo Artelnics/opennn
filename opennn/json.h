@@ -14,6 +14,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <format>
 
 namespace opennn
 {
@@ -119,11 +120,11 @@ template<typename Func>
 void for_json_items(const Json* parent, const char* tag, long count, Func func)
 {
     if (!parent || !parent->is_object())
-        throw runtime_error(string("Missing JSON parent for: ") + tag);
+        throw runtime_error(format("Missing JSON parent for: {}", tag));
 
     const Json* arr = parent->find(tag);
     if (!arr || !arr->is_array() || long(arr->array_value.size()) != count)
-        throw runtime_error(string("Missing or wrong-size JSON array: ") + tag);
+        throw runtime_error(format("Missing or wrong-size JSON array: {}", tag));
 
     for (long i = 0; i < count; i++)
         func(i, &arr->array_value[size_t(i)]);

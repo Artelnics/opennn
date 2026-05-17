@@ -33,7 +33,7 @@ struct EnumMap
         for (const auto& [enum_value, entry_name] : entries)
             if (entry_name == name)
                 return enum_value;
-        throw runtime_error("Unknown enum string: " + name);
+        throw runtime_error(format("Unknown enum string: {}", name));
     }
 
     Enum from_string(const string& name, Enum fallback) const

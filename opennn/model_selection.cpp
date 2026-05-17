@@ -126,7 +126,7 @@ void ModelSelection::from_JSON(const JsonDocument& document)
     const Json* neurons_selection_method_element = neurons_selection_element->first_child(selection_method.c_str());
 
     if (!neurons_selection_method_element)
-        throw runtime_error(selection_method + " element is nullptr.\n");
+        throw runtime_error(format("{} element is nullptr.\n", selection_method));
 
     set_neurons_selection(selection_method);
     neurons_selection->from_JSON(JsonDocument::wrap(selection_method, *neurons_selection_method_element));
@@ -140,7 +140,7 @@ void ModelSelection::from_JSON(const JsonDocument& document)
     const Json* inputs_selection_method_element = inputs_selection_element->first_child(inputs_method.c_str());
 
     if (!inputs_selection_method_element)
-        throw runtime_error(inputs_method + " element is nullptr.\n");
+        throw runtime_error(format("{} element is nullptr.\n", inputs_method));
 
     set_inputs_selection(inputs_method);
     inputs_selection->from_JSON(JsonDocument::wrap(inputs_method, *inputs_selection_method_element));
@@ -151,7 +151,7 @@ void ModelSelection::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open file: " + file_name.string());
+        throw runtime_error(format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
     to_JSON(printer);

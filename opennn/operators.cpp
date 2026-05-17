@@ -1812,7 +1812,7 @@ namespace
 
 auto sdpa_check = [](auto s, const string& what) {
     if (s.is_bad())
-        throw runtime_error("SDPA " + what + ": " + s.get_message());
+        throw runtime_error(format("SDPA {}: {}", what, s.get_message()));
 };
 
 // {B, H, S, D} contiguous tensor input.
@@ -1839,9 +1839,9 @@ void build_sdpa_graph_common(cudnn_frontend::graph::Graph& graph, Type dtype)
 void require_attention_scratch(const TensorView& attention_weights, const string& context)
 {
     if (attention_weights.empty())
-        throw runtime_error("Attention: " + context +
-            " — set_dropout_rate must be called before compiling the network on GPU "
-            "(see Attention::forward_scratch_specs).");
+        throw runtime_error(format("Attention: {} — set_dropout_rate must be called before compiling the network on GPU "
+                                   "(see Attention::forward_scratch_specs).",
+                                   context));
 }
 
 void finalize_sdpa_graph(cudnn_frontend::graph::Graph& graph, cudnnHandle_t handle, const string& tag)
@@ -2266,7 +2266,7 @@ void AttentionOp::apply_gpu(const TensorView& query,
 
     auto status = entry.fwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.fwd_workspace_buf);
     if (status.is_bad())
-        throw runtime_error("SDPA forward execute: " + status.get_message());
+        throw runtime_error(format("SDPA forward execute: {}", status.get_message()));
 #else
     // No cudnn-frontend: fall back to the manual softmax+matmul GPU path.
     apply_cpu(query, key, value, source_input,
@@ -2563,7 +2563,7 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
 
     auto status = entry.bwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.bwd_workspace_buf);
     if (status.is_bad())
-        throw runtime_error("SDPA backward execute: " + status.get_message());
+        throw runtime_error(format("SDPA backward execute: {}", status.get_message()));
 #elif defined(OPENNN_HAS_CUDA)
     apply_delta_gpu_unfused(query, key, value,
                             attention_weights, attention_weights_dropped,

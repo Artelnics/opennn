@@ -136,7 +136,7 @@ void Optimizer::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open file: " + file_name.string());
+        throw runtime_error(format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
     to_JSON(printer);
@@ -251,9 +251,8 @@ Index Optimizer::get_maximum_batch_size() const
     fixed_bytes += 2 * slot_aligned_size * Index(sizeof(float));
 
     if (fixed_bytes >= budget)
-        throw runtime_error("Optimizer::get_maximum_batch_size: fixed memory ("
-                            + to_string(fixed_bytes / (1ull << 20)) + " MiB) exceeds 80% budget ("
-                            + to_string(budget / (1ull << 20)) + " MiB).");
+        throw runtime_error(format("Optimizer::get_maximum_batch_size: fixed memory ({} MiB) exceeds 80% budget ({} MiB).",
+                                   fixed_bytes / (1ull << 20), budget / (1ull << 20)));
 
     const Index dynamic_budget = budget - fixed_bytes;
 
@@ -322,9 +321,9 @@ Index Optimizer::get_maximum_batch_size() const
     };
 
     if (bytes_for_batch(1) > dynamic_budget)
-        throw runtime_error("Optimizer::get_maximum_batch_size: not enough memory for batch_size=1. "
-                            "Need " + to_string(bytes_for_batch(1) / (1ull << 20))
-                            + " MiB, available " + to_string(dynamic_budget / (1ull << 20)) + " MiB.");
+        throw runtime_error(format("Optimizer::get_maximum_batch_size: not enough memory for batch_size=1. "
+                                   "Need {} MiB, available {} MiB.",
+                                   bytes_for_batch(1) / (1ull << 20), dynamic_budget / (1ull << 20)));
 
     Index lo = 1;
     Index hi = training_samples_number;
@@ -399,8 +398,8 @@ void Optimizer::set_scaling()
             }
 
             default:
-                throw runtime_error("Unexpected Scaling input rank: "
-                                    + to_string(scaling_layer->get_input_shape().rank));
+                throw runtime_error(format("Unexpected Scaling input rank: {}",
+                                           scaling_layer->get_input_shape().rank));
         }
     }
 
@@ -648,7 +647,7 @@ void TrainingResults::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if (!file)
-        throw runtime_error("TrainingResults::save: cannot open " + file_name.string());
+        throw runtime_error(format("TrainingResults::save: cannot open {}", file_name.string()));
 
     for (Index i = 0; i < override_results.dimension(0); ++i)
         file << override_results(i,0) << "; " << override_results(i,1) << "\n";

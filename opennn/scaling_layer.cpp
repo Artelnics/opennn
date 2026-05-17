@@ -69,9 +69,8 @@ void Scaling::set_input_shape(const Shape& new_input_shape)
 void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
     if (ssize(new_descriptives) != ssize(descriptives))
-        throw runtime_error("Scaling::set_descriptives: size mismatch (expected "
-                            + to_string(descriptives.size()) + ", got "
-                            + to_string(new_descriptives.size()) + ").");
+        throw runtime_error(format("Scaling::set_descriptives: size mismatch (expected {}, got {}).",
+                                   descriptives.size(), new_descriptives.size()));
     descriptives = new_descriptives;
     op_storage_dirty = true;
     refresh_op_storage(current_device());
@@ -88,9 +87,8 @@ void Scaling::set_min_max_range(float new_min, float new_max)
 void Scaling::set_scalers(const vector<string>& scalers_str)
 {
     if (ssize(scalers_str) != ssize(scalers))
-        throw runtime_error("Scaling::set_scalers: size mismatch (expected "
-                            + to_string(scalers.size()) + ", got "
-                            + to_string(scalers_str.size()) + ").");
+        throw runtime_error(format("Scaling::set_scalers: size mismatch (expected {}, got {}).",
+                                   scalers.size(), scalers_str.size()));
     ranges::transform(scalers_str, scalers.begin(), string_to_scaler_method);
     op_storage_dirty = true;
     refresh_op_storage(current_device());
@@ -175,9 +173,8 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
         VectorR values;
         string_to_vector(read_json_string(scaling_layer_element, field), values);
         if (values.size() != ssize(descriptives))
-            throw runtime_error("Scaling::read_JSON_body: field \"" + field
-                                + "\" has size " + to_string(values.size())
-                                + ", expected " + to_string(descriptives.size()) + ".");
+            throw runtime_error(format("Scaling::read_JSON_body: field \"{}\" has size {}, expected {}.",
+                                       field, values.size(), descriptives.size()));
         for (Index i = 0; i < values.size(); ++i)
             descriptives[size_t(i)].*member = values(i);
     };
@@ -192,9 +189,8 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
         const vector<string> tokens = get_tokens(
             read_json_string(scaling_layer_element, "Scalers"), " ");
         if (ssize(tokens) != ssize(scalers))
-            throw runtime_error("Scaling::read_JSON_body: \"Scalers\" has "
-                                + to_string(tokens.size()) + " entries, expected "
-                                + to_string(scalers.size()) + ".");
+            throw runtime_error(format("Scaling::read_JSON_body: \"Scalers\" has {} entries, expected {}.",
+                                       tokens.size(), scalers.size()));
         ranges::transform(tokens, scalers.begin(), string_to_scaler_method);
     }
 

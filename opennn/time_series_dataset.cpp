@@ -424,8 +424,8 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
     const Index samples_number = get_samples_number();
 
     if (past_time_steps > samples_number)
-        throw runtime_error("Past time steps (" + to_string(past_time_steps) + ") "
-                            "is greater than samples number (" + to_string(samples_number) + ") \n");
+        throw runtime_error(format("Past time steps ({}) is greater than samples number ({}) \n",
+                                   past_time_steps, samples_number));
 
     const Index variables_number = get_variables_number();
 
@@ -500,7 +500,8 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
     const Index samples_number = get_samples_number();
 
     if (past_time_steps > samples_number)
-        throw runtime_error("Past time steps (" + to_string(past_time_steps) + ") is greater than samples number (" + to_string(samples_number) + ") \n");
+        throw runtime_error(format("Past time steps ({}) is greater than samples number ({}) \n",
+                                   past_time_steps, samples_number));
 
     const Index variables_number = get_variables_number();
 
@@ -594,7 +595,8 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations_spearman(const Index pas
     const Index samples_number = get_samples_number();
 
     if (past_time_steps > samples_number)
-        throw runtime_error("Past time steps (" + to_string(past_time_steps) + ") is greater than samples number (" + to_string(samples_number) + ") \n");
+        throw runtime_error(format("Past time steps ({}) is greater than samples number ({}) \n",
+                                   past_time_steps, samples_number));
 
     vector<Index> numeric_vars_indices;
 

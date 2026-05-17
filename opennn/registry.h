@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <format>
 
 namespace opennn
 {
@@ -42,7 +43,7 @@ public:
         auto it = creators.find(name);
 
         if (it == creators.end())
-            throw runtime_error("Component not found: " + name);
+            throw runtime_error(format("Component not found: {}", name));
 
         return it->second();
 

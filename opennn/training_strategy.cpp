@@ -217,7 +217,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
     const Json* loss_method_element = loss_element->first_child(loss_method.c_str());
 
     if (!loss_method_element)
-        throw runtime_error(loss_method + " element is nullptr.\n");
+        throw runtime_error(format("{} element is nullptr.\n", loss_method));
 
     set_loss(loss_method);
     loss->from_JSON(JsonDocument::wrap(loss_method, *loss_method_element));
@@ -233,7 +233,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
     const Json* optimization_method_element = optimization_algorithm_element->first_child(optimization_method.c_str());
 
     if (!optimization_method_element)
-        throw runtime_error(optimization_method + " element is nullptr.\n");
+        throw runtime_error(format("{} element is nullptr.\n", optimization_method));
 
     set_optimization_algorithm(optimization_method);
     optimizer->from_JSON(JsonDocument::wrap(optimization_method, *optimization_method_element));
@@ -255,7 +255,7 @@ void TrainingStrategy::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open file: " + file_name.string());
+        throw runtime_error(format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
     to_JSON(printer);
