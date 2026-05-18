@@ -78,20 +78,20 @@ public:
 
     [[nodiscard]] Index get_layer_index(const string&) const;
 
-    [[nodiscard]] const vector<vector<Index>>& get_layer_input_indices() const { return layer_input_indices; }
-    [[nodiscard]] vector<vector<Index>> get_layer_output_indices() const;
+    [[nodiscard]] const vector<vector<Index>>& get_source_layers() const { return source_layers; }
+    [[nodiscard]] vector<vector<Index>> get_consumer_layers() const;
 
     [[nodiscard]] Layer* get_first(const string&);
     [[nodiscard]] Layer* get_first(LayerType);
     [[nodiscard]] const Layer* get_first(const string&) const;
     [[nodiscard]] const Layer* get_first(LayerType) const;
 
-    void set_layer_input_indices(const vector<vector<Index>>& new_layer_input_indices) { layer_input_indices = new_layer_input_indices; }
-    void set_layer_input_indices(const Index layer_index, const vector<Index>& new_input_indices) { layer_input_indices[layer_index] = new_input_indices; }
+    void set_source_layers(const vector<vector<Index>>& new_source_layers) { source_layers = new_source_layers; }
+    void set_source_layers(const Index layer_index, const vector<Index>& new_sources) { source_layers[layer_index] = new_sources; }
 
-    void set_layer_input_indices(const string&, const vector<string>&);
-    void set_layer_input_indices(const string&, initializer_list<string>);
-    void set_layer_input_indices(const string&, const string&);
+    void set_source_layers(const string&, const vector<string>&);
+    void set_source_layers(const string&, initializer_list<string>);
+    void set_source_layers(const string&, const string&);
 
     void set_input_variables(const vector<Variable>& new_input_variables) { input_variables = new_input_variables; }
     void set_output_variables(const vector<Variable>& new_output_variables) { output_variables = new_output_variables; }
@@ -224,7 +224,7 @@ protected:
 
     vector<unique_ptr<Layer>> layers;
 
-    vector<vector<Index>> layer_input_indices;
+    vector<vector<Index>> source_layers;
 
     Buffer parameters;
     Buffer parameters_bf16{Device::CUDA};

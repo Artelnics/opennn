@@ -212,7 +212,7 @@ void TransformerDecoder::identify_layer_ranges()
         throw runtime_error(format("TransformerDecoder: layer 1 expected to be 'encoder_embedding', found '{}'.", layers[1]->get_label()));
     encoder_embedding_layer_index = 1;
 
-    const auto& layer_input_indices = transformer.get_layer_input_indices();
+    const auto& source_layers = transformer.get_source_layers();
     Index first_cross_attention_index = -1;
     for (Index i = 0; i < layers_number; ++i)
     {
@@ -226,11 +226,11 @@ void TransformerDecoder::identify_layer_ranges()
     if (first_cross_attention_index < 0)
         throw runtime_error("TransformerDecoder: no 'cross_attention_*' layer found.");
 
-    const vector<Index>& cross_inputs = layer_input_indices[first_cross_attention_index];
-    if (cross_inputs.size() < 2 || cross_inputs[1] < 0)
+    const vector<Index>& cross_sources = source_layers[first_cross_attention_index];
+    if (cross_sources.size() < 2 || cross_sources[1] < 0)
         throw runtime_error("TransformerDecoder: first cross_attention layer must have 2 valid inputs (decoder, encoder).");
 
-    encoder_last_layer_index = cross_inputs[1];
+    encoder_last_layer_index = cross_sources[1];
 
     decoder_stack_first_layer_index = encoder_last_layer_index + 1;
     if (decoder_stack_first_layer_index >= layers_number)

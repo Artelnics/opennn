@@ -888,10 +888,8 @@ void Dataset::check_separators(string_view line) const
 
     if (line.find(separator_string) == string_view::npos)
     {
-        bool has_any_separator = false;
-
-        for (const auto& [sep, str, name] : separator_map)
-            if (line.find(str) != string_view::npos) { has_any_separator = true; break; }
+        const bool has_any_separator = ranges::any_of(separator_map,
+            [&](const auto& entry) { return line.find(get<1>(entry)) != string_view::npos; });
 
         if (has_any_separator)
             throw runtime_error(format("Separator '{}' not found in line {}.\n", separator_string, line));

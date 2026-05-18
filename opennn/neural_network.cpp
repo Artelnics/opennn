@@ -37,7 +37,7 @@ NeuralNetwork::NeuralNetwork(const filesystem::path& file_name)
     load(file_name);
 }
 
-void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& input_indices)
+void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sources)
 {
     const Index old_layers_number = get_layers_number() - 1;
 
@@ -45,9 +45,9 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
 
     layers.push_back(move(layer));
 
-    layer_input_indices.push_back(input_indices.empty()
+    source_layers.push_back(sources.empty()
         ? vector<Index>(1, old_layers_number )
-        : input_indices);
+        : sources);
 
     first_trainable_cache_ = -1;
     last_trainable_cache_  = -1;
@@ -143,22 +143,23 @@ Index NeuralNetwork::get_layer_index(const string& new_label) const
     throw runtime_error(format("Layer not found: {}", new_label));
 }
 
-vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
+vector<vector<Index>> NeuralNetwork::get_consumer_layers() const
 {
-    const Index layers_number = ssize(layer_input_indices);
+    const Index layers_number = ssize(source_layers);
 
-    vector<vector<Index>> layer_output_indices(layers_number);
+    vector<vector<Index>> consumer_layers(layers_number);
 
-    for (Index i = 0; i < layers_number; ++i)
-        for (const Index input_index : layer_input_indices[i])
-            if (input_index >= 0)
-                layer_output_indices[input_index].push_back(i);
+    for (Index i = layers_number - 1; i >= 0; --i)
+    {
+        if (consumer_layers[i].empty())
+            consumer_layers[i].push_back(-1);
 
-    for (auto& outputs : layer_output_indices)
-        if (outputs.empty())
-            outputs.push_back(-1);
+        for (const Index source_layer : source_layers[i])
+            if (source_layer >= 0)
+                consumer_layers[source_layer].push_back(i);
+    }
 
-    return layer_output_indices;
+    return consumer_layers;
 }
 
 const Layer* NeuralNetwork::get_first(const string& name) const
@@ -237,9 +238,9 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
     const Index layers_number = get_layers_number();
     for (Index i = 0; i < layers_number; ++i)
     {
-        const vector<Index>& inputs = layer_input_indices[i];
-        if (inputs.size() == 1 && inputs[0] >= 0)
-            layers[i]->set_input_shape(layers[inputs[0]]->get_output_shape());
+        const vector<Index>& sources = source_layers[i];
+        if (sources.size() == 1 && sources[0] >= 0)
+            layers[i]->set_input_shape(layers[sources[0]]->get_output_shape());
     }
 }
 
@@ -247,7 +248,7 @@ void NeuralNetwork::clear()
 {
     layers.clear();
 
-    layer_input_indices.clear();
+    source_layers.clear();
 
     input_variables.clear();
 
@@ -257,28 +258,28 @@ void NeuralNetwork::clear()
     last_trainable_cache_  = -1;
 }
 
-void NeuralNetwork::set_layer_input_indices(const string& layer_label,
-                                            const vector<string>& new_layer_input_labels)
+void NeuralNetwork::set_source_layers(const string& layer_label,
+                                      const vector<string>& new_source_labels)
 {
-    vector<Index> new_layer_input_indices(new_layer_input_labels.size());
+    vector<Index> new_sources(new_source_labels.size());
 
-    ranges::transform(new_layer_input_labels, new_layer_input_indices.begin(),
+    ranges::transform(new_source_labels, new_sources.begin(),
                       [this](const string& label) { return get_layer_index(label); });
 
-    layer_input_indices[get_layer_index(layer_label)] = new_layer_input_indices;
+    source_layers[get_layer_index(layer_label)] = new_sources;
 }
 
-void NeuralNetwork::set_layer_input_indices(const string& layer_label,
-                                            initializer_list<string> new_layer_input_labels_list)
+void NeuralNetwork::set_source_layers(const string& layer_label,
+                                      initializer_list<string> new_source_labels_list)
 {
-    set_layer_input_indices(layer_label, vector<string>(new_layer_input_labels_list));
+    set_source_layers(layer_label, vector<string>(new_source_labels_list));
 }
 
-void NeuralNetwork::set_layer_input_indices(const string& layer_label, const string& new_layer_input_labels)
+void NeuralNetwork::set_source_layers(const string& layer_label, const string& new_source_label)
 {
     const Index layer_index = get_layer_index(layer_label);
 
-    layer_input_indices[layer_index] = {get_layer_index(new_layer_input_labels)};
+    source_layers[layer_index] = {get_layer_index(new_source_label)};
 }
 
 Index NeuralNetwork::get_inputs_number() const
@@ -528,16 +529,16 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
     for (Index i = first_layer_index; i <= last_layer_index; ++i)
     {
-        const vector<Index>& input_indices = layer_input_indices[i];
+        const vector<Index>& sources = source_layers[i];
         auto& input_slot = forward_propagation.views[i][0];
 
-        for (size_t k = 0; k < input_indices.size(); ++k)
+        for (size_t k = 0; k < sources.size(); ++k)
         {
-            const Index current_input = input_indices[k];
+            const Index source_layer = sources[k];
 
-            if (current_input < 0)
-                input_slot[k] = pick_input(size_t(-current_input - 1));
-            else if (is_training && current_input < first_layer_index)
+            if (source_layer < 0)
+                input_slot[k] = pick_input(size_t(-source_layer - 1));
+            else if (is_training && source_layer < first_layer_index)
                 input_slot[k] = pick_input(k);
         }
 
@@ -720,13 +721,13 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     }
     printer.end_array();
 
-    printer.open_element("LayerInputIndices");
-    printer.begin_array("LayerInputsIndices");
-    for (size_t i = 0; i < layer_input_indices.size(); ++i)
+    printer.open_element("SourceLayers");
+    printer.begin_array("SourceLayer");
+    for (size_t i = 0; i < source_layers.size(); ++i)
     {
         printer.begin_array_object();
         add_json_field(printer, "LayerIndex", to_string(i));
-        add_json_field(printer, "Text", vector_to_string(layer_input_indices[i]));
+        add_json_field(printer, "Text", vector_to_string(source_layers[i]));
         printer.end_array_object();
     }
     printer.end_array();
@@ -780,9 +781,9 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     const Index layers_number = read_json_index(layers_container, "LayersNumber");
 
     layers.clear();
-    layer_input_indices.clear();
+    source_layers.clear();
     layers.reserve(layers_number);
-    layer_input_indices.resize(layers_number);
+    source_layers.resize(layers_number);
     first_trainable_cache_ = -1;
     last_trainable_cache_  = -1;
 
@@ -809,9 +810,9 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
         }
     }
 
-    if (const Json* connectivity_element = layers_container->find("LayerInputIndices"); connectivity_element)
+    if (const Json* source_layers_element = layers_container->find("SourceLayers"); source_layers_element)
     {
-        const Json* indices_array = connectivity_element->find("LayerInputsIndices");
+        const Json* indices_array = source_layers_element->find("SourceLayer");
         if (indices_array && indices_array->is_array())
         {
             for (const Json& entry : indices_array->array_value)
@@ -821,7 +822,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
                 if (layer_index >= 0 && layer_index < ssize(layers) && !text.empty())
                 {
                     Shape shape = string_to_shape(text, " ");
-                    layer_input_indices[layer_index].assign(shape.begin(), shape.end());
+                    source_layers[layer_index].assign(shape.begin(), shape.end());
                 }
             }
         }
