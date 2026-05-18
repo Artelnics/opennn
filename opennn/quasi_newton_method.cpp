@@ -447,6 +447,7 @@ void QuasiNewtonMethod::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_validation_failures));
     add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+    add_xml_element(printer, "DisplayPeriod", to_string(display_period));
 
     printer.CloseElement();
 }
@@ -480,6 +481,10 @@ void QuasiNewtonMethod::from_XML(const XMLDocument& document)
     set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
     set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+
+    if(const XMLElement* dp_element = root_element->FirstChildElement("DisplayPeriod"))
+        if(dp_element->GetText())
+            set_display_period(Index(stoll(dp_element->GetText())));
 }
 
 

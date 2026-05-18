@@ -1410,12 +1410,14 @@ void Dataset::set(const Index new_samples_number,
 
     set_default();
 
+    // Names were already filled by set_default() -> set_default_variable_names().
+    // Only set type and role here; re-assigning names would double the cost for
+    // every Dataset::set call (a 270k-string loop for image datasets).
     for(Index i = 0; i < new_features_number; i++)
     {
         Variable& variable = variables[i];
 
         variable.type = VariableType::Numeric;
-        variable.name = "variable_" + to_string(i + 1);
 
         variable.role = (i < new_inputs_number)
                                ? "Input"

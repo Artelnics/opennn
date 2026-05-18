@@ -63,6 +63,14 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
+    void image_variables_to_XML(XMLPrinter&) const;
+    void image_variables_from_XML(const XMLElement*);
+
+    void set_default_variable_names() override;
+
+    void samples_from_XML(const XMLElement*) override;
+    void image_samples_to_XML(XMLPrinter&) const;
+
     void print() const override;
 
     void fill_inputs(const vector<Index>&,

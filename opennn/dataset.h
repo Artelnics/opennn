@@ -183,7 +183,7 @@ public:
 
     void set_variables(const vector<Variable>&);
 
-    void set_default_variable_names();
+    virtual void set_default_variable_names();
 
     void set_default_variable_roles();
     void set_default_variable_roles_forecasting();
@@ -515,7 +515,7 @@ protected:
     void preview_data_to_XML(XMLPrinter&) const;
 
     void variables_from_XML(const XMLElement*);
-    void samples_from_XML(const XMLElement*);
+    virtual void samples_from_XML(const XMLElement*);
     void missing_values_from_XML(const XMLElement*);
     void preview_data_from_XML(const XMLElement*);
 

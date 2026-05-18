@@ -57,7 +57,17 @@
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
 
-//#define OPENNN_CUDA // Comment this line to disable cuda files
+// Enable opennn's CUDA paths only when the build is configured against a
+// real CUDA toolkit. cuda.pri sets WITH_CUDA after locating nvcc/cudnn at
+// qmake time, so:
+//   - Windows / Linux with CUDA toolkit installed -> WITH_CUDA -> OPENNN_CUDA
+//   - macOS (and any environment without nvcc) -> WITH_CUDA undefined
+//                                               -> CPU-only build, no CUDA headers needed
+// Define WITH_CUDA manually (or comment this guard) only when forcing a CPU
+// build on a machine that does have CUDA installed.
+#ifdef WITH_CUDA
+#define OPENNN_CUDA
+#endif
 
 #ifdef OPENNN_CUDA
 

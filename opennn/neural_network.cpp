@@ -990,10 +990,20 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     const Index layers_number = get_layers_number();
     const Index outputs_number = get_outputs_number();
 
-    vector<string> input_names = get_input_feature_names();
-    const Index input_names_count = max(Index(input_names.size()), inputs_number);
-    while (input_names.size() < static_cast<size_t>(input_names_count))
-        input_names.push_back("input_" + to_string(input_names.size() + 1));
+    const bool image_network = !layers.empty() && layers[0]->get_name() == "Scaling4d";
+
+    // Image networks skip per-input <Input> elements entirely (pixel inputs are
+    // decorative). Building the input_names vector for 270k pixels would burn
+    // ~270k string allocations for nothing — short-circuit when image_network.
+    vector<string> input_names;
+    Index input_names_count = inputs_number;
+    if(!image_network)
+    {
+        input_names = get_input_feature_names();
+        input_names_count = max(Index(input_names.size()), inputs_number);
+        while (input_names.size() < static_cast<size_t>(input_names_count))
+            input_names.push_back("input_" + to_string(input_names.size() + 1));
+    }
 
     vector<string> output_names = get_output_feature_names();
     const Index output_names_count = max(Index(output_names.size()), outputs_number);
@@ -1005,8 +1015,9 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     // Inputs
     printer.OpenElement("Inputs");
     add_xml_element(printer, "InputsNumber", to_string(input_names_count));
-    for(Index i = 0; i < input_names_count; i++)
-        add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
+    if(!image_network)
+        for(Index i = 0; i < input_names_count; i++)
+            add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
     printer.CloseElement();
 
     // Layers
@@ -1074,6 +1085,11 @@ void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
         // serialize the role explicitly, so without this set ResponseOptimization
         // (which filters by role == "Input") would see no features.
         variable.role = "Input";
+
+        // If we ran out of <Input> siblings in a previous iteration, current_element
+        // is nullptr and we must skip the rest of the loop to avoid a SIGSEGV.
+        if(!current_element)
+            continue;
 
         if(variable.is_categorical())
         {

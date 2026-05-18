@@ -609,6 +609,16 @@ public:
 
         biases.shape = { outputs_number };
         weights.shape = { inputs_number, outputs_number };
+
+#ifdef OPENNN_CUDA
+        // Required so size() reports a non-zero value during compile/link;
+        // without this, weights_device/biases_device stay descriptorless and
+        // link() skips them, leaving their .data pointers null on the GPU.
+        if (outputs_number > 0)
+            biases_device.set_descriptor({ outputs_number });
+        if (inputs_number > 0 && outputs_number > 0)
+            weights_device.set_descriptor({ inputs_number, outputs_number });
+#endif
     }
 
 
@@ -622,6 +632,13 @@ public:
 
         biases.shape = { neurons_number };
         weights.shape = { inputs_number, neurons_number };
+
+#ifdef OPENNN_CUDA
+        if (neurons_number > 0)
+            biases_device.set_descriptor({ neurons_number });
+        if (inputs_number > 0 && neurons_number > 0)
+            weights_device.set_descriptor({ inputs_number, neurons_number });
+#endif
     }
 
 

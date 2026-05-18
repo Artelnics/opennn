@@ -358,6 +358,34 @@ public:
         if constexpr (Rank == 2)
         {
             set({neurons_number});
+
+            const XMLElement* start_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
+
+            for(Index i = 0; i < neurons_number; i++)
+            {
+                const XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
+                if(!scaling_neuron_element)
+                    throw runtime_error("Scaling neuron " + to_string(i + 1) + " is nullptr.\n");
+
+                const XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
+                if(descriptives_element && descriptives_element->GetText())
+                {
+                    const vector<string> tokens = get_tokens(descriptives_element->GetText(), " ");
+
+                    if(tokens.size() < 4)
+                        throw runtime_error("Error: Descriptives must contain 4 values.\n");
+
+                    descriptives[i].set(
+                        type(stof(tokens[0])),
+                        type(stof(tokens[1])),
+                        type(stof(tokens[2])),
+                        type(stof(tokens[3]))
+                        );
+                }
+
+                scalers[i] = read_xml_string(scaling_neuron_element, "Scaler");
+                start_element = scaling_neuron_element;
+            }
         }
         else
         {
@@ -379,17 +407,9 @@ public:
                 throw runtime_error("Error: NeuronsNumber does not match InputDimensions product.\n");
 
             set(input_dimensions);
-        }
 
-        const XMLElement* start_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
-
-        for(Index i = 0; i < neurons_number; i++)
-        {
-            const XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
-            if(!scaling_neuron_element)
-                throw runtime_error("Scaling neuron " + to_string(i + 1) + " is nullptr.\n");
-
-            const XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
+            Descriptives shared_descriptives;
+            const XMLElement* descriptives_element = scaling_layer_element->FirstChildElement("Descriptives");
             if(descriptives_element && descriptives_element->GetText())
             {
                 const vector<string> tokens = get_tokens(descriptives_element->GetText(), " ");
@@ -397,7 +417,7 @@ public:
                 if(tokens.size() < 4)
                     throw runtime_error("Error: Descriptives must contain 4 values.\n");
 
-                descriptives[i].set(
+                shared_descriptives.set(
                     type(stof(tokens[0])),
                     type(stof(tokens[1])),
                     type(stof(tokens[2])),
@@ -405,8 +425,13 @@ public:
                     );
             }
 
-            scalers[i] = read_xml_string(scaling_neuron_element, "Scaler");
-            start_element = scaling_neuron_element;
+            const string shared_scaler = read_xml_string(scaling_layer_element, "Scaler");
+
+            for(Index i = 0; i < neurons_number; i++)
+            {
+                descriptives[i] = shared_descriptives;
+                scalers[i] = shared_scaler;
+            }
         }
     }
 
@@ -417,20 +442,29 @@ public:
 
         const Index outputs_number = get_outputs_number();
 
-        if constexpr (Rank > 2)
+        if constexpr (Rank == 2)
+        {
+            add_xml_element(printer, "NeuronsNumber", to_string(outputs_number));
+
+            for(Index i = 0; i < outputs_number; i++)
+            {
+                printer.OpenElement("ScalingNeuron");
+                printer.PushAttribute("Index", int(i + 1));
+                add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
+                add_xml_element(printer, "Scaler", scalers[i]);
+                printer.CloseElement();
+            }
+        }
+        else
         {
             add_xml_element(printer, "InputDimensions", shape_to_string(input_shape));
-        }
+            add_xml_element(printer, "NeuronsNumber", to_string(outputs_number));
 
-        add_xml_element(printer, "NeuronsNumber", to_string(outputs_number));
-
-        for(Index i = 0; i < outputs_number; i++)
-        {
-            printer.OpenElement("ScalingNeuron");
-            printer.PushAttribute("Index", int(i + 1));
-            add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
-            add_xml_element(printer, "Scaler", scalers[i]);
-            printer.CloseElement();
+            if(outputs_number > 0)
+            {
+                add_xml_element(printer, "Descriptives", vector_to_string(descriptives[0].to_tensor()));
+                add_xml_element(printer, "Scaler", scalers[0]);
+            }
         }
 
         printer.CloseElement();

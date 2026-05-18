@@ -481,6 +481,7 @@ void AdaptiveMomentEstimation::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
     add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+    add_xml_element(printer, "DisplayPeriod", to_string(display_period));
     add_xml_element(printer, "GradientClipNorm", to_string(double(gradient_clip_norm)));
     add_xml_element(printer, "HardwareUse", get_hardware_use());
 
@@ -500,6 +501,10 @@ void AdaptiveMomentEstimation::from_XML(const XMLDocument& document)
     set_loss_goal(read_xml_type(root_element, "LossGoal"));
     set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+
+    if(const XMLElement* dp_element = root_element->FirstChildElement("DisplayPeriod"))
+        if(dp_element->GetText())
+            set_display_period(Index(stoll(dp_element->GetText())));
 
     const XMLElement* clip_element = root_element->FirstChildElement("GradientClipNorm");
     if(clip_element && clip_element->GetText())
@@ -656,17 +661,30 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         training_batches = dataset->get_batches(training_sample_indices, training_batch_size, shuffle);
         training_error = type(0);
         if (is_text_classification_model) training_accuracy = type(0);
-        
-        thread training_worker([&]() 
+
+        // Capture any exception thrown inside the worker so it can be
+        // re-thrown on the main thread after join(). Without this, an
+        // unhandled throw from fill_host or queue ops would call
+        // std::terminate() directly via the thread's destructor — the
+        // engine's outer try/catch would never see it.
+        exception_ptr training_worker_exception;
+        thread training_worker([&]()
         {
-            for(Index iteration = 0; iteration < training_batches_number; iteration++) 
+            try
             {
-                BatchCuda* batch = empty_training_queue.pop();
-                batch->fill_host(training_batches[iteration],
-                                 input_feature_indices,
-                                 decoder_feature_indices,
-                                 target_feature_indices);
-                ready_training_queue.push(batch);
+                for(Index iteration = 0; iteration < training_batches_number; iteration++)
+                {
+                    BatchCuda* batch = empty_training_queue.pop();
+                    batch->fill_host(training_batches[iteration],
+                                     input_feature_indices,
+                                     decoder_feature_indices,
+                                     target_feature_indices);
+                    ready_training_queue.push(batch);
+                }
+            }
+            catch(...)
+            {
+                training_worker_exception = current_exception();
             }
         });
 
@@ -697,6 +715,8 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         }
 
         training_worker.join();
+        if(training_worker_exception)
+            rethrow_exception(training_worker_exception);
 
         training_error /= type(training_batches_number);
         if (is_text_classification_model) training_accuracy /= type(training_batches_number);
@@ -708,16 +728,24 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             validation_error = type(0);
             if (is_text_classification_model) validation_accuracy = type(0);
 
-            thread validation_worker([&]() 
+            exception_ptr validation_worker_exception;
+            thread validation_worker([&]()
             {
-                for(Index iteration = 0; iteration < validation_batches_number; iteration++) 
+                try
                 {
-                    BatchCuda* batch = empty_validation_queue.pop();
-                    batch->fill_host(validation_batches[iteration],
-                                     input_feature_indices,
-                                     decoder_feature_indices,
-                                     target_feature_indices);
-                    ready_validation_queue.push(batch);
+                    for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+                    {
+                        BatchCuda* batch = empty_validation_queue.pop();
+                        batch->fill_host(validation_batches[iteration],
+                                         input_feature_indices,
+                                         decoder_feature_indices,
+                                         target_feature_indices);
+                        ready_validation_queue.push(batch);
+                    }
+                }
+                catch(...)
+                {
+                    validation_worker_exception = current_exception();
                 }
             });
 
@@ -741,6 +769,8 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             }
 
             validation_worker.join();
+            if(validation_worker_exception)
+                rethrow_exception(validation_worker_exception);
 
             validation_error /= type(validation_batches_number);
             if (is_text_classification_model) validation_accuracy /= type(validation_batches_number);

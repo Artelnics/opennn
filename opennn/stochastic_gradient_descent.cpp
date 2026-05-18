@@ -455,6 +455,7 @@ void StochasticGradientDescent::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
     add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_validation_failures));
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+    add_xml_element(printer, "DisplayPeriod", to_string(display_period));
     add_xml_element(printer, "HardwareUse", hardware_use);
 
     printer.CloseElement();
@@ -485,6 +486,11 @@ void StochasticGradientDescent::from_XML(const XMLDocument& document)
     if(root_element->FirstChildElement("MaximumSelectionFailures") != nullptr)
         set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+
+    if(const XMLElement* dp_element = root_element->FirstChildElement("DisplayPeriod"))
+        if(dp_element->GetText())
+            set_display_period(Index(stoll(dp_element->GetText())));
+
     set_hardware_use(read_xml_string(root_element, "HardwareUse"));
 }
 
@@ -638,18 +644,28 @@ TrainingResults StochasticGradientDescent::train_cuda()
         training_error = type(0);
         if (is_text_classification_model) training_accuracy = type(0);
 
+        // Capture worker exceptions; without this, an unhandled throw inside
+        // the lambda calls std::terminate() via thread destructor.
+        exception_ptr training_worker_exception;
         thread training_worker([&]()
-                                    {
-                                        for(Index iteration = 0; iteration < training_batches_number; iteration++)
-                                        {
-                                            BatchCuda* batch = empty_training_queue.pop();
-                                            batch->fill_host(training_batches[iteration],
-                                                             input_feature_indices,
-                                                             decoder_feature_indices,
-                                                             target_feature_indices);
-                                            ready_training_queue.push(batch);
-                                        }
-                                    });
+        {
+            try
+            {
+                for(Index iteration = 0; iteration < training_batches_number; iteration++)
+                {
+                    BatchCuda* batch = empty_training_queue.pop();
+                    batch->fill_host(training_batches[iteration],
+                                     input_feature_indices,
+                                     decoder_feature_indices,
+                                     target_feature_indices);
+                    ready_training_queue.push(batch);
+                }
+            }
+            catch(...)
+            {
+                training_worker_exception = current_exception();
+            }
+        });
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
@@ -676,6 +692,8 @@ TrainingResults StochasticGradientDescent::train_cuda()
         }
 
         training_worker.join();
+        if(training_worker_exception)
+            rethrow_exception(training_worker_exception);
 
         training_error /= type(training_batches_number);
         if (is_text_classification_model) training_accuracy /= type(training_batches_number);
@@ -687,16 +705,24 @@ TrainingResults StochasticGradientDescent::train_cuda()
             validation_error = type(0);
             if (is_text_classification_model) validation_accuracy = type(0);
 
+            exception_ptr validation_worker_exception;
             thread validation_worker([&]()
             {
-                for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+                try
                 {
-                    BatchCuda* batch = empty_validation_queue.pop();
-                    batch->fill_host(validation_batches[iteration],
-                                     input_feature_indices,
-                                     decoder_feature_indices,
-                                     target_feature_indices);
-                    ready_validation_queue.push(batch);
+                    for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+                    {
+                        BatchCuda* batch = empty_validation_queue.pop();
+                        batch->fill_host(validation_batches[iteration],
+                                         input_feature_indices,
+                                         decoder_feature_indices,
+                                         target_feature_indices);
+                        ready_validation_queue.push(batch);
+                    }
+                }
+                catch(...)
+                {
+                    validation_worker_exception = current_exception();
                 }
             });
 
@@ -720,6 +746,8 @@ TrainingResults StochasticGradientDescent::train_cuda()
             }
 
             validation_worker.join();
+            if(validation_worker_exception)
+                rethrow_exception(validation_worker_exception);
 
             validation_error /= type(validation_batches_number);
             if (is_text_classification_model) validation_accuracy /= type(validation_batches_number);

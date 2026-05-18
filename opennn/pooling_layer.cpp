@@ -538,18 +538,39 @@ void Pooling::from_XML(const XMLDocument& document)
     const XMLElement* pooling_layer_element = document.FirstChildElement("Pooling");
 
     if(!pooling_layer_element)
-        throw runtime_error("Pooling layer element is nullptr.\batch_index");
+        throw runtime_error("Pooling layer element is nullptr.");
 
-    const string inputDimsStr = read_xml_string(pooling_layer_element, "InputDimensions");
+    const string label = read_xml_string(pooling_layer_element, "Label");
 
-    set_label(read_xml_string(pooling_layer_element, "Label"));
-    set_input_shape(string_to_shape(read_xml_string(pooling_layer_element, "InputDimensions")));
-    set_pool_size(read_xml_index(pooling_layer_element, "PoolHeight"), read_xml_index(pooling_layer_element, "PoolWidth"));
-    set_pooling_method(read_xml_string(pooling_layer_element, "PoolingMethod"));
-    set_column_stride(read_xml_index(pooling_layer_element, "ColumnStride"));
-    set_row_stride(read_xml_index(pooling_layer_element, "RowStride"));
-    set_padding_height(read_xml_index(pooling_layer_element, "PaddingHeight"));
-    set_padding_width(read_xml_index(pooling_layer_element, "PaddingWidth"));
+    const Shape input_shape_xml = string_to_shape(
+        read_xml_string(pooling_layer_element, "InputDimensions"));
+
+    const Shape pool_dimensions = {
+        read_xml_index(pooling_layer_element, "PoolHeight"),
+        read_xml_index(pooling_layer_element, "PoolWidth")
+    };
+
+    const Shape stride_shape = {
+        read_xml_index(pooling_layer_element, "RowStride"),
+        read_xml_index(pooling_layer_element, "ColumnStride")
+    };
+
+    const Shape padding_dimensions = {
+        read_xml_index(pooling_layer_element, "PaddingHeight"),
+        read_xml_index(pooling_layer_element, "PaddingWidth")
+    };
+
+    const string pooling_method = read_xml_string(pooling_layer_element, "PoolingMethod");
+
+    // Delegate to set() so the cudnn pooling_descriptor is initialized.
+    // Per-setter calls left it default-constructed and the CUDA forward
+    // path crashed on cudnnPoolingForward.
+    set(input_shape_xml,
+        pool_dimensions,
+        stride_shape,
+        padding_dimensions,
+        pooling_method,
+        label);
 }
 
 

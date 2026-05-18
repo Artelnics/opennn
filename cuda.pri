@@ -75,6 +75,8 @@ if(!isEmpty(CUDA_PATH)) {
             NVCC_FLAGS = --use_fast_math
             NVCC_FLAGS += --std=c++17
             NVCC_FLAGS += --expt-relaxed-constexpr
+            # CUDA <=12.9 rejects MSVC > VS2022; allow newer host compilers (VS2026).
+            win32: NVCC_FLAGS += -allow-unsupported-compiler
             NVCC_FLAGS += -gencode arch=compute_61,code=sm_61
             NVCC_FLAGS += -gencode arch=compute_75,code=sm_75
             NVCC_FLAGS += -gencode arch=compute_86,code=sm_86

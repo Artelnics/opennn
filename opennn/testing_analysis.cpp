@@ -489,7 +489,7 @@ VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sa
 
     const Index training_samples_number = dataset->get_samples_number(sample_role);
 
-    const auto [targets, outputs] = get_targets_and_outputs("Testing");
+    const auto [targets, outputs] = get_targets_and_outputs(sample_role);
 
     const type mean_squared_error = (outputs - targets).squaredNorm();
 
@@ -510,7 +510,7 @@ VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& 
 {
     const Index training_samples_number = dataset->get_samples_number(sample_role);
 
-    const auto [targets, outputs] = get_targets_and_outputs("Testing");
+    const auto [targets, outputs] = get_targets_and_outputs(sample_role);
 
     const type mean_squared_error = (outputs - targets).squaredNorm();
 

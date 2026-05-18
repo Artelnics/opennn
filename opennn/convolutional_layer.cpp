@@ -683,49 +683,48 @@ void Convolutional::from_XML(const XMLDocument& document)
     if(!convolutional_layer_element)
         throw runtime_error("Convolutional layer element is nullptr.\n");
 
-    const string inputDimsStr = read_xml_string(convolutional_layer_element, "InputDimensions");
+    const string label = read_xml_string(convolutional_layer_element, "Label");
 
-    const string strideStr = read_xml_string(convolutional_layer_element, "StrideDimensions");
+    const Shape input_shape_xml = string_to_shape(
+        read_xml_string(convolutional_layer_element, "InputDimensions"));
 
-    set_label(read_xml_string(convolutional_layer_element, "Label"));
-    set_input_shape(string_to_shape(inputDimsStr));
+    // Kernel shape is serialized as 4 separate scalars (KernelsNumber +
+    // KernelsHeight/Width/Channels). Convolutional::set expects the
+    // {height, width, channels, kernels_number} order.
+    const Index kernels_number  = read_xml_index(convolutional_layer_element, "KernelsNumber");
+    const Index kernel_height   = read_xml_index(convolutional_layer_element, "KernelsHeight");
+    const Index kernel_width    = read_xml_index(convolutional_layer_element, "KernelsWidth");
+    const Index kernel_channels = read_xml_index(convolutional_layer_element, "KernelsChannels");
+    const Shape kernel_shape    = { kernel_height, kernel_width, kernel_channels, kernels_number };
 
-    // Read kernel dimensions from XML and resize the weight/bias tensors so
-    // the layer matches the persisted architecture instead of staying at
-    // whatever defaults the Convolutional was constructed with.
-    // (Without this, edits to KernelsNumber / KernelsHeight / KernelsWidth
-    // in the editor were silently dropped on the next engine save.)
-    const Index kernels_number   = read_xml_index(convolutional_layer_element, "KernelsNumber");
-    const Index kernel_height    = read_xml_index(convolutional_layer_element, "KernelsHeight");
-    const Index kernel_width     = read_xml_index(convolutional_layer_element, "KernelsWidth");
-    const Index kernel_channels  = read_xml_index(convolutional_layer_element, "KernelsChannels");
+    const string activation = read_xml_string(convolutional_layer_element, "Activation");
 
-    biases.shape  = {kernels_number};
-    weights.shape = {kernels_number, kernel_height, kernel_width, kernel_channels};
+    const Shape stride_shape = string_to_shape(
+        read_xml_string(convolutional_layer_element, "StrideDimensions"));
 
-    set_activation_function(read_xml_string(convolutional_layer_element, "Activation"));
-
-    const Shape stride_shape = string_to_shape(read_xml_string(convolutional_layer_element, "StrideDimensions"));
-    set_column_stride(stride_shape[0]);
-    set_row_stride(stride_shape[1]);
-
-    set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
+    const string convolution_type = read_xml_string(convolutional_layer_element, "Convolution");
 
     bool use_batch_normalization = false;
     const XMLElement* bn_element = convolutional_layer_element->FirstChildElement("BatchNormalization");
     if (bn_element && bn_element->GetText())
         use_batch_normalization = (string(bn_element->GetText()) == "true");
 
-    set_batch_normalization(use_batch_normalization);
+    // Delegate to set() so the CUDA descriptors (weights_device, biases_device,
+    // kernel_descriptor, activation_descriptor, ...) are initialized exactly
+    // like in the constructor path. Doing the CPU shape assignments by hand
+    // here previously left those descriptors in their default-constructed
+    // state, which made size() return 0, link() skip the buffers, and the
+    // forward CUDA path receive null device pointers.
+    set(input_shape_xml,
+        kernel_shape,
+        activation,
+        stride_shape,
+        convolution_type,
+        use_batch_normalization,
+        label);
 
     if (batch_normalization)
     {
-        running_means.resize(kernels_number);
-        running_standard_deviations.resize(kernels_number);
-
-        gammas.shape = {kernels_number};
-        betas.shape  = {kernels_number};
-
         string_to_vector(read_xml_string(convolutional_layer_element, "RunningMeans"), running_means);
         string_to_vector(read_xml_string(convolutional_layer_element, "RunningStandardDeviations"), running_standard_deviations);
     }

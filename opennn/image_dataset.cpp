@@ -282,13 +282,177 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 
-    variables_to_XML(printer);
+    image_variables_to_XML(printer);
 
-    samples_to_XML(printer);
+    image_samples_to_XML(printer);
 
     add_xml_element(printer, "Display", to_string(display));
 
     printer.CloseElement();
+}
+
+
+void ImageDataset::set_default_variable_names()
+{
+    // Pixel inputs in an image dataset do not need per-variable names: they
+    // never surface in the UI, reports or expressions. The 270k-string init
+    // loop in the base implementation is pure overhead for image classification.
+}
+
+
+void ImageDataset::image_samples_to_XML(XMLPrinter& printer) const
+{
+    // Base Dataset::samples_to_XML uses get_samples_number() — which returns
+    // data.rows(). For image-classification tasks that never call
+    // load_data_binary (e.g., Report dataset, Randomize parameters), data is
+    // empty and that would emit <SamplesNumber>0</SamplesNumber>, corrupting
+    // the .ndm. sample_roles is the source of truth, so we use it for both
+    // <SamplesNumber> and <SampleRoles> (the base get_sample_roles_vector()
+    // also iterates from 0 to get_samples_number() and would return an
+    // empty vector here).
+
+    printer.OpenElement("Samples");
+
+    const Index roles_count = Index(sample_roles.size());
+    add_xml_element(printer, "SamplesNumber", to_string(roles_count));
+
+    if(has_sample_ids)
+        add_xml_element(printer, "SamplesId", vector_to_string(sample_ids, get_separator_string()));
+
+    // Build the "0 1 2 3"-style roles string straight from sample_roles to
+    // avoid the data.rows() trap of get_sample_roles_vector().
+    string roles_str;
+    roles_str.reserve(roles_count * 2);
+    for(Index i = 0; i < roles_count; ++i)
+    {
+        if(i > 0) roles_str.push_back(' ');
+        const string& r = sample_roles[i];
+        if(r == "Training")        roles_str.push_back('0');
+        else if(r == "Validation") roles_str.push_back('1');
+        else if(r == "Testing")    roles_str.push_back('2');
+        else                       roles_str.push_back('3'); // "None" or unset
+    }
+    add_xml_element(printer, "SampleRoles", roles_str);
+
+    printer.CloseElement();
+}
+
+
+void ImageDataset::samples_from_XML(const XMLElement* samples_element)
+{
+    // Base Dataset::samples_from_XML resizes and zero-fills the `data` matrix
+    // to (samples_number × variables_number). For a 300x300x3 / 10k-sample image
+    // project this is ~11 GB just for the zero-init — the bulk of fromXML time
+    // for any post-import task. The image pixel data lives in the binary cache
+    // and is only materialised when a task explicitly calls load_data_binary
+    // (which does its own resize). So here we record metadata and give `data`
+    // the right row count with zero columns — that way `get_samples_number()`
+    // (which returns data.rows()) reports the correct value for tasks that
+    // do not load the binary (e.g., Report dataset), without paying the
+    // 11 GB allocation.
+
+    if(!samples_element)
+        throw runtime_error("Samples element is nullptr.\n");
+
+    const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
+
+    if(has_sample_ids)
+    {
+        const string separator_string = get_separator_string();
+        sample_ids = get_tokens(read_xml_string(samples_element, "SamplesId"), separator_string);
+    }
+
+    sample_roles.resize(samples_number);
+
+    if(samples_number == 0)
+        return;
+
+    // Filter empty tokens from the roles list (the XML text can have trailing
+    // whitespace, and an empty <SampleRoles/> element returns [""] from
+    // get_tokens). set_sample_roles would throw on the empty string.
+    const vector<string> raw_tokens = get_tokens(read_xml_string(samples_element, "SampleRoles"), " ");
+    vector<string> role_tokens;
+    role_tokens.reserve(raw_tokens.size());
+    for(const string& token : raw_tokens)
+        if(!token.empty())
+            role_tokens.push_back(token);
+
+    if(!role_tokens.empty())
+        set_sample_roles(role_tokens);
+}
+
+
+void ImageDataset::image_variables_to_XML(XMLPrinter& printer) const
+{
+    const Index total_variables = get_variables_number();
+    const Index input_pixels_count = get_image_size();
+
+    printer.OpenElement("Variables");
+    add_xml_element(printer, "VariablesNumber", to_string(total_variables));
+    add_xml_element(printer, "InputVariablesNumber", to_string(input_pixels_count));
+
+    // Pixel inputs are implicit (reconstructed at load time with defaults).
+    // Emit only target/unused variables in full.
+    for(Index i = input_pixels_count; i < total_variables; i++)
+    {
+        printer.OpenElement("Variable");
+        printer.PushAttribute("Item", to_string(i + 1).c_str());
+        variables[i].to_XML(printer);
+        printer.CloseElement();
+    }
+
+    printer.CloseElement();
+}
+
+
+void ImageDataset::image_variables_from_XML(const XMLElement* variables_element)
+{
+    if(!variables_element)
+        throw runtime_error("Variables element is nullptr.\n");
+
+    const Index variables_number = read_xml_index(variables_element, "VariablesNumber");
+    const Index input_pixels_count = read_xml_index(variables_element, "InputVariablesNumber");
+
+    set_variables_number(variables_number);
+
+    // Pixel inputs are decorative metadata (only role matters downstream filters).
+    // Default-constructed Variables already have type=Numeric, scaler="MeanStandardDeviation",
+    // empty name and categories — only the role needs to be set to "Input".
+    static const string input_role = "Input";
+    for(Index i = 0; i < input_pixels_count; i++)
+        variables[i].role = input_role;
+
+    const XMLElement* variable_element = variables_element->FirstChildElement("Variable");
+
+    for(Index i = input_pixels_count; i < variables_number; i++)
+    {
+        if(!variable_element)
+            throw runtime_error("Missing <Variable> entry for index " + to_string(i + 1) + ".\n");
+
+        const char* item_attr = variable_element->Attribute("Item");
+        if(!item_attr || to_string(i + 1) != item_attr)
+            throw runtime_error("Variable item mismatch at index " + to_string(i + 1) + ".\n");
+
+        Variable& variable = variables[i];
+        variable.name = read_xml_string(variable_element, "Name");
+        variable.set_scaler(read_xml_string(variable_element, "Scaler"));
+        variable.set_role(read_xml_string(variable_element, "Role"));
+        variable.set_type(read_xml_string(variable_element, "Type"));
+
+        if(variable.type == VariableType::Categorical || variable.type == VariableType::Binary)
+        {
+            const XMLElement* categories_element = variable_element->FirstChildElement("Categories");
+
+            if(categories_element)
+                variable.categories = get_tokens(read_xml_string(variable_element, "Categories"), ";");
+            else if(variable.type == VariableType::Binary)
+                variable.categories = { "0", "1" };
+            else
+                throw runtime_error("Categorical Variable Element is nullptr: Categories");
+        }
+
+        variable_element = variable_element->NextSiblingElement("Variable");
+    }
 }
 
 
@@ -349,6 +513,12 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices, const vector
 
 void ImageDataset::from_XML(const XMLDocument& data_set_document)
 {
+    using __clkD = chrono::high_resolution_clock;
+    auto __msD = [](auto a, auto b) {
+        return chrono::duration_cast<chrono::milliseconds>(b - a).count();
+    };
+    auto __sD = __clkD::now();
+
     const XMLElement* image_dataset_element = data_set_document.FirstChildElement("ImageDataset");
 
     if(!image_dataset_element)
@@ -364,9 +534,11 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
+    __sD = __clkD::now();
     set_shape("Input", { read_xml_index(data_source_element, "Height"),
                          read_xml_index(data_source_element, "Width"),
                          read_xml_index(data_source_element, "Channels") });
+    cout << "[TIMING-ENG]       img.set_shape: " << __msD(__sD, __clkD::now()) << " ms" << endl;
 
     set_image_padding(read_xml_index(data_source_element, "Padding"));
 
@@ -385,13 +557,17 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 
     const XMLElement* variables_element = image_dataset_element->FirstChildElement("Variables");
 
-    variables_from_XML(variables_element);
+    __sD = __clkD::now();
+    image_variables_from_XML(variables_element);
+    cout << "[TIMING-ENG]       img.variables_from_XML: " << __msD(__sD, __clkD::now()) << " ms" << endl;
 
     // Samples
 
     const XMLElement* samples_element = image_dataset_element->FirstChildElement("Samples");
 
+    __sD = __clkD::now();
     samples_from_XML(samples_element);
+    cout << "[TIMING-ENG]       img.samples_from_XML: " << __msD(__sD, __clkD::now()) << " ms" << endl;
 }
 
 
@@ -554,7 +730,19 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
              << milliseconds << " milliseconds." << endl;
     }
 
-    shuffle_rows(data);
+    sample_ids.clear();
+    sample_ids.reserve(image_path.size());
+    for(const string& path : image_path)
+        sample_ids.emplace_back(filesystem::path(path).filename().string());
+    has_sample_ids = true;
+
+    for(Index i = samples_number - 1; i > 0; --i)
+    {
+        const Index j = random_integer(Index(0), i);
+        if(i == j) continue;
+        data.row(i).swap(data.row(j));
+        std::swap(sample_ids[i], sample_ids[j]);
+    }
 }
 
 } // opennn namespace
