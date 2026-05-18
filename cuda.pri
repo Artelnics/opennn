@@ -73,7 +73,7 @@ if(!isEmpty(CUDA_PATH)) {
             message("    -> Configuring NVCC for CUDA sources (.cu files)...")
 
             NVCC_FLAGS = --use_fast_math
-            NVCC_FLAGS += --std=c++17
+            NVCC_FLAGS += --std=c++20
             NVCC_FLAGS += --expt-relaxed-constexpr
             NVCC_FLAGS += -gencode arch=compute_61,code=sm_61
             NVCC_FLAGS += -gencode arch=compute_75,code=sm_75
