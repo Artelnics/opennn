@@ -31,7 +31,7 @@ Shape Pooling3d::get_output_shape() const
     return {input_features};
 }
 
-vector<pair<Shape, Type>> Pooling3d::get_forward_specs(Index batch_size) const
+vector<TensorSpec> Pooling3d::get_forward_specs(Index batch_size) const
 {
     return {
         {(pooling_method == PoolingMethod::MaxPooling)

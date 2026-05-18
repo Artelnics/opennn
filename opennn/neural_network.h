@@ -36,15 +36,18 @@ public:
     [[nodiscard]] Type get_training_type()  const { return config.training_type; }
     [[nodiscard]] Type get_inference_type() const { return config.inference_type; }
 
-    [[nodiscard]] vector<vector<pair<Shape, Type>>> get_parameter_specs() const { return collect_layer_specs([](const Layer& L) { return L.get_parameter_specs(); }); }
-    [[nodiscard]] vector<vector<pair<Shape, Type>>> get_state_specs()     const { return collect_layer_specs([](const Layer& L) { return L.get_state_specs(); }); }
-    [[nodiscard]] vector<vector<pair<Shape, Type>>> get_forward_specs(Index b) const
+    [[nodiscard]] vector<vector<TensorSpec>> get_parameter_specs() const { return collect_layer_specs([](const Layer& L) { return L.get_parameter_specs(); }); }
+    
+    [[nodiscard]] vector<vector<TensorSpec>> get_state_specs()     const { return collect_layer_specs([](const Layer& L) { return L.get_state_specs(); }); }
+    
+    [[nodiscard]] vector<vector<TensorSpec>> get_forward_specs(Index b) const
     {
         auto specs = collect_layer_specs([b](const Layer& L) { return L.get_forward_specs(b); });
         if (!is_gpu()) force_specs_to_fp32(specs);
         return specs;
     }
-    [[nodiscard]] vector<vector<pair<Shape, Type>>> get_backward_specs(Index b) const
+    
+    [[nodiscard]] vector<vector<TensorSpec>> get_backward_specs(Index b) const
     {
         auto specs = collect_layer_specs([b](const Layer& L) { return L.get_backward_specs(b); });
         if (!is_gpu()) force_specs_to_fp32(specs);
@@ -99,6 +102,7 @@ public:
     void set_input_shape(const Shape&);
 
     void clear();
+    
     [[nodiscard]] Index get_layers_number() const { return ssize(layers); }
     [[nodiscard]] Index get_layers_number(const string&) const;
     [[nodiscard]] Index get_layers_number(LayerType) const;
@@ -197,17 +201,17 @@ private:
 
     void validate_type(LayerType) const;
 
-    static void force_specs_to_fp32(vector<vector<pair<Shape, Type>>>& specs)
+    static void force_specs_to_fp32(vector<vector<TensorSpec>>& specs)
     {
         for (auto& layer_specs : specs)
             for (auto& spec : layer_specs)
-                spec.second = Type::FP32;
+                spec.dtype = Type::FP32;
     }
 
     template<typename Fn>
-    [[nodiscard]] vector<vector<pair<Shape, Type>>> collect_layer_specs(Fn fn) const
+    [[nodiscard]] vector<vector<TensorSpec>> collect_layer_specs(Fn fn) const
     {
-        vector<vector<pair<Shape, Type>>> out(layers.size());
+        vector<vector<TensorSpec>> out(layers.size());
         ranges::transform(layers, out.begin(),
                           [&](const unique_ptr<Layer>& l) { return fn(*l); });
         return out;

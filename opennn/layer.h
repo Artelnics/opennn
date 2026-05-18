@@ -112,13 +112,13 @@ public:
 
     [[nodiscard]] Index get_parameters_number() const;
     [[nodiscard]] const vector<Operator*>& get_operators() const { return operators; }
-    [[nodiscard]] virtual vector<pair<Shape, Type>> get_parameter_specs() const;
-    [[nodiscard]] virtual vector<pair<Shape, Type>> get_state_specs()     const;
-    [[nodiscard]] virtual vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const
+    [[nodiscard]] virtual vector<TensorSpec> get_parameter_specs() const;
+    [[nodiscard]] virtual vector<TensorSpec> get_state_specs()     const;
+    [[nodiscard]] virtual vector<TensorSpec> get_forward_specs(Index batch_size) const
     {
         return {{Shape{batch_size}.append(get_output_shape()), compute_dtype}};
     }
-    [[nodiscard]] virtual vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const
+    [[nodiscard]] virtual vector<TensorSpec> get_backward_specs(Index batch_size) const
     {
         if (!is_trainable) return {};
         return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
@@ -209,7 +209,7 @@ protected:
 
     float* link_views_to_operators(
         vector<TensorView>& views, float* pointer,
-        vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
+        vector<TensorSpec> (Operator::*specs_fn)() const,
         void (Operator::*link_fn)(span<const TensorView>));
 
 };

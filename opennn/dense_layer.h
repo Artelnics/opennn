@@ -35,7 +35,7 @@ public:
     bool get_batch_normalization() const { return batch_norm.active(); }
     float get_momentum() const { return batch_norm.momentum; }
 
-    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_forward_specs(Index batch_size) const override;
 
     void set(const Shape& = {},
              const Shape& = {},

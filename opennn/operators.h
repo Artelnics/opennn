@@ -27,8 +27,8 @@ struct Operator
 {
     virtual ~Operator() = default;
 
-    virtual vector<pair<Shape, Type>> parameter_specs() const { return {}; }
-    virtual vector<pair<Shape, Type>> state_specs()     const { return {}; }
+    virtual vector<TensorSpec> parameter_specs() const { return {}; }
+    virtual vector<TensorSpec> state_specs()     const { return {}; }
 
     virtual void link_parameters(span<const TensorView>) {}
     virtual void link_gradients (span<const TensorView>) {}
@@ -184,7 +184,7 @@ struct CombinationOp : Operator
 
     void set(Index new_input_features, Index new_output_features, Type new_weight_type = Type::FP32);
 
-    vector<pair<Shape, Type>> parameter_specs() const override;
+    vector<TensorSpec> parameter_specs() const override;
     void link_parameters(span<const TensorView> views) override;
     void link_gradients (span<const TensorView> views) override;
 
@@ -218,7 +218,7 @@ struct CombinationReluOp : Operator
 
     void set(Index input_features, Index output_features, Type weight_type = Type::FP32);
 
-    vector<pair<Shape, Type>> parameter_specs() const override { return combination.parameter_specs(); }
+    vector<TensorSpec> parameter_specs() const override { return combination.parameter_specs(); }
     void link_parameters(span<const TensorView> views) override { combination.link_parameters(views); }
     void link_gradients (span<const TensorView> views) override { combination.link_gradients(views); }
 
@@ -246,8 +246,8 @@ struct BatchNormOp : Operator
 
     void set(Index new_features, float new_momentum = 0.1f);
 
-    vector<pair<Shape, Type>> parameter_specs() const override;
-    vector<pair<Shape, Type>> state_specs()     const override;
+    vector<TensorSpec> parameter_specs() const override;
+    vector<TensorSpec> state_specs()     const override;
     void link_parameters(span<const TensorView> views) override;
     void link_gradients (span<const TensorView> views) override;
     void link_states    (span<const TensorView> views) override;
@@ -346,7 +346,7 @@ struct ConvolutionOp : Operator
              Index padding_h, Index padding_w,
              Type compute_dtype);
 
-    vector<pair<Shape, Type>> parameter_specs() const override;
+    vector<TensorSpec> parameter_specs() const override;
     void link_parameters(span<const TensorView> views) override;
     void link_gradients (span<const TensorView> views) override;
 
@@ -394,7 +394,7 @@ struct ConvolutionReluOp : Operator
              Index padding_h, Index padding_w,
              Type compute_dtype);
 
-    vector<pair<Shape, Type>> parameter_specs() const override { return convolution.parameter_specs(); }
+    vector<TensorSpec> parameter_specs() const override { return convolution.parameter_specs(); }
     void link_parameters(span<const TensorView> views) override { convolution.link_parameters(views); }
     void link_gradients (span<const TensorView> views) override { convolution.link_gradients(views); }
 
@@ -425,7 +425,7 @@ struct LayerNormOp : Operator
 
     void set(Index sequence_length, Index embedding_dimension);
 
-    vector<pair<Shape, Type>> parameter_specs() const override;
+    vector<TensorSpec> parameter_specs() const override;
     void link_parameters(span<const TensorView> views) override;
     void link_gradients (span<const TensorView> views) override;
 
@@ -482,7 +482,7 @@ struct MultiHeadProjectionOp : Operator
 
     void set(Index input_features, Index heads_number, Index head_dimension, Type compute_dtype);
 
-    vector<pair<Shape, Type>> parameter_specs() const override { return combination.parameter_specs(); }
+    vector<TensorSpec> parameter_specs() const override { return combination.parameter_specs(); }
     void link_parameters(span<const TensorView> views) override { combination.link_parameters(views); }
     void link_gradients (span<const TensorView> views) override { combination.link_gradients(views); }
 
@@ -520,7 +520,7 @@ struct AttentionOp : Operator
 
     void set_dropout_rate(float rate) { dropout.set_rate(rate); }
 
-    vector<pair<Shape, Type>> forward_scratch_specs(Index batch_size) const;
+    vector<TensorSpec> forward_scratch_specs(Index batch_size) const;
 
     // Slot convention (set by hosting layer):
     //   input_slots  = {Query, Key, Value, Input}     (Input read via source_view_index)
@@ -769,8 +769,8 @@ struct EmbeddingLookupOp : Operator
 
     void set(Index new_vocabulary_size, Index new_sequence_length, Index new_embedding_dimension);
 
-    vector<pair<Shape, Type>> parameter_specs() const override;
-    vector<pair<Shape, Type>> state_specs()     const override;
+    vector<TensorSpec> parameter_specs() const override;
+    vector<TensorSpec> state_specs()     const override;
     void link_parameters(span<const TensorView> views) override;
     void link_gradients (span<const TensorView> views) override;
     void link_states    (span<const TensorView> views) override;

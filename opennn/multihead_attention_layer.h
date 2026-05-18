@@ -49,8 +49,8 @@ public:
         return {batch_size, query_sequence_length, heads_number, get_head_dimension()};
     }
 
-    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
-    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_forward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_backward_specs(Index batch_size) const override;
 
     void set(Index = 0,
              Index = 0,

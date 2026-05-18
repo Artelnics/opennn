@@ -31,7 +31,7 @@ public:
 
     PoolingMethod get_pooling_method() const { return pooling_method; }
 
-    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_forward_specs(Index batch_size) const override;
 
     void set(const Shape&, const PoolingMethod&, const string&);
 

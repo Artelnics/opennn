@@ -52,7 +52,7 @@ struct BackPropagation
 
 private:
 
-    void setup_delta_pool(const vector<vector<pair<Shape, Type>>>& backward_specs);
+    void setup_delta_pool(const vector<vector<TensorSpec>>& backward_specs);
 };
 
 }

@@ -49,7 +49,7 @@ Index Pooling::get_output_width() const
     return (input_width - pool_width + 2 * padding_width) / column_stride + 1;
 }
 
-vector<pair<Shape, Type>> Pooling::get_forward_specs(Index batch_size) const
+vector<TensorSpec> Pooling::get_forward_specs(Index batch_size) const
 {
     const Shape out_shape = get_output_shape();
 
