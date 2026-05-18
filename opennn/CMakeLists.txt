@@ -7,6 +7,8 @@ file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 
 add_library(opennn STATIC ${CPP_SOURCES} ${HEADER_FILES})
 
+target_compile_features(opennn PUBLIC cxx_std_20)
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(opennn PUBLIC stdc++fs)
 endif()
