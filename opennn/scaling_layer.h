@@ -16,10 +16,12 @@
 namespace opennn
 {
 
+/// @brief Input scaling layer that normalizes features using per-variable descriptive statistics.
 class Scaling final : public Layer
 {
 public:
 
+    /// @brief Constructs a scaling layer for the given input shape.
     Scaling(const Shape& = {});
 
     Shape get_output_shape() const override { return input_shape; }
@@ -27,27 +29,41 @@ public:
     const vector<Descriptives>& get_descriptives() const { return descriptives; }
     const vector<ScalerMethod>& get_scalers()      const { return scalers; }
 
+    /// @brief Returns the per-variable minimum values from the stored descriptive statistics.
     VectorR get_minimums()            const;
+    /// @brief Returns the per-variable maximum values from the stored descriptive statistics.
     VectorR get_maximums()            const;
+    /// @brief Returns the per-variable means from the stored descriptive statistics.
     VectorR get_means()               const;
+    /// @brief Returns the per-variable standard deviations from the stored descriptive statistics.
     VectorR get_standard_deviations() const;
 
     float get_min_range() const { return min_range; }
     float get_max_range() const { return max_range; }
 
+    /// @brief Reconfigures the layer with a new input shape, resetting descriptives and scalers.
     void set(const Shape& = {});
+    /// @copydoc Layer::set_input_shape
     void set_input_shape(const Shape&) override;
 
+    /// @brief Sets the descriptive statistics (min, max, mean, stddev) used for scaling each variable.
     void set_descriptives(const vector<Descriptives>&);
+    /// @brief Sets the target output range used by min-max scaling methods.
     void set_min_max_range(float min, float max);
+    /// @brief Sets the scaling method for each input variable from a vector of method names.
     void set_scalers(const vector<string>&);
+    /// @brief Sets the same scaling method for all input variables from its name.
     void set_scalers(const string&);
 
+    /// @copydoc Layer::link_states
     float* link_states(float*) override;
 
+    /// @copydoc Layer::read_JSON_body
     void read_JSON_body(const Json*) override;
+    /// @copydoc Layer::write_JSON_body
     void write_JSON_body(JsonWriter&) const override;
 
+    /// @copydoc Layer::write_expression
     string write_expression(const vector<string>& input_names,
                             const vector<string>& output_names) const override;
 

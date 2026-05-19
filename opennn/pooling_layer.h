@@ -14,6 +14,7 @@
 namespace opennn
 {
 
+/// @brief Pooling reduction method used by Pooling and Pooling3d layers.
 enum class PoolingMethod
 {
     MaxPooling,
@@ -34,10 +35,18 @@ inline PoolingMethod string_to_pooling_method(const string& name)
     throw runtime_error(format("Unknown pooling method: {}", name));
 }
 
+/// @brief 2D spatial pooling layer supporting max and average reduction.
 class Pooling final : public Layer
 {
 public:
 
+    /// @brief Constructs a pooling layer with given input, pool, stride and padding shapes.
+    /// @param input_shape Shape of the input tensor (height, width, channels).
+    /// @param pool_shape Pooling window size (height, width).
+    /// @param stride_shape Stride along height and width.
+    /// @param padding_shape Padding along height and width.
+    /// @param pooling_method "MaxPooling" or "AveragePooling".
+    /// @param name Layer name used for serialization.
     Pooling(const Shape& = {2, 2, 1},
             const Shape& = { 2, 2 },
             const Shape& = { 2, 2 },
@@ -45,10 +54,16 @@ public:
             const string& = "MaxPooling",
             const string& = "pooling_layer");
 
+    /// @brief Returns the input tensor shape (height, width, channels).
     Shape get_input_shape() const override { return {input_height, input_width, input_channels}; }
+
+    /// @brief Returns the output tensor shape after pooling.
     Shape get_output_shape() const override;
 
+    /// @brief Returns the output feature map height.
     Index get_output_height() const;
+
+    /// @brief Returns the output feature map width.
     Index get_output_width() const;
 
     Index get_input_height() const { return input_height; }
@@ -66,8 +81,10 @@ public:
 
     PoolingMethod get_pooling_method() const { return pooling_method; }
 
+    /// @brief Returns the tensor specifications used during forward propagation.
     vector<TensorSpec> get_forward_specs(Index batch_size) const override;
 
+    /// @brief Reconfigures the layer with new shapes and pooling method.
     void set(const Shape& = { 0, 0, 0 },
              const Shape& = { 1, 1 },
              const Shape& = { 1, 1 },
@@ -75,15 +92,24 @@ public:
              const string & = "MaxPooling",
              const string & = "pooling_layer");
 
+    /// @brief Updates the layer for a new input shape.
     void set_input_shape(const Shape&) override;
+
+    /// @brief Sets the pooling window height and width.
     void set_pool_size(Index, Index);
+
     void set_row_stride(Index);
     void set_column_stride(Index);
     void set_padding_height(Index);
     void set_padding_width(Index);
+
+    /// @brief Sets the pooling method by name ("MaxPooling" or "AveragePooling").
     void set_pooling_method(const string&);
 
+    /// @brief Reads the layer configuration from a JSON node.
     void read_JSON_body(const Json*) override;
+
+    /// @brief Writes the layer configuration to a JSON writer.
     void write_JSON_body(JsonWriter&) const override;
 
 private:

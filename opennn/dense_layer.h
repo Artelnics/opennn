@@ -14,16 +14,19 @@
 namespace opennn
 {
 
+/// @brief Fully-connected layer with configurable activation, optional batch normalization and dropout.
 class Dense final : public Layer
 {
 public:
 
+    /// @brief Constructs a dense layer with the given input/output shapes, activation, and batch-norm flag.
     Dense(const Shape& = {},
           const Shape& = {},
           const string& = "Tanh",
           bool = false,
           const string& = "dense_layer");
 
+    /// @brief Returns the layer output shape, derived from input shape and configured output features.
     Shape get_output_shape() const override;
 
     Index get_input_features() const { return input_shape.empty() ? 0 : input_shape.back(); }
@@ -35,25 +38,34 @@ public:
     bool get_batch_normalization() const { return batch_norm.active(); }
     float get_momentum() const { return batch_norm.momentum; }
 
+    /// @brief Returns the tensor specs of intermediate forward buffers for a given batch size.
     vector<TensorSpec> get_forward_specs(Index batch_size) const override;
 
+    /// @brief Reconfigures the layer with new shapes, activation, batch-normalization flag and label.
     void set(const Shape& = {},
              const Shape& = {},
              const string& = "Tanh",
              bool = false,
              const string& = "dense_layer");
 
+    /// @copydoc Layer::set_input_shape
     void set_input_shape(const Shape&) override;
+    /// @copydoc Layer::set_output_shape
     void set_output_shape(const Shape&) override;
     void on_compute_dtype_changed() override { configure_operators(); }
 
+    /// @brief Sets the activation function from its string name (e.g. "Tanh", "Logistic", "Linear").
     void set_activation_function(const string&);
+    /// @brief Enables or disables batch normalization on the layer combination output.
     void set_batch_normalization(bool enable);
     void set_dropout_rate(float new_dropout_rate) { dropout.set_rate(new_dropout_rate); }
+    /// @brief Sets the running-statistics momentum used by batch normalization.
     void set_momentum(float new_momentum);
 
+    /// @copydoc Layer::read_JSON_body
     void read_JSON_body(const Json*) override;
 
+    /// @copydoc Layer::write_expression
     string write_expression(const vector<string>& input_names,
                             const vector<string>& output_names) const override;
 

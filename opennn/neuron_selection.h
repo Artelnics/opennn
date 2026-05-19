@@ -15,12 +15,15 @@ class TrainingStrategy;
 struct TrainingResults;
 struct NeuronsSelectionResults;
 
+/// @brief Abstract base class for algorithms that select the optimal number of hidden neurons.
 class NeuronSelection
 {
 public:
 
+    /// @brief Reasons the neurons selection loop may terminate.
     enum class StoppingCondition { MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons };
 
+    /// @brief Constructs the algorithm bound to an optional training strategy.
     NeuronSelection(TrainingStrategy* = nullptr);
     virtual ~NeuronSelection() = default;
 
@@ -30,10 +33,12 @@ public:
 
     bool get_display() const { return display; }
 
+    /// @brief Binds the algorithm to the given training strategy.
     void set(TrainingStrategy*);
 
     void set_training_strategy(TrainingStrategy* new_training_strategy) { training_strategy = new_training_strategy; }
 
+    /// @brief Restores default search bounds and stopping criteria.
     void set_default();
 
     void set_maximum_neurons(const Index new_maximum_neurons) { maximum_neurons = new_maximum_neurons; }
@@ -47,8 +52,11 @@ public:
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
+/// @brief Verifies that the training strategy and its dependencies are valid for neurons selection.
 void check() const;
 
+    /// @brief Runs the neurons selection algorithm until a stopping criterion is met.
+    /// @return Results including the optimal neuron count, optimal parameters and error histories.
     virtual NeuronsSelectionResults perform_neurons_selection() = 0;
 
     string get_name() const
@@ -56,13 +64,19 @@ void check() const;
         return name;
     }
 
+    /// @brief Loads algorithm configuration from a JSON document.
     virtual void from_JSON(const JsonDocument&) = 0;
 
+    /// @brief Writes algorithm configuration to a JSON writer.
     virtual void to_JSON(JsonWriter&) const = 0;
 
+    /// @brief Saves the algorithm configuration to disk.
     void save(const filesystem::path&) const;
+
+    /// @brief Loads the algorithm configuration from disk.
     void load(const filesystem::path&);
 
+    /// @brief Prints a human-readable description of the algorithm to stdout.
     virtual void print() const {}
 
 protected:
@@ -92,14 +106,19 @@ protected:
     string name;
 };
 
+/// @brief Aggregated results of a neurons selection run including the optimal neuron count and error histories.
 struct NeuronsSelectionResults
 {
+   /// @brief Builds an empty results structure able to hold up to the given number of epochs.
    NeuronsSelectionResults(const Index maximum_epochs = 0);
 
+   /// @brief Resizes the recorded error and neuron-count histories.
    void resize_history(const Index new_size);
 
+   /// @brief Returns a human-readable string describing the stopping condition that ended the run.
    string write_stopping_condition() const;
 
+   /// @brief Prints a summary of the selection results to stdout.
    void print() const;
 
    // Neural network

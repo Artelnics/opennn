@@ -14,14 +14,19 @@
 namespace opennn
 {
 
+/// @brief Token-based language dataset with input/target vocabularies and binary token cache.
 class LanguageDataset final : public Dataset
 {
 
 public:
 
+    /// @brief Creates a language dataset, optionally reading documents from the given path.
     LanguageDataset(const filesystem::path& = "");
+    /// @brief Creates a language dataset capped at the given vocabulary size.
     LanguageDataset(const filesystem::path&, Index maximum_vocabulary_size);
+    /// @brief Creates a language dataset with vocabulary size and minimum token frequency filters.
     LanguageDataset(const filesystem::path&, Index maximum_vocabulary_size, Index minimum_token_frequency);
+    /// @brief Creates a synthetic language dataset with the given sample count and vocabulary controls.
     LanguageDataset(const Index, Index, Index);
 
     const vector<string>& get_input_vocabulary() const { return input_vocabulary; }
@@ -37,24 +42,33 @@ public:
     Index get_maximum_input_sequence_length() const { return maximum_input_sequence_length; }
     Index get_maximum_target_sequence_length() const { return maximum_target_sequence_length; }
 
+    /// @brief Replaces the input vocabulary and rebuilds its lookup map.
     void set_input_vocabulary(const vector<string>&);
+    /// @brief Replaces the target vocabulary and rebuilds its lookup maps.
     void set_target_vocabulary(const vector<string>&);
 
     void set_maximum_vocabulary_size(Index new_maximum) { maximum_vocabulary_size = new_maximum; }
     void set_minimum_token_frequency(Index new_minimum) { minimum_token_frequency = new_minimum; }
 
+    /// @brief Returns the number of token sequences in the dataset.
     Index get_samples_number() const override;
     using Dataset::get_samples_number;
 
+    /// @brief Returns the distribution of target tokens or classes.
     VectorI calculate_target_distribution() const override;
 
+    /// @brief Reads the configured text corpus into the dataset and builds vocabularies.
     void read_txt();
 
+    /// @brief Builds a vocabulary from the tokenized documents, filtered by frequency and size limits.
+    /// @param documents Tokenized input or target documents.
+    /// @param vocabulary Output vector receiving the resulting vocabulary.
     void create_vocabulary(const vector<vector<string_view>>&, vector<string>&) const;
 
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
 
+    /// @brief Streams input token indices of the selected samples into the destination buffer.
     void fill_inputs(const vector<Index>&,
                      const vector<Index>&,
                      float*,
@@ -62,6 +76,7 @@ public:
                      bool parallelize = true,
                      int = -1) const override;
 
+    /// @brief Streams target token indices of the selected samples into the destination buffer.
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
@@ -69,6 +84,7 @@ public:
                       bool parallelize = true,
                       int = -1) const override;
 
+    /// @brief Streams decoder token indices (target shifted right) into the destination buffer.
     void fill_decoder(const vector<Index>&,
                       const vector<Index>&,
                       float*,

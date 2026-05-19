@@ -14,14 +14,17 @@
 namespace opennn
 {
 
+/// @brief Fused dense + ReLU layer; combines linear projection and ReLU activation in a single op for performance.
 class DenseRelu final : public Layer
 {
 public:
 
+    /// @brief Constructs a fused dense+ReLU layer with the given input and output shapes.
     DenseRelu(const Shape& = {},
               const Shape& = {},
               const string& = "dense_relu_layer");
 
+    /// @brief Returns the layer output shape, derived from input shape and configured output features.
     Shape get_output_shape() const override;
 
     Index get_input_features() const { return input_shape.empty() ? 0 : input_shape.back(); }
@@ -29,11 +32,14 @@ public:
 
     ActivationOp::Function get_output_activation() const override { return ActivationOp::Function::ReLU; }
 
+    /// @brief Reconfigures the layer with new input/output shapes and label.
     void set(const Shape& = {},
              const Shape& = {},
              const string& = "dense_relu_layer");
 
+    /// @copydoc Layer::set_input_shape
     void set_input_shape(const Shape&) override;
+    /// @copydoc Layer::set_output_shape
     void set_output_shape(const Shape&) override;
     void on_compute_dtype_changed() override { configure_operators(); }
 

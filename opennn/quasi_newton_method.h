@@ -16,11 +16,13 @@
 namespace opennn
 {
 
+/// @brief Quasi-Newton optimizer using the BFGS inverse-Hessian approximation with line search.
 class QuasiNewtonMethod final : public Optimizer
 {
 
 public:
 
+    /// @brief Slot indices into the optimizer scratch buffer (BFGS state).
     enum DataSlot {
         OldParameters,
         ParameterDifferences,
@@ -33,14 +35,20 @@ public:
         OldInverseHessian
     };
 
+    /// @brief Constructs the quasi-Newton optimizer optionally bound to a Loss instance.
     QuasiNewtonMethod(Loss* = nullptr);
+    /// @brief Resets all hyperparameters and stopping criteria to library defaults.
     void set_default();
     void set_minimum_loss_decrease(const float new_minimum_loss_decrease) { minimum_loss_decrease = new_minimum_loss_decrease; }
+    /// @brief Applies one BFGS update: line search along the search direction, then refreshes the inverse Hessian.
     void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , OptimizerData&);
 
+    /// @brief Runs the quasi-Newton training loop and returns the recorded error history.
     TrainingResults train() override;
+    /// @brief Restores hyperparameters from a JSON document.
     void from_JSON(const JsonDocument&) override;
 
+    /// @brief Serializes hyperparameters to JSON.
     void to_JSON(JsonWriter&) const override;
 
 private:

@@ -18,10 +18,12 @@ class TrainingStrategy;
 struct TrainingResults;
 struct InputsSelectionResults;
 
+/// @brief Abstract base class for algorithms that search the optimal subset of input variables.
 class InputsSelection
 {
 public:
 
+    /// @brief Reasons the inputs selection loop may terminate.
     enum class StoppingCondition {
         MaximumTime,
         SelectionErrorGoal,
@@ -30,6 +32,7 @@ public:
         MaximumSelectionFailures
     };
 
+    /// @brief Constructs the algorithm bound to an optional training strategy.
     InputsSelection(TrainingStrategy* = nullptr);
     virtual ~InputsSelection() = default;
 
@@ -39,7 +42,10 @@ public:
 
     bool get_display() const { return display; }
 
+    /// @brief Returns the minimum number of input variables that the algorithm may select.
     virtual Index get_minimum_inputs_number() const = 0;
+
+    /// @brief Returns the maximum number of input variables that the algorithm may select.
     virtual Index get_maximum_inputs_number() const = 0;
 
     void set(TrainingStrategy* new_training_strategy) { training_strategy = new_training_strategy; }
@@ -53,8 +59,11 @@ public:
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
+    /// @brief Verifies that the training strategy and its dependencies are valid for inputs selection.
     void check() const;
 
+    /// @brief Runs the inputs selection algorithm until a stopping criterion is met.
+    /// @return Results including the chosen inputs, optimal parameters and error histories.
     virtual InputsSelectionResults perform_input_selection() = 0;
 
     string get_name() const
@@ -62,13 +71,19 @@ public:
         return name;
     }
 
+    /// @brief Loads algorithm configuration from a JSON document.
     virtual void from_JSON(const JsonDocument&) = 0;
 
+    /// @brief Writes algorithm configuration to a JSON writer.
     virtual void to_JSON(JsonWriter&) const = 0;
 
+    /// @brief Saves the algorithm configuration to disk.
     void save(const filesystem::path&) const;
+
+    /// @brief Loads the algorithm configuration from disk.
     void load(const filesystem::path&);
 
+    /// @brief Prints a human-readable description of the algorithm to stdout.
     virtual void print() const {}
 
 protected:
@@ -92,18 +107,25 @@ protected:
     string name;
 };
 
+/// @brief Aggregated results of an inputs selection run including optimal inputs and error histories.
 struct InputsSelectionResults
 {
+    /// @brief Builds an empty results structure able to hold up to the given number of epochs.
     InputsSelectionResults(const Index = 0);
 
+    /// @brief Returns the number of epochs actually recorded in the histories.
     Index get_epochs_number() const;
 
+    /// @brief Resets the structure and reserves storage for the given number of epochs.
     void set(const Index = 0);
 
+    /// @brief Returns a human-readable string describing the stopping condition that ended the run.
     string write_stopping_condition() const;
 
+    /// @brief Resizes the recorded error histories.
     void resize_history(const Index new_size);
 
+    /// @brief Prints a summary of the selection results to stdout.
     void print() const;
 
     // Neural network

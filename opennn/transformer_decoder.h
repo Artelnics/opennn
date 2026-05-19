@@ -17,10 +17,12 @@
 namespace opennn
 {
 
+/// @brief Drives token-by-token inference of a Transformer model with configurable sampling strategies.
 class TransformerDecoder
 {
 public:
 
+    /// @brief Sampling parameters that control how the next token is drawn from the model output distribution.
     struct SamplingConfig
     {
         float temperature = 1.0f;
@@ -30,24 +32,37 @@ public:
         Index maximum_tokens = 0;
     };
 
+    /// @brief Callback invoked for each token emitted during streaming decoding.
     using TokenCallback = function<void(const string& token)>;
 
+    /// @brief Builds the decoder bound to a Transformer model and the language dataset providing its vocabulary.
     TransformerDecoder(Transformer&, const LanguageDataset&);
     TransformerDecoder(const TransformerDecoder&) = delete;
     TransformerDecoder& operator=(const TransformerDecoder&) = delete;
     ~TransformerDecoder() = default;
 
+    /// @brief Generates a completion for the given source using the default sampling configuration.
     string decode(const string& source);
+
+    /// @brief Generates a completion for the given source using the supplied sampling configuration.
     string decode(const string& source, const SamplingConfig& config);
+
+    /// @brief Generates a completion for the given source and invokes the callback for each emitted token.
     string decode(const string& source, const TokenCallback& on_token);
+
+    /// @brief Generates a completion using the given sampling configuration and streams tokens via the callback.
     string decode(const string& source, const SamplingConfig& config, const TokenCallback& on_token);
 
+    /// @brief Generates a completion for the given source and writes each emitted token to the output stream.
     string decode_to_stream(const string& source, ostream& out);
+
+    /// @brief Generates a completion using the given sampling configuration and writes each token to the stream.
     string decode_to_stream(const string& source, const SamplingConfig& config, ostream& out);
 
-    // Interactive REPL: reads prompts from cin, streams predictions to
-    // cout. Empty line or Ctrl+D exits.
+    /// @brief Runs an interactive REPL: reads prompts from cin, streams predictions to cout, exits on empty line / Ctrl+D.
     void chat();
+
+    /// @brief Runs the interactive REPL with the supplied sampling configuration.
     void chat(const SamplingConfig& config);
 
 private:

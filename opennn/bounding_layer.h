@@ -14,12 +14,14 @@
 namespace opennn
 {
 
+/// @brief Output bounding layer that clips outputs to configured lower and upper limits.
 class Bounding final : public Layer
 {
 public:
 
     using BoundingMethod = BoundOp::Method;
 
+    /// @brief Constructs a bounding layer for the given output shape and label.
     Bounding(const Shape& = {0}, const string& = "bounding_layer");
 
     Shape get_input_shape() const override { return output_shape; }
@@ -27,27 +29,41 @@ public:
 
     const BoundingMethod& get_bounding_method() const { return bound.method; }
 
+    /// @brief Returns the configured lower bound for each output variable.
     VectorR get_lower_bounds() const;
+    /// @brief Returns the configured upper bound for each output variable.
     VectorR get_upper_bounds() const;
 
+    /// @brief Reconfigures the layer with a new output shape and label.
     void set(const Shape& = {0}, const string& = "bounding_layer");
 
+    /// @copydoc Layer::set_input_shape
     void set_input_shape(const Shape&) override;
 
+    /// @brief Sets the bounding method enum used to clip outputs.
     void set_bounding_method(const BoundingMethod&);
+    /// @brief Sets the bounding method from its string name.
     void set_bounding_method(const string&);
 
+    /// @brief Sets the full vector of lower bounds, one entry per output variable.
     void set_lower_bounds(const VectorR&);
+    /// @brief Sets the lower bound of a single output variable by index.
     void set_lower_bound(Index, float);
 
+    /// @brief Sets the full vector of upper bounds, one entry per output variable.
     void set_upper_bounds(const VectorR&);
+    /// @brief Sets the upper bound of a single output variable by index.
     void set_upper_bound(Index, float);
 
+    /// @copydoc Layer::link_states
     float* link_states(float*) override;
 
+    /// @copydoc Layer::read_JSON_body
     void read_JSON_body(const Json*) override;
+    /// @copydoc Layer::write_JSON_body
     void write_JSON_body(JsonWriter&) const override;
 
+    /// @copydoc Layer::write_expression
     string write_expression(const vector<string>& input_names,
                             const vector<string>& output_names) const override;
 

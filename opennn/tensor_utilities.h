@@ -37,6 +37,7 @@ static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(float);
 constexpr cudaDataType_t      CUDA_REDUCTION_DTYPE   = CUDA_R_32F;
 constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_TF32;
 
+/// @brief Fixed-capacity small-vector describing tensor dimensions (rank up to MaxRank).
 struct Shape
 {
     static constexpr size_t MaxRank = 4;
@@ -46,6 +47,7 @@ struct Shape
 
     Shape() noexcept = default;
 
+    /// @brief Builds a shape of the given rank with every dimension set to value.
     Shape(size_t new_rank, Index value) : rank(new_rank)
     {
         if (new_rank > MaxRank)
@@ -54,6 +56,7 @@ struct Shape
         fill_n(dims, rank, value);
     }
 
+    /// @brief Builds a shape from a brace-enclosed list of dimensions.
     Shape(initializer_list<Index> list) : rank(list.size())
     {
         if (list.size() > MaxRank)
@@ -72,14 +75,18 @@ struct Shape
 
     [[nodiscard]] bool empty() const noexcept { return rank == 0; }
 
+    /// @brief Returns dims[i] when i is in range, otherwise 0.
     [[nodiscard]] Index dim_or_zero(size_t i) const noexcept { return i < rank ? dims[i] : Index(0); }
 
+    /// @brief Returns the number of elements (product of all dimensions).
     [[nodiscard]] Index size() const noexcept
     {
         return rank == 0 ? 0 : accumulate(begin(), end(), Index(1), multiplies<>{});
     }
 
+    /// @brief Resets the shape to rank 0 without freeing storage.
     void clear() noexcept { rank = 0; }
+    /// @brief Appends a dimension to the shape (silently no-op if already at MaxRank).
     void push_back(Index value) noexcept { if (rank < MaxRank) dims[rank++] = value; }
 
     friend ostream& operator<<(ostream& os, const Shape& shape)
@@ -95,6 +102,7 @@ struct Shape
         return rank == other.rank && equal(begin(), end(), other.begin());
     }
 
+    /// @brief Appends another shape's dimensions to this one, stopping at MaxRank.
     Shape& append(const Shape& other)
     {
         const size_t copy_count = min(other.rank, MaxRank - rank);
@@ -104,6 +112,7 @@ struct Shape
     }
 };
 
+/// @brief Lightweight description of a tensor's shape and data type (no storage attached).
 struct TensorSpec
 {
     Shape shape;
@@ -152,18 +161,24 @@ struct TensorSpec
         [dtype](const auto& s) { return get_aligned_bytes(s, dtype); });
 }
 
+/// @brief Owning raw byte buffer that lives on CPU or CUDA memory, with aligned (re)allocation.
 struct Buffer
 {
     void* data = nullptr;
     Index bytes = 0;
     Device device_type = Device::CPU;
 
+    /// @brief Reinterprets the buffer as a typed pointer (no bounds checking).
     template<typename T> [[nodiscard]] T*       as()       { return static_cast<T*>(data); }
+    /// @brief Reinterprets the buffer as a typed const pointer.
     template<typename T> [[nodiscard]] const T* as() const { return static_cast<const T*>(data); }
 
+    /// @brief Capacity expressed in float elements.
     [[nodiscard]] Index size_in_floats() const { return bytes / Index(sizeof(float)); }
+    /// @brief Returns true if no storage is allocated.
     [[nodiscard]] bool  empty() const { return bytes == 0; }
 
+    /// @brief Resizes the buffer to new_bytes on new_device_type, freeing prior storage.
     void resize_bytes(Index new_bytes, Device new_device_type)
     {
         if (new_bytes == bytes && device_type == new_device_type) return;
@@ -175,12 +190,14 @@ struct Buffer
         bytes = new_bytes;
     }
 
+    /// @brief Grows the buffer to at least new_bytes; no-op if already large enough.
     void grow_to(Index new_bytes)
     {
         if (new_bytes > bytes)
             resize_bytes(new_bytes, device_type);
     }
 
+    /// @brief Ensures the buffer holds at least n_elements of T and returns a typed pointer.
     template<typename T>
     T* ensure(Index n_elements)
     {
@@ -188,6 +205,7 @@ struct Buffer
         return as<T>();
     }
 
+    /// @brief Zeros all bytes in the buffer (cudaMemset on device, memset on host).
     void setZero()
     {
         if (!data) return;
@@ -202,6 +220,7 @@ struct Buffer
     }
 
 #ifdef OPENNN_HAS_CUDA
+    /// @brief Moves the contents of the buffer to a different device, optionally on a stream.
     void migrate_to(Device target, cudaStream_t stream = nullptr)
     {
         if (device_type == target || !data) return;
@@ -226,6 +245,7 @@ struct Buffer
     }
 #endif
 
+    /// @brief Constructs an empty buffer targeting the given device type.
     explicit Buffer(Device new_device_type = Device::CPU) noexcept : device_type(new_device_type) {}
     Buffer(const Buffer&) = delete;
     Buffer& operator=(const Buffer&) = delete;
@@ -235,6 +255,7 @@ struct Buffer
 
     ~Buffer() { free_buffer(); }
 
+    /// @brief Swaps storage with another buffer.
     void swap(Buffer& other) noexcept
     {
         std::swap(data, other.data);
@@ -267,6 +288,7 @@ private:
     }
 };
 
+/// @brief Non-owning view over a tensor: pointer, shape, and data type with rich reshape helpers.
 struct TensorView
 {
     void* data = nullptr;
@@ -275,18 +297,24 @@ struct TensorView
 
     Type type = Type::FP32;
 
+    /// @brief Constructs a view from an external buffer, shape, and dtype.
     TensorView(void* new_data = nullptr, const Shape& new_shape = {},
                Type new_dtype = Type::FP32) noexcept
         : data(new_data), shape(new_shape), type(new_dtype) {}
 
+    /// @brief Number of dimensions in the view.
     [[nodiscard]] Index get_rank() const noexcept { return shape.rank; }
 
+    /// @brief Total element count.
     [[nodiscard]] Index size() const noexcept { return shape.size(); }
 
+    /// @brief Total byte count (size() * sizeof(dtype)).
     [[nodiscard]] Index byte_size() const noexcept { return size() * type_bytes(type); }
 
+    /// @brief Returns true if the shape is empty.
     [[nodiscard]] bool empty() const noexcept { return shape.empty(); }
 
+    /// @brief Reinterprets the view's data as a pointer to T (no type checking).
     template<typename T>
     [[nodiscard]] T* as() const noexcept
     {
@@ -294,13 +322,16 @@ struct TensorView
         return reinterpret_cast<T*>(data);
     }
 
+    /// @brief Reinterprets the view's data as a float pointer.
     [[nodiscard]] float* as_float() const noexcept
     {
         return reinterpret_cast<float*>(data);
     }
 
+    /// @brief Returns the CUDA data type tag corresponding to this view's dtype.
     [[nodiscard]] cudaDataType_t cuda_dtype() const noexcept { return to_cuda(type); }
 
+    /// @brief Dispatches a callable on the concrete element type (FP32 or BF16).
     template<typename F>
     void dispatch(F&& fn) const
     {
@@ -310,15 +341,18 @@ struct TensorView
         });
     }
 
+    /// @brief Returns a new view over the same memory with a different shape.
     [[nodiscard]] TensorView reshape(const Shape& new_shape) const
     { return TensorView(data, new_shape, type); }
 
+    /// @brief Maps the view to an Eigen matrix: rows = first dim, cols = product of the rest.
     [[nodiscard]] MatrixMap as_matrix() const
     {
         assert(shape.rank >= 2);
         return MatrixMap(as<float>(), shape[0], shape.size() / shape[0]);
     }
 
+    /// @brief Maps a single batch slice of the view to an Eigen matrix.
     [[nodiscard]] MatrixMap as_matrix(Index batch_index) const
     {
         assert(shape.rank >= 2);
@@ -327,6 +361,7 @@ struct TensorView
         return MatrixMap(as<float>() + batch_index * rows * cols, rows, cols);
     }
 
+    /// @brief Maps the view to an Eigen matrix flattened across all leading dimensions.
     [[nodiscard]] MatrixMap as_flat_matrix() const
     {
         assert(shape.rank >= 1);
@@ -334,6 +369,7 @@ struct TensorView
         return MatrixMap(as<float>(), shape.size() / cols, cols);
     }
 
+    /// @brief Flat-matrix view of a single batch slice.
     [[nodiscard]] MatrixMap as_flat_matrix(Index batch_index) const
     {
         assert(shape.rank >= 2);
@@ -342,11 +378,13 @@ struct TensorView
         return MatrixMap(as<float>() + batch_index * rows * cols, rows, cols);
     }
 
+    /// @brief Maps the view to a flat Eigen vector.
     [[nodiscard]] VectorMap as_vector() const
     {
         return VectorMap(as<float>(), shape.size());
     }
 
+    /// @brief Maps the view to an Eigen Tensor of the given rank.
     template<int Rank>
     [[nodiscard]] TensorMapR<Rank> as_tensor() const
     {
@@ -356,6 +394,7 @@ struct TensorView
         return TensorMapR<Rank>(as<float>(), dims);
     }
 
+    /// @brief Maps a single batch slice of the view to an Eigen Tensor of rank Rank.
     template<int Rank>
     [[nodiscard]] TensorMapR<Rank> as_tensor(Index batch_index) const
     {
@@ -366,7 +405,9 @@ struct TensorView
         return TensorMapR<Rank>(as<float>() + batch_index * slice_size, dims);
     }
 
+    /// @brief Sets every element of the view to the given value, dispatching CPU/GPU as needed.
     void fill(float value);
+    /// @brief Zeros every element of the view.
     void setZero() { fill(0.0f); }
 
 #ifdef OPENNN_HAS_CUDA
@@ -429,9 +470,12 @@ inline TensorView& view_at_slot_or(vector<vector<TensorView>>& views,
 template<typename T, size_t N>
 using array = Eigen::array<T, N>;
 
+/// @brief Serializes a shape as a separator-joined string of dimensions.
 [[nodiscard]] string shape_to_string(const Shape&, const string& = " ");
+/// @brief Parses a separator-joined string of dimensions into a Shape.
 [[nodiscard]] Shape string_to_shape(const string&, const string& = " ");
 
+/// @brief Boost-style hash combine that mixes any number of hashable values into a single size_t.
 // Boost-style hash combine. Mixes one or more values into a single size_t. Used
 // for plan/graph cache keys (cuBLASLt, cuDNN SDPA).
 template<typename... Vs>
@@ -442,18 +486,29 @@ template<typename... Vs>
     return h;
 }
 
+/// @brief Process-wide singleton that owns the thread pool and the cuBLAS/cuDNN handles.
 class Backend
 {
 public:
 
+    /// @brief Returns the global Backend instance.
     static Backend& instance();
+
+    /// @brief Returns the Eigen ThreadPoolDevice used for CPU tensor evaluations.
     ThreadPoolDevice* get_thread_pool_device();
+
+    /// @brief Reconfigures the underlying thread pool to use num_threads workers.
     void set_threads_number(int num_threads);
 
+    /// @brief Shared cuBLAS handle for legacy GEMM calls.
     static cublasHandle_t get_cublas_handle()                      { return instance().cublas_handle; }
+    /// @brief Shared cuBLASLt handle for batched/tuned GEMMs.
     static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
+    /// @brief Shared cuDNN handle.
     static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn_handle; }
+    /// @brief Default CUDA stream used by the compute backend.
     static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
+    /// @brief cuDNN op-tensor descriptor configured for elementwise sum.
     static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
 
 private:
@@ -470,6 +525,7 @@ private:
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
 };
 
+/// @brief Convenience accessor for the global Eigen ThreadPoolDevice.
 inline ThreadPoolDevice& get_device()
 {
     return *Backend::instance().get_thread_pool_device();

@@ -14,15 +14,23 @@
 namespace opennn
 {
 
+/// @brief Token-id to dense vector embedding layer with optional scaling and positional encoding.
 class Embedding final : public Layer
 {
 public:
 
+    /// @brief Constructs an embedding layer.
+    /// @param input_shape Input shape as (vocabulary_size, sequence_length).
+    /// @param embedding_dimension Size of each embedding vector.
+    /// @param name Layer name used for serialization.
     Embedding(const Shape& = {0, 0},
               Index = 0,
               const string& = "embedding_layer");
 
+    /// @brief Returns the input tensor shape (sequence_length of token ids).
     Shape get_input_shape() const override { return {sequence_length}; }
+
+    /// @brief Returns the output tensor shape (sequence_length, embedding_dimension).
     Shape get_output_shape() const override;
 
     Index get_vocabulary_size() const { return vocabulary_size; }
@@ -31,16 +39,25 @@ public:
 
     vector<TensorSpec> get_backward_specs(Index) const override { return {}; }
 
+    /// @brief Reconfigures the layer with vocabulary size, sequence length, embedding dimension and name.
     void set(Index = 0,
              Index = 0,
              Index = 0,
              const string& = "embedding_layer");
 
+    /// @brief Enables or disables embedding scaling by sqrt(embedding_dimension).
     void set_scale_embedding(bool enabled) { embedding_lookup.scale_embedding = enabled; }
+
+    /// @brief Enables or disables sinusoidal positional encoding added to the embeddings.
     void set_add_positional_encoding(bool enabled) { embedding_lookup.add_positional_encoding = enabled; }
+
+    /// @brief Sets the dropout rate applied to the embedding output.
     void set_dropout_rate(float rate) { dropout.set_rate(rate); }
 
+    /// @brief Reads the layer configuration from a JSON node.
     void read_JSON_body(const Json*) override;
+
+    /// @brief Writes the layer configuration to a JSON writer.
     void write_JSON_body(JsonWriter&) const override;
 
 private:

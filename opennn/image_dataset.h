@@ -14,6 +14,7 @@
 namespace opennn
 {
 
+/// @brief Image augmentation parameters: reflections, rotations and translations applied at training.
 struct AugmentationSettings
 {
     bool enabled = false;
@@ -27,37 +28,50 @@ struct AugmentationSettings
     float vertical_translation_maximum = 0.0f;
 };
 
+/// @brief Image dataset that streams BMP images from disk with optional augmentation.
 class ImageDataset : public Dataset
 {
 
 public:
 
+    /// @brief Creates an image dataset with the given sample count, image shape and target shape.
+    /// @param sample_count Number of samples to allocate.
+    /// @param input_shape Image shape (height, width, channels).
+    /// @param target_shape Shape of the target tensor.
     ImageDataset(const Index = 0, const Shape& = {0, 0, 0}, const Shape& = {0});
 
+    /// @brief Creates an image dataset by reading the BMP archive at the given path.
     ImageDataset(const filesystem::path&);
 
+    /// @brief Returns the number of image channels (typically 1 or 3).
     Index get_channels_number() const;
 
     const AugmentationSettings& get_augmentation() const { return augmentation; }
     void set_augmentation(const AugmentationSettings& new_augmentation) { augmentation = new_augmentation; }
 
+    /// @brief Returns the number of image samples in the dataset.
     Index get_samples_number() const override;
     using Dataset::get_samples_number;
 
+    /// @brief Generates random image data, replacing the current contents.
     void set_data_random() override;
 
     void set_image_padding(int new_padding) { padding = new_padding; }
 
     using Dataset::unscale_features;
 
+    /// @brief Scales image pixel values for the given feature role.
     vector<Descriptives> scale_features(const string&) override;
+    /// @brief Reverts the pixel scaling for the given feature role.
     void unscale_features(const string&);
 
+    /// @brief Reads BMP images into the dataset, resizing to @p new_input_shape when non-zero.
     void read_bmp(const Shape& new_input_shape = { 0, 0, 0 });
 
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
 
+    /// @brief Streams pixel data of the selected samples into the destination buffer.
     void fill_inputs(const vector<Index>&,
                      const vector<Index>&,
                      float*,
@@ -65,6 +79,7 @@ public:
                      bool parallelize = true,
                      int = -1) const override;
 
+    /// @brief Writes one-hot encoded labels of the selected samples into the destination buffer.
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
@@ -72,6 +87,7 @@ public:
                       bool parallelize = true,
                       int = -1) const override;
 
+    /// @brief Applies the configured augmentations in place to a batch of images.
     void augment_inputs(float*, Index) const override;
 
 private:

@@ -14,16 +14,21 @@
 namespace opennn
 {
 
+/// @brief Flatten layer that reshapes a multi-dimensional input into a single 1D feature vector.
 class Flatten final : public Layer
 {
 public:
 
+    /// @brief Constructs a flatten layer for the given input shape.
     Flatten(const Shape& = {});
 
+    /// @brief Returns the flattened 1D output shape (product of input dimensions).
     Shape get_output_shape() const override { return { input_shape.size() }; }
 
+    /// @brief Reconfigures the layer with a new input shape.
     void set(const Shape&);
 
+    /// @copydoc Layer::set_input_shape
     void set_input_shape(const Shape& new_input_shape) override { set(new_input_shape); }
 
 private:

@@ -26,20 +26,24 @@ struct BackPropagation;
 
 struct TrainingResults;
 
+/// @brief Abstract base class for training optimizers (Adam, SGD, Quasi-Newton, Levenberg-Marquardt).
 class Optimizer
 {
 
 public:
 
+    /// @brief Aggregated per-epoch error and accuracy returned by training/evaluation passes.
     struct EpochStats
     {
         float error = 0.0f;
         float accuracy = 0.0f;
     };
 
+    /// @brief Constructs an optimizer optionally bound to a Loss instance.
     Optimizer(Loss* = nullptr);
     virtual ~Optimizer() = default;
 
+    /// @brief Reason that training was halted in the last call to train().
     enum class StoppingCondition{None,
                                  MinimumLossDecrease,
                                  LossGoal,
@@ -51,10 +55,13 @@ public:
 
     bool get_display() const { return display; }
 
+    /// @brief Binds the optimizer to a new Loss instance.
     void set(Loss* new_loss) { loss = new_loss; }
 
+    /// @brief Binds the optimizer to a new Loss instance (virtual hook for derived classes).
     virtual void set_loss(Loss* new_loss) { loss = new_loss; }
 
+    /// @brief Enables or disables console progress reporting during training.
     virtual void set_display(bool new_display) { display = new_display; }
 
     void set_display_period(const Index new_display_period) { display_period = new_display_period; }
@@ -67,21 +74,29 @@ public:
 
     void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
+    /// @brief Runs the training loop and returns the recorded results (must be implemented by subclasses).
     virtual TrainingResults train() = 0;
 
+    /// @brief Largest batch size compatible with the dataset and configured memory budget.
     Index get_maximum_batch_size() const;
 
     const string& get_name() const { return name; }
 
+    /// @brief Prints a human-readable description of the optimizer (no-op default).
     virtual void print() const {}
 
+    /// @brief Restores optimizer configuration from a JSON document.
     virtual void from_JSON(const JsonDocument&);
 
+    /// @brief Serializes the optimizer configuration to JSON.
     virtual void to_JSON(JsonWriter&) const;
 
+    /// @brief Writes the current optimizer configuration to a JSON file at the given path.
     void save(const filesystem::path&) const;
+    /// @brief Loads the optimizer configuration from a JSON file at the given path.
     void load(const filesystem::path&);
 
+    /// @brief Returns seconds elapsed since the given start time.
     static float get_elapsed_time(const time_t& beginning_time);
 
 protected:
@@ -162,13 +177,16 @@ protected:
     Buffer prefetch_fp32_staging{Device::CUDA};
 };
 
+/// @brief Per-optimizer scratch state (moments, directions, iteration counter) backing the update step.
 struct OptimizerData
 {
     OptimizerData() = default;
     virtual ~OptimizerData() = default;
 
+    /// @brief Prints the optimizer scratch state for debugging.
     virtual void print() const;
 
+    /// @brief Allocates a buffer with the requested slot shapes on the target device and refreshes the views.
     void set(const vector<Shape>& slot_shapes, Device device = Device::CPU);
 
     Buffer data;
@@ -181,29 +199,40 @@ struct OptimizerData
     Index iteration = 0;
 };
 
+/// @brief History and final metrics produced by a training run.
 struct TrainingResults
 {
+    /// @brief Constructs a TrainingResults pre-sized for the given number of epochs.
     TrainingResults(const Index = 0);
     virtual ~TrainingResults() = default;
 
+    /// @brief Returns a human-readable label for the stored stopping condition.
     string write_stopping_condition() const;
 
+    /// @brief Returns the final training error.
     float get_training_error() const;
 
+    /// @brief Returns the final validation (selection) error.
     float get_validation_error() const;
 
+    /// @brief Returns the number of epochs that were actually executed.
     Index get_epochs_number() const;
 
+    /// @brief Saves the training-error and validation-error histories to a JSON file.
     void save(const filesystem::path&) const;
 
+    /// @brief Prints a summary of the training run, optionally prefixed by a message.
     void print(const string& message = {}) const;
 
     Optimizer::StoppingCondition stopping_condition = Optimizer::StoppingCondition::None;
 
+    /// @brief Builds a table of final metrics for embedding in higher-level reports.
     Tensor<string, 2> write_override_results(const Index = 3) const;
 
+    /// @brief Resizes the stored training-error history.
     void resize_training_error_history(const Index);
 
+    /// @brief Resizes the stored validation-error history.
     void resize_validation_error_history(const Index);
 
     VectorR training_error_history;

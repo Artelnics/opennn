@@ -16,14 +16,23 @@ namespace opennn
 class Loss;
 class NeuralNetwork;
 
+/// @brief Workspace holding parameter gradients and per-layer deltas during a backward pass.
 struct BackPropagation
 {
+    /// @brief Constructs a workspace for the given batch size and loss.
+    /// @param batch_size Maximum number of samples per backward pass.
+    /// @param loss Loss object whose network drives buffer sizing (non-owning).
     BackPropagation(const Index = 0, Loss* = nullptr);
 
     virtual ~BackPropagation() = default;
 
+    /// @brief Reconfigures the workspace for a new batch size or loss; reuses allocations when possible.
+    /// @param batch_size Maximum number of samples per backward pass.
+    /// @param loss Loss object whose network drives buffer sizing (non-owning).
     void set(const Index = 0, Loss* = nullptr);
 
+    /// @brief Accumulates deltas from all consumer edges into the given layer's output delta.
+    /// @param layer_index Index of the layer whose output delta is being collected.
     void accumulate_output_deltas(size_t layer_index);
 
     const NeuralNetwork* neural_network = nullptr;
@@ -36,9 +45,13 @@ struct BackPropagation
 
     vector<vector<pair<size_t, size_t>>> consumer_edges;
 
+    /// @brief Returns the output delta of the network (gradient w.r.t. the final outputs).
     TensorView& get_output_delta();
+
+    /// @copydoc BackPropagation::get_output_delta()
     const TensorView& get_output_delta() const;
 
+    /// @brief Prints a human-readable summary of the workspace contents.
     void print() const;
 
     Index batch_size = 0;

@@ -16,16 +16,23 @@ namespace opennn
 class NeuralNetwork;
 class Layer;
 
+/// @brief Emits a trained neural network as source code in C, Python, JavaScript, or PHP.
 class ModelExpression
 {
 public:
 
+    /// @brief Output language for the generated expression source file.
     enum class ProgrammingLanguage{C, Python, JavaScript, PHP};
 
+    /// @brief Builds an expression generator bound to the given trained neural network.
     ModelExpression(const NeuralNetwork*);
 
+    /// @brief Returns a symbolic mathematical expression representing the network's forward pass.
     string build_expression() const;
 
+    /// @brief Writes a self-contained source file implementing the network in the chosen language.
+    /// @param path Destination file path.
+    /// @param language Target programming language.
     void save(const filesystem::path&, ProgrammingLanguage) const;
 
 private:

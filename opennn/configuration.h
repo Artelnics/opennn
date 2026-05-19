@@ -13,12 +13,16 @@
 namespace opennn
 {
 
+/// @brief Execution device selection for OpenNN runtime (auto-detected, CPU or CUDA GPU).
 enum class Device { Auto, CPU, CUDA };
 
+/// @brief Numeric precision used for training or inference tensors.
 enum class Type { Auto, FP32, BF16, INT8 };
 
+/// @brief Compile-time traits mapping an opennn::Type to its underlying numeric type and library identifiers.
 template<Type T> struct TypeInfo;
 
+/// @brief TypeInfo specialization for 32-bit floating point (FP32) tensors.
 template<> struct TypeInfo<Type::FP32>
 {
     using type = float;
@@ -28,6 +32,7 @@ template<> struct TypeInfo<Type::FP32>
     static constexpr const char*     name  = "FP32";
 };
 
+/// @brief TypeInfo specialization for bfloat16 (BF16) tensors.
 template<> struct TypeInfo<Type::BF16>
 {
     using type = bfloat16;
@@ -37,6 +42,7 @@ template<> struct TypeInfo<Type::BF16>
     static constexpr const char*     name  = "BF16";
 };
 
+/// @brief TypeInfo specialization for signed 8-bit integer (INT8) tensors.
 template<> struct TypeInfo<Type::INT8>
 {
     using type = int8_t;
@@ -46,6 +52,9 @@ template<> struct TypeInfo<Type::INT8>
     static constexpr const char*     name  = "INT8";
 };
 
+/// @brief Dispatches @p f with the TypeInfo of the runtime Type @p t (must be in @p Supported).
+/// @param t Runtime numeric type to resolve.
+/// @param f Callable invoked with the matching TypeInfo as its only argument.
 template<Type... Supported, typename F>
 void visit_type(Type t, F&& f)
 {
@@ -54,6 +63,10 @@ void visit_type(Type t, F&& f)
     throw_if(!matched, "visit_type: unsupported Type value");
 }
 
+/// @brief Dispatches @p f with the TypeInfo pair for an input and output runtime Type.
+/// @param t_in Runtime numeric type for inputs.
+/// @param t_out Runtime numeric type for outputs.
+/// @param f Callable invoked with (in_info, out_info).
 template<Type... Supported, typename F>
 void visit_type_pair(Type t_in, Type t_out, F&& f)
 {
@@ -66,6 +79,7 @@ void visit_type_pair(Type t_in, Type t_out, F&& f)
     });
 }
 
+/// @brief Returns the cuDNN data type matching the given OpenNN Type (Auto resolves to FP32).
 [[nodiscard]] inline cudnnDataType_t to_cudnn(Type type) noexcept
 {
     using enum Type;
@@ -79,6 +93,7 @@ void visit_type_pair(Type t_in, Type t_out, F&& f)
     return TypeInfo<FP32>::cudnn;
 }
 
+/// @brief Returns the CUDA data type matching the given OpenNN Type (Auto resolves to FP32).
 [[nodiscard]] inline cudaDataType_t to_cuda(Type type) noexcept
 {
     using enum Type;
@@ -92,6 +107,7 @@ void visit_type_pair(Type t_in, Type t_out, F&& f)
     return TypeInfo<FP32>::cuda;
 }
 
+/// @brief Returns the byte size of one element of the given OpenNN Type.
 [[nodiscard]] inline Index type_bytes(Type type) noexcept
 {
     using enum Type;
@@ -105,10 +121,12 @@ void visit_type_pair(Type t_in, Type t_out, F&& f)
     return TypeInfo<FP32>::bytes;
 }
 
+/// @brief Global singleton holding the OpenNN device and precision configuration.
 class Configuration
 {
 public:
 
+    /// @brief Resolved configuration after Auto values are mapped to concrete device and types.
     struct Resolved
     {
         Device device          = Device::CPU;
@@ -116,12 +134,17 @@ public:
         Type   inference_type = Type::FP32;
     };
 
+    /// @brief Returns the process-wide Configuration singleton.
     [[nodiscard]] static Configuration& instance()
     {
         static Configuration configuration;
         return configuration;
     }
 
+    /// @brief Updates device and precision settings; subsequent resolve() calls reflect the change.
+    /// @param new_device Target execution device (Auto picks CUDA when available).
+    /// @param new_training_type Numeric type used during training.
+    /// @param new_inference_type Numeric type used during inference.
     void set(Device new_device          = Device::Auto,
              Type   new_training_type   = Type::Auto,
              Type   new_inference_type  = Type::Auto);
@@ -130,6 +153,7 @@ public:
     [[nodiscard]] Type   get_training_type()  const { return training_type; }
     [[nodiscard]] Type   get_inference_type() const { return inference_type; }
 
+    /// @brief Returns the cached resolved configuration, computing it on first access.
     [[nodiscard]] const Resolved& resolve() const
     {
         if (cache_valid)
@@ -158,10 +182,15 @@ private:
     mutable atomic<bool>    cache_valid{false};
 };
 
+/// @brief Returns true when the resolved configuration runs on a CUDA GPU.
 [[nodiscard]] inline bool   is_gpu()            { return Configuration::instance().is_gpu(); }
+/// @brief Returns true when the resolved configuration runs on CPU.
 [[nodiscard]] inline bool   is_cpu()            { return Configuration::instance().is_cpu(); }
+/// @brief Returns true when training is configured to use BF16 precision.
 [[nodiscard]] inline bool   is_bf16_training()  { return Configuration::instance().is_bf16_training(); }
+/// @brief Returns true when inference is configured to use BF16 precision.
 [[nodiscard]] inline bool   is_bf16_inference() { return Configuration::instance().is_bf16_inference(); }
+/// @brief Returns the active runtime device (CUDA if available, otherwise CPU).
 [[nodiscard]] inline Device current_device()    { return is_gpu() ? Device::CUDA : Device::CPU; }
 
 }
