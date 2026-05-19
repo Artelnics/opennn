@@ -233,7 +233,7 @@ TEST(NeuralNetworkTest, DISABLED_TestSaveLoad)
     EXPECT_EQ(neural_approx1_network.get_layer(3)->get_name(), loaded_neural_approx1_network.get_layer(3)->get_name());
     EXPECT_EQ(neural_approx1_network.get_layer(4)->get_name(), loaded_neural_approx1_network.get_layer(4)->get_name());
 
-    EXPECT_EQ(neural_approx1_network.get_layer_input_indices().size(), loaded_neural_approx1_network.get_layer_input_indices().size());
+    EXPECT_EQ(neural_approx1_network.get_source_layers().size(), loaded_neural_approx1_network.get_source_layers().size());
 
     EXPECT_EQ(neural_approx1_network.get_outputs_number(), loaded_neural_approx1_network.get_outputs_number());
 }

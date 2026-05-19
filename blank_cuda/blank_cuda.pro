@@ -10,7 +10,7 @@ QT += core widgets
 
 TARGET = blank_cuda
 TEMPLATE = app
-CONFIG += console c++17
+CONFIG += console c++20
 
 mac { CONFIG -= app_bundle }
 

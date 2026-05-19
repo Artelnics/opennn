@@ -12,7 +12,7 @@
 
 TEMPLATE = app
 CONFIG += console
-CONFIG += c++17
+CONFIG += c++20
 
 mac{
     CONFIG-=app_bundle

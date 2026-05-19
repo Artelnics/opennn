@@ -25,9 +25,9 @@ Addition::Addition(const Shape& new_input_shape, const string& new_name)
     add.input_delta_slots  = {InputDelta0, InputDelta1};
 }
 
-vector<pair<Shape, Type>> Addition::get_backward_specs(Index batch_size) const
+vector<TensorSpec> Addition::get_backward_specs(Index batch_size) const
 {
-    return vector<pair<Shape, Type>>(2, {Shape{batch_size}.append(input_shape), compute_dtype});
+    return vector<TensorSpec>(2, {Shape{batch_size}.append(input_shape), compute_dtype});
 }
 
 void Addition::set(const Shape& new_input_shape, const string& new_label)

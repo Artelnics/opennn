@@ -27,9 +27,9 @@ public:
     const TensorView& get_recurrent_weights() const { return recurrent_weights; }
     const string& get_activation_function() const { return activation_function; }
 
-    vector<pair<Shape, Type>> get_parameter_specs() const override;
-    vector<pair<Shape, Type>> get_forward_specs(Index batch_size) const override;
-    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_parameter_specs() const override;
+    vector<TensorSpec> get_forward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_backward_specs(Index batch_size) const override;
 
     void set(const Shape& = {}, const Shape& = {});
 

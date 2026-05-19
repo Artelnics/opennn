@@ -39,7 +39,7 @@ Shape Normalization3d::get_output_shape() const
     return { sequence_length, embedding_dimension };
 }
 
-vector<pair<Shape, Type>> Normalization3d::get_forward_specs(Index batch_size) const
+vector<TensorSpec> Normalization3d::get_forward_specs(Index batch_size) const
 {
     const Shape normalized_shape = is_gpu()
         ? Shape{}

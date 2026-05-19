@@ -479,6 +479,63 @@ void attention_masks_cuda(const int batch_size, const int heads_number,
 template void attention_masks_cuda<float>        (int, int, int, int, int, const float*,         float*,         float*,         bool);
 template void attention_masks_cuda<__nv_bfloat16>(int, int, int, int, int, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*, bool);
 
+template<typename T>
+__global__ void softmax_rows_kernel(const int N, const int C, T* __restrict__ data)
+{
+    extern __shared__ float smem[];
+    const int row = blockIdx.x;
+    if (row >= N) return;
+    T* row_data = data + static_cast<size_t>(row) * static_cast<size_t>(C);
+
+    float thread_max = -FLT_MAX;
+    for (int j = threadIdx.x; j < C; j += blockDim.x)
+    {
+        const float v = static_cast<float>(row_data[j]);
+        if (v > thread_max) thread_max = v;
+    }
+    smem[threadIdx.x] = thread_max;
+    __syncthreads();
+    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1)
+    {
+        if (threadIdx.x < stride)
+            smem[threadIdx.x] = fmaxf(smem[threadIdx.x], smem[threadIdx.x + stride]);
+        __syncthreads();
+    }
+    const float row_max = smem[0];
+    __syncthreads();
+
+    float thread_sum = 0.0f;
+    for (int j = threadIdx.x; j < C; j += blockDim.x)
+    {
+        const float e = __expf(static_cast<float>(row_data[j]) - row_max);
+        row_data[j] = static_cast<T>(e);
+        thread_sum += e;
+    }
+    smem[threadIdx.x] = thread_sum;
+    __syncthreads();
+    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1)
+    {
+        if (threadIdx.x < stride)
+            smem[threadIdx.x] += smem[threadIdx.x + stride];
+        __syncthreads();
+    }
+    const float inv_sum = 1.0f / smem[0];
+    __syncthreads();
+
+    for (int j = threadIdx.x; j < C; j += blockDim.x)
+        row_data[j] = static_cast<T>(static_cast<float>(row_data[j]) * inv_sum);
+}
+
+template<typename T>
+void softmax_rows_cuda(const int N, const int C, T* data)
+{
+    if (N <= 0 || C <= 0) return;
+    softmax_rows_kernel<T><<<N, block_size, block_size * sizeof(float), opennn::Backend::get_compute_stream()>>>(N, C, data);
+}
+
+template void softmax_rows_cuda<float>        (const int, const int, float*);
+template void softmax_rows_cuda<__nv_bfloat16>(const int, const int, __nv_bfloat16*);
+
 // Max pooling over the seq axis of [batch, seq, features]. Saves the argmax
 // position per (batch, feature) into `indices` for the backward pass.
 template<typename T>
@@ -913,6 +970,69 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
 
 template void layernorm_backward_cuda<float>        (const int, const int, const float*,         const float*,         const float*, const float*, const float*, float*,         float*, float*);
 template void layernorm_backward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, const float*, __nv_bfloat16*, float*, float*);
+
+template<typename T>
+__global__ void activation_forward_kernel(const int n, T* __restrict__ data, const int function)
+{
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    {
+        const float x = static_cast<float>(data[idx]);
+        float y = x;
+
+        if (function == 1)
+            y = 1.0f / (1.0f + expf(-x));
+        else if (function == 2)
+            y = tanhf(x);
+        else if (function == 3)
+            y = fmaxf(x, 0.0f);
+
+        data[idx] = static_cast<T>(y);
+    }
+}
+
+template<typename T>
+void activation_forward_cuda(const Index n, T* data, const int function)
+{
+    if (n == 0) return;
+
+    const int total = static_cast<int>(n);
+    activation_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, data, function);
+}
+
+template void activation_forward_cuda<float>        (const Index, float*,         const int);
+template void activation_forward_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const int);
+
+template<typename T>
+__global__ void activation_backward_kernel(const int n, const T* __restrict__ outputs, T* __restrict__ delta, const int function)
+{
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    {
+        const float y = static_cast<float>(outputs[idx]);
+        const float d = static_cast<float>(delta[idx]);
+        float out = d;
+
+        if (function == 1)
+            out = d * y * (1.0f - y);
+        else if (function == 2)
+            out = d * (1.0f - y * y);
+        else if (function == 3)
+            out = y > 0.0f ? d : 0.0f;
+
+        delta[idx] = static_cast<T>(out);
+    }
+}
+
+template<typename T>
+void activation_backward_cuda(const Index n, const T* outputs, T* delta, const int function)
+{
+    if (n == 0) return;
+
+    const int total = static_cast<int>(n);
+    activation_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, outputs, delta, function);
+}
+
+template void activation_backward_cuda<float>        (const Index, const float*,         float*,         const int);
+template void activation_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int);
 
 template<typename T>
 __global__ void dropout_forward_kernel(const int n, T* __restrict__ output, uint8_t* __restrict__ mask, const float scale, const float rate, const unsigned long long seed)

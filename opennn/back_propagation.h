@@ -34,7 +34,7 @@ struct BackPropagation
     Buffer delta_pool;
     vector<vector<TensorView>> delta_views;
 
-    vector<vector<pair<size_t, size_t>>> backward_edges;
+    vector<vector<pair<size_t, size_t>>> consumer_edges;
 
     TensorView& get_output_delta();
     const TensorView& get_output_delta() const;
@@ -52,7 +52,7 @@ struct BackPropagation
 
 private:
 
-    void setup_delta_pool(const vector<vector<pair<Shape, Type>>>& backward_specs);
+    void setup_delta_pool(const vector<vector<TensorSpec>>& backward_specs);
 };
 
 }

@@ -22,7 +22,7 @@ public:
 
     Shape get_output_shape() const override { return input_shape; }
 
-    vector<pair<Shape, Type>> get_backward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_backward_specs(Index batch_size) const override;
 
     void set(const Shape&, const string&);
     void set_input_shape(const Shape& shape) override { set(shape, label); }

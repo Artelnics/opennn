@@ -83,7 +83,7 @@ Index Convolutional::get_input_width() const { return input_width; }
 
 Index Convolutional::get_input_channels() const { return input_channels; }
 
-vector<pair<Shape, Type>> Convolutional::get_forward_specs(Index batch_size) const
+vector<TensorSpec> Convolutional::get_forward_specs(Index batch_size) const
 {
     const Shape output_shape = {batch_size, get_output_height(), get_output_width(), kernels_number};
     const Type act = compute_dtype;

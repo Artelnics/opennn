@@ -12,9 +12,9 @@
 namespace opennn
 {
 
-vector<pair<Shape, Type>> Layer::get_parameter_specs() const
+vector<TensorSpec> Layer::get_parameter_specs() const
 {
-    vector<pair<Shape, Type>> result;
+    vector<TensorSpec> result;
     for (Operator* op : get_operators())
     {
         const auto specs = op->parameter_specs();
@@ -23,9 +23,9 @@ vector<pair<Shape, Type>> Layer::get_parameter_specs() const
     return result;
 }
 
-vector<pair<Shape, Type>> Layer::get_state_specs() const
+vector<TensorSpec> Layer::get_state_specs() const
 {
-    vector<pair<Shape, Type>> result;
+    vector<TensorSpec> result;
     for (Operator* op : get_operators())
     {
         const auto specs = op->state_specs();
@@ -59,7 +59,7 @@ Index Layer::get_parameters_number() const
 }
 
 float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
-                                      vector<pair<Shape, Type>> (Operator::*specs_fn)() const,
+                                      vector<TensorSpec> (Operator::*specs_fn)() const,
                                       void (Operator::*link_fn)(span<const TensorView>))
 {
     views.clear();

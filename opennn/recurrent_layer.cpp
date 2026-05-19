@@ -26,7 +26,7 @@ Shape Recurrent::get_output_shape() const
     return { biases.size() };
 }
 
-vector<pair<Shape, Type>> Recurrent::get_parameter_specs() const
+vector<TensorSpec> Recurrent::get_parameter_specs() const
 {
     return {
         {biases.shape,            compute_dtype},
@@ -35,7 +35,7 @@ vector<pair<Shape, Type>> Recurrent::get_parameter_specs() const
     };
 }
 
-vector<pair<Shape, Type>> Recurrent::get_forward_specs(Index batch_size) const
+vector<TensorSpec> Recurrent::get_forward_specs(Index batch_size) const
 {
     const Index outputs_number = get_outputs_number();
 
@@ -46,7 +46,7 @@ vector<pair<Shape, Type>> Recurrent::get_forward_specs(Index batch_size) const
     };
 }
 
-vector<pair<Shape, Type>> Recurrent::get_backward_specs(Index batch_size) const
+vector<TensorSpec> Recurrent::get_backward_specs(Index batch_size) const
 {
     return {{{batch_size, time_steps, input_features}, compute_dtype}};
 }

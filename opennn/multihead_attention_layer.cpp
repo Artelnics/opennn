@@ -61,7 +61,7 @@ Shape MultiHeadAttention::get_output_shape() const
     return get_input_shape();
 }
 
-vector<pair<Shape, Type>> MultiHeadAttention::get_forward_specs(Index batch_size) const
+vector<TensorSpec> MultiHeadAttention::get_forward_specs(Index batch_size) const
 {
     const Index head_dimension = get_head_dimension();
     const Index max_seq = max(query_sequence_length, source_sequence_length);
@@ -80,7 +80,7 @@ vector<pair<Shape, Type>> MultiHeadAttention::get_forward_specs(Index batch_size
     };
 }
 
-vector<pair<Shape, Type>> MultiHeadAttention::get_backward_specs(Index batch_size) const
+vector<TensorSpec> MultiHeadAttention::get_backward_specs(Index batch_size) const
 {
     const Index head_dimension = get_head_dimension();
 

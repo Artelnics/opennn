@@ -52,21 +52,21 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         }
     }
 
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
+    const auto& source_layers = neural_network->get_source_layers();
     for (size_t i = 0; i < layers_number; ++i)
     {
-        const vector<Index>& input_indices = layer_input_indices[i];
-        views[i][0].resize(input_indices.size());
+        const vector<Index>& sources = source_layers[i];
+        views[i][0].resize(sources.size());
 
-        for (size_t k = 0; k < input_indices.size(); ++k)
+        for (size_t k = 0; k < sources.size(); ++k)
         {
-            const Index producer = input_indices[k];
-            if (producer < 0) continue;
+            const Index source_layer = sources[k];
+            if (source_layer < 0) continue;
 
-            const size_t output_slot = forward_specs[producer].size();
+            const size_t output_slot = forward_specs[source_layer].size();
             if (output_slot == 0) continue;
 
-            if (const TensorView& source = views[producer][output_slot][0]; !source.empty())
+            if (const TensorView& source = views[source_layer][output_slot][0]; !source.empty())
                 views[i][0][k] = source;
         }
     }
@@ -92,6 +92,7 @@ TensorView ForwardPropagation::get_outputs() const
     if (!neural_network) return {};
 
     const Index last = Index(neural_network->get_layers_number()) - 1;
+    
     if (last >= 0
         && size_t(last) < views.size()
         && views[last].size() > 1)

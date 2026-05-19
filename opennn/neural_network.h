@@ -36,15 +36,18 @@ public:
     [[nodiscard]] Type get_training_type()  const { return config.training_type; }
     [[nodiscard]] Type get_inference_type() const { return config.inference_type; }
 
-    [[nodiscard]] vector<vector<pair<Shape, Type>>> get_parameter_specs() const { return collect_layer_specs([](const Layer& L) { return L.get_parameter_specs(); }); }
-    [[nodiscard]] vector<vector<pair<Shape, Type>>> get_state_specs()     const { return collect_layer_specs([](const Layer& L) { return L.get_state_specs(); }); }
-    [[nodiscard]] vector<vector<pair<Shape, Type>>> get_forward_specs(Index b) const
+    [[nodiscard]] vector<vector<TensorSpec>> get_parameter_specs() const { return collect_layer_specs([](const Layer& L) { return L.get_parameter_specs(); }); }
+    
+    [[nodiscard]] vector<vector<TensorSpec>> get_state_specs()     const { return collect_layer_specs([](const Layer& L) { return L.get_state_specs(); }); }
+    
+    [[nodiscard]] vector<vector<TensorSpec>> get_forward_specs(Index b) const
     {
         auto specs = collect_layer_specs([b](const Layer& L) { return L.get_forward_specs(b); });
         if (!is_gpu()) force_specs_to_fp32(specs);
         return specs;
     }
-    [[nodiscard]] vector<vector<pair<Shape, Type>>> get_backward_specs(Index b) const
+    
+    [[nodiscard]] vector<vector<TensorSpec>> get_backward_specs(Index b) const
     {
         auto specs = collect_layer_specs([b](const Layer& L) { return L.get_backward_specs(b); });
         if (!is_gpu()) force_specs_to_fp32(specs);
@@ -75,20 +78,20 @@ public:
 
     [[nodiscard]] Index get_layer_index(const string&) const;
 
-    [[nodiscard]] const vector<vector<Index>>& get_layer_input_indices() const { return layer_input_indices; }
-    [[nodiscard]] vector<vector<Index>> get_layer_output_indices() const;
+    [[nodiscard]] const vector<vector<Index>>& get_source_layers() const { return source_layers; }
+    [[nodiscard]] vector<vector<Index>> get_consumer_layers() const;
 
     [[nodiscard]] Layer* get_first(const string&);
     [[nodiscard]] Layer* get_first(LayerType);
     [[nodiscard]] const Layer* get_first(const string&) const;
     [[nodiscard]] const Layer* get_first(LayerType) const;
 
-    void set_layer_input_indices(const vector<vector<Index>>& new_layer_input_indices) { layer_input_indices = new_layer_input_indices; }
-    void set_layer_input_indices(const Index layer_index, const vector<Index>& new_input_indices) { layer_input_indices[layer_index] = new_input_indices; }
+    void set_source_layers(const vector<vector<Index>>& new_source_layers) { source_layers = new_source_layers; }
+    void set_source_layers(const Index layer_index, const vector<Index>& new_sources) { source_layers[layer_index] = new_sources; }
 
-    void set_layer_input_indices(const string&, const vector<string>&);
-    void set_layer_input_indices(const string&, initializer_list<string>);
-    void set_layer_input_indices(const string&, const string&);
+    void set_source_layers(const string&, const vector<string>&);
+    void set_source_layers(const string&, initializer_list<string>);
+    void set_source_layers(const string&, const string&);
 
     void set_input_variables(const vector<Variable>& new_input_variables) { input_variables = new_input_variables; }
     void set_output_variables(const vector<Variable>& new_output_variables) { output_variables = new_output_variables; }
@@ -99,6 +102,7 @@ public:
     void set_input_shape(const Shape&);
 
     void clear();
+    
     [[nodiscard]] Index get_layers_number() const { return ssize(layers); }
     [[nodiscard]] Index get_layers_number(const string&) const;
     [[nodiscard]] Index get_layers_number(LayerType) const;
@@ -197,17 +201,17 @@ private:
 
     void validate_type(LayerType) const;
 
-    static void force_specs_to_fp32(vector<vector<pair<Shape, Type>>>& specs)
+    static void force_specs_to_fp32(vector<vector<TensorSpec>>& specs)
     {
         for (auto& layer_specs : specs)
             for (auto& spec : layer_specs)
-                spec.second = Type::FP32;
+                spec.dtype = Type::FP32;
     }
 
     template<typename Fn>
-    [[nodiscard]] vector<vector<pair<Shape, Type>>> collect_layer_specs(Fn fn) const
+    [[nodiscard]] vector<vector<TensorSpec>> collect_layer_specs(Fn fn) const
     {
-        vector<vector<pair<Shape, Type>>> out(layers.size());
+        vector<vector<TensorSpec>> out(layers.size());
         ranges::transform(layers, out.begin(),
                           [&](const unique_ptr<Layer>& l) { return fn(*l); });
         return out;
@@ -220,7 +224,7 @@ protected:
 
     vector<unique_ptr<Layer>> layers;
 
-    vector<vector<Index>> layer_input_indices;
+    vector<vector<Index>> source_layers;
 
     Buffer parameters;
     Buffer parameters_bf16{Device::CUDA};

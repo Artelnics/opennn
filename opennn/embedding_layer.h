@@ -29,7 +29,7 @@ public:
     Index get_sequence_length() const { return sequence_length; }
     Index get_embedding_dimension() const { return embedding_dimension; }
 
-    vector<pair<Shape, Type>> get_backward_specs(Index) const override { return {}; }
+    vector<TensorSpec> get_backward_specs(Index) const override { return {}; }
 
     void set(Index = 0,
              Index = 0,

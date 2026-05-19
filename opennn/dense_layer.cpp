@@ -39,7 +39,7 @@ Shape Dense::get_output_shape() const
     return output_shape;
 }
 
-vector<pair<Shape, Type>> Dense::get_forward_specs(Index batch_size) const
+vector<TensorSpec> Dense::get_forward_specs(Index batch_size) const
 {
     const Shape full   = Shape{batch_size}.append(get_output_shape());
     const Shape stats  = Shape{output_features};

@@ -7,6 +7,8 @@ file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 
 add_library(opennn STATIC ${CPP_SOURCES} ${HEADER_FILES})
 
+target_compile_features(opennn PUBLIC cxx_std_20)
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(opennn PUBLIC stdc++fs)
 endif()
@@ -40,7 +42,7 @@ if(OPENNN_HAS_CUDA)
     target_compile_definitions(opennn PUBLIC OPENNN_HAS_CUDA)
     file(GLOB_RECURSE CUDA_SOURCES CONFIGURE_DEPENDS "*.cu" "*.cuh")
     target_sources(opennn PRIVATE ${CUDA_SOURCES})
-    target_link_libraries(opennn PUBLIC CUDA::cudart CUDA::cublas CUDA::cublasLt)
+    target_link_libraries(opennn PUBLIC CUDA::cudart CUDA::cublas CUDA::cublasLt CUDA::nvrtc CUDA::cuda_driver)
     target_compile_options(opennn PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
     if(HAVE_CUDNN)
         target_link_libraries(opennn PUBLIC ${CUDNN_LIBRARY})

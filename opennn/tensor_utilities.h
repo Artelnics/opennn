@@ -104,25 +104,31 @@ struct Shape
     }
 };
 
-[[nodiscard]] inline Index get_aligned_size(const vector<pair<Shape, Type>>& specs)
+struct TensorSpec
+{
+    Shape shape;
+    Type  dtype = Type::FP32;
+};
+
+[[nodiscard]] inline Index get_aligned_size(const vector<TensorSpec>& specs)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
-        [](const auto& spec) { return get_aligned_size(spec.first.size()); });
+        [](const auto& spec) { return get_aligned_size(spec.shape.size()); });
 }
 
-[[nodiscard]] inline Index get_aligned_size(const vector<vector<pair<Shape, Type>>>& specs)
+[[nodiscard]] inline Index get_aligned_size(const vector<vector<TensorSpec>>& specs)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
         [](const auto& s) { return get_aligned_size(s); });
 }
 
-[[nodiscard]] inline Index get_aligned_bytes(const vector<pair<Shape, Type>>& specs)
+[[nodiscard]] inline Index get_aligned_bytes(const vector<TensorSpec>& specs)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
-        [](const auto& spec) { return get_aligned_bytes(spec.first.size(), spec.second); });
+        [](const auto& spec) { return get_aligned_bytes(spec.shape.size(), spec.dtype); });
 }
 
-[[nodiscard]] inline Index get_aligned_bytes(const vector<vector<pair<Shape, Type>>>& specs)
+[[nodiscard]] inline Index get_aligned_bytes(const vector<vector<TensorSpec>>& specs)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
         [](const auto& s) { return get_aligned_bytes(s); });
@@ -134,13 +140,13 @@ struct Shape
         [dtype](const Shape& s) { return get_aligned_bytes(s.size(), dtype); });
 }
 
-[[nodiscard]] inline Index get_aligned_bytes(const vector<pair<Shape, Type>>& specs, Type dtype)
+[[nodiscard]] inline Index get_aligned_bytes(const vector<TensorSpec>& specs, Type dtype)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
-        [dtype](const auto& spec) { return get_aligned_bytes(spec.first.size(), dtype); });
+        [dtype](const auto& spec) { return get_aligned_bytes(spec.shape.size(), dtype); });
 }
 
-[[nodiscard]] inline Index get_aligned_bytes(const vector<vector<pair<Shape, Type>>>& specs, Type dtype)
+[[nodiscard]] inline Index get_aligned_bytes(const vector<vector<TensorSpec>>& specs, Type dtype)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
         [dtype](const auto& s) { return get_aligned_bytes(s, dtype); });

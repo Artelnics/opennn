@@ -335,24 +335,22 @@ void ActivationOp::apply_delta_cpu(const TensorView& outputs, TensorView& delta)
 
 void ActivationOp::apply_gpu(TensorView& output)
 {
-    CHECK_CUDNN(cudnnActivationForward(Backend::get_cudnn_handle(),
-                                       descriptor,
-                                       &one,
-                                       output.get_descriptor(), output.data,
-                                       &zero,
-                                       output.get_descriptor(), output.data));
+    output.dispatch([&](auto tag)
+    {
+        using T = decltype(tag);
+        activation_forward_cuda<T>(output.size(), output.as<T>(), static_cast<int>(function));
+    });
+    CHECK_CUDA(cudaPeekAtLastError());
 }
 
 void ActivationOp::apply_delta_gpu(const TensorView& outputs, TensorView& delta) const
 {
-    CHECK_CUDNN(cudnnActivationBackward(Backend::get_cudnn_handle(),
-                                        descriptor,
-                                        &one,
-                                        outputs.get_descriptor(), outputs.data,
-                                        delta.get_descriptor(),   delta.data,
-                                        outputs.get_descriptor(), outputs.data,
-                                        &zero,
-                                        delta.get_descriptor(),   delta.data));
+    delta.dispatch([&](auto tag)
+    {
+        using T = decltype(tag);
+        activation_backward_cuda<T>(delta.size(), outputs.as<T>(), delta.as<T>(), static_cast<int>(function));
+    });
+    CHECK_CUDA(cudaPeekAtLastError());
 }
 
 void ActivationOp::destroy_cuda()
@@ -387,13 +385,13 @@ void BatchNormOp::set(Index new_features, float new_momentum)
     momentum = new_momentum;
 }
 
-vector<pair<Shape, Type>> BatchNormOp::parameter_specs() const
+vector<TensorSpec> BatchNormOp::parameter_specs() const
 {
     if (!active()) return {};
-    return vector<pair<Shape, Type>>(2, {Shape{features}, Type::FP32});
+    return vector<TensorSpec>(2, {Shape{features}, Type::FP32});
 }
 
-vector<pair<Shape, Type>> BatchNormOp::state_specs() const
+vector<TensorSpec> BatchNormOp::state_specs() const
 {
     return parameter_specs();
 }
@@ -685,7 +683,7 @@ void CombinationOp::set(Index new_input_features, Index new_output_features, Typ
     weight_type     = new_weight_type;
 }
 
-vector<pair<Shape, Type>> CombinationOp::parameter_specs() const
+vector<TensorSpec> CombinationOp::parameter_specs() const
 {
     return {
         {{output_features},                  weight_type},
@@ -906,7 +904,7 @@ void ConvolutionOp::set(Index new_input_h, Index new_input_w,
 #endif
 }
 
-vector<pair<Shape, Type>> ConvolutionOp::parameter_specs() const
+vector<TensorSpec> ConvolutionOp::parameter_specs() const
 {
     return {
         {{kernels_number}, compute_dtype},                                                       // Bias
@@ -1328,10 +1326,10 @@ void LayerNormOp::set(Index new_sequence_length, Index new_embedding_dimension)
     embedding_dimension = new_embedding_dimension;
 }
 
-vector<pair<Shape, Type>> LayerNormOp::parameter_specs() const
+vector<TensorSpec> LayerNormOp::parameter_specs() const
 {
     // Gamma, Beta
-    return vector<pair<Shape, Type>>(2, {Shape{embedding_dimension}, Type::FP32});
+    return vector<TensorSpec>(2, {Shape{embedding_dimension}, Type::FP32});
 }
 
 void LayerNormOp::link_parameters(span<const TensorView> views)
@@ -1691,11 +1689,11 @@ Index AttentionOp::infer_attention_prefix_length(const TensorView& attention_wei
     return length;
 }
 
-vector<pair<Shape, Type>> AttentionOp::forward_scratch_specs(Index batch_size) const
+vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
 {
 #ifdef OPENNN_HAS_CUDA
     if (is_gpu() && compute_dtype == Type::BF16 && !dropout.active())
-        return vector<pair<Shape, Type>>(2, {Shape{}, compute_dtype});
+        return vector<TensorSpec>(2, {Shape{}, compute_dtype});
 #endif
 
     const Shape attention_shape = {batch_size, heads_number,
@@ -2927,12 +2925,12 @@ void EmbeddingLookupOp::set(Index new_vocabulary_size, Index new_sequence_length
     embedding_scale     = sqrt(static_cast<float>(new_embedding_dimension));
 }
 
-vector<pair<Shape, Type>> EmbeddingLookupOp::parameter_specs() const
+vector<TensorSpec> EmbeddingLookupOp::parameter_specs() const
 {
     return {{{vocabulary_size, embedding_dimension}, Type::FP32}};
 }
 
-vector<pair<Shape, Type>> EmbeddingLookupOp::state_specs() const
+vector<TensorSpec> EmbeddingLookupOp::state_specs() const
 {
     if (!add_positional_encoding) return {};
     return {{{sequence_length, embedding_dimension}, Type::FP32}};

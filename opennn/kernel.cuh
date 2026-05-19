@@ -127,6 +127,9 @@ void attention_masks_cuda(const int batch_size, const int heads_number, const in
                           const T* source_input, T* attention_weights, T* padding_mask,
                           const bool use_causal_mask);
 
+template<typename T>
+void softmax_rows_cuda(const int N, const int C, T* data);
+
 // Pooling 3D
 
 template<typename T>
@@ -148,6 +151,14 @@ void dropout_forward_cuda(const Index n, T* output, uint8_t* mask, const float r
 
 template<typename T>
 void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta, const uint8_t* mask, const float rate);
+
+// Activation
+
+template<typename T>
+void activation_forward_cuda(const Index n, T* data, const int function);
+
+template<typename T>
+void activation_backward_cuda(const Index n, const T* outputs, T* delta, const int function);
 
 // Normalization Layer
 
