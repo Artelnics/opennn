@@ -408,29 +408,65 @@ public:
 
             set(input_dimensions);
 
-            Descriptives shared_descriptives;
-            const XMLElement* descriptives_element = scaling_layer_element->FirstChildElement("Descriptives");
-            if(descriptives_element && descriptives_element->GetText())
+            const XMLElement* first_scaling_neuron =
+                scaling_layer_element->FirstChildElement("ScalingNeuron");
+
+            if(first_scaling_neuron)
             {
-                const vector<string> tokens = get_tokens(descriptives_element->GetText(), " ");
+                const XMLElement* start_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
 
-                if(tokens.size() < 4)
-                    throw runtime_error("Error: Descriptives must contain 4 values.\n");
+                for(Index i = 0; i < neurons_number; i++)
+                {
+                    const XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
+                    if(!scaling_neuron_element)
+                        throw runtime_error("Scaling neuron " + to_string(i + 1) + " is nullptr.\n");
 
-                shared_descriptives.set(
-                    type(stof(tokens[0])),
-                    type(stof(tokens[1])),
-                    type(stof(tokens[2])),
-                    type(stof(tokens[3]))
-                    );
+                    const XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
+                    if(descriptives_element && descriptives_element->GetText())
+                    {
+                        const vector<string> tokens = get_tokens(descriptives_element->GetText(), " ");
+
+                        if(tokens.size() < 4)
+                            throw runtime_error("Error: Descriptives must contain 4 values.\n");
+
+                        descriptives[i].set(
+                            type(stof(tokens[0])),
+                            type(stof(tokens[1])),
+                            type(stof(tokens[2])),
+                            type(stof(tokens[3]))
+                            );
+                    }
+
+                    scalers[i] = read_xml_string(scaling_neuron_element, "Scaler");
+                    start_element = scaling_neuron_element;
+                }
             }
-
-            const string shared_scaler = read_xml_string(scaling_layer_element, "Scaler");
-
-            for(Index i = 0; i < neurons_number; i++)
+            else
             {
-                descriptives[i] = shared_descriptives;
-                scalers[i] = shared_scaler;
+                Descriptives shared_descriptives;
+                const XMLElement* descriptives_element = scaling_layer_element->FirstChildElement("Descriptives");
+                if(descriptives_element && descriptives_element->GetText())
+                {
+                    const vector<string> tokens = get_tokens(descriptives_element->GetText(), " ");
+
+                    if(tokens.size() < 4)
+                        throw runtime_error("Error: Descriptives must contain 4 values.\n");
+
+                    shared_descriptives.set(
+                        type(stof(tokens[0])),
+                        type(stof(tokens[1])),
+                        type(stof(tokens[2])),
+                        type(stof(tokens[3]))
+                        );
+                }
+
+                const string shared_scaler = read_xml_string(scaling_layer_element, "Scaler");
+
+                for(Index i = 0; i < neurons_number; i++)
+                {
+                    descriptives[i] = shared_descriptives;
+                    scalers[i] = shared_scaler;
+                }
             }
         }
     }
