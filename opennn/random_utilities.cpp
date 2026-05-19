@@ -6,117 +6,102 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include <atomic>
-#include <thread>
+#include <mutex>
 #include "random_utilities.h"
 
 namespace opennn
 {
 
-static atomic<long long>    global_seed{-1};
-static atomic<unsigned int> seed_generation{0};
+// Single global generator protected by a mutex. The previous design used a
+// thread_local generator seeded with hash<thread::id>, but std::thread::id is
+// assigned by the OS at runtime and is not stable between program invocations
+// — so set_seed(42) gave different weight initialisations across runs and
+// across OMP thread counts. A single shared generator with a mutex is the
+// only design that yields bit-identical results regardless of how many
+// threads are running.
+static mutex rng_mutex;
+static mt19937 generator;
+static long long current_seed = -1;
 
-thread_local mt19937    generator;
-thread_local unsigned int local_generation = 0;
-
-static void initialize_generator()
+static void reseed_unlocked()
 {
-    const long long seed = global_seed.load(memory_order_relaxed);
-
-    if (seed < 0)
+    if (current_seed < 0)
     {
         random_device device;
         generator.seed(device());
     }
     else
     {
-        // Hash the thread::id so OMP threads and thread workers
-        // each get a unique seed deterministic-per-thread. omp_get_thread_num()
-        // returns 0 outside an OMP region — wrong for thread workers.
-        const uint32_t tid_hash =
-            uint32_t(hash<thread::id>{}(this_thread::get_id()));
-        seed_seq seq{ uint32_t(seed), tid_hash };
-        generator.seed(seq);
+        generator.seed(uint32_t(current_seed));
     }
-
-    local_generation = seed_generation.load(memory_order_acquire);
-}
-
-inline mt19937& get_generator()
-{
-    if (local_generation != seed_generation.load(memory_order_acquire))
-        initialize_generator();
-    return generator;
 }
 
 void set_seed(unsigned seed)
 {
-    global_seed.store(static_cast<long long>(seed), memory_order_relaxed);
-    seed_generation.fetch_add(1, memory_order_release);
-    initialize_generator();   // reseed the calling (main) thread immediately.
+    {
+        lock_guard<mutex> lock(rng_mutex);
+        current_seed = static_cast<long long>(seed);
+        reseed_unlocked();
+    }
     srand(seed);              // covers Eigen helpers that fall back to libc rand().
 }
 
 long long get_seed()
 {
-    return global_seed.load(memory_order_relaxed);
+    lock_guard<mutex> lock(rng_mutex);
+    return current_seed;
 }
 
 float random_uniform(float min, float max)
 {
+    lock_guard<mutex> lock(rng_mutex);
     uniform_real_distribution<float> distribution(min, max);
-    return distribution(get_generator());
+    return distribution(generator);
 }
 
 Index random_integer(Index min, Index max)
 {
+    lock_guard<mutex> lock(rng_mutex);
     uniform_int_distribution<Index> distribution(min, max);
-    return distribution(get_generator());
+    return distribution(generator);
 }
 
 bool random_bool(float probability)
 {
+    lock_guard<mutex> lock(rng_mutex);
     bernoulli_distribution distribution(probability);
-    return distribution(get_generator());
+    return distribution(generator);
 }
 
 void set_random_uniform(MatrixR& tensor, float min, float max)
 {
-    #pragma omp parallel
-    {
-        uniform_real_distribution<float> distribution(min, max);
-        #pragma omp for
-        for (Index i = 0; i < tensor.size(); ++i)
-            tensor(i) = distribution(get_generator());
-    }
+    lock_guard<mutex> lock(rng_mutex);
+    uniform_real_distribution<float> distribution(min, max);
+    for (Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = distribution(generator);
 }
 
 void set_random_uniform(VectorMap tensor, float min, float max)
 {
-    #pragma omp parallel
-    {
-        uniform_real_distribution<float> distribution(min, max);
-        #pragma omp for
-        for (Index i = 0; i < tensor.size(); ++i)
-            tensor(i) = distribution(get_generator());
-    }
+    lock_guard<mutex> lock(rng_mutex);
+    uniform_real_distribution<float> distribution(min, max);
+    for (Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = distribution(generator);
 }
 
 void set_random_normal(MatrixMap tensor, float mean, float std_dev)
 {
-    #pragma omp parallel
-    {
-        normal_distribution<float> distribution(mean, std_dev);
-        #pragma omp for
-        for (Index i = 0; i < tensor.size(); ++i)
-            tensor(i) = distribution(get_generator());
-    }
+    lock_guard<mutex> lock(rng_mutex);
+    normal_distribution<float> distribution(mean, std_dev);
+    for (Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = distribution(generator);
 }
 
 template<typename T>
 void shuffle_vector(vector<T>& vec)
 {
-    ranges::shuffle(vec, get_generator());
+    lock_guard<mutex> lock(rng_mutex);
+    ranges::shuffle(vec, generator);
 }
 
 template void shuffle_vector<Index>(vector<Index>&);
@@ -135,18 +120,20 @@ void shuffle_vector_blocks(vector<Index>& vec, size_t blocks_number)
         return;
     }
 
+    lock_guard<mutex> lock(rng_mutex);
     for (size_t i = 0; i < size; i += block_size)
     {
         const auto start = vec.begin() + i;
         const auto end = (i + block_size > size) ? vec.end() : start + block_size;
 
-        shuffle(start, end, get_generator());
+        shuffle(start, end, generator);
     }
 }
 
 void shuffle(VectorB& vector_to_shuffle)
 {
-    shuffle(vector_to_shuffle.data(), vector_to_shuffle.data() + vector_to_shuffle.size(), get_generator());
+    lock_guard<mutex> lock(rng_mutex);
+    shuffle(vector_to_shuffle.data(), vector_to_shuffle.data() + vector_to_shuffle.size(), generator);
 }
 
 Index get_random_element(const vector<Index>& values)
@@ -154,20 +141,18 @@ Index get_random_element(const vector<Index>& values)
     if (values.empty())
         throw runtime_error("get_random_element: Input vector is empty.");
 
+    lock_guard<mutex> lock(rng_mutex);
     uniform_int_distribution<size_t> distribution(0, values.size() - 1);
 
-    return values[distribution(get_generator())];
+    return values[distribution(generator)];
 }
 
 void set_random_integer(MatrixR &tensor, Index min, Index max)
 {
-    #pragma omp parallel
-    {
-        uniform_int_distribution<Index> distribution(min, max);
-        #pragma omp for
-        for (Index i = 0; i < tensor.size(); ++i)
-            tensor(i) = distribution(get_generator());
-    }
+    lock_guard<mutex> lock(rng_mutex);
+    uniform_int_distribution<Index> distribution(min, max);
+    for (Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = distribution(generator);
 }
 
 }

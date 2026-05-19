@@ -8,6 +8,7 @@
 
 #include "standard_networks.h"
 #include "registry.h"
+#include "activation_layer.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
 #include "dense_layer.h"
@@ -192,62 +193,123 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
     set_parameters_random();
 }
 
-SimpleResNet::SimpleResNet(const Shape& input_shape,
-                           const vector<Index>& blocks_per_stage,
-                           const Shape& initial_filters,
-                           const Shape& output_shape) : NeuralNetwork()
+ResNet::ResNet(const Shape& input_shape,
+               const vector<Index>& blocks_per_stage,
+               const Shape& initial_filters,
+               const Shape& output_shape,
+               bool use_bottleneck) : NeuralNetwork()
 {
     if (input_shape.rank != 3)
-        throw runtime_error("Input shape size must be 3.");
-    if (Index(blocks_per_stage.size()) != initial_filters.size())
-        throw runtime_error("blocks_per_stage and initial_filters must have the same size.");
+        throw runtime_error("ResNet: input shape must be rank 3 (H, W, C).");
+    if (Index(blocks_per_stage.size()) != Index(initial_filters.rank))
+        throw runtime_error("ResNet: blocks_per_stage and initial_filters must have the same size.");
+    if (blocks_per_stage.empty())
+        throw runtime_error("ResNet: at least one stage is required.");
 
-    // Adds a Convolutional with explicit input index. Returns the new layer's index.
+    // Channel expansion of a bottleneck block: the third (1x1) conv expands
+    // the inner channel count back up by this factor. Standard ResNet-V1 uses 4.
+    constexpr Index bottleneck_expansion = 4;
+
+    // Convolutional with BatchNorm fused in (the 6th ctor flag). Explicit
+    // input wiring lets us run multiple branches off the same index for skip
+    // connections. Returns the new layer's global index.
     auto add_conv = [&](Index input_index,
                         const Shape& kernel_shape, const char* activation,
                         const Shape& stride, const string& name) -> Index {
         add_layer(make_unique<Convolutional>(
-            get_layer(input_index)->get_output_shape(),
-            kernel_shape, activation, stride, "Same", false, name),
-            {input_index});
+                      get_layer(input_index)->get_output_shape(),
+                      kernel_shape, activation, stride, "Same",
+                      /*batch_normalization=*/true, name),
+                  {input_index});
         return get_layers_number() - 1;
     };
 
-    // Residual block: two 3x3 convs (the first applies `stride`, the second 1x1),
-    // a 1x1 skip-conv when shape changes, an Addition, and a 1x1 ReLU "activation".
-    auto add_residual_block = [&](Index input_index, size_t stage, Index block, Index filters) -> Index {
-        const Shape input_shape  = get_layer(input_index)->get_output_shape();
-        const Index stride       = (stage > 0 && block == 0) ? 2 : 1;
-        const string prefix      = format("s{}b{}", stage, block);
+    // Add the skip path: identity when the main branch preserves shape,
+    // otherwise a 1x1 projection conv (with BN) at the same stride.
+    auto add_skip = [&](Index input_index, Index in_channels, Index out_channels,
+                        Index stride, const string& prefix) -> Index {
+        if (stride == 1 && in_channels == out_channels)
+            return input_index;
+        return add_conv(input_index,
+                        Shape{1, 1, in_channels, out_channels}, "Identity",
+                        Shape{stride, stride}, prefix + "_skip");
+    };
+
+    // Basic block (ResNet-18/34): two 3x3 convs, optional skip projection,
+    // post-add ReLU via a standalone Activation layer.
+    auto add_basic_block = [&](Index input_index, size_t stage, Index block,
+                               Index filters) -> Index {
+        const Shape in_shape  = get_layer(input_index)->get_output_shape();
+        const Index in_chan   = in_shape[2];
+        const Index stride    = (stage > 0 && block == 0) ? 2 : 1;
+        const string prefix   = format("s{}b{}", stage, block);
 
         Index main_index = add_conv(input_index,
-            Shape{3, 3, input_shape[2], filters}, "ReLU",
+            Shape{3, 3, in_chan, filters}, "ReLU",
             Shape{stride, stride}, prefix + "_conv1");
         main_index = add_conv(main_index,
             Shape{3, 3, filters, filters}, "Identity",
             Shape{1, 1}, prefix + "_conv2");
 
-        Index skip_index = input_index;
-        if (stride != 1 || input_shape[2] != filters)
-            skip_index = add_conv(input_index,
-                Shape{1, 1, input_shape[2], filters}, "Identity",
-                Shape{stride, stride}, prefix + "_skip");
+        const Index skip_index = add_skip(input_index, in_chan, filters,
+                                          stride, prefix);
 
-        const Shape main_out = get_layer(main_index)->get_output_shape();
-        add_layer(make_unique<Addition>(main_out, prefix + "_add"),
+        add_layer(make_unique<Addition>(get_layer(main_index)->get_output_shape(),
+                                        prefix + "_add"),
                   {main_index, skip_index});
-        const Index sum_index = get_layers_number() - 1;
+        const Index add_index = get_layers_number() - 1;
 
-        return add_conv(sum_index,
-            Shape{1, 1, filters, filters}, "ReLU",
-            Shape{1, 1}, prefix + "_relu");
+        add_layer(make_unique<Activation>(get_layer(add_index)->get_output_shape(),
+                                          "ReLU", prefix + "_relu"),
+                  {add_index});
+        return get_layers_number() - 1;
     };
+
+    // Bottleneck block (ResNet-50/101/152): 1x1 → 3x3 → 1x1 with 4× expansion
+    // and post-add ReLU via a standalone Activation layer. `filters` is the
+    // inner (compressed) channel count; output channels are filters *
+    // bottleneck_expansion.
+    auto add_bottleneck_block = [&](Index input_index, size_t stage, Index block,
+                                    Index filters) -> Index {
+        const Shape in_shape  = get_layer(input_index)->get_output_shape();
+        const Index in_chan   = in_shape[2];
+        const Index out_chan  = filters * bottleneck_expansion;
+        const Index stride    = (stage > 0 && block == 0) ? 2 : 1;
+        const string prefix   = format("s{}b{}", stage, block);
+
+        Index main_index = add_conv(input_index,
+            Shape{1, 1, in_chan, filters}, "ReLU",
+            Shape{1, 1}, prefix + "_conv1");
+        main_index = add_conv(main_index,
+            Shape{3, 3, filters, filters}, "ReLU",
+            Shape{stride, stride}, prefix + "_conv2");
+        main_index = add_conv(main_index,
+            Shape{1, 1, filters, out_chan}, "Identity",
+            Shape{1, 1}, prefix + "_conv3");
+
+        const Index skip_index = add_skip(input_index, in_chan, out_chan,
+                                          stride, prefix);
+
+        add_layer(make_unique<Addition>(get_layer(main_index)->get_output_shape(),
+                                        prefix + "_add"),
+                  {main_index, skip_index});
+        const Index add_index = get_layers_number() - 1;
+
+        add_layer(make_unique<Activation>(get_layer(add_index)->get_output_shape(),
+                                          "ReLU", prefix + "_relu"),
+                  {add_index});
+        return get_layers_number() - 1;
+    };
+
+    // --- Network assembly ---
 
     add_layer(make_unique<Scaling>(input_shape));
 
+    // Stem: 7x7 conv stride 2 + 3x3 MaxPool stride 2. Aggressive downsampling
+    // turns a 224x224 input into 56x56 before the first stage.
     Index last_index = add_conv(0,
         Shape{7, 7, input_shape[2], initial_filters[0]}, "ReLU",
-        Shape{2, 2}, "stem_conv_1");
+        Shape{2, 2}, "stem_conv");
 
     add_layer(make_unique<Pooling>(get_layer(last_index)->get_output_shape(),
                                    Shape{3, 3}, Shape{2, 2}, Shape{1, 1},
@@ -255,10 +317,14 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
               {last_index});
     last_index = get_layers_number() - 1;
 
+    // Residual stages.
     for (size_t stage = 0; stage < blocks_per_stage.size(); ++stage)
         for (Index block = 0; block < blocks_per_stage[stage]; ++block)
-            last_index = add_residual_block(last_index, stage, block, initial_filters[stage]);
+            last_index = use_bottleneck
+                ? add_bottleneck_block(last_index, stage, block, initial_filters[stage])
+                : add_basic_block(last_index, stage, block, initial_filters[stage]);
 
+    // Head: global average pool → flatten → softmax classifier.
     const Shape pre_pool = get_layer(last_index)->get_output_shape();
     add_layer(make_unique<Pooling>(pre_pool,
                                    Shape{pre_pool[0], pre_pool[1]},
@@ -267,11 +333,12 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
               {last_index});
     last_index = get_layers_number() - 1;
 
-    add_layer(make_unique<Flatten>(get_layer(last_index)->get_output_shape()), {last_index});
+    add_layer(make_unique<Flatten>(get_layer(last_index)->get_output_shape()),
+              {last_index});
     last_index = get_layers_number() - 1;
 
     add_layer(make_unique<Dense>(get_layer(last_index)->get_output_shape(),
-                                 output_shape, "Softmax", false, "dense_classifier"),
+                                 output_shape, "Softmax", false, "classifier"),
               {last_index});
 
     compile();

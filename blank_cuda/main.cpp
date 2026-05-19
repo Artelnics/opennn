@@ -12,10 +12,12 @@
 #include <fstream>
 #include <limits>
 
+#include "../opennn/image_dataset.h"
 #include "../opennn/language_dataset.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/training_strategy.h"
-#include "../opennn/adaptive_moment_estimation.h"
+#include "../opennn/testing_analysis.h"
+#include "../opennn/stochastic_gradient_descent.h"
 #include "../opennn/random_utilities.h"
 #include "../opennn/transformer_decoder.h"
 
@@ -101,12 +103,91 @@ int main()
 {
     try
     {
-        cout << "OpenNN. Translation benchmark (refactor)." << endl;
+        cout << "OpenNN. ResNet-50 Imagenette benchmark." << endl;
 
 #ifdef OPENNN_HAS_CUDA
 
-        // ============== Original translation benchmark (translation_en_es) ==============
+        // ============== ResNet on Imagenette ==============
+        //
+        // Folder layout expected by ImageDataset: one subdirectory per class,
+        // each holding .bmp files. ImageDataset builds .cache/images.bin on
+        // first construction and reuses it on subsequent runs.
+        //
+        // Imagenette converted for OpenNN:
+        // one root folder with one BMP subfolder per class.
 
+        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+
+        set_seed(42);
+
+        const std::filesystem::path IMAGENETTE_PATH =
+            "/home/artelnics/Documents/imagenette2_bmp_224";
+
+        if (!std::filesystem::exists(IMAGENETTE_PATH))
+            throw runtime_error("Imagenette folder not found at " + IMAGENETTE_PATH.string()
+                                + ". Place the dataset there (one subfolder per class with .bmp images) "
+                                  "or edit IMAGENETTE_PATH in blank_cuda/main.cpp.");
+
+        ImageDataset dataset(IMAGENETTE_PATH);
+        dataset.split_samples_random(0.85, 0.1, 0.05);
+
+        const Shape input_shape  = dataset.get_shape("Input");
+        const Index num_classes  = dataset.get_shape("Target")[0];
+
+        cout << "[PARITY] train="  << dataset.get_samples_number("Training")
+             << " val="            << dataset.get_samples_number("Validation")
+             << " input="          << input_shape[0] << "x" << input_shape[1] << "x" << input_shape[2]
+             << " classes="        << num_classes << endl;
+
+        // ResNet-50: bottleneck blocks, stage depths [3, 4, 6, 3].
+        // Inner channels {64, 128, 256, 512}; with expansion=4 the outer
+        // channels become {256, 512, 1024, 2048}.
+        ResNet resnet(input_shape,
+                      {3, 4, 6, 3},
+                      Shape{64, 128, 256, 512},
+                      Shape{num_classes},
+                      /*use_bottleneck=*/true);
+
+        TrainingStrategy training_strategy(&resnet, &dataset);
+        training_strategy.set_loss("CrossEntropy");
+        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
+
+        auto* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
+        if (!sgd) throw runtime_error("StochasticGradientDescent optimizer not found.");
+
+        sgd->set_batch_size(16);
+        sgd->set_initial_learning_rate(1.0e-2f);
+        sgd->set_initial_decay(0.0f);
+        sgd->set_momentum(0.9f);
+        sgd->set_nesterov(true);
+        sgd->set_maximum_epochs(10);
+        sgd->set_display_period(1);
+
+        cout << "ResNet-50 params=" << resnet.get_parameters_number()
+             << " (buffer=" << resnet.get_parameters_size() << ")" << endl;
+
+        const std::filesystem::path parameters_path =
+            "/home/artelnics/Documents/imagenette_resnet50_parameters.bin";
+
+        const auto t0 = steady_clock::now();
+        training_strategy.train();
+        const auto t1 = steady_clock::now();
+
+        const double training_seconds = duration_cast<milliseconds>(t1 - t0).count() / 1000.0;
+        cout << "\nTotal training time: " << training_seconds << " s" << endl;
+
+        resnet.save_parameters_binary(parameters_path);
+        cout << "Saved parameters to " << parameters_path
+             << " (" << std::filesystem::file_size(parameters_path) / (1024 * 1024)
+             << " MiB)" << endl;
+
+        // Confusion on the testing split.
+        TestingAnalysis testing_analysis(&resnet, &dataset);
+        testing_analysis.set_batch_size(16);
+        cout << "\nConfusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
+
+        // ============== Translation benchmark (kept for reference) ==============
+        /*
         Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
 
         set_seed(42);
@@ -191,6 +272,7 @@ int main()
         }
 
         cout << "=========================================================\n";
+        */
 
         // ====================  LLM experiments (commented out)  ====================
         // The blocks below were used to fine-tune chat-style Transformers on

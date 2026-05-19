@@ -436,6 +436,81 @@ template<typename... Vs>
     return h;
 }
 
+#ifdef OPENNN_HAS_CUDA
+
+// RAII wrapper around cudaStream_t. Destroys the underlying stream in the
+// destructor so an exception thrown during training cannot leak the handle.
+struct CudaStream
+{
+    cudaStream_t handle = nullptr;
+
+    CudaStream() = default;
+    explicit CudaStream(unsigned flags) { CHECK_CUDA(cudaStreamCreateWithFlags(&handle, flags)); }
+
+    CudaStream(const CudaStream&) = delete;
+    CudaStream& operator=(const CudaStream&) = delete;
+
+    CudaStream(CudaStream&& other) noexcept : handle(other.handle) { other.handle = nullptr; }
+    CudaStream& operator=(CudaStream&& other) noexcept
+    {
+        if (this != &other) { destroy(); handle = other.handle; other.handle = nullptr; }
+        return *this;
+    }
+
+    ~CudaStream() { destroy(); }
+
+    void create(unsigned flags)
+    {
+        destroy();
+        CHECK_CUDA(cudaStreamCreateWithFlags(&handle, flags));
+    }
+
+    void destroy() noexcept
+    {
+        if (handle) { cudaStreamDestroy(handle); handle = nullptr; }
+    }
+
+    [[nodiscard]] operator cudaStream_t() const noexcept { return handle; }
+    [[nodiscard]] explicit operator bool()  const noexcept { return handle != nullptr; }
+};
+
+// RAII wrapper around cudaEvent_t. Same rationale as CudaStream.
+struct CudaEvent
+{
+    cudaEvent_t handle = nullptr;
+
+    CudaEvent() = default;
+    explicit CudaEvent(unsigned flags) { CHECK_CUDA(cudaEventCreateWithFlags(&handle, flags)); }
+
+    CudaEvent(const CudaEvent&) = delete;
+    CudaEvent& operator=(const CudaEvent&) = delete;
+
+    CudaEvent(CudaEvent&& other) noexcept : handle(other.handle) { other.handle = nullptr; }
+    CudaEvent& operator=(CudaEvent&& other) noexcept
+    {
+        if (this != &other) { destroy(); handle = other.handle; other.handle = nullptr; }
+        return *this;
+    }
+
+    ~CudaEvent() { destroy(); }
+
+    void create(unsigned flags)
+    {
+        destroy();
+        CHECK_CUDA(cudaEventCreateWithFlags(&handle, flags));
+    }
+
+    void destroy() noexcept
+    {
+        if (handle) { cudaEventDestroy(handle); handle = nullptr; }
+    }
+
+    [[nodiscard]] operator cudaEvent_t() const noexcept { return handle; }
+    [[nodiscard]] explicit operator bool() const noexcept { return handle != nullptr; }
+};
+
+#endif // OPENNN_HAS_CUDA
+
 class Backend
 {
 public:

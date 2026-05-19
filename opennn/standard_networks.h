@@ -63,15 +63,28 @@ public:
                                const Shape& output_shape);
 };
 
-class SimpleResNet : public NeuralNetwork
+// He et al. 2015 "Deep Residual Learning for Image Recognition" (ResNet-V1).
+// Stem: 7x7 conv stride 2 (BN+ReLU) → 3x3 MaxPool stride 2.
+// N stages, each with `blocks_per_stage[i]` residual blocks at
+// `initial_filters[i]` filters. First block of each stage (except the first)
+// downsamples by stride 2; the skip path projects with a 1x1 conv when shape
+// changes, identity otherwise. BatchNorm fused inside every Convolutional.
+//
+// `use_bottleneck=false` → basic block (Conv3x3 → Conv3x3 → +skip → ReLU),
+// suited for ResNet-18/34. `use_bottleneck=true` → bottleneck block
+// (Conv1x1 → Conv3x3 → Conv1x1 with 4× channel expansion → +skip → ReLU),
+// suited for ResNet-50/101/152. The post-addition ReLU is a standalone
+// Activation layer, matching the textbook ResNet-V1 topology.
+class ResNet : public NeuralNetwork
 {
 
 public:
 
-    SimpleResNet(const Shape& input_shape,
-                 const vector<Index>& blocks_per_stage,
-                 const Shape& initial_filters,
-                 const Shape& output_shape);
+    ResNet(const Shape& input_shape,
+           const vector<Index>& blocks_per_stage,
+           const Shape& initial_filters,
+           const Shape& output_shape,
+           bool use_bottleneck = false);
 };
 
 class VGG16 final : public NeuralNetwork

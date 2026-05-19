@@ -149,6 +149,11 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
 TrainingResults QuasiNewtonMethod::train()
 {
+    if (is_gpu())
+        throw runtime_error("QuasiNewtonMethod does not support GPU training: "
+                            "its update path maps device pointers as host memory. "
+                            "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
+
     TrainingResults results(maximum_epochs + 1);
 
     if (display) cout << "Training with quasi-Newton method..." << "\n";

@@ -8,7 +8,9 @@
 
 #pragma once
 
+#include <condition_variable>
 #include <functional>
+#include <mutex>
 #include "json.h"
 #include "tensor_utilities.h"
 #include "thread_safe_queue.h"
@@ -25,6 +27,44 @@ struct ForwardPropagation;
 struct BackPropagation;
 
 struct TrainingResults;
+
+// Persistent pool of worker threads. The previous design spawned a fresh
+// vector<jthread> per epoch — for long training runs (1000+ epochs) that
+// added thousands of unnecessary pthread_create/_join syscalls. Workers
+// are created once, then sleep on a condition_variable between epochs.
+//
+// Usage:
+//   pool.submit([&](){ /* worker body: claim atomic iterations, fill batches */ });
+//   ...consume ready[] in main thread...
+//   pool.wait();   // block until every worker has returned from its job
+//
+// Exception safety: if the consumer scope throws while workers are still
+// running, the caller must call wait() before unwinding (the worker closures
+// typically capture stack references). See train_epoch's try/catch.
+class WorkerPool
+{
+public:
+    explicit WorkerPool(int num_workers);
+    ~WorkerPool();
+
+    WorkerPool(const WorkerPool&) = delete;
+    WorkerPool& operator=(const WorkerPool&) = delete;
+
+    [[nodiscard]] int size() const { return static_cast<int>(workers_.size()); }
+
+    void submit(function<void()> job);
+    void wait();
+
+private:
+    vector<jthread> workers_;
+    mutex                mutex_;
+    condition_variable   cv_start_;
+    condition_variable   cv_done_;
+    function<void()>     current_job_;
+    uint64_t             generation_  = 0;
+    int                  outstanding_ = 0;
+    bool                 stopping_    = false;
+};
 
 class Optimizer
 {
@@ -96,12 +136,12 @@ protected:
     void write_common_json(JsonWriter&) const;
     void read_common_json(const Json*);
 
-    void setup_device_training();
+    void setup_device_training(const vector<Batch*>& batches);
     void teardown_device_training();
 
-    void prefetch_batch(Batch& batch, Index sample_count, int slot);
+    void prefetch_batch(Batch& batch, Index sample_count);
 
-    void wait_prefetch(int slot);
+    void wait_prefetch(Batch& batch);
 
     void record_batch_reuse(Batch& batch);
 
@@ -154,9 +194,18 @@ protected:
 
     int num_workers = 2;
 
-    cudaStream_t memory_stream = nullptr;
-    cudaEvent_t batch_ready_event[2] = {nullptr, nullptr};
-    unordered_map<Batch*, cudaEvent_t> batch_reuse_events;
+    // Created lazily on first train() call; sized at num_workers. Re-created
+    // if the user changes num_workers between train() invocations.
+    unique_ptr<WorkerPool> worker_pool;
+
+#ifdef OPENNN_HAS_CUDA
+    // RAII handles: destroying the optimizer (or unwinding via exception)
+    // releases stream/event handles automatically. See CudaStream / CudaEvent
+    // in tensor_utilities.h.
+    CudaStream memory_stream;
+    unordered_map<Batch*, CudaEvent> batch_ready_events;
+    unordered_map<Batch*, CudaEvent> batch_reuse_events;
+#endif
     unordered_set<Batch*> batch_reuse_recorded;
 
     Buffer prefetch_fp32_staging{Device::CUDA};

@@ -36,6 +36,72 @@
 namespace opennn
 {
 
+// --- WorkerPool --------------------------------------------------------------
+
+WorkerPool::WorkerPool(int num_workers)
+{
+    workers_.reserve(num_workers);
+    for (int w = 0; w < num_workers; ++w)
+    {
+        workers_.emplace_back([this](stop_token st)
+        {
+            uint64_t my_generation = 0;
+            while (true)
+            {
+                function<void()> job;
+                {
+                    unique_lock<mutex> lock(mutex_);
+                    cv_start_.wait(lock, [&]
+                    {
+                        return st.stop_requested() || my_generation != generation_;
+                    });
+                    if (st.stop_requested()) return;
+                    my_generation = generation_;
+                    job           = current_job_;
+                }
+
+                if (job)
+                {
+                    try { job(); } catch (...) { /* swallow; main thread reports via its own loop */ }
+                }
+
+                {
+                    lock_guard<mutex> lock(mutex_);
+                    if (--outstanding_ == 0) cv_done_.notify_all();
+                }
+            }
+        });
+    }
+}
+
+WorkerPool::~WorkerPool()
+{
+    // jthread destructor sends stop_request and joins; wake any sleeping
+    // workers so they observe the stop_token immediately.
+    for (auto& w : workers_) w.request_stop();
+    cv_start_.notify_all();
+}
+
+void WorkerPool::submit(function<void()> job)
+{
+    {
+        lock_guard<mutex> lock(mutex_);
+        current_job_ = move(job);
+        outstanding_ = static_cast<int>(workers_.size());
+        ++generation_;
+    }
+    cv_start_.notify_all();
+}
+
+void WorkerPool::wait()
+{
+    unique_lock<mutex> lock(mutex_);
+    cv_done_.wait(lock, [this] { return outstanding_ == 0; });
+    current_job_ = nullptr;
+}
+
+// --- Optimizer ---------------------------------------------------------------
+
 namespace
 {
 
@@ -257,7 +323,7 @@ Index Optimizer::get_maximum_batch_size() const
     // validation FP + pool when the chosen batch is larger than validation —
     // Adam/SGD allocate a separate FP and pool in that case).
 
-    const int batch_pool_size = max(num_workers + 1, on_gpu ? 3 : 2);
+    const int batch_pool_size = on_gpu ? max(num_workers + 1, 3) : 1;
     const Shape input_shape   = dataset->get_shape("Input");
     const Shape target_shape  = dataset->get_shape("Target");
     const Shape decoder_shape = dataset->get_shape("Decoder");
@@ -731,6 +797,11 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
     if (total_bytes > 0)
     {
         data.resize_bytes(total_bytes, device);
+#ifdef OPENNN_HAS_CUDA
+        if (device == Device::CUDA)
+            CHECK_CUDA(cudaMemsetAsync(data.data, 0, total_bytes, Backend::get_compute_stream()));
+        else
+#endif
         data.setZero();
     }
 
@@ -753,7 +824,7 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
     }
 }
 
-void Optimizer::setup_device_training()
+void Optimizer::setup_device_training(const vector<Batch*>& batches)
 {
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
@@ -765,9 +836,24 @@ void Optimizer::setup_device_training()
     neural_network->copy_parameters_device();
     neural_network->copy_states_device();
 
-    cudaStreamCreateWithFlags(&memory_stream, cudaStreamNonBlocking);
-    cudaEventCreateWithFlags(&batch_ready_event[0], cudaEventDisableTiming);
-    cudaEventCreateWithFlags(&batch_ready_event[1], cudaEventDisableTiming);
+    memory_stream.create(cudaStreamNonBlocking);
+
+    // Pre-create per-batch reuse events and pre-size the FP32 staging buffer
+    // so prefetch_batch never allocates inside the per-iteration hot path.
+    Index max_staging_bytes = 0;
+    for (Batch* batch : batches)
+    {
+        if (!batch) continue;
+        batch_ready_events[batch].create(cudaEventDisableTiming);
+        batch_reuse_events[batch].create(cudaEventDisableTiming);
+        if (batch->needs_fp32_staging)
+            max_staging_bytes = max(max_staging_bytes,
+                                    batch->get_input_elements() * Index(sizeof(float)));
+    }
+    if (max_staging_bytes > 0)
+        prefetch_fp32_staging.grow_to(max_staging_bytes);
+#else
+    (void)batches;
 #endif
 }
 
@@ -781,12 +867,9 @@ void Optimizer::teardown_device_training()
 
     clear_batch_reuse_events();
 
-    cudaStreamDestroy(memory_stream);
-    cudaEventDestroy(batch_ready_event[0]);
-    cudaEventDestroy(batch_ready_event[1]);
-    memory_stream = nullptr;
-    batch_ready_event[0] = nullptr;
-    batch_ready_event[1] = nullptr;
+    // Explicit destroy keeps tear-down ordered; the RAII destructors would
+    // also run if we skip this (e.g. on an exception path).
+    memory_stream.destroy();
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     neural_network->copy_parameters_host();
@@ -794,39 +877,45 @@ void Optimizer::teardown_device_training()
 #endif
 }
 
-void Optimizer::prefetch_batch(Batch& batch, Index sample_count, int slot)
+void Optimizer::prefetch_batch(Batch& batch, Index sample_count)
 {
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
 
-    cudaEvent_t& reuse_event = batch_reuse_events[&batch];
-    if (!reuse_event)
-        CHECK_CUDA(cudaEventCreateWithFlags(&reuse_event, cudaEventDisableTiming));
+    // Event and staging buffer are pre-created in setup_device_training, so
+    // this path is purely stream submission — no allocation, no map insert.
+    auto ready_it = batch_ready_events.find(&batch);
+    auto reuse_it = batch_reuse_events.find(&batch);
+    if (ready_it == batch_ready_events.end() || reuse_it == batch_reuse_events.end())
+        throw runtime_error("Optimizer::prefetch_batch: batch CUDA event missing — "
+                            "this batch was not passed to setup_device_training().");
 
     if (batch_reuse_recorded.contains(&batch))
-        CHECK_CUDA(cudaStreamWaitEvent(memory_stream, reuse_event, 0));
+        CHECK_CUDA(cudaStreamWaitEvent(memory_stream.handle, reuse_it->second.handle, 0));
 
-    float* fp32_staging = nullptr;
-    if (batch.needs_fp32_staging)
-    {
-        prefetch_fp32_staging.grow_to(batch.get_input_elements() * Index(sizeof(float)));
-        fp32_staging = prefetch_fp32_staging.as<float>();
-    }
+    float* fp32_staging = batch.needs_fp32_staging
+        ? prefetch_fp32_staging.as<float>()
+        : nullptr;
 
-    batch.copy_device_async(sample_count, memory_stream, fp32_staging);
-    CHECK_CUDA(cudaEventRecord(batch_ready_event[slot], memory_stream));
+    batch.copy_device_async(sample_count, memory_stream.handle, fp32_staging);
+    CHECK_CUDA(cudaEventRecord(ready_it->second.handle, memory_stream.handle));
 #else
-    (void)batch; (void)sample_count; (void)slot;
+    (void)batch; (void)sample_count;
 #endif
 }
 
-void Optimizer::wait_prefetch(int slot)
+void Optimizer::wait_prefetch(Batch& batch)
 {
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
-    CHECK_CUDA(cudaStreamWaitEvent(Backend::get_compute_stream(), batch_ready_event[slot], 0));
+    auto it = batch_ready_events.find(&batch);
+    if (it == batch_ready_events.end())
+        throw runtime_error("Optimizer::wait_prefetch: batch ready event missing — "
+                            "this batch was not passed to setup_device_training().");
+
+    CHECK_CUDA(cudaStreamWaitEvent(Backend::get_compute_stream(), it->second.handle, 0));
 #else
-    (void)slot;
+    (void)batch;
 #endif
 }
 
@@ -835,11 +924,12 @@ void Optimizer::record_batch_reuse(Batch& batch)
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
 
-    cudaEvent_t& reuse_event = batch_reuse_events[&batch];
-    if (!reuse_event)
-        CHECK_CUDA(cudaEventCreateWithFlags(&reuse_event, cudaEventDisableTiming));
+    auto it = batch_reuse_events.find(&batch);
+    if (it == batch_reuse_events.end())
+        throw runtime_error("Optimizer::record_batch_reuse: batch reuse event missing — "
+                            "this batch was not passed to setup_device_training().");
 
-    CHECK_CUDA(cudaEventRecord(reuse_event, Backend::get_compute_stream()));
+    CHECK_CUDA(cudaEventRecord(it->second.handle, Backend::get_compute_stream()));
     batch_reuse_recorded.insert(&batch);
 #else
     (void)batch;
@@ -848,13 +938,8 @@ void Optimizer::record_batch_reuse(Batch& batch)
 
 void Optimizer::clear_batch_reuse_events()
 {
-#ifdef OPENNN_HAS_CUDA
-    for (auto& [batch, event] : batch_reuse_events)
-    {
-        (void)batch;
-        if (event) cudaEventDestroy(event);
-    }
-#endif
+    // CudaEvent destructors release the underlying handles on map clear.
+    batch_ready_events.clear();
     batch_reuse_events.clear();
     batch_reuse_recorded.clear();
 }
@@ -932,6 +1017,66 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     }
     const auto epoch_t0 = chrono::steady_clock::now();
 
+    if (!is_gpu())
+    {
+        Batch* batch = empty_queue.pop();
+        const Index progress_step = max(Index(1), batches_number / 200);
+        if (show_progress) display_progress_bar(0, int(batches_number));
+
+        for (Index iteration = 0; iteration < batches_number; ++iteration)
+        {
+            {
+                PROFILE_SCOPE_HOST("step:fill");
+                batch->fill(batches[iteration],
+                            input_feature_indices,
+                            decoder_feature_indices,
+                            target_feature_indices,
+                            /*is_training=*/true,
+                            /*parallelize_samples=*/true);
+            }
+
+            {
+                PROFILE_SCOPE("step:fwd_total");
+                neural_network->forward_propagate(batch->get_inputs(), forward_propagation, true);
+            }
+
+            {
+                PROFILE_SCOPE("step:bwd_total");
+                loss->back_propagate(*batch, forward_propagation, back_propagation);
+            }
+
+            stats.error += back_propagation.error;
+            if (is_classification) stats.accuracy += back_propagation.accuracy;
+
+            {
+                PROFILE_SCOPE("step:optim_total");
+                update(back_propagation);
+            }
+
+            if (show_progress
+                && ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number))
+                display_progress_bar(int(iteration + 1), int(batches_number));
+        }
+
+        if (show_progress) cout << "\n";
+        empty_queue.push(batch);
+
+        stats.error /= float(batches_number);
+        if (is_classification) stats.accuracy /= float(batches_number);
+
+        if (profile_this)
+        {
+            const auto epoch_t1 = chrono::steady_clock::now();
+            const double epoch_ms = chrono::duration<double, milli>(epoch_t1 - epoch_t0).count();
+            ::opennn::global_stats().print(cout, "Epoch breakdown (training)", epoch_ms);
+            cout << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
+                 << " | num_workers=0\n\n";
+            ::opennn::global_stats().clear();
+        }
+
+        return stats;
+    }
+
     // Ordered consumption: each worker stores its filled batch at ready[iter].
     // The main loop polls ready[0], ready[1], ... — so the consumer sees the
     // same iteration order regardless of num_workers, preserving reproducibility.
@@ -945,41 +1090,50 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     atomic<int64_t> worker_fill_us{0};
     atomic<long>    worker_fills{0};
 
-    vector<thread> workers;
-    workers.reserve(num_workers);
+    // Persistent worker pool: created once per Optimizer (lazily) and reused
+    // across all epochs. Lifecycle is submit-now / wait-at-end; if the
+    // consumer loop throws we must wait() before unwinding so workers don't
+    // outlive the local captures (next_iteration, ready, batches, etc.).
+    if (!worker_pool || worker_pool->size() != num_workers)
+        worker_pool = make_unique<WorkerPool>(num_workers);
+
     // Batch loading is already parallelized across workers. Avoid nested OpenMP
     // teams inside Dataset::fill_*; on MinGW this can corrupt the heap when
     // worker threads tear down.
     const bool parallelize_samples_within_batch = false;
-    for (int w = 0; w < num_workers; ++w)
-        workers.emplace_back([&]() {
-            for (;;) {
-                const Index it = next_iteration.fetch_add(1);
-                if (it >= batches_number) return;
-                const auto t_pop0 = chrono::steady_clock::now();
-                Batch* batch = empty_queue.pop();
-                const auto t_fill0 = chrono::steady_clock::now();
-                batch->fill(batches[it],
-                            input_feature_indices,
-                            decoder_feature_indices,
-                            target_feature_indices,
-                            /*is_training=*/true,
-                            parallelize_samples_within_batch);
-                const auto t_fill1 = std::chrono::steady_clock::now();
-                ready[it].store(batch, std::memory_order_release);
+    worker_pool->submit([&]() {
+        for (;;) {
+            const Index it = next_iteration.fetch_add(1);
+            if (it >= batches_number) return;
+            const auto t_pop0 = chrono::steady_clock::now();
+            Batch* batch = empty_queue.pop();
+            const auto t_fill0 = chrono::steady_clock::now();
+            batch->fill(batches[it],
+                        input_feature_indices,
+                        decoder_feature_indices,
+                        target_feature_indices,
+                        /*is_training=*/true,
+                        parallelize_samples_within_batch);
+            const auto t_fill1 = std::chrono::steady_clock::now();
+            ready[it].store(batch, std::memory_order_release);
 
-                if (profile_enabled_from_env())
-                {
-                    worker_pop_us.fetch_add(
-                        chrono::duration_cast<chrono::microseconds>(t_fill0 - t_pop0).count(),
-                        memory_order_relaxed);
-                    worker_fill_us.fetch_add(
-                        chrono::duration_cast<chrono::microseconds>(t_fill1 - t_fill0).count(),
-                        memory_order_relaxed);
-                    worker_fills.fetch_add(1, memory_order_relaxed);
-                }
+            if (profile_enabled_from_env())
+            {
+                worker_pop_us.fetch_add(
+                    chrono::duration_cast<chrono::microseconds>(t_fill0 - t_pop0).count(),
+                    memory_order_relaxed);
+                worker_fill_us.fetch_add(
+                    chrono::duration_cast<chrono::microseconds>(t_fill1 - t_fill0).count(),
+                    memory_order_relaxed);
+                worker_fills.fetch_add(1, memory_order_relaxed);
             }
-        });
+        }
+    });
+
+    // RAII: wait for workers even if the consumer loop below throws. The
+    // workers capture references to next_iteration, ready, batches; those
+    // must outlive every running worker.
+    struct WaitGuard { WorkerPool* p; ~WaitGuard() { if (p) p->wait(); } } wait_guard{worker_pool.get()};
 
     auto wait_for_iteration = [&](Index it) -> Batch* {
         Batch* p = nullptr;
@@ -995,7 +1149,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     }
     {
         PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
-        prefetch_batch(*next_batch, next_batch->current_sample_count, 0);
+        prefetch_batch(*next_batch, next_batch->current_sample_count);
     }
 
     // Repaint at most ~200 times across the epoch (one ~ every 0.5%) so the
@@ -1010,7 +1164,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
 
         {
             PROFILE_SCOPE("step:wait_prefetch");
-            wait_prefetch(iteration % 2);
+            wait_prefetch(*current_batch);
         }
 
         if (iteration + 1 < batches_number)
@@ -1021,7 +1175,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
             }
             {
                 PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
-                prefetch_batch(*next_batch, next_batch->current_sample_count, (iteration + 1) % 2);
+                prefetch_batch(*next_batch, next_batch->current_sample_count);
             }
         }
 
@@ -1078,7 +1232,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     }
     if (show_progress) cout << "\n";
 
-    for (auto& w : workers) w.join();
+    worker_pool->wait();
 
 #ifdef OPENNN_HAS_CUDA
     if (use_device_metrics)
@@ -1148,28 +1302,62 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
     const bool use_device_metrics = false;
 #endif
 
+    if (!is_gpu())
+    {
+        Batch* batch = empty_queue.pop();
+
+        for (Index iteration = 0; iteration < batches_number; ++iteration)
+        {
+            batch->fill(batches[iteration],
+                        input_feature_indices,
+                        decoder_feature_indices,
+                        target_feature_indices,
+                        /*is_training=*/false,
+                        /*parallelize_samples=*/true);
+
+            neural_network->forward_propagate(batch->get_inputs(), forward_propagation, false);
+
+            const Loss::EvaluationResult eval = loss->calculate_error(*batch, forward_propagation);
+
+            stats.error += eval.error;
+            if (is_classification) stats.accuracy += eval.accuracy;
+        }
+
+        empty_queue.push(batch);
+
+        stats.error /= float(batches_number);
+        if (is_classification) stats.accuracy /= float(batches_number);
+
+        return stats;
+    }
+
     auto ready = make_unique<atomic<Batch*>[]>(batches_number);
     for (Index i = 0; i < batches_number; ++i) ready[i].store(nullptr);
 
     atomic<Index> next_iteration{0};
-    vector<thread> workers;
-    workers.reserve(num_workers);
+
+    if (!worker_pool || worker_pool->size() != num_workers)
+        worker_pool = make_unique<WorkerPool>(num_workers);
+
     const bool parallelize_samples_within_batch = false;
-    for (int w = 0; w < num_workers; ++w)
-        workers.emplace_back([&]() {
-            for (;;) {
-                const Index it = next_iteration.fetch_add(1);
-                if (it >= batches_number) return;
-                Batch* batch = empty_queue.pop();
-                batch->fill(batches[it],
-                            input_feature_indices,
-                            decoder_feature_indices,
-                            target_feature_indices,
-                            /*is_training=*/false,
-                            parallelize_samples_within_batch);
-                ready[it].store(batch, std::memory_order_release);
-            }
-        });
+    worker_pool->submit([&]() {
+        for (;;) {
+            const Index it = next_iteration.fetch_add(1);
+            if (it >= batches_number) return;
+            Batch* batch = empty_queue.pop();
+            batch->fill(batches[it],
+                        input_feature_indices,
+                        decoder_feature_indices,
+                        target_feature_indices,
+                        /*is_training=*/false,
+                        parallelize_samples_within_batch);
+            ready[it].store(batch, std::memory_order_release);
+        }
+    });
+
+    // RAII: same rationale as in train_epoch — make sure workers are joined
+    // before any captured stack reference goes out of scope on exception.
+    struct WaitGuard { WorkerPool* p; ~WaitGuard() { if (p) p->wait(); } } wait_guard{worker_pool.get()};
 
     auto wait_for_iteration = [&](Index it) -> Batch* {
         Batch* p = nullptr;
@@ -1179,19 +1367,19 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
     };
 
     Batch* next_batch = wait_for_iteration(0);
-    prefetch_batch(*next_batch, next_batch->current_sample_count, 0);
+    prefetch_batch(*next_batch, next_batch->current_sample_count);
 
     for (Index iteration = 0; iteration < batches_number; ++iteration)
     {
         Batch* current_batch = next_batch;
         next_batch = nullptr;
 
-        wait_prefetch(iteration % 2);
+        wait_prefetch(*current_batch);
 
         if (iteration + 1 < batches_number)
         {
             next_batch = wait_for_iteration(iteration + 1);
-            prefetch_batch(*next_batch, next_batch->current_sample_count, (iteration + 1) % 2);
+            prefetch_batch(*next_batch, next_batch->current_sample_count);
         }
 
         // is_training=false in evaluate_epoch: disables dropout and prevents
@@ -1228,7 +1416,7 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
         empty_queue.push(current_batch);
     }
 
-    for (auto& w : workers) w.join();
+    worker_pool->wait();
 
 #ifdef OPENNN_HAS_CUDA
     if (use_device_metrics)

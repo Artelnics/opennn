@@ -65,7 +65,7 @@ Index Convolutional::get_padding_height() const
 
     const Index total_padding = (get_output_height() - 1) * row_stride + kernel_height - input_height;
 
-    return total_padding / 2;
+    return (total_padding + 1) / 2;
 }
 
 Index Convolutional::get_padding_width() const
@@ -74,7 +74,7 @@ Index Convolutional::get_padding_width() const
 
     const Index total_padding = (get_output_width() - 1) * column_stride + kernel_width - input_width;
 
-    return total_padding / 2;
+    return (total_padding + 1) / 2;
 }
 
 Index Convolutional::get_input_height() const { return input_height; }

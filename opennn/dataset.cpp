@@ -98,7 +98,7 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
     if (shuffle)
     {
         shuffled_indices = sample_indices;
-        shuffle_vector_blocks(shuffled_indices);
+        shuffle_vector(shuffled_indices);
     }
 
     const vector<Index>& indices = shuffle ? shuffled_indices : sample_indices;

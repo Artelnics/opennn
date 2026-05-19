@@ -22,6 +22,7 @@ struct Operator;
 
 enum class LayerType
 {
+    Activation,
     Addition,
     Bounding,
     Convolutional,
@@ -42,6 +43,7 @@ enum class LayerType
 [[nodiscard]] inline const EnumMap<LayerType>& layer_type_map()
 {
     static const vector<pair<LayerType, string>> entries = {
+        {LayerType::Activation,         "Activation"},
         {LayerType::Addition,           "Addition"},
         {LayerType::Bounding,           "Bounding"},
         {LayerType::Convolutional,      "Convolutional"},

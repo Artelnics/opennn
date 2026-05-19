@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
+#include "activation_layer.h"
 #include "dense_layer.h"
 #include "scaling_layer.h"
 #include "flatten_layer.h"
@@ -31,6 +32,7 @@ namespace opennn
 
 void register_classes()
 {
+    const Activation activation;
     const Dense dense;
     const Scaling scaling;
     const Flatten flatten;

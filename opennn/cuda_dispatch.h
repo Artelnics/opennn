@@ -10,23 +10,20 @@
 
 #ifdef OPENNN_HAS_CUDA
 
-namespace opennn {
-// Cached at first call (C++11 magic statics make this thread-safe). Configuration
-// is set once at startup, so the value never changes after init.
-inline bool is_gpu_cached() {
-    static const bool v = is_gpu();
-    return v;
-}
-}
+    // Read Configuration directly each call. The previous design cached the
+    // value at first call (magic statics), but Configuration::set() can run
+    // mid-process (examples, tests, multi-session runners) and the cache
+    // would silently go stale. Configuration::is_gpu() is an atomic read on
+    // the singleton — sub-nanosecond, and inlines away in tight dispatch.
 
     #define TRY_GPU_DISPATCH(view, ...) \
-        (::opennn::is_gpu_cached() \
+        (::opennn::is_gpu() \
             ? ((view).dispatch(__VA_ARGS__), true) \
             : false)
 
     #define IF_GPU(...) \
         do { \
-            if (::opennn::is_gpu_cached()) { \
+            if (::opennn::is_gpu()) { \
                 __VA_ARGS__ \
             } \
         } while (0)

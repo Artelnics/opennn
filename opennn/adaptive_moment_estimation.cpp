@@ -115,7 +115,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     set_names();
     set_scaling();
 
-    const int pool_size = max(num_workers + 1, on_gpu ? 3 : 2);
+    const int pool_size = on_gpu ? max(num_workers + 1, 3) : 1;
 
     ThreadSafeQueue<Batch*> empty_training_queue;
     vector<unique_ptr<Batch>> training_batch_pool;
@@ -147,14 +147,18 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     unique_ptr<ForwardPropagation> validation_forward_propagation;
 
-    if (has_validation && validation_batch_size != training_batch_size)
+    if (has_validation)
         validation_forward_propagation = make_unique<ForwardPropagation>(validation_batch_size, neural_network);
 
     ForwardPropagation* validation_fp = has_validation
-        ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
+        ? validation_forward_propagation.get()
         : nullptr;
 
-    setup_device_training();
+    vector<Batch*> all_batches;
+    all_batches.reserve(training_batch_pool.size() + validation_batch_pool.size());
+    for (auto& b : training_batch_pool)   all_batches.push_back(b.get());
+    for (auto& b : validation_batch_pool) all_batches.push_back(b.get());
+    setup_device_training(all_batches);
 
     // Optimization data
 

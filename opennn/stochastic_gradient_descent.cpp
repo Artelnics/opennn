@@ -12,6 +12,7 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "loss.h"
+#include "profiler.h"
 #include "batch.h"
 #include "stochastic_gradient_descent.h"
 
@@ -83,12 +84,18 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
+    optimization_data.iteration++;
+
+    if (current_learning_rate == 0.0f)
+        return;
+
     if (momentum > 0.0f && optimization_data.views.empty())
-    {
-        const Index parameters_number = neural_network->get_parameters_size();
-        const Device device = current_device();
-        optimization_data.set({Shape{parameters_number}}, device);
-    }
+        throw runtime_error("StochasticGradientDescent::update_parameters: velocity buffer is not initialized.");
+
+#ifdef OPENNN_HAS_CUDA
+    if (is_gpu())
+        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
+#endif
 
 #ifdef OPENNN_HAS_CUDA
     if (is_gpu())
@@ -101,6 +108,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
         // BF16 mirror (if allocated) is refreshed inside the same kernel —
         // saves a separate FP32→BF16 cast pass over the whole parameter set.
+        PROFILE_SCOPE("optim:sgd_update_cuda");
         sgd_update_cuda(
             parameters_number,
             neural_network->get_parameters_data(),
@@ -200,10 +208,7 @@ TrainingResults StochasticGradientDescent::train()
     set_names();
     set_scaling();
 
-    // Batch pool: minimum 2 for producer/consumer double-buffer (avoids worker-main
-    // deadlock on prefetch_before_loop + pop_next). GPU uses 3 for triple-buffer H2D.
-
-    const int pool_size = max(num_workers + 1, on_gpu ? 3 : 2);
+    const int pool_size = on_gpu ? max(num_workers + 1, 3) : 1;
 
     ThreadSafeQueue<Batch*> empty_training_queue;
     vector<unique_ptr<Batch>> training_batch_pool;
@@ -235,24 +240,30 @@ TrainingResults StochasticGradientDescent::train()
 
     BackPropagation training_back_propagation(training_batch_size, loss);
 
-    // Reuse the training FP for validation iff batch sizes match exactly.
-    // Otherwise allocate a separate FP — over-sized views would corrupt loss
-    // kernels (input.shape[0] read directly), BatchNormOp running stats, and
-    // MultiHeadAttention reshapes.
     unique_ptr<ForwardPropagation> validation_forward_propagation;
 
-    if (has_validation && validation_batch_size != training_batch_size)
+    if (has_validation)
         validation_forward_propagation = make_unique<ForwardPropagation>(validation_batch_size, neural_network);
 
     ForwardPropagation* validation_fp = has_validation
-        ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
+        ? validation_forward_propagation.get()
         : nullptr;
 
-    setup_device_training();
+    vector<Batch*> all_batches;
+    all_batches.reserve(training_batch_pool.size() + validation_batch_pool.size());
+    for (auto& b : training_batch_pool)   all_batches.push_back(b.get());
+    for (auto& b : validation_batch_pool) all_batches.push_back(b.get());
+    setup_device_training(all_batches);
 
     // Optimization data
 
+    const Index parameters_number = loss->get_neural_network()->get_parameters_size();
+    const Device device = current_device();
+
     OptimizerData optimization_data;
+    if (momentum > 0.0f)
+        optimization_data.set({Shape{parameters_number}}, device);
+
     optimization_data.iteration = 1;
 
     float training_error = 0.0f;

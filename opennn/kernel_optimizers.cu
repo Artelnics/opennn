@@ -249,14 +249,15 @@ void sgd_update_cuda(
     const bool nesterov,
     __nv_bfloat16* parameters_bf16)
 {
-    if (n == 0) return;
+    if (n == 0 || learning_rate == 0.0f) return;
 
     const int total = static_cast<int>(n);
 
     const bool mirror_aligned = parameters_bf16 == nullptr
         || (reinterpret_cast<std::uintptr_t>(parameters_bf16) & 0x3) == 0;
 
-    const bool aligned = are_float4_aligned(parameters, velocity, gradients) && mirror_aligned;
+    const bool velocity_aligned = velocity == nullptr || is_float4_aligned(velocity);
+    const bool aligned = are_float4_aligned(parameters, gradients) && velocity_aligned && mirror_aligned;
 
     const int n_vec = aligned ? (total / 4) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));

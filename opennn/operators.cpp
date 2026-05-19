@@ -236,8 +236,17 @@ void ActivationOp::set_function(const string& name)
 void ActivationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
 {
     TensorView& output = fp.views[layer][output_slots[0]][0];
+    if (output.empty()) return;
 
-    if (function == Function::Identity || output.empty()) return;
+    // Standalone Activation layer: input and output live in different slots.
+    // Seed `output` with the upstream value before applying the elementwise
+    // function in place. When input_slots is empty (the fused path inside
+    // Dense / Convolutional / etc.), `output` already holds the pre-activation
+    // value written by the previous operator in the chain.
+    if (!input_slots.empty() && input_slots[0] != output_slots[0])
+        copy(fp.views[layer][input_slots[0]][0], output);
+
+    if (function == Function::Identity) return;
     if (function == Function::Softmax) { softmax(output); return; }
 
     IF_GPU({ apply_gpu(output); return; });
@@ -257,9 +266,24 @@ void ActivationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, s
 {
     const auto& slots = output_slots_backward.empty() ? output_slots : output_slots_backward;
     const TensorView& outputs = fp.views[layer][slots[0]][0];
-    TensorView& delta         = get_output_delta(bp, layer);
 
-    apply_delta(outputs, delta);
+    // Standalone Activation layer: write input_delta = output_delta * sigma'(output)
+    // into a distinct InputDelta slot. In the fused path (Dense/Conv/...),
+    // input_slots is empty (in-place) and we modify the layer's OutputDelta
+    // directly — the next operator in the chain reads it as its own input.
+    const bool standalone = !input_slots.empty() && input_slots[0] != output_slots[0];
+    if (standalone)
+    {
+        const TensorView& output_delta = get_output_delta(bp, layer);
+        TensorView& input_delta        = get_input_delta(bp, layer);
+        copy(output_delta, input_delta);
+        apply_delta(outputs, input_delta);
+    }
+    else
+    {
+        TensorView& delta = get_output_delta(bp, layer);
+        apply_delta(outputs, delta);
+    }
 }
 
 void ActivationOp::apply_cpu(TensorView& output)
@@ -534,8 +558,8 @@ void BatchNormOp::apply_training_cpu(const TensorView& input,
 
     inverse_variances.noalias() = output_matrix.array().square().colwise().mean().matrix();
 
-    running_means     = running_means     * momentum + means             * (1.0f - momentum);
-    running_variances = running_variances * momentum + inverse_variances * (1.0f - momentum);
+    running_means     = running_means     * (1.0f - momentum) + means             * momentum;
+    running_variances = running_variances * (1.0f - momentum) + inverse_variances * momentum;
 
     inverse_variances.array() = 1.0f / (inverse_variances.array() + EPSILON).sqrt();
     const VectorR scale = inverse_variances.array() * gamma.as_vector().array();
@@ -620,7 +644,7 @@ void BatchNormOp::apply_training_gpu(const TensorView& input,
         input.get_descriptor(),  input.data,
         output.get_descriptor(), output.data,
         gamma.get_descriptor(),  gamma.data, beta.data,
-        static_cast<double>(1.0f - momentum),
+        static_cast<double>(momentum),
         running_mean.data, running_variance.data,
         EPSILON,
         mean.data, inverse_variance.data));
@@ -2946,10 +2970,11 @@ void EmbeddingLookupOp::set_parameters_glorot()
 {
     if (weights.empty()) return;
     const float limit = glorot_limit(vocabulary_size, embedding_dimension);
-    MatrixMap weights_matrix = weights.as_matrix();
-    weights_matrix.setRandom();
-    weights_matrix *= limit;
-    weights_matrix.row(0).setZero();
+    // Eigen's setRandom() bypasses the project's RNG (uses std::rand
+    // internally), which breaks determinism — see [random_utilities.cpp]
+    // for why everything else routes through the global generator.
+    set_random_uniform(weights.as_vector(), -limit, limit);
+    weights.as_matrix().row(0).setZero();
 }
 
 void EmbeddingLookupOp::init_positional_encoding()

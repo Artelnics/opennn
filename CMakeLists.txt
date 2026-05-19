@@ -75,6 +75,14 @@ include(CheckLanguage)
 check_language(CUDA)
 
 if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
+    # Default to "native" so nvcc compiles directly for the local GPU's
+    # compute capability (no JIT step on first kernel launch, tensor-core
+    # paths picked at compile time). CMake 3.24+ resolves "native" via the
+    # CUDAToolkit at configure time. User can override with -DCMAKE_CUDA_ARCHITECTURES=...
+    if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+        set(CMAKE_CUDA_ARCHITECTURES "native" CACHE STRING
+            "CUDA compute capabilities to target (default: native)")
+    endif()
     enable_language(CUDA)
     find_package(CUDAToolkit REQUIRED)
     set(OPENNN_HAS_CUDA ON CACHE BOOL "")

@@ -29,11 +29,46 @@ namespace
 namespace scratch
 {
 
-void* ensure_cublas_lt_workspace(size_t min_bytes)    { return cublas_lt_workspace_.ensure<uint8_t>(Index(min_bytes)); }
-bfloat16* ensure_bf16_input_scratch(Index n)     { return bf16_input_.ensure<bfloat16>(n); }
-bfloat16* ensure_bf16_gradient_scratch(Index n)  { return bf16_gradient_.ensure<bfloat16>(n); }
-float* ensure_fp32_upcast_scratch(Index n)            { return fp32_upcast_.ensure<float>(n); }
-void* ensure_cudnn_conv_workspace(size_t min_bytes)   { return cudnn_conv_workspace_.ensure<uint8_t>(Index(min_bytes)); }
+static void wait_before_realloc(Buffer& buffer, Index new_bytes)
+{
+    if (new_bytes > buffer.bytes && buffer.data)
+        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
+}
+
+void* ensure_cublas_lt_workspace(size_t min_bytes)
+{
+    const Index bytes = Index(min_bytes);
+    wait_before_realloc(cublas_lt_workspace_, bytes);
+    return cublas_lt_workspace_.ensure<uint8_t>(bytes);
+}
+
+bfloat16* ensure_bf16_input_scratch(Index n)
+{
+    const Index bytes = n * Index(sizeof(bfloat16));
+    wait_before_realloc(bf16_input_, bytes);
+    return bf16_input_.ensure<bfloat16>(n);
+}
+
+bfloat16* ensure_bf16_gradient_scratch(Index n)
+{
+    const Index bytes = n * Index(sizeof(bfloat16));
+    wait_before_realloc(bf16_gradient_, bytes);
+    return bf16_gradient_.ensure<bfloat16>(n);
+}
+
+float* ensure_fp32_upcast_scratch(Index n)
+{
+    const Index bytes = n * Index(sizeof(float));
+    wait_before_realloc(fp32_upcast_, bytes);
+    return fp32_upcast_.ensure<float>(n);
+}
+
+void* ensure_cudnn_conv_workspace(size_t min_bytes)
+{
+    const Index bytes = Index(min_bytes);
+    wait_before_realloc(cudnn_conv_workspace_, bytes);
+    return cudnn_conv_workspace_.ensure<uint8_t>(bytes);
+}
 
 }
 

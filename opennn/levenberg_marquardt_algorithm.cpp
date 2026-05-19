@@ -209,6 +209,11 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense* layer,
 
 TrainingResults LevenbergMarquardtAlgorithm::train()
 {
+    if (is_gpu())
+        throw runtime_error("LevenbergMarquardtAlgorithm does not support GPU training: "
+                            "its Jacobian and gradient computation map device pointers as host memory. "
+                            "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
+
     const string loss_name = loss->get_name();
     if (loss_name == "MinkowskiError")
         throw runtime_error("Levenberg-Marquardt algorithm cannot work with Minkowski error.");
