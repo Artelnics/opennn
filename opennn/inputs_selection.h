@@ -24,10 +24,12 @@ public:
 
     enum class StoppingCondition {
         MaximumTime,
-        SelectionErrorGoal,
+        ValidationErrorGoal,
+        SelectionErrorGoal = ValidationErrorGoal,
         MaximumInputs,
         MaximumEpochs,
-        MaximumSelectionFailures
+        MaximumValidationFailures,
+        MaximumSelectionFailures = MaximumValidationFailures
     };
 
     InputsSelection(TrainingStrategy* = nullptr);
@@ -110,7 +112,7 @@ struct InputsSelectionResults
 
     VectorR optimal_parameters;
 
-    // Loss index
+    // Loss
 
     VectorR training_error_history;
 

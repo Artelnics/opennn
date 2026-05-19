@@ -353,7 +353,7 @@ TrainingResults StochasticGradientDescent::train()
 
         if (stop_training)
         {
-            results.loss = training_back_propagation.loss_value;
+            results.loss = training_back_propagation.loss;
             results.validation_failures = validation_failures;
             results.resize_training_error_history(epoch + 1);
             results.resize_validation_error_history(has_validation ? epoch + 1 : 0);

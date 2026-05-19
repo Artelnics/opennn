@@ -50,7 +50,7 @@ void ModelSelection::check() const
     if (!training_strategy)
         throw runtime_error("training strategy is not set.");
 
-    // Loss index
+    // Loss
 
     const Loss* loss = training_strategy->get_loss();
 
@@ -77,7 +77,7 @@ void ModelSelection::check() const
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
     if (validation_samples_number == 0)
-        throw runtime_error("Number of selection samples is zero.\n");
+        throw runtime_error("Number of validation samples is zero.\n");
 }
 
 NeuronsSelectionResults ModelSelection::perform_neurons_selection()
@@ -131,7 +131,7 @@ void ModelSelection::from_JSON(const JsonDocument& document)
     set_neurons_selection(selection_method);
     neurons_selection->from_JSON(JsonDocument::wrap(selection_method, *neurons_selection_method_element));
 
-    // Input Validation
+    // Input selection
 
     const Json* inputs_selection_element = require_json_field(root_element, "InputsSelection");
 

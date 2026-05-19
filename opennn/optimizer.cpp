@@ -605,8 +605,8 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
     }
     else if (validation_failures >= maximum_validation_failures)
     {
-        if (display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << validation_failures << "\n";
-        results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
+        if (display) cout << "Epoch " << epoch << "\nMaximum validation failures reached: " << validation_failures << "\n";
+        results.stopping_condition = StoppingCondition::MaximumValidationErrorIncreases;
     }
     else if (epoch == maximum_epochs)
     {
@@ -628,7 +628,7 @@ void Optimizer::write_common_json(JsonWriter& printer) const
 {
     write_json(printer, {
         {"LossGoal", to_string(training_loss_goal)},
-        {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
+        {"MaximumValidationFailures", to_string(maximum_validation_failures)},
         {"MaximumEpochsNumber", to_string(maximum_epochs)},
         {"MaximumTime", to_string(maximum_time)}
     });
@@ -637,7 +637,8 @@ void Optimizer::write_common_json(JsonWriter& printer) const
 void Optimizer::read_common_json(const Json* root_element)
 {
     set_loss_goal(read_json_type(root_element, "LossGoal"));
-    set_maximum_validation_failures(read_json_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_validation_failures(read_json_index(root_element,
+        root_element->has("MaximumValidationFailures") ? "MaximumValidationFailures" : "MaximumSelectionFailures"));
     set_maximum_epochs(read_json_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_json_type(root_element, "MaximumTime"));
 }
@@ -662,8 +663,8 @@ string TrainingResults::write_stopping_condition() const
     case LossGoal:
         return "Loss goal";
 
-    case MaximumSelectionErrorIncreases:
-        return "Maximum selection error increases";
+    case MaximumValidationErrorIncreases:
+        return "Maximum validation error increases";
 
     case MaximumEpochsNumber:
         return "Maximum epochs number";
@@ -771,7 +772,7 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
     override_results(2, 1) = write_stopping_condition();
     override_results(3, 1) = to_string(training_error_history(size - 1));
 
-    // Final selection error
+    // Final validation error
 
     override_results(4, 1) = validation_error_history.size() == 0
         ? "NAN"
@@ -938,9 +939,11 @@ void Optimizer::record_batch_reuse(Batch& batch)
 
 void Optimizer::clear_batch_reuse_events()
 {
+#ifdef OPENNN_HAS_CUDA
     // CudaEvent destructors release the underlying handles on map clear.
     batch_ready_events.clear();
     batch_reuse_events.clear();
+#endif
     batch_reuse_recorded.clear();
 }
 
@@ -1000,6 +1003,14 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index batches_number = Index(batches.size());
     if (batches_number == 0) return stats;
+
+    auto set_epoch_loss = [&]()
+    {
+        const TensorView parameters(neural_network->get_parameters_data(),
+                                    {neural_network->get_parameters_size()});
+        back_propagation.regularization = loss->calculate_regularization(parameters);
+        back_propagation.loss = stats.error + back_propagation.regularization;
+    };
 
 #ifdef OPENNN_HAS_CUDA
     const bool use_device_metrics = is_gpu() && loss->supports_device_epoch_metrics();
@@ -1063,6 +1074,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
 
         stats.error /= float(batches_number);
         if (is_classification) stats.accuracy /= float(batches_number);
+        set_epoch_loss();
 
         if (profile_this)
         {
@@ -1240,13 +1252,14 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
         stats = device_metrics.read(batches_number, is_classification);
         back_propagation.error = stats.error;
         back_propagation.accuracy = stats.accuracy;
-        back_propagation.loss_value = stats.error;
+        set_epoch_loss();
     }
     else
 #endif
     {
         stats.error /= float(batches_number);
         if (is_classification) stats.accuracy /= float(batches_number);
+        set_epoch_loss();
     }
 
     if (profile_this)

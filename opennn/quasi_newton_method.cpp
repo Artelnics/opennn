@@ -123,12 +123,12 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
         ? old_learning_rate
         : first_learning_rate;
 
-    tie(learning_rate, back_propagation.loss_value) = calculate_directional_point(
+    tie(learning_rate, back_propagation.loss) = calculate_directional_point(
         batch,
         forward_propagation,
         back_propagation,
         optimization_data,
-        back_propagation.loss_value);
+        back_propagation.loss);
 
     if (abs(learning_rate) > 0.0f)
     {
@@ -202,7 +202,7 @@ TrainingResults QuasiNewtonMethod::train()
     Batch validation_batch(validation_samples_number, dataset);
     validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices, /*is_training=*/false);
 
-    // Loss index
+    // Loss
 
     loss->set_normalization_coefficient();
 
@@ -216,7 +216,7 @@ TrainingResults QuasiNewtonMethod::train()
 
     Index validation_failures = 0;
 
-    float old_loss_value = 0.0f;
+    float old_loss = 0.0f;
     float loss_decrease = MAX;
 
     time_t beginning_time;
@@ -259,7 +259,7 @@ TrainingResults QuasiNewtonMethod::train()
                                           training_forward_propagation,
                                           true);
 
-        // Loss index
+        // Loss
 
         loss->back_propagate(training_batch,
                              training_forward_propagation,
@@ -282,7 +282,7 @@ TrainingResults QuasiNewtonMethod::train()
                                               *validation_fp,
                                               false);
 
-            // Loss Index
+            // Loss
 
             const Loss::EvaluationResult eval = loss->calculate_error(validation_batch,
                                                                        *validation_fp);
@@ -307,9 +307,9 @@ TrainingResults QuasiNewtonMethod::train()
             cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
 
-        if (epoch != 0) loss_decrease = old_loss_value - training_back_propagation.loss_value;
+        if (epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
 
-        old_loss_value = training_back_propagation.loss_value;
+        old_loss = training_back_propagation.loss;
 
         if (loss_decrease < minimum_loss_decrease)
         {
@@ -326,7 +326,7 @@ TrainingResults QuasiNewtonMethod::train()
 
         if (stop_training)
         {
-            results.loss = training_back_propagation.loss_value;
+            results.loss = training_back_propagation.loss;
             results.loss_decrease = loss_decrease;
             results.validation_failures = validation_failures;
             results.resize_training_error_history(epoch+1);
@@ -375,6 +375,8 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
     float alpha = 1.0f;
     const float rho = 0.5f;
     const float armijo_constant = 1e-4f;
+    const float previous_error = back_propagation.error;
+    const float previous_regularization = back_propagation.regularization;
 
     Map<const VectorR, AlignedMax> parameters(neural_network->get_parameters_data(),
                                                neural_network->get_parameters_size());
@@ -387,14 +389,21 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
 
         neural_network->forward_propagate(batch.get_inputs(), potential_parameters, forward_propagation);
         const Loss::EvaluationResult eval = loss->calculate_error(batch, forward_propagation);
-        back_propagation.error = eval.error;
-        const float new_loss = back_propagation.error + loss->calculate_regularization(potential_parameters);
+        const float candidate_regularization = loss->calculate_regularization(potential_parameters);
+        const float new_loss = eval.error + candidate_regularization;
 
         if (new_loss <= current_loss + armijo_constant * alpha * training_slope)
+        {
+            back_propagation.error = eval.error;
+            back_propagation.regularization = candidate_regularization;
             return {alpha, new_loss};
+        }
 
         alpha *= rho;
     }
+
+    back_propagation.error = previous_error;
+    back_propagation.regularization = previous_regularization;
 
     return {0.0f, current_loss};
 }

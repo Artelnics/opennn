@@ -24,7 +24,7 @@ void InputsSelection::check() const
     if (!training_strategy)
         throw runtime_error("training strategy is not set.");
 
-    // Loss index
+    // Loss
 
     const Loss* loss = training_strategy->get_loss();
 
@@ -51,7 +51,7 @@ void InputsSelection::check() const
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
     if (validation_samples_number == 0)
-        throw runtime_error("Number of selection samples is zero.\n");
+        throw runtime_error("Number of validation samples is zero.\n");
 }
 
 InputsSelectionResults::InputsSelectionResults(const Index maximum_epochs)
@@ -80,8 +80,8 @@ string InputsSelectionResults::write_stopping_condition() const
     case MaximumTime:
         return "MaximumTime";
 
-    case SelectionErrorGoal:
-        return "SelectionErrorGoal";
+    case ValidationErrorGoal:
+        return "ValidationErrorGoal";
 
     case MaximumInputs:
         return "MaximumInputs";
@@ -89,8 +89,8 @@ string InputsSelectionResults::write_stopping_condition() const
     case MaximumEpochs:
         return "MaximumEpochs";
 
-    case MaximumSelectionFailures:
-        return "MaximumSelectionFailures";
+    case MaximumValidationFailures:
+        return "MaximumValidationFailures";
 
     default:
         return {};
@@ -108,7 +108,7 @@ void InputsSelectionResults::resize_history(const Index new_size)
 void InputsSelectionResults::print() const
 {
     cout << "\n"
-         << "Input Validation Results" << "\n"
+         << "Input Selection Results" << "\n"
          << "Optimal inputs number: " << optimal_input_variable_names.size() << "\n"
          << "Inputs: " << "\n";
 
@@ -116,7 +116,7 @@ void InputsSelectionResults::print() const
         cout << "   " << name << "\n";
 
     cout << "Optimum training error: " << optimum_training_error << "\n"
-         << "Optimum selection error: " << optimum_validation_error << "\n";
+         << "Optimum validation error: " << optimum_validation_error << "\n";
 }
 
 void InputsSelection::save(const filesystem::path& file_name) const

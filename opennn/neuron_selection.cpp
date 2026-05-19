@@ -51,7 +51,7 @@ void NeuronSelection::check() const
     if (!training_strategy)
         throw runtime_error("training strategy is not set.");
 
-    // Loss index
+    // Loss
 
     const Loss* loss = training_strategy->get_loss();
 
@@ -78,7 +78,7 @@ void NeuronSelection::check() const
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
     if (validation_samples_number == 0)
-        throw runtime_error("Number of selection samples is zero.\n");
+        throw runtime_error("Number of validation samples is zero.\n");
 }
 
 void NeuronSelection::save(const filesystem::path& file_name) const
@@ -124,14 +124,14 @@ string NeuronsSelectionResults::write_stopping_condition() const
         case MaximumTime:
             return "MaximumTime";
 
-        case SelectionErrorGoal:
-            return "SelectionErrorGoal";
+        case ValidationErrorGoal:
+            return "ValidationErrorGoal";
 
         case MaximumEpochs:
             return "MaximumEpochs";
 
-        case MaximumSelectionFailures:
-            return "MaximumSelectionFailures";
+        case MaximumValidationFailures:
+            return "MaximumValidationFailures";
 
         case MaximumNeurons:
             return "MaximumNeurons";
@@ -144,10 +144,10 @@ string NeuronsSelectionResults::write_stopping_condition() const
 void NeuronsSelectionResults::print() const
 {
     cout << "\n"
-         << "Neuron Validation Results" << "\n"
+         << "Neuron Selection Results" << "\n"
          << "Optimal neurons number: " << optimal_neurons_number << "\n"
          << "Optimum training error: " << optimum_training_error << "\n"
-         << "Optimum selection error: " << optimum_validation_error << "\n";
+         << "Optimum validation error: " << optimum_validation_error << "\n";
 }
 
 }

@@ -33,11 +33,11 @@ struct BackPropagationLM
     VectorR output_deltas;
     Shape output_delta_dimensions;
 
-    Loss* loss = nullptr;
+    Loss* loss_pointer = nullptr;
 
     float error;
     float regularization = 0.0f;
-    float loss_value = 0.0f;
+    float loss = 0.0f;
 
     VectorR errors;
     VectorR squared_errors;

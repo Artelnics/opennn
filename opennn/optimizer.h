@@ -83,7 +83,8 @@ public:
     enum class StoppingCondition{None,
                                  MinimumLossDecrease,
                                  LossGoal,
-                                 MaximumSelectionErrorIncreases,
+                                 MaximumValidationErrorIncreases,
+                                 MaximumSelectionErrorIncreases = MaximumValidationErrorIncreases,
                                  MaximumEpochsNumber,
                                  MaximumTime};
 

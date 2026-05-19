@@ -197,16 +197,16 @@ public:
     [[nodiscard]] bool has_validation() const;
 
     void split_samples(const float training_ratio = 0.6f,
-                       float selection_ratio = 0.2f,
+                       float validation_ratio = 0.2f,
                        float testing_ratio = 0.2f,
                        bool shuffle = true);
 
     void split_samples_sequential(const float training_ratio = 0.6f,
-                                  float selection_ratio = 0.2f,
+                                  float validation_ratio = 0.2f,
                                   float testing_ratio = 0.2f);
 
     void split_samples_random(const float training_ratio = 0.6f,
-                              float selection_ratio = 0.2f,
+                              float validation_ratio = 0.2f,
                               float testing_ratio = 0.2f);
 
     [[nodiscard]] vector<vector<Index>> split_samples(const vector<Index>&, Index) const;

@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   L O S S   I N D E X   C L A S S
+//   L O S S   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -80,7 +80,8 @@ void Loss::back_propagate(const Batch& batch,
 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
-    back_propagation.loss_value = back_propagation.error;
+    back_propagation.regularization = 0.0f;
+    back_propagation.loss = back_propagation.error;
 
     // Regularization
 
@@ -325,7 +326,8 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
     back_propagation.error = 0.0f;
     back_propagation.accuracy = 0.0f;
     back_propagation.active_tokens_count = 0;
-    back_propagation.loss_value = 0.0f;
+    back_propagation.regularization = 0.0f;
+    back_propagation.loss = 0.0f;
 
     back_propagate_layers(forward_propagation, back_propagation);
     add_regularization_gradient(back_propagation);
@@ -396,17 +398,23 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
 
     check_neural_network();
 
-    IF_GPU({ return; });
-    Map<const VectorR, AlignedMax> params_vec(neural_network->get_parameters_data(),
-                                               neural_network->get_parameters_size());
-    back_propagation.loss_value += calculate_regularization(params_vec);
+    const TensorView parameters(neural_network->get_parameters_data(),
+                                {neural_network->get_parameters_size()});
+
+    back_propagation.regularization = calculate_regularization(parameters);
+    back_propagation.loss += back_propagation.regularization;
 }
 
 float Loss::calculate_regularization(const VectorR& parameters_vec) const
 {
+    const TensorView parameters(const_cast<float*>(parameters_vec.data()), { ssize(parameters_vec) });
+    return calculate_regularization(parameters);
+}
+
+float Loss::calculate_regularization(const TensorView& parameters) const
+{
     if (regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return 0.0f;
 
-    const TensorView parameters(const_cast<float*>(parameters_vec.data()), { ssize(parameters_vec) });
     float penalty = 0.0f;
 
     if (regularization_method == Regularization::L1)

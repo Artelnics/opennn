@@ -90,7 +90,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     InputsSelectionResults input_selection_results(original_input_variables_number);
 
-    // Loss index
+    // Loss
 
 //    const Loss* loss = training_strategy->get_loss();
     training_strategy->get_optimization_algorithm()->set_display(false);
@@ -257,8 +257,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         }
         else if (input_selection_results.optimum_validation_error <= validation_error_goal)
         {
-            if (display) cout << "\nSelection error reached: " << input_selection_results.optimum_validation_error << "\n";
-            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
+            if (display) cout << "\nValidation error goal reached: " << input_selection_results.optimum_validation_error << "\n";
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::ValidationErrorGoal;
             stop = true;
         }
         else if (epoch >= maximum_epochs)
@@ -269,8 +269,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         }
         else if (validation_failures >= maximum_validation_failures)
         {
-            if (display) cout << "\nMaximum selection failures (" << validation_failures << ") reached." << "\n";
-            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumSelectionFailures;
+            if (display) cout << "\nMaximum validation failures (" << validation_failures << ") reached." << "\n";
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumValidationFailures;
             stop = true;
         }
         else if (const Index current_inputs = dataset->get_variables_number("Input");
@@ -349,8 +349,8 @@ void GrowingInputs::to_JSON(JsonWriter& printer) const
 
     write_json(printer, {
         {"TrialsNumber", to_string(trials_number)},
-        {"SelectionErrorGoal", to_string(validation_error_goal)},
-        {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
+        {"ValidationErrorGoal", to_string(validation_error_goal)},
+        {"MaximumValidationFailures", to_string(maximum_validation_failures)},
         {"MinimumInputsNumber", to_string(minimum_inputs_number)},
         {"MaximumInputsNumber", to_string(maximum_inputs_number)},
         {"MinimumCorrelation", to_string(minimum_correlation)},
@@ -367,14 +367,16 @@ void GrowingInputs::from_JSON(const JsonDocument& document)
     const Json* root_element = get_json_root(document, "GrowingInputs");
 
     set_trials_number(read_json_index(root_element, "TrialsNumber"));
-    set_validation_error_goal(read_json_type(root_element, "SelectionErrorGoal"));
+    set_validation_error_goal(read_json_type(root_element,
+        root_element->has("ValidationErrorGoal") ? "ValidationErrorGoal" : "SelectionErrorGoal"));
     set_maximum_epochs(read_json_index(root_element, "MaximumEpochsNumber"));
     set_maximum_correlation(read_json_type(root_element, "MaximumCorrelation"));
     set_minimum_correlation(read_json_type(root_element, "MinimumCorrelation"));
     set_maximum_time(read_json_type(root_element, "MaximumTime"));
     set_minimum_inputs_number(read_json_index(root_element, "MinimumInputsNumber"));
     set_maximum_inputs_number(read_json_index(root_element, "MaximumInputsNumber"));
-    set_maximum_validation_failures(read_json_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_validation_failures(read_json_index(root_element,
+        root_element->has("MaximumValidationFailures") ? "MaximumValidationFailures" : "MaximumSelectionFailures"));
 }
 
 REGISTER(InputsSelection, GrowingInputs, "GrowingInputs");

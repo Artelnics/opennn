@@ -24,19 +24,20 @@ BackPropagation::BackPropagation(const Index new_batch_size, Loss* new_loss)
 void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 {
     batch_size = new_batch_size;
-    loss = new_loss;
+    loss_pointer = new_loss;
 
-    if (!loss)
+    if (!loss_pointer)
         throw runtime_error("loss is not set.");
 
-    neural_network = loss->get_neural_network();
+    neural_network = loss_pointer->get_neural_network();
 
     if (!neural_network)
         throw runtime_error("neural network is not set.");
 
-    loss_value = 0.0f;
     error = 0.0f;
     accuracy = 0.0f;
+    regularization = 0.0f;
+    loss = 0.0f;
 
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
@@ -253,7 +254,8 @@ void BackPropagation::print() const
 {
     cout << "Back-propagation" << "\n"
          << "Error: " << error << "\n"
-         << "Loss:  " << loss_value << "\n";
+         << "Regularization: " << regularization << "\n"
+         << "Loss:  " << loss << "\n";
 }
 
 }

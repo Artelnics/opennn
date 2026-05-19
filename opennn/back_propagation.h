@@ -43,11 +43,12 @@ struct BackPropagation
 
     Index batch_size = 0;
 
-    Loss* loss = nullptr;
+    Loss* loss_pointer = nullptr;
 
     float error = 0.0f;
     float accuracy = 0.0f;
-    float loss_value = 0.0f;
+    float regularization = 0.0f;
+    float loss = 0.0f;
     Index active_tokens_count = 0;
 
 private:

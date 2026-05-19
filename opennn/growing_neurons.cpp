@@ -55,7 +55,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     Index neurons_number = 0;
 
-    // Loss index
+    // Loss
 
     float previous_validation_error = MAX;
 
@@ -95,7 +95,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         neuron_selection_results.neurons_number_history(epoch) = neurons_number;
 
-        // Loss index
+        // Loss
 
         float minimum_training_error = MAX;
         float minimum_validation_error = MAX;
@@ -158,8 +158,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         }
         else if (training_results.get_validation_error() <= validation_error_goal)
         {
-            if (display) cout << "Epoch " << epoch << "\nSelection error goal reached: " << training_results.get_validation_error() << "\n";
-            neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::SelectionErrorGoal;
+            if (display) cout << "Epoch " << epoch << "\nValidation error goal reached: " << training_results.get_validation_error() << "\n";
+            neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::ValidationErrorGoal;
         }
         else if (epoch >= maximum_epochs)
         {
@@ -168,8 +168,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         }
         else if (validation_failures >= maximum_validation_failures)
         {
-            if (display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << validation_failures << "\n";
-            neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumSelectionFailures;
+            if (display) cout << "Epoch " << epoch << "\nMaximum validation failures reached: " << validation_failures << "\n";
+            neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumValidationFailures;
         }
         else if (neurons_number >= maximum_neurons)
         {
@@ -214,8 +214,8 @@ void GrowingNeurons::to_JSON(JsonWriter& printer) const
         {"MaximumNeurons", to_string(maximum_neurons)},
         {"NeuronsIncrement", to_string(neurons_increment)},
         {"TrialsNumber", to_string(trials_number)},
-        {"SelectionErrorGoal", to_string(validation_error_goal)},
-        {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
+        {"ValidationErrorGoal", to_string(validation_error_goal)},
+        {"MaximumValidationFailures", to_string(maximum_validation_failures)},
         {"MaximumTime", to_string(maximum_time)}
     });
 
@@ -230,8 +230,10 @@ void GrowingNeurons::from_JSON(const JsonDocument& document)
     set_maximum_neurons(read_json_index(root_element, "MaximumNeurons"));
     set_neurons_increment(read_json_index(root_element, "NeuronsIncrement"));
     set_trials_number(read_json_index(root_element, "TrialsNumber"));
-    set_validation_error_goal(read_json_type(root_element, "SelectionErrorGoal"));
-    set_maximum_validation_failures(read_json_index(root_element, "MaximumSelectionFailures"));
+    set_validation_error_goal(read_json_type(root_element,
+        root_element->has("ValidationErrorGoal") ? "ValidationErrorGoal" : "SelectionErrorGoal"));
+    set_maximum_validation_failures(read_json_index(root_element,
+        root_element->has("MaximumValidationFailures") ? "MaximumValidationFailures" : "MaximumSelectionFailures"));
     set_maximum_time(read_json_type(root_element, "MaximumTime"));
 }
 

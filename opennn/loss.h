@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   L O S S   I N D E X   C L A S S   H E A D E R
+//   L O S S   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -130,6 +130,7 @@ public:
 #endif
 
     float calculate_regularization(const VectorR&) const;
+    float calculate_regularization(const TensorView&) const;
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;

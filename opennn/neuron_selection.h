@@ -19,7 +19,15 @@ class NeuronSelection
 {
 public:
 
-    enum class StoppingCondition { MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons };
+    enum class StoppingCondition {
+        MaximumTime,
+        ValidationErrorGoal,
+        SelectionErrorGoal = ValidationErrorGoal,
+        MaximumEpochs,
+        MaximumValidationFailures,
+        MaximumSelectionFailures = MaximumValidationFailures,
+        MaximumNeurons
+    };
 
     NeuronSelection(TrainingStrategy* = nullptr);
     virtual ~NeuronSelection() = default;
@@ -110,7 +118,7 @@ struct NeuronsSelectionResults
 
    VectorR optimal_parameters;
 
-   // Loss index
+   // Loss
 
    VectorR training_error_history;
 

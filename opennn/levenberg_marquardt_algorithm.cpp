@@ -98,7 +98,10 @@ void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
     back_propagation_lm.gradient.noalias() = factor * J.transpose() * errors_vector;
     back_propagation_lm.hessian.noalias() = factor * J.transpose() * J;
 
-    back_propagation_lm.loss_value = back_propagation_lm.error;
+    const TensorView parameters(loss->get_neural_network()->get_parameters_data(),
+                                {loss->get_neural_network()->get_parameters_size()});
+    back_propagation_lm.regularization = loss->calculate_regularization(parameters);
+    back_propagation_lm.loss = back_propagation_lm.error + back_propagation_lm.regularization;
 }
 
 void LevenbergMarquardtAlgorithm::calculate_errors(const Batch& batch,
@@ -272,7 +275,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
         ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
         : nullptr;
 
-    // Loss index
+    // Loss
 
     loss->set_normalization_coefficient();
 
@@ -328,9 +331,9 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
         elapsed_time = get_elapsed_time(beginning_time);
 
-        if (epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss_value;
+        if (epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss;
 
-        old_loss = training_back_propagation_lm.loss_value;
+        old_loss = training_back_propagation_lm.loss;
 
         if (should_display(epoch))
         {
@@ -357,7 +360,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
         if (stop)
         {
-            results.loss = training_back_propagation_lm.loss_value;
+            results.loss = training_back_propagation_lm.loss;
             results.loss_decrease = loss_decrease;
             results.validation_failures = validation_failures;
             results.resize_training_error_history(epoch+1);
@@ -390,7 +393,10 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                          neural_network->get_parameters_size());
 
     float& error = back_propagation_lm.error;
-    float& loss_value = back_propagation_lm.loss_value;
+    float& regularization = back_propagation_lm.regularization;
+    float& current_loss = back_propagation_lm.loss;
+    const float previous_error = error;
+    const float previous_regularization = regularization;
 
     const VectorR& gradient = back_propagation_lm.gradient;
     MatrixR& hessian = back_propagation_lm.hessian;
@@ -421,18 +427,20 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         calculate_error(batch, forward_propagation, back_propagation_lm);
 
-        float new_loss_value = error + loss->calculate_regularization(potential_parameters);
+        const float candidate_regularization = loss->calculate_regularization(potential_parameters);
+        float new_loss = error + candidate_regularization;
 
-        if (!isfinite(new_loss_value))
-            new_loss_value = loss_value;
+        if (!isfinite(new_loss))
+            new_loss = current_loss;
 
-        if (new_loss_value < loss_value)
+        if (new_loss < current_loss)
         {
             set_damping_parameter(damping_parameter/damping_parameter_factor);
 
             parameters = potential_parameters;
 
-            loss_value = new_loss_value;
+            regularization = candidate_regularization;
+            current_loss = new_loss;
 
             success = true;
 
@@ -449,6 +457,9 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
     if (!success)
     {
+        error = previous_error;
+        regularization = previous_regularization;
+
         parameter_updates = (gradient.array().abs() >= EPSILON)
                                 .select(-gradient.array().sign() * EPSILON, 0.0f);
         parameters += parameter_updates;
@@ -488,8 +499,11 @@ BackPropagationLM::BackPropagationLM(const Index new_samples_number, Loss* new_l
 
 void BackPropagationLM::set(const Index new_samples_number, Loss* new_loss)
 {
-    loss = new_loss;
+    loss_pointer = new_loss;
     samples_number = new_samples_number;
+    error = 0.0f;
+    regularization = 0.0f;
+    loss = 0.0f;
 
     if (!new_loss || !new_loss->get_neural_network() || new_samples_number == 0) return;
 

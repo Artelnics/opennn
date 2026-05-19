@@ -507,13 +507,13 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
             cout << "\n"
                  << "Epoch number: " << epoch << "\n"
                  << "Generation mean training error: " << training_errors.mean() << "\n"
-                 << "Generation mean selection error: " << input_selection_results.mean_validation_error_history(epoch) << "\n"
+                 << "Generation mean validation error: " << input_selection_results.mean_validation_error_history(epoch) << "\n"
                  << "Generation minimum training error: " << optimal_training_error << "\n"
-                 << "Generation minimum selection error: " << optimal_validation_error << "\n"
+                 << "Generation minimum validation error: " << optimal_validation_error << "\n"
                  << "Best ever training error: " << input_selection_results.optimum_training_error << "\n"
-                 << "Best ever selection error: " << input_selection_results.optimum_validation_error << "\n"
+                 << "Best ever validation error: " << input_selection_results.optimum_validation_error << "\n"
                  << "Elapsed time: " << get_time(elapsed_time) << "\n"
-                 << "Best selection error in generation: " << best_generation << "\n";
+                 << "Best generation by validation error: " << best_generation << "\n";
 
         // Stopping criteria
 
@@ -521,8 +521,8 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         if (input_selection_results.optimum_validation_error <= validation_error_goal)
         {
-            if (display) cout << "Epoch " << epoch << "\nSelection error goal reached: " << input_selection_results.optimum_validation_error << "\n";
-            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
+            if (display) cout << "Epoch " << epoch << "\nValidation error goal reached: " << input_selection_results.optimum_validation_error << "\n";
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::ValidationErrorGoal;
             stop = true;
         }
         else if (elapsed_time >= maximum_time)
@@ -643,7 +643,7 @@ void GeneticAlgorithm::to_JSON(JsonWriter& printer) const
         {"PopulationSize", to_string(get_individuals_number())},
         {"ElitismSize", to_string(elitism_size)},
         {"MutationRate", to_string(mutation_rate)},
-        {"SelectionErrorGoal", to_string(validation_error_goal)},
+        {"ValidationErrorGoal", to_string(validation_error_goal)},
         {"MinimumInputsNumber", to_string(minimum_inputs_number)},
         {"MaximumInputsNumber", to_string(maximum_inputs_number)},
         {"MaximumGenerationsNumber", to_string(maximum_epochs)},
@@ -658,7 +658,8 @@ void GeneticAlgorithm::from_JSON(const JsonDocument& document)
     set_individuals_number(read_json_index(root, "PopulationSize"));
     set_mutation_rate(read_json_type(root, "MutationRate"));
     set_elitism_size(read_json_index(root, "ElitismSize"));
-    set_validation_error_goal(read_json_type(root, "SelectionErrorGoal"));
+    set_validation_error_goal(read_json_type(root,
+        root->has("ValidationErrorGoal") ? "ValidationErrorGoal" : "SelectionErrorGoal"));
     set_minimum_inputs_number(read_json_index(root, "MinimumInputsNumber"));
     set_maximum_inputs_number(read_json_index(root, "MaximumInputsNumber"));
     set_maximum_epochs(read_json_index(root, "MaximumGenerationsNumber"));
