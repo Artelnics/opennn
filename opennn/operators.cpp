@@ -311,24 +311,22 @@ void ActivationOp::apply_delta_cpu(const TensorView& outputs, TensorView& delta)
 
 void ActivationOp::apply_gpu(TensorView& output)
 {
-    CHECK_CUDNN(cudnnActivationForward(Backend::get_cudnn_handle(),
-                                       descriptor,
-                                       &one,
-                                       output.get_descriptor(), output.data,
-                                       &zero,
-                                       output.get_descriptor(), output.data));
+    output.dispatch([&](auto tag)
+    {
+        using T = decltype(tag);
+        activation_forward_cuda<T>(output.size(), output.as<T>(), static_cast<int>(function));
+    });
+    CHECK_CUDA(cudaPeekAtLastError());
 }
 
 void ActivationOp::apply_delta_gpu(const TensorView& outputs, TensorView& delta) const
 {
-    CHECK_CUDNN(cudnnActivationBackward(Backend::get_cudnn_handle(),
-                                        descriptor,
-                                        &one,
-                                        outputs.get_descriptor(), outputs.data,
-                                        delta.get_descriptor(),   delta.data,
-                                        outputs.get_descriptor(), outputs.data,
-                                        &zero,
-                                        delta.get_descriptor(),   delta.data));
+    delta.dispatch([&](auto tag)
+    {
+        using T = decltype(tag);
+        activation_backward_cuda<T>(delta.size(), outputs.as<T>(), delta.as<T>(), static_cast<int>(function));
+    });
+    CHECK_CUDA(cudaPeekAtLastError());
 }
 
 void ActivationOp::destroy_cuda()

@@ -595,13 +595,23 @@ void multiply_gpu(const TensorView& input_a, bool transpose_a,
 
 void softmax_gpu(TensorView& output)
 {
-    CHECK_CUDNN(cudnnSoftmaxForward(Backend::get_cudnn_handle(),
-                                    CUDNN_SOFTMAX_ACCURATE,
-                                    CUDNN_SOFTMAX_MODE_CHANNEL,
-                                    &one,
-                                    output.get_descriptor(), output.data,
-                                    &zero,
-                                    output.get_descriptor(), output.data));
+    // Softmax reduces over the innermost axis. Flattens any rank to [N, C].
+    const size_t rank = output.shape.rank;
+    if (rank == 0) return;
+
+    long long batch_count = 1;
+    for (size_t i = 0; i + 1 < rank; ++i)
+        batch_count *= static_cast<long long>(output.shape[i]);
+    const long long channels = static_cast<long long>(output.shape[rank - 1]);
+    if (batch_count <= 0 || channels <= 0) return;
+
+    output.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        softmax_rows_cuda<T>(static_cast<int>(batch_count),
+                             static_cast<int>(channels),
+                             output.as<T>());
+    });
+    CHECK_CUDA(cudaPeekAtLastError());
 }
 
 void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool /* is_training */)
