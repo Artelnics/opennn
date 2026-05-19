@@ -38,7 +38,7 @@ float calculate_numerical_error(Loss& loss)
     neural_network->forward_propagate(batch.get_inputs(), forward_propagation);
 
     BackPropagation back_propagation(samples_number, &loss);
-    loss.calculate_error(batch, forward_propagation, back_propagation);
+    back_propagation.error = loss.calculate_error(batch, forward_propagation).error;
 
     return back_propagation.error;
 }
@@ -110,12 +110,12 @@ VectorR calculate_numerical_gradient(Loss& loss)
 
         perturbed(i) += h;
         neural_network->forward_propagate(batch.get_inputs(), perturbed, forward_propagation);
-        loss.calculate_error(batch, forward_propagation, back_propagation);
+        back_propagation.error = loss.calculate_error(batch, forward_propagation).error;
         const float error_forward = back_propagation.error;
 
         perturbed(i) -= 2.0f * h;
         neural_network->forward_propagate(batch.get_inputs(), perturbed, forward_propagation);
-        loss.calculate_error(batch, forward_propagation, back_propagation);
+        back_propagation.error = loss.calculate_error(batch, forward_propagation).error;
         const float error_backward = back_propagation.error;
 
         perturbed(i) += h;
@@ -158,12 +158,12 @@ VectorR calculate_numerical_input_deltas(Loss& loss)
 
         input_views[0].as<float>()[i] += h;
         neural_network->forward_propagate(input_views, forward_propagation);
-        loss.calculate_error(batch, forward_propagation, back_propagation);
+        back_propagation.error = loss.calculate_error(batch, forward_propagation).error;
         const float error_forward = back_propagation.error;
 
         input_views[0].as<float>()[i] -= 2 * h;
         neural_network->forward_propagate(input_views, forward_propagation);
-        loss.calculate_error(batch, forward_propagation, back_propagation);
+        back_propagation.error = loss.calculate_error(batch, forward_propagation).error;
         const float error_backward = back_propagation.error;
 
         input_views[0].as<float>()[i] += h;

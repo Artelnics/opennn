@@ -7,7 +7,7 @@ project(OpenNN_Project LANGUAGES CXX)
 include(GNUInstallDirs)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -22,9 +22,14 @@ elseif(MSVC)
 endif()
 
 include(CheckIPOSupported)
-check_ipo_supported(RESULT OPENNN_LTO_OK)
-if(OPENNN_LTO_OK)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+option(OpenNN_ENABLE_LTO "Enable interprocedural optimization/LTO for OpenNN release builds" ON)
+if(OpenNN_ENABLE_LTO)
+    check_ipo_supported(RESULT OPENNN_LTO_OK)
+    if(OPENNN_LTO_OK)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+    endif()
+else()
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE OFF)
 endif()
 
 # Configuración específica para macOS
@@ -121,11 +126,9 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     link_libraries(${CUDNN_LIBRARY})
 
     # cuDNN frontend (header-only C++ wrapper for the cuDNN graph API).
-    # Required for SDPA / Flash Attention. Optional: if not found, Attention
-    # falls back to the manual softmax+matmul path (works, but materializes the
-    # attention matrix). Install v1.10+ from https://github.com/NVIDIA/cudnn-frontend
-    # or set CUDNN_FRONTEND_INCLUDE_DIR explicitly. Older v1.x releases have API
-    # breaks; we target the v1.10.x branch.
+    # Required for SDPA / Flash Attention. Install v1.10+ from
+    # https://github.com/NVIDIA/cudnn-frontend or set CUDNN_FRONTEND_INCLUDE_DIR
+    # explicitly. Older v1.x releases have API breaks; we target v1.10.x.
     find_path(CUDNN_FRONTEND_INCLUDE_DIR
         NAMES cudnn_frontend.h
         HINTS ${CUDAToolkit_INCLUDE_DIRS}
@@ -135,15 +138,6 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
 
     if(CUDNN_FRONTEND_INCLUDE_DIR)
         message(STATUS "Found cudnn-frontend: ${CUDNN_FRONTEND_INCLUDE_DIR}")
-        set(HAVE_CUDNN_FRONTEND ON)
-        add_compile_definitions(OPENNN_HAS_CUDNN_FRONTEND)
-        include_directories(${CUDNN_FRONTEND_INCLUDE_DIR})
-    else()
-        message(WARNING
-            "cudnn-frontend headers not found. Attention will fall back to manual "
-            "softmax+matmul (works, but no Flash Attention memory savings). "
-            "Install from https://github.com/NVIDIA/cudnn-frontend or set "
-            "CUDNN_FRONTEND_INCLUDE_DIR.")
     endif()
 else()
     set(OPENNN_HAS_CUDA OFF CACHE BOOL "")

@@ -14,56 +14,6 @@
 namespace opennn
 {
 
-void prepare_line(string& line)
-{
-    trim(line);
-    normalize_csv_line(line);
-    erase(line, '"');
-}
-
-Index count_non_empty_lines(const filesystem::path& data_path)
-{
-    ifstream file(data_path);
-
-    if (!file.is_open())
-        throw runtime_error("Cannot open file: " + data_path.string() + "\n");
-
-    Index count = 0;
-
-    string line;
-
-    while (getline(file, line))
-    {
-        prepare_line(line);
-
-        if (!line.empty())
-            ++count;
-    }
-
-    return count;
-}
-
-Index count_tokens(const string& text, const string& separator)
-{
-    Index tokens_number = 0;
-
-    string::size_type position = 0;
-
-    while ((position = text.find(separator, position)) != string::npos)
-    {
-        ++tokens_number;
-        position += separator.length();
-    }
-
-    if (text.find(separator, 0) == 0)
-        tokens_number--;
-
-    if (position == text.length())
-        tokens_number--;
-
-    return tokens_number + 1;
-}
-
 vector<string> tokenize(const string& document)
 {
     vector<string> tokens;
@@ -96,6 +46,36 @@ vector<string> tokenize(const string& document)
     return tokens;
 }
 
+vector<string_view> tokenize_views(string_view document)
+{
+    vector<string_view> tokens;
+
+    size_t i = 0;
+    while (i < document.size())
+    {
+        const unsigned char c = static_cast<unsigned char>(document[i]);
+
+        if (isalnum(c))
+        {
+            const size_t start = i;
+            while (i < document.size() && isalnum(static_cast<unsigned char>(document[i])))
+                ++i;
+            tokens.emplace_back(document.substr(start, i - start));
+        }
+        else if (ispunct(c))
+        {
+            tokens.emplace_back(document.substr(i, 1));
+            ++i;
+        }
+        else
+        {
+            ++i;
+        }
+    }
+
+    return tokens;
+}
+
 vector<string> get_tokens(const string& text, const string& separator)
 {
     vector<string> tokens;
@@ -120,6 +100,39 @@ vector<string> get_tokens(const string& text, const string& separator)
     return tokens;
 }
 
+vector<string_view> get_token_views(string_view text, char separator)
+{
+    vector<string_view> tokens;
+
+    size_t start = 0;
+    while (true)
+    {
+        const size_t end = text.find(separator, start);
+
+        if (end == string_view::npos)
+        {
+            tokens.emplace_back(text.substr(start));
+            break;
+        }
+
+        tokens.emplace_back(text.substr(start, end - start));
+        start = end + 1;
+    }
+
+    return tokens;
+}
+
+string_view trim_view(string_view text)
+{
+    constexpr string_view whitespace = " \t\n\r\f\v\b";
+
+    const size_t start = text.find_first_not_of(whitespace);
+    if (start == string_view::npos) return {};
+
+    const size_t end = text.find_last_not_of(whitespace);
+    return text.substr(start, end - start + 1);
+}
+
 vector<string> convert_string_vector(const vector<vector<string>>& input_vector, const string& separator)
 {
     vector<string> vector_result;
@@ -139,47 +152,24 @@ vector<string> convert_string_vector(const vector<vector<string>>& input_vector,
     return vector_result;
 }
 
-VectorR to_type_vector(const string& text, const string& separator)
-{
-    const vector<string> tokens = get_tokens(text, separator);
-
-    const Index tokens_size = tokens.size();
-
-    VectorR type_vector(tokens_size);
-
-    for (Index i = 0; i < tokens_size; ++i)
-    {
-        const char* begin = tokens[i].c_str();
-        char* end = nullptr;
-        errno = 0;
-        const float value = strtof(begin, &end);
-
-        type_vector(i) = (end == begin || errno == ERANGE || *end != '\0')
-            ? float(nan(""))
-            : float(value);
-    }
-
-    return type_vector;
-}
-
-bool is_numeric_string(const string& text)
+bool is_numeric_string(string_view text)
 {
     if (text.empty()) return false;
 
-    const char* begin = text.c_str();
-    char* end = nullptr;
-    errno = 0;
-    strtod(begin, &end);
+    double value;
+    const char* first = text.data();
+    const char* last  = first + text.size();
+    auto [ptr, ec] = from_chars(first, last, value);
 
-    if (end == begin || errno == ERANGE) return false;
+    if (ec != errc{} || ptr == first) return false;
 
-    const size_t consumed = static_cast<size_t>(end - begin);
+    const size_t consumed = static_cast<size_t>(ptr - first);
 
     return consumed == text.size()
-        || (text.find('%') != string::npos && consumed + 1 == text.size());
+        || (text.find('%') != string_view::npos && consumed + 1 == text.size());
 }
 
-bool is_date_time_string(const string& text)
+bool is_date_time_string(string_view text)
 {
     if (is_numeric_string(text))
         return false;
@@ -200,8 +190,8 @@ bool is_date_time_string(const string& text)
         regex(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))") // hh:mm:ss
     };
 
-    return any_of(date_regexes.begin(), date_regexes.end(),
-                  [&](const regex& date_regex) { return regex_match(text, date_regex); });
+    return ranges::any_of(date_regexes,
+                          [&](const regex& date_regex) { return regex_match(text.begin(), text.end(), date_regex); });
 }
 
 time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format)
@@ -364,72 +354,11 @@ void replace_all_appearances(string& text, const string& to_replace, const strin
     text.swap(buffer);
 }
 
-void trim(string& text)
-{
-    text.erase(0, text.find_first_not_of(" \t\n\r\f\v\b"));
-    text.erase(text.find_last_not_of(" \t\n\r\f\v\b") + 1);
-}
-
-void normalize_csv_line(string& text)
-{
-    replace_first_and_last_char_with_missing_label(text, ';', "NA", "");
-    replace_first_and_last_char_with_missing_label(text, ',', "NA", "");
-
-    replace_double_char_with_label(text, ";", "NA");
-    replace_double_char_with_label(text, ",", "NA");
-
-    replace_substring_within_quotes(text, ",", "");
-    replace_substring_within_quotes(text, ";", "");
-}
-
-void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &first_missing_label, const string &last_missing_label)
-{
-    if (str.empty()) return;
-
-    if (str.front() == target_char)
-        str.insert(0, first_missing_label);
-
-    if (str.back() == target_char)
-        str.append(last_missing_label);
-}
-
-void replace_double_char_with_label(string &str, const string &target_char, const string &missing_label)
-{
-    replace(str, target_char + target_char, target_char + missing_label + target_char);
-}
-
-void replace_substring_within_quotes(string &str, const string &target, const string &replacement)
-{
-    const regex quoted_regex("\"([^\"]*)\"");
-    string result;
-    string::const_iterator search_start(str.begin());
-    smatch match;
-
-    while (regex_search(search_start, str.cend(), match, quoted_regex))
-    {
-        result += string(search_start, match[0].first);
-
-        string quoted_content = match[1].str();
-        replace(quoted_content, target, replacement);
-
-        result += "\"" + quoted_content + "\"";
-        search_start = match[0].second;
-    }
-
-    result += string(search_start, str.cend());
-    str = result;
-}
-
-void erase(string& text, char character)
-{
-    text.erase(remove(text.begin(), text.end(), character), text.end());
-}
-
 string get_trimmed(const string& text)
 {
     const auto is_space = [](char character) { return isspace(static_cast<unsigned char>(character)); };
 
-    const auto start = find_if_not(text.begin(), text.end(), is_space);
+    const auto start = ranges::find_if_not(text, is_space);
     const auto end = find_if_not(text.rbegin(), text.rend(), is_space).base();
 
     return (start < end) ? string(start, end) : string();
@@ -437,7 +366,12 @@ string get_trimmed(const string& text)
 
 bool has_numbers(const vector<string>& string_list)
 {
-    return any_of(string_list.begin(), string_list.end(), is_numeric_string);
+    return ranges::any_of(string_list, is_numeric_string);
+}
+
+bool has_numbers(const vector<string_view>& string_list)
+{
+    return ranges::any_of(string_list, is_numeric_string);
 }
 
 void replace(string& source, const string& find_what, const string& replace_with)
@@ -464,16 +398,10 @@ string get_time(float time)
     const int minutes = (total_seconds % 3600) / 60;
     const int seconds = total_seconds % 60;
 
-    ostringstream elapsed_time;
-    elapsed_time << setfill('0')
-                 << setw(2) << hours << ":"
-                 << setw(2) << minutes << ":"
-                 << setw(2) << seconds;
-
-    return elapsed_time.str();
+    return format("{:02}:{:02}:{:02}", hours, minutes, seconds);
 }
 
-void display_progress_bar(const int& completed, const int& total)
+void display_progress_bar(int completed, int total)
 {
     const int width = 50;
     const float progress = static_cast<float>(completed) / total;
@@ -498,14 +426,18 @@ void string_to_vector(const string& input, VectorR& values)
         buffer.push_back(value);
 
     values.resize(static_cast<Index>(buffer.size()));
-
-    for (Index i = 0; i < values.size(); ++i)
-        values(i) = buffer[i];
+    ranges::copy(buffer, values.data());
 }
 
 bool contains(const vector<string>& data, const string& value)
 {
-    return find(data.begin(), data.end(), value) != data.end();
+    return ranges::find(data, value) != data.end();
+}
+
+bool contains(const vector<string>& data, string_view value)
+{
+    return ranges::any_of(data,
+                          [&](const string& s) { return s == value; });
 }
 
 }

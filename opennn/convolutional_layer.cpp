@@ -21,10 +21,10 @@ Convolutional::Convolutional(const Shape& new_input_shape,
                              const Shape& new_stride_shape,
                              const string& new_convolution_type,
                              bool new_batch_normalization,
-                             const string& new_label) : Layer()
+                             const string& new_label)
+    : Layer(LayerType::Convolutional)
 {
-    name = "Convolutional";
-    layer_type = LayerType::Convolutional;
+    operators = {&convolution, &batch_norm, &activation};
 
     set(new_input_shape,
         new_kernel_shape,
@@ -34,6 +34,7 @@ Convolutional::Convolutional(const Shape& new_input_shape,
         new_batch_normalization,
         new_label);
 }
+
 Shape Convolutional::get_output_shape() const
 {
     return { get_output_height(), get_output_width(), kernels_number };
@@ -62,8 +63,7 @@ Index Convolutional::get_padding_height() const
 {
     if (!use_padding) return 0;
 
-    const Index output_height = (input_height + row_stride - 1) / row_stride;
-    const Index total_padding = (output_height - 1) * row_stride + kernel_height - input_height;
+    const Index total_padding = (get_output_height() - 1) * row_stride + kernel_height - input_height;
 
     return total_padding / 2;
 }
@@ -72,8 +72,7 @@ Index Convolutional::get_padding_width() const
 {
     if (!use_padding) return 0;
 
-    const Index output_width = (input_width + column_stride - 1) / column_stride;
-    const Index total_padding = (output_width - 1) * column_stride + kernel_width - input_width;
+    const Index total_padding = (get_output_width() - 1) * column_stride + kernel_width - input_width;
 
     return total_padding / 2;
 }
@@ -84,15 +83,7 @@ Index Convolutional::get_input_width() const { return input_width; }
 
 Index Convolutional::get_input_channels() const { return input_channels; }
 
-vector<Operator*> Convolutional::get_operators()
-{
-    vector<Operator*> ops = {&convolution};
-    if (batch_norm.active()) ops.push_back(&batch_norm);
-    ops.push_back(&activation);
-    return ops;
-}
-
-vector<pair<Shape, Type>> Convolutional::get_forward_specs(Index batch_size) const
+vector<TensorSpec> Convolutional::get_forward_specs(Index batch_size) const
 {
     const Shape output_shape = {batch_size, get_output_height(), get_output_width(), kernels_number};
     const Type act = compute_dtype;
@@ -116,16 +107,20 @@ void Convolutional::update_convolution_operator()
                     get_padding_height(), get_padding_width(),
                     compute_dtype);
 
-    convolution.input_slots  = {Input};
     convolution.output_slots = batch_norm.active() ? vector<size_t>{ConvolutionView}
                                                    : vector<size_t>{Output};
 
-    batch_norm.input_slots  = {ConvolutionView};
-    batch_norm.output_slots = {Output, BatchNormMean, BatchNormInverseVariance};
+    if (batch_norm.active())
+    {
+        batch_norm.input_slots  = {ConvolutionView};
+        batch_norm.output_slots = {Output, BatchNormMean, BatchNormInverseVariance};
+    }
 
     activation.input_slots  = {Output};
     activation.output_slots = {Output};
+
 }
+
 void Convolutional::set(const Shape& new_input_shape,
                         const Shape& new_kernel_shape,
                         const string& new_activation_function,
@@ -184,7 +179,7 @@ void Convolutional::set(const Shape& new_input_shape,
 void Convolutional::set_input_shape(const Shape& new_input_shape)
 {
     if (new_input_shape.rank != 3)
-        throw runtime_error("Input new_input_shape.rank must be 3");
+        throw runtime_error("Input shape rank must be 3.");
 
     input_height = new_input_shape[0];
     input_width = new_input_shape[1];
@@ -225,9 +220,9 @@ void Convolutional::set_convolution_type(const string& new_convolution_type)
 
 void Convolutional::set_activation_function(const string& new_activation_function)
 {
-    const Activation::Function function = Activation::from_string(new_activation_function);
+    const ActivationOp::Function function = ActivationOp::from_string(new_activation_function);
 
-    if (function == Activation::Function::Softmax)
+    if (function == ActivationOp::Function::Softmax)
         throw runtime_error("Softmax is not a valid activation for a convolutional layer.");
 
     activation.set_function(function);
@@ -241,31 +236,6 @@ void Convolutional::set_batch_normalization(bool new_batch_normalization)
         batch_norm.features = 0;
 }
 
-void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
-                                   BackPropagation& back_propagation,
-                                   size_t layer) const noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    const TensorView& output = forward_views[Output][0];
-    TensorView& output_delta = delta_views[OutputDelta][0];
-
-    activation.apply_delta(output, output_delta);
-
-    if (batch_norm.active())
-        batch_norm.apply_delta(forward_views[ConvolutionView][0],
-                               forward_views[BatchNormMean][0],
-                               forward_views[BatchNormInverseVariance][0],
-                               output_delta);
-
-    TensorView empty_input_delta;
-    TensorView& input_delta_arg = is_first_layer ? empty_input_delta : delta_views[InputDelta][0];
-
-    convolution.apply_delta(forward_views[Input][0],
-                            output_delta,
-                            input_delta_arg);
-}
 void Convolutional::read_JSON_body(const Json* convolutional_layer_element)
 {
     kernel_height   = read_json_index(convolutional_layer_element, "KernelsHeight");

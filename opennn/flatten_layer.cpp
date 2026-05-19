@@ -15,34 +15,21 @@
 namespace opennn
 {
 
-Flatten::Flatten(const Shape& new_input_shape) : Layer()
+Flatten::Flatten(const Shape& new_input_shape)
+    : Layer(LayerType::Flatten)
 {
-    name = "Flatten";
-    layer_type = LayerType::Flatten;
+    operators = {&flat};
 
     set(new_input_shape);
-
-    flat.input_slots  = {Input};
-    flat.output_slots = {Output};
 }
+
 void Flatten::set(const Shape& new_input_shape)
 {
-    if (!new_input_shape.empty()
-        && new_input_shape.rank != 1 && new_input_shape.rank != 2 && new_input_shape.rank != 3)
-        throw runtime_error("Flatten layer supports input rank 1, 2 or 3 (got "
-                            + to_string(new_input_shape.rank) + ").");
+    check_rank(new_input_shape, {1, 2, 3}, "Flatten", "input");
 
     input_shape = new_input_shape;
 
     set_label("flatten_layer");
-}
-void Flatten::back_propagate(ForwardPropagation&,
-                             BackPropagation& back_propagation,
-                             size_t layer) const noexcept
-{
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    copy(delta_views[OutputDelta][0], delta_views[InputDelta][0]);
 }
 
 REGISTER(Layer, Flatten, "Flatten")

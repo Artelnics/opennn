@@ -92,8 +92,6 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     VectorMap gradient(back_propagation.gradient.as<float>(),
                        back_propagation.gradient.size_in_floats());
 
-    const Index parameters_number = parameters.size();
-
     VectorMap old_parameters = optimization_data.views[OldParameters].as_vector();
     VectorMap parameter_differences = optimization_data.views[ParameterDifferences].as_vector();
     VectorMap parameter_updates = optimization_data.views[ParameterUpdates].as_vector();
@@ -116,42 +114,33 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
     training_direction.noalias() = -(inverse_hessian.selfadjointView<Lower>() * gradient);
 
-    const float slope_value = gradient.dot(training_direction);
-    training_slope = slope_value;
+    training_slope = gradient.dot(training_direction);
 
-    if (slope_value >= 0.0f)
-    {
+    if (training_slope >= 0.0f)
         training_direction = -gradient;
-    }
 
     optimization_data.initial_learning_rate = (old_learning_rate > 0.0f)
         ? old_learning_rate
         : first_learning_rate;
 
-    const float current_loss_value = back_propagation.loss_value;
-
-    const pair<float, float> directional_point = calculate_directional_point(
+    tie(learning_rate, back_propagation.loss_value) = calculate_directional_point(
         batch,
         forward_propagation,
         back_propagation,
         optimization_data,
-        current_loss_value);
+        back_propagation.loss_value);
 
-    learning_rate = directional_point.first;
-    back_propagation.loss_value = directional_point.second;
-
-    if (std::abs(learning_rate) > 0.0f)
+    if (abs(learning_rate) > 0.0f)
     {
         parameter_updates = training_direction * learning_rate;
-        parameters += parameter_updates;
     }
     else
     {
-        parameter_updates = (gradient.array().abs() >= float(EPSILON))
-                                .select(-gradient.array().sign() * float(EPSILON), 0.0f);
-        parameters += parameter_updates;
+        parameter_updates = (gradient.array().abs() >= EPSILON)
+                                .select(-gradient.array().sign() * EPSILON, 0.0f);
         learning_rate = optimization_data.initial_learning_rate;
     }
+    parameters += parameter_updates;
 
     old_gradient = gradient;
     swap(optimization_data.views[InverseHessian], optimization_data.views[OldInverseHessian]);
@@ -206,7 +195,7 @@ TrainingResults QuasiNewtonMethod::train()
     training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices, true);
 
     Batch validation_batch(validation_samples_number, dataset);
-    validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices);
+    validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices, /*is_training=*/false);
 
     // Loss index
 
@@ -249,7 +238,7 @@ TrainingResults QuasiNewtonMethod::train()
 
     // Initialize OldParameters <- current parameters
     optimization_data.views[OldParameters].as_vector() =
-        VectorMap(neural_network->get_parameters_data(), neural_network->get_parameters_size());
+        VectorMap(neural_network->get_parameters_data(), parameters_number);
 
     // Initialize InverseHessian and OldInverseHessian to identity
     optimization_data.views[InverseHessian].as_matrix().setIdentity();
@@ -268,8 +257,8 @@ TrainingResults QuasiNewtonMethod::train()
         // Loss index
 
         loss->back_propagate(training_batch,
-                                   training_forward_propagation,
-                                   training_back_propagation);
+                             training_forward_propagation,
+                             training_back_propagation);
 
         results.training_error_history(epoch) = training_back_propagation.error;
 
@@ -299,7 +288,7 @@ TrainingResults QuasiNewtonMethod::train()
             results.validation_error_history(epoch) = validation_back_propagation.error;
 
             if (epoch != 0
-                && results.validation_error_history(epoch) > results.validation_error_history(epoch-1))
+                && validation_back_propagation.error > results.validation_error_history(epoch-1))
                 ++validation_failures;
         }
 
@@ -356,7 +345,7 @@ void QuasiNewtonMethod::to_JSON(JsonWriter& printer) const
     printer.open_element("QuasiNewtonMethod");
 
     add_json_field(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
-    write_common_xml(printer);
+    write_common_json(printer);
 
     printer.close_element();
 }
@@ -366,7 +355,7 @@ void QuasiNewtonMethod::from_JSON(const JsonDocument& document)
     const Json* root_element = get_json_root(document, "QuasiNewtonMethod");
 
     set_minimum_loss_decrease(read_json_type(root_element, "MinimumLossDecrease"));
-    read_common_xml(root_element);
+    read_common_json(root_element);
 }
 
 pair<float, float> QuasiNewtonMethod::calculate_directional_point(

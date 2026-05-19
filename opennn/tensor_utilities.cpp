@@ -98,7 +98,8 @@ void Backend::set_threads_number(int num_threads)
     thread_pool = make_unique<ThreadPool>(num_threads);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), num_threads);
 
-    Eigen::initParallel();
+    // Eigen::initParallel() removed: deprecated in Eigen 3.4+, threading is
+    // initialised lazily on first use.
     Eigen::setNbThreads(num_threads);
     omp_set_num_threads(num_threads);
     omp_set_dynamic(0);
@@ -114,6 +115,43 @@ ThreadPoolDevice* Backend::get_thread_pool_device()
 {
     return thread_pool_device.get();
 }
+
+#ifdef OPENNN_HAS_CUDA
+
+void copy_device_to_host_float(const void* device_src, Type src_dtype,
+                               Index element_count, float* host_dst,
+                               cudaStream_t stream)
+{
+    if (element_count == 0) return;
+
+    if (src_dtype == Type::FP32)
+    {
+        CHECK_CUDA(cudaMemcpyAsync(host_dst, device_src,
+                                   element_count * sizeof(float),
+                                   cudaMemcpyDeviceToHost, stream));
+        CHECK_CUDA(cudaStreamSynchronize(stream));
+        return;
+    }
+
+    if (src_dtype == Type::BF16)
+    {
+        vector<uint16_t> staging(static_cast<size_t>(element_count));
+        CHECK_CUDA(cudaMemcpyAsync(staging.data(), device_src,
+                                   element_count * sizeof(uint16_t),
+                                   cudaMemcpyDeviceToHost, stream));
+        CHECK_CUDA(cudaStreamSynchronize(stream));
+        for (Index i = 0; i < element_count; ++i)
+        {
+            const uint32_t bits = static_cast<uint32_t>(staging[size_t(i)]) << 16;
+            memcpy(&host_dst[i], &bits, sizeof(float));
+        }
+        return;
+    }
+
+    throw runtime_error("copy_device_to_host_float: unsupported dtype.");
+}
+
+#endif
 
 }
 

@@ -20,7 +20,7 @@ struct EnumMap
 
     const vector<Entry>& entries;
 
-    const string& to_string(Enum value) const
+    [[nodiscard]] const string& to_string(Enum value) const
     {
         for (const auto& [enum_value, name] : entries)
             if (enum_value == value)
@@ -28,15 +28,15 @@ struct EnumMap
         throw runtime_error("Unknown enum value");
     }
 
-    Enum from_string(const string& name) const
+    [[nodiscard]] Enum from_string(const string& name) const
     {
         for (const auto& [enum_value, entry_name] : entries)
             if (entry_name == name)
                 return enum_value;
-        throw runtime_error("Unknown enum string: " + name);
+        throw runtime_error(format("Unknown enum string: {}", name));
     }
 
-    Enum from_string(const string& name, Enum fallback) const
+    [[nodiscard]] Enum from_string(const string& name, Enum fallback) const
     {
         for (const auto& [enum_value, entry_name] : entries)
             if (entry_name == name)

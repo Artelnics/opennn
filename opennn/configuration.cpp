@@ -44,19 +44,22 @@ const Configuration::Resolved& Configuration::resolve_slow() const
 {
     Resolved resolved;
 
-    switch (device)
     {
-    case Device::Auto:
-        resolved.device = has_cuda_gpu() ? Device::CUDA : Device::CPU;
-        break;
-    case Device::CPU:
-        resolved.device = Device::CPU;
-        break;
-    case Device::CUDA:
-        if (!has_cuda_gpu())
-            throw runtime_error("Configuration: CUDA requested but no GPU detected.");
-        resolved.device = Device::CUDA;
-        break;
+        using enum Device;
+        switch (device)
+        {
+        case Auto:
+            resolved.device = has_cuda_gpu() ? CUDA : CPU;
+            break;
+        case CPU:
+            resolved.device = CPU;
+            break;
+        case CUDA:
+            if (!has_cuda_gpu())
+                throw runtime_error("Configuration: CUDA requested but no GPU detected.");
+            resolved.device = CUDA;
+            break;
+        }
     }
 
     const bool gpu = (resolved.device == Device::CUDA);
@@ -65,20 +68,21 @@ const Configuration::Resolved& Configuration::resolve_slow() const
 
     auto resolve_dtype = [&](Type requested, const char* role) -> Type
     {
+        using enum Type;
         switch (requested)
         {
-        case Type::Auto: return bf16_capable ? Type::BF16 : Type::FP32;
-        case Type::FP32: return Type::FP32;
-        case Type::BF16:
+        case Auto: return bf16_capable ? BF16 : FP32;
+        case FP32: return FP32;
+        case BF16:
             if (!gpu)
-                throw runtime_error(string("Configuration: BF16 ") + role + " requires CUDA.");
+                throw runtime_error(format("Configuration: BF16 {} requires CUDA.", role));
             if (!bf16_capable)
-                throw runtime_error(string("Configuration: BF16 ") + role + " requires CUDA compute capability >= 8.0 (Ampere+).");
-            return Type::BF16;
-        case Type::INT8:
-            throw runtime_error(string("Configuration: INT8 ") + role + " not yet supported (placeholder).");
+                throw runtime_error(format("Configuration: BF16 {} requires CUDA compute capability >= 8.0 (Ampere+).", role));
+            return BF16;
+        case INT8:
+            throw runtime_error(format("Configuration: INT8 {} not yet supported (placeholder).", role));
         }
-        return Type::FP32;
+        return FP32;
     };
 
     resolved.training_type = resolve_dtype(training_type, "training");

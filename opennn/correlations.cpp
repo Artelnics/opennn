@@ -8,7 +8,7 @@
 
 #include "tensor_utilities.h"
 #include "correlations.h"
-#include "dataset.h"
+#include "tabular_dataset.h"
 #include "scaling_layer.h"
 #include "dense_layer.h"
 #include "neural_network.h"
@@ -81,10 +81,7 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
     if (x_columns == 1 && y_columns != 1)
         return eta_squared_correlation(x.col(0), y);
 
-    if (x_columns != 1 && y_columns != 1)
-        return logistic_correlation(x, y);
-
-    throw runtime_error("Correlations Exception: Unknown case.");
+    return logistic_correlation(x, y);
 }
 
 Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
@@ -100,16 +97,12 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
         const auto x_vector = x.col(0);
         const auto y_vector = y.col(0);
 
-        if (!x_binary && !y_binary)
+        if (x_binary == y_binary)
             return linear_correlation_spearman(x_vector, y_vector);
 
-        if (y_binary && !x_binary)
-            return logistic_correlation_spearman(x_vector, y_vector);
-
-        if (x_binary && !y_binary)
-            return logistic_correlation_spearman(y_vector, x_vector);
-
-        return linear_correlation_spearman(x_vector, y_vector);
+        return x_binary
+            ? logistic_correlation_spearman(y_vector, x_vector)
+            : logistic_correlation_spearman(x_vector, y_vector);
     }
 
     if (x_columns == 1 && y_columns != 1)
@@ -118,10 +111,7 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
     if (x_columns != 1 && y_columns == 1)
         return logistic_correlation(x, VectorR(y.col(0)));
 
-    if (x_columns != 1 && y_columns != 1)
-        return logistic_correlation(x, y);
-
-    throw runtime_error("Correlations Exception: Unknown case.");
+    return logistic_correlation(x, y);
 }
 
 VectorR cross_correlations(const VectorR& x,
@@ -147,7 +137,7 @@ Correlation exponential_correlation(const VectorR& x, const VectorR& y)
 
     if ((!y.array().isNaN() && y.array() <= 0.0f).any())
     {
-        exponential_correlation.r = static_cast<float>(NAN);
+        exponential_correlation.r = NAN;
         return exponential_correlation;
     }
 
@@ -185,7 +175,7 @@ Correlation linear_correlation(const VectorR& x,
 
     const Index sample_count = x_filter.size();
 
-    if (x_filter.size() == 0)
+    if (sample_count == 0)
         return Correlation();
 
     const auto x_double = x_filter.cast<double>();
@@ -197,16 +187,21 @@ Correlation linear_correlation(const VectorR& x,
     const double s_yy = y_double.squaredNorm();
     const double s_xy = x_double.dot(y_double);
 
-    const double denominator = sqrt((double(sample_count) * s_xx - s_x * s_x) * (double(sample_count) * s_yy - s_y * s_y));
+    const double n = double(sample_count);
+    const double sx_term = n * s_xx - s_x * s_x;
+    const double sy_term = n * s_yy - s_y * s_y;
+    const double xy_term = n * s_xy - s_x * s_y;
+
+    const double denominator = sqrt(sx_term * sy_term);
 
     if (denominator < static_cast<double>(EPSILON))
         return Correlation();
 
     Correlation linear_correlation;
     linear_correlation.form = Correlation::Form::Identity;
-    linear_correlation.a = static_cast<float>((s_y * s_xx - s_x * s_xy) / (double(sample_count) * s_xx - s_x * s_x));
-    linear_correlation.b = static_cast<float>((double(sample_count) * s_xy - s_x * s_y) / (double(sample_count) * s_xx - s_x * s_x));
-    linear_correlation.r = static_cast<float>((double(sample_count) * s_xy - s_x * s_y) / denominator);
+    linear_correlation.a = static_cast<float>((s_y * s_xx - s_x * s_xy) / sx_term);
+    linear_correlation.b = static_cast<float>(xy_term / sx_term);
+    linear_correlation.r = static_cast<float>(xy_term / denominator);
 
     const float z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
 
@@ -223,17 +218,17 @@ float r_correlation_to_z_correlation(const float r_correlation)
 {
     const float r_clamped = clamp(r_correlation, -0.9999f, 0.9999f);
 
-    return float(0.5 * log((1 + r_clamped) / (1 - r_clamped)));
+    return 0.5f * log((1 + r_clamped) / (1 - r_clamped));
 }
 
-float z_correlation_to_r_correlation (const float z_correlation)
+float z_correlation_to_r_correlation(const float z_correlation)
 {
     return tanh(z_correlation);
 }
 
 pair<float, float> confidence_interval_z_correlation(const float z_correlation, Index sample_count)
 {
-    const float margin = 1.959964f * float(1/sqrt(sample_count - 3));
+    const float margin = 1.959964f / float(sqrt(sample_count - 3));
 
     return { z_correlation - margin, z_correlation + margin };
 }
@@ -260,7 +255,7 @@ VectorR calculate_spearman_ranks(const VectorR& x)
         while (j + 1 < size && x(sorted_indices(j + 1)) == x(sorted_indices(i)))
             ++j;
 
-        const float average_rank = (static_cast<float>(i + 1) + static_cast<float>(j + 1)) / 2.0f;
+        const float average_rank = float(i + j + 2) / 2.0f;
 
         for (Index k = i; k <= j; ++k)
             ranks(sorted_indices(k)) = average_rank;
@@ -308,7 +303,7 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     data.col(0) = input;
     data.col(1) = target;
 
-    Dataset dataset(input.size(), {1}, {1});
+    TabularDataset dataset(input.size(), {1}, {1});
     dataset.set_data(data);
     dataset.set_sample_roles("Training");
     dataset.set_variable_scalers(scaler);
@@ -415,27 +410,24 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
         cout << "Warning: Y variable has too many categories." << "\n";
 
         correlation.r = NAN;
-
         return correlation;
     }
 
     if (x_filter.size() == 0)
     {
         correlation.r = NAN;
-
         return correlation;
     }
 
     MatrixR data(x_filter.rows(), 1 + y_filter.cols());
     data << x_filter, y_filter;
 
-    vector<Index> input_columns_indices(1);
-    input_columns_indices[0] = 0.0f;
+    vector<Index> input_columns_indices = {0};
 
     vector<Index> target_columns_indices(y_filter.cols());
     iota(target_columns_indices.begin(), target_columns_indices.end(), 1);
 
-    Dataset dataset(x_filter.size(), {1}, {y_filter.cols()});
+    TabularDataset dataset(x_filter.size(), {1}, {y_filter.cols()});
 
     dataset.set_data(data);
     dataset.set_variable_indices(input_columns_indices, target_columns_indices);
@@ -443,16 +435,17 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
     dataset.set_default_variable_scalers();
 
     dataset.set_sample_roles("Training");
-    dataset.set_shape("Input", {dataset.get_features_number("Input")});
-    dataset.set_shape("Target", {dataset.get_features_number("Target")});
 
     const Index input_features_number = dataset.get_features_number("Input");
     const Index target_features_number = dataset.get_features_number("Target");
 
+    dataset.set_shape("Input", { input_features_number });
+    dataset.set_shape("Target", { target_features_number });
+
     ClassificationNetwork neural_network({ input_features_number }, {1}, {target_features_number});
 
     auto* dense_2d = dynamic_cast<Dense*>(neural_network.get_first(LayerType::Dense));
-    if (!dense_2d) throw runtime_error("Expected Dense layer.");
+    throw_if(!dense_2d, "Expected Dense layer.");
 
     dense_2d->set_activation_function("Softmax");
 
@@ -502,26 +495,25 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 
     const auto [x_filter, y_filter] = filter_missing_values(x, y);
 
-    if (x_filter.rows() == y_filter.rows() && x_filter.cols() == y_filter.cols())
-        if ((x_filter.array() == y_filter.array()).all())
-        {
-            correlation.r = 1.0f;
-            return correlation;
-        }
+    if (x_filter.rows() == y_filter.rows()
+        && x_filter.cols() == y_filter.cols()
+        && (x_filter.array() == y_filter.array()).all())
+    {
+        correlation.r = 1.0f;
+        return correlation;
+    }
 
     if (x.cols() > 50 || y.cols() > 50)
     {
         cout << "Warning: One variable has too many categories." << "\n";
 
         correlation.r = NAN;
-
         return correlation;
     }
 
     if (x_filter.size() == 0 && y_filter.size() == 0)
     {
         correlation.r = NAN;
-
         return correlation;
     }
 
@@ -535,7 +527,7 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
     vector<Index> target_columns_indices(y_filter.cols());
     iota(target_columns_indices.begin(), target_columns_indices.end(), x_filter.cols());
 
-    Dataset dataset(x_filter.rows(), { x_filter.cols() }, { y_filter.cols() });
+    TabularDataset dataset(x_filter.rows(), { x_filter.cols() }, { y_filter.cols() });
 
     dataset.set_data(data);
 
@@ -549,7 +541,7 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
     ClassificationNetwork neural_network({input_features_number }, {}, {target_features_number});
 
     auto* dense_2d = dynamic_cast<Dense*>(neural_network.get_first(LayerType::Dense));
-    if (!dense_2d) throw runtime_error("Expected Dense layer.");
+    throw_if(!dense_2d, "Expected Dense layer.");
 
     dense_2d->set_activation_function("Softmax");
 
@@ -667,9 +659,9 @@ Correlation eta_squared_correlation(const VectorR& continuous,
     const Index sample_count = x_filter.size();
     const Index n_cats     = y_filter.cols();
 
-    const double grand_mean = x_filter.cast<double>().mean();
-
-    const double ss_total = (x_filter.cast<double>().array() - grand_mean).square().sum();
+    const auto x_double = x_filter.cast<double>();
+    const double grand_mean = x_double.mean();
+    const double ss_total = (x_double.array() - grand_mean).square().sum();
 
     if (ss_total <= 0)
     {
@@ -682,7 +674,7 @@ Correlation eta_squared_correlation(const VectorR& continuous,
     for (Index cat = 0; cat < n_cats; ++cat)
     {
         const auto mask = (y_filter.col(cat).array() > 0.5f);
-        const double group_sum = mask.select(x_filter.cast<double>().array(), 0.0).sum();
+        const double group_sum = mask.select(x_double.array(), 0.0).sum();
         const Index group_count = mask.count();
 
         if (group_count == 0) continue;
@@ -710,7 +702,7 @@ Correlation power_correlation(const VectorR& x, const VectorR& y)
 
     if ((x.array() <= 0.0f).any() || (y.array() <= 0.0f).any())
     {
-        power_correlation.r = static_cast<float>(NAN);
+        power_correlation.r = NAN;
         return power_correlation;
     }
 
@@ -735,13 +727,14 @@ void Correlation::set_perfect()
 
 static const char* form_to_string(Correlation::Form form)
 {
+    using enum Correlation::Form;
     switch (form)
     {
-    case Correlation::Form::Identity:      return "linear";
-    case Correlation::Form::Sigmoid:     return "logistic";
-    case Correlation::Form::Logarithmic: return "logarithmic";
-    case Correlation::Form::Exponential: return "exponential";
-    case Correlation::Form::Power:       return "power";
+    case Identity:      return "linear";
+    case Sigmoid:     return "logistic";
+    case Logarithmic: return "logarithmic";
+    case Exponential: return "exponential";
+    case Power:       return "power";
     default:                             return "";
     }
 }

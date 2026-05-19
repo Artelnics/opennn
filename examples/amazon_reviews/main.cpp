@@ -25,7 +25,7 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-        Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::BF16, Type::FP32);
 
         // Settings
 

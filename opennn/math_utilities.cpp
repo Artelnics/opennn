@@ -17,7 +17,7 @@ namespace opennn
 
 void pad(const TensorView& input, TensorView& output)
 {
-    if (Configuration::instance().is_gpu())
+    if (is_gpu())
         throw runtime_error("pad: GPU implementation not available.");
 
     const TensorMap4 input_map = input.as_tensor<4>();
@@ -190,6 +190,7 @@ void unscale(const TensorView& input,
                     min_range, max_range, output);
         return;
     });
+    
     unscale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
                 min_range, max_range, output);
 }
@@ -307,11 +308,9 @@ void max_pooling_3d_forward_cpu(const TensorView& input, TensorView& output, Ten
             for (Index feature_index = 0; feature_index < features; ++feature_index)
             {
                 const float value = inputs(batch_index, step, feature_index);
-                if (value > outputs(batch_index, feature_index))
-                {
-                    outputs(batch_index, feature_index) = value;
-                    if (is_training) max_indices(batch_index, feature_index) = to_type(step);
-                }
+                if (value <= outputs(batch_index, feature_index)) continue;
+                outputs(batch_index, feature_index) = value;
+                if (is_training) max_indices(batch_index, feature_index) = to_type(step);
             }
     }
 }
@@ -338,10 +337,8 @@ void average_pooling_3d_forward_cpu(const TensorView& input, TensorView& output)
 
         const Index valid_count = ((seq_matrix.array() != 0.0f).rowwise().any()).count();
 
-        if (valid_count > 0)
-            outputs.row(batch_index) = seq_matrix.colwise().sum() / to_type(valid_count);
-        else
-            outputs.row(batch_index).setZero();
+        if (valid_count == 0) { outputs.row(batch_index).setZero(); continue; }
+        outputs.row(batch_index) = seq_matrix.colwise().sum() / to_type(valid_count);
     }
 }
 
@@ -550,12 +547,21 @@ void multiply_gpu(const TensorView& input_a, bool transpose_a,
                   TensorView& output,
                   float alpha, float beta)
 {
-    const size_t rank = input_a.get_rank();
+    const size_t rank_a = input_a.get_rank();
+    const size_t rank_b = input_b.get_rank();
 
-    const int rows_a = to_int(input_a.shape[rank - 2]);
-    const int cols_a = to_int(input_a.shape[rank - 1]);
-    const int rows_b = to_int(input_b.shape[rank - 2]);
-    const int cols_b = to_int(input_b.shape[rank - 1]);
+    int rows_a = to_int(input_a.shape[rank_a - 2]);
+    int cols_a = to_int(input_a.shape[rank_a - 1]);
+    const int rows_b = to_int(input_b.shape[rank_b - 2]);
+    const int cols_b = to_int(input_b.shape[rank_b - 1]);
+
+    // Rank-mismatched broadcast (e.g. {B,Q,E} @ {E,E}^T from CombinationOp::apply_delta_gpu):
+    // flatten input_a to 2D and do a single GEMM with no batching. Mirrors multiply_cpu's
+    // use of as_flat_matrix() for these calls.
+    if (rank_b == 2 && rank_a > 2)
+    {
+        rows_a = to_int(input_a.size() / cols_a);
+    }
 
     const int output_columns = transpose_b ? rows_b : cols_b;
     const int output_rows = transpose_a ? cols_a : rows_a;
@@ -567,7 +573,7 @@ void multiply_gpu(const TensorView& input_a, bool transpose_a,
     const int batch_count = to_int(input_a.size() / (rows_a * cols_a));
     const long long stride_a = rows_a * cols_a;
     const long long stride_b = rows_b * cols_b;
-    const long long stride_output = output.shape[rank - 2] * output.shape[rank - 1];
+    const long long stride_output = output.shape[output.get_rank() - 2] * output.shape[output.get_rank() - 1];
 
     if (batch_count == 1)
         gemm_cuda(operation_b, operation_a,

@@ -8,6 +8,7 @@
 
 #include "registry.h"
 #include "dataset.h"
+#include "tabular_dataset.h"
 #include "time_series_dataset.h"
 #include "scaling_layer.h"
 #include "training_strategy.h"
@@ -58,8 +59,7 @@ void GeneticAlgorithm::set_default()
 
     validation_errors.resize(individuals_number);
 
-    fitness.resize(individuals_number);
-    fitness.setConstant(-1.0f);
+    fitness = VectorR::Constant(individuals_number, -1.0f);
 
     selected.resize(individuals_number);
 
@@ -89,8 +89,7 @@ void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number
     individual_parameters.resize(new_individuals_number);
     training_errors.resize(new_individuals_number);
     validation_errors.resize(new_individuals_number);
-    fitness.resize(new_individuals_number);
-    fitness.setConstant(-1.0f);
+    fitness = VectorR::Constant(new_individuals_number, -1.0f);
     selected.resize(new_individuals_number);
 
     elitism_size = min(elitism_size, new_individuals_number);
@@ -169,8 +168,6 @@ void GeneticAlgorithm::initialize_population_correlations()
 
 void GeneticAlgorithm::evaluate_population()
 {
-    TrainingResults training_results;
-
     Loss* loss = training_strategy->get_loss();
     Dataset* dataset = training_strategy->get_dataset();
     NeuralNetwork* neural_network = loss->get_neural_network();
@@ -194,7 +191,7 @@ void GeneticAlgorithm::evaluate_population()
 
         neural_network->set_parameters_random();
 
-        training_results = training_strategy->train();
+        const TrainingResults training_results = training_strategy->train();
 
         individual_parameters(i) = VectorMap(neural_network->get_parameters_data(),
                                               neural_network->get_parameters_size());
@@ -274,13 +271,18 @@ VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& pare
     difference.reserve(genes_number);
 
     for (Index i = 0; i < genes_number; ++i)
-        if (parent_1(i) && parent_2(i))
-            intersection.push_back(i);
-        else if (parent_1(i) != parent_2(i))
-            difference.push_back(i);
+    {
+        const bool p1 = parent_1(i);
+        const bool p2 = parent_2(i);
 
-    for (const Index idx : intersection)
-        descendent(idx) = true;
+        if (p1 && p2)
+        {
+            intersection.push_back(i);
+            descendent(i) = true;
+        }
+        else if (p1 != p2)
+            difference.push_back(i);
+    }
 
     const Index current_size = intersection.size();
 
@@ -300,12 +302,13 @@ VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& pare
     shuffle_vector(difference);
     const Index genes_to_add = target_size - current_size;
 
-    for (Index i = 0; i < genes_to_add && i < difference.size(); ++i)
+    const size_t add_count = genes_to_add > 0
+        ? min(static_cast<size_t>(genes_to_add), difference.size())
+        : size_t(0);
+    for (size_t i = 0; i < add_count; ++i)
         descendent(difference[i]) = true;
 
-    const Index final_count = descendent.count();
-
-    if (final_count < minimum_inputs_number)
+    if (const Index final_count = descendent.count(); final_count < minimum_inputs_number)
     {
         vector<Index> never_true_indices;
         never_true_indices.reserve(genes_number);
@@ -317,7 +320,10 @@ VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& pare
 
         const Index genes_needed = minimum_inputs_number - final_count;
 
-        for (Index i = 0; i < genes_needed && i < never_true_indices.size(); ++i)
+        const size_t fill_count = genes_needed > 0
+            ? min(static_cast<size_t>(genes_needed), never_true_indices.size())
+            : size_t(0);
+        for (size_t i = 0; i < fill_count; ++i)
             descendent(never_true_indices[i]) = true;
     }
 
@@ -334,23 +340,21 @@ void GeneticAlgorithm::perform_crossover()
     MatrixB new_population(individuals_number, genes_number);
 
     // Copy elite individuals unchanged (sorted by fitness, highest first)
-    vector<Index> elite_indices;
     if (elitism_size > 0)
     {
+        const Index elite_count = min(elitism_size, individuals_number);
+
         vector<pair<float, Index>> fitness_indexed(individuals_number);
         for (Index i = 0; i < individuals_number; ++i)
             fitness_indexed[i] = {fitness(i), i};
 
         partial_sort(fitness_indexed.begin(),
-                     fitness_indexed.begin() + min(elitism_size, individuals_number),
+                     fitness_indexed.begin() + elite_count,
                      fitness_indexed.end(),
                      [](const auto& a, const auto& b) { return a.first > b.first; });
 
-        for (Index i = 0; i < min(elitism_size, individuals_number); ++i)
-        {
+        for (Index i = 0; i < elite_count; ++i)
             new_population.row(i) = population.row(fitness_indexed[i].second);
-            elite_indices.push_back(fitness_indexed[i].second);
-        }
     }
 
     // Fill remaining slots with crossover children
@@ -392,7 +396,7 @@ void GeneticAlgorithm::perform_mutation()
         shuffle_vector(to_true_mutations);
         shuffle_vector(to_false_mutations);
 
-        const Index swap_count = std::min(to_true_mutations.size(), to_false_mutations.size());
+        const Index swap_count = min(to_true_mutations.size(), to_false_mutations.size());
 
         for (Index k = 0; k < swap_count; ++k)
         {
@@ -400,22 +404,16 @@ void GeneticAlgorithm::perform_mutation()
             individual(to_false_mutations[k]) = false;
         }
 
-        for (size_t k = swap_count; k < to_true_mutations.size(); ++k)
+        for (size_t k = swap_count; k < to_true_mutations.size() && current_inputs_number < maximum_inputs_number; ++k)
         {
-            if (current_inputs_number < maximum_inputs_number)
-            {
-                individual(to_true_mutations[k]) = true;
-                ++current_inputs_number;
-            }
+            individual(to_true_mutations[k]) = true;
+            ++current_inputs_number;
         }
 
-        for (size_t k = swap_count; k < to_false_mutations.size(); ++k)
+        for (size_t k = swap_count; k < to_false_mutations.size() && current_inputs_number > minimum_inputs_number; ++k)
         {
-            if (current_inputs_number > minimum_inputs_number)
-            {
-                individual(to_false_mutations[k]) = false;
-                current_inputs_number--;
-            }
+            individual(to_false_mutations[k]) = false;
+            current_inputs_number--;
         }
 
         population.row(i) = individual;
@@ -453,10 +451,8 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    Index optimal_individual_index;
     time_t beginning_time, current_time;
     float elapsed_time = 0.0f;
-    vector<Index> best_input_indices;
     Index best_generation = 0;
 
     time(&beginning_time);
@@ -471,7 +467,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         // Optimal individual in population
 
-        optimal_individual_index = minimal_index(validation_errors);
+        const Index optimal_individual_index = minimal_index(validation_errors);
 
         const float optimal_training_error = training_errors(optimal_individual_index);
         const float optimal_validation_error = validation_errors(optimal_individual_index);
@@ -489,7 +485,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
             input_selection_results.optimal_inputs = population.row(optimal_individual_index);
 
-            best_input_indices = get_true_indices(input_selection_results.optimal_inputs);
+            const vector<Index> best_input_indices = get_true_indices(input_selection_results.optimal_inputs);
 
             dataset->set_variable_indices(best_input_indices, original_target_variable_indices);
 
@@ -564,7 +560,8 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     dataset->set_variable_indices(optimal_variable_indices, original_target_variable_indices);
 
-    const vector<string> input_variable_scalers = dataset->get_feature_scalers("Input");
+    auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
+    const vector<string> input_variable_scalers = tabular_dataset ? tabular_dataset->get_feature_scalers("Input") : vector<string>{};
 
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_feature_descriptives("Input");
 
@@ -610,26 +607,28 @@ void GeneticAlgorithm::configure_neural_network_inputs(NeuralNetwork* neural_net
 {
     const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
+    const Shape input_shape = time_series_dataset
+        ? Shape{ time_series_dataset->get_past_time_steps(), input_features_number }
+        : Shape{ input_features_number };
+    neural_network->set_input_shape(input_shape);
+    dataset->set_shape("Input", input_shape);
+
     if (time_series_dataset)
     {
         const Index past_time_steps = time_series_dataset->get_past_time_steps();
-        neural_network->set_input_shape({ past_time_steps, input_features_number });
-        dataset->set_shape("Input", { past_time_steps, input_features_number });
+        const vector<string> base_names = dataset->get_variable_names("Input");
 
         vector<string> final_feature_names;
-        const vector<string> base_names = dataset->get_variable_names("Input");
         final_feature_names.reserve(base_names.size() * past_time_steps);
 
         for (const string& base_name : base_names)
             for (Index j = 0; j < past_time_steps; ++j)
-                final_feature_names.push_back((base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j));
+                final_feature_names.push_back(format("{}_lag{}", base_name.empty() ? "variable" : base_name, j));
 
         neural_network->set_input_names(final_feature_names);
     }
     else
     {
-        neural_network->set_input_shape({input_features_number});
-        dataset->set_shape("Input", { input_features_number });
         neural_network->set_input_names(dataset->get_feature_names("Input"));
     }
 

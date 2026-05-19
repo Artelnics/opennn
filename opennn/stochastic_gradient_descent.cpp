@@ -34,6 +34,7 @@ void StochasticGradientDescent::set_default()
     initial_decay = 0.001f;
     momentum = 0.0f;
     nesterov = false;
+    batch_size = 0;
 
     // Stopping criteria
 
@@ -82,23 +83,34 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
+    if (momentum > 0.0f && optimization_data.views.empty())
+    {
+        const Index parameters_number = neural_network->get_parameters_size();
+        const Device device = current_device();
+        optimization_data.set({Shape{parameters_number}}, device);
+    }
+
 #ifdef OPENNN_HAS_CUDA
-    if (Configuration::instance().is_gpu())
+    if (is_gpu())
     {
         const Index parameters_number = neural_network->get_parameters_size();
 
+        float* const velocity_ptr = optimization_data.views.empty()
+            ? nullptr
+            : optimization_data.views[Velocity].as<float>();
+
+        // BF16 mirror (if allocated) is refreshed inside the same kernel —
+        // saves a separate FP32→BF16 cast pass over the whole parameter set.
         sgd_update_cuda(
             parameters_number,
             neural_network->get_parameters_data(),
-            optimization_data.views[ParameterUpdate].as<float>(),
+            velocity_ptr,
             back_propagation.gradient.as<float>(),
             current_learning_rate,
             momentum,
-            nesterov);
+            nesterov,
+            neural_network->get_parameters_bf16_data());
 
-        // Refresh the BF16 working copy from the freshly-updated FP32 master
-        // so the next forward sees current weights. No-op when the flag is off.
-        neural_network->cast_parameters_to_bf16();
         return;
     }
 #endif
@@ -109,11 +121,6 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     VectorMap gradient(back_propagation.gradient.as<float>(),
                        back_propagation.gradient.size_in_floats());
 
-    VectorMap parameter_updates(optimization_data.views[ParameterUpdate].as<float>(),
-                                optimization_data.views[ParameterUpdate].size());
-    VectorMap last_parameter_updates(optimization_data.views[LastParameterUpdate].as<float>(),
-                                     optimization_data.views[LastParameterUpdate].size());
-
     const Index parameters_size = parameters.size();
 
     if (momentum <= 0.0f)
@@ -121,21 +128,21 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         #pragma omp parallel for
         for (Index i = 0; i < parameters_size; ++i)
         {
-            const float lr_g = current_learning_rate * gradient(i);
-            parameter_updates(i) = -lr_g;
-            parameters(i) -= lr_g;
+            parameters(i) -= current_learning_rate * gradient(i);
         }
     }
     else
     {
+        VectorMap velocity(optimization_data.views[Velocity].as<float>(),
+                           optimization_data.views[Velocity].size());
+
         #pragma omp parallel for
         for (Index i = 0; i < parameters_size; ++i)
         {
             const float lr_g = current_learning_rate * gradient(i);
-            const float velocity = momentum * last_parameter_updates(i) - lr_g;
-            parameter_updates(i) = velocity;
-            last_parameter_updates(i) = velocity;
-            parameters(i) += nesterov ? momentum * velocity - lr_g : velocity;
+            const float v_new = momentum * velocity(i) - lr_g;
+            velocity(i) = v_new;
+            parameters(i) += nesterov ? momentum * v_new - lr_g : v_new;
         }
     }
 }
@@ -144,10 +151,10 @@ TrainingResults StochasticGradientDescent::train()
 {
     TrainingResults results(maximum_epochs + 1);
 
-    const bool is_gpu = Configuration::instance().is_gpu();
+    const bool on_gpu = is_gpu();
 
     if (display) cout << "Training with stochastic gradient descent (SGD)"
-                     << (is_gpu ? " CUDA" : "") << "...\n";
+                     << (on_gpu ? " CUDA" : "") << "...\n";
 
     // Dataset
 
@@ -165,17 +172,23 @@ TrainingResults StochasticGradientDescent::train()
     const Index training_samples_number = dataset->get_samples_number("Training");
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
-    const Index training_batch_size = min(training_samples_number, batch_size);
+    const Index effective_batch_size = batch_size <= 0
+        ? get_maximum_batch_size()
+        : batch_size;
 
-    // Cap validation_batch_size by training_batch_size so validation can reuse
-    // the training ForwardPropagation buffer when sample counts allow it.
-    const Index validation_batch_size = (validation_samples_number != 0)
-        ? min(validation_samples_number, training_batch_size)
-        : 0;
-
-    const Index training_batches_number = (training_batch_size != 0)
+    const Index training_batch_size = (effective_batch_size <= 0 || effective_batch_size > training_samples_number)
+        ? training_samples_number
+        : effective_batch_size;
+    const Index validation_batch_size = (effective_batch_size <= 0 || effective_batch_size > validation_samples_number)
+        ? validation_samples_number
+        : effective_batch_size;
+    const Index training_batches_number = (training_batch_size > 0)
         ? training_samples_number / training_batch_size
         : 0;
+
+    warn_dropped_samples(training_batch_size, training_samples_number, "training");
+    if (has_validation)
+        warn_dropped_samples(validation_batch_size, validation_samples_number, "validation");
 
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> validation_batches;
@@ -190,10 +203,9 @@ TrainingResults StochasticGradientDescent::train()
     // Batch pool: minimum 2 for producer/consumer double-buffer (avoids worker-main
     // deadlock on prefetch_before_loop + pop_next). GPU uses 3 for triple-buffer H2D.
 
-    const int pool_size = is_gpu ? 3 : 2;
+    const int pool_size = max(num_workers + 1, on_gpu ? 3 : 2);
 
     ThreadSafeQueue<Batch*> empty_training_queue;
-    ThreadSafeQueue<Batch*> ready_training_queue;
     vector<unique_ptr<Batch>> training_batch_pool;
 
     for (int i = 0; i < pool_size; ++i)
@@ -203,10 +215,11 @@ TrainingResults StochasticGradientDescent::train()
     }
 
     ThreadSafeQueue<Batch*> empty_validation_queue;
-    ThreadSafeQueue<Batch*> ready_validation_queue;
     vector<unique_ptr<Batch>> validation_batch_pool;
 
-    if (has_validation)
+    const bool share_batch_pool = has_validation && validation_batch_size == training_batch_size;
+
+    if (has_validation && !share_batch_pool)
     {
         for (int i = 0; i < pool_size; ++i)
         {
@@ -214,6 +227,8 @@ TrainingResults StochasticGradientDescent::train()
             empty_validation_queue.push(validation_batch_pool.back().get());
         }
     }
+
+    ThreadSafeQueue<Batch*>& validation_empty_q = share_batch_pool ? empty_training_queue : empty_validation_queue;
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
 
     loss->set_normalization_coefficient();
@@ -222,7 +237,7 @@ TrainingResults StochasticGradientDescent::train()
 
     // Reuse the training FP for validation iff batch sizes match exactly.
     // Otherwise allocate a separate FP — over-sized views would corrupt loss
-    // kernels (input.shape[0] read directly), BatchNorm running stats, and
+    // kernels (input.shape[0] read directly), BatchNormOp running stats, and
     // MultiHeadAttention reshapes.
     unique_ptr<ForwardPropagation> validation_forward_propagation;
 
@@ -237,13 +252,7 @@ TrainingResults StochasticGradientDescent::train()
 
     // Optimization data
 
-    const Index parameters_number = loss->get_neural_network()->get_parameters_size();
-
-    const Device device = Configuration::instance().is_gpu() ? Device::CUDA : Device::CPU;
-
     OptimizerData optimization_data;
-    optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, device);
-
     optimization_data.iteration = 1;
 
     float training_error = 0.0f;
@@ -252,7 +261,10 @@ TrainingResults StochasticGradientDescent::train()
     float validation_accuracy = 0.0f;
     Index validation_failures = 0;
 
-    const bool is_classification_model = (loss->get_error() == Loss::Error::CrossEntropy3d);
+    // True for sequence/token-level cross-entropy losses (translation, language
+    // modelling, chat). Gates the per-token metrics (accuracy + perplexity)
+    // and the per-batch token-count plumbing in train_epoch / evaluate_epoch.
+    const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
     bool stop_training = false;
     const bool shuffle = !neural_network->has(LayerType::Recurrent);
@@ -276,16 +288,16 @@ TrainingResults StochasticGradientDescent::train()
 
         current_learning_rate = initial_learning_rate / (1.0f + float(epoch) * initial_decay);
 
-        const EpochStats train_stats = train_epoch(is_classification_model,
+        const EpochStats train_stats = train_epoch(is_token_cross_entropy,
                                                    training_forward_propagation,
                                                    training_back_propagation,
                                                    empty_training_queue,
-                                                   ready_training_queue,
                                                    training_batches,
                                                    input_feature_indices,
                                                    decoder_feature_indices,
                                                    target_feature_indices,
-                                                   training_update);
+                                                   training_update,
+                                                   should_display(epoch));
 
         training_error = train_stats.error;
         training_accuracy = train_stats.accuracy;
@@ -295,10 +307,9 @@ TrainingResults StochasticGradientDescent::train()
         {
             dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
 
-            const EpochStats val_stats = evaluate_epoch(is_classification_model,
+            const EpochStats val_stats = evaluate_epoch(is_token_cross_entropy,
                                                         *validation_fp,
-                                                        empty_validation_queue,
-                                                        ready_validation_queue,
+                                                        validation_empty_q,
                                                         validation_batches,
                                                         input_feature_indices,
                                                         decoder_feature_indices,
@@ -308,7 +319,7 @@ TrainingResults StochasticGradientDescent::train()
             validation_accuracy = val_stats.accuracy;
             results.validation_error_history(epoch) = validation_error;
 
-            if (epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
+            if (epoch != 0 && validation_error > results.validation_error_history(epoch - 1))
                 ++validation_failures;
         }
 
@@ -317,9 +328,11 @@ TrainingResults StochasticGradientDescent::train()
         if (should_display(epoch))
         {
             cout << "Training error: " << training_error << "\n";
-            if (is_classification_model) cout << "Training accuracy: " << training_accuracy << "\n";
+            if (is_token_cross_entropy) cout << "Training perplexity: " << exp(training_error) << "\n";
+            if (is_token_cross_entropy) cout << "Training accuracy: " << training_accuracy << "\n";
             if (has_validation) cout << "Validation error: " << validation_error << "\n";
-            if (has_validation && is_classification_model) cout << "Validation accuracy: " << validation_accuracy << "\n";
+            if (has_validation && is_token_cross_entropy) cout << "Validation perplexity: " << exp(validation_error) << "\n";
+            if (has_validation && is_token_cross_entropy) cout << "Validation accuracy: " << validation_accuracy << "\n";
             cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
 
@@ -355,7 +368,7 @@ void StochasticGradientDescent::to_JSON(JsonWriter& printer) const
         {"BatchSize", to_string(batch_size)},
         {"ApplyMomentum", to_string(momentum > 0.0f)}
     });
-    write_common_xml(printer);
+    write_common_json(printer);
 
     printer.close_element();
 }
@@ -369,7 +382,7 @@ void StochasticGradientDescent::from_JSON(const JsonDocument& document)
     const bool apply_momentum = read_json_bool(root_element, "ApplyMomentum");
     set_momentum(apply_momentum ? 0.9f : 0.0f);
 
-    read_common_xml(root_element);
+    read_common_json(root_element);
 }
 
 REGISTER(Optimizer, StochasticGradientDescent, "StochasticGradientDescent");

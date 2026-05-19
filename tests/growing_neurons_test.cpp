@@ -2,6 +2,7 @@
 
 #include "../opennn/training_strategy.h"
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/growing_neurons.h"
@@ -54,7 +55,7 @@ TEST(GrowingNeuronsTest, NeuronsSelection)
         0.9f, 0.0f,
         1.0f, 0.0f;
 
-    Dataset dataset(21, {1}, {1});
+    TabularDataset dataset(21, {1}, {1});
     dataset.set_data(data);
     dataset.split_samples_random();
 
@@ -96,7 +97,7 @@ TEST(GrowingNeuronsTest, PerformNeuronsSelection)
         0.9f,  0.9f,
         1.0f,  1.0f;
 
-    Dataset dataset(21, {1}, {1});
+    TabularDataset dataset(21, {1}, {1});
     dataset.set_data(data);
     dataset.split_samples_random();
 
@@ -140,7 +141,7 @@ TEST(GrowingNeuronsTest, StopByTime)
         0.9f,  0.9f,
         1.0f,  1.0f;
 
-    Dataset dataset(21, {1}, {1});
+    TabularDataset dataset(21, {1}, {1});
     dataset.set_data(data);
     dataset.split_samples_random();
 
@@ -170,7 +171,7 @@ TEST(GrowingNeuronsTest, OptimalNeuronsFound)
         data(i, 1) = x * x;
     }
 
-    Dataset dataset(samples, {1}, {1});
+    TabularDataset dataset(samples, {1}, {1});
     dataset.set_data(data);
     dataset.split_samples_random();
 
@@ -199,7 +200,7 @@ TEST(GrowingNeuronsTest, NeuronsIncrement)
         data(i, 1) = x;
     }
 
-    Dataset dataset(21, {1}, {1});
+    TabularDataset dataset(21, {1}, {1});
     dataset.set_data(data);
     dataset.split_samples_random();
 

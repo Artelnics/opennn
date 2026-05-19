@@ -20,7 +20,10 @@ Dense::Dense(const Shape& new_input_shape,
              const string& new_activation_function,
              bool new_batch_normalization,
              const string& new_label)
+    : Layer(LayerType::Dense)
 {
+    operators = {&combination, &batch_norm, &activation, &dropout};
+
     set(new_input_shape,
         new_output_shape,
         new_activation_function,
@@ -36,16 +39,7 @@ Shape Dense::get_output_shape() const
     return output_shape;
 }
 
-vector<Operator*> Dense::get_operators()
-{
-    vector<Operator*> operators = {&combination};
-    if (batch_norm.active()) operators.push_back(&batch_norm);
-    operators.push_back(&activation);
-    if (dropout.active()) operators.push_back(&dropout);
-    return operators;
-}
-
-vector<pair<Shape, Type>> Dense::get_forward_specs(Index batch_size) const
+vector<TensorSpec> Dense::get_forward_specs(Index batch_size) const
 {
     const Shape full   = Shape{batch_size}.append(get_output_shape());
     const Shape stats  = Shape{output_features};
@@ -67,7 +61,6 @@ void Dense::configure_operators()
     if (batch_norm.active())
         batch_norm.set(output_features, batch_norm.momentum);
 
-    combination.input_slots  = {Input};
     combination.output_slots = batch_norm.active() ? vector<size_t>{CombinationView}
                                                    : vector<size_t>{Output};
 
@@ -83,6 +76,10 @@ void Dense::configure_operators()
     dropout.input_slots  = {Output};
     dropout.output_slots = {Output};
     dropout.save_slots   = {ActivationView};
+
+    activation.output_slots_backward = dropout.active()
+        ? vector<size_t>{ActivationView}
+        : vector<size_t>{};
 }
 
 void Dense::set_batch_normalization(bool enable)
@@ -99,10 +96,6 @@ void Dense::set(const Shape& new_input_shape,
                 bool new_batch_normalization,
                 const string& new_label)
 {
-    is_trainable = true;
-    layer_type = LayerType::Dense;
-    name = "Dense";
-
     if (new_input_shape.empty() && new_output_shape.empty())
     {
         input_shape = {};
@@ -110,12 +103,8 @@ void Dense::set(const Shape& new_input_shape,
         return;
     }
 
-    if (new_input_shape.rank != 1 && new_input_shape.rank != 2)
-        throw runtime_error("Dense input shape rank must be 1 or 2 (got "
-                            + to_string(new_input_shape.rank) + ").");
-
-    if (new_output_shape.rank != 1)
-        throw runtime_error("Dense output shape rank must be 1.");
+    check_rank(new_input_shape, {1, 2}, "Dense", "input");
+    check_rank(new_output_shape, {1}, "Dense", "output");
 
     input_shape = new_input_shape;
     output_features = new_output_shape.back();
@@ -129,9 +118,7 @@ void Dense::set(const Shape& new_input_shape,
 
 void Dense::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.rank != 1 && new_input_shape.rank != 2)
-        throw runtime_error("Dense input shape rank must be 1 or 2.");
-
+    check_rank(new_input_shape, {1, 2}, "Dense", "input");
     input_shape = new_input_shape;
     configure_operators();
 }
@@ -144,10 +131,10 @@ void Dense::set_output_shape(const Shape& new_output_shape)
 
 void Dense::set_activation_function(const string& name)
 {
-    Activation::Function function = Activation::from_string(name);
+    ActivationOp::Function function = ActivationOp::from_string(name);
 
-    if (function == Activation::Function::Softmax && get_outputs_number() == 1)
-        function = Activation::Function::Sigmoid;
+    if (function == ActivationOp::Function::Softmax && get_outputs_number() == 1)
+        function = ActivationOp::Function::Sigmoid;
 
     activation.set_function(function);
 }
@@ -162,48 +149,37 @@ void Dense::set_momentum(float new_momentum)
         batch_norm.set(output_features, batch_norm.momentum);
 }
 
-void Dense::back_propagate(ForwardPropagation& forward_propagation,
-                           BackPropagation& back_propagation,
-                           size_t layer) const noexcept
+string Dense::write_expression(const vector<string>& input_names,
+                               const vector<string>& output_names) const
 {
-    auto& forward_views   = forward_propagation.views[layer];
-    auto& delta_views     = back_propagation.delta_views[layer];
+    const vector<TensorView>& parameters = get_parameter_views();
+    if (parameters.size() < 2 || !parameters[0].data || !parameters[1].data) return "";
 
-    const TensorView& input  = forward_views[Input][0];
-    const TensorView& output = forward_views[Output][0];
+    const Index inputs_number = get_inputs_number();
+    const Index outputs_number = get_outputs_number();
 
-    TensorView& output_delta = delta_views[OutputDelta][0];
+    const float* bias_data = parameters[0].as<float>();
+    const float* weight_data = parameters[1].as<float>();
 
-    if (dropout.active())
-        dropout.apply_delta(output_delta);
+    const string& activation_function_local = ActivationOp::to_string(get_activation_function());
 
-    const TensorView& act_outputs = dropout.active()
-                                  ? forward_views[ActivationView][0]
-                                  : output;
-    activation.apply_delta(act_outputs, output_delta);
+    ostringstream buffer;
 
-    if (batch_norm.active())
-        batch_norm.apply_delta(forward_views[CombinationView][0],
-                               forward_views[BatchNormMean][0],
-                               forward_views[BatchNormInverseVariance][0],
-                               output_delta);
-
-    const Index total_rows = input.size() / input.shape.back();
-
-    TensorView output_delta_2d = output_delta.reshape({total_rows, output_delta.shape.back()});
-    TensorView input_2d        = input.reshape({total_rows, input.shape.back()});
-
-    TensorView input_delta_2d;
-    if (!is_first_layer)
+    for (Index j = 0; j < outputs_number; ++j)
     {
-        TensorView& input_delta = delta_views[InputDelta][0];
-        input_delta_2d = input_delta.reshape({total_rows, input_delta.shape.back()});
+        buffer << output_names[j] << " = " << activation_function_local << "( " << bias_data[j] << " + ";
+
+        for (Index i = 0; i < inputs_number; ++i)
+        {
+            const Index weight_index = i * outputs_number + j;
+            buffer << "(" << weight_data[weight_index] << "*" << input_names[i] << ")";
+            if (i < inputs_number - 1) buffer << " + ";
+        }
+
+        buffer << " );\n";
     }
 
-    combination.apply_delta(output_delta_2d,
-                            input_2d,
-                            input_delta_2d,
-                            false);
+    return buffer.str();
 }
 
 void Dense::read_JSON_body(const Json* dense_layer_element)

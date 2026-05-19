@@ -19,11 +19,10 @@ ConvolutionalRelu::ConvolutionalRelu(const Shape& new_input_shape,
                                      const Shape& new_kernel_shape,
                                      const Shape& new_stride_shape,
                                      const string& new_convolution_type,
-                                     const string& new_label) : Layer()
+                                     const string& new_label)
+    : Layer(LayerType::ConvolutionalRelu)
 {
-    name = "ConvolutionalRelu";
-    layer_type = LayerType::ConvolutionalRelu;
-
+    operators = {&convolution_relu};
     set(new_input_shape,
         new_kernel_shape,
         new_stride_shape,
@@ -53,40 +52,24 @@ Index ConvolutionalRelu::get_output_width() const
 Index ConvolutionalRelu::get_padding_height() const
 {
     if (!use_padding) return 0;
-    const Index output_height = (input_height + row_stride - 1) / row_stride;
-    const Index total_padding = (output_height - 1) * row_stride + kernel_height - input_height;
+    const Index total_padding = (get_output_height() - 1) * row_stride + kernel_height - input_height;
     return total_padding / 2;
 }
 
 Index ConvolutionalRelu::get_padding_width() const
 {
     if (!use_padding) return 0;
-    const Index output_width = (input_width + column_stride - 1) / column_stride;
-    const Index total_padding = (output_width - 1) * column_stride + kernel_width - input_width;
+    const Index total_padding = (get_output_width() - 1) * column_stride + kernel_width - input_width;
     return total_padding / 2;
-}
-
-vector<pair<Shape, Type>> ConvolutionalRelu::get_forward_specs(Index batch_size) const
-{
-    return {{{batch_size, get_output_height(), get_output_width(), kernels_number}, compute_dtype}};
 }
 
 void ConvolutionalRelu::update_convolution_operator()
 {
-    convolution.set(input_height, input_width,
-                    kernels_number, kernel_height, kernel_width, kernel_channels,
-                    row_stride, column_stride,
-                    get_padding_height(), get_padding_width(),
-                    compute_dtype);
-
-    activation.set_function(Activation::Function::ReLU);
-
-    convolution.input_slots      = {Input};
-    convolution.output_slots     = {Output};
-    convolution.fused_activation = activation.descriptor;
-
-    activation.input_slots  = {Output};
-    activation.output_slots = {Output};
+    convolution_relu.set(input_height, input_width,
+                         kernels_number, kernel_height, kernel_width, kernel_channels,
+                         row_stride, column_stride,
+                         get_padding_height(), get_padding_width(),
+                         compute_dtype);
 }
 
 void ConvolutionalRelu::set(const Shape& new_input_shape,
@@ -142,7 +125,7 @@ void ConvolutionalRelu::set(const Shape& new_input_shape,
 void ConvolutionalRelu::set_input_shape(const Shape& new_input_shape)
 {
     if (new_input_shape.rank != 3)
-        throw runtime_error("Input shape rank must be 3");
+        throw runtime_error("Input shape rank must be 3.");
 
     input_height = new_input_shape[0];
     input_width = new_input_shape[1];
@@ -173,34 +156,6 @@ void ConvolutionalRelu::set_convolution_type(const string& new_convolution_type)
         throw runtime_error("Convolution type must be 'Valid' or 'Same'.");
     use_padding = (new_convolution_type == "Same");
     update_convolution_operator();
-}
-
-void ConvolutionalRelu::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) noexcept
-{
-    convolution.forward_propagate(forward_propagation, layer, is_training);
-
-    if (!Configuration::instance().is_gpu())
-        activation.forward_propagate(forward_propagation, layer, is_training);
-}
-
-void ConvolutionalRelu::back_propagate(ForwardPropagation& forward_propagation,
-                                       BackPropagation& back_propagation,
-                                       size_t layer) const noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    const TensorView& output = forward_views[Output][0];
-    TensorView& output_delta = delta_views[OutputDelta][0];
-
-    activation.apply_delta(output, output_delta);
-
-    TensorView empty_input_delta;
-    TensorView& input_delta_arg = is_first_layer ? empty_input_delta : delta_views[InputDelta][0];
-
-    convolution.apply_delta(forward_views[Input][0],
-                            output_delta,
-                            input_delta_arg);
 }
 
 void ConvolutionalRelu::read_JSON_body(const Json* element)

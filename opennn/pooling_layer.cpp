@@ -22,11 +22,10 @@ Pooling::Pooling(const Shape& new_input_shape,
                  const Shape& new_stride_shape,
                  const Shape& new_padding_dimensions,
                  const string& new_pooling_method,
-                 const string& new_name) : Layer()
+                 const string& new_name)
+    : Layer(LayerType::Pooling)
 {
-    name = "Pooling";
-    layer_type = LayerType::Pooling;
-
+    operators = {&pool};
     set(new_input_shape,
         new_pool_dimensions,
         new_stride_shape,
@@ -34,6 +33,7 @@ Pooling::Pooling(const Shape& new_input_shape,
         new_pooling_method,
         new_name);
 }
+
 Shape Pooling::get_output_shape() const
 {
     return { get_output_height(), get_output_width(), input_channels };
@@ -49,20 +49,21 @@ Index Pooling::get_output_width() const
     return (input_width - pool_width + 2 * padding_width) / column_stride + 1;
 }
 
-vector<pair<Shape, Type>> Pooling::get_forward_specs(Index batch_size) const
+vector<TensorSpec> Pooling::get_forward_specs(Index batch_size) const
 {
     const Shape out_shape = get_output_shape();
 
-    vector<pair<Shape, Type>> specs;
+    // MaximalIndices stores argmax positions (used by CPU backward); read as
+    // float*, never as compute_dtype. Slot is reserved with an empty shape for
+    // AveragePooling so the Forward enum indices stay valid in both modes.
+    const Shape indices_shape = (pooling_method == PoolingMethod::MaxPooling)
+        ? Shape{batch_size}.append(out_shape)
+        : Shape{};
 
-    // MaximalIndices stores argmax positions (used by CPU backward and the
-    // 3D max-pool kernels). They are read as float*, never as compute_dtype.
-    if (pooling_method == PoolingMethod::MaxPooling)
-        specs.push_back({Shape{batch_size}.append(out_shape), Type::FP32}); // MaximalIndices
-
-    specs.push_back({Shape{batch_size}.append(out_shape), compute_dtype}); // Output (must be last)
-
-    return specs;
+    return {
+        {indices_shape,                           Type::FP32},   // MaximalIndices
+        {Shape{batch_size}.append(out_shape), compute_dtype}, // Output (must be last)
+    };
 }
 
 void Pooling::update_pool_operator()
@@ -71,13 +72,11 @@ void Pooling::update_pool_operator()
              pool_height, pool_width,
              row_stride, column_stride,
              padding_height, padding_width,
-             pooling_method == PoolingMethod::MaxPooling ? 0 : 1);
+             pooling_method == PoolingMethod::MaxPooling ? PoolOp::Max : PoolOp::Average);
 
-    pool.input_slots = {Input};
-    pool.output_slots = (pooling_method == PoolingMethod::MaxPooling)
-        ? vector<size_t>{Output, MaximalIndices}
-        : vector<size_t>{1};                       // {Output}; only 2 slots → Output is index 1
+    pool.output_slots = {Output, MaximalIndices};
 }
+
 void Pooling::set(const Shape& new_input_shape,
                   const Shape& new_pool_dimensions,
                   const Shape& new_stride_shape,
@@ -94,17 +93,21 @@ void Pooling::set(const Shape& new_input_shape,
     if (new_padding_dimensions.rank != 2)
         throw runtime_error("Padding shape must be 2");
 
-    if (new_pool_dimensions[0] > new_input_shape[0] || new_pool_dimensions[1] > new_input_shape[1])
-        throw runtime_error("Pool shape cannot be bigger than input shape");
-
     if (new_stride_shape[0] <= 0 || new_stride_shape[1] <= 0)
         throw runtime_error("Stride must be positive.");
 
-    if (new_stride_shape[0] > new_input_shape[0] || new_stride_shape[1] > new_input_shape[1])
-        throw runtime_error("Stride shape cannot be bigger than input shape");
-
     if (new_padding_dimensions[0] < 0 || new_padding_dimensions[1] < 0)
         throw runtime_error("Padding shape cannot be negative");
+
+    // Pool must fit into the padded input (input + 2*padding). Padding lets
+    // valid configurations like input=3, pool=5, padding=2 -> output=1 work.
+    if (new_pool_dimensions[0] > new_input_shape[0] + 2 * new_padding_dimensions[0]
+     || new_pool_dimensions[1] > new_input_shape[1] + 2 * new_padding_dimensions[1])
+        throw runtime_error("Pool shape cannot be bigger than padded input shape");
+
+    if (new_stride_shape[0] > new_input_shape[0] + 2 * new_padding_dimensions[0]
+     || new_stride_shape[1] > new_input_shape[1] + 2 * new_padding_dimensions[1])
+        throw runtime_error("Stride shape cannot be bigger than padded input shape");
 
     // Direct assignment of all geometry; setters with side-effects are deferred
     // so we hit update_pool_operator() exactly once at the end.
@@ -194,26 +197,7 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 
     update_pool_operator();
 }
-void Pooling::back_propagate(ForwardPropagation& forward_propagation,
-                             BackPropagation& back_propagation,
-                             size_t layer) const noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-    auto& delta_views = back_propagation.delta_views[layer];
 
-    const size_t output_slot = forward_views.size() - 1;
-
-    TensorView empty_indices;
-    TensorView& indices_view = (pooling_method == PoolingMethod::MaxPooling)
-        ? forward_views[MaximalIndices][0]
-        : empty_indices;
-
-    pool.apply_delta(forward_views[Input][0],
-                     forward_views[output_slot][0],
-                     delta_views[OutputDelta][0],
-                     indices_view,
-                     delta_views[InputDelta][0]);
-}
 void Pooling::read_JSON_body(const Json* pooling_layer_element)
 {
     pool_height     = read_json_index(pooling_layer_element, "PoolHeight");

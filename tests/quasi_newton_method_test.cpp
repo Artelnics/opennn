@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "numerical_derivatives.h"
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/loss.h"
 #include "../opennn/quasi_newton_method.h"
@@ -34,7 +35,7 @@ TEST(QuasiNewtonMethodTest, BFGS_Update)
     const Index outputs_number = 1;
     const Index samples_number = 10;
 
-    Dataset dataset(samples_number, { inputs_number }, { outputs_number });
+    TabularDataset dataset(samples_number, { inputs_number }, { outputs_number });
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
@@ -67,7 +68,7 @@ TEST(QuasiNewtonMethodTest, Train)
     const Index inputs_number = 1;
     const Index outputs_number = 1;
 
-    Dataset dataset(samples_number, {inputs_number}, {outputs_number});
+    TabularDataset dataset(samples_number, {inputs_number}, {outputs_number});
     dataset.set_data_constant(1);
 
     ApproximationNetwork neural_network({inputs_number}, {}, {outputs_number});

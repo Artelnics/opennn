@@ -19,6 +19,7 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/adaptive_moment_estimation.h"
 #include "../../opennn/random_utilities.h"
+#include "../../opennn/transformer_decoder.h"
 
 using namespace std;
 using namespace opennn;
@@ -29,9 +30,10 @@ int main()
     {
         cout << "OpenNN. Translation Example." << endl;
 
+        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
 
         // Dataset
-        
+
         LanguageDataset language_dataset("../data/ES-EN-small.txt");
 
         const Index input_vocabulary_size  = language_dataset.get_input_vocabulary_size();
@@ -60,9 +62,6 @@ int main()
                                 feed_forward_dimension,
                                 layers_number);
 
-        transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
-        transformer.set_output_vocabulary(language_dataset.get_target_vocabulary());
-
         // Training strategy
 
         TrainingStrategy training_strategy(&transformer, &language_dataset);
@@ -80,9 +79,7 @@ int main()
         adam->set_maximum_epochs(50);
         adam->set_display_period(5);
 
-        Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
-
-        cout << "\nTraining on CPU..." << endl;
+        cout << "\nTraining on GPU..." << endl;
         training_strategy.train();
 
         // Predictions
@@ -97,9 +94,11 @@ int main()
                 "yo veo el gato"
             };
 
+        // Inference requires GPU (TransformerDecoder is GPU-only).
+        TransformerDecoder decoder(transformer, language_dataset);
         for(Index i = 0; i < static_cast<Index>(test_sources.size()); i++)
         {
-            const string prediction = transformer.calculate_outputs(test_sources[i]);
+            const string prediction = decoder.decode(test_sources[i]);
 
             cout << "Sample " << i << endl;
             cout << "  Source:    " << test_sources[i] << endl;

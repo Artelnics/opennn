@@ -4,6 +4,7 @@
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "../opennn/loss.h"
 #include "../opennn/standard_networks.h"
 
@@ -21,7 +22,7 @@ TEST(MinkowskiErrorTest, DefaultConstructor)
 TEST(MinkowskiErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
-    Dataset dataset;
+    TabularDataset dataset;
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MinkowskiError);
@@ -38,7 +39,7 @@ TEST(MinkowskiErrorTest, BackPropagate)
     const Index outputs_number = random_integer(1, 10);
     const Index neurons_number = random_integer(1, 10);
 
-    Dataset dataset(samples_number, { inputs_number }, { outputs_number });
+    TabularDataset dataset(samples_number, { inputs_number }, { outputs_number });
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 

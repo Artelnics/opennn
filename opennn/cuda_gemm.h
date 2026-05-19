@@ -15,16 +15,17 @@ namespace opennn
 
 #ifdef OPENNN_HAS_CUDA
 
+// C and D share one layout descriptor — they always have the same shape and
+// dtype in this codebase, and cuBLASLt accepts the same layout for both.
 struct LtMatmulPlan
 {
     cublasLtMatmulDesc_t   op_desc = nullptr;
     cublasLtMatrixLayout_t a_desc  = nullptr;
     cublasLtMatrixLayout_t b_desc  = nullptr;
-    cublasLtMatrixLayout_t c_desc  = nullptr;
-    cublasLtMatrixLayout_t d_desc  = nullptr;
+    cublasLtMatrixLayout_t cd_desc = nullptr;
     cublasLtMatmulAlgo_t   algo{};
     bool                   algo_valid = false;
-    size_t                 workspace_size = 0;  // bytes the chosen algo actually needs
+    size_t                 workspace_size = 0;
 
     LtMatmulPlan() = default;
     LtMatmulPlan(const LtMatmulPlan&) = delete;
@@ -32,20 +33,18 @@ struct LtMatmulPlan
     LtMatmulPlan(LtMatmulPlan&& other) noexcept { *this = move(other); }
     LtMatmulPlan& operator=(LtMatmulPlan&& other) noexcept
     {
-        swap(op_desc, other.op_desc);
-        swap(a_desc,  other.a_desc);
-        swap(b_desc,  other.b_desc);
-        swap(c_desc,  other.c_desc);
-        swap(d_desc,  other.d_desc);
-        swap(algo,    other.algo);
-        swap(algo_valid, other.algo_valid);
-        swap(workspace_size, other.workspace_size);
+        std::swap(op_desc, other.op_desc);
+        std::swap(a_desc,  other.a_desc);
+        std::swap(b_desc,  other.b_desc);
+        std::swap(cd_desc, other.cd_desc);
+        std::swap(algo,    other.algo);
+        std::swap(algo_valid, other.algo_valid);
+        std::swap(workspace_size, other.workspace_size);
         return *this;
     }
     ~LtMatmulPlan()
     {
-        cublasLtMatrixLayoutDestroy(d_desc);
-        cublasLtMatrixLayoutDestroy(c_desc);
+        cublasLtMatrixLayoutDestroy(cd_desc);
         cublasLtMatrixLayoutDestroy(b_desc);
         cublasLtMatrixLayoutDestroy(a_desc);
         cublasLtMatmulDescDestroy(op_desc);
@@ -63,13 +62,7 @@ struct LtMatmulPlanKey
     int io_dtype;   // cudaDataType_t for A and B (inputs)
     int out_dtype;  // cudaDataType_t for C and D (outputs)
 
-    bool operator==(const LtMatmulPlanKey& other) const noexcept
-    {
-        return m == other.m && n == other.n && k == other.k
-            && transA == other.transA && transB == other.transB
-            && epilogue == other.epilogue
-            && io_dtype == other.io_dtype && out_dtype == other.out_dtype;
-    }
+    bool operator==(const LtMatmulPlanKey&) const noexcept = default;
 };
 
 struct LtMatmulPlanKeyHash
@@ -87,21 +80,22 @@ struct LtMatmulPlanKeyHash
 // the chosen algorithms reported they need (see ensure_cublas_lt_workspace).
 constexpr size_t cublas_lt_workspace_search_bytes() { return 32ull * 1024 * 1024; }
 
-// Grows the global cublasLt scratch buffer to at least `min_bytes`. Returns a
-// pointer to it. Initial size is 0 — the buffer only grows when a plan whose
-// chosen algorithm needs more workspace gets created.
+namespace scratch
+{
+
 void* ensure_cublas_lt_workspace(size_t min_bytes = 0);
 
-__nv_bfloat16* ensure_bf16_input_scratch(Index n_elements);
+bfloat16* ensure_bf16_input_scratch(Index n_elements);
 
-__nv_bfloat16* ensure_bf16_gradient_scratch(Index n_elements);
+bfloat16* ensure_bf16_gradient_scratch(Index n_elements);
 
 float* ensure_fp32_upcast_scratch(Index n_elements);
 
-float* get_loss_scratch(Index n_elements);
+void* ensure_cudnn_conv_workspace(size_t min_bytes);
 
-const void* maybe_cast(const TensorView& input, Type target_type);
+}
 
+const void* data_for_gemm_dtype(const TensorView& input, Type target_type);
 
 const LtMatmulPlan& get_lt_gemm_plan(
     int m, int n, int k,
@@ -111,6 +105,35 @@ const LtMatmulPlan& get_lt_gemm_plan(
     cudaDataType_t io_dtype  = CUDA_R_32F,
     cudaDataType_t out_dtype = CUDA_R_32F);
 
+inline void run_lt_matmul(const LtMatmulPlan& plan,
+                          const void* a_data, const void* b_data, void* c_data,
+                          const void* bias_pointer)
+{
+    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
+        CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
+
+    CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(),
+                                plan.op_desc,
+                                &one,
+                                a_data, plan.a_desc,
+                                b_data, plan.b_desc,
+                                &zero,
+                                c_data, plan.cd_desc,
+                                c_data, plan.cd_desc,
+                                plan.algo_valid ? &plan.algo : nullptr,
+                                scratch::ensure_cublas_lt_workspace(plan.workspace_size), plan.workspace_size,
+                                Backend::get_compute_stream()));
+}
+
+// CUBLAS_COMPUTE_DTYPE (= CUBLAS_COMPUTE_32F_FAST_TF32) is FP32-input only;
+// BF16 inputs require plain CUBLAS_COMPUTE_32F.
+inline cublasComputeType_t gemm_compute_type(cudaDataType_t a_type, cudaDataType_t b_type = CUDA_R_32F)
+{
+    return (a_type == CUDA_R_16BF || b_type == CUDA_R_16BF)
+        ? CUBLAS_COMPUTE_32F
+        : CUBLAS_COMPUTE_DTYPE;
+}
+
 inline void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
                       int m, int n, int k,
                       const void* A, cudaDataType_t Atype, int lda,
@@ -118,10 +141,7 @@ inline void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
                       void* C, cudaDataType_t Ctype, int ldc,
                       float alpha = 1.0f, float beta = 0.0f)
 {
-    // CUBLAS_COMPUTE_32F_FAST_TF32 is FP32-input only; for BF16 use plain CUBLAS_COMPUTE_32F.
-    const cublasComputeType_t compute = (Atype == CUDA_R_16BF || Btype == CUDA_R_16BF)
-                                            ? CUBLAS_COMPUTE_32F
-                                            : CUBLAS_COMPUTE_DTYPE;
+    const cublasComputeType_t compute = gemm_compute_type(Atype, Btype);
     CHECK_CUBLAS(cublasGemmEx(Backend::get_cublas_handle(),
                               transa, transb,
                               m, n, k,
@@ -143,9 +163,7 @@ inline void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_
                                       cudaDataType_t io_dtype = CUDA_R_32F,
                                       float alpha = 1.0f, float beta = 0.0f)
 {
-    const cublasComputeType_t compute = (io_dtype == CUDA_R_16BF)
-                                            ? CUBLAS_COMPUTE_32F
-                                            : CUBLAS_COMPUTE_DTYPE;
+    const cublasComputeType_t compute = gemm_compute_type(io_dtype);
     CHECK_CUBLAS(cublasGemmStridedBatchedEx(Backend::get_cublas_handle(),
                                             transa, transb,
                                             m, n, k,

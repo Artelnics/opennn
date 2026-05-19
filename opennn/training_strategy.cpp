@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library+
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T R A I N I N G   S T R A T E G Y   C L A S S
@@ -72,18 +72,17 @@ void TrainingStrategy::set_default()
     }
 
     // Transformer: signaled by *any* Dense layer that consumes a rank-2 (seq, feat)
-    // input â€” i.e. the layers formerly known as Dense3d.
-    bool has_seq_dense = false;
-    for (const auto& layer : neural_network->get_layers())
-    {
+    // input -- i.e. the layers formerly known as Dense3d.
+    const auto& layers = neural_network->get_layers();
+    const bool has_seq_dense = ranges::any_of(layers, [](const auto& layer) {
         const auto* dense = dynamic_cast<const Dense*>(layer.get());
-        if (dense && dense->get_input_shape().rank == 2) { has_seq_dense = true; break; }
-    }
+        return dense && dense->get_input_shape().rank == 2;
+    });
     if (has_seq_dense)
     {
         set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");
-        dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_learning_rate(0.0001);
+        dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_learning_rate(0.0001f);
         return;
     }
 
@@ -99,9 +98,9 @@ void TrainingStrategy::set_default()
 
     // Classification
 
-    const Activation::Function output_activation = neural_network->get_output_activation();
+    const ActivationOp::Function output_activation = neural_network->get_output_activation();
 
-    if (output_activation == Activation::Function::Softmax)
+    if (output_activation == ActivationOp::Function::Softmax)
     {
         // Multi-class
         set_loss("CrossEntropy");
@@ -109,7 +108,7 @@ void TrainingStrategy::set_default()
         return;
     }
 
-    if (output_activation == Activation::Function::Sigmoid)
+    if (output_activation == ActivationOp::Function::Sigmoid)
     {
         // Binary
         set_loss("WeightedSquaredError");
@@ -142,7 +141,6 @@ TrainingResults TrainingStrategy::train()
 
     return optimizer->train();
 }
-
 
 void TrainingStrategy::fix_forecasting()
 {
@@ -179,7 +177,6 @@ void TrainingStrategy::fix_forecasting()
 
 void TrainingStrategy::to_JSON(JsonWriter& printer) const
 {
-
     printer.open_element("TrainingStrategy");
 
     printer.open_element("Loss");
@@ -219,12 +216,11 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
     const Json* loss_method_element = loss_element->first_child(loss_method.c_str());
 
-    if (loss_method_element)
-    {
-        set_loss(loss_method);
-        loss->from_JSON(JsonDocument::wrap(loss_method, *loss_method_element));
-    }
-    else throw runtime_error(loss_method + " element is nullptr.\n");
+    if (!loss_method_element)
+        throw runtime_error(format("{} element is nullptr.\n", loss_method));
+
+    set_loss(loss_method);
+    loss->from_JSON(JsonDocument::wrap(loss_method, *loss_method_element));
 
     // Optimization algorithm
 
@@ -236,12 +232,11 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
     const Json* optimization_method_element = optimization_algorithm_element->first_child(optimization_method.c_str());
 
-    if (optimization_method_element)
-    {
-        set_optimization_algorithm(optimization_method);
-        optimizer->from_JSON(JsonDocument::wrap(optimization_method, *optimization_method_element));
-    }
-    else throw runtime_error(optimization_method + " element is nullptr.\n");
+    if (!optimization_method_element)
+        throw runtime_error(format("{} element is nullptr.\n", optimization_method));
+
+    set_optimization_algorithm(optimization_method);
+    optimizer->from_JSON(JsonDocument::wrap(optimization_method, *optimization_method_element));
 
     // Regularization
 
@@ -260,7 +255,7 @@ void TrainingStrategy::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open file: " + file_name.string());
+        throw runtime_error(format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
     to_JSON(printer);

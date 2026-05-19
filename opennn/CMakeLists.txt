@@ -7,6 +7,8 @@ file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 
 add_library(opennn STATIC ${CPP_SOURCES} ${HEADER_FILES})
 
+target_compile_features(opennn PUBLIC cxx_std_20)
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(opennn PUBLIC stdc++fs)
 endif()
@@ -32,8 +34,8 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_G
 endif()
 
 target_compile_options(opennn PRIVATE
-    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic>
-    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic -Wswitch-enum>
+    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /w14061>
 )
 
 if(OPENNN_HAS_CUDA)
@@ -46,6 +48,14 @@ if(OPENNN_HAS_CUDA)
         target_link_libraries(opennn PUBLIC ${CUDNN_LIBRARY})
         target_include_directories(opennn PUBLIC ${CUDNN_INCLUDE_DIR})
     endif()
+    find_path(CUDNN_FRONTEND_INCLUDE_DIR NAMES cudnn_frontend.h)
+    if(NOT CUDNN_FRONTEND_INCLUDE_DIR)
+        message(FATAL_ERROR
+            "OpenNN with OPENNN_HAS_CUDA=ON requires the cuDNN frontend headers "
+            "(cudnn_frontend.h). Install from https://github.com/NVIDIA/cudnn-frontend "
+            "and set CUDNN_FRONTEND_INCLUDE_DIR.")
+    endif()
+    target_include_directories(opennn PUBLIC ${CUDNN_FRONTEND_INCLUDE_DIR})
 endif()
 
 # Optimization & SIMD. Without host-native ISA flags Eigen falls back to the x86-64
@@ -80,6 +90,17 @@ target_compile_definitions(opennn PUBLIC
 target_precompile_headers(opennn PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
 )
+
+# operators.cpp pulls in cudnn-frontend, which has names (`half`, `bfloat16`)
+# that collide with Eigen names brought into global scope by pch.h's
+# `using namespace Eigen`. Disable PCH on this TU so cudnn-frontend is parsed
+# in a clean scope and the file picks up Eigen/std the regular way.
+if(OPENNN_HAS_CUDA)
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/operators.cpp
+        PROPERTIES SKIP_PRECOMPILE_HEADERS ON
+    )
+endif()
 
 # Safe subset of -ffast-math: lets sqrt/exp/log/sin/cos vectorize without
 # preserving errno or trapping FP exceptions. Excludes -ffinite-math-only

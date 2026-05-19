@@ -2,6 +2,8 @@
 #include "../opennn/pch.h"
 #include "../numerical_derivatives.h"
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
+using type = float;
 #include "../opennn/neural_network.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/dense_layer.h"
@@ -14,7 +16,6 @@
 #include <random>
 
 using namespace opennn;
-using type = float;
 using namespace std;
 
 int main()
@@ -93,7 +94,7 @@ int main()
     {
         const Index samples = 6, inputs_n = 2, outputs_n = 1;
 
-        Dataset dataset(samples, {inputs_n}, {outputs_n});
+        TabularDataset dataset(samples, {inputs_n}, {outputs_n});
         MatrixR data(samples, inputs_n + outputs_n);
         data << 1.0f, 2.0f, 3.0f,
                 4.0f, 5.0f, 6.0f,
@@ -121,7 +122,7 @@ int main()
     {
         const Index samples = 6, inputs_n = 2, outputs_n = 1;
 
-        Dataset dataset(samples, {inputs_n}, {outputs_n});
+        TabularDataset dataset(samples, {inputs_n}, {outputs_n});
         MatrixR data(samples, inputs_n + outputs_n);
         data << 1.0f, 2.0f, 3.0f,
                 4.0f, 5.0f, 6.0f,

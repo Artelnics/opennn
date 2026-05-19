@@ -16,12 +16,6 @@ namespace opennn
 class Loss;
 class NeuralNetwork;
 
-struct BackwardEdge
-{
-    size_t consumer_idx;
-    size_t port;
-};
-
 struct BackPropagation
 {
     BackPropagation(const Index = 0, Loss* = nullptr);
@@ -32,19 +26,18 @@ struct BackPropagation
 
     void accumulate_output_deltas(size_t layer_index);
 
-    NeuralNetwork* neural_network = nullptr;
+    const NeuralNetwork* neural_network = nullptr;
 
     Buffer gradient;
     vector<vector<TensorView>> gradient_views;
 
-    Buffer backward;
-    vector<vector<vector<TensorView>>> delta_views;
+    Buffer delta_pool;
+    vector<vector<TensorView>> delta_views;
 
-    Buffer per_layer_output_deltas;
-    vector<Shape> per_layer_output_delta_shapes;
-    vector<vector<BackwardEdge>> backward_edges;
+    vector<vector<pair<size_t, size_t>>> consumer_edges;
 
-    TensorView get_output_deltas() const;
+    TensorView& get_output_delta();
+    const TensorView& get_output_delta() const;
 
     void print() const;
 
@@ -57,15 +50,9 @@ struct BackPropagation
     float loss_value = 0.0f;
     Index active_tokens_count = 0;
 
-    Shape output_delta_dimensions;
+private:
 
-#ifdef OPENNN_HAS_CUDA
-
-    Buffer errors_device{Device::CUDA};
-
-    TensorView output_deltas_view_device;
-
-#endif
+    void setup_delta_pool(const vector<vector<TensorSpec>>& backward_specs);
 };
 
 }

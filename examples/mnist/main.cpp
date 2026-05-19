@@ -31,7 +31,7 @@ int main()
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
         set_seed(42);
-        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
 
         // Dataset
 

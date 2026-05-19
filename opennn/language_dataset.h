@@ -6,161 +6,130 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-/**
- * @file language_dataset.h
- * @brief Declares the LanguageDataset specialization of Dataset for
- *        text data, including tokenization and vocabulary management.
- */
-
 #pragma once
 
 #include "dataset.h"
+#include "io_utilities.h"
 
 namespace opennn
 {
 
-/**
- * @class LanguageDataset
- * @brief Dataset specialization for tokenized text.
- *
- * Stores per-sample input and target token id sequences plus the
- * corresponding string vocabularies. Supports CSV loading, vocabulary
- * construction with frequency cutoffs and three encoding modes:
- * sequence-to-sequence, classification and standalone input encoding.
- *
- * Reserves four special tokens at fixed indices: PAD (0), UNK (1),
- * START (2), END (3).
- */
 class LanguageDataset final : public Dataset
 {
 
 public:
 
-    /**
-     * @brief Constructs a LanguageDataset, optionally loading from CSV.
-     * @param path Path to a CSV file; pass an empty path for an empty dataset.
-     */
-    LanguageDataset(const filesystem::path& path = "");
-    /**
-     * @brief Constructs an empty LanguageDataset of given dimensions.
-     * @param samples_number Number of samples.
-     * @param maximum_input_sequence_length Maximum input sequence length.
-     * @param maximum_target_sequence_length Maximum target sequence length.
-     */
-    LanguageDataset(const Index samples_number,
-                    Index maximum_input_sequence_length,
-                    Index maximum_target_sequence_length);
+    LanguageDataset(const filesystem::path& = "");
+    LanguageDataset(const filesystem::path&, Index maximum_vocabulary_size);
+    LanguageDataset(const filesystem::path&, Index maximum_vocabulary_size, Index minimum_token_frequency);
+    LanguageDataset(const Index, Index, Index);
 
-    /** @brief Read-only access to the input-side vocabulary. */
     const vector<string>& get_input_vocabulary() const { return input_vocabulary; }
-    /** @brief Read-only access to the target-side vocabulary. */
     const vector<string>& get_target_vocabulary() const { return target_vocabulary; }
 
-    /** @brief Number of distinct tokens in the input vocabulary. */
     Index get_input_vocabulary_size() const { return input_vocabulary.size(); }
-    /** @brief Number of distinct tokens in the target vocabulary. */
     Index get_target_vocabulary_size() const { return target_vocabulary.size(); }
 
-    /** @brief Maximum input sequence length supported. */
+    const unordered_map<string, Index>& get_input_vocabulary_map() const { return input_vocabulary_map; }
+    const unordered_map<string, Index>& get_target_vocabulary_map() const { return target_vocabulary_map; }
+    const unordered_map<Index, string>& get_target_inverse_vocabulary_map() const { return target_inverse_vocabulary_map; }
+
     Index get_maximum_input_sequence_length() const { return maximum_input_sequence_length; }
-    /** @brief Maximum target sequence length supported. */
     Index get_maximum_target_sequence_length() const { return maximum_target_sequence_length; }
 
-    /**
-     * @brief Replaces the input vocabulary.
-     * @param new_vocabulary New token list (order defines token ids).
-     */
-    void set_input_vocabulary(const vector<string>& new_vocabulary) { input_vocabulary = new_vocabulary; }
-    /**
-     * @brief Replaces the target vocabulary.
-     * @param new_vocabulary New token list (order defines token ids).
-     */
-    void set_target_vocabulary(const vector<string>& new_vocabulary) { target_vocabulary = new_vocabulary; }
+    void set_input_vocabulary(const vector<string>&);
+    void set_target_vocabulary(const vector<string>&);
 
-    /** @brief Reads tokens from the configured CSV file into the dataset. */
-    void read_csv() override;
+    void set_maximum_vocabulary_size(Index new_maximum) { maximum_vocabulary_size = new_maximum; }
+    void set_minimum_token_frequency(Index new_minimum) { minimum_token_frequency = new_minimum; }
 
-    /**
-     * @brief Builds a vocabulary from a list of tokenized samples.
-     *
-     * Receives the tokenized samples as a vector of token vectors, and the
-     * output vector to fill with the resulting vocabulary (limited by the
-     * minimum_token_frequency and maximum_vocabulary_size fields).
-     */
-    void create_vocabulary(const vector<vector<string>>&, vector<string>&) const;
+    Index get_samples_number() const override;
+    using Dataset::get_samples_number;
 
-    /**
-     * @brief Encodes input tokens into ids and stores them in the dataset.
-     *
-     * Receives the tokenized input samples; out-of-vocabulary tokens are
-     * mapped to UNK_INDEX.
-     */
-    void encode_input(const vector<vector<string>>&);
-    /**
-     * @brief Encodes decoder target tokens for sequence-to-sequence training.
-     *
-     * Receives the tokenized target samples; START_TOKEN and END_TOKEN are
-     * inserted automatically.
-     */
-    void encode_decoder_target_sequence_to_sequence(const vector<vector<string>>&);
-    /**
-     * @brief Encodes target tokens for classification training.
-     *
-     * Receives the tokenized target samples; one token per sample is expected.
-     */
-    void encode_target_classification(const vector<vector<string>>&);
+    VectorI calculate_target_distribution() const override;
 
-    /**
-     * @brief Loads dataset metadata and vocabularies from a parsed JSON document.
-     */
+    void read_txt();
+
+    void create_vocabulary(const vector<vector<string_view>>&, vector<string>&) const;
+
     void from_JSON(const JsonDocument&) override;
-    /**
-     * @brief Writes dataset metadata and vocabularies to a streaming JSON writer.
-     */
     void to_JSON(JsonWriter&) const override;
 
-    /** @brief Padding token text (id 0). */
-    inline static const string PAD_TOKEN   = "[PAD]";
-    /** @brief Unknown token text (id 1). */
-    inline static const string UNK_TOKEN   = "[UNK]";
-    /** @brief Start-of-sequence token text (id 2). */
-    inline static const string START_TOKEN = "[START]";
-    /** @brief End-of-sequence token text (id 3). */
-    inline static const string END_TOKEN   = "[END]";
+    void fill_inputs(const vector<Index>&,
+                     const vector<Index>&,
+                     float*,
+                     bool is_training,
+                     bool parallelize = true,
+                     int = -1) const override;
 
-    /** @brief Numeric id used for unknown tokens. */
+    void fill_targets(const vector<Index>&,
+                      const vector<Index>&,
+                      float*,
+                      bool is_training,
+                      bool parallelize = true,
+                      int = -1) const override;
+
+    void fill_decoder(const vector<Index>&,
+                      const vector<Index>&,
+                      float*,
+                      bool is_training,
+                      bool parallelize = true,
+                      int = -1) const override;
+
+    inline static const string PAD_TOKEN   = "[PAD]";     // 0
+    inline static const string UNK_TOKEN   = "[UNK]";     // 1
+    inline static const string START_TOKEN = "[START]";   // 2
+    inline static const string END_TOKEN   = "[END]";     // 3
+
     inline static const float UNK_INDEX = 1.0f;
-    /** @brief Numeric id used for the start-of-sequence token. */
     inline static const float START_INDEX = 2.0f;
-    /** @brief Numeric id used for the end-of-sequence token. */
     inline static const float END_INDEX = 3.0f;
 
-    /** @brief Special tokens reserved at the start of every vocabulary. */
     inline static const vector<string> reserved_tokens = {PAD_TOKEN, UNK_TOKEN, START_TOKEN, END_TOKEN};
 
 private:
 
-    /**
-     * @brief Builds a token-to-index map from a vocabulary.
-     * @param vocabulary Token list whose indices follow vector order.
-     * @return Hash map suitable for fast token lookup during encoding.
-     */
-    unordered_map<string, Index> create_vocabulary_map(const vector<string>& vocabulary);
+    void update_input_vocabulary_map();
+    void update_target_vocabulary_maps();
 
-    /** @brief Input-side vocabulary. */
+    unordered_map<string_view, Index> create_vocabulary_map(const vector<string>& vocabulary) const;
+
+    void load_documents(string& buffer,
+                        vector<vector<string_view>>& input_documents,
+                        vector<vector<string_view>>& target_documents,
+                        bool has_header_line,
+                        bool strict_field_count) const;
+
+    void encode_streaming(const vector<vector<string_view>>&,
+                          const vector<vector<string_view>>&,
+                          vector<vector<Index>>& in_idx,
+                          vector<vector<Index>>& tgt_idx) const;
+
+    void write_binary_cache(const vector<vector<Index>>& in_idx,
+                            const vector<vector<Index>>& tgt_idx,
+                            bool has_decoder);
+
+    bool try_load_binary_cache(Index expected_samples);
+
     vector<string> input_vocabulary;
-    /** @brief Target-side vocabulary. */
     vector<string> target_vocabulary;
 
-    /** @brief Maximum input sequence length supported. */
+    unordered_map<string, Index> input_vocabulary_map;
+    unordered_map<string, Index> target_vocabulary_map;
+    unordered_map<Index, string> target_inverse_vocabulary_map;
+
     Index maximum_input_sequence_length = 0;
-    /** @brief Maximum target sequence length supported. */
     Index maximum_target_sequence_length = 0;
 
-    /** @brief Tokens that appear fewer times than this are dropped from the vocabulary. */
     Index minimum_token_frequency = 1;
-    /** @brief Upper bound on the vocabulary size (per side). */
     Index maximum_vocabulary_size = 20000;
+
+    // Binary streaming cache: <data_path>.cache/tokens.bin
+    // Header(64B) + offsets table (int64[N][4]) + concat int32 tokens.
+    filesystem::path cache_path;
+    mutable FileReader cache_reader;
+    uint64_t cache_data_off_ = 0;
+    vector<array<int64_t, 4>> offsets_table;   // (in_off, in_len, tgt_off, tgt_len)
 };
 
 }

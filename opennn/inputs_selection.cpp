@@ -28,22 +28,25 @@ void InputsSelection::check() const
 
     const Loss* loss = training_strategy->get_loss();
 
+    if (!loss)
+        throw runtime_error("loss is not set.");
+
     // Neural network
 
-    if (!loss->get_neural_network())
-        throw runtime_error("neural network is not set.");
-
     const NeuralNetwork* neural_network = loss->get_neural_network();
+
+    if (!neural_network)
+        throw runtime_error("neural network is not set.");
 
     if (neural_network->is_empty())
         throw runtime_error("Neural network is empty.\n");
 
     // Dataset
 
-    if (!loss->get_dataset())
-        throw runtime_error("dataset is not set.");
-
     const Dataset* dataset = loss->get_dataset();
+
+    if (!dataset)
+        throw runtime_error("dataset is not set.");
 
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
@@ -63,63 +66,43 @@ Index InputsSelectionResults::get_epochs_number() const
 
 void InputsSelectionResults::set(const Index maximum_epochs)
 {
-    training_error_history.resize(maximum_epochs);
-    training_error_history.setConstant(-1.0f);
-
-    validation_error_history.resize(maximum_epochs);
-    validation_error_history.setConstant(-1.0f);
-
-    mean_validation_error_history.resize(maximum_epochs);
-    mean_validation_error_history.setConstant(-1.0f);
-
-    mean_training_error_history.resize(maximum_epochs);
-    mean_training_error_history.setConstant(-1.0f);
+    training_error_history = VectorR::Constant(maximum_epochs, -1.0f);
+    validation_error_history = VectorR::Constant(maximum_epochs, -1.0f);
+    mean_validation_error_history = VectorR::Constant(maximum_epochs, -1.0f);
+    mean_training_error_history = VectorR::Constant(maximum_epochs, -1.0f);
 }
 
 string InputsSelectionResults::write_stopping_condition() const
 {
+    using enum InputsSelection::StoppingCondition;
     switch (stopping_condition)
     {
-    case InputsSelection::StoppingCondition::MaximumTime:
+    case MaximumTime:
         return "MaximumTime";
 
-    case InputsSelection::StoppingCondition::SelectionErrorGoal:
+    case SelectionErrorGoal:
         return "SelectionErrorGoal";
 
-    case InputsSelection::StoppingCondition::MaximumInputs:
+    case MaximumInputs:
         return "MaximumInputs";
 
-    case InputsSelection::StoppingCondition::MaximumEpochs:
+    case MaximumEpochs:
         return "MaximumEpochs";
 
-    case InputsSelection::StoppingCondition::MaximumSelectionFailures:
+    case MaximumSelectionFailures:
         return "MaximumSelectionFailures";
 
     default:
-        return string();
+        return {};
     }
 }
 
 void InputsSelectionResults::resize_history(const Index new_size)
 {
-    const VectorR old_training_error_history(training_error_history);
-    const VectorR old_validation_error_history(validation_error_history);
-
-    const VectorR old_mean_selection_history(mean_validation_error_history);
-    const VectorR old_mean_training_history(mean_training_error_history);
-
-    training_error_history.resize(new_size);
-    validation_error_history.resize(new_size);
-    mean_training_error_history.resize(new_size);
-    mean_validation_error_history.resize(new_size);
-
-    for (Index i = 0; i < new_size; ++i)
-    {
-        training_error_history(i) = old_training_error_history(i);
-        validation_error_history(i) = old_validation_error_history(i);
-        mean_training_error_history(i) = old_mean_training_history(i);
-        mean_validation_error_history(i) = old_mean_selection_history(i);
-    }
+    training_error_history.conservativeResize(new_size);
+    validation_error_history.conservativeResize(new_size);
+    mean_training_error_history.conservativeResize(new_size);
+    mean_validation_error_history.conservativeResize(new_size);
 }
 
 void InputsSelectionResults::print() const
@@ -129,8 +112,8 @@ void InputsSelectionResults::print() const
          << "Optimal inputs number: " << optimal_input_variable_names.size() << "\n"
          << "Inputs: " << "\n";
 
-    for (size_t i = 0; i < optimal_input_variable_names.size(); ++i)
-        cout << "   " << optimal_input_variable_names[i] << "\n";
+    for (const string& name : optimal_input_variable_names)
+        cout << "   " << name << "\n";
 
     cout << "Optimum training error: " << optimum_training_error << "\n"
          << "Optimum selection error: " << optimum_validation_error << "\n";
@@ -141,7 +124,7 @@ void InputsSelection::save(const filesystem::path& file_name) const
     ofstream file(file_name);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open file: " + file_name.string());
+        throw runtime_error(format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
     to_JSON(printer);

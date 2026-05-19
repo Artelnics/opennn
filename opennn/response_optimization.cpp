@@ -130,16 +130,13 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 {
     const vector<Index> feature_dimensions = response_optimization.dataset->get_feature_dimensions();
 
-    Index objectives_number = 0;
-
-    for (const auto& constraints : response_optimization.conditions)
-        if (constraints.condition == ConditionType::Maximize || constraints.condition == ConditionType::Minimize)
-            ++objectives_number;
+    const Index objectives_number = count_if(response_optimization.conditions.begin(), response_optimization.conditions.end(),
+        [](const auto& c) { return c.condition == ConditionType::Maximize || c.condition == ConditionType::Minimize; });
 
     if (objectives_number == 0)
         throw runtime_error("No Objectives found, make sure to set Minimize or Maximize to any variable");
 
-    objective_sources.resize(2,objectives_number);
+    objective_sources.resize(2, objectives_number);
 
     objective_normalizer.resize(2, objectives_number);
 
@@ -149,7 +146,6 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 
     auto process_role = [&](const string& role)
     {
-
         const vector<Index> variable_indices = response_optimization.dataset->get_variable_indices(role);
         const vector<Index> feature_dimensions_by_role = gather_by_index(feature_dimensions, variable_indices);
 
@@ -171,22 +167,15 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 
                 const float inferior_frontier = domain.inferior_frontier(feature_pointer);
                 const float superior_frontier = domain.superior_frontier(feature_pointer);
-                const float range = superior_frontier - inferior_frontier;
+                const float safe_range = max(superior_frontier - inferior_frontier, EPSILON);
 
-                objective_normalizer(0, current_objective_index) = 1.0 / (range < EPSILON ? EPSILON : range);
+                objective_normalizer(0, current_objective_index) = 1.0 / safe_range;
 
-                objective_normalizer(1, current_objective_index) = -inferior_frontier / (range < EPSILON ? EPSILON : range);
+                objective_normalizer(1, current_objective_index) = -inferior_frontier / safe_range;
 
-                if (current_condition.condition == ConditionType::Maximize)
-                {
-                    utopian_and_senses(0, current_objective_index) = superior_frontier;
-                    utopian_and_senses(1, current_objective_index) = 1.0;
-                }
-                else
-                {
-                    utopian_and_senses(0, current_objective_index) = inferior_frontier;
-                    utopian_and_senses(1, current_objective_index) = -1.0;
-                }
+                const bool maximize = current_condition.condition == ConditionType::Maximize;
+                utopian_and_senses(0, current_objective_index) = maximize ? superior_frontier : inferior_frontier;
+                utopian_and_senses(1, current_objective_index) = maximize ? 1.0 : -1.0;
 
                 ++current_objective_index;
             }
@@ -218,24 +207,28 @@ void ResponseOptimization::Domain::bound(const vector<Index>& feature_dimensions
             float& inferior = inferior_frontier(feature_index);
             float& superior = superior_frontier(feature_index);
 
+            using enum ConditionType;
             switch (condition.condition)
             {
-            case ConditionType::EqualTo:
+            case None:
+            case Minimize:
+            case Maximize:
+                break;
+            case EqualTo:
                 inferior = max(inferior, condition.low_bound);
                 superior = min(superior, condition.low_bound);
                 break;
-            case ConditionType::Between:
+            case Between:
                 inferior = max(inferior, condition.low_bound);
                 superior = min(superior, condition.up_bound);
                 break;
-            case ConditionType::GreaterEqualTo:
+            case GreaterEqualTo:
+            case GreaterThan:
                 inferior = max(inferior, condition.low_bound);
                 break;
-            case ConditionType::LessEqualTo:
+            case LessEqualTo:
+            case LessThan:
                 superior = min(superior, condition.up_bound);
-                break;
-
-            default:
                 break;
             }
         }
@@ -243,11 +236,10 @@ void ResponseOptimization::Domain::bound(const vector<Index>& feature_dimensions
         {
             const Index category_index = static_cast<Index>(llround(condition.low_bound));
 
-            for (Index j = 0; j < feature_dimension; ++j)
-            {
-                inferior_frontier(feature_index + j) = (j == category_index) ? 1.0 : 0.0;
-                superior_frontier(feature_index + j) = (j == category_index) ? 1.0 : 0.0;
-            }
+            inferior_frontier.segment(feature_index, feature_dimension).setZero();
+            superior_frontier.segment(feature_index, feature_dimension).setZero();
+            inferior_frontier(feature_index + category_index) = 1.0f;
+            superior_frontier(feature_index + category_index) = 1.0f;
         }
 
         feature_index += feature_dimension;
@@ -316,9 +308,7 @@ void ResponseOptimization::Domain::reshape(const float zoom_factor,
 {
     VectorR categories_to_save = optimal_points_inputs.colwise().maxCoeff();
 
-    for (Index i = 0; i < categories_to_save.size(); ++i)
-        if (center(i) > categories_to_save(i))
-            categories_to_save(i) = center(i);
+    categories_to_save = categories_to_save.cwiseMax(center);
 
     Index current_feature_index = 0;
 
@@ -328,18 +318,19 @@ void ResponseOptimization::Domain::reshape(const float zoom_factor,
 
         if (categories_number == 1 && input_variable_types[input_variable] != VariableType::Binary)
         {
+            const float c = center(current_feature_index);
             const float half_span = (superior_frontier(current_feature_index) - inferior_frontier(current_feature_index)) * zoom_factor / 2;
-            inferior_frontier(current_feature_index) = max(center(current_feature_index) - half_span, inferior_frontier(current_feature_index));
-            superior_frontier(current_feature_index) = min(center(current_feature_index) + half_span, superior_frontier(current_feature_index));
-
+            inferior_frontier(current_feature_index) = max(c - half_span, inferior_frontier(current_feature_index));
+            superior_frontier(current_feature_index) = min(c + half_span, superior_frontier(current_feature_index));
         }
         else
         {
             for (Index category_index = 0; category_index < categories_number; ++category_index)
             {
                 const Index current_category = current_feature_index + category_index;
-                inferior_frontier(current_category) = max(categories_to_save(current_category), inferior_frontier(current_category));
-                superior_frontier(current_category) = min(categories_to_save(current_category), superior_frontier(current_category));
+                const float saved = categories_to_save(current_category);
+                inferior_frontier(current_category) = max(saved, inferior_frontier(current_category));
+                superior_frontier(current_category) = min(saved, superior_frontier(current_category));
             }
         }
 
@@ -373,9 +364,12 @@ MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const M
     MatrixR objective_matrix(inputs.rows(), objectives_number);
 
     for (Index j = 0; j < objectives_number; ++j)
-        objective_matrix.col(j)= (objective_sources(0, j) > 0.5)
-              ? inputs.col(static_cast<Index>(objective_sources(1, j)))
-              : outputs.col(static_cast<Index>(objective_sources(1, j)));
+    {
+        const Index source_index = static_cast<Index>(objective_sources(1, j));
+        objective_matrix.col(j) = (objective_sources(0, j) > 0.5)
+            ? inputs.col(source_index)
+            : outputs.col(source_index);
+    }
 
     return objective_matrix;
 }
@@ -434,7 +428,7 @@ MatrixR ResponseOptimization::assemble_results(const MatrixR& inputs, const Matr
         {
             result.block(0, global_starts_blocks[indices_in_out[i]], inputs.rows(), hot_encoded_dimensions[i])
                 = source_to_copy.block(0, start_source_feature_columns, inputs.rows(), hot_encoded_dimensions[i]);
-                  start_source_feature_columns += hot_encoded_dimensions[i];
+            start_source_feature_columns += hot_encoded_dimensions[i];
         }
     };
 
@@ -486,9 +480,10 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 
         optimal_set = calculate_optimal_points(feasible_inputs, feasible_outputs, objectives);
 
-        optimal_point = (objectives.objective_sources(0, 0) > 0.5f
-                             ? optimal_set.first
-                             : optimal_set.second)(0, static_cast<Index>(objectives.objective_sources(1, 0)));
+        const MatrixR& objective_source = (objectives.objective_sources(0, 0) > 0.5f)
+            ? optimal_set.first
+            : optimal_set.second;
+        optimal_point = objective_source(0, static_cast<Index>(objectives.objective_sources(1, 0)));
 
         const float relative_error = abs((optimal_point - previous_optimal_point) / (objectives.utopian_and_senses(0,0) + 1e-6f));
 
@@ -557,7 +552,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inp
     MatrixR pareto_inputs(final_count, inputs.cols());
     MatrixR pareto_outputs(final_count, outputs.cols());
 
-    for (Index i = 0; i < ssize(non_dominated_indices); ++i)
+    for (Index i = 0; i < final_count; ++i)
     {
         pareto_inputs.row(i) = inputs.row(non_dominated_indices[i]);
         pareto_outputs.row(i) = outputs.row(non_dominated_indices[i]);
@@ -586,7 +581,7 @@ pair<float, float> ResponseOptimization::calculate_quality_metrics(const MatrixR
     {
         const auto current_point = objective_matrix.row(i);
 
-        VectorR  distances = (objective_matrix.rowwise() - current_point).rowwise().squaredNorm();
+        VectorR distances = (objective_matrix.rowwise() - current_point).rowwise().squaredNorm();
 
         distances(i) = MAX;
 
@@ -631,10 +626,10 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
     {
         cout << "!!! [Critical] Zero feasible points found. "
              << "Check if your constraints are too strict." << "\n";
-        return MatrixR();
+        return {};
     }
 
-    MatrixR first_objective_matrix  = objectives.extract(first_feasible_inputs, first_feasible_outputs);
+    MatrixR first_objective_matrix = objectives.extract(first_feasible_inputs, first_feasible_outputs);
     objectives.normalize(first_objective_matrix);
 
     auto [global_pareto_inputs, global_pareto_outputs] = calculate_pareto(first_feasible_inputs, first_feasible_outputs, first_objective_matrix);
@@ -663,7 +658,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
 
             auto [local_feasible_inputs, local_feasible_outputs] = filter_feasible_points(local_random_inputs, neural_network->calculate_outputs(local_random_inputs), original_output_domain);
 
-            MatrixR local_objective_matrix  = objectives.extract(local_feasible_inputs, local_feasible_outputs);
+            MatrixR local_objective_matrix = objectives.extract(local_feasible_inputs, local_feasible_outputs);
             objectives.normalize(local_objective_matrix);
 
             auto [local_pareto_input, local_pareto_output] = calculate_pareto(local_feasible_inputs, local_feasible_outputs, local_objective_matrix);
@@ -682,17 +677,12 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
         MatrixR objective_matrix = objectives.extract(candidate_inputs, candidate_outputs);
         objectives.normalize(objective_matrix);
 
-        const auto pareto_pair = calculate_pareto(candidate_inputs, candidate_outputs, objective_matrix);
-
-        global_pareto_inputs = pareto_pair.first;
-        global_pareto_outputs = pareto_pair.second;
+        tie(global_pareto_inputs, global_pareto_outputs) =
+            calculate_pareto(candidate_inputs, candidate_outputs, objective_matrix);
 
         cout << "  - New Pareto front size: " << global_pareto_inputs.rows()  << "\n";
 
-        const pair<float, float> quality = calculate_quality_metrics(global_pareto_inputs, global_pareto_outputs, objectives);
-
-        const float current_hole = quality.first;
-        const float current_boundary = quality.second;
+        const auto [current_hole, current_boundary] = calculate_quality_metrics(global_pareto_inputs, global_pareto_outputs, objectives);
 
         cout << "  - Internal Hole: " << current_hole << " | Boundary Gap: " << current_boundary << "\n";
 
@@ -708,7 +698,6 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
         previous_holes_magnitude = current_hole;
         previous_area_covered = current_boundary;
 
-        local_input_domains.reserve(static_cast<size_t>(global_pareto_inputs.rows()));
         local_input_domains.assign(static_cast<size_t>(global_pareto_inputs.rows()), original_input_domain);
 
         const MatrixR best_and_pareto = append_rows(optimal_set.first,global_pareto_inputs);
@@ -728,14 +717,14 @@ MatrixR ResponseOptimization::perform_response_optimization() const
     if (!dataset)
         throw runtime_error("Dataset not set\n");
 
-     const Objectives objectives = build_objectives();
+    const Objectives objectives = build_objectives();
 
     if (objectives.objective_sources.cols() == 0)
         throw runtime_error("No objectives found\n");
 
-    return  (objectives.objective_sources.cols() == 1)
+    return (objectives.objective_sources.cols() == 1)
                ? perform_single_objective_optimization(objectives)
-               : perform_multiobjective_optimization(objectives);;
+               : perform_multiobjective_optimization(objectives);
 }
 
 }

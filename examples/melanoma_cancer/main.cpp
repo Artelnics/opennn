@@ -31,7 +31,7 @@ int main()
 
         #ifdef OPENNN_HAS_CUDA
 
-        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
 
         // Data set
 
@@ -56,7 +56,7 @@ int main()
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_display_period(10);
-        adam->set_batch_size(16);
+        adam->set_batch_size(10);
         adam->set_maximum_epochs(50);
 
         training_strategy.train();

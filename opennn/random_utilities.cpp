@@ -7,21 +7,21 @@
 //   artelnics@artelnics.com
 
 #include <atomic>
-#include <omp.h>
+#include <thread>
 #include "random_utilities.h"
 
 namespace opennn
 {
 
-static std::atomic<long long>    global_seed{-1};
-static std::atomic<unsigned int> seed_generation{0};
+static atomic<long long>    global_seed{-1};
+static atomic<unsigned int> seed_generation{0};
 
 thread_local mt19937    generator;
 thread_local unsigned int local_generation = 0;
 
 static void initialize_generator()
 {
-    const long long seed = global_seed.load(std::memory_order_relaxed);
+    const long long seed = global_seed.load(memory_order_relaxed);
 
     if (seed < 0)
     {
@@ -30,31 +30,36 @@ static void initialize_generator()
     }
     else
     {
-        const int thread_id = omp_get_thread_num();
-        generator.seed(static_cast<unsigned int>(seed + thread_id * 5489u));
+        // Hash the thread::id so OMP threads and thread workers
+        // each get a unique seed deterministic-per-thread. omp_get_thread_num()
+        // returns 0 outside an OMP region — wrong for thread workers.
+        const uint32_t tid_hash =
+            uint32_t(hash<thread::id>{}(this_thread::get_id()));
+        seed_seq seq{ uint32_t(seed), tid_hash };
+        generator.seed(seq);
     }
 
-    local_generation = seed_generation.load(std::memory_order_acquire);
+    local_generation = seed_generation.load(memory_order_acquire);
 }
 
 inline mt19937& get_generator()
 {
-    if (local_generation != seed_generation.load(std::memory_order_acquire))
+    if (local_generation != seed_generation.load(memory_order_acquire))
         initialize_generator();
     return generator;
 }
 
 void set_seed(unsigned seed)
 {
-    global_seed.store(static_cast<long long>(seed), std::memory_order_relaxed);
-    seed_generation.fetch_add(1, std::memory_order_release);
+    global_seed.store(static_cast<long long>(seed), memory_order_relaxed);
+    seed_generation.fetch_add(1, memory_order_release);
     initialize_generator();   // reseed the calling (main) thread immediately.
     srand(seed);              // covers Eigen helpers that fall back to libc rand().
 }
 
 long long get_seed()
 {
-    return global_seed.load(std::memory_order_relaxed);
+    return global_seed.load(memory_order_relaxed);
 }
 
 float random_uniform(float min, float max)
@@ -111,7 +116,7 @@ void set_random_normal(MatrixMap tensor, float mean, float std_dev)
 template<typename T>
 void shuffle_vector(vector<T>& vec)
 {
-    shuffle(vec.begin(), vec.end(), get_generator());
+    ranges::shuffle(vec, get_generator());
 }
 
 template void shuffle_vector<Index>(vector<Index>&);
@@ -144,16 +149,14 @@ void shuffle(VectorB& vector_to_shuffle)
     shuffle(vector_to_shuffle.data(), vector_to_shuffle.data() + vector_to_shuffle.size(), get_generator());
 }
 
-Index get_random_element(const vector<Index>&values)
+Index get_random_element(const vector<Index>& values)
 {
     if (values.empty())
         throw runtime_error("get_random_element: Input vector is empty.");
 
     uniform_int_distribution<size_t> distribution(0, values.size() - 1);
 
-    const size_t random_index = distribution(get_generator());
-
-    return values[random_index];
+    return values[distribution(get_generator())];
 }
 
 void set_random_integer(MatrixR &tensor, Index min, Index max)

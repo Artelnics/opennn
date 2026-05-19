@@ -30,10 +30,10 @@ template<> struct TypeInfo<Type::FP32>
 
 template<> struct TypeInfo<Type::BF16>
 {
-    using type = __nv_bfloat16;
+    using type = bfloat16;
     static constexpr cudnnDataType_t cudnn = CUDNN_DATA_BFLOAT16;
     static constexpr cudaDataType_t  cuda  = CUDA_R_16BF;
-    static constexpr Index           bytes = Index(sizeof(__nv_bfloat16));
+    static constexpr Index           bytes = Index(sizeof(bfloat16));
     static constexpr const char*     name  = "BF16";
 };
 
@@ -51,7 +51,7 @@ void visit_type(Type t, F&& f)
 {
     bool matched = false;
     ((t == Supported && (f(TypeInfo<Supported>{}), matched = true, false)) || ...);
-    if (!matched) throw runtime_error("visit_type: unsupported Type value");
+    throw_if(!matched, "visit_type: unsupported Type value");
 }
 
 template<Type... Supported, typename F>
@@ -66,37 +66,43 @@ void visit_type_pair(Type t_in, Type t_out, F&& f)
     });
 }
 
-inline cudnnDataType_t to_cudnn(Type type) noexcept
+[[nodiscard]] inline cudnnDataType_t to_cudnn(Type type) noexcept
 {
+    using enum Type;
     switch (type)
     {
-        case Type::FP32: return TypeInfo<Type::FP32>::cudnn;
-        case Type::BF16: return TypeInfo<Type::BF16>::cudnn;
-        case Type::INT8: return TypeInfo<Type::INT8>::cudnn;
-        default:         return TypeInfo<Type::FP32>::cudnn;
+        case Auto: return TypeInfo<FP32>::cudnn;
+        case FP32: return TypeInfo<FP32>::cudnn;
+        case BF16: return TypeInfo<BF16>::cudnn;
+        case INT8: return TypeInfo<INT8>::cudnn;
     }
+    return TypeInfo<FP32>::cudnn;
 }
 
-inline cudaDataType_t to_cuda(Type type) noexcept
+[[nodiscard]] inline cudaDataType_t to_cuda(Type type) noexcept
 {
+    using enum Type;
     switch (type)
     {
-        case Type::FP32: return TypeInfo<Type::FP32>::cuda;
-        case Type::BF16: return TypeInfo<Type::BF16>::cuda;
-        case Type::INT8: return TypeInfo<Type::INT8>::cuda;
-        default:         return TypeInfo<Type::FP32>::cuda;
+        case Auto: return TypeInfo<FP32>::cuda;
+        case FP32: return TypeInfo<FP32>::cuda;
+        case BF16: return TypeInfo<BF16>::cuda;
+        case INT8: return TypeInfo<INT8>::cuda;
     }
+    return TypeInfo<FP32>::cuda;
 }
 
-inline Index type_bytes(Type type) noexcept
+[[nodiscard]] inline Index type_bytes(Type type) noexcept
 {
+    using enum Type;
     switch (type)
     {
-        case Type::FP32: return TypeInfo<Type::FP32>::bytes;
-        case Type::BF16: return TypeInfo<Type::BF16>::bytes;
-        case Type::INT8: return TypeInfo<Type::INT8>::bytes;
-        default:         return TypeInfo<Type::FP32>::bytes;
+        case Auto: return TypeInfo<FP32>::bytes;
+        case FP32: return TypeInfo<FP32>::bytes;
+        case BF16: return TypeInfo<BF16>::bytes;
+        case INT8: return TypeInfo<INT8>::bytes;
     }
+    return TypeInfo<FP32>::bytes;
 }
 
 class Configuration
@@ -110,7 +116,7 @@ public:
         Type   inference_type = Type::FP32;
     };
 
-    static Configuration& instance()
+    [[nodiscard]] static Configuration& instance()
     {
         static Configuration configuration;
         return configuration;
@@ -120,11 +126,11 @@ public:
              Type   new_training_type   = Type::Auto,
              Type   new_inference_type  = Type::Auto);
 
-    Device get_device()         const { return device; }
-    Type   get_training_type()  const { return training_type; }
-    Type   get_inference_type() const { return inference_type; }
+    [[nodiscard]] Device get_device()         const { return device; }
+    [[nodiscard]] Type   get_training_type()  const { return training_type; }
+    [[nodiscard]] Type   get_inference_type() const { return inference_type; }
 
-    const Resolved& resolve() const
+    [[nodiscard]] const Resolved& resolve() const
     {
         if (cache_valid)
             return cached_resolved;
@@ -132,25 +138,31 @@ public:
         return resolve_slow();
     }
 
-    bool is_gpu() const { return resolve().device == Device::CUDA; }
-    bool is_cpu() const { return resolve().device == Device::CPU; }
+    [[nodiscard]] bool is_gpu() const { return resolve().device == Device::CUDA; }
+    [[nodiscard]] bool is_cpu() const { return resolve().device == Device::CPU; }
 
-    bool is_bf16_training()  const { return resolve().training_type  == Type::BF16; }
-    bool is_bf16_inference() const { return resolve().inference_type == Type::BF16; }
+    [[nodiscard]] bool is_bf16_training()  const { return resolve().training_type  == Type::BF16; }
+    [[nodiscard]] bool is_bf16_inference() const { return resolve().inference_type == Type::BF16; }
 
 private:
 
     Configuration() = default;
 
-    const Resolved& resolve_slow() const;
+    [[nodiscard]] const Resolved& resolve_slow() const;
 
     Device device         = Device::Auto;
     Type   training_type  = Type::Auto;
     Type   inference_type = Type::Auto;
 
     mutable Resolved             cached_resolved;
-    mutable std::atomic<bool>    cache_valid{false};
+    mutable atomic<bool>    cache_valid{false};
 };
+
+[[nodiscard]] inline bool   is_gpu()            { return Configuration::instance().is_gpu(); }
+[[nodiscard]] inline bool   is_cpu()            { return Configuration::instance().is_cpu(); }
+[[nodiscard]] inline bool   is_bf16_training()  { return Configuration::instance().is_bf16_training(); }
+[[nodiscard]] inline bool   is_bf16_inference() { return Configuration::instance().is_bf16_inference(); }
+[[nodiscard]] inline Device current_device()    { return is_gpu() ? Device::CUDA : Device::CPU; }
 
 }
 

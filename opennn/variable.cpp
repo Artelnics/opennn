@@ -29,41 +29,12 @@ void Variable::set(const string& new_name, const string& new_variable_role, cons
 
 void Variable::set_type(const string& new_variable_type)
 {
-    if (new_variable_type == "Numeric")
-        type = VariableType::Numeric;
-    else if (new_variable_type == "Binary")
-        type = VariableType::Binary;
-    else if (new_variable_type == "Categorical")
-        type = VariableType::Categorical;
-    else if (new_variable_type == "DateTime")
-        type = VariableType::DateTime;
-    else if (new_variable_type == "Constant")
-        type = VariableType::Constant;
-    else if (new_variable_type == "None")
-        type = VariableType::None;
-    else
-        throw runtime_error("Variable type is not valid (" + new_variable_type + ").\n");
+    type = string_to_variable_type(new_variable_type);
 }
 
-string Variable::get_type_string() const
+const string& Variable::get_type_string() const
 {
-    switch (type)
-    {
-    case VariableType::None:
-        return "None";
-    case VariableType::Numeric:
-        return "Numeric";
-    case VariableType::Constant:
-        return "Constant";
-    case VariableType::Binary:
-        return "Binary";
-    case VariableType::Categorical:
-        return "Categorical";
-    case VariableType::DateTime:
-        return "DateTime";
-    default:
-        return "Unknown";
-    }
+    return variable_type_to_string(type);
 }
 
 Index Variable::get_categories_number() const
@@ -73,16 +44,15 @@ Index Variable::get_categories_number() const
 
 void Variable::from_JSON(const JsonDocument& document)
 {
-    name = read_json_string(document.first_child(), "Name");
-    set_scaler(read_json_string(document.first_child(), "Scaler"));
-    set_role(read_json_string(document.first_child(), "Role"));
-    set_type(read_json_string(document.first_child(), "Type"));
+    const Json* root = document.first_child();
+
+    name = read_json_string(root, "Name");
+    set_scaler(read_json_string(root, "Scaler"));
+    set_role(read_json_string(root, "Role"));
+    set_type(read_json_string(root, "Type"));
 
     if (type == VariableType::Categorical)
-    {
-        const string categories_text = read_json_string(document.first_child(), "Categories");
-        categories = get_tokens(categories_text, ";");
-    }
+        categories = get_tokens(read_json_string(root, "Categories"), ";");
 }
 
 void Variable::to_JSON(JsonWriter& printer) const

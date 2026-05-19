@@ -9,11 +9,30 @@
 #include <cuda_bf16.h>
 
 using Eigen::Index;
-void adam_update_cuda(const Index, float*, float*, float*, const float*, const float, const float, const float, const float, const float, const float);
 
-void sgd_update_cuda(const Index, float*, float*, const float*, const float, const float, const bool);
+// Optimizer
 
-void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm);
+// `params_bf16` (last arg, default nullptr): when non-null, the kernel writes
+// the freshly-updated FP32 master into the BF16 mirror in the same pass —
+// avoids a separate cast_fp32_to_bf16_cuda call over the whole parameter set.
+void adam_update_cuda(const Index, float*, float*, float*, const float*,
+                      const float, const float, const float, const float,
+                      const float, const float,
+                      __nv_bfloat16* params_bf16 = nullptr);
+
+void sgd_update_cuda(const Index, float*, float*, const float*,
+                     const float, const float, const bool,
+                     __nv_bfloat16* params_bf16 = nullptr);
+
+void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm, const float eps);
+
+// Cast FP32 source buffer to a BF16 destination buffer of the same length.
+// Used to initialize the BF16 mirror of network parameters in
+// NeuralNetwork::copy_parameters_device, and by Batch::copy_device_async to
+// convert FP32 inputs (pinned host) to BF16 inputs (device). The post-step
+// refresh of the mirror during Adam/SGD is folded into the optimizer kernels
+// themselves (see params_bf16 above), not into this cast.
+// When `stream` is null the host wrapper falls back to Backend::get_compute_stream().
 void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
                             cudaStream_t stream = nullptr);
 void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst);
@@ -50,6 +69,13 @@ void cross_entropy_3d_multiple_forward_cuda(const Index, const int, const T*, co
 
 template<typename T>
 void cross_entropy_3d_multiple_backward_cuda(const Index, const int, const T*, const float*, T*, const float);
+
+template<typename T>
+void cross_entropy_3d_multiple_backward_device_count_cuda(const Index, const int, const T*, const float*, T*, const float*);
+
+void accumulate_scaled_metric_cuda(const float*, float, float*);
+
+void accumulate_cross_entropy_3d_metrics_cuda(const float*, float*, float*);
 
 // Regularization
 

@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "../opennn/standard_networks.h"
 
 
@@ -19,7 +20,7 @@ void create_temp_csv_file(const string& file_path, const string& content)
 
 TEST(Dataset, DefaultConstructor)
 {
-    Dataset dataset;
+    TabularDataset dataset;
 
     EXPECT_EQ(dataset.get_variables_number(), 0);
     EXPECT_EQ(dataset.get_samples_number(), 0);
@@ -28,7 +29,7 @@ TEST(Dataset, DefaultConstructor)
 
 TEST(Dataset, DimensionsConstructor)
 {
-    Dataset dataset(1, { 1 }, { 1 });
+    TabularDataset dataset(1, { 1 }, { 1 });
 
     EXPECT_EQ(dataset.get_samples_number(), 1);
     EXPECT_EQ(dataset.get_variables_number(), 2);
@@ -41,7 +42,7 @@ TEST(Dataset, DimensionsConstructor)
 TEST(Dataset, VariableDescriptivesZero)
 {
 
-    Dataset dataset(1, { 1 }, { 1 });
+    TabularDataset dataset(1, { 1 }, { 1 });
     dataset.set_data_constant(type(0));
 
     const vector<Descriptives> variable_descriptives = dataset.calculate_feature_descriptives();
@@ -63,7 +64,7 @@ TEST(Dataset, VariableDescriptives)
     const Index inputs_number = 2;
     const Index targets_number = 1;
 
-    Dataset dataset(samples_number, { inputs_number }, { targets_number });
+    TabularDataset dataset(samples_number, { inputs_number }, { targets_number });
 
     MatrixR data(samples_number, inputs_number + targets_number);
 
@@ -88,7 +89,7 @@ TEST(Dataset, VariableDescriptives)
 TEST(Dataset, RawVariableDistributions)
 {
 
-    Dataset dataset(3, { 2 }, { 1 });
+    TabularDataset dataset(3, { 2 }, { 1 });
 
     MatrixR data(3, 3);
 
@@ -117,7 +118,7 @@ TEST(Dataset, RawVariableDistributions)
 TEST(Dataset, FilterData_MixedFiltering) {
     // Test
     {
-        Dataset dataset(2, { 1 }, { 1 });
+        TabularDataset dataset(2, { 1 }, { 1 });
         dataset.set_data_constant(type(1));
 
         VectorR minimums(2);
@@ -135,7 +136,7 @@ TEST(Dataset, FilterData_MixedFiltering) {
 
     // Test
     {
-        Dataset dataset(2, { 1 }, { 1 });
+        TabularDataset dataset(2, { 1 }, { 1 });
         MatrixR data(2, 2);
         data << type(1), type(2),
                 type(3), type(4);
@@ -159,7 +160,7 @@ TEST(Dataset, FilterData_MixedFiltering) {
 
 TEST(Dataset, ScaleData)
 {
-    Dataset dataset(2, { 1 }, { 1 });
+    TabularDataset dataset(2, { 1 }, { 1 });
 
     MatrixR original_data(2, 2);
     original_data << type(10), type(200),
@@ -188,7 +189,7 @@ TEST(Dataset, ScaleData)
 
 TEST(Dataset, UnuseConstantRawVariables)
 {
-    Dataset dataset(3, { 2 }, { 1 });
+    TabularDataset dataset(3, { 2 }, { 1 });
 
     MatrixR data(3, 3);
 
@@ -206,7 +207,7 @@ TEST(Dataset, UnuseConstantRawVariables)
 
 TEST(Dataset, CalculateTargetDistribution)
 {
-    Dataset dataset(5, { 3 }, { 2 });
+    TabularDataset dataset(5, { 3 }, { 2 });
     MatrixR data(5, 4);
 
     data << type(2),type(5),type(6),type(0),
@@ -238,7 +239,7 @@ TEST(Dataset, CalculateTargetDistribution)
     
     // Test more two classes
 
-    Dataset dataset_2(5, { 6 }, { 3 });
+    TabularDataset dataset_2(5, { 6 }, { 3 });
 
     data.resize(5, 9);
     data.setZero();
@@ -282,7 +283,7 @@ TEST(Dataset, ReadCSV_Basic)
 
     create_temp_csv_file(temp_csv_file_path, csv_content);
 
-    Dataset dataset;
+    TabularDataset dataset;
 
     dataset.set_data_path(temp_csv_file_path);
     dataset.set_separator(Dataset::Separator::Comma);
@@ -403,7 +404,7 @@ TEST(Dataset, ReadCSV_SpaceSeparator)
 
     create_temp_csv_file(temp_csv_file_path, csv_content);
 
-    Dataset dataset;
+    TabularDataset dataset;
     dataset.set_data_path(temp_csv_file_path);
     dataset.set_separator(Dataset::Separator::Space);
     dataset.set_has_header(true);
@@ -446,7 +447,7 @@ TEST(Dataset, ReadCSV_WithSampleIDs)
 
     create_temp_csv_file(temp_csv_file_path, csv_content);
 
-    Dataset dataset;
+    TabularDataset dataset;
     dataset.set_data_path(temp_csv_file_path);
     dataset.set_separator(Dataset::Separator::Comma);
     dataset.set_has_header(true);
@@ -491,7 +492,7 @@ TEST(Dataset, ReadCSV_EmptyLinesAndWhitespaceSkipped)
         "2,20\n";
     create_temp_csv_file(temp_csv_file_path, csv_content);
 
-    Dataset dataset;
+    TabularDataset dataset;
     dataset.set_data_path(temp_csv_file_path);
     dataset.set_separator(opennn::Dataset::Separator::Comma);
     dataset.set_has_header(true);
@@ -518,7 +519,7 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
     // Test 1 (numeric and numeric trivial case) aS
 
     MatrixR data;
-    Dataset dataset(3, {3}, {1});
+    TabularDataset dataset(3, {3}, {1});
 
     data.resize(3, 4);
 
@@ -627,7 +628,7 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 {
     // Test 1 (numeric and numeric trivial case)
     MatrixR data;
-    Dataset dataset(3, { 3 }, { 1 });
+    TabularDataset dataset(3, { 3 }, { 1 });
     data.resize(3, 4);
 
     data << type(1), type(1), type(-1), type(1),
@@ -1025,7 +1026,7 @@ TEST(Dataset, test_unuse_uncorrelated_raw_variables)
             type(3), type(0), type(0), type(6),
             type(4), type(1), type(0), type(8);
 
-    Dataset dataset(4, { 3 }, { 1 });
+    TabularDataset dataset(4, { 3 }, { 1 });
     dataset.set_variable_names({ "A", "B", "C", "T" });
     dataset.set_data(data);
 
@@ -1059,7 +1060,7 @@ TEST(Dataset,CalculateNegatives)
 
     // Test
 
-    Dataset dataset(3, { 2 }, { 1 });
+    TabularDataset dataset(3, { 2 }, { 1 });
 
     MatrixR data;
 
@@ -1111,7 +1112,7 @@ TEST(Dataset,CalculateNegatives)
 
 TEST(Dataset, BatchFill)
 {
-    Dataset dataset(3, { 2 }, { 1 });
+    TabularDataset dataset(3, { 2 }, { 1 });
 
     MatrixR data(3, 3);
     data << type(1),type(4),type(1),

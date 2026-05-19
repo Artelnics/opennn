@@ -15,44 +15,28 @@
 namespace opennn
 {
 
-Addition::Addition(const Shape& new_input_shape, const string& new_name) : Layer()
+Addition::Addition(const Shape& new_input_shape, const string& new_name)
+    : Layer(LayerType::Addition)
 {
-    name = "Addition";
-    layer_type = LayerType::Addition;
+    operators = {&add};
 
     set(new_input_shape, new_name);
 
-    add.input_slots  = {Input};
-    add.output_slots = {Output};
+    add.input_delta_slots  = {InputDelta0, InputDelta1};
 }
 
-vector<pair<Shape, Type>> Addition::get_backward_specs(Index batch_size) const
+vector<TensorSpec> Addition::get_backward_specs(Index batch_size) const
 {
-    return {
-        {Shape{batch_size}.append(input_shape), compute_dtype}, // InputDelta0
-        {Shape{batch_size}.append(input_shape), compute_dtype}, // InputDelta1
-    };
+    return vector<TensorSpec>(2, {Shape{batch_size}.append(input_shape), compute_dtype});
 }
 
 void Addition::set(const Shape& new_input_shape, const string& new_label)
 {
-    if (!new_input_shape.empty() && new_input_shape.rank != 2 && new_input_shape.rank != 3)
-        throw runtime_error("Addition layer supports input rank 2 or 3 (got "
-                            + to_string(new_input_shape.rank) + ").");
+    check_rank(new_input_shape, {2, 3}, "Addition", "input");
 
     input_shape = new_input_shape;
 
     set_label(new_label);
-}
-
-void Addition::back_propagate(ForwardPropagation&,
-                              BackPropagation& back_propagation,
-                              size_t layer) const noexcept
-{
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    copy(delta_views[OutputDelta][0], delta_views[InputDelta0][0]);
-    copy(delta_views[OutputDelta][0], delta_views[InputDelta1][0]);
 }
 
 REGISTER(Layer, Addition, "Addition")

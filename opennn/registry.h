@@ -13,17 +13,12 @@
 #include <memory>
 #include <stdexcept>
 #include <unordered_map>
+#include <utility>
 #include <vector>
+#include <format>
 
 namespace opennn
 {
-
-using std::string;
-using std::unique_ptr;
-using std::vector;
-using std::function;
-using std::unordered_map;
-using std::runtime_error;
 
 template<typename T>
 class Registry
@@ -32,7 +27,7 @@ public:
 
     using Creator = function<unique_ptr<T>()>;
 
-    static Registry& instance()
+    [[nodiscard]] static Registry& instance()
     {
         static Registry registry;
         return registry;
@@ -43,18 +38,18 @@ public:
         creators[name] = move(creator);
     }
 
-    unique_ptr<T> create(const string& name) const
+    [[nodiscard]] unique_ptr<T> create(const string& name) const
     {
         auto it = creators.find(name);
 
         if (it == creators.end())
-            throw runtime_error("Component not found: " + name);
+            throw runtime_error(format("Component not found: {}", name));
 
         return it->second();
 
     }
 
-    vector<string> registered_names() const
+    [[nodiscard]] vector<string> registered_names() const
     {
         vector<string> names;
 

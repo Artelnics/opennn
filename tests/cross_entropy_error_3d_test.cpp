@@ -3,6 +3,7 @@
 #include "../opennn/loss.h"
 #include "../opennn/dense_layer.h"
 #include "../opennn/dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "gtest/gtest.h"
 
 using namespace opennn;
@@ -10,7 +11,7 @@ using namespace opennn;
 TEST(CrossEntropyError3DTest, DefaultConstructor)
 {
     NeuralNetwork neural_network;
-    Dataset dataset;
+    TabularDataset dataset;
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::CrossEntropy);

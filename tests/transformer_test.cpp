@@ -62,7 +62,7 @@ TEST(Transformer, GeneralConstructor)
 
     EXPECT_EQ(transformer.get_layer_index("output_projection"), 19);
 
-    const vector<vector<Index>>& in = transformer.get_layer_input_indices();
+    const vector<vector<Index>>& in = transformer.get_source_layers();
 
     ASSERT_EQ(in.size(), 20);
 
@@ -90,7 +90,7 @@ TEST(Transformer, GeneralConstructor)
 
     EXPECT_EQ(in[19], (vector<Index>{18}));
 
-    const vector<vector<Index>> out = transformer.get_layer_output_indices();
+    const vector<vector<Index>> out = transformer.get_consumer_layers();
 
     ASSERT_EQ(out.size(), 20);
 

@@ -15,19 +15,18 @@ namespace opennn
 {
 
 Recurrent::Recurrent(const Shape& new_input_shape,
-                     const Shape& new_output_shape) : Layer()
+                     const Shape& new_output_shape)
+    : Layer(LayerType::Recurrent)
 {
-    name = "Recurrent";
-    layer_type = LayerType::Recurrent;
-
     set(new_input_shape, new_output_shape);
 }
+
 Shape Recurrent::get_output_shape() const
 {
     return { biases.size() };
 }
 
-vector<pair<Shape, Type>> Recurrent::get_parameter_specs() const
+vector<TensorSpec> Recurrent::get_parameter_specs() const
 {
     return {
         {biases.shape,            compute_dtype},
@@ -36,7 +35,7 @@ vector<pair<Shape, Type>> Recurrent::get_parameter_specs() const
     };
 }
 
-vector<pair<Shape, Type>> Recurrent::get_forward_specs(Index batch_size) const
+vector<TensorSpec> Recurrent::get_forward_specs(Index batch_size) const
 {
     const Index outputs_number = get_outputs_number();
 
@@ -47,10 +46,11 @@ vector<pair<Shape, Type>> Recurrent::get_forward_specs(Index batch_size) const
     };
 }
 
-vector<pair<Shape, Type>> Recurrent::get_backward_specs(Index batch_size) const
+vector<TensorSpec> Recurrent::get_backward_specs(Index batch_size) const
 {
     return {{{batch_size, time_steps, input_features}, compute_dtype}};
 }
+
 void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 {
     if (new_input_shape.rank != 2)
@@ -59,7 +59,7 @@ void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
     time_steps     = new_input_shape[0];
     input_features = new_input_shape[1];
 
-    const Index outputs_number = new_output_shape.empty() ? Index(0) : new_output_shape[0];
+    const Index outputs_number = new_output_shape.dim_or_zero(0);
 
     biases.shape            = {outputs_number};
     input_weights.shape     = {input_features, outputs_number};
@@ -93,14 +93,15 @@ void Recurrent::set_output_shape(const Shape& new_output_shape)
 
 void Recurrent::set_activation_function(const string& new_activation_function)
 {
-    if (new_activation_function == "Sigmoid"
-        || new_activation_function == "Tanh"
-        || new_activation_function == "Identity"
-        || new_activation_function == "ReLU")
-        activation_function = new_activation_function;
-    else
-        throw runtime_error("Unknown activation function: " + new_activation_function);
+    if (new_activation_function != "Sigmoid"
+        && new_activation_function != "Tanh"
+        && new_activation_function != "Identity"
+        && new_activation_function != "ReLU")
+        throw runtime_error(format("Unknown activation function: {}", new_activation_function));
+
+    activation_function = new_activation_function;
 }
+
 void Recurrent::forward_propagate(ForwardPropagation& /*forward_propagation*/, size_t /*index*/, bool /*is_training*/) noexcept
 {
 /*
@@ -249,6 +250,7 @@ void Recurrent::back_propagate(ForwardPropagation& /*forward_propagation*/,
     }
 */
 }
+
 void Recurrent::read_JSON_body(const Json* recurrent_layer_element)
 {
     set_activation_function(read_json_string(recurrent_layer_element, "Activation"));
@@ -259,7 +261,64 @@ void Recurrent::write_JSON_body(JsonWriter& printer) const
     add_json_field(printer, "Activation", activation_function);
 }
 
+string Recurrent::write_expression(const vector<string>& feature_names,
+                                   const vector<string>& output_names) const
+{
+    const Shape input_shape_local = get_input_shape();
+    const Index time_steps_local = input_shape_local[0];
+    const Index inputs_number = input_shape_local[1];
+    const Index outputs_number = get_outputs_number();
+
+    VectorMap biases_map = get_biases().as_vector();
+    MatrixMap input_to_hidden_weights_map = get_input_weights().as_matrix();
+    MatrixMap hidden_to_hidden_weights_map = get_recurrent_weights().as_matrix();
+
+    const string& activation_function_local = get_activation_function();
+
+    ostringstream buffer;
+    buffer.precision(10);
+
+    for (Index time_step = 0; time_step < time_steps_local; ++time_step)
+    {
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            string current_variable_name;
+
+            if (time_step == time_steps_local - 1)
+                current_variable_name = (j < ssize(output_names))
+                    ? output_names[j]
+                    : format("recurrent_output_{}", j);
+            else
+                current_variable_name = format("recurrent_hidden_step_{}_neuron_{}", time_step, j);
+
+            buffer << current_variable_name << " = " << activation_function_local << "( " << biases_map(j);
+
+            for (Index i = 0; i < inputs_number; ++i)
+            {
+                const Index feature_index = (time_step * inputs_number) + i;
+
+                if (feature_index < ssize(feature_names))
+                    buffer << " + (" << feature_names[feature_index] << "*" << input_to_hidden_weights_map(i, j) << ")";
+            }
+
+            if (time_step > 0)
+            {
+                for (Index previous_j = 0; previous_j < outputs_number; ++previous_j)
+                {
+                    string previous_variable_name = format("recurrent_hidden_step_{}_neuron_{}", time_step - 1, previous_j);
+                    buffer << " + (" << previous_variable_name << "*" << hidden_to_hidden_weights_map(previous_j, j) << ")";
+                }
+            }
+
+            buffer << " );\n";
+        }
+    }
+
+    return buffer.str();
+}
+
 REGISTER(Layer, Recurrent, "Recurrent")
+
 }
 
 // OpenNN: Open Neural Networks Library.

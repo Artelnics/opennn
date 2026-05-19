@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <cstring>
 #include "registry.h"
 #include "dataset.h"
 #include "forward_propagation.h"
@@ -15,6 +16,10 @@
 #include "batch.h"
 #include "cuda_dispatch.h"
 #include "adaptive_moment_estimation.h"
+
+#ifdef OPENNN_HAS_CUDA
+#include <cuda_runtime.h>
+#endif
 
 namespace opennn
 {
@@ -47,6 +52,7 @@ void AdaptiveMomentEstimation::set_beta_2(const float new_beta_2)
 
 void AdaptiveMomentEstimation::set_default()
 {
+    batch_size = 0;
     display_period = 100;
     name = "AdaptiveMomentEstimation";
 }
@@ -60,10 +66,10 @@ TrainingResults AdaptiveMomentEstimation::train()
 {
     TrainingResults results(maximum_epochs + 1);
 
-    const bool is_gpu = Configuration::instance().is_gpu();
+    const bool on_gpu = is_gpu();
 
     if (display) cout << "Training with adaptive moment estimation \"Adam\""
-                     << (is_gpu ? " CUDA" : "") << " ...\n";
+                     << (on_gpu ? " CUDA" : "") << " ...\n";
 
     // Dataset
 
@@ -81,17 +87,23 @@ TrainingResults AdaptiveMomentEstimation::train()
     const Index training_samples_number = dataset->get_samples_number("Training");
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
-    const Index training_batch_size = min(training_samples_number, batch_size);
+    const Index effective_batch_size = batch_size <= 0
+        ? get_maximum_batch_size()
+        : batch_size;
 
-    // Cap validation_batch_size by training_batch_size so validation can reuse
-    // the training ForwardPropagation buffer when sample counts allow it.
-    const Index validation_batch_size = (validation_samples_number != 0)
-        ? min(validation_samples_number, training_batch_size)
-        : 0;
-
-    const Index training_batches_number = (training_batch_size != 0)
+    const Index training_batch_size = (effective_batch_size <= 0 || effective_batch_size > training_samples_number)
+        ? training_samples_number
+        : effective_batch_size;
+    const Index validation_batch_size = (effective_batch_size <= 0 || effective_batch_size > validation_samples_number)
+        ? validation_samples_number
+        : effective_batch_size;
+    const Index training_batches_number = (training_batch_size > 0)
         ? training_samples_number / training_batch_size
         : 0;
+
+    warn_dropped_samples(training_batch_size, training_samples_number, "training");
+    if (has_validation)
+        warn_dropped_samples(validation_batch_size, validation_samples_number, "validation");
 
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> validation_batches;
@@ -103,10 +115,9 @@ TrainingResults AdaptiveMomentEstimation::train()
     set_names();
     set_scaling();
 
-    const int pool_size = is_gpu ? 3 : 2;
+    const int pool_size = max(num_workers + 1, on_gpu ? 3 : 2);
 
     ThreadSafeQueue<Batch*> empty_training_queue;
-    ThreadSafeQueue<Batch*> ready_training_queue;
     vector<unique_ptr<Batch>> training_batch_pool;
 
     for (int i = 0; i < pool_size; ++i)
@@ -116,25 +127,24 @@ TrainingResults AdaptiveMomentEstimation::train()
     }
 
     ThreadSafeQueue<Batch*> empty_validation_queue;
-    ThreadSafeQueue<Batch*> ready_validation_queue;
     vector<unique_ptr<Batch>> validation_batch_pool;
 
-    if (has_validation)
+    const bool share_batch_pool = has_validation && validation_batch_size == training_batch_size;
+
+    if (has_validation && !share_batch_pool)
         for (int i = 0; i < pool_size; ++i)
         {
             validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
             empty_validation_queue.push(validation_batch_pool.back().get());
         }
+
+    ThreadSafeQueue<Batch*>& validation_empty_q = share_batch_pool ? empty_training_queue : empty_validation_queue;
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
 
     loss->set_normalization_coefficient();
 
     BackPropagation training_back_propagation(training_batch_size, loss);
 
-    // Reuse the training FP for validation iff batch sizes match exactly.
-    // Otherwise allocate a separate FP — over-sized views would corrupt loss
-    // kernels (input.shape[0] read directly), BatchNorm running stats, and
-    // MultiHeadAttention reshapes.
     unique_ptr<ForwardPropagation> validation_forward_propagation;
 
     if (has_validation && validation_batch_size != training_batch_size)
@@ -150,7 +160,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     const Index parameters_number = loss->get_neural_network()->get_parameters_size();
 
-    const Device device = Configuration::instance().is_gpu() ? Device::CUDA : Device::CPU;
+    const Device device = current_device();
 
     OptimizerData optimization_data;
     optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, device);
@@ -162,8 +172,11 @@ TrainingResults AdaptiveMomentEstimation::train()
     float validation_error = 0.0f;
     float validation_accuracy = 0.0f;
     Index validation_failures = 0;
+    float best_validation_error = numeric_limits<float>::max();
 
-    const bool is_classification_model = (loss->get_error() == Loss::Error::CrossEntropy3d);
+    vector<float> best_parameters;
+
+    const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
     bool stop_training = false;
     const bool shuffle = !neural_network->has(LayerType::Recurrent);
@@ -184,16 +197,16 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
-        const EpochStats train_stats = train_epoch(is_classification_model,
+        const EpochStats train_stats = train_epoch(is_token_cross_entropy,
                                                    training_forward_propagation,
                                                    training_back_propagation,
                                                    empty_training_queue,
-                                                   ready_training_queue,
                                                    training_batches,
                                                    input_feature_indices,
                                                    decoder_feature_indices,
                                                    target_feature_indices,
-                                                   training_update);
+                                                   training_update,
+                                                   should_display(epoch));
 
         training_error = train_stats.error;
         training_accuracy = train_stats.accuracy;
@@ -203,10 +216,9 @@ TrainingResults AdaptiveMomentEstimation::train()
         {
             dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
 
-            const EpochStats val_stats = evaluate_epoch(is_classification_model,
+            const EpochStats val_stats = evaluate_epoch(is_token_cross_entropy,
                                                         *validation_fp,
-                                                        empty_validation_queue,
-                                                        ready_validation_queue,
+                                                        validation_empty_q,
                                                         validation_batches,
                                                         input_feature_indices,
                                                         decoder_feature_indices,
@@ -216,7 +228,28 @@ TrainingResults AdaptiveMomentEstimation::train()
             validation_accuracy = val_stats.accuracy;
             results.validation_error_history(epoch) = validation_error;
 
-            if (epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
+            if(validation_error < best_validation_error)
+            {
+                best_validation_error = validation_error;
+                validation_failures = 0;
+
+                const Index psize = neural_network->get_parameters_size();
+                if(Index(best_parameters.size()) != psize)
+                    best_parameters.resize(psize);
+
+                const float* src = neural_network->get_parameters_data();
+                const size_t bytes = size_t(psize) * sizeof(float);
+#ifdef OPENNN_HAS_CUDA
+                if(Configuration::instance().is_gpu())
+                {
+                    CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
+                    CHECK_CUDA(cudaMemcpy(best_parameters.data(), src, bytes, cudaMemcpyDeviceToHost));
+                }
+                else
+#endif
+                    memcpy(best_parameters.data(), src, bytes);
+            }
+            else
                 ++validation_failures;
         }
 
@@ -225,9 +258,11 @@ TrainingResults AdaptiveMomentEstimation::train()
         if (should_display(epoch))
         {
             cout << "Training error: " << training_error << "\n";
-            if (is_classification_model) cout << "Training accuracy: " << training_accuracy << "\n";
+            if (is_token_cross_entropy) cout << "Training perplexity: " << exp(training_error) << "\n";
+            if (is_token_cross_entropy) cout << "Training accuracy: " << training_accuracy << "\n";
             if (has_validation) cout << "Validation error: " << validation_error << "\n";
-            if (has_validation && is_classification_model) cout << "Validation accuracy: " << validation_accuracy << "\n";
+            if (has_validation && is_token_cross_entropy) cout << "Validation perplexity: " << exp(validation_error) << "\n";
+            if (has_validation && is_token_cross_entropy) cout << "Validation accuracy: " << validation_accuracy << "\n";
             cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
 
@@ -247,6 +282,22 @@ TrainingResults AdaptiveMomentEstimation::train()
     }
 
     teardown_device_training();
+
+    if(results.stopping_condition == StoppingCondition::MaximumSelectionErrorIncreases
+       && !best_parameters.empty()
+       && Index(best_parameters.size()) == neural_network->get_parameters_size())
+    {
+        if(display)
+            cout << "Restoring best parameters (validation error " << best_validation_error << ")\n";
+
+        // Use set_parameters (not memcpy) so the GPU path properly issues
+        // cudaMemcpy(H2D) and refreshes the BF16 mirror via
+        // cast_parameters_to_bf16. memcpy into a device pointer is UB.
+        VectorR best_view(best_parameters.size());
+        memcpy(best_view.data(), best_parameters.data(),
+                    best_parameters.size() * sizeof(float));
+        neural_network->set_parameters(best_view);
+    }
 
     set_unscaling();
 
@@ -287,9 +338,8 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             learning_rate,
             EPSILON,
             bias_correction_1,
-            bias_correction_2);
-
-        neural_network->cast_parameters_to_bf16();
+            bias_correction_2,
+            neural_network->get_parameters_bf16_data());
 
         return;
     });
@@ -333,7 +383,7 @@ void AdaptiveMomentEstimation::to_JSON(JsonWriter& printer) const
     printer.open_element("AdaptiveMomentEstimation");
 
     add_json_field(printer, "BatchSize", to_string(batch_size));
-    write_common_xml(printer);
+    write_common_json(printer);
 
     printer.close_element();
 }
@@ -343,7 +393,7 @@ void AdaptiveMomentEstimation::from_JSON(const JsonDocument& document)
     const Json* root_element = get_json_root(document, "AdaptiveMomentEstimation");
 
     set_batch_size(read_json_index(root_element, "BatchSize"));
-    read_common_xml(root_element);
+    read_common_json(root_element);
 }
 
 REGISTER(Optimizer, AdaptiveMomentEstimation, "AdaptiveMomentEstimation");

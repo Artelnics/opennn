@@ -17,6 +17,30 @@ namespace opennn
 
 enum class VariableType { None, Numeric, Binary, Categorical, DateTime, Constant };
 
+inline const EnumMap<VariableType>& variable_type_map()
+{
+    static const vector<pair<VariableType, string>> entries = {
+        {VariableType::None,        "None"},
+        {VariableType::Numeric,     "Numeric"},
+        {VariableType::Binary,      "Binary"},
+        {VariableType::Categorical, "Categorical"},
+        {VariableType::DateTime,    "DateTime"},
+        {VariableType::Constant,    "Constant"}
+    };
+    static const EnumMap<VariableType> map{entries};
+    return map;
+}
+
+inline const string& variable_type_to_string(VariableType type)
+{
+    return variable_type_map().to_string(type);
+}
+
+inline VariableType string_to_variable_type(const string& name)
+{
+    return variable_type_map().from_string(name);
+}
+
 enum class ScalerMethod
 {
     None,
@@ -94,17 +118,17 @@ inline bool role_matches(VariableRole actual, VariableRole query)
 
 struct Variable
 {
-    Variable(const string& = string(),
+    Variable(const string& = {},
              const string& = "None",
              const VariableType& = VariableType::Numeric,
              const string& = "MeanStandardDeviation",
-             const vector<string>& = vector<string>());
+             const vector<string>& = {});
 
-    void set(const string& = string(),
+    void set(const string& = {},
              const string& = "None",
              const VariableType& = VariableType::Numeric,
              const string& = "MeanStandardDeviation",
-             const vector<string>& = vector<string>());
+             const vector<string>& = {});
 
     string name;
     VariableRole role = VariableRole::None;
@@ -115,7 +139,7 @@ struct Variable
     VariableRole get_role_type() const { return role; }
     const string& get_scaler() const { return scaler_method_to_string(scaler); }
     ScalerMethod get_scaler_type() const { return scaler; }
-    string get_type_string() const;
+    const string& get_type_string() const;
     Index get_categories_number() const;
 
     void set_scaler(const string& new_scaler) { scaler = string_to_scaler_method(new_scaler); }
@@ -131,6 +155,8 @@ struct Variable
     bool is_binary() const { return type == VariableType::Binary; }
     bool is_categorical() const { return type == VariableType::Categorical; }
     bool is_used() const { return role != VariableRole::None && role != VariableRole::Time; }
+
+    Index feature_count() const { return is_categorical() ? get_categories_number() : 1; }
 
     vector<string> get_names() const;
 

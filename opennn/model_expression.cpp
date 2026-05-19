@@ -8,10 +8,6 @@
 
 #include "model_expression.h"
 #include "scaling_layer.h"
-#include "unscaling_layer.h"
-#include "bounding_layer.h"
-#include "recurrent_layer.h"
-#include "dense_layer.h"
 #include "string_utilities.h"
 #include "neural_network.h"
 #include "variable.h"
@@ -263,7 +259,7 @@ vector<string> ModelExpression::split_expression_lines(const string& expression)
 
     while (getline(ss, line, '\n'))
     {
-        if (line.empty() || all_of(line.begin(), line.end(), [](char c) { return isspace(static_cast<unsigned char>(c)); }))
+        if (line.empty() || ranges::all_of(line, [](char c) { return isspace(static_cast<unsigned char>(c)); }))
             continue;
         if (line.find("{") != string::npos)
             break;
@@ -275,248 +271,11 @@ vector<string> ModelExpression::split_expression_lines(const string& expression)
     return lines;
 }
 
-string ModelExpression::write_bounding_expression(const Bounding& layer,
-                                                  const vector<string>& input_names,
-                                                  const vector<string>& output_names)
-{
-    if (layer.get_bounding_method() == Bounding::BoundingMethod::NoBounding)
-        return string();
-
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    const Shape output_shape = layer.get_output_shape();
-    const VectorR& lower_bounds = layer.get_lower_bounds();
-    const VectorR& upper_bounds = layer.get_upper_bounds();
-
-    for (Index i = 0; i < output_shape[0]; ++i)
-        buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << input_names[i] << ")\n"
-               << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
-
-    return buffer.str();
-}
-
-string ModelExpression::write_scaling_expression(const Scaling& layer,
-                                                 const vector<string>& input_names,
-                                                 const vector<string>& /*output_names*/)
-{
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    const Index outputs_number = layer.get_outputs_number();
-    const VectorR& minimums = layer.get_minimums();
-    const VectorR& maximums = layer.get_maximums();
-    const VectorR& means = layer.get_means();
-    const VectorR& standard_deviations = layer.get_standard_deviations();
-    const vector<ScalerMethod>& scalers = layer.get_scalers();
-    const float min_range = layer.get_min_range();
-    const float max_range = layer.get_max_range();
-
-    for (Index i = 0; i < outputs_number; ++i)
-    {
-        switch (scalers[i])
-        {
-        case ScalerMethod::None:
-            buffer << "scaled_" << input_names[i] << " = " << input_names[i] << ";\n";
-            break;
-        case ScalerMethod::MinimumMaximum:
-            buffer << "scaled_" << input_names[i]
-                   << " = " << input_names[i] << "*(" << max_range << "-" << min_range << ")/("
-                   << maximums[i] << "-(" << minimums[i] << "))-" << minimums[i] << "*("
-                   << max_range << "-" << min_range << ")/("
-                   << maximums[i] << "-" << minimums[i] << ")+" << min_range << ";\n";
-            break;
-        case ScalerMethod::MeanStandardDeviation:
-            buffer << "scaled_" << input_names[i] << " = (" << input_names[i] << "-" << means[i] << ")/" << standard_deviations[i] << ";\n";
-            break;
-        case ScalerMethod::StandardDeviation:
-            buffer << "scaled_" << input_names[i] << " = " << input_names[i] << "/(" << standard_deviations[i] << ");\n";
-            break;
-        case ScalerMethod::Logarithm:
-            buffer << "scaled_" << input_names[i] << " = log(" << input_names[i] << ");\n";
-            break;
-        default:
-            throw runtime_error("Unknown inputs scaling method.\n");
-        }
-    }
-
-    string expression = buffer.str();
-
-    expression = regex_replace(expression, regex("\\+-"), "-");
-    expression = regex_replace(expression, regex("--"), "+");
-
-    return expression;
-}
-
-string ModelExpression::write_unscaling_expression(const Unscaling& layer,
-                                                   const vector<string>& input_names,
-                                                   const vector<string>& output_names)
-{
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    const Index outputs_number = layer.get_outputs_number();
-    const VectorR& minimums = layer.get_minimums();
-    const VectorR& maximums = layer.get_maximums();
-    const VectorR& means = layer.get_means();
-    const VectorR& standard_deviations = layer.get_standard_deviations();
-    const vector<ScalerMethod>& scalers = layer.get_scalers();
-    const float min_range = layer.get_min_range();
-    const float max_range = layer.get_max_range();
-
-    for (Index i = 0; i < outputs_number; ++i)
-    {
-        switch (scalers[i])
-        {
-        case ScalerMethod::None:
-            buffer << output_names[i] << " = " << input_names[i] << ";\n";
-            break;
-        case ScalerMethod::MinimumMaximum:
-            if (abs(minimums[i] - maximums[i]) < EPSILON)
-                buffer << output_names[i] << "=" << minimums[i] << ";\n";
-            else
-                buffer << output_names[i] << "=" << input_names[i] << "*"
-                       << "(" << (maximums[i] - minimums[i]) / (max_range - min_range)
-                       << ")+" << (minimums[i] - min_range * (maximums[i] - minimums[i]) / (max_range - min_range)) << ";\n";
-            break;
-        case ScalerMethod::MeanStandardDeviation:
-            buffer << output_names[i] << "=" << input_names[i] << "*" << standard_deviations[i] << "+" << means[i] << ";\n";
-            break;
-        case ScalerMethod::StandardDeviation:
-            buffer << output_names[i] << "=" << input_names[i] << "*" << standard_deviations[i] << ";\n";
-            break;
-        case ScalerMethod::Logarithm:
-            buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";
-            break;
-        default:
-            throw runtime_error("Unknown inputs scaling method.\n");
-        }
-    }
-
-    string expression = buffer.str();
-
-    replace(expression, "+-", "-");
-    replace(expression, "--", "+");
-
-    return expression;
-}
-
-string ModelExpression::write_recurrent_expression(const Recurrent& layer,
-                                                   const vector<string>& feature_names,
-                                                   const vector<string>& output_names)
-{
-    const Shape input_shape = layer.get_input_shape();
-    const Index time_steps = input_shape[0];
-    const Index inputs_number = input_shape[1];
-    const Index outputs_number = layer.get_outputs_number();
-
-    VectorMap biases_map = layer.get_biases().as_vector();
-    MatrixMap input_to_hidden_weights_map = layer.get_input_weights().as_matrix();
-    MatrixMap hidden_to_hidden_weights_map = layer.get_recurrent_weights().as_matrix();
-
-    const string& activation_function = layer.get_activation_function();
-
-    ostringstream buffer;
-    buffer.precision(10);
-
-    for (Index time_step = 0; time_step < time_steps; ++time_step)
-    {
-        for (Index j = 0; j < outputs_number; ++j)
-        {
-            string current_variable_name;
-
-            if (time_step == time_steps - 1)
-            {
-                if (j < ssize(output_names))
-                    current_variable_name = output_names[j];
-                else
-                    current_variable_name = "recurrent_output_" + to_string(j);
-            }
-            else
-                current_variable_name = "recurrent_hidden_step_" + to_string(time_step) + "_neuron_" + to_string(j);
-
-            buffer << current_variable_name << " = " << activation_function << "( " << biases_map(j);
-
-            for (Index i = 0; i < inputs_number; ++i)
-            {
-                const Index feature_index = (time_step * inputs_number) + i;
-
-                if (feature_index < ssize(feature_names))
-                    buffer << " + (" << feature_names[feature_index] << "*" << input_to_hidden_weights_map(i, j) << ")";
-            }
-
-            if (time_step > 0)
-            {
-                for (Index previous_j = 0; previous_j < outputs_number; ++previous_j)
-                {
-                    string previous_variable_name = "recurrent_hidden_step_" + to_string(time_step - 1) + "_neuron_" + to_string(previous_j);
-                    buffer << " + (" << previous_variable_name << "*" << hidden_to_hidden_weights_map(previous_j, j) << ")";
-                }
-            }
-
-            buffer << " );\n";
-        }
-    }
-
-    return buffer.str();
-}
-
-string ModelExpression::write_dense_expression(const Dense& layer,
-                                               const vector<string>& input_names,
-                                               const vector<string>& output_names)
-{
-    const vector<TensorView>& parameters = layer.get_parameter_views();
-    if (parameters.size() < 2 || !parameters[0].data || !parameters[1].data) return "";
-
-    const Index inputs_number = layer.get_inputs_number();
-    const Index outputs_number = layer.get_outputs_number();
-
-    const float* bias_data = parameters[0].as<float>();
-    const float* weight_data = parameters[1].as<float>();
-
-    const string& activation_function = Activation::to_string(layer.get_activation_function());
-
-    ostringstream buffer;
-
-    for (Index j = 0; j < outputs_number; ++j)
-    {
-        buffer << output_names[j] << " = " << activation_function << "( " << bias_data[j] << " + ";
-
-        for (Index i = 0; i < inputs_number; ++i)
-        {
-            const Index weight_index = i * outputs_number + j;
-            buffer << "(" << weight_data[weight_index] << "*" << input_names[i] << ")";
-            if (i < inputs_number - 1) buffer << " + ";
-        }
-
-        buffer << " );\n";
-    }
-
-    return buffer.str();
-}
-
 string ModelExpression::get_layer_expression(const Layer& layer,
                                              const vector<string>& input_names,
                                              const vector<string>& output_names)
 {
-    switch (layer.get_type())
-    {
-    case LayerType::Bounding:
-        return write_bounding_expression(static_cast<const Bounding&>(layer), input_names, output_names);
-    case LayerType::Scaling:
-        return write_scaling_expression(static_cast<const Scaling&>(layer), input_names, output_names);
-    case LayerType::Unscaling:
-        return write_unscaling_expression(static_cast<const Unscaling&>(layer), input_names, output_names);
-    case LayerType::Recurrent:
-        return write_recurrent_expression(static_cast<const Recurrent&>(layer), input_names, output_names);
-    case LayerType::Dense:
-        return write_dense_expression(static_cast<const Dense&>(layer), input_names, output_names);
-    default:
-        return string();
-    }
+    return layer.write_expression(input_names, output_names);
 }
 
 string ModelExpression::build_expression() const
@@ -531,13 +290,13 @@ string ModelExpression::build_expression() const
     new_input_names.resize(inputs_number);
     for (Index i = 0; i < inputs_number; ++i)
         if (new_input_names[i].empty())
-            new_input_names[i] = "input_" + to_string(i);
+            new_input_names[i] = format("input_{}", i);
 
     vector<string> new_output_names = neural_network->get_output_feature_names();
     new_output_names.resize(outputs_number);
     for (Index i = 0; i < outputs_number; ++i)
         if (new_output_names[i].empty())
-            new_output_names[i] = "output_" + to_string(i);
+            new_output_names[i] = format("output_{}", i);
 
     ostringstream buffer;
 
@@ -559,7 +318,7 @@ string ModelExpression::build_expression() const
             for (size_t j = 0; j < static_cast<size_t>(layer_neurons_number); ++j)
                 layer_output_names[j] = (layer_labels[i] == "scaling_layer" && j < new_input_names.size())
                                             ? "scaled_" + new_input_names[j]
-                                            : layer_labels[i] + "_output_" + to_string(j);
+                                            : format("{}_output_{}", layer_labels[i], j);
         }
 
         buffer << get_layer_expression(*layers[i], new_input_names, layer_output_names) << "\n";
@@ -612,7 +371,7 @@ void ModelExpression::rename_spaced_var_definitions(vector<string>& lines)
         if (clean_var.find(' ') == string::npos) continue;
 
         string fixed_var = clean_var;
-        replace(fixed_var.begin(), fixed_var.end(), ' ', '_');
+        ranges::replace(fixed_var, ' ', '_');
 
         for (size_t j = 0; j < lines.size(); ++j)
             replace_all_appearances(lines[j], clean_var, fixed_var);
@@ -794,7 +553,7 @@ string ModelExpression::get_expression_php() const
 
     vector<string> all_possible_vars = fixed_output_names;
     all_possible_vars.insert(all_possible_vars.end(), fixed_input_names.begin(), fixed_input_names.end());
-    sort(all_possible_vars.begin(), all_possible_vars.end(), [](const string& a, const string& b) { return a.length() > b.length(); });
+    ranges::sort(all_possible_vars, [](const string& a, const string& b) { return a.length() > b.length(); });
     for (const string& var_name : all_possible_vars)
         replace_all_word_appearances(expression, var_name, "$" + var_name);
 
@@ -1199,8 +958,7 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
     buffer << "\tdef calculate_outputs(self, inputs):\n";
 
     vector<string> python_mapped(input_names.size());
-    for (size_t i = 0; i < input_names.size(); ++i)
-        python_mapped[i] = replace_reserved_keywords(input_names[i]);
+    ranges::transform(input_names, python_mapped.begin(), replace_reserved_keywords);
 
     for (size_t i = 0; i < input_names.size(); ++i)
         buffer << "\t\t" << python_mapped[i] << " = inputs[" << i << "]\n";
@@ -1322,7 +1080,7 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
 
     while (getline(ss, token, '\n'))
     {
-        if (token.empty() || all_of(token.begin(), token.end(), [](char c) { return isspace(c); }))
+        if (token.empty() || ranges::all_of(token, [](char c) { return isspace(c); }))
             continue;
 
         if (token.find("{") != string::npos)
@@ -1367,7 +1125,7 @@ vector<string> ModelExpression::fix_names(const vector<string>& names, const str
 
     for (size_t i = 0; i < names.size(); ++i)
         fixed[i] = names[i].empty()
-            ? default_prefix + to_string(i)
+            ? format("{}{}", default_prefix, i)
             : replace_reserved_keywords(names[i]);
 
     return fixed;
@@ -1378,14 +1136,15 @@ void ModelExpression::save(const filesystem::path& file_name, ProgrammingLanguag
     ofstream file(file_name);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open file: " + file_name.string());
+        throw runtime_error(format("Cannot open file: {}", file_name.string()));
 
+    using enum ProgrammingLanguage;
     switch (language)
     {
-    case ProgrammingLanguage::C:          file << get_expression_c();          break;
-    case ProgrammingLanguage::Python:     file << get_expression_python();     break;
-    case ProgrammingLanguage::JavaScript: file << get_expression_javascript(); break;
-    case ProgrammingLanguage::PHP:        file << get_expression_php();        break;
+    case C:          file << get_expression_c();          break;
+    case Python:     file << get_expression_python();     break;
+    case JavaScript: file << get_expression_javascript(); break;
+    case PHP:        file << get_expression_php();        break;
     }
 
     file.close();

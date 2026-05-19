@@ -39,7 +39,7 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
                                        Shape{ complexity_dimensions[i] },
                                        "Tanh",
                                        false,
-                                       "dense2d_layer_" + to_string(i + 1)));
+                                       format("dense2d_layer_{}", i + 1)));
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,
@@ -68,7 +68,7 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                        Shape{complexity_dimensions[i]},
                                        "Tanh",
                                        false,
-                                       "dense2d_layer_" + to_string(i + 1)));
+                                       format("dense2d_layer_{}", i + 1)));
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,
@@ -84,7 +84,7 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                                        const Shape& complexity_dimensions,
                                        const Shape& output_shape) : NeuralNetwork()
 {
-    set_default();
+    clear();
 
     add_layer(make_unique<Recurrent>(input_shape, complexity_dimensions));
 
@@ -100,32 +100,32 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
 {
     add_layer(make_unique<Scaling>(input_shape));
 
-    const Index mapping_neurons_number = 10;
-    const Index bottle_neck_neurons_number = complexity_dimensions[0];
+    const Shape mapping_shape{ 10 };
+    const Shape bottleneck_shape{ complexity_dimensions[0] };
 
     add_layer(make_unique<Dense>(input_shape,
-                                   Shape{mapping_neurons_number},
-                                   "Tanh",
-                                   false,
-                                   "mapping_layer"));
+                                 mapping_shape,
+                                 "Tanh",
+                                 false,
+                                 "mapping_layer"));
 
-    add_layer(make_unique<Dense>(Shape{ mapping_neurons_number },
-                                   Shape{ bottle_neck_neurons_number },
-                                   "Identity",
-                                   false,
-                                   "bottleneck_layer"));
+    add_layer(make_unique<Dense>(mapping_shape,
+                                 bottleneck_shape,
+                                 "Identity",
+                                 false,
+                                 "bottleneck_layer"));
 
-    add_layer(make_unique<Dense>(Shape{ bottle_neck_neurons_number },
-                                   Shape{ mapping_neurons_number },
-                                   "Tanh",
-                                   false,
-                                   "demapping_layer"));
+    add_layer(make_unique<Dense>(bottleneck_shape,
+                                 mapping_shape,
+                                 "Tanh",
+                                 false,
+                                 "demapping_layer"));
 
-    add_layer(make_unique<Dense>(Shape{ mapping_neurons_number },
-                                   Shape{ output_shape },
-                                   "Identity",
-                                   false,
-                                   "output_layer"));
+    add_layer(make_unique<Dense>(mapping_shape,
+                                 Shape{ output_shape },
+                                 "Identity",
+                                 false,
+                                 "output_layer"));
 
     add_layer(make_unique<Unscaling>(output_shape));
 
@@ -157,7 +157,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                              stride_shape,
                                              "Same",
                                              false,
-                                             "convolutional_layer_" + to_string(i + 1)));
+                                             format("convolutional_layer_{}", i + 1)));
 
         const Shape pool_dimensions = { 2, 2 };
         const Shape pooling_stride_shape = { 2, 2 };
@@ -168,7 +168,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                        pooling_stride_shape,
                                        padding_dimensions,
                                        "MaxPooling",
-                                       "pooling_layer_" + to_string(i + 1)));
+                                       format("pooling_layer_{}", i + 1)));
     }
 
     add_layer(make_unique<Flatten>(get_output_shape()));
@@ -202,136 +202,77 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
     if (Index(blocks_per_stage.size()) != initial_filters.size())
         throw runtime_error("blocks_per_stage and initial_filters must have the same size.");
 
+    // Adds a Convolutional with explicit input index. Returns the new layer's index.
+    auto add_conv = [&](Index input_index,
+                        const Shape& kernel_shape, const char* activation,
+                        const Shape& stride, const string& name) -> Index {
+        add_layer(make_unique<Convolutional>(
+            get_layer(input_index)->get_output_shape(),
+            kernel_shape, activation, stride, "Same", false, name),
+            {input_index});
+        return get_layers_number() - 1;
+    };
+
+    // Residual block: two 3x3 convs (the first applies `stride`, the second 1x1),
+    // a 1x1 skip-conv when shape changes, an Addition, and a 1x1 ReLU "activation".
+    auto add_residual_block = [&](Index input_index, size_t stage, Index block, Index filters) -> Index {
+        const Shape input_shape  = get_layer(input_index)->get_output_shape();
+        const Index stride       = (stage > 0 && block == 0) ? 2 : 1;
+        const string prefix      = format("s{}b{}", stage, block);
+
+        Index main_index = add_conv(input_index,
+            Shape{3, 3, input_shape[2], filters}, "ReLU",
+            Shape{stride, stride}, prefix + "_conv1");
+        main_index = add_conv(main_index,
+            Shape{3, 3, filters, filters}, "Identity",
+            Shape{1, 1}, prefix + "_conv2");
+
+        Index skip_index = input_index;
+        if (stride != 1 || input_shape[2] != filters)
+            skip_index = add_conv(input_index,
+                Shape{1, 1, input_shape[2], filters}, "Identity",
+                Shape{stride, stride}, prefix + "_skip");
+
+        const Shape main_out = get_layer(main_index)->get_output_shape();
+        add_layer(make_unique<Addition>(main_out, prefix + "_add"),
+                  {main_index, skip_index});
+        const Index sum_index = get_layers_number() - 1;
+
+        return add_conv(sum_index,
+            Shape{1, 1, filters, filters}, "ReLU",
+            Shape{1, 1}, prefix + "_relu");
+    };
+
     add_layer(make_unique<Scaling>(input_shape));
 
-    Index last_layer_index = 0;
+    Index last_index = add_conv(0,
+        Shape{7, 7, input_shape[2], initial_filters[0]}, "ReLU",
+        Shape{2, 2}, "stem_conv_1");
 
-    auto stem_conv = make_unique<Convolutional>(get_layer(last_layer_index)->get_output_shape(),
-                                                Shape{ 7, 7, input_shape[2], initial_filters[0] },
-                                                "ReLU",
-                                                Shape{ 2, 2 },
-                                                "Same",
-                                                false,
-                                                "stem_conv_1");
-
-    add_layer(move(stem_conv), { last_layer_index });
-
-    last_layer_index = get_layers_number() - 1;
-
-    auto stem_pool = make_unique<Pooling>(get_layer(last_layer_index)->get_output_shape(),
-                                          Shape{ 3, 3 },
-                                          Shape{ 2, 2 },
-                                          Shape{ 1, 1 },
-                                          "MaxPooling",
-                                          "stem_pool");
-
-    add_layer(move(stem_pool), { last_layer_index });
-
-    last_layer_index = get_layers_number() - 1;
+    add_layer(make_unique<Pooling>(get_layer(last_index)->get_output_shape(),
+                                   Shape{3, 3}, Shape{2, 2}, Shape{1, 1},
+                                   "MaxPooling", "stem_pool"),
+              {last_index});
+    last_index = get_layers_number() - 1;
 
     for (size_t stage = 0; stage < blocks_per_stage.size(); ++stage)
-    {
         for (Index block = 0; block < blocks_per_stage[stage]; ++block)
-        {
-            const Index block_input_index = last_layer_index;
+            last_index = add_residual_block(last_index, stage, block, initial_filters[stage]);
 
-            Shape current_input_shape = get_layer(block_input_index)->get_output_shape();
+    const Shape pre_pool = get_layer(last_index)->get_output_shape();
+    add_layer(make_unique<Pooling>(pre_pool,
+                                   Shape{pre_pool[0], pre_pool[1]},
+                                   Shape{1, 1}, Shape{0, 0},
+                                   "AveragePooling", "global_avg_pool"),
+              {last_index});
+    last_index = get_layers_number() - 1;
 
-            const Index filters = initial_filters[stage];
+    add_layer(make_unique<Flatten>(get_layer(last_index)->get_output_shape()), {last_index});
+    last_index = get_layers_number() - 1;
 
-            const Index stride = (stage > 0 && block == 0) ? 2 : 1;
-
-            // Main
-            auto conv1 = make_unique<Convolutional>(current_input_shape,
-                                                    Shape{ 3, 3, current_input_shape[2], filters },
-                                                    "ReLU",
-                                                    Shape{ stride, stride },
-                                                    "Same",
-                                                    false,
-                                                    "s" + to_string(stage) + "b" + to_string(block) + "_conv1");
-
-            add_layer(move(conv1), { block_input_index });
-
-            Index main_path_index = get_layers_number() - 1;
-
-            auto conv2 = make_unique<Convolutional>(get_layer(main_path_index)->get_output_shape(),
-                                                    Shape{ 3, 3, filters, filters },
-                                                    "Identity",
-                                                    Shape{ 1, 1 },
-                                                    "Same",
-                                                    false,
-                                                    "s" + to_string(stage) + "b" + to_string(block) + "_conv2");
-
-            add_layer(move(conv2), { main_path_index });
-
-            main_path_index = get_layers_number() - 1;
-
-            // Skip Connection
-            Index skip_path_index = block_input_index;
-
-            if (stride != 1 || current_input_shape[2] != filters)
-            {
-                auto skip_conv = make_unique<Convolutional>(current_input_shape,
-                                                            Shape{ 1, 1, current_input_shape[2], filters },
-                                                            "Identity",
-                                                            Shape{ stride, stride },
-                                                            "Same",
-                                                            false,
-                                                            "s" + to_string(stage) + "b" + to_string(block) + "_skip");
-
-                add_layer(move(skip_conv), { block_input_index });
-
-                skip_path_index = get_layers_number() - 1;
-            }
-
-            const Shape main_out_shape = get_layer(main_path_index)->get_output_shape();
-
-            auto addition_layer = make_unique<Addition>(main_out_shape, "s" + to_string(stage) + "b" + to_string(block) + "_add");
-
-            add_layer(move(addition_layer), { main_path_index, skip_path_index });
-
-            last_layer_index = get_layers_number() - 1;
-
-            auto activation_layer = make_unique<Convolutional>(get_layer(last_layer_index)->get_output_shape(),
-                                                               Shape{ 1, 1, filters, filters },
-                                                               "ReLU",
-                                                               Shape{ 1, 1 },
-                                                               "Same",
-                                                               false,
-                                                               "s" + to_string(stage) + "b" + to_string(block) + "_relu");
-
-            add_layer(move(activation_layer), { last_layer_index });
-
-            last_layer_index = get_layers_number() - 1;
-        }
-    }
-
-    const Shape pre_pool_shape = get_layer(last_layer_index)->get_output_shape();
-
-    auto global_pool = make_unique<Pooling>(pre_pool_shape,
-                                            Shape{ pre_pool_shape[0], pre_pool_shape[1] },
-                                            Shape{ 1, 1 },
-                                            Shape{ 0, 0 },
-                                            "AveragePooling",
-                                            "global_avg_pool");
-
-    add_layer(move(global_pool), { last_layer_index });
-
-    last_layer_index = get_layers_number() - 1;
-
-    auto flatten_layer = make_unique<Flatten>(get_layer(last_layer_index)->get_output_shape());
-
-    add_layer(move(flatten_layer), { last_layer_index });
-
-    last_layer_index = get_layers_number() - 1;
-
-    auto dense_layer = make_unique<Dense>(get_layer(last_layer_index)->get_output_shape(),
-                                            output_shape,
-                                            "Softmax",
-                                            false,
-                                            "dense_classifier");
-
-    add_layer(move(dense_layer), { last_layer_index });
+    add_layer(make_unique<Dense>(get_layer(last_index)->get_output_shape(),
+                                 output_shape, "Softmax", false, "dense_classifier"),
+              {last_index});
 
     compile();
     set_parameters_random();
@@ -345,166 +286,57 @@ VGG16::VGG16(const Shape& new_input_shape, const Shape& new_target_shape)
 
 void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
 {
-    // Scaling 4D
     add_layer(make_unique<Scaling>(new_input_shape));
 
-    {
+    // 3x3 ReLU conv with stride 1, "Same" padding. In-channels read from the previous layer's output.
+    auto add_conv = [&](Index out_channels, const string& name) {
+        const Shape in = get_output_shape();
         add_layer(make_unique<Convolutional>(
-            get_output_shape(),
-            Shape{ 3, 3, new_input_shape[2], 64 },
-            "ReLU",
-            Shape{ 1, 1 },
-            "Same",
-            "conv_1"));
-        add_layer(make_unique<Convolutional>(
-            get_output_shape(),
-            Shape{ 3, 3, 64, 64 },
-            "ReLU",
-            Shape{ 1, 1 },
-            "Same",
-            "conv_2"));
-        add_layer(make_unique<Pooling>(
-            get_output_shape(),
-            Shape{ 2, 2 },
-            Shape{ 2, 2 },
-            Shape{ 0, 0 },
-            "MaxPooling",
-            "pool1"));
-    }
+            in, Shape{3, 3, in[2], out_channels}, "ReLU",
+            Shape{1, 1}, "Same", false, name));
+    };
 
-    {
-        add_layer(make_unique<Convolutional>(
-            get_output_shape(),
-            Shape{ 3, 3, 64, 128 },
-            "ReLU",
-            Shape{ 1, 1 },
-            "Same",
-            "conv_3"));
-        add_layer(make_unique<Convolutional>(
-            get_output_shape(),
-            Shape{ 3, 3, 128, 128 },
-            "ReLU",
-            Shape{ 1, 1 },
-            "Same",
-            "conv_4"));
+    // 2x2 max pool with stride 2, no padding.
+    auto add_max_pool = [&](const string& name) {
         add_layer(make_unique<Pooling>(
-            get_output_shape(),
-            Shape{ 2, 2 },
-            Shape{ 2, 2 },
-            Shape{ 0, 0 },
-            "MaxPooling",
-            "pool2"));
-    }
+            get_output_shape(), Shape{2, 2}, Shape{2, 2}, Shape{0, 0},
+            "MaxPooling", name));
+    };
 
-    {
-        add_layer(make_unique<Convolutional>(
-            get_output_shape(),
-            Shape{ 3, 3, 128, 256 },
-            "ReLU",
-            Shape{ 1, 1 },
-            "Same",
-            "conv_5"));
-        add_layer(make_unique<Convolutional>(
-            get_output_shape(),
-            Shape{ 3, 3, 256, 256 },
-            "ReLU",
-            Shape{ 1, 1 },
-            "Same",
-            "conv_6"));
-        add_layer(make_unique<Convolutional>(
-            get_output_shape(),
-            Shape{ 3, 3, 256, 256 },
-            "ReLU",
-            Shape{ 1, 1 },
-            "Same",
-            "conv_7"));
-        add_layer(make_unique<Pooling>(
-            get_output_shape(),
-            Shape{ 2, 2 },
-            Shape{ 2, 2 },
-            Shape{ 0, 0 },
-            "MaxPooling", "pool3"));
-    }
+    add_conv(64,  "conv_1");
+    add_conv(64,  "conv_2");
+    add_max_pool("pool1");
 
-    {
-        add_layer(make_unique<Convolutional>(
-            get_output_shape(),
-            Shape{ 3, 3, 256, 512 },
-            "ReLU",
-            Shape{ 1, 1 },
-            "Same",
-            "conv_8"));
-        add_layer(make_unique<Convolutional>(
-            get_output_shape(),
-            Shape{ 3, 3, 512, 512 },
-            "ReLU",
-            Shape{ 1, 1 },
-            "Same",
-            "conv_9"));
-        add_layer(make_unique<Convolutional>(
-            get_output_shape(),
-            Shape{ 3, 3, 512, 512 },
-            "ReLU",
-            Shape{ 1, 1 },
-            "Same",
-            "conv_10"));
-        add_layer(make_unique<Pooling>(
-            get_output_shape(),
-            Shape{ 2, 2 },
-            Shape{ 2, 2 },
-            Shape{ 0, 0 },
-            "MaxPooling", "pool4"));
-    }
+    add_conv(128, "conv_3");
+    add_conv(128, "conv_4");
+    add_max_pool("pool2");
 
-    {
-        add_layer(make_unique<Convolutional>(
-            get_output_shape(),
-            Shape{ 3, 3, 512, 512 },
-            "ReLU",
-            Shape{ 1, 1 },
-            "Same",
-            "conv_11"));
-        add_layer(make_unique<Convolutional>(
-            get_output_shape(),
-            Shape{ 3, 3, 512, 512 },
-            "ReLU",
-            Shape{ 1, 1 },
-            "Same",
-            "conv_12"));
-        add_layer(make_unique<Convolutional>(
-            get_output_shape(),
-            Shape{ 3, 3, 512, 512 },
-            "ReLU",
-            Shape{ 1, 1 },
-            "Same",
-            "conv_13"));
-        add_layer(make_unique<Pooling>(
-            get_output_shape(),
-            Shape{ 2, 2 },
-            Shape{ 2, 2 },
-            Shape{ 0, 0 },
-            "MaxPooling", "pool5"));
-    }
+    add_conv(256, "conv_5");
+    add_conv(256, "conv_6");
+    add_conv(256, "conv_7");
+    add_max_pool("pool3");
+
+    add_conv(512, "conv_8");
+    add_conv(512, "conv_9");
+    add_conv(512, "conv_10");
+    add_max_pool("pool4");
+
+    add_conv(512, "conv_11");
+    add_conv(512, "conv_12");
+    add_conv(512, "conv_13");
+    add_max_pool("pool5");
 
     const Shape pre_pool_shape = get_output_shape();
-
     add_layer(make_unique<Pooling>(
         pre_pool_shape,
-        Shape{ pre_pool_shape[0], pre_pool_shape[1] },
-        Shape{ 1, 1 },
-        Shape{ 0, 0 },
-        "AveragePooling",
-        "global_avg_pool"));
+        Shape{pre_pool_shape[0], pre_pool_shape[1]},
+        Shape{1, 1}, Shape{0, 0},
+        "AveragePooling", "global_avg_pool"));
 
-    // Flatten
     add_layer(make_unique<Flatten>(get_output_shape()));
 
-    //Classifier
-    add_layer(make_unique<Dense>(get_output_shape(),
-                                   new_target_shape,
-                                   "Softmax",
-                                   false,
-                                   "dense_classifier"));
+    add_layer(make_unique<Dense>(get_output_shape(), new_target_shape,
+                                 "Softmax", false, "dense_classifier"));
 
     compile();
     set_parameters_random();
@@ -539,9 +371,13 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Pooling3d>(get_output_shape(), PoolingMethod::AveragePooling));
 
-    add_layer(make_unique<Dense>(get_output_shape(), Shape({16}), "ReLU", false, "hidden_layer"));
+    add_layer(make_unique<Dense>(get_output_shape(), Shape({64}), "ReLU", false, "hidden_layer"));
 
-    add_layer(make_unique<Dense>(get_output_shape(), output_shape, "Sigmoid", false, "classification_layer"));
+    add_layer(make_unique<Dense>(get_output_shape(),
+                                 output_shape,
+                                 output_shape[0] == 1 ? "Sigmoid" : "Softmax",
+                                 false,
+                                 "classification_layer"));
 
     compile();
     set_parameters_glorot();
@@ -575,10 +411,7 @@ void Transformer::set(const Index input_sequence_length,
                       Index feed_forward_dimension,
                       Index layers_number)
 {
-    name = "transformer";
-
-    layers.clear();
-    layer_input_indices.clear();
+    clear();
 
     if (input_sequence_length == 0 ||
         decoder_sequence_length == 0 ||
@@ -593,205 +426,127 @@ void Transformer::set(const Index input_sequence_length,
     if (embedding_dimension % heads_number != 0)
         throw runtime_error("embedding_dimension must be divisible by heads_number.");
 
+    // Adds: Addition(left_index, right_index) → Normalization3d. Returns the norm index.
+    auto add_residual_and_norm = [&](const Shape& shape,
+                                     const string& add_label,
+                                     const string& norm_label,
+                                     Index left_index, Index right_index) -> Index {
+        add_layer(make_unique<Addition>(shape, add_label), {left_index, right_index});
+        add_layer(make_unique<Normalization3d>(shape, norm_label));
+        return get_layers_number() - 1;
+    };
+
+    // Adds two Dense layers (ReLU expand to ff_dim, Identity project back). Returns
+    // the second dense's index. Each Dense chains to the previous layer by default.
+    auto add_feed_forward = [&](const Shape& input_shape, Index ff_dim,
+                                const string& internal_label,
+                                const string& external_label) -> Index {
+        const Index seq_len = input_shape[0];
+        const Index emb_dim = input_shape[1];
+        add_layer(make_unique<Dense>(input_shape, Shape{ff_dim},
+                                     "ReLU", false, internal_label));
+        add_layer(make_unique<Dense>(Shape{seq_len, ff_dim}, Shape{emb_dim},
+                                     "Identity", false, external_label));
+        return get_layers_number() - 1;
+    };
+
     // Input embeddings
 
     auto decoder_embedding = make_unique<Embedding>(
         Shape{output_vocabulary_size, decoder_sequence_length},
-        embedding_dimension,
-        "decoder_embedding");
-
+        embedding_dimension, "decoder_embedding");
     decoder_embedding->set_scale_embedding(true);
     decoder_embedding->set_add_positional_encoding(true);
-
     add_layer(move(decoder_embedding), {-1});
-    Index current_decoder_idx = get_layers_number() - 1;
+    Index current_decoder_index = get_layers_number() - 1;
 
     auto encoder_embedding = make_unique<Embedding>(
         Shape{input_vocabulary_size, input_sequence_length},
-        embedding_dimension,
-        "encoder_embedding");
-
+        embedding_dimension, "encoder_embedding");
     encoder_embedding->set_scale_embedding(true);
     encoder_embedding->set_add_positional_encoding(true);
-
     add_layer(move(encoder_embedding), {-2});
-    Index current_encoder_idx = get_layers_number() - 1;
+    Index current_encoder_index = get_layers_number() - 1;
 
-    // Encoder stack
+    // Encoder stack: self-attention block + feed-forward block, each with residual + post-norm.
+
+    const Shape encoder_shape{input_sequence_length, embedding_dimension};
 
     for (Index i = 0; i < layers_number; ++i)
     {
-        const string suffix = "_" + to_string(i + 1);
+        const string suffix = format("_{}", i + 1);
 
-        // Self-attention
-        add_layer(
-            make_unique<MultiHeadAttention>(
-                Shape{input_sequence_length, embedding_dimension},
-                heads_number,
-                "encoder_self_attention" + suffix),
-            {current_encoder_idx});
+        add_layer(make_unique<MultiHeadAttention>(encoder_shape, heads_number,
+                                                  "encoder_self_attention" + suffix),
+                  {current_encoder_index});
+        const Index attn_index = get_layers_number() - 1;
 
-        const Index encoder_self_attention_idx = get_layers_number() - 1;
+        const Index norm1_index = add_residual_and_norm(encoder_shape,
+            "encoder_self_attention_addition" + suffix,
+            "encoder_self_attention_normalization" + suffix,
+            current_encoder_index, attn_index);
 
-        // Residual
-        add_layer(
-            make_unique<Addition>(
-                Shape{input_sequence_length, embedding_dimension},
-                "encoder_self_attention_addition" + suffix),
-            {current_encoder_idx, encoder_self_attention_idx});
+        const Index ff_index = add_feed_forward(encoder_shape, feed_forward_dimension,
+            "encoder_internal_dense" + suffix,
+            "encoder_external_dense" + suffix);
 
-        // Post-norm
-        add_layer(
-            make_unique<Normalization3d>(
-                Shape{input_sequence_length, embedding_dimension},
-                "encoder_self_attention_normalization" + suffix));
-
-        const Index encoder_norm_1_idx = get_layers_number() - 1;
-
-        // Feed-forward
-        add_layer(
-            make_unique<Dense>(
-                Shape{input_sequence_length, embedding_dimension},
-                Shape{feed_forward_dimension},
-                "ReLU",
-                false,
-                "encoder_internal_dense" + suffix));
-
-        add_layer(
-            make_unique<Dense>(
-                Shape{input_sequence_length, feed_forward_dimension},
-                Shape{embedding_dimension},
-                "Identity",
-                false,
-                "encoder_external_dense" + suffix));
-
-        const Index encoder_ff_idx = get_layers_number() - 1;
-
-        // Residual
-        add_layer(
-            make_unique<Addition>(
-                Shape{input_sequence_length, embedding_dimension},
-                "encoder_dense_addition" + suffix),
-            {encoder_norm_1_idx, encoder_ff_idx});
-
-        // Post-norm
-        add_layer(
-            make_unique<Normalization3d>(
-                Shape{input_sequence_length, embedding_dimension},
-                "encoder_dense_normalization" + suffix));
-
-        current_encoder_idx = get_layers_number() - 1;
+        current_encoder_index = add_residual_and_norm(encoder_shape,
+            "encoder_dense_addition" + suffix,
+            "encoder_dense_normalization" + suffix,
+            norm1_index, ff_index);
     }
 
-    const Index encoder_final_output_idx = current_encoder_idx;
+    const Index encoder_final_output_index = current_encoder_index;
 
-    // Decoder stack
+    // Decoder stack: masked self-attention block + cross-attention block + feed-forward block.
+
+    const Shape decoder_shape{decoder_sequence_length, embedding_dimension};
 
     for (Index i = 0; i < layers_number; ++i)
     {
-        const string suffix = "_" + to_string(i + 1);
+        const string suffix = format("_{}", i + 1);
 
-        // Masked self-attention
+        // Masked self-attention.
         auto decoder_self_attention = make_unique<MultiHeadAttention>(
-            Shape{decoder_sequence_length, embedding_dimension},
-            heads_number,
-            "decoder_self_attention" + suffix);
+            decoder_shape, heads_number, "decoder_self_attention" + suffix);
+        decoder_self_attention->set(decoder_sequence_length, decoder_sequence_length,
+                                    embedding_dimension, heads_number,
+                                    true,  // use_causal_mask
+                                    "decoder_self_attention" + suffix);
+        add_layer(move(decoder_self_attention), {current_decoder_index});
+        const Index self_attn_index = get_layers_number() - 1;
 
-        decoder_self_attention->set(
-            decoder_sequence_length,   // query_sequence_length
-            decoder_sequence_length,   // source_sequence_length
-            embedding_dimension,
-            heads_number,
-            true,                      // use_causal_mask
-            "decoder_self_attention" + suffix);
+        const Index norm1_index = add_residual_and_norm(decoder_shape,
+            "decoder_self_attention_addition" + suffix,
+            "decoder_self_attention_normalization" + suffix,
+            current_decoder_index, self_attn_index);
 
-        add_layer(move(decoder_self_attention), {current_decoder_idx});
-        const Index decoder_self_attention_idx = get_layers_number() - 1;
+        // Cross-attention against encoder output.
+        add_layer(make_unique<MultiHeadAttention>(decoder_shape, encoder_shape,
+                                                  heads_number,
+                                                  "cross_attention" + suffix),
+                  {norm1_index, encoder_final_output_index});
+        const Index cross_attn_index = get_layers_number() - 1;
 
-        // Residual
-        add_layer(
-            make_unique<Addition>(
-                Shape{decoder_sequence_length, embedding_dimension},
-                "decoder_self_attention_addition" + suffix),
-            {current_decoder_idx, decoder_self_attention_idx});
+        const Index norm2_index = add_residual_and_norm(decoder_shape,
+            "cross_attention_addition" + suffix,
+            "cross_attention_normalization" + suffix,
+            norm1_index, cross_attn_index);
 
-        // Post-norm
-        add_layer(
-            make_unique<Normalization3d>(
-                Shape{decoder_sequence_length, embedding_dimension},
-                "decoder_self_attention_normalization" + suffix));
+        const Index ff_index = add_feed_forward(decoder_shape, feed_forward_dimension,
+            "decoder_internal_dense" + suffix,
+            "decoder_external_dense" + suffix);
 
-        const Index decoder_norm_1_idx = get_layers_number() - 1;
-
-        // Cross-attention
-        add_layer(
-            make_unique<MultiHeadAttention>(
-                Shape{decoder_sequence_length, embedding_dimension},
-                Shape{input_sequence_length, embedding_dimension},
-                heads_number,
-                "cross_attention" + suffix),
-            {decoder_norm_1_idx, encoder_final_output_idx});
-
-        const Index cross_attention_idx = get_layers_number() - 1;
-
-        // Residual
-        add_layer(
-            make_unique<Addition>(
-                Shape{decoder_sequence_length, embedding_dimension},
-                "cross_attention_addition" + suffix),
-            {decoder_norm_1_idx, cross_attention_idx});
-
-        // Post-norm
-        add_layer(
-            make_unique<Normalization3d>(
-                Shape{decoder_sequence_length, embedding_dimension},
-                "cross_attention_normalization" + suffix));
-
-        const Index decoder_norm_2_idx = get_layers_number() - 1;
-
-        // Feed-forward
-        add_layer(
-            make_unique<Dense>(
-                Shape{decoder_sequence_length, embedding_dimension},
-                Shape{feed_forward_dimension},
-                "ReLU",
-                false,
-                "decoder_internal_dense" + suffix));
-
-        add_layer(
-            make_unique<Dense>(
-                Shape{decoder_sequence_length, feed_forward_dimension},
-                Shape{embedding_dimension},
-                "Identity",
-                false,
-                "decoder_external_dense" + suffix));
-
-        const Index decoder_ff_idx = get_layers_number() - 1;
-
-        // Residual
-        add_layer(
-            make_unique<Addition>(
-                Shape{decoder_sequence_length, embedding_dimension},
-                "decoder_dense_addition" + suffix),
-            {decoder_norm_2_idx, decoder_ff_idx});
-
-        // Post-norm
-        add_layer(
-            make_unique<Normalization3d>(
-                Shape{decoder_sequence_length, embedding_dimension},
-                "decoder_dense_normalization" + suffix));
-
-        current_decoder_idx = get_layers_number() - 1;
+        current_decoder_index = add_residual_and_norm(decoder_shape,
+            "decoder_dense_addition" + suffix,
+            "decoder_dense_normalization" + suffix,
+            norm2_index, ff_index);
     }
 
-    // Final token projection
+    // Final token projection.
 
-    add_layer(make_unique<Dense>(
-            Shape{decoder_sequence_length, embedding_dimension},
-            Shape{output_vocabulary_size},
-            "Softmax",
-            false,
-            "output_projection"));
+    add_layer(make_unique<Dense>(decoder_shape, Shape{output_vocabulary_size},
+                                 "Softmax", false, "output_projection"));
 
     compile();
     set_parameters_random();
@@ -805,10 +560,10 @@ void Transformer::set_dropout_rate(const float new_dropout_rate)
 
         const string& label = layer->get_label();
         const bool is_ffn_dense =
-               label.rfind("encoder_internal_dense", 0) == 0
-            || label.rfind("encoder_external_dense", 0) == 0
-            || label.rfind("decoder_internal_dense", 0) == 0
-            || label.rfind("decoder_external_dense", 0) == 0;
+               label.starts_with("encoder_internal_dense")
+            || label.starts_with("encoder_external_dense")
+            || label.starts_with("decoder_internal_dense")
+            || label.starts_with("decoder_external_dense");
 
         if (is_ffn_dense)
         {
@@ -820,26 +575,6 @@ void Transformer::set_dropout_rate(const float new_dropout_rate)
             mha->set_dropout_rate(new_dropout_rate);
         }
     }
-}
-
-void Transformer::set_input_vocabulary(const vector<string>& new_input_vocabulary)
-{
-    input_vocabulary = new_input_vocabulary;
-
-    input_vocabulary_map.clear();
-
-    for (size_t i = 0; i < input_vocabulary.size(); ++i)
-        input_vocabulary_map[input_vocabulary[i]] = i;
-}
-
-void Transformer::set_output_vocabulary(const vector<string>& new_output_vocabulary)
-{
-    output_vocabulary = new_output_vocabulary;
-
-    output_inverse_vocabulary_map.clear();
-
-    for (size_t i = 0; i < output_vocabulary.size(); ++i)
-        output_inverse_vocabulary_map[i] = output_vocabulary[i];
 }
 
 Index Transformer::get_input_sequence_length() const
@@ -859,125 +594,10 @@ Index Transformer::get_embedding_dimension() const
 
 Index Transformer::get_heads_number() const
 {
-    for (const auto& layer : layers)
-        if (layer->get_type() == LayerType::MultiHeadAttention)
-            return static_cast<MultiHeadAttention*>(layer.get())->get_heads_number();
+    if (auto* mha = dynamic_cast<const MultiHeadAttention*>(get_first(LayerType::MultiHeadAttention)))
+        return mha->get_heads_number();
 
     return 0;
-}
-
-string Transformer::calculate_outputs(const string& source)
-{
-    if (input_vocabulary_map.empty() || output_inverse_vocabulary_map.empty())
-        throw runtime_error("Transformer::calculate_outputs Error: Vocabularies not initialized.");
-
-    constexpr float PAD   = 0.0f;
-    constexpr float UNK   = 1.0f;
-    constexpr float START = 2.0f;
-    constexpr float END   = 3.0f;
-
-    const Index input_sequence_length = get_input_sequence_length();
-    const Index decoder_sequence_length = get_decoder_sequence_length();
-    const Index batch_size = 1;
-
-    const vector<string> source_tokens = tokenize(source);
-
-    Tensor2 source_ids(batch_size, input_sequence_length);
-    source_ids.setConstant(PAD);
-
-    source_ids(0, 0) = START;
-
-    Index write_index = 1;
-
-    for (size_t i = 0; i < source_tokens.size() && write_index < input_sequence_length; ++i, ++write_index)
-    {
-        const auto it = input_vocabulary_map.find(source_tokens[i]);
-
-        source_ids(0, write_index) = (it != input_vocabulary_map.end())
-                                         ? static_cast<float>(it->second)
-                                         : UNK;
-    }
-
-    if (write_index < input_sequence_length)
-        source_ids(0, write_index) = END;
-
-    Tensor2 target_ids(batch_size, decoder_sequence_length);
-    target_ids.setConstant(PAD);
-    target_ids(0, 0) = START;
-
-    const bool was_gpu = Configuration::instance().is_gpu();
-    if (was_gpu)
-    {
-        Configuration::instance().set(Device::CPU,
-                                      Type::FP32,
-                                      Type::FP32);
-#ifdef OPENNN_HAS_CUDA
-        copy_parameters_host();
-        link_parameters();
-        copy_states_host();
-        link_states();
-#endif
-    }
-
-    ForwardPropagation forward_propagation(batch_size, this);
-
-    for (Index i = 1; i < decoder_sequence_length; ++i)
-    {
-        const vector<TensorView> inputs =
-        {TensorView(target_ids.data(), {batch_size, decoder_sequence_length}),
-         TensorView(source_ids.data(), {batch_size, input_sequence_length})};
-
-        forward_propagate(inputs, forward_propagation, false);
-
-        const TensorView output_view = forward_propagation.get_outputs();
-        const Index vocabulary_size = output_view.shape[2];
-
-        const float* distribution_ptr = output_view.as<float>() + (i-1)*vocabulary_size;
-
-        const Map<const VectorR> current_distribution(distribution_ptr, vocabulary_size);
-
-        const Index best_id = maximal_index(current_distribution);
-
-        target_ids(0, i) = static_cast<float>(best_id);
-
-        if (best_id == END)
-            break;
-    }
-
-    if (was_gpu)
-    {
-        Configuration::instance().set(Device::Auto,
-                                      Type::Auto,
-                                      Type::Auto);
-#ifdef OPENNN_HAS_CUDA
-        copy_parameters_device();
-        link_parameters();
-        copy_states_device();
-        link_states();
-#endif
-    }
-
-    string result;
-
-    for (Index i = 1; i < decoder_sequence_length; ++i)
-    {
-        const Index id = static_cast<Index>(target_ids(0, i));
-
-        if (id == END || id == PAD)
-            break;
-
-        const auto it = output_inverse_vocabulary_map.find(id);
-
-        if (it == output_inverse_vocabulary_map.end())
-            continue;
-
-        if (!result.empty())
-            result += " ";
-
-        result += it->second;
-    }
-
-    return result;
 }
 
 }

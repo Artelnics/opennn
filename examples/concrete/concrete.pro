@@ -14,7 +14,7 @@
 
 TEMPLATE = app
 CONFIG += console
-CONFIG += c++17
+CONFIG += c++20
 
 mac{
     CONFIG-=app_bundle
@@ -44,6 +44,7 @@ else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../../opennn/debug/
 else:unix: LIBS += -L$$OUT_PWD/../../opennn/ -lopennn
 
 INCLUDEPATH += ../../opennn
+INCLUDEPATH += ../../eigen
 DEPENDPATH += ../../opennn
 
 win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../../opennn/release/libopennn.a

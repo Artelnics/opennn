@@ -21,27 +21,16 @@ namespace opennn
 
 Embedding::Embedding(const Shape& new_input_shape,
                      Index new_embedding_dimension,
-                     const string& new_label) : Layer()
+                     const string& new_label)
+    : Layer(LayerType::Embedding)
 {
-    name = "Embedding";
-    layer_type = LayerType::Embedding;
-
+    operators = {&embedding_lookup, &dropout};
     set(new_input_shape[0], new_input_shape[1], new_embedding_dimension, new_label);
 }
 
 Shape Embedding::get_output_shape() const
 {
     return {sequence_length, embedding_dimension};
-}
-
-vector<Operator*> Embedding::get_operators()
-{
-    return {&embedding_lookup, &dropout};
-}
-
-vector<pair<Shape, Type>> Embedding::get_forward_specs(Index batch_size) const
-{
-    return {{{batch_size, sequence_length, embedding_dimension}, compute_dtype}}; // Output
 }
 
 void Embedding::set(Index new_vocabulary_size,
@@ -57,38 +46,18 @@ void Embedding::set(Index new_vocabulary_size,
 
     embedding_lookup.set(vocabulary_size, sequence_length, embedding_dimension);
 
-    embedding_lookup.input_slots  = {Input};
-    embedding_lookup.output_slots = {Output};
-
     dropout.input_slots  = {Output};
-    dropout.output_slots = {Output};
-}
-
-void Embedding::back_propagate(ForwardPropagation& forward_propagation,
-                               BackPropagation& back_propagation,
-                               size_t layer) const noexcept
-{
-    auto& forward_views = forward_propagation.views[layer];
-    auto& delta_views = back_propagation.delta_views[layer];
-
-    TensorView& output_delta = delta_views[OutputDelta][0];
-
-    if (dropout.active())
-        dropout.apply_delta(output_delta);
-
-    embedding_lookup.apply_delta(forward_views[Input][0], output_delta);
 }
 
 void Embedding::read_JSON_body(const Json* embedding_layer_element)
 {
-    const string new_label = read_json_string(embedding_layer_element, "Label");
     const Index new_vocabulary_size = read_json_index(embedding_layer_element, "VocabularySize");
     const Shape new_output_shape = string_to_shape(read_json_string(embedding_layer_element, "OutputDimensions"));
 
     set(new_vocabulary_size,
-        new_output_shape.empty() ? Index(0) : new_output_shape[0],
-        new_output_shape.rank >= 2 ? new_output_shape[1] : Index(0),
-        new_label);
+        new_output_shape.dim_or_zero(0),
+        new_output_shape.dim_or_zero(1),
+        get_label());
 
     set_scale_embedding(read_json_bool(embedding_layer_element, "ScaleEmbedding"));
     set_add_positional_encoding(read_json_bool(embedding_layer_element, "AddPositionalEncoding"));

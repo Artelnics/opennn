@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-#include "../../opennn/dataset.h"
+#include "../../opennn/tabular_dataset.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
@@ -29,7 +29,7 @@ int main()
 
         // Dataset
 
-        Dataset dataset("../data/breast_cancer.csv", ";", true, false);
+        TabularDataset dataset("../data/breast_cancer.csv", ";", true, false);
 
         const Index neurons_number = 3;
 
