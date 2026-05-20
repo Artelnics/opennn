@@ -36,9 +36,15 @@ public:
     [[nodiscard]] Type get_training_type()  const { return config.training_type; }
     [[nodiscard]] Type get_inference_type() const { return config.inference_type; }
 
-    [[nodiscard]] vector<vector<TensorSpec>> get_parameter_specs() const { return collect_layer_specs([](const Layer& L) { return L.get_parameter_specs(); }); }
+    [[nodiscard]] vector<vector<TensorSpec>> get_parameter_specs() const 
+    { 
+        return collect_layer_specs([](const Layer& L) { return L.get_parameter_specs(); }); 
+    }
     
-    [[nodiscard]] vector<vector<TensorSpec>> get_state_specs()     const { return collect_layer_specs([](const Layer& L) { return L.get_state_specs(); }); }
+    [[nodiscard]] vector<vector<TensorSpec>> get_state_specs() const 
+    {
+        return collect_layer_specs([](const Layer& L) { return L.get_state_specs(); }); 
+    }
     
     [[nodiscard]] vector<vector<TensorSpec>> get_forward_specs(Index b) const
     {

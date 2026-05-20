@@ -63,7 +63,7 @@ public:
 
     enum class Separator{Space, Tab, Comma, Semicolon};
 
-    [[nodiscard]] virtual Index get_samples_number() const { return data.rows(); }
+    [[nodiscard]] virtual Index get_samples_number() const { return ssize(sample_roles); }
 
     [[nodiscard]] Index get_samples_number(const string&) const;
 
@@ -134,10 +134,6 @@ public:
     [[nodiscard]] Shape get_input_shape() const { return input_shape; }
     [[nodiscard]] Shape get_target_shape() const { return target_shape; }
 
-    [[nodiscard]] const MatrixR& get_data() const { return data; }
-    void set_data(const MatrixR&);
-    void set_data_constant(const float);
-
     void set_default();
     void set_sample_roles(const string&);
 
@@ -161,8 +157,6 @@ public:
     void set_variable_type(const string&, const VariableType&);
 
     void set_variable_types(const VariableType&);
-    void set_binary_variables();
-
     void set_variable_names(const vector<string>&);
 
     void set_variables_number(const Index new_size) { variables.resize(new_size); }
@@ -213,32 +207,10 @@ public:
 
     virtual vector<Descriptives> scale_features(const string&) { return {}; }
 
-    virtual void set_data_random() {}
-    virtual void set_data_integer(const Index) {}
-
     virtual void from_JSON(const JsonDocument&) = 0;
     virtual void to_JSON(JsonWriter&) const {}
 
-    [[nodiscard]] MatrixR get_data(const string&, const string&) const;
-    [[nodiscard]] MatrixR get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
-
-    [[nodiscard]] VectorR get_sample_data(const Index) const;
-
-    [[nodiscard]] MatrixR get_variable_data(const Index) const;
-    [[nodiscard]] MatrixR get_variable_data(const Index, const vector<Index>&) const;
-    [[nodiscard]] MatrixR get_variable_data(const string&) const;
-
-    [[nodiscard]] MatrixR get_feature_data(const string&) const;
-
-    void set(const Index = 0, const Shape& = {}, const Shape& = {});
-
-    [[nodiscard]] bool has_nan() const;
-    [[nodiscard]] bool has_nan_row(const Index) const;
-
-    [[nodiscard]] VectorI count_nans_per_variable() const;
-    [[nodiscard]] Index count_variables_with_nan() const;
-    [[nodiscard]] Index count_rows_with_nan() const;
-    [[nodiscard]] Index count_nan() const;
+    [[nodiscard]] virtual bool has_nan() const { return false; }
 
     virtual void scrub_missing_values() {}
 
@@ -251,10 +223,6 @@ public:
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
-
-    void save_data() const;
-    void save_data_binary(const filesystem::path&) const;
-    void load_data_binary();
 
     virtual void fill_inputs(const vector<Index>&,
                              const vector<Index>&,
@@ -286,10 +254,10 @@ protected:
     void set_default_variable_roles();
     void set_default_variable_roles_forecasting();
 
-    void infer_variable_types_from_data();
     void read_data_file_preview(const vector<vector<string_view>>&);
     void check_separators(string_view) const;
     void samples_from_JSON(const Json*);
+    virtual void resize_data_from_JSON(Index) {}
 
     Shape input_shape;
     Shape target_shape;
@@ -300,8 +268,6 @@ protected:
 
     vector<Variable> variables;
 
-    MatrixR data;
-
     filesystem::path data_path;
     Separator separator = Separator::Comma;
     bool has_header = false;
@@ -310,9 +276,6 @@ protected:
     vector<vector<string>> data_file_preview;
 
     bool display = true;
-
-    const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
-    const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
 
     void variables_to_JSON(JsonWriter&) const;
     void samples_to_JSON(JsonWriter&) const;

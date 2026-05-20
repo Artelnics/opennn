@@ -22,7 +22,6 @@ public:
     LanguageDataset(const filesystem::path& = "");
     LanguageDataset(const filesystem::path&, Index maximum_vocabulary_size);
     LanguageDataset(const filesystem::path&, Index maximum_vocabulary_size, Index minimum_token_frequency);
-    LanguageDataset(const Index, Index, Index);
 
     const vector<string>& get_input_vocabulary() const { return input_vocabulary; }
     const vector<string>& get_target_vocabulary() const { return target_vocabulary; }

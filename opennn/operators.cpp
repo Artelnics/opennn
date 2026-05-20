@@ -3180,6 +3180,605 @@ void UnscaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*i
             min_range, max_range, output);
 }
 
+void RecurrentOp::set(Index new_input_features,
+                      Index new_output_features,
+                      Index new_time_steps,
+                      ActivationOp::Function new_activation_function)
+{
+    input_features      = new_input_features;
+    output_features     = new_output_features;
+    time_steps          = new_time_steps;
+    activation_function = new_activation_function;
+}
+
+vector<TensorSpec> RecurrentOp::parameter_specs() const
+{
+    if (output_features == 0)
+        return {};
+
+    return {
+        {Shape{output_features},                  Type::FP32}, // biases
+        {Shape{input_features,  output_features}, Type::FP32}, // input→hidden
+        {Shape{output_features, output_features}, Type::FP32}, // hidden→hidden
+    };
+}
+
+void RecurrentOp::link_parameters(span<const TensorView> views)
+{
+    if (views.size() < 3) return;
+    biases            = views[0];
+    input_weights     = views[1];
+    recurrent_weights = views[2];
+}
+
+void RecurrentOp::link_gradients(span<const TensorView> views)
+{
+    if (views.size() < 3) return;
+    bias_gradient             = views[0];
+    input_weight_gradient     = views[1];
+    recurrent_weight_gradient = views[2];
+}
+
+void RecurrentOp::set_parameters_random()
+{
+    if (biases.data)            set_random_uniform(biases.as_vector(),            -0.1f, 0.1f);
+    if (input_weights.data)     set_random_uniform(input_weights.as_vector(),     -0.1f, 0.1f);
+    if (recurrent_weights.data) set_random_uniform(recurrent_weights.as_vector(), -0.1f, 0.1f);
+}
+
+void RecurrentOp::set_parameters_glorot()
+{
+    if (biases.data) biases.as_vector().setZero();
+
+    if (input_weights.data)
+    {
+        const float limit = glorot_limit(input_features, output_features);
+        set_random_uniform(input_weights.as_vector(), -limit, limit);
+    }
+    if (recurrent_weights.data)
+    {
+        const float limit = glorot_limit(output_features, output_features);
+        set_random_uniform(recurrent_weights.as_vector(), -limit, limit);
+    }
+}
+
+void RecurrentOp::forward_propagate(ForwardPropagation& /*fp*/, size_t /*layer*/, bool /*is_training*/) noexcept
+{
+    // TODO: unroll over time_steps. Reads Input view, writes Output (last
+    // hidden state), AllHiddenStates, and (when is_training) AllActivationDerivatives.
+    // The previous in-class implementation is kept commented in recurrent_layer.cpp
+    // as the starting point — re-port it once the buffer-backed views are
+    // exercised end-to-end.
+}
+
+void RecurrentOp::back_propagate(ForwardPropagation& /*fp*/, BackPropagation& /*bp*/, size_t /*layer*/) const noexcept
+{
+    // TODO: backprop-through-time. Reads OutputDelta and the cached forward
+    // tensors; writes bias_gradient / input_weight_gradient /
+    // recurrent_weight_gradient (Operator-owned views), and the layer's
+    // InputDelta view at input_delta_slots[0]. See the reference snippet in
+    // recurrent_layer.cpp.
+}
+
+namespace
+{
+
+float lstm_activate(ActivationOp::Function function, float x)
+{
+    using enum ActivationOp::Function;
+    switch (function)
+    {
+        case Identity: return x;
+        case Sigmoid:  return 1.0f / (1.0f + exp(-x));
+        case Tanh:     return tanh(x);
+        case ReLU:     return max(0.0f, x);
+        case Softmax:  return x;
+    }
+    return x;
+}
+
+float lstm_derivative_from_output(ActivationOp::Function function, float y)
+{
+    using enum ActivationOp::Function;
+    switch (function)
+    {
+        case Identity: return 1.0f;
+        case Sigmoid:  return y * (1.0f - y);
+        case Tanh:     return 1.0f - y * y;
+        case ReLU:     return y > 0.0f ? 1.0f : 0.0f;
+        case Softmax:  return 1.0f;
+    }
+    return 1.0f;
+}
+
+void zero_if_linked(const TensorView& view)
+{
+    if (view.data) const_cast<TensorView&>(view).setZero();
+}
+
+}
+
+void LongShortTermMemoryOp::set(Index new_input_features,
+                                Index new_output_features,
+                                Index new_time_steps,
+                                ActivationOp::Function new_activation_function,
+                                ActivationOp::Function new_recurrent_activation_function)
+{
+    input_features = new_input_features;
+    output_features = new_output_features;
+    time_steps = new_time_steps;
+    activation_function = new_activation_function;
+    recurrent_activation_function = new_recurrent_activation_function;
+}
+
+vector<TensorSpec> LongShortTermMemoryOp::parameter_specs() const
+{
+    if (output_features == 0)
+        return {};
+
+    const Shape bias_shape{output_features};
+    const Shape input_weight_shape{input_features, output_features};
+    const Shape recurrent_weight_shape{output_features, output_features};
+
+    return {
+        {bias_shape, Type::FP32},             // forget bias
+        {bias_shape, Type::FP32},             // input bias
+        {bias_shape, Type::FP32},             // candidate bias
+        {bias_shape, Type::FP32},             // output bias
+        {input_weight_shape, Type::FP32},     // forget input weights
+        {input_weight_shape, Type::FP32},     // input gate input weights
+        {input_weight_shape, Type::FP32},     // candidate input weights
+        {input_weight_shape, Type::FP32},     // output gate input weights
+        {recurrent_weight_shape, Type::FP32}, // forget recurrent weights
+        {recurrent_weight_shape, Type::FP32}, // input recurrent weights
+        {recurrent_weight_shape, Type::FP32}, // candidate recurrent weights
+        {recurrent_weight_shape, Type::FP32}, // output recurrent weights
+    };
+}
+
+void LongShortTermMemoryOp::link_parameters(span<const TensorView> views)
+{
+    if (views.size() < 12) return;
+
+    forget_bias = views[0];
+    input_bias = views[1];
+    candidate_bias = views[2];
+    output_bias = views[3];
+
+    forget_weights = views[4];
+    input_weights = views[5];
+    candidate_weights = views[6];
+    output_weights = views[7];
+
+    forget_recurrent_weights = views[8];
+    input_recurrent_weights = views[9];
+    candidate_recurrent_weights = views[10];
+    output_recurrent_weights = views[11];
+}
+
+void LongShortTermMemoryOp::link_gradients(span<const TensorView> views)
+{
+    if (views.size() < 12) return;
+
+    forget_bias_gradient = views[0];
+    input_bias_gradient = views[1];
+    candidate_bias_gradient = views[2];
+    output_bias_gradient = views[3];
+
+    forget_weight_gradient = views[4];
+    input_weight_gradient = views[5];
+    candidate_weight_gradient = views[6];
+    output_weight_gradient = views[7];
+
+    forget_recurrent_weight_gradient = views[8];
+    input_recurrent_weight_gradient = views[9];
+    candidate_recurrent_weight_gradient = views[10];
+    output_recurrent_weight_gradient = views[11];
+}
+
+void LongShortTermMemoryOp::set_parameters_random()
+{
+    set_parameters_glorot();
+}
+
+void LongShortTermMemoryOp::set_parameters_glorot()
+{
+    zero_if_linked(forget_bias);
+    zero_if_linked(input_bias);
+    zero_if_linked(candidate_bias);
+    zero_if_linked(output_bias);
+
+    if (forget_weights.data)
+    {
+        const float limit = glorot_limit(input_features, output_features);
+        set_random_uniform(forget_weights.as_vector(), -limit, limit);
+        set_random_uniform(input_weights.as_vector(), -limit, limit);
+        set_random_uniform(candidate_weights.as_vector(), -limit, limit);
+        set_random_uniform(output_weights.as_vector(), -limit, limit);
+    }
+
+    if (forget_recurrent_weights.data)
+    {
+        const float limit = glorot_limit(output_features, output_features);
+        set_random_uniform(forget_recurrent_weights.as_vector(), -limit, limit);
+        set_random_uniform(input_recurrent_weights.as_vector(), -limit, limit);
+        set_random_uniform(candidate_recurrent_weights.as_vector(), -limit, limit);
+        set_random_uniform(output_recurrent_weights.as_vector(), -limit, limit);
+    }
+}
+
+void LongShortTermMemoryOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexcept
+{
+    auto& views = fp.views[layer];
+
+    TensorView& input = views[InputSlot][0];
+    TensorView& output = views[OutputSlot][0];
+    TensorView& forget_gate = views[ForgetGateSlot][0];
+    TensorView& input_gate = views[InputGateSlot][0];
+    TensorView& candidate_gate = views[CandidateGateSlot][0];
+    TensorView& output_gate = views[OutputGateSlot][0];
+    TensorView& cell_state = views[CellStateSlot][0];
+    TensorView& hidden_state = views[HiddenStateSlot][0];
+    TensorView& cell_activation = views[CellActivationSlot][0];
+
+    IF_GPU({
+        apply_gpu(input, output, forget_gate, input_gate, candidate_gate, output_gate,
+                  cell_state, hidden_state, cell_activation);
+        return;
+    });
+
+    apply_cpu(input, output, forget_gate, input_gate, candidate_gate, output_gate,
+              cell_state, hidden_state, cell_activation);
+}
+
+void LongShortTermMemoryOp::apply_cpu(const TensorView& input,
+                                      TensorView& output,
+                                      TensorView& forget_gate,
+                                      TensorView& input_gate,
+                                      TensorView& candidate_gate,
+                                      TensorView& output_gate,
+                                      TensorView& cell_state,
+                                      TensorView& hidden_state,
+                                      TensorView& cell_activation) const
+{
+    if (!input.data || output_features == 0 || time_steps == 0) return;
+
+    const Index batch_size = input.shape[0];
+    const Index F = input_features;
+    const Index H = output_features;
+    const Index T = time_steps;
+
+    const float* x = input.as<float>();
+    float* y = output.as<float>();
+    float* f_gate = forget_gate.as<float>();
+    float* i_gate = input_gate.as<float>();
+    float* g_gate = candidate_gate.as<float>();
+    float* o_gate = output_gate.as<float>();
+    float* cells = cell_state.as<float>();
+    float* hidden = hidden_state.as<float>();
+    float* cell_act = cell_activation.as<float>();
+
+    const float* bf = forget_bias.as<float>();
+    const float* bi = input_bias.as<float>();
+    const float* bg = candidate_bias.as<float>();
+    const float* bo = output_bias.as<float>();
+
+    const float* Wf = forget_weights.as<float>();
+    const float* Wi = input_weights.as<float>();
+    const float* Wg = candidate_weights.as<float>();
+    const float* Wo = output_weights.as<float>();
+
+    const float* Uf = forget_recurrent_weights.as<float>();
+    const float* Ui = input_recurrent_weights.as<float>();
+    const float* Ug = candidate_recurrent_weights.as<float>();
+    const float* Uo = output_recurrent_weights.as<float>();
+
+    #pragma omp parallel for
+    for (Index b = 0; b < batch_size; ++b)
+    {
+        for (Index t = 0; t < T; ++t)
+        {
+            const float* xt = x + (b * T + t) * F;
+            const float* h_prev = t > 0 ? hidden + (b * T + t - 1) * H : nullptr;
+            const float* c_prev = t > 0 ? cells + (b * T + t - 1) * H : nullptr;
+            const Index step = (b * T + t) * H;
+
+            for (Index h = 0; h < H; ++h)
+            {
+                float zf = bf[h];
+                float zi = bi[h];
+                float zg = bg[h];
+                float zo = bo[h];
+
+                for (Index k = 0; k < F; ++k)
+                {
+                    const float xk = xt[k];
+                    zf += xk * Wf[k * H + h];
+                    zi += xk * Wi[k * H + h];
+                    zg += xk * Wg[k * H + h];
+                    zo += xk * Wo[k * H + h];
+                }
+
+                if (h_prev)
+                {
+                    for (Index j = 0; j < H; ++j)
+                    {
+                        const float hp = h_prev[j];
+                        zf += hp * Uf[j * H + h];
+                        zi += hp * Ui[j * H + h];
+                        zg += hp * Ug[j * H + h];
+                        zo += hp * Uo[j * H + h];
+                    }
+                }
+
+                const float f = lstm_activate(recurrent_activation_function, zf);
+                const float i = lstm_activate(recurrent_activation_function, zi);
+                const float g = lstm_activate(activation_function, zg);
+                const float o = lstm_activate(recurrent_activation_function, zo);
+                const float c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
+                const float a = lstm_activate(activation_function, c);
+                const float h_value = o * a;
+
+                f_gate[step + h] = f;
+                i_gate[step + h] = i;
+                g_gate[step + h] = g;
+                o_gate[step + h] = o;
+                cells[step + h] = c;
+                cell_act[step + h] = a;
+                hidden[step + h] = h_value;
+            }
+        }
+
+        copy_n(hidden + (b * T + T - 1) * H, H, y + b * H);
+    }
+}
+
+void LongShortTermMemoryOp::apply_gpu(const TensorView&,
+                                      TensorView&,
+                                      TensorView&,
+                                      TensorView&,
+                                      TensorView&,
+                                      TensorView&,
+                                      TensorView&,
+                                      TensorView&,
+                                      TensorView&) const
+{
+    // @todo Implement CUDA LSTM forward.
+    throw runtime_error("LongShortTermMemoryOp::apply_gpu is not implemented yet.");
+}
+
+void LongShortTermMemoryOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+{
+    auto& deltas = bp.delta_views[layer];
+    if (deltas.size() <= OutputDeltaScratchSlot) return;
+
+    const auto& views = fp.views[layer];
+
+    TensorView& input_delta = deltas[InputDeltaSlot];
+    TensorView& hidden_delta = deltas[HiddenDeltaScratchSlot];
+    TensorView& cell_delta = deltas[CellDeltaScratchSlot];
+    TensorView& forget_delta = deltas[ForgetDeltaScratchSlot];
+    TensorView& input_gate_delta = deltas[InputDeltaScratchSlot];
+    TensorView& candidate_delta = deltas[CandidateDeltaScratchSlot];
+    TensorView& output_gate_delta = deltas[OutputDeltaScratchSlot];
+
+    const TensorView& input = views[InputSlot][0];
+    const TensorView& output_delta = get_output_delta(bp, layer);
+    const TensorView& forget_gate = views[ForgetGateSlot][0];
+    const TensorView& input_gate = views[InputGateSlot][0];
+    const TensorView& candidate_gate = views[CandidateGateSlot][0];
+    const TensorView& output_gate = views[OutputGateSlot][0];
+    const TensorView& cell_state = views[CellStateSlot][0];
+    const TensorView& hidden_state = views[HiddenStateSlot][0];
+    const TensorView& cell_activation = views[CellActivationSlot][0];
+
+    IF_GPU({
+        apply_delta_gpu(input, output_delta, input_delta, hidden_delta, cell_delta,
+                        forget_delta, input_gate_delta, candidate_delta, output_gate_delta,
+                        forget_gate, input_gate, candidate_gate, output_gate, cell_state,
+                        hidden_state, cell_activation);
+        return;
+    });
+
+    apply_delta_cpu(input, output_delta, input_delta, hidden_delta, cell_delta,
+                    forget_delta, input_gate_delta, candidate_delta, output_gate_delta,
+                    forget_gate, input_gate, candidate_gate, output_gate, cell_state,
+                    hidden_state, cell_activation);
+}
+
+void LongShortTermMemoryOp::apply_delta_cpu(const TensorView& input,
+                                            const TensorView& output_delta,
+                                            TensorView& input_delta,
+                                            TensorView& hidden_delta_scratch,
+                                            TensorView& cell_delta_scratch,
+                                            TensorView& forget_delta_scratch,
+                                            TensorView& input_delta_scratch,
+                                            TensorView& candidate_delta_scratch,
+                                            TensorView& output_delta_scratch,
+                                            const TensorView& forget_gate,
+                                            const TensorView& input_gate,
+                                            const TensorView& candidate_gate,
+                                            const TensorView& output_gate,
+                                            const TensorView& cell_state,
+                                            const TensorView& hidden_state,
+                                            const TensorView& cell_activation) const
+{
+    if (!input.data || !output_delta.data || output_features == 0 || time_steps == 0) return;
+
+    zero_if_linked(forget_bias_gradient);
+    zero_if_linked(input_bias_gradient);
+    zero_if_linked(candidate_bias_gradient);
+    zero_if_linked(output_bias_gradient);
+    zero_if_linked(forget_weight_gradient);
+    zero_if_linked(input_weight_gradient);
+    zero_if_linked(candidate_weight_gradient);
+    zero_if_linked(output_weight_gradient);
+    zero_if_linked(forget_recurrent_weight_gradient);
+    zero_if_linked(input_recurrent_weight_gradient);
+    zero_if_linked(candidate_recurrent_weight_gradient);
+    zero_if_linked(output_recurrent_weight_gradient);
+
+    const Index batch_size = input.shape[0];
+    const Index F = input_features;
+    const Index H = output_features;
+    const Index T = time_steps;
+
+    const float* x = input.as<float>();
+    const float* out_delta = output_delta.as<float>();
+    float* in_delta = input_delta.as<float>();
+
+    const float* f_gate = forget_gate.as<float>();
+    const float* i_gate = input_gate.as<float>();
+    const float* g_gate = candidate_gate.as<float>();
+    const float* o_gate = output_gate.as<float>();
+    const float* cells = cell_state.as<float>();
+    const float* hidden = hidden_state.as<float>();
+    const float* cell_act = cell_activation.as<float>();
+
+    const float* Wf = forget_weights.as<float>();
+    const float* Wi = input_weights.as<float>();
+    const float* Wg = candidate_weights.as<float>();
+    const float* Wo = output_weights.as<float>();
+
+    const float* Uf = forget_recurrent_weights.as<float>();
+    const float* Ui = input_recurrent_weights.as<float>();
+    const float* Ug = candidate_recurrent_weights.as<float>();
+    const float* Uo = output_recurrent_weights.as<float>();
+
+    float* gbf = forget_bias_gradient.as<float>();
+    float* gbi = input_bias_gradient.as<float>();
+    float* gbg = candidate_bias_gradient.as<float>();
+    float* gbo = output_bias_gradient.as<float>();
+
+    float* gWf = forget_weight_gradient.as<float>();
+    float* gWi = input_weight_gradient.as<float>();
+    float* gWg = candidate_weight_gradient.as<float>();
+    float* gWo = output_weight_gradient.as<float>();
+
+    float* gUf = forget_recurrent_weight_gradient.as<float>();
+    float* gUi = input_recurrent_weight_gradient.as<float>();
+    float* gUg = candidate_recurrent_weight_gradient.as<float>();
+    float* gUo = output_recurrent_weight_gradient.as<float>();
+
+    float* dh_next_all = hidden_delta_scratch.as<float>();
+    float* dc_next_all = cell_delta_scratch.as<float>();
+    float* df_all = forget_delta_scratch.as<float>();
+    float* di_all = input_delta_scratch.as<float>();
+    float* dg_all = candidate_delta_scratch.as<float>();
+    float* do_all = output_delta_scratch.as<float>();
+
+    for (Index b = 0; b < batch_size; ++b)
+    {
+        float* dh_next = dh_next_all + b * H;
+        float* dc_next = dc_next_all + b * H;
+        float* df = df_all + b * H;
+        float* di = di_all + b * H;
+        float* dg = dg_all + b * H;
+        float* do_gate = do_all + b * H;
+
+        copy_n(out_delta + b * H, H, dh_next);
+        fill_n(dc_next, H, 0.0f);
+
+        for (Index t = T; t-- > 0;)
+        {
+            const Index step = (b * T + t) * H;
+            const float* xt = x + (b * T + t) * F;
+            const float* h_prev = t > 0 ? hidden + (b * T + t - 1) * H : nullptr;
+            const float* c_prev = t > 0 ? cells + (b * T + t - 1) * H : nullptr;
+
+            for (Index h = 0; h < H; ++h)
+            {
+                const float f = f_gate[step + h];
+                const float i = i_gate[step + h];
+                const float g = g_gate[step + h];
+                const float o = o_gate[step + h];
+                const float a = cell_act[step + h];
+
+                const float dc = dh_next[h] * o * lstm_derivative_from_output(activation_function, a) + dc_next[h];
+
+                do_gate[h] = dh_next[h] * a * lstm_derivative_from_output(recurrent_activation_function, o);
+                df[h] = dc * (c_prev ? c_prev[h] : 0.0f) * lstm_derivative_from_output(recurrent_activation_function, f);
+                di[h] = dc * g * lstm_derivative_from_output(recurrent_activation_function, i);
+                dg[h] = dc * i * lstm_derivative_from_output(activation_function, g);
+                dc_next[h] = dc * f;
+
+                gbf[h] += df[h];
+                gbi[h] += di[h];
+                gbg[h] += dg[h];
+                gbo[h] += do_gate[h];
+            }
+
+            for (Index k = 0; k < F; ++k)
+            {
+                float dx = 0.0f;
+                const float xk = xt[k];
+
+                for (Index h = 0; h < H; ++h)
+                {
+                    const Index wh = k * H + h;
+                    gWf[wh] += xk * df[h];
+                    gWi[wh] += xk * di[h];
+                    gWg[wh] += xk * dg[h];
+                    gWo[wh] += xk * do_gate[h];
+
+                    dx += df[h] * Wf[wh]
+                        + di[h] * Wi[wh]
+                        + dg[h] * Wg[wh]
+                        + do_gate[h] * Wo[wh];
+                }
+
+                in_delta[(b * T + t) * F + k] = dx;
+            }
+
+            for (Index j = 0; j < H; ++j)
+            {
+                float dh_prev = 0.0f;
+                const float hp = h_prev ? h_prev[j] : 0.0f;
+
+                for (Index h = 0; h < H; ++h)
+                {
+                    const Index uh = j * H + h;
+
+                    if (h_prev)
+                    {
+                        gUf[uh] += hp * df[h];
+                        gUi[uh] += hp * di[h];
+                        gUg[uh] += hp * dg[h];
+                        gUo[uh] += hp * do_gate[h];
+                    }
+
+                    dh_prev += df[h] * Uf[uh]
+                             + di[h] * Ui[uh]
+                             + dg[h] * Ug[uh]
+                             + do_gate[h] * Uo[uh];
+                }
+
+                dh_next[j] = dh_prev;
+            }
+        }
+    }
+}
+
+void LongShortTermMemoryOp::apply_delta_gpu(const TensorView&,
+                                            const TensorView&,
+                                            TensorView&,
+                                            TensorView&,
+                                            TensorView&,
+                                            TensorView&,
+                                            TensorView&,
+                                            TensorView&,
+                                            TensorView&,
+                                            const TensorView&,
+                                            const TensorView&,
+                                            const TensorView&,
+                                            const TensorView&,
+                                            const TensorView&,
+                                            const TensorView&,
+                                            const TensorView&) const
+{
+    // @todo Implement CUDA LSTM backward.
+    throw runtime_error("LongShortTermMemoryOp::apply_delta_gpu is not implemented yet.");
+}
 
 }
 

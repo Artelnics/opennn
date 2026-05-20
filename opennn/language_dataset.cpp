@@ -36,6 +36,9 @@ static_assert(sizeof(LangCacheHeader) == 64, "LangCacheHeader must be 64 bytes")
 constexpr uint32_t LANG_CACHE_VERSION = 1;
 constexpr const char LANG_CACHE_MAGIC[8] = {'O','P','E','N','N','N','T','K'};
 
+const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
+const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
+
 }
 
 LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Dataset()
@@ -103,62 +106,6 @@ VectorI LanguageDataset::calculate_target_distribution() const
     distribution(0) = negatives;
     distribution(1) = positives;
     return distribution;
-}
-
-LanguageDataset::LanguageDataset(const Index samples_number,
-                                 Index input_sequence_length,
-                                 Index input_vocabulary_size) : Dataset()
-{
-    maximum_input_sequence_length = input_sequence_length;
-    maximum_target_sequence_length = 1;
-
-    const Index features_number = input_sequence_length + 1;
-
-    data.resize(samples_number, features_number);
-    variables.resize(features_number);
-
-    set_default();
-
-    for (Index i = 0; i < features_number; ++i)
-    {
-        Variable& variable = variables[i];
-
-        variable.type = VariableType::Numeric;
-        variable.name = format("variable_{}", i + 1);
-
-        variable.role = (i < input_sequence_length)
-            ? VariableRole::Input
-            : VariableRole::Target;
-    }
-
-    sample_roles.resize(samples_number);
-    split_samples_random();
-
-    const Index target_column_index = data.cols() - 1;
-
-    for (Index i = 0; i < data.rows(); ++i)
-    {
-        for (Index j = 0; j < target_column_index; ++j)
-            data(i, j) = random_integer(0, input_vocabulary_size - 1);
-
-        data(i, target_column_index) = random_integer(0, 1);
-    }
-
-    input_vocabulary.resize(input_vocabulary_size + reserved_tokens.size());
-    target_vocabulary.resize(2);
-
-    if (!variables.empty())
-        variables[0].categories = input_vocabulary;
-
-    input_shape = { get_maximum_input_sequence_length() };
-    target_shape = { get_maximum_target_sequence_length() };
-    decoder_shape.clear();
-
-    set_default_variable_names();
-    set_binary_variables();
-
-    ranges::for_each(variables | views::take(maximum_input_sequence_length),
-                     [](Variable& variable) { variable.role = VariableRole::Input; });
 }
 
 void LanguageDataset::create_vocabulary(const vector<vector<string_view>>& document_tokens,

@@ -293,6 +293,9 @@ Index NeuralNetwork::get_inputs_number() const
     if (const Layer* recurrent = get_first(LayerType::Recurrent))
         return recurrent->get_input_shape()[1];
 
+    if (const Layer* lstm = get_first(LayerType::LongShortTermMemory))
+        return lstm->get_input_shape()[1];
+
     return layers[0]->get_input_shape().size();
 }
 

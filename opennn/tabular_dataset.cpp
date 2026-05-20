@@ -15,6 +15,236 @@
 namespace opennn
 {
 
+namespace {
+
+const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
+const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
+
+}
+
+void TabularDataset::set_data(const MatrixR& new_data)
+{
+    if (new_data.rows() != get_samples_number())
+        throw runtime_error("Rows number is not equal to samples number");
+    if (new_data.cols() != get_features_number())
+        throw runtime_error("Columns number is not equal to variables number");
+
+    data = new_data;
+}
+
+void TabularDataset::set_data_constant(float new_value) { data.setConstant(new_value); }
+
+void TabularDataset::set(const Index new_samples_number,
+                         const Shape& new_input_shape,
+                         const Shape& new_target_shape)
+{
+    if (new_samples_number == 0 || new_input_shape.empty() || new_target_shape.empty())
+        return;
+
+    input_shape = new_input_shape;
+
+    const Index new_inputs_number = new_input_shape.size();
+    const Index target_size = new_target_shape.size();
+    const Index new_targets_number = (target_size == 2) ? 1 : target_size;
+    const Index new_features_number = new_inputs_number + new_targets_number;
+
+    target_shape = { new_targets_number };
+    data.resize(new_samples_number, new_features_number);
+    variables.resize(new_features_number);
+
+    set_default();
+
+    for (Index i = 0; i < new_features_number; ++i)
+    {
+        Variable& variable = variables[i];
+
+        variable.type = VariableType::Numeric;
+        variable.name = format("variable_{}", i + 1);
+        variable.role = (i < new_inputs_number) ? VariableRole::Input : VariableRole::Target;
+    }
+
+    sample_roles.resize(new_samples_number, SampleRole::Training);
+    split_samples_random();
+}
+
+MatrixR TabularDataset::get_feature_data(const string& variable_role) const
+{
+    vector<Index> indices(get_samples_number());
+    iota(indices.begin(), indices.end(), 0);
+
+    return get_data_from_indices(indices, get_feature_indices(variable_role));
+}
+
+MatrixR TabularDataset::get_data(const string& sample_role, const string& variable_role) const
+{
+    return get_data_from_indices(get_sample_indices(sample_role), get_feature_indices(variable_role));
+}
+
+MatrixR TabularDataset::get_data_from_indices(const vector<Index>& sample_indices, const vector<Index>& feature_indices) const
+{
+    MatrixR this_data(sample_indices.size(), feature_indices.size());
+    fill_tensor_data(data, sample_indices, feature_indices, this_data.data());
+    return this_data;
+}
+
+VectorR TabularDataset::get_sample_data(Index index) const { return data.row(index); }
+
+MatrixR TabularDataset::get_variable_data(Index variable_index) const
+{
+    const Index start_column = get_feature_indices(variable_index)[0];
+    return data.block(0, start_column, data.rows(), variables[variable_index].feature_count());
+}
+
+MatrixR TabularDataset::get_variable_data(Index variable_index, const vector<Index>& row_indices) const
+{
+    MatrixR variable_data(row_indices.size(), get_feature_indices(variable_index).size());
+    fill_tensor_data(data, row_indices, get_feature_indices(variable_index), variable_data.data());
+    return variable_data;
+}
+
+MatrixR TabularDataset::get_variable_data(const string& column_name) const { return get_variable_data(get_variable_index(column_name)); }
+
+bool TabularDataset::has_nan() const
+{
+    for (Index i = 0; i < data.rows(); ++i)
+        if (sample_roles[i] != SampleRole::None && has_nan_row(i))
+            return true;
+
+    return false;
+}
+
+bool TabularDataset::has_nan_row(Index row_index) const { return data.row(row_index).array().isNaN().any(); }
+
+VectorI TabularDataset::count_nans_per_variable() const { return data.array().isNaN().cast<Index>().colwise().sum(); }
+
+Index TabularDataset::count_variables_with_nan() const { return (count_nans_per_variable().array() > 0).count(); }
+
+Index TabularDataset::count_rows_with_nan() const { return data.array().isNaN().rowwise().any().count(); }
+
+Index TabularDataset::count_nan() const { return data.array().isNaN().count(); }
+
+void TabularDataset::save_data() const
+{
+    ofstream file(data_path);
+
+    if (!file.is_open())
+        throw runtime_error(format("Cannot open matrix data file: {}\n", data_path.string()));
+
+    file.precision(20);
+
+    const Index samples_number = get_samples_number();
+    const Index features_number = get_features_number();
+
+    const vector<string> feature_names = get_feature_names();
+
+    const string separator_string = get_separator_string();
+
+    if (has_sample_ids)
+        file << "id" << separator_string;
+
+    for (Index j = 0; j < features_number; ++j)
+        file << feature_names[j] << (j == features_number - 1 ? "\n" : separator_string);
+
+    for (Index i = 0; i < samples_number; ++i)
+    {
+        if (has_sample_ids)
+            file << sample_ids[i] << separator_string;
+
+        for (Index j = 0; j < features_number; ++j)
+            file << data(i, j) << (j == features_number - 1 ? "\n" : separator_string);
+    }
+}
+
+void TabularDataset::save_data_binary(const filesystem::path& binary_data_file_name) const
+{
+    ofstream file(binary_data_file_name, ios::binary);
+
+    if (!file.is_open())
+        throw runtime_error("Cannot open data binary file.");
+
+    const Index columns_number = data.cols();
+    const Index rows_number = data.rows();
+    const Index total_elements = columns_number * rows_number;
+
+    file.write(reinterpret_cast<const char*>(&columns_number), sizeof(Index));
+    file.write(reinterpret_cast<const char*>(&rows_number), sizeof(Index));
+    file.write(reinterpret_cast<const char*>(data.data()), total_elements * sizeof(float));
+}
+
+void TabularDataset::load_data_binary()
+{
+    ifstream file(data_path, ios::binary);
+
+    if (!file.is_open())
+        throw runtime_error(format("Failed to open file: {}", data_path.string()));
+
+    Index columns_number = 0;
+    Index rows_number = 0;
+
+    file.read(reinterpret_cast<char*>(&columns_number), sizeof(Index));
+    file.read(reinterpret_cast<char*>(&rows_number), sizeof(Index));
+
+    data.resize(rows_number, columns_number);
+    file.read(reinterpret_cast<char*>(data.data()), rows_number * columns_number * sizeof(float));
+}
+
+void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices,
+                                 float* input_data, bool, bool parallelize, int contiguous) const
+{
+    fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize, contiguous);
+}
+
+void TabularDataset::fill_decoder(const vector<Index>& sample_indices, const vector<Index>& decoder_indices,
+                                  float* decoder_data, bool, bool parallelize, int contiguous) const
+{
+    fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, parallelize, contiguous);
+}
+
+void TabularDataset::fill_targets(const vector<Index>& sample_indices, const vector<Index>& target_indices,
+                                  float* target_data, bool, bool parallelize, int contiguous) const
+{
+    fill_tensor_data(data, sample_indices, target_indices, target_data, parallelize, contiguous);
+}
+
+void TabularDataset::infer_variable_types_from_data()
+{
+    Index feature_index = 0;
+
+    const Index variables_number = get_variables_number();
+
+    for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
+    {
+        Variable& variable = variables[variable_index];
+        const Index advance = variable.feature_count();
+
+        if (variable.type == VariableType::Numeric)
+        {
+            const VectorR data_column = data.col(feature_index);
+
+            if (is_constant(data_column))
+                variable.set(variable.name, "None", VariableType::Constant);
+            else if (is_binary(data_column))
+            {
+                variable.type = VariableType::Binary;
+                variable.categories = { "0", "1" };
+            }
+        }
+        else if (variable.type == VariableType::Binary || variable.type == VariableType::Categorical)
+            if (variable.get_categories_number() == 1)
+                variable.set(variable.name, "None", VariableType::Constant);
+
+        feature_index += advance;
+    }
+}
+
+void TabularDataset::set_binary_variables() { infer_variable_types_from_data(); }
+
+void TabularDataset::resize_data_from_JSON(Index samples_number)
+{
+    if (variables.empty()) data.resize(0, 0);
+    else data = MatrixR::Zero(samples_number, get_features_number());
+}
+
 TabularDataset::TabularDataset(const Index new_samples_number,
                                          const Shape& new_input_shape,
                                          const Shape& new_target_shape)

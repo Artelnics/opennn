@@ -183,7 +183,8 @@ TrainingResults AdaptiveMomentEstimation::train()
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
     bool stop_training = false;
-    const bool shuffle = !neural_network->has(LayerType::Recurrent);
+    const bool shuffle = !neural_network->has(LayerType::Recurrent)
+                      && !neural_network->has(LayerType::LongShortTermMemory);
 
     time_t beginning_time;
     time(&beginning_time);

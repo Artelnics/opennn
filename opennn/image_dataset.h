@@ -44,14 +44,12 @@ public:
     Index get_samples_number() const override;
     using Dataset::get_samples_number;
 
-    void set_data_random() override;
-
     void set_image_padding(int new_padding) { padding = new_padding; }
 
-    using Dataset::unscale_features;
-
     vector<Descriptives> scale_features(const string&) override;
-    void unscale_features(const string&);
+    void unscale_features(const string&, const vector<Descriptives>&) override;
+
+    VectorI calculate_target_distribution() const override;
 
     void read_bmp(const Shape& new_input_shape = { 0, 0, 0 });
 

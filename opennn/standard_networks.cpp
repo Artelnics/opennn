@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "standard_networks.h"
-#include "registry.h"
 #include "activation_layer.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
@@ -22,7 +21,6 @@
 #include "addition_layer.h"
 #include "normalization_layer_3d.h"
 #include "multihead_attention_layer.h"
-#include "string_utilities.h"
 
 namespace opennn
 {
@@ -349,76 +347,6 @@ ResNet::ResNet(const Shape& input_shape,
     set_parameters_random();
 }
 
-VGG16::VGG16(const Shape& new_input_shape, const Shape& new_target_shape)
-    : NeuralNetwork()
-{
-    set(new_input_shape, new_target_shape);
-}
-
-void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
-{
-    add_layer(make_unique<Scaling>(new_input_shape));
-
-    // 3x3 ReLU conv with stride 1, "Same" padding. In-channels read from the previous layer's output.
-    auto add_conv = [&](Index out_channels, const string& name) {
-        const Shape in = get_output_shape();
-        add_layer(make_unique<Convolutional>(
-            in, Shape{3, 3, in[2], out_channels}, "ReLU",
-            Shape{1, 1}, "Same", false, name));
-    };
-
-    // 2x2 max pool with stride 2, no padding.
-    auto add_max_pool = [&](const string& name) {
-        add_layer(make_unique<Pooling>(
-            get_output_shape(), Shape{2, 2}, Shape{2, 2}, Shape{0, 0},
-            "MaxPooling", name));
-    };
-
-    add_conv(64,  "conv_1");
-    add_conv(64,  "conv_2");
-    add_max_pool("pool1");
-
-    add_conv(128, "conv_3");
-    add_conv(128, "conv_4");
-    add_max_pool("pool2");
-
-    add_conv(256, "conv_5");
-    add_conv(256, "conv_6");
-    add_conv(256, "conv_7");
-    add_max_pool("pool3");
-
-    add_conv(512, "conv_8");
-    add_conv(512, "conv_9");
-    add_conv(512, "conv_10");
-    add_max_pool("pool4");
-
-    add_conv(512, "conv_11");
-    add_conv(512, "conv_12");
-    add_conv(512, "conv_13");
-    add_max_pool("pool5");
-
-    const Shape pre_pool_shape = get_output_shape();
-    add_layer(make_unique<Pooling>(
-        pre_pool_shape,
-        Shape{pre_pool_shape[0], pre_pool_shape[1]},
-        Shape{1, 1}, Shape{0, 0},
-        "AveragePooling", "global_avg_pool"));
-
-    add_layer(make_unique<Flatten>(get_output_shape()));
-
-    add_layer(make_unique<Dense>(get_output_shape(), new_target_shape,
-                                 "Softmax", false, "dense_classifier"));
-
-    compile();
-    set_parameters_random();
-}
-
-VGG16::VGG16(const filesystem::path& file_name)
-    : NeuralNetwork(file_name)
-{
-
-}
-
 TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                      const Shape& complexity_dimensions,
                                                      const Shape& output_shape) : NeuralNetwork()
@@ -454,7 +382,7 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
     set_parameters_glorot();
 }
 
-Transformer::Transformer(const Index input_sequence_length,
+Transformer::Transformer(Index input_sequence_length,
                          Index decoder_sequence_length,
                          Index input_vocabulary_size,
                          Index output_vocabulary_size,
@@ -462,28 +390,8 @@ Transformer::Transformer(const Index input_sequence_length,
                          Index heads_number,
                          Index feed_forward_dimension,
                          Index layers_number)
+    : NeuralNetwork()
 {
-    set(input_sequence_length,
-        decoder_sequence_length,
-        input_vocabulary_size,
-        output_vocabulary_size,
-        embedding_dimension,
-        heads_number,
-        feed_forward_dimension,
-        layers_number);
-}
-
-void Transformer::set(const Index input_sequence_length,
-                      Index decoder_sequence_length,
-                      Index input_vocabulary_size,
-                      Index output_vocabulary_size,
-                      Index embedding_dimension,
-                      Index heads_number,
-                      Index feed_forward_dimension,
-                      Index layers_number)
-{
-    clear();
-
     if (input_sequence_length == 0 ||
         decoder_sequence_length == 0 ||
         input_vocabulary_size == 0 ||
@@ -492,10 +400,10 @@ void Transformer::set(const Index input_sequence_length,
         heads_number == 0 ||
         feed_forward_dimension == 0 ||
         layers_number == 0)
-        return;
+        throw runtime_error("Transformer: all dimensions must be > 0.");
 
     if (embedding_dimension % heads_number != 0)
-        throw runtime_error("embedding_dimension must be divisible by heads_number.");
+        throw runtime_error("Transformer: embedding_dimension must be divisible by heads_number.");
 
     // Adds: Addition(left_index, right_index) → Normalization3d. Returns the norm index.
     auto add_residual_and_norm = [&](const Shape& shape,

@@ -32,7 +32,24 @@ public:
                         bool = false,
                         const Codification& = Codification::UTF8);
 
-    using Dataset::set;
+    [[nodiscard]] Index get_samples_number() const override { return data.rows(); }
+
+    [[nodiscard]] const MatrixR& get_data() const { return data; }
+    void set_data(const MatrixR&);
+    void set_data_constant(float);
+
+    [[nodiscard]] MatrixR get_data(const string&, const string&) const;
+    [[nodiscard]] MatrixR get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
+
+    [[nodiscard]] VectorR get_sample_data(Index) const;
+
+    [[nodiscard]] MatrixR get_variable_data(Index) const;
+    [[nodiscard]] MatrixR get_variable_data(Index, const vector<Index>&) const;
+    [[nodiscard]] MatrixR get_variable_data(const string&) const;
+
+    [[nodiscard]] MatrixR get_feature_data(const string&) const;
+
+    void set(Index = 0, const Shape& = {}, const Shape& = {});
     void set(const filesystem::path&,
              const string&,
              bool = true,
@@ -101,8 +118,22 @@ public:
     vector<vector<Index>> replace_Tukey_outliers_with_NaN(const float = 1.5f);
     void unuse_Tukey_outliers(const float = 1.5f);
 
-    void set_data_random() override;
-    void set_data_integer(const Index vocabulary_size) override;
+    [[nodiscard]] bool has_nan() const override;
+    [[nodiscard]] bool has_nan_row(Index) const;
+
+    [[nodiscard]] VectorI count_nans_per_variable() const;
+    [[nodiscard]] Index count_variables_with_nan() const;
+    [[nodiscard]] Index count_rows_with_nan() const;
+    [[nodiscard]] Index count_nan() const;
+
+    void save_data() const;
+    void save_data_binary(const filesystem::path&) const;
+    void load_data_binary();
+
+    void set_binary_variables();
+
+    void set_data_random();
+    void set_data_integer(const Index vocabulary_size);
     void set_data_rosenbrock();
     void set_data_binary_classification();
 
@@ -111,7 +142,30 @@ public:
 
     void read_csv();
 
+    void fill_inputs(const vector<Index>&,
+                     const vector<Index>&,
+                     float*,
+                     bool is_training,
+                     bool parallelize = true,
+                     int contiguous = -1) const override;
+
+    void fill_decoder(const vector<Index>&,
+                      const vector<Index>&,
+                      float*,
+                      bool is_training,
+                      bool parallelize = true,
+                      int contiguous = -1) const override;
+
+    void fill_targets(const vector<Index>&,
+                      const vector<Index>&,
+                      float*,
+                      bool is_training,
+                      bool parallelize = true,
+                      int contiguous = -1) const override;
+
 protected:
+
+    MatrixR data;
 
     string missing_values_label = "NA";
     MissingValuesMethod missing_values_method = MissingValuesMethod::Mean;
@@ -123,6 +177,9 @@ protected:
 
     void missing_values_to_JSON(JsonWriter&) const;
     void missing_values_from_JSON(const Json*);
+
+    void infer_variable_types_from_data();
+    void resize_data_from_JSON(Index) override;
 
     void infer_column_types(const vector<vector<string_view>>&);
 

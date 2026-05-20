@@ -12,13 +12,6 @@
 namespace opennn
 {
 
-// Single global generator protected by a mutex. The previous design used a
-// thread_local generator seeded with hash<thread::id>, but std::thread::id is
-// assigned by the OS at runtime and is not stable between program invocations
-// — so set_seed(42) gave different weight initialisations across runs and
-// across OMP thread counts. A single shared generator with a mutex is the
-// only design that yields bit-identical results regardless of how many
-// threads are running.
 static mutex rng_mutex;
 static mt19937 generator;
 static long long current_seed = -1;
@@ -31,9 +24,7 @@ static void reseed_unlocked()
         generator.seed(device());
     }
     else
-    {
         generator.seed(uint32_t(current_seed));
-    }
 }
 
 void set_seed(unsigned seed)
@@ -43,7 +34,7 @@ void set_seed(unsigned seed)
         current_seed = static_cast<long long>(seed);
         reseed_unlocked();
     }
-    srand(seed);              // covers Eigen helpers that fall back to libc rand().
+    srand(seed); // covers Eigen helpers that fall back to libc rand().
 }
 
 long long get_seed()

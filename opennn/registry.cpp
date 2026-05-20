@@ -21,6 +21,7 @@
 #include "bounding_layer.h"
 #include "multihead_attention_layer.h"
 #include "recurrent_layer.h"
+#include "long_short_term_memory_layer.h"
 #include "loss.h"
 #include "adaptive_moment_estimation.h"
 #include "stochastic_gradient_descent.h"
@@ -46,6 +47,7 @@ void register_classes()
     const Bounding bounding;
     const Unscaling unscaling;
     const Recurrent recurrent;
+    const LongShortTermMemory long_short_term_memory;
 
     const Loss loss;
     const AdaptiveMomentEstimation adaptive_moment_estimation;
