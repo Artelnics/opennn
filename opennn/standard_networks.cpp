@@ -87,9 +87,13 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
 {
     clear();
 
-    add_layer(make_unique<Recurrent>(input_shape, complexity_dimensions));
+    add_layer(make_unique<Scaling>(input_shape));
+
+    add_layer(make_unique<Recurrent>(get_output_shape(), complexity_dimensions));
 
     add_layer(make_unique<Dense>(complexity_dimensions, output_shape, "Identity", false, "dense_layer"));
+
+    add_layer(make_unique<Unscaling>(output_shape));
 
     compile();
     set_parameters_random();
