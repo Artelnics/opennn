@@ -869,6 +869,142 @@ struct RecurrentOp : Operator
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 
+struct LongShortTermMemoryOp : Operator
+{
+    enum ForwardSlot
+    {
+        InputSlot = 0,
+        OutputSlot,
+        ForgetGateSlot,
+        InputGateSlot,
+        CandidateGateSlot,
+        OutputGateSlot,
+        CellStateSlot,
+        HiddenStateSlot,
+        CellActivationSlot
+    };
+
+    enum BackwardSlot
+    {
+        OutputDeltaSlot = 0,
+        InputDeltaSlot,
+        HiddenDeltaScratchSlot,
+        CellDeltaScratchSlot,
+        ForgetDeltaScratchSlot,
+        InputDeltaScratchSlot,
+        CandidateDeltaScratchSlot,
+        OutputDeltaScratchSlot
+    };
+
+    Index input_features  = 0;
+    Index output_features = 0;
+    Index time_steps      = 0;
+
+    ActivationOp::Function activation_function = ActivationOp::Function::Tanh;
+    ActivationOp::Function recurrent_activation_function = ActivationOp::Function::Sigmoid;
+
+    TensorView forget_bias;
+    TensorView input_bias;
+    TensorView candidate_bias;
+    TensorView output_bias;
+
+    TensorView forget_weights;
+    TensorView input_weights;
+    TensorView candidate_weights;
+    TensorView output_weights;
+
+    TensorView forget_recurrent_weights;
+    TensorView input_recurrent_weights;
+    TensorView candidate_recurrent_weights;
+    TensorView output_recurrent_weights;
+
+    TensorView forget_bias_gradient;
+    TensorView input_bias_gradient;
+    TensorView candidate_bias_gradient;
+    TensorView output_bias_gradient;
+
+    TensorView forget_weight_gradient;
+    TensorView input_weight_gradient;
+    TensorView candidate_weight_gradient;
+    TensorView output_weight_gradient;
+
+    TensorView forget_recurrent_weight_gradient;
+    TensorView input_recurrent_weight_gradient;
+    TensorView candidate_recurrent_weight_gradient;
+    TensorView output_recurrent_weight_gradient;
+
+    void set(Index new_input_features,
+             Index new_output_features,
+             Index new_time_steps,
+             ActivationOp::Function new_activation_function = ActivationOp::Function::Tanh,
+             ActivationOp::Function new_recurrent_activation_function = ActivationOp::Function::Sigmoid);
+
+    vector<TensorSpec> parameter_specs() const override;
+    void link_parameters(span<const TensorView> views) override;
+    void link_gradients (span<const TensorView> views) override;
+
+    void set_parameters_random() override;
+    void set_parameters_glorot() override;
+
+    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
+
+private:
+    void apply_cpu(const TensorView& input,
+                   TensorView& output,
+                   TensorView& forget_gate,
+                   TensorView& input_gate,
+                   TensorView& candidate_gate,
+                   TensorView& output_gate,
+                   TensorView& cell_state,
+                   TensorView& hidden_state,
+                   TensorView& cell_activation) const;
+
+    void apply_gpu(const TensorView& input,
+                   TensorView& output,
+                   TensorView& forget_gate,
+                   TensorView& input_gate,
+                   TensorView& candidate_gate,
+                   TensorView& output_gate,
+                   TensorView& cell_state,
+                   TensorView& hidden_state,
+                   TensorView& cell_activation) const;
+
+    void apply_delta_cpu(const TensorView& input,
+                         const TensorView& output_delta,
+                         TensorView& input_delta,
+                         TensorView& hidden_delta_scratch,
+                         TensorView& cell_delta_scratch,
+                         TensorView& forget_delta_scratch,
+                         TensorView& input_delta_scratch,
+                         TensorView& candidate_delta_scratch,
+                         TensorView& output_delta_scratch,
+                         const TensorView& forget_gate,
+                         const TensorView& input_gate,
+                         const TensorView& candidate_gate,
+                         const TensorView& output_gate,
+                         const TensorView& cell_state,
+                         const TensorView& hidden_state,
+                         const TensorView& cell_activation) const;
+
+    void apply_delta_gpu(const TensorView& input,
+                         const TensorView& output_delta,
+                         TensorView& input_delta,
+                         TensorView& hidden_delta_scratch,
+                         TensorView& cell_delta_scratch,
+                         TensorView& forget_delta_scratch,
+                         TensorView& input_delta_scratch,
+                         TensorView& candidate_delta_scratch,
+                         TensorView& output_delta_scratch,
+                         const TensorView& forget_gate,
+                         const TensorView& input_gate,
+                         const TensorView& candidate_gate,
+                         const TensorView& output_gate,
+                         const TensorView& cell_state,
+                         const TensorView& hidden_state,
+                         const TensorView& cell_activation) const;
+};
+
 }
 
 // OpenNN: Open Neural Networks Library.

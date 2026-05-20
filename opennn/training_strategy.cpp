@@ -54,7 +54,8 @@ void TrainingStrategy::set_default()
 
     // Forecasting
 
-    if (neural_network->has(LayerType::Recurrent))
+    if (neural_network->has(LayerType::Recurrent)
+        || neural_network->has(LayerType::LongShortTermMemory))
     {
         set_loss("MeanSquaredError");
         set_optimization_algorithm("AdaptiveMomentEstimation");
@@ -136,7 +137,8 @@ TrainingResults TrainingStrategy::train()
     if (!optimizer->get_loss())
         throw runtime_error("optimizer is not set.");
 
-    if (neural_network->has(LayerType::Recurrent))
+    if (neural_network->has(LayerType::Recurrent)
+        || neural_network->has(LayerType::LongShortTermMemory))
         fix_forecasting();
 
     return optimizer->train();
