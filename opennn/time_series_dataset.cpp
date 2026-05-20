@@ -95,7 +95,10 @@ void TimeSeriesDataset::set_future_time_steps(const Index new_future_time_steps)
 {
     future_time_steps = new_future_time_steps;
     if (multi_target)
-        target_shape = { future_time_steps };
+    {
+        const Index n_targets = get_features_number("Target");
+        target_shape = { future_time_steps * (n_targets > 0 ? n_targets : 1) };
+    }
 }
 
 void TimeSeriesDataset::set_time_variable_index(const Index new_time_variable_index)
@@ -106,6 +109,15 @@ void TimeSeriesDataset::set_time_variable_index(const Index new_time_variable_in
 void TimeSeriesDataset::set_multi_target(bool new_multi_target)
 {
     multi_target = new_multi_target;
+    // Keep target_shape consistent with the (multi_target, future_time_steps,
+    // n_target_columns) tuple. Layout is the same as in fill_targets:
+    //   multi_target=true : K * N values per sample (K = future steps,
+    //                       N = number of target columns) grouped by column.
+    //   multi_target=false: N values per sample (one per target column at the
+    //                       point t + future_time_steps - 1).
+    const Index n_targets = get_features_number("Target");
+    target_shape = multi_target ? Shape{ future_time_steps * (n_targets > 0 ? n_targets : 1) }
+                                : Shape{ n_targets > 0 ? n_targets : 1 };
 }
 
 void TimeSeriesDataset::resize_input_shape(Index input_features_count)
@@ -360,28 +372,41 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
     const Index batch_size = ssize(sample_indices);
     const Index targets_number = get_target_shape()[0];
     const Index total_rows_in_data = data.rows();
+    const Index target_columns = ssize(target_indices);
 
     MatrixMap targets(target_data, batch_size, targets_number);
 
+    // Layout rationale:
+    //   multi_target=false: per-sample row is one value per target column at
+    //     t + future_time_steps - 1.  Targets has N columns.
+    //   multi_target=true : per-sample row is K consecutive future values for
+    //     each target column.  Layout is grouped by column then by step,
+    //     i.e. targets(i, c * K + k) = data[row + k, target_indices[c]].
+    //     This keeps the K values of column c contiguous so the unscaling
+    //     layer can replicate descriptive[c] across K slots without
+    //     interleaving across columns.
     #pragma omp parallel for schedule(static) if (parallelize)
     for (Index i = 0; i < batch_size; ++i)
     {
         if (multi_target)
         {
-            for (Index j = 0; j < future_time_steps; ++j)
-            {
-                const Index target_row = sample_indices[i] + past_time_steps + j;
-                targets(i, j) = (target_row < total_rows_in_data)
-                    ? data(target_row, target_indices[0])
-                    : 0.0f;
-            }
+            for (Index c = 0; c < target_columns; ++c)
+                for (Index k = 0; k < future_time_steps; ++k)
+                {
+                    const Index target_row = sample_indices[i] + past_time_steps + k;
+                    targets(i, c * future_time_steps + k) =
+                        (target_row < total_rows_in_data)
+                            ? data(target_row, target_indices[c])
+                            : 0.0f;
+                }
         }
         else
         {
             const Index target_row = sample_indices[i] + past_time_steps + (future_time_steps - 1);
-            targets(i, 0) = (target_row < total_rows_in_data)
-                ? data(target_row, target_indices[0])
-                : 0.0f;
+            for (Index c = 0; c < target_columns; ++c)
+                targets(i, c) = (target_row < total_rows_in_data)
+                    ? data(target_row, target_indices[c])
+                    : 0.0f;
         }
     }
 }

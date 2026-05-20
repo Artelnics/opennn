@@ -49,7 +49,11 @@ void Scaling::set(const Shape& new_input_shape)
 
     set_label("scaling_layer");
 
-    const Index features = input_shape.size();
+    // For rank-1 inputs (tabular per-sample), features == shape[0] == size().
+    // For rank-2 (time-series per-sample: time × feature) and rank-3 (image:
+    // H × W × C), the feature axis is the LAST one; using shape.size() would
+    // create one descriptive per element instead of per feature.
+    const Index features = input_shape.empty() ? 0 : input_shape.back();
     descriptives.assign(size_t(features), Descriptives(-1.0f, 1.0f, 0.0f, 1.0f));
     scalers.assign(size_t(features), ScalerMethod::MeanStandardDeviation);
     min_range = -1.0f;

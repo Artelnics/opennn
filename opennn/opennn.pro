@@ -64,7 +64,9 @@ SOURCES += $$files($$PWD/*.cpp)
 # CUDA
 
 win32-msvc* | linux-g++ {
-    CUDA_SOURCES += kernel.cu
+    CUDA_SOURCES += kernel_layers.cu \
+                    kernel_losses.cu \
+                    kernel_optimizers.cu
 }
 
 include(../cuda.pri)

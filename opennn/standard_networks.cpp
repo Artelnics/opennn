@@ -87,16 +87,27 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
 {
     clear();
 
+    // Scaling supports rank 2 input ({time_steps, input_features}); the
+    // optimizer auto-fills its descriptives from TimeSeriesDataset.
     add_layer(make_unique<Scaling>(input_shape));
 
-    add_layer(make_unique<Recurrent>(get_output_shape(), complexity_dimensions));
+    add_layer(make_unique<Recurrent>(get_output_shape(),
+                                     complexity_dimensions,
+                                     "Tanh",
+                                     "recurrent_layer"));
 
-    add_layer(make_unique<Dense>(complexity_dimensions, output_shape, "Identity", false, "dense_layer"));
+    add_layer(make_unique<Dense>(get_output_shape(),
+                                 output_shape,
+                                 "Identity",
+                                 false,
+                                 "forecasting_layer"));
 
+    // Unscaling rank-1 output back to original target range. Optimizer fills
+    // descriptives from the dataset's target columns.
     add_layer(make_unique<Unscaling>(output_shape));
 
     compile();
-    set_parameters_random();
+    set_parameters_glorot();
 }
 
 AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,

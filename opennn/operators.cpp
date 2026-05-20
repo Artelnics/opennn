@@ -8,7 +8,9 @@
 
 #ifdef OPENNN_HAS_CUDA
 #include <cuda_fp16.h>
+#ifdef HAVE_CUDNN_FRONTEND
 #include <cudnn_frontend.h>
+#endif
 #include "cuda_gemm.h"
 #endif
 
@@ -863,6 +865,309 @@ void CombinationReluOp::back_propagate(ForwardPropagation& fp, BackPropagation& 
     combination.apply_delta(output_delta, input, input_delta, false);
 }
 
+// -----------------------------------------------------------------------------
+// RecurrentOp — Elman RNN, BPTT over the time axis. CPU path is hand-written.
+// GPU path stubs throw until kernels land in Phase 3.
+// -----------------------------------------------------------------------------
+
+void RecurrentOp::set(Index new_input_features,
+                      Index new_time_steps,
+                      Index new_output_features,
+                      ActivationOp::Function new_activation,
+                      Type new_weight_type)
+{
+    input_features  = new_input_features;
+    time_steps      = new_time_steps;
+    output_features = new_output_features;
+    activation      = new_activation;
+    weight_type     = new_weight_type;
+}
+
+vector<TensorSpec> RecurrentOp::parameter_specs() const
+{
+    return {
+        {{output_features},                   weight_type},  // bias
+        {{input_features, output_features},   weight_type},  // input weights
+        {{output_features, output_features},  weight_type},  // recurrent weights
+    };
+}
+
+void RecurrentOp::link_parameters(span<const TensorView> views)
+{
+    if (views.size() < 3) return;
+    bias              = views[0];
+    input_weights     = views[1];
+    recurrent_weights = views[2];
+}
+
+void RecurrentOp::link_gradients(span<const TensorView> views)
+{
+    if (views.size() < 3) return;
+    bias_gradient              = views[0];
+    input_weight_gradient      = views[1];
+    recurrent_weight_gradient  = views[2];
+}
+
+void RecurrentOp::set_parameters_random()
+{
+    if (!input_weights.empty())     set_random_uniform(input_weights.as_vector());
+    if (!recurrent_weights.empty()) set_random_uniform(recurrent_weights.as_vector());
+    if (!bias.empty())              bias.setZero();
+}
+
+void RecurrentOp::set_parameters_glorot()
+{
+    if (!input_weights.empty())
+    {
+        const float limit = glorot_limit(input_features, output_features);
+        set_random_uniform(input_weights.as_vector(), -limit, limit);
+    }
+    if (!recurrent_weights.empty())
+    {
+        const float limit = glorot_limit(output_features, output_features);
+        set_random_uniform(recurrent_weights.as_vector(), -limit, limit);
+    }
+    if (!bias.empty()) bias.setZero();
+}
+
+void RecurrentOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept
+{
+    // Slot convention (set by the hosting layer):
+    //   output_slots = {Output, HiddenStates, ActivationDerivatives}
+    auto& fv = fp.views[layer];
+    const TensorView& input             = get_input(fp, layer);
+    TensorView& output                  = fv[output_slots[0]][0];
+    TensorView& hidden_states           = fv[output_slots[1]][0];
+    TensorView& activation_derivatives  = fv[output_slots[2]][0];
+
+    IF_GPU({ apply_gpu(input, hidden_states, activation_derivatives, output, is_training); return; });
+    apply_cpu(input, hidden_states, activation_derivatives, output, is_training);
+}
+
+void RecurrentOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+{
+    auto& fv = fp.views[layer];
+    auto& dv = bp.delta_views[layer];
+
+    const TensorView& input                    = get_input(fp, layer);
+    const TensorView& hidden_states            = fv[output_slots[1]][0];
+    const TensorView& activation_derivatives   = fv[output_slots[2]][0];
+    const TensorView& output_delta             = get_output_delta(bp, layer);
+
+    TensorView empty;
+    TensorView& input_delta = view_at_slot_or(dv, input_delta_slots, 0, empty);
+
+    IF_GPU({ apply_delta_gpu(input, hidden_states, activation_derivatives, output_delta, input_delta); return; });
+    apply_delta_cpu(input, hidden_states, activation_derivatives, output_delta, input_delta);
+}
+
+void RecurrentOp::apply_cpu(const TensorView& input,
+                            TensorView& hidden_states,
+                            TensorView& activation_derivatives,
+                            TensorView& output,
+                            bool is_training)
+{
+    const Index batch_size = input.shape[0];
+
+    const VectorMap bias_map  = bias.as_vector();
+    const MatrixMap w_in_map  = input_weights.as_matrix();
+    const MatrixMap w_rec_map = recurrent_weights.as_matrix();
+
+    const float* input_data  = input.as<float>();
+    float*       hidden_data = hidden_states.as<float>();
+    float*       derivs_data = (is_training && !activation_derivatives.empty())
+                               ? activation_derivatives.as<float>() : nullptr;
+
+    const Index in_stride_t = input_features;             // stride between consecutive time steps (one batch row)
+    const Index in_stride_b = time_steps * input_features; // stride between batch rows
+    const Index h_stride_t  = output_features;
+    const Index h_stride_b  = time_steps * output_features;
+
+    MatrixR step_input  (batch_size, input_features);
+    MatrixR step_hidden (batch_size, output_features);
+    MatrixR prev_hidden (batch_size, output_features);
+    MatrixR step_derivs (batch_size, output_features);
+
+    for (Index t = 0; t < time_steps; ++t)
+    {
+        for (Index i = 0; i < batch_size; ++i)
+            std::memcpy(step_input.data() + i * input_features,
+                        input_data + i * in_stride_b + t * in_stride_t,
+                        input_features * sizeof(float));
+
+        step_hidden.noalias() = step_input * w_in_map;
+        step_hidden.rowwise() += bias_map.transpose();
+
+        if (t > 0)
+            step_hidden.noalias() += prev_hidden * w_rec_map;
+
+        using F = ActivationOp::Function;
+        switch (activation)
+        {
+        case F::Tanh:
+            step_hidden = step_hidden.array().tanh();
+            if (is_training)
+                step_derivs = 1.0f - step_hidden.array().square();
+            break;
+        case F::Sigmoid:
+            step_hidden = (1.0f / (1.0f + (-step_hidden.array()).exp())).matrix();
+            if (is_training)
+                step_derivs = step_hidden.array() * (1.0f - step_hidden.array());
+            break;
+        case F::ReLU:
+            if (is_training)
+                step_derivs = (step_hidden.array() > 0.0f).cast<float>();
+            step_hidden = step_hidden.array().cwiseMax(0.0f);
+            break;
+        case F::Identity:
+        case F::Softmax: // Softmax over time is degenerate for an RNN; treat as Identity.
+            if (is_training)
+                step_derivs.setOnes();
+            break;
+        }
+
+        for (Index i = 0; i < batch_size; ++i)
+            std::memcpy(hidden_data + i * h_stride_b + t * h_stride_t,
+                        step_hidden.data() + i * output_features,
+                        output_features * sizeof(float));
+
+        if (derivs_data)
+            for (Index i = 0; i < batch_size; ++i)
+                std::memcpy(derivs_data + i * h_stride_b + t * h_stride_t,
+                            step_derivs.data() + i * output_features,
+                            output_features * sizeof(float));
+
+        prev_hidden = step_hidden;
+    }
+
+    output.as_matrix() = prev_hidden;
+}
+
+void RecurrentOp::apply_delta_cpu(const TensorView& input,
+                                  const TensorView& hidden_states,
+                                  const TensorView& activation_derivatives,
+                                  const TensorView& output_delta,
+                                  TensorView& input_delta) const
+{
+    const Index batch_size = input.shape[0];
+
+    const MatrixMap w_in_map  = input_weights.as_matrix();
+    const MatrixMap w_rec_map = recurrent_weights.as_matrix();
+
+    VectorMap bias_grad   = bias_gradient.as_vector();
+    MatrixMap w_in_grad   = input_weight_gradient.as_matrix();
+    MatrixMap w_rec_grad  = recurrent_weight_gradient.as_matrix();
+
+    bias_grad.setZero();
+    w_in_grad.setZero();
+    w_rec_grad.setZero();
+
+    const float* input_data  = input.as<float>();
+    const float* hidden_data = hidden_states.as<float>();
+    const float* derivs_data = activation_derivatives.as<float>();
+    const MatrixMap out_delta = output_delta.as_matrix();
+
+    const bool write_input_delta = !input_delta.empty() && input_delta.data != nullptr;
+    float* input_delta_data = write_input_delta ? input_delta.as<float>() : nullptr;
+
+    const Index in_stride_t = input_features;
+    const Index in_stride_b = time_steps * input_features;
+    const Index h_stride_t  = output_features;
+    const Index h_stride_b  = time_steps * output_features;
+
+    MatrixR delta        (batch_size, output_features);
+    MatrixR next_carry   = MatrixR::Zero(batch_size, output_features);
+    MatrixR step_input   (batch_size, input_features);
+    MatrixR step_prev_h  (batch_size, output_features);
+    MatrixR step_derivs  (batch_size, output_features);
+    MatrixR step_in_delta(batch_size, input_features);
+
+    for (Index t = time_steps - 1; t >= 0; --t)
+    {
+        delta = (t == time_steps - 1) ? out_delta : next_carry;
+
+        for (Index i = 0; i < batch_size; ++i)
+            std::memcpy(step_derivs.data() + i * output_features,
+                        derivs_data + i * h_stride_b + t * h_stride_t,
+                        output_features * sizeof(float));
+
+        delta.array() *= step_derivs.array();
+
+        for (Index i = 0; i < batch_size; ++i)
+            std::memcpy(step_input.data() + i * input_features,
+                        input_data + i * in_stride_b + t * in_stride_t,
+                        input_features * sizeof(float));
+
+        w_in_grad.noalias() += step_input.transpose() * delta;
+        bias_grad.noalias() += delta.colwise().sum().transpose();
+
+        if (t > 0)
+        {
+            for (Index i = 0; i < batch_size; ++i)
+                std::memcpy(step_prev_h.data() + i * output_features,
+                            hidden_data + i * h_stride_b + (t - 1) * h_stride_t,
+                            output_features * sizeof(float));
+
+            w_rec_grad.noalias() += step_prev_h.transpose() * delta;
+            next_carry.noalias()  = delta * w_rec_map.transpose();
+        }
+
+        if (write_input_delta)
+        {
+            step_in_delta.noalias() = delta * w_in_map.transpose();
+
+            for (Index i = 0; i < batch_size; ++i)
+                std::memcpy(input_delta_data + i * in_stride_b + t * in_stride_t,
+                            step_in_delta.data() + i * input_features,
+                            input_features * sizeof(float));
+        }
+    }
+}
+
+#ifdef OPENNN_HAS_CUDA
+
+// Phase 3 status: native CUDA kernels for the recurrent step are not yet
+// implemented. A host-fallback prototype was tried (download device→host,
+// run apply_cpu, upload back) and abandoned: it ran without crashing but
+// the gradients written back to device interacted incorrectly with the
+// optimiser's compute-stream pipeline and training stalled. The proper fix
+// is fused per-step CUDA kernels — work that belongs in its own follow-up
+// phase. Until then we surface the limitation loudly so callers know to use
+// Configuration::set(Device::CPU) when their network contains a Recurrent
+// layer.
+
+void RecurrentOp::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&, bool)
+{
+    throw runtime_error(
+        "RecurrentOp::apply_gpu: the Recurrent layer GPU path is not implemented yet. "
+        "Call Configuration::instance().set(Device::CPU, ...) before training a "
+        "network that contains a Recurrent layer.");
+}
+
+void RecurrentOp::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&,
+                                  const TensorView&, TensorView&) const
+{
+    throw runtime_error(
+        "RecurrentOp::apply_delta_gpu: the Recurrent layer GPU path is not implemented yet. "
+        "Call Configuration::instance().set(Device::CPU, ...) before training a "
+        "network that contains a Recurrent layer.");
+}
+
+#else
+
+void RecurrentOp::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&, bool)
+{
+    throw runtime_error("RecurrentOp::apply_gpu: CUDA support not compiled in.");
+}
+
+void RecurrentOp::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&,
+                                  const TensorView&, TensorView&) const
+{
+    throw runtime_error("RecurrentOp::apply_delta_gpu: CUDA support not compiled in.");
+}
+
+#endif
+
 void ConvolutionOp::set(Index new_input_h, Index new_input_w,
                       Index new_kernels_n, Index new_kernel_h, Index new_kernel_w, Index new_kernel_c,
                       [[maybe_unused]] Index new_row_stride, [[maybe_unused]] Index new_column_stride,
@@ -1706,7 +2011,7 @@ vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
     };
 }
 
-#ifdef OPENNN_HAS_CUDA
+#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
 
 namespace
 {
@@ -1753,7 +2058,7 @@ struct AttentionOp::SDPACache
         }
     };
 
-#ifdef OPENNN_HAS_CUDA
+#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
     struct Entry
     {
         // Forward graph
@@ -1823,10 +2128,10 @@ struct AttentionOp::SDPACache
         }
 #endif
     }
-#endif  // OPENNN_HAS_CUDA
+#endif  // OPENNN_HAS_CUDA && HAVE_CUDNN_FRONTEND
 };
 
-#ifdef OPENNN_HAS_CUDA
+#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
 
 namespace
 {
@@ -2006,7 +2311,7 @@ static void build_sdpa_backward_graph(AttentionOp::SDPACache::Entry& entry,
     entry.bwd_graph = graph;
 }
 
-#endif  // OPENNN_HAS_CUDA
+#endif  // OPENNN_HAS_CUDA && HAVE_CUDNN_FRONTEND
 
 AttentionOp::AttentionOp() = default;
 AttentionOp::~AttentionOp() { destroy_cuda(); }
@@ -2226,7 +2531,7 @@ void AttentionOp::apply_gpu(const TensorView& query,
                           float* mask_scratch,
                           bool is_training)
 {
-#ifdef OPENNN_HAS_CUDA
+#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
     // SDPA Flash AttentionOp requires BF16 or FP16 in current cuDNN 9.x.
     // For FP32 we fall back to the manual GPU path (still correct, no fused kernel).
     // Padding-mask handling not yet wired through the graph (would need a per-batch
@@ -2511,7 +2816,7 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
                                 TensorView& key_delta,
                                 TensorView& value_delta) const
 {
-#ifdef OPENNN_HAS_CUDA
+#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
     // Same support gate as forward. The forward path that produced this backward
     // call established the cache entry; if we fell back to the unfused path on
     // forward, we must also fall back here (no LSE stats to use).
@@ -3463,86 +3768,6 @@ void NonMaxSuppressionOp::apply_gpu(const TensorView&, TensorView&) const
 {
     // @todo Implement CUDA YOLO non-max suppression.
     throw runtime_error("NonMaxSuppressionOp::apply_gpu is not implemented yet.");
-}
-
-void RecurrentOp::set(Index new_input_features,
-                      Index new_output_features,
-                      Index new_time_steps,
-                      ActivationOp::Function new_activation_function)
-{
-    input_features      = new_input_features;
-    output_features     = new_output_features;
-    time_steps          = new_time_steps;
-    activation_function = new_activation_function;
-}
-
-vector<TensorSpec> RecurrentOp::parameter_specs() const
-{
-    if (output_features == 0)
-        return {};
-
-    return {
-        {Shape{output_features},                  Type::FP32}, // biases
-        {Shape{input_features,  output_features}, Type::FP32}, // input→hidden
-        {Shape{output_features, output_features}, Type::FP32}, // hidden→hidden
-    };
-}
-
-void RecurrentOp::link_parameters(span<const TensorView> views)
-{
-    if (views.size() < 3) return;
-    biases            = views[0];
-    input_weights     = views[1];
-    recurrent_weights = views[2];
-}
-
-void RecurrentOp::link_gradients(span<const TensorView> views)
-{
-    if (views.size() < 3) return;
-    bias_gradient             = views[0];
-    input_weight_gradient     = views[1];
-    recurrent_weight_gradient = views[2];
-}
-
-void RecurrentOp::set_parameters_random()
-{
-    if (biases.data)            set_random_uniform(biases.as_vector(),            -0.1f, 0.1f);
-    if (input_weights.data)     set_random_uniform(input_weights.as_vector(),     -0.1f, 0.1f);
-    if (recurrent_weights.data) set_random_uniform(recurrent_weights.as_vector(), -0.1f, 0.1f);
-}
-
-void RecurrentOp::set_parameters_glorot()
-{
-    if (biases.data) biases.as_vector().setZero();
-
-    if (input_weights.data)
-    {
-        const float limit = glorot_limit(input_features, output_features);
-        set_random_uniform(input_weights.as_vector(), -limit, limit);
-    }
-    if (recurrent_weights.data)
-    {
-        const float limit = glorot_limit(output_features, output_features);
-        set_random_uniform(recurrent_weights.as_vector(), -limit, limit);
-    }
-}
-
-void RecurrentOp::forward_propagate(ForwardPropagation& /*fp*/, size_t /*layer*/, bool /*is_training*/) noexcept
-{
-    // TODO: unroll over time_steps. Reads Input view, writes Output (last
-    // hidden state), AllHiddenStates, and (when is_training) AllActivationDerivatives.
-    // The previous in-class implementation is kept commented in recurrent_layer.cpp
-    // as the starting point — re-port it once the buffer-backed views are
-    // exercised end-to-end.
-}
-
-void RecurrentOp::back_propagate(ForwardPropagation& /*fp*/, BackPropagation& /*bp*/, size_t /*layer*/) const noexcept
-{
-    // TODO: backprop-through-time. Reads OutputDelta and the cached forward
-    // tensors; writes bias_gradient / input_weight_gradient /
-    // recurrent_weight_gradient (Operator-owned views), and the layer's
-    // InputDelta view at input_delta_slots[0]. See the reference snippet in
-    // recurrent_layer.cpp.
 }
 
 namespace

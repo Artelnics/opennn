@@ -229,6 +229,72 @@ struct CombinationReluOp : Operator
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 
+// Elman-style recurrent op (simple RNN with tied weights over the time axis).
+// Forward (per step t): z[t] = X[t]·W_in + h[t-1]·W_rec + b ;  h[t] = σ(z[t])
+// Output of the op = h[T-1]. Hidden states and σ'(z) are stored across steps
+// so the backward pass can do BPTT without recomputing the activations.
+//
+// Slot convention (set by hosting layer in configure_operators()):
+//   input_slots  = {Input}                                       // 3D (batch, time, features)
+//   output_slots = {Output, HiddenStates, ActivationDerivatives} // first is principal output (2D), the other two are 3D internal buffers
+//
+// Activation: Tanh by default (sane RNN choice). Sigmoid / Identity / ReLU also accepted.
+struct RecurrentOp : Operator
+{
+    Index input_features  = 0;
+    Index time_steps      = 0;
+    Index output_features = 0;
+    Type  weight_type     = Type::FP32;
+    ActivationOp::Function activation = ActivationOp::Function::Tanh;
+
+    TensorView bias;
+    TensorView input_weights;
+    TensorView recurrent_weights;
+
+    TensorView bias_gradient;
+    TensorView input_weight_gradient;
+    TensorView recurrent_weight_gradient;
+
+    void set(Index new_input_features,
+             Index new_time_steps,
+             Index new_output_features,
+             ActivationOp::Function = ActivationOp::Function::Tanh,
+             Type = Type::FP32);
+
+    vector<TensorSpec> parameter_specs() const override;
+    void link_parameters(span<const TensorView> views) override;
+    void link_gradients (span<const TensorView> views) override;
+
+    void set_parameters_random() override;
+    void set_parameters_glorot() override;
+
+    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
+
+private:
+    void apply_cpu(const TensorView& input,
+                   TensorView& hidden_states,
+                   TensorView& activation_derivatives,
+                   TensorView& output,
+                   bool is_training);
+    void apply_gpu(const TensorView& input,
+                   TensorView& hidden_states,
+                   TensorView& activation_derivatives,
+                   TensorView& output,
+                   bool is_training);
+
+    void apply_delta_cpu(const TensorView& input,
+                         const TensorView& hidden_states,
+                         const TensorView& activation_derivatives,
+                         const TensorView& output_delta,
+                         TensorView& input_delta) const;
+    void apply_delta_gpu(const TensorView& input,
+                         const TensorView& hidden_states,
+                         const TensorView& activation_derivatives,
+                         const TensorView& output_delta,
+                         TensorView& input_delta) const;
+};
+
 struct BatchNormOp : Operator
 {
     Index features = 0;
@@ -876,38 +942,6 @@ struct NonMaxSuppressionOp : Operator
 private:
     void apply_cpu(const TensorView& input, TensorView& output) const;
     void apply_gpu(const TensorView& input, TensorView& output) const;
-};
-
-struct RecurrentOp : Operator
-{
-    Index input_features  = 0;
-    Index output_features = 0;
-    Index time_steps      = 0;
-
-    ActivationOp::Function activation_function = ActivationOp::Function::Tanh;
-
-    TensorView biases;
-    TensorView input_weights;
-    TensorView recurrent_weights;
-
-    TensorView bias_gradient;
-    TensorView input_weight_gradient;
-    TensorView recurrent_weight_gradient;
-
-    void set(Index new_input_features,
-             Index new_output_features,
-             Index new_time_steps,
-             ActivationOp::Function new_activation_function = ActivationOp::Function::Tanh);
-
-    vector<TensorSpec> parameter_specs() const override;
-    void link_parameters(span<const TensorView> views) override;
-    void link_gradients (span<const TensorView> views) override;
-
-    void set_parameters_random() override;
-    void set_parameters_glorot() override;
-
-    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
-    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 
 struct LongShortTermMemoryOp : Operator

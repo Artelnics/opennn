@@ -33,6 +33,7 @@ else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../opennn/debug/ -l
 else:unix: LIBS += -L$$OUT_PWD/../opennn/ -lopennn
 
 INCLUDEPATH += $$PWD/../opennn
+INCLUDEPATH += $$PWD/../eigen
 DEPENDPATH += $$PWD/../opennn
 
 win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/release/libopennn.a

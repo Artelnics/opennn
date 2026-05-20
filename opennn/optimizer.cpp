@@ -516,7 +516,39 @@ void Optimizer::set_scaling()
     auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
     throw_if(!unscaling_layer, "Expected Unscaling layer.");
 
-    if (ssize(unscaling_layer_descriptives) != unscaling_layer->get_outputs_number())
+    const Index unscaling_outputs = unscaling_layer->get_outputs_number();
+
+    // Multi-target time-series networks predict K consecutive future values for
+    // EACH target column. fill_targets lays them out grouped by column then by
+    // step (targets(i, c*K + k)), so the unscaling layer needs descriptives in
+    // the same order: each original target column's descriptive replicated K
+    // times. K = future_time_steps; with N target columns the layer has K * N
+    // output neurons.
+    if (auto* ts_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+        ts_dataset && ts_dataset->get_multi_target()
+        && unscaling_outputs > ssize(unscaling_layer_descriptives))
+    {
+        const Index n_targets = ssize(unscaling_layer_descriptives);
+        const Index future_steps = ts_dataset->get_future_time_steps();
+
+        if (n_targets > 0 && unscaling_outputs == n_targets * future_steps)
+        {
+            vector<Descriptives> expanded_desc;
+            vector<string> expanded_scalers;
+            expanded_desc.reserve(unscaling_outputs);
+            expanded_scalers.reserve(unscaling_outputs);
+            for (Index c = 0; c < n_targets; ++c)
+                for (Index k = 0; k < future_steps; ++k)
+                {
+                    expanded_desc.push_back(unscaling_layer_descriptives[c]);
+                    expanded_scalers.push_back(unscaling_layer_scalers[c]);
+                }
+            unscaling_layer_descriptives = move(expanded_desc);
+            unscaling_layer_scalers      = move(expanded_scalers);
+        }
+    }
+
+    if (ssize(unscaling_layer_descriptives) != unscaling_outputs)
         throw runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
 
     unscaling_layer->set_descriptives(unscaling_layer_descriptives);

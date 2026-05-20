@@ -48,11 +48,11 @@ if(!isEmpty(CUDA_PATH)) {
         CUDA_INCLUDE_PATH = $$CUDA_INCLUDE_PATH_TEST
         CUDA_LIB_DIR = $$CUDA_LIB_DIR_TEST
 
-        DEFINES += WITH_CUDA
+        DEFINES += WITH_CUDA OPENNN_HAS_CUDA
 
         INCLUDEPATH += $$CUDA_INCLUDE_PATH
         DEPENDPATH += $$CUDA_INCLUDE_PATH
-        LIBS += -L$$CUDA_LIB_DIR -lcudart -lcublas
+        LIBS += -L$$CUDA_LIB_DIR -lcudart -lcublas -lcublasLt
 
         exists($$CUDA_INCLUDE_PATH/cudnn.h) {
             message("    -> cuDNN found. Adding to build.")
@@ -69,6 +69,24 @@ if(!isEmpty(CUDA_PATH)) {
             LIBS += -L/usr/lib/x86_64-linux-gnu -lcudnn
         }
 
+        # cuDNN frontend (header-only). Search across common locations so users
+        # do not need to clone the repo into the source tree on every machine.
+        CUDNN_FRONTEND_PATHS = \
+            $$PWD/cudnn-frontend/include \
+            $$CUDA_INCLUDE_PATH \
+            /usr/include \
+            /usr/local/include
+        CUDNN_FRONTEND_FOUND = 0
+        for(p, CUDNN_FRONTEND_PATHS) {
+            equals(CUDNN_FRONTEND_FOUND, 0):exists($$p/cudnn_frontend.h) {
+                message("    -> Found cudnn-frontend: $$p")
+                DEFINES += HAVE_CUDNN_FRONTEND
+                INCLUDEPATH += $$p
+                CUDNN_FRONTEND_FOUND = 1
+            }
+        }
+        equals(CUDNN_FRONTEND_FOUND, 0):message("    -> cudnn-frontend not found. SDPA / Flash Attention disabled.")
+
         if(!isEmpty(CUDA_SOURCES)) {
             message("    -> Configuring NVCC for CUDA sources (.cu files)...")
 
@@ -84,6 +102,11 @@ if(!isEmpty(CUDA_PATH)) {
 
             debug:   NVCC_FLAGS_DEBUG   = -g -G
             release: NVCC_FLAGS_RELEASE = --ptxas-options=-v
+
+            # Propagate include paths and defines to NVCC. Without this NVCC
+            # would not see Eigen, opennn/, cudnn-frontend, OPENNN_HAS_CUDA, etc.
+            for(inc, INCLUDEPATH): NVCC_FLAGS += -I$$shell_quote($$absolute_path($$inc, $$_PRO_FILE_PWD_))
+            for(def, DEFINES):     NVCC_FLAGS += -D$$def
 
             cuda.commands = $$NVCC_EXECUTABLE -c $$NVCC_FLAGS \
                             $$join(NVCC_FLAGS_RELEASE, " ", "", " ") \

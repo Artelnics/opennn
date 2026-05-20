@@ -18,26 +18,27 @@ class Recurrent final : public Layer
 {
 public:
 
-    Recurrent(const Shape& = {},
-              const Shape& = {},
+
+    Recurrent(const Shape& = {0, 0},
+              const Shape& = {0},
               const string& = "Tanh",
               const string& = "recurrent_layer");
 
-    Shape get_input_shape()  const override { return input_shape; }
-    Shape get_output_shape() const override;
+    Shape get_input_shape() const override { return {time_steps, input_features}; }
+    Shape get_output_shape() const override { return {output_features}; }
 
-    Index get_time_steps()      const { return input_shape.rank == 2 ? input_shape[0] : Index(0); }
-    Index get_input_features()  const { return input_shape.rank == 2 ? input_shape[1] : Index(0); }
+    Index get_time_steps()      const { return time_steps; }
+    Index get_input_features()  const { return input_features; }
     Index get_output_features() const { return output_features; }
 
-    const TensorView& get_biases()            const { return recurrent_op.biases; }
+    const TensorView& get_biases()            const { return recurrent_op.bias; }
     const TensorView& get_input_weights()     const { return recurrent_op.input_weights; }
     const TensorView& get_recurrent_weights() const { return recurrent_op.recurrent_weights; }
 
-    const ActivationOp::Function& get_activation_function() const { return recurrent_op.activation_function; }
-    ActivationOp::Function get_output_activation() const override { return recurrent_op.activation_function; }
+    string get_activation_function() const { return ActivationOp::to_string(recurrent_op.activation); }
+    ActivationOp::Function get_output_activation() const override { return recurrent_op.activation; }
 
-    vector<TensorSpec> get_forward_specs(Index batch_size)  const override;
+    vector<TensorSpec> get_forward_specs(Index batch_size) const override;
     vector<TensorSpec> get_backward_specs(Index batch_size) const override;
 
     void set(const Shape& = {},
@@ -59,11 +60,13 @@ public:
 
 private:
 
+    enum Forward {Input, HiddenStates, ActivationDerivatives, Output};
+
+    Index time_steps      = 0;
+    Index input_features  = 0;
     Index output_features = 0;
 
     RecurrentOp recurrent_op;
-
-    enum Forward {Input, Output, AllHiddenStates, AllActivationDerivatives};
 
     void configure_operators();
 };
