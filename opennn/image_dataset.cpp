@@ -335,7 +335,8 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     vector<filesystem::path> directory_path;
 
     for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(data_path))
-        if (current_directory.is_directory())
+        if (current_directory.is_directory()
+            && !current_directory.path().filename().string().starts_with('.'))
             directory_path.emplace_back(current_directory.path());
 
     // Sort for reproducibility of the cache content.
@@ -433,56 +434,38 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     filesystem::create_directories(cache_path.parent_path());
     const filesystem::path tmp_path = cache_path.string() + ".tmp";
 
-    // We can't trivially do this with FileWriter + OMP (multi-writer single-stream
-    // is not thread-safe), so we materialize the binary in memory in two pieces:
-    // (a) a contiguous pixel buffer filled in parallel by OMP, and (b) labels.
-    // For typical melanoma datasets (~10k × 32 KB) this is ~320 MB peak — fits
-    // in RAM; the cache file is the same size. For larger datasets the limit
-    // grows linearly, which is the trade-off for parallel decode.
-    vector<uint8_t> pixels(size_t(samples_number) * size_t(pixels_number));
+    // Stream pixels directly to the cache file so large image datasets do not
+    // require RAM proportional to samples_number * pixels_per_image.
     vector<int32_t> labels_out;
     labels_out.resize(size_t(samples_number));
-
-    Index progress_counter = 0;
-    string omp_error;
-
-    #pragma omp parallel for schedule(dynamic)
-    for (Index i = 0; i < samples_number; ++i)
-    {
-        try
-        {
-            vector<float> tmp;
-            tmp.resize(size_t(pixels_number));
-            load_image(paths[i], tmp.data(), height, width, channels, /*divide_by_255=*/false);
-            uint8_t* dst = pixels.data() + size_t(i) * size_t(pixels_number);
-            for (Index p = 0; p < pixels_number; ++p)
-            {
-                const float v = tmp[size_t(p)];
-                const int iv = int(v < 0.0f ? 0.0f : (v > 255.0f ? 255.0f : v) + 0.5f);
-                dst[p] = uint8_t(iv);
-            }
-            labels_out[size_t(i)] = int32_t(labels[i]);
-        }
-        catch (const exception& e)
-        {
-            #pragma omp critical
-            { omp_error = e.what(); }
-            continue;
-        }
-
-        #pragma omp atomic
-        ++progress_counter;
-
-        if (omp_get_thread_num() == 0)
-            display_progress_bar(progress_counter, samples_number);
-    }
-
-    if (!omp_error.empty()) throw runtime_error(omp_error);
 
     FileWriter writer;
     writer.open(tmp_path);
     writer.write(&header, sizeof(header));
-    writer.write(pixels.data(), pixels.size());
+
+    vector<float> tmp;
+    tmp.resize(size_t(pixels_number));
+    vector<uint8_t> pixels;
+    pixels.resize(size_t(pixels_number));
+
+    for (Index i = 0; i < samples_number; ++i)
+    {
+        load_image(paths[i], tmp.data(), height, width, channels, /*divide_by_255=*/false);
+
+        for (Index p = 0; p < pixels_number; ++p)
+        {
+            const float v = tmp[size_t(p)];
+            const int iv = int(v < 0.0f ? 0.0f : (v > 255.0f ? 255.0f : v) + 0.5f);
+            pixels[size_t(p)] = uint8_t(iv);
+        }
+
+        writer.write(pixels.data(), pixels.size());
+        labels_out[size_t(i)] = int32_t(labels[i]);
+
+        if (display && (i % 1000 == 0 || i + 1 == samples_number))
+            display_progress_bar(i + 1, samples_number);
+    }
+
     writer.write(labels_out.data(), labels_out.size() * sizeof(int32_t));
     writer.finish_with_rename(cache_path);
 

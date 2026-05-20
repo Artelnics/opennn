@@ -103,32 +103,30 @@ int main()
 {
     try
     {
-        cout << "OpenNN. ResNet-50 Imagenette benchmark." << endl;
+        cout << "OpenNN. ResNet-50 Places365 benchmark." << endl;
 
 #ifdef OPENNN_HAS_CUDA
 
-        // ============== ResNet on Imagenette ==============
+        // ============== ResNet on Places365 ==============
         //
         // Folder layout expected by ImageDataset: one subdirectory per class,
         // each holding .bmp files. ImageDataset builds .cache/images.bin on
         // first construction and reuses it on subsequent runs.
         //
-        // Imagenette converted for OpenNN:
+        // Places365 converted for OpenNN:
         // one root folder with one BMP subfolder per class.
 
-        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
 
-        set_seed(42);
+        const std::filesystem::path PLACES365_PATH =
+            R"(\\Artelnics\data_sets\places365_bmp_224)";
 
-        const std::filesystem::path IMAGENETTE_PATH =
-            "/home/artelnics/Documents/imagenette2_bmp_224";
-
-        if (!std::filesystem::exists(IMAGENETTE_PATH))
-            throw runtime_error("Imagenette folder not found at " + IMAGENETTE_PATH.string()
+        if (!std::filesystem::exists(PLACES365_PATH))
+            throw runtime_error("Places365 folder not found at " + PLACES365_PATH.string()
                                 + ". Place the dataset there (one subfolder per class with .bmp images) "
-                                  "or edit IMAGENETTE_PATH in blank_cuda/main.cpp.");
+                                  "or edit PLACES365_PATH in blank_cuda/main.cpp.");
 
-        ImageDataset dataset(IMAGENETTE_PATH);
+        ImageDataset dataset(PLACES365_PATH);
         dataset.split_samples_random(0.85, 0.1, 0.05);
 
         const Shape input_shape  = dataset.get_shape("Input");
@@ -167,7 +165,7 @@ int main()
              << " (buffer=" << resnet.get_parameters_size() << ")" << endl;
 
         const std::filesystem::path parameters_path =
-            "/home/artelnics/Documents/imagenette_resnet50_parameters.bin";
+            R"(\\Artelnics\data_sets\places365_resnet50_parameters.bin)";
 
         const auto t0 = steady_clock::now();
         training_strategy.train();
