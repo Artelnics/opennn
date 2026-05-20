@@ -64,13 +64,45 @@ ImageDataset::ImageDataset(const Index new_samples_number,
                            const Shape& new_input_shape,
                            const Shape& new_target_shape)
 {
+    if (new_samples_number == 0)
+        return;
+
     if (new_input_shape.rank != 3)
         throw runtime_error("Input shape is not 3");
 
     if (new_target_shape.rank != 1)
         throw runtime_error("Target shape is not 1");
 
-    set(new_samples_number, new_input_shape, new_target_shape);
+    input_shape = new_input_shape;
+    target_shape = new_target_shape;
+    record_bytes_ = uint64_t(input_shape.size());
+    num_classes_ = uint32_t(target_shape[0] == 1 ? 2 : target_shape[0]);
+
+    variables.resize(input_shape.size() + 1);
+    for (Index i = 0; i < input_shape.size(); ++i)
+    {
+        variables[i].type = VariableType::Numeric;
+        variables[i].name = format("variable_{}", i + 1);
+        variables[i].role = VariableRole::Input;
+    }
+
+    Variable& target_variable = variables[input_shape.size()];
+    target_variable.name = "Class";
+    target_variable.role = VariableRole::Target;
+    target_variable.type = target_shape[0] == 1 ? VariableType::Binary : VariableType::Categorical;
+    target_variable.scaler = ScalerMethod::None;
+
+    vector<string> categories{size_t(num_classes_)};
+    for (size_t i = 0; i < categories.size(); ++i)
+        categories[i] = to_string(i);
+    target_variable.set_categories(categories);
+
+    labels_ram.resize(size_t(new_samples_number));
+    for (Index i = 0; i < new_samples_number; ++i)
+        labels_ram[size_t(i)] = int32_t(i % num_classes_);
+
+    sample_roles.assign(size_t(new_samples_number), SampleRole::Training);
+    split_samples_random();
 }
 
 ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
@@ -88,44 +120,6 @@ Index ImageDataset::get_samples_number() const
 Index ImageDataset::get_channels_number() const
 {
     return input_shape[2];
-}
-
-void ImageDataset::set_data_random()
-{
-    // Synthetic random images: used by tests that build ImageDataset via the
-    // (samples_number, input_shape, target_shape) constructor without a real
-    // image folder. In that mode there's no binary cache; we keep `data` as
-    // the source of truth.
-    const Index height = input_shape[0];
-    const Index width = input_shape[1];
-    const Index channels = input_shape[2];
-
-    const Index targets_number = target_shape[0];
-    const Index inputs_number = height * width * channels;
-    const Index samples_number = data.rows();
-
-    data.setZero();
-
-    const Index images_per_category = samples_number / targets_number;
-    const Index extra = samples_number % targets_number;
-
-    VectorI images_number = VectorI::Constant(targets_number, images_per_category);
-    images_number.head(extra).array() += 1;
-
-    Index current_sample = 0;
-
-    for (Index k = 0; k < targets_number; ++k)
-    {
-        for (Index i = 0; i < images_number[k]; ++i)
-        {
-            for (Index j = 0; j < inputs_number; ++j)
-                data(current_sample, j) = random_integer(0, 255);
-
-            data(current_sample, k + inputs_number) = 1;
-
-            ++current_sample;
-        }
-    }
 }
 
 void ImageDataset::to_JSON(JsonWriter& printer) const
@@ -249,9 +243,20 @@ vector<Descriptives> ImageDataset::scale_features(const string&)
     return {};
 }
 
-void ImageDataset::unscale_features(const string&)
+void ImageDataset::unscale_features(const string&, const vector<Descriptives>&)
 {
     // Symmetric: dataset bytes never get scaled, so nothing to undo.
+}
+
+VectorI ImageDataset::calculate_target_distribution() const
+{
+    VectorI distribution = VectorI::Zero(Index(num_classes_));
+
+    for (int32_t label : labels_ram)
+        if (label >= 0 && label < distribution.size())
+            distribution(label)++;
+
+    return distribution;
 }
 
 void ImageDataset::read_bmp(const Shape& new_input_shape)

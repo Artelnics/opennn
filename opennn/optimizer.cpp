@@ -558,7 +558,7 @@ void Optimizer::set_unscaling()
 
             case 3:
                 if (auto* image_dataset = dynamic_cast<ImageDataset*>(dataset))
-                    image_dataset->unscale_features("Input");
+                    image_dataset->unscale_features("Input", {});
                 break;
         }
     }
