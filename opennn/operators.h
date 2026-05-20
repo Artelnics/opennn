@@ -837,6 +837,47 @@ struct UnscaleOp : Operator
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
 };
 
+struct DetectionOp : Operator
+{
+    Index grid_size = 0;
+    Index boxes_per_cell = 0;
+    Index classes_number = 0;
+
+    vector<array<float, 2>> anchors;
+
+    void set(const Shape& input_shape, const vector<array<float, 2>>& new_anchors);
+
+    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
+
+private:
+    void apply_cpu(const TensorView& input, TensorView& output) const;
+    void apply_gpu(const TensorView& input, TensorView& output) const;
+
+    void apply_delta_cpu(const TensorView& output, const TensorView& output_delta, TensorView& input_delta) const;
+    void apply_delta_gpu(const TensorView& output, const TensorView& output_delta, TensorView& input_delta) const;
+};
+
+struct NonMaxSuppressionOp : Operator
+{
+    Index grid_size = 0;
+    Index boxes_per_cell = 0;
+    Index classes_number = 0;
+    float confidence_threshold = 0.5f;
+    float iou_threshold = 0.4f;
+
+    void set(const Shape& input_shape,
+             Index new_boxes_per_cell,
+             float new_confidence_threshold,
+             float new_iou_threshold);
+
+    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+
+private:
+    void apply_cpu(const TensorView& input, TensorView& output) const;
+    void apply_gpu(const TensorView& input, TensorView& output) const;
+};
+
 struct RecurrentOp : Operator
 {
     Index input_features  = 0;

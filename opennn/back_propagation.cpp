@@ -94,7 +94,7 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
 
     const Index max_step = last_trainable_layer_index - first_trainable_layer_index;
 
-    const Shape output_delta_shape = Shape({batch_size}).append(neural_network->get_output_shape());
+    const Shape output_delta_shape = Shape({batch_size}).append(layers[last_trainable_layer_index]->get_output_shape());
 
     if (output_delta_shape.size() != 0)
         deltas.push_back({last_trainable_layer_index, 0, {output_delta_shape, compute_dtype}, 0, 0});

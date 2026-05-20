@@ -75,6 +75,16 @@ public:
            bool use_bottleneck = false);
 };
 
+class YoloNetwork : public NeuralNetwork
+{
+public:
+
+    YoloNetwork(const Shape& input_shape,
+                Index classes_number,
+                const vector<array<float, 2>>& anchors,
+                Index grid_size = 13);
+};
+
 class TextClassificationNetwork : public NeuralNetwork
 {
 

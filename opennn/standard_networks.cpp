@@ -15,8 +15,10 @@
 #include "recurrent_layer.h"
 #include "embedding_layer.h"
 #include "convolutional_layer.h"
+#include "detection_layer.h"
 #include "pooling_layer.h"
 #include "pooling_layer_3d.h"
+#include "non_max_suppression_layer.h"
 #include "flatten_layer.h"
 #include "addition_layer.h"
 #include "normalization_layer_3d.h"
@@ -338,6 +340,65 @@ ResNet::ResNet(const Shape& input_shape,
     add_layer(make_unique<Dense>(get_layer(last_index)->get_output_shape(),
                                  output_shape, "Softmax", false, "classifier"),
               {last_index});
+
+    compile();
+    set_parameters_random();
+}
+
+YoloNetwork::YoloNetwork(const Shape& input_shape,
+                         Index classes_number,
+                         const vector<array<float, 2>>& anchors,
+                         Index grid_size) : NeuralNetwork()
+{
+    if (input_shape.rank != 3)
+        throw runtime_error("YoloNetwork: input shape must be rank 3 (H, W, C).");
+    if (classes_number <= 0 || anchors.empty())
+        throw runtime_error("YoloNetwork: classes_number and anchors must be valid.");
+    if (input_shape[0] != grid_size * 32 || input_shape[1] != grid_size * 32)
+        throw runtime_error("YoloNetwork: this minimal builder expects input H/W == grid_size * 32.");
+
+    auto scaling_layer = make_unique<Scaling>(input_shape);
+    scaling_layer->set_scalers("ImageMinMax");
+    add_layer(move(scaling_layer));
+
+    const Shape stride{1, 1};
+    const Shape pool{2, 2};
+    const Shape pool_stride{2, 2};
+    const Shape no_padding{0, 0};
+
+    const vector<Index> filters = {32, 64, 128, 256, 512};
+
+    for (Index i = 0; i < ssize(filters); ++i)
+    {
+        add_layer(make_unique<Convolutional>(get_output_shape(),
+                                             Shape{3, 3, get_output_shape()[2], filters[size_t(i)]},
+                                             "ReLU", stride, "Same", false,
+                                             format("yolo_conv_{}", i + 1)));
+
+        add_layer(make_unique<Pooling>(get_output_shape(), pool, pool_stride,
+                                       no_padding, "MaxPooling",
+                                       format("yolo_pool_{}", i + 1)));
+    }
+
+    add_layer(make_unique<Convolutional>(get_output_shape(),
+                                         Shape{3, 3, get_output_shape()[2], 1024},
+                                         "ReLU", stride, "Same", false,
+                                         "yolo_conv_6"));
+
+    const Index detection_channels = ssize(anchors) * (5 + classes_number);
+
+    add_layer(make_unique<Convolutional>(get_output_shape(),
+                                         Shape{1, 1, get_output_shape()[2], detection_channels},
+                                         "Identity", stride, "Same", false,
+                                         "yolo_logits"));
+
+    add_layer(make_unique<Detection>(get_output_shape(), anchors, "detection_layer"));
+
+    add_layer(make_unique<NonMaxSuppression>(get_output_shape(),
+                                             ssize(anchors),
+                                             0.5f,
+                                             0.4f,
+                                             "non_max_suppression_layer"));
 
     compile();
     set_parameters_random();

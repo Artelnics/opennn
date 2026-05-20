@@ -10,6 +10,7 @@
 #include "batch.h"
 #include "dataset.h"
 #include "loss.h"
+#include "yolo_dataset.h"
 #include "error_utilities.h"
 #include "profiler.h"
 #include "forward_propagation.h"
@@ -19,6 +20,167 @@
 
 namespace opennn
 {
+
+namespace
+{
+
+float yolo_loss_iou(const float* a, const float* b)
+{
+    const float a_left = a[0] - 0.5f * a[2];
+    const float a_top = a[1] - 0.5f * a[3];
+    const float a_right = a[0] + 0.5f * a[2];
+    const float a_bottom = a[1] + 0.5f * a[3];
+
+    const float b_left = b[0] - 0.5f * b[2];
+    const float b_top = b[1] - 0.5f * b[3];
+    const float b_right = b[0] + 0.5f * b[2];
+    const float b_bottom = b[1] + 0.5f * b[3];
+
+    const float inter_w = max(0.0f, min(a_right, b_right) - max(a_left, b_left));
+    const float inter_h = max(0.0f, min(a_bottom, b_bottom) - max(a_top, b_top));
+    const float inter = inter_w * inter_h;
+    const float area = a[2] * a[3] + b[2] * b[3] - inter;
+
+    return area > 0.0f ? inter / area : 0.0f;
+}
+
+void check_yolo_loss(const Dataset* dataset)
+{
+    if (is_gpu())
+        throw runtime_error("YOLO loss GPU implementation not available yet.");
+
+    if (!dynamic_cast<const YoloDataset*>(dataset))
+        throw runtime_error("YOLO loss requires YoloDataset.");
+}
+
+Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
+                                      const TensorView& target,
+                                      const Dataset* dataset)
+{
+    check_yolo_loss(dataset);
+
+    constexpr float lambda_coord = 5.0f;
+    constexpr float lambda_noobject = 0.5f;
+
+    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
+    const Index B = yolo_dataset->get_boxes_per_cell();
+    const Index C = yolo_dataset->get_classes_number();
+    const Index values_per_box = 5 + C;
+    const Index batch_size = output.shape[0];
+    const Index grid_size = output.shape[1];
+    const Index channels = output.shape[3];
+
+    const float* out = output.as<float>();
+    const float* tgt = target.as<float>();
+
+    float coordinate_loss = 0.0f;
+    float object_loss = 0.0f;
+    float noobject_loss = 0.0f;
+    float class_loss = 0.0f;
+
+    for (Index n = 0; n < batch_size; ++n)
+        for (Index row = 0; row < grid_size; ++row)
+            for (Index col = 0; col < grid_size; ++col)
+            {
+                const Index cell = ((n * grid_size + row) * grid_size + col) * channels;
+
+                for (Index box = 0; box < B; ++box)
+                {
+                    const Index base = cell + box * values_per_box;
+
+                    if (tgt[base + 4] == 1.0f)
+                    {
+                        const float target_box[4] = {tgt[base + 0], tgt[base + 1], tgt[base + 2], tgt[base + 3]};
+                        const float output_box[4] = {out[base + 0], out[base + 1], out[base + 2], out[base + 3]};
+                        const float iou = yolo_loss_iou(target_box, output_box);
+
+                        coordinate_loss += pow(out[base + 0] - tgt[base + 0], 2.0f)
+                                         +  pow(out[base + 1] - tgt[base + 1], 2.0f)
+                                         +  pow(sqrt(out[base + 2] + EPSILON) - sqrt(tgt[base + 2] + EPSILON), 2.0f)
+                                         +  pow(sqrt(out[base + 3] + EPSILON) - sqrt(tgt[base + 3] + EPSILON), 2.0f);
+
+                        object_loss += pow(out[base + 4] - iou, 2.0f);
+
+                        for (Index c = 0; c < C; ++c)
+                            if (tgt[base + 5 + c] > 0.0f)
+                                class_loss -= log(out[base + 5 + c] + EPSILON);
+                    }
+                    else
+                    {
+                        noobject_loss += pow(out[base + 4], 2.0f);
+                    }
+                }
+            }
+
+    Loss::EvaluationResult result;
+    result.error = (lambda_coord * coordinate_loss + object_loss
+                  + lambda_noobject * noobject_loss + class_loss) / float(batch_size);
+    return result;
+}
+
+void yolo_gradient_cpu(const TensorView& output,
+                       const TensorView& target,
+                       const TensorView& output_delta,
+                       const Dataset* dataset)
+{
+    check_yolo_loss(dataset);
+
+    constexpr float lambda_coord = 5.0f;
+    constexpr float lambda_noobject = 0.5f;
+
+    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
+    const Index B = yolo_dataset->get_boxes_per_cell();
+    const Index C = yolo_dataset->get_classes_number();
+    const Index values_per_box = 5 + C;
+    const Index batch_size = output.shape[0];
+    const Index grid_size = output.shape[1];
+    const Index channels = output.shape[3];
+    const float inv_batch = 1.0f / float(batch_size);
+
+    const float* out = output.as<float>();
+    const float* tgt = target.as<float>();
+    float* delta = output_delta.as<float>();
+
+    fill_n(delta, output_delta.size(), 0.0f);
+
+    for (Index n = 0; n < batch_size; ++n)
+        for (Index row = 0; row < grid_size; ++row)
+            for (Index col = 0; col < grid_size; ++col)
+            {
+                const Index cell = ((n * grid_size + row) * grid_size + col) * channels;
+
+                for (Index box = 0; box < B; ++box)
+                {
+                    const Index base = cell + box * values_per_box;
+
+                    if (tgt[base + 4] == 1.0f)
+                    {
+                        const float target_box[4] = {tgt[base + 0], tgt[base + 1], tgt[base + 2], tgt[base + 3]};
+                        const float output_box[4] = {out[base + 0], out[base + 1], out[base + 2], out[base + 3]};
+                        const float iou = yolo_loss_iou(target_box, output_box);
+
+                        delta[base + 0] = 2.0f * lambda_coord * (out[base + 0] - tgt[base + 0]) * inv_batch;
+                        delta[base + 1] = 2.0f * lambda_coord * (out[base + 1] - tgt[base + 1]) * inv_batch;
+
+                        const float sqrt_w = sqrt(out[base + 2] + EPSILON);
+                        const float sqrt_h = sqrt(out[base + 3] + EPSILON);
+                        delta[base + 2] = lambda_coord * (sqrt_w - sqrt(tgt[base + 2] + EPSILON)) / sqrt_w * inv_batch;
+                        delta[base + 3] = lambda_coord * (sqrt_h - sqrt(tgt[base + 3] + EPSILON)) / sqrt_h * inv_batch;
+                        delta[base + 4] = 2.0f * (out[base + 4] - iou) * inv_batch;
+
+                        for (Index c = 0; c < C; ++c)
+                            if (tgt[base + 5 + c] > 0.0f)
+                                delta[base + 5 + c] = -tgt[base + 5 + c] / (out[base + 5 + c] + EPSILON) * inv_batch;
+                    }
+                    else
+                    {
+                        delta[base + 4] = 2.0f * lambda_noobject * out[base + 4] * inv_batch;
+                    }
+                }
+            }
+}
+
+}
 
 Loss::Loss(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
@@ -150,6 +312,9 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     case MinkowskiError:
         minkowski_error(input, target, minkowski_parameter, result.error, workspace_device);
         break;
+    case Yolo:
+        result = yolo_error_cpu(input, target, dataset);
+        break;
     }
 
     return result;
@@ -159,7 +324,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
 
 bool Loss::supports_device_epoch_metrics() const
 {
-    return is_gpu() && error != Error::MinkowskiError;
+    return is_gpu() && error != Error::MinkowskiError && error != Error::Yolo;
 }
 
 bool Loss::calculate_error_device_metrics(const Batch& batch,
@@ -271,6 +436,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     }
 
     case MinkowskiError:
+    case Yolo:
         return false;
     }
 
@@ -319,6 +485,7 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
             break;
         case CrossEntropy3d:
         case MinkowskiError:
+        case Yolo:
             return false;
         }
     }
@@ -363,6 +530,9 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         break;
     case MinkowskiError:
         minkowski_error_gradient(input, target, minkowski_parameter, input_delta);
+        break;
+    case Yolo:
+        yolo_gradient_cpu(input, target, input_delta, dataset);
         break;
     }
 }
@@ -443,7 +613,9 @@ static const vector<pair<Loss::Error, string>> error_map = {
     {Loss::Error::WeightedSquaredError,   "WeightedSquaredError"},
     {Loss::Error::CrossEntropy,           "CrossEntropy"},
     {Loss::Error::CrossEntropy3d,         "CrossEntropyError3d"},
-    {Loss::Error::MinkowskiError,         "MinkowskiError"}
+    {Loss::Error::MinkowskiError,         "MinkowskiError"},
+    {Loss::Error::Yolo,                   "Yolo"},
+    {Loss::Error::Yolo,                   "YoloError"}
 };
 
 void Loss::set_error(const Error& new_error)

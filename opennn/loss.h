@@ -29,7 +29,8 @@ public:
                      WeightedSquaredError,
                      CrossEntropy,
                      CrossEntropy3d,
-                     MinkowskiError};
+                     MinkowskiError,
+                     Yolo};
 
     enum class Regularization{L1, L2, ElasticNet, NoRegularization};
 

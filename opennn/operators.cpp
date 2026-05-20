@@ -3180,6 +3180,291 @@ void UnscaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*i
             min_range, max_range, output);
 }
 
+namespace
+{
+
+float yolo_sigmoid(float x)
+{
+    return 1.0f / (1.0f + exp(-x));
+}
+
+float yolo_iou_xywh(const array<float, 6>& a, const array<float, 6>& b)
+{
+    const float a_left = a[0] - 0.5f * a[2];
+    const float a_top = a[1] - 0.5f * a[3];
+    const float a_right = a[0] + 0.5f * a[2];
+    const float a_bottom = a[1] + 0.5f * a[3];
+
+    const float b_left = b[0] - 0.5f * b[2];
+    const float b_top = b[1] - 0.5f * b[3];
+    const float b_right = b[0] + 0.5f * b[2];
+    const float b_bottom = b[1] + 0.5f * b[3];
+
+    const float inter_w = max(0.0f, min(a_right, b_right) - max(a_left, b_left));
+    const float inter_h = max(0.0f, min(a_bottom, b_bottom) - max(a_top, b_top));
+    const float inter = inter_w * inter_h;
+    const float area = a[2] * a[3] + b[2] * b[3] - inter;
+
+    return area > 0.0f ? inter / area : 0.0f;
+}
+
+}
+
+void DetectionOp::set(const Shape& input_shape, const vector<array<float, 2>>& new_anchors)
+{
+    if (input_shape.rank != 3)
+        throw runtime_error("DetectionOp: input shape must be rank 3.");
+    if (new_anchors.empty())
+        throw runtime_error("DetectionOp: anchors are empty.");
+
+    grid_size = input_shape[0];
+    boxes_per_cell = ssize(new_anchors);
+    anchors = new_anchors;
+
+    const Index channels = input_shape[2];
+    if (channels % boxes_per_cell != 0)
+        throw runtime_error("DetectionOp: channels must be divisible by boxes_per_cell.");
+
+    classes_number = channels / boxes_per_cell - 5;
+    if (classes_number <= 0)
+        throw runtime_error("DetectionOp: classes_number must be positive.");
+}
+
+void DetectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexcept
+{
+    const TensorView& input = get_input(fp, layer);
+    TensorView& output = get_output(fp, layer);
+
+    IF_GPU({ apply_gpu(input, output); return; });
+    apply_cpu(input, output);
+}
+
+void DetectionOp::apply_cpu(const TensorView& input, TensorView& output) const
+{
+    const Index batch_size = input.shape[0];
+    const Index channels = input.shape[3];
+    const Index values_per_box = 5 + classes_number;
+
+    const float* src = input.as<float>();
+    float* dst = output.as<float>();
+
+    #pragma omp parallel for collapse(3)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index row = 0; row < grid_size; ++row)
+            for (Index col = 0; col < grid_size; ++col)
+            {
+                const Index cell = ((b * grid_size + row) * grid_size + col) * channels;
+
+                for (Index box = 0; box < boxes_per_cell; ++box)
+                {
+                    const Index base = cell + box * values_per_box;
+
+                    dst[base + 0] = yolo_sigmoid(src[base + 0]);
+                    dst[base + 1] = yolo_sigmoid(src[base + 1]);
+                    dst[base + 2] = exp(src[base + 2]) * anchors[size_t(box)][0];
+                    dst[base + 3] = exp(src[base + 3]) * anchors[size_t(box)][1];
+                    dst[base + 4] = yolo_sigmoid(src[base + 4]);
+
+                    float max_logit = src[base + 5];
+                    for (Index c = 1; c < classes_number; ++c)
+                        max_logit = max(max_logit, src[base + 5 + c]);
+
+                    float sum = 0.0f;
+                    for (Index c = 0; c < classes_number; ++c)
+                    {
+                        const float e = exp(src[base + 5 + c] - max_logit);
+                        dst[base + 5 + c] = e;
+                        sum += e;
+                    }
+
+                    const float inv_sum = 1.0f / (sum + EPSILON);
+                    for (Index c = 0; c < classes_number; ++c)
+                        dst[base + 5 + c] *= inv_sum;
+                }
+            }
+}
+
+void DetectionOp::apply_gpu(const TensorView&, TensorView&) const
+{
+    // @todo Implement CUDA YOLO detection forward.
+    throw runtime_error("DetectionOp::apply_gpu is not implemented yet.");
+}
+
+void DetectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+{
+    const TensorView& output = get_output(fp, layer);
+    const TensorView& output_delta = get_output_delta(bp, layer);
+    TensorView& input_delta = get_input_delta(bp, layer);
+
+    if (input_delta.empty()) return;
+
+    IF_GPU({ apply_delta_gpu(output, output_delta, input_delta); return; });
+    apply_delta_cpu(output, output_delta, input_delta);
+}
+
+void DetectionOp::apply_delta_cpu(const TensorView& output,
+                                  const TensorView& output_delta,
+                                  TensorView& input_delta) const
+{
+    const Index batch_size = output.shape[0];
+    const Index channels = output.shape[3];
+    const Index values_per_box = 5 + classes_number;
+
+    const float* out = output.as<float>();
+    const float* delta = output_delta.as<float>();
+    float* in_delta = input_delta.as<float>();
+
+    #pragma omp parallel for collapse(3)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index row = 0; row < grid_size; ++row)
+            for (Index col = 0; col < grid_size; ++col)
+            {
+                const Index cell = ((b * grid_size + row) * grid_size + col) * channels;
+
+                for (Index box = 0; box < boxes_per_cell; ++box)
+                {
+                    const Index base = cell + box * values_per_box;
+
+                    in_delta[base + 0] = delta[base + 0] * out[base + 0] * (1.0f - out[base + 0]);
+                    in_delta[base + 1] = delta[base + 1] * out[base + 1] * (1.0f - out[base + 1]);
+                    in_delta[base + 2] = delta[base + 2] * out[base + 2];
+                    in_delta[base + 3] = delta[base + 3] * out[base + 3];
+                    in_delta[base + 4] = delta[base + 4] * out[base + 4] * (1.0f - out[base + 4]);
+
+                    float dot = 0.0f;
+                    for (Index c = 0; c < classes_number; ++c)
+                        dot += delta[base + 5 + c] * out[base + 5 + c];
+
+                    for (Index c = 0; c < classes_number; ++c)
+                        in_delta[base + 5 + c] = out[base + 5 + c] * (delta[base + 5 + c] - dot);
+                }
+            }
+}
+
+void DetectionOp::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const
+{
+    // @todo Implement CUDA YOLO detection backward.
+    throw runtime_error("DetectionOp::apply_delta_gpu is not implemented yet.");
+}
+
+void NonMaxSuppressionOp::set(const Shape& input_shape,
+                              Index new_boxes_per_cell,
+                              float new_confidence_threshold,
+                              float new_iou_threshold)
+{
+    if (input_shape.rank != 3)
+        throw runtime_error("NonMaxSuppressionOp: input shape must be rank 3.");
+    if (new_boxes_per_cell <= 0)
+        throw runtime_error("NonMaxSuppressionOp: boxes_per_cell must be positive.");
+
+    grid_size = input_shape[0];
+    boxes_per_cell = new_boxes_per_cell;
+    confidence_threshold = new_confidence_threshold;
+    iou_threshold = new_iou_threshold;
+
+    const Index channels = input_shape[2];
+    if (channels % boxes_per_cell != 0)
+        throw runtime_error("NonMaxSuppressionOp: channels must be divisible by boxes_per_cell.");
+
+    classes_number = channels / boxes_per_cell - 5;
+    if (classes_number <= 0)
+        throw runtime_error("NonMaxSuppressionOp: classes_number must be positive.");
+}
+
+void NonMaxSuppressionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexcept
+{
+    const TensorView& input = get_input(fp, layer);
+    TensorView& output = get_output(fp, layer);
+
+    IF_GPU({ apply_gpu(input, output); return; });
+    apply_cpu(input, output);
+}
+
+void NonMaxSuppressionOp::apply_cpu(const TensorView& input, TensorView& output) const
+{
+    const Index batch_size = input.shape[0];
+    const Index channels = input.shape[3];
+    const Index values_per_box = 5 + classes_number;
+    const Index max_boxes = grid_size * grid_size * boxes_per_cell;
+
+    const float* src = input.as<float>();
+    float* dst = output.as<float>();
+    fill_n(dst, output.size(), 0.0f);
+
+    for (Index b = 0; b < batch_size; ++b)
+    {
+        vector<array<float, 6>> candidates;
+        candidates.reserve(size_t(max_boxes));
+
+        for (Index row = 0; row < grid_size; ++row)
+            for (Index col = 0; col < grid_size; ++col)
+            {
+                const Index cell = ((b * grid_size + row) * grid_size + col) * channels;
+
+                for (Index box = 0; box < boxes_per_cell; ++box)
+                {
+                    const Index base = cell + box * values_per_box;
+
+                    Index best_class = 0;
+                    float best_probability = src[base + 5];
+                    for (Index c = 1; c < classes_number; ++c)
+                        if (src[base + 5 + c] > best_probability)
+                        {
+                            best_probability = src[base + 5 + c];
+                            best_class = c;
+                        }
+
+                    const float score = src[base + 4] * best_probability;
+                    if (score < confidence_threshold)
+                        continue;
+
+                    candidates.push_back({
+                        (float(col) + src[base + 0]) / float(grid_size),
+                        (float(row) + src[base + 1]) / float(grid_size),
+                        src[base + 2],
+                        src[base + 3],
+                        score,
+                        float(best_class)
+                    });
+                }
+            }
+
+        ranges::sort(candidates, greater<>{}, [](const array<float, 6>& box) { return box[4]; });
+
+        Index kept_count = 0;
+        for (const array<float, 6>& candidate : candidates)
+        {
+            bool suppressed = false;
+            for (Index k = 0; k < kept_count; ++k)
+            {
+                const float* kept = dst + (b * max_boxes + k) * 6;
+                const array<float, 6> kept_box{kept[0], kept[1], kept[2], kept[3], kept[4], kept[5]};
+
+                if (Index(kept_box[5]) == Index(candidate[5])
+                &&  yolo_iou_xywh(candidate, kept_box) > iou_threshold)
+                {
+                    suppressed = true;
+                    break;
+                }
+            }
+
+            if (suppressed)
+                continue;
+
+            float* out = dst + (b * max_boxes + kept_count) * 6;
+            std::copy(candidate.begin(), candidate.end(), out);
+            if (++kept_count == max_boxes)
+                break;
+        }
+    }
+}
+
+void NonMaxSuppressionOp::apply_gpu(const TensorView&, TensorView&) const
+{
+    // @todo Implement CUDA YOLO non-max suppression.
+    throw runtime_error("NonMaxSuppressionOp::apply_gpu is not implemented yet.");
+}
+
 void RecurrentOp::set(Index new_input_features,
                       Index new_output_features,
                       Index new_time_steps,
