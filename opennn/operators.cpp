@@ -3180,6 +3180,85 @@ void UnscaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*i
             min_range, max_range, output);
 }
 
+void RecurrentOp::set(Index new_input_features,
+                      Index new_output_features,
+                      Index new_time_steps,
+                      ActivationOp::Function new_activation_function)
+{
+    input_features      = new_input_features;
+    output_features     = new_output_features;
+    time_steps          = new_time_steps;
+    activation_function = new_activation_function;
+}
+
+vector<TensorSpec> RecurrentOp::parameter_specs() const
+{
+    if (output_features == 0)
+        return {};
+
+    return {
+        {Shape{output_features},                  Type::FP32}, // biases
+        {Shape{input_features,  output_features}, Type::FP32}, // input→hidden
+        {Shape{output_features, output_features}, Type::FP32}, // hidden→hidden
+    };
+}
+
+void RecurrentOp::link_parameters(span<const TensorView> views)
+{
+    if (views.size() < 3) return;
+    biases            = views[0];
+    input_weights     = views[1];
+    recurrent_weights = views[2];
+}
+
+void RecurrentOp::link_gradients(span<const TensorView> views)
+{
+    if (views.size() < 3) return;
+    bias_gradient             = views[0];
+    input_weight_gradient     = views[1];
+    recurrent_weight_gradient = views[2];
+}
+
+void RecurrentOp::set_parameters_random()
+{
+    if (biases.data)            set_random_uniform(biases.as_vector(),            -0.1f, 0.1f);
+    if (input_weights.data)     set_random_uniform(input_weights.as_vector(),     -0.1f, 0.1f);
+    if (recurrent_weights.data) set_random_uniform(recurrent_weights.as_vector(), -0.1f, 0.1f);
+}
+
+void RecurrentOp::set_parameters_glorot()
+{
+    if (biases.data) biases.as_vector().setZero();
+
+    if (input_weights.data)
+    {
+        const float limit = glorot_limit(input_features, output_features);
+        set_random_uniform(input_weights.as_vector(), -limit, limit);
+    }
+    if (recurrent_weights.data)
+    {
+        const float limit = glorot_limit(output_features, output_features);
+        set_random_uniform(recurrent_weights.as_vector(), -limit, limit);
+    }
+}
+
+void RecurrentOp::forward_propagate(ForwardPropagation& /*fp*/, size_t /*layer*/, bool /*is_training*/) noexcept
+{
+    // TODO: unroll over time_steps. Reads Input view, writes Output (last
+    // hidden state), AllHiddenStates, and (when is_training) AllActivationDerivatives.
+    // The previous in-class implementation is kept commented in recurrent_layer.cpp
+    // as the starting point — re-port it once the buffer-backed views are
+    // exercised end-to-end.
+}
+
+void RecurrentOp::back_propagate(ForwardPropagation& /*fp*/, BackPropagation& /*bp*/, size_t /*layer*/) const noexcept
+{
+    // TODO: backprop-through-time. Reads OutputDelta and the cached forward
+    // tensors; writes bias_gradient / input_weight_gradient /
+    // recurrent_weight_gradient (Operator-owned views), and the layer's
+    // InputDelta view at input_delta_slots[0]. See the reference snippet in
+    // recurrent_layer.cpp.
+}
 
 }
 

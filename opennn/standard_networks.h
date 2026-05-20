@@ -63,18 +63,6 @@ public:
                                const Shape& output_shape);
 };
 
-// He et al. 2015 "Deep Residual Learning for Image Recognition" (ResNet-V1).
-// Stem: 7x7 conv stride 2 (BN+ReLU) → 3x3 MaxPool stride 2.
-// N stages, each with `blocks_per_stage[i]` residual blocks at
-// `initial_filters[i]` filters. First block of each stage (except the first)
-// downsamples by stride 2; the skip path projects with a 1x1 conv when shape
-// changes, identity otherwise. BatchNorm fused inside every Convolutional.
-//
-// `use_bottleneck=false` → basic block (Conv3x3 → Conv3x3 → +skip → ReLU),
-// suited for ResNet-18/34. `use_bottleneck=true` → bottleneck block
-// (Conv1x1 → Conv3x3 → Conv1x1 with 4× channel expansion → +skip → ReLU),
-// suited for ResNet-50/101/152. The post-addition ReLU is a standalone
-// Activation layer, matching the textbook ResNet-V1 topology.
 class ResNet : public NeuralNetwork
 {
 
@@ -85,18 +73,6 @@ public:
            const Shape& initial_filters,
            const Shape& output_shape,
            bool use_bottleneck = false);
-};
-
-class VGG16 final : public NeuralNetwork
-{
-public:
-
-    VGG16(const Shape& input_shape, const Shape& target_shape);
-
-    VGG16(const filesystem::path&);
-
-    void set(const Shape& input_shape, const Shape& target_shape);
-
 };
 
 class TextClassificationNetwork : public NeuralNetwork
@@ -113,23 +89,14 @@ class Transformer final : public NeuralNetwork
 {
 public:
 
-    Transformer(const Index = 0,
-                Index = 0,
-                Index = 0,
-                Index = 0,
-                Index = 0,
-                Index = 0,
-                Index = 0,
-                Index = 0);
-
-    void set(const Index = 0,
-             Index = 0,
-             Index = 0,
-             Index = 0,
-             Index = 0,
-             Index = 0,
-             Index = 0,
-             Index = 0);
+    Transformer(Index input_sequence_length,
+                Index decoder_sequence_length,
+                Index input_vocabulary_size,
+                Index output_vocabulary_size,
+                Index embedding_dimension,
+                Index heads_number,
+                Index feed_forward_dimension,
+                Index layers_number);
 
     Index get_input_sequence_length() const;
     Index get_decoder_sequence_length() const;

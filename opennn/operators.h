@@ -837,6 +837,38 @@ struct UnscaleOp : Operator
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
 };
 
+struct RecurrentOp : Operator
+{
+    Index input_features  = 0;
+    Index output_features = 0;
+    Index time_steps      = 0;
+
+    ActivationOp::Function activation_function = ActivationOp::Function::Tanh;
+
+    TensorView biases;
+    TensorView input_weights;
+    TensorView recurrent_weights;
+
+    TensorView bias_gradient;
+    TensorView input_weight_gradient;
+    TensorView recurrent_weight_gradient;
+
+    void set(Index new_input_features,
+             Index new_output_features,
+             Index new_time_steps,
+             ActivationOp::Function new_activation_function = ActivationOp::Function::Tanh);
+
+    vector<TensorSpec> parameter_specs() const override;
+    void link_parameters(span<const TensorView> views) override;
+    void link_gradients (span<const TensorView> views) override;
+
+    void set_parameters_random() override;
+    void set_parameters_glorot() override;
+
+    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
+};
+
 }
 
 // OpenNN: Open Neural Networks Library.

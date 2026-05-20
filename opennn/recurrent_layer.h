@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "operators.h"
 
 namespace opennn
 {
@@ -17,29 +18,38 @@ class Recurrent final : public Layer
 {
 public:
 
-    Recurrent(const Shape& = {0, 0}, const Shape& = {0});
+    Recurrent(const Shape& = {},
+              const Shape& = {},
+              const string& = "Tanh",
+              const string& = "recurrent_layer");
 
-    Shape get_input_shape() const override { return {time_steps, input_features}; }
+    Shape get_input_shape()  const override { return input_shape; }
     Shape get_output_shape() const override;
 
-    const TensorView& get_biases() const { return biases; }
-    const TensorView& get_input_weights() const { return input_weights; }
-    const TensorView& get_recurrent_weights() const { return recurrent_weights; }
-    const string& get_activation_function() const { return activation_function; }
+    Index get_time_steps()      const { return input_shape.rank == 2 ? input_shape[0] : Index(0); }
+    Index get_input_features()  const { return input_shape.rank == 2 ? input_shape[1] : Index(0); }
+    Index get_output_features() const { return output_features; }
 
-    vector<TensorSpec> get_parameter_specs() const override;
-    vector<TensorSpec> get_forward_specs(Index batch_size) const override;
+    const TensorView& get_biases()            const { return recurrent_op.biases; }
+    const TensorView& get_input_weights()     const { return recurrent_op.input_weights; }
+    const TensorView& get_recurrent_weights() const { return recurrent_op.recurrent_weights; }
+
+    const ActivationOp::Function& get_activation_function() const { return recurrent_op.activation_function; }
+    ActivationOp::Function get_output_activation() const override { return recurrent_op.activation_function; }
+
+    vector<TensorSpec> get_forward_specs(Index batch_size)  const override;
     vector<TensorSpec> get_backward_specs(Index batch_size) const override;
 
-    void set(const Shape& = {}, const Shape& = {});
+    void set(const Shape& = {},
+             const Shape& = {},
+             const string& = "Tanh",
+             const string& = "recurrent_layer");
 
     void set_input_shape(const Shape&) override;
     void set_output_shape(const Shape&) override;
+    void on_compute_dtype_changed() override { configure_operators(); }
 
     void set_activation_function(const string&);
-
-    void forward_propagate(ForwardPropagation&, size_t, bool) noexcept override;
-    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const noexcept override;
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
@@ -49,16 +59,13 @@ public:
 
 private:
 
-    Index time_steps = 0;
-    Index input_features = 0;
+    Index output_features = 0;
 
-    TensorView biases;
-    TensorView input_weights;
-    TensorView recurrent_weights;
+    RecurrentOp recurrent_op;
 
-    Tensor2 empty_2;  // sentinel passed to calculate_activations<2>(...) when no derivative output is wanted
+    enum Forward {Input, Output, AllHiddenStates, AllActivationDerivatives};
 
-    string activation_function = "Tanh";
+    void configure_operators();
 };
 
 }
