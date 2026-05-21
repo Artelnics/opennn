@@ -73,6 +73,15 @@ struct Shape
         copy_n(list.begin(), rank, dims);
     }
 
+    template<typename It>
+    Shape(It first, It last) : rank(size_t(distance(first, last)))
+    {
+        if (rank > MaxRank)
+            throw runtime_error(format("Shape: iterator-pair rank {} exceeds MaxRank={}.",
+                                       rank, MaxRank));
+        copy_n(first, rank, dims);
+    }
+
     [[nodiscard]] const Index* begin() const noexcept { return dims; }
     [[nodiscard]] const Index* end()   const noexcept { return dims + rank; }
     [[nodiscard]] const Index& operator[](size_t i) const noexcept { return dims[i]; }
