@@ -302,7 +302,8 @@ examples/wwt_optimization/data/WWTP_PO4_NH4_removal.csv
 **/vc*.pdb
 
 # Claude
-CLAUDE.md
+CLAUDE.local.md
+.claude/settings.local.json
 
 # Local build/run scripts
 build-cmake/
