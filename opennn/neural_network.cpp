@@ -322,11 +322,11 @@ Shape NeuralNetwork::get_output_shape() const
     return layers.back()->get_output_shape();
 }
 
-ActivationOp::Function NeuralNetwork::get_output_activation() const
+ActivationFunction NeuralNetwork::get_output_activation() const
 {
     const Index last_index = get_last_trainable_layer_index();
     if (last_index < 0 || static_cast<size_t>(last_index) >= layers.size())
-        return ActivationOp::Function::Identity;
+        return ActivationFunction::Identity;
 
     return layers[last_index]->get_output_activation();
 }
@@ -448,7 +448,6 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
     const vector<TensorView> input_views = {TensorView(const_cast<float*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
                                             TensorView(const_cast<float*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
 
-#ifdef OPENNN_HAS_CUDA
     IF_GPU({
         const MatrixR result_matrix = calculate_outputs_device(input_views, forward_propagation);
         const TensorView out = forward_propagation.get_outputs();
@@ -460,7 +459,6 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
                     size_t(result.size()) * sizeof(float));
         return result;
     });
-#endif
 
     forward_propagate(input_views, forward_propagation, false);
 

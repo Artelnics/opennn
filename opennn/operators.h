@@ -19,10 +19,6 @@ namespace opennn
 class Json;
 class JsonWriter;
 
-#ifdef OPENNN_HAS_CUDA
-struct LtMatmulPlan;
-#endif
-
 struct Operator
 {
     virtual ~Operator() = default;
@@ -102,11 +98,6 @@ struct DropoutOp : Operator
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
-    void apply_cpu(TensorView& output);
-    void apply_gpu(TensorView& output);
-
-    void apply_delta(TensorView& delta) const;
-
     void to_JSON(JsonWriter& w) const override;
     void from_JSON(const Json* parent) override;
 
@@ -117,21 +108,17 @@ struct DropoutOp : Operator
     DropoutOp() = default;
     DropoutOp(DropoutOp&&) noexcept = default;
     DropoutOp& operator=(DropoutOp&&) noexcept = default;
-
-private:
-    void apply_delta_cpu(TensorView& delta) const;
-    void apply_delta_gpu(TensorView& delta) const;
-
-    void ensure_mask(Index n);
 };
 
 struct ActivationOp : Operator
 {
-    enum class Function { Identity, Sigmoid, Tanh, ReLU, Softmax };
+    // Enum lives at namespace scope in tensor_utilities.h; this alias keeps
+    // existing call sites (`ActivationOp::Function::Tanh`) working unchanged.
+    using Function = ActivationFunction;
 
-    static const EnumMap<Function>& map();
-    static Function from_string(const string& name);
-    static const string& to_string(Function function);
+    static const EnumMap<Function>& map() { return activation_function_map(); }
+    static Function from_string(const string& name) { return activation_function_from_string(name); }
+    static const string& to_string(Function function) { return activation_function_to_string(function); }
     static cudnnActivationMode_t to_cudnn_mode(Function function);
 
     Function function = Function::Identity;
@@ -149,9 +136,6 @@ struct ActivationOp : Operator
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
-    void apply_cpu(TensorView& output);
-    void apply_gpu(TensorView& output);
-
     void apply_delta(const TensorView& outputs, TensorView& delta) const;
 
     void to_JSON(JsonWriter& w) const override;
@@ -164,10 +148,6 @@ struct ActivationOp : Operator
     ActivationOp() = default;
     ActivationOp(const ActivationOp&) = delete;
     ActivationOp& operator=(const ActivationOp&) = delete;
-
-private:
-    void apply_delta_cpu(const TensorView& outputs, TensorView& delta) const;
-    void apply_delta_gpu(const TensorView& outputs, TensorView& delta) const;
 };
 
 struct CombinationOp : Operator
@@ -202,13 +182,6 @@ struct CombinationOp : Operator
                      bool accumulate_input_delta = false) const;
 
 private:
-    void apply_cpu(const TensorView& input, TensorView& output, cublasLtEpilogue_t epilogue);
-    void apply_gpu(const TensorView& input, TensorView& output, cublasLtEpilogue_t epilogue);
-
-    void apply_delta_cpu(const TensorView& output_delta, const TensorView& input,
-                         TensorView& input_delta, bool accumulate_input_delta) const;
-    void apply_delta_gpu(const TensorView& output_delta, const TensorView& input,
-                         TensorView& input_delta, bool accumulate_input_delta) const;
 };
 
 struct CombinationReluOp : Operator
@@ -272,27 +245,17 @@ struct RecurrentOp : Operator
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
 private:
-    void apply_cpu(const TensorView& input,
-                   TensorView& hidden_states,
-                   TensorView& activation_derivatives,
-                   TensorView& output,
-                   bool is_training);
-    void apply_gpu(const TensorView& input,
-                   TensorView& hidden_states,
-                   TensorView& activation_derivatives,
-                   TensorView& output,
-                   bool is_training);
+    void apply(const TensorView& input,
+               TensorView& hidden_states,
+               TensorView& activation_derivatives,
+               TensorView& output,
+               bool is_training);
 
-    void apply_delta_cpu(const TensorView& input,
-                         const TensorView& hidden_states,
-                         const TensorView& activation_derivatives,
-                         const TensorView& output_delta,
-                         TensorView& input_delta) const;
-    void apply_delta_gpu(const TensorView& input,
-                         const TensorView& hidden_states,
-                         const TensorView& activation_derivatives,
-                         const TensorView& output_delta,
-                         TensorView& input_delta) const;
+    void apply_delta(const TensorView& input,
+                     const TensorView& hidden_states,
+                     const TensorView& activation_derivatives,
+                     const TensorView& output_delta,
+                     TensorView& input_delta) const;
 };
 
 struct BatchNormOp : Operator
@@ -430,14 +393,15 @@ struct ConvolutionOp : Operator
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
-    void apply_cpu(const TensorView& input, TensorView& output);
-    void apply_gpu(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation = nullptr);
+    void apply(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation = nullptr);
 
     void apply_delta(const TensorView& input,
                      const TensorView& output_delta,
                      TensorView& input_delta) const;
 
 private:
+    void apply_cpu(const TensorView& input, TensorView& output);
+    void apply_gpu(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation = nullptr);
 
     void apply_delta_cpu(const TensorView& input, const TensorView& output_delta,
                          TensorView& input_delta) const;
@@ -504,22 +468,6 @@ struct LayerNormOp : Operator
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
 private:
-    void apply_cpu(const TensorView& input,
-                   TensorView& means, TensorView& standard_deviations, TensorView& normalized,
-                   TensorView& output);
-                   
-    void apply_gpu(const TensorView& input,
-                   TensorView& means, TensorView& standard_deviations,
-                   TensorView& output);
-
-    void apply_delta_cpu(const TensorView& output_delta,
-                         const TensorView& standard_deviations,
-                         const TensorView& normalized,
-                         TensorView& input_delta) const;
-    void apply_delta_gpu(const TensorView& input,
-                         const TensorView& output_delta,
-                         const TensorView& means, const TensorView& standard_deviations,
-                         TensorView& input_delta) const;
 };
 
 struct MultiHeadProjectionOp : Operator
@@ -704,6 +652,8 @@ private:
     static Index infer_attention_prefix_length(const TensorView& attention_weights,
                                                Index batch_index);
 
+    bool use_sdpa_backend(Type dtype) const;
+
     // Common backbone for the unfused CPU and GPU paths. The softmax-backward
     // step differs (Eigen vs cuDNN) and is supplied as a callable.
     template<typename SoftmaxBwd>
@@ -807,12 +757,8 @@ private:
 struct Pool3dOp : Operator
 {
     enum Method { Max, Average };
-    Method method = Max;
+    Method method = Average;
 
-    // Slot convention (set by Pooling3d layer):
-    //   input_slots  = {Input}
-    //   output_slots = {Output, MaximalIndices}
-    //   For AveragePooling, MaximalIndices is allocated empty (Shape{}).
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
@@ -825,8 +771,6 @@ struct EmbeddingLookupOp : Operator
 
     bool  scale_embedding         = false;
     bool  add_positional_encoding = false;
-
-    float embedding_scale = 1.0f;
 
     TensorView weights;
     TensorView positional_encoding;
@@ -850,11 +794,6 @@ struct EmbeddingLookupOp : Operator
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
 private:
-    void apply_cpu(const TensorView& indices, TensorView& output);
-    void apply_gpu(const TensorView& indices, TensorView& output);
-
-    void apply_delta_cpu(const TensorView& indices, const TensorView& output_delta) const;
-    void apply_delta_gpu(const TensorView& indices, const TensorView& output_delta) const;
 };
 
 struct FlatOp : Operator
@@ -917,11 +856,8 @@ struct DetectionOp : Operator
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
 private:
-    void apply_cpu(const TensorView& input, TensorView& output) const;
-    void apply_gpu(const TensorView& input, TensorView& output) const;
-
-    void apply_delta_cpu(const TensorView& output, const TensorView& output_delta, TensorView& input_delta) const;
-    void apply_delta_gpu(const TensorView& output, const TensorView& output_delta, TensorView& input_delta) const;
+    void apply(const TensorView& input, TensorView& output) const;
+    void apply_delta(const TensorView& output, const TensorView& output_delta, TensorView& input_delta) const;
 };
 
 struct NonMaxSuppressionOp : Operator
@@ -940,8 +876,7 @@ struct NonMaxSuppressionOp : Operator
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
 
 private:
-    void apply_cpu(const TensorView& input, TensorView& output) const;
-    void apply_gpu(const TensorView& input, TensorView& output) const;
+    void apply(const TensorView& input, TensorView& output) const;
 };
 
 struct LongShortTermMemoryOp : Operator
@@ -1025,59 +960,32 @@ struct LongShortTermMemoryOp : Operator
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 
 private:
-    void apply_cpu(const TensorView& input,
-                   TensorView& output,
-                   TensorView& forget_gate,
-                   TensorView& input_gate,
-                   TensorView& candidate_gate,
-                   TensorView& output_gate,
-                   TensorView& cell_state,
-                   TensorView& hidden_state,
-                   TensorView& cell_activation) const;
+    void apply(const TensorView& input,
+               TensorView& output,
+               TensorView& forget_gate,
+               TensorView& input_gate,
+               TensorView& candidate_gate,
+               TensorView& output_gate,
+               TensorView& cell_state,
+               TensorView& hidden_state,
+               TensorView& cell_activation) const;
 
-    void apply_gpu(const TensorView& input,
-                   TensorView& output,
-                   TensorView& forget_gate,
-                   TensorView& input_gate,
-                   TensorView& candidate_gate,
-                   TensorView& output_gate,
-                   TensorView& cell_state,
-                   TensorView& hidden_state,
-                   TensorView& cell_activation) const;
-
-    void apply_delta_cpu(const TensorView& input,
-                         const TensorView& output_delta,
-                         TensorView& input_delta,
-                         TensorView& hidden_delta_scratch,
-                         TensorView& cell_delta_scratch,
-                         TensorView& forget_delta_scratch,
-                         TensorView& input_delta_scratch,
-                         TensorView& candidate_delta_scratch,
-                         TensorView& output_delta_scratch,
-                         const TensorView& forget_gate,
-                         const TensorView& input_gate,
-                         const TensorView& candidate_gate,
-                         const TensorView& output_gate,
-                         const TensorView& cell_state,
-                         const TensorView& hidden_state,
-                         const TensorView& cell_activation) const;
-
-    void apply_delta_gpu(const TensorView& input,
-                         const TensorView& output_delta,
-                         TensorView& input_delta,
-                         TensorView& hidden_delta_scratch,
-                         TensorView& cell_delta_scratch,
-                         TensorView& forget_delta_scratch,
-                         TensorView& input_delta_scratch,
-                         TensorView& candidate_delta_scratch,
-                         TensorView& output_delta_scratch,
-                         const TensorView& forget_gate,
-                         const TensorView& input_gate,
-                         const TensorView& candidate_gate,
-                         const TensorView& output_gate,
-                         const TensorView& cell_state,
-                         const TensorView& hidden_state,
-                         const TensorView& cell_activation) const;
+    void apply_delta(const TensorView& input,
+                     const TensorView& output_delta,
+                     TensorView& input_delta,
+                     TensorView& hidden_delta_scratch,
+                     TensorView& cell_delta_scratch,
+                     TensorView& forget_delta_scratch,
+                     TensorView& input_delta_scratch,
+                     TensorView& candidate_delta_scratch,
+                     TensorView& output_delta_scratch,
+                     const TensorView& forget_gate,
+                     const TensorView& input_gate,
+                     const TensorView& candidate_gate,
+                     const TensorView& output_gate,
+                     const TensorView& cell_state,
+                     const TensorView& hidden_state,
+                     const TensorView& cell_activation) const;
 };
 
 }

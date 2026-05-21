@@ -56,6 +56,11 @@ if(OPENNN_HAS_CUDA)
             "and set CUDNN_FRONTEND_INCLUDE_DIR.")
     endif()
     target_include_directories(opennn PUBLIC ${CUDNN_FRONTEND_INCLUDE_DIR})
+    # operators.cpp guards SDPA / Flash Attention with HAVE_CUDNN_FRONTEND.
+    # The find_path above already errors out if the header is missing, so when
+    # we get here it is always available — define the macro so the SDPA path
+    # is actually compiled in the CMake build (qmake sets it in cuda.pri).
+    target_compile_definitions(opennn PUBLIC HAVE_CUDNN_FRONTEND)
 endif()
 
 # Optimization & SIMD. Without host-native ISA flags Eigen falls back to the x86-64

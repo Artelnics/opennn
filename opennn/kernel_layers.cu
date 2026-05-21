@@ -480,61 +480,69 @@ template void attention_masks_cuda<float>        (int, int, int, int, int, const
 template void attention_masks_cuda<__nv_bfloat16>(int, int, int, int, int, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*, bool);
 
 template<typename T>
-__global__ void softmax_rows_kernel(const int N, const int C, T* __restrict__ data)
+__global__ void attention_sequence_lengths_kernel(const int batch_size,
+                                                  const int query_sequence_length,
+                                                  const int source_sequence_length,
+                                                  const int embedding_dimension,
+                                                  const T* __restrict__ source_input,
+                                                  int32_t* __restrict__ query_lengths,
+                                                  int32_t* __restrict__ source_lengths)
 {
-    extern __shared__ float smem[];
-    const int row = blockIdx.x;
-    if (row >= N) return;
-    T* row_data = data + static_cast<size_t>(row) * static_cast<size_t>(C);
+    const int batch = blockIdx.x;
+    if (batch >= batch_size) return;
 
-    float thread_max = -FLT_MAX;
-    for (int j = threadIdx.x; j < C; j += blockDim.x)
+    __shared__ int stop;
+    if (threadIdx.x == 0)
     {
-        const float v = static_cast<float>(row_data[j]);
-        if (v > thread_max) thread_max = v;
+        stop = 0;
+        query_lengths[batch] = query_sequence_length;
+        source_lengths[batch] = 1;
     }
-    smem[threadIdx.x] = thread_max;
     __syncthreads();
-    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1)
+
+    const T* sequence = source_input + batch * source_sequence_length * embedding_dimension;
+
+    for (int s = 0; s < source_sequence_length; ++s)
     {
-        if (threadIdx.x < stride)
-            smem[threadIdx.x] = fmaxf(smem[threadIdx.x], smem[threadIdx.x + stride]);
+        bool nonzero = false;
+        const T* token = sequence + s * embedding_dimension;
+        for (int e = threadIdx.x; e < embedding_dimension; e += blockDim.x)
+            if (fabsf(static_cast<float>(token[e])) > 1e-7f) { nonzero = true; break; }
+
+        const int token_is_valid = __syncthreads_or(nonzero);
+
+        if (threadIdx.x == 0)
+        {
+            if (token_is_valid) source_lengths[batch] = s + 1;
+            else stop = 1;
+        }
         __syncthreads();
+        if (stop) break;
     }
-    const float row_max = smem[0];
-    __syncthreads();
-
-    float thread_sum = 0.0f;
-    for (int j = threadIdx.x; j < C; j += blockDim.x)
-    {
-        const float e = __expf(static_cast<float>(row_data[j]) - row_max);
-        row_data[j] = static_cast<T>(e);
-        thread_sum += e;
-    }
-    smem[threadIdx.x] = thread_sum;
-    __syncthreads();
-    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1)
-    {
-        if (threadIdx.x < stride)
-            smem[threadIdx.x] += smem[threadIdx.x + stride];
-        __syncthreads();
-    }
-    const float inv_sum = 1.0f / smem[0];
-    __syncthreads();
-
-    for (int j = threadIdx.x; j < C; j += blockDim.x)
-        row_data[j] = static_cast<T>(static_cast<float>(row_data[j]) * inv_sum);
 }
 
 template<typename T>
-void softmax_rows_cuda(const int N, const int C, T* data)
+void attention_sequence_lengths_cuda(const int batch_size,
+                                     const int query_sequence_length,
+                                     const int source_sequence_length,
+                                     const int embedding_dimension,
+                                     const T* source_input,
+                                     int32_t* query_lengths,
+                                     int32_t* source_lengths)
 {
-    if (N <= 0 || C <= 0) return;
-    softmax_rows_kernel<T><<<N, block_size, block_size * sizeof(float), opennn::Backend::get_compute_stream()>>>(N, C, data);
+    if (batch_size > 0)
+        attention_sequence_lengths_kernel<T><<<batch_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(
+            batch_size,
+            query_sequence_length,
+            source_sequence_length,
+            embedding_dimension,
+            source_input,
+            query_lengths,
+            source_lengths);
 }
 
-template void softmax_rows_cuda<float>        (const int, const int, float*);
-template void softmax_rows_cuda<__nv_bfloat16>(const int, const int, __nv_bfloat16*);
+template void attention_sequence_lengths_cuda<float>        (int, int, int, int, const float*,         int32_t*, int32_t*);
+template void attention_sequence_lengths_cuda<__nv_bfloat16>(int, int, int, int, const __nv_bfloat16*, int32_t*, int32_t*);
 
 // Max pooling over the seq axis of [batch, seq, features]. Saves the argmax
 // position per (batch, feature) into `indices` for the backward pass.

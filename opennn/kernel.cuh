@@ -128,7 +128,13 @@ void attention_masks_cuda(const int batch_size, const int heads_number, const in
                           const bool use_causal_mask);
 
 template<typename T>
-void softmax_rows_cuda(const int N, const int C, T* data);
+void attention_sequence_lengths_cuda(const int batch_size,
+                                     const int query_sequence_length,
+                                     const int source_sequence_length,
+                                     const int embedding_dimension,
+                                     const T* source_input,
+                                     int32_t* query_lengths,
+                                     int32_t* source_lengths);
 
 // Pooling 3D
 

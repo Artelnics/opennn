@@ -107,6 +107,9 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     embedding_dimension    = new_embedding_dimension;
     heads_number           = new_heads_number;
 
+    operators = {&value_projection, &key_projection, &query_projection,
+                 &attention, &merge, &output_projection};
+
     set_label(new_label);
 
     if (new_heads_number == 0 && new_embedding_dimension == 0)
@@ -120,9 +123,9 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
 
     const Index head_dimension = get_head_dimension();
 
-    query_projection .set(embedding_dimension, heads_number, head_dimension, compute_dtype);
-    key_projection   .set(embedding_dimension, heads_number, head_dimension, compute_dtype);
-    value_projection .set(embedding_dimension, heads_number, head_dimension, compute_dtype);
+    query_projection.set(embedding_dimension, heads_number, head_dimension, compute_dtype);
+    key_projection  .set(embedding_dimension, heads_number, head_dimension, compute_dtype);
+    value_projection.set(embedding_dimension, heads_number, head_dimension, compute_dtype);
     output_projection.set(embedding_dimension, embedding_dimension, compute_dtype);
 
     attention.set(heads_number, head_dimension,

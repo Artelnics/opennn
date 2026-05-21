@@ -18,6 +18,7 @@
 #include "../opennn/training_strategy.h"
 #include "../opennn/testing_analysis.h"
 #include "../opennn/stochastic_gradient_descent.h"
+#include "../opennn/adaptive_moment_estimation.h"
 #include "../opennn/random_utilities.h"
 #include "../opennn/transformer_decoder.h"
 
@@ -103,10 +104,11 @@ int main()
 {
     try
     {
-        cout << "OpenNN. ResNet-50 Places365 benchmark." << endl;
+        
+        cout << "OpenNN. Benchmark." << endl;
 
 #ifdef OPENNN_HAS_CUDA
-
+/*
         // ============== ResNet on Places365 ==============
         //
         // Folder layout expected by ImageDataset: one subdirectory per class,
@@ -144,7 +146,7 @@ int main()
                       {3, 4, 6, 3},
                       Shape{64, 128, 256, 512},
                       Shape{num_classes},
-                      /*use_bottleneck=*/true);
+                      true);
 
         TrainingStrategy training_strategy(&resnet, &dataset);
         training_strategy.set_loss("CrossEntropy");
@@ -183,9 +185,9 @@ int main()
         TestingAnalysis testing_analysis(&resnet, &dataset);
         testing_analysis.set_batch_size(16);
         cout << "\nConfusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
-
+        */
         // ============== Translation benchmark (kept for reference) ==============
-        /*
+        
         Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
 
         set_seed(42);
@@ -270,7 +272,7 @@ int main()
         }
 
         cout << "=========================================================\n";
-        */
+        
 
         // ====================  LLM experiments (commented out)  ====================
         // The blocks below were used to fine-tune chat-style Transformers on

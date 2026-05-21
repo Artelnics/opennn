@@ -10,9 +10,20 @@
 
 #include "pch.h"
 #include "configuration.h"
+#include "enum_map.h"
 
 namespace opennn
 {
+
+// Activation enum lives here (not in operators.h) so math_utilities.h can
+// reference it without pulling the full Operator / cuDNN frontend stack.
+// ActivationOp keeps a `using Function = ActivationFunction;` alias for
+// back-compat with code that says `ActivationOp::Function::Tanh`.
+enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax };
+
+[[nodiscard]] const EnumMap<ActivationFunction>& activation_function_map();
+[[nodiscard]] const string& activation_function_to_string(ActivationFunction function);
+[[nodiscard]] ActivationFunction activation_function_from_string(const string& name);
 
 static constexpr Index ALIGN_BYTES = EIGEN_MAX_ALIGN_BYTES;
 static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(float);

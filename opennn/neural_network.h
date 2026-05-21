@@ -121,7 +121,7 @@ public:
     [[nodiscard]] Shape get_input_shape() const;
     [[nodiscard]] Shape get_output_shape() const;
 
-    [[nodiscard]] ActivationOp::Function get_output_activation() const;
+    [[nodiscard]] ActivationFunction get_output_activation() const;
     [[nodiscard]] Index get_parameters_number() const;
 
     void set_parameters(const VectorR& new_parameters);

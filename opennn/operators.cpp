@@ -33,16 +33,9 @@ void AddOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexce
 
     check(inputs, output);
 
-    IF_GPU({
-        add_gpu(inputs[0], inputs[1], output);
-        for (size_t i = 2; i < inputs.size(); ++i)
-            add_gpu(output, inputs[i], output);
-        return;
-    });
-
-    add_cpu(inputs[0], inputs[1], output);
+    add(inputs[0], inputs[1], output);
     for (size_t i = 2; i < inputs.size(); ++i)
-        add_cpu(output, inputs[i], output);
+        add(output, inputs[i], output);
 }
 
 void AddOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const noexcept
@@ -81,95 +74,22 @@ void DropoutOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_
     if (!save_slots.empty())
         copy(output, fv[save_slots[0]][0]);
 
-    IF_GPU({ apply_gpu(output); return; });
-    apply_cpu(output);
-}
-
-void DropoutOp::apply_delta(TensorView& delta) const
-{
-    if (!active()) return;
-
-    IF_GPU({ apply_delta_gpu(delta); return; });
-    apply_delta_cpu(delta);
+    dropout_forward(output, mask, rate);
 }
 
 void DropoutOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const noexcept
 {
     if (!active()) return;
-    apply_delta(get_output_delta(bp, layer));
-}
-
-void DropoutOp::apply_cpu(TensorView& output)
-{
-    const Index total_size = output.size();
-    mask.resize_bytes(total_size * Index(sizeof(float)), Device::CPU);
-
-    const float scale = 1.0f / (1.0f - rate);
-    float* data = output.as<float>();
-    float* mask_data = mask.as<float>();
-
-    #pragma omp parallel for
-    for (Index i = 0; i < total_size; ++i)
-    {
-        const float mask_value = random_uniform(0.0f, 1.0f) < rate ? 0.0f : scale;
-        mask_data[i] = mask_value;
-        data[i] *= mask_value;
-    }
-}
-
-void DropoutOp::apply_delta_cpu(TensorView& delta) const
-{
-    const Index n = delta.size();
-    Map<const VectorR, AlignedMax> mask_view(mask.as<float>(), n);
-    delta.as_vector().array() *= mask_view.array();
-}
-
-#ifdef OPENNN_HAS_CUDA
-
-void DropoutOp::apply_gpu(TensorView& output)
-{
-    const Index n = output.size();
-    ensure_mask(n);
-    const unsigned long long seed = static_cast<unsigned long long>(random_integer(0, 1 << 30));
-
-    visit_type<Type::FP32, Type::BF16>(output.type, [&](auto info)
-    {
-        using T = typename decltype(info)::type;
-        dropout_forward_cuda<T>(n, output.as<T>(), mask.as<uint8_t>(), rate, seed);
-    });
-}
-
-void DropoutOp::apply_delta_gpu(TensorView& delta) const
-{
-    const Index n = delta.size();
-
-    visit_type<Type::FP32, Type::BF16>(delta.type, [&](auto info)
-    {
-        using T = typename decltype(info)::type;
-        dropout_backward_cuda<T>(n, delta.as<T>(), delta.as<T>(), mask.as<uint8_t>(), rate);
-    });
-}
-
-void DropoutOp::ensure_mask(Index n)
-{
-    if (mask.device_type != Device::CUDA || mask.bytes < n)
-        mask.resize_bytes(n, Device::CUDA);
+    dropout_backward(get_output_delta(bp, layer), mask, rate);
 }
 
 void DropoutOp::destroy_cuda()
 {
+#ifdef OPENNN_HAS_CUDA
     if (mask.device_type == Device::CUDA)
         mask.resize_bytes(0, Device::CUDA);
-}
-
-#else
-
-void DropoutOp::apply_gpu(TensorView&)             { throw runtime_error("Dropout::apply_gpu: CUDA support not compiled in."); }
-void DropoutOp::apply_delta_gpu(TensorView&) const { throw runtime_error("Dropout::apply_delta_gpu: CUDA support not compiled in."); }
-void DropoutOp::ensure_mask(Index)                 {}
-void DropoutOp::destroy_cuda()                     {}
-
 #endif
+}
 
 void DropoutOp::to_JSON(JsonWriter& w) const
 {
@@ -181,29 +101,6 @@ void DropoutOp::from_JSON(const Json* parent)
 {
     if (parent && parent->has("DropoutRate"))
         set_rate(float(read_json_type(parent, "DropoutRate")));
-}
-
-const EnumMap<ActivationOp::Function>& ActivationOp::map()
-{
-    static const vector<pair<Function, string>> entries = {
-        {Function::Identity, "Identity"},
-        {Function::Sigmoid,  "Sigmoid"},
-        {Function::Tanh,     "Tanh"},
-        {Function::ReLU,     "ReLU"},
-        {Function::Softmax,  "Softmax"}
-    };
-    static const EnumMap<Function> instance{entries};
-    return instance;
-}
-
-ActivationOp::Function ActivationOp::from_string(const string& name)
-{
-    return map().from_string(name, Function::Identity);
-}
-
-const string& ActivationOp::to_string(Function function)
-{
-    return map().to_string(function);
 }
 
 cudnnActivationMode_t ActivationOp::to_cudnn_mode(Function function)
@@ -248,20 +145,12 @@ void ActivationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool 
     if (!input_slots.empty() && input_slots[0] != output_slots[0])
         copy(fp.views[layer][input_slots[0]][0], output);
 
-    if (function == Function::Identity) return;
-    if (function == Function::Softmax) { softmax(output); return; }
-
-    IF_GPU({ apply_gpu(output); return; });
-    apply_cpu(output);
+    activation_forward(output, function);
 }
 
 void ActivationOp::apply_delta(const TensorView& outputs, TensorView& delta) const
 {
-    // Softmax delta is folded into AttentionOp's softmax-backward step.
-    if (function == Function::Identity || function == Function::Softmax || outputs.empty()) return;
-
-    IF_GPU({ apply_delta_gpu(outputs, delta); return; });
-    apply_delta_cpu(outputs, delta);
+    activation_backward(outputs, delta, function);
 }
 
 void ActivationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
@@ -288,85 +177,12 @@ void ActivationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, s
     }
 }
 
-void ActivationOp::apply_cpu(TensorView& output)
-{
-    auto a = output.as_vector().array();
-
-    using enum Function;
-    switch (function)
-    {
-    case Identity:
-    case Softmax:
-        return;
-    case Sigmoid:
-        a = (1.0f + (-a).exp()).inverse();
-        return;
-    case Tanh:
-        a = a.tanh();
-        return;
-    case ReLU:
-        a = a.cwiseMax(0.0f);
-        return;
-    }
-}
-
-void ActivationOp::apply_delta_cpu(const TensorView& outputs, TensorView& delta) const
-{
-    const auto y = outputs.as_vector().array();
-    auto       d = delta.as_vector().array();
-
-    using enum Function;
-    switch (function)
-    {
-    case Identity:
-    case Softmax:
-        return;
-    case Sigmoid:
-        d *= y * (1.0f - y);
-        return;
-    case Tanh:
-        d *= (1.0f - y.square());
-        return;
-    case ReLU:
-        d = (y > 0.0f).select(d, 0.0f);
-        return;
-    }
-}
-
-#ifdef OPENNN_HAS_CUDA
-
-void ActivationOp::apply_gpu(TensorView& output)
-{
-    output.dispatch([&](auto tag)
-    {
-        using T = decltype(tag);
-        activation_forward_cuda<T>(output.size(), output.as<T>(), static_cast<int>(function));
-    });
-    CHECK_CUDA(cudaPeekAtLastError());
-}
-
-void ActivationOp::apply_delta_gpu(const TensorView& outputs, TensorView& delta) const
-{
-    delta.dispatch([&](auto tag)
-    {
-        using T = decltype(tag);
-        activation_backward_cuda<T>(delta.size(), outputs.as<T>(), delta.as<T>(), static_cast<int>(function));
-    });
-    CHECK_CUDA(cudaPeekAtLastError());
-}
-
 void ActivationOp::destroy_cuda()
 {
+#ifdef OPENNN_HAS_CUDA
     if (descriptor) { cudnnDestroyActivationDescriptor(descriptor); descriptor = nullptr; }
-}
-
-#else
-
-void ActivationOp::apply_gpu(TensorView&)                                                     { throw runtime_error("Activation::apply_gpu: CUDA support not compiled in."); }
-void ActivationOp::apply_delta_gpu(const TensorView&, TensorView&) const                      { throw runtime_error("Activation::apply_delta_gpu: CUDA support not compiled in."); }
-void ActivationOp::destroy_cuda()                                                             {}
-
 #endif
+}
 
 void ActivationOp::to_JSON(JsonWriter& w) const
 {
@@ -729,8 +545,7 @@ void CombinationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool
 
 void CombinationOp::apply(const TensorView& input, TensorView& output, cublasLtEpilogue_t epilogue)
 {
-    IF_GPU({ apply_gpu(input, output, epilogue); return; });
-    apply_cpu(input, output, epilogue);
+    linear_forward(input, weights, bias, output, epilogue);
 }
 
 void CombinationOp::apply_delta(const TensorView& output_delta,
@@ -738,8 +553,8 @@ void CombinationOp::apply_delta(const TensorView& output_delta,
                               TensorView& input_delta,
                               bool accumulate_input_delta) const
 {
-    IF_GPU({ apply_delta_gpu(output_delta, input, input_delta, accumulate_input_delta); return; });
-    apply_delta_cpu(output_delta, input, input_delta, accumulate_input_delta);
+    linear_backward(output_delta, input, weights, weight_gradient, bias_gradient,
+                    input_delta, accumulate_input_delta);
 }
 
 void CombinationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
@@ -754,85 +569,6 @@ void CombinationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
 
     apply_delta(output_delta, input, input_delta, false);
 }
-
-void CombinationOp::apply_cpu(const TensorView& input, TensorView& output, cublasLtEpilogue_t epilogue)
-{
-    output.as_flat_matrix().noalias() = (input.as_flat_matrix() * weights.as_matrix()).rowwise()
-                                      + bias.as_vector().transpose();
-
-    if (epilogue == CUBLASLT_EPILOGUE_RELU_BIAS)
-        output.as_vector().array() = output.as_vector().array().cwiseMax(0.0f);
-}
-
-void CombinationOp::apply_delta_cpu(const TensorView& output_delta,
-                                  const TensorView& input,
-                                  TensorView& input_delta,
-                                  bool accumulate) const
-{
-    weight_gradient.as_matrix().noalias() = input.as_flat_matrix().transpose() * output_delta.as_flat_matrix();
-    bias_gradient.as_vector().noalias()   = output_delta.as_flat_matrix().colwise().sum();
-
-    if (!input_delta.data || input_delta.size() == 0) return;
-
-    auto input_delta_mat = input_delta.as_flat_matrix();
-    const auto product   = output_delta.as_flat_matrix() * weights.as_matrix().transpose();
-
-    if (accumulate) input_delta_mat.noalias() += product;
-    else            input_delta_mat.noalias()  = product;
-}
-
-#ifdef OPENNN_HAS_CUDA
-
-void CombinationOp::apply_gpu(const TensorView& input, TensorView& output, cublasLtEpilogue_t epilogue)
-{
-    const int input_columns  = to_int(input.shape.back());
-    const int output_columns = to_int(weights.shape.back());
-    const int total_rows     = to_int(input.size() / input.shape.back());
-
-    const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
-    const cudaDataType_t io_type = output.cuda_dtype();
-
-    const LtMatmulPlan& plan = get_lt_gemm_plan(
-        output_columns, total_rows, input_columns,
-        CUBLAS_OP_N, CUBLAS_OP_N,
-        epilogue, io_type, io_type);
-
-    const void* bias_pointer = bias.data;
-    run_lt_matmul(plan, weights.data, input_for_gemm, output.data, bias_pointer);
-}
-
-void CombinationOp::apply_delta_gpu(const TensorView& output_delta, const TensorView& input,
-                                  TensorView& input_delta,
-                                  bool accumulate_input_delta) const
-{
-    const int input_columns  = to_int(input.shape.back());
-    const int output_columns = to_int(output_delta.shape.back());
-    const int total_rows     = to_int(input.size() / input.shape.back());
-
-    const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
-
-    const LtMatmulPlan& plan = get_lt_gemm_plan(
-        output_columns, input_columns, total_rows,
-        CUBLAS_OP_N, CUBLAS_OP_T,
-        CUBLASLT_EPILOGUE_BGRADA,
-        output_delta.cuda_dtype(),
-        CUDA_R_32F);
-
-    const float* bias_gradient_pointer = bias_gradient.as<float>();
-    run_lt_matmul(plan, output_delta.data, input_for_gemm, weight_gradient.data, bias_gradient_pointer);
-
-    if (!input_delta.data || input_delta.size() == 0) return;
-
-    multiply(output_delta, false, weights, true, input_delta, 1.0f,
-             accumulate_input_delta ? 1.0f : 0.0f);
-}
-
-#else
-
-void CombinationOp::apply_gpu(const TensorView&, TensorView&, cublasLtEpilogue_t)                                             { throw runtime_error("Combination::apply_gpu: CUDA support not compiled in."); }
-void CombinationOp::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&, bool) const  { throw runtime_error("Combination::apply_delta_gpu: CUDA support not compiled in."); }
-
-#endif
 
 void CombinationReluOp::set(Index input_features, Index output_features, Type weight_type)
 {
@@ -864,11 +600,6 @@ void CombinationReluOp::back_propagate(ForwardPropagation& fp, BackPropagation& 
 
     combination.apply_delta(output_delta, input, input_delta, false);
 }
-
-// -----------------------------------------------------------------------------
-// RecurrentOp — Elman RNN, BPTT over the time axis. CPU path is hand-written.
-// GPU path stubs throw until kernels land in Phase 3.
-// -----------------------------------------------------------------------------
 
 void RecurrentOp::set(Index new_input_features,
                       Index new_time_steps,
@@ -940,8 +671,8 @@ void RecurrentOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
     TensorView& hidden_states           = fv[output_slots[1]][0];
     TensorView& activation_derivatives  = fv[output_slots[2]][0];
 
-    IF_GPU({ apply_gpu(input, hidden_states, activation_derivatives, output, is_training); return; });
-    apply_cpu(input, hidden_states, activation_derivatives, output, is_training);
+    IF_GPU({ throw runtime_error("Recurrent GPU path is not implemented yet. Call Configuration::instance().set(Device::CPU, ...) before training a network that contains a Recurrent layer."); });
+    apply(input, hidden_states, activation_derivatives, output, is_training);
 }
 
 void RecurrentOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
@@ -957,11 +688,11 @@ void RecurrentOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
     TensorView empty;
     TensorView& input_delta = view_at_slot_or(dv, input_delta_slots, 0, empty);
 
-    IF_GPU({ apply_delta_gpu(input, hidden_states, activation_derivatives, output_delta, input_delta); return; });
-    apply_delta_cpu(input, hidden_states, activation_derivatives, output_delta, input_delta);
+    IF_GPU({ throw runtime_error("Recurrent GPU path is not implemented yet. Call Configuration::instance().set(Device::CPU, ...) before training a network that contains a Recurrent layer."); });
+    apply_delta(input, hidden_states, activation_derivatives, output_delta, input_delta);
 }
 
-void RecurrentOp::apply_cpu(const TensorView& input,
+void RecurrentOp::apply(const TensorView& input,
                             TensorView& hidden_states,
                             TensorView& activation_derivatives,
                             TensorView& output,
@@ -1043,11 +774,11 @@ void RecurrentOp::apply_cpu(const TensorView& input,
     output.as_matrix() = prev_hidden;
 }
 
-void RecurrentOp::apply_delta_cpu(const TensorView& input,
-                                  const TensorView& hidden_states,
-                                  const TensorView& activation_derivatives,
-                                  const TensorView& output_delta,
-                                  TensorView& input_delta) const
+void RecurrentOp::apply_delta(const TensorView& input,
+                              const TensorView& hidden_states,
+                              const TensorView& activation_derivatives,
+                              const TensorView& output_delta,
+                              TensorView& input_delta) const
 {
     const Index batch_size = input.shape[0];
 
@@ -1123,50 +854,6 @@ void RecurrentOp::apply_delta_cpu(const TensorView& input,
         }
     }
 }
-
-#ifdef OPENNN_HAS_CUDA
-
-// Phase 3 status: native CUDA kernels for the recurrent step are not yet
-// implemented. A host-fallback prototype was tried (download device→host,
-// run apply_cpu, upload back) and abandoned: it ran without crashing but
-// the gradients written back to device interacted incorrectly with the
-// optimiser's compute-stream pipeline and training stalled. The proper fix
-// is fused per-step CUDA kernels — work that belongs in its own follow-up
-// phase. Until then we surface the limitation loudly so callers know to use
-// Configuration::set(Device::CPU) when their network contains a Recurrent
-// layer.
-
-void RecurrentOp::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&, bool)
-{
-    throw runtime_error(
-        "RecurrentOp::apply_gpu: the Recurrent layer GPU path is not implemented yet. "
-        "Call Configuration::instance().set(Device::CPU, ...) before training a "
-        "network that contains a Recurrent layer.");
-}
-
-void RecurrentOp::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&,
-                                  const TensorView&, TensorView&) const
-{
-    throw runtime_error(
-        "RecurrentOp::apply_delta_gpu: the Recurrent layer GPU path is not implemented yet. "
-        "Call Configuration::instance().set(Device::CPU, ...) before training a "
-        "network that contains a Recurrent layer.");
-}
-
-#else
-
-void RecurrentOp::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&, bool)
-{
-    throw runtime_error("RecurrentOp::apply_gpu: CUDA support not compiled in.");
-}
-
-void RecurrentOp::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&,
-                                  const TensorView&, TensorView&) const
-{
-    throw runtime_error("RecurrentOp::apply_delta_gpu: CUDA support not compiled in.");
-}
-
-#endif
 
 void ConvolutionOp::set(Index new_input_h, Index new_input_w,
                       Index new_kernels_n, Index new_kernel_h, Index new_kernel_w, Index new_kernel_c,
@@ -1252,16 +939,21 @@ void ConvolutionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
 
-    IF_GPU({ apply_gpu(input, output, nullptr); return; });
-    apply_cpu(input, output);
+    apply(input, output);
 }
 
 void ConvolutionOp::apply_delta(const TensorView& input,
-                              const TensorView& output_delta,
-                              TensorView& input_delta) const
+                                const TensorView& output_delta,
+                                TensorView& input_delta) const
 {
     IF_GPU({ apply_delta_gpu(input, output_delta, input_delta); return; });
     apply_delta_cpu(input, output_delta, input_delta);
+}
+
+void ConvolutionOp::apply(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation)
+{
+    IF_GPU({ apply_gpu(input, output, fused_activation); return; });
+    apply_cpu(input, output);
 }
 
 void ConvolutionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
@@ -1602,9 +1294,9 @@ void ConvolutionReluOp::forward_propagate(ForwardPropagation& fp, size_t layer, 
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
 
-    IF_GPU({ convolution.apply_gpu(input, output, activation.descriptor); return; });
-    convolution.apply_cpu(input, output);
-    activation.apply_cpu(output);
+    IF_GPU({ convolution.apply(input, output, activation.descriptor); return; });
+    convolution.apply(input, output);
+    activation_forward(output, activation.function);
 }
 
 void ConvolutionReluOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
@@ -1665,8 +1357,7 @@ void LayerNormOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /
     TensorView& normalized  = get_output(fp, layer, 2);
     TensorView& output      = get_output(fp, layer, 3);
 
-    IF_GPU({ apply_gpu(input, means, stds, output); return; });
-    apply_cpu(input, means, stds, normalized, output);
+    layer_norm_forward(input, gamma, beta, means, stds, normalized, output);
 }
 
 void LayerNormOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
@@ -1676,151 +1367,10 @@ void LayerNormOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
     const TensorView& output_delta = get_output_delta(bp, layer);
     TensorView& input_delta        = get_input_delta(bp, layer);
 
-#ifdef OPENNN_HAS_CUDA
-    IF_GPU({
-        const TensorView& input = get_input(fp, layer);
-        const TensorView& means = get_output(fp, layer);
-        apply_delta_gpu(input, output_delta, means, stds, input_delta);
-        return;
-    });
-#endif
-    apply_delta_cpu(output_delta, stds, normalized, input_delta);
+    layer_norm_backward(get_input(fp, layer), output_delta, get_output(fp, layer),
+                        stds, normalized, gamma, gamma_gradient, beta_gradient,
+                        input_delta);
 }
-
-void LayerNormOp::apply_cpu(const TensorView& input,
-                          TensorView& means, TensorView& standard_deviations, TensorView& normalized,
-                          TensorView& output)
-{
-    const float* input_data = input.as<float>();
-    float* means_data       = means.as<float>();
-    float* stds_data        = standard_deviations.as<float>();
-    float* normalized_data  = normalized.as<float>();
-    float* output_data      = output.as<float>();
-    const float* gamma_data = gamma.as<float>();
-    const float* beta_data  = beta.as<float>();
-
-    const Index total_rows = input.shape[0] * sequence_length;
-    const float inv_D = 1.0f / to_type(embedding_dimension);
-
-    #pragma omp parallel for
-    for (Index row = 0; row < total_rows; ++row)
-    {
-        const float* input_row = input_data + row * embedding_dimension;
-        float* norm_row        = normalized_data + row * embedding_dimension;
-        float* out_row         = output_data + row * embedding_dimension;
-
-        float sum = 0;
-        float sum_sq = 0;
-        for (Index dim_index = 0; dim_index < embedding_dimension; ++dim_index)
-        {
-            const float value = input_row[dim_index];
-            sum    += value;
-            sum_sq += value * value;
-        }
-
-        const float mean    = sum * inv_D;
-        const float std_val = sqrt(sum_sq * inv_D - mean * mean + EPSILON);
-        const float inv_std = 1.0f / std_val;
-
-        means_data[row] = mean;
-        stds_data[row]  = std_val;
-
-        for (Index dim_index = 0; dim_index < embedding_dimension; ++dim_index)
-        {
-            const float x_hat = (input_row[dim_index] - mean) * inv_std;
-            norm_row[dim_index] = x_hat;
-            out_row[dim_index]  = gamma_data[dim_index] * x_hat + beta_data[dim_index];
-        }
-    }
-}
-
-void LayerNormOp::apply_delta_cpu(const TensorView& output_delta,
-                                const TensorView& standard_deviations,
-                                const TensorView& normalized,
-                                TensorView& input_delta) const
-{
-    const MatrixMap output_delta_flat = output_delta.as_flat_matrix();
-    const MatrixMap norm_flat         = normalized.as_flat_matrix();
-
-    beta_gradient.as_vector().noalias()  = output_delta_flat.colwise().sum();
-    gamma_gradient.as_vector().noalias() = (output_delta_flat.array() * norm_flat.array()).matrix().colwise().sum();
-
-    const float* output_delta_data = output_delta.as<float>();
-    const float* norm_data         = normalized.as<float>();
-    const float* std_data          = standard_deviations.as<float>();
-    const float* gamma_data        = gamma.as<float>();
-    float* input_delta_data        = input_delta.as<float>();
-
-    const Index total_rows = output_delta.shape[0] * sequence_length;
-    const float inv_D = 1.0f / to_type(embedding_dimension);
-
-    #pragma omp parallel for
-    for (Index row = 0; row < total_rows; ++row)
-    {
-        const float* output_delta_row = output_delta_data + row * embedding_dimension;
-        const float* norm_row         = norm_data + row * embedding_dimension;
-        float* input_delta_row        = input_delta_data + row * embedding_dimension;
-        const float inv_std = 1.0f / std_data[row];
-
-        float sum_scaled_gradient      = 0;
-        float sum_scaled_gradient_norm = 0;
-        for (Index dim_index = 0; dim_index < embedding_dimension; ++dim_index)
-        {
-            const float scaled_gradient = gamma_data[dim_index] * output_delta_row[dim_index];
-            sum_scaled_gradient      += scaled_gradient;
-            sum_scaled_gradient_norm += scaled_gradient * norm_row[dim_index];
-        }
-        sum_scaled_gradient      *= inv_D;
-        sum_scaled_gradient_norm *= inv_D;
-
-        for (Index dim_index = 0; dim_index < embedding_dimension; ++dim_index)
-        {
-            const float scaled_gradient = gamma_data[dim_index] * output_delta_row[dim_index];
-            input_delta_row[dim_index] = (scaled_gradient - sum_scaled_gradient - norm_row[dim_index] * sum_scaled_gradient_norm) * inv_std;
-        }
-    }
-}
-
-#ifdef OPENNN_HAS_CUDA
-
-void LayerNormOp::apply_gpu(const TensorView& input,
-                          TensorView& means, TensorView& standard_deviations,
-                          TensorView& output)
-{
-    output.dispatch([&](auto tag) {
-        using T = decltype(tag);
-        layernorm_forward_cuda<T>(to_int(input.shape[0] * sequence_length),
-                                  to_int(embedding_dimension),
-                                  input.as<T>(), output.as<T>(),
-                                  means.as<float>(), standard_deviations.as<float>(),
-                                  gamma.as<float>(), beta.as<float>(), EPSILON);
-    });
-}
-
-void LayerNormOp::apply_delta_gpu(const TensorView& input,
-                                const TensorView& output_delta,
-                                const TensorView& means, const TensorView& standard_deviations,
-                                TensorView& input_delta) const
-{
-    input.dispatch([&](auto tag) {
-        using T = decltype(tag);
-        layernorm_backward_cuda<T>(to_int(input.shape[0] * sequence_length),
-                                   to_int(embedding_dimension),
-                                   output_delta.as<T>(), input.as<T>(),
-                                   means.as<float>(), standard_deviations.as<float>(),
-                                   gamma.as<float>(),
-                                   input_delta.as<T>(),
-                                   gamma_gradient.as<float>(), beta_gradient.as<float>());
-    });
-}
-
-#else
-
-void LayerNormOp::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&)              { throw runtime_error("LayerNorm::apply_gpu: CUDA support not compiled in."); }
-void LayerNormOp::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&,
-                                TensorView&) const                                                  { throw runtime_error("LayerNorm::apply_delta_gpu: CUDA support not compiled in."); }
-
-#endif
 
 void MultiHeadProjectionOp::set(Index new_input_features, Index new_heads_number,
                               Index new_head_dimension, Type new_compute_dtype)
@@ -1896,7 +1446,6 @@ void MultiHeadProjectionOp::back_propagate(ForwardPropagation& fp, BackPropagati
     apply_delta(head_delta, input, input_delta, accumulate,
                 fv[scratch_slots[0]][0].as<float>());
 }
-
 
 void AttentionOp::set(Index new_heads_number, Index new_head_dimension,
                     Index new_query_sequence_length, Index new_source_sequence_length,
@@ -1997,7 +1546,7 @@ Index AttentionOp::infer_attention_prefix_length(const TensorView& attention_wei
 vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
 {
 #ifdef OPENNN_HAS_CUDA
-    if (is_gpu() && compute_dtype == Type::BF16 && !dropout.active())
+    if (use_sdpa_backend(compute_dtype) && !dropout.active())
         return vector<TensorSpec>(2, {Shape{}, compute_dtype});
 #endif
 
@@ -2009,6 +1558,19 @@ vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
         {attention_shape, compute_dtype}, // AttentionWeights
         {dropout_shape,   compute_dtype}, // AttentionWeightsDropped
     };
+}
+
+bool AttentionOp::use_sdpa_backend(Type dtype) const
+{
+#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
+    constexpr Index sdpa_min_attention_area = 64 * 64;
+    return is_gpu()
+        && dtype == Type::BF16
+        && query_sequence_length * source_sequence_length >= sdpa_min_attention_area;
+#else
+    (void)dtype;
+    return false;
+#endif
 }
 
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
@@ -2064,6 +1626,7 @@ struct AttentionOp::SDPACache
         // Forward graph
         shared_ptr<cudnn_frontend::graph::Graph> fwd_graph;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_Q, fwd_K, fwd_V, fwd_O, fwd_Stats;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_SeqLenQ, fwd_SeqLenKV;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_Seed, fwd_Offset;
         void* fwd_workspace_buf = nullptr;
 
@@ -2071,6 +1634,7 @@ struct AttentionOp::SDPACache
         shared_ptr<cudnn_frontend::graph::Graph> bwd_graph;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Q, bwd_K, bwd_V, bwd_O, bwd_dO, bwd_Stats;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_dQ, bwd_dK, bwd_dV;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_SeqLenQ, bwd_SeqLenKV;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Seed, bwd_Offset;
         void* bwd_workspace_buf = nullptr;
 
@@ -2083,6 +1647,11 @@ struct AttentionOp::SDPACache
         // so cuDNN regenerates an identical mask.
         void* seed_buf   = nullptr;
         void* offset_buf = nullptr;
+
+        // Per-batch INT32 sequence lengths for cuDNN padding masks. Forward
+        // refreshes them from source_input; backward reuses the same batch.
+        void* seq_len_q_buf  = nullptr;
+        void* seq_len_kv_buf = nullptr;
     };
 
     unordered_map<CacheKey, Entry, CacheKeyHash> entries;
@@ -2125,6 +1694,8 @@ struct AttentionOp::SDPACache
             if (e.stats_buf)         cudaFree(e.stats_buf);
             if (e.seed_buf)          cudaFree(e.seed_buf);
             if (e.offset_buf)        cudaFree(e.offset_buf);
+            if (e.seq_len_q_buf)     cudaFree(e.seq_len_q_buf);
+            if (e.seq_len_kv_buf)    cudaFree(e.seq_len_kv_buf);
         }
 #endif
     }
@@ -2150,6 +1721,17 @@ bhsd_input(cudnn_frontend::graph::Graph& graph, const char* name, int64_t B, int
                         .set_dim   ({B, H, S, D})
                         .set_stride({H * S * D, S * D, D, 1}));
 }
+
+shared_ptr<cudnn_frontend::graph::Tensor_attributes>
+seq_len_input(cudnn_frontend::graph::Graph& graph, const char* name, int64_t batch_size)
+{
+    return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_dim({batch_size, 1, 1, 1})
+                        .set_stride({1, 1, 1, 1})
+                        .set_data_type(cudnn_frontend::DataType_t::INT32));
+}
+
 void bhsd_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>& T,
                  int64_t B, int64_t H, int64_t S, int64_t D)
 {
@@ -2178,6 +1760,26 @@ void finalize_sdpa_graph(cudnn_frontend::graph::Graph& graph, cudnnHandle_t hand
     sdpa_check(graph.build_plans(handle, cudnn_frontend::BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
 }
 
+void refresh_sdpa_sequence_lengths(AttentionOp::SDPACache::Entry& entry,
+                                   const AttentionOp::SDPACache::CacheKey& k,
+                                   const TensorView& source_input)
+{
+    const bool ok = source_input.shape.rank == 3 && source_input.shape[0] == k.batch_size && source_input.shape[1] == k.src_seq
+        && TRY_GPU_DISPATCH(source_input, [&](auto tag) {
+            using T = decltype(tag);
+            attention_sequence_lengths_cuda<T>(to_int(k.batch_size),
+                                               to_int(k.q_seq),
+                                               to_int(k.src_seq),
+                                               to_int(source_input.shape[2]),
+                                               source_input.as<T>(),
+                                               static_cast<int32_t*>(entry.seq_len_q_buf),
+                                               static_cast<int32_t*>(entry.seq_len_kv_buf));
+        });
+
+    if (!ok)
+        throw runtime_error("SDPA padding mask: source_input must be a rank-3 CUDA tensor with supported dtype.");
+}
+
 }  // namespace
 
 static void build_sdpa_forward_graph(AttentionOp::SDPACache::Entry& entry,
@@ -2191,12 +1793,20 @@ static void build_sdpa_forward_graph(AttentionOp::SDPACache::Entry& entry,
     entry.fwd_Q = bhsd_input(*graph, "Q", k.batch_size, k.heads, k.q_seq,   k.head_dim);
     entry.fwd_K = bhsd_input(*graph, "K", k.batch_size, k.heads, k.src_seq, k.head_dim);
     entry.fwd_V = bhsd_input(*graph, "V", k.batch_size, k.heads, k.src_seq, k.head_dim);
+    entry.fwd_SeqLenQ  = seq_len_input(*graph, "SeqLenQ",  k.batch_size);
+    entry.fwd_SeqLenKV = seq_len_input(*graph, "SeqLenKV", k.batch_size);
 
     auto sdpa_options = cudnn_frontend::graph::SDPA_attributes()
                         .set_name("flash_attn_fwd")
                         .set_is_inference(!k.is_training)
+                        .set_padding_mask(true)
+                        .set_seq_len_q(entry.fwd_SeqLenQ)
+                        .set_seq_len_kv(entry.fwd_SeqLenKV)
                         .set_causal_mask(k.causal)
                         .set_attn_scale(1.0f / sqrt(float(k.head_dim)));
+
+    if (!entry.seq_len_q_buf)  CHECK_CUDA(cudaMalloc(&entry.seq_len_q_buf,  size_t(k.batch_size) * sizeof(int32_t)));
+    if (!entry.seq_len_kv_buf) CHECK_CUDA(cudaMalloc(&entry.seq_len_kv_buf, size_t(k.batch_size) * sizeof(int32_t)));
 
     if (k.dropout_active)
     {
@@ -2254,6 +1864,8 @@ static void build_sdpa_backward_graph(AttentionOp::SDPACache::Entry& entry,
     entry.bwd_K  = bhsd_input(*graph, "K_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim);
     entry.bwd_V  = bhsd_input(*graph, "V_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim);
     entry.bwd_dO = bhsd_input(*graph, "dO_bwd", k.batch_size, k.heads, k.q_seq,   k.head_dim);
+    entry.bwd_SeqLenQ  = seq_len_input(*graph, "SeqLenQ_bwd",  k.batch_size);
+    entry.bwd_SeqLenKV = seq_len_input(*graph, "SeqLenKV_bwd", k.batch_size);
 
     // O is read from the layer's ConcatenatedAttentionOutputs buffer, which is
     // physically laid out as {B, Q_seq, H, D} (post merge_heads). Logical shape
@@ -2275,6 +1887,9 @@ static void build_sdpa_backward_graph(AttentionOp::SDPACache::Entry& entry,
 
     auto sdpa_bwd_options = cudnn_frontend::graph::SDPA_backward_attributes()
                             .set_name("flash_attn_bwd")
+                            .set_padding_mask(true)
+                            .set_seq_len_q(entry.bwd_SeqLenQ)
+                            .set_seq_len_kv(entry.bwd_SeqLenKV)
                             .set_causal_mask(k.causal)
                             .set_attn_scale(1.0f / sqrt(float(k.head_dim)));
 
@@ -2515,7 +2130,7 @@ void AttentionOp::apply_cpu(const TensorView& query,
     if (apply_dropout)
     {
         copy(attention_weights, used);
-        dropout.apply_cpu(used);
+        dropout_forward(used, dropout.mask, dropout.rate);
     }
 
     multiply(used, false, value, false, output);
@@ -2534,9 +2149,9 @@ void AttentionOp::apply_gpu(const TensorView& query,
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
     // SDPA Flash AttentionOp requires BF16 or FP16 in current cuDNN 9.x.
     // For FP32 we fall back to the manual GPU path (still correct, no fused kernel).
-    // Padding-mask handling not yet wired through the graph (would need a per-batch
-    // seq-len tensor); for now SDPA path assumes no padding tokens.
-    const bool sdpa_supported = (query.type == Type::BF16);
+    // Padding uses cuDNN seq-len tensors computed from source_input, matching
+    // the unfused path's key/value padding mask semantics.
+    const bool sdpa_supported = use_sdpa_backend(query.type);
     if (!sdpa_supported)
     {
         require_attention_scratch(attention_weights, "SDPA fallback triggered (FP32 only)");
@@ -2566,6 +2181,8 @@ void AttentionOp::apply_gpu(const TensorView& query,
     if (!entry.fwd_graph)
         build_sdpa_forward_graph(entry, ck, Backend::get_cudnn_handle(), dropout.rate);
 
+    refresh_sdpa_sequence_lengths(entry, ck, source_input);
+
     if (dropout_in_graph)
     {
         sdpa_last_used_offset = sdpa_dropout_offset;
@@ -2583,6 +2200,8 @@ void AttentionOp::apply_gpu(const TensorView& query,
     tp[entry.fwd_K] = key.data;
     tp[entry.fwd_V] = value.data;
     tp[entry.fwd_O] = output.data;
+    tp[entry.fwd_SeqLenQ]  = entry.seq_len_q_buf;
+    tp[entry.fwd_SeqLenKV] = entry.seq_len_kv_buf;
     if (is_training && entry.fwd_Stats) tp[entry.fwd_Stats] = entry.stats_buf;
     if (dropout_in_graph)
     {
@@ -2647,7 +2266,7 @@ void AttentionOp::apply_delta_unfused(const TensorView& query,
     multiply(output_delta, false, value, true, attention_weight_delta);
 
     if (dropout.active())
-        dropout.apply_delta(attention_weight_delta);
+        dropout_backward(attention_weight_delta, dropout.mask, dropout.rate);
 
     if (!attention_weight_delta.empty())
         softmax_bwd();
@@ -2820,7 +2439,7 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
     // Same support gate as forward. The forward path that produced this backward
     // call established the cache entry; if we fell back to the unfused path on
     // forward, we must also fall back here (no LSE stats to use).
-    const bool sdpa_supported = (query.type == Type::BF16);
+    const bool sdpa_supported = use_sdpa_backend(query.type);
     if (!sdpa_supported || !sdpa_cache)
     {
         require_attention_scratch(attention_weights, "SDPA backward fallback triggered");
@@ -2881,6 +2500,8 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
     tp[entry.bwd_dQ]    = query_delta.data;
     tp[entry.bwd_dK]    = key_delta.data;
     tp[entry.bwd_dV]    = value_delta.data;
+    tp[entry.bwd_SeqLenQ]  = entry.seq_len_q_buf;
+    tp[entry.bwd_SeqLenKV] = entry.seq_len_kv_buf;
     if (dropout_in_graph)
     {
         tp[entry.bwd_Seed]   = entry.seed_buf;
@@ -3006,14 +2627,13 @@ void PoolOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t 
     TensorView empty;
     const TensorView& indices = view_at_slot_or(fv, output_slots, 1, empty);
 
-#ifdef OPENNN_HAS_CUDA
     IF_GPU({
         const TensorView& input = get_input(fp, layer);
         const TensorView& output = get_output(fp, layer);
         apply_delta_gpu(input, output, output_delta, input_delta);
         return;
     });
-#endif
+
     apply_delta_cpu(output_delta, indices, input_delta);
 }
 
@@ -3227,7 +2847,6 @@ void EmbeddingLookupOp::set(Index new_vocabulary_size, Index new_sequence_length
     vocabulary_size     = new_vocabulary_size;
     sequence_length     = new_sequence_length;
     embedding_dimension = new_embedding_dimension;
-    embedding_scale     = sqrt(static_cast<float>(new_embedding_dimension));
 }
 
 vector<TensorSpec> EmbeddingLookupOp::parameter_specs() const
@@ -3306,8 +2925,9 @@ void EmbeddingLookupOp::forward_propagate(ForwardPropagation& fp, size_t layer, 
     const TensorView& indices = get_input(fp, layer);
     TensorView& output        = get_output(fp, layer);
 
-    IF_GPU({ apply_gpu(indices, output); return; });
-    apply_cpu(indices, output);
+    embedding_lookup_forward(indices, weights, positional_encoding, output,
+                             sequence_length, embedding_dimension, vocabulary_size,
+                             scale_embedding, add_positional_encoding);
 }
 
 void EmbeddingLookupOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
@@ -3315,121 +2935,9 @@ void EmbeddingLookupOp::back_propagate(ForwardPropagation& fp, BackPropagation& 
     const TensorView& indices      = get_input(fp, layer);
     const TensorView& output_delta = get_output_delta(bp, layer);
 
-    IF_GPU({ apply_delta_gpu(indices, output_delta); return; });
-    apply_delta_cpu(indices, output_delta);
+    embedding_lookup_backward(indices, output_delta, weight_gradient,
+                              embedding_dimension, vocabulary_size, scale_embedding);
 }
-
-void EmbeddingLookupOp::apply_cpu(const TensorView& indices, TensorView& output)
-{
-    const Index total_tokens = indices.size();
-
-    MatrixMap output_mat              = output.as_flat_matrix();
-    const MatrixMap weights_mat       = weights.as_matrix();
-    const float* input_indices = indices.as<float>();
-
-    static atomic<bool> out_of_range_warned{false};
-
-    #pragma omp parallel for
-    for (Index i = 0; i < total_tokens; ++i)
-    {
-        const Index token_id = static_cast<Index>(input_indices[i]);
-
-        if (token_id == 0)
-        {
-            output_mat.row(i).setZero();
-            continue;
-        }
-
-        if (token_id < 0 || token_id >= weights_mat.rows())
-        {
-            if (!out_of_range_warned.exchange(true))
-                cerr << "EmbeddingLookup warning: token id " << token_id
-                          << " out of range [0, " << weights_mat.rows()
-                          << "); zeroing row. Further warnings suppressed.\n";
-            output_mat.row(i).setZero();
-            continue;
-        }
-
-        output_mat.row(i).noalias() = weights_mat.row(token_id);
-
-        if (scale_embedding)
-            output_mat.row(i) *= embedding_scale;
-
-        if (add_positional_encoding && token_id > 0)
-        {
-            const MatrixMap pe = positional_encoding.as_matrix();
-            output_mat.row(i) += pe.row(i % sequence_length);
-        }
-    }
-}
-
-void EmbeddingLookupOp::apply_delta_cpu(const TensorView& indices,
-                                      const TensorView& output_delta) const
-{
-    const Index total_elements = indices.size();
-
-    MatrixMap output_delta_map = output_delta.as_flat_matrix();
-
-    // Fold scale_embedding into the accumulation rather than mutating
-    // output_delta in place (which would break parity with the GPU path that
-    // bakes the scale into embedding_backward_cuda).
-    const float scale = scale_embedding ? sqrt(to_type(embedding_dimension)) : 1.0f;
-
-    MatrixMap weight_gradients = weight_gradient.as_matrix().setZero();
-
-    for (Index token_index = 0; token_index < total_elements; ++token_index)
-    {
-        const Index vocabulary_index = static_cast<Index>(indices.as<float>()[token_index]);
-
-        if (vocabulary_index <= 0 || vocabulary_index >= weight_gradients.rows())
-            continue;
-
-        if (scale_embedding)
-            weight_gradients.row(vocabulary_index).noalias() += scale * output_delta_map.row(token_index);
-        else
-            weight_gradients.row(vocabulary_index).noalias() += output_delta_map.row(token_index);
-    }
-}
-
-#ifdef OPENNN_HAS_CUDA
-
-void EmbeddingLookupOp::apply_gpu(const TensorView& indices, TensorView& output)
-{
-    output.dispatch([&](auto tag) {
-        using T = decltype(tag);
-        embedding_forward_cuda<T>(
-            output.size(),
-            indices.as<float>(),
-            weights.as<float>(),
-            add_positional_encoding ? positional_encoding.as<float>() : nullptr,
-            output.as<T>(),
-            sequence_length, embedding_dimension, vocabulary_size,
-            scale_embedding);
-    });
-}
-
-void EmbeddingLookupOp::apply_delta_gpu(const TensorView& indices,
-                                      const TensorView& output_delta) const
-{
-    weight_gradient.set_zero_async();
-
-    output_delta.dispatch([&](auto tag) {
-        using T = decltype(tag);
-        embedding_backward_cuda<T>(
-            output_delta.size(),
-            indices.as<float>(),
-            output_delta.as<T>(),
-            weight_gradient.as<float>(),
-            embedding_dimension, vocabulary_size, scale_embedding);
-    });
-}
-
-#else
-
-void EmbeddingLookupOp::apply_gpu(const TensorView&, TensorView&)                                                { throw runtime_error("EmbeddingLookup::apply_gpu: CUDA support not compiled in."); }
-void EmbeddingLookupOp::apply_delta_gpu(const TensorView&, const TensorView&) const                              { throw runtime_error("EmbeddingLookup::apply_delta_gpu: CUDA support not compiled in."); }
-
-#endif
 
 void FlatOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
 {
@@ -3540,11 +3048,11 @@ void DetectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) 
     const TensorView& input = get_input(fp, layer);
     TensorView& output = get_output(fp, layer);
 
-    IF_GPU({ apply_gpu(input, output); return; });
-    apply_cpu(input, output);
+    IF_GPU({ throw runtime_error("DetectionOp GPU path is not implemented yet."); });
+    apply(input, output);
 }
 
-void DetectionOp::apply_cpu(const TensorView& input, TensorView& output) const
+void DetectionOp::apply(const TensorView& input, TensorView& output) const
 {
     const Index batch_size = input.shape[0];
     const Index channels = input.shape[3];
@@ -3589,12 +3097,6 @@ void DetectionOp::apply_cpu(const TensorView& input, TensorView& output) const
             }
 }
 
-void DetectionOp::apply_gpu(const TensorView&, TensorView&) const
-{
-    // @todo Implement CUDA YOLO detection forward.
-    throw runtime_error("DetectionOp::apply_gpu is not implemented yet.");
-}
-
 void DetectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
 {
     const TensorView& output = get_output(fp, layer);
@@ -3603,13 +3105,13 @@ void DetectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
 
     if (input_delta.empty()) return;
 
-    IF_GPU({ apply_delta_gpu(output, output_delta, input_delta); return; });
-    apply_delta_cpu(output, output_delta, input_delta);
+    IF_GPU({ throw runtime_error("DetectionOp GPU path is not implemented yet."); });
+    apply_delta(output, output_delta, input_delta);
 }
 
-void DetectionOp::apply_delta_cpu(const TensorView& output,
-                                  const TensorView& output_delta,
-                                  TensorView& input_delta) const
+void DetectionOp::apply_delta(const TensorView& output,
+                              const TensorView& output_delta,
+                              TensorView& input_delta) const
 {
     const Index batch_size = output.shape[0];
     const Index channels = output.shape[3];
@@ -3646,12 +3148,6 @@ void DetectionOp::apply_delta_cpu(const TensorView& output,
             }
 }
 
-void DetectionOp::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const
-{
-    // @todo Implement CUDA YOLO detection backward.
-    throw runtime_error("DetectionOp::apply_delta_gpu is not implemented yet.");
-}
-
 void NonMaxSuppressionOp::set(const Shape& input_shape,
                               Index new_boxes_per_cell,
                               float new_confidence_threshold,
@@ -3681,11 +3177,11 @@ void NonMaxSuppressionOp::forward_propagate(ForwardPropagation& fp, size_t layer
     const TensorView& input = get_input(fp, layer);
     TensorView& output = get_output(fp, layer);
 
-    IF_GPU({ apply_gpu(input, output); return; });
-    apply_cpu(input, output);
+    IF_GPU({ throw runtime_error("NonMaxSuppressionOp GPU path is not implemented yet."); });
+    apply(input, output);
 }
 
-void NonMaxSuppressionOp::apply_cpu(const TensorView& input, TensorView& output) const
+void NonMaxSuppressionOp::apply(const TensorView& input, TensorView& output) const
 {
     const Index batch_size = input.shape[0];
     const Index channels = input.shape[3];
@@ -3762,12 +3258,6 @@ void NonMaxSuppressionOp::apply_cpu(const TensorView& input, TensorView& output)
                 break;
         }
     }
-}
-
-void NonMaxSuppressionOp::apply_gpu(const TensorView&, TensorView&) const
-{
-    // @todo Implement CUDA YOLO non-max suppression.
-    throw runtime_error("NonMaxSuppressionOp::apply_gpu is not implemented yet.");
 }
 
 namespace
@@ -3931,17 +3421,13 @@ void LongShortTermMemoryOp::forward_propagate(ForwardPropagation& fp, size_t lay
     TensorView& hidden_state = views[HiddenStateSlot][0];
     TensorView& cell_activation = views[CellActivationSlot][0];
 
-    IF_GPU({
-        apply_gpu(input, output, forget_gate, input_gate, candidate_gate, output_gate,
-                  cell_state, hidden_state, cell_activation);
-        return;
-    });
+    IF_GPU({ throw runtime_error("LongShortTermMemoryOp GPU path is not implemented yet."); });
 
-    apply_cpu(input, output, forget_gate, input_gate, candidate_gate, output_gate,
-              cell_state, hidden_state, cell_activation);
+    apply(input, output, forget_gate, input_gate, candidate_gate, output_gate,
+          cell_state, hidden_state, cell_activation);
 }
 
-void LongShortTermMemoryOp::apply_cpu(const TensorView& input,
+void LongShortTermMemoryOp::apply(const TensorView& input,
                                       TensorView& output,
                                       TensorView& forget_gate,
                                       TensorView& input_gate,
@@ -4043,20 +3529,6 @@ void LongShortTermMemoryOp::apply_cpu(const TensorView& input,
     }
 }
 
-void LongShortTermMemoryOp::apply_gpu(const TensorView&,
-                                      TensorView&,
-                                      TensorView&,
-                                      TensorView&,
-                                      TensorView&,
-                                      TensorView&,
-                                      TensorView&,
-                                      TensorView&,
-                                      TensorView&) const
-{
-    // @todo Implement CUDA LSTM forward.
-    throw runtime_error("LongShortTermMemoryOp::apply_gpu is not implemented yet.");
-}
-
 void LongShortTermMemoryOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
 {
     auto& deltas = bp.delta_views[layer];
@@ -4082,30 +3554,24 @@ void LongShortTermMemoryOp::back_propagate(ForwardPropagation& fp, BackPropagati
     const TensorView& hidden_state = views[HiddenStateSlot][0];
     const TensorView& cell_activation = views[CellActivationSlot][0];
 
-    IF_GPU({
-        apply_delta_gpu(input, output_delta, input_delta, hidden_delta, cell_delta,
-                        forget_delta, input_gate_delta, candidate_delta, output_gate_delta,
-                        forget_gate, input_gate, candidate_gate, output_gate, cell_state,
-                        hidden_state, cell_activation);
-        return;
-    });
+    IF_GPU({ throw runtime_error("LongShortTermMemoryOp GPU path is not implemented yet."); });
 
-    apply_delta_cpu(input, output_delta, input_delta, hidden_delta, cell_delta,
-                    forget_delta, input_gate_delta, candidate_delta, output_gate_delta,
-                    forget_gate, input_gate, candidate_gate, output_gate, cell_state,
-                    hidden_state, cell_activation);
+    apply_delta(input, output_delta, input_delta, hidden_delta, cell_delta,
+                forget_delta, input_gate_delta, candidate_delta, output_gate_delta,
+                forget_gate, input_gate, candidate_gate, output_gate, cell_state,
+                hidden_state, cell_activation);
 }
 
-void LongShortTermMemoryOp::apply_delta_cpu(const TensorView& input,
-                                            const TensorView& output_delta,
-                                            TensorView& input_delta,
-                                            TensorView& hidden_delta_scratch,
-                                            TensorView& cell_delta_scratch,
-                                            TensorView& forget_delta_scratch,
-                                            TensorView& input_delta_scratch,
-                                            TensorView& candidate_delta_scratch,
-                                            TensorView& output_delta_scratch,
-                                            const TensorView& forget_gate,
+void LongShortTermMemoryOp::apply_delta(const TensorView& input,
+                                        const TensorView& output_delta,
+                                        TensorView& input_delta,
+                                        TensorView& hidden_delta_scratch,
+                                        TensorView& cell_delta_scratch,
+                                        TensorView& forget_delta_scratch,
+                                        TensorView& input_delta_scratch,
+                                        TensorView& candidate_delta_scratch,
+                                        TensorView& output_delta_scratch,
+                                        const TensorView& forget_gate,
                                             const TensorView& input_gate,
                                             const TensorView& candidate_gate,
                                             const TensorView& output_gate,
@@ -4267,27 +3733,6 @@ void LongShortTermMemoryOp::apply_delta_cpu(const TensorView& input,
             }
         }
     }
-}
-
-void LongShortTermMemoryOp::apply_delta_gpu(const TensorView&,
-                                            const TensorView&,
-                                            TensorView&,
-                                            TensorView&,
-                                            TensorView&,
-                                            TensorView&,
-                                            TensorView&,
-                                            TensorView&,
-                                            TensorView&,
-                                            const TensorView&,
-                                            const TensorView&,
-                                            const TensorView&,
-                                            const TensorView&,
-                                            const TensorView&,
-                                            const TensorView&,
-                                            const TensorView&) const
-{
-    // @todo Implement CUDA LSTM backward.
-    throw runtime_error("LongShortTermMemoryOp::apply_delta_gpu is not implemented yet.");
 }
 
 }

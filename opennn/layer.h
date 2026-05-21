@@ -10,6 +10,7 @@
 
 #include "tensor_utilities.h"
 #include "math_utilities.h"
+#include "operators.h"
 #include "random_utilities.h"
 #include "string_utilities.h"
 #include "forward_propagation.h"
@@ -136,7 +137,7 @@ public:
 
     [[nodiscard]] virtual Shape get_output_shape() const = 0;
 
-    [[nodiscard]] virtual ActivationOp::Function get_output_activation() const { return ActivationOp::Function::Identity; }
+    [[nodiscard]] virtual ActivationFunction get_output_activation() const { return ActivationFunction::Identity; }
 
     [[nodiscard]] Index get_inputs_number() const { return get_input_shape().size(); }
 

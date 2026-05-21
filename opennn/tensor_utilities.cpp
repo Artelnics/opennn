@@ -13,6 +13,29 @@
 namespace opennn
 {
 
+const EnumMap<ActivationFunction>& activation_function_map()
+{
+    static const vector<pair<ActivationFunction, string>> entries = {
+        {ActivationFunction::Identity, "Identity"},
+        {ActivationFunction::Sigmoid,  "Sigmoid"},
+        {ActivationFunction::Tanh,     "Tanh"},
+        {ActivationFunction::ReLU,     "ReLU"},
+        {ActivationFunction::Softmax,  "Softmax"}
+    };
+    static const EnumMap<ActivationFunction> instance{entries};
+    return instance;
+}
+
+const string& activation_function_to_string(ActivationFunction function)
+{
+    return activation_function_map().to_string(function);
+}
+
+ActivationFunction activation_function_from_string(const string& name)
+{
+    return activation_function_map().from_string(name, ActivationFunction::Identity);
+}
+
 string shape_to_string(const Shape& shape, const string& separator)
 {
     const Index size = shape.rank;
