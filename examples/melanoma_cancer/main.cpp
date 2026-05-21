@@ -31,7 +31,7 @@ int main()
 
         #ifdef OPENNN_HAS_CUDA
 
-        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
+        Configuration::instance().set(Device::Auto, Type::Auto, Type::Auto);
 
         // Data set
 

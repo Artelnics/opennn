@@ -24,7 +24,7 @@ int main()
     {
         cout << "OpenNN. Emotion analysis example." << endl;
 
-        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::Auto, Type::FP32, Type::FP32);
 
         // Settings
 
