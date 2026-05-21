@@ -1,0 +1,29 @@
+WWTP Growing Neurons Results - Run 1
+=====================================
+Date: 2026-04-13
+Loss: NormalizedSquaredError
+Lags: 2, Epochs: 100, Batch: 16, Trials: 3
+Neurons range: 3 to 30 (step 3)
+Total time: 61h 17m 32s
+
+Neurons | Best Val Error | All Trial Val Errors
+--------|----------------|---------------------
+  3     |  4.222         | 4.223, 4.281, 4.818
+  6     |  2.889         | 3.691, 5.682, 2.889
+  9     |  2.227         | 2.227, 3.732, 11.623
+ 12     |  1.968         | 2.080, 1.968, 2.583
+ 15     |  1.861         | 2.077, 1.861, 2.135
+ 18     |  1.447         | 3.143, 1.447, 1.515
+ 21     |  1.186         | 1.625, 1.186, 1.211
+ 24     |  1.367         | 1.367, 1.645, 1.405
+ 27     |  1.276         | 1.488, 1.276, 1.443
+ 30     |  1.065         | 1.065, 1.356, 1.826
+
+Winner: 30 neurons, validation NSE = 1.065
+Stopped by: MaximumNeurons (error still improving)
+
+Notes:
+- Error never plateaued — more neurons likely beneficial
+- Some trials show unstable init (e.g. 9 neurons trial 3 = 11.6)
+- NSE > 1.0 means model still slightly worse than mean predictor
+- Next run should explore 30-60 neurons

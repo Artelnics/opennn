@@ -22,5 +22,6 @@ add_subdirectory(iris_plant)
 add_subdirectory(mnist)
 add_subdirectory(melanoma_cancer)
 add_subdirectory(translation)
+add_subdirectory(wwt_optimization)
 
 
