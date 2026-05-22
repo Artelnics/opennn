@@ -286,7 +286,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             {
                 input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices("Input");
                 input_selection_results.optimal_input_variable_names = dataset->get_variable_names("Input");
-                //neural_network->get_parameters(input_selection_results.optimal_parameters);
+                input_selection_results.optimal_parameters = neural_network->get_parameters();
                 input_selection_results.optimum_training_error = trial_training_error;
                 input_selection_results.optimum_validation_error = trial_validation_error;
             }
@@ -356,15 +356,23 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         }
     }
 
+    cout << "[GI-DIAG] loop exited, beginning cleanup" << endl;
+
     input_selection_results.elapsed_time = write_time(elapsed_time);
     input_selection_results.resize_history(epoch);
+
+    cout << "[GI-DIAG] history resized (epoch=" << epoch << ")" << endl;
 
     // Set dataset
 
     dataset->set_variable_indices(input_selection_results.optimal_input_variables_indices,
         target_variable_indices);
 
+    cout << "[GI-DIAG] set_variable_indices done" << endl;
+
     const Index optimal_processed_variables_number = dataset->get_features_number("Input");
+
+    cout << "[GI-DIAG] optimal_processed_variables_number=" << optimal_processed_variables_number << endl;
 
     if(time_series_dataset)
     {
@@ -378,15 +386,23 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     else
     {
         dataset->set_shape("Input", { optimal_processed_variables_number });
+        cout << "[GI-DIAG] dataset->set_shape done" << endl;
         neural_network->set_input_shape({ optimal_processed_variables_number });
+        cout << "[GI-DIAG] neural_network->set_input_shape done" << endl;
     }
 
     if(display) dataset->print();
 
+    cout << "[GI-DIAG] before get_feature_scalers" << endl;
     const vector<string> input_variable_scalers = dataset->get_feature_scalers("Input");
+    cout << "[GI-DIAG] get_feature_scalers done (size=" << input_variable_scalers.size() << ")" << endl;
+
+    cout << "[GI-DIAG] before calculate_feature_descriptives" << endl;
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_feature_descriptives("Input");
+    cout << "[GI-DIAG] calculate_feature_descriptives done (size=" << input_variable_descriptives.size() << ")" << endl;
 
     set_maximum_inputs_number(dataset->get_variables_number("Input"));
+    cout << "[GI-DIAG] set_maximum_inputs_number done" << endl;
 
     // Set neural network
 
@@ -407,13 +423,22 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         neural_network->set_input_names(final_feature_names);
     }
     else
-        neural_network->set_input_names(dataset->get_feature_names("Input"));
+    {
+        cout << "[GI-DIAG] before set_input_names" << endl;
+        const vector<string> feat_names = dataset->get_feature_names("Input");
+        cout << "[GI-DIAG] get_feature_names done (size=" << feat_names.size() << ")" << endl;
+        neural_network->set_input_names(feat_names);
+        cout << "[GI-DIAG] set_input_names done" << endl;
+    }
 
     if(neural_network->has("Scaling2d"))
     {
+        cout << "[GI-DIAG] before scaling2d setup" << endl;
         Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(neural_network->get_first("Scaling2d"));
         scaling_layer->set_descriptives(input_variable_descriptives);
+        cout << "[GI-DIAG] scaling2d set_descriptives done" << endl;
         scaling_layer->set_scalers(input_variable_scalers);
+        cout << "[GI-DIAG] scaling2d set_scalers done" << endl;
     }
     else if(neural_network->has("Scaling3d"))
     {
@@ -435,9 +460,14 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         scaling_layer->set_scalers(expanded_scalers);
     }
 
+    cout << "[GI-DIAG] before set_parameters (optimal_parameters.size="
+         << input_selection_results.optimal_parameters.size() << ")" << endl;
     neural_network->set_parameters(input_selection_results.optimal_parameters);
+    cout << "[GI-DIAG] set_parameters done" << endl;
 
     if(display) input_selection_results.print();
+
+    cout << "[GI-DIAG] returning input_selection_results" << endl;
 
     return input_selection_results;
 }

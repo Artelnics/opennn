@@ -137,7 +137,10 @@ void GeneticAlgorithm::set_default()
 
     selection.resize(individuals_number);
 
-    elitism_size = Index(ceil(individuals_number / 4));
+    // Bug 9 fix — integer division truncates before ceil, so the original
+    // `ceil(individuals_number / 4)` returned floor(N/4) for non-multiples
+    // of 4 instead of the intended ceiling.
+    elitism_size = (individuals_number + 3) / 4;
 
     initialization_method = "Correlations";
 }
@@ -268,29 +271,51 @@ void GeneticAlgorithm::initialize_population_correlations()
     population.resize(individuals_number, genes_number);
     population.setConstant(false);
 
-    const VectorR correlations_rank = dataset->calculate_correlations_rank().cast<type>().array() + 1.0f;
+    // Bug 4 fix — dataset->calculate_correlations_rank() returns argsort
+    // (ascending) of |mean correlations|, NOT a per-feature rank. Build a
+    // proper rank vector keyed by feature index, so that roulette weights
+    // actually reflect correlation strength.
+    // corr_argsort_asc[i] = feature index of the i-th SMALLEST correlation.
+    // We want feature_weight[feature with highest corr] = N (most likely to
+    // be picked) and feature_weight[lowest corr] = 1.
+    const VectorI corr_argsort_asc = dataset->calculate_correlations_rank();
+    VectorR feature_weights(genes_number);
+    for(Index i = 0; i < genes_number; ++i)
+        feature_weights(corr_argsort_asc(i)) = type(i + 1);
 
-    const type correlations_sum = correlations_rank.sum();
+    const type weights_sum = feature_weights.sum();
 
-    VectorR correlations_cumsum(genes_number);
-    partial_sum(correlations_rank.data(), correlations_rank.data() + genes_number, correlations_cumsum.data());
+    VectorR weights_cumsum(genes_number);
+    partial_sum(feature_weights.data(), feature_weights.data() + genes_number, weights_cumsum.data());
 
-    const type* begin = correlations_cumsum.data();
+    const type* begin = weights_cumsum.data();
     const type* end   = begin + genes_number;
 
+    cout << "[DBG_GA] correlation-init feature weights:" << endl;                // DBG_GA
+    for(Index j = 0; j < genes_number; ++j)                                      // DBG_GA
+        cout << "  feature " << j << " weight=" << feature_weights(j) << endl;   // DBG_GA
+
     for(Index i = 0; i < individuals_number; i++)
-    {        
+    {
         individual_genes.setConstant(false);
 
         const Index true_count = random_integer(minimum_inputs_number, maximum_inputs_number);
 
+        Index safety_guard = 0;                                                  // DBG_GA
+        const Index safety_guard_limit = genes_number * 100;                     // DBG_GA
         while (count(individual_genes.data(), individual_genes.data() + genes_number, true) < true_count)
-        {   
-            const type arrow = random_uniform(0, correlations_sum);
+        {
+            const type arrow = random_uniform(type(0), weights_sum);
 
-            const Index j = static_cast<Index>(upper_bound(begin, end, arrow) - begin);
+            Index j = static_cast<Index>(upper_bound(begin, end, arrow) - begin);
+            if(j >= genes_number) j = genes_number - 1;
 
             individual_genes(j) = true;
+
+            if(++safety_guard > safety_guard_limit) {                            // DBG_GA
+                cout << "[DBG_GA] init_corr safety guard hit" << endl;           // DBG_GA
+                break;                                                           // DBG_GA
+            }                                                                    // DBG_GA
         }
 
         if (!individual_genes.any())
@@ -366,6 +391,43 @@ void GeneticAlgorithm::evaluate_population()
             neural_network->set_input_names(dataset->get_feature_names("Input"));
         }
 
+        // Bug 5 fix — restore scaling descriptives/scalers after set_input_shape
+        // because Scaling<N>::set() resets them to (mean=0, std=1) defaults.
+        {
+            const vector<Descriptives> ind_descriptives = dataset->calculate_feature_descriptives("Input");
+            const vector<string> ind_scalers = dataset->get_feature_scalers("Input");
+
+            if(neural_network->has("Scaling2d"))
+            {
+                Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(neural_network->get_first("Scaling2d"));
+                scaling_layer->set_descriptives(ind_descriptives);
+                scaling_layer->set_scalers(ind_scalers);
+            }
+            else if(neural_network->has("Scaling3d"))
+            {
+                Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(neural_network->get_first("Scaling3d"));
+                const Index past_time_steps = time_series_dataset
+                    ? time_series_dataset->get_past_time_steps() : Index(1);
+                const Index inputs_count = Index(ind_descriptives.size());
+                vector<Descriptives> expanded_descriptives;
+                vector<string> expanded_scalers;
+                expanded_descriptives.reserve(inputs_count * past_time_steps);
+                expanded_scalers.reserve(inputs_count * past_time_steps);
+                for(Index r = 0; r < inputs_count; r++)
+                    for(Index s = 0; s < past_time_steps; s++)
+                    {
+                        expanded_descriptives.push_back(ind_descriptives[r]);
+                        expanded_scalers.push_back(ind_scalers[r]);
+                    }
+                scaling_layer->set_descriptives(expanded_descriptives);
+                scaling_layer->set_scalers(expanded_scalers);
+            }
+
+            cout << "[DBG_GA] ind " << i << " scaling restored: "    // DBG_GA
+                 << ind_descriptives.size() << " descriptives, "     // DBG_GA
+                 << ind_scalers.size() << " scalers" << endl;        // DBG_GA
+        }
+
         neural_network->set_parameters_random();
 
         //Training
@@ -416,7 +478,24 @@ void GeneticAlgorithm::evaluate_population()
 
 void GeneticAlgorithm::perform_fitness_assignment()
 {
-    fitness = calculate_rank_greater(validation_errors).cast<type>().array() + type(1.0);
+    // Bug 1/2/3 fix — calculate_rank_greater returns argsort (indices sorted
+    // by descending value), NOT a rank. Build a proper rank where the
+    // individual with the LOWEST validation_error gets the HIGHEST fitness.
+    // argsort_desc[0] = index of WORST individual (largest validation_error)
+    // argsort_desc[N-1] = index of BEST individual.
+    // We want fitness[worst] = 1 and fitness[best] = N.
+    const Index n = get_individuals_number();
+    const VectorI argsort_desc = calculate_rank_greater(validation_errors);
+
+    fitness.resize(n);
+    for(Index i = 0; i < n; ++i)
+        fitness(argsort_desc(i)) = type(i + 1);
+
+    cout << "[DBG_GA] fitness assignment:" << endl;                              // DBG_GA
+    for(Index i = 0; i < n; ++i)                                                 // DBG_GA
+        cout << "  ind " << i                                                    // DBG_GA
+             << " val_err=" << validation_errors(i)                              // DBG_GA
+             << " fitness=" << fitness(i) << endl;                               // DBG_GA
 }
 
 
@@ -430,9 +509,11 @@ void GeneticAlgorithm::perform_selection()
 
     const Index individuals_to_be_selected = individuals_number/2;
 
+    // Elitism: with the rank-based fitness fix, fitness ∈ [1..N] and the top
+    // `elitism_size` individuals have fitness > N - elitism_size.
     if(elitism_size != 0)
         for(Index i = 0; i < individuals_number; i++)
-            selection(i) = (fitness(i) - 1 >= 0) && (fitness(i) > (individuals_number - elitism_size));
+            selection(i) = (fitness(i) > type(individuals_number - elitism_size));
 
     VectorR fitness_cumsum(fitness.size());
     partial_sum(fitness.data(), fitness.data() + fitness.size(), fitness_cumsum.data());
@@ -440,14 +521,30 @@ void GeneticAlgorithm::perform_selection()
     const type* begin = fitness_cumsum.data();
     const type* end = begin + individuals_number;
 
+    // Bug 11 fix — clamp upper_bound result to [0, N-1] to avoid OOB when
+    // arrow happens to equal fitness_sum due to float rounding.
+    Index safety_guard = 0;                                                       // DBG_GA
+    const Index safety_guard_limit = individuals_number * 100;                    // DBG_GA
     while (get_selected_individuals_number() < individuals_to_be_selected)
     {
         const type arrow = random_uniform(type(0), fitness_sum);
 
-        const Index i = static_cast<Index>(upper_bound(begin, end, arrow) - begin);
+        Index i = static_cast<Index>(upper_bound(begin, end, arrow) - begin);
+        if(i >= individuals_number) i = individuals_number - 1;
 
         selection(i) = true;
+
+        if(++safety_guard > safety_guard_limit) {                                 // DBG_GA
+            cout << "[DBG_GA] perform_selection safety guard hit" << endl;        // DBG_GA
+            break;                                                                // DBG_GA
+        }                                                                         // DBG_GA
     }
+
+    cout << "[DBG_GA] selection mask (elitism_size=" << elitism_size              // DBG_GA
+         << ", to_select=" << individuals_to_be_selected << "):" << endl;        // DBG_GA
+    for(Index i = 0; i < individuals_number; ++i)                                 // DBG_GA
+        cout << "  ind " << i << " fitness=" << fitness(i)                        // DBG_GA
+             << " selected=" << (selection(i) ? "Y" : "N") << endl;               // DBG_GA
 }
 
 
@@ -539,21 +636,33 @@ void GeneticAlgorithm::perform_crossover()
 
     MatrixB new_population(individuals_number, genes_number);
 
-    VectorB parent_1_genes;
-    VectorB parent_2_genes;
-
     const Index selected_individuals_number = get_selected_individuals_number();
 
-    vector<Index> selected_individual_indices = get_selected_individual_indices();
+    const vector<Index> selected_individual_indices = get_selected_individual_indices();
 
     if (selected_individuals_number == 0)
         throw logic_error("Cannot perform crossover with zero selected parents.");
 
-    const vector<Index> parent_1_indices = selected_individual_indices;
-    vector<Index> parent_2_indices = selected_individual_indices;
-    shuffle_vector(parent_2_indices);
-
     Index descendent_index = 0;
+
+    // Bug 8 fix — actual elite preservation: copy the top `elitism_size`
+    // individuals (by fitness) into the new population verbatim BEFORE doing
+    // crossover. Without this, elitism only made the elites likelier parents
+    // but didn't guarantee their genomes survived intact.
+    if(elitism_size > 0)
+    {
+        const VectorI fitness_argsort_desc = calculate_rank_greater(fitness);
+        const Index elites_to_copy = min(elitism_size, individuals_number);
+        for(Index e = 0; e < elites_to_copy; ++e)
+        {
+            new_population.row(descendent_index) = population.row(fitness_argsort_desc(e));
+            cout << "[DBG_GA] elite preserved: copy ind "                           // DBG_GA
+                 << fitness_argsort_desc(e)                                         // DBG_GA
+                 << " (fitness=" << fitness(fitness_argsort_desc(e))                // DBG_GA
+                 << ") -> new pop row " << descendent_index << endl;                // DBG_GA
+            descendent_index++;
+        }
+    }
 
     while (descendent_index < individuals_number)
     {
@@ -592,7 +701,14 @@ void GeneticAlgorithm::perform_mutation()
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
 
-    for(Index i = 0; i < individuals_number; ++i)
+    // Skip the first `elitism_size` rows, which were just copied verbatim as
+    // preserved elites by perform_crossover (Bug 8). Mutating them would
+    // defeat the point of elitism.
+    const Index mutation_start = min(elitism_size, individuals_number);
+    cout << "[DBG_GA] mutation: skipping rows 0.." << mutation_start - 1          // DBG_GA
+         << " (preserved elites)" << endl;                                        // DBG_GA
+
+    for(Index i = mutation_start; i < individuals_number; ++i)
     {
         VectorB individual = population.row(i);
         Index current_inputs_number = count(individual.data(), individual.data() + genes_number, true);
@@ -735,11 +851,18 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
             input_selection_results.optimal_parameters = parameters(optimal_individual_index);
 
-            // Loss index
-
-            input_selection_results.optimum_training_error = training_errors(optimal_individual_training_index);
+            // Loss index — Bug 6 fix: report the training error of the individual
+            // whose parameters we are SAVING (the validation winner), not of a
+            // different individual that happened to have the lowest training error.
+            input_selection_results.optimum_training_error = training_errors(optimal_individual_index);
 
             input_selection_results.optimum_validation_error = validation_errors(optimal_individual_index);
+
+            cout << "[DBG_GA] new global best at gen " << epoch                    // DBG_GA
+                 << " ind=" << optimal_individual_index                            // DBG_GA
+                 << " train_err=" << training_errors(optimal_individual_index)    // DBG_GA
+                 << " val_err=" << validation_errors(optimal_individual_index)    // DBG_GA
+                 << endl;                                                          // DBG_GA
         }
         else
         {
@@ -799,7 +922,10 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         perform_crossover();
 
-        if(mutation_rate!=0 && epoch > maximum_epochs*0.5 && epoch < maximum_epochs*0.8)
+        // Bug 7 fix — was: `epoch > 0.5*max && epoch < 0.8*max`. That window
+        // suppressed mutation in early generations (where diversity is most
+        // valuable) and in the final ones, with no documented justification.
+        if(mutation_rate != type(0))
             perform_mutation();
     }
 

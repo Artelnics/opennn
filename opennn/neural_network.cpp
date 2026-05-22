@@ -324,7 +324,15 @@ void NeuralNetwork::set_output_variables(const vector<Variable>& new_output_vari
 void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 {
     const Index total_inputs = new_input_shape.count();
-    input_variables.resize(total_inputs);
+    // Wipe any pre-existing variable metadata before resizing. plain resize()
+    // keeps the first `total_inputs` entries untouched, which leaves stale
+    // categorical Variables behind when input selection (growing/genetic)
+    // reuses the same NeuralNetwork across iterations with different input
+    // subsets. set_input_names() then sees those stale categoricals, tries
+    // to copy `num_cats` names per slot from the new flat name list, and
+    // walks off the end of the vector — libc++ surfaces that as a
+    // basic_string length_error / out_of_range.
+    input_variables.assign(total_inputs, Variable());
 
     if(has("Scaling2d"))
     {
