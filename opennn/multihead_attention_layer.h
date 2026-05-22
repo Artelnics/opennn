@@ -64,6 +64,16 @@ public:
 
     void set_dropout_rate(float new_dropout_rate) { attention.set_dropout_rate(new_dropout_rate); }
 
+    static constexpr Index default_sdpa_min_sequence_length = 192;
+
+    void set_sdpa_auto(bool new_sdpa_auto);
+    void set_sdpa_min_sequence_length(Index new_threshold);
+
+    bool  get_sdpa_auto() const { return sdpa_auto; }
+    Index get_sdpa_min_sequence_length() const { return sdpa_min_sequence_length; }
+
+    bool select_use_sdpa() const;
+
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 
@@ -73,6 +83,9 @@ private:
     Index heads_number = 0;
     Index query_sequence_length = 0;
     Index source_sequence_length = 0;
+
+    bool  sdpa_auto = true;
+    Index sdpa_min_sequence_length = default_sdpa_min_sequence_length;
 
     MultiHeadProjectionOp query_projection;
     MultiHeadProjectionOp key_projection;

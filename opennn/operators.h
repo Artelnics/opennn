@@ -473,10 +473,9 @@ private:
 struct MultiHeadProjectionOp : Operator
 {
     CombinationOp combination;
+
     Index input_features = 0;
-    Index heads_number = 0;
-    Index head_dimension = 0;
-    Type compute_dtype = Type::FP32;
+    Type  compute_dtype  = Type::FP32;
 
     // Which view inside views[input_slots[0]] to read. 0 for query path, 1 for
     // source path; clamped to size()-1 so self-attention (single input view)
@@ -505,14 +504,6 @@ struct MultiHeadProjectionOp : Operator
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
-
-    void apply(const TensorView& input, TensorView& head_output, float* scratch);
-
-    void apply_delta(const TensorView& head_delta,
-                     const TensorView& input,
-                     TensorView& input_delta,
-                     bool accumulate,
-                     float* scratch) const;
 };
 
 struct AttentionOp : Operator
@@ -524,6 +515,8 @@ struct AttentionOp : Operator
     bool  use_causal_mask = false;
     Type  compute_dtype = Type::FP32;
 
+    bool use_sdpa = false;
+
     MatrixR causal_mask;
 
     DropoutOp dropout;
@@ -532,16 +525,14 @@ struct AttentionOp : Operator
              Index query_sequence_length, Index source_sequence_length,
              bool use_causal_mask, Type compute_dtype);
 
+    static bool sdpa_supported(Type dtype);
+
     void set_dropout_rate(float rate) { dropout.set_rate(rate); }
 
     vector<TensorSpec> forward_scratch_specs(Index batch_size) const;
 
-    // Slot convention (set by hosting layer):
-    //   input_slots  = {Query, Key, Value, Input}     (Input read via source_view_index)
-    //   output_slots = {AttentionWeights, AttentionWeightsDropped}
-    //   scratch_slots = {TransposeScratch}             (used as attention_out + mask_scratch)
-    //   attention_output_slots = {ConcatenatedAttentionOutputs}  (backward-only: merged output for SDPA)
-    //   output_delta_slots = {AttentionWeightDelta, InputQueryDelta, InputSourceDelta, ValueDelta}
+    TensorSpec backward_scratch_spec(Index batch_size) const;
+
     size_t source_view_index = 1;  // 1 = source path; clamped to size()-1 for self-attention
 
     vector<size_t> scratch_slots;
@@ -549,28 +540,6 @@ struct AttentionOp : Operator
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
-
-    void apply(const TensorView& query,                    // {B, H, Q_seq, D}
-               const TensorView& key,                      // {B, H, S_seq, D}
-               const TensorView& value,                    // {B, H, S_seq, D}
-               const TensorView& source_input,             // {B, S_seq, embed} for padding mask
-               TensorView& attention_weights,              // {B, H, Q_seq, S_seq} on CPU; empty on GPU
-               TensorView& attention_weights_dropped,      // CPU-only, optional
-               TensorView& output,                         // {B, H, Q_seq, D}
-               float* mask_scratch,
-               bool is_training);
-
-    void apply_delta(const TensorView& query,
-                     const TensorView& key,
-                     const TensorView& value,
-                     const TensorView& attention_output,   // forward output O — only read by GPU SDPA
-                     const TensorView& attention_weights,
-                     const TensorView& attention_weights_dropped,
-                     const TensorView& output_delta,        // {B, H, Q_seq, D}
-                     TensorView& attention_weight_delta,    // CPU-only scratch; empty on GPU
-                     TensorView& query_delta,
-                     TensorView& key_delta,
-                     TensorView& value_delta) const;
 
     void to_JSON(JsonWriter& w) const override;
     void from_JSON(const Json* parent) override;
@@ -596,7 +565,7 @@ private:
                    TensorView& attention_weights,
                    TensorView& attention_weights_dropped,
                    TensorView& output,
-                   float* mask_scratch,
+                   void* scratch,
                    bool is_training);
 
     void apply_gpu(const TensorView& query,
@@ -606,10 +575,9 @@ private:
                    TensorView& attention_weights,
                    TensorView& attention_weights_dropped,
                    TensorView& output,
-                   float* mask_scratch,
+                   void* scratch,
                    bool is_training);
 
-    // Same signature as apply_delta(); CPU path ignores attention_output.
     void apply_delta_cpu(const TensorView& query,
                          const TensorView& key,
                          const TensorView& value,
@@ -652,10 +620,6 @@ private:
     static Index infer_attention_prefix_length(const TensorView& attention_weights,
                                                Index batch_index);
 
-    bool use_sdpa_backend(Type dtype) const;
-
-    // Common backbone for the unfused CPU and GPU paths. The softmax-backward
-    // step differs (Eigen vs cuDNN) and is supplied as a callable.
     template<typename SoftmaxBwd>
     void apply_delta_unfused(const TensorView& query,
                               const TensorView& key,
@@ -671,17 +635,11 @@ private:
 
     mutable unique_ptr<SDPACache> sdpa_cache;
 
-    // SDPA dropout RNG state. Forward advances `sdpa_dropout_offset`; backward
-    // replays the previous step's offset via `sdpa_last_used_offset` so the
-    // dropout mask is reproduced. Seed is fixed per AttentionOp instance.
     uint64_t sdpa_dropout_seed   = 0x9E3779B97F4A7C15ULL;
     uint64_t sdpa_dropout_offset = 0;
     mutable uint64_t sdpa_last_used_offset = 0;
 };
 
-// Reshapes a (batch, heads, seq, head_dim) tensor into (batch, seq, embed)
-// by interleaving heads back into the embedding dimension. Forward = merge_heads;
-// no parameters; the layer hosts the shape configuration via set().
 struct MergeOp : Operator
 {
     Index heads_number = 0;
@@ -692,10 +650,6 @@ struct MergeOp : Operator
     void set(Index heads_number, Index query_sequence_length, Index head_dimension, Type compute_dtype);
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
-
-    // Note: writes the heads gradient back to the SAME forward slot it reads from in
-    // forward (input_slots[0]). Buffer reuse for memory efficiency — the next backward
-    // op (AttentionOp) consumes the heads gradient from that scratch slot.
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
 };
 

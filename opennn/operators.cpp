@@ -1375,26 +1375,10 @@ void LayerNormOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
 void MultiHeadProjectionOp::set(Index new_input_features, Index new_heads_number,
                               Index new_head_dimension, Type new_compute_dtype)
 {
-    input_features   = new_input_features;
-    heads_number     = new_heads_number;
-    head_dimension   = new_head_dimension;
-    compute_dtype = new_compute_dtype;
+    input_features = new_input_features;
+    compute_dtype  = new_compute_dtype;
 
-    combination.set(input_features, heads_number * head_dimension, compute_dtype);
-}
-
-void MultiHeadProjectionOp::apply(const TensorView& input, TensorView& head_output, float* scratch)
-{
-    const Index batch_size = input.shape[0];
-    const Index seq_len    = input.shape[1];
-    const Index rows       = batch_size * seq_len;
-
-    TensorView input_2d   = input.reshape({rows, input_features});
-    TensorView scratch_2d(scratch, {rows, input_features}, head_output.type);
-    TensorView scratch_4d(scratch, {batch_size, seq_len, heads_number, head_dimension}, head_output.type);
-
-    combination.apply(input_2d, scratch_2d);
-    split_heads(scratch_4d, head_output);
+    combination.set(input_features, new_heads_number * new_head_dimension, compute_dtype);
 }
 
 void MultiHeadProjectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
@@ -1402,29 +1386,21 @@ void MultiHeadProjectionOp::forward_propagate(ForwardPropagation& fp, size_t lay
     auto& fv = fp.views[layer];
     const auto& input_views = get_inputs(fp, layer);
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
-    TensorView& output = get_output(fp, layer);
-    float* const scratch = fv[scratch_slots[0]][0].as<float>();
-    apply(input, output, scratch);
-}
+    TensorView& head_output = get_output(fp, layer);
 
-void MultiHeadProjectionOp::apply_delta(const TensorView& head_delta,
-                                      const TensorView& input,
-                                      TensorView& input_delta,
-                                      bool accumulate,
-                                      float* scratch) const
-{
-    const Index batch_size = input.shape[0];
-    const Index seq_len    = input.shape[1];
-    const Index rows       = batch_size * seq_len;
+    const Index batch_size     = input.shape[0];
+    const Index seq_len        = input.shape[1];
+    const Index rows           = batch_size * seq_len;
+    const Index heads_number   = head_output.shape[1];
+    const Index head_dimension = head_output.shape[3];
 
-    TensorView scratch_4d(scratch, {batch_size, seq_len, heads_number, head_dimension}, head_delta.type);
-    merge_heads(head_delta, scratch_4d);
+    TensorView& scratch     = fv[scratch_slots[0]][0];
+    TensorView  scratch_2d  = scratch.reshape({rows, input_features});
+    TensorView  scratch_4d  = scratch.reshape({batch_size, seq_len, heads_number, head_dimension});
+    TensorView  input_2d    = input.reshape({rows, input_features});
 
-    TensorView scratch_2d(scratch, {rows, input_features}, head_delta.type);
-    TensorView input_2d          = input.reshape({rows, input_features});
-    TensorView input_delta_2d = input_delta.reshape({rows, input_features});
-
-    combination.apply_delta(scratch_2d, input_2d, input_delta_2d, accumulate);
+    combination.apply(input_2d, scratch_2d);
+    split_heads(scratch_4d, head_output);
 }
 
 void MultiHeadProjectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
@@ -1436,15 +1412,26 @@ void MultiHeadProjectionOp::back_propagate(ForwardPropagation& fp, BackPropagati
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
     const bool self_attention = (input_views.size() == 1);
 
-    const TensorView head_delta(get_output_delta(bp, layer).as<float>(),
-                                   {fp.batch_size, heads_number, input.shape[1], head_dimension},
-                                   compute_dtype);
+    const TensorView& head_delta = get_output_delta(bp, layer);
 
-    TensorView& input_delta = dv[(self_attention ? input_delta_slots_self : input_delta_slots_cross)[0]];
-    const bool accumulate   = self_attention ? accumulate_input_delta_self : accumulate_input_delta_cross;
+    const Index batch_size     = input.shape[0];
+    const Index seq_len        = input.shape[1];
+    const Index rows           = batch_size * seq_len;
+    const Index heads_number   = head_delta.shape[1];
+    const Index head_dimension = head_delta.shape[3];
 
-    apply_delta(head_delta, input, input_delta, accumulate,
-                fv[scratch_slots[0]][0].as<float>());
+    TensorView& scratch     = fv[scratch_slots[0]][0];
+    TensorView  scratch_4d  = scratch.reshape({batch_size, seq_len, heads_number, head_dimension});
+    TensorView  scratch_2d  = scratch.reshape({rows, input_features});
+    TensorView  input_2d    = input.reshape({rows, input_features});
+
+    merge_heads(head_delta, scratch_4d);
+
+    TensorView& input_delta    = dv[(self_attention ? input_delta_slots_self : input_delta_slots_cross)[0]];
+    TensorView  input_delta_2d = input_delta.reshape({rows, input_features});
+    const bool  accumulate     = self_attention ? accumulate_input_delta_self : accumulate_input_delta_cross;
+
+    combination.apply_delta(scratch_2d, input_2d, input_delta_2d, accumulate);
 }
 
 void AttentionOp::set(Index new_heads_number, Index new_head_dimension,
@@ -1545,10 +1532,12 @@ Index AttentionOp::infer_attention_prefix_length(const TensorView& attention_wei
 
 vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
 {
-#ifdef OPENNN_HAS_CUDA
-    if (use_sdpa_backend(compute_dtype) && !dropout.active())
+    // SDPA does not materialise the attention matrix and does not use these
+    // scratch slots for dropout either, so they collapse to empty placeholders.
+    // Unfused path needs a (B, H, Q, K) scratch for the attention weights and,
+    // when dropout is active, a matching one for the dropped mask.
+    if (use_sdpa && !dropout.active())
         return vector<TensorSpec>(2, {Shape{}, compute_dtype});
-#endif
 
     const Shape attention_shape = {batch_size, heads_number,
                                    query_sequence_length, source_sequence_length};
@@ -1560,13 +1549,22 @@ vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
     };
 }
 
-bool AttentionOp::use_sdpa_backend(Type dtype) const
+TensorSpec AttentionOp::backward_scratch_spec(Index batch_size) const
+{
+    // SDPA backward (cuDNN frontend) computes dQ/dK/dV without materialising
+    // the attention weight matrix, so the (B,H,Q,K) scratch can be skipped.
+    // Unfused backward still needs it for the softmax-derivative reduction.
+    if (use_sdpa)
+        return {Shape{}, compute_dtype};
+
+    return {{batch_size, heads_number, query_sequence_length, source_sequence_length},
+            compute_dtype};
+}
+
+bool AttentionOp::sdpa_supported(Type dtype)
 {
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    constexpr Index sdpa_min_attention_area = 64 * 64;
-    return is_gpu()
-        && dtype == Type::BF16
-        && query_sequence_length * source_sequence_length >= sdpa_min_attention_area;
+    return is_gpu() && dtype == Type::BF16;
 #else
     (void)dtype;
     return false;
@@ -1938,27 +1936,6 @@ void AttentionOp::destroy_cuda()
     sdpa_cache.reset();
 }
 
-void AttentionOp::apply(const TensorView& query,
-                      const TensorView& key,
-                      const TensorView& value,
-                      const TensorView& source_input,
-                      TensorView& attention_weights,
-                      TensorView& attention_weights_dropped,
-                      TensorView& output,
-                      float* mask_scratch,
-                      bool is_training)
-{
-    IF_GPU({
-        apply_gpu(query, key, value, source_input,
-                  attention_weights, attention_weights_dropped,
-                  output, mask_scratch, is_training);
-        return;
-    });
-    apply_cpu(query, key, value, source_input,
-              attention_weights, attention_weights_dropped,
-              output, mask_scratch, is_training);
-}
-
 void AttentionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept
 {
     auto& fv = fp.views[layer];
@@ -1966,20 +1943,28 @@ void AttentionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
     const auto& src_views = get_inputs(fp, layer, 3);
     const TensorView& source_input = src_views[min(source_view_index, src_views.size() - 1)];
 
-    float* const mask_scratch = fv[scratch_slots[0]][0].as<float>();
-    TensorView attention_out(mask_scratch,
-                             {fp.batch_size, heads_number, query_sequence_length, head_dimension},
-                             compute_dtype);
+    const TensorView& query = get_input(fp, layer);
 
-    apply(get_input(fp, layer), get_input(fp, layer, 1), get_input(fp, layer, 2), source_input,
-          get_output(fp, layer), get_output(fp, layer, 1),
-          attention_out, mask_scratch, is_training);
+    // TransposeScratch is reused as the per-head attention output {B,H,Q,D}.
+    // CPU path also dereferences it as float* for the padding mask scratch
+    // — it does that inside apply_cpu without leaking the pointer up here.
+    TensorView attention_out = fv[scratch_slots[0]][0].reshape(
+        {fp.batch_size, query.shape[1], query.shape[2], query.shape[3]});
+
+    IF_GPU({
+        apply_gpu(query, get_input(fp, layer, 1), get_input(fp, layer, 2), source_input,
+                  get_output(fp, layer), get_output(fp, layer, 1),
+                  attention_out, fv[scratch_slots[0]][0].as<float>(), is_training);
+        return;
+    });
+    apply_cpu(query, get_input(fp, layer, 1), get_input(fp, layer, 2), source_input,
+              get_output(fp, layer), get_output(fp, layer, 1),
+              attention_out, fv[scratch_slots[0]][0].as<float>(), is_training);
 }
 
 void AttentionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
 {
     auto& fv = fp.views[layer];
-    const Index batch_size = fp.batch_size;
 
     const TensorView& query             = get_input(fp, layer);
     const TensorView& key               = get_input(fp, layer, 1);
@@ -1988,23 +1973,31 @@ void AttentionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
     const TensorView& attention_weights = get_output(fp, layer);
     const TensorView& attention_weights_dropped = get_output(fp, layer, 1);
 
+    // TransposeScratch reused as output_delta {B,H,Q,D}. Dims read from `query`
+    // instead of duplicating member state in the hot path.
     const TensorView output_delta = fv[scratch_slots[0]][0]
-        .reshape({batch_size, heads_number, query_sequence_length, head_dimension});
+        .reshape({fp.batch_size, query.shape[1], query.shape[2], query.shape[3]});
 
+    // delta_views are preallocated by MHA::get_backward_specs with the right
+    // shape and dtype; no need to reconstruct them from raw float pointers.
     TensorView& attention_weight_delta = get_output_delta(bp, layer);
-    TensorView  query_delta(get_output_delta(bp, layer, 1).as<float>(),
-                               {batch_size, heads_number, query_sequence_length, head_dimension},
-                               compute_dtype);
-    TensorView  key_delta(get_output_delta(bp, layer, 2).as<float>(),
-                             {batch_size, heads_number, source_sequence_length, head_dimension},
-                             compute_dtype);
-    TensorView& value_delta = get_output_delta(bp, layer, 3);
+    TensorView& query_delta            = get_output_delta(bp, layer, 1);
+    TensorView& key_delta              = get_output_delta(bp, layer, 2);
+    TensorView& value_delta            = get_output_delta(bp, layer, 3);
 
-    apply_delta(query, key, value, attention_output,
-                attention_weights, attention_weights_dropped,
-                output_delta,
-                attention_weight_delta,
-                query_delta, key_delta, value_delta);
+    IF_GPU({
+        apply_delta_gpu(query, key, value, attention_output,
+                        attention_weights, attention_weights_dropped,
+                        output_delta,
+                        attention_weight_delta,
+                        query_delta, key_delta, value_delta);
+        return;
+    });
+    apply_delta_cpu(query, key, value, attention_output,
+                    attention_weights, attention_weights_dropped,
+                    output_delta,
+                    attention_weight_delta,
+                    query_delta, key_delta, value_delta);
 }
 
 void AttentionOp::apply_cpu(const TensorView& query,
@@ -2014,7 +2007,7 @@ void AttentionOp::apply_cpu(const TensorView& query,
                           TensorView& attention_weights,
                           TensorView& attention_weights_dropped,
                           TensorView& output,
-                          [[maybe_unused]] float* mask_scratch,
+                          [[maybe_unused]] void* scratch,
                           bool is_training)
 {
     // CPU-only padding-aware fast path: uses Eigen MatrixMap directly on raw
@@ -2085,7 +2078,7 @@ void AttentionOp::apply_cpu(const TensorView& query,
                                     to_int(embedding_dimension),
                                     source_input.as<T>(),
                                     attention_weights.as<T>(),
-                                    reinterpret_cast<T*>(mask_scratch),
+                                    reinterpret_cast<T*>(scratch),
                                     use_causal_mask);
         }))
         {
@@ -2143,23 +2136,25 @@ void AttentionOp::apply_gpu(const TensorView& query,
                           TensorView& attention_weights,
                           TensorView& attention_weights_dropped,
                           TensorView& output,
-                          float* mask_scratch,
+                          void* scratch,
                           bool is_training)
 {
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    // SDPA Flash AttentionOp requires BF16 or FP16 in current cuDNN 9.x.
-    // For FP32 we fall back to the manual GPU path (still correct, no fused kernel).
-    // Padding uses cuDNN seq-len tensors computed from source_input, matching
-    // the unfused path's key/value padding mask semantics.
-    const bool sdpa_supported = use_sdpa_backend(query.type);
-    if (!sdpa_supported)
+    // The layer's policy decides whether this AttentionOp runs SDPA. The
+    // operator itself just executes — no implicit fallback, because the
+    // forward_scratch_specs allocation already committed to one path.
+    if (!use_sdpa)
     {
-        require_attention_scratch(attention_weights, "SDPA fallback triggered (FP32 only)");
         apply_cpu(query, key, value, source_input,
                   attention_weights, attention_weights_dropped,
-                  output, mask_scratch, is_training);
+                  output, scratch, is_training);
         return;
     }
+
+    if (!sdpa_supported(query.type))
+        throw runtime_error("AttentionOp: SDPA backend selected by the layer "
+                            "but not supported (build without HAVE_CUDNN_FRONTEND, "
+                            "non-BF16 dtype, or CPU runtime).");
 
     if (!sdpa_cache) sdpa_cache = make_unique<SDPACache>();
 
@@ -2216,33 +2211,8 @@ void AttentionOp::apply_gpu(const TensorView& query,
     // No cudnn-frontend: fall back to the manual softmax+matmul GPU path.
     apply_cpu(query, key, value, source_input,
               attention_weights, attention_weights_dropped,
-              output, mask_scratch, is_training);
+              output, scratch, is_training);
 #endif
-}
-
-void AttentionOp::apply_delta(const TensorView& query,
-                            const TensorView& key,
-                            const TensorView& value,
-                            const TensorView& attention_output,
-                            const TensorView& attention_weights,
-                            const TensorView& attention_weights_dropped,
-                            const TensorView& output_delta,
-                            TensorView& attention_weight_delta,
-                            TensorView& query_delta,
-                            TensorView& key_delta,
-                            TensorView& value_delta) const
-{
-    IF_GPU({
-        apply_delta_gpu(query, key, value, attention_output,
-                        attention_weights, attention_weights_dropped,
-                        output_delta, attention_weight_delta,
-                        query_delta, key_delta, value_delta);
-        return;
-    });
-    apply_delta_cpu(query, key, value, attention_output,
-                    attention_weights, attention_weights_dropped,
-                    output_delta, attention_weight_delta,
-                    query_delta, key_delta, value_delta);
 }
 
 template<typename SoftmaxBwd>
@@ -2436,19 +2406,21 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
                                 TensorView& value_delta) const
 {
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    // Same support gate as forward. The forward path that produced this backward
-    // call established the cache entry; if we fell back to the unfused path on
-    // forward, we must also fall back here (no LSE stats to use).
-    const bool sdpa_supported = use_sdpa_backend(query.type);
-    if (!sdpa_supported || !sdpa_cache)
+    // Mirrors the forward path: backend is decided by the hosting layer at
+    // configuration time and locked in by forward_scratch_specs. The forward
+    // populated sdpa_cache iff use_sdpa is true.
+    if (!use_sdpa)
     {
-        require_attention_scratch(attention_weights, "SDPA backward fallback triggered");
         apply_delta_gpu_unfused(query, key, value,
                                 attention_weights, attention_weights_dropped,
                                 output_delta, attention_weight_delta,
                                 query_delta, key_delta, value_delta);
         return;
     }
+
+    if (!sdpa_supported(query.type) || !sdpa_cache)
+        throw runtime_error("AttentionOp: SDPA backward called without a live SDPA "
+                            "forward graph (use_sdpa set inconsistently between fwd/bwd).");
 
     const bool dropout_in_graph = dropout.active();   // backward implies training
 
@@ -2466,15 +2438,15 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
 
     SDPACache::Entry* entry_ptr = sdpa_cache->find_entry(ck);
     if (!entry_ptr || !entry_ptr->fwd_graph)
-    {
-        // Forward never built an SDPA entry for this shape (e.g. fell back).
-        require_attention_scratch(attention_weights, "SDPA backward without matching forward entry");
-        apply_delta_gpu_unfused(query, key, value,
-                                attention_weights, attention_weights_dropped,
-                                output_delta, attention_weight_delta,
-                                query_delta, key_delta, value_delta);
-        return;
-    }
+        // Under the current policy (layer-decided, no silent fallback) the
+        // forward path always populates the cache when use_sdpa is true, so a
+        // missing entry here means the cache key drifted between fwd and bwd
+        // (e.g. batch size changed mid-iteration). The unfused scratch is no
+        // longer allocated in that case — falling back would just crash later.
+        throw runtime_error("AttentionOp::apply_delta_gpu: SDPA forward did not populate "
+                            "a cache entry for this shape. Cache key drifted between "
+                            "forward and backward (likely batch size changing across "
+                            "iterations under use_sdpa).");
 
     auto& entry = *entry_ptr;
     if (!entry.bwd_graph)

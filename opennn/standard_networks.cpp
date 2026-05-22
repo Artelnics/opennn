@@ -626,6 +626,20 @@ void Transformer::set_dropout_rate(const float new_dropout_rate)
     }
 }
 
+void Transformer::set_attention_sdpa_auto(bool new_sdpa_auto)
+{
+    for (auto& layer : get_layers())
+        if (auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
+            mha->set_sdpa_auto(new_sdpa_auto);
+}
+
+void Transformer::set_attention_sdpa_min_sequence_length(Index new_threshold)
+{
+    for (auto& layer : get_layers())
+        if (auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
+            mha->set_sdpa_min_sequence_length(new_threshold);
+}
+
 Index Transformer::get_input_sequence_length() const
 {
     return get_layer("encoder_embedding")->get_input_shape()[0];

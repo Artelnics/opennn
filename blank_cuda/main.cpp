@@ -7,10 +7,12 @@
 //   artelnics@artelnics.com
 
 #include <iostream>
+#include <iomanip>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <vector>
 
 #include "../opennn/image_dataset.h"
 #include "../opennn/language_dataset.h"
@@ -24,6 +26,40 @@
 
 using namespace opennn;
 using namespace std::chrono;
+
+// ----- SDPA vs unfused benchmark scaffolding (temporary) -----
+// Writes N random (input, target) pairs to dst, each pair containing exactly
+// `tokens_per_side` tokens drawn from a vocabulary of `vocab_size` synthetic
+// words. LanguageDataset then pads up to maximum_input_sequence_length =
+// tokens_per_side + 2, giving deterministic control over the model seq_len.
+static void write_synthetic_pairs(const std::filesystem::path& dst,
+                                  Index n_pairs,
+                                  Index tokens_per_side,
+                                  Index vocab_size)
+{
+    if (std::filesystem::exists(dst)) return;
+
+    std::ofstream out(dst);
+    if (!out.is_open())
+        throw runtime_error("write_synthetic_pairs: cannot open " + dst.string());
+
+    for (Index i = 0; i < n_pairs; ++i)
+    {
+        for (Index j = 0; j < tokens_per_side; ++j)
+        {
+            if (j > 0) out << ' ';
+            out << "tok" << random_integer(0, int(vocab_size) - 1);
+        }
+        out << '\t';
+        for (Index j = 0; j < tokens_per_side; ++j)
+        {
+            if (j > 0) out << ' ';
+            out << "tok" << random_integer(0, int(vocab_size) - 1);
+        }
+        out << '\n';
+    }
+}
+// ----- end SDPA bench scaffolding -----
 
 // tinychat.txt format: each line is one conversation with multiple
 // `[INST] user [/INST] assistant` turns concatenated. We extract every turn as
@@ -186,92 +222,110 @@ int main()
         testing_analysis.set_batch_size(16);
         cout << "\nConfusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
         */
-        // ============== Translation benchmark (kept for reference) ==============
-        
+        // ============== SDPA vs unfused — seq_len sweep ==============
+        // Drives a synthetic dataset where every pair has exactly seq_len-2
+        // real tokens. Same Transformer config for every seq_len so the only
+        // varying axis is the attention shape. The policy now lives in
+        // MultiHeadAttention (sdpa_auto + sdpa_min_sequence_length); we toggle
+        // it through Transformer::set_attention_sdpa_min_sequence_length to
+        // force SDPA on (threshold=1) or off (threshold=MAX).
+
         Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
+        Backend::instance();
 
-        set_seed(42);
+        const vector<Index> seq_lens = { 64, 96, 128, 192, 256, 384, 512, 768 };
+        const Index   n_pairs                = 1024;
+        const Index   vocab_size             = 500;
+        const Index   embedding_dimension    = 256;
+        const Index   heads_number           = 8;
+        const Index   feed_forward_dimension = 1024;
+        const Index   layers_number          = 2;
+        const Index   batch_size             = 32;
+        const Index   warmup_epochs          = 2;
+        const Index   timed_epochs           = 3;
 
-        LanguageDataset dataset("/home/artelnics/Documents/openNN/opennn/temp/translation_en_es.txt");
-        dataset.split_samples_random(0.8, 0.1, 0.1);
+        struct BenchResult { Index seq_len; double sdpa_sec; double unfused_sec; };
+        vector<BenchResult> results;
 
-        const Index input_vocab  = dataset.get_input_vocabulary_size();
-        const Index output_vocab = dataset.get_target_vocabulary_size();
-        const Index input_seq    = dataset.get_shape("Input")[0];
-        const Index decoder_seq  = dataset.get_shape("Decoder")[0];
-        const Index target_seq   = dataset.get_shape("Target")[0];
-
-        if(decoder_seq != target_seq)
-            throw runtime_error("Decoder and target sequence lengths must match.");
-
-        const Index embedding_dimension     = 512;
-        const Index heads_number            = 8;
-        const Index feed_forward_dimension  = 2048;
-        const Index layers_number           = 4;
-
-        Transformer transformer(input_seq,
-                                decoder_seq,
-                                input_vocab,
-                                output_vocab,
-                                embedding_dimension,
-                                heads_number,
-                                feed_forward_dimension,
-                                layers_number);
-
-        transformer.set_dropout_rate(float(0));
-
-        TrainingStrategy training_strategy(&transformer, &dataset);
-
-        training_strategy.set_loss("CrossEntropyError3d");
-        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-
-        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        if(!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
-
-        adam->set_batch_size(128);
-        adam->set_learning_rate(float(5e-4));
-        adam->set_maximum_epochs(4);   // 5 epochs (loop runs 0..4 inclusive)
-        adam->set_display_period(1);
-
-        cout << "[PARITY] train="  << dataset.get_samples_number("Training")
-             << " val="            << dataset.get_samples_number("Validation")
-             << " test="           << dataset.get_samples_number("Testing")
-             << " input_vocab="    << input_vocab
-             << " target_vocab="   << output_vocab
-             << " input_seq="      << input_seq
-             << " decoder_seq="    << decoder_seq
-             << " params="         << transformer.get_parameters_number()
-             << " (buffer="        << transformer.get_parameters_size() << ")" << endl;
-
-        const auto t0 = steady_clock::now();
-        training_strategy.train();
-        const auto t1 = steady_clock::now();
-
-        const double training_seconds = duration_cast<milliseconds>(t1 - t0).count() / 1000.0;
-        cout << "\nTotal training time (refactor): " << training_seconds << " s" << endl;
-
-        cout << "\n================ TRANSFORMER PREDICTIONS ================\n";
-
-        const vector<string> test_sources =
+        auto run_one = [&](Index seq_len, bool force_sdpa) -> double
         {
-            "the cat eats an apple",
-            "a boy sings happily",
-            "my friend writes a book",
-            "the teacher speaks loudly"
+            const Index tokens_per_side = seq_len - 2;   // +2 for START/END pads
+            const filesystem::path tsv = format("/tmp/sdpa_bench_seq{}.tsv", seq_len);
+
+            set_seed(42);
+            write_synthetic_pairs(tsv, n_pairs, tokens_per_side, vocab_size);
+
+            set_seed(42);
+            LanguageDataset dataset(tsv);
+            dataset.split_samples_random(0.9f, 0.0f, 0.1f);
+
+            Transformer transformer(dataset.get_shape("Input")[0],
+                                    dataset.get_shape("Decoder")[0],
+                                    dataset.get_input_vocabulary_size(),
+                                    dataset.get_target_vocabulary_size(),
+                                    embedding_dimension,
+                                    heads_number,
+                                    feed_forward_dimension,
+                                    layers_number);
+            transformer.set_dropout_rate(0.0f);
+
+            // Layer-level policy: threshold=1 forces SDPA at every seq_len,
+            // MAX disables it entirely. Must be set BEFORE training because
+            // forward_scratch_specs() reads use_sdpa at compile time.
+            if (force_sdpa)
+                transformer.set_attention_sdpa_min_sequence_length(1);
+            else
+                transformer.set_attention_sdpa_auto(false);
+
+            TrainingStrategy ts(&transformer, &dataset);
+            ts.set_loss("CrossEntropyError3d");
+            ts.set_optimization_algorithm("AdaptiveMomentEstimation");
+
+            auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(ts.get_optimization_algorithm());
+            if (!adam) throw runtime_error("Adam optimizer not found.");
+            adam->set_batch_size(batch_size);
+            adam->set_learning_rate(5e-4f);
+            adam->set_display(false);
+
+            adam->set_maximum_epochs(warmup_epochs - 1);  // train() runs max+1 epochs
+            ts.train();
+
+            adam->set_maximum_epochs(timed_epochs - 1);
+            const auto t0 = steady_clock::now();
+            ts.train();
+            const auto t1 = steady_clock::now();
+
+            return duration_cast<microseconds>(t1 - t0).count() / 1e6 / double(timed_epochs);
         };
 
-        TransformerDecoder translation_decoder(transformer, dataset);
-        for(Index i = 0; i < Index(test_sources.size()); ++i)
+        cout << "\n=================== SDPA vs UNFUSED benchmark ===================\n";
+        cout << "config: emb=" << embedding_dimension
+             << " heads=" << heads_number
+             << " ffn=" << feed_forward_dimension
+             << " layers=" << layers_number
+             << " batch=" << batch_size
+             << " samples=" << n_pairs
+             << " warmup=" << warmup_epochs << "ep timed=" << timed_epochs << "ep (avg)\n\n";
+
+        cout << left << setw(10) << "seq_len"
+             << right << setw(14) << "sdpa (s/ep)"
+             << setw(16) << "unfused (s/ep)"
+             << setw(14) << "speedup" << "\n";
+        cout << string(54, '-') << "\n";
+
+        for (Index seq_len : seq_lens)
         {
-            const string prediction = translation_decoder.decode(test_sources[i]);
+            const double t_sdpa    = run_one(seq_len, /*force_sdpa=*/true);
+            const double t_unfused = run_one(seq_len, /*force_sdpa=*/false);
+            results.push_back({seq_len, t_sdpa, t_unfused});
 
-            cout << "Sample " << i << endl;
-            cout << "  Source:    " << test_sources[i] << endl;
-            cout << "  Predicted: " << prediction << endl;
-            cout << endl;
+            cout << left << setw(10) << seq_len
+                 << right << fixed << setprecision(3) << setw(14) << t_sdpa
+                 << setw(16) << t_unfused
+                 << setw(13) << setprecision(2) << (t_unfused / t_sdpa) << "x" << "\n"
+                 << flush;
         }
-
-        cout << "=========================================================\n";
+        cout << "=================================================================\n";
         
 
         // ====================  LLM experiments (commented out)  ====================
