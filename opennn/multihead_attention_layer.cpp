@@ -81,7 +81,7 @@ vector<TensorSpec> MultiHeadAttention::get_backward_specs(Index batch_size) cons
     return {
         {{batch_size, query_sequence_length, embedding_dimension},                  compute_dtype}, // InputQueryDelta - final dInput query
         {{batch_size, source_sequence_length, embedding_dimension},                 compute_dtype}, // InputSourceDelta - final dInput source
-        {{batch_size, heads_number, query_sequence_length, source_sequence_length}, compute_dtype}, // AttentionWeightDelta - unfused scratch
+        attention.backward_scratch_spec(batch_size),                                                // AttentionWeightDelta - empty if SDPA, (B,H,Q,K) otherwise
         {{batch_size, heads_number, source_sequence_length, head_dimension},        compute_dtype}, // ValueHeadDelta - dV, head shape
         {{batch_size, query_sequence_length, embedding_dimension},                  compute_dtype}, // ConcatenatedOutputDelta - dConcat, embed shape
         {{batch_size, heads_number, query_sequence_length, head_dimension},         compute_dtype}, // QueryHeadDelta - dQ, head shape

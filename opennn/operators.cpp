@@ -1375,26 +1375,10 @@ void LayerNormOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
 void MultiHeadProjectionOp::set(Index new_input_features, Index new_heads_number,
                               Index new_head_dimension, Type new_compute_dtype)
 {
-    input_features   = new_input_features;
-    heads_number     = new_heads_number;
-    head_dimension   = new_head_dimension;
-    compute_dtype = new_compute_dtype;
+    input_features = new_input_features;
+    compute_dtype  = new_compute_dtype;
 
-    combination.set(input_features, heads_number * head_dimension, compute_dtype);
-}
-
-void MultiHeadProjectionOp::apply(const TensorView& input, TensorView& head_output, float* scratch)
-{
-    const Index batch_size = input.shape[0];
-    const Index seq_len    = input.shape[1];
-    const Index rows       = batch_size * seq_len;
-
-    TensorView input_2d   = input.reshape({rows, input_features});
-    TensorView scratch_2d(scratch, {rows, input_features}, head_output.type);
-    TensorView scratch_4d(scratch, {batch_size, seq_len, heads_number, head_dimension}, head_output.type);
-
-    combination.apply(input_2d, scratch_2d);
-    split_heads(scratch_4d, head_output);
+    combination.set(input_features, new_heads_number * new_head_dimension, compute_dtype);
 }
 
 void MultiHeadProjectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
@@ -1402,29 +1386,23 @@ void MultiHeadProjectionOp::forward_propagate(ForwardPropagation& fp, size_t lay
     auto& fv = fp.views[layer];
     const auto& input_views = get_inputs(fp, layer);
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
-    TensorView& output = get_output(fp, layer);
-    float* const scratch = fv[scratch_slots[0]][0].as<float>();
-    apply(input, output, scratch);
-}
+    TensorView& head_output = get_output(fp, layer);
 
-void MultiHeadProjectionOp::apply_delta(const TensorView& head_delta,
-                                      const TensorView& input,
-                                      TensorView& input_delta,
-                                      bool accumulate,
-                                      float* scratch) const
-{
-    const Index batch_size = input.shape[0];
-    const Index seq_len    = input.shape[1];
-    const Index rows       = batch_size * seq_len;
+    // head_output is preallocated by the layer with shape {B, H, S, D}; read
+    // those instead of carrying duplicated members that could go out of sync.
+    const Index batch_size     = input.shape[0];
+    const Index seq_len        = input.shape[1];
+    const Index rows           = batch_size * seq_len;
+    const Index heads_number   = head_output.shape[1];
+    const Index head_dimension = head_output.shape[3];
 
-    TensorView scratch_4d(scratch, {batch_size, seq_len, heads_number, head_dimension}, head_delta.type);
-    merge_heads(head_delta, scratch_4d);
+    TensorView& scratch     = fv[scratch_slots[0]][0];
+    TensorView  scratch_2d  = scratch.reshape({rows, input_features});
+    TensorView  scratch_4d  = scratch.reshape({batch_size, seq_len, heads_number, head_dimension});
+    TensorView  input_2d    = input.reshape({rows, input_features});
 
-    TensorView scratch_2d(scratch, {rows, input_features}, head_delta.type);
-    TensorView input_2d          = input.reshape({rows, input_features});
-    TensorView input_delta_2d = input_delta.reshape({rows, input_features});
-
-    combination.apply_delta(scratch_2d, input_2d, input_delta_2d, accumulate);
+    combination.apply(input_2d, scratch_2d);
+    split_heads(scratch_4d, head_output);
 }
 
 void MultiHeadProjectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
@@ -1436,15 +1414,28 @@ void MultiHeadProjectionOp::back_propagate(ForwardPropagation& fp, BackPropagati
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
     const bool self_attention = (input_views.size() == 1);
 
-    const TensorView head_delta(get_output_delta(bp, layer).as<float>(),
-                                   {fp.batch_size, heads_number, input.shape[1], head_dimension},
-                                   compute_dtype);
+    // head_delta arrives with shape {B, H, S, D} and the right dtype, set by
+    // MHA::get_backward_specs(). No need to reconstruct it from a raw float*.
+    const TensorView& head_delta = get_output_delta(bp, layer);
 
-    TensorView& input_delta = dv[(self_attention ? input_delta_slots_self : input_delta_slots_cross)[0]];
-    const bool accumulate   = self_attention ? accumulate_input_delta_self : accumulate_input_delta_cross;
+    const Index batch_size     = input.shape[0];
+    const Index seq_len        = input.shape[1];
+    const Index rows           = batch_size * seq_len;
+    const Index heads_number   = head_delta.shape[1];
+    const Index head_dimension = head_delta.shape[3];
 
-    apply_delta(head_delta, input, input_delta, accumulate,
-                fv[scratch_slots[0]][0].as<float>());
+    TensorView& scratch     = fv[scratch_slots[0]][0];
+    TensorView  scratch_4d  = scratch.reshape({batch_size, seq_len, heads_number, head_dimension});
+    TensorView  scratch_2d  = scratch.reshape({rows, input_features});
+    TensorView  input_2d    = input.reshape({rows, input_features});
+
+    merge_heads(head_delta, scratch_4d);
+
+    TensorView& input_delta    = dv[(self_attention ? input_delta_slots_self : input_delta_slots_cross)[0]];
+    TensorView  input_delta_2d = input_delta.reshape({rows, input_features});
+    const bool  accumulate     = self_attention ? accumulate_input_delta_self : accumulate_input_delta_cross;
+
+    combination.apply_delta(scratch_2d, input_2d, input_delta_2d, accumulate);
 }
 
 void AttentionOp::set(Index new_heads_number, Index new_head_dimension,
@@ -1560,6 +1551,18 @@ vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
         {attention_shape, compute_dtype}, // AttentionWeights
         {dropout_shape,   compute_dtype}, // AttentionWeightsDropped
     };
+}
+
+TensorSpec AttentionOp::backward_scratch_spec(Index batch_size) const
+{
+    // SDPA backward (cuDNN frontend) computes dQ/dK/dV without materialising
+    // the attention weight matrix, so the (B,H,Q,K) scratch can be skipped.
+    // Unfused backward still needs it for the softmax-derivative reduction.
+    if (use_sdpa)
+        return {Shape{}, compute_dtype};
+
+    return {{batch_size, heads_number, query_sequence_length, source_sequence_length},
+            compute_dtype};
 }
 
 bool AttentionOp::sdpa_supported(Type dtype)

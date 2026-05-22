@@ -473,10 +473,9 @@ private:
 struct MultiHeadProjectionOp : Operator
 {
     CombinationOp combination;
+
     Index input_features = 0;
-    Index heads_number = 0;
-    Index head_dimension = 0;
-    Type compute_dtype = Type::FP32;
+    Type  compute_dtype  = Type::FP32;
 
     // Which view inside views[input_slots[0]] to read. 0 for query path, 1 for
     // source path; clamped to size()-1 so self-attention (single input view)
@@ -505,14 +504,6 @@ struct MultiHeadProjectionOp : Operator
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept override;
-
-    void apply(const TensorView& input, TensorView& head_output, float* scratch);
-
-    void apply_delta(const TensorView& head_delta,
-                     const TensorView& input,
-                     TensorView& input_delta,
-                     bool accumulate,
-                     float* scratch) const;
 };
 
 struct AttentionOp : Operator
@@ -547,6 +538,11 @@ struct AttentionOp : Operator
     void set_dropout_rate(float rate) { dropout.set_rate(rate); }
 
     vector<TensorSpec> forward_scratch_specs(Index batch_size) const;
+
+    // Backward attention_weight_delta scratch. Empty shape when use_sdpa is on
+    // (cuDNN frontend SDPA backward does not materialise the (B,H,Q,K) matrix);
+    // otherwise the same shape as the unfused forward AttentionWeights slot.
+    TensorSpec backward_scratch_spec(Index batch_size) const;
 
     // Slot convention (set by hosting layer):
     //   input_slots  = {Query, Key, Value, Input}     (Input read via source_view_index)

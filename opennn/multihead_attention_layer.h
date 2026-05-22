@@ -64,14 +64,6 @@ public:
 
     void set_dropout_rate(float new_dropout_rate) { attention.set_dropout_rate(new_dropout_rate); }
 
-    // SDPA backend policy. The layer decides; the AttentionOp only executes
-    // whatever it was told. select_use_sdpa() returns true when:
-    //   - sdpa_auto is on,
-    //   - the build/runtime/dtype combination supports SDPA, and
-    //   - min(query_seq_len, source_seq_len) > sdpa_min_sequence_length.
-    // Tuned empirically on the blank_cuda sweep (cross-over ~192 for self-attn
-    // on RTX 4080). Cross-attention shapes with one short axis have not been
-    // re-measured; keep the threshold conservative until then.
     static constexpr Index default_sdpa_min_sequence_length = 192;
 
     void set_sdpa_auto(bool new_sdpa_auto);
