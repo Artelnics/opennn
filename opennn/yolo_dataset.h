@@ -13,6 +13,27 @@
 namespace opennn
 {
 
+struct YoloDetection
+{
+    float center_x = 0.0f;   // pixel coords in the original image
+    float center_y = 0.0f;
+    float width    = 0.0f;
+    float height   = 0.0f;
+    float score    = 0.0f;
+    Index class_id = 0;
+};
+
+// Decode one batch element of a NonMaxSuppression layer output into bounding
+// boxes expressed in the original (pre-letterbox) image's pixel coordinates.
+// nms_output rows are (x, y, w, h, score, class_id) where x,y,w,h are
+// normalized to the letterboxed network input and zero rows are empty slots.
+vector<YoloDetection> decode_yolo_detections(const float* nms_output,
+                                             Index max_boxes,
+                                             Index original_height,
+                                             Index original_width,
+                                             Index network_height,
+                                             Index network_width);
+
 class YoloDataset final : public ImageDataset
 {
 public:

@@ -105,6 +105,52 @@ ImageDataset::ImageDataset(const Index new_samples_number,
     split_samples_random();
 }
 
+void ImageDataset::set_data_random()
+{
+    const Index samples_number = ssize(labels_ram);
+    if (samples_number == 0)
+        throw runtime_error("ImageDataset::set_data_random: dataset has no samples; use the (samples, input_shape, target_shape) constructor first.");
+    if (record_bytes_ == 0 || input_shape.rank != 3)
+        throw runtime_error("ImageDataset::set_data_random: input_shape is not set.");
+
+    cache_reader.close();
+
+    const filesystem::path temp_dir = filesystem::temp_directory_path();
+    cache_path = temp_dir / format("opennn_imagedataset_random_{}.bin",
+                                   random_integer(0, 1000000000));
+    const filesystem::path tmp_path = cache_path.string() + ".tmp";
+
+    ImageCacheHeader header{};
+    memcpy(header.magic, IMAGE_CACHE_MAGIC, 8);
+    header.version = IMAGE_CACHE_VERSION;
+    header.height = uint32_t(input_shape[0]);
+    header.width = uint32_t(input_shape[1]);
+    header.channels = uint32_t(input_shape[2]);
+    header.num_samples = uint64_t(samples_number);
+    header.record_bytes = record_bytes_;
+    header.labels_off = uint64_t(sizeof(ImageCacheHeader))
+                      + uint64_t(samples_number) * record_bytes_;
+    header.num_classes = num_classes_;
+    labels_off_ = header.labels_off;
+
+    FileWriter writer;
+    writer.open(tmp_path);
+    writer.write(&header, sizeof(header));
+
+    vector<uint8_t> pixels;
+    pixels.resize(size_t(record_bytes_));
+    for (Index s = 0; s < samples_number; ++s)
+    {
+        for (auto& byte : pixels)
+            byte = uint8_t(random_integer(0, 255));
+        writer.write(pixels.data(), pixels.size());
+    }
+    writer.write(labels_ram.data(), labels_ram.size() * sizeof(int32_t));
+
+    writer.finish_with_rename(cache_path);
+    cache_reader.open(cache_path);
+}
+
 ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
 {
     data_path = new_data_path;

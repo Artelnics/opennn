@@ -53,6 +53,8 @@ public:
 
     void read_bmp(const Shape& new_input_shape = { 0, 0, 0 });
 
+    void set_data_random();
+
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
 
