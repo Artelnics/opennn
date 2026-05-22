@@ -98,6 +98,7 @@ static void scale_cpu(const TensorView& input,
                TensorView& output)
 {
     const Index features = scalers.size();
+    if (features == 0) { output.as_matrix().noalias() = input.as_matrix(); return; }
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap minimums_vector = minimums.as_vector();
@@ -110,10 +111,12 @@ static void scale_cpu(const TensorView& input,
 
     output_matrix.noalias() = input_matrix;
 
-    for (Index feature_index = 0; feature_index < features; ++feature_index)
+    const Index cols = output_matrix.cols();
+    for (Index col = 0; col < cols; ++col)
     {
+        const Index feature_index = col % features;
         const int code = static_cast<int>(scalers_vector(feature_index));
-        auto column = output_matrix.col(feature_index).array();
+        auto column = output_matrix.col(col).array();
 
         switch (code)
         {
@@ -163,6 +166,7 @@ static void unscale_cpu(const TensorView& input,
                  TensorView& output)
 {
     const Index features = scalers.size();
+    if (features == 0) { output.as_matrix().noalias() = input.as_matrix(); return; }
 
     const MatrixMap input_matrix = input.as_matrix();
     const VectorMap minimums_vector = minimums.as_vector();
@@ -175,10 +179,12 @@ static void unscale_cpu(const TensorView& input,
 
     output_matrix.noalias() = input_matrix;
 
-    for (Index feature_index = 0; feature_index < features; ++feature_index)
+    const Index cols = output_matrix.cols();
+    for (Index col = 0; col < cols; ++col)
     {
+        const Index feature_index = col % features;
         const int code = static_cast<int>(scalers_vector(feature_index));
-        auto column = output_matrix.col(feature_index).array();
+        auto column = output_matrix.col(col).array();
 
         switch (code)
         {
