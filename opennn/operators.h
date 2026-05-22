@@ -524,6 +524,13 @@ struct AttentionOp : Operator
     bool  use_causal_mask = false;
     Type  compute_dtype = Type::FP32;
 
+    // Backend selection. Set by the hosting layer (MultiHeadAttention) when it
+    // decides the policy (see `select_use_sdpa()`); the operator just executes.
+    // forward_scratch_specs and apply_gpu / apply_delta_gpu read this flag.
+    // No fallback: if use_sdpa is true but the build/dtype does not support
+    // SDPA, the operator throws a clear error instead of silently downgrading.
+    bool use_sdpa = false;
+
     MatrixR causal_mask;
 
     DropoutOp dropout;
@@ -531,6 +538,11 @@ struct AttentionOp : Operator
     void set(Index heads_number, Index head_dimension,
              Index query_sequence_length, Index source_sequence_length,
              bool use_causal_mask, Type compute_dtype);
+
+    // True when the build + runtime combination can run the cuDNN-frontend SDPA
+    // graph. Compile-time and dtype only; no shape/size heuristic — that lives
+    // in the layer's policy.
+    static bool sdpa_supported(Type dtype);
 
     void set_dropout_rate(float rate) { dropout.set_rate(rate); }
 
@@ -651,8 +663,6 @@ private:
     static void softmax_rows_prefix(float* matrix, Index rows, Index cols, Index length);
     static Index infer_attention_prefix_length(const TensorView& attention_weights,
                                                Index batch_index);
-
-    bool use_sdpa_backend(Type dtype) const;
 
     // Common backbone for the unfused CPU and GPU paths. The softmax-backward
     // step differs (Eigen vs cuDNN) and is supplied as a callable.

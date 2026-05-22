@@ -1545,10 +1545,12 @@ Index AttentionOp::infer_attention_prefix_length(const TensorView& attention_wei
 
 vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
 {
-#ifdef OPENNN_HAS_CUDA
-    if (use_sdpa_backend(compute_dtype) && !dropout.active())
+    // SDPA does not materialise the attention matrix and does not use these
+    // scratch slots for dropout either, so they collapse to empty placeholders.
+    // Unfused path needs a (B, H, Q, K) scratch for the attention weights and,
+    // when dropout is active, a matching one for the dropped mask.
+    if (use_sdpa && !dropout.active())
         return vector<TensorSpec>(2, {Shape{}, compute_dtype});
-#endif
 
     const Shape attention_shape = {batch_size, heads_number,
                                    query_sequence_length, source_sequence_length};
@@ -1560,13 +1562,10 @@ vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
     };
 }
 
-bool AttentionOp::use_sdpa_backend(Type dtype) const
+bool AttentionOp::sdpa_supported(Type dtype)
 {
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    constexpr Index sdpa_min_attention_area = 64 * 64;
-    return is_gpu()
-        && dtype == Type::BF16
-        && query_sequence_length * source_sequence_length >= sdpa_min_attention_area;
+    return is_gpu() && dtype == Type::BF16;
 #else
     (void)dtype;
     return false;
@@ -2147,19 +2146,21 @@ void AttentionOp::apply_gpu(const TensorView& query,
                           bool is_training)
 {
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    // SDPA Flash AttentionOp requires BF16 or FP16 in current cuDNN 9.x.
-    // For FP32 we fall back to the manual GPU path (still correct, no fused kernel).
-    // Padding uses cuDNN seq-len tensors computed from source_input, matching
-    // the unfused path's key/value padding mask semantics.
-    const bool sdpa_supported = use_sdpa_backend(query.type);
-    if (!sdpa_supported)
+    // The layer's policy decides whether this AttentionOp runs SDPA. The
+    // operator itself just executes — no implicit fallback, because the
+    // forward_scratch_specs allocation already committed to one path.
+    if (!use_sdpa)
     {
-        require_attention_scratch(attention_weights, "SDPA fallback triggered (FP32 only)");
         apply_cpu(query, key, value, source_input,
                   attention_weights, attention_weights_dropped,
                   output, mask_scratch, is_training);
         return;
     }
+
+    if (!sdpa_supported(query.type))
+        throw runtime_error("AttentionOp: SDPA backend selected by the layer "
+                            "but not supported (build without HAVE_CUDNN_FRONTEND, "
+                            "non-BF16 dtype, or CPU runtime).");
 
     if (!sdpa_cache) sdpa_cache = make_unique<SDPACache>();
 
@@ -2436,19 +2437,21 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
                                 TensorView& value_delta) const
 {
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    // Same support gate as forward. The forward path that produced this backward
-    // call established the cache entry; if we fell back to the unfused path on
-    // forward, we must also fall back here (no LSE stats to use).
-    const bool sdpa_supported = use_sdpa_backend(query.type);
-    if (!sdpa_supported || !sdpa_cache)
+    // Mirrors the forward path: backend is decided by the hosting layer at
+    // configuration time and locked in by forward_scratch_specs. The forward
+    // populated sdpa_cache iff use_sdpa is true.
+    if (!use_sdpa)
     {
-        require_attention_scratch(attention_weights, "SDPA backward fallback triggered");
         apply_delta_gpu_unfused(query, key, value,
                                 attention_weights, attention_weights_dropped,
                                 output_delta, attention_weight_delta,
                                 query_delta, key_delta, value_delta);
         return;
     }
+
+    if (!sdpa_supported(query.type) || !sdpa_cache)
+        throw runtime_error("AttentionOp: SDPA backward called without a live SDPA "
+                            "forward graph (use_sdpa set inconsistently between fwd/bwd).");
 
     const bool dropout_in_graph = dropout.active();   // backward implies training
 
