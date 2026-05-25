@@ -1325,14 +1325,11 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 
     const Index parameters_number = parameters.size();
 
-//    VectorR new_parameters(parameters_number);
 
     file.read(reinterpret_cast<char*>(parameters.data()), parameters_number * sizeof(type));
 
     if(!file)
         throw runtime_error("Error reading binary file: " + file_name.string());
-
-//    set_parameters(new_parameters);
 }
 
 
