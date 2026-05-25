@@ -214,6 +214,17 @@ struct CombinationReluOp : Operator
 // Activation: Tanh by default (sane RNN choice). Sigmoid / Identity / ReLU also accepted.
 struct RecurrentOp : Operator
 {
+    enum BackwardSlot
+    {
+        OutputDeltaSlot = 0,
+        InputDeltaSlot,
+        StepInputScratchSlot,
+        StepPrevHScratchSlot,
+        DeltaScratchSlot,
+        NextCarryScratchSlot,
+        StepInDeltaScratchSlot
+    };
+
     Index input_features  = 0;
     Index time_steps      = 0;
     Index output_features = 0;
@@ -250,12 +261,41 @@ private:
                TensorView& activation_derivatives,
                TensorView& output,
                bool is_training);
+    void apply_gpu(const TensorView& input,
+                   TensorView& hidden_states,
+                   TensorView& activation_derivatives,
+                   TensorView& output,
+                   bool is_training);
 
     void apply_delta(const TensorView& input,
                      const TensorView& hidden_states,
                      const TensorView& activation_derivatives,
                      const TensorView& output_delta,
                      TensorView& input_delta) const;
+    void apply_delta_gpu(const TensorView& input,
+                         const TensorView& hidden_states,
+                         const TensorView& activation_derivatives,
+                         const TensorView& output_delta,
+                         TensorView& input_delta,
+                         TensorView& step_input_scratch,
+                         TensorView& step_prev_h_scratch,
+                         TensorView& delta_scratch,
+                         TensorView& next_carry_scratch,
+                         TensorView& step_in_delta_scratch) const;
+
+    // Forward-only device-side scratch. Forward state must persist across
+    // timesteps within a single forward pass (notably the swap between
+    // step_hidden_buf and prev_hidden_buf carries h[t-1] into step t), so
+    // these stay as per-instance buffers rather than slots in the framework
+    // forward pool (which has no lifetime reuse).
+    //
+    // Backward-only scratch lives in the per-layer delta_views pool, declared
+    // by Recurrent::get_backward_specs and consumed via the BackwardSlot
+    // indices above.
+    mutable Buffer step_input_buf      {Device::CUDA};   // (batch, in_features)
+    mutable Buffer step_hidden_buf     {Device::CUDA};   // (batch, out_features)
+    mutable Buffer prev_hidden_buf     {Device::CUDA};   // (batch, out_features)
+    mutable Buffer step_derivs_buf     {Device::CUDA};   // (batch, out_features)
 };
 
 struct BatchNormOp : Operator

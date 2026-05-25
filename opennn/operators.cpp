@@ -12,6 +12,7 @@
 #include <cudnn_frontend.h>
 #endif
 #include "cuda_gemm.h"
+#include "kernel.cuh"
 #endif
 
 #include "operators.h"
@@ -671,7 +672,7 @@ void RecurrentOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
     TensorView& hidden_states           = fv[output_slots[1]][0];
     TensorView& activation_derivatives  = fv[output_slots[2]][0];
 
-    IF_GPU({ throw runtime_error("Recurrent GPU path is not implemented yet. Call Configuration::instance().set(Device::CPU, ...) before training a network that contains a Recurrent layer."); });
+    IF_GPU({ apply_gpu(input, hidden_states, activation_derivatives, output, is_training); return; });
     apply(input, hidden_states, activation_derivatives, output, is_training);
 }
 
@@ -688,7 +689,18 @@ void RecurrentOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
     TensorView empty;
     TensorView& input_delta = view_at_slot_or(dv, input_delta_slots, 0, empty);
 
-    IF_GPU({ throw runtime_error("Recurrent GPU path is not implemented yet. Call Configuration::instance().set(Device::CPU, ...) before training a network that contains a Recurrent layer."); });
+    IF_GPU({
+        TensorView& step_input_scratch    = dv[StepInputScratchSlot];
+        TensorView& step_prev_h_scratch   = dv[StepPrevHScratchSlot];
+        TensorView& delta_scratch         = dv[DeltaScratchSlot];
+        TensorView& next_carry_scratch    = dv[NextCarryScratchSlot];
+        TensorView& step_in_delta_scratch = dv[StepInDeltaScratchSlot];
+        apply_delta_gpu(input, hidden_states, activation_derivatives,
+                        output_delta, input_delta,
+                        step_input_scratch, step_prev_h_scratch,
+                        delta_scratch, next_carry_scratch, step_in_delta_scratch);
+        return;
+    });
     apply_delta(input, hidden_states, activation_derivatives, output_delta, input_delta);
 }
 
@@ -854,6 +866,203 @@ void RecurrentOp::apply_delta(const TensorView& input,
         }
     }
 }
+
+#ifdef OPENNN_HAS_CUDA
+
+namespace
+{
+
+void zero_device_view(const TensorView& view)
+{
+    if (!view.data || view.empty()) return;
+    CHECK_CUDA(cudaMemsetAsync(view.data, 0, view.byte_size(),
+                               Backend::get_compute_stream()));
+}
+
+void require_same_recurrent_dtype(const TensorView& reference,
+                                  initializer_list<pair<const TensorView*, const char*>> views)
+{
+    for (const auto& [view, name] : views)
+        if (view->data && !view->empty() && view->type != reference.type)
+            throw runtime_error(format("RecurrentOp CUDA: {} dtype does not match recurrent compute dtype.", name));
+}
+
+}
+
+void RecurrentOp::apply_gpu(const TensorView& input,
+                            TensorView& hidden_states,
+                            TensorView& activation_derivatives,
+                            TensorView& output,
+                            bool is_training)
+{
+    if (!input.data || output_features == 0 || time_steps == 0) return;
+
+    require_same_recurrent_dtype(output, {
+        {&input, "input"},
+        {&hidden_states, "hidden_states"},
+        {&activation_derivatives, "activation_derivatives"},
+        {&bias, "bias"},
+        {&input_weights, "input_weights"},
+        {&recurrent_weights, "recurrent_weights"}
+    });
+
+    output.dispatch([&](auto tag)
+    {
+        using Scalar = decltype(tag);
+
+        const Index batch_size = input.shape[0];
+        const Shape step_input_shape{batch_size, input_features};
+        const Shape step_hidden_shape{batch_size, output_features};
+
+        step_input_buf.grow_to(batch_size * input_features * Index(sizeof(Scalar)));
+        step_hidden_buf.grow_to(batch_size * output_features * Index(sizeof(Scalar)));
+        prev_hidden_buf.grow_to(batch_size * output_features * Index(sizeof(Scalar)));
+
+        if (is_training && !activation_derivatives.empty())
+            step_derivs_buf.grow_to(batch_size * output_features * Index(sizeof(Scalar)));
+
+        for (Index t = 0; t < time_steps; ++t)
+        {
+            TensorView step_input(step_input_buf.data, step_input_shape, input.type);
+            TensorView step_hidden(step_hidden_buf.data, step_hidden_shape, output.type);
+
+            gather_time_slice_cuda<Scalar>(batch_size, time_steps, input_features, t,
+                                           input.as<Scalar>(), step_input.as<Scalar>());
+
+            const Scalar* prev_h_ptr = (t > 0)
+                ? static_cast<const Scalar*>(prev_hidden_buf.data)
+                : nullptr;
+
+            Scalar* derivs = nullptr;
+            TensorView step_derivs;
+            if (is_training && !activation_derivatives.empty())
+            {
+                step_derivs = TensorView(step_derivs_buf.data, step_hidden_shape, output.type);
+                derivs = step_derivs.as<Scalar>();
+            }
+
+            rnn_step_fused_forward_cuda<Scalar>(batch_size,
+                                                input_features,
+                                                output_features,
+                                                step_input.as<Scalar>(),
+                                                prev_h_ptr,
+                                                input_weights.as<Scalar>(),
+                                                recurrent_weights.as<Scalar>(),
+                                                bias.as<Scalar>(),
+                                                step_hidden.as<Scalar>(),
+                                                derivs,
+                                                static_cast<int>(activation));
+
+            scatter_time_slice_cuda<Scalar>(batch_size, time_steps, output_features, t,
+                                            step_hidden.as<Scalar>(), hidden_states.as<Scalar>());
+
+            if (derivs)
+                scatter_time_slice_cuda<Scalar>(batch_size, time_steps, output_features, t,
+                                                step_derivs.as<Scalar>(), activation_derivatives.as<Scalar>());
+
+            step_hidden_buf.swap(prev_hidden_buf);
+        }
+
+        TensorView final_hidden(prev_hidden_buf.data, step_hidden_shape, output.type);
+        copy(final_hidden, output);
+    });
+}
+
+void RecurrentOp::apply_delta_gpu(const TensorView& input,
+                                  const TensorView& hidden_states,
+                                  const TensorView& activation_derivatives,
+                                  const TensorView& output_delta,
+                                  TensorView& input_delta,
+                                  TensorView& step_input_scratch,
+                                  TensorView& step_prev_h_scratch,
+                                  TensorView& delta_scratch,
+                                  TensorView& next_carry_scratch,
+                                  TensorView& step_in_delta_scratch) const
+{
+    if (!input.data || !output_delta.data || output_features == 0 || time_steps == 0) return;
+
+    require_same_recurrent_dtype(output_delta, {
+        {&input, "input"},
+        {&hidden_states, "hidden_states"},
+        {&activation_derivatives, "activation_derivatives"},
+        {&input_weights, "input_weights"},
+        {&recurrent_weights, "recurrent_weights"},
+        {&input_delta, "input_delta"},
+        {&step_input_scratch, "step_input_scratch"},
+        {&step_prev_h_scratch, "step_prev_h_scratch"},
+        {&delta_scratch, "delta_scratch"},
+        {&next_carry_scratch, "next_carry_scratch"},
+        {&step_in_delta_scratch, "step_in_delta_scratch"}
+    });
+
+    output_delta.dispatch([&](auto tag)
+    {
+        using Scalar = decltype(tag);
+
+        const Index batch_size = input.shape[0];
+
+        zero_device_view(bias_gradient);
+        zero_device_view(input_weight_gradient);
+        zero_device_view(recurrent_weight_gradient);
+
+        for (Index t = time_steps; t-- > 0;)
+        {
+            const bool first_iter = (t == time_steps - 1);
+
+            rnn_step_fused_backward_pre_cuda<Scalar>(
+                batch_size, output_features, time_steps, t, first_iter,
+                first_iter ? output_delta.as<Scalar>() : nullptr,
+                first_iter ? nullptr : next_carry_scratch.as<Scalar>(),
+                activation_derivatives.as<Scalar>(),
+                delta_scratch.as<Scalar>(),
+                bias_gradient.as<float>());
+
+            gather_time_slice_cuda<Scalar>(batch_size, time_steps, input_features, t,
+                                           input.as<Scalar>(), step_input_scratch.as<Scalar>());
+
+            multiply(step_input_scratch, true, delta_scratch, false,
+                     const_cast<TensorView&>(input_weight_gradient), 1.0f, 1.0f);
+
+            if (t > 0)
+            {
+                gather_time_slice_cuda<Scalar>(batch_size, time_steps, output_features, t - 1,
+                                               hidden_states.as<Scalar>(), step_prev_h_scratch.as<Scalar>());
+
+                multiply(step_prev_h_scratch, true, delta_scratch, false,
+                         const_cast<TensorView&>(recurrent_weight_gradient), 1.0f, 1.0f);
+
+                multiply(delta_scratch, false, recurrent_weights, true,
+                         next_carry_scratch, 1.0f, 0.0f);
+            }
+
+            if (input_delta.data && !input_delta.empty())
+            {
+                multiply(delta_scratch, false, input_weights, true,
+                         step_in_delta_scratch, 1.0f, 0.0f);
+
+                scatter_time_slice_cuda<Scalar>(batch_size, time_steps, input_features, t,
+                                                step_in_delta_scratch.as<Scalar>(), input_delta.as<Scalar>());
+            }
+        }
+    });
+}
+
+#else
+
+void RecurrentOp::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&, bool)
+{
+    throw runtime_error("RecurrentOp::apply_gpu: CUDA support not compiled in.");
+}
+
+void RecurrentOp::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&,
+                                  const TensorView&, TensorView&,
+                                  TensorView&, TensorView&, TensorView&,
+                                  TensorView&, TensorView&) const
+{
+    throw runtime_error("RecurrentOp::apply_delta_gpu: CUDA support not compiled in.");
+}
+
+#endif
 
 void ConvolutionOp::set(Index new_input_h, Index new_input_w,
                       Index new_kernels_n, Index new_kernel_h, Index new_kernel_w, Index new_kernel_c,

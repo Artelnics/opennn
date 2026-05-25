@@ -23,6 +23,5 @@ add_subdirectory(mnist)
 add_subdirectory(melanoma_cancer)
 add_subdirectory(translation)
 add_subdirectory(wwt_optimization)
-# add_subdirectory(yolo)   # local: directory missing in this checkout
 
 
