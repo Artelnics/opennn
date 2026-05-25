@@ -55,6 +55,11 @@ add_executable(run_tests test.cpp
 		transformer_test.cpp
 		unscaling_layer_test.cpp
 		weighted_squared_error_test.cpp
+		yolo_dataset_test.cpp
+		detection_layer_test.cpp
+		yolo_loss_test.cpp
+		non_max_suppression_test.cpp
+		yolo_inference_test.cpp
 )
 
 target_link_libraries(run_tests gtest gtest_main opennn)

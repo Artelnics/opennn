@@ -99,6 +99,8 @@ class Transformer final : public NeuralNetwork
 {
 public:
 
+    Transformer() = default;
+
     Transformer(Index input_sequence_length,
                 Index decoder_sequence_length,
                 Index input_vocabulary_size,

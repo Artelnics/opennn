@@ -372,10 +372,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     if (input_shape[0] != grid_size * 32 || input_shape[1] != grid_size * 32)
         throw runtime_error("YoloNetwork: this minimal builder expects input H/W == grid_size * 32.");
 
-    auto scaling_layer = make_unique<Scaling>(input_shape);
-    scaling_layer->set_scalers("ImageMinMax");
-    add_layer(move(scaling_layer));
-
     const Shape stride{1, 1};
     const Shape pool{2, 2};
     const Shape pool_stride{2, 2};
@@ -385,8 +381,10 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
     for (Index i = 0; i < ssize(filters); ++i)
     {
-        add_layer(make_unique<Convolutional>(get_output_shape(),
-                                             Shape{3, 3, get_output_shape()[2], filters[size_t(i)]},
+        const Shape conv_input_shape = (i == 0) ? input_shape : get_output_shape();
+
+        add_layer(make_unique<Convolutional>(conv_input_shape,
+                                             Shape{3, 3, conv_input_shape[2], filters[size_t(i)]},
                                              "ReLU", stride, "Same", false,
                                              format("yolo_conv_{}", i + 1)));
 
