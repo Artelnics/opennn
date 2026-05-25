@@ -42,7 +42,19 @@ vector<TensorSpec> Recurrent::get_forward_specs(Index batch_size) const
 vector<TensorSpec> Recurrent::get_backward_specs(Index batch_size) const
 {
     if (!is_trainable) return {};
-    return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
+
+    const Shape input_delta_shape = Shape{batch_size}.append(get_input_shape());
+    const Shape step_in_shape  {batch_size, input_features};
+    const Shape step_out_shape {batch_size, output_features};
+
+    return {
+        {input_delta_shape, compute_dtype},  // InputDeltaSlot
+        {step_in_shape,     compute_dtype},  // StepInputScratchSlot
+        {step_out_shape,    compute_dtype},  // StepPrevHScratchSlot
+        {step_out_shape,    compute_dtype},  // DeltaScratchSlot
+        {step_out_shape,    compute_dtype},  // NextCarryScratchSlot
+        {step_in_shape,     compute_dtype},  // StepInDeltaScratchSlot
+    };
 }
 
 void Recurrent::configure_operators()
