@@ -862,23 +862,21 @@ void Optimizer::setup_device_training(const vector<Batch*>& batches)
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
 
-    clear_batch_reuse_events();
-
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     neural_network->copy_parameters_device();
     neural_network->copy_states_device();
 
-    memory_stream.create(cudaStreamNonBlocking);
-
-    // Pre-create per-batch reuse events and pre-size the FP32 staging buffer
-    // so prefetch_batch never allocates inside the per-iteration hot path.
+    // All GPU work (kernels, cuBLAS, prefetch H→D copies) runs on the single
+    // compute_stream owned by Backend. Keeping H→D copies on the same stream
+    // as the compute that consumes them removes the need for cross-stream
+    // events: ordering is implicit. This matches every other GPU operator in
+    // the codebase (Combination, Activation, BatchNorm, LayerNorm, Convolution,
+    // Adam, MSE, …) which all submit to compute_stream.
     Index max_staging_bytes = 0;
     for (Batch* batch : batches)
     {
         if (!batch) continue;
-        batch_ready_events[batch].create(cudaEventDisableTiming);
-        batch_reuse_events[batch].create(cudaEventDisableTiming);
         if (batch->needs_fp32_staging)
             max_staging_bytes = max(max_staging_bytes,
                                     batch->get_input_elements() * Index(sizeof(float)));
@@ -895,14 +893,7 @@ void Optimizer::teardown_device_training()
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
 
-    if (memory_stream) CHECK_CUDA(cudaStreamSynchronize(memory_stream));
     CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
-
-    clear_batch_reuse_events();
-
-    // Explicit destroy keeps tear-down ordered; the RAII destructors would
-    // also run if we skip this (e.g. on an exception path).
-    memory_stream.destroy();
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     neural_network->copy_parameters_host();
@@ -915,74 +906,41 @@ void Optimizer::prefetch_batch(Batch& batch, Index sample_count)
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
 
-    // Event and staging buffer are pre-created in setup_device_training, so
-    // this path is purely stream submission — no allocation, no map insert.
-    auto ready_it = batch_ready_events.find(&batch);
-    auto reuse_it = batch_reuse_events.find(&batch);
-    if (ready_it == batch_ready_events.end() || reuse_it == batch_reuse_events.end())
-        throw runtime_error("Optimizer::prefetch_batch: batch CUDA event missing — "
-                            "this batch was not passed to setup_device_training().");
-
-    if (batch_reuse_recorded.contains(&batch))
-        CHECK_CUDA(cudaStreamWaitEvent(memory_stream.handle, reuse_it->second.handle, 0));
-
+    // Single-stream submission: the H→D copy lands on compute_stream, so the
+    // kernels that consume the batch (queued later on the same stream) see it
+    // ready by construction — no event needed.
     float* fp32_staging = batch.needs_fp32_staging
         ? prefetch_fp32_staging.as<float>()
         : nullptr;
 
-    batch.copy_device_async(sample_count, memory_stream.handle, fp32_staging);
-    CHECK_CUDA(cudaEventRecord(ready_it->second.handle, memory_stream.handle));
+    batch.copy_device_async(sample_count, Backend::get_compute_stream(), fp32_staging);
 #else
     (void)batch; (void)sample_count;
 #endif
 }
 
-void Optimizer::wait_prefetch(Batch& batch)
+void Optimizer::wait_prefetch(Batch& /*batch*/)
 {
-#ifdef OPENNN_HAS_CUDA
-    if (!is_gpu()) return;
-    auto it = batch_ready_events.find(&batch);
-    if (it == batch_ready_events.end())
-        throw runtime_error("Optimizer::wait_prefetch: batch ready event missing — "
-                            "this batch was not passed to setup_device_training().");
-
-    CHECK_CUDA(cudaStreamWaitEvent(Backend::get_compute_stream(), it->second.handle, 0));
-#else
-    (void)batch;
-#endif
+    // Single-stream model: the copy issued by prefetch_batch is already
+    // ordered before subsequent kernels on compute_stream. No-op.
 }
 
-void Optimizer::record_batch_reuse(Batch& batch)
+void Optimizer::record_batch_reuse(Batch& /*batch*/)
 {
-#ifdef OPENNN_HAS_CUDA
-    if (!is_gpu()) return;
-
-    auto it = batch_reuse_events.find(&batch);
-    if (it == batch_reuse_events.end())
-        throw runtime_error("Optimizer::record_batch_reuse: batch reuse event missing — "
-                            "this batch was not passed to setup_device_training().");
-
-    CHECK_CUDA(cudaEventRecord(it->second.handle, Backend::get_compute_stream()));
-    batch_reuse_recorded.insert(&batch);
-#else
-    (void)batch;
-#endif
-}
-
-void Optimizer::clear_batch_reuse_events()
-{
-#ifdef OPENNN_HAS_CUDA
-    // CudaEvent destructors release the underlying handles on map clear.
-    batch_ready_events.clear();
-    batch_reuse_events.clear();
-#endif
-    batch_reuse_recorded.clear();
+    // Single-stream model: reuse ordering is implicit (next copy targeting
+    // the same Batch lands after the kernels consuming the previous copy).
+    // No event to record.
 }
 
 void Optimizer::sync_device()
 {
 #ifdef OPENNN_HAS_CUDA
-    if (is_gpu() && cuda_sync_each_batch())
+    // RecurrentOp's pure-GPU path submits ~30 async kernels per batch (gather/
+    // scatter + cuBLAS + activation, ×5 timesteps × forward+backward). Without
+    // a per-batch drain the CUDA driver queue saturates after a few hundred
+    // batches and the host loop blocks indefinitely. Cost per call is a single
+    // stream synchronize, dominated by the GPU work that was already in flight.
+    if (is_gpu())
         CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
 #endif
 }

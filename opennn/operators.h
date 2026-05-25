@@ -250,12 +250,39 @@ private:
                TensorView& activation_derivatives,
                TensorView& output,
                bool is_training);
+    void apply_gpu(const TensorView& input,
+                   TensorView& hidden_states,
+                   TensorView& activation_derivatives,
+                   TensorView& output,
+                   bool is_training);
 
     void apply_delta(const TensorView& input,
                      const TensorView& hidden_states,
                      const TensorView& activation_derivatives,
                      const TensorView& output_delta,
                      TensorView& input_delta) const;
+    void apply_delta_gpu(const TensorView& input,
+                         const TensorView& hidden_states,
+                         const TensorView& activation_derivatives,
+                         const TensorView& output_delta,
+                         TensorView& input_delta) const;
+
+    // Device-side scratch buffers for the per-step matrices that cuBLAS and
+    // the activation kernel operate on. Grown lazily on first invocation;
+    // reused across training iterations. Not reentrant — one RecurrentOp
+    // instance must not be invoked concurrently from multiple threads.
+    //
+    // All buffers are mutable so they can be (lazily) resized inside the
+    // const apply_delta_gpu method, matching the pattern already used by
+    // BatchNormOp::inference_scale / delta_scale_scratch.
+    mutable Buffer step_input_buf      {Device::CUDA};   // (batch, in_features)
+    mutable Buffer step_hidden_buf     {Device::CUDA};   // (batch, out_features)
+    mutable Buffer prev_hidden_buf     {Device::CUDA};   // (batch, out_features)
+    mutable Buffer step_derivs_buf     {Device::CUDA};   // (batch, out_features)
+    mutable Buffer delta_buf           {Device::CUDA};
+    mutable Buffer next_carry_buf      {Device::CUDA};
+    mutable Buffer step_in_delta_buf   {Device::CUDA};
+    mutable Buffer step_prev_h_buf     {Device::CUDA};
 };
 
 struct BatchNormOp : Operator

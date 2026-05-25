@@ -99,14 +99,14 @@ static void scale_cpu(const TensorView& input,
 {
     const Index features = scalers.size();
 
-    const MatrixMap input_matrix = input.as_matrix();
+    const MatrixMap input_matrix = input.as_flat_matrix();
     const VectorMap minimums_vector = minimums.as_vector();
     const VectorMap maximums_vector = maximums.as_vector();
     const VectorMap means_vector  = means.as_vector();
     const VectorMap standard_deviations_vector  = standard_deviations.as_vector();
     const VectorMap scalers_vector   = scalers.as_vector();
 
-    MatrixMap output_matrix = output.as_matrix();
+    MatrixMap output_matrix = output.as_flat_matrix();
 
     output_matrix.noalias() = input_matrix;
 
@@ -164,14 +164,14 @@ static void unscale_cpu(const TensorView& input,
 {
     const Index features = scalers.size();
 
-    const MatrixMap input_matrix = input.as_matrix();
+    const MatrixMap input_matrix = input.as_flat_matrix();
     const VectorMap minimums_vector = minimums.as_vector();
     const VectorMap maximums_vector = maximums.as_vector();
     const VectorMap means_vector  = means.as_vector();
     const VectorMap standard_deviations_vector  = standard_deviations.as_vector();
     const VectorMap scalers_vector   = scalers.as_vector();
 
-    MatrixMap output_matrix = output.as_matrix();
+    MatrixMap output_matrix = output.as_flat_matrix();
 
     output_matrix.noalias() = input_matrix;
 

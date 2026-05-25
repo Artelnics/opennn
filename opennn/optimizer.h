@@ -140,13 +140,15 @@ protected:
     void setup_device_training(const vector<Batch*>& batches);
     void teardown_device_training();
 
+    // All GPU work (kernels, cuBLAS, H→D copies) runs on Backend's single
+    // compute_stream. prefetch_batch enqueues the copy; the kernels that read
+    // it land later on the same stream, so ordering is implicit and
+    // wait_prefetch / record_batch_reuse have no work to do. They're kept as
+    // no-op hooks to leave the train_epoch / evaluate_epoch loop structure
+    // untouched and for future use if a real prefetch stream is reintroduced.
     void prefetch_batch(Batch& batch, Index sample_count);
-
     void wait_prefetch(Batch& batch);
-
     void record_batch_reuse(Batch& batch);
-
-    void clear_batch_reuse_events();
 
     void sync_device();
 
@@ -198,16 +200,6 @@ protected:
     // Created lazily on first train() call; sized at num_workers. Re-created
     // if the user changes num_workers between train() invocations.
     unique_ptr<WorkerPool> worker_pool;
-
-#ifdef OPENNN_HAS_CUDA
-    // RAII handles: destroying the optimizer (or unwinding via exception)
-    // releases stream/event handles automatically. See CudaStream / CudaEvent
-    // in tensor_utilities.h.
-    CudaStream memory_stream;
-    unordered_map<Batch*, CudaEvent> batch_ready_events;
-    unordered_map<Batch*, CudaEvent> batch_reuse_events;
-#endif
-    unordered_set<Batch*> batch_reuse_recorded;
 
     Buffer prefetch_fp32_staging{Device::CUDA};
 };

@@ -1095,3 +1095,431 @@ void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta,
 
 template void dropout_backward_cuda<float>        (const Index, const float*,         float*,         const uint8_t*, const float);
 template void dropout_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const uint8_t*, const float);
+
+// -----------------------------------------------------------------------------
+// Recurrent time-slice helpers
+//
+// The recurrent op operates step-by-step on a row-major 3D tensor
+// (batch, time, features). For each timestep t we need a contiguous
+// (batch, features) buffer to hand to cuBLAS, so we materialise the slice into
+// scratch memory with `gather_time_slice` and write it back after the step
+// with `scatter_time_slice`. Each thread copies one element; the launch grid
+// is sized over the full slice (batch * features).
+// -----------------------------------------------------------------------------
+
+template<typename T>
+__global__ void gather_time_slice_kernel(const int batch,
+                                         const int time_steps,
+                                         const int features,
+                                         const int t,
+                                         const T* __restrict__ src,
+                                         T* __restrict__ dst)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    const int total = batch * features;
+    if (idx >= total) return;
+
+    const int b = idx / features;
+    const int f = idx - b * features;
+    dst[idx] = src[(b * time_steps + t) * features + f];
+}
+
+template<typename T>
+void gather_time_slice_cuda(const Index batch,
+                            const Index time_steps,
+                            const Index features,
+                            const Index t,
+                            const T* src,
+                            T* dst)
+{
+    if (batch == 0 || features == 0) return;
+    const int total = static_cast<int>(batch * features);
+    gather_time_slice_kernel<T><<<grid_size_for(total), block_size, 0,
+                                  opennn::Backend::get_compute_stream()>>>(
+        static_cast<int>(batch),
+        static_cast<int>(time_steps),
+        static_cast<int>(features),
+        static_cast<int>(t),
+        src, dst);
+}
+
+template void gather_time_slice_cuda<float>        (const Index, const Index, const Index, const Index, const float*,         float*);
+template void gather_time_slice_cuda<__nv_bfloat16>(const Index, const Index, const Index, const Index, const __nv_bfloat16*, __nv_bfloat16*);
+
+template<typename T>
+__global__ void scatter_time_slice_kernel(const int batch,
+                                          const int time_steps,
+                                          const int features,
+                                          const int t,
+                                          const T* __restrict__ src,
+                                          T* __restrict__ dst)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    const int total = batch * features;
+    if (idx >= total) return;
+
+    const int b = idx / features;
+    const int f = idx - b * features;
+    dst[(b * time_steps + t) * features + f] = src[idx];
+}
+
+template<typename T>
+void scatter_time_slice_cuda(const Index batch,
+                             const Index time_steps,
+                             const Index features,
+                             const Index t,
+                             const T* src,
+                             T* dst)
+{
+    if (batch == 0 || features == 0) return;
+    const int total = static_cast<int>(batch * features);
+    scatter_time_slice_kernel<T><<<grid_size_for(total), block_size, 0,
+                                   opennn::Backend::get_compute_stream()>>>(
+        static_cast<int>(batch),
+        static_cast<int>(time_steps),
+        static_cast<int>(features),
+        static_cast<int>(t),
+        src, dst);
+}
+
+template void scatter_time_slice_cuda<float>        (const Index, const Index, const Index, const Index, const float*,         float*);
+template void scatter_time_slice_cuda<__nv_bfloat16>(const Index, const Index, const Index, const Index, const __nv_bfloat16*, __nv_bfloat16*);
+
+// -----------------------------------------------------------------------------
+// Fused per-step activation kernel for RecurrentOp.
+//
+// One thread per (batch_row, out_feature) element. The kernel adds the bias
+// broadcast over features, applies the activation σ in-place, and (when
+// `derivs` is non-null) writes σ'(z) into the derivatives buffer.
+//
+// activation_id encoding matches ActivationOp::Function ordinal:
+//   0=Identity, 1=Sigmoid, 2=Tanh, 3=ReLU, 4=Softmax (treated as Identity here)
+//
+// We use the post-activation value to derive σ'(z) cheaply (no need to
+// remember the pre-activation):
+//   Tanh:    σ'(z) = 1 - h^2
+//   Sigmoid: σ'(z) = h * (1 - h)
+//   ReLU:    σ'(z) = h > 0 ? 1 : 0
+//   Identity / Softmax: σ'(z) = 1
+// -----------------------------------------------------------------------------
+
+template<typename T>
+__global__ void rnn_step_bias_activation_kernel(const int total,
+                                                const int out_features,
+                                                T* __restrict__ hidden,
+                                                const T* __restrict__ bias,
+                                                T* derivs,
+                                                const int activation_id)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= total) return;
+
+    const int f = idx % out_features;
+    float z = static_cast<float>(hidden[idx]) + static_cast<float>(bias[f]);
+
+    float h;
+    float dh;
+    switch (activation_id)
+    {
+        case 1:  // Sigmoid
+            h  = 1.0f / (1.0f + expf(-z));
+            dh = h * (1.0f - h);
+            break;
+        case 2:  // Tanh
+            h  = tanhf(z);
+            dh = 1.0f - h * h;
+            break;
+        case 3:  // ReLU
+            h  = z > 0.0f ? z : 0.0f;
+            dh = z > 0.0f ? 1.0f : 0.0f;
+            break;
+        case 0:  // Identity
+        case 4:  // Softmax (degenerate for RNN; treat as Identity)
+        default:
+            h  = z;
+            dh = 1.0f;
+            break;
+    }
+
+    hidden[idx] = static_cast<T>(h);
+    if (derivs) derivs[idx] = static_cast<T>(dh);
+}
+
+template<typename T>
+void rnn_step_bias_activation_cuda(const Index batch,
+                                   const Index out_features,
+                                   T* hidden,
+                                   const T* bias,
+                                   T* derivs_or_null,
+                                   const int activation_id)
+{
+    if (batch == 0 || out_features == 0) return;
+    const int total = static_cast<int>(batch * out_features);
+    rnn_step_bias_activation_kernel<T><<<grid_size_for(total), block_size, 0,
+                                         opennn::Backend::get_compute_stream()>>>(
+        total,
+        static_cast<int>(out_features),
+        hidden, bias, derivs_or_null, activation_id);
+}
+
+template void rnn_step_bias_activation_cuda<float>        (const Index, const Index, float*,         const float*,         float*,         const int);
+template void rnn_step_bias_activation_cuda<__nv_bfloat16>(const Index, const Index, __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, const int);
+
+// -----------------------------------------------------------------------------
+// Fused recurrent forward step (Phase 3.E).
+//
+// Computes for each (batch, out_feature) pair:
+//     z = bias[j] + Σ_i X[b, i] * W_in[i, j] + Σ_k h_prev[b, k] * W_rec[k, j]
+//     h[b, j] = σ(z)
+//     deriv[b, j] = σ'(z)   (only if derivs ≠ null)
+//
+// Launch: one block per batch row, one thread per output feature.
+// Shared memory caches X[b, *] and (when prev_hidden ≠ null) h_prev[b, *].
+//
+// This replaces the per-step sequence (2 cuBLAS GEMMs + bias_activation kernel)
+// with a single launch, dropping the kernel-submission rate by ~3× in the
+// RecurrentOp pure-GPU path. For RNNs with out_features ≤ 128 this is also
+// faster than cuBLAS GEMMs because of the small (m, n, k) overhead.
+// -----------------------------------------------------------------------------
+
+template<typename T>
+__global__ void rnn_step_fused_forward_kernel(const int batch,
+                                              const int in_features,
+                                              const int out_features,
+                                              const T* __restrict__ step_input,
+                                              const T* __restrict__ prev_hidden,
+                                              const T* __restrict__ W_in,
+                                              const T* __restrict__ W_rec,
+                                              const T* __restrict__ bias,
+                                              T* __restrict__ step_hidden,
+                                              T* derivs,
+                                              const int activation_id)
+{
+    extern __shared__ float smem[];
+    float* sX = smem;                             // [in_features]
+    float* sH = smem + in_features;               // [out_features] when prev_hidden != null
+
+    const int b = blockIdx.x;
+    const int j = threadIdx.x;
+
+    // Cooperative load of X[b, :] into shared memory.
+    for (int i = j; i < in_features; i += blockDim.x)
+        sX[i] = static_cast<float>(step_input[b * in_features + i]);
+
+    // Cooperative load of h_prev[b, :] into shared memory (skipped at t=0).
+    if (prev_hidden)
+        for (int k = j; k < out_features; k += blockDim.x)
+            sH[k] = static_cast<float>(prev_hidden[b * out_features + k]);
+
+    __syncthreads();
+
+    if (j >= out_features) return;
+
+    float z = static_cast<float>(bias[j]);
+
+    for (int i = 0; i < in_features; ++i)
+        z += sX[i] * static_cast<float>(W_in[i * out_features + j]);
+
+    if (prev_hidden)
+        for (int k = 0; k < out_features; ++k)
+            z += sH[k] * static_cast<float>(W_rec[k * out_features + j]);
+
+    float h_out;
+    float dh_out;
+    switch (activation_id)
+    {
+        case 1:  // Sigmoid
+            h_out  = 1.0f / (1.0f + expf(-z));
+            dh_out = h_out * (1.0f - h_out);
+            break;
+        case 2:  // Tanh
+            h_out  = tanhf(z);
+            dh_out = 1.0f - h_out * h_out;
+            break;
+        case 3:  // ReLU
+            h_out  = z > 0.0f ? z : 0.0f;
+            dh_out = z > 0.0f ? 1.0f : 0.0f;
+            break;
+        case 0:  // Identity
+        case 4:  // Softmax (degenerate per-step → identity)
+        default:
+            h_out  = z;
+            dh_out = 1.0f;
+            break;
+    }
+
+    step_hidden[b * out_features + j] = static_cast<T>(h_out);
+    if (derivs) derivs[b * out_features + j] = static_cast<T>(dh_out);
+}
+
+template<typename T>
+void rnn_step_fused_forward_cuda(const Index batch,
+                                 const Index in_features,
+                                 const Index out_features,
+                                 const T* step_input,
+                                 const T* prev_hidden,
+                                 const T* W_in,
+                                 const T* W_rec,
+                                 const T* bias,
+                                 T* step_hidden,
+                                 T* derivs_or_null,
+                                 const int activation_id)
+{
+    if (batch == 0 || out_features == 0) return;
+
+    const int block_size = static_cast<int>(out_features);
+    const int grid_size  = static_cast<int>(batch);
+    const Index shmem_floats = in_features + (prev_hidden ? out_features : Index(0));
+    const size_t shmem_bytes = static_cast<size_t>(shmem_floats) * sizeof(float);
+
+    rnn_step_fused_forward_kernel<T><<<grid_size, block_size, shmem_bytes,
+                                       opennn::Backend::get_compute_stream()>>>(
+        static_cast<int>(batch),
+        static_cast<int>(in_features),
+        static_cast<int>(out_features),
+        step_input, prev_hidden, W_in, W_rec, bias,
+        step_hidden, derivs_or_null, activation_id);
+}
+
+template void rnn_step_fused_forward_cuda<float>        (const Index, const Index, const Index, const float*,         const float*,         const float*,         const float*,         const float*,         float*,         float*,         const int);
+template void rnn_step_fused_forward_cuda<__nv_bfloat16>(const Index, const Index, const Index, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*, const int);
+
+// -----------------------------------------------------------------------------
+// Element-wise multiply for BPTT: delta *= mask (used as δh ⊙ σ'(z) -> δz).
+// -----------------------------------------------------------------------------
+
+template<typename T>
+__global__ void rnn_elementwise_multiply_kernel(const int n,
+                                                T* __restrict__ dst,
+                                                const T* __restrict__ a)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= n) return;
+    const float v = static_cast<float>(dst[idx]) * static_cast<float>(a[idx]);
+    dst[idx] = static_cast<T>(v);
+}
+
+template<typename T>
+void rnn_elementwise_multiply_cuda(const Index n, T* dst, const T* a)
+{
+    if (n == 0) return;
+    const int total = static_cast<int>(n);
+    rnn_elementwise_multiply_kernel<T><<<grid_size_for(total), block_size, 0,
+                                         opennn::Backend::get_compute_stream()>>>(
+        total, dst, a);
+}
+
+template void rnn_elementwise_multiply_cuda<float>        (const Index, float*,         const float*);
+template void rnn_elementwise_multiply_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const __nv_bfloat16*);
+
+// -----------------------------------------------------------------------------
+// Bias-gradient column reduction: bias_grad[f] += sum_batch( delta[b, f] ).
+// -----------------------------------------------------------------------------
+
+template<typename T>
+__global__ void rnn_accumulate_bias_grad_kernel(const int batch,
+                                                const int features,
+                                                const T* __restrict__ delta,
+                                                float* __restrict__ bias_grad)
+{
+    const int f = blockIdx.x * blockDim.x + threadIdx.x;
+    if (f >= features) return;
+
+    float acc = 0.0f;
+    for (int b = 0; b < batch; ++b)
+        acc += static_cast<float>(delta[b * features + f]);
+
+    atomicAdd(bias_grad + f, acc);
+}
+
+template<typename T>
+void rnn_accumulate_bias_grad_cuda(const Index batch,
+                                   const Index features,
+                                   const T* delta,
+                                   float* bias_grad)
+{
+    if (batch == 0 || features == 0) return;
+    const int total = static_cast<int>(features);
+    rnn_accumulate_bias_grad_kernel<T><<<grid_size_for(total), block_size, 0,
+                                         opennn::Backend::get_compute_stream()>>>(
+        static_cast<int>(batch),
+        static_cast<int>(features),
+        delta, bias_grad);
+}
+
+template void rnn_accumulate_bias_grad_cuda<float>        (const Index, const Index, const float*,         float*);
+template void rnn_accumulate_bias_grad_cuda<__nv_bfloat16>(const Index, const Index, const __nv_bfloat16*, float*);
+
+// -----------------------------------------------------------------------------
+// Fused recurrent backward "pre-gemm" step (Phase 3.E backward).
+//
+// One thread per (batch, out_feature). Replaces four kernels per timestep:
+//   1) copy delta from output_delta or next_carry
+//   2) gather σ'(z[t]) from activation_derivatives[:, t, :]
+//   3) elementwise multiply δz = δh ⊙ σ'(z[t]) into delta
+//   4) atomic-add δz into bias_grad
+// The cuBLAS GEMMs that follow (dW_in, dW_rec, next_carry) are untouched.
+// -----------------------------------------------------------------------------
+
+template<typename T>
+__global__ void rnn_step_fused_backward_pre_kernel(const int batch,
+                                                   const int out_features,
+                                                   const int time_steps,
+                                                   const int t,
+                                                   const bool first_iter,
+                                                   const T* __restrict__ output_delta,
+                                                   const T* __restrict__ next_carry,
+                                                   const T* __restrict__ activation_derivatives,
+                                                   T* __restrict__ delta,
+                                                   float* __restrict__ bias_grad)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    const int total = batch * out_features;
+    if (idx >= total) return;
+
+    const int b = idx / out_features;
+    const int j = idx - b * out_features;
+
+    const float dh = first_iter
+        ? static_cast<float>(output_delta[idx])
+        : static_cast<float>(next_carry[idx]);
+
+    const float sigma_prime = static_cast<float>(
+        activation_derivatives[(b * time_steps + t) * out_features + j]);
+
+    const float dz = dh * sigma_prime;
+
+    delta[idx] = static_cast<T>(dz);
+
+    atomicAdd(bias_grad + j, dz);
+}
+
+template<typename T>
+void rnn_step_fused_backward_pre_cuda(const Index batch,
+                                      const Index out_features,
+                                      const Index time_steps,
+                                      const Index t,
+                                      const bool first_iter,
+                                      const T* output_delta,
+                                      const T* next_carry,
+                                      const T* activation_derivatives,
+                                      T* delta,
+                                      float* bias_grad)
+{
+    if (batch == 0 || out_features == 0) return;
+
+    const int total = static_cast<int>(batch * out_features);
+    rnn_step_fused_backward_pre_kernel<T><<<grid_size_for(total), block_size, 0,
+                                            opennn::Backend::get_compute_stream()>>>(
+        static_cast<int>(batch),
+        static_cast<int>(out_features),
+        static_cast<int>(time_steps),
+        static_cast<int>(t),
+        first_iter,
+        output_delta, next_carry,
+        activation_derivatives,
+        delta, bias_grad);
+}
+
+template void rnn_step_fused_backward_pre_cuda<float>        (const Index, const Index, const Index, const Index, const bool, const float*,         const float*,         const float*,         float*,         float*);
+template void rnn_step_fused_backward_pre_cuda<__nv_bfloat16>(const Index, const Index, const Index, const Index, const bool, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, float*);
