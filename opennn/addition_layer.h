@@ -18,20 +18,22 @@ class Addition final : public Layer
 {
 public:
 
-    Addition(const Shape& = {}, const string& = "");
+    Addition(const Shape& = {}, const string& = "", Index num_inputs = 2);
 
     Shape get_output_shape() const override { return input_shape; }
 
     vector<TensorSpec> get_backward_specs(Index batch_size) const override;
 
-    void set(const Shape&, const string&);
-    void set_input_shape(const Shape& shape) override { set(shape, label); }
+    void set(const Shape&, const string&, Index num_inputs);
+    void set_input_shape(const Shape& shape) override { set(shape, label, inputs_number); }
+
+    Index get_inputs_number() const { return inputs_number; }
 
 private:
 
     AddOp add;
 
-    enum Backward {OutputDelta, InputDelta0, InputDelta1};
+    Index inputs_number = 2;
 };
 
 }

@@ -169,7 +169,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     OptimizerData optimization_data;
     optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, device);
 
-    optimization_data.iteration = 1;
+    optimization_data.iteration = 0;
 
     float training_error = 0.0f;
     float training_accuracy = 0.0f;

@@ -55,6 +55,15 @@ public:
     void submit(function<void()> job);
     void wait();
 
+    // If any worker caught an exception during its job, rethrow it from
+    // the calling (consumer) thread and clear the stored error. Call this
+    // inside busy-wait loops to avoid hanging when a worker dies.
+    [[nodiscard]] bool has_error() const noexcept
+    {
+        return error_pending_.load(memory_order_acquire);
+    }
+    void rethrow_if_error();
+
 private:
     vector<jthread> workers_;
     mutex                mutex_;
@@ -63,7 +72,10 @@ private:
     function<void()>     current_job_;
     uint64_t             generation_  = 0;
     int                  outstanding_ = 0;
-    bool                 stopping_    = false;
+
+    mutex               error_mutex_;
+    exception_ptr       worker_error_;
+    atomic<bool>        error_pending_{false};
 };
 
 class Optimizer

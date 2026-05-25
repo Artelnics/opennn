@@ -125,7 +125,12 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
                 if (minimum_validation_error < neuron_selection_results.optimum_validation_error)
                 {
                     neuron_selection_results.optimal_neurons_number = neurons_number;
-                    //neural_network->get_parameters(neuron_selection_results.optimal_parameters);
+                    // Ensure parameters are reachable from host before mapping
+                    // (training may have left them on device for the GPU path).
+                    neural_network->copy_parameters_host();
+                    neuron_selection_results.optimal_parameters =
+                        Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
+                                                  neural_network->get_parameters_size());
                     neuron_selection_results.optimum_training_error = minimum_training_error;
                     neuron_selection_results.optimum_validation_error = minimum_validation_error;
                 }
@@ -198,7 +203,11 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     const Shape optimal_shape = { neuron_selection_results.optimal_neurons_number };
     neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape(optimal_shape);
     neural_network->get_layer(last_trainable_layer_index)->set_input_shape(optimal_shape);
-    neural_network->set_parameters(neuron_selection_results.optimal_parameters);
+
+    if (neuron_selection_results.optimal_parameters.size() == neural_network->get_parameters_size())
+        neural_network->set_parameters(neuron_selection_results.optimal_parameters);
+    else if (display)
+        cout << "Warning: no optimal parameter snapshot captured; keeping current weights.\n";
 
     if (display) neuron_selection_results.print();
 

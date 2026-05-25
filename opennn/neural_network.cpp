@@ -27,6 +27,10 @@
 namespace opennn
 {
 
+static vector<Index> string_to_source_indices(const string&);
+static void validate_source_indices(const vector<Index>&, Index, Index);
+static void validate_source_arity(const Layer&, const vector<Index>&, Index);
+
 NeuralNetwork::NeuralNetwork()
 {
     clear();
@@ -43,11 +47,16 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sour
 
     if (!layers.empty()) validate_type(layers.back()->get_type());
 
+    const vector<Index> resolved_sources = sources.empty()
+        ? vector<Index>{old_layers_number}
+        : sources;
+
+    validate_source_indices(resolved_sources, ssize(layers), ssize(layers));
+    validate_source_arity(*layer, resolved_sources, ssize(layers));
+
     layers.push_back(move(layer));
 
-    source_layers.push_back(sources.empty()
-        ? vector<Index>(1, old_layers_number )
-        : sources);
+    source_layers.push_back(resolved_sources);
 
     first_trainable_cache_ = -1;
     last_trainable_cache_  = -1;
@@ -258,6 +267,71 @@ void NeuralNetwork::clear()
     last_trainable_cache_  = -1;
 }
 
+static vector<Index> string_to_source_indices(const string& text)
+{
+    vector<Index> indices;
+    istringstream stream(text);
+
+    Index index = 0;
+    while (stream >> index)
+        indices.push_back(index);
+
+    return indices;
+}
+
+static void validate_source_indices(const vector<Index>& sources, Index layer_index, Index layers_count)
+{
+    for (Index src : sources)
+    {
+        if (src < 0) continue;  // sentinel for external input
+        if (src >= layers_count || src >= layer_index)
+            throw runtime_error("NeuralNetwork::set_source_layers: source index "
+                                + to_string(src) + " is not a previous layer for layer "
+                                + to_string(layer_index) + ".");
+    }
+}
+
+static void validate_source_arity(const Layer& layer,
+                                  const vector<Index>& sources,
+                                  Index layer_index)
+{
+    if (const auto* addition = dynamic_cast<const Addition*>(&layer);
+        addition && ssize(sources) != addition->get_inputs_number())
+        throw runtime_error("NeuralNetwork::set_source_layers: Addition layer "
+                            + to_string(layer_index) + " expects "
+                            + to_string(addition->get_inputs_number()) + " sources, got "
+                            + to_string(sources.size()) + ".");
+}
+
+void NeuralNetwork::set_source_layers(const vector<vector<Index>>& new_source_layers)
+{
+    if (ssize(new_source_layers) != ssize(layers))
+        throw runtime_error("NeuralNetwork::set_source_layers: outer size ("
+                            + to_string(new_source_layers.size())
+                            + ") must match layers count ("
+                            + to_string(layers.size()) + ").");
+
+    for (Index i = 0; i < ssize(new_source_layers); ++i)
+    {
+        validate_source_indices(new_source_layers[i], i, ssize(layers));
+        validate_source_arity(*layers[i], new_source_layers[i], i);
+    }
+
+    source_layers = new_source_layers;
+}
+
+void NeuralNetwork::set_source_layers(const Index layer_index, const vector<Index>& new_sources)
+{
+    if (layer_index < 0 || layer_index >= ssize(layers))
+        throw runtime_error("NeuralNetwork::set_source_layers: layer index "
+                            + to_string(layer_index) + " out of range.");
+
+    validate_source_indices(new_sources, layer_index, ssize(layers));
+    validate_source_arity(*layers[layer_index], new_sources, layer_index);
+
+    source_layers[layer_index] = new_sources;
+}
+
 void NeuralNetwork::set_source_layers(const string& layer_label,
                                       const vector<string>& new_source_labels)
 {
@@ -266,7 +340,7 @@ void NeuralNetwork::set_source_layers(const string& layer_label,
     ranges::transform(new_source_labels, new_sources.begin(),
                       [this](const string& label) { return get_layer_index(label); });
 
-    source_layers[get_layer_index(layer_label)] = new_sources;
+    set_source_layers(get_layer_index(layer_label), new_sources);
 }
 
 void NeuralNetwork::set_source_layers(const string& layer_label,
@@ -279,7 +353,7 @@ void NeuralNetwork::set_source_layers(const string& layer_label, const string& n
 {
     const Index layer_index = get_layer_index(layer_label);
 
-    source_layers[layer_index] = {get_layer_index(new_source_label)};
+    set_source_layers(layer_index, {get_layer_index(new_source_label)});
 }
 
 Index NeuralNetwork::get_inputs_number() const
@@ -376,6 +450,22 @@ Index NeuralNetwork::get_layers_number(LayerType type) const
 
 void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 {
+    if (new_parameters.size() == 0)
+        throw runtime_error("NeuralNetwork::set_parameters: refusing to apply an empty parameter vector.");
+
+    // If the network has already been compiled, the parameter buffer carries
+    // a fixed size derived from the layer specs. Reject mismatches up-front
+    // instead of silently realloc'ing — the caller almost always wants the
+    // compiled size, and an off-by-one here leaves the views pointing into
+    // freshly resized memory whose layout no longer matches the layers.
+    const Index expected_size = get_parameters_size();
+    if (expected_size > 0 && new_parameters.size() != expected_size)
+        throw runtime_error("NeuralNetwork::set_parameters: size mismatch (got "
+                            + to_string(new_parameters.size())
+                            + ", expected " + to_string(expected_size)
+                            + "). Make sure the network is compiled with the same "
+                            + "architecture as the one that produced this snapshot.");
+
     const Index byte_count = new_parameters.size() * Index(sizeof(float));
 
 #ifdef OPENNN_HAS_CUDA
@@ -390,6 +480,7 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
             CHECK_CUDA(cudaStreamSynchronize(stream));
         }
         cast_parameters_to_bf16();
+        link_parameters();
         return;
     }
 #endif
@@ -397,6 +488,7 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
     parameters.resize_bytes(byte_count, Device::CPU);
     if (byte_count > 0)
         memcpy(parameters.data, new_parameters.data(), static_cast<size_t>(byte_count));
+    link_parameters();
 }
 
 void NeuralNetwork::set_parameters_random()
@@ -820,11 +912,14 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
             {
                 const long layer_index = read_json_index(&entry, "LayerIndex");
                 const string text   = read_json_string(&entry, "Text");
-                if (layer_index >= 0 && layer_index < ssize(layers) && !text.empty())
-                {
-                    Shape shape = string_to_shape(text, " ");
-                    source_layers[layer_index].assign(shape.begin(), shape.end());
-                }
+                if (text.empty()) continue;
+
+                if (layer_index < 0 || layer_index >= ssize(layers))
+                    throw runtime_error("NeuralNetwork::from_JSON: SourceLayer index "
+                                        + to_string(layer_index) + " out of range (have "
+                                        + to_string(layers.size()) + " layers).");
+
+                set_source_layers(layer_index, string_to_source_indices(text));
             }
         }
     }

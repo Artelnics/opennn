@@ -27,6 +27,49 @@
 namespace opennn
 {
 
+namespace
+{
+
+bool same_specs(const vector<vector<TensorSpec>>& a, const vector<vector<TensorSpec>>& b)
+{
+    if (a.size() != b.size()) return false;
+
+    for (size_t i = 0; i < a.size(); ++i)
+    {
+        if (a[i].size() != b[i].size()) return false;
+
+        for (size_t j = 0; j < a[i].size(); ++j)
+            if (!(a[i][j].shape == b[i][j].shape) || a[i][j].dtype != b[i][j].dtype)
+                return false;
+    }
+
+    return true;
+}
+
+void recompile_if_specs_changed(NeuralNetwork& network,
+                                const vector<vector<TensorSpec>>& forward_before,
+                                const vector<vector<TensorSpec>>& backward_before)
+{
+    if (same_specs(forward_before, network.get_forward_specs(1))
+        && same_specs(backward_before, network.get_backward_specs(1)))
+        return;
+
+    VectorR parameters_snapshot;
+    if (network.get_parameters_size() > 0)
+    {
+        network.copy_parameters_host();
+        parameters_snapshot = Eigen::Map<const VectorR>(network.get_parameters_data(),
+                                                        network.get_parameters_size());
+    }
+
+    network.compile();
+
+    if (parameters_snapshot.size() > 0)
+        network.set_parameters(parameters_snapshot);
+}
+
+}
+
 ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
                                            const Shape& complexity_dimensions,
                                            const Shape& output_shape) : NeuralNetwork()
@@ -603,6 +646,9 @@ Transformer::Transformer(Index input_sequence_length,
 
 void Transformer::set_dropout_rate(const float new_dropout_rate)
 {
+    const auto forward_before = get_forward_specs(1);
+    const auto backward_before = get_backward_specs(1);
+
     for (auto& layer : get_layers())
     {
         if (!layer) continue;
@@ -624,20 +670,32 @@ void Transformer::set_dropout_rate(const float new_dropout_rate)
             mha->set_dropout_rate(new_dropout_rate);
         }
     }
+
+    recompile_if_specs_changed(*this, forward_before, backward_before);
 }
 
 void Transformer::set_attention_sdpa_auto(bool new_sdpa_auto)
 {
+    const auto forward_before = get_forward_specs(1);
+    const auto backward_before = get_backward_specs(1);
+
     for (auto& layer : get_layers())
         if (auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
             mha->set_sdpa_auto(new_sdpa_auto);
+
+    recompile_if_specs_changed(*this, forward_before, backward_before);
 }
 
 void Transformer::set_attention_sdpa_min_sequence_length(Index new_threshold)
 {
+    const auto forward_before = get_forward_specs(1);
+    const auto backward_before = get_backward_specs(1);
+
     for (auto& layer : get_layers())
         if (auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
             mha->set_sdpa_min_sequence_length(new_threshold);
+
+    recompile_if_specs_changed(*this, forward_before, backward_before);
 }
 
 Index Transformer::get_input_sequence_length() const

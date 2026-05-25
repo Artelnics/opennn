@@ -80,8 +80,8 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     for (Index i = 0; i < outputs_number; ++i)
     {
-        const VectorMap targets = vector_map(all_targets, i);
-        const VectorMap outputs = vector_map(all_outputs, i);
+        const VectorR targets = all_targets.col(i);
+        const VectorR outputs = all_outputs.col(i);
 
         const float determination = calculate_determination(outputs, targets);
 
@@ -458,35 +458,6 @@ VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& 
     categorical_cross_entropy(outputs_view, targets_view, errors(4), nullptr);
 
     return errors;
-}
-
-float TestingAnalysis::calculate_masked_accuracy(const Tensor3& /*outputs*/, const MatrixR& /*targets*/) const
-{
-/*
-    const Index batch_size = outputs.rows();
-    const Index outputs_number = outputs.cols();
-
-    MatrixR predictions(batch_size, outputs_number);
-    MatrixB matches(batch_size, outputs_number);
-    MatrixB mask(batch_size, outputs_number);
-
-    Tensor0 accuracy;
-
-    mask = targets != targets.constant(0);
-
-    const Tensor0 mask_sum = mask.cast<float>().sum();
-
-    predictions = outputs.argmax(2).cast<float>();
-
-    matches = predictions == targets;
-
-    matches = matches && mask;
-
-    accuracy = matches.cast<float>().sum() / mask_sum(0);
-
-    return accuracy(0);
-*/
-    return 0;
 }
 
 float TestingAnalysis::calculate_determination(const VectorR& outputs, const VectorR& targets) const
@@ -1139,12 +1110,6 @@ void TestingAnalysis::save_classified_samples_statistics_csv(const Tensor<string
          << standard_deviation(probabilities);
 }
 
-void TestingAnalysis::save_classified_samples_probability_histogram(const Tensor<string, 2>& samples, const filesystem::path& file_name) const
-{
-    const Histogram h(extract_probabilities(samples));
-    h.save(file_name);
-}
-
 VectorR TestingAnalysis::extract_probabilities(const Tensor<string, 2>& samples)
 {
     VectorR probabilities(samples.dimension(0));
@@ -1221,97 +1186,6 @@ vector<VectorR> TestingAnalysis::calculate_inputs_errors_cross_correlation(const
         inputs_errors_cross_correlation[i] = cross_correlations(inputs.col(i), errors.col(i), past_time_steps);
 
     return inputs_errors_cross_correlation;
-}
-
-pair<float, float> TestingAnalysis::test_transformer() const
-{
-    cout << "Testing transformer..." << "\n";
-
-    const auto* transformer = dynamic_cast<Transformer*>(neural_network);
-    throw_if(!transformer, "Expected Transformer neural network.");
-    const auto* language_dataset = dynamic_cast<LanguageDataset*>(dataset);
-    throw_if(!language_dataset, "Expected LanguageDataset.");
-
-    const vector<Index> sample_indices   = language_dataset->get_sample_indices("Testing");
-    const vector<Index> input_features   = language_dataset->get_feature_indices("Input");
-    const vector<Index> decoder_features = language_dataset->get_feature_indices("Decoder");
-    const vector<Index> target_features  = language_dataset->get_feature_indices("Target");
-    const Index n = ssize(sample_indices);
-
-    MatrixR context(n, ssize(input_features));
-    MatrixR input(n, ssize(decoder_features));
-    MatrixR target(n, ssize(target_features));
-    language_dataset->fill_inputs(sample_indices, input_features,
-                                  context.data(), /*is_training=*/false, /*parallelize=*/true);
-    language_dataset->fill_decoder(sample_indices, decoder_features,
-                                   input.data(), /*is_training=*/false, /*parallelize=*/true);
-    language_dataset->fill_targets(sample_indices, target_features,
-                                   target.data(), /*is_training=*/false, /*parallelize=*/true);
-
-    const Index testing_batch_size = min(static_cast<Index>(2000), input.rows());
-
-    MatrixR testing_input = input.topRows(testing_batch_size);
-    MatrixR testing_context = context.topRows(testing_batch_size);
-    MatrixR testing_target = target.topRows(testing_batch_size);
-
-    //const Tensor3 outputs = transformer->calculate_outputs(testing_input, testing_context);
-
-    // cout<<"English:"<<endl;
-    // cout<<testing_context.chip(10,0)<<endl;
-    // for (Index i = 0; i < testing_context.dimension(1); ++i)
-    //     cout<<language_dataset->get_context_vocabulary()[Index(testing_context(10,i))]<<" ";
-    // cout<<endl;
-    // cout<<endl;
-    // cout<<"Spanish:"<<endl;
-    // cout<<testing_input.chip(10,0)<<endl;
-    // for (Index i = 0; i < testing_input.dimension(1); ++i)
-    //     cout<<language_dataset->get_completion_vocabulary()[Index(testing_input(10,i))]<<" ";
-    // cout<<endl;
-    // cout<<endl;
-    // cout<<"Prediction:"<<endl;
-
-    // for (Index j = 0; j < outputs.dimension(1); ++j) {
-    //     float max = outputs(10, j, 0);
-    //     Index index = 0;
-    //     for (Index i = 1; i < outputs.dimension(2); ++i) {
-    //         if (max < outputs(10,j,i)) {
-    //             index = i;
-    //             max = outputs(10,j,i);
-    //         } else {continue;}
-    //     }
-    //     cout<<index<<" ";
-    // }
-    // cout<<endl;
-    // for (Index j = 0; j < outputs.dimension(1); ++j) {
-    //     float max = outputs(10, j, 0);
-    //     Index index = 0;
-    //     for (Index i = 1; i < outputs.dimension(2); ++i) {
-    //         if (max < outputs(10,j,i)) {
-    //             index = i;
-    //             max = outputs(10,j,i);
-    //         } else {continue;}
-    //     }
-    //     cout<<language_dataset->get_completion_vocabulary()[index]<<" ";
-    // }
-/*
-    const float error = calculate_cross_entropy_error_3d(outputs, testing_target);
-
-    const float accuracy = calculate_masked_accuracy(outputs, testing_target);
-
-    return pair<float, float>(error, accuracy);
-*/
-    return {};
-}
-
-string TestingAnalysis::test_transformer(const vector<string>& /*context_string*/, bool /*imported_vocabulary*/) const
-{
-    cout << "Testing transformer..." << endl;
-/*
-    Transformer* transformer = static_cast<Transformer*>(neural_network);
-
-    return transformer->calculate_outputs(context_string);
-*/
-    return {};
 }
 
 VectorR TestingAnalysis::calculate_binary_classification_tests(const float decision_threshold) const

@@ -62,7 +62,17 @@ WorkerPool::WorkerPool(int num_workers)
 
                 if (job)
                 {
-                    try { job(); } catch (...) { /* swallow; main thread reports via its own loop */ }
+                    try
+                    {
+                        job();
+                    }
+                    catch (...)
+                    {
+                        lock_guard<mutex> elock(error_mutex_);
+                        if (!worker_error_)
+                            worker_error_ = current_exception();
+                        error_pending_.store(true, memory_order_release);
+                    }
                 }
 
                 {
@@ -98,6 +108,19 @@ void WorkerPool::wait()
     unique_lock<mutex> lock(mutex_);
     cv_done_.wait(lock, [this] { return outstanding_ == 0; });
     current_job_ = nullptr;
+}
+
+void WorkerPool::rethrow_if_error()
+{
+    if (!error_pending_.load(memory_order_acquire)) return;
+
+    exception_ptr e;
+    {
+        lock_guard<mutex> elock(error_mutex_);
+        e.swap(worker_error_);
+        error_pending_.store(false, memory_order_release);
+    }
+    if (e) rethrow_exception(e);
 }
 
 // --- Optimizer ---------------------------------------------------------------
@@ -453,9 +476,7 @@ void Optimizer::set_scaling()
 
             case 3:
             {
-                auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
-                throw_if(!image_dataset, "Expected ImageDataset.");
-                image_dataset->scale_features("Input");
+                throw_if(!dynamic_cast<ImageDataset*>(dataset), "Expected ImageDataset.");
                 scaling_layer->set_scalers("ImageMinMax");
                 break;
             }
@@ -575,8 +596,6 @@ void Optimizer::set_unscaling()
         return descriptives;
     };
 
-    // Mirror set_scaling's rank dispatch: tabular/time-series invert via descriptives,
-    // image inverts at the dataset level (no descriptives kept).
     if (auto* layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
     {
         switch (layer->get_input_shape().rank)
@@ -586,11 +605,6 @@ void Optimizer::set_unscaling()
                 dataset->unscale_features("Input",
                     reconstruct_descriptives(layer->get_minimums(), layer->get_maximums(),
                                               layer->get_means(), layer->get_standard_deviations()));
-                break;
-
-            case 3:
-                if (auto* image_dataset = dynamic_cast<ImageDataset*>(dataset))
-                    image_dataset->unscale_features("Input", {});
                 break;
         }
     }
@@ -1182,7 +1196,13 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     auto wait_for_iteration = [&](Index it) -> Batch* {
         Batch* p = nullptr;
         while (!(p = ready[it].load(memory_order_acquire)))
+        {
+            // If a worker died with an exception, ready[it] will never be set
+            // and the consumer would hang forever. Surface it now.
+            if (worker_pool->has_error())
+                worker_pool->rethrow_if_error();
             this_thread::yield();
+        }
         return p;
     };
 
@@ -1277,6 +1297,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     if (show_progress) cout << "\n";
 
     worker_pool->wait();
+    worker_pool->rethrow_if_error();
 
 #ifdef OPENNN_HAS_CUDA
     if (use_device_metrics)
@@ -1407,7 +1428,11 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
     auto wait_for_iteration = [&](Index it) -> Batch* {
         Batch* p = nullptr;
         while (!(p = ready[it].load(memory_order_acquire)))
+        {
+            if (worker_pool->has_error())
+                worker_pool->rethrow_if_error();
             this_thread::yield();
+        }
         return p;
     };
 
@@ -1462,6 +1487,7 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
     }
 
     worker_pool->wait();
+    worker_pool->rethrow_if_error();
 
 #ifdef OPENNN_HAS_CUDA
     if (use_device_metrics)

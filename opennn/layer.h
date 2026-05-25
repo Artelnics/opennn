@@ -143,13 +143,13 @@ public:
 
     [[nodiscard]] Index get_outputs_number() const { return get_output_shape().size(); }
     
-    virtual void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept
+    virtual void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
     {
         for (Operator* op : get_operators())
             op->forward_propagate(fp, layer, is_training);
     }
 
-    virtual void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t i) const noexcept
+    virtual void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t i) const
     {
         for (Operator* op : views::reverse(get_operators()))
             op->back_propagate(fp, bp, i);

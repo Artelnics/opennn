@@ -70,14 +70,11 @@ void embedding_lookup_backward(const TensorView& indices, const TensorView& outp
                                bool scale_embedding);
 
 void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training);
-
 void average_pooling_3d_forward(const TensorView& input, TensorView& output);
-
 void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta);
-
 void average_pooling_3d_backward(const TensorView& input, const TensorView& output_delta, TensorView& input_delta);
-void split_heads(const TensorView& source, TensorView& destination);
 
+void split_heads(const TensorView& source, TensorView& destination);
 void merge_heads(const TensorView& source, TensorView& destination);
 
 }

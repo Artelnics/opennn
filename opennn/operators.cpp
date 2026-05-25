@@ -26,7 +26,7 @@
 namespace opennn
 {
 
-void AddOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexcept
+void AddOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
     const vector<TensorView>& inputs = get_inputs(fp, layer);
     TensorView& output               = get_output(fp, layer);
@@ -38,7 +38,7 @@ void AddOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexce
         add(output, inputs[i], output);
 }
 
-void AddOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const noexcept
+void AddOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
 {
     const TensorView& output_delta = get_output_delta(bp, layer);
 
@@ -64,7 +64,7 @@ void DropoutOp::set_rate(float new_rate)
     rate = new_rate;
 }
 
-void DropoutOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept
+void DropoutOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
 {
     if (!is_training || !active()) return;
 
@@ -77,7 +77,7 @@ void DropoutOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_
     dropout_forward(output, mask, rate);
 }
 
-void DropoutOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const noexcept
+void DropoutOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
 {
     if (!active()) return;
     dropout_backward(get_output_delta(bp, layer), mask, rate);
@@ -132,7 +132,7 @@ void ActivationOp::set_function(const string& name)
     set_function(from_string(name));
 }
 
-void ActivationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
+void ActivationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
     TensorView& output = fp.views[layer][output_slots[0]][0];
     if (output.empty()) return;
@@ -153,7 +153,7 @@ void ActivationOp::apply_delta(const TensorView& outputs, TensorView& delta) con
     activation_backward(outputs, delta, function);
 }
 
-void ActivationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void ActivationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     const auto& slots = output_slots_backward.empty() ? output_slots : output_slots_backward;
     const TensorView& outputs = fp.views[layer][slots[0]][0];
@@ -298,7 +298,7 @@ void BatchNormOp::update_inference_cache()
     inference_cache_dirty = false;
 }
 
-void BatchNormOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept
+void BatchNormOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
 {
     if (!active()) return;
 
@@ -330,7 +330,7 @@ void BatchNormOp::apply_delta(const TensorView& input,
     apply_delta_cpu(input, mean, inverse_variance, delta);
 }
 
-void BatchNormOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void BatchNormOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     if (!active()) return;
 
@@ -538,7 +538,7 @@ void CombinationOp::set_parameters_glorot()
     if (!bias.empty()) bias.setZero();
 }
 
-void CombinationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexcept
+void CombinationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
     apply(get_input(fp, layer), get_output(fp, layer), CUBLASLT_EPILOGUE_BIAS);
 }
@@ -557,7 +557,7 @@ void CombinationOp::apply_delta(const TensorView& output_delta,
                     input_delta, accumulate_input_delta);
 }
 
-void CombinationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void CombinationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     auto& dv = bp.delta_views[layer];
 
@@ -576,7 +576,7 @@ void CombinationReluOp::set(Index input_features, Index output_features, Type we
     activation.set_function(ActivationOp::Function::ReLU);
 }
 
-void CombinationReluOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
+void CombinationReluOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
@@ -584,7 +584,7 @@ void CombinationReluOp::forward_propagate(ForwardPropagation& fp, size_t layer, 
     combination.apply(input, output, CUBLASLT_EPILOGUE_RELU_BIAS);
 }
 
-void CombinationReluOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void CombinationReluOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     auto& dv = bp.delta_views[layer];
 
@@ -661,7 +661,7 @@ void RecurrentOp::set_parameters_glorot()
     if (!bias.empty()) bias.setZero();
 }
 
-void RecurrentOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept
+void RecurrentOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
 {
     // Slot convention (set by the hosting layer):
     //   output_slots = {Output, HiddenStates, ActivationDerivatives}
@@ -675,7 +675,7 @@ void RecurrentOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
     apply(input, hidden_states, activation_derivatives, output, is_training);
 }
 
-void RecurrentOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void RecurrentOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     auto& fv = fp.views[layer];
     auto& dv = bp.delta_views[layer];
@@ -934,7 +934,7 @@ void ConvolutionOp::set_parameters_glorot()
     if (!bias.empty()) bias.setZero();
 }
 
-void ConvolutionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
+void ConvolutionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
@@ -956,7 +956,7 @@ void ConvolutionOp::apply(const TensorView& input, TensorView& output, cudnnActi
     apply_cpu(input, output);
 }
 
-void ConvolutionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void ConvolutionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     auto& dv = bp.delta_views[layer];
 
@@ -1289,7 +1289,7 @@ void ConvolutionReluOp::set(Index input_h, Index input_w,
     activation.set_function(ActivationOp::Function::ReLU);
 }
 
-void ConvolutionReluOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
+void ConvolutionReluOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
@@ -1299,7 +1299,7 @@ void ConvolutionReluOp::forward_propagate(ForwardPropagation& fp, size_t layer, 
     activation_forward(output, activation.function);
 }
 
-void ConvolutionReluOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void ConvolutionReluOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     auto& dv = bp.delta_views[layer];
 
@@ -1349,7 +1349,7 @@ void LayerNormOp::init_defaults()
     if (beta.data)  beta.as_vector().setZero();
 }
 
-void LayerNormOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
+void LayerNormOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
     const TensorView& input = get_input(fp, layer);
     TensorView& means       = get_output(fp, layer);
@@ -1360,7 +1360,7 @@ void LayerNormOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /
     layer_norm_forward(input, gamma, beta, means, stds, normalized, output);
 }
 
-void LayerNormOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void LayerNormOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     const TensorView& stds         = get_output(fp, layer, 1);
     const TensorView& normalized   = get_output(fp, layer, 2);
@@ -1381,7 +1381,7 @@ void MultiHeadProjectionOp::set(Index new_input_features, Index new_heads_number
     combination.set(input_features, new_heads_number * new_head_dimension, compute_dtype);
 }
 
-void MultiHeadProjectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
+void MultiHeadProjectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
     auto& fv = fp.views[layer];
     const auto& input_views = get_inputs(fp, layer);
@@ -1403,7 +1403,7 @@ void MultiHeadProjectionOp::forward_propagate(ForwardPropagation& fp, size_t lay
     split_heads(scratch_4d, head_output);
 }
 
-void MultiHeadProjectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void MultiHeadProjectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     auto& fv = fp.views[layer];
     auto& dv = bp.delta_views[layer];
@@ -1936,7 +1936,7 @@ void AttentionOp::destroy_cuda()
     sdpa_cache.reset();
 }
 
-void AttentionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept
+void AttentionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
 {
     auto& fv = fp.views[layer];
 
@@ -1962,7 +1962,7 @@ void AttentionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
               attention_out, fv[scratch_slots[0]][0].as<float>(), is_training);
 }
 
-void AttentionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void AttentionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     auto& fv = fp.views[layer];
 
@@ -2516,7 +2516,7 @@ void MergeOp::set(Index new_heads_number, Index new_query_sequence_length, Index
     compute_dtype         = new_compute_dtype;
 }
 
-void MergeOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
+void MergeOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
     const Index batch_size = fp.batch_size;
 
@@ -2528,7 +2528,7 @@ void MergeOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_
     merge_heads(source_4d, dest_4d);
 }
 
-void MergeOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void MergeOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     const Index batch_size = fp.batch_size;
 
@@ -2576,7 +2576,7 @@ void PoolOp::set(Index input_h, Index input_w, Index input_c,
 #endif
 }
 
-void PoolOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept
+void PoolOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
 {
     auto& fv = fp.views[layer];
     const TensorView& input = get_input(fp, layer);
@@ -2589,7 +2589,7 @@ void PoolOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_tra
     apply_cpu(input, output, indices, is_training);
 }
 
-void PoolOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void PoolOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     auto& fv = fp.views[layer];
 
@@ -2609,7 +2609,7 @@ void PoolOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t 
     apply_delta_cpu(output_delta, indices, input_delta);
 }
 
-void Pool3dOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) noexcept
+void Pool3dOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
 {
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
@@ -2621,7 +2621,7 @@ void Pool3dOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_t
         average_pooling_3d_forward(input, output);
 }
 
-void Pool3dOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void Pool3dOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     const TensorView& output_delta = get_output_delta(bp, layer);
     TensorView& input_delta        = get_input_delta(bp, layer);
@@ -2892,7 +2892,7 @@ void EmbeddingLookupOp::init_positional_encoding()
                 : cos(i / divisors(j));
 }
 
-void EmbeddingLookupOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
+void EmbeddingLookupOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
     const TensorView& indices = get_input(fp, layer);
     TensorView& output        = get_output(fp, layer);
@@ -2902,7 +2902,7 @@ void EmbeddingLookupOp::forward_propagate(ForwardPropagation& fp, size_t layer, 
                              scale_embedding, add_positional_encoding);
 }
 
-void EmbeddingLookupOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void EmbeddingLookupOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     const TensorView& indices      = get_input(fp, layer);
     const TensorView& output_delta = get_output_delta(bp, layer);
@@ -2911,17 +2911,17 @@ void EmbeddingLookupOp::back_propagate(ForwardPropagation& fp, BackPropagation& 
                               embedding_dimension, vocabulary_size, scale_embedding);
 }
 
-void FlatOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
+void FlatOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
     copy(get_input(fp, layer), get_output(fp, layer));
 }
 
-void FlatOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const noexcept
+void FlatOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
 {
     copy(get_output_delta(bp, layer), get_input_delta(bp, layer));
 }
 
-void BoundOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
+void BoundOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
@@ -2935,7 +2935,7 @@ void BoundOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_
     bound(input, lower, upper, output);
 }
 
-void ScaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
+void ScaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
@@ -2950,7 +2950,7 @@ void ScaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_
           min_range, max_range, output);
 }
 
-void UnscaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/) noexcept
+void UnscaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
@@ -3015,7 +3015,7 @@ void DetectionOp::set(const Shape& input_shape, const vector<array<float, 2>>& n
         throw runtime_error("DetectionOp: classes_number must be positive.");
 }
 
-void DetectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexcept
+void DetectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
     const TensorView& input = get_input(fp, layer);
     TensorView& output = get_output(fp, layer);
@@ -3069,7 +3069,7 @@ void DetectionOp::apply(const TensorView& input, TensorView& output) const
             }
 }
 
-void DetectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void DetectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     const TensorView& output = get_output(fp, layer);
     const TensorView& output_delta = get_output_delta(bp, layer);
@@ -3144,7 +3144,7 @@ void NonMaxSuppressionOp::set(const Shape& input_shape,
         throw runtime_error("NonMaxSuppressionOp: classes_number must be positive.");
 }
 
-void NonMaxSuppressionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexcept
+void NonMaxSuppressionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
     const TensorView& input = get_input(fp, layer);
     TensorView& output = get_output(fp, layer);
@@ -3379,7 +3379,7 @@ void LongShortTermMemoryOp::set_parameters_glorot()
     }
 }
 
-void LongShortTermMemoryOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool) noexcept
+void LongShortTermMemoryOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
     auto& views = fp.views[layer];
 
@@ -3501,7 +3501,7 @@ void LongShortTermMemoryOp::apply(const TensorView& input,
     }
 }
 
-void LongShortTermMemoryOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const noexcept
+void LongShortTermMemoryOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     auto& deltas = bp.delta_views[layer];
     if (deltas.size() <= OutputDeltaScratchSlot) return;
