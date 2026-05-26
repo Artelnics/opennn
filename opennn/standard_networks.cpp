@@ -57,7 +57,11 @@ void recompile_if_specs_changed(NeuralNetwork& network,
     VectorR parameters_snapshot;
     if (network.get_parameters_size() > 0)
     {
+#ifdef OPENNN_HAS_CUDA
+        // Drag the parameter buffer back from device memory before snapshotting
+        // its host-side bytes. No-op needed in CPU-only builds.
         network.copy_parameters_host();
+#endif
         parameters_snapshot = Eigen::Map<const VectorR>(network.get_parameters_data(),
                                                         network.get_parameters_size());
     }
@@ -191,6 +195,8 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
     compile();
     set_parameters_random();
 }
+
+#ifndef OPENNN_NO_VISION
 
 ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                                        const Shape& complexity_dimensions,
@@ -720,6 +726,8 @@ Index Transformer::get_heads_number() const
 
     return 0;
 }
+
+#endif // OPENNN_NO_VISION
 
 }
 

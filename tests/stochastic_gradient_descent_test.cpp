@@ -99,35 +99,33 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
 
     type error = 0;
 
-    Index context_length = 0;
-    Index context_dimension = 0;
-    Index input_shape = 0;
-
     LanguageDataset language_dataset;
 
-    Index depth;
-    Index dense_depth;
-    Index heads_number;
-    Index layers_number;
+    Index samples_number = 1;
 
-    Transformer transformer;
+    Index inputs_number = 2;
+    Index context_length = 3;
+    Index input_shape = 5;
+    Index context_dimension = 6;
+
+    Index depth = 4;
+    Index dense_depth = 6;
+    Index heads_number = 4;
+    Index layers_number = 1;
+
+    Transformer transformer(inputs_number,
+                            context_length,
+                            input_shape,
+                            context_dimension,
+                            depth,
+                            heads_number,
+                            dense_depth,
+                            layers_number);
 
     Loss cross_entropy_loss(&transformer, &language_dataset);
     cross_entropy_loss.set_error(Loss::Error::CrossEntropy);
 
     StochasticGradientDescent stochastic_gradient_descent(&cross_entropy_loss);
-
-    Index samples_number = 1;
-
-    Index inputs_number = 2;
-    context_length = 3;
-    input_shape = 5;
-    context_dimension = 6;
-
-    depth = 4;
-    dense_depth = 6;
-    heads_number = 4;
-    layers_number = 1;
 /*
     language_dataset.set_data_random_language_model(samples_number, inputs_number, context_length, input_shape, context_dimension);
 

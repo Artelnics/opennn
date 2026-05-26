@@ -159,6 +159,9 @@ TrainingResults StochasticGradientDescent::train()
 {
     TrainingResults results(maximum_epochs + 1);
 
+    if (!loss || !loss->get_neural_network() || !loss->get_dataset())
+        return results;
+
     const bool on_gpu = is_gpu();
 
     if (display) cout << "Training with stochastic gradient descent (SGD)"

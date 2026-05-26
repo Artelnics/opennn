@@ -117,7 +117,9 @@ void WorkerPool::rethrow_if_error()
     exception_ptr e;
     {
         lock_guard<mutex> elock(error_mutex_);
-        e.swap(worker_error_);
+        // std::exception_ptr has no member swap in MSVC's STL — use the free
+        // function template (exception_ptr is move-assignable).
+        swap(e, worker_error_);
         error_pending_.store(false, memory_order_release);
     }
     if (e) rethrow_exception(e);

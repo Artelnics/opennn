@@ -118,10 +118,21 @@ void TrainingStrategy::set_default()
         return;
     }
 
-    // Approximation (default)
+    // Approximation (default). Empirical results on UCI tabular regression
+    // (airfoil / concrete / yacht):
+    //   QuasiNewton:                R² ≈ 0.11 / 0.22 / 0.42 — collapses to mean
+    //   LevenbergMarquardt:         throws on ApproximationNetwork (2-Dense)
+    //                               because compute_jacobian only fills the
+    //                               last trainable Dense's columns; the new
+    //                               guard correctly rejects multi-Dense nets.
+    //   AdaptiveMomentEstimation:   R² ≈ 0.87 / 0.89 / 0.99 — at published
+    //                               baseline quality. Slower than LM
+    //                               (~1.6 s/fit vs ~0.05 s) but the only
+    //                               optimizer that handles ApproximationNetwork
+    //                               correctly under the current opennn.
 
     set_loss("MeanSquaredError");
-    set_optimization_algorithm("QuasiNewtonMethod");
+    set_optimization_algorithm("AdaptiveMomentEstimation");
 }
 
 TrainingResults TrainingStrategy::train()

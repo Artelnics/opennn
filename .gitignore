@@ -245,6 +245,7 @@ Makefile*
 ![Ee]xamples/rosenbrock
 
 #CMake
+**/CMakeFiles/
 CMakeFiles/*
 examples/*/CMakeFiles/*
 examples/*/*.dir/*
@@ -300,3 +301,14 @@ tests/data/*.xml
 
 # Local benchmark scratch (datasets, scripts, generated TSV)
 /temp/
+
+# Local build trees and run scripts (machine-specific)
+/build-cmake/
+/build-port/
+/build_and_run.bat
+/continue_build.ps1
+/run_friday_experiments.bat
+/run_n2o.bat
+
+# Large local example data
+/examples/wwt_optimization/data/WWTP_PO4_NH4_removal.csv
