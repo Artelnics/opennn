@@ -32,15 +32,14 @@ public:
                      MinkowskiError,
                      Yolo};
 
-    enum class Regularization{L1, L2, ElasticNet, NoRegularization};
+    enum class Regularization{L1, L2, NoRegularization};
 
     static const EnumMap<Regularization>& regularization_map()
     {
         static const vector<pair<Regularization, string>> entries = {
             {Regularization::NoRegularization, "None"},
             {Regularization::L1,               "L1"},
-            {Regularization::L2,               "L2"},
-            {Regularization::ElasticNet,       "ElasticNet"}
+            {Regularization::L2,               "L2"}
         };
         static const EnumMap<Regularization> map{entries};
         return map;
@@ -150,12 +149,6 @@ private:
     {
         if (!neural_network)
             throw runtime_error("Loss error: neural network is not set.");
-    }
-
-    void check_dataset() const
-    {
-        if (!dataset)
-            throw runtime_error("Loss error: dataset is not set.");
     }
 
     void add_regularization(BackPropagation&) const;

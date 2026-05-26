@@ -92,9 +92,9 @@ public:
         bool update_utopian_from_points(const MatrixR& unnormalized_objective_values);
     };
 
-    ResponseOptimization(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    ResponseOptimization(NeuralNetwork* = nullptr);
 
-    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    void set(NeuralNetwork* = nullptr);
 
     void clear_conditions();
     void clear_conditions(const string& name);
@@ -187,8 +187,6 @@ private:
                                                                   Index evaluations_count) const;
 
     NeuralNetwork* neural_network = nullptr;
-
-    Dataset* dataset = nullptr;
 
     map<string, Condition> conditions;
 

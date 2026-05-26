@@ -108,8 +108,6 @@ public:
     MatrixR calculate_multiple_classification_errors() const;
     VectorR calculate_multiple_classification_errors(const string&) const;
 
-    float calculate_masked_accuracy(const Tensor3&, const MatrixR&) const;
-
     float calculate_determination(const VectorR&, const VectorR&) const;
     Tensor<Correlation, 1> linear_correlation(const MatrixR&, const MatrixR&) const;
 
@@ -171,9 +169,7 @@ public:
     vector<VectorR> calculate_error_autocorrelation(const Index = 10) const;
 
     vector<VectorR> calculate_inputs_errors_cross_correlation(const Index = 10) const;
-    pair<float, float> test_transformer() const;
 
-    string test_transformer(const vector<string>& context_string, bool imported_vocabulary) const;
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;
@@ -196,7 +192,6 @@ private:
 
     void save_classified_samples_csv(const Tensor<string, 2>&, const filesystem::path&) const;
     void save_classified_samples_statistics_csv(const Tensor<string, 2>&, const filesystem::path&) const;
-    void save_classified_samples_probability_histogram(const Tensor<string, 2>&, const filesystem::path&) const;
 
     NeuralNetwork* neural_network = nullptr;
 

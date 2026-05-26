@@ -8,6 +8,7 @@
 
 #include "registry.h"
 #include "non_max_suppression_layer.h"
+#include "json.h"
 
 namespace opennn
 {
@@ -64,6 +65,21 @@ void NonMaxSuppression::configure_operator()
 {
     if (input_shape.empty()) return;
     nms.set(input_shape, nms.boxes_per_cell, nms.confidence_threshold, nms.iou_threshold);
+}
+
+void NonMaxSuppression::read_JSON_body(const Json* root)
+{
+    nms.boxes_per_cell = Index(read_json_index(root, "BoxesPerCell"));
+    nms.confidence_threshold = read_json_type(root, "ConfidenceThreshold");
+    nms.iou_threshold = read_json_type(root, "IouThreshold");
+    configure_operator();
+}
+
+void NonMaxSuppression::write_JSON_body(JsonWriter& writer) const
+{
+    add_json_field(writer, "BoxesPerCell", to_string(nms.boxes_per_cell));
+    add_json_field(writer, "ConfidenceThreshold", to_string(nms.confidence_threshold));
+    add_json_field(writer, "IouThreshold", to_string(nms.iou_threshold));
 }
 
 REGISTER(Layer, NonMaxSuppression, "NonMaxSuppression")

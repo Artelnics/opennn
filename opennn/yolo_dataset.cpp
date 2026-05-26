@@ -327,6 +327,55 @@ void make_target(const vector<YoloDataset::Box>& boxes,
 
 } // namespace
 
+vector<YoloDetection> decode_yolo_detections(const float* nms_output,
+                                             Index max_boxes,
+                                             Index original_height,
+                                             Index original_width,
+                                             Index network_height,
+                                             Index network_width)
+{
+    if (original_height <= 0 || original_width <= 0
+    ||  network_height  <= 0 || network_width  <= 0)
+        throw runtime_error("decode_yolo_detections: dimensions must be positive.");
+
+    const float scale = min(float(network_width)  / float(original_width),
+                            float(network_height) / float(original_height));
+    const float scaled_width  = float(original_width)  * scale;
+    const float scaled_height = float(original_height) * scale;
+    const float offset_x = (float(network_width)  - scaled_width)  * 0.5f;
+    const float offset_y = (float(network_height) - scaled_height) * 0.5f;
+
+    vector<YoloDetection> detections;
+
+    for (Index k = 0; k < max_boxes; ++k)
+    {
+        const float* row = nms_output + k * 6;
+        const float score = row[4];
+
+        if (score <= 0.0f) break;  // NMS writes kept boxes first; first zero terminates
+
+        const float cx_net_px = row[0] * float(network_width);
+        const float cy_net_px = row[1] * float(network_height);
+        const float w_net_px  = row[2] * float(network_width);
+        const float h_net_px  = row[3] * float(network_height);
+
+        YoloDetection detection;
+        detection.center_x = (cx_net_px - offset_x) / scale;
+        detection.center_y = (cy_net_px - offset_y) / scale;
+        detection.width    = w_net_px / scale;
+        detection.height   = h_net_px / scale;
+        detection.score    = score;
+        detection.class_id = Index(row[5]);
+
+        detection.center_x = clamp(detection.center_x, 0.0f, float(original_width));
+        detection.center_y = clamp(detection.center_y, 0.0f, float(original_height));
+
+        detections.push_back(detection);
+    }
+
+    return detections;
+}
+
 YoloDataset::YoloDataset(const filesystem::path& new_images_dir,
                          const filesystem::path& new_labels_dir,
                          const Shape& new_input_shape,
@@ -602,12 +651,12 @@ void YoloDataset::setup_metadata(Index new_samples_number)
 void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                               const vector<Index>&,
                               float* input_data,
-                              bool is_training,
+                              bool,
                               bool parallelize,
                               int) const
 {
     const Index batch_size = ssize(sample_indices);
-    const float scale = is_training ? (1.0f / 255.0f) : 1.0f;
+    const float scale = 1.0f / 255.0f;
 
     string omp_error;
 

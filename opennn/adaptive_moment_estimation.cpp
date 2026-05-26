@@ -118,6 +118,20 @@ TrainingResults AdaptiveMomentEstimation::train()
     set_names();
     set_scaling();
 
+#ifdef OPENNN_HAS_CUDA
+    // Some driver/GPU combos (verified on GTX 1050 Ti) hang the host loop
+    // non-deterministically when num_workers > 1 is paired with a Recurrent
+    // layer in pure-GPU mode. The hang reproduces even after reducing the
+    // per-batch kernel-submission count by ~40% via the Phase 3.E fused
+    // forward+backward kernels, so the root cause is unrelated to kernel
+    // submission rate and lives deeper in the CUDA runtime's host-thread
+    // interaction. Serializing the batch loader to a single worker is the
+    // only known workaround; cost is negligible because the host fill runs
+    // off the GPU critical path.
+    if (on_gpu && neural_network->has(LayerType::Recurrent) && num_workers > 1)
+        num_workers = 1;
+#endif
+
     const int pool_size = on_gpu ? max(num_workers + 1, 3) : 1;
 
     ThreadSafeQueue<Batch*> empty_training_queue;
@@ -172,7 +186,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     OptimizerData optimization_data;
     optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, device);
 
-    optimization_data.iteration = 1;
+    optimization_data.iteration = 0;
 
     float training_error = 0.0f;
     float training_accuracy = 0.0f;

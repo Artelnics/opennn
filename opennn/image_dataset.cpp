@@ -38,6 +38,31 @@ static_assert(sizeof(ImageCacheHeader) == 64, "ImageCacheHeader must be 64 bytes
 constexpr uint32_t IMAGE_CACHE_VERSION = 1;
 constexpr const char IMAGE_CACHE_MAGIC[8] = {'O','P','E','N','N','N','I','M'};
 
+bool has_augmentation_transform(const AugmentationSettings& augmentation)
+{
+    return augmentation.reflection_axis_x
+        || augmentation.reflection_axis_y
+        || augmentation.rotation_minimum != 0.0f
+        || augmentation.rotation_maximum != 0.0f
+        || augmentation.horizontal_translation_minimum != 0.0f
+        || augmentation.horizontal_translation_maximum != 0.0f
+        || augmentation.vertical_translation_minimum != 0.0f
+        || augmentation.vertical_translation_maximum != 0.0f;
+}
+
+float sample_augmentation_value(float minimum, float maximum)
+{
+    if (minimum == maximum)
+        return minimum;
+
+    return random_uniform(min(minimum, maximum), max(minimum, maximum));
+}
+
+Index sample_augmentation_shift(float minimum, float maximum)
+{
+    return static_cast<Index>(lround(sample_augmentation_value(minimum, maximum)));
+}
+
 bool read_header(FileReader& reader, ImageCacheHeader& header)
 {
     if (reader.file_size() < sizeof(ImageCacheHeader)) return false;
@@ -105,6 +130,52 @@ ImageDataset::ImageDataset(const Index new_samples_number,
     split_samples_random();
 }
 
+void ImageDataset::set_data_random()
+{
+    const Index samples_number = ssize(labels_ram);
+    if (samples_number == 0)
+        throw runtime_error("ImageDataset::set_data_random: dataset has no samples; use the (samples, input_shape, target_shape) constructor first.");
+    if (record_bytes_ == 0 || input_shape.rank != 3)
+        throw runtime_error("ImageDataset::set_data_random: input_shape is not set.");
+
+    cache_reader.close();
+
+    const filesystem::path temp_dir = filesystem::temp_directory_path();
+    cache_path = temp_dir / format("opennn_imagedataset_random_{}.bin",
+                                   random_integer(0, 1000000000));
+    const filesystem::path tmp_path = cache_path.string() + ".tmp";
+
+    ImageCacheHeader header{};
+    memcpy(header.magic, IMAGE_CACHE_MAGIC, 8);
+    header.version = IMAGE_CACHE_VERSION;
+    header.height = uint32_t(input_shape[0]);
+    header.width = uint32_t(input_shape[1]);
+    header.channels = uint32_t(input_shape[2]);
+    header.num_samples = uint64_t(samples_number);
+    header.record_bytes = record_bytes_;
+    header.labels_off = uint64_t(sizeof(ImageCacheHeader))
+                      + uint64_t(samples_number) * record_bytes_;
+    header.num_classes = num_classes_;
+    labels_off_ = header.labels_off;
+
+    FileWriter writer;
+    writer.open(tmp_path);
+    writer.write(&header, sizeof(header));
+
+    vector<uint8_t> pixels;
+    pixels.resize(size_t(record_bytes_));
+    for (Index s = 0; s < samples_number; ++s)
+    {
+        for (auto& byte : pixels)
+            byte = uint8_t(random_integer(0, 255));
+        writer.write(pixels.data(), pixels.size());
+    }
+    writer.write(labels_ram.data(), labels_ram.size() * sizeof(int32_t));
+
+    writer.finish_with_rename(cache_path);
+    cache_reader.open(cache_path);
+}
+
 ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
 {
     data_path = new_data_path;
@@ -136,6 +207,7 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
         {"Width", to_string(input_shape[1])},
         {"Height", to_string(input_shape[0])},
         {"Padding", to_string(padding)},
+        {"RandomAugmentation", to_string(augmentation.enabled)},
         {"RandomReflectionAxisX", to_string(augmentation.reflection_axis_x)},
         {"RandomReflectionAxisY", to_string(augmentation.reflection_axis_y)},
         {"RandomRotationMinimum", to_string(augmentation.rotation_minimum)},
@@ -158,49 +230,74 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
     printer.close_element();
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
+void ImageDataset::augment_inputs(float* input_data, Index batch_size, bool parallelize) const
 {
     if (!augmentation.enabled) return;
+    if (batch_size <= 0) return;
 
     const Index height = input_shape[0];
     const Index width = input_shape[1];
     const Index channels = input_shape[2];
+    const Index pixels = height * width * channels;
 
-    TensorMap4 inputs(input_data,
-                      batch_size,
-                      height,
-                      width,
-                      channels);
+    const bool use_rotation = augmentation.rotation_minimum != 0.0f
+                           || augmentation.rotation_maximum != 0.0f;
+    const bool use_horizontal_translation = augmentation.horizontal_translation_minimum != 0.0f
+                                         || augmentation.horizontal_translation_maximum != 0.0f;
+    const bool use_vertical_translation = augmentation.vertical_translation_minimum != 0.0f
+                                       || augmentation.vertical_translation_maximum != 0.0f;
 
-    for (Index i = 0; i < batch_size; ++i)
+    const auto augment_sample = [&](Index i, Tensor3* scratch_storage)
     {
-        Tensor3 image = inputs.chip(i, 0);
+        float* sample = input_data + i * pixels;
+        TensorMap3 image(sample, height, width, channels);
 
-        if (augmentation.reflection_axis_x)
+        if (augmentation.reflection_axis_x && random_bool(0.5f))
             reflect_image_horizontal(image);
 
-        if (augmentation.reflection_axis_y)
+        if (augmentation.reflection_axis_y && random_bool(0.5f))
             reflect_image_vertical(image);
 
-        if (augmentation.rotation_minimum != 0 && augmentation.rotation_maximum != 0)
-            rotate_image(image, image, random_uniform(augmentation.rotation_minimum, augmentation.rotation_maximum));
+        if (use_rotation)
+        {
+            copy_n(sample, pixels, scratch_storage->data());
+            TensorMap3 scratch(scratch_storage->data(), height, width, channels);
+            rotate_image(scratch, image, sample_augmentation_value(augmentation.rotation_minimum,
+                                                                   augmentation.rotation_maximum));
+        }
 
-        if (augmentation.horizontal_translation_minimum != 0 && augmentation.horizontal_translation_maximum != 0)
-            translate_image_x(image, image, Index(random_uniform(augmentation.horizontal_translation_minimum, augmentation.horizontal_translation_maximum)));
+        if (use_horizontal_translation)
+            translate_image_x(image, sample_augmentation_shift(augmentation.horizontal_translation_minimum,
+                                                               augmentation.horizontal_translation_maximum));
 
-        if (augmentation.vertical_translation_minimum != 0 && augmentation.vertical_translation_maximum != 0)
-            translate_image_y(image, image, Index(random_uniform(augmentation.vertical_translation_minimum, augmentation.vertical_translation_maximum)));
+        if (use_vertical_translation)
+            translate_image_y(image, sample_augmentation_shift(augmentation.vertical_translation_minimum,
+                                                               augmentation.vertical_translation_maximum));
+    };
 
-        inputs.chip(i, 0) = image;
+    if (parallelize)
+    {
+        #pragma omp parallel
+        {
+            unique_ptr<Tensor3> scratch_storage;
+            if (use_rotation)
+                scratch_storage = make_unique<Tensor3>(height, width, channels);
+
+            #pragma omp for schedule(static)
+            for (Index i = 0; i < batch_size; ++i)
+                augment_sample(i, scratch_storage.get());
+        }
+    }
+    else
+    {
+        unique_ptr<Tensor3> scratch_storage;
+        if (use_rotation)
+            scratch_storage = make_unique<Tensor3>(height, width, channels);
+
+        for (Index i = 0; i < batch_size; ++i)
+            augment_sample(i, scratch_storage.get());
     }
 }
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
 
 void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 {
@@ -224,28 +321,19 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_codification(read_json_string(data_source_element, "Codification"));
 
-    augmentation.reflection_axis_x = read_json_index(data_source_element, "RandomReflectionAxisX");
-    augmentation.reflection_axis_y = read_json_index(data_source_element, "RandomReflectionAxisY");
+    augmentation.reflection_axis_x = read_json_bool(data_source_element, "RandomReflectionAxisX");
+    augmentation.reflection_axis_y = read_json_bool(data_source_element, "RandomReflectionAxisY");
     augmentation.rotation_minimum = read_json_type(data_source_element, "RandomRotationMinimum");
     augmentation.rotation_maximum = read_json_type(data_source_element, "RandomRotationMaximum");
     augmentation.horizontal_translation_minimum = read_json_type(data_source_element, "RandomHorizontalTranslationMinimum");
     augmentation.horizontal_translation_maximum = read_json_type(data_source_element, "RandomHorizontalTranslationMaximum");
     augmentation.vertical_translation_minimum = read_json_type(data_source_element, "RandomVerticalTranslationMinimum");
     augmentation.vertical_translation_maximum = read_json_type(data_source_element, "RandomVerticalTranslationMaximum");
+    augmentation.enabled = data_source_element->has("RandomAugmentation")
+                         ? read_json_bool(data_source_element, "RandomAugmentation")
+                         : has_augmentation_transform(augmentation);
 
     read_bmp();
-}
-
-vector<Descriptives> ImageDataset::scale_features(const string&)
-{
-    // Streaming binary stores pixels as uint8 0..255; the model's Scaling
-    // layer (ImageMinMax) handles normalization. Nothing to do here.
-    return {};
-}
-
-void ImageDataset::unscale_features(const string&, const vector<Descriptives>&)
-{
-    // Symmetric: dataset bytes never get scaled, so nothing to undo.
 }
 
 VectorI ImageDataset::calculate_target_distribution() const

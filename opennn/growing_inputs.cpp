@@ -66,16 +66,6 @@ void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_num
                                 : min(new_maximum_inputs_number, inputs_number);
 }
 
-void GrowingInputs::set_minimum_correlation(const float new_minimum_correlation)
-{
-    minimum_correlation = new_minimum_correlation;
-}
-
-void GrowingInputs::set_maximum_correlation(const float new_maximum_correlation)
-{
-    maximum_correlation = new_maximum_correlation;
-}
-
 InputsSelectionResults GrowingInputs::perform_input_selection()
 {
     // Dataset
@@ -210,11 +200,10 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                 {
                     input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices("Input");
                     input_selection_results.optimal_input_variable_names = dataset->get_variable_names("Input");
-                    // Snapshot the winning trial's parameter buffer — post-refactor
-                    // get_parameters returns raw float* + size, not a VectorR&.
-                    input_selection_results.optimal_parameters
-                        = Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
-                                                    neural_network->get_parameters_size());
+                    neural_network->copy_parameters_host();
+                    input_selection_results.optimal_parameters =
+                        Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
+                                                  neural_network->get_parameters_size());
                     input_selection_results.optimum_training_error = training_error;
                     input_selection_results.optimum_validation_error = validation_error;
                 }
@@ -340,10 +329,10 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         scaling_layer->set_scalers(input_variable_scalers);
     }
 
-    // Guard against size mismatch — the network may have been recompiled to
-    // a different input feature count after optimal_parameters was snapshotted.
     if (input_selection_results.optimal_parameters.size() == neural_network->get_parameters_size())
         neural_network->set_parameters(input_selection_results.optimal_parameters);
+    else if (display)
+        cout << "Warning: no optimal parameter snapshot captured; keeping current weights.\n";
 
     if (display) input_selection_results.print();
 
@@ -360,8 +349,6 @@ void GrowingInputs::to_JSON(JsonWriter& printer) const
         {"MaximumValidationFailures", to_string(maximum_validation_failures)},
         {"MinimumInputsNumber", to_string(minimum_inputs_number)},
         {"MaximumInputsNumber", to_string(maximum_inputs_number)},
-        {"MinimumCorrelation", to_string(minimum_correlation)},
-        {"MaximumCorrelation", to_string(maximum_correlation)},
         {"MaximumEpochsNumber", to_string(maximum_epochs)},
         {"MaximumTime", to_string(maximum_time)}
     });
@@ -377,8 +364,6 @@ void GrowingInputs::from_JSON(const JsonDocument& document)
     set_validation_error_goal(read_json_type(root_element,
         root_element->has("ValidationErrorGoal") ? "ValidationErrorGoal" : "SelectionErrorGoal"));
     set_maximum_epochs(read_json_index(root_element, "MaximumEpochsNumber"));
-    set_maximum_correlation(read_json_type(root_element, "MaximumCorrelation"));
-    set_minimum_correlation(read_json_type(root_element, "MinimumCorrelation"));
     set_maximum_time(read_json_type(root_element, "MaximumTime"));
     set_minimum_inputs_number(read_json_index(root_element, "MinimumInputsNumber"));
     set_maximum_inputs_number(read_json_index(root_element, "MaximumInputsNumber"));

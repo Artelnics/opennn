@@ -231,7 +231,7 @@ public:
                              bool parallelize = true,
                              int contiguous = -1) const;
 
-    virtual void augment_inputs(float*, Index) const {}
+    virtual void augment_inputs(float*, Index, bool = true) const {}
 
     virtual void fill_decoder(const vector<Index>&,
                               const vector<Index>&,

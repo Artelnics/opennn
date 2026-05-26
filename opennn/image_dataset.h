@@ -46,12 +46,11 @@ public:
 
     void set_image_padding(int new_padding) { padding = new_padding; }
 
-    vector<Descriptives> scale_features(const string&) override;
-    void unscale_features(const string&, const vector<Descriptives>&) override;
-
     VectorI calculate_target_distribution() const override;
 
     void read_bmp(const Shape& new_input_shape = { 0, 0, 0 });
+
+    void set_data_random();
 
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
@@ -70,7 +69,7 @@ public:
                       bool parallelize = true,
                       int = -1) const override;
 
-    void augment_inputs(float*, Index) const override;
+    void augment_inputs(float*, Index, bool = true) const override;
 
 private:
 

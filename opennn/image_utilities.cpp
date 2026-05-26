@@ -271,21 +271,59 @@ Tensor3 resize_image(const Tensor3& input_image,
     return output_image;
 }
 
-void reflect_image_horizontal(Tensor3& image)
+void reflect_image_horizontal(TensorMap3& image)
 {
-    image.device(get_device()) = image.reverse(array<bool, 3>({false, true, false}));
+    const Index height = image.dimension(0);
+    const Index width = image.dimension(1);
+    const Index channels = image.dimension(2);
+
+    for (Index y = 0; y < height; ++y)
+        for (Index x = 0; x < width / 2; ++x)
+            for (Index c = 0; c < channels; ++c)
+                swap(image(y, x, c), image(y, width - 1 - x, c));
 }
 
-void reflect_image_vertical(Tensor3& image)
+void reflect_image_vertical(TensorMap3& image)
 {
-    image.device(get_device()) = image.reverse(array<bool, 3>({true, false, false}));
+    const Index height = image.dimension(0);
+    const Index width = image.dimension(1);
+    const Index channels = image.dimension(2);
+    const Index row_size = width * channels;
+
+    float* data = image.data();
+
+    for (Index y = 0; y < height / 2; ++y)
+        swap_ranges(data + y * row_size,
+                    data + (y + 1) * row_size,
+                    data + (height - 1 - y) * row_size);
 }
 
-void rotate_image(const Tensor3& input, Tensor3& output, float angle_degree)
+void rotate_image(const TensorMap3& input, TensorMap3& output, float angle_degree)
 {
     const Index height = input.dimension(0);
     const Index width = input.dimension(1);
     const Index channels = input.dimension(2);
+    const Index pixels = height * width * channels;
+
+    assert(height == output.dimension(0));
+    assert(width == output.dimension(1));
+    assert(channels == output.dimension(2));
+
+    if (angle_degree == 0.0f)
+    {
+        if (input.data() != output.data())
+            copy_n(input.data(), pixels, output.data());
+        return;
+    }
+
+    if (input.data() == output.data())
+    {
+        Tensor3 copy(height, width, channels);
+        copy_n(input.data(), pixels, copy.data());
+        TensorMap3 copy_map(copy.data(), height, width, channels);
+        rotate_image(copy_map, output, angle_degree);
+        return;
+    }
 
     const float center_x = float(width) / 2.0f;
     const float center_y = float(height) / 2.0f;
@@ -294,31 +332,21 @@ void rotate_image(const Tensor3& input, Tensor3& output, float angle_degree)
     const float cos_angle = cos(angle_rad);
     const float sin_angle = sin(angle_rad);
 
-    MatrixR rotation_matrix(3, 3);
-
-    rotation_matrix << cos_angle, -sin_angle, center_x - cos_angle * center_x + sin_angle * center_y,
-                       sin_angle, cos_angle, center_y - sin_angle * center_x - cos_angle * center_y,
-                       0.0f, 0.0f, 1.0f;
-
-    using Vector3T = Matrix<float, 3, 1>;
-
-    #pragma omp parallel for collapse(2)
-
     for (Index y = 0; y < height; ++y)
     {
         for (Index x = 0; x < width; ++x)
         {
-            Vector3T coordinates;
-            coordinates << static_cast<float>(x), static_cast<float>(y), 1.0f;
+            const float src_x = cos_angle * (float(x) - center_x)
+                              - sin_angle * (float(y) - center_y)
+                              + center_x;
+            const float src_y = sin_angle * (float(x) - center_x)
+                              + cos_angle * (float(y) - center_y)
+                              + center_y;
 
-            const Vector3T transformed = rotation_matrix * coordinates;
-
-            if (transformed[0] >= 0 && transformed[0] < width
-            && transformed[1] >= 0 && transformed[1] < height)
+            if (src_x >= 0.0f && src_x < float(width)
+            && src_y >= 0.0f && src_y < float(height))
                 for (Index c = 0; c < channels; ++c)
-                    output(y, x, c) = input(int(transformed[1]),
-                                            int(transformed[0]),
-                                            c);
+                    output(y, x, c) = input(int(src_y), int(src_x), c);
             else
                 for (Index c = 0; c < channels; ++c)
                     output(y, x, c) = 0.0f;
@@ -326,34 +354,111 @@ void rotate_image(const Tensor3& input, Tensor3& output, float angle_degree)
     }
 }
 
-template<int Dim>
-void translate_image(const Tensor3& input, Tensor3& output, Index shift)
+void translate_image_x(TensorMap3& image, Index shift)
 {
-    assert(input.dimension(0) == output.dimension(0));
-    assert(input.dimension(1) == output.dimension(1));
-    assert(input.dimension(2) == output.dimension(2));
+    if (shift == 0) return;
 
-    output.setZero();
+    const Index height = image.dimension(0);
+    const Index width = image.dimension(1);
+    const Index channels = image.dimension(2);
+    const Index row_size = width * channels;
+    float* data = image.data();
 
-    const Index dim_size = input.dimension(Dim);
+    if (abs(shift) >= width)
+    {
+        fill(data, data + height * row_size, 0.0f);
+        return;
+    }
 
-    if (abs(shift) >= dim_size) return;
+    const Index move_columns = width - abs(shift);
+    const Index move_size = move_columns * channels;
+    const Index fill_size = abs(shift) * channels;
 
-    const Index src_start = (shift >= 0) ? 0 : -shift;
-    const Index src_end = (shift >= 0) ? dim_size - shift : dim_size;
+    for (Index y = 0; y < height; ++y)
+    {
+        float* row = data + y * row_size;
 
-    for (Index i = src_start; i < src_end; ++i)
-        output.template chip<Dim>(i + shift) = input.template chip<Dim>(i);
+        if (shift > 0)
+        {
+            memmove(row + fill_size, row, size_t(move_size) * sizeof(float));
+            fill(row, row + fill_size, 0.0f);
+        }
+        else
+        {
+            memmove(row, row + fill_size, size_t(move_size) * sizeof(float));
+            fill(row + move_size, row + row_size, 0.0f);
+        }
+    }
+}
+
+void translate_image_y(TensorMap3& image, Index shift)
+{
+    if (shift == 0) return;
+
+    const Index height = image.dimension(0);
+    const Index width = image.dimension(1);
+    const Index channels = image.dimension(2);
+    const Index row_size = width * channels;
+    const Index pixels = height * row_size;
+    float* data = image.data();
+
+    if (abs(shift) >= height)
+    {
+        fill(data, data + pixels, 0.0f);
+        return;
+    }
+
+    const Index move_rows = height - abs(shift);
+    const Index move_size = move_rows * row_size;
+    const Index fill_size = abs(shift) * row_size;
+
+    if (shift > 0)
+    {
+        memmove(data + fill_size, data, size_t(move_size) * sizeof(float));
+        fill(data, data + fill_size, 0.0f);
+    }
+    else
+    {
+        memmove(data, data + fill_size, size_t(move_size) * sizeof(float));
+        fill(data + move_size, data + pixels, 0.0f);
+    }
+}
+
+void reflect_image_horizontal(Tensor3& image)
+{
+    TensorMap3 image_map(image.data(), image.dimension(0), image.dimension(1), image.dimension(2));
+    reflect_image_horizontal(image_map);
+}
+
+void reflect_image_vertical(Tensor3& image)
+{
+    TensorMap3 image_map(image.data(), image.dimension(0), image.dimension(1), image.dimension(2));
+    reflect_image_vertical(image_map);
+}
+
+void rotate_image(const Tensor3& input, Tensor3& output, float angle_degree)
+{
+    TensorMap3 input_map(const_cast<float*>(input.data()), input.dimension(0), input.dimension(1), input.dimension(2));
+    TensorMap3 output_map(output.data(), output.dimension(0), output.dimension(1), output.dimension(2));
+    rotate_image(input_map, output_map, angle_degree);
 }
 
 void translate_image_x(const Tensor3& input, Tensor3& output, Index shift)
 {
-    translate_image<1>(input, output, shift);
+    if (input.data() != output.data())
+        copy_n(input.data(), input.size(), output.data());
+
+    TensorMap3 output_map(output.data(), output.dimension(0), output.dimension(1), output.dimension(2));
+    translate_image_x(output_map, shift);
 }
 
 void translate_image_y(const Tensor3& input, Tensor3& output, Index shift)
 {
-    translate_image<0>(input, output, shift);
+    if (input.data() != output.data())
+        copy_n(input.data(), input.size(), output.data());
+
+    TensorMap3 output_map(output.data(), output.dimension(0), output.dimension(1), output.dimension(2));
+    translate_image_y(output_map, shift);
 }
 
 }

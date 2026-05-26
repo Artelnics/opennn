@@ -88,6 +88,8 @@ void Dense::set_batch_normalization(bool enable)
         batch_norm.set(output_features, batch_norm.momentum);
     else
         batch_norm.features = 0;
+
+    configure_operators();
 }
 
 void Dense::set(const Shape& new_input_shape,
@@ -186,6 +188,15 @@ void Dense::read_JSON_body(const Json* dense_layer_element)
 {
     if (dense_layer_element->has("Momentum"))
         set_batch_normalization(true);
+}
+
+void Dense::from_JSON(const JsonDocument& document)
+{
+    Layer::from_JSON(document);
+    // Operators may have flipped active/inactive flags (DropoutOp::from_JSON
+    // sets rate > 0 → active). Re-derive slots so activation_layer save-slots
+    // and dropout chaining stay consistent post-load.
+    configure_operators();
 }
 
 REGISTER(Layer, Dense, "Dense")

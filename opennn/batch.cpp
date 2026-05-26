@@ -60,7 +60,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         if (on_gpu)
         {
             buffer.resize_bytes(shape.size() * device_elem_bytes, Device::CUDA);
-            num_features = dataset->get_features_number(role);
+            num_features = dataset_shape.size();
 
             if (const Index size = samples_number * num_features; size > host_alloc)
             {
@@ -68,7 +68,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
                 CHECK_CUDA(cudaMallocHost(&host_buf, size * sizeof(float)));
                 host_alloc = size;
             }
-            
+
             return;
         }
 #endif
@@ -142,7 +142,7 @@ void Batch::fill(const vector<Index>& sample_indices,
                          is_training, parallelize, input_contiguous);
 
     if (is_training)
-        dataset->augment_inputs(input_buffer, sample_indices.size());
+        dataset->augment_inputs(input_buffer, sample_indices.size(), parallelize);
 
     if (!decoder_shape.empty())
         dataset->fill_decoder(sample_indices, decoder_indices, decoder_buffer,

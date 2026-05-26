@@ -92,8 +92,8 @@ public:
     [[nodiscard]] const Layer* get_first(const string&) const;
     [[nodiscard]] const Layer* get_first(LayerType) const;
 
-    void set_source_layers(const vector<vector<Index>>& new_source_layers) { source_layers = new_source_layers; }
-    void set_source_layers(const Index layer_index, const vector<Index>& new_sources) { source_layers[layer_index] = new_sources; }
+    void set_source_layers(const vector<vector<Index>>& new_source_layers);
+    void set_source_layers(const Index layer_index, const vector<Index>& new_sources);
 
     void set_source_layers(const string&, const vector<string>&);
     void set_source_layers(const string&, initializer_list<string>);

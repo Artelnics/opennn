@@ -27,6 +27,49 @@
 namespace opennn
 {
 
+namespace
+{
+
+bool same_specs(const vector<vector<TensorSpec>>& a, const vector<vector<TensorSpec>>& b)
+{
+    if (a.size() != b.size()) return false;
+
+    for (size_t i = 0; i < a.size(); ++i)
+    {
+        if (a[i].size() != b[i].size()) return false;
+
+        for (size_t j = 0; j < a[i].size(); ++j)
+            if (!(a[i][j].shape == b[i][j].shape) || a[i][j].dtype != b[i][j].dtype)
+                return false;
+    }
+
+    return true;
+}
+
+void recompile_if_specs_changed(NeuralNetwork& network,
+                                const vector<vector<TensorSpec>>& forward_before,
+                                const vector<vector<TensorSpec>>& backward_before)
+{
+    if (same_specs(forward_before, network.get_forward_specs(1))
+        && same_specs(backward_before, network.get_backward_specs(1)))
+        return;
+
+    VectorR parameters_snapshot;
+    if (network.get_parameters_size() > 0)
+    {
+        network.copy_parameters_host();
+        parameters_snapshot = Eigen::Map<const VectorR>(network.get_parameters_data(),
+                                                        network.get_parameters_size());
+    }
+
+    network.compile();
+
+    if (parameters_snapshot.size() > 0)
+        network.set_parameters(parameters_snapshot);
+}
+
+}
+
 ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
                                            const Shape& complexity_dimensions,
                                            const Shape& output_shape) : NeuralNetwork()
@@ -374,10 +417,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     if (input_shape[0] != grid_size * 32 || input_shape[1] != grid_size * 32)
         throw runtime_error("YoloNetwork: this minimal builder expects input H/W == grid_size * 32.");
 
-    auto scaling_layer = make_unique<Scaling>(input_shape);
-    scaling_layer->set_scalers("ImageMinMax");
-    add_layer(move(scaling_layer));
-
     const Shape stride{1, 1};
     const Shape pool{2, 2};
     const Shape pool_stride{2, 2};
@@ -387,8 +426,10 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
     for (Index i = 0; i < ssize(filters); ++i)
     {
-        add_layer(make_unique<Convolutional>(get_output_shape(),
-                                             Shape{3, 3, get_output_shape()[2], filters[size_t(i)]},
+        const Shape conv_input_shape = (i == 0) ? input_shape : get_output_shape();
+
+        add_layer(make_unique<Convolutional>(conv_input_shape,
+                                             Shape{3, 3, conv_input_shape[2], filters[size_t(i)]},
                                              "ReLU", stride, "Same", false,
                                              format("yolo_conv_{}", i + 1)));
 
@@ -607,6 +648,9 @@ Transformer::Transformer(Index input_sequence_length,
 
 void Transformer::set_dropout_rate(const float new_dropout_rate)
 {
+    const auto forward_before = get_forward_specs(1);
+    const auto backward_before = get_backward_specs(1);
+
     for (auto& layer : get_layers())
     {
         if (!layer) continue;
@@ -628,6 +672,32 @@ void Transformer::set_dropout_rate(const float new_dropout_rate)
             mha->set_dropout_rate(new_dropout_rate);
         }
     }
+
+    recompile_if_specs_changed(*this, forward_before, backward_before);
+}
+
+void Transformer::set_attention_sdpa_auto(bool new_sdpa_auto)
+{
+    const auto forward_before = get_forward_specs(1);
+    const auto backward_before = get_backward_specs(1);
+
+    for (auto& layer : get_layers())
+        if (auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
+            mha->set_sdpa_auto(new_sdpa_auto);
+
+    recompile_if_specs_changed(*this, forward_before, backward_before);
+}
+
+void Transformer::set_attention_sdpa_min_sequence_length(Index new_threshold)
+{
+    const auto forward_before = get_forward_specs(1);
+    const auto backward_before = get_backward_specs(1);
+
+    for (auto& layer : get_layers())
+        if (auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
+            mha->set_sdpa_min_sequence_length(new_threshold);
+
+    recompile_if_specs_changed(*this, forward_before, backward_before);
 }
 
 Index Transformer::get_input_sequence_length() const

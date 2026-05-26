@@ -125,12 +125,10 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
                 if (minimum_validation_error < neuron_selection_results.optimum_validation_error)
                 {
                     neuron_selection_results.optimal_neurons_number = neurons_number;
-                    // Snapshot the winning trial's parameter buffer. The old API was
-                    // `get_parameters(VectorR&)`; the post-refactor API only exposes
-                    // a raw float* + size, so map and assign into the VectorR result.
-                    neuron_selection_results.optimal_parameters
-                        = Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
-                                                    neural_network->get_parameters_size());
+                    neural_network->copy_parameters_host();
+                    neuron_selection_results.optimal_parameters =
+                        Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
+                                                  neural_network->get_parameters_size());
                     neuron_selection_results.optimum_training_error = minimum_training_error;
                     neuron_selection_results.optimum_validation_error = minimum_validation_error;
                 }
@@ -205,13 +203,12 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape(optimal_shape);
     neural_network->get_layer(last_trainable_layer_index)->set_input_shape(optimal_shape);
 
-    // The last trial may have ended with a different neurons_number than the
-    // optimal — recompile so the parameter buffer matches the optimal shape
-    // before set_parameters writes into it. Mirrors the trial-loop's compile().
     neural_network->compile();
 
     if (neuron_selection_results.optimal_parameters.size() == neural_network->get_parameters_size())
         neural_network->set_parameters(neuron_selection_results.optimal_parameters);
+    else if (display)
+        cout << "Warning: no optimal parameter snapshot captured; keeping current weights.\n";
 
     if (display) neuron_selection_results.print();
 

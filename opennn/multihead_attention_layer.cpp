@@ -31,12 +31,6 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
                                        const string& new_name)
     : Layer(LayerType::MultiHeadAttention)
 {
-    // Forward order V, K, Q ensures Layer::back_propagate (reverse iteration) runs
-    // as output_projection -> merge -> attention -> query_projection ->
-    // key_projection -> value_projection. That order is what produces correctly
-    // accumulated dQ + dK + dV input deltas in self-attention (Q overwrites,
-    // K/V accumulate) and matches the gradient computation order of the original
-    // monolithic backward.
     operators = {&value_projection, &key_projection, &query_projection,
                  &attention, &merge, &output_projection};
 
@@ -87,7 +81,7 @@ vector<TensorSpec> MultiHeadAttention::get_backward_specs(Index batch_size) cons
     return {
         {{batch_size, query_sequence_length, embedding_dimension},                  compute_dtype}, // InputQueryDelta - final dInput query
         {{batch_size, source_sequence_length, embedding_dimension},                 compute_dtype}, // InputSourceDelta - final dInput source
-        {{batch_size, heads_number, query_sequence_length, source_sequence_length}, compute_dtype}, // AttentionWeightDelta - unfused scratch
+        attention.backward_scratch_spec(batch_size),                                                // AttentionWeightDelta - empty if SDPA, (B,H,Q,K) otherwise
         {{batch_size, heads_number, source_sequence_length, head_dimension},        compute_dtype}, // ValueHeadDelta - dV, head shape
         {{batch_size, query_sequence_length, embedding_dimension},                  compute_dtype}, // ConcatenatedOutputDelta - dConcat, embed shape
         {{batch_size, heads_number, query_sequence_length, head_dimension},         compute_dtype}, // QueryHeadDelta - dQ, head shape
@@ -132,7 +126,8 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
                   query_sequence_length, source_sequence_length,
                   new_use_causal_mask, compute_dtype);
 
-    // Shared across all 3 projections.
+    attention.use_sdpa = select_use_sdpa();
+
     for (auto* proj : {&query_projection, &key_projection, &value_projection})
     {
         proj->input_slots  = {Input};
@@ -140,17 +135,6 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
         proj->input_delta_slots_self = {InputQueryDelta};
     }
 
-    // Each backward intermediate has its own dedicated slot so Layer::back_propagate
-    // (reverse iteration) works without temporal-alias contracts:
-    //   - output_projection writes ConcatenatedOutputDelta (concat-shape).
-    //   - merge reads ConcatenatedOutputDelta, writes head-shape into forward
-    //     TransposeScratch.
-    //   - attention reads forward TransposeScratch as dO, writes QueryHeadDelta,
-    //     KeyHeadDelta, ValueHeadDelta (and AttentionWeightDelta on unfused path).
-    //   - Q reads QueryHeadDelta, writes InputQueryDelta (accumulate=false).
-    //   - K reads KeyHeadDelta, writes InputQueryDelta (self, accumulate) or
-    //     InputSourceDelta (cross, overwrite).
-    //   - V reads ValueHeadDelta, accumulates onto K's destination.
     query_projection.output_slots = {Query};
     query_projection.input_view_index = 0;
     query_projection.output_delta_slots = {QueryHeadDelta};
@@ -188,6 +172,31 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     merge.input_slots  = {TransposeScratch};
     merge.output_slots = {ConcatenatedAttentionOutputs};
     merge.output_delta_slots = {ConcatenatedOutputDelta};
+}
+
+bool MultiHeadAttention::select_use_sdpa() const
+{
+    if (!sdpa_auto) return false;
+    if (!AttentionOp::sdpa_supported(compute_dtype)) return false;
+
+    const Index shorter = min(query_sequence_length, source_sequence_length);
+    return shorter > sdpa_min_sequence_length;
+}
+
+// NOTE: SDPA flag changes alter forward_scratch_specs/backward_specs. Call
+// these setters BEFORE NeuralNetwork::compile(), otherwise the framework's
+// scratch buffers are sized for the old policy and the next forward/backward
+// pass overruns them.
+void MultiHeadAttention::set_sdpa_auto(bool new_sdpa_auto)
+{
+    sdpa_auto = new_sdpa_auto;
+    attention.use_sdpa = select_use_sdpa();
+}
+
+void MultiHeadAttention::set_sdpa_min_sequence_length(Index new_threshold)
+{
+    sdpa_min_sequence_length = new_threshold;
+    attention.use_sdpa = select_use_sdpa();
 }
 
 void MultiHeadAttention::set_input_shape(const Shape& new_input_shape)

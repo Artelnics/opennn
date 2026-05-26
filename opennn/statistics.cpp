@@ -732,7 +732,7 @@ vector<Histogram> histograms(const MatrixR& matrix, Index bins_number)
     vector<Histogram> histograms(columns_number);
 
     for (Index i = 0; i < columns_number; ++i)
-        histograms[i] = histogram(VectorR(vector_map(matrix, i)), bins_number);
+        histograms[i] = histogram(VectorR(matrix.col(i)), bins_number);
 
     return histograms;
 }
@@ -1276,11 +1276,6 @@ void fill_tensor_data(const MatrixR& matrix,
                 dest_row_ptr[j] = src_row_ptr[column_indices[j]];
         }
     }
-}
-
-VectorMap vector_map(const MatrixR& tensor, Index index_1)
-{
-    return VectorMap(const_cast<float*>(tensor.data()) + tensor.rows()*index_1, tensor.rows());
 }
 
 VectorR filter_missing_values(const VectorR& x)

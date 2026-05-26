@@ -138,17 +138,32 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
                                                    const ForwardPropagation& forward_propagation,
                                                    BackPropagationLM& back_propagation_lm)
 {
+    // LIMITATION: the current Jacobian computation only fills the columns of
+    // the LAST trainable Dense layer; the rest of the Jacobian stays zero.
+    // That works as a single-Dense regression solver but converges into a
+    // subspace if the network has more than one trainable Dense.
     NeuralNetwork* neural_network = loss->get_neural_network();
     const auto& layers = neural_network->get_layers();
 
     back_propagation_lm.squared_errors_jacobian.setZero();
 
     Index last_trainable_dense = -1;
+    Index trainable_dense_count = 0;
     for (size_t i = 0; i < layers.size(); ++i)
         if (layers[i]->get_is_trainable() && dynamic_cast<Dense*>(layers[i].get()))
+        {
             last_trainable_dense = i;
+            ++trainable_dense_count;
+        }
 
     if (last_trainable_dense < 0) return;
+
+    if (trainable_dense_count > 1)
+        throw runtime_error("LevenbergMarquardtAlgorithm: only networks with a single "
+                            "trainable Dense layer are supported. Found "
+                            + to_string(trainable_dense_count) + " trainable Dense "
+                            "layers. Use AdaptiveMomentEstimation, SGD, or "
+                            "QuasiNewtonMethod instead.");
 
     // Compute parameter offset up to the last trainable Dense layer
     const Index parameter_offset = transform_reduce(

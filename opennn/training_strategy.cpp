@@ -73,7 +73,8 @@ void TrainingStrategy::set_default()
     }
 
     // Transformer: signaled by *any* Dense layer that consumes a rank-2 (seq, feat)
-    // input -- i.e. the layers formerly known as Dense3d.
+    // input -- i.e. the layers formerly known as Dense3d. Targets are token
+    // indices per position, so the loss is CrossEntropy3d, not 2D.
     const auto& layers = neural_network->get_layers();
     const bool has_seq_dense = ranges::any_of(layers, [](const auto& layer) {
         const auto* dense = dynamic_cast<const Dense*>(layer.get());
@@ -81,7 +82,7 @@ void TrainingStrategy::set_default()
     });
     if (has_seq_dense)
     {
-        set_loss("CrossEntropy");
+        set_loss("CrossEntropyError3d");
         set_optimization_algorithm("AdaptiveMomentEstimation");
         dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_learning_rate(0.0001f);
         return;
@@ -141,44 +142,7 @@ TrainingResults TrainingStrategy::train()
     if (!optimizer->get_loss())
         throw runtime_error("optimizer is not set.");
 
-    if (neural_network->has(LayerType::Recurrent)
-        || neural_network->has(LayerType::LongShortTermMemory))
-        fix_forecasting();
-
     return optimizer->train();
-}
-
-void TrainingStrategy::fix_forecasting()
-{
-/*
-    const Index past_time_steps = 0;
-
-    if (neural_network->has("Recurrent"))
-        past_time_steps = static_cast<Recurrent*>(neural_network->get_first(Recurrent))->get_timesteps();
-    else
-        return;
-
-    Index batch_size = 0;
-
-    if (optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
-        batch_size = adaptive_moment_estimation.get_samples_number();
-    else if (optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
-        batch_size = stochastic_gradient_descent.get_samples_number();
-    else
-        return;
-
-    if (batch_size%past_time_steps == 0)
-        return;
-
-    const Index constant = past_time_steps > batch_size
-        ? 1
-        : Index(batch_size/past_time_steps);
-
-    if (optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
-        adaptive_moment_estimation.set_batch_size(constant*past_time_steps);
-    else if (optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
-        stochastic_gradient_descent.set_batch_size(constant*past_time_steps);
-*/
 }
 
 void TrainingStrategy::to_JSON(JsonWriter& printer) const
