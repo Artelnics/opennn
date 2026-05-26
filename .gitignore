@@ -245,6 +245,7 @@ Makefile*
 ![Ee]xamples/rosenbrock
 
 #CMake
+**/CMakeFiles/
 CMakeFiles/*
 examples/*/CMakeFiles/*
 examples/*/*.dir/*
