@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "image_dataset.h"
 
 namespace opennn
@@ -65,6 +67,8 @@ public:
     const vector<array<float, 2>>& get_anchors() const { return anchors; }
     const vector<string>& get_class_names() const { return class_names; }
     const string& get_class_name(Index i) const { return class_names[size_t(i)]; }
+    const filesystem::path& get_image_path(Index i) const { return image_filenames[size_t(i)]; }
+    const vector<filesystem::path>& get_image_paths() const { return image_filenames; }
 
     void set(const filesystem::path& images_dir,
              const filesystem::path& labels_dir,
@@ -92,15 +96,30 @@ public:
 
     void augment_inputs(float*, Index) const override {}
 
+    struct AugmentationConfig
+    {
+        float jitter = 0.2f;
+        float exposure = 1.5f;
+        float saturation = 1.5f;
+        float hue = 0.1f;
+        bool flip = true;
+        bool enabled = true;
+    };
+
+    void set_augmentation(const AugmentationConfig& cfg) { augmentation = cfg; }
+    const AugmentationConfig& get_augmentation() const { return augmentation; }
+
 private:
 
     filesystem::path images_directory;
     filesystem::path labels_directory;
     filesystem::path image_cache_path;
     filesystem::path target_cache_path;
+    filesystem::path boxes_cache_path;
 
     mutable FileReader image_cache_reader;
     mutable FileReader target_cache_reader;
+    mutable FileReader boxes_cache_reader;
 
     Index samples_number = 0;
     Index grid_size = 13;
@@ -109,7 +128,13 @@ private:
     Index image_record_bytes = 0;
     Index target_record_floats = 0;
     uint64_t target_data_offset = 0;
+    uint64_t boxes_data_offset = 0;
+    vector<uint64_t> boxes_offsets;       // (samples + 1) entries, in box-count units
 
+    AugmentationConfig augmentation{};
+    mutable atomic<uint64_t> augmentation_counter{0};
+
+    vector<filesystem::path> image_filenames;
     vector<array<float, 2>> anchors;
     vector<string> class_names;
 
@@ -117,6 +142,7 @@ private:
     bool try_open_cache(const vector<array<float, 2>>& requested_anchors);
     void build_cache(const vector<array<float, 2>>& requested_anchors);
     void setup_metadata(Index new_samples_number);
+    void read_sample_boxes(Index sample_index, vector<Box>& out) const;
 };
 
 }

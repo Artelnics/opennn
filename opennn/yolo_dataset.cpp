@@ -27,7 +27,8 @@ struct YoloImageCacheHeader
     uint32_t channels;
     uint64_t samples;
     uint64_t record_bytes;
-    uint8_t pad[24];
+    uint64_t sources_hash;
+    uint8_t pad[16];
 };
 
 struct YoloTargetCacheHeader
@@ -43,14 +44,38 @@ struct YoloTargetCacheHeader
     uint64_t anchors_offset;
     uint64_t targets_offset;
 };
+
+struct YoloBoxesCacheHeader
+{
+    char magic[8];
+    uint32_t version;
+    uint32_t reserved;
+    uint64_t samples;
+    uint64_t total_boxes;
+    uint64_t offsets_byte_offset;
+    uint64_t boxes_byte_offset;
+    uint8_t pad[16];
+};
+
+struct YoloBoxRecord
+{
+    int32_t class_id;
+    float x;
+    float y;
+    float w;
+    float h;
+};
 #pragma pack(pop)
 
 static_assert(sizeof(YoloImageCacheHeader) == 64);
 static_assert(sizeof(YoloTargetCacheHeader) == 64);
+static_assert(sizeof(YoloBoxesCacheHeader) == 64);
+static_assert(sizeof(YoloBoxRecord) == 20);
 
-constexpr uint32_t YOLO_CACHE_VERSION = 1;
+constexpr uint32_t YOLO_CACHE_VERSION = 2;
 constexpr char YOLO_IMAGE_MAGIC[8] = {'O','P','E','N','N','Y','I','M'};
 constexpr char YOLO_TARGET_MAGIC[8] = {'O','P','E','N','N','Y','T','G'};
+constexpr char YOLO_BOXES_MAGIC[8] = {'O','P','E','N','N','Y','B','X'};
 
 bool has_bmp_extension(const filesystem::path& path)
 {
@@ -139,6 +164,65 @@ uint64_t hash_anchors(const vector<array<float, 2>>& anchors)
         mix(bits);
         memcpy(&bits, &anchor[1], sizeof(uint32_t));
         mix(bits);
+    }
+
+    return h;
+}
+
+uint64_t hash_sources(const filesystem::path& images_dir,
+                      const filesystem::path& labels_dir)
+{
+    uint64_t h = 1469598103934665603ull;
+
+    auto mix_u64 = [&](uint64_t value)
+    {
+        for (int b = 0; b < 8; ++b)
+        {
+            h ^= (value >> (b * 8)) & 0xff;
+            h *= 1099511628211ull;
+        }
+    };
+
+    auto mix_bytes = [&](const void* data, size_t n)
+    {
+        const uint8_t* p = static_cast<const uint8_t*>(data);
+        for (size_t i = 0; i < n; ++i)
+        {
+            h ^= p[i];
+            h *= 1099511628211ull;
+        }
+    };
+
+    auto mix_path = [&](const filesystem::path& path)
+    {
+        const string s = path.filename().string();
+        mix_u64(uint64_t(s.size()));
+        mix_bytes(s.data(), s.size());
+
+        error_code ec;
+        const auto size = filesystem::file_size(path, ec);
+        mix_u64(ec ? 0ull : uint64_t(size));
+
+        const auto mtime = filesystem::last_write_time(path, ec);
+        if (ec)
+            mix_u64(0ull);
+        else
+            mix_u64(uint64_t(mtime.time_since_epoch().count()));
+    };
+
+    vector<filesystem::path> image_paths = list_files(images_dir, has_bmp_extension);
+    mix_u64(uint64_t(image_paths.size()));
+
+    for (const auto& image_path : image_paths)
+    {
+        mix_path(image_path);
+
+        filesystem::path label_path = labels_dir / image_path.filename();
+        label_path.replace_extension(".txt");
+        if (filesystem::exists(label_path))
+            mix_path(label_path);
+        else
+            mix_u64(0ull);
     }
 
     return h;
@@ -295,6 +379,224 @@ Index best_anchor_for_box(const YoloDataset::Box& box,
     return best;
 }
 
+struct AugmentationParams
+{
+    float crop_left;     // pleft / orig_w   (signed, can be negative for padding)
+    float crop_top;      // ptop  / orig_h
+    float crop_right;    // pright / orig_w
+    float crop_bottom;   // pbot  / orig_h
+    bool flip;
+    float exposure_mul;  // multiply V channel
+    float saturation_mul;// multiply S channel
+    float hue_shift;     // additive on H in [0, 1] (will be wrapped)
+};
+
+uint64_t splitmix64(uint64_t x)
+{
+    x += 0x9E3779B97F4A7C15ull;
+    x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9ull;
+    x = (x ^ (x >> 27)) * 0x94D049BB133111EBull;
+    return x ^ (x >> 31);
+}
+
+struct AugmentationConfig
+{
+    float jitter = 0.2f;
+    float exposure = 1.5f;
+    float saturation = 1.5f;
+    float hue = 0.1f;
+    bool flip = true;
+};
+
+AugmentationParams derive_augmentation_params(uint64_t epoch_counter,
+                                              uint64_t sample_index,
+                                              const AugmentationConfig& cfg)
+{
+    auto rand_unit = [](uint64_t& s) -> float
+    {
+        s = splitmix64(s);
+        return float(s >> 40) / float(1u << 24); // [0, 1)
+    };
+
+    auto rand_signed = [&](uint64_t& s, float range) -> float
+    {
+        return (rand_unit(s) * 2.0f - 1.0f) * range;
+    };
+
+    auto rand_scale = [&](uint64_t& s, float max_scale) -> float
+    {
+        // multiplier uniform in [1/max_scale, max_scale]
+        const float r = rand_unit(s);
+        const float t = (r * 2.0f - 1.0f) * log(max_scale);
+        return exp(t);
+    };
+
+    uint64_t state = splitmix64(epoch_counter * 0x9E3779B97F4A7C15ull + sample_index);
+
+    AugmentationParams p{};
+    p.crop_left   = rand_signed(state, cfg.jitter);
+    p.crop_right  = rand_signed(state, cfg.jitter);
+    p.crop_top    = rand_signed(state, cfg.jitter);
+    p.crop_bottom = rand_signed(state, cfg.jitter);
+    p.flip = cfg.flip && (rand_unit(state) < 0.5f);
+    p.exposure_mul = rand_scale(state, cfg.exposure);
+    p.saturation_mul = rand_scale(state, cfg.saturation);
+    p.hue_shift = rand_signed(state, cfg.hue);
+    return p;
+}
+
+void rgb_to_hsv(float r, float g, float b, float& h, float& s, float& v)
+{
+    const float mx = max(max(r, g), b);
+    const float mn = min(min(r, g), b);
+    v = mx;
+    const float d = mx - mn;
+    s = mx > 0.0f ? d / mx : 0.0f;
+    if (d <= 1e-6f) { h = 0.0f; return; }
+    if (mx == r)      h = ((g - b) / d) / 6.0f;
+    else if (mx == g) h = ((b - r) / d + 2.0f) / 6.0f;
+    else              h = ((r - g) / d + 4.0f) / 6.0f;
+    if (h < 0.0f) h += 1.0f;
+}
+
+void hsv_to_rgb(float h, float s, float v, float& r, float& g, float& b)
+{
+    if (s <= 0.0f) { r = g = b = v; return; }
+    h = h - floor(h);
+    const float h6 = h * 6.0f;
+    const int i = int(floor(h6));
+    const float f = h6 - i;
+    const float p = v * (1.0f - s);
+    const float q = v * (1.0f - s * f);
+    const float t = v * (1.0f - s * (1.0f - f));
+    switch (i % 6)
+    {
+        case 0: r = v; g = t; b = p; break;
+        case 1: r = q; g = v; b = p; break;
+        case 2: r = p; g = v; b = t; break;
+        case 3: r = p; g = q; b = v; break;
+        case 4: r = t; g = p; b = v; break;
+        default: r = v; g = p; b = q;
+    }
+}
+
+void apply_color_jitter(uint8_t* rgb, Index height, Index width, Index channels,
+                        const AugmentationParams& p)
+{
+    if (channels < 3) return;
+    const Index pixels = height * width;
+    for (Index i = 0; i < pixels; ++i)
+    {
+        const Index base = i * channels;
+        float r = float(rgb[base + 0]) / 255.0f;
+        float g = float(rgb[base + 1]) / 255.0f;
+        float b = float(rgb[base + 2]) / 255.0f;
+        float h, s, v;
+        rgb_to_hsv(r, g, b, h, s, v);
+        h += p.hue_shift;
+        s = min(1.0f, max(0.0f, s * p.saturation_mul));
+        v = min(1.0f, max(0.0f, v * p.exposure_mul));
+        hsv_to_rgb(h, s, v, r, g, b);
+        rgb[base + 0] = uint8_t(min(255.0f, max(0.0f, r * 255.0f + 0.5f)));
+        rgb[base + 1] = uint8_t(min(255.0f, max(0.0f, g * 255.0f + 0.5f)));
+        rgb[base + 2] = uint8_t(min(255.0f, max(0.0f, b * 255.0f + 0.5f)));
+    }
+}
+
+void apply_geometric_to_image(const uint8_t* src, uint8_t* dst,
+                              Index height, Index width, Index channels,
+                              const AugmentationParams& p)
+{
+    // Resample dst[y, x] from src crop region [src_x0, src_y0]–[src_x1, src_y1]
+    // where the crop is expressed as fractions of the original size.
+    const float orig_w = float(width);
+    const float orig_h = float(height);
+    const float src_x0 = p.crop_left * orig_w;
+    const float src_y0 = p.crop_top * orig_h;
+    const float src_x1 = (1.0f - p.crop_right) * orig_w;
+    const float src_y1 = (1.0f - p.crop_bottom) * orig_h;
+    const float crop_w = max(1.0f, src_x1 - src_x0);
+    const float crop_h = max(1.0f, src_y1 - src_y0);
+
+    for (Index dy = 0; dy < height; ++dy)
+    {
+        for (Index dx = 0; dx < width; ++dx)
+        {
+            const Index out_x = p.flip ? (width - 1 - dx) : dx;
+            const float fx = src_x0 + (float(dx) + 0.5f) * crop_w / orig_w - 0.5f;
+            const float fy = src_y0 + (float(dy) + 0.5f) * crop_h / orig_h - 0.5f;
+
+            const Index x0 = Index(floor(fx));
+            const Index y0 = Index(floor(fy));
+            const Index x1 = x0 + 1;
+            const Index y1 = y0 + 1;
+            const float ax = fx - float(x0);
+            const float ay = fy - float(y0);
+
+            auto sample = [&](Index sx, Index sy, Index c) -> float
+            {
+                if (sx < 0 || sx >= width || sy < 0 || sy >= height) return 128.0f;
+                return float(src[(sy * width + sx) * channels + c]);
+            };
+
+            for (Index c = 0; c < channels; ++c)
+            {
+                const float v00 = sample(x0, y0, c);
+                const float v10 = sample(x1, y0, c);
+                const float v01 = sample(x0, y1, c);
+                const float v11 = sample(x1, y1, c);
+                const float v0 = v00 * (1.0f - ax) + v10 * ax;
+                const float v1 = v01 * (1.0f - ax) + v11 * ax;
+                const float v = v0 * (1.0f - ay) + v1 * ay;
+                dst[(dy * width + out_x) * channels + c] =
+                    uint8_t(min(255.0f, max(0.0f, v + 0.5f)));
+            }
+        }
+    }
+}
+
+void apply_geometric_to_boxes(vector<YoloDataset::Box>& boxes,
+                              const AugmentationParams& p)
+{
+    const float crop_w = max(1e-6f, 1.0f - p.crop_left - p.crop_right);
+    const float crop_h = max(1e-6f, 1.0f - p.crop_top - p.crop_bottom);
+
+    vector<YoloDataset::Box> out;
+    out.reserve(boxes.size());
+
+    for (auto box : boxes)
+    {
+        const float bx0 = box.x - 0.5f * box.w;
+        const float by0 = box.y - 0.5f * box.h;
+        const float bx1 = box.x + 0.5f * box.w;
+        const float by1 = box.y + 0.5f * box.h;
+
+        float nx0 = (bx0 - p.crop_left) / crop_w;
+        float ny0 = (by0 - p.crop_top)  / crop_h;
+        float nx1 = (bx1 - p.crop_left) / crop_w;
+        float ny1 = (by1 - p.crop_top)  / crop_h;
+
+        nx0 = max(0.0f, min(1.0f, nx0));
+        ny0 = max(0.0f, min(1.0f, ny0));
+        nx1 = max(0.0f, min(1.0f, nx1));
+        ny1 = max(0.0f, min(1.0f, ny1));
+
+        const float nw = nx1 - nx0;
+        const float nh = ny1 - ny0;
+        if (nw <= 1e-3f || nh <= 1e-3f) continue;
+
+        box.x = 0.5f * (nx0 + nx1);
+        box.y = 0.5f * (ny0 + ny1);
+        box.w = nw;
+        box.h = nh;
+        if (p.flip) box.x = 1.0f - box.x;
+
+        out.push_back(box);
+    }
+
+    boxes = std::move(out);
+}
+
 void make_target(const vector<YoloDataset::Box>& boxes,
                  const vector<array<float, 2>>& anchors,
                  Index grid_size,
@@ -410,6 +712,13 @@ void YoloDataset::set(const filesystem::path& new_images_dir,
 
     image_cache_path = images_directory / ".cache" / "yolo_images.bin";
     target_cache_path = images_directory / ".cache" / "yolo_targets.bin";
+    boxes_cache_path = images_directory / ".cache" / "yolo_boxes.bin";
+
+    // Snapshot the sorted image filename list so callers (e.g. visualization)
+    // can map a dataset sample index back to its on-disk filename. The cache
+    // is built/loaded in the same alphabetical order; sources_hash invalidation
+    // (in try_open_cache) guarantees this list matches the cached contents.
+    image_filenames = list_files(images_directory, has_bmp_extension);
 
     open_or_build_cache(new_anchors);
 }
@@ -421,18 +730,22 @@ void YoloDataset::open_or_build_cache(const vector<array<float, 2>>& requested_a
 
     image_cache_reader.close();
     target_cache_reader.close();
+    boxes_cache_reader.close();
     build_cache(requested_anchors);
 }
 
 bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchors)
 {
-    if (!filesystem::exists(image_cache_path) || !filesystem::exists(target_cache_path))
+    if (!filesystem::exists(image_cache_path)
+    ||  !filesystem::exists(target_cache_path)
+    ||  !filesystem::exists(boxes_cache_path))
         return false;
 
     try
     {
         image_cache_reader.open(image_cache_path);
         target_cache_reader.open(target_cache_path);
+        boxes_cache_reader.open(boxes_cache_path);
 
         YoloImageCacheHeader image_header{};
         YoloTargetCacheHeader target_header{};
@@ -451,6 +764,9 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
         ||  Index(target_header.grid_size) != grid_size
         ||  Index(target_header.boxes_per_cell) != boxes_per_cell
         ||  image_header.samples != target_header.samples)
+            return false;
+
+        if (image_header.sources_hash != hash_sources(images_directory, labels_directory))
             return false;
 
         vector<array<float, 2>> cached_anchors(static_cast<size_t>(boxes_per_cell));
@@ -485,6 +801,25 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
 
         target_record_floats = Index(target_header.target_floats);
         target_data_offset = target_header.targets_offset;
+
+        YoloBoxesCacheHeader boxes_header{};
+        boxes_cache_reader.read_at(&boxes_header, sizeof(boxes_header), 0);
+        if (memcmp(boxes_header.magic, YOLO_BOXES_MAGIC, 8) != 0
+        ||  boxes_header.version != YOLO_CACHE_VERSION
+        ||  boxes_header.samples != image_header.samples)
+            return false;
+
+        boxes_offsets.assign(size_t(boxes_header.samples + 1), 0);
+        boxes_cache_reader.read_at(boxes_offsets.data(),
+                                   boxes_offsets.size() * sizeof(uint64_t),
+                                   boxes_header.offsets_byte_offset);
+        boxes_data_offset = boxes_header.boxes_byte_offset;
+
+        const uint64_t expected_boxes_size = boxes_header.boxes_byte_offset
+            + boxes_header.total_boxes * sizeof(YoloBoxRecord);
+        if (boxes_cache_reader.file_size() != expected_boxes_size)
+            return false;
+
         setup_metadata(Index(image_header.samples));
         return true;
     }
@@ -492,6 +827,7 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
     {
         image_cache_reader.close();
         target_cache_reader.close();
+        boxes_cache_reader.close();
         return false;
     }
 }
@@ -519,6 +855,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     image_header.channels = uint32_t(input_shape[2]);
     image_header.samples = uint64_t(image_paths.size());
     image_header.record_bytes = uint64_t(image_record_bytes);
+    image_header.sources_hash = hash_sources(images_directory, labels_directory);
     image_writer.write(&image_header, sizeof(image_header));
 
     vector<uint8_t> pixels(static_cast<size_t>(image_record_bytes));
@@ -608,9 +945,47 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
 
     target_writer.finish_with_rename(target_cache_path);
 
+    // Boxes side-cache: raw per-sample box lists for on-the-fly augmentation.
+    const filesystem::path boxes_tmp_path = boxes_cache_path.string() + ".tmp";
+    FileWriter boxes_writer;
+    boxes_writer.open(boxes_tmp_path);
+
+    uint64_t total_boxes = 0;
+    for (const auto& sample_boxes : labels) total_boxes += sample_boxes.size();
+
+    YoloBoxesCacheHeader boxes_header{};
+    memcpy(boxes_header.magic, YOLO_BOXES_MAGIC, 8);
+    boxes_header.version = YOLO_CACHE_VERSION;
+    boxes_header.samples = uint64_t(image_paths.size());
+    boxes_header.total_boxes = total_boxes;
+    boxes_header.offsets_byte_offset = sizeof(YoloBoxesCacheHeader);
+    boxes_header.boxes_byte_offset = boxes_header.offsets_byte_offset
+        + (boxes_header.samples + 1) * sizeof(uint64_t);
+
+    boxes_writer.write(&boxes_header, sizeof(boxes_header));
+
+    vector<uint64_t> offsets(image_paths.size() + 1, 0);
+    for (size_t i = 0; i < image_paths.size(); ++i)
+        offsets[i + 1] = offsets[i] + labels[i].size();
+    boxes_writer.write(offsets.data(), offsets.size() * sizeof(uint64_t));
+
+    for (const auto& sample_boxes : labels)
+        for (const auto& box : sample_boxes)
+        {
+            YoloBoxRecord rec{};
+            rec.class_id = int32_t(box.class_id);
+            rec.x = box.x; rec.y = box.y; rec.w = box.w; rec.h = box.h;
+            boxes_writer.write(&rec, sizeof(rec));
+        }
+
+    boxes_writer.finish_with_rename(boxes_cache_path);
+
     image_cache_reader.open(image_cache_path);
     target_cache_reader.open(target_cache_path);
+    boxes_cache_reader.open(boxes_cache_path);
     target_data_offset = target_header.targets_offset;
+    boxes_data_offset = boxes_header.boxes_byte_offset;
+    boxes_offsets = std::move(offsets);
 
     setup_metadata(Index(image_paths.size()));
 
@@ -648,15 +1023,46 @@ void YoloDataset::setup_metadata(Index new_samples_number)
     split_samples_random();
 }
 
+void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
+{
+    const uint64_t begin = boxes_offsets[size_t(sample_index)];
+    const uint64_t end   = boxes_offsets[size_t(sample_index) + 1];
+    const uint64_t count = end - begin;
+
+    out.resize(size_t(count));
+    if (count == 0) return;
+
+    thread_local vector<YoloBoxRecord> records;
+    records.resize(size_t(count));
+    boxes_cache_reader.read_at(records.data(), records.size() * sizeof(YoloBoxRecord),
+                               boxes_data_offset + begin * sizeof(YoloBoxRecord));
+
+    for (size_t i = 0; i < records.size(); ++i)
+    {
+        out[i].class_id = records[i].class_id;
+        out[i].x = records[i].x;
+        out[i].y = records[i].y;
+        out[i].w = records[i].w;
+        out[i].h = records[i].h;
+    }
+}
+
 void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                               const vector<Index>&,
                               float* input_data,
-                              bool,
+                              bool is_training,
                               bool parallelize,
                               int) const
 {
     const Index batch_size = ssize(sample_indices);
     const float scale = 1.0f / 255.0f;
+
+    const bool augment = is_training && augmentation.enabled;
+    const uint64_t epoch_seed = augment
+        ? augmentation_counter.fetch_add(1, std::memory_order_relaxed) + 1
+        : 0;
+
+    AugmentationConfig cfg = augmentation;
 
     string omp_error;
 
@@ -666,6 +1072,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
         try
         {
             thread_local vector<uint8_t> pixels;
+            thread_local vector<uint8_t> aug_pixels;
             pixels.resize(size_t(image_record_bytes));
 
             const uint64_t offset = sizeof(YoloImageCacheHeader)
@@ -673,9 +1080,27 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
 
             image_cache_reader.read_at(pixels.data(), pixels.size(), offset);
 
+            const uint8_t* image_bytes = pixels.data();
+
+            if (augment)
+            {
+                const ::opennn::AugmentationConfig free_cfg{
+                    cfg.jitter, cfg.exposure, cfg.saturation, cfg.hue, cfg.flip
+                };
+                const AugmentationParams p = derive_augmentation_params(
+                    epoch_seed, uint64_t(sample_indices[size_t(i)]), free_cfg);
+
+                aug_pixels.resize(size_t(image_record_bytes));
+                apply_geometric_to_image(pixels.data(), aug_pixels.data(),
+                                         input_shape[0], input_shape[1], input_shape[2], p);
+                apply_color_jitter(aug_pixels.data(),
+                                   input_shape[0], input_shape[1], input_shape[2], p);
+                image_bytes = aug_pixels.data();
+            }
+
             float* dst = input_data + i * image_record_bytes;
             for (Index p = 0; p < image_record_bytes; ++p)
-                dst[p] = float(pixels[size_t(p)]) * scale;
+                dst[p] = float(image_bytes[size_t(p)]) * scale;
         }
         catch (const exception& e)
         {
@@ -691,11 +1116,18 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
 void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                                const vector<Index>&,
                                float* target_data,
-                               bool,
+                               bool is_training,
                                bool parallelize,
                                int) const
 {
     const Index batch_size = ssize(sample_indices);
+
+    const bool augment = is_training && augmentation.enabled;
+    const uint64_t epoch_seed = augment
+        ? augmentation_counter.load(std::memory_order_relaxed)
+        : 0;
+
+    AugmentationConfig cfg = augmentation;
 
     string omp_error;
 
@@ -704,12 +1136,30 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     {
         try
         {
-            const uint64_t offset = target_data_offset
-                + uint64_t(sample_indices[size_t(i)]) * uint64_t(target_record_floats) * sizeof(float);
+            if (augment)
+            {
+                vector<Box> boxes;
+                read_sample_boxes(sample_indices[size_t(i)], boxes);
 
-            target_cache_reader.read_at(target_data + i * target_record_floats,
-                                        size_t(target_record_floats) * sizeof(float),
-                                        offset);
+                const ::opennn::AugmentationConfig free_cfg{
+                    cfg.jitter, cfg.exposure, cfg.saturation, cfg.hue, cfg.flip
+                };
+                const AugmentationParams p = derive_augmentation_params(
+                    epoch_seed, uint64_t(sample_indices[size_t(i)]), free_cfg);
+                apply_geometric_to_boxes(boxes, p);
+
+                make_target(boxes, anchors, grid_size, boxes_per_cell, classes_number,
+                            target_data + i * target_record_floats);
+            }
+            else
+            {
+                const uint64_t offset = target_data_offset
+                    + uint64_t(sample_indices[size_t(i)]) * uint64_t(target_record_floats) * sizeof(float);
+
+                target_cache_reader.read_at(target_data + i * target_record_floats,
+                                            size_t(target_record_floats) * sizeof(float),
+                                            offset);
+            }
         }
         catch (const exception& e)
         {
