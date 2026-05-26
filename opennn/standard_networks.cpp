@@ -149,6 +149,8 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
     set_parameters_random();
 }
 
+#ifndef OPENNN_NO_VISION
+
 ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                                        const Shape& complexity_dimensions,
                                                        const Shape& output_shape) : NeuralNetwork()
@@ -650,6 +652,8 @@ Index Transformer::get_heads_number() const
 
     return 0;
 }
+
+#endif // OPENNN_NO_VISION
 
 }
 

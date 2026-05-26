@@ -340,6 +340,8 @@ struct ConvolutionOp : Operator
     Index kernel_height = 0;
     Index kernel_width = 0;
     Index kernel_channels = 0;
+    Index row_stride = 1;
+    Index column_stride = 1;
 
     Index padding_height = 0;
     Index padding_width = 0;

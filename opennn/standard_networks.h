@@ -53,6 +53,8 @@ public:
                            const Shape& output_shape);
 };
 
+#ifndef OPENNN_NO_VISION
+
 class ImageClassificationNetwork : public NeuralNetwork
 {
 
@@ -115,6 +117,8 @@ public:
 
     void set_dropout_rate(const float);
 };
+
+#endif // OPENNN_NO_VISION
 
 }
 

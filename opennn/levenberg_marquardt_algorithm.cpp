@@ -44,7 +44,8 @@ void LevenbergMarquardtAlgorithm::set_default()
 
     // Training parameters
 
-    damping_parameter = 1.0e-3f;
+    initial_damping_parameter = 1.0e-3f;
+    damping_parameter = initial_damping_parameter;
 
     damping_parameter_factor = 10.0f;
 
@@ -54,7 +55,11 @@ void LevenbergMarquardtAlgorithm::set_default()
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter(const float new_damping_parameter)
 {
-    damping_parameter = clamp(new_damping_parameter, minimum_damping_parameter, maximum_damping_parameter);
+    // Update both the live value and the "fresh-train" baseline. Without
+    // updating initial_damping_parameter, the next train() call would reset
+    // back to the previous initial, undoing the user's customization.
+    initial_damping_parameter = clamp(new_damping_parameter, minimum_damping_parameter, maximum_damping_parameter);
+    damping_parameter = initial_damping_parameter;
 }
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const float new_damping_parameter_factor)
@@ -224,6 +229,14 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
         throw runtime_error("Levenberg-Marquardt algorithm cannot work with cross-entropy error.");
     if (loss_name == "WeightedSquaredError")
         throw runtime_error("Levenberg-Marquardt algorithm is not implemented with weighted squared error.");
+
+    // Reset live training state. damping_parameter is the only mutable
+    // per-run state held as a class member; the update_parameters loop
+    // drives it up to ~1e6 when steps fail, and a saturated value carried
+    // over to the next train() call cripples the LM step size. Selection
+    // algorithms (GrowingNeurons / GrowingInputs) call train() repeatedly,
+    // so this is essential for them to behave correctly.
+    damping_parameter = initial_damping_parameter;
 
     // Start training
 

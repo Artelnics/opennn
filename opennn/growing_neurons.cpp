@@ -125,7 +125,12 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
                 if (minimum_validation_error < neuron_selection_results.optimum_validation_error)
                 {
                     neuron_selection_results.optimal_neurons_number = neurons_number;
-                    //neural_network->get_parameters(neuron_selection_results.optimal_parameters);
+                    // Snapshot the winning trial's parameter buffer. The old API was
+                    // `get_parameters(VectorR&)`; the post-refactor API only exposes
+                    // a raw float* + size, so map and assign into the VectorR result.
+                    neuron_selection_results.optimal_parameters
+                        = Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
+                                                    neural_network->get_parameters_size());
                     neuron_selection_results.optimum_training_error = minimum_training_error;
                     neuron_selection_results.optimum_validation_error = minimum_validation_error;
                 }
@@ -193,12 +198,20 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     // Save neural network
 
-    cout << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << "\n";
+    if (display)
+        cout << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << "\n";
 
     const Shape optimal_shape = { neuron_selection_results.optimal_neurons_number };
     neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape(optimal_shape);
     neural_network->get_layer(last_trainable_layer_index)->set_input_shape(optimal_shape);
-    neural_network->set_parameters(neuron_selection_results.optimal_parameters);
+
+    // The last trial may have ended with a different neurons_number than the
+    // optimal — recompile so the parameter buffer matches the optimal shape
+    // before set_parameters writes into it. Mirrors the trial-loop's compile().
+    neural_network->compile();
+
+    if (neuron_selection_results.optimal_parameters.size() == neural_network->get_parameters_size())
+        neural_network->set_parameters(neuron_selection_results.optimal_parameters);
 
     if (display) neuron_selection_results.print();
 

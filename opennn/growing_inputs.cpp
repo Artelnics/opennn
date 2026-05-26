@@ -210,7 +210,11 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                 {
                     input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices("Input");
                     input_selection_results.optimal_input_variable_names = dataset->get_variable_names("Input");
-                    //neural_network->get_parameters(input_selection_results.optimal_parameters);
+                    // Snapshot the winning trial's parameter buffer — post-refactor
+                    // get_parameters returns raw float* + size, not a VectorR&.
+                    input_selection_results.optimal_parameters
+                        = Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
+                                                    neural_network->get_parameters_size());
                     input_selection_results.optimum_training_error = training_error;
                     input_selection_results.optimum_validation_error = validation_error;
                 }
@@ -336,7 +340,10 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         scaling_layer->set_scalers(input_variable_scalers);
     }
 
-    neural_network->set_parameters(input_selection_results.optimal_parameters);
+    // Guard against size mismatch — the network may have been recompiled to
+    // a different input feature count after optimal_parameters was snapshotted.
+    if (input_selection_results.optimal_parameters.size() == neural_network->get_parameters_size())
+        neural_network->set_parameters(input_selection_results.optimal_parameters);
 
     if (display) input_selection_results.print();
 

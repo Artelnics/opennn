@@ -38,8 +38,9 @@ void register_classes()
     const Activation activation;
     const Dense dense;
     const Scaling scaling;
-    const Flatten flatten;
     const Addition addition;
+#ifndef OPENNN_NO_VISION
+    const Flatten flatten;
     const Embedding embedding;
     const MultiHeadAttention multi_head_attention;
     const Normalization3d normalization_3d;
@@ -47,6 +48,7 @@ void register_classes()
     const Detection detection;
     const Pooling pooling;
     const Pooling3d pooling_3d;
+#endif
     const Bounding bounding;
     const Unscaling unscaling;
     const Recurrent recurrent;

@@ -564,9 +564,13 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     input_target_raw_variable_correlations = dataset.calculate_input_target_variable_pearson_correlations();
 
-    EXPECT_TRUE(-1 < input_target_raw_variable_correlations(0, 0).r && input_target_raw_variable_correlations(0, 0).r < 1);
-    EXPECT_TRUE(-1 < input_target_raw_variable_correlations(1, 0).r && input_target_raw_variable_correlations(1, 0).r < 1);
-    EXPECT_TRUE(-1 < input_target_raw_variable_correlations(2, 0).r && input_target_raw_variable_correlations(2, 0).r < 1);
+    EXPECT_EQ(input_target_raw_variable_correlations.dimension(0), 2);
+    EXPECT_EQ(input_target_raw_variable_correlations.dimension(1), 2);
+
+    for(Index i = 0; i < input_target_raw_variable_correlations.dimension(0); ++i)
+        for(Index j = 0; j < input_target_raw_variable_correlations.dimension(1); ++j)
+            EXPECT_TRUE(-1 < input_target_raw_variable_correlations(i, j).r
+                        && input_target_raw_variable_correlations(i, j).r < 1);
 
     // Test 3 (binary and binary non trivial case)
 

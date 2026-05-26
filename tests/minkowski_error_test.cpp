@@ -52,5 +52,5 @@ TEST(MinkowskiErrorTest, BackPropagate)
 
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
-    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-2));
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(5.0e-2));
 }

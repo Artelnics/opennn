@@ -1225,6 +1225,9 @@ vector<VectorR> TestingAnalysis::calculate_inputs_errors_cross_correlation(const
 
 pair<float, float> TestingAnalysis::test_transformer() const
 {
+#ifdef OPENNN_NO_VISION
+    throw runtime_error("test_transformer requires OpenNN_BUILD_VISION=ON.");
+#else
     cout << "Testing transformer..." << "\n";
 
     const auto* transformer = dynamic_cast<Transformer*>(neural_network);
@@ -1301,10 +1304,14 @@ pair<float, float> TestingAnalysis::test_transformer() const
     return pair<float, float>(error, accuracy);
 */
     return {};
+#endif // OPENNN_NO_VISION
 }
 
 string TestingAnalysis::test_transformer(const vector<string>& /*context_string*/, bool /*imported_vocabulary*/) const
 {
+#ifdef OPENNN_NO_VISION
+    throw runtime_error("test_transformer requires OpenNN_BUILD_VISION=ON.");
+#else
     cout << "Testing transformer..." << endl;
 /*
     Transformer* transformer = static_cast<Transformer*>(neural_network);
@@ -1312,6 +1319,7 @@ string TestingAnalysis::test_transformer(const vector<string>& /*context_string*
     return transformer->calculate_outputs(context_string);
 */
     return {};
+#endif // OPENNN_NO_VISION
 }
 
 VectorR TestingAnalysis::calculate_binary_classification_tests(const float decision_threshold) const

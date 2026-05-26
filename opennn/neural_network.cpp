@@ -586,6 +586,10 @@ MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
 
 Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
+#ifdef OPENNN_NO_VISION
+    (void)image_path;
+    throw runtime_error("calculate_image_output requires OpenNN_BUILD_VISION=ON.");
+#else
     Tensor3 image = load_image(image_path);
 
     const auto* scaling_layer = dynamic_cast<Scaling*>(get_first(LayerType::Scaling));
@@ -617,6 +621,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     const Matrix outputs = calculate_outputs(input_data);
 
     return outputs.size() > 1 ? maximal_index(outputs.row(0)) : Index(outputs(0));
+#endif // OPENNN_NO_VISION
 }
 
 MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)
