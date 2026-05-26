@@ -245,8 +245,6 @@ void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&
 
 [[nodiscard]] VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
 
-[[nodiscard]] VectorMap vector_map(const MatrixR&, Index);
-
 }
 
 // OpenNN: Open Neural Networks Library.

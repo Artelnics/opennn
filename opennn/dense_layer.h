@@ -49,10 +49,17 @@ public:
 
     void set_activation_function(const string&);
     void set_batch_normalization(bool enable);
-    void set_dropout_rate(float new_dropout_rate) { dropout.set_rate(new_dropout_rate); }
+    void set_dropout_rate(float new_dropout_rate)
+    {
+        const bool was_active = dropout.active();
+        dropout.set_rate(new_dropout_rate);
+        if (was_active != dropout.active())
+            configure_operators();
+    }
     void set_momentum(float new_momentum);
 
     void read_JSON_body(const Json*) override;
+    void from_JSON(const JsonDocument&) override;
 
     string write_expression(const vector<string>& input_names,
                             const vector<string>& output_names) const override;

@@ -174,4 +174,79 @@ void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* m
 template<typename T>
 void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, float* dGamma, float* dBeta);
 
+// Recurrent helpers: gather/scatter a (batch, features) slice of a row-major
+// (batch, time, features) tensor at a given timestep t. Used by RecurrentOp
+// to materialise the per-step matrices that cuBLAS / activation kernels need.
+template<typename T>
+void gather_time_slice_cuda(const Index batch, const Index time_steps,
+                            const Index features, const Index t,
+                            const T* src, T* dst);
+
+template<typename T>
+void scatter_time_slice_cuda(const Index batch, const Index time_steps,
+                             const Index features, const Index t,
+                             const T* src, T* dst);
+
+// Bias-broadcast + activation + (optional) derivative in one pass per step.
+// activation_id matches ActivationOp::Function ordinal.
+template<typename T>
+void rnn_step_bias_activation_cuda(const Index batch, const Index out_features,
+                                   T* hidden, const T* bias,
+                                   T* derivs_or_null, const int activation_id);
+
+// One-shot forward recurrent step: z = X[t] @ W_in + h[t-1] @ W_rec + b ; h = σ(z).
+// Replaces the {2 cuBLAS gemms + bias_activation_kernel} sequence with a single
+// kernel launch. One thread block per batch row; one thread per output feature.
+// Requires out_features ≤ 1024 (CUDA block size limit). Uses shared memory for
+// X[t] and h[t-1] row to avoid repeated global-memory reads from the inner loops.
+//
+// prev_hidden may be null at t=0 (recurrent term skipped).
+// derivs_or_null receives σ'(z) when non-null (training mode).
+template<typename T>
+void rnn_step_fused_forward_cuda(const Index batch,
+                                 const Index in_features,
+                                 const Index out_features,
+                                 const T* step_input,
+                                 const T* prev_hidden,
+                                 const T* W_in,
+                                 const T* W_rec,
+                                 const T* bias,
+                                 T* step_hidden,
+                                 T* derivs_or_null,
+                                 const int activation_id);
+
+// δz = δh ⊙ σ'(z): elementwise multiply (in-place into dst).
+template<typename T>
+void rnn_elementwise_multiply_cuda(const Index n, T* dst, const T* a);
+
+// bias_grad[f] += sum over batch of delta[b, f]. bias_grad always FP32.
+template<typename T>
+void rnn_accumulate_bias_grad_cuda(const Index batch, const Index features,
+                                   const T* delta, float* bias_grad);
+
+// Fused backward "pre-gemm" kernel (Phase 3.E backward).
+//
+// For each (batch, out_feature):
+//   δh   = first_iter ? output_delta[b, j] : next_carry[b, j]
+//   δz   = δh * activation_derivatives[b, t, j]
+//   delta[b, j] = δz
+//   atomicAdd(bias_grad[j], δz)
+//
+// Replaces the per-step sequence:
+//   copy(delta_src, delta) + gather(activation_derivatives) +
+//   elementwise_multiply(delta *= step_derivs) + bias_grad_accumulate
+// with a single kernel launch. bias_grad is always FP32 (Adam compute dtype),
+// while delta uses the recurrent compute dtype (T).
+template<typename T>
+void rnn_step_fused_backward_pre_cuda(const Index batch,
+                                      const Index out_features,
+                                      const Index time_steps,
+                                      const Index t,
+                                      const bool first_iter,
+                                      const T* output_delta,
+                                      const T* next_carry,
+                                      const T* activation_derivatives,
+                                      T* delta,
+                                      float* bias_grad);
+
 #endif // KERNEL_CUH

@@ -92,9 +92,9 @@ public:
         bool update_utopian_from_points(const MatrixR& unnormalized_objective_values);
     };
 
-    ResponseOptimization(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    ResponseOptimization(NeuralNetwork* = nullptr);
 
-    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    void set(NeuralNetwork* = nullptr);
 
     void clear_conditions();
     void clear_conditions(const string& name);
@@ -188,8 +188,6 @@ private:
 
     NeuralNetwork* neural_network = nullptr;
 
-    Dataset* dataset = nullptr;
-
     map<string, Condition> conditions;
 
     vector<FormulaConstraint> formula_constraints;
@@ -197,15 +195,22 @@ private:
     float min_feasible_ratio = 0.01f;
     Index max_oversample_factor = 8;
 
+    // Defaults set 2026-05-25 to the best 40k-budget config from the
+    // IDC_benchmark grid search (e2000_i20_z85). The 160k-budget grid
+    // winner (e8000_i20_z85) was the briefly-promoted canonical 2026-05-22,
+    // but matched-budget pymoo comparison at 160k is wall-clock-prohibitive
+    // (~17h for the full 23-entry holdout sweep), so we settled on the
+    // best 40k shape — still uses the grid-confirmed gentle zoom 0.85 and
+    // tightened tolerance 1e-6, just with a budget that lets pymoo keep up.
     Index evaluations_number = 2000;
 
-    Index max_iterations = 5;
+    Index max_iterations = 20;
 
     Index min_iterations = 4;
 
-    float zoom_factor = 0.45f;
+    float zoom_factor = 0.85f;
 
-    float relative_tolerance = 0.001f;
+    float relative_tolerance = 1e-6f;
 
     float deformation_domain_factor = 1.0f;
 

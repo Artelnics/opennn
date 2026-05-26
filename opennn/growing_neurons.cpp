@@ -125,7 +125,14 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
                 if (minimum_validation_error < neuron_selection_results.optimum_validation_error)
                 {
                     neuron_selection_results.optimal_neurons_number = neurons_number;
-                    //neural_network->get_parameters(neuron_selection_results.optimal_parameters);
+#ifdef OPENNN_HAS_CUDA
+                    // Drag params back from device memory before snapshotting
+                    // their host-side bytes. No-op needed in CPU-only builds.
+                    neural_network->copy_parameters_host();
+#endif
+                    neuron_selection_results.optimal_parameters =
+                        Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
+                                                  neural_network->get_parameters_size());
                     neuron_selection_results.optimum_training_error = minimum_training_error;
                     neuron_selection_results.optimum_validation_error = minimum_validation_error;
                 }
@@ -193,12 +200,19 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     // Save neural network
 
-    cout << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << "\n";
+    if (display)
+        cout << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << "\n";
 
     const Shape optimal_shape = { neuron_selection_results.optimal_neurons_number };
     neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape(optimal_shape);
     neural_network->get_layer(last_trainable_layer_index)->set_input_shape(optimal_shape);
-    neural_network->set_parameters(neuron_selection_results.optimal_parameters);
+
+    neural_network->compile();
+
+    if (neuron_selection_results.optimal_parameters.size() == neural_network->get_parameters_size())
+        neural_network->set_parameters(neuron_selection_results.optimal_parameters);
+    else if (display)
+        cout << "Warning: no optimal parameter snapshot captured; keeping current weights.\n";
 
     if (display) neuron_selection_results.print();
 

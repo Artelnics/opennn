@@ -62,7 +62,17 @@ WorkerPool::WorkerPool(int num_workers)
 
                 if (job)
                 {
-                    try { job(); } catch (...) { /* swallow; main thread reports via its own loop */ }
+                    try
+                    {
+                        job();
+                    }
+                    catch (...)
+                    {
+                        lock_guard<mutex> elock(error_mutex_);
+                        if (!worker_error_)
+                            worker_error_ = current_exception();
+                        error_pending_.store(true, memory_order_release);
+                    }
                 }
 
                 {
@@ -98,6 +108,21 @@ void WorkerPool::wait()
     unique_lock<mutex> lock(mutex_);
     cv_done_.wait(lock, [this] { return outstanding_ == 0; });
     current_job_ = nullptr;
+}
+
+void WorkerPool::rethrow_if_error()
+{
+    if (!error_pending_.load(memory_order_acquire)) return;
+
+    exception_ptr e;
+    {
+        lock_guard<mutex> elock(error_mutex_);
+        // std::exception_ptr has no member swap in MSVC's STL — use the free
+        // function template (exception_ptr is move-assignable).
+        swap(e, worker_error_);
+        error_pending_.store(false, memory_order_release);
+    }
+    if (e) rethrow_exception(e);
 }
 
 // --- Optimizer ---------------------------------------------------------------
@@ -453,9 +478,7 @@ void Optimizer::set_scaling()
 
             case 3:
             {
-                auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
-                throw_if(!image_dataset, "Expected ImageDataset.");
-                image_dataset->scale_features("Input");
+                throw_if(!dynamic_cast<ImageDataset*>(dataset), "Expected ImageDataset.");
                 scaling_layer->set_scalers("ImageMinMax");
                 break;
             }
@@ -575,8 +598,6 @@ void Optimizer::set_unscaling()
         return descriptives;
     };
 
-    // Mirror set_scaling's rank dispatch: tabular/time-series invert via descriptives,
-    // image inverts at the dataset level (no descriptives kept).
     if (auto* layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
     {
         switch (layer->get_input_shape().rank)
@@ -586,11 +607,6 @@ void Optimizer::set_unscaling()
                 dataset->unscale_features("Input",
                     reconstruct_descriptives(layer->get_minimums(), layer->get_maximums(),
                                               layer->get_means(), layer->get_standard_deviations()));
-                break;
-
-            case 3:
-                if (auto* image_dataset = dynamic_cast<ImageDataset*>(dataset))
-                    image_dataset->unscale_features("Input", {});
                 break;
         }
     }
@@ -862,23 +878,21 @@ void Optimizer::setup_device_training(const vector<Batch*>& batches)
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
 
-    clear_batch_reuse_events();
-
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     neural_network->copy_parameters_device();
     neural_network->copy_states_device();
 
-    memory_stream.create(cudaStreamNonBlocking);
-
-    // Pre-create per-batch reuse events and pre-size the FP32 staging buffer
-    // so prefetch_batch never allocates inside the per-iteration hot path.
+    // All GPU work (kernels, cuBLAS, prefetch H→D copies) runs on the single
+    // compute_stream owned by Backend. Keeping H→D copies on the same stream
+    // as the compute that consumes them removes the need for cross-stream
+    // events: ordering is implicit. This matches every other GPU operator in
+    // the codebase (Combination, Activation, BatchNorm, LayerNorm, Convolution,
+    // Adam, MSE, …) which all submit to compute_stream.
     Index max_staging_bytes = 0;
     for (Batch* batch : batches)
     {
         if (!batch) continue;
-        batch_ready_events[batch].create(cudaEventDisableTiming);
-        batch_reuse_events[batch].create(cudaEventDisableTiming);
         if (batch->needs_fp32_staging)
             max_staging_bytes = max(max_staging_bytes,
                                     batch->get_input_elements() * Index(sizeof(float)));
@@ -895,14 +909,7 @@ void Optimizer::teardown_device_training()
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
 
-    if (memory_stream) CHECK_CUDA(cudaStreamSynchronize(memory_stream));
     CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
-
-    clear_batch_reuse_events();
-
-    // Explicit destroy keeps tear-down ordered; the RAII destructors would
-    // also run if we skip this (e.g. on an exception path).
-    memory_stream.destroy();
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     neural_network->copy_parameters_host();
@@ -915,74 +922,41 @@ void Optimizer::prefetch_batch(Batch& batch, Index sample_count)
 #ifdef OPENNN_HAS_CUDA
     if (!is_gpu()) return;
 
-    // Event and staging buffer are pre-created in setup_device_training, so
-    // this path is purely stream submission — no allocation, no map insert.
-    auto ready_it = batch_ready_events.find(&batch);
-    auto reuse_it = batch_reuse_events.find(&batch);
-    if (ready_it == batch_ready_events.end() || reuse_it == batch_reuse_events.end())
-        throw runtime_error("Optimizer::prefetch_batch: batch CUDA event missing — "
-                            "this batch was not passed to setup_device_training().");
-
-    if (batch_reuse_recorded.contains(&batch))
-        CHECK_CUDA(cudaStreamWaitEvent(memory_stream.handle, reuse_it->second.handle, 0));
-
+    // Single-stream submission: the H→D copy lands on compute_stream, so the
+    // kernels that consume the batch (queued later on the same stream) see it
+    // ready by construction — no event needed.
     float* fp32_staging = batch.needs_fp32_staging
         ? prefetch_fp32_staging.as<float>()
         : nullptr;
 
-    batch.copy_device_async(sample_count, memory_stream.handle, fp32_staging);
-    CHECK_CUDA(cudaEventRecord(ready_it->second.handle, memory_stream.handle));
+    batch.copy_device_async(sample_count, Backend::get_compute_stream(), fp32_staging);
 #else
     (void)batch; (void)sample_count;
 #endif
 }
 
-void Optimizer::wait_prefetch(Batch& batch)
+void Optimizer::wait_prefetch(Batch& /*batch*/)
 {
-#ifdef OPENNN_HAS_CUDA
-    if (!is_gpu()) return;
-    auto it = batch_ready_events.find(&batch);
-    if (it == batch_ready_events.end())
-        throw runtime_error("Optimizer::wait_prefetch: batch ready event missing — "
-                            "this batch was not passed to setup_device_training().");
-
-    CHECK_CUDA(cudaStreamWaitEvent(Backend::get_compute_stream(), it->second.handle, 0));
-#else
-    (void)batch;
-#endif
+    // Single-stream model: the copy issued by prefetch_batch is already
+    // ordered before subsequent kernels on compute_stream. No-op.
 }
 
-void Optimizer::record_batch_reuse(Batch& batch)
+void Optimizer::record_batch_reuse(Batch& /*batch*/)
 {
-#ifdef OPENNN_HAS_CUDA
-    if (!is_gpu()) return;
-
-    auto it = batch_reuse_events.find(&batch);
-    if (it == batch_reuse_events.end())
-        throw runtime_error("Optimizer::record_batch_reuse: batch reuse event missing — "
-                            "this batch was not passed to setup_device_training().");
-
-    CHECK_CUDA(cudaEventRecord(it->second.handle, Backend::get_compute_stream()));
-    batch_reuse_recorded.insert(&batch);
-#else
-    (void)batch;
-#endif
-}
-
-void Optimizer::clear_batch_reuse_events()
-{
-#ifdef OPENNN_HAS_CUDA
-    // CudaEvent destructors release the underlying handles on map clear.
-    batch_ready_events.clear();
-    batch_reuse_events.clear();
-#endif
-    batch_reuse_recorded.clear();
+    // Single-stream model: reuse ordering is implicit (next copy targeting
+    // the same Batch lands after the kernels consuming the previous copy).
+    // No event to record.
 }
 
 void Optimizer::sync_device()
 {
 #ifdef OPENNN_HAS_CUDA
-    if (is_gpu() && cuda_sync_each_batch())
+    // RecurrentOp's pure-GPU path submits ~30 async kernels per batch (gather/
+    // scatter + cuBLAS + activation, ×5 timesteps × forward+backward). Without
+    // a per-batch drain the CUDA driver queue saturates after a few hundred
+    // batches and the host loop blocks indefinitely. Cost per call is a single
+    // stream synchronize, dominated by the GPU work that was already in flight.
+    if (is_gpu())
         CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
 #endif
 }
@@ -1182,7 +1156,13 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     auto wait_for_iteration = [&](Index it) -> Batch* {
         Batch* p = nullptr;
         while (!(p = ready[it].load(memory_order_acquire)))
+        {
+            // If a worker died with an exception, ready[it] will never be set
+            // and the consumer would hang forever. Surface it now.
+            if (worker_pool->has_error())
+                worker_pool->rethrow_if_error();
             this_thread::yield();
+        }
         return p;
     };
 
@@ -1277,6 +1257,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     if (show_progress) cout << "\n";
 
     worker_pool->wait();
+    worker_pool->rethrow_if_error();
 
 #ifdef OPENNN_HAS_CUDA
     if (use_device_metrics)
@@ -1407,7 +1388,11 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
     auto wait_for_iteration = [&](Index it) -> Batch* {
         Batch* p = nullptr;
         while (!(p = ready[it].load(memory_order_acquire)))
+        {
+            if (worker_pool->has_error())
+                worker_pool->rethrow_if_error();
             this_thread::yield();
+        }
         return p;
     };
 
@@ -1462,6 +1447,7 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
     }
 
     worker_pool->wait();
+    worker_pool->rethrow_if_error();
 
 #ifdef OPENNN_HAS_CUDA
     if (use_device_metrics)

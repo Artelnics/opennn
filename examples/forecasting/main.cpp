@@ -80,7 +80,7 @@ CaseResult train(const string& label,
     adam->set_maximum_epochs(epochs);
     adam->set_learning_rate(0.01f);
     adam->set_batch_size(64);
-    adam->set_display_period(epochs);  // only print at end to reduce noise
+    adam->set_display_period(epochs);
 
     cout << "Training...\n";
     TrainingResults results = strategy.train();
@@ -109,7 +109,7 @@ int main()
     {
         cout << "OpenNN. Forecasting — multi-case validation suite." << endl;
 
-        Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
 
         vector<CaseResult> results;
 
@@ -131,9 +131,7 @@ int main()
 
         // ---------------------------------------------------------------
         // Case 2 — 1 future step, N variables (multivariate target).
-        // twopendulum.csv: two coupled pendulum angles. Both columns are
-        // marked InputTarget by the dataset's default forecasting role
-        // assignment, so the network predicts both at t + future_steps.
+        // twopendulum.csv: two coupled pendulum angles.
         // ---------------------------------------------------------------
         {
             TimeSeriesDataset ds(DATA_DIR + "twopendulum.csv",
@@ -148,7 +146,6 @@ int main()
 
         // ---------------------------------------------------------------
         // Case 3 — K future steps, 1 variable.
-        // funcion_seno_inputTarget.csv: predict next 5 points of the sine.
         // ---------------------------------------------------------------
         {
             TimeSeriesDataset ds(DATA_DIR + "funcion_seno_inputTarget.csv",
@@ -162,9 +159,7 @@ int main()
         }
 
         // ---------------------------------------------------------------
-        // Case 4 — K future steps, N variables (the full multi-step
-        // multi-variate case). twopendulum.csv with multi_target=true.
-        // Target shape becomes {K * N} = {5 * N_target_columns}.
+        // Case 4 — K future steps, N variables.
         // ---------------------------------------------------------------
         {
             TimeSeriesDataset ds(DATA_DIR + "twopendulum.csv",

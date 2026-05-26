@@ -5,9 +5,35 @@ project(opennn_library LANGUAGES CXX)
 file(GLOB_RECURSE CPP_SOURCES CONFIGURE_DEPENDS "*.cpp")
 file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 
+# Vision module: YOLO, ResNet, ImageClassification, Transformer, and their
+# layers (convolutional, pooling, flatten, embedding, multihead-attention,
+# normalization_3d, detection, transformer_decoder) plus image/yolo
+# datasets. Default ON so colleagues building the full library are
+# unaffected; set OFF (with -DOpenNN_BUILD_VISION=OFF) for tabular-only
+# users who hit MSVC link.exe LNK1327 against the full vision lib.
+option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
+
+if(NOT OpenNN_BUILD_VISION)
+    set(_opennn_vision_pattern
+        ".*/(convolutional_layer|convolutional_relu_layer|pooling_layer|pooling_layer_3d|normalization_layer_3d|flatten_layer|embedding_layer|multihead_attention_layer|detection_layer|transformer_decoder|image_dataset|image_utilities|yolo_dataset)\\.cpp$")
+    list(FILTER CPP_SOURCES EXCLUDE REGEX "${_opennn_vision_pattern}")
+endif()
+
 add_library(opennn STATIC ${CPP_SOURCES} ${HEADER_FILES})
 
+if(NOT OpenNN_BUILD_VISION)
+    target_compile_definitions(opennn PUBLIC OPENNN_NO_VISION)
+    # Distinct output name so the slim lib does not clash with the full
+    # opennn.lib (which may be locked by another VS process on the same
+    # machine). Consumers of the slim build should point their CMake
+    # OPENNN_LIB at .../Release/opennn_core.lib.
+    set_target_properties(opennn PROPERTIES OUTPUT_NAME "opennn_core")
+endif()
+
 target_compile_features(opennn PUBLIC cxx_std_20)
+
+find_package(ZLIB REQUIRED)
+target_link_libraries(opennn PUBLIC ZLIB::ZLIB)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(opennn PUBLIC stdc++fs)

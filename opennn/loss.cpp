@@ -9,6 +9,7 @@
 #include "tensor_utilities.h"
 #include "batch.h"
 #include "dataset.h"
+#include "tabular_dataset.h"
 #include "loss.h"
 #include "yolo_dataset.h"
 #include "error_utilities.h"
@@ -21,6 +22,7 @@
 namespace opennn
 {
 
+#ifndef OPENNN_NO_VISION
 namespace
 {
 
@@ -181,6 +183,7 @@ void yolo_gradient_cpu(const TensorView& output,
 }
 
 }
+#endif // OPENNN_NO_VISION
 
 Loss::Loss(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
@@ -205,6 +208,25 @@ void Loss::set_normalization_coefficient()
 
     if (!dataset || dataset->get_samples_number() == 0)
         return;
+
+    if (error == Error::NormalizedSquaredError)
+    {
+        // NSE divides the squared-error sum by the total squared deviation of
+        // the training targets from their column means. Without this, NSE
+        // collapses to plain SSE (coefficient = 1), which biases multi-target
+        // joint regression toward whichever target has the larger scale.
+        const auto* tabular = dynamic_cast<const TabularDataset*>(dataset);
+        if (!tabular) return;
+
+        const MatrixR targets = tabular->get_data("Training", "Target");
+        if (targets.rows() < 2 || targets.cols() == 0) return;
+
+        const Matrix<float, 1, Dynamic> target_means = targets.colwise().mean();
+        const float coefficient = (targets.rowwise() - target_means).squaredNorm();
+
+        normalization_coefficient = (coefficient < EPSILON) ? 1.0f : coefficient;
+        return;
+    }
 
     if (error == Error::WeightedSquaredError)
     {
@@ -313,7 +335,11 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         minkowski_error(input, target, minkowski_parameter, result.error, workspace_device);
         break;
     case Yolo:
+#ifndef OPENNN_NO_VISION
         result = yolo_error_cpu(input, target, dataset);
+#else
+        throw runtime_error("YOLO loss not available: opennn was built with OpenNN_BUILD_VISION=OFF.");
+#endif
         break;
     }
 
@@ -532,7 +558,11 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         minkowski_error_gradient(input, target, minkowski_parameter, input_delta);
         break;
     case Yolo:
+#ifndef OPENNN_NO_VISION
         yolo_gradient_cpu(input, target, input_delta, dataset);
+#else
+        throw runtime_error("YOLO gradient not available: opennn was built with OpenNN_BUILD_VISION=OFF.");
+#endif
         break;
     }
 }

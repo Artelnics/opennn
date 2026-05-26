@@ -94,7 +94,7 @@ public:
                       bool parallelize = true,
                       int contiguous = -1) const override;
 
-    void augment_inputs(float*, Index) const override {}
+    void augment_inputs(float*, Index, bool = true) const override {}
 
     struct AugmentationConfig
     {

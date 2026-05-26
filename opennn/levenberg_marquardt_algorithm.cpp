@@ -44,7 +44,8 @@ void LevenbergMarquardtAlgorithm::set_default()
 
     // Training parameters
 
-    damping_parameter = 1.0e-3f;
+    initial_damping_parameter = 1.0e-3f;
+    damping_parameter = initial_damping_parameter;
 
     damping_parameter_factor = 10.0f;
 
@@ -54,7 +55,11 @@ void LevenbergMarquardtAlgorithm::set_default()
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter(const float new_damping_parameter)
 {
-    damping_parameter = clamp(new_damping_parameter, minimum_damping_parameter, maximum_damping_parameter);
+    // Update both the live value and the "fresh-train" baseline. Without
+    // updating initial_damping_parameter, the next train() call would reset
+    // back to the previous initial, undoing the user's customization.
+    initial_damping_parameter = clamp(new_damping_parameter, minimum_damping_parameter, maximum_damping_parameter);
+    damping_parameter = initial_damping_parameter;
 }
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const float new_damping_parameter_factor)
@@ -133,17 +138,32 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
                                                    const ForwardPropagation& forward_propagation,
                                                    BackPropagationLM& back_propagation_lm)
 {
+    // LIMITATION: the current Jacobian computation only fills the columns of
+    // the LAST trainable Dense layer; the rest of the Jacobian stays zero.
+    // That works as a single-Dense regression solver but converges into a
+    // subspace if the network has more than one trainable Dense.
     NeuralNetwork* neural_network = loss->get_neural_network();
     const auto& layers = neural_network->get_layers();
 
     back_propagation_lm.squared_errors_jacobian.setZero();
 
     Index last_trainable_dense = -1;
+    Index trainable_dense_count = 0;
     for (size_t i = 0; i < layers.size(); ++i)
         if (layers[i]->get_is_trainable() && dynamic_cast<Dense*>(layers[i].get()))
+        {
             last_trainable_dense = i;
+            ++trainable_dense_count;
+        }
 
     if (last_trainable_dense < 0) return;
+
+    if (trainable_dense_count > 1)
+        throw runtime_error("LevenbergMarquardtAlgorithm: only networks with a single "
+                            "trainable Dense layer are supported. Found "
+                            + to_string(trainable_dense_count) + " trainable Dense "
+                            "layers. Use AdaptiveMomentEstimation, SGD, or "
+                            "QuasiNewtonMethod instead.");
 
     // Compute parameter offset up to the last trainable Dense layer
     const Index parameter_offset = transform_reduce(
@@ -224,6 +244,14 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
         throw runtime_error("Levenberg-Marquardt algorithm cannot work with cross-entropy error.");
     if (loss_name == "WeightedSquaredError")
         throw runtime_error("Levenberg-Marquardt algorithm is not implemented with weighted squared error.");
+
+    // Reset live training state. damping_parameter is the only mutable
+    // per-run state held as a class member; the update_parameters loop
+    // drives it up to ~1e6 when steps fail, and a saturated value carried
+    // over to the next train() call cripples the LM step size. Selection
+    // algorithms (GrowingNeurons / GrowingInputs) call train() repeatedly,
+    // so this is essential for them to behave correctly.
+    damping_parameter = initial_damping_parameter;
 
     // Start training
 
@@ -435,7 +463,13 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         if (new_loss < current_loss)
         {
-            set_damping_parameter(damping_parameter/damping_parameter_factor);
+            // Internal update — only the live damping_parameter, not the
+            // user-config initial. Going through set_damping_parameter() here
+            // would overwrite initial_damping_parameter and defeat the
+            // train()-start reset.
+            damping_parameter = clamp(damping_parameter / damping_parameter_factor,
+                                      minimum_damping_parameter,
+                                      maximum_damping_parameter);
 
             parameters = potential_parameters;
 
@@ -450,7 +484,9 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
         {
             hessian.diagonal().array() -= damping_parameter;
 
-            set_damping_parameter(damping_parameter*damping_parameter_factor);
+            damping_parameter = clamp(damping_parameter * damping_parameter_factor,
+                                      minimum_damping_parameter,
+                                      maximum_damping_parameter);
         }
 
     } while (damping_parameter < maximum_damping_parameter);

@@ -55,8 +55,6 @@ public:
 
 private:
 
-    void fix_forecasting();
-
     Dataset* dataset = nullptr;
 
     NeuralNetwork* neural_network = nullptr;

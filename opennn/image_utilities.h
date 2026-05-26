@@ -15,6 +15,8 @@ namespace opennn
 
 Tensor3 load_image(const filesystem::path&);
 
+bool is_supported_image_file(const filesystem::path&);
+
 void load_image(const filesystem::path&,
                 float* dst,
                 Index expected_height,
@@ -29,6 +31,12 @@ void reflect_image_vertical(Tensor3&);
 void rotate_image(const Tensor3&, Tensor3&, float);
 void translate_image_x(const Tensor3&, Tensor3&, Index);
 void translate_image_y(const Tensor3&, Tensor3&, Index);
+
+void reflect_image_horizontal(TensorMap3&);
+void reflect_image_vertical(TensorMap3&);
+void rotate_image(const TensorMap3&, TensorMap3&, float);
+void translate_image_x(TensorMap3&, Index);
+void translate_image_y(TensorMap3&, Index);
 }
 
 // OpenNN: Open Neural Networks Library.

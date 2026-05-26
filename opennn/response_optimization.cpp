@@ -69,16 +69,15 @@ inline vector<Index> filter_selected_indices_by_column(const MatrixR& matrix,
 
 }
 
-ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 {
-    set(new_neural_network, new_dataset);
+    set(new_neural_network);
 }
 
 
-void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
-    dataset = new_dataset;
 
     if(!neural_network)
         return;

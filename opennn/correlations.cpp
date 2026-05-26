@@ -135,13 +135,16 @@ Correlation exponential_correlation(const VectorR& x, const VectorR& y)
 {
     Correlation exponential_correlation;
 
-    if ((!y.array().isNaN() && y.array() <= 0.0f).any())
-    {
-        exponential_correlation.r = NAN;
-        return exponential_correlation;
-    }
+    for(Index i = 0; i < y.size(); ++i)
+        if(!isnan(y(i)) && y(i) <= 0.0f)
+        {
+            exponential_correlation.r = NAN;
+            return exponential_correlation;
+        }
 
-    exponential_correlation = linear_correlation(x, y.array().log().matrix());
+    const VectorR log_y = y.array().log().matrix();
+
+    exponential_correlation = linear_correlation(x, log_y);
 
     exponential_correlation.form = Correlation::Form::Exponential;
     exponential_correlation.a = exp(exponential_correlation.a);
@@ -281,13 +284,16 @@ Correlation logarithmic_correlation(const VectorR& x,
 {
     Correlation logarithmic_correlation;
 
-    if ((!x.array().isNaN() && x.array() <= 0.0f).any())
-    {
-        logarithmic_correlation.r = NAN;
-        return logarithmic_correlation;
-    }
+    for(Index i = 0; i < x.size(); ++i)
+        if(!isnan(x(i)) && x(i) <= 0.0f)
+        {
+            logarithmic_correlation.r = NAN;
+            return logarithmic_correlation;
+        }
 
-    logarithmic_correlation = linear_correlation(x.array().log(), y);
+    const VectorR log_x = x.array().log().matrix();
+
+    logarithmic_correlation = linear_correlation(log_x, y);
 
     logarithmic_correlation.form = Correlation::Form::Logarithmic;
 
@@ -700,13 +706,24 @@ Correlation power_correlation(const VectorR& x, const VectorR& y)
 {
     Correlation power_correlation;
 
-    if ((x.array() <= 0.0f).any() || (y.array() <= 0.0f).any())
-    {
-        power_correlation.r = NAN;
-        return power_correlation;
-    }
+    for(Index i = 0; i < x.size(); ++i)
+        if(!isnan(x(i)) && x(i) <= 0.0f)
+        {
+            power_correlation.r = NAN;
+            return power_correlation;
+        }
 
-    power_correlation = linear_correlation(x.array().log().matrix(), y.array().log().matrix());
+    for(Index i = 0; i < y.size(); ++i)
+        if(!isnan(y(i)) && y(i) <= 0.0f)
+        {
+            power_correlation.r = NAN;
+            return power_correlation;
+        }
+
+    const VectorR log_x = x.array().log().matrix();
+    const VectorR log_y = y.array().log().matrix();
+
+    power_correlation = linear_correlation(log_x, log_y);
 
     power_correlation.form = Correlation::Form::Power;
     power_correlation.a = exp(power_correlation.a);
