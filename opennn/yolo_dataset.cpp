@@ -52,9 +52,9 @@ constexpr uint32_t YOLO_CACHE_VERSION = 1;
 constexpr char YOLO_IMAGE_MAGIC[8] = {'O','P','E','N','N','Y','I','M'};
 constexpr char YOLO_TARGET_MAGIC[8] = {'O','P','E','N','N','Y','T','G'};
 
-bool has_bmp_extension(const filesystem::path& path)
+bool has_image_extension(const filesystem::path& path)
 {
-    return path.extension() == ".bmp";
+    return is_supported_image_file(path);
 }
 
 vector<filesystem::path> list_files(const filesystem::path& directory,
@@ -498,9 +498,9 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
 
 void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
 {
-    vector<filesystem::path> image_paths = list_files(images_directory, has_bmp_extension);
+    vector<filesystem::path> image_paths = list_files(images_directory, has_image_extension);
     if (image_paths.empty())
-        throw runtime_error(format("YoloDataset: no BMP files found in {}", images_directory.string()));
+        throw runtime_error(format("YoloDataset: no images found in {}", images_directory.string()));
 
     vector<vector<Box>> labels(image_paths.size());
     Index max_class_id = -1;

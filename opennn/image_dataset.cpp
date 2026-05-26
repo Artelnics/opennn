@@ -200,7 +200,7 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
     printer.open_element("DataSource");
 
     write_json(printer, {
-        {"FileType", "bmp"},
+        {"FileType", "image"},
         {"Path", data_path.string()},
         {"HasSamplesId", to_string(has_sample_ids)},
         {"Channels", to_string(input_shape[2])},
@@ -424,7 +424,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         }
     }
 
-    // 2) No valid cache — scan the BMP directory and build it.
+    // 2) No valid cache — scan the image directory and build it.
     vector<filesystem::path> directory_path;
 
     for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(data_path))
@@ -444,7 +444,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     {
         vector<filesystem::path> folder_files;
         for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(directory_path[i]))
-            if (current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
+            if (current_directory.is_regular_file() && is_supported_image_file(current_directory.path()))
                 folder_files.emplace_back(current_directory.path());
 
         ranges::sort(folder_files);

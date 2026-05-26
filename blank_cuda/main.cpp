@@ -1,14 +1,16 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   B L A N K   C U D A   —   Translation benchmark (refactor)
+//   B L A N K   C U D A
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <limits>
@@ -17,6 +19,13 @@
 #include "../opennn/image_dataset.h"
 #include "../opennn/language_dataset.h"
 #include "../opennn/standard_networks.h"
+#include "../opennn/scaling_layer.h"
+#include "../opennn/convolutional_layer.h"
+#include "../opennn/pooling_layer.h"
+#include "../opennn/flatten_layer.h"
+#include "../opennn/dense_layer.h"
+#include "../opennn/addition_layer.h"
+#include "../opennn/activation_layer.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/testing_analysis.h"
 #include "../opennn/stochastic_gradient_descent.h"
@@ -27,6 +36,7 @@
 using namespace opennn;
 using namespace std::chrono;
 
+#if 0
 // ----- SDPA vs unfused benchmark scaffolding (temporary) -----
 // Writes N random (input, target) pairs to dst, each pair containing exactly
 // `tokens_per_side` tokens drawn from a vocabulary of `vocab_size` synthetic
@@ -135,15 +145,349 @@ static void prepare_tinychat_pairs(const std::filesystem::path& src,
 
     cout << "Wrote " << pair_count << " (user, assistant) pairs to " << dst << endl;
 }
+#endif
 
 int main()
 {
     try
     {
         
-        cout << "OpenNN. Benchmark." << endl;
+        cout << "OpenNN. train_1000_filter ResNet-18 clean test." << endl;
 
 #ifdef OPENNN_HAS_CUDA
+        // ============== train_1000_filter — binary PNG image training ==============
+        //
+        // Dataset layout:
+        //   /home/artelnics/Documents/train_1000_filter/
+        //       NEGATIVE/*.png
+        //       POSITIVE/*.png
+        //
+        // ImageDataset now builds .cache/images.bin directly from PNG/BMP files.
+
+        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
+        Backend::instance();
+        set_seed(42);
+
+        const filesystem::path dataset_path = "/home/artelnics/Documents/train_1000_filter";
+        if (!filesystem::exists(dataset_path))
+            throw runtime_error("Dataset folder not found: " + dataset_path.string());
+
+        ImageDataset dataset(dataset_path);
+        dataset.split_samples_random(0.80, 0.10, 0.10);
+
+        AugmentationSettings augmentation;
+        augmentation.enabled = false;
+        dataset.set_augmentation(augmentation);
+
+        const Shape input_shape = dataset.get_shape("Input");
+        const Shape target_shape = dataset.get_shape("Target");
+
+        cout << "[DATASET] train=" << dataset.get_samples_number("Training")
+             << " val="            << dataset.get_samples_number("Validation")
+             << " test="           << dataset.get_samples_number("Testing")
+             << " input="          << input_shape[0] << "x" << input_shape[1] << "x" << input_shape[2]
+             << " target="         << target_shape[0] << endl;
+
+        NeuralNetwork network;
+
+        auto scaling = make_unique<Scaling>(input_shape);
+        scaling->set_scalers("ImageMinMax");
+        network.add_layer(move(scaling));
+
+        auto add_conv = [&](Index input_index,
+                            const Shape& kernel_shape,
+                            const char* activation,
+                            const Shape& stride,
+                            const string& name) -> Index
+        {
+            network.add_layer(make_unique<Convolutional>(
+                                  network.get_layer(input_index)->get_output_shape(),
+                                  kernel_shape,
+                                  activation,
+                                  stride,
+                                  "Same",
+                                  true,
+                                  name),
+                              {input_index});
+            return network.get_layers_number() - 1;
+        };
+
+        auto add_skip = [&](Index input_index,
+                            Index in_channels,
+                            Index out_channels,
+                            Index stride,
+                            const string& prefix) -> Index
+        {
+            if (stride == 1 && in_channels == out_channels)
+                return input_index;
+
+            return add_conv(input_index,
+                            Shape{1, 1, in_channels, out_channels},
+                            "Identity",
+                            Shape{stride, stride},
+                            prefix + "_skip");
+        };
+
+        auto add_basic_block = [&](Index input_index,
+                                   size_t stage,
+                                   Index block,
+                                   Index filters) -> Index
+        {
+            const Shape block_input_shape = network.get_layer(input_index)->get_output_shape();
+            const Index in_channels = block_input_shape[2];
+            const Index stride = (stage > 0 && block == 0) ? 2 : 1;
+            const string prefix = format("s{}b{}", stage, block);
+
+            Index main_index = add_conv(input_index,
+                                        Shape{3, 3, in_channels, filters},
+                                        "ReLU",
+                                        Shape{stride, stride},
+                                        prefix + "_conv1");
+
+            main_index = add_conv(main_index,
+                                  Shape{3, 3, filters, filters},
+                                  "Identity",
+                                  Shape{1, 1},
+                                  prefix + "_conv2");
+
+            const Index skip_index = add_skip(input_index,
+                                              in_channels,
+                                              filters,
+                                              stride,
+                                              prefix);
+
+            network.add_layer(make_unique<Addition>(
+                                  network.get_layer(main_index)->get_output_shape(),
+                                  prefix + "_add"),
+                              {main_index, skip_index});
+            const Index add_index = network.get_layers_number() - 1;
+
+            network.add_layer(make_unique<Activation>(
+                                  network.get_layer(add_index)->get_output_shape(),
+                                  "ReLU",
+                                  prefix + "_relu"),
+                              {add_index});
+
+            return network.get_layers_number() - 1;
+        };
+
+        Index last_index = add_conv(0,
+                                    Shape{7, 7, input_shape[2], 64},
+                                    "ReLU",
+                                    Shape{2, 2},
+                                    "stem_conv");
+
+        network.add_layer(make_unique<Pooling>(network.get_layer(last_index)->get_output_shape(),
+                                               Shape{3, 3},
+                                               Shape{2, 2},
+                                               Shape{1, 1},
+                                               "MaxPooling",
+                                               "stem_pool"),
+                          {last_index});
+        last_index = network.get_layers_number() - 1;
+
+        const vector<Index> blocks_per_stage = {2, 2, 2, 2};
+        const Shape filters_per_stage = {64, 128, 256, 512};
+
+        for (size_t stage = 0; stage < blocks_per_stage.size(); ++stage)
+            for (Index block = 0; block < blocks_per_stage[stage]; ++block)
+                last_index = add_basic_block(last_index,
+                                             stage,
+                                             block,
+                                             filters_per_stage[Index(stage)]);
+
+        const Shape pre_pool_shape = network.get_layer(last_index)->get_output_shape();
+        network.add_layer(make_unique<Pooling>(pre_pool_shape,
+                                               Shape{pre_pool_shape[0], pre_pool_shape[1]},
+                                               Shape{1, 1},
+                                               Shape{0, 0},
+                                               "AveragePooling",
+                                               "global_avg_pool"),
+                          {last_index});
+        last_index = network.get_layers_number() - 1;
+
+        network.add_layer(make_unique<Flatten>(network.get_layer(last_index)->get_output_shape()),
+                          {last_index});
+        last_index = network.get_layers_number() - 1;
+
+        auto classifier_hidden = make_unique<opennn::Dense>(
+            network.get_layer(last_index)->get_output_shape(),
+            Shape{256},
+            "ReLU",
+            true,
+            "classifier_hidden");
+        classifier_hidden->set_dropout_rate(0.0f);
+        network.add_layer(move(classifier_hidden), {last_index});
+        last_index = network.get_layers_number() - 1;
+
+        network.add_layer(make_unique<opennn::Dense>(network.get_layer(last_index)->get_output_shape(),
+                                                     target_shape,
+                                                     "Sigmoid",
+                                                     false,
+                                                     "classifier"),
+                                                     {last_index});
+
+        network.compile();
+        network.set_parameters_random();
+
+        cout << "Binary ResNet-18 clean params=" << network.get_parameters_number()
+             << " (buffer=" << network.get_parameters_size() << ")" << endl;
+
+        const filesystem::path parameters_path =
+            "/home/artelnics/Documents/train_1000_filter_resnet18_clean_parameters.bin";
+        const filesystem::path states_path =
+            "/home/artelnics/Documents/train_1000_filter_resnet18_clean_states.bin";
+
+        const bool evaluate_saved_parameters_only =
+            std::getenv("OPENNN_EVALUATE_SAVED_PARAMETERS") != nullptr;
+
+        TrainingStrategy training_strategy(&network, &dataset);
+        training_strategy.set_loss("CrossEntropy");
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        training_strategy.get_loss()->set_regularization("None");
+
+        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        if (!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
+
+        adam->set_batch_size(16);
+        adam->set_learning_rate(3.0e-4f);
+        adam->set_num_workers(8);
+        adam->set_maximum_epochs(39);
+        adam->set_maximum_validation_failures(8);
+        adam->set_display_period(1);
+
+        if (evaluate_saved_parameters_only)
+        {
+            if (!filesystem::exists(parameters_path))
+                throw runtime_error("Saved parameters not found: " + parameters_path.string());
+
+            cout << "Loading saved parameters from " << parameters_path
+                 << " (skipping training)" << endl;
+            network.load_parameters_binary(parameters_path);
+
+            if (!filesystem::exists(states_path))
+                throw runtime_error("Saved states not found: " + states_path.string());
+
+            cout << "Loading saved states from " << states_path << endl;
+            network.load_states_binary(states_path);
+        }
+        else
+        {
+            const auto t0 = steady_clock::now();
+            training_strategy.train();
+            const auto t1 = steady_clock::now();
+
+            const double training_seconds = duration_cast<milliseconds>(t1 - t0).count() / 1000.0;
+            cout << "\nTotal training time: " << training_seconds << " s" << endl;
+
+            network.save_parameters_binary(parameters_path);
+            cout << "Saved parameters to " << parameters_path
+                 << " (" << filesystem::file_size(parameters_path) / (1024 * 1024)
+                 << " MiB)" << endl;
+
+            network.save_states_binary(states_path);
+            cout << "Saved states to " << states_path
+                 << " (" << filesystem::file_size(states_path) / 1024
+                 << " KiB)" << endl;
+        }
+
+        TestingAnalysis testing_analysis(&network, &dataset);
+        testing_analysis.set_batch_size(32);
+
+        auto get_targets_and_outputs_batched = [&](const string& role) -> pair<MatrixR, MatrixR>
+        {
+            const vector<Index> sample_indices = dataset.get_sample_indices(role);
+            const vector<Index> input_indices = dataset.get_feature_indices("Input");
+            const vector<Index> target_indices = dataset.get_feature_indices("Target");
+
+            MatrixR targets(ssize(sample_indices), ssize(target_indices));
+            MatrixR outputs(ssize(sample_indices), target_shape.size());
+
+            const Index batch_size = 32;
+            for (Index begin = 0; begin < ssize(sample_indices); begin += batch_size)
+            {
+                const Index current_batch_size = min(batch_size, ssize(sample_indices) - begin);
+                vector<Index> batch_indices(sample_indices.begin() + begin,
+                                            sample_indices.begin() + begin + current_batch_size);
+
+                MatrixR batch_targets(current_batch_size, ssize(target_indices));
+                dataset.fill_targets(batch_indices, target_indices,
+                                     batch_targets.data(), false, true);
+
+                Tensor4 batch_inputs(current_batch_size, input_shape[0], input_shape[1], input_shape[2]);
+                dataset.fill_inputs(batch_indices, input_indices,
+                                    batch_inputs.data(), false, true);
+
+                const MatrixR batch_outputs = network.calculate_outputs(batch_inputs);
+                targets.middleRows(begin, current_batch_size) = batch_targets;
+                outputs.middleRows(begin, current_batch_size) = batch_outputs;
+            }
+
+            return {targets, outputs};
+        };
+
+        const string evaluation_role = "Testing";
+        const auto [testing_targets, testing_outputs] = get_targets_and_outputs_batched(evaluation_role);
+        const MatrixR roc_curve = testing_analysis.calculate_roc_curve(testing_targets, testing_outputs);
+
+        TestingAnalysis::RocAnalysis roc_analysis;
+        roc_analysis.roc_curve = roc_curve;
+        roc_analysis.area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
+        roc_analysis.confidence_limit =
+            testing_analysis.calculate_area_under_curve_confidence_limit(testing_targets, testing_outputs);
+        roc_analysis.optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
+
+        cout << "\nROC analysis:" << endl;
+        cout << "Role: " << evaluation_role << endl;
+        cout << "AUC: " << roc_analysis.area_under_curve << endl;
+        cout << "Confidence limit: " << roc_analysis.confidence_limit << endl;
+        cout << "Optimal threshold: " << roc_analysis.optimal_threshold << endl;
+        cout << "\nConfusion matrix at threshold 0.5:\n"
+             << testing_analysis.calculate_confusion(testing_targets,
+                                                    testing_outputs,
+                                                    0.5f) << endl;
+        cout << "\nConfusion matrix at optimal threshold:\n"
+             << testing_analysis.calculate_confusion(testing_targets,
+                                                    testing_outputs,
+                                                    roc_analysis.optimal_threshold) << endl;
+
+        Index positives = 0;
+        Index negatives = 0;
+        double positive_sum = 0.0;
+        double negative_sum = 0.0;
+        float positive_min = numeric_limits<float>::max();
+        float positive_max = numeric_limits<float>::lowest();
+        float negative_min = numeric_limits<float>::max();
+        float negative_max = numeric_limits<float>::lowest();
+
+        for (Index i = 0; i < testing_targets.rows(); ++i)
+        {
+            const float output = testing_outputs(i, 0);
+            if (testing_targets(i, 0) >= 0.5f)
+            {
+                ++positives;
+                positive_sum += output;
+                positive_min = min(positive_min, output);
+                positive_max = max(positive_max, output);
+            }
+            else
+            {
+                ++negatives;
+                negative_sum += output;
+                negative_min = min(negative_min, output);
+                negative_max = max(negative_max, output);
+            }
+        }
+
+        cout << "\nOutput stats:" << endl;
+        cout << "Positive targets: mean=" << positive_sum / double(positives)
+             << " min=" << positive_min
+             << " max=" << positive_max << endl;
+        cout << "Negative targets: mean=" << negative_sum / double(negatives)
+             << " min=" << negative_min
+             << " max=" << negative_max << endl;
+
+#if 0
 /*
         // ============== ResNet on Places365 ==============
         //
@@ -653,6 +997,7 @@ int main()
         cout << "===============================================\n";
         */
 
+#endif
 #endif
 
         cout << "Bye!" << endl;

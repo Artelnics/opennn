@@ -15,6 +15,8 @@ namespace opennn
 
 Tensor3 load_image(const filesystem::path&);
 
+bool is_supported_image_file(const filesystem::path&);
+
 void load_image(const filesystem::path&,
                 float* dst,
                 Index expected_height,

@@ -9,6 +9,9 @@ add_library(opennn STATIC ${CPP_SOURCES} ${HEADER_FILES})
 
 target_compile_features(opennn PUBLIC cxx_std_20)
 
+find_package(ZLIB REQUIRED)
+target_link_libraries(opennn PUBLIC ZLIB::ZLIB)
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(opennn PUBLIC stdc++fs)
 endif()

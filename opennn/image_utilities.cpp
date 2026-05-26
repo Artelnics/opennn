@@ -9,6 +9,9 @@
 #include "image_utilities.h"
 #include "tensor_utilities.h"
 
+#include <cctype>
+#include <zlib.h>
+
 namespace opennn
 {
 
@@ -36,17 +39,28 @@ struct BmpHeader
     vector<RGBQuad> palette;
 };
 
-void read_bmp_file(const filesystem::path& path, vector<uint8_t>& buffer)
+struct PngHeader
+{
+    Index height = 0;
+    Index width = 0;
+    Index channels = 0;
+    uint8_t bit_depth = 0;
+    uint8_t color_type = 0;
+    int bytes_per_pixel = 0;
+    vector<uint8_t> palette;
+};
+
+void read_image_file(const filesystem::path& path, vector<uint8_t>& buffer)
 {
     const string path_str = path.string();
 
     ifstream file(path, ios::binary | ios::ate);
     if (!file)
-        throw runtime_error(format("Cannot open BMP file: {}", path_str));
+        throw runtime_error(format("Cannot open image file: {}", path_str));
 
     const streamsize size = file.tellg();
-    if (size < 54)
-        throw runtime_error(format("File too small to be a BMP: {}", path_str));
+    if (size < 8)
+        throw runtime_error(format("File too small to be an image: {}", path_str));
 
     file.seekg(0, ios::beg);
 
@@ -56,11 +70,33 @@ void read_bmp_file(const filesystem::path& path, vector<uint8_t>& buffer)
     buffer.resize(byte_count);
 
     if (!file.read(reinterpret_cast<char*>(buffer.data()), size))
-        throw runtime_error(format("Error reading BMP file: {}", path_str));
+        throw runtime_error(format("Error reading image file: {}", path_str));
+}
+
+bool has_png_signature(const vector<uint8_t>& buffer)
+{
+    static constexpr uint8_t signature[8] = {137, 80, 78, 71, 13, 10, 26, 10};
+    return buffer.size() >= 8 && equal(begin(signature), end(signature), buffer.begin());
+}
+
+bool has_bmp_signature(const vector<uint8_t>& buffer)
+{
+    return buffer.size() >= 2 && buffer[0] == 'B' && buffer[1] == 'M';
+}
+
+uint32_t read_be32(const uint8_t* p)
+{
+    return (uint32_t(p[0]) << 24)
+         | (uint32_t(p[1]) << 16)
+         | (uint32_t(p[2]) << 8)
+         |  uint32_t(p[3]);
 }
 
 BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str)
 {
+    if (buffer.size() < 54)
+        throw runtime_error(format("File too small to be a BMP: {}", path_str));
+
     auto read_u16 = [&](int offset) { return static_cast<uint16_t>(buffer[offset] | (buffer[offset+1] << 8)); };
     auto read_u32 = [&](int offset) { return static_cast<uint32_t>(buffer[offset] | (buffer[offset+1] << 8) | (buffer[offset+2] << 16) | (buffer[offset+3] << 24)); };
     auto read_s32 = [&](int offset) { return static_cast<int32_t>(read_u32(offset)); };
@@ -168,19 +204,262 @@ void decode_bmp_pixels(const vector<uint8_t>& buffer, const BmpHeader& h, float*
     }
 }
 
+uint8_t paeth_predictor(uint8_t a, uint8_t b, uint8_t c)
+{
+    const int p = int(a) + int(b) - int(c);
+    const int pa = abs(p - int(a));
+    const int pb = abs(p - int(b));
+    const int pc = abs(p - int(c));
+
+    if (pa <= pb && pa <= pc) return a;
+    if (pb <= pc) return b;
+    return c;
+}
+
+PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
+                           vector<uint8_t>& compressed,
+                           const string& path_str)
+{
+    if (!has_png_signature(buffer))
+        throw runtime_error(format("Not a PNG file: {}", path_str));
+
+    // Reset destination so callers don't have to remember the precondition.
+    // Capacity is preserved, so the thread_local buffer doesn't re-allocate.
+    compressed.clear();
+
+    PngHeader h;
+    bool saw_ihdr = false;
+    size_t pos = 8;
+
+    while (pos + 12 <= buffer.size())
+    {
+        const uint32_t length = read_be32(buffer.data() + pos);
+        pos += 4;
+
+        if (pos + 4 + size_t(length) + 4 > buffer.size())
+            throw runtime_error(format("Corrupted PNG chunk in file: {}", path_str));
+
+        const string_view type(reinterpret_cast<const char*>(buffer.data() + pos), 4);
+        pos += 4;
+        const uint8_t* data = buffer.data() + pos;
+
+        if (type == "IHDR")
+        {
+            if (length != 13)
+                throw runtime_error(format("Invalid PNG IHDR in file: {}", path_str));
+
+            h.width = Index(read_be32(data));
+            h.height = Index(read_be32(data + 4));
+            h.bit_depth = data[8];
+            h.color_type = data[9];
+            const uint8_t compression = data[10];
+            const uint8_t filter = data[11];
+            const uint8_t interlace = data[12];
+
+            if (h.width <= 0 || h.height <= 0 || h.bit_depth != 8
+             || compression != 0 || filter != 0 || interlace != 0)
+                throw runtime_error(format("Unsupported PNG format in file: {}", path_str));
+
+            switch (h.color_type)
+            {
+                case 0: h.channels = 1; h.bytes_per_pixel = 1; break;
+                case 2: h.channels = 3; h.bytes_per_pixel = 3; break;
+                case 3: h.channels = 3; h.bytes_per_pixel = 1; break;
+                case 4: h.channels = 1; h.bytes_per_pixel = 2; break;
+                case 6: h.channels = 3; h.bytes_per_pixel = 4; break;
+                default:
+                    throw runtime_error(format("Unsupported PNG color type {} in file: {}",
+                                               h.color_type, path_str));
+            }
+
+            saw_ihdr = true;
+        }
+        else if (type == "PLTE")
+        {
+            h.palette.assign(data, data + length);
+        }
+        else if (type == "IDAT")
+        {
+            compressed.insert(compressed.end(), data, data + length);
+        }
+        else if (type == "IEND")
+        {
+            break;
+        }
+
+        pos += size_t(length) + 4;
+    }
+
+    if (!saw_ihdr || compressed.empty())
+        throw runtime_error(format("Incomplete PNG file: {}", path_str));
+
+    if (h.color_type == 3 && (h.palette.empty() || h.palette.size() % 3 != 0))
+        throw runtime_error(format("PNG palette missing or invalid in file: {}", path_str));
+
+    return h;
+}
+
+// Resizes `inflated` in place and uncompresses `compressed` into it. No new
+// allocation if the thread_local buffer is already large enough.
+void inflate_png_data_into(const vector<uint8_t>& compressed,
+                            const PngHeader& h,
+                            vector<uint8_t>& inflated,
+                            const string& path_str)
+{
+    const size_t row_bytes = size_t(h.width) * size_t(h.bytes_per_pixel);
+    const size_t expected_size = size_t(h.height) * (row_bytes + 1);
+
+    inflated.resize(expected_size);
+    uLongf actual_size = uLongf(expected_size);
+
+    const int zlib_status = uncompress(inflated.data(), &actual_size,
+                                       compressed.data(), uLong(compressed.size()));
+
+    if (zlib_status != Z_OK || actual_size != expected_size)
+        throw runtime_error(format("Cannot decompress PNG image: {}", path_str));
+}
+
+// Resizes `unfiltered` in place and applies PNG row filters from `inflated`.
+// No new allocation if the thread_local buffer is already large enough.
+void unfilter_png_rows_into(const vector<uint8_t>& inflated,
+                             const PngHeader& h,
+                             vector<uint8_t>& unfiltered,
+                             const string& path_str)
+{
+    const Index row_bytes = h.width * h.bytes_per_pixel;
+    unfiltered.resize(size_t(h.height) * size_t(row_bytes));
+
+    size_t src = 0;
+    for (Index y = 0; y < h.height; ++y)
+    {
+        const uint8_t filter_type = inflated[src++];
+        uint8_t* row = unfiltered.data() + size_t(y) * size_t(row_bytes);
+        const uint8_t* prev = y > 0 ? row - row_bytes : nullptr;
+
+        for (Index x = 0; x < row_bytes; ++x)
+        {
+            const uint8_t raw = inflated[src++];
+            const uint8_t left = x >= h.bytes_per_pixel ? row[x - h.bytes_per_pixel] : 0;
+            const uint8_t up = prev ? prev[x] : 0;
+            const uint8_t up_left = (prev && x >= h.bytes_per_pixel)
+                                  ? prev[x - h.bytes_per_pixel]
+                                  : 0;
+
+            switch (filter_type)
+            {
+                case 0: row[x] = raw; break;
+                case 1: row[x] = uint8_t(raw + left); break;
+                case 2: row[x] = uint8_t(raw + up); break;
+                case 3: row[x] = uint8_t(raw + uint8_t((uint16_t(left) + uint16_t(up)) / 2)); break;
+                case 4: row[x] = uint8_t(raw + paeth_predictor(left, up, up_left)); break;
+                default:
+                    throw runtime_error(format("Unsupported PNG row filter in file: {}", path_str));
+            }
+        }
+    }
+}
+
+// Orchestrates PNG decode: takes the already-parsed header + IDAT-concatenated
+// `compressed`, inflates and unfilters into thread_local scratch, and writes
+// the result as floats into `dst` (length h.height*h.width*h.channels).
+// Symmetric with decode_bmp_pixels — no heap allocations on the steady state
+// because inflated/unfiltered keep their capacity across calls.
+void decode_png_pixels(const PngHeader& h,
+                       const vector<uint8_t>& compressed,
+                       float* dst,
+                       bool divide_by_255,
+                       const string& path_str)
+{
+    thread_local vector<uint8_t> inflated;
+    thread_local vector<uint8_t> unfiltered;
+
+    inflate_png_data_into(compressed, h, inflated, path_str);
+    unfilter_png_rows_into(inflated, h, unfiltered, path_str);
+
+    const float scale = divide_by_255 ? (1.0f / 255.0f) : 1.0f;
+
+    for (Index y = 0; y < h.height; ++y)
+    {
+        const uint8_t* row = unfiltered.data() + size_t(y) * size_t(h.width) * size_t(h.bytes_per_pixel);
+
+        for (Index x = 0; x < h.width; ++x)
+        {
+            const uint8_t* p = row + size_t(x) * size_t(h.bytes_per_pixel);
+            const Index out = (y * h.width + x) * h.channels;
+
+            switch (h.color_type)
+            {
+                case 0:
+                    dst[out] = float(p[0]) * scale;
+                    break;
+                case 2:
+                    dst[out + 0] = float(p[0]) * scale;
+                    dst[out + 1] = float(p[1]) * scale;
+                    dst[out + 2] = float(p[2]) * scale;
+                    break;
+                case 3:
+                {
+                    const size_t pal = size_t(p[0]) * 3;
+                    if (pal + 2 >= h.palette.size())
+                        throw runtime_error("PNG palette index out of range.");
+
+                    dst[out + 0] = float(h.palette[pal + 0]) * scale;
+                    dst[out + 1] = float(h.palette[pal + 1]) * scale;
+                    dst[out + 2] = float(h.palette[pal + 2]) * scale;
+                    break;
+                }
+                case 4:
+                    dst[out] = float(p[0]) * scale;
+                    break;
+                case 6:
+                    dst[out + 0] = float(p[0]) * scale;
+                    dst[out + 1] = float(p[1]) * scale;
+                    dst[out + 2] = float(p[2]) * scale;
+                    break;
+            }
+        }
+    }
+}
+
+}
+
+bool is_supported_image_file(const filesystem::path& path)
+{
+    string extension = path.extension().string();
+    ranges::transform(extension, extension.begin(),
+                      [](unsigned char c) { return char(std::tolower(c)); });
+
+    return extension == ".bmp" || extension == ".png";
 }
 
 Tensor3 load_image(const filesystem::path& path)
 {
     thread_local vector<uint8_t> buffer;
 
-    read_bmp_file(path, buffer);
-    const BmpHeader h = parse_bmp_header(buffer, path.string());
+    read_image_file(path, buffer);
 
-    Tensor3 image(h.height, h.width, h.channels);
-    decode_bmp_pixels(buffer, h, image.data(), false);
+    if (has_bmp_signature(buffer))
+    {
+        const BmpHeader h = parse_bmp_header(buffer, path.string());
 
-    return image;
+        Tensor3 image(h.height, h.width, h.channels);
+        decode_bmp_pixels(buffer, h, image.data(), false);
+
+        return image;
+    }
+
+    if (has_png_signature(buffer))
+    {
+        thread_local vector<uint8_t> compressed;
+        const PngHeader h = parse_png_chunks(buffer, compressed, path.string());
+
+        Tensor3 image(h.height, h.width, h.channels);
+        decode_png_pixels(h, compressed, image.data(), false, path.string());
+
+        return image;
+    }
+
+    throw runtime_error(format("Unsupported image file: {}", path.string()));
 }
 
 void load_image(const filesystem::path& path,
@@ -192,20 +471,62 @@ void load_image(const filesystem::path& path,
 {
     thread_local vector<uint8_t> buffer;
 
-    read_bmp_file(path, buffer);
-    const BmpHeader h = parse_bmp_header(buffer, path.string());
+    read_image_file(path, buffer);
 
-    if (h.channels != expected_channels)
-        throw runtime_error(format("Channel mismatch in image: {}", path.string()));
+    Index height = 0;
+    Index width = 0;
+    Index channels = 0;
 
-    if (h.height == expected_height && h.width == expected_width)
+    if (has_bmp_signature(buffer))
     {
-        decode_bmp_pixels(buffer, h, dst, divide_by_255);
+        const BmpHeader h = parse_bmp_header(buffer, path.string());
+        height = h.height;
+        width = h.width;
+        channels = h.channels;
+
+        if (channels != expected_channels)
+            throw runtime_error(format("Channel mismatch in image: {}", path.string()));
+
+        if (height == expected_height && width == expected_width)
+        {
+            decode_bmp_pixels(buffer, h, dst, divide_by_255);
+            return;
+        }
+
+        Tensor3 temp(height, width, channels);
+        decode_bmp_pixels(buffer, h, temp.data(), false);
+
+        const Tensor3 resized = resize_image(temp, expected_height, expected_width);
+        const Index pixels = expected_height * expected_width * expected_channels;
+
+        if (divide_by_255)
+            for (Index k = 0; k < pixels; ++k) dst[k] = resized.data()[k] / 255.0f;
+        else
+            copy_n(resized.data(), pixels, dst);
+
         return;
     }
 
-    Tensor3 temp(h.height, h.width, h.channels);
-    decode_bmp_pixels(buffer, h, temp.data(), false);
+    if (!has_png_signature(buffer))
+        throw runtime_error(format("Unsupported image file: {}", path.string()));
+
+    thread_local vector<uint8_t> compressed;
+    const PngHeader h = parse_png_chunks(buffer, compressed, path.string());
+    height = h.height;
+    width = h.width;
+    channels = h.channels;
+
+    if (channels != expected_channels)
+        throw runtime_error(format("Channel mismatch in image: {}", path.string()));
+
+    if (height == expected_height && width == expected_width)
+    {
+        decode_png_pixels(h, compressed, dst, divide_by_255, path.string());
+        return;
+    }
+
+    Tensor3 temp(height, width, channels);
+    decode_png_pixels(h, compressed, temp.data(), false, path.string());
 
     const Tensor3 resized = resize_image(temp, expected_height, expected_width);
     const Index pixels = expected_height * expected_width * expected_channels;
