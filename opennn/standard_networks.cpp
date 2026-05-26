@@ -57,7 +57,11 @@ void recompile_if_specs_changed(NeuralNetwork& network,
     VectorR parameters_snapshot;
     if (network.get_parameters_size() > 0)
     {
+#ifdef OPENNN_HAS_CUDA
+        // Drag the parameter buffer back from device memory before snapshotting
+        // its host-side bytes. No-op needed in CPU-only builds.
         network.copy_parameters_host();
+#endif
         parameters_snapshot = Eigen::Map<const VectorR>(network.get_parameters_data(),
                                                         network.get_parameters_size());
     }

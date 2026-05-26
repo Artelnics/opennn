@@ -463,7 +463,13 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         if (new_loss < current_loss)
         {
-            set_damping_parameter(damping_parameter/damping_parameter_factor);
+            // Internal update — only the live damping_parameter, not the
+            // user-config initial. Going through set_damping_parameter() here
+            // would overwrite initial_damping_parameter and defeat the
+            // train()-start reset.
+            damping_parameter = clamp(damping_parameter / damping_parameter_factor,
+                                      minimum_damping_parameter,
+                                      maximum_damping_parameter);
 
             parameters = potential_parameters;
 
@@ -478,7 +484,9 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
         {
             hessian.diagonal().array() -= damping_parameter;
 
-            set_damping_parameter(damping_parameter*damping_parameter_factor);
+            damping_parameter = clamp(damping_parameter * damping_parameter_factor,
+                                      minimum_damping_parameter,
+                                      maximum_damping_parameter);
         }
 
     } while (damping_parameter < maximum_damping_parameter);

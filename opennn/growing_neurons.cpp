@@ -125,7 +125,11 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
                 if (minimum_validation_error < neuron_selection_results.optimum_validation_error)
                 {
                     neuron_selection_results.optimal_neurons_number = neurons_number;
+#ifdef OPENNN_HAS_CUDA
+                    // Drag params back from device memory before snapshotting
+                    // their host-side bytes. No-op needed in CPU-only builds.
                     neural_network->copy_parameters_host();
+#endif
                     neuron_selection_results.optimal_parameters =
                         Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
                                                   neural_network->get_parameters_size());
