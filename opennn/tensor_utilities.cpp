@@ -82,6 +82,16 @@ Backend::Backend()
     set_threads_number(0);
 
 #ifdef OPENNN_HAS_CUDA
+    int device_count = 0;
+    const cudaError_t status = cudaGetDeviceCount(&device_count);
+    if (status != cudaSuccess || device_count == 0)
+    {
+        cudaGetLastError(); // clear sticky error so later cuda*() calls don't inherit it
+        cerr << "OpenNN: no CUDA device available (" << cudaGetErrorString(status)
+             << "); running on CPU.\n";
+        return;
+    }
+
     CHECK_CUDA(cudaStreamCreateWithFlags(&compute_stream, cudaStreamNonBlocking));
 
     CHECK_CUBLAS(cublasCreate(&cublas_handle));
