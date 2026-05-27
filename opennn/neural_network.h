@@ -71,6 +71,9 @@ public:
     [[nodiscard]] float* get_parameters_data() { return parameters.as<float>(); }
     [[nodiscard]] const float* get_parameters_data() const { return parameters.as<float>(); }
     [[nodiscard]] Index get_parameters_size() const { return parameters.size_in_floats(); }
+    [[nodiscard]] float* get_states_data() { return states.as<float>(); }
+    [[nodiscard]] const float* get_states_data() const { return states.as<float>(); }
+    [[nodiscard]] Index get_states_buffer_size() const { return states.size_in_floats(); }
 
     [[nodiscard]] const vector<Variable>& get_input_variables() const { return input_variables; }
     [[nodiscard]] vector<string> get_input_feature_names() const;
@@ -125,6 +128,7 @@ public:
     [[nodiscard]] Index get_parameters_number() const;
 
     void set_parameters(const VectorR& new_parameters);
+    void set_states(const VectorR& new_states);
     void set_parameters_random();
     void set_parameters_glorot();
     void link_parameters();
@@ -151,9 +155,11 @@ public:
     void save(const filesystem::path&) const;
     void save_parameters(const filesystem::path&) const;
     void save_parameters_binary(const filesystem::path&) const;
+    void save_states_binary(const filesystem::path&) const;
 
     void load(const filesystem::path&);
     void load_parameters_binary(const filesystem::path&);
+    void load_states_binary(const filesystem::path&);
 
     [[nodiscard]] vector<string> get_names_string() const;
 

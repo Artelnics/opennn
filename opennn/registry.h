@@ -25,7 +25,7 @@ class Registry
 {
 public:
 
-    using Creator = function<unique_ptr<T>()>;
+    using Creator = std::function<std::unique_ptr<T>()>;
 
     [[nodiscard]] static Registry& instance()
     {
@@ -33,25 +33,25 @@ public:
         return registry;
     }
 
-    void register_component(const string& name, Creator creator)
+    void register_component(const std::string& name, Creator creator)
     {
-        creators[name] = move(creator);
+        creators[name] = std::move(creator);
     }
 
-    [[nodiscard]] unique_ptr<T> create(const string& name) const
+    [[nodiscard]] std::unique_ptr<T> create(const std::string& name) const
     {
         auto it = creators.find(name);
 
         if (it == creators.end())
-            throw runtime_error(format("Component not found: {}", name));
+            throw std::runtime_error(std::format("Component not found: {}", name));
 
         return it->second();
 
     }
 
-    [[nodiscard]] vector<string> registered_names() const
+    [[nodiscard]] std::vector<std::string> registered_names() const
     {
-        vector<string> names;
+        std::vector<std::string> names;
 
         for (const auto& pair : creators)
             names.push_back(pair.first);
@@ -60,14 +60,14 @@ public:
     }
 
 private:
-    unordered_map<string, Creator> creators;
+    std::unordered_map<std::string, Creator> creators;
 };
 
 #define REGISTER(BASE, CLASS, NAME) \
 namespace { \
     const bool CLASS##_registered = []() { \
               Registry<BASE>::instance().register_component(NAME, []() { \
-                          return make_unique<CLASS>(); \
+                          return std::make_unique<CLASS>(); \
                   }); \
               return true; \
       }(); \

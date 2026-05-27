@@ -491,6 +491,47 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
     link_parameters();
 }
 
+void NeuralNetwork::set_states(const VectorR& new_states)
+{
+    const Index expected_size = get_states_buffer_size();
+
+    if (expected_size == 0)
+    {
+        if (new_states.size() != 0)
+            throw runtime_error("NeuralNetwork::set_states: network has no state buffer.");
+        return;
+    }
+
+    if (new_states.size() != expected_size)
+        throw runtime_error("NeuralNetwork::set_states: size mismatch (got "
+                            + to_string(new_states.size())
+                            + ", expected " + to_string(expected_size) + ").");
+
+    const Index byte_count = new_states.size() * Index(sizeof(float));
+
+#ifdef OPENNN_HAS_CUDA
+    if (states.device_type == Device::CUDA)
+    {
+        states.resize_bytes(byte_count, Device::CUDA);
+        if (byte_count > 0)
+        {
+            cudaStream_t stream = Backend::get_compute_stream();
+            CHECK_CUDA(cudaMemcpyAsync(states.data, new_states.data(), byte_count,
+                                       cudaMemcpyHostToDevice, stream));
+            CHECK_CUDA(cudaStreamSynchronize(stream));
+        }
+        link_states();
+        return;
+    }
+#endif
+
+    states.resize_bytes(byte_count, Device::CPU);
+    if (byte_count > 0)
+        memcpy(states.data, new_states.data(), static_cast<size_t>(byte_count));
+
+    link_states();
+}
+
 void NeuralNetwork::set_parameters_random()
 {
 #ifdef OPENNN_HAS_CUDA
@@ -678,6 +719,10 @@ MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
 
 Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
+#ifdef OPENNN_NO_VISION
+    (void)image_path;
+    throw runtime_error("calculate_image_output requires OpenNN_BUILD_VISION=ON.");
+#else
     Tensor3 image = load_image(image_path);
 
     const auto* scaling_layer = dynamic_cast<Scaling*>(get_first(LayerType::Scaling));
@@ -709,6 +754,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     const Matrix outputs = calculate_outputs(input_data);
 
     return outputs.size() > 1 ? maximal_index(outputs.row(0)) : Index(outputs(0));
+#endif // OPENNN_NO_VISION
 }
 
 MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)
@@ -1055,6 +1101,33 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
 #endif
 }
 
+void NeuralNetwork::save_states_binary(const filesystem::path& file_name) const
+{
+    ofstream file(file_name, ios::binary);
+
+    if (!file.is_open())
+        throw runtime_error(format("Cannot open binary file for writing: {}\n", file_name.string()));
+
+#ifdef OPENNN_HAS_CUDA
+    const bool was_on_device = (states.device_type == Device::CUDA);
+    if (was_on_device)
+        const_cast<NeuralNetwork*>(this)->copy_states_host();
+#endif
+
+    if (states.bytes > 0)
+        file.write(reinterpret_cast<const char*>(states.data), states.bytes);
+
+    if (!file)
+        throw runtime_error(format("Error writing binary file: {}\n", file_name.string()));
+
+    file.close();
+
+#ifdef OPENNN_HAS_CUDA
+    if (was_on_device)
+        const_cast<NeuralNetwork*>(this)->copy_states_device();
+#endif
+}
+
 void NeuralNetwork::load(const filesystem::path& file_name)
 {
     clear();
@@ -1089,6 +1162,40 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
     if (!file)
         throw runtime_error(format("Error reading binary file: {}", file_name.string()));
 
+}
+
+void NeuralNetwork::load_states_binary(const filesystem::path& file_name)
+{
+    ifstream file(file_name, ios::binary);
+
+    if (!file.is_open())
+        throw runtime_error(format("Cannot open binary file: {}\n", file_name.string()));
+
+    const uintmax_t file_bytes = filesystem::file_size(file_name);
+    if (file_bytes != uintmax_t(states.bytes))
+        throw runtime_error(format("NeuralNetwork::load_states_binary: size mismatch for {} (got {} bytes, expected {} bytes).",
+                                   file_name.string(),
+                                   file_bytes,
+                                   states.bytes));
+
+#ifdef OPENNN_HAS_CUDA
+    const bool was_on_device = (states.device_type == Device::CUDA);
+    if (was_on_device)
+        copy_states_host();
+#endif
+
+    if (states.bytes > 0)
+        file.read(reinterpret_cast<char*>(states.data), states.bytes);
+
+#ifdef OPENNN_HAS_CUDA
+    if (was_on_device)
+        copy_states_device();
+    else
+#endif
+        link_states();
+
+    if (!file)
+        throw runtime_error(format("Error reading binary file: {}", file_name.string()));
 }
 
 void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_name)

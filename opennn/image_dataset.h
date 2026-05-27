@@ -10,6 +10,7 @@
 
 #include "dataset.h"
 #include "io_utilities.h"
+#include "variable.h"
 
 namespace opennn
 {
@@ -40,6 +41,10 @@ public:
 
     const AugmentationSettings& get_augmentation() const { return augmentation; }
     void set_augmentation(const AugmentationSettings& new_augmentation) { augmentation = new_augmentation; }
+    void set_input_scaling(const vector<Descriptives>&,
+                           const vector<ScalerMethod>&,
+                           float min_range,
+                           float max_range);
 
     Index get_samples_number() const override;
     using Dataset::get_samples_number;
@@ -76,6 +81,8 @@ private:
     Index padding = 0;
 
     AugmentationSettings augmentation;
+    vector<float> input_scale;
+    vector<float> input_offset;
 
     // Binary streaming cache: <data_path>/.cache/images.bin
     // Pixels stored as uint8 [0..255]; labels as int32_t.

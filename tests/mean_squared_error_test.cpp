@@ -104,7 +104,7 @@ TEST(MeanSquaredErrorTest, BackPropagateConvolutional)
     const Shape input_shape = { 21, 21, 3 };
     const Shape kernel_shape = { 3, 3, 3, 1 };
 
-    ImageDataset dataset(samples_number, { input_shape }, { targets_number });
+    TabularDataset dataset(samples_number, input_shape, { targets_number });
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
@@ -137,7 +137,7 @@ TEST(MeanSquaredErrorTest, BackPropagatePooling)
     const Shape input_shape = { 21, 21, 3 };
     const Shape kernel_shape = { 3, 3, 3, 1 };
 
-    ImageDataset dataset(samples_number, input_shape, {targets_number});
+    TabularDataset dataset(samples_number, input_shape, {targets_number});
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 

@@ -53,6 +53,8 @@ public:
                            const Shape& output_shape);
 };
 
+#ifndef OPENNN_NO_VISION
+
 class ImageClassificationNetwork : public NeuralNetwork
 {
 
@@ -123,6 +125,8 @@ public:
     void set_attention_sdpa_auto(bool);
     void set_attention_sdpa_min_sequence_length(Index);
 };
+
+#endif // OPENNN_NO_VISION
 
 }
 

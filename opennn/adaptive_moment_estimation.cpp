@@ -66,6 +66,9 @@ TrainingResults AdaptiveMomentEstimation::train()
 {
     TrainingResults results(maximum_epochs + 1);
 
+    if (!loss || !loss->get_neural_network() || !loss->get_dataset())
+        return results;
+
     const bool on_gpu = is_gpu();
 
     if (display) cout << "Training with adaptive moment estimation \"Adam\""
@@ -193,6 +196,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     float best_validation_error = numeric_limits<float>::max();
 
     vector<float> best_parameters;
+    vector<float> best_states;
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
@@ -267,6 +271,25 @@ TrainingResults AdaptiveMomentEstimation::train()
                 else
 #endif
                     memcpy(best_parameters.data(), src, bytes);
+
+                const Index ssize = neural_network->get_states_buffer_size();
+                if (ssize > 0)
+                {
+                    if (Index(best_states.size()) != ssize)
+                        best_states.resize(ssize);
+
+                    const float* state_src = neural_network->get_states_data();
+                    const size_t state_bytes = size_t(ssize) * sizeof(float);
+#ifdef OPENNN_HAS_CUDA
+                    if (Configuration::instance().is_gpu())
+                    {
+                        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
+                        CHECK_CUDA(cudaMemcpy(best_states.data(), state_src, state_bytes, cudaMemcpyDeviceToHost));
+                    }
+                    else
+#endif
+                        memcpy(best_states.data(), state_src, state_bytes);
+                }
             }
             else
                 ++validation_failures;
@@ -316,6 +339,14 @@ TrainingResults AdaptiveMomentEstimation::train()
         memcpy(best_view.data(), best_parameters.data(),
                     best_parameters.size() * sizeof(float));
         neural_network->set_parameters(best_view);
+
+        if (!best_states.empty())
+        {
+            VectorR best_state_view(best_states.size());
+            memcpy(best_state_view.data(), best_states.data(),
+                   best_states.size() * sizeof(float));
+            neural_network->set_states(best_state_view);
+        }
     }
 
     set_unscaling();

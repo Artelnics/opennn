@@ -141,9 +141,6 @@ void Batch::fill(const vector<Index>& sample_indices,
     dataset->fill_inputs(sample_indices, input_indices, input_buffer,
                          is_training, parallelize, input_contiguous);
 
-    if (is_training)
-        dataset->augment_inputs(input_buffer, sample_indices.size(), parallelize);
-
     if (!decoder_shape.empty())
         dataset->fill_decoder(sample_indices, decoder_indices, decoder_buffer,
                               is_training, parallelize, decoder_contiguous);

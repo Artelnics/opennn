@@ -117,7 +117,9 @@ void WorkerPool::rethrow_if_error()
     exception_ptr e;
     {
         lock_guard<mutex> elock(error_mutex_);
-        e.swap(worker_error_);
+        // std::exception_ptr has no member swap in MSVC's STL — use the free
+        // function template (exception_ptr is move-assignable).
+        swap(e, worker_error_);
         error_pending_.store(false, memory_order_release);
     }
     if (e) rethrow_exception(e);
@@ -476,8 +478,13 @@ void Optimizer::set_scaling()
 
             case 3:
             {
-                throw_if(!dynamic_cast<ImageDataset*>(dataset), "Expected ImageDataset.");
-                scaling_layer->set_scalers("ImageMinMax");
+                auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
+                throw_if(!image_dataset, "Expected ImageDataset.");
+
+                image_dataset->set_input_scaling(scaling_layer->get_descriptives(),
+                                                 scaling_layer->get_scalers(),
+                                                 scaling_layer->get_min_range(),
+                                                 scaling_layer->get_max_range());
                 break;
             }
 
