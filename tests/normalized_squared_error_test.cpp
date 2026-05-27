@@ -4,6 +4,8 @@
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/dataset.h"
 #include "../opennn/tabular_dataset.h"
+#include "../opennn/dense_layer.h"
+#include "../opennn/neural_network.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/loss.h"
 
@@ -55,4 +57,27 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
 
     EXPECT_GE(error, 0);
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
+}
+
+
+TEST(NormalizedSquaredErrorTest, SetNormalizationCoefficientFromTrainingTargets)
+{
+    TabularDataset dataset(4, {1}, {1});
+    MatrixR data(4, 2);
+    data << 0.0f, -2.0f,
+            0.0f,  0.0f,
+            0.0f,  2.0f,
+            0.0f,  4.0f;
+    dataset.set_data(data);
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<Dense>(Shape{1}, Shape{1}, "Identity"));
+    neural_network.compile();
+
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::NormalizedSquaredError);
+    loss.set_normalization_coefficient();
+
+    EXPECT_NEAR(calculate_numerical_error(loss), 0.6f, 1.0e-6f);
 }

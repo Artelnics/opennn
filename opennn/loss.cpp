@@ -16,6 +16,7 @@
 #include "forward_propagation.h"
 #include "cuda_dispatch.h"
 #include "back_propagation.h"
+#include "statistics.h"
 #include <Eigen/LU>
 
 namespace opennn
@@ -205,6 +206,25 @@ void Loss::set_normalization_coefficient()
 
     if (!dataset || dataset->get_samples_number() == 0)
         return;
+
+    if (error == Error::NormalizedSquaredError)
+    {
+        const vector<Index> training_indices = dataset->get_sample_indices("Training");
+        const Shape target_shape = dataset->get_shape("Target");
+
+        if (training_indices.empty() || target_shape.empty()) return;
+
+        MatrixR targets(training_indices.size(), target_shape.size());
+        dataset->fill_targets(training_indices,
+                              dataset->get_feature_indices("Target"),
+                              targets.data(),
+                              false);
+
+        const VectorR targets_mean = mean(targets);
+        normalization_coefficient = (targets.rowwise() - targets_mean.transpose()).squaredNorm();
+
+        return;
+    }
 
     if (error == Error::WeightedSquaredError)
     {
