@@ -475,8 +475,13 @@ Correlation logistic_correlation_vector_vector_spearman(const VectorR& x,
 
     const VectorR x_rank = calculate_spearman_ranks(x_filter);
 
-    MatrixR data;
-    data << x_rank, y_filter;
+    // Eigen's comma initializer (operator<<) requires the matrix to be
+    // pre-sized; otherwise NDEBUG strips the assertion and `data` stays 0x0,
+    // which later makes Dataset::set_data throw "Rows number is not equal
+    // to samples number".
+    MatrixR data(x_filter.size(), 2);
+    data.col(0) = x_rank;
+    data.col(1) = y_filter;
 
     Dataset dataset(x_filter.size(), {1}, {1});
     dataset.set_data(data);

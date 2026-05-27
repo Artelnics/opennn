@@ -727,22 +727,31 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     frequencies.setZero();
 
     vector<type> unique_values;
-
     unique_values.reserve(min<Index>(size, bins_number));
-    unique_values.push_back(new_vector(0));
 
-    for(Index i = 1; i < size; i++)
+    for(Index i = 0; i < size; i++)
     {
         const type value = new_vector(i);
 
-        if(!isnan(value))
-            if (find(unique_values.begin(), unique_values.end(), value) == unique_values.end())
-            {
-                unique_values.push_back(value);
+        if(isnan(value)) continue;
 
-                if (static_cast<Index>(unique_values.size()) > bins_number)
-                    break;
-            }
+        if(find(unique_values.begin(), unique_values.end(), value) == unique_values.end())
+        {
+            unique_values.push_back(value);
+
+            if(static_cast<Index>(unique_values.size()) > bins_number)
+                break;
+        }
+    }
+
+    if(unique_values.empty())
+    {
+        Histogram empty_histogram(bins_number);
+        empty_histogram.minimums = VectorR::Constant(bins_number, type(NAN));
+        empty_histogram.maximums = VectorR::Constant(bins_number, type(NAN));
+        empty_histogram.centers = VectorR::Constant(bins_number, type(NAN));
+        empty_histogram.frequencies = VectorR::Zero(bins_number);
+        return empty_histogram;
     }
 
     const Index unique_values_number = static_cast<Index>(unique_values.size());
@@ -778,8 +787,16 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     }
     else
     {
-        const type min = minimum(new_vector);
-        const type max = maximum(new_vector);
+        type min = numeric_limits<type>::infinity();
+        type max = -numeric_limits<type>::infinity();
+
+        for(Index i = 0; i < size; i++)
+        {
+            const type value = new_vector(i);
+            if(isnan(value)) continue;
+            if(value < min) min = value;
+            if(value > max) max = value;
+        }
 
         const type length = (max - min) /type(bins_number);
 

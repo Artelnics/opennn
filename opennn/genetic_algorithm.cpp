@@ -239,17 +239,47 @@ void GeneticAlgorithm::initialize_population_random()
 
     population.setConstant(false);
 
+    // Biased Bernoulli(p) init: each gene is active with probability p
+    // derived from the user's min/max bounds. With genes_number >> max,
+    // this yields a sparse, binomially-distributed active count centered
+    // near (min+max)/2 — much narrower than uniform(min,max) and avoids
+    // the 50/50 init that wastes early generations on dense individuals.
+    const type p = type(minimum_inputs_number + maximum_inputs_number)
+                 / type(2 * genes_number);
+
     VectorB individual_genes(genes_number);
 
     for(Index i = 0; i < individuals_number; i++)
     {
-        individual_genes.setConstant(false);
+        Index active = 0;
 
-        const Index true_count = random_integer(minimum_inputs_number, maximum_inputs_number);
+        for(Index g = 0; g < genes_number; ++g)
+        {
+            const bool on = random_bool(p);
+            individual_genes(g) = on;
+            if(on) ++active;
+        }
 
-        fill_n(individual_genes.data(), true_count, true);
+        // Clamp into [min, max] as a hard constraint.
+        while(active < minimum_inputs_number)
+        {
+            const Index idx = random_integer(0, genes_number - 1);
+            if(!individual_genes(idx))
+            {
+                individual_genes(idx) = true;
+                ++active;
+            }
+        }
 
-        shuffle(individual_genes);
+        while(active > maximum_inputs_number)
+        {
+            const Index idx = random_integer(0, genes_number - 1);
+            if(individual_genes(idx))
+            {
+                individual_genes(idx) = false;
+                --active;
+            }
+        }
 
         population.row(i) = individual_genes;
     }

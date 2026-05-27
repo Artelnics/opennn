@@ -565,35 +565,28 @@ pair<VectorR, MatrixR> filter_missing_values(const VectorR& x, const MatrixR& y)
     const Index rows_number = x.size();
     const Index y_columns_number = y.cols();
 
-    Index new_rows_number = 0;
+    if(y.rows() != rows_number)
+        throw runtime_error("filter_missing_values: x size must match y rows.");
 
-    VectorB not_NAN_row(rows_number);
+    vector<Index> valid_indices;
+    valid_indices.reserve(rows_number);
 
     for(Index i = 0; i < rows_number; i++)
     {
-        not_NAN_row(i) = true;
-
-        if(isnan(x(i)) || isnan(y(i)))
-            not_NAN_row(i) = false;
-
-        if(not_NAN_row(i))
-            new_rows_number++;
+        if(isnan(x(i))) continue;
+        if(!y.row(i).array().isFinite().all()) continue;
+        valid_indices.push_back(i);
     }
 
+    const Index new_rows_number = static_cast<Index>(valid_indices.size());
     VectorR new_x(new_rows_number);
     MatrixR new_y(new_rows_number, y_columns_number);
 
-    Index index = 0;
-
-    for(Index i = 0; i < rows_number; i++)
+    for(Index i = 0; i < new_rows_number; i++)
     {
-        if(!not_NAN_row(i))
-            continue;
-
-        for(Index j = 0; j < y_columns_number; j++)
-            new_y(index, j) = y(i, j);
-
-        new_x(index++) = x(i);
+        const Index original_index = valid_indices[i];
+        new_x(i) = x(original_index);
+        new_y.row(i) = y.row(original_index);
     }
 
     return {new_x, new_y};
