@@ -367,7 +367,9 @@ ResNet::ResNet(const Shape& input_shape,
 
     // --- Network assembly ---
 
-    add_layer(make_unique<Scaling>(input_shape));
+    auto scaling_layer = make_unique<Scaling>(input_shape);
+    scaling_layer->set_scalers("ImageMinMax");
+    add_layer(move(scaling_layer));
 
     // Stem: 7x7 conv stride 2 + 3x3 MaxPool stride 2. Aggressive downsampling
     // turns a 224x224 input into 56x56 before the first stage.

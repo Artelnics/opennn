@@ -83,6 +83,36 @@ bool header_matches_request(const ImageCacheHeader& header,
     return true;
 }
 
+pair<float, float> scaling_affine(ScalerMethod scaler,
+                                  const Descriptives& descriptives,
+                                  float min_range,
+                                  float max_range)
+{
+    switch (scaler)
+    {
+    case ScalerMethod::MinimumMaximum:
+    {
+        const float scale = (max_range - min_range)
+                          / ((descriptives.maximum - descriptives.minimum) + EPSILON);
+        return {scale, min_range - descriptives.minimum * scale};
+    }
+    case ScalerMethod::MeanStandardDeviation:
+    {
+        const float scale = 1.0f / (descriptives.standard_deviation + EPSILON);
+        return {scale, -descriptives.mean * scale};
+    }
+    case ScalerMethod::StandardDeviation:
+        return {1.0f / (descriptives.standard_deviation + EPSILON), 0.0f};
+    case ScalerMethod::ImageMinMax:
+        return {1.0f / 255.0f, 0.0f};
+    case ScalerMethod::None:
+    case ScalerMethod::Logarithm:
+        return {1.0f, 0.0f};
+    default:
+        return {1.0f, 0.0f};
+    }
+}
+
 }  // namespace
 
 ImageDataset::ImageDataset(const Index new_samples_number,
@@ -191,6 +221,29 @@ Index ImageDataset::get_samples_number() const
 Index ImageDataset::get_channels_number() const
 {
     return input_shape[2];
+}
+
+void ImageDataset::set_input_scaling(const vector<Descriptives>& descriptives,
+                                     const vector<ScalerMethod>& scalers,
+                                     float min_range,
+                                     float max_range)
+{
+    const Index channels = get_channels_number();
+    if (ssize(descriptives) != channels || ssize(scalers) != channels)
+        throw runtime_error("ImageDataset::set_input_scaling: channel count mismatch.");
+
+    input_scale.resize(size_t(channels));
+    input_offset.resize(size_t(channels));
+
+    for (Index c = 0; c < channels; ++c)
+    {
+        const auto [scale, offset] = scaling_affine(scalers[size_t(c)],
+                                                    descriptives[size_t(c)],
+                                                    min_range,
+                                                    max_range);
+        input_scale[size_t(c)] = scale;
+        input_offset[size_t(c)] = offset;
+    }
 }
 
 void ImageDataset::to_JSON(JsonWriter& printer) const
@@ -591,8 +644,13 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
                                int /*contiguous*/) const
 {
     const Index batch_size = ssize(sample_indices);
+    const Index channels = input_shape[2];
     const Index pixels_per_image = Index(record_bytes_);
-    const float scale = is_training ? (1.0f / 255.0f) : 1.0f;
+    const bool apply_scaling = is_training;
+    const bool has_scaling = ssize(input_scale) == channels
+                          && ssize(input_offset) == channels;
+    const bool use_default_scaling = apply_scaling && !has_scaling;
+    const bool apply_augmentation = is_training && augmentation.enabled;
 
     string omp_error;
 
@@ -611,7 +669,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
 
             float* dst = input_data + i * pixels_per_image;
             for (Index p = 0; p < pixels_per_image; ++p)
-                dst[p] = float(buf[size_t(p)]) * scale;
+                dst[p] = float(buf[size_t(p)]);
         }
         catch (const exception& e)
         {
@@ -623,6 +681,34 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
 
     if (!omp_error.empty())
         throw runtime_error(omp_error);
+
+    if (apply_augmentation)
+        augment_inputs(input_data, batch_size, parallelize);
+
+    if (has_scaling)
+    {
+        #pragma omp parallel for schedule(static) if (parallelize)
+        for (Index i = 0; i < batch_size; ++i)
+        {
+            float* dst = input_data + i * pixels_per_image;
+            for (Index p = 0; p < pixels_per_image; ++p)
+            {
+                const Index channel = p % channels;
+                dst[p] = dst[p] * input_scale[size_t(channel)]
+                       + input_offset[size_t(channel)];
+            }
+        }
+    }
+    else if (use_default_scaling)
+    {
+        #pragma omp parallel for schedule(static) if (parallelize)
+        for (Index i = 0; i < batch_size; ++i)
+        {
+            float* dst = input_data + i * pixels_per_image;
+            for (Index p = 0; p < pixels_per_image; ++p)
+                dst[p] *= 1.0f / 255.0f;
+        }
+    }
 }
 
 void ImageDataset::fill_targets(const vector<Index>& sample_indices,

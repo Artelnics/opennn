@@ -14,9 +14,12 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <numeric>
+#include <unordered_map>
 #include <vector>
 
 #include "../opennn/image_dataset.h"
+#include "../opennn/image_utilities.h"
 #include "../opennn/language_dataset.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/scaling_layer.h"
@@ -151,6 +154,151 @@ int main()
 {
     try
     {
+        {
+        cout << "OpenNN. ResNet-18 ImageNet pretrained Imagenette evaluation." << endl;
+
+#ifdef OPENNN_HAS_CUDA
+        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Backend::instance();
+#endif
+
+        const filesystem::path imagenette_path = "/home/artelnics/Documents/imagenette2_bmp_224";
+        const filesystem::path pretrained_dir = "/home/artelnics/Documents/opennn_pretrained";
+        const filesystem::path parameters_path = pretrained_dir / "resnet18_imagenet1k_opennn_parameters.bin";
+        const filesystem::path states_path = pretrained_dir / "resnet18_imagenet1k_opennn_states.bin";
+
+        if (!filesystem::exists(imagenette_path))
+            throw runtime_error("Imagenette folder not found: " + imagenette_path.string());
+        if (!filesystem::exists(parameters_path))
+            throw runtime_error("Pretrained parameters not found: " + parameters_path.string());
+        if (!filesystem::exists(states_path))
+            throw runtime_error("Pretrained states not found: " + states_path.string());
+
+        ResNet network({224, 224, 3}, {2, 2, 2, 2}, Shape{64, 128, 256, 512}, Shape{1000}, false);
+
+        auto* scaling = dynamic_cast<Scaling*>(network.get_first(LayerType::Scaling));
+        if (!scaling)
+            throw runtime_error("ResNet scaling layer not found.");
+
+        scaling->set_descriptives({
+            Descriptives(0.0f, 255.0f, 0.485f * 255.0f, 0.229f * 255.0f),
+            Descriptives(0.0f, 255.0f, 0.456f * 255.0f, 0.224f * 255.0f),
+            Descriptives(0.0f, 255.0f, 0.406f * 255.0f, 0.225f * 255.0f)
+        });
+        scaling->set_scalers("MeanStandardDeviation");
+
+        cout << "ResNet-18 params=" << network.get_parameters_number()
+             << " (buffer=" << network.get_parameters_size() << ")" << endl;
+        cout << "Loading " << parameters_path << endl;
+        network.load_parameters_binary(parameters_path);
+        cout << "Loading " << states_path << endl;
+        network.load_states_binary(states_path);
+
+        const unordered_map<string, Index> imagenette_to_imagenet = {
+            {"tench", 0},
+            {"english_springer", 217},
+            {"cassette_player", 482},
+            {"chain_saw", 491},
+            {"church", 497},
+            {"french_horn", 566},
+            {"garbage_truck", 569},
+            {"gas_pump", 571},
+            {"golf_ball", 574},
+            {"parachute", 701}
+        };
+
+        struct Sample { filesystem::path path; Index target; string label; };
+        vector<Sample> samples;
+
+        for (const auto& entry : filesystem::directory_iterator(imagenette_path))
+        {
+            if (!entry.is_directory() || entry.path().filename().string().starts_with("."))
+                continue;
+
+            const string label = entry.path().filename().string();
+            const auto target_it = imagenette_to_imagenet.find(label);
+            if (target_it == imagenette_to_imagenet.end())
+                continue;
+
+            for (const auto& image_entry : filesystem::recursive_directory_iterator(entry.path()))
+                if (image_entry.is_regular_file() && is_supported_image_file(image_entry.path()))
+                    samples.push_back({image_entry.path(), target_it->second, label});
+        }
+
+        ranges::sort(samples, {}, &Sample::path);
+
+        cout << "Imagenette samples=" << samples.size() << endl;
+        if (samples.empty())
+            throw runtime_error("No Imagenette samples found.");
+
+        const Index batch_size = 64;
+        Index top1 = 0;
+        Index top5 = 0;
+        vector<Index> class_total(1000, 0);
+        vector<Index> class_correct(1000, 0);
+
+        vector<Index> top_indices(1000);
+        iota(top_indices.begin(), top_indices.end(), 0);
+
+        const auto t0 = steady_clock::now();
+
+        for (Index begin = 0; begin < ssize(samples); begin += batch_size)
+        {
+            const Index current_batch_size = min(batch_size, ssize(samples) - begin);
+            Tensor4 batch_inputs(current_batch_size, 224, 224, 3);
+
+            for (Index i = 0; i < current_batch_size; ++i)
+                load_image(samples[size_t(begin + i)].path,
+                           batch_inputs.data() + i * 224 * 224 * 3,
+                           224, 224, 3, false);
+
+            const MatrixR outputs = network.calculate_outputs(batch_inputs);
+
+            for (Index i = 0; i < current_batch_size; ++i)
+            {
+                const Index target = samples[size_t(begin + i)].target;
+                ++class_total[size_t(target)];
+
+                Index prediction = 0;
+                outputs.row(i).maxCoeff(&prediction);
+                if (prediction == target)
+                {
+                    ++top1;
+                    ++class_correct[size_t(target)];
+                }
+
+                iota(top_indices.begin(), top_indices.end(), 0);
+                nth_element(top_indices.begin(),
+                            top_indices.begin() + 5,
+                            top_indices.end(),
+                            [&](Index a, Index b) { return outputs(i, a) > outputs(i, b); });
+                if (find(top_indices.begin(), top_indices.begin() + 5, target) != top_indices.begin() + 5)
+                    ++top5;
+            }
+        }
+
+        const auto t1 = steady_clock::now();
+        const double seconds = duration_cast<milliseconds>(t1 - t0).count() / 1000.0;
+
+        cout << fixed << setprecision(4);
+        cout << "Top-1 accuracy: " << 100.0 * double(top1) / double(samples.size()) << " %" << endl;
+        cout << "Top-5 accuracy: " << 100.0 * double(top5) / double(samples.size()) << " %" << endl;
+        cout << "Elapsed: " << seconds << " s" << endl;
+
+        cout << "\nPer-class top-1:" << endl;
+        for (const auto& [label, target] : imagenette_to_imagenet)
+        {
+            const Index total = class_total[size_t(target)];
+            if (total == 0) continue;
+            cout << setw(18) << label << ": "
+                 << 100.0 * double(class_correct[size_t(target)]) / double(total)
+                 << " % (" << class_correct[size_t(target)] << "/" << total << ")" << endl;
+        }
+
+        cout << "Bye!" << endl;
+        return 0;
+        }
+
         
         cout << "OpenNN. train_1000_filter ResNet-18 clean test." << endl;
 

@@ -478,8 +478,13 @@ void Optimizer::set_scaling()
 
             case 3:
             {
-                throw_if(!dynamic_cast<ImageDataset*>(dataset), "Expected ImageDataset.");
-                scaling_layer->set_scalers("ImageMinMax");
+                auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
+                throw_if(!image_dataset, "Expected ImageDataset.");
+
+                image_dataset->set_input_scaling(scaling_layer->get_descriptives(),
+                                                 scaling_layer->get_scalers(),
+                                                 scaling_layer->get_min_range(),
+                                                 scaling_layer->get_max_range());
                 break;
             }
 
