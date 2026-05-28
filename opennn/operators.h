@@ -231,6 +231,13 @@ struct RecurrentOp : Operator
     Type  weight_type     = Type::FP32;
     ActivationOp::Function activation = ActivationOp::Function::Tanh;
 
+    // When false (default), forward emits only the final hidden state h[T-1]
+    // and backward expects a rank-2 output_delta of shape (batch, output_features).
+    // When true, forward emits the full sequence (batch, time_steps, output_features)
+    // and backward expects a rank-3 output_delta of the same shape. Needed to
+    // stack Recurrent layers since the next one's input must be rank-2 per sample.
+    bool return_sequences = false;
+
     TensorView bias;
     TensorView input_weights;
     TensorView recurrent_weights;
@@ -296,6 +303,7 @@ private:
     mutable Buffer step_hidden_buf     {Device::CUDA};   // (batch, out_features)
     mutable Buffer prev_hidden_buf     {Device::CUDA};   // (batch, out_features)
     mutable Buffer step_derivs_buf     {Device::CUDA};   // (batch, out_features)
+    mutable Buffer step_seq_delta_buf  {Device::CUDA};   // (batch, out_features) - sequence-mode backward scratch
 };
 
 struct BatchNormOp : Operator

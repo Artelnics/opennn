@@ -32,10 +32,15 @@ vector<TensorSpec> Recurrent::get_forward_specs(Index batch_size) const
     const Shape state_history {batch_size, time_steps, output_features};
     const Shape final_state   {batch_size,             output_features};
 
+    // When return_sequences is enabled the layer emits the full hidden-state
+    // sequence rather than just the last step, so the public Output slot is
+    // sized rank-3 to feed another Recurrent / sequence-aware layer.
+    const Shape output_shape = return_sequences ? state_history : final_state;
+
     return {
         {state_history, compute_dtype},  // Forward::HiddenStates          (batch, time, out)
         {state_history, compute_dtype},  // Forward::ActivationDerivatives (batch, time, out)
-        {final_state,   compute_dtype},  // Forward::Output                (batch, out)            — last
+        {output_shape,  compute_dtype},  // Forward::Output                — last
     };
 }
 
@@ -62,8 +67,16 @@ void Recurrent::configure_operators()
     recurrent_op.set(input_features, time_steps, output_features,
                      recurrent_op.activation, compute_dtype);
 
+    recurrent_op.return_sequences = return_sequences;
     recurrent_op.input_slots  = {Input};
     recurrent_op.output_slots = {Output, HiddenStates, ActivationDerivatives};
+}
+
+void Recurrent::set_return_sequences(bool value)
+{
+    if (return_sequences == value) return;
+    return_sequences = value;
+    configure_operators();
 }
 
 void Recurrent::set(const Shape& new_input_shape,

@@ -103,51 +103,92 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
 {
     check();
 
-    // Dataset
-
     const Index samples_number = dataset->get_samples_number(sample_role);
 
     if (samples_number == 0)
         throw runtime_error("Number of samples is zero.\n");
 
-    MatrixR output_data;
-    MatrixR target_data;
-
     const vector<Index> sample_indices = dataset->get_sample_indices(sample_role);
     const vector<Index> input_feature_indices  = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
-    target_data.resize(ssize(sample_indices), ssize(target_feature_indices));
-    dataset->fill_targets(sample_indices, target_feature_indices,
-                          target_data.data(), /*is_training=*/false, /*parallelize=*/true);
+    // Per-sample target width is the full size of the dataset's target shape,
+    // not the number of target columns. For multi-target time series these
+    // differ (target_shape[0] = future_time_steps * n_target_columns).
+    const Index target_width = dataset->get_target_shape().size();
 
-    if (const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset))
+    // Batched inference. Running calculate_outputs on the full split blows up
+    // GPU workspaces sized for the training batch (cuBLAS error 11 then
+    // poisons the CUDA context). On GPU, when the caller did not set a batch,
+    // default to 256 so the existing code paths keep working without manual
+    // intervention.
+    const Index default_batch_size =
+        Configuration::instance().is_gpu() ? Index(256) : samples_number;
+    const Index current_batch_size =
+        (batch_size <= 0) ? default_batch_size
+                          : min<Index>(batch_size, samples_number);
+
+    // Dataset::get_batches drops the remainder (samples / batch_size, integer
+    // division), which is acceptable during training but corrupts metrics here:
+    // the trailing rows of target_data / output_data would stay uninitialised
+    // and pollute the aggregates. Build batches manually so every sample is
+    // covered, even when samples_number is not divisible by current_batch_size.
+    vector<vector<Index>> testing_batches;
+    for (Index start = 0; start < samples_number; start += current_batch_size)
     {
-        const Tensor3 input_data = time_series_dataset->get_data(sample_role, "Input");
-        output_data = neural_network->calculate_outputs(input_data);
+        const Index end = min(start + current_batch_size, samples_number);
+        testing_batches.emplace_back(sample_indices.begin() + start,
+                                     sample_indices.begin() + end);
     }
-    else
-    {
-        const Shape input_shape = dataset->get_shape("Input");
 
-        if (input_shape.rank == 1)
+    const Shape input_shape = dataset->get_shape("Input");
+
+    MatrixR target_data(samples_number, target_width);
+    MatrixR output_data;
+
+    Index row_cursor = 0;
+    for (const vector<Index>& batch_indices : testing_batches)
+    {
+        if (batch_indices.empty()) continue;
+        const Index n = batch_indices.size();
+
+        // Write targets directly into the slab that belongs to this batch.
+        dataset->fill_targets(batch_indices, target_feature_indices,
+                              target_data.data() + row_cursor * target_width,
+                              /*is_training=*/false, /*parallelize=*/true);
+
+        MatrixR batch_outputs;
+        if (auto* tsd = dynamic_cast<TimeSeriesDataset*>(dataset))
         {
-            MatrixR input_data(samples_number, input_shape[0]);
-            dataset->fill_inputs(sample_indices, input_feature_indices,
-                                 input_data.data(), /*is_training=*/false, /*parallelize=*/true);
-            output_data = neural_network->calculate_outputs(input_data);
+            Tensor3 batch_inputs(n, input_shape[0], input_shape[1]);
+            tsd->fill_inputs(batch_indices, input_feature_indices,
+                             batch_inputs.data(), /*is_training=*/false, /*parallelize=*/true);
+            batch_outputs = neural_network->calculate_outputs(batch_inputs);
+        }
+        else if (input_shape.rank == 1)
+        {
+            MatrixR batch_inputs(n, input_shape[0]);
+            dataset->fill_inputs(batch_indices, input_feature_indices,
+                                 batch_inputs.data(), /*is_training=*/false, /*parallelize=*/true);
+            batch_outputs = neural_network->calculate_outputs(batch_inputs);
         }
         else if (input_shape.rank == 3)
         {
-            Tensor4 inputs_4d(samples_number, input_shape[0], input_shape[1], input_shape[2]);
-            dataset->fill_inputs(sample_indices, input_feature_indices,
-                                 inputs_4d.data(), /*is_training=*/false, /*parallelize=*/true);
-            output_data = neural_network->calculate_outputs(inputs_4d);
+            Tensor4 batch_inputs(n, input_shape[0], input_shape[1], input_shape[2]);
+            dataset->fill_inputs(batch_indices, input_feature_indices,
+                                 batch_inputs.data(), /*is_training=*/false, /*parallelize=*/true);
+            batch_outputs = neural_network->calculate_outputs(batch_inputs);
         }
         else
         {
             throw runtime_error(format("Unsupported input rank {}", input_shape.rank));
         }
+
+        if (output_data.size() == 0)
+            output_data.resize(samples_number, batch_outputs.cols());
+
+        output_data.middleRows(row_cursor, n) = batch_outputs;
+        row_cursor += n;
     }
 
     return {target_data, output_data};
@@ -383,27 +424,42 @@ MatrixR TestingAnalysis::calculate_multiple_classification_errors() const
 VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
                                           const MatrixR& outputs) const
 {
-    const TensorView outputs_view(const_cast<float*>(outputs.data()), {outputs.rows(), outputs.cols()});
-    const TensorView targets_view(const_cast<float*>(targets.data()), {targets.rows(), targets.cols()});
+    // mean_squared_error / normalized_squared_error / minkowski_error in
+    // error_utilities.cpp dispatch to the GPU branch through IF_GPU based on
+    // the global Configuration, but the TensorViews we build here point to
+    // host MatrixR storage. Calling cuBLAS on a host pointer raises
+    // CUBLAS_STATUS_MAPPING_ERROR and poisons the CUDA context, breaking the
+    // entire process. Compute these aggregates directly with Eigen so they
+    // stay host-only regardless of the active device.
+
+    const Index batch_size = targets.rows();
+    const float two_batch  = 2.0f * static_cast<float>(batch_size);
 
     VectorR errors(5);
 
-    // 1. Mean Squared Error
-    mean_squared_error(outputs_view, targets_view, errors(1), nullptr);
+    const float sum_squared = (outputs.array() - targets.array()).square().sum();
 
-    // 0. Sum Squared Error
-    errors(0) = errors(1) * static_cast<float>(targets.size());
+    // 0. Sum Squared Error  (kept as a raw sum, no division)
+    errors(0) = sum_squared;
+
+    // 1. Mean Squared Error (consistent with the 1/(2N) convention in error_utilities)
+    errors(1) = sum_squared / two_batch;
 
     // 2. Root Mean Squared Error
-    errors(2) = sqrt(errors(1));
+    errors(2) = std::sqrt(errors(1));
 
     // 3. Normalized Squared Error
     const VectorR targets_mean = mean(targets);
-    const float normalization_coefficient = (targets.rowwise() - targets_mean.transpose()).squaredNorm();
-    normalized_squared_error(outputs_view, targets_view, normalization_coefficient, errors(3), nullptr);
+    const float normalization_coefficient =
+        (targets.rowwise() - targets_mean.transpose()).squaredNorm();
+    errors(3) = sum_squared / (2.0f * (normalization_coefficient + EPSILON));
 
-    // 4. Minkowski Error
-    minkowski_error(outputs_view, targets_view, 1.5f, errors(4), nullptr);
+    // 4. Minkowski Error (p = 1.5)
+    const float p = 1.5f;
+    errors(4) = (outputs.array() - targets.array())
+                    .abs()
+                    .pow(p)
+                    .sum() / static_cast<float>(batch_size);
 
     return errors;
 }

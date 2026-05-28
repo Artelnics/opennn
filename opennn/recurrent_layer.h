@@ -25,11 +25,18 @@ public:
               const string& = "recurrent_layer");
 
     Shape get_input_shape() const override { return {time_steps, input_features}; }
-    Shape get_output_shape() const override { return {output_features}; }
+    Shape get_output_shape() const override
+    {
+        return return_sequences ? Shape{time_steps, output_features}
+                                : Shape{output_features};
+    }
 
     Index get_time_steps()      const { return time_steps; }
     Index get_input_features()  const { return input_features; }
     Index get_output_features() const { return output_features; }
+
+    bool get_return_sequences() const { return return_sequences; }
+    void set_return_sequences(bool value);
 
     const TensorView& get_biases()            const { return recurrent_op.bias; }
     const TensorView& get_input_weights()     const { return recurrent_op.input_weights; }
@@ -65,6 +72,7 @@ private:
     Index time_steps      = 0;
     Index input_features  = 0;
     Index output_features = 0;
+    bool  return_sequences = false;
 
     RecurrentOp recurrent_op;
 

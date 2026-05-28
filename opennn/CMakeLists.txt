@@ -32,15 +32,21 @@ endif()
 
 target_compile_features(opennn PUBLIC cxx_std_20)
 
+# Flatpak-host .so files often have epoch-zero mtimes, which makes GNU make
+# fail with "No rule to make target" when CMake embeds the full path. Use
+# -l<name> linker flags instead of the imported targets to sidestep this.
 find_package(ZLIB REQUIRED)
-target_link_libraries(opennn PUBLIC ZLIB::ZLIB)
+target_link_libraries(opennn PUBLIC z)
 
 if(OpenNN_BUILD_VISION)
     find_package(JPEG REQUIRED)
-    target_link_libraries(opennn PUBLIC JPEG::JPEG)
+    target_link_libraries(opennn PUBLIC jpeg)
 endif()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+# stdc++fs is only needed on GCC < 9; modern toolchains have std::filesystem
+# in libstdc++ itself and the link library may not exist in the sysroot.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+   AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
     target_link_libraries(opennn PUBLIC stdc++fs)
 endif()
 
@@ -57,7 +63,13 @@ if(APPLE)
     target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
 elseif(OpenMP_FOUND)
     target_compile_options(opennn PRIVATE ${OpenMP_CXX_FLAGS})
-    target_link_libraries(opennn PUBLIC OpenMP::OpenMP_CXX)
+    # Same epoch-zero mtime workaround as ZLib/JPEG.
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_link_options(opennn PUBLIC -fopenmp)
+        target_link_libraries(opennn PUBLIC gomp pthread)
+    else()
+        target_link_libraries(opennn PUBLIC OpenMP::OpenMP_CXX)
+    endif()
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)

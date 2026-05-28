@@ -783,7 +783,17 @@ void RecurrentOp::apply(const TensorView& input,
         prev_hidden = step_hidden;
     }
 
-    output.as_matrix() = prev_hidden;
+    if (return_sequences)
+    {
+        // Output shape is (batch, time_steps, output_features), identical
+        // layout to hidden_states; just mirror the buffer.
+        std::memcpy(output.as<float>(), hidden_data,
+                    batch_size * time_steps * output_features * sizeof(float));
+    }
+    else
+    {
+        output.as_matrix() = prev_hidden;
+    }
 }
 
 void RecurrentOp::apply_delta(const TensorView& input,
@@ -808,7 +818,6 @@ void RecurrentOp::apply_delta(const TensorView& input,
     const float* input_data  = input.as<float>();
     const float* hidden_data = hidden_states.as<float>();
     const float* derivs_data = activation_derivatives.as<float>();
-    const MatrixMap out_delta = output_delta.as_matrix();
 
     const bool write_input_delta = !input_delta.empty() && input_delta.data != nullptr;
     float* input_delta_data = write_input_delta ? input_delta.as<float>() : nullptr;
@@ -818,16 +827,41 @@ void RecurrentOp::apply_delta(const TensorView& input,
     const Index h_stride_t  = output_features;
     const Index h_stride_b  = time_steps * output_features;
 
+    // Sequence-mode backward receives output_delta as (batch, time_steps, out)
+    // grouped by sample; each step's slice must be added to the carry. Final-
+    // state mode receives a (batch, out) slab that only contributes at t=T-1.
+    const float* seq_delta_data = return_sequences ? output_delta.as<float>()
+                                                   : nullptr;
+    const float* final_delta_data = return_sequences ? nullptr
+                                                     : output_delta.as<float>();
+
     MatrixR delta        (batch_size, output_features);
     MatrixR next_carry   = MatrixR::Zero(batch_size, output_features);
     MatrixR step_input   (batch_size, input_features);
     MatrixR step_prev_h  (batch_size, output_features);
     MatrixR step_derivs  (batch_size, output_features);
     MatrixR step_in_delta(batch_size, input_features);
+    MatrixR step_out_delta(batch_size, output_features);
 
     for (Index t = time_steps - 1; t >= 0; --t)
     {
-        delta = (t == time_steps - 1) ? out_delta : next_carry;
+        if (return_sequences)
+        {
+            for (Index i = 0; i < batch_size; ++i)
+                std::memcpy(step_out_delta.data() + i * output_features,
+                            seq_delta_data + i * h_stride_b + t * h_stride_t,
+                            output_features * sizeof(float));
+            delta = next_carry + step_out_delta;
+        }
+        else if (t == time_steps - 1)
+        {
+            // Final-state mode: output_delta is (batch, output_features).
+            delta = Eigen::Map<const MatrixR>(final_delta_data, batch_size, output_features);
+        }
+        else
+        {
+            delta = next_carry;
+        }
 
         for (Index i = 0; i < batch_size; ++i)
             std::memcpy(step_derivs.data() + i * output_features,
@@ -963,8 +997,17 @@ void RecurrentOp::apply_gpu(const TensorView& input,
             step_hidden_buf.swap(prev_hidden_buf);
         }
 
-        TensorView final_hidden(prev_hidden_buf.data, step_hidden_shape, output.type);
-        copy(final_hidden, output);
+        if (return_sequences)
+        {
+            // Output and hidden_states share the (batch, time_steps, out)
+            // layout, so a direct copy suffices.
+            copy(hidden_states, output);
+        }
+        else
+        {
+            TensorView final_hidden(prev_hidden_buf.data, step_hidden_shape, output.type);
+            copy(final_hidden, output);
+        }
     });
 }
 
@@ -1005,14 +1048,58 @@ void RecurrentOp::apply_delta_gpu(const TensorView& input,
         zero_device_view(input_weight_gradient);
         zero_device_view(recurrent_weight_gradient);
 
+        // Sequence-mode backward needs a per-step (batch, out) staging buffer
+        // to combine output_delta[:, t, :] with the recurrent carry before
+        // feeding the unmodified fused-pre kernel. In final-state mode this
+        // buffer is unused.
+        if (return_sequences)
+            step_seq_delta_buf.grow_to(batch_size * output_features *
+                                       Index(sizeof(Scalar)));
+
+        // cuDataType for cublasAxpyEx — matches the dtype of output_delta.
+        const cudaDataType_t axpy_dtype =
+            (output_delta.type == Type::FP32) ? CUDA_R_32F :
+            (output_delta.type == Type::BF16) ? CUDA_R_16BF :
+                                                 CUDA_R_32F;
+
         for (Index t = time_steps; t-- > 0;)
         {
             const bool first_iter = (t == time_steps - 1);
 
+            const Scalar* delta_src = nullptr;
+            const Scalar* carry_src = nullptr;
+            bool kernel_first_iter  = first_iter;
+
+            if (return_sequences)
+            {
+                // Stage = slice of output_delta at step t.
+                gather_time_slice_cuda<Scalar>(batch_size, time_steps,
+                                               output_features, t,
+                                               output_delta.as<Scalar>(),
+                                               static_cast<Scalar*>(step_seq_delta_buf.data));
+                if (!first_iter)
+                {
+                    const float alpha = 1.0f;
+                    const int   n     = static_cast<int>(batch_size * output_features);
+                    CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), n,
+                                              &alpha, CUDA_R_32F,
+                                              next_carry_scratch.data, axpy_dtype, 1,
+                                              step_seq_delta_buf.data, axpy_dtype, 1,
+                                              CUDA_R_32F));
+                }
+                delta_src        = static_cast<const Scalar*>(step_seq_delta_buf.data);
+                carry_src        = nullptr;
+                kernel_first_iter = true; // delta_src already carries everything
+            }
+            else
+            {
+                delta_src = first_iter ? output_delta.as<Scalar>() : nullptr;
+                carry_src = first_iter ? nullptr : next_carry_scratch.as<Scalar>();
+            }
+
             rnn_step_fused_backward_pre_cuda<Scalar>(
-                batch_size, output_features, time_steps, t, first_iter,
-                first_iter ? output_delta.as<Scalar>() : nullptr,
-                first_iter ? nullptr : next_carry_scratch.as<Scalar>(),
+                batch_size, output_features, time_steps, t, kernel_first_iter,
+                delta_src, carry_src,
                 activation_derivatives.as<Scalar>(),
                 delta_scratch.as<Scalar>(),
                 bias_gradient.as<float>());
