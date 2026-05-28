@@ -10,7 +10,12 @@
 #include "tensor_utilities.h"
 
 #include <cctype>
+#include <csetjmp>
+#include <cstdio>
 #include <zlib.h>
+extern "C" {
+#include <jpeglib.h>
+}
 
 namespace opennn
 {
@@ -421,6 +426,88 @@ void decode_png_pixels(const PngHeader& h,
     }
 }
 
+struct JpegHeader
+{
+    Index height = 0;
+    Index width = 0;
+    Index channels = 0;
+};
+
+struct JpegErrorManager
+{
+    struct jpeg_error_mgr pub;
+    jmp_buf jmp;
+    char message[JMSG_LENGTH_MAX] = {0};
+};
+
+void jpeg_error_exit_throw(j_common_ptr cinfo)
+{
+    JpegErrorManager* err = reinterpret_cast<JpegErrorManager*>(cinfo->err);
+    (*cinfo->err->format_message)(cinfo, err->message);
+    longjmp(err->jmp, 1);
+}
+
+void jpeg_output_silent(j_common_ptr) {}
+
+bool has_jpeg_signature(const vector<uint8_t>& buffer)
+{
+    return buffer.size() >= 3 && buffer[0] == 0xFF && buffer[1] == 0xD8 && buffer[2] == 0xFF;
+}
+
+// Decode JPEG bytes in `buffer` into `dst` as interleaved HWC.
+// `dst` must hold height*width*channels floats (sized by caller from JpegHeader).
+JpegHeader decode_jpeg_pixels(const vector<uint8_t>& buffer,
+                              float* dst,
+                              bool divide_by_255,
+                              const string& path_for_error)
+{
+    jpeg_decompress_struct cinfo{};
+    JpegErrorManager err{};
+    cinfo.err = jpeg_std_error(&err.pub);
+    err.pub.error_exit = jpeg_error_exit_throw;
+    err.pub.output_message = jpeg_output_silent;
+
+    JpegHeader header;
+    string error_message;
+
+    if (setjmp(err.jmp))
+    {
+        jpeg_destroy_decompress(&cinfo);
+        throw runtime_error(format("JPEG decode failed for {}: {}", path_for_error, err.message));
+    }
+
+    jpeg_create_decompress(&cinfo);
+    jpeg_mem_src(&cinfo, buffer.data(), buffer.size());
+
+    if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK)
+        throw runtime_error(format("JPEG: missing or corrupt header in {}", path_for_error));
+
+    cinfo.out_color_space = (cinfo.num_components == 1) ? JCS_GRAYSCALE : JCS_RGB;
+    jpeg_start_decompress(&cinfo);
+
+    header.height = cinfo.output_height;
+    header.width = cinfo.output_width;
+    header.channels = cinfo.output_components;
+
+    const float scale = divide_by_255 ? (1.0f / 255.0f) : 1.0f;
+    const size_t row_bytes = size_t(header.width) * size_t(header.channels);
+    vector<uint8_t> row(row_bytes);
+    JSAMPROW row_ptr = row.data();
+
+    while (cinfo.output_scanline < cinfo.output_height)
+    {
+        const Index y = cinfo.output_scanline;
+        jpeg_read_scanlines(&cinfo, &row_ptr, 1);
+        float* dst_row = dst + y * row_bytes;
+        for (size_t i = 0; i < row_bytes; ++i)
+            dst_row[i] = float(row[i]) * scale;
+    }
+
+    jpeg_finish_decompress(&cinfo);
+    jpeg_destroy_decompress(&cinfo);
+    return header;
+}
+
 }
 
 bool is_supported_image_file(const filesystem::path& path)
@@ -429,7 +516,8 @@ bool is_supported_image_file(const filesystem::path& path)
     ranges::transform(extension, extension.begin(),
                       [](unsigned char c) { return char(std::tolower(c)); });
 
-    return extension == ".bmp" || extension == ".png";
+    return extension == ".bmp" || extension == ".png"
+        || extension == ".jpg" || extension == ".jpeg";
 }
 
 Tensor3 load_image(const filesystem::path& path)
@@ -456,6 +544,34 @@ Tensor3 load_image(const filesystem::path& path)
         Tensor3 image(h.height, h.width, h.channels);
         decode_png_pixels(h, compressed, image.data(), false, path.string());
 
+        return image;
+    }
+
+    if (has_jpeg_signature(buffer))
+    {
+        // Two-pass: peek header to size the tensor, then decode in place.
+        jpeg_decompress_struct cinfo{};
+        JpegErrorManager err{};
+        cinfo.err = jpeg_std_error(&err.pub);
+        err.pub.error_exit = jpeg_error_exit_throw;
+        err.pub.output_message = jpeg_output_silent;
+
+        Index height = 0, width = 0, channels = 0;
+        if (setjmp(err.jmp))
+        {
+            jpeg_destroy_decompress(&cinfo);
+            throw runtime_error(format("JPEG header read failed for {}: {}", path.string(), err.message));
+        }
+        jpeg_create_decompress(&cinfo);
+        jpeg_mem_src(&cinfo, buffer.data(), buffer.size());
+        jpeg_read_header(&cinfo, TRUE);
+        height = cinfo.image_height;
+        width = cinfo.image_width;
+        channels = (cinfo.num_components == 1) ? 1 : 3;
+        jpeg_destroy_decompress(&cinfo);
+
+        Tensor3 image(height, width, channels);
+        decode_jpeg_pixels(buffer, image.data(), false, path.string());
         return image;
     }
 
@@ -507,26 +623,72 @@ void load_image(const filesystem::path& path,
         return;
     }
 
-    if (!has_png_signature(buffer))
-        throw runtime_error(format("Unsupported image file: {}", path.string()));
-
-    thread_local vector<uint8_t> compressed;
-    const PngHeader h = parse_png_chunks(buffer, compressed, path.string());
-    height = h.height;
-    width = h.width;
-    channels = h.channels;
-
-    if (channels != expected_channels)
-        throw runtime_error(format("Channel mismatch in image: {}", path.string()));
-
-    if (height == expected_height && width == expected_width)
+    if (has_png_signature(buffer))
     {
-        decode_png_pixels(h, compressed, dst, divide_by_255, path.string());
+        thread_local vector<uint8_t> compressed;
+        const PngHeader h = parse_png_chunks(buffer, compressed, path.string());
+        height = h.height;
+        width = h.width;
+        channels = h.channels;
+
+        if (channels != expected_channels)
+            throw runtime_error(format("Channel mismatch in image: {}", path.string()));
+
+        if (height == expected_height && width == expected_width)
+        {
+            decode_png_pixels(h, compressed, dst, divide_by_255, path.string());
+            return;
+        }
+
+        Tensor3 temp(height, width, channels);
+        decode_png_pixels(h, compressed, temp.data(), false, path.string());
+
+        const Tensor3 resized = resize_image(temp, expected_height, expected_width);
+        const Index pixels = expected_height * expected_width * expected_channels;
+
+        if (divide_by_255)
+            for (Index k = 0; k < pixels; ++k) dst[k] = resized.data()[k] / 255.0f;
+        else
+            copy_n(resized.data(), pixels, dst);
         return;
     }
 
-    Tensor3 temp(height, width, channels);
-    decode_png_pixels(h, compressed, temp.data(), false, path.string());
+    if (!has_jpeg_signature(buffer))
+        throw runtime_error(format("Unsupported image file: {}", path.string()));
+
+    // JPEG: decode into a temp at native size, then resize/scale to match expectations.
+    Index jh = 0, jw = 0, jc = 0;
+    {
+        jpeg_decompress_struct cinfo{};
+        JpegErrorManager err{};
+        cinfo.err = jpeg_std_error(&err.pub);
+        err.pub.error_exit = jpeg_error_exit_throw;
+        err.pub.output_message = jpeg_output_silent;
+        if (setjmp(err.jmp))
+        {
+            jpeg_destroy_decompress(&cinfo);
+            throw runtime_error(format("JPEG header read failed for {}: {}", path.string(), err.message));
+        }
+        jpeg_create_decompress(&cinfo);
+        jpeg_mem_src(&cinfo, buffer.data(), buffer.size());
+        jpeg_read_header(&cinfo, TRUE);
+        jh = cinfo.image_height;
+        jw = cinfo.image_width;
+        jc = (cinfo.num_components == 1) ? 1 : 3;
+        jpeg_destroy_decompress(&cinfo);
+    }
+
+    if (jc != expected_channels)
+        throw runtime_error(format("Channel mismatch in image: {}", path.string()));
+
+    if (jh == expected_height && jw == expected_width)
+    {
+        decode_jpeg_pixels(buffer, dst, divide_by_255, path.string());
+        return;
+    }
+
+    Tensor3 temp(jh, jw, jc);
+    decode_jpeg_pixels(buffer, temp.data(), false, path.string());
 
     const Tensor3 resized = resize_image(temp, expected_height, expected_width);
     const Index pixels = expected_height * expected_width * expected_channels;

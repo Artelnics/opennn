@@ -35,6 +35,11 @@ target_compile_features(opennn PUBLIC cxx_std_20)
 find_package(ZLIB REQUIRED)
 target_link_libraries(opennn PUBLIC ZLIB::ZLIB)
 
+if(OpenNN_BUILD_VISION)
+    find_package(JPEG REQUIRED)
+    target_link_libraries(opennn PUBLIC JPEG::JPEG)
+endif()
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(opennn PUBLIC stdc++fs)
 endif()

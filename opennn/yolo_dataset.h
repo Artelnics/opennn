@@ -109,6 +109,13 @@ public:
     void set_augmentation(const AugmentationConfig& cfg) { augmentation = cfg; }
     const AugmentationConfig& get_augmentation() const { return augmentation; }
 
+    // Multi-scale: switch the runtime input shape. Must be rank 3, H/W
+    // multiples of 32 and not greater than the cache's letterbox size,
+    // channels matching the cache.
+    void set_runtime_input_shape(const Shape& new_shape);
+    const Shape& get_cache_input_shape() const { return cache_input_shape; }
+    Index get_cache_grid_size() const { return cache_grid_size; }
+
 private:
 
     filesystem::path images_directory;
@@ -127,6 +134,14 @@ private:
     Index classes_number = 0;
     Index image_record_bytes = 0;
     Index target_record_floats = 0;
+
+    // Cache shape — fixed at the moment the cache was built. Used for I/O on
+    // the cache files. Differs from the (mutable) input_shape/grid_size when
+    // multi-scale is active.
+    Shape cache_input_shape;
+    Index cache_grid_size = 0;
+    Index cache_image_record_bytes = 0;
+    Index cache_target_record_floats = 0;
     uint64_t target_data_offset = 0;
     uint64_t boxes_data_offset = 0;
     vector<uint64_t> boxes_offsets;       // (samples + 1) entries, in box-count units
