@@ -436,7 +436,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
         add_layer(make_unique<Convolutional>(conv_input_shape,
                                              Shape{3, 3, conv_input_shape[2], filters[size_t(i)]},
-                                             "ReLU", stride, "Same", false,
+                                             "ReLU", stride, "Same", true,
                                              format("yolo_conv_{}", i + 1)));
 
         add_layer(make_unique<Pooling>(get_output_shape(), pool, pool_stride,
@@ -446,7 +446,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Convolutional>(get_output_shape(),
                                          Shape{3, 3, get_output_shape()[2], 1024},
-                                         "ReLU", stride, "Same", false,
+                                         "ReLU", stride, "Same", true,
                                          "yolo_conv_6"));
 
     const Index detection_channels = ssize(anchors) * (5 + classes_number);

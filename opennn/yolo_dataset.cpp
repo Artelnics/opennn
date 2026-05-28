@@ -555,6 +555,56 @@ void apply_geometric_to_image(const uint8_t* src, uint8_t* dst,
     }
 }
 
+// Bilinear-resample an HWC uint8 image from (src_h, src_w) to (dst_h, dst_w),
+// preserving channel count. Used by fill_inputs when the runtime input shape
+// differs from the cache shape (multi-scale training).
+void bilinear_resize_uint8(const uint8_t* src,
+                           Index src_h, Index src_w,
+                           uint8_t* dst,
+                           Index dst_h, Index dst_w,
+                           Index channels)
+{
+    if (src_h == dst_h && src_w == dst_w)
+    {
+        std::memcpy(dst, src, size_t(src_h) * size_t(src_w) * size_t(channels));
+        return;
+    }
+
+    const float scale_y = (dst_h <= 1) ? 0.0f : float(src_h - 1) / float(dst_h - 1);
+    const float scale_x = (dst_w <= 1) ? 0.0f : float(src_w - 1) / float(dst_w - 1);
+
+    for (Index y = 0; y < dst_h; ++y)
+    {
+        const float sy = float(y) * scale_y;
+        const Index y0 = Index(sy);
+        const Index y1 = min(y0 + 1, src_h - 1);
+        const float dy = sy - float(y0);
+
+        for (Index x = 0; x < dst_w; ++x)
+        {
+            const float sx = float(x) * scale_x;
+            const Index x0 = Index(sx);
+            const Index x1 = min(x0 + 1, src_w - 1);
+            const float dx = sx - float(x0);
+
+            const uint8_t* p00 = src + (y0 * src_w + x0) * channels;
+            const uint8_t* p01 = src + (y0 * src_w + x1) * channels;
+            const uint8_t* p10 = src + (y1 * src_w + x0) * channels;
+            const uint8_t* p11 = src + (y1 * src_w + x1) * channels;
+
+            uint8_t* dst_pixel = dst + (y * dst_w + x) * channels;
+
+            for (Index c = 0; c < channels; ++c)
+            {
+                const float top = float(p00[c]) * (1.0f - dx) + float(p01[c]) * dx;
+                const float bot = float(p10[c]) * (1.0f - dx) + float(p11[c]) * dx;
+                const float v = top * (1.0f - dy) + bot * dy;
+                dst_pixel[c] = uint8_t(min(255.0f, max(0.0f, v + 0.5f)));
+            }
+        }
+    }
+}
+
 void apply_geometric_to_boxes(vector<YoloDataset::Box>& boxes,
                               const AugmentationParams& p)
 {
@@ -996,6 +1046,14 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
 void YoloDataset::setup_metadata(Index new_samples_number)
 {
     samples_number = new_samples_number;
+
+    // Snapshot the cache shape; runtime input_shape/grid_size mirror it
+    // until set_runtime_input_shape() rebinds them.
+    cache_input_shape = input_shape;
+    cache_grid_size = grid_size;
+    cache_image_record_bytes = image_record_bytes;
+    cache_target_record_floats = target_record_floats;
+
     target_shape = {grid_size, grid_size, boxes_per_cell * (5 + classes_number)};
 
     variables.clear();
@@ -1021,6 +1079,27 @@ void YoloDataset::setup_metadata(Index new_samples_number)
 
     sample_roles.assign(size_t(samples_number), SampleRole::Training);
     split_samples_random();
+}
+
+void YoloDataset::set_runtime_input_shape(const Shape& new_shape)
+{
+    if (new_shape.rank != 3)
+        throw runtime_error("YoloDataset::set_runtime_input_shape: rank must be 3.");
+    if (new_shape[2] != cache_input_shape[2])
+        throw runtime_error("YoloDataset::set_runtime_input_shape: channel count must match the cache.");
+    if (new_shape[0] <= 0 || new_shape[1] <= 0)
+        throw runtime_error("YoloDataset::set_runtime_input_shape: H/W must be positive.");
+    if (new_shape[0] > cache_input_shape[0] || new_shape[1] > cache_input_shape[1])
+        throw runtime_error("YoloDataset::set_runtime_input_shape: H/W cannot exceed the cache letterbox size.");
+    const Index stride = 32;
+    if (new_shape[0] % stride != 0 || new_shape[1] % stride != 0)
+        throw runtime_error("YoloDataset::set_runtime_input_shape: H/W must be multiples of 32.");
+
+    input_shape = new_shape;
+    grid_size = new_shape[0] / stride;
+    image_record_bytes = input_shape.size();
+    target_record_floats = grid_size * grid_size * boxes_per_cell * (5 + classes_number);
+    target_shape = {grid_size, grid_size, boxes_per_cell * (5 + classes_number)};
 }
 
 void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
@@ -1066,6 +1145,9 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
 
     string omp_error;
 
+    const bool resize_needed = (input_shape[0] != cache_input_shape[0])
+                            || (input_shape[1] != cache_input_shape[1]);
+
     #pragma omp parallel for schedule(dynamic) if (parallelize)
     for (Index i = 0; i < batch_size; ++i)
     {
@@ -1073,10 +1155,11 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
         {
             thread_local vector<uint8_t> pixels;
             thread_local vector<uint8_t> aug_pixels;
-            pixels.resize(size_t(image_record_bytes));
+            thread_local vector<uint8_t> resized_pixels;
+            pixels.resize(size_t(cache_image_record_bytes));
 
             const uint64_t offset = sizeof(YoloImageCacheHeader)
-                + uint64_t(sample_indices[size_t(i)]) * uint64_t(image_record_bytes);
+                + uint64_t(sample_indices[size_t(i)]) * uint64_t(cache_image_record_bytes);
 
             image_cache_reader.read_at(pixels.data(), pixels.size(), offset);
 
@@ -1090,12 +1173,23 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                 const AugmentationParams p = derive_augmentation_params(
                     epoch_seed, uint64_t(sample_indices[size_t(i)]), free_cfg);
 
-                aug_pixels.resize(size_t(image_record_bytes));
+                aug_pixels.resize(size_t(cache_image_record_bytes));
                 apply_geometric_to_image(pixels.data(), aug_pixels.data(),
-                                         input_shape[0], input_shape[1], input_shape[2], p);
+                                         cache_input_shape[0], cache_input_shape[1], cache_input_shape[2], p);
                 apply_color_jitter(aug_pixels.data(),
-                                   input_shape[0], input_shape[1], input_shape[2], p);
+                                   cache_input_shape[0], cache_input_shape[1], cache_input_shape[2], p);
                 image_bytes = aug_pixels.data();
+            }
+
+            if (resize_needed)
+            {
+                resized_pixels.resize(size_t(image_record_bytes));
+                bilinear_resize_uint8(image_bytes,
+                                      cache_input_shape[0], cache_input_shape[1],
+                                      resized_pixels.data(),
+                                      input_shape[0], input_shape[1],
+                                      input_shape[2]);
+                image_bytes = resized_pixels.data();
             }
 
             float* dst = input_data + i * image_record_bytes;
@@ -1129,6 +1223,9 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
 
     AugmentationConfig cfg = augmentation;
 
+    const bool grid_changed = (grid_size != cache_grid_size);
+    const bool reencode = augment || grid_changed;
+
     string omp_error;
 
     #pragma omp parallel for if (parallelize)
@@ -1136,17 +1233,20 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     {
         try
         {
-            if (augment)
+            if (reencode)
             {
                 vector<Box> boxes;
                 read_sample_boxes(sample_indices[size_t(i)], boxes);
 
-                const ::opennn::AugmentationConfig free_cfg{
-                    cfg.jitter, cfg.exposure, cfg.saturation, cfg.hue, cfg.flip
-                };
-                const AugmentationParams p = derive_augmentation_params(
-                    epoch_seed, uint64_t(sample_indices[size_t(i)]), free_cfg);
-                apply_geometric_to_boxes(boxes, p);
+                if (augment)
+                {
+                    const ::opennn::AugmentationConfig free_cfg{
+                        cfg.jitter, cfg.exposure, cfg.saturation, cfg.hue, cfg.flip
+                    };
+                    const AugmentationParams p = derive_augmentation_params(
+                        epoch_seed, uint64_t(sample_indices[size_t(i)]), free_cfg);
+                    apply_geometric_to_boxes(boxes, p);
+                }
 
                 make_target(boxes, anchors, grid_size, boxes_per_cell, classes_number,
                             target_data + i * target_record_floats);
@@ -1154,10 +1254,10 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
             else
             {
                 const uint64_t offset = target_data_offset
-                    + uint64_t(sample_indices[size_t(i)]) * uint64_t(target_record_floats) * sizeof(float);
+                    + uint64_t(sample_indices[size_t(i)]) * uint64_t(cache_target_record_floats) * sizeof(float);
 
                 target_cache_reader.read_at(target_data + i * target_record_floats,
-                                            size_t(target_record_floats) * sizeof(float),
+                                            size_t(cache_target_record_floats) * sizeof(float),
                                             offset);
             }
         }
