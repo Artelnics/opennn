@@ -210,7 +210,7 @@ uint64_t hash_sources(const filesystem::path& images_dir,
             mix_u64(uint64_t(mtime.time_since_epoch().count()));
     };
 
-    vector<filesystem::path> image_paths = list_files(images_dir, has_bmp_extension);
+    vector<filesystem::path> image_paths = list_files(images_dir, has_image_extension);
     mix_u64(uint64_t(image_paths.size()));
 
     for (const auto& image_path : image_paths)
@@ -718,7 +718,7 @@ void YoloDataset::set(const filesystem::path& new_images_dir,
     // can map a dataset sample index back to its on-disk filename. The cache
     // is built/loaded in the same alphabetical order; sources_hash invalidation
     // (in try_open_cache) guarantees this list matches the cached contents.
-    image_filenames = list_files(images_directory, has_bmp_extension);
+    image_filenames = list_files(images_directory, has_image_extension);
 
     open_or_build_cache(new_anchors);
 }

@@ -201,6 +201,7 @@ bool Batch::is_empty() const
 
 Batch::~Batch()
 {
+    if (h2d_done_event) cudaEventDestroy(h2d_done_event);
     if (inputs_host)  cudaFreeHost(inputs_host);
     if (decoder_host) cudaFreeHost(decoder_host);
     if (targets_host) cudaFreeHost(targets_host);
@@ -233,8 +234,28 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
     }
 
     copy_to_device(target.as<float>(), targets_host, target_size * sizeof(float));
+
+    // Mark when the DMA is done so the next worker that recycles this Batch
+    // can wait on this specific copy (cheaper than draining the whole stream)
+    // before overwriting the pinned host buffers in fill(). Created lazily so
+    // CPU-only Batches (which never reach this path) pay nothing.
+    if (!h2d_done_event)
+        CHECK_CUDA(cudaEventCreateWithFlags(&h2d_done_event, cudaEventDisableTiming));
+    CHECK_CUDA(cudaEventRecord(h2d_done_event, stream));
+    h2d_done_recorded = true;
 }
 
 #endif
+
+void Batch::wait_h2d_complete()
+{
+#ifdef OPENNN_HAS_CUDA
+    if (h2d_done_recorded)
+    {
+        CHECK_CUDA(cudaEventSynchronize(h2d_done_event));
+        h2d_done_recorded = false;
+    }
+#endif
+}
 
 }

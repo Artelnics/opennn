@@ -214,6 +214,13 @@ protected:
     unique_ptr<WorkerPool> worker_pool;
 
     Buffer prefetch_fp32_staging{Device::CUDA};
+
+    // Refreshed at the start of every train_epoch / evaluate_epoch call.
+    // Drives sync_device(): recurrent nets need a per-batch stream drain to
+    // keep the driver queue from saturating with their many small kernels;
+    // non-recurrent nets don't and benefit from the missing sync via
+    // CPU/GPU overlap. See sync_device() for the full rationale.
+    bool has_recurrent_layers_ = false;
 };
 
 struct OptimizerData
@@ -269,6 +276,10 @@ struct TrainingResults
     float loss = NAN;
 
     Index validation_failures = 0;
+
+    bool restored_best_parameters = false;
+
+    Index restored_epoch = -1;
 
     float loss_decrease = 0.0f;
 };

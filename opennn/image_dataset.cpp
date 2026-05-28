@@ -685,7 +685,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     if (apply_augmentation)
         augment_inputs(input_data, batch_size, parallelize);
 
-    if (has_scaling)
+    if (apply_scaling && has_scaling)
     {
         #pragma omp parallel for schedule(static) if (parallelize)
         for (Index i = 0; i < batch_size; ++i)

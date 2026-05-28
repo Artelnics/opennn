@@ -94,12 +94,11 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
 #ifdef OPENNN_HAS_CUDA
     if (is_gpu())
-        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
-#endif
-
-#ifdef OPENNN_HAS_CUDA
-    if (is_gpu())
     {
+        // Single-stream model: the backward kernels that wrote gradient and
+        // sgd_update_cuda both run on Backend::get_compute_stream(), so FIFO
+        // ordering already guarantees the update sees the fresh gradient. No
+        // explicit drain needed here.
         const Index parameters_number = neural_network->get_parameters_size();
 
         float* const velocity_ptr = optimization_data.views.empty()

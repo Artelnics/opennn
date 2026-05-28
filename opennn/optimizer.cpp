@@ -775,8 +775,9 @@ void TrainingResults::save(const filesystem::path& file_name) const
 void TrainingResults::print(const string &message) const
 {
     const Index epochs_number = training_error_history.size();
+    const Index final_epoch = epochs_number - 1;
 
-    Index best_epoch = epochs_number - 1;
+    Index best_epoch = final_epoch;
     if (validation_error_history.size() > 0)
     {
         float best_val = numeric_limits<float>::max();
@@ -788,15 +789,27 @@ void TrainingResults::print(const string &message) const
             }
     }
 
+    const bool restored_best_epoch = restored_best_parameters
+        && restored_epoch >= 0
+        && restored_epoch < epochs_number;
+
+    const Index reported_epoch = restored_best_epoch ? restored_epoch : final_epoch;
+
     cout << message << "\n"
          << "Training results" << "\n"
-         << "Epochs number: " << epochs_number - 1 << "\n"
-         << "Training error: " << training_error_history(best_epoch) << "\n";
+         << "Epochs number: " << final_epoch << "\n"
+         << "Training error: " << training_error_history(reported_epoch) << "\n";
     if (validation_error_history.size() > 0)
-        cout << "Validation error: " << validation_error_history(best_epoch) << "\n";
-    if (best_epoch != epochs_number - 1)
-        cout << "Best epoch: " << best_epoch
-             << " (restored parameters correspond to this epoch)\n";
+        cout << "Validation error: " << validation_error_history(reported_epoch) << "\n";
+    if (validation_error_history.size() > 0 && best_epoch != final_epoch)
+    {
+        if (restored_best_epoch)
+            cout << "Best epoch: " << restored_epoch
+                 << " (restored parameters and states correspond to this epoch)\n";
+        else
+            cout << "Best validation epoch: " << best_epoch
+                 << " (final parameters correspond to epoch " << final_epoch << ")\n";
+    }
     cout << "Stopping condition: " << write_stopping_condition() << "\n";
 }
 
@@ -929,7 +942,9 @@ void Optimizer::prefetch_batch(Batch& batch, Index sample_count)
 
     // Single-stream submission: the H→D copy lands on compute_stream, so the
     // kernels that consume the batch (queued later on the same stream) see it
-    // ready by construction — no event needed.
+    // ready by construction. copy_device_async() also records an event so the
+    // worker that recycles this Batch can wait for the DMA to release the
+    // pinned host buffers before fill() overwrites them.
     float* fp32_staging = batch.needs_fp32_staging
         ? prefetch_fp32_staging.as<float>()
         : nullptr;
@@ -956,12 +971,18 @@ void Optimizer::record_batch_reuse(Batch& /*batch*/)
 void Optimizer::sync_device()
 {
 #ifdef OPENNN_HAS_CUDA
-    // RecurrentOp's pure-GPU path submits ~30 async kernels per batch (gather/
-    // scatter + cuBLAS + activation, ×5 timesteps × forward+backward). Without
-    // a per-batch drain the CUDA driver queue saturates after a few hundred
-    // batches and the host loop blocks indefinitely. Cost per call is a single
-    // stream synchronize, dominated by the GPU work that was already in flight.
-    if (is_gpu())
+    // Single-stream model: forward/backward/loss/optimizer kernels all run
+    // on Backend::get_compute_stream(), so FIFO ordering makes per-batch
+    // drains unnecessary for correctness. Two cases still need one:
+    //   - RecurrentOp's pure-GPU path submits ~30 async kernels per batch
+    //     (gather/scatter + cuBLAS + activation × timesteps × fwd+bwd) and
+    //     saturates the driver queue without a per-batch drain — after a few
+    //     hundred batches the host loop blocks indefinitely.
+    //   - OPENNN_CUDA_SYNC_EACH_BATCH=1 forces drain so async CUDA errors
+    //     surface at the offending batch rather than downstream.
+    // Skipping the drain in the common (non-recurrent) case lets the next
+    // batch's H2D and forward overlap with the previous batch's tail.
+    if (is_gpu() && (has_recurrent_layers_ || cuda_sync_each_batch()))
         CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
 #endif
 }
@@ -1014,6 +1035,8 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index batches_number = Index(batches.size());
     if (batches_number == 0) return stats;
+
+    has_recurrent_layers_ = neural_network->has(LayerType::Recurrent);
 
     auto set_epoch_loss = [&]()
     {
@@ -1126,11 +1149,19 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     const bool parallelize_samples_within_batch = false;
     worker_pool->submit([&]() {
         for (;;) {
-            const Index it = next_iteration.fetch_add(1);
-            if (it >= batches_number) return;
             const auto t_pop0 = chrono::steady_clock::now();
             Batch* batch = empty_queue.pop();
             const auto t_fill0 = chrono::steady_clock::now();
+            const Index it = next_iteration.fetch_add(1);
+            if (it >= batches_number)
+            {
+                empty_queue.push(batch);
+                return;
+            }
+            // Wait for the previous H→D DMA on this Batch to drain before
+            // overwriting its pinned host buffers. No-op on first use or when
+            // the GPU has long since consumed it.
+            batch->wait_h2d_complete();
             batch->fill(batches[it],
                         input_feature_indices,
                         decoder_feature_indices,
@@ -1325,6 +1356,8 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
     const Index batches_number = Index(batches.size());
     if (batches_number == 0) return stats;
 
+    has_recurrent_layers_ = neural_network->has(LayerType::Recurrent);
+
 #ifdef OPENNN_HAS_CUDA
     const bool use_device_metrics = is_gpu() && loss->supports_device_epoch_metrics();
     DeviceEpochMetrics device_metrics;
@@ -1373,9 +1406,16 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
     const bool parallelize_samples_within_batch = false;
     worker_pool->submit([&]() {
         for (;;) {
-            const Index it = next_iteration.fetch_add(1);
-            if (it >= batches_number) return;
             Batch* batch = empty_queue.pop();
+            const Index it = next_iteration.fetch_add(1);
+            if (it >= batches_number)
+            {
+                empty_queue.push(batch);
+                return;
+            }
+            // See train_epoch's worker — wait for the prior H→D on this Batch
+            // to drain before refilling its pinned host buffers.
+            batch->wait_h2d_complete();
             batch->fill(batches[it],
                         input_feature_indices,
                         decoder_feature_indices,

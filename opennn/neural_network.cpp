@@ -1149,6 +1149,13 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
         throw runtime_error(format("Cannot open binary file: {}\n", file_name.string()));
 
     const Index parameters_number = parameters.size_in_floats();
+    const uintmax_t file_bytes = filesystem::file_size(file_name);
+    const uintmax_t expected_bytes = uintmax_t(parameters_number) * sizeof(float);
+    if (file_bytes != expected_bytes)
+        throw runtime_error(format("NeuralNetwork::load_parameters_binary: size mismatch for {} (got {} bytes, expected {} bytes).",
+                                   file_name.string(),
+                                   file_bytes,
+                                   expected_bytes));
 
 #ifdef OPENNN_HAS_CUDA
     const bool was_on_device = (parameters.device_type == Device::CUDA);

@@ -194,6 +194,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     float validation_accuracy = 0.0f;
     Index validation_failures = 0;
     float best_validation_error = numeric_limits<float>::max();
+    Index best_epoch = -1;
 
     vector<float> best_parameters;
     vector<float> best_states;
@@ -254,6 +255,7 @@ TrainingResults AdaptiveMomentEstimation::train()
             if(validation_error < best_validation_error)
             {
                 best_validation_error = validation_error;
+                best_epoch = epoch;
                 validation_failures = 0;
 
                 const Index psize = neural_network->get_parameters_size();
@@ -330,7 +332,8 @@ TrainingResults AdaptiveMomentEstimation::train()
        && Index(best_parameters.size()) == neural_network->get_parameters_size())
     {
         if(display)
-            cout << "Restoring best parameters (validation error " << best_validation_error << ")\n";
+            cout << "Restoring best parameters and states from epoch " << best_epoch
+                 << " (validation error " << best_validation_error << ")\n";
 
         // Use set_parameters (not memcpy) so the GPU path properly issues
         // cudaMemcpy(H2D) and refreshes the BF16 mirror via
@@ -347,6 +350,9 @@ TrainingResults AdaptiveMomentEstimation::train()
                    best_states.size() * sizeof(float));
             neural_network->set_states(best_state_view);
         }
+
+        results.restored_best_parameters = true;
+        results.restored_epoch = best_epoch;
     }
 
     set_unscaling();

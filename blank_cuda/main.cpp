@@ -21,6 +21,7 @@
 #include "../opennn/image_dataset.h"
 #include "../opennn/image_utilities.h"
 #include "../opennn/language_dataset.h"
+#include "../opennn/tabular_dataset.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/scaling_layer.h"
 #include "../opennn/convolutional_layer.h"
@@ -154,6 +155,310 @@ int main()
 {
     try
     {
+        cout << "OpenNN. HIGGS 5x300 DNN benchmark." << endl;
+
+#ifdef OPENNN_HAS_CUDA
+        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Backend::instance();
+#endif
+
+        const filesystem::path dataset_path = "/home/artelnics/Documents/HIGGS.csv";
+        const filesystem::path parameters_path = "/home/artelnics/Documents/higgs_5x300_dnn_parameters.bin";
+        const filesystem::path threshold_path = "/home/artelnics/Documents/higgs_5x300_dnn_threshold.txt";
+
+        TabularDataset dataset(dataset_path, ",", false, false);
+
+        vector<Index> input_variables(28);
+        iota(input_variables.begin(), input_variables.end(), 1);
+        dataset.set_variable_indices(input_variables, {0});
+        dataset.set_variable_type(0, VariableType::Binary);
+        dataset.split_samples_sequential(10.0f / 11.0f, 0.5f / 11.0f, 0.5f / 11.0f);
+
+        cout << "[DATASET] train=" << dataset.get_sample_indices("Training").size()
+             << " val="            << dataset.get_sample_indices("Validation").size()
+             << " test="           << dataset.get_sample_indices("Testing").size()
+             << " input="          << dataset.get_shape("Input")[0]
+             << " target="         << dataset.get_shape("Target")[0]
+             << endl;
+
+        NeuralNetwork network;
+        network.add_layer(make_unique<Scaling>(dataset.get_shape("Input")));
+
+        for (Index i = 0; i < 5; ++i)
+            network.add_layer(make_unique<opennn::Dense>(network.get_output_shape(),
+                                                         Shape{300},
+                                                         "Tanh",
+                                                         false,
+                                                         format("higgs_hidden_{}", i + 1)));
+
+        network.add_layer(make_unique<opennn::Dense>(network.get_output_shape(),
+                                                     dataset.get_shape("Target"),
+                                                     "Sigmoid",
+                                                     false,
+                                                     "higgs_output"));
+        network.compile();
+        network.set_parameters_glorot();
+
+        cout << "HIGGS DNN params=" << network.get_parameters_number()
+             << " (buffer=" << network.get_parameters_size() << ")" << endl;
+
+        TrainingStrategy training_strategy(&network, &dataset);
+        training_strategy.set_loss("CrossEntropy");
+        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
+        training_strategy.get_loss()->set_regularization("L2");
+        training_strategy.get_loss()->set_regularization_weight(1.0e-5f);
+
+        auto* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
+        if (!sgd)
+            throw runtime_error("StochasticGradientDescent optimizer not found.");
+
+        sgd->set_batch_size(100);
+        sgd->set_initial_learning_rate(0.05f);
+        sgd->set_initial_decay(0.0202f);
+        sgd->set_momentum(0.9f);
+        sgd->set_nesterov(false);
+        sgd->set_num_workers(8);
+        sgd->set_maximum_epochs(100);
+        sgd->set_maximum_validation_failures(200);
+        sgd->set_display_period(1);
+
+        const auto t0 = steady_clock::now();
+        training_strategy.train();
+        const auto t1 = steady_clock::now();
+
+        cout << "\nTotal training time: "
+             << duration_cast<milliseconds>(t1 - t0).count() / 1000.0 << " s" << endl;
+
+        network.save_parameters_binary(parameters_path);
+        cout << "Saved parameters to " << parameters_path
+             << " (" << filesystem::file_size(parameters_path) / (1024 * 1024)
+             << " MiB)" << endl;
+
+        TestingAnalysis testing_analysis(&network, &dataset);
+        testing_analysis.set_batch_size(10000);
+        const TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
+
+        cout << "\nROC analysis:" << endl;
+        cout << "Role: Testing" << endl;
+        cout << "AUC: " << roc_analysis.area_under_curve << endl;
+        cout << "Confidence limit: " << roc_analysis.confidence_limit << endl;
+        cout << "Optimal threshold: " << roc_analysis.optimal_threshold << endl;
+
+        ofstream threshold_file(threshold_path);
+        if (!threshold_file.is_open())
+            throw runtime_error("Cannot open threshold file for writing: " + threshold_path.string());
+        threshold_file << setprecision(9) << roc_analysis.optimal_threshold << '\n';
+        cout << "Saved optimal threshold to " << threshold_path << endl;
+
+        cout << "\nConfusion matrix at threshold 0.5:\n"
+             << testing_analysis.calculate_confusion(0.5f) << endl;
+        cout << "\nConfusion matrix at optimal threshold:\n"
+             << testing_analysis.calculate_confusion(roc_analysis.optimal_threshold) << endl;
+
+        cout << "Bye!" << endl;
+        return 0;
+
+        /*
+        cout << "OpenNN. train_1000_filter ResNet-18 ImageNet transfer learning." << endl;
+
+#ifdef OPENNN_HAS_CUDA
+        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
+        Backend::instance();
+#endif
+
+        const filesystem::path dataset_path = "/home/artelnics/Documents/train_1000_filter";
+        const filesystem::path pretrained_dir = "/home/artelnics/Documents/opennn_pretrained";
+        const filesystem::path pretrained_parameters_path =
+            pretrained_dir / "resnet18_imagenet1k_to_1_opennn_parameters.bin";
+        const filesystem::path pretrained_states_path =
+            pretrained_dir / "resnet18_imagenet1k_to_1_opennn_states.bin";
+        const filesystem::path trained_parameters_path =
+            "/home/artelnics/Documents/train_1000_filter_resnet18_transfer_lr3e6_best_parameters.bin";
+        const filesystem::path trained_states_path =
+            "/home/artelnics/Documents/train_1000_filter_resnet18_transfer_lr3e6_best_states.bin";
+        const filesystem::path trained_threshold_path =
+            "/home/artelnics/Documents/train_1000_filter_resnet18_transfer_lr3e6_best_threshold.txt";
+
+        if (!filesystem::exists(dataset_path))
+            throw runtime_error("Dataset folder not found: " + dataset_path.string());
+        if (!filesystem::exists(pretrained_parameters_path))
+            throw runtime_error("Pretrained parameters not found: " + pretrained_parameters_path.string());
+        if (!filesystem::exists(pretrained_states_path))
+            throw runtime_error("Pretrained states not found: " + pretrained_states_path.string());
+
+        ImageDataset dataset(dataset_path);
+        dataset.split_samples_random(0.80, 0.10, 0.10);
+
+        AugmentationSettings augmentation;
+        augmentation.enabled = true;
+        augmentation.reflection_axis_x = true;
+        augmentation.rotation_minimum = -5.0f;
+        augmentation.rotation_maximum = 5.0f;
+        augmentation.horizontal_translation_minimum = -4.0f;
+        augmentation.horizontal_translation_maximum = 4.0f;
+        augmentation.vertical_translation_minimum = -4.0f;
+        augmentation.vertical_translation_maximum = 4.0f;
+        dataset.set_augmentation(augmentation);
+
+        const Shape input_shape = dataset.get_shape("Input");
+        const Shape target_shape = dataset.get_shape("Target");
+
+        cout << "[DATASET] train=" << dataset.get_samples_number("Training")
+             << " val="            << dataset.get_samples_number("Validation")
+             << " test="           << dataset.get_samples_number("Testing")
+             << " input="          << input_shape[0] << "x" << input_shape[1] << "x" << input_shape[2]
+             << " target="         << target_shape[0] << endl;
+
+        ResNet network(input_shape,
+                       {2, 2, 2, 2},
+                       Shape{64, 128, 256, 512},
+                       target_shape,
+                       false);
+
+        auto* scaling = dynamic_cast<Scaling*>(network.get_first(LayerType::Scaling));
+        if (!scaling)
+            throw runtime_error("ResNet scaling layer not found.");
+
+        scaling->set_descriptives({
+            Descriptives(0.0f, 255.0f, 0.485f * 255.0f, 0.229f * 255.0f),
+            Descriptives(0.0f, 255.0f, 0.456f * 255.0f, 0.224f * 255.0f),
+            Descriptives(0.0f, 255.0f, 0.406f * 255.0f, 0.225f * 255.0f)
+        });
+        scaling->set_scalers("MeanStandardDeviation");
+
+        cout << "Transfer ResNet-18 params=" << network.get_parameters_number()
+             << " (buffer=" << network.get_parameters_size() << ")" << endl;
+        cout << "Loading pretrained parameters from " << pretrained_parameters_path << endl;
+        network.load_parameters_binary(pretrained_parameters_path);
+        cout << "Loading pretrained states from " << pretrained_states_path << endl;
+        network.load_states_binary(pretrained_states_path);
+
+        const bool evaluate_saved_parameters_only =
+            getenv("OPENNN_EVALUATE_SAVED_PARAMETERS") != nullptr;
+
+        if (evaluate_saved_parameters_only)
+        {
+            if (!filesystem::exists(trained_parameters_path))
+                throw runtime_error("Saved transfer parameters not found: " + trained_parameters_path.string());
+            if (!filesystem::exists(trained_states_path))
+                throw runtime_error("Saved transfer states not found: " + trained_states_path.string());
+
+            cout << "Loading trained transfer parameters from " << trained_parameters_path << endl;
+            network.load_parameters_binary(trained_parameters_path);
+            cout << "Loading trained transfer states from " << trained_states_path << endl;
+            network.load_states_binary(trained_states_path);
+        }
+        else
+        {
+            TrainingStrategy training_strategy(&network, &dataset);
+            training_strategy.set_loss("CrossEntropy");
+            training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+            training_strategy.get_loss()->set_regularization("None");
+
+            auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+            if (!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
+
+            adam->set_batch_size(16);
+            adam->set_learning_rate(3.0e-6f);
+            adam->set_num_workers(8);
+            adam->set_maximum_epochs(48);
+            adam->set_maximum_validation_failures(8);
+            adam->set_display_period(1);
+
+            const auto t0 = steady_clock::now();
+            training_strategy.train();
+            const auto t1 = steady_clock::now();
+
+            const double training_seconds = duration_cast<milliseconds>(t1 - t0).count() / 1000.0;
+            cout << "\nTotal training time: " << training_seconds << " s" << endl;
+
+            network.save_parameters_binary(trained_parameters_path);
+            cout << "Saved parameters to " << trained_parameters_path
+                 << " (" << filesystem::file_size(trained_parameters_path) / (1024 * 1024)
+                 << " MiB)" << endl;
+
+            network.save_states_binary(trained_states_path);
+            cout << "Saved states to " << trained_states_path
+                 << " (" << filesystem::file_size(trained_states_path) / 1024
+                 << " KiB)" << endl;
+        }
+
+        TestingAnalysis testing_analysis(&network, &dataset);
+        testing_analysis.set_batch_size(32);
+
+        auto get_targets_and_outputs_batched = [&](const string& role) -> pair<MatrixR, MatrixR>
+        {
+            const vector<Index> sample_indices = dataset.get_sample_indices(role);
+            const vector<Index> input_indices = dataset.get_feature_indices("Input");
+            const vector<Index> target_indices = dataset.get_feature_indices("Target");
+
+            MatrixR targets(ssize(sample_indices), ssize(target_indices));
+            MatrixR outputs(ssize(sample_indices), target_shape.size());
+
+            const Index batch_size = 32;
+            for (Index begin = 0; begin < ssize(sample_indices); begin += batch_size)
+            {
+                const Index current_batch_size = min(batch_size, ssize(sample_indices) - begin);
+                vector<Index> batch_indices(sample_indices.begin() + begin,
+                                            sample_indices.begin() + begin + current_batch_size);
+
+                MatrixR batch_targets(current_batch_size, ssize(target_indices));
+                dataset.fill_targets(batch_indices, target_indices,
+                                     batch_targets.data(), false, true);
+
+                Tensor4 batch_inputs(current_batch_size, input_shape[0], input_shape[1], input_shape[2]);
+                dataset.fill_inputs(batch_indices, input_indices,
+                                    batch_inputs.data(), false, true);
+
+                const MatrixR batch_outputs = network.calculate_outputs(batch_inputs);
+                targets.middleRows(begin, current_batch_size) = batch_targets;
+                outputs.middleRows(begin, current_batch_size) = batch_outputs;
+            }
+
+            return {targets, outputs};
+        };
+
+        const string evaluation_role = "Testing";
+        const auto [testing_targets, testing_outputs] = get_targets_and_outputs_batched(evaluation_role);
+        const MatrixR roc_curve = testing_analysis.calculate_roc_curve(testing_targets, testing_outputs);
+
+        TestingAnalysis::RocAnalysis roc_analysis;
+        roc_analysis.roc_curve = roc_curve;
+        roc_analysis.area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
+        roc_analysis.confidence_limit =
+            testing_analysis.calculate_area_under_curve_confidence_limit(testing_targets, testing_outputs);
+        roc_analysis.optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
+
+        MatrixR inverted_outputs = MatrixR::Ones(testing_outputs.rows(), testing_outputs.cols()) - testing_outputs;
+        const MatrixR inverted_roc_curve = testing_analysis.calculate_roc_curve(testing_targets, inverted_outputs);
+        const float inverted_auc = testing_analysis.calculate_area_under_curve(inverted_roc_curve);
+
+        cout << "\nROC analysis:" << endl;
+        cout << "Role: " << evaluation_role << endl;
+        cout << "AUC: " << roc_analysis.area_under_curve << endl;
+        cout << "AUC with inverted score: " << inverted_auc << endl;
+        cout << "Confidence limit: " << roc_analysis.confidence_limit << endl;
+        cout << "Optimal threshold: " << roc_analysis.optimal_threshold << endl;
+
+        ofstream threshold_file(trained_threshold_path);
+        if (!threshold_file.is_open())
+            throw runtime_error("Cannot open threshold file for writing: " + trained_threshold_path.string());
+        threshold_file << setprecision(9) << roc_analysis.optimal_threshold << '\n';
+        cout << "Saved optimal threshold to " << trained_threshold_path << endl;
+
+        cout << "\nConfusion matrix at threshold 0.5:\n"
+             << testing_analysis.calculate_confusion(testing_targets,
+                                                    testing_outputs,
+                                                    0.5f) << endl;
+        cout << "\nConfusion matrix at optimal threshold:\n"
+             << testing_analysis.calculate_confusion(testing_targets,
+                                                    testing_outputs,
+                                                    roc_analysis.optimal_threshold) << endl;
+
+        cout << "Bye!" << endl;
+        return 0;
+        }
+
         {
         cout << "OpenNN. ResNet-18 ImageNet pretrained Imagenette evaluation." << endl;
 
@@ -714,112 +1019,7 @@ int main()
         testing_analysis.set_batch_size(16);
         cout << "\nConfusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
         */
-        // ============== SDPA vs unfused — seq_len sweep ==============
-        // Drives a synthetic dataset where every pair has exactly seq_len-2
-        // real tokens. Same Transformer config for every seq_len so the only
-        // varying axis is the attention shape. The policy now lives in
-        // MultiHeadAttention (sdpa_auto + sdpa_min_sequence_length); we toggle
-        // it through Transformer::set_attention_sdpa_min_sequence_length to
-        // force SDPA on (threshold=1) or off (threshold=MAX).
-
-        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
-        Backend::instance();
-
-        const vector<Index> seq_lens = { 64, 96, 128, 192, 256, 384, 512, 768 };
-        const Index   n_pairs                = 1024;
-        const Index   vocab_size             = 500;
-        const Index   embedding_dimension    = 256;
-        const Index   heads_number           = 8;
-        const Index   feed_forward_dimension = 1024;
-        const Index   layers_number          = 2;
-        const Index   batch_size             = 32;
-        const Index   warmup_epochs          = 2;
-        const Index   timed_epochs           = 3;
-
-        struct BenchResult { Index seq_len; double sdpa_sec; double unfused_sec; };
-        vector<BenchResult> results;
-
-        auto run_one = [&](Index seq_len, bool force_sdpa) -> double
-        {
-            const Index tokens_per_side = seq_len - 2;   // +2 for START/END pads
-            const filesystem::path tsv = format("/tmp/sdpa_bench_seq{}.tsv", seq_len);
-
-            set_seed(42);
-            write_synthetic_pairs(tsv, n_pairs, tokens_per_side, vocab_size);
-
-            set_seed(42);
-            LanguageDataset dataset(tsv);
-            dataset.split_samples_random(0.9f, 0.0f, 0.1f);
-
-            Transformer transformer(dataset.get_shape("Input")[0],
-                                    dataset.get_shape("Decoder")[0],
-                                    dataset.get_input_vocabulary_size(),
-                                    dataset.get_target_vocabulary_size(),
-                                    embedding_dimension,
-                                    heads_number,
-                                    feed_forward_dimension,
-                                    layers_number);
-            transformer.set_dropout_rate(0.0f);
-
-            // Layer-level policy: threshold=1 forces SDPA at every seq_len,
-            // MAX disables it entirely. Must be set BEFORE training because
-            // forward_scratch_specs() reads use_sdpa at compile time.
-            if (force_sdpa)
-                transformer.set_attention_sdpa_min_sequence_length(1);
-            else
-                transformer.set_attention_sdpa_auto(false);
-
-            TrainingStrategy ts(&transformer, &dataset);
-            ts.set_loss("CrossEntropyError3d");
-            ts.set_optimization_algorithm("AdaptiveMomentEstimation");
-
-            auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(ts.get_optimization_algorithm());
-            if (!adam) throw runtime_error("Adam optimizer not found.");
-            adam->set_batch_size(batch_size);
-            adam->set_learning_rate(5e-4f);
-            adam->set_display(false);
-
-            adam->set_maximum_epochs(warmup_epochs - 1);  // train() runs max+1 epochs
-            ts.train();
-
-            adam->set_maximum_epochs(timed_epochs - 1);
-            const auto t0 = steady_clock::now();
-            ts.train();
-            const auto t1 = steady_clock::now();
-
-            return duration_cast<microseconds>(t1 - t0).count() / 1e6 / double(timed_epochs);
-        };
-
-        cout << "\n=================== SDPA vs UNFUSED benchmark ===================\n";
-        cout << "config: emb=" << embedding_dimension
-             << " heads=" << heads_number
-             << " ffn=" << feed_forward_dimension
-             << " layers=" << layers_number
-             << " batch=" << batch_size
-             << " samples=" << n_pairs
-             << " warmup=" << warmup_epochs << "ep timed=" << timed_epochs << "ep (avg)\n\n";
-
-        cout << left << setw(10) << "seq_len"
-             << right << setw(14) << "sdpa (s/ep)"
-             << setw(16) << "unfused (s/ep)"
-             << setw(14) << "speedup" << "\n";
-        cout << string(54, '-') << "\n";
-
-        for (Index seq_len : seq_lens)
-        {
-            const double t_sdpa    = run_one(seq_len, /*force_sdpa=*/true);
-            const double t_unfused = run_one(seq_len, /*force_sdpa=*/false);
-            results.push_back({seq_len, t_sdpa, t_unfused});
-
-            cout << left << setw(10) << seq_len
-                 << right << fixed << setprecision(3) << setw(14) << t_sdpa
-                 << setw(16) << t_unfused
-                 << setw(13) << setprecision(2) << (t_unfused / t_sdpa) << "x" << "\n"
-                 << flush;
-        }
-        cout << "=================================================================\n";
         
-
         // ====================  LLM experiments (commented out)  ====================
         // The blocks below were used to fine-tune chat-style Transformers on
         // tinychat / OASST2 / UltraChat combinations. Restored above is the
@@ -1144,9 +1344,6 @@ int main()
 
         cout << "===============================================\n";
         */
-
-#endif
-#endif
 
         cout << "Bye!" << endl;
         return 0;
