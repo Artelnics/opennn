@@ -150,6 +150,33 @@ string Recurrent::write_expression(const vector<string>& feature_names,
 
     const string& activation_name = ActivationOp::to_string(recurrent_op.activation);
 
+    // Naming policy for the variable assigned at step (t, j):
+    //   - return_sequences=false (default): only h[T-1] reaches the next layer,
+    //     so output_names[j] is used at t==T-1 and intermediate steps stay
+    //     internal as "recurrent_hidden_step_t_neuron_j".
+    //   - return_sequences=true: the layer's output is the full sequence
+    //     (batch, time_steps, output_features), so each step's hidden state
+    //     must be exposed under the name the framework allocated for it.
+    //     output_names is laid out row-major across (t, j): index = t*F + j.
+    // For internal references during recurrent multiplication we keep using
+    // "recurrent_hidden_step_t_neuron_j" as a stable internal alias by
+    // emitting a synonym assignment when return_sequences=true.
+    auto step_var = [&](Index t, Index j) -> string {
+        const string internal = format("recurrent_hidden_step_{}_neuron_{}", t, j);
+        if (return_sequences)
+        {
+            const Index linear = t * output_features + j;
+            if (linear < ssize(output_names)) return output_names[linear];
+            return internal;
+        }
+        if (t == time_steps - 1)
+        {
+            if (j < ssize(output_names)) return output_names[j];
+            return format("recurrent_output_{}", j);
+        }
+        return internal;
+    };
+
     ostringstream buffer;
     buffer.precision(10);
 
@@ -157,9 +184,7 @@ string Recurrent::write_expression(const vector<string>& feature_names,
     {
         for (Index j = 0; j < output_features; ++j)
         {
-            const string current_var = (time_step == time_steps - 1)
-                ? (j < ssize(output_names) ? output_names[j] : format("recurrent_output_{}", j))
-                : format("recurrent_hidden_step_{}_neuron_{}", time_step, j);
+            const string current_var = step_var(time_step, j);
             buffer << current_var << " = " << activation_name << "( " << biases_map(j);
 
             for (Index i = 0; i < input_features; ++i)
@@ -171,7 +196,7 @@ string Recurrent::write_expression(const vector<string>& feature_names,
 
             if (time_step > 0)
                 for (Index prev_j = 0; prev_j < output_features; ++prev_j)
-                    buffer << " + (" << format("recurrent_hidden_step_{}_neuron_{}", time_step - 1, prev_j)
+                    buffer << " + (" << step_var(time_step - 1, prev_j)
                            << "*" << recurrent_w_map(prev_j, j) << ")";
 
             buffer << " );\n";
