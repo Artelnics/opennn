@@ -17,6 +17,7 @@
 #include "forward_propagation.h"
 #include "cuda_dispatch.h"
 #include "back_propagation.h"
+#include "statistics.h"
 #include <Eigen/LU>
 
 namespace opennn
@@ -215,14 +216,19 @@ void Loss::set_normalization_coefficient()
         // the training targets from their column means. Without this, NSE
         // collapses to plain SSE (coefficient = 1), which biases multi-target
         // joint regression toward whichever target has the larger scale.
-        const auto* tabular = dynamic_cast<const TabularDataset*>(dataset);
-        if (!tabular) return;
+        const vector<Index> training_indices = dataset->get_sample_indices("Training");
+        const Shape target_shape = dataset->get_shape("Target");
 
-        const MatrixR targets = tabular->get_data("Training", "Target");
-        if (targets.rows() < 2 || targets.cols() == 0) return;
+        if (training_indices.empty() || target_shape.empty()) return;
 
-        const Matrix<float, 1, Dynamic> target_means = targets.colwise().mean();
-        const float coefficient = (targets.rowwise() - target_means).squaredNorm();
+        MatrixR targets(training_indices.size(), target_shape.size());
+        dataset->fill_targets(training_indices,
+                              dataset->get_feature_indices("Target"),
+                              targets.data(),
+                              false);
+
+        const VectorR targets_mean = mean(targets);
+        const float coefficient = (targets.rowwise() - targets_mean.transpose()).squaredNorm();
 
         normalization_coefficient = (coefficient < EPSILON) ? 1.0f : coefficient;
         return;
