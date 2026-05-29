@@ -130,6 +130,12 @@ struct ActivationOp : Operator
     // operator (e.g. DropoutOp) overwrites the activation's output in place.
     vector<size_t> output_slots_backward;
 
+    // When true, a preceding operator already applied this activation through a
+    // fused GPU epilogue (cuBLASLt RELU_BIAS in Dense, cuDNN bias+activation in
+    // Convolutional), so forward_propagate skips the redundant pass on the GPU
+    // path. back_propagate still applies the derivative — fusion is forward-only.
+    bool forward_fused = false;
+
     void set_function(Function new_function);
     void set_function(const string& name);
 
@@ -155,6 +161,12 @@ struct CombinationOp : Operator
     Index input_features  = 0;
     Index output_features = 0;
     Type  weight_type     = Type::FP32;
+
+    // When true, forward_propagate uses the cuBLASLt RELU_BIAS epilogue so the
+    // GEMM, bias and ReLU run in a single launch (also fused on CPU via
+    // linear_forward). Set by the hosting Dense layer when the activation is
+    // ReLU and no BatchNorm sits between the combination and the activation.
+    bool  fuse_relu       = false;
 
     TensorView weights;
     TensorView bias;
@@ -182,24 +194,6 @@ struct CombinationOp : Operator
                      bool accumulate_input_delta = false) const;
 
 private:
-};
-
-struct CombinationReluOp : Operator
-{
-    CombinationOp combination;
-    ActivationOp  activation;
-
-    void set(Index input_features, Index output_features, Type weight_type = Type::FP32);
-
-    vector<TensorSpec> parameter_specs() const override { return combination.parameter_specs(); }
-    void link_parameters(span<const TensorView> views) override { combination.link_parameters(views); }
-    void link_gradients (span<const TensorView> views) override { combination.link_gradients(views); }
-
-    void set_parameters_random() override { combination.set_parameters_random(); }
-    void set_parameters_glorot() override { combination.set_parameters_glorot(); }
-
-    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
-    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
 };
 
 // Elman-style recurrent op (simple RNN with tied weights over the time axis).
@@ -402,6 +396,12 @@ struct ConvolutionOp : Operator
     TensorView weight_gradient;
     TensorView bias_gradient;
 
+    // Non-owning. When set (by the hosting Convolutional layer for a ReLU
+    // activation with no BatchNorm), apply_gpu fuses bias + activation into the
+    // single cudnnConvolutionBiasActivationForward call. Owned by the layer's
+    // ActivationOp. Null = no fusion (plain bias). CPU path ignores it.
+    cudnnActivationDescriptor_t fused_activation = nullptr;
+
 #ifdef OPENNN_HAS_CUDA
     cudnnFilterDescriptor_t      kernel_descriptor      = nullptr;
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
@@ -461,35 +461,6 @@ private:
     void plan_convolution_algorithms(const TensorView& input, const TensorView& output);
 
     array<pair<Index, Index>, 4> nhwc_padding() const;
-};
-
-struct ConvolutionReluOp : Operator
-{
-    ConvolutionOp convolution;
-    ActivationOp  activation;
-
-    void set(Index input_h, Index input_w,
-             Index kernels_n, Index kernel_h, Index kernel_w, Index kernel_c,
-             Index row_stride, Index column_stride,
-             Index padding_h, Index padding_w,
-             Type compute_dtype);
-
-    vector<TensorSpec> parameter_specs() const override { return convolution.parameter_specs(); }
-    void link_parameters(span<const TensorView> views) override { convolution.link_parameters(views); }
-    void link_gradients (span<const TensorView> views) override { convolution.link_gradients(views); }
-
-    void set_parameters_random() override { convolution.set_parameters_random(); }
-    void set_parameters_glorot() override { convolution.set_parameters_glorot(); }
-
-    void destroy_cuda() override { convolution.destroy_cuda(); activation.destroy_cuda(); }
-    ~ConvolutionReluOp() override { destroy_cuda(); }
-
-    ConvolutionReluOp() = default;
-    ConvolutionReluOp(const ConvolutionReluOp&) = delete;
-    ConvolutionReluOp& operator=(const ConvolutionReluOp&) = delete;
-
-    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
-    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
 };
 
 struct LayerNormOp : Operator

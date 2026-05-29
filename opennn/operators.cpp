@@ -135,6 +135,12 @@ void ActivationOp::set_function(const string& name)
 
 void ActivationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
+    // A preceding operator already applied this activation through a fused GPU
+    // epilogue, so the pass is redundant on GPU. On CPU we fall through: Dense's
+    // linear_forward also fuses ReLU there (re-applying is harmless — ReLU is
+    // idempotent), while the convolution CPU path does not fuse, so it is needed.
+    if (forward_fused) { IF_GPU(return;); }
+
     TensorView& output = fp.views[layer][output_slots[0]][0];
     if (output.empty()) return;
 
@@ -541,7 +547,8 @@ void CombinationOp::set_parameters_glorot()
 
 void CombinationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
-    apply(get_input(fp, layer), get_output(fp, layer), CUBLASLT_EPILOGUE_BIAS);
+    apply(get_input(fp, layer), get_output(fp, layer),
+          fuse_relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS);
 }
 
 void CombinationOp::apply(const TensorView& input, TensorView& output, cublasLtEpilogue_t epilogue)
@@ -569,37 +576,6 @@ void CombinationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
     TensorView& input_delta = view_at_slot_or(dv, input_delta_slots, 0, empty);
 
     apply_delta(output_delta, input, input_delta, false);
-}
-
-void CombinationReluOp::set(Index input_features, Index output_features, Type weight_type)
-{
-    combination.set(input_features, output_features, weight_type);
-    activation.set_function(ActivationOp::Function::ReLU);
-}
-
-void CombinationReluOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
-{
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output      = get_output(fp, layer);
-
-    combination.apply(input, output, CUBLASLT_EPILOGUE_RELU_BIAS);
-}
-
-void CombinationReluOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
-{
-    auto& dv = bp.delta_views[layer];
-
-    const TensorView& output = get_output(fp, layer);
-    TensorView& output_delta = get_output_delta(bp, layer);
-
-    activation.apply_delta(output, output_delta);
-
-    const TensorView& input = get_input(fp, layer);
-
-    TensorView empty;
-    TensorView& input_delta = view_at_slot_or(dv, input_delta_slots, 0, empty);
-
-    combination.apply_delta(output_delta, input, input_delta, false);
 }
 
 void RecurrentOp::set(Index new_input_features,
@@ -1237,7 +1213,10 @@ void ConvolutionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
 
-    apply(input, output);
+    // fused_activation is non-null only on the GPU ReLU path; apply_gpu folds
+    // bias + activation into one cuDNN call. CPU apply ignores it, so the
+    // hosting layer's ActivationOp still runs on CPU.
+    apply(input, output, fused_activation);
 }
 
 void ConvolutionOp::apply_delta(const TensorView& input,
@@ -1554,49 +1533,6 @@ void ConvolutionOp::apply_gpu(const TensorView&, TensorView&, cudnnActivationDes
 void ConvolutionOp::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("Convolution::apply_delta_gpu: CUDA support not compiled in."); }
 
 #endif
-
-
-void ConvolutionReluOp::set(Index input_h, Index input_w,
-                          Index kernels_n, Index kernel_h, Index kernel_w, Index kernel_c,
-                          Index row_stride, Index column_stride,
-                          Index padding_h, Index padding_w,
-                          Type compute_dtype)
-{
-    convolution.set(input_h, input_w,
-                    kernels_n, kernel_h, kernel_w, kernel_c,
-                    row_stride, column_stride,
-                    padding_h, padding_w,
-                    compute_dtype);
-
-    activation.set_function(ActivationOp::Function::ReLU);
-}
-
-void ConvolutionReluOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
-{
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output      = get_output(fp, layer);
-
-    IF_GPU({ convolution.apply(input, output, activation.descriptor); return; });
-    convolution.apply(input, output);
-    activation_forward(output, activation.function);
-}
-
-void ConvolutionReluOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
-{
-    auto& dv = bp.delta_views[layer];
-
-    const TensorView& output = get_output(fp, layer);
-    TensorView& output_delta = get_output_delta(bp, layer);
-
-    activation.apply_delta(output, output_delta);
-
-    const TensorView& input = get_input(fp, layer);
-
-    TensorView empty;
-    TensorView& input_delta = view_at_slot_or(dv, input_delta_slots, 0, empty);
-
-    convolution.apply_delta(input, output_delta, input_delta);
-}
 
 
 void LayerNormOp::set(Index new_sequence_length, Index new_embedding_dimension)

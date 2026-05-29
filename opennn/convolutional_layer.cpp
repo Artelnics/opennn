@@ -119,6 +119,14 @@ void Convolutional::update_convolution_operator()
     activation.input_slots  = {Output};
     activation.output_slots = {Output};
 
+    // Fuse bias + ReLU into the single cudnnConvolutionBiasActivationForward
+    // call when there is no BatchNorm between the convolution and the
+    // activation. Only the GPU path fuses; the activation operator still runs
+    // on CPU (where it is skipped only under IF_GPU) and always in backward.
+    const bool fuse_relu = (activation.function == ActivationOp::Function::ReLU)
+                           && !batch_norm.active();
+    convolution.fused_activation = fuse_relu ? activation.descriptor : nullptr;
+    activation.forward_fused     = fuse_relu;
 }
 
 void Convolutional::set(const Shape& new_input_shape,
@@ -270,6 +278,16 @@ void Convolutional::write_JSON_body(JsonWriter& printer) const
         {"Convolution", use_padding ? "Same" : "Valid"},
         {"BatchNormalization", to_string(batch_norm.active())}
     });
+}
+
+void Convolutional::from_JSON(const JsonDocument& document)
+{
+    Layer::from_JSON(document);
+    // The operators set their activation function during Layer::from_JSON
+    // (after read_JSON_body has already run update_convolution_operator), so
+    // re-derive the fused-activation wiring now that activation.function and
+    // its descriptor are final.
+    update_convolution_operator();
 }
 
 REGISTER(Layer, Convolutional, "Convolutional")
