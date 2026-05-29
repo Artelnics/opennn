@@ -116,8 +116,6 @@ struct Batch
     Index inputs_host_allocated_size = 0;
     Index decoder_host_allocated_size = 0;
     Index targets_host_allocated_size = 0;
-
-    bool needs_fp32_staging = false;
 };
 
 }

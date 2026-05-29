@@ -102,8 +102,7 @@ void Batch::set(const Index new_samples_number,
         target_view_host_cache = TensorView(target.as<float>(), target_shape, Type::FP32, Device::CPU);
 
 #ifdef OPENNN_HAS_CUDA
-    needs_fp32_staging = bf16_input;
-    fp32_staging.resize_bytes(needs_fp32_staging
+    fp32_staging.resize_bytes(bf16_input
         ? samples_number * input_features_number * Index(sizeof(float))
         : Index(0),
         Device::CUDA);
@@ -226,7 +225,7 @@ void Batch::copy_device_async(cudaStream_t stream)
         CHECK_CUDA(cudaMemcpyAsync(destination, source, bytes, cudaMemcpyHostToDevice, stream));
     };
 
-    if (needs_fp32_staging)
+    if (!fp32_staging.empty())
     {
         assert(fp32_staging.bytes >= input_size * Index(sizeof(float)));
         copy_to_device(fp32_staging.as<float>(), inputs_host, input_size * sizeof(float));
@@ -258,7 +257,7 @@ void Batch::gather_device_async(const Index current_batch_size,
 {
     current_sample_count = current_batch_size;
 
-    if (needs_fp32_staging)
+    if (!fp32_staging.empty())
         gather_rows_cuda<float, bfloat16>(current_batch_size, resident_input_features,
                                           device_row_indices, resident_input, input.as<bfloat16>());
     else
