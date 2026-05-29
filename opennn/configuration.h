@@ -111,7 +111,7 @@ public:
 
     struct Resolved
     {
-        Device device          = Device::CPU;
+        Device device         = Device::CPU;
         Type   training_type  = Type::FP32;
         Type   inference_type = Type::FP32;
     };
@@ -122,9 +122,9 @@ public:
         return configuration;
     }
 
-    void set(Device new_device          = Device::Auto,
-             Type   new_training_type   = Type::Auto,
-             Type   new_inference_type  = Type::Auto);
+    void set(Device new_device         = Device::Auto,
+             Type   new_training_type  = Type::Auto,
+             Type   new_inference_type = Type::Auto);
 
     [[nodiscard]] Device get_device()         const { return device; }
     [[nodiscard]] Type   get_training_type()  const { return training_type; }

@@ -177,7 +177,7 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
 bool MultiHeadAttention::select_use_sdpa() const
 {
     if (!sdpa_auto) return false;
-    if (!AttentionOp::sdpa_supported(compute_dtype)) return false;
+    if (!AttentionOp::sdpa_supported(compute_dtype, compute_device)) return false;
 
     const Index shorter = min(query_sequence_length, source_sequence_length);
     return shorter > sdpa_min_sequence_length;

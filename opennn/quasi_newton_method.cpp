@@ -149,7 +149,9 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
 TrainingResults QuasiNewtonMethod::train()
 {
-    if (is_gpu())
+    NeuralNetwork* neural_network = loss->get_neural_network();
+
+    if (neural_network->is_gpu())
         throw runtime_error("QuasiNewtonMethod does not support GPU training: "
                             "its update path maps device pointers as host memory. "
                             "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
@@ -176,8 +178,6 @@ TrainingResults QuasiNewtonMethod::train()
 
     // Neural network
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
-
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
 
     unique_ptr<ForwardPropagation> validation_forward_propagation;
@@ -193,10 +193,10 @@ TrainingResults QuasiNewtonMethod::train()
     set_names();
 
     set_scaling();
-    Batch training_batch(training_samples_number, dataset);
+    Batch training_batch(training_samples_number, dataset, neural_network->get_config());
     training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices, true);
 
-    Batch validation_batch(validation_samples_number, dataset);
+    Batch validation_batch(validation_samples_number, dataset, neural_network->get_config());
     validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices, /*is_training=*/false);
 
     // Loss

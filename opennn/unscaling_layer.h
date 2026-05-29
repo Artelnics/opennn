@@ -47,7 +47,7 @@ public:
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
 
-    float* link_states(float*) override;
+    float* link_states(float*, Device) override;
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
@@ -63,6 +63,7 @@ private:
     float max_range = 1.0f;
 
     Buffer op_storage;
+    Device op_storage_device = Device::CPU;
     bool   op_storage_dirty = true;
 
     UnscaleOp unscale_op;

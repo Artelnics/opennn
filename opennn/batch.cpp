@@ -16,16 +16,20 @@
 namespace opennn
 {
 
-Batch::Batch(const Index new_samples_number, const Dataset* new_dataset)
+Batch::Batch(const Index new_samples_number,
+             const Dataset* new_dataset,
+             const Configuration::Resolved& new_config)
 {
-    set(new_samples_number, new_dataset);
+    set(new_samples_number, new_dataset, new_config);
 }
 
 #ifndef OPENNN_HAS_CUDA
 Batch::~Batch() = default;
 #endif
 
-void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
+void Batch::set(const Index new_samples_number,
+                const Dataset* new_dataset,
+                const Configuration::Resolved& new_config)
 {
     if (!new_dataset)
         throw runtime_error("dataset is not set.");
@@ -33,11 +37,12 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     samples_number = new_samples_number;
 
     dataset = new_dataset;
+    config = new_config;
 
 #ifdef OPENNN_HAS_CUDA
-    const bool on_gpu = is_gpu();
+    const bool on_gpu = uses_cuda();
     const bool bf16_input = on_gpu
-                         && is_bf16_training()
+                         && config.training_type == Type::BF16
                          && dynamic_cast<const LanguageDataset*>(dataset) == nullptr;
     const Index input_device_bytes = bf16_input ? Index(sizeof(bfloat16)) : Index(sizeof(float));
 #else
@@ -88,13 +93,13 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     input_views_host_cache.clear();
 
     if (!decoder_shape.empty())
-        input_views_host_cache.emplace_back(decoder.as<float>(), decoder_shape);
+        input_views_host_cache.emplace_back(decoder.as<float>(), decoder_shape, Type::FP32, Device::CPU);
 
     if (!input_shape.empty())
-        input_views_host_cache.emplace_back(input.as<float>(), input_shape);
+        input_views_host_cache.emplace_back(input.as<float>(), input_shape, Type::FP32, Device::CPU);
 
     if (!target_shape.empty())
-        target_view_host_cache = TensorView(target.as<float>(), target_shape);
+        target_view_host_cache = TensorView(target.as<float>(), target_shape, Type::FP32, Device::CPU);
 
 #ifdef OPENNN_HAS_CUDA
     needs_fp32_staging = bf16_input;
@@ -104,13 +109,13 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
         input_views_cache.clear();
 
         if (!decoder_shape.empty() && decoder.data)
-            input_views_cache.emplace_back(decoder.data, decoder_shape, Type::FP32);
+            input_views_cache.emplace_back(decoder.data, decoder_shape, Type::FP32, Device::CUDA);
 
-        input_views_cache.emplace_back(input.data, input_shape, bf16_input ? Type::BF16 : Type::FP32);
+        input_views_cache.emplace_back(input.data, input_shape, bf16_input ? Type::BF16 : Type::FP32, Device::CUDA);
     }
 
     if (!target_shape.empty() && target.data)
-        target_view_cache = TensorView(target.data, target_shape, Type::FP32);
+        target_view_cache = TensorView(target.data, target_shape, Type::FP32, Device::CUDA);
 #endif
 }
 
@@ -123,7 +128,7 @@ void Batch::fill(const vector<Index>& sample_indices,
 {
     current_sample_count = ssize(sample_indices);
 
-    const bool on_gpu = is_gpu();
+    const bool on_gpu = uses_cuda();
 
     float* const input_buffer   = on_gpu ? inputs_host  : input.as<float>();
     float* const decoder_buffer = on_gpu ? decoder_host : decoder.as<float>();

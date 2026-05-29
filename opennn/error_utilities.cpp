@@ -63,7 +63,7 @@ void mean_squared_error(const TensorView& input, const TensorView& target, float
                         [[maybe_unused]] float* workspace_device)
 {
     const Index batch_size = input.shape[0];
-    IF_GPU({
+    IF_GPU_VIEW(input, {
         error = sum_squared_diff_cuda(input, target, workspace_device) / to_int(2 * batch_size);
         return;
     });
@@ -73,7 +73,7 @@ void mean_squared_error(const TensorView& input, const TensorView& target, float
 void mean_squared_error_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta)
 {
     const Index batch_size = input.shape[0];
-    IF_GPU({
+    IF_GPU_VIEW(input, {
         scaled_diff_cuda(input, target, 1.0f / to_int(batch_size), input_delta);
         return;
     });
@@ -83,7 +83,7 @@ void mean_squared_error_gradient(const TensorView& input, const TensorView& targ
 void normalized_squared_error(const TensorView& input, const TensorView& target, float coefficient, float& error,
                               [[maybe_unused]] float* workspace_device)
 {
-    IF_GPU({
+    IF_GPU_VIEW(input, {
         error = sum_squared_diff_cuda(input, target, workspace_device) / (2.0f * (coefficient + EPSILON));
         return;
     });
@@ -92,7 +92,7 @@ void normalized_squared_error(const TensorView& input, const TensorView& target,
 
 void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, float coefficient, const TensorView& input_delta)
 {
-    IF_GPU({
+    IF_GPU_VIEW(input, {
         scaled_diff_cuda(input, target, 1.0f / (static_cast<float>(coefficient) + EPSILON), input_delta);
         return;
     });
@@ -206,7 +206,7 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, c
 
 void minkowski_error(const TensorView& input, const TensorView& target, float power, float& error, float* workspace_device)
 {
-    if (is_gpu())
+    if (workspace_device)
         throw runtime_error("minkowski_error: GPU implementation not available.");
 
     (void)workspace_device;
@@ -214,9 +214,13 @@ void minkowski_error(const TensorView& input, const TensorView& target, float po
     error = (input.as_vector() - target.as_vector()).array().abs().pow(power).sum() / to_type(power * batch_size);
 }
 
-void minkowski_error_gradient(const TensorView& input, const TensorView& target, float power, const TensorView& input_delta)
+void minkowski_error_gradient(const TensorView& input,
+                              const TensorView& target,
+                              float power,
+                              const TensorView& input_delta,
+                              bool on_gpu)
 {
-    if (is_gpu())
+    if (on_gpu)
         throw runtime_error("minkowski_error_gradient: GPU implementation not available.");
 
     const Index batch_size = input.shape[0];
@@ -370,7 +374,7 @@ void cross_entropy_3d_gradient_device_count(const TensorView& input, const Tenso
 
 void l1_regularization(const TensorView& parameters, float lambda, float& penalty)
 {
-    IF_GPU({
+    IF_GPU_VIEW(parameters, {
         penalty = lambda * sum_abs_cuda(parameters.as<float>(), parameters.size());
         return;
     });
@@ -379,7 +383,7 @@ void l1_regularization(const TensorView& parameters, float lambda, float& penalt
 
 void l1_regularization_gradient(const TensorView& parameters, float lambda, const TensorView& gradient)
 {
-    IF_GPU({
+    IF_GPU_VIEW(parameters, {
         l1_gradient_cuda<float>(parameters.size(), gradient.as<float>(), parameters.as<float>(), lambda);
         return;
     });
@@ -388,7 +392,7 @@ void l1_regularization_gradient(const TensorView& parameters, float lambda, cons
 
 void l2_regularization(const TensorView& parameters, float lambda, float& penalty)
 {
-    IF_GPU({
+    IF_GPU_VIEW(parameters, {
         penalty = 0.5f * lambda * squared_norm_cuda(parameters.as<float>(), parameters.size());
         return;
     });
@@ -397,7 +401,7 @@ void l2_regularization(const TensorView& parameters, float lambda, float& penalt
 
 void l2_regularization_gradient(const TensorView& parameters, float lambda, const TensorView& gradient)
 {
-    IF_GPU({
+    IF_GPU_VIEW(parameters, {
         const int total_size = to_int(parameters.size());
         CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), total_size,
                                   &lambda,         CUDA_R_32F,

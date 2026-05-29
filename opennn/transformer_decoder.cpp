@@ -138,7 +138,7 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
     : transformer(new_transformer),
       language_dataset(new_language_dataset)
 {
-    if (!Configuration::instance().is_gpu())
+    if (!transformer.is_gpu())
         throw runtime_error("TransformerDecoder requires GPU configuration.");
 
     const Index input_sequence_length   = transformer.get_input_sequence_length();
@@ -176,10 +176,12 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
     char* const base = arena.as<char>();
     source_ids_device = TensorView(base,
                                    {batch_size, input_sequence_length},
-                                   Type::FP32);
+                                   Type::FP32,
+                                   Device::CUDA);
     target_ids_device = TensorView(base + source_bytes,
                                    {batch_size, decoder_sequence_length},
-                                   Type::FP32);
+                                   Type::FP32,
+                                   Device::CUDA);
 
     forward_propagation = make_unique<ForwardPropagation>(batch_size, &transformer);
 

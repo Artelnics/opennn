@@ -113,7 +113,7 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
     const Index target_width = dataset->get_target_shape().size();
 
     const Index default_batch_size =
-        Configuration::instance().is_gpu() ? Index(256) : samples_number;
+        neural_network->is_gpu() ? Index(256) : samples_number;
     const Index current_batch_size =
         (batch_size <= 0) ? default_batch_size
                           : min<Index>(batch_size, samples_number);

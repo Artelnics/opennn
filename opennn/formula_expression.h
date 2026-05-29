@@ -50,10 +50,10 @@ struct CompiledFormula
     vector<pair<Index, float>> affine_output_terms;
     float affine_constant = 0.0f;
 
-    [[nodiscard]] float evaluate(const VectorR& inputs_row, const VectorR& outputs_row) const;
+    float evaluate(const VectorR& inputs_row, const VectorR& outputs_row) const;
 };
 
-[[nodiscard]] CompiledFormula compile_formula(const string& expression,
+CompiledFormula compile_formula(const string& expression,
                                               const vector<NamedColumn>& inputs,
                                               const vector<NamedColumn>& outputs);
 

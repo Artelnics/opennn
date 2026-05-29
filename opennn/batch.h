@@ -16,7 +16,9 @@ namespace opennn
 
 struct Batch
 {
-    Batch(const Index = 0, const Dataset* = nullptr);
+    Batch(Index,
+          const Dataset*,
+          const Configuration::Resolved&);
     ~Batch();
 
     Batch(const Batch&)            = delete;
@@ -24,7 +26,9 @@ struct Batch
     Batch(Batch&&)                 = delete;
     Batch& operator=(Batch&&)      = delete;
 
-    void set(const Index = 0, const Dataset* = nullptr);
+    void set(Index,
+             const Dataset*,
+             const Configuration::Resolved&);
 
     void fill(const vector<Index>&,
               const vector<Index>&,
@@ -35,18 +39,23 @@ struct Batch
 
     const vector<TensorView>& get_inputs() const
     {
-#ifdef OPENNN_HAS_CUDA
-        if (is_gpu()) return input_views_cache;
-#endif
+        if (uses_cuda()) return input_views_cache;
         return input_views_host_cache;
     }
 
     const TensorView& get_targets() const
     {
-#ifdef OPENNN_HAS_CUDA
-        if (is_gpu()) return target_view_cache;
-#endif
+        if (uses_cuda()) return target_view_cache;
         return target_view_host_cache;
+    }
+
+    bool uses_cuda() const
+    {
+#ifdef OPENNN_HAS_CUDA
+        return config.device == Device::CUDA;
+#else
+        return false;
+#endif
     }
 
     Index get_samples_number() const;
@@ -59,6 +68,7 @@ struct Batch
     Index current_sample_count = 0;     // set by fill(); may be < samples_number
 
     const Dataset* dataset = nullptr;
+    Configuration::Resolved config;
 
     Buffer input;
     Shape input_shape;
@@ -87,7 +97,12 @@ struct Batch
 
     void wait_h2d_complete();
 
-    Index get_input_elements() const { return samples_number * input_features_number; }
+    Index get_fp32_staging_bytes() const
+    {
+        return needs_fp32_staging
+            ? samples_number * input_features_number * Index(sizeof(float))
+            : Index(0);
+    }
 
     vector<TensorView> input_views_host_cache;
     TensorView target_view_host_cache;

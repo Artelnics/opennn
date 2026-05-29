@@ -43,9 +43,6 @@ static void merge_heads_gpu(const TensorView&, TensorView&);
 
 void pad(const TensorView& input, TensorView& output)
 {
-    if (is_gpu())
-        throw runtime_error("pad: GPU implementation not available.");
-
     const TensorMap4 input_map = input.as_tensor<4>();
     TensorMap4 output_map = output.as_tensor<4>();
 
@@ -86,7 +83,7 @@ void bound(const TensorView& input,
            const TensorView& upper_bounds,
            TensorView& output)
 {
-    IF_GPU({ bound_gpu(input, lower_bounds, upper_bounds, output); return; });
+    IF_GPU_VIEW(input, { bound_gpu(input, lower_bounds, upper_bounds, output); return; });
     bound_cpu(input, lower_bounds, upper_bounds, output);
 }
 
@@ -164,7 +161,7 @@ void scale(const TensorView& input,
            float min_range, float max_range,
            TensorView& output)
 {
-    IF_GPU({
+    IF_GPU_VIEW(input, {
         scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
                   min_range, max_range, output);
         return;
@@ -232,7 +229,7 @@ void unscale(const TensorView& input,
              float min_range, float max_range,
              TensorView& output)
 {
-    IF_GPU({
+    IF_GPU_VIEW(input, {
         unscale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
                     min_range, max_range, output);
         return;
@@ -252,7 +249,7 @@ void copy(const TensorView& source, TensorView& destination)
     if (source.size() != destination.size())
         throw runtime_error("Tensor sizes mismatch in copy operation.");
 
-    IF_GPU({ copy_gpu(source, destination); return; });
+    IF_GPU_VIEW(source, { copy_gpu(source, destination); return; });
     copy_cpu(source, destination);
 }
 
@@ -270,7 +267,7 @@ void add(const TensorView& input_1,
     if (input_1.size() != input_2.size() || input_1.size() != output.size())
         throw runtime_error("Tensor dimensions do not match.");
 
-    IF_GPU({ add_gpu(input_1, input_2, output); return; });
+    IF_GPU_VIEW(input_1, { add_gpu(input_1, input_2, output); return; });
     add_cpu(input_1, input_2, output);
 }
 
@@ -309,7 +306,7 @@ void multiply(const TensorView& input_a, bool transpose_a,
               TensorView& output,
               float alpha, float beta)
 {
-    IF_GPU({ multiply_gpu(input_a, transpose_a, input_b, transpose_b, output, alpha, beta); return; });
+    IF_GPU_VIEW(input_a, { multiply_gpu(input_a, transpose_a, input_b, transpose_b, output, alpha, beta); return; });
     multiply_cpu(input_a, transpose_a, input_b, transpose_b, output, alpha, beta);
 }
 
@@ -331,7 +328,7 @@ void softmax(TensorView& output)
 {
     if (output.empty()) return;
 
-    IF_GPU({ softmax_gpu(output); return; });
+    IF_GPU_VIEW(output, { softmax_gpu(output); return; });
     softmax_cpu(output);
 }
 
@@ -385,7 +382,7 @@ void activation_forward(TensorView& output, ActivationFunction function)
     if (function == ActivationFunction::Identity || output.empty()) return;
     if (function == ActivationFunction::Softmax) { softmax(output); return; }
 
-    IF_GPU({ activation_forward_gpu(output, function); return; });
+    IF_GPU_VIEW(output, { activation_forward_gpu(output, function); return; });
     activation_forward_cpu(output, function);
 }
 
@@ -395,7 +392,7 @@ void activation_backward(const TensorView& outputs, TensorView& delta, Activatio
         || function == ActivationFunction::Softmax
         || outputs.empty()) return;
 
-    IF_GPU({ activation_backward_gpu(outputs, delta, function); return; });
+    IF_GPU_VIEW(outputs, { activation_backward_gpu(outputs, delta, function); return; });
     activation_backward_cpu(outputs, delta, function);
 }
 
@@ -427,14 +424,14 @@ static void dropout_backward_cpu(TensorView& delta, const Buffer& mask)
 void dropout_forward(TensorView& output, Buffer& mask, float rate)
 {
     if (rate <= 0.0f) return;
-    IF_GPU({ dropout_forward_gpu(output, mask, rate); return; });
+    IF_GPU_VIEW(output, { dropout_forward_gpu(output, mask, rate); return; });
     dropout_forward_cpu(output, mask, rate);
 }
 
 void dropout_backward(TensorView& delta, const Buffer& mask, float rate)
 {
     if (rate <= 0.0f) return;
-    IF_GPU({ dropout_backward_gpu(delta, mask, rate); return; });
+    IF_GPU_VIEW(delta, { dropout_backward_gpu(delta, mask, rate); return; });
     dropout_backward_cpu(delta, mask);
 }
 
@@ -467,7 +464,7 @@ static void linear_backward_cpu(const TensorView& output_delta, const TensorView
 void linear_forward(const TensorView& input, const TensorView& weights, const TensorView& bias,
                     TensorView& output, cublasLtEpilogue_t epilogue)
 {
-    IF_GPU({ linear_forward_gpu(input, weights, bias, output, epilogue); return; });
+    IF_GPU_VIEW(input, { linear_forward_gpu(input, weights, bias, output, epilogue); return; });
     linear_forward_cpu(input, weights, bias, output, epilogue);
 }
 
@@ -475,7 +472,7 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
                      const TensorView& weight_gradient, const TensorView& bias_gradient,
                      TensorView& input_delta, bool accumulate_input_delta)
 {
-    IF_GPU({
+    IF_GPU_VIEW(output_delta, {
         linear_backward_gpu(output_delta, input, weights, weight_gradient, bias_gradient,
                             input_delta, accumulate_input_delta);
         return;
@@ -588,7 +585,7 @@ void layer_norm_forward(const TensorView& input, const TensorView& gamma, const 
                         TensorView& means, TensorView& standard_deviations,
                         TensorView& normalized, TensorView& output)
 {
-    IF_GPU({ layer_norm_forward_gpu(input, gamma, beta, means, standard_deviations, output); return; });
+    IF_GPU_VIEW(input, { layer_norm_forward_gpu(input, gamma, beta, means, standard_deviations, output); return; });
     layer_norm_forward_cpu(input, gamma, beta, means, standard_deviations, normalized, output);
 }
 
@@ -598,7 +595,7 @@ void layer_norm_backward(const TensorView& input, const TensorView& output_delta
                          const TensorView& gamma_gradient, const TensorView& beta_gradient,
                          TensorView& input_delta)
 {
-    IF_GPU({
+    IF_GPU_VIEW(input, {
         layer_norm_backward_gpu(input, output_delta, means, standard_deviations, gamma,
                                 gamma_gradient, beta_gradient, input_delta);
         return;
@@ -678,7 +675,7 @@ void embedding_lookup_forward(const TensorView& indices, const TensorView& weigh
                               Index sequence_length, Index embedding_dimension, Index vocabulary_size,
                               bool scale_embedding, bool add_positional_encoding)
 {
-    IF_GPU({
+    IF_GPU_VIEW(output, {
         embedding_lookup_forward_gpu(indices, weights, positional_encoding, output,
                                      sequence_length, embedding_dimension, vocabulary_size,
                                      scale_embedding, add_positional_encoding);
@@ -694,7 +691,7 @@ void embedding_lookup_backward(const TensorView& indices, const TensorView& outp
                                Index embedding_dimension, Index vocabulary_size,
                                bool scale_embedding)
 {
-    IF_GPU({
+    IF_GPU_VIEW(output_delta, {
         embedding_lookup_backward_gpu(indices, output_delta, weight_gradient,
                                       embedding_dimension, vocabulary_size, scale_embedding);
         return;
@@ -732,7 +729,7 @@ static void max_pooling_3d_forward_cpu(const TensorView& input, TensorView& outp
 
 void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training)
 {
-    IF_GPU({ max_pooling_3d_forward_gpu(input, output, maximal_indices, is_training); return; });
+    IF_GPU_VIEW(input, { max_pooling_3d_forward_gpu(input, output, maximal_indices, is_training); return; });
     max_pooling_3d_forward_cpu(input, output, maximal_indices, is_training);
 }
 
@@ -759,7 +756,7 @@ static void average_pooling_3d_forward_cpu(const TensorView& input, TensorView& 
 
 void average_pooling_3d_forward(const TensorView& input, TensorView& output)
 {
-    IF_GPU({ average_pooling_3d_forward_gpu(input, output); return; });
+    IF_GPU_VIEW(input, { average_pooling_3d_forward_gpu(input, output); return; });
     average_pooling_3d_forward_cpu(input, output);
 }
 
@@ -783,7 +780,7 @@ static void max_pooling_3d_backward_cpu(const TensorView& maximal_indices, const
 
 void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta)
 {
-    IF_GPU({ max_pooling_3d_backward_gpu(maximal_indices, output_delta, input_delta); return; });
+    IF_GPU_VIEW(output_delta, { max_pooling_3d_backward_gpu(maximal_indices, output_delta, input_delta); return; });
     max_pooling_3d_backward_cpu(maximal_indices, output_delta, input_delta);
 }
 
@@ -822,7 +819,7 @@ void average_pooling_3d_backward(const TensorView& input,
                                  const TensorView& output_delta,
                                  TensorView& input_delta)
 {
-    IF_GPU({ average_pooling_3d_backward_gpu(input, output_delta, input_delta); return; });
+    IF_GPU_VIEW(output_delta, { average_pooling_3d_backward_gpu(input, output_delta, input_delta); return; });
     average_pooling_3d_backward_cpu(input, output_delta, input_delta);
 }
 
@@ -851,7 +848,7 @@ static void split_heads_cpu(const TensorView& source, TensorView& destination)
 
 void split_heads(const TensorView& source, TensorView& destination)
 {
-    IF_GPU({ split_heads_gpu(source, destination); return; });
+    IF_GPU_VIEW(source, { split_heads_gpu(source, destination); return; });
     split_heads_cpu(source, destination);
 }
 
@@ -868,7 +865,7 @@ static void merge_heads_cpu(const TensorView& source, TensorView& destination)
 
 void merge_heads(const TensorView& source, TensorView& destination)
 {
-    IF_GPU({ merge_heads_gpu(source, destination); return; });
+    IF_GPU_VIEW(source, { merge_heads_gpu(source, destination); return; });
     merge_heads_cpu(source, destination);
 }
 

@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include <condition_variable>
 #include <functional>
 #include <mutex>
+#include "batch.h"
 #include "json.h"
 #include "tensor_utilities.h"
 #include "thread_safe_queue.h"
@@ -21,47 +21,28 @@ namespace opennn
 inline constexpr float GRADIENT_NORM_EPS = 1e-6f;
 
 class Loss;
-struct Batch;
+class NeuralNetwork;
 struct Buffer;
 struct ForwardPropagation;
 struct BackPropagation;
 
 struct TrainingResults;
 
-class WorkerPool
+struct BatchFillSession
 {
-public:
-    explicit WorkerPool(int num_workers);
-    ~WorkerPool();
+    explicit BatchFillSession(Index batches_number);
 
-    WorkerPool(const WorkerPool&) = delete;
-    WorkerPool& operator=(const WorkerPool&) = delete;
+    BatchFillSession(const BatchFillSession&) = delete;
+    BatchFillSession& operator=(const BatchFillSession&) = delete;
 
-    [[nodiscard]] int size() const { return static_cast<int>(workers_.size()); }
-
-    void submit(function<void()> job);
-    void wait();
-
-    [[nodiscard]] bool has_error() const noexcept
-    {
-        return error_pending_.load(memory_order_acquire);
-    }
     void rethrow_if_error();
 
-private:
-    void worker_loop(stop_token st);
+    unique_ptr<atomic<Batch*>[]> ready;
+    vector<jthread>              workers;
 
-    vector<jthread> workers_;
-    mutex                mutex_;
-    condition_variable   cv_start_;
-    condition_variable   cv_done_;
-    function<void()>     current_job_;
-    uint64_t             generation_  = 0;
-    int                  outstanding_ = 0;
-
-    mutex               error_mutex_;
-    exception_ptr       worker_error_;
-    atomic<bool>        error_pending_{false};
+    mutex          error_mutex;
+    exception_ptr  worker_error;
+    atomic<bool>   error_pending{false};
 };
 
 #ifdef OPENNN_HAS_CUDA
@@ -158,10 +139,8 @@ protected:
 #endif
 
     void prefetch_batch(Batch& batch, Index sample_count);
-    void wait_prefetch(Batch& batch);
-    void record_batch_reuse(Batch& batch);
 
-    void sync_device();
+    void sync_device(bool on_gpu);
 
     static void clip_gradient_norm(Buffer& gradient, float max_norm);
 
@@ -170,6 +149,49 @@ protected:
     void warn_dropped_samples(Index batch_size,
                               Index samples_number,
                               const char* context) const;
+
+    struct BatchPools
+    {
+        ThreadSafeQueue<Batch*> training_empty_queue;
+        ThreadSafeQueue<Batch*> validation_empty_queue;
+
+        vector<unique_ptr<Batch>> training_pool;
+        vector<unique_ptr<Batch>> validation_pool;
+
+        bool validation_uses_training_pool = false;
+
+        ThreadSafeQueue<Batch*>& validation_queue();
+        vector<Batch*> all_batches() const;
+    };
+
+    void setup_batch_pools(BatchPools&,
+                           Dataset&,
+                           NeuralNetwork&,
+                           Index training_batch_size,
+                           Index validation_batch_size,
+                           bool has_validation);
+
+    struct WorkerProfileCounters
+    {
+        atomic<int64_t> pop_us{0};
+        atomic<int64_t> fill_us{0};
+        atomic<long> fills{0};
+    };
+
+    unique_ptr<BatchFillSession> start_batch_workers(
+        ThreadSafeQueue<Batch*>& empty_queue,
+        const vector<vector<Index>>& batches,
+        const vector<Index>& input_feature_indices,
+        const vector<Index>& decoder_feature_indices,
+        const vector<Index>& target_feature_indices,
+        bool is_training,
+        WorkerProfileCounters* profile_counters = nullptr);
+
+    Batch* wait_for_filled_batch(BatchFillSession& session, Index iteration);
+
+    int get_effective_num_workers(const NeuralNetwork&) const;
+    int get_batch_pool_size(const NeuralNetwork&) const;
+    void apply_effective_num_workers(const NeuralNetwork&);
 
     EpochStats train_epoch(bool tracks_accuracy,
                            ForwardPropagation& forward_propagation,
@@ -207,8 +229,6 @@ protected:
     string name;
 
     int num_workers = 2;
-
-    unique_ptr<WorkerPool> worker_pool;
 
     Buffer prefetch_fp32_staging{Device::CUDA};
 

@@ -522,7 +522,7 @@ struct AttentionOp : Operator
              Index query_sequence_length, Index source_sequence_length,
              bool use_causal_mask, Type compute_dtype);
 
-    static bool sdpa_supported(Type dtype);
+    static bool sdpa_supported(Type dtype, Device device);
 
     void set_dropout_rate(float rate) { dropout.set_rate(rate); }
 

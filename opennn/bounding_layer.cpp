@@ -14,7 +14,6 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "string_utilities.h"
-#include "cuda_dispatch.h"
 #include "json.h"
 
 namespace opennn
@@ -86,7 +85,7 @@ void Bounding::set_lower_bound(Index index, float new_lower_bound)
                                    index, lower_bounds.size()));
     lower_bounds[size_t(index)] = new_lower_bound;
     op_storage_dirty = true;
-    refresh_op_storage(current_device());
+    refresh_op_storage(op_storage_device);
 }
 
 void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
@@ -97,7 +96,7 @@ void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
     for (Index i = 0; i < new_lower_bounds.size(); ++i)
         lower_bounds[size_t(i)] = new_lower_bounds(i);
     op_storage_dirty = true;
-    refresh_op_storage(current_device());
+    refresh_op_storage(op_storage_device);
 }
 
 void Bounding::set_upper_bound(Index index, float new_upper_bound)
@@ -107,7 +106,7 @@ void Bounding::set_upper_bound(Index index, float new_upper_bound)
                                    index, upper_bounds.size()));
     upper_bounds[size_t(index)] = new_upper_bound;
     op_storage_dirty = true;
-    refresh_op_storage(current_device());
+    refresh_op_storage(op_storage_device);
 }
 
 void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
@@ -118,17 +117,19 @@ void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
     for (Index i = 0; i < new_upper_bounds.size(); ++i)
         upper_bounds[size_t(i)] = new_upper_bounds(i);
     op_storage_dirty = true;
-    refresh_op_storage(current_device());
+    refresh_op_storage(op_storage_device);
 }
 
-float* Bounding::link_states(float* pointer)
+float* Bounding::link_states(float* pointer, Device device)
 {
-    refresh_op_storage(current_device());
+    refresh_op_storage(device);
     return pointer;
 }
 
 void Bounding::refresh_op_storage(Device device)
 {
+    op_storage_device = device;
+
     const Index features = ssize(lower_bounds);
     const Index bytes    = 2 * features * Index(sizeof(float));
 
@@ -167,8 +168,8 @@ void Bounding::refresh_op_storage(Device device)
 
     float* const base = op_storage.as<float>();
     const Shape shape{features};
-    bound.lower = TensorView(base + 0 * features, shape, Type::FP32);
-    bound.upper = TensorView(base + 1 * features, shape, Type::FP32);
+    bound.lower = TensorView(base + 0 * features, shape, Type::FP32, device);
+    bound.upper = TensorView(base + 1 * features, shape, Type::FP32, device);
 
     op_storage_dirty = false;
 }
@@ -195,7 +196,7 @@ void Bounding::read_JSON_body(const Json* root_element)
     parse_bounds("UpperBounds", upper_bounds);
 
     op_storage_dirty = true;
-    refresh_op_storage(current_device());
+    refresh_op_storage(op_storage_device);
 }
 
 void Bounding::write_JSON_body(JsonWriter& printer) const

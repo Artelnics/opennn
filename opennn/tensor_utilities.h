@@ -17,26 +17,26 @@ namespace opennn
 
 enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax };
 
-[[nodiscard]] const EnumMap<ActivationFunction>& activation_function_map();
-[[nodiscard]] const string& activation_function_to_string(ActivationFunction function);
-[[nodiscard]] ActivationFunction activation_function_from_string(const string& name);
+const EnumMap<ActivationFunction>& activation_function_map();
+const string& activation_function_to_string(ActivationFunction function);
+ActivationFunction activation_function_from_string(const string& name);
 
 static constexpr Index ALIGN_BYTES = EIGEN_MAX_ALIGN_BYTES;
 static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(float);
 
-[[nodiscard]] inline int to_int(Index value) { return static_cast<int>(value); }
-[[nodiscard]] inline float to_type(Index value) { return static_cast<float>(value); }
+inline int to_int(Index value) { return static_cast<int>(value); }
+inline float to_type(Index value) { return static_cast<float>(value); }
 
-[[nodiscard]] inline Index align_up(Index value, Index alignment)
+inline Index align_up(Index value, Index alignment)
 {
     return value == 0 ? 0 : (value + alignment - 1) & ~(alignment - 1);
 }
 
-[[nodiscard]] inline Index get_aligned_size(Index size)     { return align_up(size,    ALIGN_ELEMENTS); }
-[[nodiscard]] inline Index get_aligned_bytes(Index n_bytes) { return align_up(n_bytes, ALIGN_BYTES); }
-[[nodiscard]] inline Index get_aligned_bytes(Index count, Type dtype) { return get_aligned_bytes(count * type_bytes(dtype)); }
+inline Index get_aligned_size(Index size)     { return align_up(size,    ALIGN_ELEMENTS); }
+inline Index get_aligned_bytes(Index n_bytes) { return align_up(n_bytes, ALIGN_BYTES); }
+inline Index get_aligned_bytes(Index count, Type dtype) { return get_aligned_bytes(count * type_bytes(dtype)); }
 
-[[nodiscard]] inline bool is_aligned(const void* ptr)
+inline bool is_aligned(const void* ptr)
 {
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
 }
@@ -78,19 +78,19 @@ struct Shape
         copy_n(first, rank, dims);
     }
 
-    [[nodiscard]] const Index* begin() const noexcept { return dims; }
-    [[nodiscard]] const Index* end()   const noexcept { return dims + rank; }
-    [[nodiscard]] const Index& operator[](size_t i) const noexcept { return dims[i]; }
+    const Index* begin() const noexcept { return dims; }
+    const Index* end()   const noexcept { return dims + rank; }
+    const Index& operator[](size_t i) const noexcept { return dims[i]; }
     Index&                     operator[](size_t i)       noexcept { return dims[i]; }
 
     Index&                     back()       { if (rank == 0) throw runtime_error("Shape::back() on empty"); return dims[rank - 1]; }
-    [[nodiscard]] const Index& back() const { if (rank == 0) throw runtime_error("Shape::back() on empty"); return dims[rank - 1]; }
+    const Index& back() const { if (rank == 0) throw runtime_error("Shape::back() on empty"); return dims[rank - 1]; }
 
-    [[nodiscard]] bool empty() const noexcept { return rank == 0; }
+    bool empty() const noexcept { return rank == 0; }
 
-    [[nodiscard]] Index dim_or_zero(size_t i) const noexcept { return i < rank ? dims[i] : Index(0); }
+    Index dim_or_zero(size_t i) const noexcept { return i < rank ? dims[i] : Index(0); }
 
-    [[nodiscard]] Index size() const noexcept
+    Index size() const noexcept
     {
         return rank == 0 ? 0 : accumulate(begin(), end(), Index(1), multiplies<>{});
     }
@@ -106,7 +106,7 @@ struct Shape
         return os;
     }
 
-    [[nodiscard]] bool operator==(const Shape& other) const noexcept
+    bool operator==(const Shape& other) const noexcept
     {
         return rank == other.rank && equal(begin(), end(), other.begin());
     }
@@ -126,43 +126,43 @@ struct TensorSpec
     Type  dtype = Type::FP32;
 };
 
-[[nodiscard]] inline Index get_aligned_size(const vector<TensorSpec>& specs)
+inline Index get_aligned_size(const vector<TensorSpec>& specs)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
         [](const auto& spec) { return get_aligned_size(spec.shape.size()); });
 }
 
-[[nodiscard]] inline Index get_aligned_size(const vector<vector<TensorSpec>>& specs)
+inline Index get_aligned_size(const vector<vector<TensorSpec>>& specs)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
         [](const auto& s) { return get_aligned_size(s); });
 }
 
-[[nodiscard]] inline Index get_aligned_bytes(const vector<TensorSpec>& specs)
+inline Index get_aligned_bytes(const vector<TensorSpec>& specs)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
         [](const auto& spec) { return get_aligned_bytes(spec.shape.size(), spec.dtype); });
 }
 
-[[nodiscard]] inline Index get_aligned_bytes(const vector<vector<TensorSpec>>& specs)
+inline Index get_aligned_bytes(const vector<vector<TensorSpec>>& specs)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
         [](const auto& s) { return get_aligned_bytes(s); });
 }
 
-[[nodiscard]] inline Index get_aligned_bytes(const vector<Shape>& shapes, Type dtype)
+inline Index get_aligned_bytes(const vector<Shape>& shapes, Type dtype)
 {
     return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
         [dtype](const Shape& s) { return get_aligned_bytes(s.size(), dtype); });
 }
 
-[[nodiscard]] inline Index get_aligned_bytes(const vector<TensorSpec>& specs, Type dtype)
+inline Index get_aligned_bytes(const vector<TensorSpec>& specs, Type dtype)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
         [dtype](const auto& spec) { return get_aligned_bytes(spec.shape.size(), dtype); });
 }
 
-[[nodiscard]] inline Index get_aligned_bytes(const vector<vector<TensorSpec>>& specs, Type dtype)
+inline Index get_aligned_bytes(const vector<vector<TensorSpec>>& specs, Type dtype)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
         [dtype](const auto& s) { return get_aligned_bytes(s, dtype); });
@@ -174,11 +174,11 @@ struct Buffer
     Index bytes = 0;
     Device device_type = Device::CPU;
 
-    template<typename T> [[nodiscard]] T*       as()       { return static_cast<T*>(data); }
-    template<typename T> [[nodiscard]] const T* as() const { return static_cast<const T*>(data); }
+    template<typename T> T*       as()       { return static_cast<T*>(data); }
+    template<typename T> const T* as() const { return static_cast<const T*>(data); }
 
-    [[nodiscard]] Index size_in_floats() const { return bytes / Index(sizeof(float)); }
-    [[nodiscard]] bool  empty() const { return bytes == 0; }
+    Index size_in_floats() const { return bytes / Index(sizeof(float)); }
+    bool  empty() const { return bytes == 0; }
 
     void resize_bytes(Index new_bytes, Device new_device_type)
     {
@@ -290,32 +290,34 @@ struct TensorView
     Shape shape;
 
     Type type = Type::FP32;
+    Device device = Device::CPU;
 
     TensorView(void* new_data = nullptr, const Shape& new_shape = {},
-               Type new_dtype = Type::FP32) noexcept
-        : data(new_data), shape(new_shape), type(new_dtype) {}
+               Type new_dtype = Type::FP32,
+               Device new_device = Device::CPU) noexcept
+        : data(new_data), shape(new_shape), type(new_dtype), device(new_device) {}
 
-    [[nodiscard]] Index get_rank() const noexcept { return shape.rank; }
+    Index get_rank() const noexcept { return shape.rank; }
 
-    [[nodiscard]] Index size() const noexcept { return shape.size(); }
+    Index size() const noexcept { return shape.size(); }
 
-    [[nodiscard]] Index byte_size() const noexcept { return size() * type_bytes(type); }
+    Index byte_size() const noexcept { return size() * type_bytes(type); }
 
-    [[nodiscard]] bool empty() const noexcept { return shape.empty(); }
+    bool empty() const noexcept { return shape.empty(); }
 
     template<typename T>
-    [[nodiscard]] T* as() const noexcept
+    T* as() const noexcept
     {
         assert(data);
         return reinterpret_cast<T*>(data);
     }
 
-    [[nodiscard]] float* as_float() const noexcept
+    float* as_float() const noexcept
     {
         return reinterpret_cast<float*>(data);
     }
 
-    [[nodiscard]] cudaDataType_t cuda_dtype() const noexcept { return to_cuda(type); }
+    cudaDataType_t cuda_dtype() const noexcept { return to_cuda(type); }
 
     template<typename F>
     void dispatch(F&& fn) const
@@ -326,16 +328,16 @@ struct TensorView
         });
     }
 
-    [[nodiscard]] TensorView reshape(const Shape& new_shape) const
-    { return TensorView(data, new_shape, type); }
+    TensorView reshape(const Shape& new_shape) const
+    { return TensorView(data, new_shape, type, device); }
 
-    [[nodiscard]] MatrixMap as_matrix() const
+    MatrixMap as_matrix() const
     {
         assert(shape.rank >= 2);
         return MatrixMap(as<float>(), shape[0], shape.size() / shape[0]);
     }
 
-    [[nodiscard]] MatrixMap as_matrix(Index batch_index) const
+    MatrixMap as_matrix(Index batch_index) const
     {
         assert(shape.rank >= 2);
         const Index rows = shape[shape.rank - 2];
@@ -343,14 +345,14 @@ struct TensorView
         return MatrixMap(as<float>() + batch_index * rows * cols, rows, cols);
     }
 
-    [[nodiscard]] MatrixMap as_flat_matrix() const
+    MatrixMap as_flat_matrix() const
     {
         assert(shape.rank >= 1);
         const Index cols = shape[shape.rank - 1];
         return MatrixMap(as<float>(), shape.size() / cols, cols);
     }
 
-    [[nodiscard]] MatrixMap as_flat_matrix(Index batch_index) const
+    MatrixMap as_flat_matrix(Index batch_index) const
     {
         assert(shape.rank >= 2);
         const Index cols = shape[shape.rank - 1];
@@ -358,13 +360,13 @@ struct TensorView
         return MatrixMap(as<float>() + batch_index * rows * cols, rows, cols);
     }
 
-    [[nodiscard]] VectorMap as_vector() const
+    VectorMap as_vector() const
     {
         return VectorMap(as<float>(), shape.size());
     }
 
     template<int Rank>
-    [[nodiscard]] TensorMapR<Rank> as_tensor() const
+    TensorMapR<Rank> as_tensor() const
     {
         assert(shape.rank == Rank);
         Eigen::array<Index, Rank> dims;
@@ -373,7 +375,7 @@ struct TensorView
     }
 
     template<int Rank>
-    [[nodiscard]] TensorMapR<Rank> as_tensor(Index batch_index) const
+    TensorMapR<Rank> as_tensor(Index batch_index) const
     {
         assert(shape.rank == Rank + 1);
         Eigen::array<Index, Rank> dims;
@@ -445,11 +447,11 @@ inline TensorView& view_at_slot_or(vector<vector<TensorView>>& views,
 template<typename T, size_t N>
 using array = Eigen::array<T, N>;
 
-[[nodiscard]] string shape_to_string(const Shape&, const string& = " ");
-[[nodiscard]] Shape string_to_shape(const string&, const string& = " ");
+string shape_to_string(const Shape&, const string& = " ");
+Shape string_to_shape(const string&, const string& = " ");
 
 template<typename... Vs>
-[[nodiscard]] size_t hash_combine(const Vs&... values)
+size_t hash_combine(const Vs&... values)
 {
     size_t h = 0;
     ((h ^= hash<Vs>{}(values) + 0x9e3779b9 + (h << 6) + (h >> 2)), ...);
@@ -488,8 +490,8 @@ struct CudaStream
         if (handle) { cudaStreamDestroy(handle); handle = nullptr; }
     }
 
-    [[nodiscard]] operator cudaStream_t() const noexcept { return handle; }
-    [[nodiscard]] explicit operator bool()  const noexcept { return handle != nullptr; }
+    operator cudaStream_t() const noexcept { return handle; }
+    explicit operator bool()  const noexcept { return handle != nullptr; }
 };
 
 // RAII wrapper around cudaEvent_t. Same rationale as CudaStream.
@@ -523,8 +525,8 @@ struct CudaEvent
         if (handle) { cudaEventDestroy(handle); handle = nullptr; }
     }
 
-    [[nodiscard]] operator cudaEvent_t() const noexcept { return handle; }
-    [[nodiscard]] explicit operator bool() const noexcept { return handle != nullptr; }
+    operator cudaEvent_t() const noexcept { return handle; }
+    explicit operator bool() const noexcept { return handle != nullptr; }
 };
 
 #endif // OPENNN_HAS_CUDA

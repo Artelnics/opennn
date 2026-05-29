@@ -13,45 +13,45 @@
 namespace opennn
 {
 
-    [[nodiscard]] vector<string> get_tokens(const string&, const string&);
+    vector<string> get_tokens(const string&, const string&);
 
-    [[nodiscard]] vector<string_view> get_token_views(string_view, char);
+    vector<string_view> get_token_views(string_view, char);
 
-    [[nodiscard]] string_view trim_view(string_view);
+    string_view trim_view(string_view);
 
-    [[nodiscard]] vector<string> tokenize(const string&);
+    vector<string> tokenize(const string&);
 
-    [[nodiscard]] vector<string_view> tokenize_views(string_view);
+    vector<string_view> tokenize_views(string_view);
 
-    [[nodiscard]] vector<string> convert_string_vector(const vector<vector<string>>&, const string&);
+    vector<string> convert_string_vector(const vector<vector<string>>&, const string&);
 
-    [[nodiscard]] bool is_numeric_string(string_view);
-    [[nodiscard]] bool is_date_time_string(string_view);
+    bool is_numeric_string(string_view);
+    bool is_date_time_string(string_view);
 
     enum DateFormat {AUTO, DMY, MDY, YMD};
 
-    [[nodiscard]] time_t date_to_timestamp(const string&, Index = 0, const DateFormat& format = AUTO);
+    time_t date_to_timestamp(const string&, Index = 0, const DateFormat& format = AUTO);
 
     void replace_all_appearances(string&, const string&, const string&);
     void replace_all_word_appearances(string&, const string&, const string&);
 
-    [[nodiscard]] string get_trimmed(const string&);
+    string get_trimmed(const string&);
 
-    [[nodiscard]] bool has_numbers(const vector<string>&);
-    [[nodiscard]] bool has_numbers(const vector<string_view>&);
+    bool has_numbers(const vector<string>&);
+    bool has_numbers(const vector<string_view>&);
 
     void replace(string&, const string&, const string&);
 
     void display_progress_bar(int, int);
 
-    [[nodiscard]] string get_time(float);
+    string get_time(float);
 
-    [[nodiscard]] string get_first_word(const string&);
+    string get_first_word(const string&);
 
     // Vector/tensor string conversion
 
     template <typename T>
-    [[nodiscard]] string vector_to_string(const vector<T>& values, const string& separator = " ")
+    string vector_to_string(const vector<T>& values, const string& separator = " ")
     {
         ostringstream buffer;
 
@@ -66,7 +66,7 @@ namespace opennn
     }
 
     template <typename Derived>
-    [[nodiscard]] inline string vector_to_string(const Eigen::DenseBase<Derived>& values, const string& separator = " ")
+    inline string vector_to_string(const Eigen::DenseBase<Derived>& values, const string& separator = " ")
     {
         ostringstream buffer;
         for (Index i = 0; i < values.size(); ++i) buffer << values(i) << separator;
@@ -76,7 +76,7 @@ namespace opennn
     void string_to_vector(const string& input, VectorR& values);
 
     template <typename T, size_t Rank>
-    [[nodiscard]] string tensor_to_string(const TensorR<Rank>& values, const string& separator = " ")
+    string tensor_to_string(const TensorR<Rank>& values, const string& separator = " ")
     {
         ostringstream buffer;
 
@@ -97,8 +97,8 @@ namespace opennn
             values(i++) = value;
     }
 
-    [[nodiscard]] bool contains(const vector<string>&, const string&);
-    [[nodiscard]] bool contains(const vector<string>&, string_view);
+    bool contains(const vector<string>&, const string&);
+    bool contains(const vector<string>&, string_view);
 }
 
 // OpenNN: Open Neural Networks Library.

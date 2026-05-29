@@ -1136,7 +1136,7 @@ TEST(Dataset, BatchFill)
     vector<Index> target_variables_indices;
     target_variables_indices.push_back(2);
 
-    Batch batch(samples_number, &dataset);
+    Batch batch(samples_number, &dataset, Configuration::Resolved{});
     batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
     // Datos esperados

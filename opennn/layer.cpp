@@ -60,7 +60,8 @@ Index Layer::get_parameters_number() const
 
 float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
                                       vector<TensorSpec> (Operator::*specs_fn)() const,
-                                      void (Operator::*link_fn)(span<const TensorView>))
+                                      void (Operator::*link_fn)(span<const TensorView>),
+                                      Device device)
 {
     views.clear();
 
@@ -78,7 +79,7 @@ float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
             if (!is_aligned(pointer))
                 throw runtime_error(format("Layer::link_views_to_operators: unaligned memory in layer \"{}\"", get_name()));
 
-            views.emplace_back(pointer, shape, Type::FP32);
+            views.emplace_back(pointer, shape, Type::FP32, device);
             pointer += get_aligned_size(shape.size());
         }
 
@@ -88,18 +89,20 @@ float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
     return pointer;
 }
 
-float* Layer::link_states(float* pointer)
+float* Layer::link_states(float* pointer, Device device)
 {
     return link_views_to_operators(states, pointer,
                                    &Operator::state_specs,
-                                   &Operator::link_states);
+                                   &Operator::link_states,
+                                   device);
 }
 
-float* Layer::link_gradients(float* pointer, vector<TensorView>& gradient_views)
+float* Layer::link_gradients(float* pointer, vector<TensorView>& gradient_views, Device device)
 {
     return link_views_to_operators(gradient_views, pointer,
                                    &Operator::parameter_specs,
-                                   &Operator::link_gradients);
+                                   &Operator::link_gradients,
+                                   device);
 }
 
 void Layer::set_input_shape(const Shape&)
