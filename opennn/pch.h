@@ -124,8 +124,6 @@ template <typename T>
 void check_cuda_status(T status, const char* msg,
                        std::source_location loc = std::source_location::current())
 {
-    // `using namespace std;` is declared below this point in pch.h so std::
-    // qualifications are required here.
     if (status != 0)
         throw std::runtime_error(std::string(msg) + " Error: " + std::to_string(static_cast<int>(status)) +
                                  " in " + loc.file_name() + ":" + std::to_string(loc.line()));

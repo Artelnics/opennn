@@ -93,20 +93,14 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         throw runtime_error("StochasticGradientDescent::update_parameters: velocity buffer is not initialized.");
 
 #ifdef OPENNN_HAS_CUDA
-    if (is_gpu())
+    if (neural_network->is_gpu())
     {
-        // Single-stream model: the backward kernels that wrote gradient and
-        // sgd_update_cuda both run on Backend::get_compute_stream(), so FIFO
-        // ordering already guarantees the update sees the fresh gradient. No
-        // explicit drain needed here.
         const Index parameters_number = neural_network->get_parameters_size();
 
         float* const velocity_ptr = optimization_data.views.empty()
             ? nullptr
             : optimization_data.views[Velocity].as<float>();
 
-        // BF16 mirror (if allocated) is refreshed inside the same kernel —
-        // saves a separate FP32→BF16 cast pass over the whole parameter set.
         PROFILE_SCOPE("optim:sgd_update_cuda");
         sgd_update_cuda(
             parameters_number,
@@ -161,7 +155,8 @@ TrainingResults StochasticGradientDescent::train()
     if (!loss || !loss->get_neural_network() || !loss->get_dataset())
         return results;
 
-    const bool on_gpu = is_gpu();
+    NeuralNetwork* neural_network = loss->get_neural_network();
+    const bool on_gpu = neural_network->is_gpu();
 
     if (display) cout << "Training with stochastic gradient descent (SGD)"
                      << (on_gpu ? " CUDA" : "") << "...\n";
@@ -205,37 +200,17 @@ TrainingResults StochasticGradientDescent::train()
 
     // Neural network
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
-
     set_names();
     set_scaling();
 
-    const int pool_size = on_gpu ? max(num_workers + 1, 3) : 1;
+    BatchPools batch_pools;
+    setup_batch_pools(batch_pools,
+                      *dataset,
+                      *neural_network,
+                      training_batch_size,
+                      validation_batch_size,
+                      has_validation);
 
-    ThreadSafeQueue<Batch*> empty_training_queue;
-    vector<unique_ptr<Batch>> training_batch_pool;
-
-    for (int i = 0; i < pool_size; ++i)
-    {
-        training_batch_pool.push_back(make_unique<Batch>(training_batch_size, dataset));
-        empty_training_queue.push(training_batch_pool.back().get());
-    }
-
-    ThreadSafeQueue<Batch*> empty_validation_queue;
-    vector<unique_ptr<Batch>> validation_batch_pool;
-
-    const bool share_batch_pool = has_validation && validation_batch_size == training_batch_size;
-
-    if (has_validation && !share_batch_pool)
-    {
-        for (int i = 0; i < pool_size; ++i)
-        {
-            validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
-            empty_validation_queue.push(validation_batch_pool.back().get());
-        }
-    }
-
-    ThreadSafeQueue<Batch*>& validation_empty_q = share_batch_pool ? empty_training_queue : empty_validation_queue;
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
 
     loss->set_normalization_coefficient();
@@ -251,20 +226,15 @@ TrainingResults StochasticGradientDescent::train()
         ? validation_forward_propagation.get()
         : nullptr;
 
-    vector<Batch*> all_batches;
-    all_batches.reserve(training_batch_pool.size() + validation_batch_pool.size());
-    for (auto& b : training_batch_pool)   all_batches.push_back(b.get());
-    for (auto& b : validation_batch_pool) all_batches.push_back(b.get());
+    const vector<Batch*> all_batches = batch_pools.all_batches();
     setup_device_training(all_batches);
 
     // Optimization data
 
     const Index parameters_number = loss->get_neural_network()->get_parameters_size();
-    const Device device = current_device();
-
     OptimizerData optimization_data;
     if (momentum > 0.0f)
-        optimization_data.set({Shape{parameters_number}}, device);
+        optimization_data.set({Shape{parameters_number}}, neural_network->get_device());
 
     optimization_data.iteration = 1;
 
@@ -274,9 +244,6 @@ TrainingResults StochasticGradientDescent::train()
     float validation_accuracy = 0.0f;
     Index validation_failures = 0;
 
-    // True for sequence/token-level cross-entropy losses (translation, language
-    // modelling, chat). Gates the per-token metrics (accuracy + perplexity)
-    // and the per-batch token-count plumbing in train_epoch / evaluate_epoch.
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
     bool stop_training = false;
@@ -305,7 +272,7 @@ TrainingResults StochasticGradientDescent::train()
         const EpochStats train_stats = train_epoch(is_token_cross_entropy,
                                                    training_forward_propagation,
                                                    training_back_propagation,
-                                                   empty_training_queue,
+                                                   batch_pools.training_empty_queue,
                                                    training_batches,
                                                    input_feature_indices,
                                                    decoder_feature_indices,
@@ -323,7 +290,7 @@ TrainingResults StochasticGradientDescent::train()
 
             const EpochStats val_stats = evaluate_epoch(is_token_cross_entropy,
                                                         *validation_fp,
-                                                        validation_empty_q,
+                                                        batch_pools.validation_queue(),
                                                         validation_batches,
                                                         input_feature_indices,
                                                         decoder_feature_indices,

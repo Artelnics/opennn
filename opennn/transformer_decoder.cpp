@@ -138,7 +138,7 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
     : transformer(new_transformer),
       language_dataset(new_language_dataset)
 {
-    if (!Configuration::instance().is_gpu())
+    if (!transformer.is_gpu())
         throw runtime_error("TransformerDecoder requires GPU configuration.");
 
     const Index input_sequence_length   = transformer.get_input_sequence_length();
@@ -176,10 +176,12 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
     char* const base = arena.as<char>();
     source_ids_device = TensorView(base,
                                    {batch_size, input_sequence_length},
-                                   Type::FP32);
+                                   Type::FP32,
+                                   Device::CUDA);
     target_ids_device = TensorView(base + source_bytes,
                                    {batch_size, decoder_sequence_length},
-                                   Type::FP32);
+                                   Type::FP32,
+                                   Device::CUDA);
 
     forward_propagation = make_unique<ForwardPropagation>(batch_size, &transformer);
 
@@ -252,7 +254,6 @@ void TransformerDecoder::reset_per_prompt_state()
     history.clear();
 
 #ifdef OPENNN_HAS_CUDA
-    // One full H2D per prompt; subsequent steps update only the new token slot.
     const Index decoder_sequence_length = transformer.get_decoder_sequence_length();
     constexpr Index batch_size = 1;
     cudaStream_t stream = Backend::get_compute_stream();
@@ -438,7 +439,6 @@ string TransformerDecoder::decode_to_stream(const string& source,
 
     return decode(source, config, [&](const string& token)
     {
-        // Single-char punctuation never gets a leading space.
         const bool is_punctuation = token.size() == 1
             && string(",.!?;:").find(token[0]) != string::npos;
 

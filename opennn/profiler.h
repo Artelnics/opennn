@@ -104,8 +104,6 @@ public:
 #define OPENNN_PROFILE_CAT_INNER(a, b) a##b
 #define OPENNN_PROFILE_CAT(a, b)       OPENNN_PROFILE_CAT_INNER(a, b)
 
-// The ternary short-circuits: when profiling is disabled, the `name` expression
-// is not evaluated and no string is built. The empty-string fallback is cheap.
 #define PROFILE_SCOPE_IMPL(name, sync) \
     ::opennn::ScopedTimer OPENNN_PROFILE_CAT(_profile_, __LINE__)( \
         ::opennn::enabled() ? string(name) : string{}, sync)

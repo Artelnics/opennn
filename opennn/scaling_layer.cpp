@@ -11,7 +11,6 @@
 #include "math_utilities.h"
 #include "forward_propagation.h"
 #include "string_utilities.h"
-#include "cuda_dispatch.h"
 #include "json.h"
 
 namespace opennn
@@ -49,10 +48,6 @@ void Scaling::set(const Shape& new_input_shape)
 
     set_label("scaling_layer");
 
-    // For rank-1 inputs (tabular per-sample), features == shape[0] == size().
-    // For rank-2 (time-series per-sample: time × feature) and rank-3 (image:
-    // H × W × C), the feature axis is the LAST one; using shape.size() would
-    // create one descriptive per element instead of per feature.
     const Index features = input_shape.empty() ? 0 : input_shape.back();
     descriptives.assign(size_t(features), Descriptives(-1.0f, 1.0f, 0.0f, 1.0f));
     scalers.assign(size_t(features), ScalerMethod::MeanStandardDeviation);
@@ -77,7 +72,7 @@ void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
                                    descriptives.size(), new_descriptives.size()));
     descriptives = new_descriptives;
     op_storage_dirty = true;
-    refresh_op_storage(current_device());
+    refresh_op_storage(op_storage_device);
 }
 
 void Scaling::set_min_max_range(float new_min, float new_max)
@@ -95,7 +90,7 @@ void Scaling::set_scalers(const vector<string>& scalers_str)
                                    scalers.size(), scalers_str.size()));
     ranges::transform(scalers_str, scalers.begin(), string_to_scaler_method);
     op_storage_dirty = true;
-    refresh_op_storage(current_device());
+    refresh_op_storage(op_storage_device);
 }
 
 void Scaling::set_scalers(const string& scaler)
@@ -103,17 +98,19 @@ void Scaling::set_scalers(const string& scaler)
     const ScalerMethod method = string_to_scaler_method(scaler);
     ranges::fill(scalers, method);
     op_storage_dirty = true;
-    refresh_op_storage(current_device());
+    refresh_op_storage(op_storage_device);
 }
 
-float* Scaling::link_states(float* pointer)
+float* Scaling::link_states(float* pointer, Device device)
 {
-    refresh_op_storage(current_device());
+    refresh_op_storage(device);
     return pointer;
 }
 
 void Scaling::refresh_op_storage(Device device)
 {
+    op_storage_device = device;
+
     const Index features = ssize(descriptives);
     const Index bytes    = 5 * features * Index(sizeof(float));
 
@@ -158,11 +155,11 @@ void Scaling::refresh_op_storage(Device device)
 
     float* const base = op_storage.as<float>();
     const Shape shape{features};
-    scale_op.minimums            = TensorView(base + 0 * features, shape, Type::FP32);
-    scale_op.maximums            = TensorView(base + 1 * features, shape, Type::FP32);
-    scale_op.means               = TensorView(base + 2 * features, shape, Type::FP32);
-    scale_op.standard_deviations = TensorView(base + 3 * features, shape, Type::FP32);
-    scale_op.scalers             = TensorView(base + 4 * features, shape, Type::FP32);
+    scale_op.minimums            = TensorView(base + 0 * features, shape, Type::FP32, device);
+    scale_op.maximums            = TensorView(base + 1 * features, shape, Type::FP32, device);
+    scale_op.means               = TensorView(base + 2 * features, shape, Type::FP32, device);
+    scale_op.standard_deviations = TensorView(base + 3 * features, shape, Type::FP32, device);
+    scale_op.scalers             = TensorView(base + 4 * features, shape, Type::FP32, device);
 
     op_storage_dirty = false;
 }
@@ -204,7 +201,7 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
         max_range = float(stof(read_json_string(scaling_layer_element, "MaxRange")));
 
     op_storage_dirty = true;
-    refresh_op_storage(current_device());
+    refresh_op_storage(op_storage_device);
 }
 
 void Scaling::write_JSON_body(JsonWriter& printer) const
@@ -253,20 +250,30 @@ string Scaling::write_expression(const vector<string>& input_names,
         case None:
             buffer << "scaled_" << input_names[i] << " = " << input_names[i] << ";\n";
             break;
+
         case MinimumMaximum:
-            buffer << "scaled_" << input_names[i]
-                   << " = " << input_names[i] << "*(" << max_range << "-" << min_range << ")/("
-                   << d.maximum << "-(" << d.minimum << "))-" << d.minimum << "*("
-                   << max_range << "-" << min_range << ")/("
-                   << d.maximum << "-" << d.minimum << ")+" << min_range << ";\n";
+            if (d.maximum - d.minimum < EPSILON)
+                buffer << "scaled_" << input_names[i] << " = 0;\n";
+            else
+                buffer << "scaled_" << input_names[i]
+                       << " = " << input_names[i] << "*(" << max_range << "-" << min_range << ")/("
+                       << d.maximum << "-(" << d.minimum << "))-" << d.minimum << "*("
+                       << max_range << "-" << min_range << ")/("
+                       << d.maximum << "-" << d.minimum << ")+" << min_range << ";\n";
             break;
         case MeanStandardDeviation:
-            buffer << "scaled_" << input_names[i] << " = (" << input_names[i] << "-"
-                   << d.mean << ")/" << d.standard_deviation << ";\n";
+            if (d.standard_deviation > EPSILON)
+                buffer << "scaled_" << input_names[i] << " = (" << input_names[i] << "-"
+                       << d.mean << ")/" << d.standard_deviation << ";\n";
+            else
+                buffer << "scaled_" << input_names[i] << " = 0;\n";
             break;
         case StandardDeviation:
-            buffer << "scaled_" << input_names[i] << " = " << input_names[i]
-                   << "/(" << d.standard_deviation << ");\n";
+            if (d.standard_deviation > EPSILON)
+                buffer << "scaled_" << input_names[i] << " = " << input_names[i]
+                       << "/(" << d.standard_deviation << ");\n";
+            else
+                buffer << "scaled_" << input_names[i] << " = 0;\n";
             break;
         case Logarithm:
             buffer << "scaled_" << input_names[i] << " = log(" << input_names[i] << ");\n";

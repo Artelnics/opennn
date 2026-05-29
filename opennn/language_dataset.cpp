@@ -88,7 +88,6 @@ VectorI LanguageDataset::calculate_target_distribution() const
     Index positives = 0;
     Index negatives = 0;
 
-    // Read first target token of each sample from the binary.
     for (Index sample = 0; sample < samples_number; ++sample)
     {
         const auto& off = offsets_table[size_t(sample)];
@@ -146,7 +145,6 @@ void LanguageDataset::read_txt()
 
     cache_path = filesystem::path(data_path.string() + ".cache") / "tokens.bin";
 
-    // Always tokenize the txt to build vocabularies (cheap) and learn layout.
     string buffer;
     vector<vector<string_view>> input_document_tokens;
     vector<vector<string_view>> target_document_tokens;
@@ -243,7 +241,6 @@ void LanguageDataset::read_txt()
         target_shape = { get_maximum_target_sequence_length() };
     }
 
-    // Try to skip re-tokenization if the cache matches our current vocab layout.
     if (!try_load_binary_cache(samples_number))
     {
         vector<vector<Index>> in_idx;
@@ -426,7 +423,6 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_data_path(read_json_string(data_source_element, "Path"));
 
-    // Legacy: "Streaming" key may exist in old JSONs — read and discard.
     if (data_source_element->has("Streaming"))
         (void)read_json_bool(data_source_element, "Streaming");
 
@@ -559,7 +555,6 @@ void LanguageDataset::write_binary_cache(const vector<vector<Index>>& in_idx,
 
     offsets_table.assign(size_t(N), array<int64_t, 4>{0, 0, 0, 0});
 
-    // Compute total token bytes.
     int64_t total_in_tokens = 0;
     int64_t total_tgt_tokens = 0;
     for (Index i = 0; i < N; ++i)
@@ -572,8 +567,6 @@ void LanguageDataset::write_binary_cache(const vector<vector<Index>>& in_idx,
         total_tgt_tokens += int64_t(tgt_idx[size_t(i)].size());
     }
 
-    // Target offsets are relative to the start of the target region, which
-    // begins after all input tokens. Patch them now.
     for (Index i = 0; i < N; ++i)
         offsets_table[size_t(i)][2] += total_in_tokens;
 
@@ -596,7 +589,6 @@ void LanguageDataset::write_binary_cache(const vector<vector<Index>>& in_idx,
     writer.write(&header, sizeof(header));
     writer.write(offsets_table.data(), offsets_table.size() * sizeof(array<int64_t, 4>));
 
-    // Inputs concatenated as int32_t.
     vector<int32_t> chunk;
     chunk.reserve(8192);
     for (const auto& v : in_idx)

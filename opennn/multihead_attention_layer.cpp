@@ -177,16 +177,12 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
 bool MultiHeadAttention::select_use_sdpa() const
 {
     if (!sdpa_auto) return false;
-    if (!AttentionOp::sdpa_supported(compute_dtype)) return false;
+    if (!AttentionOp::sdpa_supported(compute_dtype, compute_device)) return false;
 
     const Index shorter = min(query_sequence_length, source_sequence_length);
     return shorter > sdpa_min_sequence_length;
 }
 
-// NOTE: SDPA flag changes alter forward_scratch_specs/backward_specs. Call
-// these setters BEFORE NeuralNetwork::compile(), otherwise the framework's
-// scratch buffers are sized for the old policy and the next forward/backward
-// pass overruns them.
 void MultiHeadAttention::set_sdpa_auto(bool new_sdpa_auto)
 {
     sdpa_auto = new_sdpa_auto;

@@ -73,6 +73,11 @@ void Dense::configure_operators()
     activation.input_slots  = {Output};
     activation.output_slots = {Output};
 
+    const bool fuse_relu = (activation.function == ActivationOp::Function::ReLU)
+                           && !batch_norm.active();
+    combination.fuse_relu    = fuse_relu;
+    activation.forward_fused = fuse_relu;
+
     dropout.input_slots  = {Output};
     dropout.output_slots = {Output};
     dropout.save_slots   = {ActivationView};
@@ -193,9 +198,7 @@ void Dense::read_JSON_body(const Json* dense_layer_element)
 void Dense::from_JSON(const JsonDocument& document)
 {
     Layer::from_JSON(document);
-    // Operators may have flipped active/inactive flags (DropoutOp::from_JSON
-    // sets rate > 0 → active). Re-derive slots so activation_layer save-slots
-    // and dropout chaining stay consistent post-load.
+
     configure_operators();
 }
 

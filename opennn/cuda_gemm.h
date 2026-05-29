@@ -15,8 +15,6 @@ namespace opennn
 
 #ifdef OPENNN_HAS_CUDA
 
-// C and D share one layout descriptor — they always have the same shape and
-// dtype in this codebase, and cuBLASLt accepts the same layout for both.
 struct LtMatmulPlan
 {
     cublasLtMatmulDesc_t   op_desc = nullptr;
@@ -75,9 +73,6 @@ struct LtMatmulPlanKeyHash
     }
 };
 
-// Upper bound passed to cuBLASLt's heuristic search — limits which algorithms
-// are considered. The actual VRAM allocated only grows to the max workspace
-// the chosen algorithms reported they need (see ensure_cublas_lt_workspace).
 constexpr size_t cublas_lt_workspace_search_bytes() { return 32ull * 1024 * 1024; }
 
 namespace scratch
@@ -125,8 +120,6 @@ inline void run_lt_matmul(const LtMatmulPlan& plan,
                                 Backend::get_compute_stream()));
 }
 
-// CUBLAS_COMPUTE_DTYPE (= CUBLAS_COMPUTE_32F_FAST_TF32) is FP32-input only;
-// BF16 inputs require plain CUBLAS_COMPUTE_32F.
 inline cublasComputeType_t gemm_compute_type(cudaDataType_t a_type, cudaDataType_t b_type = CUDA_R_32F)
 {
     return (a_type == CUDA_R_16BF || b_type == CUDA_R_16BF)

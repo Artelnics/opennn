@@ -228,8 +228,6 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
     if (!has_png_signature(buffer))
         throw runtime_error(format("Not a PNG file: {}", path_str));
 
-    // Reset destination so callers don't have to remember the precondition.
-    // Capacity is preserved, so the thread_local buffer doesn't re-allocate.
     compressed.clear();
 
     PngHeader h;
@@ -304,8 +302,6 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
     return h;
 }
 
-// Resizes `inflated` in place and uncompresses `compressed` into it. No new
-// allocation if the thread_local buffer is already large enough.
 void inflate_png_data_into(const vector<uint8_t>& compressed,
                             const PngHeader& h,
                             vector<uint8_t>& inflated,
@@ -324,8 +320,6 @@ void inflate_png_data_into(const vector<uint8_t>& compressed,
         throw runtime_error(format("Cannot decompress PNG image: {}", path_str));
 }
 
-// Resizes `unfiltered` in place and applies PNG row filters from `inflated`.
-// No new allocation if the thread_local buffer is already large enough.
 void unfilter_png_rows_into(const vector<uint8_t>& inflated,
                              const PngHeader& h,
                              vector<uint8_t>& unfiltered,
@@ -364,11 +358,6 @@ void unfilter_png_rows_into(const vector<uint8_t>& inflated,
     }
 }
 
-// Orchestrates PNG decode: takes the already-parsed header + IDAT-concatenated
-// `compressed`, inflates and unfilters into thread_local scratch, and writes
-// the result as floats into `dst` (length h.height*h.width*h.channels).
-// Symmetric with decode_bmp_pixels — no heap allocations on the steady state
-// because inflated/unfiltered keep their capacity across calls.
 void decode_png_pixels(const PngHeader& h,
                        const vector<uint8_t>& compressed,
                        float* dst,
@@ -454,8 +443,6 @@ bool has_jpeg_signature(const vector<uint8_t>& buffer)
     return buffer.size() >= 3 && buffer[0] == 0xFF && buffer[1] == 0xD8 && buffer[2] == 0xFF;
 }
 
-// Decode JPEG bytes in `buffer` into `dst` as interleaved HWC.
-// `dst` must hold height*width*channels floats (sized by caller from JpegHeader).
 JpegHeader decode_jpeg_pixels(const vector<uint8_t>& buffer,
                               float* dst,
                               bool divide_by_255,
@@ -549,7 +536,6 @@ Tensor3 load_image(const filesystem::path& path)
 
     if (has_jpeg_signature(buffer))
     {
-        // Two-pass: peek header to size the tensor, then decode in place.
         jpeg_decompress_struct cinfo{};
         JpegErrorManager err{};
         cinfo.err = jpeg_std_error(&err.pub);
@@ -656,7 +642,6 @@ void load_image(const filesystem::path& path,
     if (!has_jpeg_signature(buffer))
         throw runtime_error(format("Unsupported image file: {}", path.string()));
 
-    // JPEG: decode into a temp at native size, then resize/scale to match expectations.
     Index jh = 0, jw = 0, jc = 0;
     {
         jpeg_decompress_struct cinfo{};

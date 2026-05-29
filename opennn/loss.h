@@ -92,9 +92,6 @@ public:
 
     void set_normalization_coefficient();
 
-    // Result of calculate_error. accuracy and active_tokens_count are only
-    // meaningful for classification losses (CrossEntropy3d sets both;
-    // CrossEntropy with binary/multi-class leaves them at zero).
     struct EvaluationResult
     {
         float error = 0.0f;
@@ -179,9 +176,6 @@ protected:
     float minkowski_parameter = 1.5f;
 
 #ifdef OPENNN_HAS_CUDA
-    // Reduction workspace for cublasSasum/cudaMemcpy used by the loss kernels.
-    // mutable because calculate_error grows it lazily on the first call; the
-    // method's logical contract is still const (no observable state changes).
     mutable Buffer errors_device{Device::CUDA};
     mutable Buffer metric_results_device{Device::CUDA};
 #endif

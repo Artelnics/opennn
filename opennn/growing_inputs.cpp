@@ -201,8 +201,6 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                     input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices("Input");
                     input_selection_results.optimal_input_variable_names = dataset->get_variable_names("Input");
 #ifdef OPENNN_HAS_CUDA
-                    // Drag params back from device memory before snapshotting
-                    // their host-side bytes. No-op needed in CPU-only builds.
                     neural_network->copy_parameters_host();
 #endif
                     input_selection_results.optimal_parameters =
@@ -219,9 +217,6 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                 << "   Validation error: " << validation_error << "\n";
         }
 
-        // Input growing tracks validation error increases: if adding the
-        // current variable made the best validation error worse than the
-        // previous epoch's, count it as a failure and roll back the variable.
         if (previous_validation_error < minimum_validation_error)
         {
             if (display) cout << "Validation failure" << "\n";

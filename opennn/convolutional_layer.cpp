@@ -119,6 +119,10 @@ void Convolutional::update_convolution_operator()
     activation.input_slots  = {Output};
     activation.output_slots = {Output};
 
+    const bool fuse_relu = (activation.function == ActivationOp::Function::ReLU)
+                           && !batch_norm.active();
+    convolution.fused_activation = fuse_relu ? activation.descriptor : nullptr;
+    activation.forward_fused     = fuse_relu;
 }
 
 void Convolutional::set(const Shape& new_input_shape,
@@ -270,6 +274,13 @@ void Convolutional::write_JSON_body(JsonWriter& printer) const
         {"Convolution", use_padding ? "Same" : "Valid"},
         {"BatchNormalization", to_string(batch_norm.active())}
     });
+}
+
+void Convolutional::from_JSON(const JsonDocument& document)
+{
+    Layer::from_JSON(document);
+
+    update_convolution_operator();
 }
 
 REGISTER(Layer, Convolutional, "Convolutional")

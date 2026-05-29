@@ -99,7 +99,7 @@ public:
     void clear_conditions();
     void clear_conditions(const string& name);
 
-    [[nodiscard]] Condition get_condition(const string& name) const;
+    Condition get_condition(const string& name) const;
 
     void set_condition(const string& name, const ConditionType condition = ConditionType::None, float low = 0.0f, float up = 0.0f);
 
@@ -124,65 +124,65 @@ public:
     void set_relative_tolerance(float new_relative_tolerance);
 
     void set_deformation_domain_factor(float new_deformation_domain_factor);
-    [[nodiscard]] float get_deformation_domain_factor();
+    float get_deformation_domain_factor();
 
-    [[nodiscard]] vector<Descriptives> get_descriptives(const string& role) const;
+    vector<Descriptives> get_descriptives(const string& role) const;
 
-    [[nodiscard]] pair<vector<Variable>, vector<Descriptives>> get_variables_and_descriptives(const string& role) const;
+    pair<vector<Variable>, vector<Descriptives>> get_variables_and_descriptives(const string& role) const;
 
-    [[nodiscard]] vector<float> get_utopian_point() const;
+    vector<float> get_utopian_point() const;
 
-    [[nodiscard]] pair<Index, VectorR> get_advised_point(const MatrixR& pareto_front,
+    pair<Index, VectorR> get_advised_point(const MatrixR& pareto_front,
                                                          const VectorR& importance_scale = VectorR()) const;
 
-    [[nodiscard]] Domain get_original_domain(const string role) const;
+    Domain get_original_domain(const string role) const;
 
-    [[nodiscard]] MatrixR calculate_random_inputs(const Domain& input_domain, Index evaluations_count = -1) const;
+    MatrixR calculate_random_inputs(const Domain& input_domain, Index evaluations_count = -1) const;
 
-    [[nodiscard]] Tensor3 combine_input(const MatrixR& present_random_values) const;
+    Tensor3 combine_input(const MatrixR& present_random_values) const;
 
-    [[nodiscard]] MatrixR calculate_outputs(const MatrixR& input) const;
+    MatrixR calculate_outputs(const MatrixR& input) const;
 
-    [[nodiscard]] pair<MatrixR, MatrixR> filter_feasible_points(const MatrixR& inputs,
+    pair<MatrixR, MatrixR> filter_feasible_points(const MatrixR& inputs,
                                                                 const MatrixR& outputs,
                                                                 const Domain& output_domain) const;
 
-    [[nodiscard]] pair<MatrixR, MatrixR> sample_feasible_points(const Domain& input_domain,
+    pair<MatrixR, MatrixR> sample_feasible_points(const Domain& input_domain,
                                                                 const Domain& output_domain) const;
 
-    [[nodiscard]] pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR& feasible_inputs,
+    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR& feasible_inputs,
                                                                   const MatrixR& feasible_outputs,
                                                                   const Objectives& objectives) const;
 
-    [[nodiscard]] MatrixR assemble_results(const MatrixR& inputs, const MatrixR& outputs) const;
+    MatrixR assemble_results(const MatrixR& inputs, const MatrixR& outputs) const;
 
-    [[nodiscard]] pair<MatrixR, MatrixR> calculate_pareto(const MatrixR& inputs, const MatrixR& outputs, const MatrixR& objective_matrix) const;
+    pair<MatrixR, MatrixR> calculate_pareto(const MatrixR& inputs, const MatrixR& outputs, const MatrixR& objective_matrix) const;
 
-    [[nodiscard]] pair<float, float> calculate_quality_metrics(const MatrixR& inputs,
+    pair<float, float> calculate_quality_metrics(const MatrixR& inputs,
                                                                const MatrixR& outputs,
                                                                const Objectives& objectives) const;
 
-    [[nodiscard]] MatrixR perform_single_objective_optimization() const;
+    MatrixR perform_single_objective_optimization() const;
 
-    [[nodiscard]] MatrixR perform_multiobjective_optimization() const;
+    MatrixR perform_multiobjective_optimization() const;
 
-    [[nodiscard]] MatrixR perform_response_optimization() const;
+    MatrixR perform_response_optimization() const;
 
-    [[nodiscard]] Index get_objectives_number() const;
+    Index get_objectives_number() const;
 
 private:
 
-    [[nodiscard]] vector<NamedColumn> build_input_columns_for_formula() const;
-    [[nodiscard]] vector<NamedColumn> build_output_columns_for_formula() const;
+    vector<NamedColumn> build_input_columns_for_formula() const;
+    vector<NamedColumn> build_output_columns_for_formula() const;
 
     void apply_affine_input_swap(MatrixR& random_inputs,
                                  const FormulaConstraint& formula_constraint,
                                  const Domain& input_domain) const;
 
-    [[nodiscard]] bool row_satisfies_formula_constraints(const VectorR& input_row,
+    bool row_satisfies_formula_constraints(const VectorR& input_row,
                                                          const VectorR& output_row) const;
 
-    [[nodiscard]] pair<MatrixR, MatrixR> generate_feasible_points(const Domain& input_domain,
+    pair<MatrixR, MatrixR> generate_feasible_points(const Domain& input_domain,
                                                                   const Domain& output_domain,
                                                                   Index evaluations_count) const;
 
@@ -195,13 +195,6 @@ private:
     float min_feasible_ratio = 0.01f;
     Index max_oversample_factor = 8;
 
-    // Defaults set 2026-05-25 to the best 40k-budget config from the
-    // IDC_benchmark grid search (e2000_i20_z85). The 160k-budget grid
-    // winner (e8000_i20_z85) was the briefly-promoted canonical 2026-05-22,
-    // but matched-budget pymoo comparison at 160k is wall-clock-prohibitive
-    // (~17h for the full 23-entry holdout sweep), so we settled on the
-    // best 40k shape — still uses the grid-confirmed gentle zoom 0.85 and
-    // tightened tolerance 1e-6, just with a budget that lets pymoo keep up.
     Index evaluations_number = 2000;
 
     Index max_iterations = 20;

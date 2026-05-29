@@ -84,14 +84,12 @@ private:
     vector<float> input_scale;
     vector<float> input_offset;
 
-    // Binary streaming cache: <data_path>/.cache/images.bin
-    // Pixels stored as uint8 [0..255]; labels as int32_t.
     filesystem::path cache_path;
     mutable FileReader cache_reader;
     uint64_t record_bytes_ = 0;
     uint64_t labels_off_   = 0;
     uint32_t num_classes_  = 0;
-    vector<int32_t> labels_ram;       // small; one entry per sample
+    vector<int32_t> labels_ram; 
 
     vector<string> labels_tokens;
 

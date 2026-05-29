@@ -32,8 +32,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     if (const Index total_bytes = get_aligned_bytes(forward_specs); total_bytes > 0)
     {
-        const Device device = current_device();
-        data.resize_bytes(total_bytes, device);
+        data.resize_bytes(total_bytes, neural_network->get_device());
         data.setZero();
     }
 
@@ -47,7 +46,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         {
             const auto& [shape, dtype] = specs[j];
             if (shape.size() == 0) continue;
-            views[i][j + 1][0] = TensorView(cursor, shape, dtype);
+            views[i][j + 1][0] = TensorView(cursor, shape, dtype, data.device_type);
             cursor += get_aligned_bytes(shape.size(), dtype);
         }
     }

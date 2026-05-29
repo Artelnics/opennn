@@ -1,14 +1,6 @@
-// Layer-op kernels: bounding, scaling/unscaling, embedding, multi-head
-// attention helpers (split/merge heads, padding mask, fused mask), 3D pooling
-// (max/avg, forward/backward), and layer normalisation. All host wrappers are
-// templated over T = float / __nv_bfloat16.
-
 #include "kernel_common.cuh"
 #include <curand_kernel.h>
 
-// Per-feature clip: output[i] = clamp(input[i], lower[f], upper[f]) where f = i % features.
-// Input/output dtypes are independent so the boundary layers can bridge a BF16
-// activation arena with FP32 final outputs (or vice versa).
 template<typename TIn, typename TOut>
 __global__ void bounding_kernel(const int n, const int features,
                                 const TIn* __restrict__ input,
@@ -41,10 +33,6 @@ template void bounding_cuda<float,         __nv_bfloat16>(const Index, const int
 template void bounding_cuda<__nv_bfloat16, float>        (const Index, const int, const __nv_bfloat16*, const float*, const float*, float*);
 template void bounding_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, __nv_bfloat16*);
 
-// Per-feature input scaling. Method per feature is encoded in `scalers` (cast from
-// ScalerMethod enum stored as float): MinMax, MeanStd, StdDev, Logarithm, ImageMinMax.
-// Input and output dtypes are independent: the first network input often arrives
-// FP32 from the Batch while the output may need to feed BF16 activations downstream.
 template<typename TIn, typename TOut>
 __global__ void scale_kernel(const int n, const int features,
                              const TIn* __restrict__ input,
@@ -66,14 +54,17 @@ __global__ void scale_kernel(const int n, const int features,
         switch (code)
         {
         case 1: // MinimumMaximum
-            y = (x - minimums[f]) / ((maximums[f] - minimums[f]) + FLT_EPSILON)
-                * (max_range - min_range) + min_range;
+        {
+            const float range = maximums[f] - minimums[f];
+            y = (range < FLT_EPSILON) ? 0.0f
+              : (x - minimums[f]) / range * (max_range - min_range) + min_range;
             break;
+        }
         case 2: // MeanStandardDeviation
-            y = (x - means[f]) / (stds[f] + FLT_EPSILON);
+            y = (stds[f] > FLT_EPSILON) ? (x - means[f]) / stds[f] : 0.0f;
             break;
         case 3: // StandardDeviation
-            y = x / (stds[f] + FLT_EPSILON);
+            y = (stds[f] > FLT_EPSILON) ? x / stds[f] : 0.0f;
             break;
         case 4: // Logarithm
             y = logf(x);
@@ -112,9 +103,6 @@ template void scale_cuda<float,         __nv_bfloat16>(const Index, const int, c
 template void scale_cuda<__nv_bfloat16, float>        (const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, float*);
 template void scale_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
 
-// Inverse of scale_kernel: per-feature output unscaling. Same mixed-dtype
-// signature as scale_kernel — the last hidden layer's output may be BF16 while
-// the unscaled tensor that feeds Bounding/loss is FP32.
 template<typename TIn, typename TOut>
 __global__ void unscale_kernel(const int n, const int features,
                                const TIn* __restrict__ input,
@@ -182,11 +170,6 @@ template void unscale_cuda<float,         __nv_bfloat16>(const Index, const int,
 template void unscale_cuda<__nv_bfloat16, float>        (const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, float*);
 template void unscale_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
 
-// Mixed-dtype loss helpers. cuDNN OpTensor requires all input descriptors to
-// share dtype, which is incompatible with our BF16 activations / FP32 targets
-// pairing. These two kernels do (input - target) elementwise with the input
-// dtype templated and target/output FP32 (or templated for the gradient case).
-
 template<typename TIn>
 __global__ void diff_to_fp32_kernel(const int n,
                                     const TIn* __restrict__ input,
@@ -236,9 +219,6 @@ template void scaled_diff_cuda_typed<float,         __nv_bfloat16>(const Index, 
 template void scaled_diff_cuda_typed<__nv_bfloat16, float>        (const Index, const __nv_bfloat16*, const float*, float, float*);
 template void scaled_diff_cuda_typed<__nv_bfloat16, __nv_bfloat16>(const Index, const __nv_bfloat16*, const float*, float, __nv_bfloat16*);
 
-// Token embedding lookup: outputs[i] = scale * weights[token_id, dim] + positional_encoding.
-// `inputs` carries integer token ids stored as float. Out-of-vocab tokens get 0.
-// `scale_embedding` applies sqrt(D) scaling (Transformer convention).
 template<typename T>
 __global__ void embedding_forward_kernel(const int n, const float* __restrict__ inputs, const float* __restrict__ weights, const float* __restrict__ positional_encoding, T* __restrict__ outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
 {
@@ -279,8 +259,6 @@ void embedding_forward_cuda(const Index n, const float* inputs, const float* wei
 template void embedding_forward_cuda<float>        (const Index, const float*, const float*, const float*, float*,         const int, const int, const int, const bool);
 template void embedding_forward_cuda<__nv_bfloat16>(const Index, const float*, const float*, const float*, __nv_bfloat16*, const int, const int, const int, const bool);
 
-// Embedding weight gradient via atomicAdd into the vocabulary table.
-// Padding tokens (id 0 or out-of-range) contribute nothing.
 template<typename T>
 __global__ void embedding_backward_kernel(const int n, const float* __restrict__ inputs, const T* __restrict__ output_deltas, float* __restrict__ weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
 {
@@ -313,7 +291,6 @@ void embedding_backward_cuda(const Index n, const float* inputs, const T* output
 template void embedding_backward_cuda<float>        (const Index, const float*, const float*,         float*, const int, const int, const bool);
 template void embedding_backward_cuda<__nv_bfloat16>(const Index, const float*, const __nv_bfloat16*, float*, const int, const int, const bool);
 
-// [batch, seq, heads, head_dim] -> [batch, heads, seq, head_dim], scalar path.
 template<typename T>
 __global__ void split_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D)
 {
@@ -328,8 +305,6 @@ __global__ void split_heads_scalar_kernel(const int n, const T* __restrict__ in,
     }
 }
 
-// split_heads using float4 lanes when head_dim*sizeof(T) is a multiple of 16 bytes.
-// D_vec = head_dim / vec_width.
 template<typename T>
 __global__ void split_heads_vec_kernel(const int n_vec, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D_vec)
 {
@@ -369,7 +344,6 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
 template void split_heads_cuda<float>        (const Index, const float*,         float*,         const int, const int, const int);
 template void split_heads_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int, const int, const int);
 
-// Inverse of split_heads: [batch, heads, seq, head_dim] -> [batch, seq, heads, head_dim].
 template<typename T>
 __global__ void merge_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D)
 {
@@ -384,7 +358,6 @@ __global__ void merge_heads_scalar_kernel(const int n, const T* __restrict__ in,
     }
 }
 
-// merge_heads using float4 lanes when head_dim*sizeof(T) is a multiple of 16 bytes.
 template<typename T>
 __global__ void merge_heads_vec_kernel(const int n_vec, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D_vec)
 {
@@ -424,8 +397,6 @@ void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int
 template void merge_heads_cuda<float>        (const Index, const float*,         float*,         const int, const int, const int);
 template void merge_heads_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int, const int, const int);
 
-// Per-token validity for attention: padding_mask[i] = 1 if all embedding dims of
-// token i are ~0 (treated as PAD), else 0.
 template<typename T>
 __global__ void padding_mask_kernel(const int num_tokens, const T* __restrict__ source_input, T* __restrict__ padding_mask, const int embedding_dimension)
 {
@@ -439,9 +410,6 @@ __global__ void padding_mask_kernel(const int num_tokens, const T* __restrict__ 
     }
 }
 
-// Apply padding + optional causal mask to pre-softmax attention weights by
-// setting masked positions to -1e9 (so softmax produces ~0). Operates on
-// [batch, heads, seq_q, seq_k] flattened to n.
 template<typename T>
 __global__ void fused_masks_kernel(const int n, T* __restrict__ attention_weights, const T* __restrict__ padding_mask,
                                          const int heads_number, const int query_sequence_length,
@@ -544,8 +512,6 @@ void attention_sequence_lengths_cuda(const int batch_size,
 template void attention_sequence_lengths_cuda<float>        (int, int, int, int, const float*,         int32_t*, int32_t*);
 template void attention_sequence_lengths_cuda<__nv_bfloat16>(int, int, int, int, const __nv_bfloat16*, int32_t*, int32_t*);
 
-// Max pooling over the seq axis of [batch, seq, features]. Saves the argmax
-// position per (batch, feature) into `indices` for the backward pass.
 template<typename T>
 __global__ void max_pooling_3d_forward_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, float* __restrict__ indices, const int S, const int F)
 {
@@ -581,8 +547,6 @@ void max_pooling_3d_forward_cuda(const Index n, const T* in, T* out, float* indi
 template void max_pooling_3d_forward_cuda<float>        (const Index, const float*,         float*,         float*, const int, const int);
 template void max_pooling_3d_forward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, float*, const int, const int);
 
-// Scatter delta back to argmax positions saved by max_pooling_3d_forward.
-// Caller must zero-initialise in_gradient first (host does cudaMemset).
 template<typename T>
 __global__ void max_pooling_3d_backward_kernel(const int n, const T* __restrict__ delta, T* __restrict__ in_gradient, const float* __restrict__ indices, const int S, const int F)
 {
@@ -616,8 +580,6 @@ static float* get_pooling_scratch(size_t floats_needed)
     return pooling_scratch_.ensure<float>(Index(floats_needed));
 }
 
-// Helper for average pooling: writes per-token validity (1 if any feature is
-// ~nonzero, else 0) and accumulates per-batch valid counts via atomicAdd.
 template<typename T>
 __global__ void pooling_3d_valid_mask_kernel(const int BS, const int S, const int F,
                                              const T* __restrict__ in,
@@ -636,8 +598,6 @@ __global__ void pooling_3d_valid_mask_kernel(const int BS, const int S, const in
     if (valid) atomicAdd(&counts[bs / S], 1.0f);
 }
 
-// Average pooling over the seq axis, masking invalid (~zero) tokens. Output
-// is sum-of-valid-tokens / valid_count; zero rows when no valid tokens.
 template<typename T>
 __global__ void average_pooling_3d_forward_kernel(const int n, const T* __restrict__ in, T* __restrict__ out,
                                                   const int S, const int F,
@@ -663,8 +623,6 @@ __global__ void average_pooling_3d_forward_kernel(const int n, const T* __restri
     }
 }
 
-// Compute valid_mask + per-batch counts from the input tokens. Returns pointers
-// into the TU-private pooling scratch.
 template<typename T>
 static void prepare_pooling_valid_mask(int B, int S, int F, const T* in,
                                        float*& valid_mask, float*& counts)
@@ -698,8 +656,6 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
 template void average_pooling_3d_forward_cuda<float>        (const Index, const float*,         float*,         const int, const int);
 template void average_pooling_3d_forward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int, const int);
 
-// Distribute output delta uniformly across the batch's valid tokens
-// (delta_per_token = delta / valid_count, zero where invalid).
 template<typename T>
 __global__ void average_pooling_3d_backward_kernel(const int n, const T* __restrict__ delta, T* __restrict__ in_gradient,
                                                    const int S, const int F,
@@ -751,9 +707,6 @@ __device__ __forceinline__ void warp_reduce_sum2(float& a, float& b)
     }
 }
 
-// Per-row layer norm, one block per row of [N, D]: y = gamma*(x-mean)/sqrt(var+eps) + beta.
-// Saves mean and 1/sqrt(var+eps) for the backward pass. Variance computed from the
-// online moments E[X], E[X^2] reduced via warp_reduce_sum2.
 template<typename T>
 __global__ void layernorm_forward_kernel(const int N, const int D, const T* __restrict__ X, T* __restrict__ Y, float* __restrict__ means, float* __restrict__ inv_vars, const float* __restrict__ gamma, const float* __restrict__ beta, const float eps)
 {
@@ -763,7 +716,6 @@ __global__ void layernorm_forward_kernel(const int N, const int D, const T* __re
     const T* x_row = X + idx * D;
     T* y_row = Y + idx * D;
 
-    // Per-thread accumulation. Variance derived as E[X^2] - E[X]^2 after the block reduction.
     float local_sum = 0.0f;
     float local_sum_sq = 0.0f;
     for (int i = threadIdx.x; i < D; i += blockDim.x)
@@ -839,8 +791,6 @@ void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* m
 template void layernorm_forward_cuda<float>        (const int, const int, const float*,         float*,         float*, float*, const float*, const float*, const float);
 template void layernorm_forward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, __nv_bfloat16*, float*, float*, const float*, const float*, const float);
 
-// Per-row dX for layer norm, one block per row of [N, D]. Uses cached mean and
-// inv_var saved by layernorm_forward_kernel.
 template<typename T>
 __global__ void layernorm_backward_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, const float* __restrict__ gamma, T* __restrict__ dX)
 {
@@ -909,7 +859,6 @@ __global__ void layernorm_backward_kernel(const int N, const int D, const T* __r
     }
 }
 
-// Per-feature dGamma/dBeta accumulation for layer norm, with coalesced reads.
 template<typename T, int NUM_WARPS>
 __global__ void layernorm_gamma_beta_gradient_coalesced_kernel(const int N, const int D,
                                                                const T* __restrict__ dY,
@@ -919,8 +868,8 @@ __global__ void layernorm_gamma_beta_gradient_coalesced_kernel(const int N, cons
                                                                float* __restrict__ dGamma,
                                                                float* __restrict__ dBeta)
 {
-    const int lane    = threadIdx.x;          // 0..31 along d
-    const int warp_id = threadIdx.y;          // 0..NUM_WARPS-1 along n stride
+    const int lane    = threadIdx.x; 
+    const int warp_id = threadIdx.y;
     const int d       = blockIdx.x * 32 + lane;
     const bool active = (d < D);
 
@@ -938,8 +887,6 @@ __global__ void layernorm_gamma_beta_gradient_coalesced_kernel(const int N, cons
         }
     }
 
-    // Inter-warp reduction: one slot per (warp, lane). One sync, then warp 0
-    // sums the NUM_WARPS partials for its lane.
     __shared__ float partial_gamma[NUM_WARPS][32];
     __shared__ float partial_beta [NUM_WARPS][32];
 
@@ -1096,17 +1043,6 @@ void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta,
 template void dropout_backward_cuda<float>        (const Index, const float*,         float*,         const uint8_t*, const float);
 template void dropout_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const uint8_t*, const float);
 
-// -----------------------------------------------------------------------------
-// Recurrent time-slice helpers
-//
-// The recurrent op operates step-by-step on a row-major 3D tensor
-// (batch, time, features). For each timestep t we need a contiguous
-// (batch, features) buffer to hand to cuBLAS, so we materialise the slice into
-// scratch memory with `gather_time_slice` and write it back after the step
-// with `scatter_time_slice`. Each thread copies one element; the launch grid
-// is sized over the full slice (batch * features).
-// -----------------------------------------------------------------------------
-
 template<typename T>
 __global__ void gather_time_slice_kernel(const int batch,
                                          const int time_steps,
@@ -1146,6 +1082,42 @@ void gather_time_slice_cuda(const Index batch,
 template void gather_time_slice_cuda<float>        (const Index, const Index, const Index, const Index, const float*,         float*);
 template void gather_time_slice_cuda<__nv_bfloat16>(const Index, const Index, const Index, const Index, const __nv_bfloat16*, __nv_bfloat16*);
 
+template<typename TSrc, typename TDst>
+__global__ void gather_rows_kernel(const int batch_size,
+                                   const int features,
+                                   const Index* __restrict__ row_indices,
+                                   const TSrc* __restrict__ src,
+                                   TDst* __restrict__ dst)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    const int total = batch_size * features;
+    if (idx >= total) return;
+
+    const int b = idx / features;
+    const int f = idx - b * features;
+    const Index src_row = row_indices[b];
+    dst[idx] = static_cast<TDst>(src[src_row * Index(features) + f]);
+}
+
+template<typename TSrc, typename TDst>
+void gather_rows_cuda(const Index batch_size,
+                      const Index features,
+                      const Index* row_indices,
+                      const TSrc* src_matrix,
+                      TDst* dst)
+{
+    if (batch_size == 0 || features == 0) return;
+    const int total = static_cast<int>(batch_size * features);
+    gather_rows_kernel<TSrc, TDst><<<grid_size_for(total), block_size, 0,
+                                     opennn::Backend::get_compute_stream()>>>(
+        static_cast<int>(batch_size),
+        static_cast<int>(features),
+        row_indices, src_matrix, dst);
+}
+
+template void gather_rows_cuda<float, float>        (const Index, const Index, const Index*, const float*,         float*);
+template void gather_rows_cuda<float, __nv_bfloat16>(const Index, const Index, const Index*, const float*,         __nv_bfloat16*);
+
 template<typename T>
 __global__ void scatter_time_slice_kernel(const int batch,
                                           const int time_steps,
@@ -1184,24 +1156,6 @@ void scatter_time_slice_cuda(const Index batch,
 
 template void scatter_time_slice_cuda<float>        (const Index, const Index, const Index, const Index, const float*,         float*);
 template void scatter_time_slice_cuda<__nv_bfloat16>(const Index, const Index, const Index, const Index, const __nv_bfloat16*, __nv_bfloat16*);
-
-// -----------------------------------------------------------------------------
-// Fused per-step activation kernel for RecurrentOp.
-//
-// One thread per (batch_row, out_feature) element. The kernel adds the bias
-// broadcast over features, applies the activation σ in-place, and (when
-// `derivs` is non-null) writes σ'(z) into the derivatives buffer.
-//
-// activation_id encoding matches ActivationOp::Function ordinal:
-//   0=Identity, 1=Sigmoid, 2=Tanh, 3=ReLU, 4=Softmax (treated as Identity here)
-//
-// We use the post-activation value to derive σ'(z) cheaply (no need to
-// remember the pre-activation):
-//   Tanh:    σ'(z) = 1 - h^2
-//   Sigmoid: σ'(z) = h * (1 - h)
-//   ReLU:    σ'(z) = h > 0 ? 1 : 0
-//   Identity / Softmax: σ'(z) = 1
-// -----------------------------------------------------------------------------
 
 template<typename T>
 __global__ void rnn_step_bias_activation_kernel(const int total,
@@ -1265,23 +1219,6 @@ void rnn_step_bias_activation_cuda(const Index batch,
 template void rnn_step_bias_activation_cuda<float>        (const Index, const Index, float*,         const float*,         float*,         const int);
 template void rnn_step_bias_activation_cuda<__nv_bfloat16>(const Index, const Index, __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, const int);
 
-// -----------------------------------------------------------------------------
-// Fused recurrent forward step (Phase 3.E).
-//
-// Computes for each (batch, out_feature) pair:
-//     z = bias[j] + Σ_i X[b, i] * W_in[i, j] + Σ_k h_prev[b, k] * W_rec[k, j]
-//     h[b, j] = σ(z)
-//     deriv[b, j] = σ'(z)   (only if derivs ≠ null)
-//
-// Launch: one block per batch row, one thread per output feature.
-// Shared memory caches X[b, *] and (when prev_hidden ≠ null) h_prev[b, *].
-//
-// This replaces the per-step sequence (2 cuBLAS GEMMs + bias_activation kernel)
-// with a single launch, dropping the kernel-submission rate by ~3× in the
-// RecurrentOp pure-GPU path. For RNNs with out_features ≤ 128 this is also
-// faster than cuBLAS GEMMs because of the small (m, n, k) overhead.
-// -----------------------------------------------------------------------------
-
 template<typename T>
 __global__ void rnn_step_fused_forward_kernel(const int batch,
                                               const int in_features,
@@ -1302,11 +1239,9 @@ __global__ void rnn_step_fused_forward_kernel(const int batch,
     const int b = blockIdx.x;
     const int j = threadIdx.x;
 
-    // Cooperative load of X[b, :] into shared memory.
     for (int i = j; i < in_features; i += blockDim.x)
         sX[i] = static_cast<float>(step_input[b * in_features + i]);
 
-    // Cooperative load of h_prev[b, :] into shared memory (skipped at t=0).
     if (prev_hidden)
         for (int k = j; k < out_features; k += blockDim.x)
             sH[k] = static_cast<float>(prev_hidden[b * out_features + k]);
@@ -1384,10 +1319,6 @@ void rnn_step_fused_forward_cuda(const Index batch,
 template void rnn_step_fused_forward_cuda<float>        (const Index, const Index, const Index, const float*,         const float*,         const float*,         const float*,         const float*,         float*,         float*,         const int);
 template void rnn_step_fused_forward_cuda<__nv_bfloat16>(const Index, const Index, const Index, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*, const int);
 
-// -----------------------------------------------------------------------------
-// Element-wise multiply for BPTT: delta *= mask (used as δh ⊙ σ'(z) -> δz).
-// -----------------------------------------------------------------------------
-
 template<typename T>
 __global__ void rnn_elementwise_multiply_kernel(const int n,
                                                 T* __restrict__ dst,
@@ -1411,10 +1342,6 @@ void rnn_elementwise_multiply_cuda(const Index n, T* dst, const T* a)
 
 template void rnn_elementwise_multiply_cuda<float>        (const Index, float*,         const float*);
 template void rnn_elementwise_multiply_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*, const __nv_bfloat16*);
-
-// -----------------------------------------------------------------------------
-// Bias-gradient column reduction: bias_grad[f] += sum_batch( delta[b, f] ).
-// -----------------------------------------------------------------------------
 
 template<typename T>
 __global__ void rnn_accumulate_bias_grad_kernel(const int batch,
@@ -1449,17 +1376,6 @@ void rnn_accumulate_bias_grad_cuda(const Index batch,
 
 template void rnn_accumulate_bias_grad_cuda<float>        (const Index, const Index, const float*,         float*);
 template void rnn_accumulate_bias_grad_cuda<__nv_bfloat16>(const Index, const Index, const __nv_bfloat16*, float*);
-
-// -----------------------------------------------------------------------------
-// Fused recurrent backward "pre-gemm" step (Phase 3.E backward).
-//
-// One thread per (batch, out_feature). Replaces four kernels per timestep:
-//   1) copy delta from output_delta or next_carry
-//   2) gather σ'(z[t]) from activation_derivatives[:, t, :]
-//   3) elementwise multiply δz = δh ⊙ σ'(z[t]) into delta
-//   4) atomic-add δz into bias_grad
-// The cuBLAS GEMMs that follow (dW_in, dW_rec, next_carry) are untouched.
-// -----------------------------------------------------------------------------
 
 template<typename T>
 __global__ void rnn_step_fused_backward_pre_kernel(const int batch,

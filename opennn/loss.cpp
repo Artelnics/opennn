@@ -17,7 +17,6 @@
 #include "error_utilities.h"
 #include "profiler.h"
 #include "forward_propagation.h"
-#include "cuda_dispatch.h"
 #include "back_propagation.h"
 #include "statistics.h"
 #include <Eigen/LU>
@@ -154,9 +153,9 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     return r;
 }
 
-void check_yolo_loss(const Dataset* dataset)
+void check_yolo_loss(const Dataset* dataset, const NeuralNetwork* neural_network)
 {
-    if (is_gpu())
+    if (neural_network && neural_network->is_gpu())
         throw runtime_error("YOLO loss GPU implementation not available yet.");
 
     if (!dynamic_cast<const YoloDataset*>(dataset))
@@ -253,9 +252,10 @@ float yolo_error_kernel(const TensorView& output,
 Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
                                       const TensorView& target,
                                       const Dataset* dataset,
+                                      const NeuralNetwork* neural_network,
                                       bool sigmoid_classes)
 {
-    check_yolo_loss(dataset);
+    check_yolo_loss(dataset, neural_network);
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
     const Index B = yolo_dataset->get_boxes_per_cell();
     const Index C = yolo_dataset->get_classes_number();
@@ -350,9 +350,10 @@ void yolo_gradient_cpu(const TensorView& output,
                        const TensorView& target,
                        const TensorView& output_delta,
                        const Dataset* dataset,
+                       const NeuralNetwork* neural_network,
                        bool sigmoid_classes)
 {
-    check_yolo_loss(dataset);
+    check_yolo_loss(dataset, neural_network);
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
     const Index B = yolo_dataset->get_boxes_per_cell();
     const Index C = yolo_dataset->get_classes_number();
@@ -384,7 +385,7 @@ Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& fp,
                                             const vector<Index>& detection_indices,
                                             bool sigmoid_classes)
 {
-    check_yolo_loss(dataset);
+    check_yolo_loss(dataset, nn);
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
     const Index B = yolo_dataset->get_boxes_per_head();
     const Index C = yolo_dataset->get_classes_number();
@@ -445,7 +446,7 @@ void yolo_gradient_cpu_multi(const ForwardPropagation& fp,
                              const vector<Index>& detection_indices,
                              bool sigmoid_classes)
 {
-    check_yolo_loss(dataset);
+    check_yolo_loss(dataset, nn);
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
     const Index B = yolo_dataset->get_boxes_per_head();
     const Index C = yolo_dataset->get_classes_number();
@@ -513,10 +514,6 @@ void Loss::set_normalization_coefficient()
 
     if (error == Error::NormalizedSquaredError)
     {
-        // NSE divides the squared-error sum by the total squared deviation of
-        // the training targets from their column means. Without this, NSE
-        // collapses to plain SSE (coefficient = 1), which biases multi-target
-        // joint regression toward whichever target has the larger scale.
         const vector<Index> training_indices = dataset->get_sample_indices("Training");
         const Shape target_shape = dataset->get_shape("Target");
 
@@ -593,15 +590,14 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
     const TensorView target = batch.get_targets();
+    const bool on_gpu = neural_network && neural_network->is_gpu();
 
     EvaluationResult result;
 
     float* workspace_device = nullptr;
 #ifdef OPENNN_HAS_CUDA
-    if (is_gpu())
+    if (on_gpu)
     {
-        // CrossEntropy3d packs three masks (errors, valid, correct) of size
-        // token_count; other losses need one float per input element.
         const Index workspace_floats = (error == Error::CrossEntropy3d)
             ? 3 * (input.size() / input.shape.back())
             : input.size();
@@ -649,7 +645,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         result = detection_indices.size() > 1
             ? yolo_error_cpu_multi(forward_propagation, target, dataset, neural_network,
                                    detection_indices, sigmoid)
-            : yolo_error_cpu(input, target, dataset, sigmoid);
+            : yolo_error_cpu(input, target, dataset, neural_network, sigmoid);
     }
 #else
         throw runtime_error("YOLO loss not available: opennn was built with OpenNN_BUILD_VISION=OFF.");
@@ -664,7 +660,10 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
 
 bool Loss::supports_device_epoch_metrics() const
 {
-    return is_gpu() && error != Error::MinkowskiError && error != Error::Yolo;
+    return neural_network
+        && neural_network->is_gpu()
+        && error != Error::MinkowskiError
+        && error != Error::Yolo;
 }
 
 bool Loss::calculate_error_device_metrics(const Batch& batch,
@@ -869,7 +868,8 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         cross_entropy_3d_gradient(input, target, input_delta, back_propagation.active_tokens_count);
         break;
     case MinkowskiError:
-        minkowski_error_gradient(input, target, minkowski_parameter, input_delta);
+        minkowski_error_gradient(input, target, minkowski_parameter, input_delta,
+                                 neural_network && neural_network->is_gpu());
         break;
     case Yolo:
 #ifndef OPENNN_NO_VISION
@@ -880,7 +880,7 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
             yolo_gradient_cpu_multi(forward_propagation, target, back_propagation,
                                     dataset, neural_network, detection_indices, sigmoid);
         else
-            yolo_gradient_cpu(input, target, input_delta, dataset, sigmoid);
+            yolo_gradient_cpu(input, target, input_delta, dataset, neural_network, sigmoid);
     }
 #else
         throw runtime_error("YOLO gradient not available: opennn was built with OpenNN_BUILD_VISION=OFF.");
@@ -921,7 +921,9 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
     check_neural_network();
 
     const TensorView parameters(neural_network->get_parameters_data(),
-                                {neural_network->get_parameters_size()});
+                                {neural_network->get_parameters_size()},
+                                Type::FP32,
+                                neural_network->get_device());
 
     back_propagation.regularization = calculate_regularization(parameters);
     back_propagation.loss += back_propagation.regularization;
@@ -994,8 +996,14 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 
     const Index parameters_number = neural_network->get_parameters_size();
 
-    const TensorView parameters(neural_network->get_parameters_data(), { parameters_number });
-    TensorView gradient(back_propagation.gradient.as<float>(), { parameters_number });
+    const TensorView parameters(neural_network->get_parameters_data(),
+                                { parameters_number },
+                                Type::FP32,
+                                neural_network->get_device());
+    TensorView gradient(back_propagation.gradient.as<float>(),
+                        { parameters_number },
+                        Type::FP32,
+                        back_propagation.gradient.device_type);
 
     if (regularization_method == Regularization::L1)
         l1_regularization_gradient(parameters, regularization_weight, gradient);

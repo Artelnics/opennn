@@ -26,15 +26,9 @@ Recurrent::Recurrent(const Shape& new_input_shape,
 
 vector<TensorSpec> Recurrent::get_forward_specs(Index batch_size) const
 {
-    // Slot 0 (Input) is filled by the framework from the previous layer.
-    // Specs returned here populate slots 1..N. Convention: principal output last
-    // (forward_propagation.cpp reads views[layer].back() as the layer output).
     const Shape state_history {batch_size, time_steps, output_features};
     const Shape final_state   {batch_size,             output_features};
 
-    // When return_sequences is enabled the layer emits the full hidden-state
-    // sequence rather than just the last step, so the public Output slot is
-    // sized rank-3 to feed another Recurrent / sequence-aware layer.
     const Shape output_shape = return_sequences ? state_history : final_state;
 
     return {
@@ -150,17 +144,6 @@ string Recurrent::write_expression(const vector<string>& feature_names,
 
     const string& activation_name = ActivationOp::to_string(recurrent_op.activation);
 
-    // Naming policy for the variable assigned at step (t, j):
-    //   - return_sequences=false (default): only h[T-1] reaches the next layer,
-    //     so output_names[j] is used at t==T-1 and intermediate steps stay
-    //     internal as "recurrent_hidden_step_t_neuron_j".
-    //   - return_sequences=true: the layer's output is the full sequence
-    //     (batch, time_steps, output_features), so each step's hidden state
-    //     must be exposed under the name the framework allocated for it.
-    //     output_names is laid out row-major across (t, j): index = t*F + j.
-    // For internal references during recurrent multiplication we keep using
-    // "recurrent_hidden_step_t_neuron_j" as a stable internal alias by
-    // emitting a synonym assignment when return_sequences=true.
     auto step_var = [&](Index t, Index j) -> string {
         const string internal = format("recurrent_hidden_step_{}_neuron_{}", t, j);
         if (return_sequences)

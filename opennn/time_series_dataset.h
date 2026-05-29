@@ -37,6 +37,8 @@ public:
 
     Tensor3 get_data(const string& sample_role, const string& feature_role) const;
 
+    bool supports_device_residency() const override { return false; }
+
     void set_past_time_steps(const Index);
     void set_future_time_steps(const Index);
     void set_time_variable_index(const Index);

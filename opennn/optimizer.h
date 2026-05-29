@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include <condition_variable>
 #include <functional>
 #include <mutex>
+#include "batch.h"
 #include "json.h"
 #include "tensor_utilities.h"
 #include "thread_safe_queue.h"
@@ -21,62 +21,50 @@ namespace opennn
 inline constexpr float GRADIENT_NORM_EPS = 1e-6f;
 
 class Loss;
-struct Batch;
+class NeuralNetwork;
 struct Buffer;
 struct ForwardPropagation;
 struct BackPropagation;
 
 struct TrainingResults;
 
-// Persistent pool of worker threads. The previous design spawned a fresh
-// vector<jthread> per epoch — for long training runs (1000+ epochs) that
-// added thousands of unnecessary pthread_create/_join syscalls. Workers
-// are created once, then sleep on a condition_variable between epochs.
-//
-// Usage:
-//   pool.submit([&](){ /* worker body: claim atomic iterations, fill batches */ });
-//   ...consume ready[] in main thread...
-//   pool.wait();   // block until every worker has returned from its job
-//
-// Exception safety: if the consumer scope throws while workers are still
-// running, the caller must call wait() before unwinding (the worker closures
-// typically capture stack references). See train_epoch's try/catch.
-class WorkerPool
+struct BatchFillSession
 {
-public:
-    explicit WorkerPool(int num_workers);
-    ~WorkerPool();
+    explicit BatchFillSession(Index batches_number);
+    ~BatchFillSession();
 
-    WorkerPool(const WorkerPool&) = delete;
-    WorkerPool& operator=(const WorkerPool&) = delete;
+    BatchFillSession(const BatchFillSession&) = delete;
+    BatchFillSession& operator=(const BatchFillSession&) = delete;
 
-    [[nodiscard]] int size() const { return static_cast<int>(workers_.size()); }
-
-    void submit(function<void()> job);
-    void wait();
-
-    // If any worker caught an exception during its job, rethrow it from
-    // the calling (consumer) thread and clear the stored error. Call this
-    // inside busy-wait loops to avoid hanging when a worker dies.
-    [[nodiscard]] bool has_error() const noexcept
-    {
-        return error_pending_.load(memory_order_acquire);
-    }
     void rethrow_if_error();
 
-private:
-    vector<jthread> workers_;
-    mutex                mutex_;
-    condition_variable   cv_start_;
-    condition_variable   cv_done_;
-    function<void()>     current_job_;
-    uint64_t             generation_  = 0;
-    int                  outstanding_ = 0;
+    unique_ptr<atomic<Batch*>[]> ready;
+    atomic<Index>                next_iteration{0};
+    atomic<bool>                 cancelled{false};
 
-    mutex               error_mutex_;
-    exception_ptr       worker_error_;
-    atomic<bool>        error_pending_{false};
+    // Set by start_batch_workers; ~BatchFillSession uses it to unblock workers
+    // stuck in pop() if the consumer abandoned the session mid-epoch.
+    ThreadSafeQueue<Batch*>*     empty_queue = nullptr;
+
+    mutex          error_mutex;
+    exception_ptr  worker_error;
+    atomic<bool>   error_pending{false};
+
+    // Declared last so ~vector joins all threads before the error state above
+    // is destroyed — workers may still be in their catch(...) handler.
+    vector<jthread> workers;
 };
+
+#ifdef OPENNN_HAS_CUDA
+struct DeviceResidentData;
+
+struct ResidentEpochState
+{
+    Buffer row_index_buffer{Device::CUDA}; 
+    const DeviceResidentData* data = nullptr; 
+    bool active = false;
+};
+#endif
 
 class Optimizer
 {
@@ -152,17 +140,17 @@ protected:
     void setup_device_training(const vector<Batch*>& batches);
     void teardown_device_training();
 
-    // All GPU work (kernels, cuBLAS, H→D copies) runs on Backend's single
-    // compute_stream. prefetch_batch enqueues the copy; the kernels that read
-    // it land later on the same stream, so ordering is implicit and
-    // wait_prefetch / record_batch_reuse have no work to do. They're kept as
-    // no-op hooks to leave the train_epoch / evaluate_epoch loop structure
-    // untouched and for future use if a real prefetch stream is reintroduced.
-    void prefetch_batch(Batch& batch, Index sample_count);
-    void wait_prefetch(Batch& batch);
-    void record_batch_reuse(Batch& batch);
+#ifdef OPENNN_HAS_CUDA
 
-    void sync_device();
+    void setup_resident_datasets();
+    void upload_resident_epoch_indices(ResidentEpochState& state,
+                                       const vector<vector<Index>>& batches,
+                                       Index batch_size);
+#endif
+
+    void prefetch_batch(Batch& batch);
+
+    void sync_device(bool on_gpu);
 
     static void clip_gradient_norm(Buffer& gradient, float max_norm);
 
@@ -171,6 +159,49 @@ protected:
     void warn_dropped_samples(Index batch_size,
                               Index samples_number,
                               const char* context) const;
+
+    struct BatchPools
+    {
+        ThreadSafeQueue<Batch*> training_empty_queue;
+        ThreadSafeQueue<Batch*> validation_empty_queue;
+
+        vector<unique_ptr<Batch>> training_pool;
+        vector<unique_ptr<Batch>> validation_pool;
+
+        bool validation_uses_training_pool = false;
+
+        ThreadSafeQueue<Batch*>& validation_queue();
+        vector<Batch*> all_batches() const;
+    };
+
+    void setup_batch_pools(BatchPools&,
+                           Dataset&,
+                           NeuralNetwork&,
+                           Index training_batch_size,
+                           Index validation_batch_size,
+                           bool has_validation);
+
+    struct WorkerProfileCounters
+    {
+        atomic<int64_t> pop_us{0};
+        atomic<int64_t> fill_us{0};
+        atomic<long> fills{0};
+    };
+
+    unique_ptr<BatchFillSession> start_batch_workers(
+        ThreadSafeQueue<Batch*>& empty_queue,
+        const vector<vector<Index>>& batches,
+        const vector<Index>& input_feature_indices,
+        const vector<Index>& decoder_feature_indices,
+        const vector<Index>& target_feature_indices,
+        bool is_training,
+        WorkerProfileCounters* profile_counters = nullptr);
+
+    Batch* wait_for_filled_batch(BatchFillSession& session, Index iteration);
+
+    int get_effective_num_workers(const NeuralNetwork&) const;
+    int get_batch_pool_size(const NeuralNetwork&) const;
+    void apply_effective_num_workers(const NeuralNetwork&);
 
     EpochStats train_epoch(bool tracks_accuracy,
                            ForwardPropagation& forward_propagation,
@@ -209,17 +240,11 @@ protected:
 
     int num_workers = 2;
 
-    // Created lazily on first train() call; sized at num_workers. Re-created
-    // if the user changes num_workers between train() invocations.
-    unique_ptr<WorkerPool> worker_pool;
+#ifdef OPENNN_HAS_CUDA
+    ResidentEpochState resident_train_;
+    ResidentEpochState resident_validation_;
+#endif
 
-    Buffer prefetch_fp32_staging{Device::CUDA};
-
-    // Refreshed at the start of every train_epoch / evaluate_epoch call.
-    // Drives sync_device(): recurrent nets need a per-batch stream drain to
-    // keep the driver queue from saturating with their many small kernels;
-    // non-recurrent nets don't and benefit from the missing sync via
-    // CPU/GPU overlap. See sync_device() for the full rationale.
     bool has_recurrent_layers_ = false;
 };
 

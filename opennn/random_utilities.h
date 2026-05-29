@@ -13,11 +13,11 @@
 namespace opennn
 {
     void set_seed(unsigned seed);
-    [[nodiscard]] long long get_seed();
+    long long get_seed();
 
-    [[nodiscard]] float random_uniform(float = -1, float = 1);
-    [[nodiscard]] Index random_integer(Index, Index);
-    [[nodiscard]] bool random_bool(float = 0.5);
+    float random_uniform(float = -1, float = 1);
+    Index random_integer(Index, Index);
+    bool random_bool(float = 0.5);
 
     void set_random_uniform(MatrixR&, float = -0.1, float = 0.1);
     void set_random_uniform(VectorMap, float = -0.1, float = 0.1);
@@ -33,9 +33,9 @@ namespace opennn
 
     void shuffle_vector_blocks(vector<Index>&, size_t = 20);
 
-    [[nodiscard]] Index get_random_element(const vector<Index>&);
+    Index get_random_element(const vector<Index>&);
 
-    [[nodiscard]] inline float glorot_limit(Index fan_in, Index fan_out)
+    inline float glorot_limit(Index fan_in, Index fan_out)
     {
         return sqrt(6.0f / static_cast<float>(fan_in + fan_out));
     }

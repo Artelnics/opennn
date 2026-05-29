@@ -13,7 +13,6 @@
 #include "dense_layer.h"
 #include "scaling_layer.h"
 #include "flatten_layer.h"
-#include "cuda_dispatch.h"
 #include "convolutional_layer.h"
 #include "image_utilities.h"
 #include "addition_layer.h"
@@ -69,7 +68,10 @@ void NeuralNetwork::compile()
     config = Configuration::instance().resolve();
 
     for (auto& layer : layers)
+    {
+        layer->set_compute_device(get_device());
         layer->set_compute_dtype(get_training_type());
+    }
 
     parameters.resize_bytes(get_aligned_bytes(get_parameter_specs(), Type::FP32), Device::CPU);
     parameters.setZero();
@@ -453,11 +455,6 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
     if (new_parameters.size() == 0)
         throw runtime_error("NeuralNetwork::set_parameters: refusing to apply an empty parameter vector.");
 
-    // If the network has already been compiled, the parameter buffer carries
-    // a fixed size derived from the layer specs. Reject mismatches up-front
-    // instead of silently realloc'ing — the caller almost always wants the
-    // compiled size, and an off-by-one here leaves the views pointing into
-    // freshly resized memory whose layout no longer matches the layers.
     const Index expected_size = get_parameters_size();
     if (expected_size > 0 && new_parameters.size() != expected_size)
         throw runtime_error("NeuralNetwork::set_parameters: size mismatch (got "
@@ -581,7 +578,9 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
     const vector<TensorView> input_views = {TensorView(const_cast<float*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
                                             TensorView(const_cast<float*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
 
-    IF_GPU({
+#ifdef OPENNN_HAS_CUDA
+    if (is_gpu())
+    {
         const MatrixR result_matrix = calculate_outputs_device(input_views, forward_propagation);
         const TensorView out = forward_propagation.get_outputs();
         if (out.shape.rank < 3)
@@ -591,7 +590,8 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
         memcpy(result.data(), result_matrix.data(),
                     size_t(result.size()) * sizeof(float));
         return result;
-    });
+    }
+#endif
 
     forward_propagate(input_views, forward_propagation, false);
 
@@ -605,7 +605,10 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     const Index batch_size = input_views[0].shape[0];
     ForwardPropagation forward_propagation(batch_size, this);
 
-    IF_GPU({ return calculate_outputs_device(input_views, forward_propagation); });
+#ifdef OPENNN_HAS_CUDA
+    if (is_gpu())
+        return calculate_outputs_device(input_views, forward_propagation);
+#endif
 
     forward_propagate(input_views, forward_propagation, false);
 
@@ -807,10 +810,6 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 
 void NeuralNetwork::to_JSON(JsonWriter& printer) const
 {
-    // Layer state serializers (e.g. Scaling::write_JSON_body) read from
-    // TensorView::data via Eigen Maps. When the network lives on CUDA those
-    // pointers reference device memory; sync to host first and restore the
-    // device mirror after.
 #ifdef OPENNN_HAS_CUDA
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device)
@@ -1076,9 +1075,6 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
     if (!file.is_open())
         throw runtime_error(format("Cannot open binary file for writing: {}\n", file_name.string()));
 
-    // parameters.as<float>() returns a raw pointer that can live on device when
-    // training in CUDA. Reading it from host (file.write) segfaults; sync to
-    // host first and restore the device mirror after.
 #ifdef OPENNN_HAS_CUDA
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device)
@@ -1352,16 +1348,18 @@ void NeuralNetwork::link_parameters()
 
             void* slot_ptr = fp32_slot;
             Type view_type = Type::FP32;
+            Device view_device = parameters.device_type;
 
 #ifdef OPENNN_HAS_CUDA
             if (slot_dtype == Type::BF16 && bf16_base != nullptr)
             {
                 slot_ptr = bf16_base + offset;
                 view_type = Type::BF16;
+                view_device = Device::CUDA;
             }
 #endif
 
-            param_views.emplace_back(slot_ptr, shape, view_type);
+            param_views.emplace_back(slot_ptr, shape, view_type, view_device);
             offset += aligned;
         }
 
@@ -1371,10 +1369,19 @@ void NeuralNetwork::link_parameters()
 
 void NeuralNetwork::link_states()
 {
+    const Device state_device = states.empty()
+        ? parameters.device_type
+        : states.device_type;
+
+    link_states(state_device);
+}
+
+void NeuralNetwork::link_states(Device device)
+{
     float* state_pointer = states.as<float>();
 
     for (auto& layer : layers)
-        state_pointer = layer->link_states(state_pointer);
+        state_pointer = layer->link_states(state_pointer, device);
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -1386,8 +1393,7 @@ void NeuralNetwork::copy_parameters_device()
     cudaStream_t stream = Backend::get_compute_stream();
     parameters.migrate_to(Device::CUDA, stream);
 
-    if(config.training_type  == Type::BF16 ||
-       config.inference_type == Type::BF16)
+    if(config.training_type == Type::BF16)
     {
         parameters_bf16.resize_bytes(parameters.size_in_floats() * Index(sizeof(bfloat16)), Device::CUDA);
         cast_parameters_to_bf16();
@@ -1417,13 +1423,10 @@ void NeuralNetwork::copy_parameters_host()
 
 void NeuralNetwork::copy_states_device()
 {
-    // Migrate the shared states buffer if any operator claims slots in it.
-    // Always invoke link_states so layers with per-layer storage
-    // (Scaling/Unscaling/Bounding) still receive the device-change signal.
     if (!states.empty())
         states.migrate_to(Device::CUDA, Backend::get_compute_stream());
 
-    link_states();
+    link_states(Device::CUDA);
 }
 
 void NeuralNetwork::copy_states_host()
@@ -1431,7 +1434,7 @@ void NeuralNetwork::copy_states_host()
     if (!states.empty())
         states.migrate_to(Device::CPU, Backend::get_compute_stream());
 
-    link_states();
+    link_states(Device::CPU);
 }
 
 MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
@@ -1443,19 +1446,22 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     cudaStream_t stream = Backend::get_compute_stream();
 
     vector<TensorView> input_views_gpu = input_views_cpu;
-    vector<float*>     input_devices(input_views_cpu.size(), nullptr);
+    vector<Buffer>     input_buffers(input_views_cpu.size());
 
     for (size_t i = 0; i < input_views_cpu.size(); ++i)
     {
-        const Index input_size = input_views_cpu[i].size();
-        if (input_size == 0) continue;
-        CHECK_CUDA(cudaMalloc(&input_devices[i], input_size * sizeof(float)));
-        CHECK_CUDA(cudaMemcpyAsync(input_devices[i],
+        const TensorView& source = input_views_cpu[i];
+        if (source.empty()) continue;
+        if (source.device == Device::CUDA) continue;
+
+        input_buffers[i].resize_bytes(source.byte_size(), Device::CUDA);
+        CHECK_CUDA(cudaMemcpyAsync(input_buffers[i].data,
                                    input_views_cpu[i].data,
-                                   input_size * sizeof(float),
+                                   source.byte_size(),
                                    cudaMemcpyHostToDevice,
                                    stream));
-        input_views_gpu[i].data = input_devices[i];
+        input_views_gpu[i].data = input_buffers[i].data;
+        input_views_gpu[i].device = Device::CUDA;
     }
 
     forward_propagate(input_views_gpu, forward_propagation, false);
@@ -1474,9 +1480,6 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
 
     copy_device_to_host_float(out_view.data, out_view.type, out_view.size(),
                               result.data(), stream);
-
-    for (float* p : input_devices)
-        if (p) CHECK_CUDA(cudaFree(p));
 
     return result;
 }

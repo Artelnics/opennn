@@ -72,7 +72,9 @@ void UpsampleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
 
-    IF_GPU({ throw runtime_error("UpsampleOp GPU path is not implemented yet."); });
+    if (input.is_cuda())
+        throw runtime_error("UpsampleOp GPU path is not implemented yet.");
+
     apply(input, output);
 }
 
@@ -107,7 +109,9 @@ void UpsampleOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t
     TensorView& input_delta = get_input_delta(bp, layer);
     if (input_delta.empty()) return;
 
-    IF_GPU({ throw runtime_error("UpsampleOp GPU path is not implemented yet."); });
+    if (output_delta.is_cuda())
+        throw runtime_error("UpsampleOp GPU path is not implemented yet.");
+
     apply_delta(output_delta, input_delta);
 }
 
@@ -161,7 +165,8 @@ void ConcatenateOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool
     if (inputs.size() != input_channels.size())
         throw runtime_error("Concatenate: input count mismatch.");
 
-    IF_GPU({ throw runtime_error("ConcatenateOp GPU path is not implemented yet."); });
+    if (output.is_cuda())
+        throw runtime_error("ConcatenateOp GPU path is not implemented yet.");
 
     const Index batch_size = output.shape[0];
     Index total_channels = 0;
@@ -192,7 +197,8 @@ void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, siz
 {
     const TensorView& output_delta = get_output_delta(bp, layer);
 
-    IF_GPU({ throw runtime_error("ConcatenateOp GPU path is not implemented yet."); });
+    if (output_delta.is_cuda())
+        throw runtime_error("ConcatenateOp GPU path is not implemented yet.");
 
     const Index batch_size = output_delta.shape[0];
     Index total_channels = 0;
@@ -301,11 +307,10 @@ void ActivationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool 
     TensorView& output = fp.views[layer][output_slots[0]][0];
     if (output.empty()) return;
 
-    // Standalone Activation layer: input and output live in different slots.
-    // Seed `output` with the upstream value before applying the elementwise
-    // function in place. When input_slots is empty (the fused path inside
-    // Dense / Convolutional / etc.), `output` already holds the pre-activation
-    // value written by the previous operator in the chain.
+#ifdef OPENNN_HAS_CUDA
+    if (forward_fused && output.is_cuda()) return;
+#endif
+
     if (!input_slots.empty() && input_slots[0] != output_slots[0])
         copy(fp.views[layer][input_slots[0]][0], output);
 
@@ -322,10 +327,6 @@ void ActivationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, s
     const auto& slots = output_slots_backward.empty() ? output_slots : output_slots_backward;
     const TensorView& outputs = fp.views[layer][slots[0]][0];
 
-    // Standalone Activation layer: write input_delta = output_delta * sigma'(output)
-    // into a distinct InputDelta slot. In the fused path (Dense/Conv/...),
-    // input_slots is empty (in-place) and we modify the layer's OutputDelta
-    // directly — the next operator in the chain reads it as its own input.
     const bool standalone = !input_slots.empty() && input_slots[0] != output_slots[0];
     if (standalone)
     {
@@ -474,13 +475,26 @@ void BatchNormOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
         TensorView& mean         = get_output(fp, layer, 1);
         TensorView& inv_variance = get_output(fp, layer, 2);
 
-        IF_GPU({ apply_training_gpu(input, mean, inv_variance, output); invalidate_inference_cache(); return; });
+#ifdef OPENNN_HAS_CUDA
+        if (input.is_cuda())
+        {
+            apply_training_gpu(input, mean, inv_variance, output);
+            invalidate_inference_cache();
+            return;
+        }
+#endif
         apply_training_cpu(input, mean, inv_variance, output);
         invalidate_inference_cache();
     }
     else
     {
-        IF_GPU({ apply_inference_gpu(input, output); return; });
+#ifdef OPENNN_HAS_CUDA
+        if (input.is_cuda())
+        {
+            apply_inference_gpu(input, output);
+            return;
+        }
+#endif
         apply_inference_cpu(input, output);
     }
 }
@@ -490,7 +504,13 @@ void BatchNormOp::apply_delta(const TensorView& input,
                             const TensorView& inverse_variance,
                             TensorView& delta) const
 {
-    IF_GPU({ apply_delta_gpu(input, mean, inverse_variance, delta); return; });
+#ifdef OPENNN_HAS_CUDA
+    if (delta.is_cuda())
+    {
+        apply_delta_gpu(input, mean, inverse_variance, delta);
+        return;
+    }
+#endif
     apply_delta_cpu(input, mean, inverse_variance, delta);
 }
 
@@ -704,7 +724,8 @@ void CombinationOp::set_parameters_glorot()
 
 void CombinationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
-    apply(get_input(fp, layer), get_output(fp, layer), CUBLASLT_EPILOGUE_BIAS);
+    apply(get_input(fp, layer), get_output(fp, layer),
+          fuse_relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS);
 }
 
 void CombinationOp::apply(const TensorView& input, TensorView& output, cublasLtEpilogue_t epilogue)
@@ -732,37 +753,6 @@ void CombinationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
     TensorView& input_delta = view_at_slot_or(dv, input_delta_slots, 0, empty);
 
     apply_delta(output_delta, input, input_delta, false);
-}
-
-void CombinationReluOp::set(Index input_features, Index output_features, Type weight_type)
-{
-    combination.set(input_features, output_features, weight_type);
-    activation.set_function(ActivationOp::Function::ReLU);
-}
-
-void CombinationReluOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
-{
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output      = get_output(fp, layer);
-
-    combination.apply(input, output, CUBLASLT_EPILOGUE_RELU_BIAS);
-}
-
-void CombinationReluOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
-{
-    auto& dv = bp.delta_views[layer];
-
-    const TensorView& output = get_output(fp, layer);
-    TensorView& output_delta = get_output_delta(bp, layer);
-
-    activation.apply_delta(output, output_delta);
-
-    const TensorView& input = get_input(fp, layer);
-
-    TensorView empty;
-    TensorView& input_delta = view_at_slot_or(dv, input_delta_slots, 0, empty);
-
-    combination.apply_delta(output_delta, input, input_delta, false);
 }
 
 void RecurrentOp::set(Index new_input_features,
@@ -827,15 +817,19 @@ void RecurrentOp::set_parameters_glorot()
 
 void RecurrentOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
 {
-    // Slot convention (set by the hosting layer):
-    //   output_slots = {Output, HiddenStates, ActivationDerivatives}
     auto& fv = fp.views[layer];
     const TensorView& input             = get_input(fp, layer);
     TensorView& output                  = fv[output_slots[0]][0];
     TensorView& hidden_states           = fv[output_slots[1]][0];
     TensorView& activation_derivatives  = fv[output_slots[2]][0];
 
-    IF_GPU({ apply_gpu(input, hidden_states, activation_derivatives, output, is_training); return; });
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_cuda())
+    {
+        apply_gpu(input, hidden_states, activation_derivatives, output, is_training);
+        return;
+    }
+#endif
     apply(input, hidden_states, activation_derivatives, output, is_training);
 }
 
@@ -852,7 +846,9 @@ void RecurrentOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
     TensorView empty;
     TensorView& input_delta = view_at_slot_or(dv, input_delta_slots, 0, empty);
 
-    IF_GPU({
+#ifdef OPENNN_HAS_CUDA
+    if (output_delta.is_cuda())
+    {
         TensorView& step_input_scratch    = dv[StepInputScratchSlot];
         TensorView& step_prev_h_scratch   = dv[StepPrevHScratchSlot];
         TensorView& delta_scratch         = dv[DeltaScratchSlot];
@@ -863,7 +859,8 @@ void RecurrentOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
                         step_input_scratch, step_prev_h_scratch,
                         delta_scratch, next_carry_scratch, step_in_delta_scratch);
         return;
-    });
+    }
+#endif
     apply_delta(input, hidden_states, activation_derivatives, output_delta, input_delta);
 }
 
@@ -948,8 +945,6 @@ void RecurrentOp::apply(const TensorView& input,
 
     if (return_sequences)
     {
-        // Output shape is (batch, time_steps, output_features), identical
-        // layout to hidden_states; just mirror the buffer.
         std::memcpy(output.as<float>(), hidden_data,
                     batch_size * time_steps * output_features * sizeof(float));
     }
@@ -990,9 +985,6 @@ void RecurrentOp::apply_delta(const TensorView& input,
     const Index h_stride_t  = output_features;
     const Index h_stride_b  = time_steps * output_features;
 
-    // Sequence-mode backward receives output_delta as (batch, time_steps, out)
-    // grouped by sample; each step's slice must be added to the carry. Final-
-    // state mode receives a (batch, out) slab that only contributes at t=T-1.
     const float* seq_delta_data = return_sequences ? output_delta.as<float>()
                                                    : nullptr;
     const float* final_delta_data = return_sequences ? nullptr
@@ -1018,7 +1010,6 @@ void RecurrentOp::apply_delta(const TensorView& input,
         }
         else if (t == time_steps - 1)
         {
-            // Final-state mode: output_delta is (batch, output_features).
             delta = Eigen::Map<const MatrixR>(final_delta_data, batch_size, output_features);
         }
         else
@@ -1120,8 +1111,8 @@ void RecurrentOp::apply_gpu(const TensorView& input,
 
         for (Index t = 0; t < time_steps; ++t)
         {
-            TensorView step_input(step_input_buf.data, step_input_shape, input.type);
-            TensorView step_hidden(step_hidden_buf.data, step_hidden_shape, output.type);
+            TensorView step_input(step_input_buf.data, step_input_shape, input.type, Device::CUDA);
+            TensorView step_hidden(step_hidden_buf.data, step_hidden_shape, output.type, Device::CUDA);
 
             gather_time_slice_cuda<Scalar>(batch_size, time_steps, input_features, t,
                                            input.as<Scalar>(), step_input.as<Scalar>());
@@ -1134,7 +1125,7 @@ void RecurrentOp::apply_gpu(const TensorView& input,
             TensorView step_derivs;
             if (is_training && !activation_derivatives.empty())
             {
-                step_derivs = TensorView(step_derivs_buf.data, step_hidden_shape, output.type);
+                step_derivs = TensorView(step_derivs_buf.data, step_hidden_shape, output.type, Device::CUDA);
                 derivs = step_derivs.as<Scalar>();
             }
 
@@ -1162,13 +1153,11 @@ void RecurrentOp::apply_gpu(const TensorView& input,
 
         if (return_sequences)
         {
-            // Output and hidden_states share the (batch, time_steps, out)
-            // layout, so a direct copy suffices.
             copy(hidden_states, output);
         }
         else
         {
-            TensorView final_hidden(prev_hidden_buf.data, step_hidden_shape, output.type);
+            TensorView final_hidden(prev_hidden_buf.data, step_hidden_shape, output.type, Device::CUDA);
             copy(final_hidden, output);
         }
     });
@@ -1211,15 +1200,10 @@ void RecurrentOp::apply_delta_gpu(const TensorView& input,
         zero_device_view(input_weight_gradient);
         zero_device_view(recurrent_weight_gradient);
 
-        // Sequence-mode backward needs a per-step (batch, out) staging buffer
-        // to combine output_delta[:, t, :] with the recurrent carry before
-        // feeding the unmodified fused-pre kernel. In final-state mode this
-        // buffer is unused.
         if (return_sequences)
             step_seq_delta_buf.grow_to(batch_size * output_features *
                                        Index(sizeof(Scalar)));
 
-        // cuDataType for cublasAxpyEx — matches the dtype of output_delta.
         const cudaDataType_t axpy_dtype =
             (output_delta.type == Type::FP32) ? CUDA_R_32F :
             (output_delta.type == Type::BF16) ? CUDA_R_16BF :
@@ -1235,7 +1219,6 @@ void RecurrentOp::apply_delta_gpu(const TensorView& input,
 
             if (return_sequences)
             {
-                // Stage = slice of output_delta at step t.
                 gather_time_slice_cuda<Scalar>(batch_size, time_steps,
                                                output_features, t,
                                                output_delta.as<Scalar>(),
@@ -1400,20 +1383,32 @@ void ConvolutionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
 
-    apply(input, output);
+    apply(input, output, fused_activation);
 }
 
 void ConvolutionOp::apply_delta(const TensorView& input,
                                 const TensorView& output_delta,
                                 TensorView& input_delta) const
 {
-    IF_GPU({ apply_delta_gpu(input, output_delta, input_delta); return; });
+#ifdef OPENNN_HAS_CUDA
+    if (output_delta.is_cuda())
+    {
+        apply_delta_gpu(input, output_delta, input_delta);
+        return;
+    }
+#endif
     apply_delta_cpu(input, output_delta, input_delta);
 }
 
 void ConvolutionOp::apply(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation)
 {
-    IF_GPU({ apply_gpu(input, output, fused_activation); return; });
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_cuda())
+    {
+        apply_gpu(input, output, fused_activation);
+        return;
+    }
+#endif
     apply_cpu(input, output);
 }
 
@@ -1454,9 +1449,6 @@ void ConvolutionOp::apply_cpu(const TensorView& input, TensorView& output)
 
     TensorMap4 outputs = output.as_tensor<4>();
 
-    // Pad inputs ONCE before the kernel loop. Doing inputs.pad() inside the
-    // loop would re-materialize the padded tensor per kernel (kernels_number
-    // times) and was the main forward-pass perf gap vs. master.
     const bool needs_padding = padding_height > 0 || padding_width > 0;
     const Tensor4 padded_inputs_storage = needs_padding
         ? Tensor4(inputs.pad(input_paddings))
@@ -1557,7 +1549,6 @@ void ConvolutionOp::plan_convolution_algorithms(const TensorView& input, const T
     cudnnTensorDescriptor_t input_desc  = input.get_descriptor();
     cudnnTensorDescriptor_t output_desc = output.get_descriptor();
 
-    // Picks the first SUCCESS entry from a Find perfs array.
     auto pick_algo = [](auto* perfs, int count, auto fallback) {
         for (int i = 0; i < count; ++i)
             if (perfs[i].status == CUDNN_STATUS_SUCCESS)
@@ -1685,7 +1676,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
                                output_delta.as<bfloat16>(),
                                output_delta_fp32);
 
-        output_delta_for_bias = TensorView(output_delta_fp32, output_delta.shape, Type::FP32);
+        output_delta_for_bias = TensorView(output_delta_fp32, output_delta.shape, Type::FP32, Device::CUDA);
     }
 
     CHECK_CUDNN(cudnnConvolutionBackwardBias(Backend::get_cudnn_handle(),
@@ -1719,49 +1710,6 @@ void ConvolutionOp::apply_delta_gpu(const TensorView&, const TensorView&, Tensor
 #endif
 
 
-void ConvolutionReluOp::set(Index input_h, Index input_w,
-                          Index kernels_n, Index kernel_h, Index kernel_w, Index kernel_c,
-                          Index row_stride, Index column_stride,
-                          Index padding_h, Index padding_w,
-                          Type compute_dtype)
-{
-    convolution.set(input_h, input_w,
-                    kernels_n, kernel_h, kernel_w, kernel_c,
-                    row_stride, column_stride,
-                    padding_h, padding_w,
-                    compute_dtype);
-
-    activation.set_function(ActivationOp::Function::ReLU);
-}
-
-void ConvolutionReluOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
-{
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output      = get_output(fp, layer);
-
-    IF_GPU({ convolution.apply(input, output, activation.descriptor); return; });
-    convolution.apply(input, output);
-    activation_forward(output, activation.function);
-}
-
-void ConvolutionReluOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
-{
-    auto& dv = bp.delta_views[layer];
-
-    const TensorView& output = get_output(fp, layer);
-    TensorView& output_delta = get_output_delta(bp, layer);
-
-    activation.apply_delta(output, output_delta);
-
-    const TensorView& input = get_input(fp, layer);
-
-    TensorView empty;
-    TensorView& input_delta = view_at_slot_or(dv, input_delta_slots, 0, empty);
-
-    convolution.apply_delta(input, output_delta, input_delta);
-}
-
-
 void LayerNormOp::set(Index new_sequence_length, Index new_embedding_dimension)
 {
     sequence_length     = new_sequence_length;
@@ -1770,7 +1718,6 @@ void LayerNormOp::set(Index new_sequence_length, Index new_embedding_dimension)
 
 vector<TensorSpec> LayerNormOp::parameter_specs() const
 {
-    // Gamma, Beta
     return vector<TensorSpec>(2, {Shape{embedding_dimension}, Type::FP32});
 }
 
@@ -1977,10 +1924,6 @@ Index AttentionOp::infer_attention_prefix_length(const TensorView& attention_wei
 
 vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
 {
-    // SDPA does not materialise the attention matrix and does not use these
-    // scratch slots for dropout either, so they collapse to empty placeholders.
-    // Unfused path needs a (B, H, Q, K) scratch for the attention weights and,
-    // when dropout is active, a matching one for the dropped mask.
     if (use_sdpa && !dropout.active())
         return vector<TensorSpec>(2, {Shape{}, compute_dtype});
 
@@ -1996,9 +1939,6 @@ vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
 
 TensorSpec AttentionOp::backward_scratch_spec(Index batch_size) const
 {
-    // SDPA backward (cuDNN frontend) computes dQ/dK/dV without materialising
-    // the attention weight matrix, so the (B,H,Q,K) scratch can be skipped.
-    // Unfused backward still needs it for the softmax-derivative reduction.
     if (use_sdpa)
         return {Shape{}, compute_dtype};
 
@@ -2006,12 +1946,13 @@ TensorSpec AttentionOp::backward_scratch_spec(Index batch_size) const
             compute_dtype};
 }
 
-bool AttentionOp::sdpa_supported(Type dtype)
+bool AttentionOp::sdpa_supported(Type dtype, Device device)
 {
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    return is_gpu() && dtype == Type::BF16;
+    return device == Device::CUDA && dtype == Type::BF16;
 #else
     (void)dtype;
+    (void)device;
     return false;
 #endif
 }
@@ -2066,14 +2007,12 @@ struct AttentionOp::SDPACache
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
     struct Entry
     {
-        // Forward graph
         shared_ptr<cudnn_frontend::graph::Graph> fwd_graph;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_Q, fwd_K, fwd_V, fwd_O, fwd_Stats;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_SeqLenQ, fwd_SeqLenKV;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_Seed, fwd_Offset;
         void* fwd_workspace_buf = nullptr;
 
-        // Backward graph (built lazily on first apply_delta_gpu)
         shared_ptr<cudnn_frontend::graph::Graph> bwd_graph;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Q, bwd_K, bwd_V, bwd_O, bwd_dO, bwd_Stats;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_dQ, bwd_dK, bwd_dV;
@@ -2081,27 +2020,17 @@ struct AttentionOp::SDPACache
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Seed, bwd_Offset;
         void* bwd_workspace_buf = nullptr;
 
-        // Shared (forward writes, backward reads). LSE stats from softmax.
         void* stats_buf = nullptr;
 
-        // Device-resident scalars for SDPA dropout RNG (1 INT64 each).
-        // Allocated only when the cache key has dropout_active=true. Forward
-        // writes the per-step (seed, offset); backward writes the same values
-        // so cuDNN regenerates an identical mask.
         void* seed_buf   = nullptr;
         void* offset_buf = nullptr;
 
-        // Per-batch INT32 sequence lengths for cuDNN padding masks. Forward
-        // refreshes them from source_input; backward reuses the same batch.
         void* seq_len_q_buf  = nullptr;
         void* seq_len_kv_buf = nullptr;
     };
 
     unordered_map<CacheKey, Entry, CacheKeyHash> entries;
 
-    // 1-element shortcut: AttentionOp is typically called with the same shape
-    // and dtype across all training/inference steps. After the first call this
-    // skips the unordered_map hash lookup entirely.
     mutable Entry*   last_entry_ = nullptr;
     mutable CacheKey last_key_;
     mutable bool     last_valid_ = false;
@@ -2155,7 +2084,6 @@ auto sdpa_check = [](auto s, const string& what) {
         throw runtime_error(format("SDPA {}: {}", what, s.get_message()));
 };
 
-// {B, H, S, D} contiguous tensor input.
 shared_ptr<cudnn_frontend::graph::Tensor_attributes>
 bhsd_input(cudnn_frontend::graph::Graph& graph, const char* name, int64_t B, int64_t H, int64_t S, int64_t D)
 {
@@ -2310,10 +2238,6 @@ static void build_sdpa_backward_graph(AttentionOp::SDPACache::Entry& entry,
     entry.bwd_SeqLenQ  = seq_len_input(*graph, "SeqLenQ_bwd",  k.batch_size);
     entry.bwd_SeqLenKV = seq_len_input(*graph, "SeqLenKV_bwd", k.batch_size);
 
-    // O is read from the layer's ConcatenatedAttentionOutputs buffer, which is
-    // physically laid out as {B, Q_seq, H, D} (post merge_heads). Logical shape
-    // is {B, H, Q_seq, D} with non-contiguous strides:
-    //   stride[B]=Q*H*D, stride[H]=D, stride[Q]=H*D, stride[D]=1
     entry.bwd_O = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
                                 .set_name("O_bwd")
                                 .set_dim({k.batch_size, k.heads, k.q_seq, k.head_dim})
@@ -2390,18 +2314,18 @@ void AttentionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
 
     const TensorView& query = get_input(fp, layer);
 
-    // TransposeScratch is reused as the per-head attention output {B,H,Q,D}.
-    // CPU path also dereferences it as float* for the padding mask scratch
-    // — it does that inside apply_cpu without leaking the pointer up here.
     TensorView attention_out = fv[scratch_slots[0]][0].reshape(
         {fp.batch_size, query.shape[1], query.shape[2], query.shape[3]});
 
-    IF_GPU({
+#ifdef OPENNN_HAS_CUDA
+    if (query.is_cuda())
+    {
         apply_gpu(query, get_input(fp, layer, 1), get_input(fp, layer, 2), source_input,
                   get_output(fp, layer), get_output(fp, layer, 1),
                   attention_out, fv[scratch_slots[0]][0].as<float>(), is_training);
         return;
-    });
+    }
+#endif
     apply_cpu(query, get_input(fp, layer, 1), get_input(fp, layer, 2), source_input,
               get_output(fp, layer), get_output(fp, layer, 1),
               attention_out, fv[scratch_slots[0]][0].as<float>(), is_training);
@@ -2418,26 +2342,25 @@ void AttentionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
     const TensorView& attention_weights = get_output(fp, layer);
     const TensorView& attention_weights_dropped = get_output(fp, layer, 1);
 
-    // TransposeScratch reused as output_delta {B,H,Q,D}. Dims read from `query`
-    // instead of duplicating member state in the hot path.
     const TensorView output_delta = fv[scratch_slots[0]][0]
         .reshape({fp.batch_size, query.shape[1], query.shape[2], query.shape[3]});
 
-    // delta_views are preallocated by MHA::get_backward_specs with the right
-    // shape and dtype; no need to reconstruct them from raw float pointers.
     TensorView& attention_weight_delta = get_output_delta(bp, layer);
     TensorView& query_delta            = get_output_delta(bp, layer, 1);
     TensorView& key_delta              = get_output_delta(bp, layer, 2);
     TensorView& value_delta            = get_output_delta(bp, layer, 3);
 
-    IF_GPU({
+#ifdef OPENNN_HAS_CUDA
+    if (output_delta.is_cuda())
+    {
         apply_delta_gpu(query, key, value, attention_output,
                         attention_weights, attention_weights_dropped,
                         output_delta,
                         attention_weight_delta,
                         query_delta, key_delta, value_delta);
         return;
-    });
+    }
+#endif
     apply_delta_cpu(query, key, value, attention_output,
                     attention_weights, attention_weights_dropped,
                     output_delta,
@@ -2455,11 +2378,7 @@ void AttentionOp::apply_cpu(const TensorView& query,
                           [[maybe_unused]] void* scratch,
                           bool is_training)
 {
-    // CPU-only padding-aware fast path: uses Eigen MatrixMap directly on raw
-    // pointers, which requires host memory. Gated on !is_gpu() so that the
-    // FP32 fallback from apply_gpu (where buffers live on device) falls
-    // through to the generic GPU-dispatched path below.
-    if (!is_gpu()
+    if (query.device != Device::CUDA
         && !use_causal_mask
         && !dropout.active()
         && compute_dtype == Type::FP32
@@ -2585,9 +2504,6 @@ void AttentionOp::apply_gpu(const TensorView& query,
                           bool is_training)
 {
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    // The layer's policy decides whether this AttentionOp runs SDPA. The
-    // operator itself just executes — no implicit fallback, because the
-    // forward_scratch_specs allocation already committed to one path.
     if (!use_sdpa)
     {
         apply_cpu(query, key, value, source_input,
@@ -2596,7 +2512,7 @@ void AttentionOp::apply_gpu(const TensorView& query,
         return;
     }
 
-    if (!sdpa_supported(query.type))
+    if (!sdpa_supported(query.type, query.device))
         throw runtime_error("AttentionOp: SDPA backend selected by the layer "
                             "but not supported (build without HAVE_CUDNN_FRONTEND, "
                             "non-BF16 dtype, or CPU runtime).");
@@ -2653,7 +2569,6 @@ void AttentionOp::apply_gpu(const TensorView& query,
     if (status.is_bad())
         throw runtime_error(format("SDPA forward execute: {}", status.get_message()));
 #else
-    // No cudnn-frontend: fall back to the manual softmax+matmul GPU path.
     apply_cpu(query, key, value, source_input,
               attention_weights, attention_weights_dropped,
               output, scratch, is_training);
@@ -2703,11 +2618,7 @@ void AttentionOp::apply_delta_cpu(const TensorView& query,
                                 TensorView& key_delta,
                                 TensorView& value_delta) const
 {
-    // CPU-only padding-aware fast path: uses Eigen MatrixMap directly on raw
-    // pointers, which requires host memory. Gated on !is_gpu() so that the
-    // FP32 fallback from apply_delta_gpu falls through to the unfused path
-    // below (which uses GPU-dispatched multiply/softmax).
-    if (!is_gpu()
+    if (query.device != Device::CUDA
         && !use_causal_mask
         && !dropout.active()
         && compute_dtype == Type::FP32
@@ -2851,9 +2762,6 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
                                 TensorView& value_delta) const
 {
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    // Mirrors the forward path: backend is decided by the hosting layer at
-    // configuration time and locked in by forward_scratch_specs. The forward
-    // populated sdpa_cache iff use_sdpa is true.
     if (!use_sdpa)
     {
         apply_delta_gpu_unfused(query, key, value,
@@ -2863,7 +2771,7 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
         return;
     }
 
-    if (!sdpa_supported(query.type) || !sdpa_cache)
+    if (!sdpa_supported(query.type, query.device) || !sdpa_cache)
         throw runtime_error("AttentionOp: SDPA backward called without a live SDPA "
                             "forward graph (use_sdpa set inconsistently between fwd/bwd).");
 
@@ -2883,11 +2791,6 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
 
     SDPACache::Entry* entry_ptr = sdpa_cache->find_entry(ck);
     if (!entry_ptr || !entry_ptr->fwd_graph)
-        // Under the current policy (layer-decided, no silent fallback) the
-        // forward path always populates the cache when use_sdpa is true, so a
-        // missing entry here means the cache key drifted between fwd and bwd
-        // (e.g. batch size changed mid-iteration). The unfused scratch is no
-        // longer allocated in that case — falling back would just crash later.
         throw runtime_error("AttentionOp::apply_delta_gpu: SDPA forward did not populate "
                             "a cache entry for this shape. Cache key drifted between "
                             "forward and backward (likely batch size changing across "
@@ -2943,13 +2846,10 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
 
 void AttentionOp::to_JSON(JsonWriter&) const
 {
-    // Per-call config (heads/seqs/causal_mask/dtype) lives at the layer level.
-    // DropoutOp rate is a runtime knob, not serialized — preserves existing schema.
 }
 
 void AttentionOp::from_JSON(const Json*)
 {
-    // No-op for the same reason.
 }
 
 
@@ -2965,9 +2865,8 @@ void MergeOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_
 {
     const Index batch_size = fp.batch_size;
 
-    const TensorView source_4d(get_input(fp, layer).as<float>(),
-                               {batch_size, heads_number, query_sequence_length, head_dimension},
-                               compute_dtype);
+    const TensorView source_4d = get_input(fp, layer)
+        .reshape({batch_size, heads_number, query_sequence_length, head_dimension});
     TensorView dest_4d = get_output(fp, layer).reshape({batch_size, query_sequence_length, heads_number, head_dimension});
 
     merge_heads(source_4d, dest_4d);
@@ -3030,7 +2929,13 @@ void PoolOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_tra
     TensorView empty;
     TensorView& indices = view_at_slot_or(fv, output_slots, 1, empty);
 
-    IF_GPU({ apply_gpu(input, output); return; });
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_cuda())
+    {
+        apply_gpu(input, output);
+        return;
+    }
+#endif
     apply_cpu(input, output, indices, is_training);
 }
 
@@ -3044,12 +2949,15 @@ void PoolOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t 
     TensorView empty;
     const TensorView& indices = view_at_slot_or(fv, output_slots, 1, empty);
 
-    IF_GPU({
+#ifdef OPENNN_HAS_CUDA
+    if (output_delta.is_cuda())
+    {
         const TensorView& input = get_input(fp, layer);
         const TensorView& output = get_output(fp, layer);
         apply_delta_gpu(input, output, output_delta, input_delta);
         return;
-    });
+    }
+#endif
 
     apply_delta_cpu(output_delta, indices, input_delta);
 }
@@ -3309,9 +3217,6 @@ void EmbeddingLookupOp::set_parameters_glorot()
 {
     if (weights.empty()) return;
     const float limit = glorot_limit(vocabulary_size, embedding_dimension);
-    // Eigen's setRandom() bypasses the project's RNG (uses std::rand
-    // internally), which breaks determinism — see [random_utilities.cpp]
-    // for why everything else routes through the global generator.
     set_random_uniform(weights.as_vector(), -limit, limit);
     weights.as_matrix().row(0).setZero();
 }
@@ -3465,7 +3370,9 @@ void DetectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
     const TensorView& input = get_input(fp, layer);
     TensorView& output = get_output(fp, layer);
 
-    IF_GPU({ throw runtime_error("DetectionOp GPU path is not implemented yet."); });
+    if (input.is_cuda())
+        throw runtime_error("DetectionOp GPU path is not implemented yet.");
+
     apply(input, output);
 }
 
@@ -3530,7 +3437,9 @@ void DetectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
 
     if (input_delta.empty()) return;
 
-    IF_GPU({ throw runtime_error("DetectionOp GPU path is not implemented yet."); });
+    if (output_delta.is_cuda())
+        throw runtime_error("DetectionOp GPU path is not implemented yet.");
+
     apply_delta(output, output_delta, input_delta);
 }
 
@@ -3613,7 +3522,10 @@ void NonMaxSuppressionOp::forward_propagate(ForwardPropagation& fp, size_t layer
     const TensorView& input = get_input(fp, layer);
     TensorView& output = get_output(fp, layer);
 
-    IF_GPU({ throw runtime_error("NonMaxSuppressionOp GPU path is not implemented yet."); });
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_cuda())
+        throw runtime_error("NonMaxSuppressionOp GPU path is not implemented yet.");
+#endif
     apply(input, output);
 }
 
@@ -3857,7 +3769,10 @@ void LongShortTermMemoryOp::forward_propagate(ForwardPropagation& fp, size_t lay
     TensorView& hidden_state = views[HiddenStateSlot][0];
     TensorView& cell_activation = views[CellActivationSlot][0];
 
-    IF_GPU({ throw runtime_error("LongShortTermMemoryOp GPU path is not implemented yet."); });
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_cuda())
+        throw runtime_error("LongShortTermMemoryOp GPU path is not implemented yet.");
+#endif
 
     apply(input, output, forget_gate, input_gate, candidate_gate, output_gate,
           cell_state, hidden_state, cell_activation);
@@ -3990,7 +3905,10 @@ void LongShortTermMemoryOp::back_propagate(ForwardPropagation& fp, BackPropagati
     const TensorView& hidden_state = views[HiddenStateSlot][0];
     const TensorView& cell_activation = views[CellActivationSlot][0];
 
-    IF_GPU({ throw runtime_error("LongShortTermMemoryOp GPU path is not implemented yet."); });
+#ifdef OPENNN_HAS_CUDA
+    if (output_delta.is_cuda())
+        throw runtime_error("LongShortTermMemoryOp GPU path is not implemented yet.");
+#endif
 
     apply_delta(input, output_delta, input_delta, hidden_delta, cell_delta,
                 forget_delta, input_gate_delta, candidate_delta, output_gate_delta,
@@ -4008,12 +3926,12 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
                                         TensorView& candidate_delta_scratch,
                                         TensorView& output_delta_scratch,
                                         const TensorView& forget_gate,
-                                            const TensorView& input_gate,
-                                            const TensorView& candidate_gate,
-                                            const TensorView& output_gate,
-                                            const TensorView& cell_state,
-                                            const TensorView& hidden_state,
-                                            const TensorView& cell_activation) const
+                                        const TensorView& input_gate,
+                                        const TensorView& candidate_gate,
+                                        const TensorView& output_gate,
+                                        const TensorView& cell_state,
+                                        const TensorView& hidden_state,
+                                        const TensorView& cell_activation) const
 {
     if (!input.data || !output_delta.data || output_features == 0 || time_steps == 0) return;
 

@@ -22,7 +22,7 @@ int main()
     {
         cout << "OpenNN. Iris Plant Example." << endl;
 
-        Configuration::instance().set(Device::Auto, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::Auto, Type::FP32);
 
         // Dataset
 

@@ -1,10 +1,3 @@
-// Adam and SGD parameter-update kernels.
-//
-// Both follow the same vec+tail layout: caller computes n_vec from a runtime
-// alignment check on the parameter pointers, then this TU's __global__ kernel
-// vectorises [0, n_vec) as float4 chunks and falls back to scalar for the
-// [n_vec*4, n) tail.
-
 #include "kernel_common.cuh"
 
 __device__ __forceinline__ void adam_update_one(
@@ -64,9 +57,6 @@ __global__ void adam_update_kernel(
         m4[i] = M;
         v4[i] = V;
 
-        // Refresh BF16 mirror in the same kernel: P is already in registers, so
-        // this saves a separate read-modify-write pass over the whole parameter
-        // buffer. Two 32-bit stores (one per __nv_bfloat162) cover the 4 lanes.
         if (bf2)
         {
             bf2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
@@ -80,8 +70,7 @@ __global__ void adam_update_kernel(
         adam_update_one(parameters[i], m[i], v[i], gradients[i],
                         beta_1, one_minus_beta_1, beta_2, one_minus_beta_2,
                         lr, eps);
-        // Tail also writes the mirror — without this the last 0..3 weights stay
-        // stale in BF16 and the next forward reads outdated values.
+
         if (parameters_bf16)
             parameters_bf16[i] = __float2bfloat16(parameters[i]);
     }
@@ -112,8 +101,6 @@ void adam_update_cuda(
     const float one_minus_beta_1 = 1.0f - beta_1;
     const float one_minus_beta_2 = 1.0f - beta_2;
 
-    // BF16 mirror comes from cudaMalloc → 256-byte aligned in practice. The
-    // explicit check keeps us defensive if the buffer ever becomes non-owning.
     const bool mirror_aligned = parameters_bf16 == nullptr
         || (reinterpret_cast<std::uintptr_t>(parameters_bf16) & 0x3) == 0;
 
@@ -190,8 +177,6 @@ __global__ void sgd_update_kernel(
             p4[i] = P;
             v4[i] = V;
 
-            // Refresh BF16 mirror in the same kernel — see adam_update_kernel for
-            // the rationale (P is already in registers, no extra read pass).
             if (bf2)
             {
                 bf2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
@@ -315,7 +300,6 @@ __global__ void cast_fp32_to_bf16_kernel(const int n_vec,
     for (int i = tid; i < n_vec; i += stride)
     {
         const float4 in = src4[i];
-        // Pack each pair of floats into one __nv_bfloat162 (one 32-bit store).
         dst2[i * 2 + 0] = __floats2bfloat162_rn(in.x, in.y);
         dst2[i * 2 + 1] = __floats2bfloat162_rn(in.z, in.w);
     }
@@ -332,7 +316,6 @@ void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
     if (stream == nullptr) stream = opennn::Backend::get_compute_stream();
 
     const int total = static_cast<int>(n);
-    // Vec path needs src 16B-aligned (float4 load) and dst 4B-aligned (__nv_bfloat162 store).
     const bool dst_aligned = (reinterpret_cast<std::uintptr_t>(dst) & 0x3) == 0;
     const bool aligned = are_float4_aligned(src) && dst_aligned;
     const int n_vec = aligned ? (total / 4) : 0;

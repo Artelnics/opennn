@@ -253,7 +253,7 @@ int main()
         std::cout << "OpenNN. YOLO Example." << std::endl;
 
         set_seed(42);
-        Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CPU, Type::FP32);
 
         // ===== Configuration toggles =====
         //

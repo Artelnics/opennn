@@ -25,7 +25,7 @@ int main()
     {
         cout << "OpenNN. Breast Cancer Example." << endl;
 
-        Configuration::instance().set(Device::Auto, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::Auto, Type::FP32);
 
         // Dataset
 

@@ -72,9 +72,6 @@ void TrainingStrategy::set_default()
         return;
     }
 
-    // Transformer: signaled by *any* Dense layer that consumes a rank-2 (seq, feat)
-    // input -- i.e. the layers formerly known as Dense3d. Targets are token
-    // indices per position, so the loss is CrossEntropy3d, not 2D.
     const auto& layers = neural_network->get_layers();
     const bool has_seq_dense = ranges::any_of(layers, [](const auto& layer) {
         const auto* dense = dynamic_cast<const Dense*>(layer.get());
@@ -117,19 +114,6 @@ void TrainingStrategy::set_default()
         set_optimization_algorithm("QuasiNewtonMethod");
         return;
     }
-
-    // Approximation (default). Empirical results on UCI tabular regression
-    // (airfoil / concrete / yacht):
-    //   QuasiNewton:                R² ≈ 0.11 / 0.22 / 0.42 — collapses to mean
-    //   LevenbergMarquardt:         throws on ApproximationNetwork (2-Dense)
-    //                               because compute_jacobian only fills the
-    //                               last trainable Dense's columns; the new
-    //                               guard correctly rejects multi-Dense nets.
-    //   AdaptiveMomentEstimation:   R² ≈ 0.87 / 0.89 / 0.99 — at published
-    //                               baseline quality. Slower than LM
-    //                               (~1.6 s/fit vs ~0.05 s) but the only
-    //                               optimizer that handles ApproximationNetwork
-    //                               correctly under the current opennn.
 
     set_loss("MeanSquaredError");
     set_optimization_algorithm("AdaptiveMomentEstimation");

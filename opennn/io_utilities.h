@@ -13,8 +13,6 @@
 namespace opennn
 {
 
-// Thread-safe positional reader. On POSIX uses pread(); on Windows uses
-// ReadFile with OVERLAPPED so the offset is per-call and not shared state.
 class FileReader
 {
 public:
@@ -28,11 +26,11 @@ public:
 
     void open(const filesystem::path& path);
     void close();
-    [[nodiscard]] bool is_open() const;
+    bool is_open() const;
 
     void read_at(void* buffer, size_t bytes, uint64_t offset) const;
 
-    [[nodiscard]] uint64_t file_size() const;
+    uint64_t file_size() const;
 
 private:
 #if defined(_WIN32)
@@ -42,9 +40,6 @@ private:
 #endif
 };
 
-
-// Streaming writer that lands on a .tmp file and renames atomically when
-// finish_with_rename() succeeds. Drops the .tmp on destruction otherwise.
 class FileWriter
 {
 public:
@@ -57,7 +52,7 @@ public:
     FileWriter& operator=(FileWriter&&)      = delete;
 
     void open(const filesystem::path& tmp_path);
-    [[nodiscard]] bool is_open() const;
+    bool is_open() const;
 
     void write(const void* buffer, size_t bytes);
 
@@ -74,12 +69,6 @@ private:
 
 void atomic_rename(const filesystem::path& from, const filesystem::path& to);
 
-
-// CSV reader. Loads a file (or string) into a single buffer and tokenizes
-// each non-empty line into a vector of string_views into that buffer.
-// The buffer lives in Result, so the views stay valid as long as Result does.
-// Handles UTF-8 BOM, quoted fields (the separator inside quotes is ignored),
-// and CRLF line endings.
 class CsvReader
 {
 public:
@@ -98,8 +87,8 @@ public:
 
     explicit CsvReader(Config c) : config(std::move(c)) {}
 
-    [[nodiscard]] Result read(const filesystem::path& path) const;
-    [[nodiscard]] Result read_string(string_view csv_text) const;
+    Result read(const filesystem::path& path) const;
+    Result read_string(string_view csv_text) const;
 
 private:
 

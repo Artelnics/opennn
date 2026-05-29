@@ -26,7 +26,7 @@ enum class SampleRole
     None
 };
 
-[[nodiscard]] inline const EnumMap<SampleRole>& sample_role_map()
+inline const EnumMap<SampleRole>& sample_role_map()
 {
     static const vector<pair<SampleRole, string>> entries = {
         {SampleRole::Training,   "Training"},
@@ -38,12 +38,12 @@ enum class SampleRole
     return map;
 }
 
-[[nodiscard]] inline const string& sample_role_to_string(SampleRole role)
+inline const string& sample_role_to_string(SampleRole role)
 {
     return sample_role_map().to_string(role);
 }
 
-[[nodiscard]] inline SampleRole string_to_sample_role(const string& name)
+inline SampleRole string_to_sample_role(const string& name)
 {
     if (name == "0") return SampleRole::Training;
     if (name == "1") return SampleRole::Validation;
@@ -51,6 +51,18 @@ enum class SampleRole
     if (name == "3") return SampleRole::None;
     return sample_role_map().from_string(name);
 }
+
+
+struct DeviceResidentData
+{
+    Buffer input{Device::CUDA};    // rows x input_features  (FP32, row-major)
+    Buffer target{Device::CUDA};   // rows x target_features (FP32)
+    vector<Index> row_of;          // dataset sample index -> resident row (-1 if absent)
+    Index rows = 0;
+    Index input_features = 0;
+    Index target_features = 0;
+    bool  valid = false;
+};
 
 class Dataset
 {
@@ -63,76 +75,80 @@ public:
 
     enum class Separator{Space, Tab, Comma, Semicolon};
 
-    [[nodiscard]] virtual Index get_samples_number() const { return ssize(sample_roles); }
+    virtual Index get_samples_number() const { return ssize(sample_roles); }
 
-    [[nodiscard]] Index get_samples_number(const string&) const;
+    Index get_samples_number(const string&) const;
 
-    [[nodiscard]] Index get_used_samples_number() const;
+    Index get_used_samples_number() const;
 
-    [[nodiscard]] vector<Index> get_sample_indices(const string&) const;
+    vector<Index> get_sample_indices(const string&) const;
 
-    [[nodiscard]] vector<Index> get_used_sample_indices() const;
+    vector<Index> get_used_sample_indices() const;
 
-    [[nodiscard]] const vector<SampleRole>& get_sample_roles() const { return sample_roles; }
+    const vector<SampleRole>& get_sample_roles() const { return sample_roles; }
 
-    [[nodiscard]] vector<Index> get_sample_roles_vector() const;
+    vector<Index> get_sample_roles_vector() const;
 
-    [[nodiscard]] VectorI get_sample_role_numbers() const;
+    VectorI get_sample_role_numbers() const;
 
-    [[nodiscard]] Index get_variables_number() const { return variables.size(); }
-    [[nodiscard]] Index get_variables_number(const string&) const;
-    [[nodiscard]] Index get_used_variables_number() const;
+    Index get_variables_number() const { return variables.size(); }
+    Index get_variables_number(const string&) const;
+    Index get_used_variables_number() const;
 
-    [[nodiscard]] const vector<Variable>& get_variables() const { return variables; }
-    [[nodiscard]] vector<Variable> get_variables(const string&) const;
+    const vector<Variable>& get_variables() const { return variables; }
+    vector<Variable> get_variables(const string&) const;
 
-    [[nodiscard]] Index get_variable_index(const string&) const;
-    [[nodiscard]] Index get_variable_index(const Index) const;
+    Index get_variable_index(const string&) const;
+    Index get_variable_index(const Index) const;
 
-    [[nodiscard]] vector<Index> get_variable_indices(const string&) const;
-    [[nodiscard]] vector<Index> get_used_variables_indices() const;
+    vector<Index> get_variable_indices(const string&) const;
+    vector<Index> get_used_variables_indices() const;
 
-    [[nodiscard]] vector<string> get_variable_names() const;
-    [[nodiscard]] vector<string> get_variable_names(const string&) const;
+    vector<string> get_variable_names() const;
+    vector<string> get_variable_names(const string&) const;
 
-    [[nodiscard]] VariableType get_variable_type(const Index index) const { return variables[index].type; }
+    VariableType get_variable_type(const Index index) const { return variables[index].type; }
 
-    [[nodiscard]] vector<VariableType> get_variable_types(const vector<Index>& indices) const;
-    [[nodiscard]] Index get_features_number() const;
-    [[nodiscard]] Index get_features_number(const string&) const;
-    [[nodiscard]] Index get_used_features_number() const;
+    vector<VariableType> get_variable_types(const vector<Index>& indices) const;
+    Index get_features_number() const;
+    Index get_features_number(const string&) const;
+    Index get_used_features_number() const;
 
-    [[nodiscard]] vector<string> get_feature_names() const;
-    [[nodiscard]] vector<string> get_feature_names(const string&) const;
+    vector<string> get_feature_names() const;
+    vector<string> get_feature_names(const string&) const;
 
-    [[nodiscard]] vector<vector<Index>> get_feature_indices() const;
-    [[nodiscard]] vector<Index> get_feature_indices(const Index) const;
-    [[nodiscard]] vector<Index> get_feature_indices(const string&) const;
-    [[nodiscard]] vector<Index> get_used_feature_indices() const;
+    vector<vector<Index>> get_feature_indices() const;
+    vector<Index> get_feature_indices(const Index) const;
+    vector<Index> get_feature_indices(const string&) const;
+    vector<Index> get_used_feature_indices() const;
 
-    [[nodiscard]] vector<Index> get_feature_dimensions() const;
+    vector<Index> get_feature_dimensions() const;
 
-    [[nodiscard]] Shape get_shape(const string&) const;
+    Shape get_shape(const string&) const;
 
     virtual void get_batches(const vector<Index>&, Index, bool, vector<vector<Index>>&) const;
 
-    [[nodiscard]] const vector<vector<string>>& get_data_file_preview() const { return data_file_preview; }
+    virtual bool supports_device_residency() const { return false; }
+    virtual bool ensure_device_resident(const string& /*sample_role*/) { return false; }
+    virtual const DeviceResidentData* get_device_resident(const string& /*sample_role*/) const { return nullptr; }
 
-    [[nodiscard]] const filesystem::path& get_data_path() const { return data_path; }
+    const vector<vector<string>>& get_data_file_preview() const { return data_file_preview; }
 
-    [[nodiscard]] const Separator& get_separator() const { return separator; }
-    [[nodiscard]] string get_separator_string() const;
-    [[nodiscard]] string get_separator_name() const;
+    const filesystem::path& get_data_path() const { return data_path; }
 
-    [[nodiscard]] const Codification& get_codification() const { return codification; }
-    [[nodiscard]] string get_codification_string() const;
+    const Separator& get_separator() const { return separator; }
+    string get_separator_string() const;
+    string get_separator_name() const;
 
-    [[nodiscard]] bool get_display() const { return display; }
+    const Codification& get_codification() const { return codification; }
+    string get_codification_string() const;
 
-    [[nodiscard]] virtual bool is_empty() const { return get_samples_number() == 0; }
+    bool get_display() const { return display; }
 
-    [[nodiscard]] Shape get_input_shape() const { return input_shape; }
-    [[nodiscard]] Shape get_target_shape() const { return target_shape; }
+    virtual bool is_empty() const { return get_samples_number() == 0; }
+
+    Shape get_input_shape() const { return input_shape; }
+    Shape get_target_shape() const { return target_shape; }
 
     void set_default();
     void set_sample_roles(const string&);
@@ -181,14 +197,14 @@ public:
 
     void set_display(bool new_display) { display = new_display; }
 
-    [[nodiscard]] bool is_sample_used(const Index i) const { return sample_roles[i] != SampleRole::None; }
+    bool is_sample_used(const Index i) const { return sample_roles[i] != SampleRole::None; }
 
-    [[nodiscard]] bool has_binary_variables() const;
-    [[nodiscard]] bool has_categorical_variables() const;
-    [[nodiscard]] bool has_binary_or_categorical_variables() const;
-    [[nodiscard]] bool has_time_variable() const;
+    bool has_binary_variables() const;
+    bool has_categorical_variables() const;
+    bool has_binary_or_categorical_variables() const;
+    bool has_time_variable() const;
 
-    [[nodiscard]] bool has_validation() const;
+    bool has_validation() const;
 
     void split_samples(const float training_ratio = 0.6f,
                        float validation_ratio = 0.2f,
@@ -203,21 +219,21 @@ public:
                               float validation_ratio = 0.2f,
                               float testing_ratio = 0.2f);
 
-    [[nodiscard]] vector<vector<Index>> split_samples(const vector<Index>&, Index) const;
+    vector<vector<Index>> split_samples(const vector<Index>&, Index) const;
 
     virtual vector<Descriptives> scale_features(const string&) { return {}; }
 
     virtual void from_JSON(const JsonDocument&) = 0;
     virtual void to_JSON(JsonWriter&) const {}
 
-    [[nodiscard]] virtual bool has_nan() const { return false; }
+    virtual bool has_nan() const { return false; }
 
     virtual void scrub_missing_values() {}
 
-    [[nodiscard]] virtual vector<Descriptives> calculate_feature_descriptives(const string&) const { return {}; }
-    [[nodiscard]] virtual Tensor<Correlation, 2> calculate_input_target_variable_pearson_correlations() const { return {}; }
-    [[nodiscard]] virtual VectorI calculate_target_distribution() const { return {}; }
-    [[nodiscard]] virtual VectorI calculate_correlations_rank() const { return {}; }
+    virtual vector<Descriptives> calculate_feature_descriptives(const string&) const { return {}; }
+    virtual Tensor<Correlation, 2> calculate_input_target_variable_pearson_correlations() const { return {}; }
+    virtual VectorI calculate_target_distribution() const { return {}; }
+    virtual VectorI calculate_correlations_rank() const { return {}; }
 
     virtual void unscale_features(const string&, const vector<Descriptives>&) {}
 

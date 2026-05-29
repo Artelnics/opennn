@@ -17,7 +17,7 @@ struct Descriptives
 {
     Descriptives(const float = NAN, float = NAN, float = NAN, float = NAN);
 
-    [[nodiscard]] VectorR to_tensor() const;
+    VectorR to_tensor() const;
 
     void set(const float = NAN, float = NAN, float = NAN, float = NAN);
 
@@ -73,23 +73,23 @@ struct Histogram
     Histogram(const VectorR&, Index);
 
     Histogram(const VectorR&);
-    [[nodiscard]] Index get_bins_number() const;
+    Index get_bins_number() const;
 
-    [[nodiscard]] Index count_empty_bins() const;
+    Index count_empty_bins() const;
 
-    [[nodiscard]] Index calculate_minimum_frequency() const;
+    Index calculate_minimum_frequency() const;
 
-    [[nodiscard]] Index calculate_maximum_frequency() const;
+    Index calculate_maximum_frequency() const;
 
-    [[nodiscard]] Index calculate_most_populated_bin() const;
+    Index calculate_most_populated_bin() const;
 
-    [[nodiscard]] VectorR calculate_minimal_centers() const;
+    VectorR calculate_minimal_centers() const;
 
-    [[nodiscard]] VectorR calculate_maximal_centers() const;
+    VectorR calculate_maximal_centers() const;
 
-    [[nodiscard]] Index calculate_bin(const float) const;
+    Index calculate_bin(const float) const;
 
-    [[nodiscard]] Index calculate_frequency(const float) const;
+    Index calculate_frequency(const float) const;
 
     void save(const filesystem::path&) const;
 
@@ -101,68 +101,68 @@ struct Histogram
 
     VectorR frequencies;
 };
-[[nodiscard]] float minimum(const MatrixR&);
-[[nodiscard]] float minimum(const VectorR&);
-[[nodiscard]] float minimum(const VectorR&, const vector<Index>&);
-[[nodiscard]] VectorR column_minimums(const Tensor2&, const vector<Index>& = {}, const vector<Index>& = {});
-[[nodiscard]] float maximum(const MatrixR&);
-[[nodiscard]] float maximum(const VectorR&);
-[[nodiscard]] float maximum(const VectorR&, const vector<Index>&);
-[[nodiscard]] VectorR column_maximums(const Tensor2&, const vector<Index>& = {}, const vector<Index>& = {});
-[[nodiscard]] float range(const VectorR&);
-[[nodiscard]] float mean(const VectorR&);
-[[nodiscard]] float mean(const MatrixR&, Index);
-[[nodiscard]] VectorR mean(const MatrixR&);
-[[nodiscard]] VectorR mean(const MatrixR&, const vector<Index>&, const vector<Index>&);
-[[nodiscard]] float median(const VectorR&);
-[[nodiscard]] float median(const MatrixR&, Index);
-[[nodiscard]] VectorR median(const MatrixR&);
-[[nodiscard]] VectorR median(const MatrixR&, const vector<Index>&);
-[[nodiscard]] VectorR median(const MatrixR&, const vector<Index>&, const vector<Index>&);
-[[nodiscard]] float variance(const VectorR&);
-[[nodiscard]] float variance(const VectorR&, const VectorI&);
-[[nodiscard]] float standard_deviation(const VectorR&);
-[[nodiscard]] VectorR standard_deviation(const VectorR&, Index);
-[[nodiscard]] VectorR quartiles(const VectorR&);
-[[nodiscard]] VectorR quartiles(const VectorR&, const vector<Index>&);
-[[nodiscard]] BoxPlot box_plot(const VectorR&);
-[[nodiscard]] BoxPlot box_plot(const VectorR&, const vector<Index>&);
-[[nodiscard]] Descriptives vector_descriptives(const VectorR&);
-[[nodiscard]] vector<Descriptives> descriptives(const MatrixR&);
-[[nodiscard]] vector<Descriptives> descriptives(const MatrixR&, const vector<Index>&, const vector<Index>&);
-[[nodiscard]] Histogram histogram(const VectorR&, Index  = 10);
-[[nodiscard]] Histogram histogram_centered(const VectorR&, float = 0.0f, Index  = 10);
-[[nodiscard]] Histogram histogram(const VectorB&);
-[[nodiscard]] Histogram histogram(const VectorI&, Index  = 10);
-[[nodiscard]] vector<Histogram> histograms(const MatrixR&, Index = 10);
-[[nodiscard]] VectorI total_frequencies(const vector<Histogram>&);
-[[nodiscard]] Index minimal_index(const VectorR&);
-[[nodiscard]] VectorI minimal_indices(const VectorR&, Index);
-[[nodiscard]] VectorI minimal_indices(const MatrixR&);
-[[nodiscard]] Index maximal_index(const VectorR&);
-[[nodiscard]] VectorI maximal_indices(const VectorR&, Index);
-[[nodiscard]] VectorI maximal_indices(const MatrixR&);
-[[nodiscard]] inline bool row_finite(const VectorR& values, Index i) { return isfinite(values(i)); }
-[[nodiscard]] inline bool row_finite(const MatrixR& matrix, Index i) { return matrix.row(i).array().isFinite().all(); }
+float minimum(const MatrixR&);
+float minimum(const VectorR&);
+float minimum(const VectorR&, const vector<Index>&);
+VectorR column_minimums(const Tensor2&, const vector<Index>& = {}, const vector<Index>& = {});
+float maximum(const MatrixR&);
+float maximum(const VectorR&);
+float maximum(const VectorR&, const vector<Index>&);
+VectorR column_maximums(const Tensor2&, const vector<Index>& = {}, const vector<Index>& = {});
+float range(const VectorR&);
+float mean(const VectorR&);
+float mean(const MatrixR&, Index);
+VectorR mean(const MatrixR&);
+VectorR mean(const MatrixR&, const vector<Index>&, const vector<Index>&);
+float median(const VectorR&);
+float median(const MatrixR&, Index);
+VectorR median(const MatrixR&);
+VectorR median(const MatrixR&, const vector<Index>&);
+VectorR median(const MatrixR&, const vector<Index>&, const vector<Index>&);
+float variance(const VectorR&);
+float variance(const VectorR&, const VectorI&);
+float standard_deviation(const VectorR&);
+VectorR standard_deviation(const VectorR&, Index);
+VectorR quartiles(const VectorR&);
+VectorR quartiles(const VectorR&, const vector<Index>&);
+BoxPlot box_plot(const VectorR&);
+BoxPlot box_plot(const VectorR&, const vector<Index>&);
+Descriptives vector_descriptives(const VectorR&);
+vector<Descriptives> descriptives(const MatrixR&);
+vector<Descriptives> descriptives(const MatrixR&, const vector<Index>&, const vector<Index>&);
+Histogram histogram(const VectorR&, Index  = 10);
+Histogram histogram_centered(const VectorR&, float = 0.0f, Index  = 10);
+Histogram histogram(const VectorB&);
+Histogram histogram(const VectorI&, Index  = 10);
+vector<Histogram> histograms(const MatrixR&, Index = 10);
+VectorI total_frequencies(const vector<Histogram>&);
+Index minimal_index(const VectorR&);
+VectorI minimal_indices(const VectorR&, Index);
+VectorI minimal_indices(const MatrixR&);
+Index maximal_index(const VectorR&);
+VectorI maximal_indices(const VectorR&, Index);
+VectorI maximal_indices(const MatrixR&);
+inline bool row_finite(const VectorR& values, Index i) { return isfinite(values(i)); }
+inline bool row_finite(const MatrixR& matrix, Index i) { return matrix.row(i).array().isFinite().all(); }
 
-[[nodiscard]] inline VectorR slice_rows(const VectorR& values, const vector<Index>& indices)
+inline VectorR slice_rows(const VectorR& values, const vector<Index>& indices)
 {
     VectorR result(indices.size());
     for (Index i = 0; i < Index(indices.size()); ++i) result(i) = values(indices[i]);
     return result;
 }
 
-[[nodiscard]] inline MatrixR slice_rows(const MatrixR& matrix, const vector<Index>& indices)
+inline MatrixR slice_rows(const MatrixR& matrix, const vector<Index>& indices)
 {
     MatrixR result(indices.size(), matrix.cols());
     for (Index i = 0; i < Index(indices.size()); ++i) result.row(i) = matrix.row(indices[i]);
     return result;
 }
 
-[[nodiscard]] VectorR filter_missing_values(const VectorR&);
+VectorR filter_missing_values(const VectorR&);
 
 template<typename X, typename Y>
-[[nodiscard]] pair<X, Y> filter_missing_values(const X& x, const Y& y)
+pair<X, Y> filter_missing_values(const X& x, const Y& y)
 {
     if (x.rows() != y.rows())
         throw runtime_error("filter_missing_values: row count mismatch");
@@ -177,23 +177,23 @@ template<typename X, typename Y>
     return { slice_rows(x, valid), slice_rows(y, valid) };
 }
 
-[[nodiscard]] inline bool is_contiguous(const vector<Index>& indices)
+inline bool is_contiguous(const vector<Index>& indices)
 {
     return ranges::adjacent_find(indices,
         [](Index a, Index b) { return b != a + 1; }) == indices.end();
 }
 
 template <typename T>
-[[nodiscard]] inline bool is_binary(const T& tensor)
+inline bool is_binary(const T& tensor)
 {
     return all_of(tensor.data(), tensor.data() + tensor.size(),
                   [](float value) { return value == 0.0f || value == 1.0f || isnan(value); });
 }
 
-[[nodiscard]] MatrixR append_rows(const MatrixR&, const MatrixR&);
+MatrixR append_rows(const MatrixR&, const MatrixR&);
 
 template<typename T>
-[[nodiscard]] vector<T> gather_by_index(const vector<T>& data, const vector<Index>& indices)
+vector<T> gather_by_index(const vector<T>& data, const vector<Index>& indices)
 {
     vector<T> result;
     result.reserve(indices.size());
@@ -204,10 +204,10 @@ template<typename T>
     return result;
 }
 
-[[nodiscard]] vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums);
+vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums);
 
 template <typename T>
-[[nodiscard]] inline bool is_constant(const T& tensor)
+inline bool is_constant(const T& tensor)
 {
     const float* data = tensor.data();
     const float* end = data + tensor.size();
@@ -223,7 +223,7 @@ template <typename T>
                   [reference_value](float value) { return isnan(value) || abs(reference_value - value) <= numeric_limits<float>::min(); });
 }
 
-[[nodiscard]] inline vector<Index> get_true_indices(const VectorB& flags)
+inline vector<Index> get_true_indices(const VectorB& flags)
 {
     vector<Index> indices;
     indices.reserve(flags.size());
@@ -235,15 +235,15 @@ template <typename T>
     return indices;
 }
 
-[[nodiscard]] VectorI calculate_rank(const VectorR&, bool ascending = true);
+VectorI calculate_rank(const VectorR&, bool ascending = true);
 
-[[nodiscard]] vector<Index> get_elements_greater_than(const vector<Index>&, Index);
+vector<Index> get_elements_greater_than(const vector<Index>&, Index);
 
-[[nodiscard]] VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
+VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
 
 void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, float*, bool = true, int contiguous = -1);
 
-[[nodiscard]] VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
+VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
 
 }
 

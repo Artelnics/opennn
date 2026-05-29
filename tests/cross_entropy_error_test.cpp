@@ -87,7 +87,7 @@ TEST(CrossEntropyError2d, calculate_error)
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<opennn::Dense>(Shape{ 3 }, Shape{ 1 }, "Sigmoid"));
 
-    Batch batch(5, &dataset);
+    Batch batch(5, &dataset, neural_network.get_config());
 
     const vector<Index> training_indices = dataset.get_sample_indices("Training");
     batch.fill(training_indices, input_features_indices, {}, target_features_indices);
@@ -135,7 +135,7 @@ TEST(CrossEntropyError2d, calculate_output_gradients)
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<opennn::Dense>(Shape{ 3 }, Shape{ 1 }, "Sigmoid"));
 
-    Batch batch(5, &dataset);
+    Batch batch(5, &dataset, neural_network.get_config());
 
     const vector<Index> training_indices = dataset.get_sample_indices("Training");
     batch.fill(training_indices, input_features_indices, {},  target_features_indices);

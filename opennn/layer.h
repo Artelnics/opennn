@@ -28,9 +28,7 @@ enum class LayerType
     Bounding,
     Concatenate,
     Convolutional,
-    ConvolutionalRelu,
     Dense,
-    DenseRelu,
     Detection,
     Embedding,
     Flatten,
@@ -46,7 +44,7 @@ enum class LayerType
     Upsample
 };
 
-[[nodiscard]] inline const EnumMap<LayerType>& layer_type_map()
+inline const EnumMap<LayerType>& layer_type_map()
 {
     static const vector<pair<LayerType, string>> entries = {
         {LayerType::Activation,         "Activation"},
@@ -54,9 +52,7 @@ enum class LayerType
         {LayerType::Bounding,           "Bounding"},
         {LayerType::Concatenate,        "Concatenate"},
         {LayerType::Convolutional,      "Convolutional"},
-        {LayerType::ConvolutionalRelu,  "ConvolutionalRelu"},
         {LayerType::Dense,              "Dense"},
-        {LayerType::DenseRelu,          "DenseRelu"},
         {LayerType::Detection,          "Detection"},
         {LayerType::Embedding,          "Embedding"},
         {LayerType::Flatten,            "Flatten"},
@@ -75,12 +71,12 @@ enum class LayerType
     return map;
 }
 
-[[nodiscard]] inline const string& layer_type_to_string(LayerType type)
+inline const string& layer_type_to_string(LayerType type)
 {
     return layer_type_map().to_string(type);
 }
 
-[[nodiscard]] inline LayerType string_to_layer_type(const string& name)
+inline LayerType string_to_layer_type(const string& name)
 {
     return layer_type_map().from_string(name);
 }
@@ -112,40 +108,40 @@ public:
 
     virtual ~Layer() = default;
 
-    [[nodiscard]] const string& get_label() const { return label; }
+    const string& get_label() const { return label; }
 
-    [[nodiscard]] const string& get_name() const { return layer_type_to_string(layer_type); }
+    const string& get_name() const { return layer_type_to_string(layer_type); }
 
-    [[nodiscard]] LayerType get_type() const { return layer_type; }
+    LayerType get_type() const { return layer_type; }
 
     virtual void set_input_shape(const Shape&);
     virtual void set_output_shape(const Shape&);
 
     void set_label(string new_label) { label = move(new_label); }
 
-    [[nodiscard]] Index get_parameters_number() const;
-    [[nodiscard]] const vector<Operator*>& get_operators() const { return operators; }
-    [[nodiscard]] virtual vector<TensorSpec> get_parameter_specs() const;
-    [[nodiscard]] virtual vector<TensorSpec> get_state_specs()     const;
-    [[nodiscard]] virtual vector<TensorSpec> get_forward_specs(Index batch_size) const
+    Index get_parameters_number() const;
+    const vector<Operator*>& get_operators() const { return operators; }
+    virtual vector<TensorSpec> get_parameter_specs() const;
+    virtual vector<TensorSpec> get_state_specs()     const;
+    virtual vector<TensorSpec> get_forward_specs(Index batch_size) const
     {
         return {{Shape{batch_size}.append(get_output_shape()), compute_dtype}};
     }
-    [[nodiscard]] virtual vector<TensorSpec> get_backward_specs(Index batch_size) const
+    virtual vector<TensorSpec> get_backward_specs(Index batch_size) const
     {
         if (!is_trainable) return {};
         return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
     }
 
-    [[nodiscard]] virtual Shape get_input_shape() const { return input_shape; }
+    virtual Shape get_input_shape() const { return input_shape; }
 
-    [[nodiscard]] virtual Shape get_output_shape() const = 0;
+    virtual Shape get_output_shape() const = 0;
 
-    [[nodiscard]] virtual ActivationFunction get_output_activation() const { return ActivationFunction::Identity; }
+    virtual ActivationFunction get_output_activation() const { return ActivationFunction::Identity; }
 
-    [[nodiscard]] Index get_inputs_number() const { return get_input_shape().size(); }
+    Index get_inputs_number() const { return get_input_shape().size(); }
 
-    [[nodiscard]] Index get_outputs_number() const { return get_output_shape().size(); }
+    Index get_outputs_number() const { return get_output_shape().size(); }
     
     virtual void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
     {
@@ -169,14 +165,15 @@ public:
 
     virtual void write_JSON_body(JsonWriter&) const {}
 
-    [[nodiscard]] virtual string write_expression(const vector<string>& /*input_names*/,
+    virtual string write_expression(const vector<string>& /*input_names*/,
                                     const vector<string>& /*output_names*/) const { return {}; }
 
     virtual void print() const {}
 
-    [[nodiscard]] bool get_is_trainable() const { return is_trainable; }
+    bool get_is_trainable() const { return is_trainable; }
 
-    [[nodiscard]] Type get_compute_dtype() const { return compute_dtype; }
+    Type get_compute_dtype() const { return compute_dtype; }
+    Device get_compute_device() const { return compute_device; }
 
     void set_compute_dtype(Type new_compute_dtype)
     {
@@ -184,11 +181,13 @@ public:
         on_compute_dtype_changed();
     }
 
+    void set_compute_device(Device new_compute_device) { compute_device = new_compute_device; }
+
     virtual void on_compute_dtype_changed() {}
 
-    virtual float* link_states(float* pointer);
+    virtual float* link_states(float* pointer, Device device);
 
-    float* link_gradients(float* pointer, vector<TensorView>& gradient_views);
+    float* link_gradients(float* pointer, vector<TensorView>& gradient_views, Device device);
 
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const { return parameters; }
@@ -214,6 +213,7 @@ protected:
     Shape input_shape;
 
     Type compute_dtype = Type::FP32;
+    Device compute_device = Device::CPU;
 
     vector<TensorView> parameters;
     vector<TensorView> states;
@@ -223,7 +223,8 @@ protected:
     float* link_views_to_operators(
         vector<TensorView>& views, float* pointer,
         vector<TensorSpec> (Operator::*specs_fn)() const,
-        void (Operator::*link_fn)(span<const TensorView>));
+        void (Operator::*link_fn)(span<const TensorView>),
+        Device device);
 
 };
 

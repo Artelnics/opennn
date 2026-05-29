@@ -15,7 +15,7 @@ option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
 
 if(NOT OpenNN_BUILD_VISION)
     set(_opennn_vision_pattern
-        ".*/(convolutional_layer|convolutional_relu_layer|pooling_layer|pooling_layer_3d|normalization_layer_3d|flatten_layer|embedding_layer|multihead_attention_layer|detection_layer|transformer_decoder|image_dataset|image_utilities|yolo_dataset)\\.cpp$")
+        ".*/(convolutional_layer|pooling_layer|pooling_layer_3d|normalization_layer_3d|flatten_layer|embedding_layer|multihead_attention_layer|detection_layer|transformer_decoder|image_dataset|image_utilities|yolo_dataset)\\.cpp$")
     list(FILTER CPP_SOURCES EXCLUDE REGEX "${_opennn_vision_pattern}")
 endif()
 

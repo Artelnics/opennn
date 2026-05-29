@@ -123,8 +123,6 @@ private:
     Index minimum_token_frequency = 1;
     Index maximum_vocabulary_size = 20000;
 
-    // Binary streaming cache: <data_path>.cache/tokens.bin
-    // Header(64B) + offsets table (int64[N][4]) + concat int32 tokens.
     filesystem::path cache_path;
     mutable FileReader cache_reader;
     uint64_t cache_data_off_ = 0;

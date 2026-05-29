@@ -92,11 +92,7 @@ private:
                               Index layer_index,
                               Index parameter_offset,
                               MatrixR& jacobian);
-   // User-configurable initial value (set via set_damping_parameter / set_default).
-   // train() resets the live damping_parameter to this at the top so consecutive
-   // train() calls — e.g. inside GrowingNeurons' trial loop — don't inherit a
-   // saturated damping value from the previous run, which would cause every
-   // trial after the first to converge to the target-mean prediction.
+
    float initial_damping_parameter = 0.0f;
 
    float damping_parameter = 0.0f;

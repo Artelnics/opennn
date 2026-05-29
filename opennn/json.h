@@ -44,28 +44,28 @@ public:
     Json(const char* s)         : kind(Kind::String), string_value(s) {}
     Json(const string& s)  : kind(Kind::String), string_value(s) {}
 
-    [[nodiscard]] static Json make_object();
-    [[nodiscard]] static Json make_array();
+    static Json make_object();
+    static Json make_array();
 
-    [[nodiscard]] bool is_null()   const { return kind == Kind::Null; }
-    [[nodiscard]] bool is_bool()   const { return kind == Kind::Bool; }
-    [[nodiscard]] bool is_number() const { return kind == Kind::Number; }
-    [[nodiscard]] bool is_string() const { return kind == Kind::String; }
-    [[nodiscard]] bool is_array()  const { return kind == Kind::Array; }
-    [[nodiscard]] bool is_object() const { return kind == Kind::Object; }
-    [[nodiscard]] bool         has(const string& key) const;
-    [[nodiscard]] const Json*  find(const string& key) const;
-    [[nodiscard]] const Json*  first_child(const string& key) const { return find(key); }
-    [[nodiscard]] const Json&  at(const string& key) const;
+    bool is_null()   const { return kind == Kind::Null; }
+    bool is_bool()   const { return kind == Kind::Bool; }
+    bool is_number() const { return kind == Kind::Number; }
+    bool is_string() const { return kind == Kind::String; }
+    bool is_array()  const { return kind == Kind::Array; }
+    bool is_object() const { return kind == Kind::Object; }
+    bool         has(const string& key) const;
+    const Json*  find(const string& key) const;
+    const Json*  first_child(const string& key) const { return find(key); }
+    const Json&  at(const string& key) const;
     Json&        operator[](const string& key);
     Json& set(const string& key, Json value);
     void push_back(Json value);
-    [[nodiscard]] string as_string() const;
-    [[nodiscard]] long        as_long()   const;
-    [[nodiscard]] double      as_double() const;
-    [[nodiscard]] bool        as_bool()   const;
-    [[nodiscard]] static Json  parse(const string& text);
-    [[nodiscard]] string  dump(int indent = 2) const;
+    string as_string() const;
+    long        as_long()   const;
+    double      as_double() const;
+    bool        as_bool()   const;
+    static Json  parse(const string& text);
+    string  dump(int indent = 2) const;
 };
 
 class JsonDocument
@@ -75,12 +75,11 @@ public:
 
     void load(const filesystem::path& path);
     void save(const filesystem::path& path, int indent = 2) const;
-    [[nodiscard]] const Json* first_child(const string& name) const;
-    [[nodiscard]] const Json* first_child() const { return &root; }
-    [[nodiscard]] static JsonDocument wrap(const string& tag, Json value);
+    const Json* first_child(const string& name) const;
+    const Json* first_child() const { return &root; }
+    static JsonDocument wrap(const string& tag, Json value);
 };
 
-// Incremental writer (mirrors the old XmlPrinter API). Only one root object.
 class JsonWriter
 {
 public:
@@ -93,7 +92,7 @@ public:
     void end_array_object();
     void add_field(const string& name, const string& value);
 
-    [[nodiscard]] string c_str(int indent = 2) const;
+    string c_str(int indent = 2) const;
 
 private:
     Json                root;
@@ -106,15 +105,15 @@ void add_json_field(JsonWriter& writer,
 
 void write_json(JsonWriter& writer,
                 initializer_list<pair<const char*, string>> props);
-[[nodiscard]] float       read_json_type   (const Json* root, const string& field);
-[[nodiscard]] long        read_json_index  (const Json* root, const string& field);
-[[nodiscard]] bool        read_json_bool   (const Json* root, const string& field);
-[[nodiscard]] string read_json_string (const Json* root, const string& field);
+float       read_json_type   (const Json* root, const string& field);
+long        read_json_index  (const Json* root, const string& field);
+bool        read_json_bool   (const Json* root, const string& field);
+string read_json_string (const Json* root, const string& field);
 
-[[nodiscard]] string read_json_string_fallback(const Json* root,
+string read_json_string_fallback(const Json* root,
                                       initializer_list<string> names);
 
-[[nodiscard]] const Json* require_json_field(const Json* root, const string& field);
+const Json* require_json_field(const Json* root, const string& field);
 
 template<typename Func>
 void for_json_items(const Json* parent, const char* tag, long count, Func func)
@@ -130,7 +129,7 @@ void for_json_items(const Json* parent, const char* tag, long count, Func func)
         func(i, &arr->array_value[size_t(i)]);
 }
 
-[[nodiscard]] JsonDocument load_json_file(const filesystem::path& file_name);
-[[nodiscard]] const Json*  get_json_root (const JsonDocument& document, const string& tag);
+JsonDocument load_json_file(const filesystem::path& file_name);
+const Json*  get_json_root (const JsonDocument& document, const string& tag);
 
 }

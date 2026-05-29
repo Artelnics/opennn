@@ -16,16 +16,20 @@
 namespace opennn
 {
 
-Batch::Batch(const Index new_samples_number, const Dataset* new_dataset)
+Batch::Batch(const Index new_samples_number,
+             const Dataset* new_dataset,
+             const Configuration::Resolved& new_config)
 {
-    set(new_samples_number, new_dataset);
+    set(new_samples_number, new_dataset, new_config);
 }
 
 #ifndef OPENNN_HAS_CUDA
 Batch::~Batch() = default;
 #endif
 
-void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
+void Batch::set(const Index new_samples_number,
+                const Dataset* new_dataset,
+                const Configuration::Resolved& new_config)
 {
     if (!new_dataset)
         throw runtime_error("dataset is not set.");
@@ -33,11 +37,12 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     samples_number = new_samples_number;
 
     dataset = new_dataset;
+    config = new_config;
 
 #ifdef OPENNN_HAS_CUDA
-    const bool on_gpu = is_gpu();
+    const bool on_gpu = uses_cuda();
     const bool bf16_input = on_gpu
-                         && is_bf16_training()
+                         && config.training_type == Type::BF16
                          && dynamic_cast<const LanguageDataset*>(dataset) == nullptr;
     const Index input_device_bytes = bf16_input ? Index(sizeof(bfloat16)) : Index(sizeof(float));
 #else
@@ -88,29 +93,32 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     input_views_host_cache.clear();
 
     if (!decoder_shape.empty())
-        input_views_host_cache.emplace_back(decoder.as<float>(), decoder_shape);
+        input_views_host_cache.emplace_back(decoder.as<float>(), decoder_shape, Type::FP32, Device::CPU);
 
     if (!input_shape.empty())
-        input_views_host_cache.emplace_back(input.as<float>(), input_shape);
+        input_views_host_cache.emplace_back(input.as<float>(), input_shape, Type::FP32, Device::CPU);
 
     if (!target_shape.empty())
-        target_view_host_cache = TensorView(target.as<float>(), target_shape);
+        target_view_host_cache = TensorView(target.as<float>(), target_shape, Type::FP32, Device::CPU);
 
 #ifdef OPENNN_HAS_CUDA
-    needs_fp32_staging = bf16_input;
+    fp32_staging.resize_bytes(bf16_input
+        ? samples_number * input_features_number * Index(sizeof(float))
+        : Index(0),
+        Device::CUDA);
 
     if (!input_shape.empty() && input.data)
     {
         input_views_cache.clear();
 
         if (!decoder_shape.empty() && decoder.data)
-            input_views_cache.emplace_back(decoder.data, decoder_shape, Type::FP32);
+            input_views_cache.emplace_back(decoder.data, decoder_shape, Type::FP32, Device::CUDA);
 
-        input_views_cache.emplace_back(input.data, input_shape, bf16_input ? Type::BF16 : Type::FP32);
+        input_views_cache.emplace_back(input.data, input_shape, bf16_input ? Type::BF16 : Type::FP32, Device::CUDA);
     }
 
     if (!target_shape.empty() && target.data)
-        target_view_cache = TensorView(target.data, target_shape, Type::FP32);
+        target_view_cache = TensorView(target.data, target_shape, Type::FP32, Device::CUDA);
 #endif
 }
 
@@ -123,7 +131,7 @@ void Batch::fill(const vector<Index>& sample_indices,
 {
     current_sample_count = ssize(sample_indices);
 
-    const bool on_gpu = is_gpu();
+    const bool on_gpu = uses_cuda();
 
     float* const input_buffer   = on_gpu ? inputs_host  : input.as<float>();
     float* const decoder_buffer = on_gpu ? decoder_host : decoder.as<float>();
@@ -207,8 +215,9 @@ Batch::~Batch()
     if (targets_host) cudaFreeHost(targets_host);
 }
 
-void Batch::copy_device_async(const Index current_batch_size, cudaStream_t stream, float* fp32_staging)
+void Batch::copy_device_async(cudaStream_t stream)
 {
+    const Index current_batch_size = current_sample_count;
     const Index input_size  = current_batch_size * input_features_number;
     const Index target_size = current_batch_size * target_features_number;
 
@@ -216,11 +225,11 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
         CHECK_CUDA(cudaMemcpyAsync(destination, source, bytes, cudaMemcpyHostToDevice, stream));
     };
 
-    if (needs_fp32_staging)
+    if (!fp32_staging.empty())
     {
-        assert(fp32_staging != nullptr);
-        copy_to_device(fp32_staging, inputs_host, input_size * sizeof(float));
-        cast_fp32_to_bf16_cuda(input_size, fp32_staging, input.as<bfloat16>(), stream);
+        assert(fp32_staging.bytes >= input_size * Index(sizeof(float)));
+        copy_to_device(fp32_staging.as<float>(), inputs_host, input_size * sizeof(float));
+        cast_fp32_to_bf16_cuda(input_size, fp32_staging.as<float>(), input.as<bfloat16>(), stream);
     }
     else
     {
@@ -235,14 +244,28 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
 
     copy_to_device(target.as<float>(), targets_host, target_size * sizeof(float));
 
-    // Mark when the DMA is done so the next worker that recycles this Batch
-    // can wait on this specific copy (cheaper than draining the whole stream)
-    // before overwriting the pinned host buffers in fill(). Created lazily so
-    // CPU-only Batches (which never reach this path) pay nothing.
     if (!h2d_done_event)
         CHECK_CUDA(cudaEventCreateWithFlags(&h2d_done_event, cudaEventDisableTiming));
     CHECK_CUDA(cudaEventRecord(h2d_done_event, stream));
     h2d_done_recorded = true;
+}
+
+void Batch::gather_device_async(const Index current_batch_size,
+                                const Index* device_row_indices,
+                                const float* resident_input, Index resident_input_features,
+                                const float* resident_target, Index resident_target_features)
+{
+    current_sample_count = current_batch_size;
+
+    if (!fp32_staging.empty())
+        gather_rows_cuda<float, bfloat16>(current_batch_size, resident_input_features,
+                                          device_row_indices, resident_input, input.as<bfloat16>());
+    else
+        gather_rows_cuda<float, float>(current_batch_size, resident_input_features,
+                                       device_row_indices, resident_input, input.as<float>());
+
+    gather_rows_cuda<float, float>(current_batch_size, resident_target_features,
+                                   device_row_indices, resident_target, target.as<float>());
 }
 
 #endif

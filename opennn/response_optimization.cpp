@@ -346,8 +346,6 @@ void ResponseOptimization::Domain::set(const vector<Variable>& variables, const 
     inferior_frontier.resize(total_feature_dimensions);
     superior_frontier.resize(total_feature_dimensions);
 
-    //allowed_values.resize(total_feature_dimensions, 1);
-    //allowed_values.setConstant(numeric_limits<float>::quiet_NaN());
 
     Index feature_index = 0;
 
@@ -575,9 +573,6 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                 if(input_domain.superior_frontier(current_feature_index + i) > 0.5)
                     allowed_categories.push_back(i);
 
-            // Guard: if every category is constrained out, indexing
-            // allowed_categories[random_integer(0, -1)] reads past the end and
-            // crashes (SIGSEGV). Throw a useful error instead.
             if (allowed_categories.empty())
             {
                 throw runtime_error("ResponseOptimization: variable '"
@@ -669,12 +664,6 @@ void ResponseOptimization::apply_affine_input_swap(MatrixR& random_inputs,
             continue;
         }
 
-        // Iterative redistribution with clamping.
-        //
-        // Distribute the correction across variables. When a variable hits
-        // its domain bound (saturates), compute the residual that couldn't
-        // be absorbed and redistribute it among the remaining active variables.
-        // Repeat until the constraint is satisfied or all variables are frozen.
 
         vector<bool> frozen(terms_number, false);
         float residual_error = current_value - target;
@@ -743,8 +732,6 @@ void ResponseOptimization::apply_affine_input_swap(MatrixR& random_inputs,
                 }
             }
 
-            // The residual is what's left after the absorbed correction.
-            // absorbed_correction should ideally equal -residual_error.
 
             residual_error += absorbed_correction;
 
@@ -903,8 +890,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
                                                                     const MatrixR& outputs,
                                                                     const Domain& output_domain) const
 {
-    // Iterate ALL output variables so col_index stays aligned with outputs columns (unfiltered).
-    // domain_index advances only for non-Past variables, matching how output_domain was built.
     const vector<Variable>& all_target_variables = neural_network->get_output_variables();
     const Index rows_number = outputs.rows();
 
@@ -1174,18 +1159,12 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
     {
         auto [feasible_inputs, feasible_outputs] = sample_feasible_points(input_domain, original_output_domain);
 
-        // Defensive: if the model produced NaN, bail out instead of letting it
-        // propagate to optimal_set.first.row(0) below and segfault.
         if (feasible_outputs.size() > 0 && !feasible_outputs.allFinite())
         {
             cout << "Model produced NaN — aborting optimization loop." << endl;
             break;
         }
 
-        // No feasible point in this iteration: the constraints are too tight (or
-        // the model output range no longer overlaps them). Stop instead of
-        // calling calculate_optimal_points with empty matrices, which then
-        // crashed on optimal_set.first.row(0) below (SIGSEGV).
         if (feasible_inputs.rows() == 0)
         {
             cout << "!!! [Critical] Zero feasible points found. "
@@ -1199,9 +1178,6 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 
         optimal_set = calculate_optimal_points(feasible_inputs, feasible_outputs, objectives);
 
-        // Defensive guard: calculate_optimal_points should not return empty when
-        // its inputs aren't, but if it ever does, accessing (0, ...) below would
-        // segfault. Same for the subsequent input_domain.reshape(... row(0) ...).
         if (optimal_set.first.rows() == 0 || optimal_set.second.rows() == 0)
         {
             cout << "!!! [Critical] calculate_optimal_points returned empty. "
