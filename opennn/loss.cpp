@@ -12,6 +12,8 @@
 #include "tabular_dataset.h"
 #include "loss.h"
 #include "yolo_dataset.h"
+#include "detection_layer.h"
+#include "neural_network.h"
 #include "error_utilities.h"
 #include "profiler.h"
 #include "forward_propagation.h"
@@ -27,24 +29,129 @@ namespace opennn
 namespace
 {
 
-float yolo_loss_iou(const float* a, const float* b)
+struct GIoUResult
 {
-    const float a_left = a[0] - 0.5f * a[2];
-    const float a_top = a[1] - 0.5f * a[3];
-    const float a_right = a[0] + 0.5f * a[2];
-    const float a_bottom = a[1] + 0.5f * a[3];
+    float giou = 0.0f;
+    float iou  = 0.0f;
+    // Gradients of L = 1 - GIoU wrt the predicted box (cx, cy, w, h).
+    // Only populated by yolo_loss_giou_grad; left at zero by yolo_loss_giou_forward.
+    float d_cx = 0.0f;
+    float d_cy = 0.0f;
+    float d_w  = 0.0f;
+    float d_h  = 0.0f;
+};
 
-    const float b_left = b[0] - 0.5f * b[2];
-    const float b_top = b[1] - 0.5f * b[3];
-    const float b_right = b[0] + 0.5f * b[2];
-    const float b_bottom = b[1] + 0.5f * b[3];
+GIoUResult yolo_loss_giou_forward(const float* pred, const float* gt)
+{
+    const float p_l = pred[0] - 0.5f * pred[2];
+    const float p_r = pred[0] + 0.5f * pred[2];
+    const float p_t = pred[1] - 0.5f * pred[3];
+    const float p_b = pred[1] + 0.5f * pred[3];
+    const float g_l = gt[0] - 0.5f * gt[2];
+    const float g_r = gt[0] + 0.5f * gt[2];
+    const float g_t = gt[1] - 0.5f * gt[3];
+    const float g_b = gt[1] + 0.5f * gt[3];
 
-    const float inter_w = max(0.0f, min(a_right, b_right) - max(a_left, b_left));
-    const float inter_h = max(0.0f, min(a_bottom, b_bottom) - max(a_top, b_top));
-    const float inter = inter_w * inter_h;
-    const float area = a[2] * a[3] + b[2] * b[3] - inter;
+    const float i_w = max(0.0f, min(p_r, g_r) - max(p_l, g_l));
+    const float i_h = max(0.0f, min(p_b, g_b) - max(p_t, g_t));
+    const float i_area = i_w * i_h;
 
-    return area > 0.0f ? inter / area : 0.0f;
+    const float p_area = pred[2] * pred[3];
+    const float g_area = gt[2] * gt[3];
+    const float U = p_area + g_area - i_area;
+
+    const float c_w = max(p_r, g_r) - min(p_l, g_l);
+    const float c_h = max(p_b, g_b) - min(p_t, g_t);
+    const float C = c_w * c_h;
+
+    GIoUResult r;
+    r.iou  = (U > 0.0f) ? (i_area / U) : 0.0f;
+    r.giou = (C > 0.0f) ? (r.iou - (C - U) / C) : r.iou;
+    return r;
+}
+
+GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
+{
+    const float p_w = pred[2];
+    const float p_h = pred[3];
+
+    const float p_l = pred[0] - 0.5f * p_w;
+    const float p_r = pred[0] + 0.5f * p_w;
+    const float p_t = pred[1] - 0.5f * p_h;
+    const float p_b = pred[1] + 0.5f * p_h;
+    const float g_l = gt[0] - 0.5f * gt[2];
+    const float g_r = gt[0] + 0.5f * gt[2];
+    const float g_t = gt[1] - 0.5f * gt[3];
+    const float g_b = gt[1] + 0.5f * gt[3];
+
+    const float i_w_raw = min(p_r, g_r) - max(p_l, g_l);
+    const float i_h_raw = min(p_b, g_b) - max(p_t, g_t);
+    const float i_w = max(0.0f, i_w_raw);
+    const float i_h = max(0.0f, i_h_raw);
+    const float i_area = i_w * i_h;
+
+    const float p_area = p_w * p_h;
+    const float g_area = gt[2] * gt[3];
+    const float U = p_area + g_area - i_area;
+
+    const float c_w = max(p_r, g_r) - min(p_l, g_l);
+    const float c_h = max(p_b, g_b) - min(p_t, g_t);
+    const float C = c_w * c_h;
+
+    GIoUResult r;
+    r.iou  = (U > 0.0f) ? (i_area / U) : 0.0f;
+    r.giou = (C > 0.0f) ? (r.iou - (C - U) / C) : r.iou;
+
+    // Subgradient of max/min, averaged at the corner so locally-optimal edges
+    // do not generate a one-sided gradient that drifts the box parameters.
+    constexpr float corner_eps = 1e-6f;
+    auto max_grad = [&](float a, float b) -> float {
+        if (a > b + corner_eps) return 1.0f;
+        if (a < b - corner_eps) return 0.0f;
+        return 0.5f;
+    };
+    auto min_grad = [&](float a, float b) -> float {
+        if (a < b - corner_eps) return 1.0f;
+        if (a > b + corner_eps) return 0.0f;
+        return 0.5f;
+    };
+
+    const float inter_alive = (i_w_raw > 0.0f && i_h_raw > 0.0f) ? 1.0f : 0.0f;
+    const float di_dpl = inter_alive * -max_grad(p_l, g_l) * i_h;
+    const float di_dpr = inter_alive *  min_grad(p_r, g_r) * i_h;
+    const float di_dpt = inter_alive * -max_grad(p_t, g_t) * i_w;
+    const float di_dpb = inter_alive *  min_grad(p_b, g_b) * i_w;
+
+    const float dC_dpl = -min_grad(p_l, g_l) * c_h;
+    const float dC_dpr =  max_grad(p_r, g_r) * c_h;
+    const float dC_dpt = -min_grad(p_t, g_t) * c_w;
+    const float dC_dpb =  max_grad(p_b, g_b) * c_w;
+
+    // Predicted-area derivatives in corner space (p_area = (p_r - p_l)(p_b - p_t)).
+    const float dpA_dpl = -p_h;
+    const float dpA_dpr =  p_h;
+    const float dpA_dpt = -p_w;
+    const float dpA_dpb =  p_w;
+
+    auto loss_grad_corner = [&](float di_dx, float dpA_dx, float dC_dx) -> float
+    {
+        const float dU_dx = dpA_dx - di_dx;
+        const float dIoU_dx = (U > 0.0f) ? ((di_dx * U - i_area * dU_dx) / (U * U)) : 0.0f;
+        const float d_penalty_dx = (C > 0.0f) ? ((U * dC_dx - C * dU_dx) / (C * C)) : 0.0f;
+        // L = 1 - GIoU = 1 - IoU + (C - U)/C  ⇒  dL/dx = -dIoU/dx + d_penalty/dx
+        return -dIoU_dx + d_penalty_dx;
+    };
+
+    const float dL_dpl = loss_grad_corner(di_dpl, dpA_dpl, dC_dpl);
+    const float dL_dpr = loss_grad_corner(di_dpr, dpA_dpr, dC_dpr);
+    const float dL_dpt = loss_grad_corner(di_dpt, dpA_dpt, dC_dpt);
+    const float dL_dpb = loss_grad_corner(di_dpb, dpA_dpb, dC_dpb);
+
+    r.d_cx = dL_dpl + dL_dpr;
+    r.d_cy = dL_dpt + dL_dpb;
+    r.d_w  = 0.5f * (dL_dpr - dL_dpl);
+    r.d_h  = 0.5f * (dL_dpb - dL_dpt);
+    return r;
 }
 
 void check_yolo_loss(const Dataset* dataset)
@@ -56,13 +163,25 @@ void check_yolo_loss(const Dataset* dataset)
         throw runtime_error("YOLO loss requires YoloDataset.");
 }
 
+bool yolo_uses_sigmoid_classes(const NeuralNetwork* nn)
+{
+    if (!nn) return false;
+    const vector<unique_ptr<Layer>>& layers = nn->get_layers();
+    for (const unique_ptr<Layer>& layer : layers)
+        if (layer && layer->get_type() == LayerType::Detection)
+            return static_cast<const Detection*>(layer.get())->get_class_activation()
+                   == Detection::ClassActivation::Sigmoid;
+    return false;
+}
+
 Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
                                       const TensorView& target,
-                                      const Dataset* dataset)
+                                      const Dataset* dataset,
+                                      bool sigmoid_classes)
 {
     check_yolo_loss(dataset);
 
-    constexpr float lambda_coord = 5.0f;
+    constexpr float lambda_giou = 5.0f;
     constexpr float lambda_noobject = 0.5f;
 
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
@@ -93,20 +212,30 @@ Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
 
                     if (tgt[base + 4] == 1.0f)
                     {
-                        const float target_box[4] = {tgt[base + 0], tgt[base + 1], tgt[base + 2], tgt[base + 3]};
                         const float output_box[4] = {out[base + 0], out[base + 1], out[base + 2], out[base + 3]};
-                        const float iou = yolo_loss_iou(target_box, output_box);
+                        const float target_box[4] = {tgt[base + 0], tgt[base + 1], tgt[base + 2], tgt[base + 3]};
+                        const GIoUResult g = yolo_loss_giou_forward(output_box, target_box);
 
-                        coordinate_loss += pow(out[base + 0] - tgt[base + 0], 2.0f)
-                                         +  pow(out[base + 1] - tgt[base + 1], 2.0f)
-                                         +  pow(sqrt(out[base + 2] + EPSILON) - sqrt(tgt[base + 2] + EPSILON), 2.0f)
-                                         +  pow(sqrt(out[base + 3] + EPSILON) - sqrt(tgt[base + 3] + EPSILON), 2.0f);
+                        coordinate_loss += 1.0f - g.giou;
+                        object_loss += pow(out[base + 4] - g.iou, 2.0f);
 
-                        object_loss += pow(out[base + 4] - iou, 2.0f);
-
-                        for (Index c = 0; c < C; ++c)
-                            if (tgt[base + 5 + c] > 0.0f)
-                                class_loss -= log(out[base + 5 + c] + EPSILON);
+                        if (sigmoid_classes)
+                        {
+                            // BCE summed over all classes (independent labels).
+                            for (Index c = 0; c < C; ++c)
+                            {
+                                const float p = out[base + 5 + c];
+                                const float t = tgt[base + 5 + c];
+                                class_loss -= t * log(p + EPSILON) + (1.0f - t) * log(1.0f - p + EPSILON);
+                            }
+                        }
+                        else
+                        {
+                            // CE over softmax — only the target class contributes.
+                            for (Index c = 0; c < C; ++c)
+                                if (tgt[base + 5 + c] > 0.0f)
+                                    class_loss -= log(out[base + 5 + c] + EPSILON);
+                        }
                     }
                     else
                     {
@@ -116,7 +245,7 @@ Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
             }
 
     Loss::EvaluationResult result;
-    result.error = (lambda_coord * coordinate_loss + object_loss
+    result.error = (lambda_giou * coordinate_loss + object_loss
                   + lambda_noobject * noobject_loss + class_loss) / float(batch_size);
     return result;
 }
@@ -124,12 +253,14 @@ Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
 void yolo_gradient_cpu(const TensorView& output,
                        const TensorView& target,
                        const TensorView& output_delta,
-                       const Dataset* dataset)
+                       const Dataset* dataset,
+                       bool sigmoid_classes)
 {
     check_yolo_loss(dataset);
 
-    constexpr float lambda_coord = 5.0f;
+    constexpr float lambda_giou = 5.0f;
     constexpr float lambda_noobject = 0.5f;
+    constexpr float grad_clip = 10.0f;
 
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
     const Index B = yolo_dataset->get_boxes_per_cell();
@@ -158,22 +289,35 @@ void yolo_gradient_cpu(const TensorView& output,
 
                     if (tgt[base + 4] == 1.0f)
                     {
-                        const float target_box[4] = {tgt[base + 0], tgt[base + 1], tgt[base + 2], tgt[base + 3]};
                         const float output_box[4] = {out[base + 0], out[base + 1], out[base + 2], out[base + 3]};
-                        const float iou = yolo_loss_iou(target_box, output_box);
+                        const float target_box[4] = {tgt[base + 0], tgt[base + 1], tgt[base + 2], tgt[base + 3]};
+                        const GIoUResult g = yolo_loss_giou_grad(output_box, target_box);
 
-                        delta[base + 0] = 2.0f * lambda_coord * (out[base + 0] - tgt[base + 0]) * inv_batch;
-                        delta[base + 1] = 2.0f * lambda_coord * (out[base + 1] - tgt[base + 1]) * inv_batch;
+                        const float scale = lambda_giou * inv_batch;
+                        delta[base + 0] = scale * clamp(g.d_cx, -grad_clip, grad_clip);
+                        delta[base + 1] = scale * clamp(g.d_cy, -grad_clip, grad_clip);
+                        delta[base + 2] = scale * clamp(g.d_w,  -grad_clip, grad_clip);
+                        delta[base + 3] = scale * clamp(g.d_h,  -grad_clip, grad_clip);
+                        delta[base + 4] = 2.0f * (out[base + 4] - g.iou) * inv_batch;
 
-                        const float sqrt_w = sqrt(out[base + 2] + EPSILON);
-                        const float sqrt_h = sqrt(out[base + 3] + EPSILON);
-                        delta[base + 2] = lambda_coord * (sqrt_w - sqrt(tgt[base + 2] + EPSILON)) / sqrt_w * inv_batch;
-                        delta[base + 3] = lambda_coord * (sqrt_h - sqrt(tgt[base + 3] + EPSILON)) / sqrt_h * inv_batch;
-                        delta[base + 4] = 2.0f * (out[base + 4] - iou) * inv_batch;
-
-                        for (Index c = 0; c < C; ++c)
-                            if (tgt[base + 5 + c] > 0.0f)
-                                delta[base + 5 + c] = -tgt[base + 5 + c] / (out[base + 5 + c] + EPSILON) * inv_batch;
+                        if (sigmoid_classes)
+                        {
+                            // dE/dp = (p - t) / (p (1-p)). DetectionOp's
+                            // sigmoid-Jacobian s(1-s) cancels the denominator,
+                            // so the in_delta lands at (p - t).
+                            for (Index c = 0; c < C; ++c)
+                            {
+                                const float p = out[base + 5 + c];
+                                const float t = tgt[base + 5 + c];
+                                delta[base + 5 + c] = (p - t) / (p * (1.0f - p) + EPSILON) * inv_batch;
+                            }
+                        }
+                        else
+                        {
+                            for (Index c = 0; c < C; ++c)
+                                if (tgt[base + 5 + c] > 0.0f)
+                                    delta[base + 5 + c] = -tgt[base + 5 + c] / (out[base + 5 + c] + EPSILON) * inv_batch;
+                        }
                     }
                     else
                     {
@@ -336,7 +480,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         break;
     case Yolo:
 #ifndef OPENNN_NO_VISION
-        result = yolo_error_cpu(input, target, dataset);
+        result = yolo_error_cpu(input, target, dataset, yolo_uses_sigmoid_classes(neural_network));
 #else
         throw runtime_error("YOLO loss not available: opennn was built with OpenNN_BUILD_VISION=OFF.");
 #endif
@@ -559,7 +703,7 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         break;
     case Yolo:
 #ifndef OPENNN_NO_VISION
-        yolo_gradient_cpu(input, target, input_delta, dataset);
+        yolo_gradient_cpu(input, target, input_delta, dataset, yolo_uses_sigmoid_classes(neural_network));
 #else
         throw runtime_error("YOLO gradient not available: opennn was built with OpenNN_BUILD_VISION=OFF.");
 #endif

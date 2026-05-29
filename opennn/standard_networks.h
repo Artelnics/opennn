@@ -81,10 +81,23 @@ class YoloNetwork : public NeuralNetwork
 {
 public:
 
+    // Vgg = the conv+pool stack used since Phase 1 (~6M params, no skip
+    // connections). DarknetTiny = residual blocks à la Darknet-53 trimmed
+    // for CPU tractability (~5.8M params). Default stays Vgg so existing call
+    // sites and saved weight files are unaffected.
+    enum class Backbone { Vgg, DarknetTiny };
+
+    // Softmax = mutually-exclusive classes (YOLO v1/v2 + PASCAL VOC). Sigmoid
+    // = independent per-class probabilities (YOLO v3+, multi-label datasets).
+    // Default stays Softmax to preserve Phase 1/2 saved weights and behavior.
+    enum class ClassActivation { Softmax, Sigmoid };
+
     YoloNetwork(const Shape& input_shape,
                 Index classes_number,
                 const vector<array<float, 2>>& anchors,
-                Index grid_size = 13);
+                Index grid_size = 13,
+                Backbone backbone = Backbone::Vgg,
+                ClassActivation class_activation = ClassActivation::Softmax);
 };
 
 class TextClassificationNetwork : public NeuralNetwork

@@ -26,6 +26,7 @@ enum class LayerType
     Activation,
     Addition,
     Bounding,
+    Concatenate,
     Convolutional,
     Dense,
     Detection,
@@ -39,7 +40,8 @@ enum class LayerType
     Pooling3d,
     Recurrent,
     Scaling,
-    Unscaling
+    Unscaling,
+    Upsample
 };
 
 [[nodiscard]] inline const EnumMap<LayerType>& layer_type_map()
@@ -48,6 +50,7 @@ enum class LayerType
         {LayerType::Activation,         "Activation"},
         {LayerType::Addition,           "Addition"},
         {LayerType::Bounding,           "Bounding"},
+        {LayerType::Concatenate,        "Concatenate"},
         {LayerType::Convolutional,      "Convolutional"},
         {LayerType::Dense,              "Dense"},
         {LayerType::Detection,          "Detection"},
@@ -61,7 +64,8 @@ enum class LayerType
         {LayerType::Pooling3d,          "Pooling3d"},
         {LayerType::Recurrent,          "Recurrent"},
         {LayerType::Scaling,            "Scaling"},
-        {LayerType::Unscaling,          "Unscaling"}
+        {LayerType::Unscaling,          "Unscaling"},
+        {LayerType::Upsample,           "Upsample"}
     };
     static const EnumMap<LayerType> map{entries};
     return map;

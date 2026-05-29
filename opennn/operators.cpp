@@ -57,6 +57,169 @@ void AddOp::check(const vector<TensorView>& inputs, const TensorView& output) co
             throw runtime_error("Add: tensor dimensions do not match.");
 }
 
+void UpsampleOp::set(Index in_h, Index in_w, Index ch, Index scale)
+{
+    if (scale < 1)
+        throw runtime_error("Upsample: scale_factor must be >= 1.");
+    input_height = in_h;
+    input_width = in_w;
+    channels = ch;
+    scale_factor = scale;
+}
+
+void UpsampleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
+{
+    const TensorView& input = get_input(fp, layer);
+    TensorView& output      = get_output(fp, layer);
+
+    IF_GPU({ throw runtime_error("UpsampleOp GPU path is not implemented yet."); });
+    apply(input, output);
+}
+
+void UpsampleOp::apply(const TensorView& input, TensorView& output) const
+{
+    const Index batch_size = input.shape[0];
+    const Index out_h = input_height * scale_factor;
+    const Index out_w = input_width * scale_factor;
+
+    const float* src = input.as<float>();
+    float* dst = output.as<float>();
+
+    #pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index oh = 0; oh < out_h; ++oh)
+        {
+            const Index ih = oh / scale_factor;
+            for (Index ow = 0; ow < out_w; ++ow)
+            {
+                const Index iw = ow / scale_factor;
+                const Index in_idx  = ((b * input_height + ih) * input_width + iw) * channels;
+                const Index out_idx = ((b * out_h + oh) * out_w + ow) * channels;
+                for (Index c = 0; c < channels; ++c)
+                    dst[out_idx + c] = src[in_idx + c];
+            }
+        }
+}
+
+void UpsampleOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
+{
+    const TensorView& output_delta = get_output_delta(bp, layer);
+    TensorView& input_delta = get_input_delta(bp, layer);
+    if (input_delta.empty()) return;
+
+    IF_GPU({ throw runtime_error("UpsampleOp GPU path is not implemented yet."); });
+    apply_delta(output_delta, input_delta);
+}
+
+void UpsampleOp::apply_delta(const TensorView& output_delta, TensorView& input_delta) const
+{
+    const Index batch_size = input_delta.shape[0];
+    const Index out_h = input_height * scale_factor;
+    const Index out_w = input_width * scale_factor;
+
+    const float* delta = output_delta.as<float>();
+    float* in_delta = input_delta.as<float>();
+
+    fill_n(in_delta, input_delta.size(), 0.0f);
+
+    // Each input pixel receives the sum over its scale×scale output block.
+    // Parallelize over batch + input rows: contributions never collide.
+    #pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index ih = 0; ih < input_height; ++ih)
+            for (Index iw = 0; iw < input_width; ++iw)
+            {
+                const Index in_idx = ((b * input_height + ih) * input_width + iw) * channels;
+                for (Index dh = 0; dh < scale_factor; ++dh)
+                    for (Index dw = 0; dw < scale_factor; ++dw)
+                    {
+                        const Index oh = ih * scale_factor + dh;
+                        const Index ow = iw * scale_factor + dw;
+                        const Index out_idx = ((b * out_h + oh) * out_w + ow) * channels;
+                        for (Index c = 0; c < channels; ++c)
+                            in_delta[in_idx + c] += delta[out_idx + c];
+                    }
+            }
+}
+
+void ConcatenateOp::set(Index h, Index w, const vector<Index>& per_input_channels)
+{
+    if (per_input_channels.empty())
+        throw runtime_error("Concatenate: needs at least 1 input.");
+    for (Index c : per_input_channels)
+        if (c <= 0) throw runtime_error("Concatenate: per-input channels must be positive.");
+    height = h;
+    width = w;
+    input_channels = per_input_channels;
+}
+
+void ConcatenateOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
+{
+    const vector<TensorView>& inputs = get_inputs(fp, layer);
+    TensorView& output = get_output(fp, layer);
+
+    if (inputs.size() != input_channels.size())
+        throw runtime_error("Concatenate: input count mismatch.");
+
+    IF_GPU({ throw runtime_error("ConcatenateOp GPU path is not implemented yet."); });
+
+    const Index batch_size = output.shape[0];
+    Index total_channels = 0;
+    for (Index c : input_channels) total_channels += c;
+
+    float* dst = output.as<float>();
+
+    #pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index h = 0; h < height; ++h)
+            for (Index w = 0; w < width; ++w)
+            {
+                const Index out_idx = ((b * height + h) * width + w) * total_channels;
+                Index ch_offset = 0;
+                for (size_t i = 0; i < inputs.size(); ++i)
+                {
+                    const Index in_c = input_channels[i];
+                    const float* src = inputs[i].as<float>();
+                    const Index in_idx = ((b * height + h) * width + w) * in_c;
+                    for (Index c = 0; c < in_c; ++c)
+                        dst[out_idx + ch_offset + c] = src[in_idx + c];
+                    ch_offset += in_c;
+                }
+            }
+}
+
+void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
+{
+    const TensorView& output_delta = get_output_delta(bp, layer);
+
+    IF_GPU({ throw runtime_error("ConcatenateOp GPU path is not implemented yet."); });
+
+    const Index batch_size = output_delta.shape[0];
+    Index total_channels = 0;
+    for (Index c : input_channels) total_channels += c;
+
+    const float* delta = output_delta.as<float>();
+
+    #pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index h = 0; h < height; ++h)
+            for (Index w = 0; w < width; ++w)
+            {
+                const Index out_idx = ((b * height + h) * width + w) * total_channels;
+                Index ch_offset = 0;
+                for (size_t i = 0; i < input_channels.size(); ++i)
+                {
+                    const Index in_c = input_channels[i];
+                    TensorView& in_delta = bp.delta_views[layer][input_delta_slots[i]];
+                    float* dst = in_delta.as<float>();
+                    const Index in_idx = ((b * height + h) * width + w) * in_c;
+                    for (Index c = 0; c < in_c; ++c)
+                        dst[in_idx + c] = delta[out_idx + ch_offset + c];
+                    ch_offset += in_c;
+                }
+            }
+}
+
 void DropoutOp::set_rate(float new_rate)
 {
     if (new_rate < 0.0f || new_rate >= 1.0f)
@@ -3174,21 +3337,29 @@ void DetectionOp::apply(const TensorView& input, TensorView& output) const
                     dst[base + 3] = exp(src[base + 3]) * anchors[size_t(box)][1];
                     dst[base + 4] = yolo_sigmoid(src[base + 4]);
 
-                    float max_logit = src[base + 5];
-                    for (Index c = 1; c < classes_number; ++c)
-                        max_logit = max(max_logit, src[base + 5 + c]);
-
-                    float sum = 0.0f;
-                    for (Index c = 0; c < classes_number; ++c)
+                    if (class_activation == ClassActivation::Sigmoid)
                     {
-                        const float e = exp(src[base + 5 + c] - max_logit);
-                        dst[base + 5 + c] = e;
-                        sum += e;
+                        for (Index c = 0; c < classes_number; ++c)
+                            dst[base + 5 + c] = yolo_sigmoid(src[base + 5 + c]);
                     }
+                    else
+                    {
+                        float max_logit = src[base + 5];
+                        for (Index c = 1; c < classes_number; ++c)
+                            max_logit = max(max_logit, src[base + 5 + c]);
 
-                    const float inv_sum = 1.0f / (sum + EPSILON);
-                    for (Index c = 0; c < classes_number; ++c)
-                        dst[base + 5 + c] *= inv_sum;
+                        float sum = 0.0f;
+                        for (Index c = 0; c < classes_number; ++c)
+                        {
+                            const float e = exp(src[base + 5 + c] - max_logit);
+                            dst[base + 5 + c] = e;
+                            sum += e;
+                        }
+
+                        const float inv_sum = 1.0f / (sum + EPSILON);
+                        for (Index c = 0; c < classes_number; ++c)
+                            dst[base + 5 + c] *= inv_sum;
+                    }
                 }
             }
 }
@@ -3234,12 +3405,23 @@ void DetectionOp::apply_delta(const TensorView& output,
                     in_delta[base + 3] = delta[base + 3] * out[base + 3];
                     in_delta[base + 4] = delta[base + 4] * out[base + 4] * (1.0f - out[base + 4]);
 
-                    float dot = 0.0f;
-                    for (Index c = 0; c < classes_number; ++c)
-                        dot += delta[base + 5 + c] * out[base + 5 + c];
+                    if (class_activation == ClassActivation::Sigmoid)
+                    {
+                        for (Index c = 0; c < classes_number; ++c)
+                        {
+                            const float s = out[base + 5 + c];
+                            in_delta[base + 5 + c] = delta[base + 5 + c] * s * (1.0f - s);
+                        }
+                    }
+                    else
+                    {
+                        float dot = 0.0f;
+                        for (Index c = 0; c < classes_number; ++c)
+                            dot += delta[base + 5 + c] * out[base + 5 + c];
 
-                    for (Index c = 0; c < classes_number; ++c)
-                        in_delta[base + 5 + c] = out[base + 5 + c] * (delta[base + 5 + c] - dot);
+                        for (Index c = 0; c < classes_number; ++c)
+                            in_delta[base + 5 + c] = out[base + 5 + c] * (delta[base + 5 + c] - dot);
+                    }
                 }
             }
 }

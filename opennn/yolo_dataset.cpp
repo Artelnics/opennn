@@ -672,7 +672,171 @@ void make_target(const vector<YoloDataset::Box>& boxes,
     }
 }
 
+// VOC XML annotation parsing. Tag-based, not a full XML parser: relies on the
+// well-known structure of PASCAL VOC annotations and is robust to whitespace
+// and ordering of child tags. Throws on malformed input.
+
+string read_voc_tag(const string& xml, const string& tag, size_t from = 0)
+{
+    const string open = "<" + tag + ">";
+    const string close = "</" + tag + ">";
+    const size_t a = xml.find(open, from);
+    if (a == string::npos) return {};
+    const size_t b = xml.find(close, a + open.size());
+    if (b == string::npos) return {};
+    string value = xml.substr(a + open.size(), b - a - open.size());
+    // Trim ASCII whitespace.
+    const size_t s = value.find_first_not_of(" \t\r\n");
+    const size_t e = value.find_last_not_of(" \t\r\n");
+    return (s == string::npos) ? string{} : value.substr(s, e - s + 1);
+}
+
+struct VocBox
+{
+    string class_name;
+    float xmin, ymin, xmax, ymax;
+};
+
+struct VocAnnotation
+{
+    float width = 0.0f;
+    float height = 0.0f;
+    vector<VocBox> boxes;
+};
+
+VocAnnotation parse_voc_xml(const filesystem::path& xml_path)
+{
+    ifstream file(xml_path);
+    if (!file)
+        throw runtime_error(format("Cannot open VOC annotation: {}", xml_path.string()));
+
+    stringstream buffer;
+    buffer << file.rdbuf();
+    const string xml = buffer.str();
+
+    VocAnnotation annotation;
+    const string size_block = read_voc_tag(xml, "size");
+    annotation.width  = stof(read_voc_tag(size_block, "width"));
+    annotation.height = stof(read_voc_tag(size_block, "height"));
+
+    if (annotation.width <= 0.0f || annotation.height <= 0.0f)
+        throw runtime_error(format("VOC annotation has invalid size: {}", xml_path.string()));
+
+    // Each <object> block contains a <name> and a <bndbox>.
+    size_t cursor = 0;
+    const string obj_open = "<object>";
+    while ((cursor = xml.find(obj_open, cursor)) != string::npos)
+    {
+        const size_t obj_end = xml.find("</object>", cursor);
+        if (obj_end == string::npos)
+            throw runtime_error(format("Unterminated <object> in {}", xml_path.string()));
+
+        const string obj = xml.substr(cursor, obj_end - cursor);
+        const string bbox = read_voc_tag(obj, "bndbox");
+        VocBox box;
+        box.class_name = read_voc_tag(obj, "name");
+        box.xmin = stof(read_voc_tag(bbox, "xmin"));
+        box.ymin = stof(read_voc_tag(bbox, "ymin"));
+        box.xmax = stof(read_voc_tag(bbox, "xmax"));
+        box.ymax = stof(read_voc_tag(bbox, "ymax"));
+        annotation.boxes.push_back(box);
+
+        cursor = obj_end + strlen("</object>");
+    }
+
+    return annotation;
+}
+
+const vector<string>& voc_class_names()
+{
+    static const vector<string> names = {
+        "aeroplane", "bicycle", "bird", "boat", "bottle",
+        "bus", "car", "cat", "chair", "cow",
+        "diningtable", "dog", "horse", "motorbike", "person",
+        "pottedplant", "sheep", "sofa", "train", "tvmonitor"
+    };
+    return names;
+}
+
 } // namespace
+
+Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
+                                       const string& image_set,
+                                       const filesystem::path& output_labels_dir)
+{
+    if (!filesystem::is_directory(voc_root))
+        throw runtime_error(format("VOC root is not a directory: {}", voc_root.string()));
+
+    const filesystem::path image_set_path =
+        voc_root / "ImageSets" / "Main" / (image_set + ".txt");
+    if (!filesystem::is_regular_file(image_set_path))
+        throw runtime_error(format("VOC image-set file not found: {}",
+                                   image_set_path.string()));
+
+    const filesystem::path annotations_dir = voc_root / "Annotations";
+    if (!filesystem::is_directory(annotations_dir))
+        throw runtime_error(format("VOC Annotations dir not found: {}",
+                                   annotations_dir.string()));
+
+    filesystem::create_directories(output_labels_dir);
+
+    // Class name → 0..19 lookup so we don't repeat linear scans per box.
+    const vector<string>& classes = voc_class_names();
+    unordered_map<string, Index> class_index;
+    for (Index i = 0; i < ssize(classes); ++i)
+        class_index[classes[size_t(i)]] = i;
+
+    // Write the classes file (matches read_yolo_classes' .names lookup).
+    ofstream names_file(output_labels_dir / "voc.names");
+    if (!names_file)
+        throw runtime_error(format("Cannot write VOC names file in {}",
+                                   output_labels_dir.string()));
+    for (const string& name : classes)
+        names_file << name << '\n';
+    names_file.close();
+
+    ifstream id_file(image_set_path);
+    string image_id;
+    Index converted = 0;
+
+    while (id_file >> image_id)
+    {
+        if (image_id.empty()) continue;
+
+        const filesystem::path xml_path = annotations_dir / (image_id + ".xml");
+        if (!filesystem::is_regular_file(xml_path))
+            continue;  // some image-set entries (e.g. test splits) have no annotation
+
+        const VocAnnotation ann = parse_voc_xml(xml_path);
+
+        const filesystem::path out_path = output_labels_dir / (image_id + ".txt");
+        ofstream out(out_path);
+        if (!out)
+            throw runtime_error(format("Cannot write YOLO label: {}", out_path.string()));
+
+        for (const VocBox& box : ann.boxes)
+        {
+            const auto it = class_index.find(box.class_name);
+            if (it == class_index.end())
+                continue;  // skip non-VOC-canonical classes (extensions, typos)
+
+            const float cx = 0.5f * (box.xmin + box.xmax) / ann.width;
+            const float cy = 0.5f * (box.ymin + box.ymax) / ann.height;
+            const float bw = (box.xmax - box.xmin) / ann.width;
+            const float bh = (box.ymax - box.ymin) / ann.height;
+
+            // Clamp slightly out-of-range coords that occur in some VOC files
+            // due to 1-indexed boundary conventions.
+            auto clamp01 = [](float v) { return min(1.0f, max(0.0f, v)); };
+            out << it->second << ' '
+                << clamp01(cx) << ' ' << clamp01(cy) << ' '
+                << clamp01(bw) << ' ' << clamp01(bh) << '\n';
+        }
+        ++converted;
+    }
+
+    return converted;
+}
 
 vector<YoloDetection> decode_yolo_detections(const float* nms_output,
                                              Index max_boxes,
