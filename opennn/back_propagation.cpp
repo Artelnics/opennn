@@ -135,6 +135,25 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         deltas.push_back({layer_index, 0, {delta_shape, compute_dtype}, step, step});
     }
 
+    // YOLO multi-head (FPN): every Detection layer is a training target —
+    // the Loss writes a per-head output-delta to slot 0 of each. Pool
+    // would otherwise only back the last-trainable Detection's slot 0.
+    // Lifetime: born at step 0 (loss writes all heads at once at the start of
+    // backward), dies when its layer is walked.
+    for (Index layer_index = first_trainable_layer_index; layer_index < last_trainable_layer_index; ++layer_index)
+    {
+        if (layers[layer_index]->get_type() != LayerType::Detection) continue;
+        if (!consumer_edges[layer_index].empty()) continue;
+
+        const Shape output_shape = layers[layer_index]->get_output_shape();
+        if (output_shape.empty()) continue;
+
+        const Shape delta_shape = Shape({batch_size}).append(output_shape);
+        const Index step = last_trainable_layer_index - layer_index;
+
+        deltas.push_back({layer_index, 0, {delta_shape, compute_dtype}, 0, step});
+    }
+
     vector<vector<size_t>> births_by_step(size_t(max_step + 1));
     vector<vector<size_t>> deaths_by_step(size_t(max_step + 1));
 

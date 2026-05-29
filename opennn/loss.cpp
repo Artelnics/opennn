@@ -173,20 +173,19 @@ bool yolo_uses_sigmoid_classes(const NeuralNetwork* nn)
     return false;
 }
 
-Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
-                                      const TensorView& target,
-                                      const Dataset* dataset,
-                                      const NeuralNetwork* neural_network,
-                                      bool sigmoid_classes)
+// Reusable cell-iteration kernel — takes B (boxes_per_cell) and C
+// (classes_number) as parameters so it can be called per-head for FPN. The
+// caller divides the accumulated error by batch_size externally for both
+// single-head and multi-head modes.
+float yolo_error_kernel(const TensorView& output,
+                        const TensorView& target,
+                        Index B,
+                        Index C,
+                        bool sigmoid_classes)
 {
-    check_yolo_loss(dataset, neural_network);
-
     constexpr float lambda_giou = 5.0f;
     constexpr float lambda_noobject = 0.5f;
 
-    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
-    const Index B = yolo_dataset->get_boxes_per_cell();
-    const Index C = yolo_dataset->get_classes_number();
     const Index values_per_box = 5 + C;
     const Index batch_size = output.shape[0];
     const Index grid_size = output.shape[1];
@@ -244,33 +243,50 @@ Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
                 }
             }
 
+    return lambda_giou * coordinate_loss + object_loss
+         + lambda_noobject * noobject_loss + class_loss;
+}
+
+// Single-head adapter — kept for backward compatibility. Multi-head dispatch
+// uses yolo_error_kernel directly.
+Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
+                                      const TensorView& target,
+                                      const Dataset* dataset,
+                                      const NeuralNetwork* neural_network,
+                                      bool sigmoid_classes)
+{
+    check_yolo_loss(dataset, neural_network);
+    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
+    const Index B = yolo_dataset->get_boxes_per_cell();
+    const Index C = yolo_dataset->get_classes_number();
+    const Index batch_size = output.shape[0];
+
     Loss::EvaluationResult result;
-    result.error = (lambda_giou * coordinate_loss + object_loss
-                  + lambda_noobject * noobject_loss + class_loss) / float(batch_size);
+    result.error = yolo_error_kernel(output, target, B, C, sigmoid_classes) / float(batch_size);
     return result;
 }
 
-void yolo_gradient_cpu(const TensorView& output,
-                       const TensorView& target,
-                       const TensorView& output_delta,
-                       const Dataset* dataset,
-                       const NeuralNetwork* neural_network,
-                       bool sigmoid_classes)
+// Reusable cell-iteration kernel for the gradient — takes explicit B, C and
+// an `inv_batch` divisor supplied by the caller. For multi-head, all heads
+// share the same inv_batch (the actual mini-batch size) so per-head deltas
+// remain scaled consistently regardless of the per-head spatial resolution.
+void yolo_gradient_kernel(const TensorView& output,
+                          const TensorView& target,
+                          const TensorView& output_delta,
+                          Index B,
+                          Index C,
+                          bool sigmoid_classes,
+                          float inv_batch)
 {
-    check_yolo_loss(dataset, neural_network);
-
     constexpr float lambda_giou = 5.0f;
     constexpr float lambda_noobject = 0.5f;
     constexpr float grad_clip = 10.0f;
 
-    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
-    const Index B = yolo_dataset->get_boxes_per_cell();
-    const Index C = yolo_dataset->get_classes_number();
     const Index values_per_box = 5 + C;
     const Index batch_size = output.shape[0];
     const Index grid_size = output.shape[1];
     const Index channels = output.shape[3];
-    const float inv_batch = 1.0f / float(batch_size);
+    (void)batch_size;
 
     const float* out = output.as<float>();
     const float* tgt = target.as<float>();
@@ -326,6 +342,147 @@ void yolo_gradient_cpu(const TensorView& output,
                     }
                 }
             }
+}
+
+// Single-head adapter — kept for backward compatibility. Multi-head dispatch
+// uses yolo_gradient_kernel directly with shared inv_batch across heads.
+void yolo_gradient_cpu(const TensorView& output,
+                       const TensorView& target,
+                       const TensorView& output_delta,
+                       const Dataset* dataset,
+                       const NeuralNetwork* neural_network,
+                       bool sigmoid_classes)
+{
+    check_yolo_loss(dataset, neural_network);
+    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
+    const Index B = yolo_dataset->get_boxes_per_cell();
+    const Index C = yolo_dataset->get_classes_number();
+    const float inv_batch = 1.0f / float(output.shape[0]);
+    yolo_gradient_kernel(output, target, output_delta, B, C, sigmoid_classes, inv_batch);
+}
+
+// Walk layers, return Detection indices in network order. Multi-head (FPN)
+// returns ≥2 entries; single-head returns exactly one.
+vector<Index> yolo_detection_layer_indices(const NeuralNetwork* nn)
+{
+    vector<Index> result;
+    if (!nn) return result;
+    const auto& layers = nn->get_layers();
+    for (size_t i = 0; i < layers.size(); ++i)
+        if (layers[i] && layers[i]->get_type() == LayerType::Detection)
+            result.push_back(Index(i));
+    return result;
+}
+
+// Multi-head error: walk Detection layers in order, slice flat target buffer
+// into per-head chunks (concatenated in network order as written by
+// YoloDataset::make_target_multi_scale), accumulate per-head loss. Returns
+// total / batch_size.
+Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& fp,
+                                            const TensorView& target_flat,
+                                            const Dataset* dataset,
+                                            const NeuralNetwork* nn,
+                                            const vector<Index>& detection_indices,
+                                            bool sigmoid_classes)
+{
+    check_yolo_loss(dataset, nn);
+    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
+    const Index B = yolo_dataset->get_boxes_per_head();
+    const Index C = yolo_dataset->get_classes_number();
+
+    const float* tgt = target_flat.as<float>();
+    const Index batch_size = target_flat.shape[0];
+
+    // Per-sample stride in the flat target buffer = sum of per-head floats.
+    Index per_sample_floats = 0;
+    for (Index idx : detection_indices)
+    {
+        const Shape head_shape = nn->get_layer(idx)->get_output_shape();
+        per_sample_floats += head_shape[0] * head_shape[1] * head_shape[2];
+    }
+
+    float total_error = 0.0f;
+    Index head_offset = 0;
+    for (Index detection_idx : detection_indices)
+    {
+        const TensorView head_output = fp.views[size_t(detection_idx)].back()[0];
+        const Shape head_shape = nn->get_layer(detection_idx)->get_output_shape();
+        const Index head_floats = head_shape[0] * head_shape[1] * head_shape[2];
+
+        // Build a non-owning view into the target buffer for this head's chunk.
+        // Per-sample layout: [head0 | head1 | head2]; the target_flat buffer is
+        // batch-major over per_sample_floats.
+        // We can't naturally slice into a TensorView with the same H,W as
+        // head_output because the flat target chunk isn't strided like the
+        // output. Instead, build a synthetic strided "view" by computing
+        // per-cell offsets manually inside an inline call to the kernel —
+        // simplest is to materialize a head_target buffer on the fly.
+        vector<float> head_target(size_t(batch_size) * size_t(head_floats));
+        for (Index n = 0; n < batch_size; ++n)
+            copy_n(tgt + n * per_sample_floats + head_offset,
+                   head_floats,
+                   head_target.data() + n * head_floats);
+
+        Shape head_target_shape = Shape({batch_size}).append(head_shape);
+        TensorView head_target_view(head_target.data(), head_target_shape, Type::FP32);
+
+        total_error += yolo_error_kernel(head_output, head_target_view, B, C, sigmoid_classes);
+        head_offset += head_floats;
+    }
+
+    Loss::EvaluationResult result;
+    result.error = total_error / float(batch_size);
+    return result;
+}
+
+// Multi-head gradient: same target slicing as above, writes per-head delta
+// directly into bp.delta_views[detection_idx][0]. inv_batch shared across
+// heads so the gradient magnitudes scale consistently.
+void yolo_gradient_cpu_multi(const ForwardPropagation& fp,
+                             const TensorView& target_flat,
+                             BackPropagation& bp,
+                             const Dataset* dataset,
+                             const NeuralNetwork* nn,
+                             const vector<Index>& detection_indices,
+                             bool sigmoid_classes)
+{
+    check_yolo_loss(dataset, nn);
+    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
+    const Index B = yolo_dataset->get_boxes_per_head();
+    const Index C = yolo_dataset->get_classes_number();
+
+    const float* tgt = target_flat.as<float>();
+    const Index batch_size = target_flat.shape[0];
+    const float inv_batch = 1.0f / float(batch_size);
+
+    Index per_sample_floats = 0;
+    for (Index idx : detection_indices)
+    {
+        const Shape head_shape = nn->get_layer(idx)->get_output_shape();
+        per_sample_floats += head_shape[0] * head_shape[1] * head_shape[2];
+    }
+
+    Index head_offset = 0;
+    for (Index detection_idx : detection_indices)
+    {
+        const TensorView head_output = fp.views[size_t(detection_idx)].back()[0];
+        const Shape head_shape = nn->get_layer(detection_idx)->get_output_shape();
+        const Index head_floats = head_shape[0] * head_shape[1] * head_shape[2];
+
+        vector<float> head_target(size_t(batch_size) * size_t(head_floats));
+        for (Index n = 0; n < batch_size; ++n)
+            copy_n(tgt + n * per_sample_floats + head_offset,
+                   head_floats,
+                   head_target.data() + n * head_floats);
+
+        Shape head_target_shape = Shape({batch_size}).append(head_shape);
+        TensorView head_target_view(head_target.data(), head_target_shape, Type::FP32);
+
+        TensorView& head_delta = bp.delta_views[size_t(detection_idx)][0];
+        yolo_gradient_kernel(head_output, head_target_view, head_delta, B, C, sigmoid_classes, inv_batch);
+
+        head_offset += head_floats;
+    }
 }
 
 }
@@ -482,7 +639,14 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         break;
     case Yolo:
 #ifndef OPENNN_NO_VISION
-        result = yolo_error_cpu(input, target, dataset, neural_network, yolo_uses_sigmoid_classes(neural_network));
+    {
+        const vector<Index> detection_indices = yolo_detection_layer_indices(neural_network);
+        const bool sigmoid = yolo_uses_sigmoid_classes(neural_network);
+        result = detection_indices.size() > 1
+            ? yolo_error_cpu_multi(forward_propagation, target, dataset, neural_network,
+                                   detection_indices, sigmoid)
+            : yolo_error_cpu(input, target, dataset, neural_network, sigmoid);
+    }
 #else
         throw runtime_error("YOLO loss not available: opennn was built with OpenNN_BUILD_VISION=OFF.");
 #endif
@@ -709,7 +873,15 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         break;
     case Yolo:
 #ifndef OPENNN_NO_VISION
-        yolo_gradient_cpu(input, target, input_delta, dataset, neural_network, yolo_uses_sigmoid_classes(neural_network));
+    {
+        const vector<Index> detection_indices = yolo_detection_layer_indices(neural_network);
+        const bool sigmoid = yolo_uses_sigmoid_classes(neural_network);
+        if (detection_indices.size() > 1)
+            yolo_gradient_cpu_multi(forward_propagation, target, back_propagation,
+                                    dataset, neural_network, detection_indices, sigmoid);
+        else
+            yolo_gradient_cpu(input, target, input_delta, dataset, neural_network, sigmoid);
+    }
 #else
         throw runtime_error("YOLO gradient not available: opennn was built with OpenNN_BUILD_VISION=OFF.");
 #endif

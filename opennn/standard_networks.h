@@ -92,12 +92,20 @@ public:
     // Default stays Softmax to preserve Phase 1/2 saved weights and behavior.
     enum class ClassActivation { Softmax, Sigmoid };
 
+    // Single = one detection head at stride 32 (YOLO v1/v2 style, single grid).
+    // FPN = three detection heads at strides 32 / 16 / 8 with top-down
+    // upsample+concat skip path à la YOLO v3. FPN requires Backbone::DarknetTiny
+    // (needs the stage-tap structure) and exactly 9 anchors (3 per scale,
+    // assigned smallest→stride-8, largest→stride-32).
+    enum class HeadStyle { Single, FPN };
+
     YoloNetwork(const Shape& input_shape,
                 Index classes_number,
                 const vector<array<float, 2>>& anchors,
                 Index grid_size = 13,
                 Backbone backbone = Backbone::Vgg,
-                ClassActivation class_activation = ClassActivation::Softmax);
+                ClassActivation class_activation = ClassActivation::Softmax,
+                HeadStyle head_style = HeadStyle::Single);
 };
 
 class TextClassificationNetwork : public NeuralNetwork

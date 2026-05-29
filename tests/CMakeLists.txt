@@ -60,6 +60,7 @@ add_executable(run_tests test.cpp
 		yolo_loss_test.cpp
 		non_max_suppression_test.cpp
 		yolo_inference_test.cpp
+		yolo_fpn_test.cpp
 )
 
 target_link_libraries(run_tests gtest gtest_main opennn)
