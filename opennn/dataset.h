@@ -20,13 +20,7 @@ namespace opennn
 
 struct Batch;
 
-enum class SampleRole
-{
-    Training,
-    Validation,
-    Testing,
-    None
-};
+enum class SampleRole{Training, Validation, Testing, None};
 
 inline const EnumMap<SampleRole>& sample_role_map()
 {
@@ -54,35 +48,7 @@ inline SampleRole string_to_sample_role(const string& name)
     return sample_role_map().from_string(name);
 }
 
-enum class BatchPlacement
-{
-    Host,
-    Device
-};
-
-struct BatchRequest
-{
-    const vector<Index>& sample_indices;
-    const vector<Index>& input_indices;
-    const vector<Index>& decoder_indices;
-    const vector<Index>& target_indices;
-
-    SampleRole role = SampleRole::Training;
-    bool is_training = true;
-    bool parallelize = true;
-    bool allow_device_resident = false;
-};
-
-struct DeviceResidentData
-{
-    Buffer input{Device::CUDA};    // rows x input_features  (FP32, row-major)
-    Buffer target{Device::CUDA};   // rows x target_features (FP32)
-    vector<Index> row_of;          // dataset sample index -> resident row (-1 if absent)
-    Index rows = 0;
-    Index input_features = 0;
-    Index target_features = 0;
-    bool  valid = false;
-};
+enum class BatchPlacement{Host, Device};
 
 class Dataset
 {
@@ -94,7 +60,7 @@ public:
     virtual ~Dataset() = default;
 
     enum class Separator{Space, Tab, Comma, Semicolon};
-    enum class StorageMode{Matrix, BinaryFile, Auto};
+    enum class StorageMode{Matrix, BinaryFile};
 
     virtual Index get_samples_number() const { return ssize(sample_roles); }
 
@@ -133,7 +99,6 @@ public:
     vector<VariableType> get_variable_types(const vector<Index>& indices) const;
     Index get_features_number() const;
     Index get_features_number(const string&) const;
-    Index get_used_features_number() const;
 
     vector<string> get_feature_names() const;
     vector<string> get_feature_names(const string&) const;
@@ -178,7 +143,7 @@ public:
     void set_variables(const vector<Variable>& new_variables)
     {
         variables = new_variables;
-        invalidate_device_resident_cache();
+        invalidate_data_buffer();
     }
 
     void set_default_variable_names();
@@ -200,7 +165,7 @@ public:
     void set_variables_number(const Index new_size)
     {
         variables.resize(new_size);
-        invalidate_device_resident_cache();
+        invalidate_data_buffer();
     }
 
     void set_feature_names(const vector<string>&);
@@ -226,11 +191,6 @@ public:
     void set_display(bool new_display) { display = new_display; }
 
     bool is_sample_used(const Index i) const { return sample_roles[i] != SampleRole::None; }
-
-    bool has_binary_variables() const;
-    bool has_categorical_variables() const;
-    bool has_binary_or_categorical_variables() const;
-    bool has_time_variable() const;
 
     bool has_validation() const;
 
@@ -272,26 +232,29 @@ public:
                              const vector<Index>&,
                              float*,
                              bool is_training,
-                             bool parallelize = true,
                              int contiguous = -1) const;
 
-    virtual void augment_inputs(float*, Index, bool = true) const {}
+    virtual void augment_inputs(float*, Index) const {}
 
     virtual void fill_decoder(const vector<Index>&,
                               const vector<Index>&,
                               float*,
                               bool is_training,
-                              bool parallelize = true,
                               int contiguous = -1) const;
 
     virtual void fill_targets(const vector<Index>&,
                               const vector<Index>&,
                               float*,
                               bool is_training,
-                              bool parallelize = true,
                               int contiguous = -1) const;
 
-    virtual BatchPlacement fill_batch(const BatchRequest&, Batch&) const;
+    virtual void fill_batch(Batch&,
+                            const vector<Index>& sample_indices,
+                            const vector<Index>& input_indices,
+                            const vector<Index>& decoder_indices,
+                            const vector<Index>& target_indices,
+                            bool is_training,
+                            bool allow_device_data_buffer) const;
 
 protected:
 
@@ -304,23 +267,23 @@ protected:
     void check_separators(string_view) const;
     void samples_from_JSON(const Json*);
     virtual void resize_data_from_JSON(Index) {}
-    virtual bool can_use_device_resident_batch(const BatchRequest&) const { return false; }
-    virtual bool has_in_memory_data() const { return false; }
-    virtual void release_in_memory_data() {}
+    virtual bool supports_device_data_buffer() const { return false; }
 
-    BatchPlacement fill_host_batch(const BatchRequest&, Batch&) const;
-    bool fill_binary_tensor_if_needed(const vector<Index>&,
-                                      const vector<Index>&,
-                                      float*,
-                                      int contiguous = -1) const;
-    bool uses_binary_storage() const;
+    bool try_fill_binary_tensor(const vector<Index>&,
+                                const vector<Index>&,
+                                float*,
+                                int contiguous = -1) const;
     void read_binary_header() const;
-    void invalidate_device_resident_cache() const;
-    DeviceResidentData* select_device_resident(SampleRole) const;
+    void set_matrix_storage();
+    void invalidate_data_buffer() const;
 
 #ifdef OPENNN_HAS_CUDA
-    bool fill_batch_from_device_cache(const BatchRequest&, Batch&) const;
-    bool prepare_device_cache(SampleRole, const vector<Index>&, const vector<Index>&) const;
+    bool try_fill_from_device_data_buffer(Batch&,
+                                          const vector<Index>& sample_indices,
+                                          const vector<Index>& input_indices,
+                                          const vector<Index>& decoder_indices,
+                                          const vector<Index>& target_indices) const;
+    bool prepare_device_data_buffer() const;
 #endif
 
     Shape input_shape;
@@ -337,9 +300,9 @@ protected:
     mutable Index binary_rows_number = 0;
     mutable Index binary_columns_number = 0;
 
-    mutable DeviceResidentData device_resident_training;
-    mutable DeviceResidentData device_resident_validation;
-    mutable mutex device_resident_mutex;
+    mutable Buffer data_buffer{Device::CUDA};
+    mutable Shape data_buffer_shape;
+    mutable mutex data_buffer_mutex;
 
     Separator separator = Separator::Comma;
     bool has_header = false;

@@ -9,7 +9,6 @@
 #pragma once
 
 #include <functional>
-#include <mutex>
 #include "batch.h"
 #include "json.h"
 #include "tensor_utilities.h"
@@ -27,33 +26,7 @@ struct ForwardPropagation;
 struct BackPropagation;
 
 struct TrainingResults;
-
-struct BatchFillSession
-{
-    explicit BatchFillSession(Index batches_number);
-    ~BatchFillSession();
-
-    BatchFillSession(const BatchFillSession&) = delete;
-    BatchFillSession& operator=(const BatchFillSession&) = delete;
-
-    void rethrow_if_error();
-
-    unique_ptr<atomic<Batch*>[]> ready;
-    atomic<Index>                next_iteration{0};
-    atomic<bool>                 cancelled{false};
-
-    // Set by start_batch_workers; ~BatchFillSession uses it to unblock workers
-    // stuck in pop() if the consumer abandoned the session mid-epoch.
-    ThreadSafeQueue<Batch*>*     empty_queue = nullptr;
-
-    mutex          error_mutex;
-    exception_ptr  worker_error;
-    atomic<bool>   error_pending{false};
-
-    // Declared last so ~vector joins all threads before the error state above
-    // is destroyed — workers may still be in their catch(...) handler.
-    vector<jthread> workers;
-};
+struct BatchFillSession;
 
 class Optimizer
 {
@@ -126,7 +99,7 @@ protected:
     void write_common_json(JsonWriter&) const;
     void read_common_json(const Json*);
 
-    void setup_device_training(const vector<Batch*>& batches);
+    void setup_device_training();
     void teardown_device_training();
 
     void prefetch_batch(Batch& batch);
@@ -152,7 +125,6 @@ protected:
         bool validation_uses_training_pool = false;
 
         ThreadSafeQueue<Batch*>& validation_queue();
-        vector<Batch*> all_batches() const;
     };
 
     void setup_batch_pools(BatchPools&,
@@ -162,12 +134,7 @@ protected:
                            Index validation_batch_size,
                            bool has_validation);
 
-    struct WorkerProfileCounters
-    {
-        atomic<int64_t> pop_us{0};
-        atomic<int64_t> fill_us{0};
-        atomic<long> fills{0};
-    };
+    struct WorkerProfileCounters;
 
     unique_ptr<BatchFillSession> start_batch_workers(
         ThreadSafeQueue<Batch*>& empty_queue,
@@ -176,10 +143,8 @@ protected:
         const vector<Index>& decoder_feature_indices,
         const vector<Index>& target_feature_indices,
         bool is_training,
-        bool allow_device_resident,
+        bool allow_device_data_buffer,
         WorkerProfileCounters* profile_counters = nullptr);
-
-    Batch* wait_for_filled_batch(BatchFillSession& session, Index iteration);
 
     int get_effective_num_workers(const NeuralNetwork&) const;
     int get_batch_pool_size(const NeuralNetwork&) const;

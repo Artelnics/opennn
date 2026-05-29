@@ -170,9 +170,13 @@ void gather_time_slice_cuda(const Index batch, const Index time_steps,
                             const T* src, T* dst);
 
 template<typename TSrc, typename TDst>
-void gather_rows_cuda(const Index batch_size, const Index features,
-                      const Index* row_indices,
-                      const TSrc* src_matrix, TDst* dst);
+void gather_columns_cuda(const Index batch_size,
+                         const Index output_features,
+                         const Index source_features,
+                         const Index* row_indices,
+                         const Index* column_indices,
+                         const TSrc* source,
+                         TDst* destination);
 
 template<typename T>
 void scatter_time_slice_cuda(const Index batch, const Index time_steps,

@@ -328,7 +328,6 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
                                     const vector<Index>& input_indices,
                                     float* input_data,
                                     bool /*is_training*/,
-                                    bool parallelize,
                                     int) const
 {
     if (sample_indices.empty() || input_indices.empty()) return;
@@ -339,7 +338,7 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
 
     TensorMap3 inputs(input_data, batch_size, past_time_steps, inputs_number);
 
-    #pragma omp parallel for schedule(static) if (parallelize)
+    #pragma omp parallel for schedule(static)
     for (Index i = 0; i < batch_size; ++i)
     {
         const Index start_row = sample_indices[i];
@@ -359,7 +358,6 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
                                      const vector<Index>& target_indices,
                                      float* target_data,
                                      bool /*is_training*/,
-                                     bool parallelize,
                                      int) const
 {
     if (sample_indices.empty() || target_indices.empty()) return;
@@ -371,7 +369,7 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
 
     MatrixMap targets(target_data, batch_size, targets_number);
 
-    #pragma omp parallel for schedule(static) if (parallelize)
+    #pragma omp parallel for schedule(static)
     for (Index i = 0; i < batch_size; ++i)
     {
         if (multi_target)

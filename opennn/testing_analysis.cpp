@@ -139,28 +139,28 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
 
         dataset->fill_targets(batch_indices, target_feature_indices,
                               target_data.data() + row_cursor * target_width,
-                              /*is_training=*/false, /*parallelize=*/true);
+                              /*is_training=*/false);
 
         MatrixR batch_outputs;
         if (auto* tsd = dynamic_cast<TimeSeriesDataset*>(dataset))
         {
             Tensor3 batch_inputs(n, input_shape[0], input_shape[1]);
             tsd->fill_inputs(batch_indices, input_feature_indices,
-                             batch_inputs.data(), /*is_training=*/false, /*parallelize=*/true);
+                             batch_inputs.data(), /*is_training=*/false);
             batch_outputs = neural_network->calculate_outputs(batch_inputs);
         }
         else if (input_shape.rank == 1)
         {
             MatrixR batch_inputs(n, input_shape[0]);
             dataset->fill_inputs(batch_indices, input_feature_indices,
-                                 batch_inputs.data(), /*is_training=*/false, /*parallelize=*/true);
+                                 batch_inputs.data(), /*is_training=*/false);
             batch_outputs = neural_network->calculate_outputs(batch_inputs);
         }
         else if (input_shape.rank == 3)
         {
             Tensor4 batch_inputs(n, input_shape[0], input_shape[1], input_shape[2]);
             dataset->fill_inputs(batch_indices, input_feature_indices,
-                                 batch_inputs.data(), /*is_training=*/false, /*parallelize=*/true);
+                                 batch_inputs.data(), /*is_training=*/false);
             batch_outputs = neural_network->calculate_outputs(batch_inputs);
         }
         else
@@ -564,21 +564,21 @@ MatrixI TestingAnalysis::calculate_confusion(const float decision_threshold) con
 
         MatrixR batch_targets(batch_n, targets_number);
         dataset->fill_targets(current_batch_indices, target_feature_indices,
-                              batch_targets.data(), /*is_training=*/false, /*parallelize=*/true);
+                              batch_targets.data(), /*is_training=*/false);
 
         MatrixR batch_outputs;
         if (input_shape.rank == 1)
         {
             MatrixR batch_inputs(batch_n, input_shape[0]);
             dataset->fill_inputs(current_batch_indices, input_feature_indices,
-                                 batch_inputs.data(), /*is_training=*/false, /*parallelize=*/true);
+                                 batch_inputs.data(), /*is_training=*/false);
             batch_outputs = neural_network->calculate_outputs(batch_inputs);
         }
         else if (input_shape.rank == 3)
         {
             Tensor4 inputs_4d(batch_n, input_shape[0], input_shape[1], input_shape[2]);
             dataset->fill_inputs(current_batch_indices, input_feature_indices,
-                                 inputs_4d.data(), /*is_training=*/false, /*parallelize=*/true);
+                                 inputs_4d.data(), /*is_training=*/false);
             batch_outputs = neural_network->calculate_outputs(inputs_4d);
         }
         else
@@ -1193,9 +1193,9 @@ vector<VectorR> TestingAnalysis::calculate_inputs_errors_cross_correlation(const
     MatrixR inputs(samples_n, ssize(input_feature_indices));
     MatrixR targets(samples_n, ssize(target_feature_indices));
     dataset->fill_inputs(sample_indices, input_feature_indices,
-                         inputs.data(), /*is_training=*/false, /*parallelize=*/true);
+                         inputs.data(), /*is_training=*/false);
     dataset->fill_targets(sample_indices, target_feature_indices,
-                          targets.data(), /*is_training=*/false, /*parallelize=*/true);
+                          targets.data(), /*is_training=*/false);
 
     const MatrixR outputs = neural_network->calculate_outputs(inputs);
 

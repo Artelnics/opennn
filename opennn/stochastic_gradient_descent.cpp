@@ -226,8 +226,7 @@ TrainingResults StochasticGradientDescent::train()
         ? validation_forward_propagation.get()
         : nullptr;
 
-    const vector<Batch*> all_batches = batch_pools.all_batches();
-    setup_device_training(all_batches);
+    setup_device_training();
 
     // Optimization data
 

@@ -241,7 +241,7 @@ vector<Index> get_elements_greater_than(const vector<Index>&, Index);
 
 VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
 
-void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, float*, bool = true, int contiguous = -1);
+void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, float*, int contiguous = -1);
 
 VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
 

@@ -30,16 +30,13 @@ void TabularDataset::set_data(const MatrixR& new_data)
         throw runtime_error("Columns number is not equal to variables number");
 
     data = new_data;
-    storage_mode = StorageMode::Matrix;
-    binary_rows_number = 0;
-    binary_columns_number = 0;
-    invalidate_device_resident_cache();
+    set_matrix_storage();
 }
 
 void TabularDataset::set_data_constant(float new_value)
 {
     data.setConstant(new_value);
-    invalidate_device_resident_cache();
+    invalidate_data_buffer();
 }
 
 void TabularDataset::set(const Index new_samples_number,
@@ -58,9 +55,7 @@ void TabularDataset::set(const Index new_samples_number,
 
     target_shape = { new_targets_number };
     data.resize(new_samples_number, new_features_number);
-    storage_mode = StorageMode::Matrix;
-    binary_rows_number = 0;
-    binary_columns_number = 0;
+    set_matrix_storage();
     variables.resize(new_features_number);
 
     set_default();
@@ -198,31 +193,28 @@ void TabularDataset::load_data_binary()
     data.resize(rows_number, columns_number);
     file.read(reinterpret_cast<char*>(data.data()), rows_number * columns_number * sizeof(float));
 
-    storage_mode = StorageMode::Matrix;
-    binary_columns_number = columns_number;
-    binary_rows_number = rows_number;
-    invalidate_device_resident_cache();
+    set_matrix_storage();
 }
 
 void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices,
-                                 float* input_data, bool, bool parallelize, int contiguous) const
+                                 float* input_data, bool, int contiguous) const
 {
-    if (!fill_binary_tensor_if_needed(sample_indices, input_indices, input_data, contiguous))
-        fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize, contiguous);
+    if (!try_fill_binary_tensor(sample_indices, input_indices, input_data, contiguous))
+        fill_tensor_data(data, sample_indices, input_indices, input_data, contiguous);
 }
 
 void TabularDataset::fill_decoder(const vector<Index>& sample_indices, const vector<Index>& decoder_indices,
-                                  float* decoder_data, bool, bool parallelize, int contiguous) const
+                                  float* decoder_data, bool, int contiguous) const
 {
-    if (!fill_binary_tensor_if_needed(sample_indices, decoder_indices, decoder_data, contiguous))
-        fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, parallelize, contiguous);
+    if (!try_fill_binary_tensor(sample_indices, decoder_indices, decoder_data, contiguous))
+        fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, contiguous);
 }
 
 void TabularDataset::fill_targets(const vector<Index>& sample_indices, const vector<Index>& target_indices,
-                                  float* target_data, bool, bool parallelize, int contiguous) const
+                                  float* target_data, bool, int contiguous) const
 {
-    if (!fill_binary_tensor_if_needed(sample_indices, target_indices, target_data, contiguous))
-        fill_tensor_data(data, sample_indices, target_indices, target_data, parallelize, contiguous);
+    if (!try_fill_binary_tensor(sample_indices, target_indices, target_data, contiguous))
+        fill_tensor_data(data, sample_indices, target_indices, target_data, contiguous);
 }
 
 void TabularDataset::infer_variable_types_from_data()
@@ -300,10 +292,7 @@ void TabularDataset::set(const filesystem::path& new_data_path,
 
     read_csv();
 
-    storage_mode = StorageMode::Matrix;
-    binary_rows_number = 0;
-    binary_columns_number = 0;
-    invalidate_device_resident_cache();
+    set_matrix_storage();
 
     set_default_variable_scalers();
 

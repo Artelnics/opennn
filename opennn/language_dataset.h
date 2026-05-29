@@ -58,21 +58,18 @@ public:
                      const vector<Index>&,
                      float*,
                      bool is_training,
-                     bool parallelize = true,
                      int = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       bool is_training,
-                      bool parallelize = true,
                       int = -1) const override;
 
     void fill_decoder(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       bool is_training,
-                      bool parallelize = true,
                       int = -1) const override;
 
     inline static const string PAD_TOKEN   = "[PAD]";     // 0

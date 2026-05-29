@@ -1283,7 +1283,6 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                               const vector<Index>&,
                               float* input_data,
                               bool is_training,
-                              bool parallelize,
                               int) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -1301,7 +1300,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
     const bool resize_needed = (input_shape[0] != cache_input_shape[0])
                             || (input_shape[1] != cache_input_shape[1]);
 
-    #pragma omp parallel for schedule(dynamic) if (parallelize)
+    #pragma omp parallel for schedule(dynamic)
     for (Index i = 0; i < batch_size; ++i)
     {
         try
@@ -1364,7 +1363,6 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                                const vector<Index>&,
                                float* target_data,
                                bool is_training,
-                               bool parallelize,
                                int) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -1381,7 +1379,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
 
     string omp_error;
 
-    #pragma omp parallel for if (parallelize)
+    #pragma omp parallel for
     for (Index i = 0; i < batch_size; ++i)
     {
         try

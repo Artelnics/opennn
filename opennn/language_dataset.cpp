@@ -647,7 +647,6 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
                                   const vector<Index>& /*input_indices*/,
                                   float* input_data,
                                   bool /*is_training*/,
-                                  bool parallelize,
                                   int /*contiguous*/) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -655,7 +654,7 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
 
     fill_n(input_data, batch_size * seq_len, 0.0f);
 
-    #pragma omp parallel for if (parallelize)
+    #pragma omp parallel for
     for (Index i = 0; i < batch_size; ++i)
     {
         const auto& off = offsets_table[size_t(sample_indices[i])];
@@ -676,7 +675,6 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
                                    const vector<Index>& /*target_indices*/,
                                    float* target_data,
                                    bool /*is_training*/,
-                                   bool parallelize,
                                    int /*contiguous*/) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -684,7 +682,7 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
 
     fill_n(target_data, batch_size * seq_len, 0.0f);
 
-    #pragma omp parallel for if (parallelize)
+    #pragma omp parallel for
     for (Index i = 0; i < batch_size; ++i)
     {
         const auto& off = offsets_table[size_t(sample_indices[i])];
@@ -705,7 +703,6 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
                                    const vector<Index>& /*decoder_indices*/,
                                    float* decoder_data,
                                    bool /*is_training*/,
-                                   bool parallelize,
                                    int /*contiguous*/) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -713,7 +710,7 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
 
     fill_n(decoder_data, batch_size * seq_len, 0.0f);
 
-    #pragma omp parallel for if (parallelize)
+    #pragma omp parallel for
     for (Index i = 0; i < batch_size; ++i)
     {
         decoder_data[i * seq_len] = START_INDEX;

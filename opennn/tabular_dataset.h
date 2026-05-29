@@ -34,8 +34,7 @@ public:
 
     Index get_samples_number() const override
     {
-        return (storage_mode == StorageMode::BinaryFile && binary_rows_number > 0)
-            || (storage_mode == StorageMode::Auto && data.rows() == 0 && binary_rows_number > 0)
+        return storage_mode == StorageMode::BinaryFile && binary_rows_number > 0
              ? binary_rows_number
              : data.rows();
     }
@@ -151,30 +150,25 @@ public:
                      const vector<Index>&,
                      float*,
                      bool is_training,
-                     bool parallelize = true,
                      int contiguous = -1) const override;
 
     void fill_decoder(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       bool is_training,
-                      bool parallelize = true,
                       int contiguous = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       bool is_training,
-                      bool parallelize = true,
                       int contiguous = -1) const override;
 
 protected:
 
     MatrixR data;
 
-    bool can_use_device_resident_batch(const BatchRequest&) const override { return true; }
-    bool has_in_memory_data() const override { return data.rows() > 0; }
-    void release_in_memory_data() override { data.resize(0, 0); }
+    bool supports_device_data_buffer() const override { return true; }
 
     string missing_values_label = "NA";
     MissingValuesMethod missing_values_method = MissingValuesMethod::Mean;

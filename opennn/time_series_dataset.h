@@ -58,21 +58,19 @@ public:
                            const vector<Index>&,
                            float*,
                            bool is_training,
-                           bool parallelize = true,
                            int contiguous = -1) const override;
 
     void fill_targets(const vector<Index>&,
                             const vector<Index>&,
                             float*,
                             bool is_training,
-                            bool parallelize = true,
                             int contiguous = -1) const override;
 
     void resize_input_shape(Index) override;
 
 private:
 
-    bool can_use_device_resident_batch(const BatchRequest&) const override { return false; }
+    bool supports_device_data_buffer() const override { return false; }
 
     Index past_time_steps = 2;
 

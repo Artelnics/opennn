@@ -21,9 +21,13 @@
 #include "neural_network.h"
 #include "profiler.h"
 #include "string_utilities.h"
+#include <atomic>
 #include <cctype>
 #include <chrono>
 #include <cstdlib>
+#include <exception>
+#include <mutex>
+#include <thread>
 
 #if defined(__linux__) || defined(__unix__)
 #include <unistd.h>
@@ -36,39 +40,72 @@
 namespace opennn
 {
 
-BatchFillSession::BatchFillSession(Index batches_number)
-    : ready(make_unique<atomic<Batch*>[]>(batches_number))
+struct BatchFillSession
 {
-    for (Index i = 0; i < batches_number; ++i)
-        ready[i].store(nullptr);
-}
+    explicit BatchFillSession(Index batches_number)
+        : ready(size_t(batches_number))
+    {
+        for (atomic<Batch*>& slot : ready)
+            slot.store(nullptr, memory_order_relaxed);
+    }
 
-BatchFillSession::~BatchFillSession()
-{
-    // If the consumer abandoned the session mid-epoch (e.g. threw out of
-    // train_epoch), workers may still be blocked in empty_queue.pop() or about
-    // to claim a fresh batch. Signal cancellation and wake any blocked pops,
-    // then join all workers before the queue is reopened for the next epoch.
-    cancelled.store(true, memory_order_release);
-    if (empty_queue) empty_queue->close();
+    ~BatchFillSession()
+    {
+        // If the consumer abandons the session mid-epoch, wake blocked pops
+        // and join workers before reopening the queue for the next epoch.
+        cancelled.store(true, memory_order_release);
+        if (empty_queue) empty_queue->close();
 
-    workers.clear();   // ~jthread joins each worker
+        workers.clear();
 
-    if (empty_queue) empty_queue->reopen();
-}
+        if (empty_queue) empty_queue->reopen();
+    }
 
-void BatchFillSession::rethrow_if_error()
-{
-    if (!error_pending.load(memory_order_acquire)) return;
+    BatchFillSession(const BatchFillSession&) = delete;
+    BatchFillSession& operator=(const BatchFillSession&) = delete;
 
-    exception_ptr e;
+    Batch* wait(Index iteration)
+    {
+        Batch* batch = nullptr;
+        while (!(batch = ready[size_t(iteration)].load(memory_order_acquire)))
+        {
+            rethrow_if_error();
+            this_thread::yield();
+        }
+
+        return batch;
+    }
+
+    void capture_current_exception()
     {
         lock_guard<mutex> elock(error_mutex);
-        swap(e, worker_error);
-        error_pending.store(false, memory_order_release);
+        if (!worker_error)
+            worker_error = current_exception();
+        error_pending.store(true, memory_order_release);
     }
-    if (e) rethrow_exception(e);
-}
+
+    void rethrow_if_error()
+    {
+        if (!error_pending.load(memory_order_acquire)) return;
+
+        exception_ptr e;
+        {
+            lock_guard<mutex> elock(error_mutex);
+            swap(e, worker_error);
+            error_pending.store(false, memory_order_release);
+        }
+        if (e) rethrow_exception(e);
+    }
+
+    vector<atomic<Batch*>> ready;
+    atomic<Index> next_iteration{0};
+    atomic<bool> cancelled{false};
+    ThreadSafeQueue<Batch*>* empty_queue = nullptr;
+    mutex error_mutex;
+    exception_ptr worker_error;
+    atomic<bool> error_pending{false};
+    vector<jthread> workers;
+};
 
 // --- Optimizer ---------------------------------------------------------------
 
@@ -148,6 +185,40 @@ struct DeviceEpochMetrics
 
 }
 
+struct Optimizer::WorkerProfileCounters
+{
+    atomic<int64_t> pop_us{0};
+    atomic<int64_t> fill_us{0};
+    atomic<long> fills{0};
+
+    void record(chrono::steady_clock::time_point pop_begin,
+                chrono::steady_clock::time_point fill_begin,
+                chrono::steady_clock::time_point fill_end)
+    {
+        pop_us.fetch_add(
+            chrono::duration_cast<chrono::microseconds>(fill_begin - pop_begin).count(),
+            memory_order_relaxed);
+        fill_us.fetch_add(
+            chrono::duration_cast<chrono::microseconds>(fill_end - fill_begin).count(),
+            memory_order_relaxed);
+        fills.fetch_add(1, memory_order_relaxed);
+    }
+
+    void publish() const
+    {
+        const long calls = fills.load();
+        if (calls <= 0) return;
+
+        auto& fill_entry = ::opennn::global_stats().entries["worker:fill"];
+        fill_entry.total_ms = double(fill_us.load()) / 1000.0;
+        fill_entry.calls = calls;
+
+        auto& wait_entry = ::opennn::global_stats().entries["worker:queue_wait"];
+        wait_entry.total_ms = double(pop_us.load()) / 1000.0;
+        wait_entry.calls = calls;
+    }
+};
+
 Optimizer::Optimizer(Loss* new_loss)
 {
     set(new_loss);
@@ -216,19 +287,6 @@ ThreadSafeQueue<Batch*>& Optimizer::BatchPools::validation_queue()
         : validation_empty_queue;
 }
 
-vector<Batch*> Optimizer::BatchPools::all_batches() const
-{
-    vector<Batch*> batches;
-    batches.reserve(training_pool.size() + validation_pool.size());
-
-    for (const auto& batch : training_pool)
-        batches.push_back(batch.get());
-    for (const auto& batch : validation_pool)
-        batches.push_back(batch.get());
-
-    return batches;
-}
-
 void Optimizer::setup_batch_pools(BatchPools& pools,
                                   Dataset& dataset,
                                   NeuralNetwork& neural_network,
@@ -272,90 +330,78 @@ unique_ptr<BatchFillSession> Optimizer::start_batch_workers(
     const vector<Index>& decoder_feature_indices,
     const vector<Index>& target_feature_indices,
     bool is_training,
-    bool allow_device_resident,
+    bool allow_device_data_buffer,
     WorkerProfileCounters* profile_counters)
 {
     const Index batches_number = Index(batches.size());
 
     auto session = make_unique<BatchFillSession>(batches_number);
     BatchFillSession* const session_ptr = session.get();
-    session->empty_queue = &empty_queue;
+    ThreadSafeQueue<Batch*>* const queue = &empty_queue;
+    const auto* const batches_ptr = &batches;
+    const auto* const input_indices = &input_feature_indices;
+    const auto* const decoder_indices = &decoder_feature_indices;
+    const auto* const target_indices = &target_feature_indices;
+    session->empty_queue = queue;
 
-    auto worker_body = [&, session_ptr, is_training, profile_counters]()
+    auto worker_body = [queue,
+                        batches_ptr,
+                        input_indices,
+                        decoder_indices,
+                        target_indices,
+                        session_ptr,
+                        batches_number,
+                        is_training,
+                        allow_device_data_buffer,
+                        profile_counters]()
     {
         try
         {
             for (;;)
             {
                 const auto t_pop0 = chrono::steady_clock::now();
-                Batch* batch = empty_queue.pop();
+                Batch* batch = queue->pop();
                 const auto t_fill0 = chrono::steady_clock::now();
 
-                // Cancellation: pop returns nullptr when the queue was closed
-                // by ~BatchFillSession, or the flag was flipped after we already
-                // held a real batch. Either way, stop draining iterations.
                 if (!batch || session_ptr->cancelled.load(memory_order_acquire))
                 {
-                    if (batch) empty_queue.push(batch);
+                    if (batch) queue->push(batch);
                     return;
                 }
 
                 const Index it = session_ptr->next_iteration.fetch_add(1);
                 if (it >= batches_number)
                 {
-                    empty_queue.push(batch);
+                    queue->push(batch);
                     return;
                 }
 
                 batch->wait_h2d_complete();
-                batch->fill(batches[size_t(it)],
-                            input_feature_indices,
-                            decoder_feature_indices,
-                            target_feature_indices,
+                batch->fill((*batches_ptr)[size_t(it)],
+                            *input_indices,
+                            *decoder_indices,
+                            *target_indices,
                             is_training,
-                            /*parallelize_samples_within_batch=*/false,
-                            allow_device_resident);
+                            allow_device_data_buffer);
 
                 const auto t_fill1 = chrono::steady_clock::now();
-                session_ptr->ready[it].store(batch, memory_order_release);
+                session_ptr->ready[size_t(it)].store(batch, memory_order_release);
 
                 if (profile_counters)
-                {
-                    profile_counters->pop_us.fetch_add(
-                        chrono::duration_cast<chrono::microseconds>(t_fill0 - t_pop0).count(),
-                        memory_order_relaxed);
-                    profile_counters->fill_us.fetch_add(
-                        chrono::duration_cast<chrono::microseconds>(t_fill1 - t_fill0).count(),
-                        memory_order_relaxed);
-                    profile_counters->fills.fetch_add(1, memory_order_relaxed);
-                }
+                    profile_counters->record(t_pop0, t_fill0, t_fill1);
             }
         }
         catch (...)
         {
-            lock_guard<mutex> elock(session_ptr->error_mutex);
-            if (!session_ptr->worker_error)
-                session_ptr->worker_error = current_exception();
-            session_ptr->error_pending.store(true, memory_order_release);
+            session_ptr->capture_current_exception();
         }
     };
 
-    session->workers.reserve(num_workers);
+    session->workers.reserve(size_t(num_workers));
     for (int w = 0; w < num_workers; ++w)
         session->workers.emplace_back(worker_body);
 
     return session;
-}
-
-Batch* Optimizer::wait_for_filled_batch(BatchFillSession& session, Index iteration)
-{
-    Batch* batch = nullptr;
-    while (!(batch = session.ready[iteration].load(memory_order_acquire)))
-    {
-        session.rethrow_if_error();
-        this_thread::yield();
-    }
-    return batch;
 }
 
 int Optimizer::get_effective_num_workers(const NeuralNetwork& neural_network) const
@@ -983,9 +1029,8 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
     }
 }
 
-void Optimizer::setup_device_training(const vector<Batch*>& batches)
+void Optimizer::setup_device_training()
 {
-    (void)batches;
 #ifdef OPENNN_HAS_CUDA
     NeuralNetwork* neural_network = loss->get_neural_network();
     if (!neural_network->is_gpu()) return;
@@ -1122,8 +1167,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                             input_feature_indices,
                             decoder_feature_indices,
                             target_feature_indices,
-                            /*is_training=*/true,
-                            /*parallelize_samples=*/true);
+                            /*is_training=*/true);
             }
 
             {
@@ -1170,22 +1214,22 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     }
 
     WorkerProfileCounters worker_profile;
-    const bool allow_device_resident = on_gpu
-                                    && !neural_network->has(LayerType::Recurrent)
-                                    && !neural_network->has(LayerType::LongShortTermMemory);
+    const bool allow_device_data_buffer = on_gpu
+                                       && !neural_network->has(LayerType::Recurrent)
+                                       && !neural_network->has(LayerType::LongShortTermMemory);
     auto session = start_batch_workers(empty_queue,
                                        batches,
                                        input_feature_indices,
                                        decoder_feature_indices,
                                        target_feature_indices,
                                        /*is_training=*/true,
-                                       allow_device_resident,
+                                       allow_device_data_buffer,
                                        profile_this ? &worker_profile : nullptr);
 
     Batch* next_batch = nullptr;
     {
         PROFILE_SCOPE_HOST("step:wait_fill");
-        next_batch = wait_for_filled_batch(*session, 0);
+        next_batch = session->wait(0);
     }
     {
         PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
@@ -1204,7 +1248,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
         {
             {
                 PROFILE_SCOPE_HOST("step:wait_fill");
-                next_batch = wait_for_filled_batch(*session, iteration + 1);
+                next_batch = session->wait(iteration + 1);
             }
             {
                 PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
@@ -1286,16 +1330,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
         const auto epoch_t1 = chrono::steady_clock::now();
         const double epoch_ms = chrono::duration<double, milli>(epoch_t1 - epoch_t0).count();
 
-        if (const long w_calls = worker_profile.fills.load(); w_calls > 0)
-        {
-            auto& fill_entry = ::opennn::global_stats().entries["worker:fill"];
-            fill_entry.total_ms = double(worker_profile.fill_us.load()) / 1000.0;
-            fill_entry.calls    = w_calls;
-
-            auto& wait_entry = ::opennn::global_stats().entries["worker:queue_wait"];
-            wait_entry.total_ms = double(worker_profile.pop_us.load()) / 1000.0;
-            wait_entry.calls    = w_calls;
-        }
+        worker_profile.publish();
 
         ::opennn::global_stats().print(cout, "Epoch breakdown (training)", epoch_ms);
         cout << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
@@ -1341,8 +1376,7 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
                         input_feature_indices,
                         decoder_feature_indices,
                         target_feature_indices,
-                        /*is_training=*/false,
-                        /*parallelize_samples=*/true);
+                        /*is_training=*/false);
 
             neural_network->forward_propagate(batch->get_inputs(), forward_propagation, false);
 
@@ -1360,18 +1394,18 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
         return stats;
     }
 
-    const bool allow_device_resident = on_gpu
-                                    && !neural_network->has(LayerType::Recurrent)
-                                    && !neural_network->has(LayerType::LongShortTermMemory);
+    const bool allow_device_data_buffer = on_gpu
+                                       && !neural_network->has(LayerType::Recurrent)
+                                       && !neural_network->has(LayerType::LongShortTermMemory);
     auto session = start_batch_workers(empty_queue,
                                        batches,
                                        input_feature_indices,
                                        decoder_feature_indices,
                                        target_feature_indices,
                                        /*is_training=*/false,
-                                       allow_device_resident);
+                                       allow_device_data_buffer);
 
-    Batch* next_batch = wait_for_filled_batch(*session, 0);
+    Batch* next_batch = session->wait(0);
     prefetch_batch(*next_batch);
 
     for (Index iteration = 0; iteration < batches_number; ++iteration)
@@ -1381,7 +1415,7 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
 
         if (iteration + 1 < batches_number)
         {
-            next_batch = wait_for_filled_batch(*session, iteration + 1);
+            next_batch = session->wait(iteration + 1);
             prefetch_batch(*next_batch);
         }
 

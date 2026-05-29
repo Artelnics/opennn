@@ -283,7 +283,7 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
     printer.close_element();
 }
 
-void ImageDataset::augment_inputs(float* input_data, Index batch_size, bool parallelize) const
+void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
 {
     if (!augmentation.enabled) return;
     if (batch_size <= 0) return;
@@ -328,25 +328,13 @@ void ImageDataset::augment_inputs(float* input_data, Index batch_size, bool para
                                                                augmentation.vertical_translation_maximum));
     };
 
-    if (parallelize)
-    {
-        #pragma omp parallel
-        {
-            unique_ptr<Tensor3> scratch_storage;
-            if (use_rotation)
-                scratch_storage = make_unique<Tensor3>(height, width, channels);
-
-            #pragma omp for schedule(static)
-            for (Index i = 0; i < batch_size; ++i)
-                augment_sample(i, scratch_storage.get());
-        }
-    }
-    else
+    #pragma omp parallel
     {
         unique_ptr<Tensor3> scratch_storage;
         if (use_rotation)
             scratch_storage = make_unique<Tensor3>(height, width, channels);
 
+        #pragma omp for schedule(static)
         for (Index i = 0; i < batch_size; ++i)
             augment_sample(i, scratch_storage.get());
     }
@@ -629,7 +617,6 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
                                const vector<Index>& /*input_indices*/,
                                float* input_data,
                                bool is_training,
-                               bool parallelize,
                                int /*contiguous*/) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -643,7 +630,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
 
     string omp_error;
 
-    #pragma omp parallel for schedule(dynamic) if (parallelize)
+    #pragma omp parallel for schedule(dynamic)
     for (Index i = 0; i < batch_size; ++i)
     {
         try
@@ -671,11 +658,11 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
         throw runtime_error(omp_error);
 
     if (apply_augmentation)
-        augment_inputs(input_data, batch_size, parallelize);
+        augment_inputs(input_data, batch_size);
 
     if (apply_scaling && has_scaling)
     {
-        #pragma omp parallel for schedule(static) if (parallelize)
+        #pragma omp parallel for schedule(static)
         for (Index i = 0; i < batch_size; ++i)
         {
             float* dst = input_data + i * pixels_per_image;
@@ -689,7 +676,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     }
     else if (use_default_scaling)
     {
-        #pragma omp parallel for schedule(static) if (parallelize)
+        #pragma omp parallel for schedule(static)
         for (Index i = 0; i < batch_size; ++i)
         {
             float* dst = input_data + i * pixels_per_image;
@@ -703,7 +690,6 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
                                 const vector<Index>& target_indices,
                                 float* target_data,
                                 bool /*is_training*/,
-                                bool parallelize,
                                 int /*contiguous*/) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -712,16 +698,13 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
     if (targets_number == 1)
     {
         auto label_of = [&](Index s) { return float(labels_ram[size_t(s)]); };
-        if (parallelize)
-            transform(execution::par, sample_indices.begin(), sample_indices.begin() + batch_size, target_data, label_of);
-        else
-            transform(sample_indices.begin(), sample_indices.begin() + batch_size, target_data, label_of);
+        transform(execution::par, sample_indices.begin(), sample_indices.begin() + batch_size, target_data, label_of);
     }
     else
     {
         fill_n(target_data, batch_size * targets_number, 0.0f);
 
-        #pragma omp parallel for if (parallelize)
+        #pragma omp parallel for
         for (Index i = 0; i < batch_size; ++i)
         {
             const int32_t label = labels_ram[size_t(sample_indices[i])];

@@ -122,27 +122,20 @@ void Batch::set(const Index new_samples_number,
 #endif
 }
 
-BatchPlacement Batch::fill(const vector<Index>& sample_indices,
-                           const vector<Index>& input_indices,
-                           const vector<Index>& decoder_indices,
-                           const vector<Index>& target_indices,
-                           bool is_training,
-                           bool parallelize_samples,
-                           bool allow_device_resident)
+void Batch::fill(const vector<Index>& sample_indices,
+                 const vector<Index>& input_indices,
+                 const vector<Index>& decoder_indices,
+                 const vector<Index>& target_indices,
+                 bool is_training,
+                 bool allow_device_data_buffer)
 {
-    const BatchRequest request{
-        sample_indices,
-        input_indices,
-        decoder_indices,
-        target_indices,
-        is_training ? SampleRole::Training : SampleRole::Validation,
-        is_training,
-        parallelize_samples,
-        allow_device_resident
-    };
-
-    placement = dataset->fill_batch(request, *this);
-    return placement;
+    dataset->fill_batch(*this,
+                        sample_indices,
+                        input_indices,
+                        decoder_indices,
+                        target_indices,
+                        is_training,
+                        allow_device_data_buffer);
 }
 
 Index Batch::get_samples_number() const
@@ -238,35 +231,60 @@ void Batch::copy_device_async(cudaStream_t stream)
     h2d_done_recorded = true;
 }
 
-void Batch::gather_device_async(const vector<Index>& resident_rows,
-                                const float* resident_input, Index resident_input_features,
-                                const float* resident_target, Index resident_target_features)
+void Batch::gather_device_async(const vector<Index>& row_indices,
+                                const float* source_data,
+                                Index source_features,
+                                const vector<Index>& input_feature_indices,
+                                const vector<Index>& target_feature_indices)
 {
-    const Index current_batch_size = ssize(resident_rows);
+    const Index current_batch_size = ssize(row_indices);
     current_sample_count = current_batch_size;
 
-    resident_row_indices_host = resident_rows;
-    resident_row_indices.resize_bytes(current_batch_size * Index(sizeof(Index)), Device::CUDA);
+    device_data_row_indices_host = row_indices;
 
     cudaStream_t stream = Backend::get_compute_stream();
-    CHECK_CUDA(cudaMemcpyAsync(resident_row_indices.data,
-                               resident_row_indices_host.data(),
-                               resident_row_indices_host.size() * sizeof(Index),
-                               cudaMemcpyHostToDevice,
-                               stream));
+    auto upload_indices = [stream](const vector<Index>& indices, Buffer& buffer)
+    {
+        buffer.resize_bytes(ssize(indices) * Index(sizeof(Index)), Device::CUDA);
+        if (!indices.empty())
+            CHECK_CUDA(cudaMemcpyAsync(buffer.data, indices.data(),
+                                       indices.size() * sizeof(Index),
+                                       cudaMemcpyHostToDevice, stream));
+        return buffer.as<Index>();
+    };
 
-    const Index* device_row_indices = resident_row_indices.as<Index>();
+    const Index* device_row_indices =
+        upload_indices(device_data_row_indices_host, device_data_row_indices);
+    const Index* device_input_features =
+        upload_indices(input_feature_indices, device_data_input_feature_indices);
+    const Index* device_target_features =
+        upload_indices(target_feature_indices, device_data_target_feature_indices);
 
     if (!fp32_staging.empty())
-        gather_rows_cuda<float, bfloat16>(current_batch_size, resident_input_features,
-                                          device_row_indices, resident_input, input.as<bfloat16>());
+        gather_columns_cuda<float, bfloat16>(current_batch_size,
+                                             ssize(input_feature_indices),
+                                             source_features,
+                                             device_row_indices,
+                                             device_input_features,
+                                             source_data,
+                                             input.as<bfloat16>());
     else
-        gather_rows_cuda<float, float>(current_batch_size, resident_input_features,
-                                       device_row_indices, resident_input, input.as<float>());
+        gather_columns_cuda<float, float>(current_batch_size,
+                                          ssize(input_feature_indices),
+                                          source_features,
+                                          device_row_indices,
+                                          device_input_features,
+                                          source_data,
+                                          input.as<float>());
 
-    if (resident_target_features > 0)
-        gather_rows_cuda<float, float>(current_batch_size, resident_target_features,
-                                       device_row_indices, resident_target, target.as<float>());
+    if (!target_feature_indices.empty())
+        gather_columns_cuda<float, float>(current_batch_size,
+                                          ssize(target_feature_indices),
+                                          source_features,
+                                          device_row_indices,
+                                          device_target_features,
+                                          source_data,
+                                          target.as<float>());
 
     if (!h2d_done_event)
         CHECK_CUDA(cudaEventCreateWithFlags(&h2d_done_event, cudaEventDisableTiming));

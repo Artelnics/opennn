@@ -64,17 +64,15 @@ public:
                      const vector<Index>&,
                      float*,
                      bool is_training,
-                     bool parallelize = true,
                      int = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       bool is_training,
-                      bool parallelize = true,
                       int = -1) const override;
 
-    void augment_inputs(float*, Index, bool = true) const override;
+    void augment_inputs(float*, Index) const override;
 
 private:
 
