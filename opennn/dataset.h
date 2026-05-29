@@ -48,8 +48,6 @@ inline SampleRole string_to_sample_role(const string& name)
     return sample_role_map().from_string(name);
 }
 
-enum class BatchPlacement{Host, Device};
-
 class Dataset
 {
 
@@ -248,13 +246,13 @@ public:
                               bool is_training,
                               int contiguous = -1) const;
 
-    virtual void fill_batch(Batch&,
-                            const vector<Index>& sample_indices,
-                            const vector<Index>& input_indices,
-                            const vector<Index>& decoder_indices,
-                            const vector<Index>& target_indices,
-                            bool is_training,
-                            bool allow_device_data_buffer) const;
+    void fill_batch(Batch&,
+                    const vector<Index>& sample_indices,
+                    const vector<Index>& input_indices,
+                    const vector<Index>& decoder_indices,
+                    const vector<Index>& target_indices,
+                    bool is_training,
+                    bool allow_device_data_buffer) const;
 
 protected:
 
@@ -275,6 +273,7 @@ protected:
                                 int contiguous = -1) const;
     void read_binary_header() const;
     void set_matrix_storage();
+    void mark_data_changed() const { invalidate_data_buffer(); }
     void invalidate_data_buffer() const;
 
 #ifdef OPENNN_HAS_CUDA

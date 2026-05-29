@@ -36,7 +36,7 @@ void TabularDataset::set_data(const MatrixR& new_data)
 void TabularDataset::set_data_constant(float new_value)
 {
     data.setConstant(new_value);
-    invalidate_data_buffer();
+    mark_data_changed();
 }
 
 void TabularDataset::set(const Index new_samples_number,
@@ -254,6 +254,7 @@ void TabularDataset::resize_data_from_JSON(Index samples_number)
 {
     if (variables.empty()) data.resize(0, 0);
     else data = MatrixR::Zero(samples_number, get_features_number());
+    mark_data_changed();
 }
 
 TabularDataset::TabularDataset(const Index new_samples_number,
@@ -736,6 +737,8 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
         if (unscale) unscale_image_minimum_maximum(map, feature_index);
         break;
     }
+
+    mark_data_changed();
 }
 
 vector<Descriptives> TabularDataset::scale_data()
@@ -775,11 +778,13 @@ void TabularDataset::unscale_features(const string& variable_role,
 void TabularDataset::set_data_random()
 {
     set_random_uniform(data);
+    mark_data_changed();
 }
 
 void TabularDataset::set_data_integer(const Index vocabulary_size)
 {
     set_random_integer(data, 0, vocabulary_size - 1);
+    mark_data_changed();
 }
 
 void TabularDataset::from_JSON(const JsonDocument& data_set_document)
@@ -872,6 +877,7 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
 
     Index feature_index = 0;
     Index used_feature_index = 0;
+    bool data_changed = false;
 
     for (Index i = 0; i < variables_number; ++i)
     {
@@ -917,7 +923,10 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
                     ++variables_outliers;
 
                     if (replace_with_nan)
+                    {
                         data(sample_idx, feature_index) = QUIET_NAN;
+                        data_changed = true;
+                    }
                 }
             }
 
@@ -927,6 +936,9 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
             ++used_feature_index;
         }
     }
+
+    if (data_changed)
+        mark_data_changed();
 
     return return_values;
 }
@@ -973,6 +985,8 @@ void TabularDataset::set_data_rosenbrock()
 
         data(i, features_number - 1) = rosenbrock;
     }
+
+    mark_data_changed();
 }
 
 void TabularDataset::set_data_binary_classification()
@@ -985,6 +999,8 @@ void TabularDataset::set_data_binary_classification()
 #pragma omp parallel for
     for (Index i = 0; i < samples_number; ++i)
         data(i, features_number - 1) = float(random_bool());
+
+    mark_data_changed();
 }
 
 namespace {
@@ -1205,6 +1221,7 @@ void TabularDataset::read_csv()
 
     infer_variable_types_from_data();
     split_samples_random();
+    mark_data_changed();
 }
 
 static const vector<pair<TabularDataset::MissingValuesMethod, string>> missing_values_method_map = {
@@ -1307,6 +1324,7 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
     const Index samples_number = used_sample_indices.size();
     const Index features_number = used_feature_indices.size();
     const Index target_features_number = target_feature_indices.size();
+    bool data_changed = false;
 
     for (Index j = 0; j < features_number - target_features_number; ++j)
     {
@@ -1317,7 +1335,10 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
             const Index current_sample = used_sample_indices[i];
 
             if (isnan(data(current_sample, current_variable)))
+            {
                 data(current_sample, current_variable) = replacements(j);
+                data_changed = true;
+            }
         }
     }
 
@@ -1333,6 +1354,9 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
                 set_sample_role(current_sample, "None");
         }
     }
+
+    if (data_changed)
+        mark_data_changed();
 }
 
 void TabularDataset::impute_missing_values_interpolate()
@@ -1342,6 +1366,7 @@ void TabularDataset::impute_missing_values_interpolate()
     const vector<Index> target_feature_indices = get_feature_indices("Target");
 
     const Index samples_number = used_sample_indices.size();
+    bool data_changed = false;
 
     for (const Index current_variable : input_feature_indices)
     {
@@ -1383,6 +1408,7 @@ void TabularDataset::impute_missing_values_interpolate()
             }
 
             data(current_sample, current_variable) = y;
+            data_changed = true;
         }
     }
 
@@ -1396,6 +1422,9 @@ void TabularDataset::impute_missing_values_interpolate()
                 set_sample_role(current_sample, "None");
         }
     }
+
+    if (data_changed)
+        mark_data_changed();
 }
 
 void TabularDataset::scrub_missing_values()

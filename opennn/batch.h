@@ -66,7 +66,7 @@ struct Batch
 
     Index samples_number = 0;
     Index current_sample_count = 0;     // May be < samples_number for the last batch.
-    BatchPlacement placement = BatchPlacement::Host;
+    bool needs_device_copy = true;
 
     const Dataset* dataset = nullptr;
     Configuration::Resolved config;

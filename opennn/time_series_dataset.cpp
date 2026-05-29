@@ -322,6 +322,8 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
             i = end_missing;
         }
     }
+
+    mark_data_changed();
 }
 
 void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
@@ -426,6 +428,8 @@ void TimeSeriesDataset::fill_gaps()
             ++row_index;
         }
     }
+
+    mark_data_changed();
 }
 
 MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_steps) const

@@ -986,7 +986,7 @@ void Dataset::fill_batch(Batch& batch,
                                             decoder_indices,
                                             target_indices))
     {
-        batch.placement = BatchPlacement::Device;
+        batch.needs_device_copy = false;
         return;
     }
 #endif
@@ -1025,7 +1025,7 @@ void Dataset::fill_batch(Batch& batch,
                  is_training,
                  batch.target_contiguous);
 
-    batch.placement = BatchPlacement::Host;
+    batch.needs_device_copy = true;
 }
 
 void Dataset::read_binary_header() const

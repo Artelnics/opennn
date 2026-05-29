@@ -1057,7 +1057,7 @@ void Optimizer::prefetch_batch(Batch& batch)
 {
 #ifdef OPENNN_HAS_CUDA
     if (!batch.uses_cuda()) return;
-    if (batch.placement == BatchPlacement::Device) return;
+    if (!batch.needs_device_copy) return;
 
     batch.copy_device_async(Backend::get_compute_stream());
 #else
