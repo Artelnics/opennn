@@ -2058,7 +2058,6 @@ struct AttentionOp::SDPACache
 
     ~SDPACache()
     {
-#ifdef OPENNN_HAS_CUDA
         for (auto& [_, e] : entries)
         {
             if (e.fwd_workspace_buf) cudaFree(e.fwd_workspace_buf);
@@ -2069,7 +2068,6 @@ struct AttentionOp::SDPACache
             if (e.seq_len_q_buf)     cudaFree(e.seq_len_q_buf);
             if (e.seq_len_kv_buf)    cudaFree(e.seq_len_kv_buf);
         }
-#endif
     }
 #endif  // OPENNN_HAS_CUDA && HAVE_CUDNN_FRONTEND
 };
@@ -2844,15 +2842,6 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
 #endif
 }
 
-void AttentionOp::to_JSON(JsonWriter&) const
-{
-}
-
-void AttentionOp::from_JSON(const Json*)
-{
-}
-
-
 void MergeOp::set(Index new_heads_number, Index new_query_sequence_length, Index new_head_dimension, Type new_compute_dtype)
 {
     heads_number          = new_heads_number;
@@ -3227,17 +3216,17 @@ void EmbeddingLookupOp::init_positional_encoding()
     if (positional_encoding.empty() || !positional_encoding.data) return;
 
     float* table = positional_encoding.as<float>();
-    const float half_depth = float(embedding_dimension) / 2;
+    const Index half   = embedding_dimension / 2;
+    const float half_f = float(embedding_dimension) / 2.0f;
 
     VectorR divisors(embedding_dimension);
     for (Index j = 0; j < embedding_dimension; ++j)
-        divisors(j) = pow(10000.0f,
-                          (j < Index(half_depth) ? j : j - Index(half_depth)) / half_depth);
+        divisors(j) = pow(10000.0f, (j < half ? j : j - half) / half_f);
 
     #pragma omp parallel for collapse(2)
     for (Index i = 0; i < sequence_length; ++i)
         for (Index j = 0; j < embedding_dimension; ++j)
-            table[i * embedding_dimension + j] = (j < Index(half_depth))
+            table[i * embedding_dimension + j] = (j < half)
                 ? sin(i / divisors(j))
                 : cos(i / divisors(j));
 }
@@ -3522,10 +3511,8 @@ void NonMaxSuppressionOp::forward_propagate(ForwardPropagation& fp, size_t layer
     const TensorView& input = get_input(fp, layer);
     TensorView& output = get_output(fp, layer);
 
-#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
         throw runtime_error("NonMaxSuppressionOp GPU path is not implemented yet.");
-#endif
     apply(input, output);
 }
 
@@ -3769,10 +3756,8 @@ void LongShortTermMemoryOp::forward_propagate(ForwardPropagation& fp, size_t lay
     TensorView& hidden_state = views[HiddenStateSlot][0];
     TensorView& cell_activation = views[CellActivationSlot][0];
 
-#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
         throw runtime_error("LongShortTermMemoryOp GPU path is not implemented yet.");
-#endif
 
     apply(input, output, forget_gate, input_gate, candidate_gate, output_gate,
           cell_state, hidden_state, cell_activation);
@@ -3905,10 +3890,8 @@ void LongShortTermMemoryOp::back_propagate(ForwardPropagation& fp, BackPropagati
     const TensorView& hidden_state = views[HiddenStateSlot][0];
     const TensorView& cell_activation = views[CellActivationSlot][0];
 
-#ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
         throw runtime_error("LongShortTermMemoryOp GPU path is not implemented yet.");
-#endif
 
     apply_delta(input, output_delta, input_delta, hidden_delta, cell_delta,
                 forget_delta, input_gate_delta, candidate_delta, output_gate_delta,

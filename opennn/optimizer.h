@@ -55,17 +55,6 @@ struct BatchFillSession
     vector<jthread> workers;
 };
 
-#ifdef OPENNN_HAS_CUDA
-struct DeviceResidentData;
-
-struct ResidentEpochState
-{
-    Buffer row_index_buffer{Device::CUDA}; 
-    const DeviceResidentData* data = nullptr; 
-    bool active = false;
-};
-#endif
-
 class Optimizer
 {
 
@@ -140,14 +129,6 @@ protected:
     void setup_device_training(const vector<Batch*>& batches);
     void teardown_device_training();
 
-#ifdef OPENNN_HAS_CUDA
-
-    void setup_resident_datasets();
-    void upload_resident_epoch_indices(ResidentEpochState& state,
-                                       const vector<vector<Index>>& batches,
-                                       Index batch_size);
-#endif
-
     void prefetch_batch(Batch& batch);
 
     void sync_device(bool on_gpu);
@@ -195,6 +176,7 @@ protected:
         const vector<Index>& decoder_feature_indices,
         const vector<Index>& target_feature_indices,
         bool is_training,
+        bool allow_device_resident,
         WorkerProfileCounters* profile_counters = nullptr);
 
     Batch* wait_for_filled_batch(BatchFillSession& session, Index iteration);
@@ -239,11 +221,6 @@ protected:
     string name;
 
     int num_workers = 2;
-
-#ifdef OPENNN_HAS_CUDA
-    ResidentEpochState resident_train_;
-    ResidentEpochState resident_validation_;
-#endif
 
     bool has_recurrent_layers_ = false;
 };

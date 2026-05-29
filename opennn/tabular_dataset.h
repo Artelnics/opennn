@@ -32,8 +32,13 @@ public:
                         bool = false,
                         const Codification& = Codification::UTF8);
 
-    Index get_samples_number() const override { return data.rows(); }
-
+    Index get_samples_number() const override
+    {
+        return (storage_mode == StorageMode::BinaryFile && binary_rows_number > 0)
+            || (storage_mode == StorageMode::Auto && data.rows() == 0 && binary_rows_number > 0)
+             ? binary_rows_number
+             : data.rows();
+    }
     const MatrixR& get_data() const { return data; }
     void set_data(const MatrixR&);
     void set_data_constant(float);
@@ -163,17 +168,13 @@ public:
                       bool parallelize = true,
                       int contiguous = -1) const override;
 
-    bool ensure_device_resident(const string& sample_role) override;
-    const DeviceResidentData* get_device_resident(const string& sample_role) const override;
-
 protected:
 
     MatrixR data;
 
-    DeviceResidentData device_resident_training;
-    DeviceResidentData device_resident_validation;
-    bool supports_device_residency() const { return true; }
-    DeviceResidentData* select_device_resident(const string& sample_role);
+    bool can_use_device_resident_batch(const BatchRequest&) const override { return true; }
+    bool has_in_memory_data() const override { return data.rows() > 0; }
+    void release_in_memory_data() override { data.resize(0, 0); }
 
     string missing_values_label = "NA";
     MissingValuesMethod missing_values_method = MissingValuesMethod::Mean;

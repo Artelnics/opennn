@@ -18,6 +18,8 @@
 namespace opennn
 {
 
+struct Batch;
+
 enum class SampleRole
 {
     Training,
@@ -52,6 +54,24 @@ inline SampleRole string_to_sample_role(const string& name)
     return sample_role_map().from_string(name);
 }
 
+enum class BatchPlacement
+{
+    Host,
+    Device
+};
+
+struct BatchRequest
+{
+    const vector<Index>& sample_indices;
+    const vector<Index>& input_indices;
+    const vector<Index>& decoder_indices;
+    const vector<Index>& target_indices;
+
+    SampleRole role = SampleRole::Training;
+    bool is_training = true;
+    bool parallelize = true;
+    bool allow_device_resident = false;
+};
 
 struct DeviceResidentData
 {
@@ -74,6 +94,7 @@ public:
     virtual ~Dataset() = default;
 
     enum class Separator{Space, Tab, Comma, Semicolon};
+    enum class StorageMode{Matrix, BinaryFile, Auto};
 
     virtual Index get_samples_number() const { return ssize(sample_roles); }
 
@@ -128,13 +149,10 @@ public:
 
     virtual void get_batches(const vector<Index>&, Index, bool, vector<vector<Index>>&) const;
 
-    virtual bool supports_device_residency() const { return false; }
-    virtual bool ensure_device_resident(const string& /*sample_role*/) { return false; }
-    virtual const DeviceResidentData* get_device_resident(const string& /*sample_role*/) const { return nullptr; }
-
     const vector<vector<string>>& get_data_file_preview() const { return data_file_preview; }
 
     const filesystem::path& get_data_path() const { return data_path; }
+    StorageMode get_storage_mode() const { return storage_mode; }
 
     const Separator& get_separator() const { return separator; }
     string get_separator_string() const;
@@ -157,7 +175,11 @@ public:
 
     void set_sample_roles(const vector<string>&);
     void set_sample_roles(const vector<Index>&, const string&);
-    void set_variables(const vector<Variable>& new_variables) { variables = new_variables; }
+    void set_variables(const vector<Variable>& new_variables)
+    {
+        variables = new_variables;
+        invalidate_device_resident_cache();
+    }
 
     void set_default_variable_names();
 
@@ -175,7 +197,11 @@ public:
     void set_variable_types(const VariableType&);
     void set_variable_names(const vector<string>&);
 
-    void set_variables_number(const Index new_size) { variables.resize(new_size); }
+    void set_variables_number(const Index new_size)
+    {
+        variables.resize(new_size);
+        invalidate_device_resident_cache();
+    }
 
     void set_feature_names(const vector<string>&);
 
@@ -183,7 +209,9 @@ public:
 
     void set_shape(const string&, const Shape&);
     virtual void resize_input_shape(Index input_features_count) { set_shape("Input", {input_features_count}); }
-    void set_data_path(const filesystem::path& new_data_path) { data_path = new_data_path; }
+    void set_data_path(const filesystem::path& new_data_path);
+    void set_storage_mode(StorageMode);
+    void use_binary_data_file(const filesystem::path&);
 
     void set_has_header(bool new_has_header) { has_header = new_has_header; }
     void set_has_ids(bool new_has_ids) { has_sample_ids = new_has_ids; }
@@ -263,6 +291,8 @@ public:
                               bool parallelize = true,
                               int contiguous = -1) const;
 
+    virtual BatchPlacement fill_batch(const BatchRequest&, Batch&) const;
+
 protected:
 
     Dataset() = default;
@@ -274,6 +304,24 @@ protected:
     void check_separators(string_view) const;
     void samples_from_JSON(const Json*);
     virtual void resize_data_from_JSON(Index) {}
+    virtual bool can_use_device_resident_batch(const BatchRequest&) const { return false; }
+    virtual bool has_in_memory_data() const { return false; }
+    virtual void release_in_memory_data() {}
+
+    BatchPlacement fill_host_batch(const BatchRequest&, Batch&) const;
+    bool fill_binary_tensor_if_needed(const vector<Index>&,
+                                      const vector<Index>&,
+                                      float*,
+                                      int contiguous = -1) const;
+    bool uses_binary_storage() const;
+    void read_binary_header() const;
+    void invalidate_device_resident_cache() const;
+    DeviceResidentData* select_device_resident(SampleRole) const;
+
+#ifdef OPENNN_HAS_CUDA
+    bool fill_batch_from_device_cache(const BatchRequest&, Batch&) const;
+    bool prepare_device_cache(SampleRole, const vector<Index>&, const vector<Index>&) const;
+#endif
 
     Shape input_shape;
     Shape target_shape;
@@ -285,6 +333,14 @@ protected:
     vector<Variable> variables;
 
     filesystem::path data_path;
+    StorageMode storage_mode = StorageMode::Matrix;
+    mutable Index binary_rows_number = 0;
+    mutable Index binary_columns_number = 0;
+
+    mutable DeviceResidentData device_resident_training;
+    mutable DeviceResidentData device_resident_validation;
+    mutable mutex device_resident_mutex;
+
     Separator separator = Separator::Comma;
     bool has_header = false;
     bool has_sample_ids = false;

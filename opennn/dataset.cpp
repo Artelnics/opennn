@@ -7,7 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "dataset.h"
+#include "batch.h"
 #include "random_utilities.h"
+#include <cstdlib>
 #include <regex>
 
 namespace opennn
@@ -113,6 +115,37 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
     }
 }
 
+void Dataset::set_data_path(const filesystem::path& new_data_path)
+{
+    data_path = new_data_path;
+    binary_rows_number = 0;
+    binary_columns_number = 0;
+    invalidate_device_resident_cache();
+}
+
+void Dataset::set_storage_mode(StorageMode new_storage_mode)
+{
+    storage_mode = new_storage_mode;
+
+    if (storage_mode == StorageMode::BinaryFile)
+        read_binary_header();
+
+    invalidate_device_resident_cache();
+}
+
+void Dataset::use_binary_data_file(const filesystem::path& binary_data_file_name)
+{
+    set_data_path(binary_data_file_name);
+    storage_mode = StorageMode::BinaryFile;
+    read_binary_header();
+
+    if (sample_roles.empty())
+        sample_roles.resize(binary_rows_number, SampleRole::Training);
+
+    release_in_memory_data();
+    invalidate_device_resident_cache();
+}
+
 Index Dataset::get_samples_number(const string& sample_role) const
 {
     const SampleRole role_type = string_to_sample_role(sample_role);
@@ -128,16 +161,19 @@ void Dataset::set_sample_roles(const string& sample_role)
 {
     const SampleRole role_type = string_to_sample_role(sample_role);
     ranges::fill(sample_roles, role_type);
+    invalidate_device_resident_cache();
 }
 
 void Dataset::set_sample_role(const Index index, const string& new_role)
 {
     sample_roles[index] = string_to_sample_role(new_role);
+    invalidate_device_resident_cache();
 }
 
 void Dataset::set_sample_roles(const vector<string>& new_roles)
 {
     ranges::transform(new_roles, sample_roles.begin(), string_to_sample_role);
+    invalidate_device_resident_cache();
 }
 
 void Dataset::set_sample_roles(const vector<Index>& indices, const string& sample_role)
@@ -145,6 +181,7 @@ void Dataset::set_sample_roles(const vector<Index>& indices, const string& sampl
     const SampleRole role_type = string_to_sample_role(sample_role);
     for (const auto& i : indices)
         sample_roles[i] = role_type;
+    invalidate_device_resident_cache();
 }
 
 void Dataset::split_samples(const float training_samples_ratio,
@@ -189,6 +226,7 @@ void Dataset::split_samples(const float training_samples_ratio,
     assign_role(SampleRole::Training, training_samples_number, index);
     assign_role(SampleRole::Validation, validation_samples_number, index);
     assign_role(SampleRole::Testing, testing_samples_number, index);
+    invalidate_device_resident_cache();
 }
 
 void Dataset::split_samples_random(const float training_ratio,
@@ -367,6 +405,8 @@ void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
         decoder_shape = new_shape;
     else
         throw invalid_argument("set_shape: Invalid variable role string: " + variable_role);
+
+    invalidate_device_resident_cache();
 }
 
 Index Dataset::get_used_features_number() const
@@ -528,6 +568,8 @@ void Dataset::set_variable_roles(const vector<string>& new_variables_roles)
 
     for (size_t i = 0; i < new_variables_roles.size(); ++i)
         variables[i].set_role(new_variables_roles[i]);
+
+    invalidate_device_resident_cache();
 }
 
 void Dataset::set_variable_indices(const vector<Index>& input_variables,
@@ -558,6 +600,7 @@ void Dataset::set_input_variables_unused()
 void Dataset::set_variable_role(const Index index, const string& new_role)
 {
     variables[index].set_role(new_role);
+    invalidate_device_resident_cache();
 }
 
 void Dataset::set_variable_role(const string& name, const string& new_role)
@@ -568,6 +611,7 @@ void Dataset::set_variable_role(const string& name, const string& new_role)
 void Dataset::set_variable_type(const Index index, const VariableType& new_type)
 {
     variables[index].type = new_type;
+    invalidate_device_resident_cache();
 }
 
 void Dataset::set_variable_type(const string& name, const VariableType& new_type)
@@ -579,6 +623,8 @@ void Dataset::set_variable_types(const VariableType& new_type)
 {
     for (auto& variable : variables)
         variable.type = new_type;
+
+    invalidate_device_resident_cache();
 }
 
 void Dataset::set_feature_names(const vector<string>& new_variables_names)
@@ -591,6 +637,8 @@ void Dataset::set_feature_names(const vector<string>& new_variables_names)
                 variable.categories[j] = new_variables_names[index++];
         else
             variable.name = new_variables_names[index++];
+
+    invalidate_device_resident_cache();
 }
 
 void Dataset::set_variable_names(const vector<string>& new_names)
@@ -604,6 +652,8 @@ void Dataset::set_variable_names(const vector<string>& new_names)
 
     for (Index i = 0; i < variables_number; ++i)
         variables[i].name = get_trimmed(new_names[i]);
+
+    invalidate_device_resident_cache();
 }
 
 void Dataset::set_variable_roles(const string& variable_role)
@@ -613,6 +663,8 @@ void Dataset::set_variable_roles(const string& variable_role)
             (variable.type == VariableType::Constant || variable.type == VariableType::DateTime)
                 ? "None"
                 : variable_role);
+
+    invalidate_device_resident_cache();
 }
 
 static const vector<tuple<Dataset::Separator, string, string>> separator_map = {
@@ -984,6 +1036,271 @@ void Dataset::fill_targets(const vector<Index>& sample_indices,
     (void)contiguous;
     throw runtime_error("Dataset::fill_targets must be implemented by a concrete dataset.");
 }
+
+BatchPlacement Dataset::fill_batch(const BatchRequest& request, Batch& batch) const
+{
+#ifdef OPENNN_HAS_CUDA
+    if (can_use_device_resident_batch(request) && fill_batch_from_device_cache(request, batch))
+        return BatchPlacement::Device;
+#endif
+
+    return fill_host_batch(request, batch);
+}
+
+BatchPlacement Dataset::fill_host_batch(const BatchRequest& request, Batch& batch) const
+{
+    batch.current_sample_count = ssize(request.sample_indices);
+
+    const bool on_gpu = batch.uses_cuda();
+
+    float* const input_buffer   = on_gpu ? batch.inputs_host  : batch.input.as<float>();
+    float* const decoder_buffer = on_gpu ? batch.decoder_host : batch.decoder.as<float>();
+    float* const target_buffer  = on_gpu ? batch.targets_host : batch.target.as<float>();
+
+    if (batch.input_contiguous < 0 && !request.input_indices.empty())
+        batch.input_contiguous = is_contiguous(request.input_indices) ? 1 : 0;
+    if (batch.decoder_contiguous < 0 && !request.decoder_indices.empty())
+        batch.decoder_contiguous = is_contiguous(request.decoder_indices) ? 1 : 0;
+    if (batch.target_contiguous < 0 && !request.target_indices.empty())
+        batch.target_contiguous = is_contiguous(request.target_indices) ? 1 : 0;
+
+    const bool parallelize = request.parallelize && !on_gpu;
+
+    if (!fill_binary_tensor_if_needed(request.sample_indices,
+                                      request.input_indices,
+                                      input_buffer,
+                                      batch.input_contiguous))
+    {
+        fill_inputs(request.sample_indices,
+                    request.input_indices,
+                    input_buffer,
+                    request.is_training,
+                    parallelize,
+                    batch.input_contiguous);
+    }
+
+    if (!batch.decoder_shape.empty())
+        if (!fill_binary_tensor_if_needed(request.sample_indices,
+                                          request.decoder_indices,
+                                          decoder_buffer,
+                                          batch.decoder_contiguous))
+        {
+            fill_decoder(request.sample_indices,
+                         request.decoder_indices,
+                         decoder_buffer,
+                         request.is_training,
+                         parallelize,
+                         batch.decoder_contiguous);
+        }
+
+    if (!fill_binary_tensor_if_needed(request.sample_indices,
+                                      request.target_indices,
+                                      target_buffer,
+                                      batch.target_contiguous))
+    {
+        fill_targets(request.sample_indices,
+                     request.target_indices,
+                     target_buffer,
+                     request.is_training,
+                     parallelize,
+                     batch.target_contiguous);
+    }
+
+    return BatchPlacement::Host;
+}
+
+bool Dataset::uses_binary_storage() const
+{
+    if (storage_mode == StorageMode::BinaryFile)
+        return true;
+
+    if (storage_mode != StorageMode::Auto)
+        return false;
+
+    return !has_in_memory_data() && !data_path.empty() && binary_rows_number > 0;
+}
+
+void Dataset::read_binary_header() const
+{
+    ifstream file(data_path, ios::binary);
+
+    if (!file.is_open())
+        throw runtime_error(format("Failed to open binary data file: {}", data_path.string()));
+
+    file.read(reinterpret_cast<char*>(&binary_columns_number), sizeof(Index));
+    file.read(reinterpret_cast<char*>(&binary_rows_number), sizeof(Index));
+
+    if (!file)
+        throw runtime_error(format("Failed to read binary data header: {}", data_path.string()));
+}
+
+bool Dataset::fill_binary_tensor_if_needed(const vector<Index>& sample_indices,
+                                           const vector<Index>& feature_indices,
+                                           float* output,
+                                           int contiguous_hint) const
+{
+    if (!uses_binary_storage()) return false;
+    if (sample_indices.empty() || feature_indices.empty()) return true;
+
+    if (binary_rows_number == 0 || binary_columns_number == 0)
+        read_binary_header();
+
+    ifstream file(data_path, ios::binary);
+    if (!file.is_open())
+        throw runtime_error(format("Failed to open binary data file: {}", data_path.string()));
+
+    const Index columns_number = binary_columns_number;
+    const Index features_number = ssize(feature_indices);
+    const bool contiguous = contiguous_hint >= 0
+                          ? static_cast<bool>(contiguous_hint)
+                          : is_contiguous(feature_indices);
+
+    const Index first_column = feature_indices.front();
+    const streamoff header_bytes = streamoff(2 * sizeof(Index));
+
+    for (Index i = 0; i < ssize(sample_indices); ++i)
+    {
+        const Index row = sample_indices[size_t(i)];
+        if (row < 0 || row >= binary_rows_number)
+            throw runtime_error("Binary data row index is out of range.");
+
+        float* const dst = output + i * features_number;
+
+        if (contiguous)
+        {
+            const streamoff offset = header_bytes
+                + streamoff(row * columns_number + first_column) * streamoff(sizeof(float));
+            file.seekg(offset, ios::beg);
+            file.read(reinterpret_cast<char*>(dst), features_number * sizeof(float));
+        }
+        else
+        {
+            for (Index j = 0; j < features_number; ++j)
+            {
+                const Index column = feature_indices[size_t(j)];
+                const streamoff offset = header_bytes
+                    + streamoff(row * columns_number + column) * streamoff(sizeof(float));
+                file.seekg(offset, ios::beg);
+                file.read(reinterpret_cast<char*>(dst + j), sizeof(float));
+            }
+        }
+
+        if (!file)
+            throw runtime_error(format("Failed to read binary data file: {}", data_path.string()));
+    }
+
+    return true;
+}
+
+DeviceResidentData* Dataset::select_device_resident(SampleRole sample_role) const
+{
+    if (sample_role == SampleRole::Training) return &device_resident_training;
+    if (sample_role == SampleRole::Validation) return &device_resident_validation;
+    return nullptr;
+}
+
+void Dataset::invalidate_device_resident_cache() const
+{
+    device_resident_training.valid = false;
+    device_resident_validation.valid = false;
+}
+
+#ifdef OPENNN_HAS_CUDA
+
+bool Dataset::prepare_device_cache(SampleRole sample_role,
+                                   const vector<Index>& input_feature_indices,
+                                   const vector<Index>& target_feature_indices) const
+{
+    lock_guard<mutex> lock(device_resident_mutex);
+
+    DeviceResidentData* res = select_device_resident(sample_role);
+    if (!res) return false;
+    if (res->valid) return true;
+
+    const vector<Index> sample_indices = get_sample_indices(sample_role_to_string(sample_role));
+
+    const Index rows  = Index(sample_indices.size());
+    const Index in_f  = Index(input_feature_indices.size());
+    const Index tgt_f = Index(target_feature_indices.size());
+    if (rows == 0 || in_f == 0) return false;
+
+    const Index resident_bytes =
+        rows * (in_f + tgt_f) * Index(sizeof(float))
+        + rows * Index(sizeof(Index));
+
+    size_t free_bytes = 0;
+    size_t total_bytes = 0;
+    CHECK_CUDA(cudaMemGetInfo(&free_bytes, &total_bytes));
+    const Index margin = Index(512) << 20;
+    if (resident_bytes + margin > Index(free_bytes)) return false;
+
+    vector<float> input_host(size_t(rows) * size_t(in_f));
+    vector<float> target_host(size_t(rows) * size_t(tgt_f));
+
+    if (!fill_binary_tensor_if_needed(sample_indices, input_feature_indices, input_host.data()))
+        fill_inputs(sample_indices, input_feature_indices, input_host.data(),
+                    /*is_training=*/false, /*parallelize=*/true);
+
+    if (!fill_binary_tensor_if_needed(sample_indices, target_feature_indices, target_host.data()))
+        fill_targets(sample_indices, target_feature_indices, target_host.data(),
+                     /*is_training=*/false, /*parallelize=*/true);
+
+    res->input.resize_bytes(Index(input_host.size()) * Index(sizeof(float)), Device::CUDA);
+    res->target.resize_bytes(Index(target_host.size()) * Index(sizeof(float)), Device::CUDA);
+
+    cudaStream_t stream = Backend::get_compute_stream();
+    CHECK_CUDA(cudaMemcpyAsync(res->input.data, input_host.data(),
+                               input_host.size() * sizeof(float), cudaMemcpyHostToDevice, stream));
+    CHECK_CUDA(cudaMemcpyAsync(res->target.data, target_host.data(),
+                               target_host.size() * sizeof(float), cudaMemcpyHostToDevice, stream));
+    CHECK_CUDA(cudaStreamSynchronize(stream));
+
+    res->row_of.assign(size_t(get_samples_number()), Index(-1));
+    for (Index r = 0; r < rows; ++r)
+        res->row_of[size_t(sample_indices[size_t(r)])] = r;
+
+    res->rows = rows;
+    res->input_features = in_f;
+    res->target_features = tgt_f;
+    res->valid = true;
+    return true;
+}
+
+bool Dataset::fill_batch_from_device_cache(const BatchRequest& request, Batch& batch) const
+{
+    if (!request.allow_device_resident || !batch.uses_cuda()) return false;
+    if (!request.decoder_indices.empty()) return false;
+    if (request.role != SampleRole::Training && request.role != SampleRole::Validation) return false;
+
+    if (const char* e = getenv("OPENNN_DISABLE_RESIDENT"); e && e[0] == '1') return false;
+
+    if (!prepare_device_cache(request.role, request.input_indices, request.target_indices))
+        return false;
+
+    const DeviceResidentData* res = select_device_resident(request.role);
+    if (!res || !res->valid) return false;
+
+    vector<Index> resident_rows(request.sample_indices.size());
+
+    for (Index i = 0; i < ssize(request.sample_indices); ++i)
+    {
+        const Index sample_index = request.sample_indices[size_t(i)];
+        if (sample_index < 0 || sample_index >= ssize(res->row_of)) return false;
+
+        const Index resident_row = res->row_of[size_t(sample_index)];
+        if (resident_row < 0) return false;
+
+        resident_rows[size_t(i)] = resident_row;
+    }
+
+    batch.gather_device_async(resident_rows,
+                              res->input.as<float>(),  res->input_features,
+                              res->target.as<float>(), res->target_features);
+
+    return true;
+}
+
+#endif
 
 void Dataset::samples_from_JSON(const Json *samples_element)
 {

@@ -210,8 +210,6 @@ struct CombinationOp : Operator
                      const TensorView& input,
                      TensorView& input_delta,
                      bool accumulate_input_delta = false) const;
-
-private:
 };
 
 struct RecurrentOp : Operator
@@ -484,8 +482,6 @@ struct LayerNormOp : Operator
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
-
-private:
 };
 
 struct MultiHeadProjectionOp : Operator
@@ -551,9 +547,6 @@ struct AttentionOp : Operator
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
-
-    void to_JSON(JsonWriter& w) const override;
-    void from_JSON(const Json* parent) override;
 
     void destroy_cuda() override;
 
@@ -757,8 +750,6 @@ struct EmbeddingLookupOp : Operator
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
-
-private:
 };
 
 struct FlatOp : Operator

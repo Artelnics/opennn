@@ -30,9 +30,17 @@ void TabularDataset::set_data(const MatrixR& new_data)
         throw runtime_error("Columns number is not equal to variables number");
 
     data = new_data;
+    storage_mode = StorageMode::Matrix;
+    binary_rows_number = 0;
+    binary_columns_number = 0;
+    invalidate_device_resident_cache();
 }
 
-void TabularDataset::set_data_constant(float new_value) { data.setConstant(new_value); }
+void TabularDataset::set_data_constant(float new_value)
+{
+    data.setConstant(new_value);
+    invalidate_device_resident_cache();
+}
 
 void TabularDataset::set(const Index new_samples_number,
                          const Shape& new_input_shape,
@@ -50,6 +58,9 @@ void TabularDataset::set(const Index new_samples_number,
 
     target_shape = { new_targets_number };
     data.resize(new_samples_number, new_features_number);
+    storage_mode = StorageMode::Matrix;
+    binary_rows_number = 0;
+    binary_columns_number = 0;
     variables.resize(new_features_number);
 
     set_default();
@@ -186,86 +197,32 @@ void TabularDataset::load_data_binary()
 
     data.resize(rows_number, columns_number);
     file.read(reinterpret_cast<char*>(data.data()), rows_number * columns_number * sizeof(float));
+
+    storage_mode = StorageMode::Matrix;
+    binary_columns_number = columns_number;
+    binary_rows_number = rows_number;
+    invalidate_device_resident_cache();
 }
 
 void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices,
                                  float* input_data, bool, bool parallelize, int contiguous) const
 {
-    fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize, contiguous);
+    if (!fill_binary_tensor_if_needed(sample_indices, input_indices, input_data, contiguous))
+        fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize, contiguous);
 }
 
 void TabularDataset::fill_decoder(const vector<Index>& sample_indices, const vector<Index>& decoder_indices,
                                   float* decoder_data, bool, bool parallelize, int contiguous) const
 {
-    fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, parallelize, contiguous);
+    if (!fill_binary_tensor_if_needed(sample_indices, decoder_indices, decoder_data, contiguous))
+        fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, parallelize, contiguous);
 }
 
 void TabularDataset::fill_targets(const vector<Index>& sample_indices, const vector<Index>& target_indices,
                                   float* target_data, bool, bool parallelize, int contiguous) const
 {
-    fill_tensor_data(data, sample_indices, target_indices, target_data, parallelize, contiguous);
-}
-
-DeviceResidentData* TabularDataset::select_device_resident(const string& sample_role)
-{
-    if (sample_role == "Training")   return &device_resident_training;
-    if (sample_role == "Validation") return &device_resident_validation;
-    return nullptr;
-}
-
-const DeviceResidentData* TabularDataset::get_device_resident(const string& sample_role) const
-{
-    const DeviceResidentData* res =
-        const_cast<TabularDataset*>(this)->select_device_resident(sample_role);
-    return (res && res->valid) ? res : nullptr;
-}
-
-bool TabularDataset::ensure_device_resident(const string& sample_role)
-{
-#ifdef OPENNN_HAS_CUDA
-    DeviceResidentData* res = select_device_resident(sample_role);
-    if (!res) return false;
-    if (res->valid) return true;
-
-    const vector<Index> input_feature_indices  = get_feature_indices("Input");
-    const vector<Index> target_feature_indices = get_feature_indices("Target");
-    const vector<Index> sample_indices = get_sample_indices(sample_role);
-
-    const Index rows  = Index(sample_indices.size());
-    const Index in_f  = Index(input_feature_indices.size());
-    const Index tgt_f = Index(target_feature_indices.size());
-    if (rows == 0 || in_f == 0) return false;
-
-    vector<float> input_host(size_t(rows) * size_t(in_f));
-    vector<float> target_host(size_t(rows) * size_t(tgt_f));
-    fill_inputs(sample_indices, input_feature_indices, input_host.data(),
-                /*is_training=*/false, /*parallelize=*/true);
-    fill_targets(sample_indices, target_feature_indices, target_host.data(),
-                 /*is_training=*/false, /*parallelize=*/true);
-
-    res->input.resize_bytes(Index(input_host.size()) * Index(sizeof(float)), Device::CUDA);
-    res->target.resize_bytes(Index(target_host.size()) * Index(sizeof(float)), Device::CUDA);
-
-    cudaStream_t stream = Backend::get_compute_stream();
-    CHECK_CUDA(cudaMemcpyAsync(res->input.data, input_host.data(),
-                               input_host.size() * sizeof(float), cudaMemcpyHostToDevice, stream));
-    CHECK_CUDA(cudaMemcpyAsync(res->target.data, target_host.data(),
-                               target_host.size() * sizeof(float), cudaMemcpyHostToDevice, stream));
-    CHECK_CUDA(cudaStreamSynchronize(stream));
-    
-    res->row_of.assign(size_t(get_samples_number()), Index(-1));
-    for (Index r = 0; r < rows; ++r)
-        res->row_of[size_t(sample_indices[size_t(r)])] = r;
-
-    res->rows = rows;
-    res->input_features = in_f;
-    res->target_features = tgt_f;
-    res->valid = true;
-    return true;
-#else
-    (void)sample_role;
-    return false;
-#endif
+    if (!fill_binary_tensor_if_needed(sample_indices, target_indices, target_data, contiguous))
+        fill_tensor_data(data, sample_indices, target_indices, target_data, parallelize, contiguous);
 }
 
 void TabularDataset::infer_variable_types_from_data()
@@ -342,6 +299,11 @@ void TabularDataset::set(const filesystem::path& new_data_path,
     set_codification(new_codification);
 
     read_csv();
+
+    storage_mode = StorageMode::Matrix;
+    binary_rows_number = 0;
+    binary_columns_number = 0;
+    invalidate_device_resident_cache();
 
     set_default_variable_scalers();
 
