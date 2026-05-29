@@ -72,6 +72,8 @@ public:
                       bool is_training,
                       int = -1) const override;
 
+    bool supports_bf16_inputs() const override { return false; }
+
     inline static const string PAD_TOKEN   = "[PAD]";     // 0
     inline static const string UNK_TOKEN   = "[UNK]";     // 1
     inline static const string START_TOKEN = "[START]";   // 2

@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "batch.h"
-#include "language_dataset.h"
 
 #ifdef OPENNN_HAS_CUDA
 #include "kernel.cuh"
@@ -43,7 +42,7 @@ void Batch::set(const Index new_samples_number,
     const bool on_gpu = uses_cuda();
     const bool bf16_input = on_gpu
                          && config.training_type == Type::BF16
-                         && dynamic_cast<const LanguageDataset*>(dataset) == nullptr;
+                         && dataset->supports_bf16_inputs();
     const Index input_device_bytes = bf16_input ? Index(sizeof(bfloat16)) : Index(sizeof(float));
 #else
     const Index input_device_bytes = Index(sizeof(float));
@@ -126,16 +125,14 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& input_indices,
                  const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices,
-                 bool is_training,
-                 bool allow_device_data_buffer)
+                 bool is_training)
 {
     dataset->fill_batch(*this,
                         sample_indices,
                         input_indices,
                         decoder_indices,
                         target_indices,
-                        is_training,
-                        allow_device_data_buffer);
+                        is_training);
 }
 
 Index Batch::get_samples_number() const

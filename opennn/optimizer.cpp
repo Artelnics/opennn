@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "image_dataset.h"
-#include "language_dataset.h"
 #include "tabular_dataset.h"
 #include "time_series_dataset.h"
 #include "scaling_layer.h"
@@ -298,6 +297,11 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
 
     const int pool_size = get_batch_pool_size(neural_network);
     const auto& config = neural_network.get_config();
+    const bool use_device_data_buffer = neural_network.is_gpu()
+                                     && dataset.supports_dense_feature_gather()
+                                     && !neural_network.has(LayerType::Recurrent)
+                                     && !neural_network.has(LayerType::LongShortTermMemory)
+                                     && !env_flag_enabled("OPENNN_DISABLE_DATA_BUFFER");
 
     auto fill_pool = [&](ThreadSafeQueue<Batch*>& queue,
                          vector<unique_ptr<Batch>>& pool,
@@ -306,6 +310,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
         for (int i = 0; i < pool_size; ++i)
         {
             pool.push_back(make_unique<Batch>(batch_size, &dataset, config));
+            pool.back()->use_device_data_buffer = use_device_data_buffer;
             queue.push(pool.back().get());
         }
     };
@@ -330,7 +335,6 @@ unique_ptr<BatchFillSession> Optimizer::start_batch_workers(
     const vector<Index>& decoder_feature_indices,
     const vector<Index>& target_feature_indices,
     bool is_training,
-    bool allow_device_data_buffer,
     WorkerProfileCounters* profile_counters)
 {
     const Index batches_number = Index(batches.size());
@@ -352,7 +356,6 @@ unique_ptr<BatchFillSession> Optimizer::start_batch_workers(
                         session_ptr,
                         batches_number,
                         is_training,
-                        allow_device_data_buffer,
                         profile_counters]()
     {
         try
@@ -381,8 +384,7 @@ unique_ptr<BatchFillSession> Optimizer::start_batch_workers(
                             *input_indices,
                             *decoder_indices,
                             *target_indices,
-                            is_training,
-                            allow_device_data_buffer);
+                            is_training);
 
                 const auto t_fill1 = chrono::steady_clock::now();
                 session_ptr->ready[size_t(it)].store(batch, memory_order_release);
@@ -485,7 +487,7 @@ Index Optimizer::get_maximum_batch_size() const
     const Index parameters_aligned_size = get_aligned_size(neural_network->get_parameter_specs());
     const Index slot_aligned_size       = get_aligned_size(parameters_number);
     const bool bf16_train = on_gpu && neural_network->get_training_type() == Type::BF16;
-    const bool bf16_input = bf16_train && dynamic_cast<const LanguageDataset*>(dataset) == nullptr;
+    const bool bf16_input = bf16_train && dataset->supports_bf16_inputs();
 
     Index fixed_bytes = 0;
 
@@ -1214,16 +1216,12 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
     }
 
     WorkerProfileCounters worker_profile;
-    const bool allow_device_data_buffer = on_gpu
-                                       && !neural_network->has(LayerType::Recurrent)
-                                       && !neural_network->has(LayerType::LongShortTermMemory);
     auto session = start_batch_workers(empty_queue,
                                        batches,
                                        input_feature_indices,
                                        decoder_feature_indices,
                                        target_feature_indices,
                                        /*is_training=*/true,
-                                       allow_device_data_buffer,
                                        profile_this ? &worker_profile : nullptr);
 
     Batch* next_batch = nullptr;
@@ -1394,16 +1392,12 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
         return stats;
     }
 
-    const bool allow_device_data_buffer = on_gpu
-                                       && !neural_network->has(LayerType::Recurrent)
-                                       && !neural_network->has(LayerType::LongShortTermMemory);
     auto session = start_batch_workers(empty_queue,
                                        batches,
                                        input_feature_indices,
                                        decoder_feature_indices,
                                        target_feature_indices,
-                                       /*is_training=*/false,
-                                       allow_device_data_buffer);
+                                       /*is_training=*/false);
 
     Batch* next_batch = session->wait(0);
     prefetch_batch(*next_batch);

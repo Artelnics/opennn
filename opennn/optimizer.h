@@ -143,7 +143,6 @@ protected:
         const vector<Index>& decoder_feature_indices,
         const vector<Index>& target_feature_indices,
         bool is_training,
-        bool allow_device_data_buffer,
         WorkerProfileCounters* profile_counters = nullptr);
 
     int get_effective_num_workers(const NeuralNetwork&) const;

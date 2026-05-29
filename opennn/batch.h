@@ -34,8 +34,7 @@ struct Batch
               const vector<Index>&,
               const vector<Index>&,
               const vector<Index>&,
-              bool is_training = true,
-              bool allow_device_data_buffer = false);
+              bool is_training = true);
 
     const vector<TensorView>& get_inputs() const
     {
@@ -67,6 +66,7 @@ struct Batch
     Index samples_number = 0;
     Index current_sample_count = 0;     // May be < samples_number for the last batch.
     bool needs_device_copy = true;
+    bool use_device_data_buffer = false;
 
     const Dataset* dataset = nullptr;
     Configuration::Resolved config;

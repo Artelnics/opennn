@@ -199,22 +199,19 @@ void TabularDataset::load_data_binary()
 void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices,
                                  float* input_data, bool, int contiguous) const
 {
-    if (!try_fill_binary_tensor(sample_indices, input_indices, input_data, contiguous))
-        fill_tensor_data(data, sample_indices, input_indices, input_data, contiguous);
+    fill_tensor_data(data, sample_indices, input_indices, input_data, contiguous);
 }
 
 void TabularDataset::fill_decoder(const vector<Index>& sample_indices, const vector<Index>& decoder_indices,
                                   float* decoder_data, bool, int contiguous) const
 {
-    if (!try_fill_binary_tensor(sample_indices, decoder_indices, decoder_data, contiguous))
-        fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, contiguous);
+    fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, contiguous);
 }
 
 void TabularDataset::fill_targets(const vector<Index>& sample_indices, const vector<Index>& target_indices,
                                   float* target_data, bool, int contiguous) const
 {
-    if (!try_fill_binary_tensor(sample_indices, target_indices, target_data, contiguous))
-        fill_tensor_data(data, sample_indices, target_indices, target_data, contiguous);
+    fill_tensor_data(data, sample_indices, target_indices, target_data, contiguous);
 }
 
 void TabularDataset::infer_variable_types_from_data()

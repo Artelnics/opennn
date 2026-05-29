@@ -246,13 +246,15 @@ public:
                               bool is_training,
                               int contiguous = -1) const;
 
+    virtual bool supports_dense_feature_gather() const { return false; }
+    virtual bool supports_bf16_inputs() const { return true; }
+
     void fill_batch(Batch&,
                     const vector<Index>& sample_indices,
                     const vector<Index>& input_indices,
                     const vector<Index>& decoder_indices,
                     const vector<Index>& target_indices,
-                    bool is_training,
-                    bool allow_device_data_buffer) const;
+                    bool is_training) const;
 
 protected:
 
@@ -265,7 +267,6 @@ protected:
     void check_separators(string_view) const;
     void samples_from_JSON(const Json*);
     virtual void resize_data_from_JSON(Index) {}
-    virtual bool supports_device_data_buffer() const { return false; }
 
     bool try_fill_binary_tensor(const vector<Index>&,
                                 const vector<Index>&,

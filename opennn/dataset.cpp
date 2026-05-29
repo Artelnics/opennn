@@ -973,13 +973,11 @@ void Dataset::fill_batch(Batch& batch,
                          const vector<Index>& input_indices,
                          const vector<Index>& decoder_indices,
                          const vector<Index>& target_indices,
-                         bool is_training,
-                         bool allow_device_data_buffer) const
+                         bool is_training) const
 {
 #ifdef OPENNN_HAS_CUDA
-    if (allow_device_data_buffer
+    if (batch.use_device_data_buffer
         && batch.uses_cuda()
-        && supports_device_data_buffer()
         && try_fill_from_device_data_buffer(batch,
                                             sample_indices,
                                             input_indices,
@@ -1006,24 +1004,34 @@ void Dataset::fill_batch(Batch& batch,
     if (batch.target_contiguous < 0 && !target_indices.empty())
         batch.target_contiguous = is_contiguous(target_indices) ? 1 : 0;
 
-    fill_inputs(sample_indices,
-                input_indices,
-                input_buffer,
-                is_training,
-                batch.input_contiguous);
+    using FillTensor = void (Dataset::*)(const vector<Index>&,
+                                         const vector<Index>&,
+                                         float*,
+                                         bool,
+                                         int) const;
+
+    auto fill_from_storage = [&](const vector<Index>& feature_indices,
+                                 float* output,
+                                 int contiguous,
+                                 FillTensor fill_tensor)
+    {
+        if (!try_fill_binary_tensor(sample_indices,
+                                    feature_indices,
+                                    output,
+                                    contiguous))
+            (this->*fill_tensor)(sample_indices,
+                                 feature_indices,
+                                 output,
+                                 is_training,
+                                 contiguous);
+    };
+
+    fill_from_storage(input_indices, input_buffer, batch.input_contiguous, &Dataset::fill_inputs);
 
     if (!batch.decoder_shape.empty())
-        fill_decoder(sample_indices,
-                     decoder_indices,
-                     decoder_buffer,
-                     is_training,
-                     batch.decoder_contiguous);
+        fill_from_storage(decoder_indices, decoder_buffer, batch.decoder_contiguous, &Dataset::fill_decoder);
 
-    fill_targets(sample_indices,
-                 target_indices,
-                 target_buffer,
-                 is_training,
-                 batch.target_contiguous);
+    fill_from_storage(target_indices, target_buffer, batch.target_contiguous, &Dataset::fill_targets);
 
     batch.needs_device_copy = true;
 }
@@ -1143,8 +1151,9 @@ bool Dataset::prepare_device_data_buffer() const
     iota(feature_indices.begin(), feature_indices.end(), Index(0));
 
     vector<float> host_data(size_t(rows) * size_t(features));
-    fill_inputs(sample_indices, feature_indices, host_data.data(),
-                /*is_training=*/false);
+    if (!try_fill_binary_tensor(sample_indices, feature_indices, host_data.data()))
+        fill_inputs(sample_indices, feature_indices, host_data.data(),
+                    /*is_training=*/false);
 
     data_buffer.resize_bytes(Index(host_data.size()) * Index(sizeof(float)), Device::CUDA);
 
@@ -1164,12 +1173,6 @@ bool Dataset::try_fill_from_device_data_buffer(Batch& batch,
                                                const vector<Index>& target_indices) const
 {
     if (!decoder_indices.empty()) return false;
-
-    if (const char* disable_buffer = getenv("OPENNN_DISABLE_DATA_BUFFER");
-        disable_buffer && disable_buffer[0] == '1')
-    {
-        return false;
-    }
 
     if (!prepare_device_data_buffer())
         return false;
