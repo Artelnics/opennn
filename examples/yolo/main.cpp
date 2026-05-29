@@ -273,7 +273,14 @@ int main()
         const auto class_activation = YoloNetwork::ClassActivation::Softmax;
         // const auto class_activation = YoloNetwork::ClassActivation::Sigmoid;
 
-        const bool use_voc = true;
+        // FPN (YOLO v3): 3 detection heads at strides 32/16/8 with top-down
+        // upsample+concat. Requires Backbone::DarknetTiny and 9 anchors
+        // (3 per scale, smallest→stride-8, largest→stride-32). Cross-scale
+        // NMS for inference is not yet wired — training only.
+        const auto head_style = YoloNetwork::HeadStyle::FPN;
+        // const auto head_style = YoloNetwork::HeadStyle::Single;
+
+        const bool use_voc = false;
         const std::filesystem::path voc_root = "/home/alvaromartin/VOCdevkit/VOC2007";
         const std::string voc_image_set = "trainval_small";
 
@@ -318,8 +325,45 @@ int main()
             anchors = {{0.25f, 0.25f}, {0.5f, 0.5f}};
         }
 
+        // FPN needs 9 anchors, 3 per scale. Override the dataset-builder anchors
+        // for the smoke path. boxes_per_head ends up = 3 across all heads.
+        if (head_style == YoloNetwork::HeadStyle::FPN)
+        {
+            anchors = {
+                {0.05f, 0.05f}, {0.08f, 0.08f}, {0.12f, 0.12f},  // small head
+                {0.18f, 0.18f}, {0.25f, 0.25f}, {0.32f, 0.32f},  // medium head
+                {0.40f, 0.40f}, {0.55f, 0.55f}, {0.75f, 0.75f}}; // large head
+            boxes_per_cell = 3;
+        }
+
+        // Dataset constructor validates anchors.size() == boxes_per_cell. In
+        // FPN mode the single-scale path is unused after set_multi_scale_heads,
+        // so any 3 anchors satisfy the constructor.
+        const std::vector<std::array<float, 2>> ctor_anchors =
+            head_style == YoloNetwork::HeadStyle::FPN
+                ? std::vector<std::array<float, 2>>{anchors[0], anchors[1], anchors[2]}
+                : anchors;
+
         YoloDataset dataset(images_dir, labels_dir, input_shape,
-                            grid_size, boxes_per_cell, anchors);
+                            grid_size, boxes_per_cell, ctor_anchors);
+
+        // FPN dataset configuration: 3 grid scales (stride 32 / 16 / 8) and
+        // 3 anchor groups (small→medium→large by area) — must match the
+        // YoloNetwork FPN constructor's auto-sorted assignment.
+        if (head_style == YoloNetwork::HeadStyle::FPN)
+        {
+            const std::vector<Index> head_grids = {
+                grid_size,         // stride 32 head: matches "grid_size" param
+                grid_size * 2,     // stride 16
+                grid_size * 4      // stride 8
+            };
+            const std::vector<std::vector<std::array<float, 2>>> head_anchors = {
+                {anchors[6], anchors[7], anchors[8]},  // large head (largest 3)
+                {anchors[3], anchors[4], anchors[5]},  // medium head
+                {anchors[0], anchors[1], anchors[2]},  // small head
+            };
+            dataset.set_multi_scale_heads(head_grids, head_anchors);
+        }
 
         // Class signal in this demo is color (red vs blue) — disable hue/sat jitter
         // so we don't erase it. Geometric augmentation (flip + crop) is what we need:
@@ -341,28 +385,42 @@ int main()
 
         // Network.
 
+        // Network anchors: FPN needs all 9 (the dataset only stores its 3
+        // single-scale ctor anchors after multi-scale config). Single-head
+        // continues to use the dataset's anchor list.
+        const std::vector<std::array<float, 2>>& network_anchors =
+            head_style == YoloNetwork::HeadStyle::FPN ? anchors : dataset.get_anchors();
+
         YoloNetwork yolo_network(input_shape,
                                  dataset.get_classes_number(),
-                                 dataset.get_anchors(),
+                                 network_anchors,
                                  grid_size,
                                  backbone,
-                                 class_activation);
+                                 class_activation,
+                                 head_style);
 
         std::cout << "Network: backbone="
                   << (backbone == YoloNetwork::Backbone::Vgg ? "Vgg" : "DarknetTiny")
                   << ", class_activation="
                   << (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "Sigmoid" : "Softmax")
+                  << ", head_style="
+                  << (head_style == YoloNetwork::HeadStyle::FPN ? "FPN" : "Single")
                   << ", layers=" << yolo_network.get_layers_number()
                   << ", parameters=" << yolo_network.get_parameters_number() << "\n";
 
         // Loosen the NMS confidence threshold so the demo prints something visible
-        // even on an under-trained tiny model.
-        auto* nms_layer = dynamic_cast<NonMaxSuppression*>(
-            yolo_network.get_layer("non_max_suppression_layer").get());
-        if (nms_layer)
-            nms_layer->set(yolo_network.get_layer(yolo_network.get_layers_number() - 2)->get_output_shape(),
-                           boxes_per_cell, /*confidence=*/0.0f, /*iou=*/0.4f,
-                           "non_max_suppression_layer");
+        // even on an under-trained tiny model. FPN mode has no NMS layer
+        // (cross-scale NMS happens externally in the inference helper, not
+        // wired here yet) — skip the NMS configuration in that case.
+        if (head_style != YoloNetwork::HeadStyle::FPN)
+        {
+            auto* nms_layer = dynamic_cast<NonMaxSuppression*>(
+                yolo_network.get_layer("non_max_suppression_layer").get());
+            if (nms_layer)
+                nms_layer->set(yolo_network.get_layer(yolo_network.get_layers_number() - 2)->get_output_shape(),
+                               boxes_per_cell, /*confidence=*/0.0f, /*iou=*/0.4f,
+                               "non_max_suppression_layer");
+        }
 
         // Training.
 
@@ -377,7 +435,7 @@ int main()
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
             training_strategy.get_optimization_algorithm());
         adam->set_batch_size(8);
-        adam->set_maximum_epochs(5);
+        adam->set_maximum_epochs(head_style == YoloNetwork::HeadStyle::FPN ? 1 : 5);
         adam->set_display_period(1);
         // Tighter global gradient clip than the 1.0 default — Adam is
         // scale-invariant so this matters less for the step magnitude, but it
@@ -391,6 +449,7 @@ int main()
         // switching architectures doesn't try to load incompatible weights.
         const std::string weights_filename = std::string("yolo_weights_") +
             (backbone == YoloNetwork::Backbone::Vgg ? "vgg" : "darknet") +
+            (head_style == YoloNetwork::HeadStyle::FPN ? "_fpn" : "") +
             std::string(".bin");
         std::filesystem::path weights_path = data_dir / weights_filename;
         // Backward-compat: load the Phase 2 committed weights file if present.
@@ -407,10 +466,22 @@ int main()
         }
         else
         {
+            std::cout << "\nStarting training...\n";
             training_strategy.train();
+            std::cout << "Training returned (no crash).\n";
             yolo_network.save_parameters_binary(weights_path);
-            std::cout << "\nSaved trained weights to " << weights_path
+            std::cout << "Saved trained weights to " << weights_path
                       << " (" << yolo_network.get_parameters_number() << " parameters)\n";
+        }
+
+        // FPN mode: cross-scale NMS for inference isn't wired yet, so the
+        // visualization pipeline below (which decodes from the NMS layer
+        // output) doesn't apply. Skip and exit after training.
+        if (head_style == YoloNetwork::HeadStyle::FPN)
+        {
+            std::cout << "\n[FPN] Training run complete. Visualization skipped "
+                      << "(cross-scale NMS not implemented yet).\n";
+            return 0;
         }
 
         // Inference on 5 SELECTION (held-out) samples — the model has never

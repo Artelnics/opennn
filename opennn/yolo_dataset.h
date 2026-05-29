@@ -70,6 +70,20 @@ public:
     const filesystem::path& get_image_path(Index i) const { return image_filenames[size_t(i)]; }
     const vector<filesystem::path>& get_image_paths() const { return image_filenames; }
 
+    // Multi-scale (FPN) target encoding. Empty head_grid_sizes = single-scale
+    // (the Phase-1/2 default). Configure via set_multi_scale_heads() AFTER the
+    // constructor. The targets become a flat buffer per sample concatenating the
+    // per-head chunks in network order — large-stride head first, small-stride
+    // head last. Each head uses boxes_per_head anchors from head_anchors[h];
+    // each ground-truth box is assigned to the single best-IoU (head, anchor)
+    // pair across all 3 heads.
+    bool is_multi_scale() const { return !head_grid_sizes.empty(); }
+    const vector<Index>& get_head_grid_sizes() const { return head_grid_sizes; }
+    const vector<vector<array<float, 2>>>& get_head_anchors() const { return head_anchors; }
+    Index get_boxes_per_head() const { return boxes_per_head; }
+    void set_multi_scale_heads(const vector<Index>& grid_sizes,
+                               const vector<vector<array<float, 2>>>& per_head_anchors);
+
     void set(const filesystem::path& images_dir,
              const filesystem::path& labels_dir,
              const Shape& input_shape = {416, 416, 3},
@@ -163,6 +177,11 @@ private:
     vector<filesystem::path> image_filenames;
     vector<array<float, 2>> anchors;
     vector<string> class_names;
+
+    // Multi-scale state — empty by default. See set_multi_scale_heads().
+    vector<Index> head_grid_sizes;
+    vector<vector<array<float, 2>>> head_anchors;
+    Index boxes_per_head = 0;
 
     void open_or_build_cache(const vector<array<float, 2>>& requested_anchors);
     bool try_open_cache(const vector<array<float, 2>>& requested_anchors);

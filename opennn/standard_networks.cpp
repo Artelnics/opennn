@@ -21,6 +21,8 @@
 #include "non_max_suppression_layer.h"
 #include "flatten_layer.h"
 #include "addition_layer.h"
+#include "upsample_layer.h"
+#include "concatenate_layer.h"
 #include "normalization_layer_3d.h"
 #include "multihead_attention_layer.h"
 
@@ -424,7 +426,8 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                          const vector<array<float, 2>>& anchors,
                          Index grid_size,
                          Backbone backbone,
-                         ClassActivation class_activation) : NeuralNetwork()
+                         ClassActivation class_activation,
+                         HeadStyle head_style) : NeuralNetwork()
 {
     if (input_shape.rank != 3)
         throw runtime_error("YoloNetwork: input shape must be rank 3 (H, W, C).");
@@ -432,6 +435,13 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         throw runtime_error("YoloNetwork: classes_number and anchors must be valid.");
     if (input_shape[0] != grid_size * 32 || input_shape[1] != grid_size * 32)
         throw runtime_error("YoloNetwork: this minimal builder expects input H/W == grid_size * 32.");
+    if (head_style == HeadStyle::FPN)
+    {
+        if (backbone != Backbone::DarknetTiny)
+            throw runtime_error("YoloNetwork: HeadStyle::FPN requires Backbone::DarknetTiny.");
+        if (ssize(anchors) != 9)
+            throw runtime_error("YoloNetwork: HeadStyle::FPN expects exactly 9 anchors (3 per scale).");
+    }
 
     const Shape stride{1, 1};
     const Shape stride_2{2, 2};
@@ -523,6 +533,14 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                                              "darknet_stem"));
         Index last_index = get_layers_number() - 1;
 
+        // Capture the post-stage feature maps the FPN heads tap into.
+        // For 416x416 input: stem halves to 208, then 4 stages halve again
+        // each → C2=104 (stride 4), C3=52 (stride 8), C4=26 (stride 16),
+        // C5=13 (stride 32). FPN uses C3/C4/C5.
+        Index c3_index = -1;
+        Index c4_index = -1;
+        Index c5_index = -1;
+
         for (size_t s = 0; s < stages.size(); ++s)
         {
             const Index ch = stages[s].first;
@@ -536,6 +554,105 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             for (Index b = 0; b < n; ++b)
                 last_index = add_residual_block(last_index, ch,
                     format("darknet_s{}_b{}", s + 1, b));
+
+            if (s == 1) c3_index = last_index;
+            if (s == 2) c4_index = last_index;
+            if (s == 3) c5_index = last_index;
+        }
+
+        if (head_style == HeadStyle::FPN)
+        {
+            // Sort anchors ascending by area so smallest 3 land on the stride-8
+            // (small-object) head and largest 3 on the stride-32 head.
+            vector<array<float, 2>> anchors_sorted = anchors;
+            ranges::sort(anchors_sorted, {},
+                         [](const array<float, 2>& a) { return a[0] * a[1]; });
+
+            const vector<array<float, 2>> anchors_small (anchors_sorted.begin(),     anchors_sorted.begin() + 3);
+            const vector<array<float, 2>> anchors_medium(anchors_sorted.begin() + 3, anchors_sorted.begin() + 6);
+            const vector<array<float, 2>> anchors_large (anchors_sorted.begin() + 6, anchors_sorted.end());
+
+            const Index detection_channels_per_head = 3 * (5 + classes_number);
+
+            // Adds: 1x1 conv (yolo_logits_<name>) → Detection layer.
+            // The Detection layer becomes the head's terminal node; its index
+            // is the value returned. The Loss walks the network to find these
+            // and writes per-head targets/deltas into each.
+            auto add_detection_head = [&](Index feature_index,
+                                          const vector<array<float, 2>>& head_anchors,
+                                          const string& name) -> Index {
+                const Index logits_index = add_conv(feature_index,
+                    Shape{1, 1, get_layer(feature_index)->get_output_shape()[2],
+                          detection_channels_per_head},
+                    "Identity", stride, false, "yolo_logits_" + name);
+
+                add_layer(make_unique<Detection>(
+                              get_layer(logits_index)->get_output_shape(),
+                              head_anchors, "detection_" + name),
+                          {logits_index});
+                static_cast<Detection&>(*get_layers().back()).set_class_activation(
+                    class_activation == ClassActivation::Sigmoid
+                    ? Detection::ClassActivation::Sigmoid
+                    : Detection::ClassActivation::Softmax);
+                return get_layers_number() - 1;
+            };
+
+            // Top-down lateral connections. Each scale gets a 1x1 conv before
+            // and after concat to mix channel info before detection.
+            // P5 = stride 32 — uses C5 directly.
+            const Index p5_lateral = add_conv(c5_index,
+                Shape{1, 1, get_layer(c5_index)->get_output_shape()[2], 256},
+                "ReLU", stride, true, "fpn_p5_lateral");
+            add_detection_head(p5_lateral, anchors_large, "large");
+
+            // P4 = stride 16: Upsample(p5_lateral) ⊕ C4 → conv block → head.
+            add_layer(make_unique<Upsample>(
+                          get_layer(p5_lateral)->get_output_shape(),
+                          /*scale_factor=*/2, "fpn_p5_upsample"),
+                      {p5_lateral});
+            const Index p5_up = get_layers_number() - 1;
+
+            const Index c4_channels = get_layer(c4_index)->get_output_shape()[2];
+            const Index p5_up_channels = get_layer(p5_up)->get_output_shape()[2];
+            add_layer(make_unique<Concatenate>(
+                          // H, W of either input — they match by construction.
+                          get_layer(c4_index)->get_output_shape(),
+                          vector<Index>{p5_up_channels, c4_channels},
+                          "fpn_p4_concat"),
+                      {p5_up, c4_index});
+            const Index p4_concat = get_layers_number() - 1;
+
+            const Index p4_lateral = add_conv(p4_concat,
+                Shape{1, 1, get_layer(p4_concat)->get_output_shape()[2], 256},
+                "ReLU", stride, true, "fpn_p4_lateral");
+            add_detection_head(p4_lateral, anchors_medium, "medium");
+
+            // P3 = stride 8: Upsample(p4_lateral) ⊕ C3 → conv block → head.
+            add_layer(make_unique<Upsample>(
+                          get_layer(p4_lateral)->get_output_shape(),
+                          /*scale_factor=*/2, "fpn_p4_upsample"),
+                      {p4_lateral});
+            const Index p4_up = get_layers_number() - 1;
+
+            const Index c3_channels = get_layer(c3_index)->get_output_shape()[2];
+            const Index p4_up_channels = get_layer(p4_up)->get_output_shape()[2];
+            add_layer(make_unique<Concatenate>(
+                          get_layer(c3_index)->get_output_shape(),
+                          vector<Index>{p4_up_channels, c3_channels},
+                          "fpn_p3_concat"),
+                      {p4_up, c3_index});
+            const Index p3_concat = get_layers_number() - 1;
+
+            const Index p3_lateral = add_conv(p3_concat,
+                Shape{1, 1, get_layer(p3_concat)->get_output_shape()[2], 128},
+                "ReLU", stride, true, "fpn_p3_lateral");
+            add_detection_head(p3_lateral, anchors_small, "small");
+
+            // No NMS layer in FPN mode — boxes from all 3 heads must be merged
+            // before suppression. Inference helper does this externally.
+            compile();
+            set_parameters_random();
+            return;
         }
     }
 

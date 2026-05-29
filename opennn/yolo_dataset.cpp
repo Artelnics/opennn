@@ -677,6 +677,73 @@ void make_target(const vector<YoloDataset::Box>& boxes,
     }
 }
 
+// Multi-scale (FPN): writes one flat target per sample concatenating the
+// per-head chunks in head order. Each ground-truth box is assigned to the
+// single best-IoU (head, anchor) pair across all heads — only that one head's
+// chunk receives a positive sample for that box; the other two heads have
+// objectness 0 at the matching cell. This matches YOLO v3's "best anchor wins"
+// assignment rule.
+void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
+                             const vector<vector<array<float, 2>>>& head_anchors,
+                             const vector<Index>& head_grid_sizes,
+                             Index boxes_per_head,
+                             Index classes_number,
+                             float* target)
+{
+    const Index values_per_box = 5 + classes_number;
+    const Index head_channels = boxes_per_head * values_per_box;
+
+    // Zero the whole multi-head buffer first.
+    Index total_floats = 0;
+    vector<Index> head_offsets(head_grid_sizes.size() + 1, 0);
+    for (size_t h = 0; h < head_grid_sizes.size(); ++h)
+    {
+        const Index head_floats = head_grid_sizes[h] * head_grid_sizes[h] * head_channels;
+        head_offsets[h + 1] = head_offsets[h] + head_floats;
+        total_floats += head_floats;
+    }
+    fill_n(target, total_floats, 0.0f);
+
+    for (const auto& box : boxes)
+    {
+        if (box.class_id < 0 || box.class_id >= classes_number)
+            continue;
+
+        // Best (head, anchor) by w/h IoU across all heads' anchors.
+        float best_iou = -1.0f;
+        size_t best_head = 0;
+        Index best_anchor_in_head = 0;
+        for (size_t h = 0; h < head_anchors.size(); ++h)
+        {
+            const vector<array<float, 2>>& anchors_h = head_anchors[h];
+            for (Index a = 0; a < ssize(anchors_h); ++a)
+            {
+                const float iou = yolo_iou_wh({box.w, box.h}, anchors_h[size_t(a)]);
+                if (iou > best_iou)
+                {
+                    best_iou = iou;
+                    best_head = h;
+                    best_anchor_in_head = a;
+                }
+            }
+        }
+
+        const Index grid_h = head_grid_sizes[best_head];
+        const Index col = min<Index>(grid_h - 1, max<Index>(0, Index(floor(box.x * grid_h))));
+        const Index row = min<Index>(grid_h - 1, max<Index>(0, Index(floor(box.y * grid_h))));
+        const Index base = head_offsets[best_head]
+                         + (row * grid_h + col) * head_channels
+                         + best_anchor_in_head * values_per_box;
+
+        target[base + 0] = box.x * grid_h - float(col);
+        target[base + 1] = box.y * grid_h - float(row);
+        target[base + 2] = box.w;
+        target[base + 3] = box.h;
+        target[base + 4] = 1.0f;
+        target[base + 5 + box.class_id] = 1.0f;
+    }
+}
+
 // VOC XML annotation parsing. Tag-based, not a full XML parser: relies on the
 // well-known structure of PASCAL VOC annotations and is robust to whitespace
 // and ordering of child tags. Throws on malformed input.
@@ -1266,6 +1333,36 @@ void YoloDataset::set_runtime_input_shape(const Shape& new_shape)
     target_shape = {grid_size, grid_size, boxes_per_cell * (5 + classes_number)};
 }
 
+void YoloDataset::set_multi_scale_heads(const vector<Index>& grid_sizes,
+                                        const vector<vector<array<float, 2>>>& per_head_anchors)
+{
+    if (grid_sizes.empty() || grid_sizes.size() != per_head_anchors.size())
+        throw runtime_error("YoloDataset::set_multi_scale_heads: head counts must match and be non-zero.");
+
+    const Index per_head = ssize(per_head_anchors[0]);
+    if (per_head <= 0)
+        throw runtime_error("YoloDataset::set_multi_scale_heads: each head needs at least one anchor.");
+    for (const auto& a : per_head_anchors)
+        if (ssize(a) != per_head)
+            throw runtime_error("YoloDataset::set_multi_scale_heads: all heads must have the same boxes_per_head.");
+    for (Index g : grid_sizes)
+        if (g <= 0)
+            throw runtime_error("YoloDataset::set_multi_scale_heads: grid sizes must be positive.");
+
+    head_grid_sizes = grid_sizes;
+    head_anchors = per_head_anchors;
+    boxes_per_head = per_head;
+
+    // Flat target buffer = sum of per-head buffer sizes. The Loss decodes by
+    // querying the network's Detection layers for their grid sizes.
+    const Index values_per_box = 5 + classes_number;
+    Index total_floats = 0;
+    for (Index g : grid_sizes)
+        total_floats += g * g * boxes_per_head * values_per_box;
+    target_record_floats = total_floats;
+    target_shape = {target_record_floats};
+}
+
 void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
 {
     const uint64_t begin = boxes_offsets[size_t(sample_index)];
@@ -1388,7 +1485,9 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     AugmentationConfig cfg = augmentation;
 
     const bool grid_changed = (grid_size != cache_grid_size);
-    const bool reencode = augment || grid_changed;
+    // Multi-scale: the target_cache only stores single-scale targets — always
+    // re-encode from the boxes_cache, which is layout-independent.
+    const bool reencode = augment || grid_changed || is_multi_scale();
 
     string omp_error;
 
@@ -1412,8 +1511,13 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                     apply_geometric_to_boxes(boxes, p);
                 }
 
-                make_target(boxes, anchors, grid_size, boxes_per_cell, classes_number,
-                            target_data + i * target_record_floats);
+                if (is_multi_scale())
+                    make_target_multi_scale(boxes, head_anchors, head_grid_sizes,
+                                            boxes_per_head, classes_number,
+                                            target_data + i * target_record_floats);
+                else
+                    make_target(boxes, anchors, grid_size, boxes_per_cell, classes_number,
+                                target_data + i * target_record_floats);
             }
             else
             {
