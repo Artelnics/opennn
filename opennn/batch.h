@@ -30,12 +30,13 @@ struct Batch
              const Dataset*,
              const Configuration::Resolved&);
 
-    void fill(const vector<Index>&,
-              const vector<Index>&,
-              const vector<Index>&,
-              const vector<Index>&,
-              bool is_training = true,
-              bool parallelize_samples = true);
+    BatchPlacement fill(const vector<Index>&,
+                        const vector<Index>&,
+                        const vector<Index>&,
+                        const vector<Index>&,
+                        bool is_training = true,
+                        bool parallelize_samples = true,
+                        bool allow_device_resident = false);
 
     const vector<TensorView>& get_inputs() const
     {
@@ -66,6 +67,7 @@ struct Batch
 
     Index samples_number = 0;
     Index current_sample_count = 0;     // May be < samples_number for the last batch.
+    BatchPlacement placement = BatchPlacement::Host;
 
     const Dataset* dataset = nullptr;
     Configuration::Resolved config;
@@ -86,12 +88,13 @@ struct Batch
 #ifdef OPENNN_HAS_CUDA
     void copy_device_async(cudaStream_t);
 
-    void gather_device_async(const Index current_batch_size,
-                             const Index* device_row_indices,
+    void gather_device_async(const vector<Index>& resident_rows,
                              const float* resident_input, Index resident_input_features,
                              const float* resident_target, Index resident_target_features);
 
     Buffer fp32_staging{Device::CUDA};
+    Buffer resident_row_indices{Device::CUDA};
+    vector<Index> resident_row_indices_host;
 
     cudaEvent_t h2d_done_event = nullptr;
     bool        h2d_done_recorded = false;

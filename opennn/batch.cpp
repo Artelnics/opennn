@@ -122,39 +122,27 @@ void Batch::set(const Index new_samples_number,
 #endif
 }
 
-void Batch::fill(const vector<Index>& sample_indices,
-                 const vector<Index>& input_indices,
-                 const vector<Index>& decoder_indices,
-                 const vector<Index>& target_indices,
-                 bool is_training,
-                 bool parallelize_samples)
+BatchPlacement Batch::fill(const vector<Index>& sample_indices,
+                           const vector<Index>& input_indices,
+                           const vector<Index>& decoder_indices,
+                           const vector<Index>& target_indices,
+                           bool is_training,
+                           bool parallelize_samples,
+                           bool allow_device_resident)
 {
-    current_sample_count = ssize(sample_indices);
+    const BatchRequest request{
+        sample_indices,
+        input_indices,
+        decoder_indices,
+        target_indices,
+        is_training ? SampleRole::Training : SampleRole::Validation,
+        is_training,
+        parallelize_samples,
+        allow_device_resident
+    };
 
-    const bool on_gpu = uses_cuda();
-
-    float* const input_buffer   = on_gpu ? inputs_host  : input.as<float>();
-    float* const decoder_buffer = on_gpu ? decoder_host : decoder.as<float>();
-    float* const target_buffer  = on_gpu ? targets_host : target.as<float>();
-
-    if (input_contiguous < 0 && !input_indices.empty())
-        input_contiguous = is_contiguous(input_indices) ? 1 : 0;
-    if (decoder_contiguous < 0 && !decoder_indices.empty())
-        decoder_contiguous = is_contiguous(decoder_indices) ? 1 : 0;
-    if (target_contiguous < 0 && !target_indices.empty())
-        target_contiguous = is_contiguous(target_indices) ? 1 : 0;
-
-    const bool parallelize = parallelize_samples && !on_gpu;
-
-    dataset->fill_inputs(sample_indices, input_indices, input_buffer,
-                         is_training, parallelize, input_contiguous);
-
-    if (!decoder_shape.empty())
-        dataset->fill_decoder(sample_indices, decoder_indices, decoder_buffer,
-                              is_training, parallelize, decoder_contiguous);
-
-    dataset->fill_targets(sample_indices, target_indices, target_buffer,
-                          is_training, parallelize, target_contiguous);
+    placement = dataset->fill_batch(request, *this);
+    return placement;
 }
 
 Index Batch::get_samples_number() const
@@ -250,12 +238,24 @@ void Batch::copy_device_async(cudaStream_t stream)
     h2d_done_recorded = true;
 }
 
-void Batch::gather_device_async(const Index current_batch_size,
-                                const Index* device_row_indices,
+void Batch::gather_device_async(const vector<Index>& resident_rows,
                                 const float* resident_input, Index resident_input_features,
                                 const float* resident_target, Index resident_target_features)
 {
+    const Index current_batch_size = ssize(resident_rows);
     current_sample_count = current_batch_size;
+
+    resident_row_indices_host = resident_rows;
+    resident_row_indices.resize_bytes(current_batch_size * Index(sizeof(Index)), Device::CUDA);
+
+    cudaStream_t stream = Backend::get_compute_stream();
+    CHECK_CUDA(cudaMemcpyAsync(resident_row_indices.data,
+                               resident_row_indices_host.data(),
+                               resident_row_indices_host.size() * sizeof(Index),
+                               cudaMemcpyHostToDevice,
+                               stream));
+
+    const Index* device_row_indices = resident_row_indices.as<Index>();
 
     if (!fp32_staging.empty())
         gather_rows_cuda<float, bfloat16>(current_batch_size, resident_input_features,
@@ -264,8 +264,14 @@ void Batch::gather_device_async(const Index current_batch_size,
         gather_rows_cuda<float, float>(current_batch_size, resident_input_features,
                                        device_row_indices, resident_input, input.as<float>());
 
-    gather_rows_cuda<float, float>(current_batch_size, resident_target_features,
-                                   device_row_indices, resident_target, target.as<float>());
+    if (resident_target_features > 0)
+        gather_rows_cuda<float, float>(current_batch_size, resident_target_features,
+                                       device_row_indices, resident_target, target.as<float>());
+
+    if (!h2d_done_event)
+        CHECK_CUDA(cudaEventCreateWithFlags(&h2d_done_event, cudaEventDisableTiming));
+    CHECK_CUDA(cudaEventRecord(h2d_done_event, stream));
+    h2d_done_recorded = true;
 }
 
 #endif

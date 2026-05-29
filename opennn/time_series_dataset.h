@@ -37,8 +37,6 @@ public:
 
     Tensor3 get_data(const string& sample_role, const string& feature_role) const;
 
-    bool supports_device_residency() const override { return false; }
-
     void set_past_time_steps(const Index);
     void set_future_time_steps(const Index);
     void set_time_variable_index(const Index);
@@ -73,6 +71,8 @@ public:
     void resize_input_shape(Index) override;
 
 private:
+
+    bool can_use_device_resident_batch(const BatchRequest&) const override { return false; }
 
     Index past_time_steps = 2;
 
