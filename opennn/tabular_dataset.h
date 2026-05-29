@@ -163,9 +163,17 @@ public:
                       bool parallelize = true,
                       int contiguous = -1) const override;
 
+    bool ensure_device_resident(const string& sample_role) override;
+    [[nodiscard]] const DeviceResidentData* get_device_resident(const string& sample_role) const override;
+
 protected:
 
     MatrixR data;
+
+    DeviceResidentData device_resident_training;
+    DeviceResidentData device_resident_validation;
+    bool supports_device_residency() const { return true; }
+    DeviceResidentData* select_device_resident(const string& sample_role);
 
     string missing_values_label = "NA";
     MissingValuesMethod missing_values_method = MissingValuesMethod::Mean;

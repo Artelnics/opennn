@@ -53,9 +53,6 @@ vector<TensorSpec> Pooling::get_forward_specs(Index batch_size) const
 {
     const Shape out_shape = get_output_shape();
 
-    // MaximalIndices stores argmax positions (used by CPU backward); read as
-    // float*, never as compute_dtype. Slot is reserved with an empty shape for
-    // AveragePooling so the Forward enum indices stay valid in both modes.
     const Shape indices_shape = (pooling_method == PoolingMethod::MaxPooling)
         ? Shape{batch_size}.append(out_shape)
         : Shape{};
@@ -99,8 +96,6 @@ void Pooling::set(const Shape& new_input_shape,
     if (new_padding_dimensions[0] < 0 || new_padding_dimensions[1] < 0)
         throw runtime_error("Padding shape cannot be negative");
 
-    // Pool must fit into the padded input (input + 2*padding). Padding lets
-    // valid configurations like input=3, pool=5, padding=2 -> output=1 work.
     if (new_pool_dimensions[0] > new_input_shape[0] + 2 * new_padding_dimensions[0]
      || new_pool_dimensions[1] > new_input_shape[1] + 2 * new_padding_dimensions[1])
         throw runtime_error("Pool shape cannot be bigger than padded input shape");
@@ -109,8 +104,6 @@ void Pooling::set(const Shape& new_input_shape,
      || new_stride_shape[1] > new_input_shape[1] + 2 * new_padding_dimensions[1])
         throw runtime_error("Stride shape cannot be bigger than padded input shape");
 
-    // Direct assignment of all geometry; setters with side-effects are deferred
-    // so we hit update_pool_operator() exactly once at the end.
     input_height    = new_input_shape[0];
     input_width     = new_input_shape[1];
     input_channels  = new_input_shape[2];

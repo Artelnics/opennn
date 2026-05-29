@@ -15,6 +15,7 @@
 #include <fstream>
 #include <limits>
 #include <numeric>
+#include <random>
 #include <unordered_map>
 #include <vector>
 
@@ -155,6 +156,201 @@ int main()
 {
     try
     {
+#if 0
+        cout << "OpenNN. ResNet-50 ImageNet single-image test." << endl;
+
+#ifdef OPENNN_HAS_CUDA
+        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Backend::instance();
+#else
+        Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
+#endif
+
+        const filesystem::path imagenette_path = "/home/artelnics/Documents/imagenette2_bmp_224";
+        const filesystem::path resnet50_dir = "/home/artelnics/Documents/resnet-50";
+        const filesystem::path parameters_path = resnet50_dir / "resnet50_imagenet1k_v2_opennn_parameters.bin";
+        const filesystem::path states_path = resnet50_dir / "resnet50_imagenet1k_v2_opennn_states.bin";
+        const filesystem::path categories_path = resnet50_dir / "imagenet1k_categories.txt";
+
+        if (!filesystem::exists(imagenette_path))
+            throw runtime_error("Imagenette folder not found: " + imagenette_path.string());
+        if (!filesystem::exists(parameters_path))
+            throw runtime_error("ResNet-50 parameters not found: " + parameters_path.string());
+        if (!filesystem::exists(states_path))
+            throw runtime_error("ResNet-50 states not found: " + states_path.string());
+        if (!filesystem::exists(categories_path))
+            throw runtime_error("ImageNet categories file not found: " + categories_path.string());
+
+        vector<string> categories;
+        {
+            ifstream in(categories_path);
+            string line;
+            while (getline(in, line)) categories.push_back(line);
+        }
+        if (categories.size() != 1000)
+            throw runtime_error("Expected 1000 ImageNet categories, got " + to_string(categories.size()));
+
+        ResNet network({224, 224, 3}, {3, 4, 6, 3}, Shape{64, 128, 256, 512}, Shape{1000}, true);
+
+        auto* scaling = dynamic_cast<Scaling*>(network.get_first(LayerType::Scaling));
+        if (!scaling)
+            throw runtime_error("ResNet scaling layer not found.");
+
+        scaling->set_descriptives({
+            Descriptives(0.0f, 255.0f, 0.485f * 255.0f, 0.229f * 255.0f),
+            Descriptives(0.0f, 255.0f, 0.456f * 255.0f, 0.224f * 255.0f),
+            Descriptives(0.0f, 255.0f, 0.406f * 255.0f, 0.225f * 255.0f)
+        });
+        scaling->set_scalers("MeanStandardDeviation");
+
+        cout << "ResNet-50 params=" << network.get_parameters_number()
+             << " (buffer=" << network.get_parameters_size() << ")" << endl;
+        cout << "Loading parameters from " << parameters_path << endl;
+        network.load_parameters_binary(parameters_path);
+        cout << "Loading states from " << states_path << endl;
+        network.load_states_binary(states_path);
+
+        TestingAnalysis testing_analysis(&network, nullptr);
+
+        vector<filesystem::path> images;
+        for (const auto& entry : filesystem::directory_iterator(imagenette_path))
+        {
+            if (!entry.is_directory() || entry.path().filename().string().starts_with("."))
+                continue;
+
+            for (const auto& image_entry : filesystem::recursive_directory_iterator(entry.path()))
+                if (image_entry.is_regular_file() && is_supported_image_file(image_entry.path()))
+                    images.push_back(image_entry.path());
+        }
+
+        sort(images.begin(), images.end());
+        if (images.empty())
+            throw runtime_error("No images found in " + imagenette_path.string());
+
+        mt19937 rng(random_device{}());
+        uniform_int_distribution<size_t> pick(0, images.size() - 1);
+        const filesystem::path image_path = images[pick(rng)];
+
+        Tensor4 image(1, 224, 224, 3);
+        load_image(image_path, image.data(), 224, 224, 3, false);
+        MatrixR output = network.calculate_outputs(image);
+
+        vector<Index> top_indices(1000);
+        iota(top_indices.begin(), top_indices.end(), 0);
+        partial_sort(top_indices.begin(),
+                     top_indices.begin() + 5,
+                     top_indices.end(),
+                     [&](Index a, Index b) { return output(0, a) > output(0, b); });
+
+        cout << "\nImage: " << image_path << endl;
+        cout << "Folder label: " << image_path.parent_path().filename().string() << endl;
+        cout << "\nTop-5 predictions:" << endl;
+
+        cout << fixed << setprecision(6);
+        for (Index i = 0; i < 5; ++i)
+        {
+            const Index class_index = top_indices[size_t(i)];
+            cout << i + 1 << ". [" << class_index << "] "
+                 << categories[size_t(class_index)]
+                 << " = " << output(0, class_index) << endl;
+        }
+
+        cout << "Bye!" << endl;
+        return 0;
+#endif
+
+        cout << "OpenNN. HIGGS 5x300 DNN max-batch benchmark." << endl;
+
+#ifdef OPENNN_HAS_CUDA
+        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Backend::instance();
+#else
+        Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
+#endif
+
+        const filesystem::path dataset_path = "/home/artelnics/Documents/HIGGS.csv";
+
+        TabularDataset dataset(dataset_path, ",", false, false);
+
+        vector<Index> input_variables(28);
+        iota(input_variables.begin(), input_variables.end(), 1);
+        dataset.set_variable_indices(input_variables, {0});
+        dataset.set_variable_type(0, VariableType::Binary);
+        dataset.split_samples_sequential(10.0f / 11.0f, 0.5f / 11.0f, 0.5f / 11.0f);
+
+        const Index training_samples = dataset.get_sample_indices("Training").size();
+        const Index validation_samples = dataset.get_sample_indices("Validation").size();
+        const Index testing_samples = dataset.get_sample_indices("Testing").size();
+
+        cout << "[DATASET] train=" << training_samples
+             << " val="          << validation_samples
+             << " test="         << testing_samples
+             << " input="        << dataset.get_shape("Input")[0]
+             << " target="       << dataset.get_shape("Target")[0]
+             << endl;
+
+        NeuralNetwork network;
+        network.add_layer(make_unique<Scaling>(dataset.get_shape("Input")));
+
+        for (Index i = 0; i < 5; ++i)
+            network.add_layer(make_unique<opennn::Dense>(network.get_output_shape(),
+                                                         Shape{300},
+                                                         "Tanh",
+                                                         false,
+                                                         format("higgs_hidden_{}", i + 1)));
+
+        network.add_layer(make_unique<opennn::Dense>(network.get_output_shape(),
+                                                     dataset.get_shape("Target"),
+                                                     "Sigmoid",
+                                                     false,
+                                                     "higgs_output"));
+        network.compile();
+        network.set_parameters_glorot();
+
+        cout << "HIGGS DNN params=" << network.get_parameters_number()
+             << " (buffer=" << network.get_parameters_size() << ")" << endl;
+
+        TrainingStrategy training_strategy(&network, &dataset);
+        training_strategy.set_loss("CrossEntropy");
+        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
+        training_strategy.get_loss()->set_regularization("L2");
+        training_strategy.get_loss()->set_regularization_weight(1.0e-5f);
+
+        auto* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
+        if (!sgd)
+            throw runtime_error("StochasticGradientDescent optimizer not found.");
+
+        sgd->set_batch_size(1000000);
+        sgd->set_initial_learning_rate(0.05f);
+        sgd->set_initial_decay(0.0202f);
+        sgd->set_momentum(0.9f);
+        sgd->set_nesterov(false);
+        sgd->set_num_workers(8);
+        sgd->set_maximum_epochs(20);
+        sgd->set_maximum_validation_failures(100);
+        sgd->set_display_period(1);
+
+        const auto t0 = steady_clock::now();
+        training_strategy.train();
+        const auto t1 = steady_clock::now();
+        const double training_time = duration_cast<milliseconds>(t1 - t0).count() / 1000.0;
+
+        cout << "\nTotal training time: " << training_time << " s" << endl;
+
+        TestingAnalysis testing_analysis(&network, &dataset);
+        testing_analysis.set_batch_size(500000);
+        const TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
+
+        cout << "\nROC analysis:" << endl;
+        cout << "Role: Testing" << endl;
+        cout << "AUC: " << roc_analysis.area_under_curve << endl;
+        cout << "Confidence limit: " << roc_analysis.confidence_limit << endl;
+        cout << "Optimal threshold: " << roc_analysis.optimal_threshold << endl;
+
+        cout << "Bye!" << endl;
+        return 0;
+
+#if 0
         cout << "OpenNN. HIGGS 5x300 DNN benchmark." << endl;
 
 #ifdef OPENNN_HAS_CUDA
@@ -1347,6 +1543,7 @@ int main()
 
         cout << "Bye!" << endl;
         return 0;
+#endif
     }
     catch(const exception& e)
     {

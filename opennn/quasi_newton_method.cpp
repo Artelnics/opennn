@@ -180,9 +180,6 @@ TrainingResults QuasiNewtonMethod::train()
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
 
-    // Reuse the training FP for validation iff sample counts match exactly.
-    // QN is full-batch so splits typically differ — separate FP is the common
-    // case here, but the alias path activates for symmetric splits (e.g. 50/50).
     unique_ptr<ForwardPropagation> validation_forward_propagation;
 
     if (has_validation && validation_samples_number != training_samples_number)

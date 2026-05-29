@@ -52,6 +52,18 @@ enum class SampleRole
     return sample_role_map().from_string(name);
 }
 
+
+struct DeviceResidentData
+{
+    Buffer input{Device::CUDA};    // rows x input_features  (FP32, row-major)
+    Buffer target{Device::CUDA};   // rows x target_features (FP32)
+    vector<Index> row_of;          // dataset sample index -> resident row (-1 if absent)
+    Index rows = 0;
+    Index input_features = 0;
+    Index target_features = 0;
+    bool  valid = false;
+};
+
 class Dataset
 {
 
@@ -115,6 +127,10 @@ public:
     [[nodiscard]] Shape get_shape(const string&) const;
 
     virtual void get_batches(const vector<Index>&, Index, bool, vector<vector<Index>>&) const;
+
+    [[nodiscard]] virtual bool supports_device_residency() const { return false; }
+    virtual bool ensure_device_resident(const string& /*sample_role*/) { return false; }
+    [[nodiscard]] virtual const DeviceResidentData* get_device_resident(const string& /*sample_role*/) const { return nullptr; }
 
     [[nodiscard]] const vector<vector<string>>& get_data_file_preview() const { return data_file_preview; }
 

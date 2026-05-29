@@ -1,10 +1,6 @@
 #ifndef KERNEL_COMMON_CUH
 #define KERNEL_COMMON_CUH
 
-// Shared host-side helpers for the split kernel TUs (kernel_optimizers.cu,
-// kernel_losses.cu, kernel_layers.cu). Header-only, internal-linkage so each
-// TU gets its own copy without ODR conflicts.
-
 #include <cstdint>
 #include <cfloat>
 

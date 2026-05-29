@@ -118,10 +118,6 @@ public:
     Index get_heads_number() const;
 
     void set_dropout_rate(const float);
-
-    // Propagates SDPA policy to every MultiHeadAttention layer in the model.
-    // Override the threshold to force/disable SDPA in benchmarks or when the
-    // default doesn't fit the workload (default = 192, see MHA header).
     void set_attention_sdpa_auto(bool);
     void set_attention_sdpa_min_sequence_length(Index);
 };

@@ -64,14 +64,12 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 {
     check();
 
-    // Dataset
 
     const Index testing_samples_number = dataset->get_samples_number("Testing");
 
     if (testing_samples_number == 0)
         throw runtime_error("Number of testing samples is zero.\n");
 
-    // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -112,27 +110,14 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
     const vector<Index> input_feature_indices  = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
-    // Per-sample target width is the full size of the dataset's target shape,
-    // not the number of target columns. For multi-target time series these
-    // differ (target_shape[0] = future_time_steps * n_target_columns).
     const Index target_width = dataset->get_target_shape().size();
 
-    // Batched inference. Running calculate_outputs on the full split blows up
-    // GPU workspaces sized for the training batch (cuBLAS error 11 then
-    // poisons the CUDA context). On GPU, when the caller did not set a batch,
-    // default to 256 so the existing code paths keep working without manual
-    // intervention.
     const Index default_batch_size =
         Configuration::instance().is_gpu() ? Index(256) : samples_number;
     const Index current_batch_size =
         (batch_size <= 0) ? default_batch_size
                           : min<Index>(batch_size, samples_number);
 
-    // Dataset::get_batches drops the remainder (samples / batch_size, integer
-    // division), which is acceptable during training but corrupts metrics here:
-    // the trailing rows of target_data / output_data would stay uninitialised
-    // and pollute the aggregates. Build batches manually so every sample is
-    // covered, even when samples_number is not divisible by current_batch_size.
     vector<vector<Index>> testing_batches;
     for (Index start = 0; start < samples_number; start += current_batch_size)
     {
@@ -152,7 +137,6 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
         if (batch_indices.empty()) continue;
         const Index n = batch_indices.size();
 
-        // Write targets directly into the slab that belongs to this batch.
         dataset->fill_targets(batch_indices, target_feature_indices,
                               target_data.data() + row_cursor * target_width,
                               /*is_training=*/false, /*parallelize=*/true);
@@ -248,14 +232,12 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 {
     check();
 
-    // Dataset
 
     const Index testing_samples_number = dataset->get_samples_number("Testing");
 
     if (testing_samples_number == 0)
         throw runtime_error("Number of testing samples is zero.\n");
 
-    // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -313,7 +295,6 @@ vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives(c
 
 vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives() const
 {
-    // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -424,13 +405,6 @@ MatrixR TestingAnalysis::calculate_multiple_classification_errors() const
 VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
                                           const MatrixR& outputs) const
 {
-    // mean_squared_error / normalized_squared_error / minkowski_error in
-    // error_utilities.cpp dispatch to the GPU branch through IF_GPU based on
-    // the global Configuration, but the TensorViews we build here point to
-    // host MatrixR storage. Calling cuBLAS on a host pointer raises
-    // CUBLAS_STATUS_MAPPING_ERROR and poisons the CUDA context, breaking the
-    // entire process. Compute these aggregates directly with Eigen so they
-    // stay host-only regardless of the active device.
 
     const Index batch_size = targets.rows();
     const float two_batch  = 2.0f * static_cast<float>(batch_size);
@@ -439,22 +413,17 @@ VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
 
     const float sum_squared = (outputs.array() - targets.array()).square().sum();
 
-    // 0. Sum Squared Error  (kept as a raw sum, no division)
     errors(0) = sum_squared;
 
-    // 1. Mean Squared Error (consistent with the 1/(2N) convention in error_utilities)
     errors(1) = sum_squared / two_batch;
 
-    // 2. Root Mean Squared Error
     errors(2) = std::sqrt(errors(1));
 
-    // 3. Normalized Squared Error
     const VectorR targets_mean = mean(targets);
     const float normalization_coefficient =
         (targets.rowwise() - targets_mean.transpose()).squaredNorm();
     errors(3) = sum_squared / (2.0f * (normalization_coefficient + EPSILON));
 
-    // 4. Minkowski Error (p = 1.5)
     const float p = 1.5f;
     errors(4) = (outputs.array() - targets.array())
                     .abs()
@@ -483,10 +452,8 @@ VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sa
     const VectorR std_errors = calculate_errors(targets, outputs);
     errors.head(4) = std_errors.head(4);
 
-    // 4. Binary Cross Entropy
     binary_cross_entropy(outputs_view, targets_view, errors(4), nullptr);
 
-    // 5. Weighted Squared Error
     const VectorI target_distribution = dataset->calculate_target_distribution();
     const float neg_w = 1.0f;
     const float pos_w = (target_distribution[0] == 0 || target_distribution[1] == 0)
@@ -510,7 +477,6 @@ VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& 
     const VectorR std_errors = calculate_errors(targets, outputs);
     errors.head(4) = std_errors.head(4);
 
-    // 4. Categorical Cross Entropy
     categorical_cross_entropy(outputs_view, targets_view, errors(4), nullptr);
 
     return errors;
@@ -1080,7 +1046,6 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates(cons
         for (Index j = 0; j < targets_number; ++j)
             multiple_classification_rates(i, j).resize(confusion(i, j));
 
-    // Save indices
 
     MatrixI indices = MatrixI::Zero(targets_number, targets_number);
 
@@ -1405,7 +1370,6 @@ MatrixR TestingAnalysis::calculate_multiple_classification_tests() const
         total_samples += row_sum;
     }
 
-    // Averages
 
     if (targets_number > 0)
     {
@@ -1478,17 +1442,12 @@ void TestingAnalysis::GoodnessOfFitAnalysis::print() const
     cout << "Goodness-of-fit analysis" << "\n"
          << "Determination: " << determination << "\n";
 
-    // cout << "Targets:" << "\n";
-    // cout << targets << "\n";
-    // cout << "Outputs:" << "\n";
-    // cout << outputs << "\n";
 }
 
 void TestingAnalysis::RocAnalysis::print() const
 {
     cout << "ROC Curve analysis" << "\n";
 
-//    cout << "Roc Curve:\n" << roc_curve << "\n";
     cout << "Area Under Curve: " << area_under_curve << "\n";
     cout << "Confidence Limit: " << confidence_limit << "\n";
     cout << "Optimal Threshold: " << optimal_threshold << "\n";

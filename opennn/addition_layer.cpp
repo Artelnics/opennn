@@ -38,9 +38,6 @@ void Addition::set(const Shape& new_input_shape, const string& new_label, Index 
     input_shape = new_input_shape;
     inputs_number = new_inputs_number;
 
-    // Output is at slot inputs_number (after all inputs). Delta slots:
-    //   slot 0           = output delta (incoming from downstream)
-    //   slots 1..N       = input deltas (one per source)
     vector<size_t> input_delta_slots(inputs_number);
     for (Index i = 0; i < inputs_number; ++i)
         input_delta_slots[size_t(i)] = size_t(i + 1);

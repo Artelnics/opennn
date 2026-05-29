@@ -252,7 +252,6 @@ void TransformerDecoder::reset_per_prompt_state()
     history.clear();
 
 #ifdef OPENNN_HAS_CUDA
-    // One full H2D per prompt; subsequent steps update only the new token slot.
     const Index decoder_sequence_length = transformer.get_decoder_sequence_length();
     constexpr Index batch_size = 1;
     cudaStream_t stream = Backend::get_compute_stream();
@@ -438,7 +437,6 @@ string TransformerDecoder::decode_to_stream(const string& source,
 
     return decode(source, config, [&](const string& token)
     {
-        // Single-char punctuation never gets a leading space.
         const bool is_punctuation = token.size() == 1
             && string(",.!?;:").find(token[0]) != string::npos;
 

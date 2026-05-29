@@ -453,11 +453,6 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
     if (new_parameters.size() == 0)
         throw runtime_error("NeuralNetwork::set_parameters: refusing to apply an empty parameter vector.");
 
-    // If the network has already been compiled, the parameter buffer carries
-    // a fixed size derived from the layer specs. Reject mismatches up-front
-    // instead of silently realloc'ing — the caller almost always wants the
-    // compiled size, and an off-by-one here leaves the views pointing into
-    // freshly resized memory whose layout no longer matches the layers.
     const Index expected_size = get_parameters_size();
     if (expected_size > 0 && new_parameters.size() != expected_size)
         throw runtime_error("NeuralNetwork::set_parameters: size mismatch (got "
@@ -807,10 +802,6 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 
 void NeuralNetwork::to_JSON(JsonWriter& printer) const
 {
-    // Layer state serializers (e.g. Scaling::write_JSON_body) read from
-    // TensorView::data via Eigen Maps. When the network lives on CUDA those
-    // pointers reference device memory; sync to host first and restore the
-    // device mirror after.
 #ifdef OPENNN_HAS_CUDA
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device)
@@ -1076,9 +1067,6 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
     if (!file.is_open())
         throw runtime_error(format("Cannot open binary file for writing: {}\n", file_name.string()));
 
-    // parameters.as<float>() returns a raw pointer that can live on device when
-    // training in CUDA. Reading it from host (file.write) segfaults; sync to
-    // host first and restore the device mirror after.
 #ifdef OPENNN_HAS_CUDA
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device)
@@ -1417,9 +1405,6 @@ void NeuralNetwork::copy_parameters_host()
 
 void NeuralNetwork::copy_states_device()
 {
-    // Migrate the shared states buffer if any operator claims slots in it.
-    // Always invoke link_states so layers with per-layer storage
-    // (Scaling/Unscaling/Bounding) still receive the device-change signal.
     if (!states.empty())
         states.migrate_to(Device::CUDA, Backend::get_compute_stream());
 

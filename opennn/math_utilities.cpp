@@ -69,11 +69,11 @@ static void bound_cpu(const TensorView& input,
 {
     const Index features = lower_bounds.size();
 
-    const MatrixMap input_matrix = input.as_matrix();
+    const MatrixMap input_matrix = input.as_flat_matrix();
     const VectorMap lower_bounds_vector = lower_bounds.as_vector();
     const VectorMap upper_bounds_vector = upper_bounds.as_vector();
 
-    MatrixMap output_matrix = output.as_matrix();
+    MatrixMap output_matrix = output.as_flat_matrix();
 
     for (Index feature_index = 0; feature_index < features; ++feature_index)
         output_matrix.col(feature_index) = input_matrix.col(feature_index)
@@ -121,15 +121,30 @@ static void scale_cpu(const TensorView& input,
         switch (code)
         {
         case 1: // MinimumMaximum
-            column = (column - minimums_vector(feature_index)) / ((maximums_vector(feature_index) - minimums_vector(feature_index)) + EPSILON)
-                   * (max_range - min_range) + min_range;
+        {
+            const float range = maximums_vector(feature_index) - minimums_vector(feature_index);
+            if (range < EPSILON)
+                column.setZero();
+            else
+                column = (column - minimums_vector(feature_index)) / range
+                       * (max_range - min_range) + min_range;
             break;
+        }
         case 2: // MeanStandardDeviation
-            column = (column - means_vector(feature_index)) / (standard_deviations_vector(feature_index) + EPSILON);
+        {
+            const float sd = standard_deviations_vector(feature_index);
+            if (sd > EPSILON)
+                column = (column - means_vector(feature_index)) / sd;
+            else
+                column.setZero();
             break;
+        }
         case 3: // StandardDeviation
-            column /= (standard_deviations_vector(feature_index) + EPSILON);
+        {
+            const float sd = standard_deviations_vector(feature_index);
+            column *= (sd > EPSILON) ? (1.0f / sd) : 0.0f;
             break;
+        }
         case 4: // Logarithm
             column = column.log();
             break;
@@ -955,9 +970,6 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
     const int rows_b = to_int(input_b.shape[rank_b - 2]);
     const int cols_b = to_int(input_b.shape[rank_b - 1]);
 
-    // Rank-mismatched broadcast (e.g. {B,Q,E} @ {E,E}^T from CombinationOp::apply_delta_gpu):
-    // flatten input_a to 2D and do a single GEMM with no batching. Mirrors multiply_cpu's
-    // use of as_flat_matrix() for these calls.
     if (rank_b == 2 && rank_a > 2)
     {
         rows_a = to_int(input_a.size() / cols_a);

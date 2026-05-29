@@ -58,8 +58,6 @@ void recompile_if_specs_changed(NeuralNetwork& network,
     if (network.get_parameters_size() > 0)
     {
 #ifdef OPENNN_HAS_CUDA
-        // Drag the parameter buffer back from device memory before snapshotting
-        // its host-side bytes. No-op needed in CPU-only builds.
         network.copy_parameters_host();
 #endif
         parameters_snapshot = Eigen::Map<const VectorR>(network.get_parameters_data(),
@@ -278,13 +276,8 @@ ResNet::ResNet(const Shape& input_shape,
     if (blocks_per_stage.empty())
         throw runtime_error("ResNet: at least one stage is required.");
 
-    // Channel expansion of a bottleneck block: the third (1x1) conv expands
-    // the inner channel count back up by this factor. Standard ResNet-V1 uses 4.
     constexpr Index bottleneck_expansion = 4;
 
-    // Convolutional with BatchNorm fused in (the 6th ctor flag). Explicit
-    // input wiring lets us run multiple branches off the same index for skip
-    // connections. Returns the new layer's global index.
     auto add_conv = [&](Index input_index,
                         const Shape& kernel_shape, const char* activation,
                         const Shape& stride, const string& name) -> Index {
@@ -296,8 +289,6 @@ ResNet::ResNet(const Shape& input_shape,
         return get_layers_number() - 1;
     };
 
-    // Add the skip path: identity when the main branch preserves shape,
-    // otherwise a 1x1 projection conv (with BN) at the same stride.
     auto add_skip = [&](Index input_index, Index in_channels, Index out_channels,
                         Index stride, const string& prefix) -> Index {
         if (stride == 1 && in_channels == out_channels)
@@ -307,8 +298,6 @@ ResNet::ResNet(const Shape& input_shape,
                         Shape{stride, stride}, prefix + "_skip");
     };
 
-    // Basic block (ResNet-18/34): two 3x3 convs, optional skip projection,
-    // post-add ReLU via a standalone Activation layer.
     auto add_basic_block = [&](Index input_index, size_t stage, Index block,
                                Index filters) -> Index {
         const Shape in_shape  = get_layer(input_index)->get_output_shape();
@@ -337,10 +326,6 @@ ResNet::ResNet(const Shape& input_shape,
         return get_layers_number() - 1;
     };
 
-    // Bottleneck block (ResNet-50/101/152): 1x1 → 3x3 → 1x1 with 4× expansion
-    // and post-add ReLU via a standalone Activation layer. `filters` is the
-    // inner (compressed) channel count; output channels are filters *
-    // bottleneck_expansion.
     auto add_bottleneck_block = [&](Index input_index, size_t stage, Index block,
                                     Index filters) -> Index {
         const Shape in_shape  = get_layer(input_index)->get_output_shape();
@@ -379,8 +364,6 @@ ResNet::ResNet(const Shape& input_shape,
     scaling_layer->set_scalers("ImageMinMax");
     add_layer(move(scaling_layer));
 
-    // Stem: 7x7 conv stride 2 + 3x3 MaxPool stride 2. Aggressive downsampling
-    // turns a 224x224 input into 56x56 before the first stage.
     Index last_index = add_conv(0,
         Shape{7, 7, input_shape[2], initial_filters[0]}, "ReLU",
         Shape{2, 2}, "stem_conv");
@@ -534,7 +517,6 @@ Transformer::Transformer(Index input_sequence_length,
     if (embedding_dimension % heads_number != 0)
         throw runtime_error("Transformer: embedding_dimension must be divisible by heads_number.");
 
-    // Adds: Addition(left_index, right_index) → Normalization3d. Returns the norm index.
     auto add_residual_and_norm = [&](const Shape& shape,
                                      const string& add_label,
                                      const string& norm_label,
@@ -544,8 +526,6 @@ Transformer::Transformer(Index input_sequence_length,
         return get_layers_number() - 1;
     };
 
-    // Adds two Dense layers (ReLU expand to ff_dim, Identity project back). Returns
-    // the second dense's index. Each Dense chains to the previous layer by default.
     auto add_feed_forward = [&](const Shape& input_shape, Index ff_dim,
                                 const string& internal_label,
                                 const string& external_label) -> Index {

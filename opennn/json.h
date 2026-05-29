@@ -80,7 +80,6 @@ public:
     [[nodiscard]] static JsonDocument wrap(const string& tag, Json value);
 };
 
-// Incremental writer (mirrors the old XmlPrinter API). Only one root object.
 class JsonWriter
 {
 public:

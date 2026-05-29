@@ -507,8 +507,6 @@ void apply_geometric_to_image(const uint8_t* src, uint8_t* dst,
                               Index height, Index width, Index channels,
                               const AugmentationParams& p)
 {
-    // Resample dst[y, x] from src crop region [src_x0, src_y0]–[src_x1, src_y1]
-    // where the crop is expressed as fractions of the original size.
     const float orig_w = float(width);
     const float orig_h = float(height);
     const float src_x0 = p.crop_left * orig_w;
@@ -555,9 +553,6 @@ void apply_geometric_to_image(const uint8_t* src, uint8_t* dst,
     }
 }
 
-// Bilinear-resample an HWC uint8 image from (src_h, src_w) to (dst_h, dst_w),
-// preserving channel count. Used by fill_inputs when the runtime input shape
-// differs from the cache shape (multi-scale training).
 void bilinear_resize_uint8(const uint8_t* src,
                            Index src_h, Index src_w,
                            uint8_t* dst,
@@ -764,10 +759,6 @@ void YoloDataset::set(const filesystem::path& new_images_dir,
     target_cache_path = images_directory / ".cache" / "yolo_targets.bin";
     boxes_cache_path = images_directory / ".cache" / "yolo_boxes.bin";
 
-    // Snapshot the sorted image filename list so callers (e.g. visualization)
-    // can map a dataset sample index back to its on-disk filename. The cache
-    // is built/loaded in the same alphabetical order; sources_hash invalidation
-    // (in try_open_cache) guarantees this list matches the cached contents.
     image_filenames = list_files(images_directory, has_image_extension);
 
     open_or_build_cache(new_anchors);
@@ -1047,8 +1038,6 @@ void YoloDataset::setup_metadata(Index new_samples_number)
 {
     samples_number = new_samples_number;
 
-    // Snapshot the cache shape; runtime input_shape/grid_size mirror it
-    // until set_runtime_input_shape() rebinds them.
     cache_input_shape = input_shape;
     cache_grid_size = grid_size;
     cache_image_record_bytes = image_record_bytes;

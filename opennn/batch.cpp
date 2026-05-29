@@ -235,14 +235,28 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
 
     copy_to_device(target.as<float>(), targets_host, target_size * sizeof(float));
 
-    // Mark when the DMA is done so the next worker that recycles this Batch
-    // can wait on this specific copy (cheaper than draining the whole stream)
-    // before overwriting the pinned host buffers in fill(). Created lazily so
-    // CPU-only Batches (which never reach this path) pay nothing.
     if (!h2d_done_event)
         CHECK_CUDA(cudaEventCreateWithFlags(&h2d_done_event, cudaEventDisableTiming));
     CHECK_CUDA(cudaEventRecord(h2d_done_event, stream));
     h2d_done_recorded = true;
+}
+
+void Batch::gather_device_async(const Index current_batch_size,
+                                const Index* device_row_indices,
+                                const float* resident_input, Index resident_input_features,
+                                const float* resident_target, Index resident_target_features)
+{
+    current_sample_count = current_batch_size;
+
+    if (needs_fp32_staging)
+        gather_rows_cuda<float, bfloat16>(current_batch_size, resident_input_features,
+                                          device_row_indices, resident_input, input.as<bfloat16>());
+    else
+        gather_rows_cuda<float, float>(current_batch_size, resident_input_features,
+                                       device_row_indices, resident_input, input.as<float>());
+
+    gather_rows_cuda<float, float>(current_batch_size, resident_target_features,
+                                   device_row_indices, resident_target, target.as<float>());
 }
 
 #endif

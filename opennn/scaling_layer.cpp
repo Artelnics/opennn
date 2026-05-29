@@ -49,10 +49,6 @@ void Scaling::set(const Shape& new_input_shape)
 
     set_label("scaling_layer");
 
-    // For rank-1 inputs (tabular per-sample), features == shape[0] == size().
-    // For rank-2 (time-series per-sample: time × feature) and rank-3 (image:
-    // H × W × C), the feature axis is the LAST one; using shape.size() would
-    // create one descriptive per element instead of per feature.
     const Index features = input_shape.empty() ? 0 : input_shape.back();
     descriptives.assign(size_t(features), Descriptives(-1.0f, 1.0f, 0.0f, 1.0f));
     scalers.assign(size_t(features), ScalerMethod::MeanStandardDeviation);
@@ -253,20 +249,30 @@ string Scaling::write_expression(const vector<string>& input_names,
         case None:
             buffer << "scaled_" << input_names[i] << " = " << input_names[i] << ";\n";
             break;
+
         case MinimumMaximum:
-            buffer << "scaled_" << input_names[i]
-                   << " = " << input_names[i] << "*(" << max_range << "-" << min_range << ")/("
-                   << d.maximum << "-(" << d.minimum << "))-" << d.minimum << "*("
-                   << max_range << "-" << min_range << ")/("
-                   << d.maximum << "-" << d.minimum << ")+" << min_range << ";\n";
+            if (d.maximum - d.minimum < EPSILON)
+                buffer << "scaled_" << input_names[i] << " = 0;\n";
+            else
+                buffer << "scaled_" << input_names[i]
+                       << " = " << input_names[i] << "*(" << max_range << "-" << min_range << ")/("
+                       << d.maximum << "-(" << d.minimum << "))-" << d.minimum << "*("
+                       << max_range << "-" << min_range << ")/("
+                       << d.maximum << "-" << d.minimum << ")+" << min_range << ";\n";
             break;
         case MeanStandardDeviation:
-            buffer << "scaled_" << input_names[i] << " = (" << input_names[i] << "-"
-                   << d.mean << ")/" << d.standard_deviation << ";\n";
+            if (d.standard_deviation > EPSILON)
+                buffer << "scaled_" << input_names[i] << " = (" << input_names[i] << "-"
+                       << d.mean << ")/" << d.standard_deviation << ";\n";
+            else
+                buffer << "scaled_" << input_names[i] << " = 0;\n";
             break;
         case StandardDeviation:
-            buffer << "scaled_" << input_names[i] << " = " << input_names[i]
-                   << "/(" << d.standard_deviation << ");\n";
+            if (d.standard_deviation > EPSILON)
+                buffer << "scaled_" << input_names[i] << " = " << input_names[i]
+                       << "/(" << d.standard_deviation << ");\n";
+            else
+                buffer << "scaled_" << input_names[i] << " = 0;\n";
             break;
         case Logarithm:
             buffer << "scaled_" << input_names[i] << " = log(" << input_names[i] << ");\n";

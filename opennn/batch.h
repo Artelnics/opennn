@@ -76,18 +76,15 @@ struct Batch
 #ifdef OPENNN_HAS_CUDA
     void copy_device_async(const Index, cudaStream_t, float* fp32_staging);
 
-    // Recorded at the end of copy_device_async() on compute_stream; waited on
-    // by wait_h2d_complete() before the worker recycles this Batch. Created
-    // lazily on first H→D copy (CPU-only Batches never touch them).
+    void gather_device_async(const Index current_batch_size,
+                             const Index* device_row_indices,
+                             const float* resident_input, Index resident_input_features,
+                             const float* resident_target, Index resident_target_features);
+
     cudaEvent_t h2d_done_event = nullptr;
     bool        h2d_done_recorded = false;
 #endif
 
-    // Block until the most recent copy_device_async() has finished reading
-    // inputs_host / decoder_host / targets_host on the device. Workers MUST
-    // call this before re-filling these pinned buffers, otherwise the DMA in
-    // flight will race against the new fill(). No-op when no copy is pending
-    // (first use of the batch, or already drained).
     void wait_h2d_complete();
 
     Index get_input_elements() const { return samples_number * input_features_number; }

@@ -135,20 +135,11 @@ void ActivationOp::set_function(const string& name)
 
 void ActivationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
-    // A preceding operator already applied this activation through a fused GPU
-    // epilogue, so the pass is redundant on GPU. On CPU we fall through: Dense's
-    // linear_forward also fuses ReLU there (re-applying is harmless — ReLU is
-    // idempotent), while the convolution CPU path does not fuse, so it is needed.
     if (forward_fused) { IF_GPU(return;); }
 
     TensorView& output = fp.views[layer][output_slots[0]][0];
     if (output.empty()) return;
 
-    // Standalone Activation layer: input and output live in different slots.
-    // Seed `output` with the upstream value before applying the elementwise
-    // function in place. When input_slots is empty (the fused path inside
-    // Dense / Convolutional / etc.), `output` already holds the pre-activation
-    // value written by the previous operator in the chain.
     if (!input_slots.empty() && input_slots[0] != output_slots[0])
         copy(fp.views[layer][input_slots[0]][0], output);
 
@@ -165,10 +156,6 @@ void ActivationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, s
     const auto& slots = output_slots_backward.empty() ? output_slots : output_slots_backward;
     const TensorView& outputs = fp.views[layer][slots[0]][0];
 
-    // Standalone Activation layer: write input_delta = output_delta * sigma'(output)
-    // into a distinct InputDelta slot. In the fused path (Dense/Conv/...),
-    // input_slots is empty (in-place) and we modify the layer's OutputDelta
-    // directly — the next operator in the chain reads it as its own input.
     const bool standalone = !input_slots.empty() && input_slots[0] != output_slots[0];
     if (standalone)
     {
@@ -640,8 +627,6 @@ void RecurrentOp::set_parameters_glorot()
 
 void RecurrentOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
 {
-    // Slot convention (set by the hosting layer):
-    //   output_slots = {Output, HiddenStates, ActivationDerivatives}
     auto& fv = fp.views[layer];
     const TensorView& input             = get_input(fp, layer);
     TensorView& output                  = fv[output_slots[0]][0];
@@ -761,8 +746,6 @@ void RecurrentOp::apply(const TensorView& input,
 
     if (return_sequences)
     {
-        // Output shape is (batch, time_steps, output_features), identical
-        // layout to hidden_states; just mirror the buffer.
         std::memcpy(output.as<float>(), hidden_data,
                     batch_size * time_steps * output_features * sizeof(float));
     }
@@ -803,9 +786,6 @@ void RecurrentOp::apply_delta(const TensorView& input,
     const Index h_stride_t  = output_features;
     const Index h_stride_b  = time_steps * output_features;
 
-    // Sequence-mode backward receives output_delta as (batch, time_steps, out)
-    // grouped by sample; each step's slice must be added to the carry. Final-
-    // state mode receives a (batch, out) slab that only contributes at t=T-1.
     const float* seq_delta_data = return_sequences ? output_delta.as<float>()
                                                    : nullptr;
     const float* final_delta_data = return_sequences ? nullptr
@@ -831,7 +811,6 @@ void RecurrentOp::apply_delta(const TensorView& input,
         }
         else if (t == time_steps - 1)
         {
-            // Final-state mode: output_delta is (batch, output_features).
             delta = Eigen::Map<const MatrixR>(final_delta_data, batch_size, output_features);
         }
         else
@@ -975,8 +954,6 @@ void RecurrentOp::apply_gpu(const TensorView& input,
 
         if (return_sequences)
         {
-            // Output and hidden_states share the (batch, time_steps, out)
-            // layout, so a direct copy suffices.
             copy(hidden_states, output);
         }
         else
@@ -1024,15 +1001,10 @@ void RecurrentOp::apply_delta_gpu(const TensorView& input,
         zero_device_view(input_weight_gradient);
         zero_device_view(recurrent_weight_gradient);
 
-        // Sequence-mode backward needs a per-step (batch, out) staging buffer
-        // to combine output_delta[:, t, :] with the recurrent carry before
-        // feeding the unmodified fused-pre kernel. In final-state mode this
-        // buffer is unused.
         if (return_sequences)
             step_seq_delta_buf.grow_to(batch_size * output_features *
                                        Index(sizeof(Scalar)));
 
-        // cuDataType for cublasAxpyEx — matches the dtype of output_delta.
         const cudaDataType_t axpy_dtype =
             (output_delta.type == Type::FP32) ? CUDA_R_32F :
             (output_delta.type == Type::BF16) ? CUDA_R_16BF :
@@ -1048,7 +1020,6 @@ void RecurrentOp::apply_delta_gpu(const TensorView& input,
 
             if (return_sequences)
             {
-                // Stage = slice of output_delta at step t.
                 gather_time_slice_cuda<Scalar>(batch_size, time_steps,
                                                output_features, t,
                                                output_delta.as<Scalar>(),
@@ -1213,9 +1184,6 @@ void ConvolutionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
 
-    // fused_activation is non-null only on the GPU ReLU path; apply_gpu folds
-    // bias + activation into one cuDNN call. CPU apply ignores it, so the
-    // hosting layer's ActivationOp still runs on CPU.
     apply(input, output, fused_activation);
 }
 
@@ -1270,9 +1238,6 @@ void ConvolutionOp::apply_cpu(const TensorView& input, TensorView& output)
 
     TensorMap4 outputs = output.as_tensor<4>();
 
-    // Pad inputs ONCE before the kernel loop. Doing inputs.pad() inside the
-    // loop would re-materialize the padded tensor per kernel (kernels_number
-    // times) and was the main forward-pass perf gap vs. master.
     const bool needs_padding = padding_height > 0 || padding_width > 0;
     const Tensor4 padded_inputs_storage = needs_padding
         ? Tensor4(inputs.pad(input_paddings))
@@ -1373,7 +1338,6 @@ void ConvolutionOp::plan_convolution_algorithms(const TensorView& input, const T
     cudnnTensorDescriptor_t input_desc  = input.get_descriptor();
     cudnnTensorDescriptor_t output_desc = output.get_descriptor();
 
-    // Picks the first SUCCESS entry from a Find perfs array.
     auto pick_algo = [](auto* perfs, int count, auto fallback) {
         for (int i = 0; i < count; ++i)
             if (perfs[i].status == CUDNN_STATUS_SUCCESS)
@@ -1543,7 +1507,6 @@ void LayerNormOp::set(Index new_sequence_length, Index new_embedding_dimension)
 
 vector<TensorSpec> LayerNormOp::parameter_specs() const
 {
-    // Gamma, Beta
     return vector<TensorSpec>(2, {Shape{embedding_dimension}, Type::FP32});
 }
 
@@ -1750,10 +1713,6 @@ Index AttentionOp::infer_attention_prefix_length(const TensorView& attention_wei
 
 vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
 {
-    // SDPA does not materialise the attention matrix and does not use these
-    // scratch slots for dropout either, so they collapse to empty placeholders.
-    // Unfused path needs a (B, H, Q, K) scratch for the attention weights and,
-    // when dropout is active, a matching one for the dropped mask.
     if (use_sdpa && !dropout.active())
         return vector<TensorSpec>(2, {Shape{}, compute_dtype});
 
@@ -1769,9 +1728,6 @@ vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
 
 TensorSpec AttentionOp::backward_scratch_spec(Index batch_size) const
 {
-    // SDPA backward (cuDNN frontend) computes dQ/dK/dV without materialising
-    // the attention weight matrix, so the (B,H,Q,K) scratch can be skipped.
-    // Unfused backward still needs it for the softmax-derivative reduction.
     if (use_sdpa)
         return {Shape{}, compute_dtype};
 
@@ -1839,14 +1795,12 @@ struct AttentionOp::SDPACache
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
     struct Entry
     {
-        // Forward graph
         shared_ptr<cudnn_frontend::graph::Graph> fwd_graph;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_Q, fwd_K, fwd_V, fwd_O, fwd_Stats;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_SeqLenQ, fwd_SeqLenKV;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_Seed, fwd_Offset;
         void* fwd_workspace_buf = nullptr;
 
-        // Backward graph (built lazily on first apply_delta_gpu)
         shared_ptr<cudnn_frontend::graph::Graph> bwd_graph;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Q, bwd_K, bwd_V, bwd_O, bwd_dO, bwd_Stats;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_dQ, bwd_dK, bwd_dV;
@@ -1854,27 +1808,17 @@ struct AttentionOp::SDPACache
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Seed, bwd_Offset;
         void* bwd_workspace_buf = nullptr;
 
-        // Shared (forward writes, backward reads). LSE stats from softmax.
         void* stats_buf = nullptr;
 
-        // Device-resident scalars for SDPA dropout RNG (1 INT64 each).
-        // Allocated only when the cache key has dropout_active=true. Forward
-        // writes the per-step (seed, offset); backward writes the same values
-        // so cuDNN regenerates an identical mask.
         void* seed_buf   = nullptr;
         void* offset_buf = nullptr;
 
-        // Per-batch INT32 sequence lengths for cuDNN padding masks. Forward
-        // refreshes them from source_input; backward reuses the same batch.
         void* seq_len_q_buf  = nullptr;
         void* seq_len_kv_buf = nullptr;
     };
 
     unordered_map<CacheKey, Entry, CacheKeyHash> entries;
 
-    // 1-element shortcut: AttentionOp is typically called with the same shape
-    // and dtype across all training/inference steps. After the first call this
-    // skips the unordered_map hash lookup entirely.
     mutable Entry*   last_entry_ = nullptr;
     mutable CacheKey last_key_;
     mutable bool     last_valid_ = false;
@@ -1928,7 +1872,6 @@ auto sdpa_check = [](auto s, const string& what) {
         throw runtime_error(format("SDPA {}: {}", what, s.get_message()));
 };
 
-// {B, H, S, D} contiguous tensor input.
 shared_ptr<cudnn_frontend::graph::Tensor_attributes>
 bhsd_input(cudnn_frontend::graph::Graph& graph, const char* name, int64_t B, int64_t H, int64_t S, int64_t D)
 {
@@ -2083,10 +2026,6 @@ static void build_sdpa_backward_graph(AttentionOp::SDPACache::Entry& entry,
     entry.bwd_SeqLenQ  = seq_len_input(*graph, "SeqLenQ_bwd",  k.batch_size);
     entry.bwd_SeqLenKV = seq_len_input(*graph, "SeqLenKV_bwd", k.batch_size);
 
-    // O is read from the layer's ConcatenatedAttentionOutputs buffer, which is
-    // physically laid out as {B, Q_seq, H, D} (post merge_heads). Logical shape
-    // is {B, H, Q_seq, D} with non-contiguous strides:
-    //   stride[B]=Q*H*D, stride[H]=D, stride[Q]=H*D, stride[D]=1
     entry.bwd_O = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
                                 .set_name("O_bwd")
                                 .set_dim({k.batch_size, k.heads, k.q_seq, k.head_dim})
@@ -2163,9 +2102,6 @@ void AttentionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
 
     const TensorView& query = get_input(fp, layer);
 
-    // TransposeScratch is reused as the per-head attention output {B,H,Q,D}.
-    // CPU path also dereferences it as float* for the padding mask scratch
-    // — it does that inside apply_cpu without leaking the pointer up here.
     TensorView attention_out = fv[scratch_slots[0]][0].reshape(
         {fp.batch_size, query.shape[1], query.shape[2], query.shape[3]});
 
@@ -2191,13 +2127,9 @@ void AttentionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
     const TensorView& attention_weights = get_output(fp, layer);
     const TensorView& attention_weights_dropped = get_output(fp, layer, 1);
 
-    // TransposeScratch reused as output_delta {B,H,Q,D}. Dims read from `query`
-    // instead of duplicating member state in the hot path.
     const TensorView output_delta = fv[scratch_slots[0]][0]
         .reshape({fp.batch_size, query.shape[1], query.shape[2], query.shape[3]});
 
-    // delta_views are preallocated by MHA::get_backward_specs with the right
-    // shape and dtype; no need to reconstruct them from raw float pointers.
     TensorView& attention_weight_delta = get_output_delta(bp, layer);
     TensorView& query_delta            = get_output_delta(bp, layer, 1);
     TensorView& key_delta              = get_output_delta(bp, layer, 2);
@@ -2228,10 +2160,6 @@ void AttentionOp::apply_cpu(const TensorView& query,
                           [[maybe_unused]] void* scratch,
                           bool is_training)
 {
-    // CPU-only padding-aware fast path: uses Eigen MatrixMap directly on raw
-    // pointers, which requires host memory. Gated on !is_gpu() so that the
-    // FP32 fallback from apply_gpu (where buffers live on device) falls
-    // through to the generic GPU-dispatched path below.
     if (!is_gpu()
         && !use_causal_mask
         && !dropout.active()
@@ -2358,9 +2286,6 @@ void AttentionOp::apply_gpu(const TensorView& query,
                           bool is_training)
 {
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    // The layer's policy decides whether this AttentionOp runs SDPA. The
-    // operator itself just executes — no implicit fallback, because the
-    // forward_scratch_specs allocation already committed to one path.
     if (!use_sdpa)
     {
         apply_cpu(query, key, value, source_input,
@@ -2426,7 +2351,6 @@ void AttentionOp::apply_gpu(const TensorView& query,
     if (status.is_bad())
         throw runtime_error(format("SDPA forward execute: {}", status.get_message()));
 #else
-    // No cudnn-frontend: fall back to the manual softmax+matmul GPU path.
     apply_cpu(query, key, value, source_input,
               attention_weights, attention_weights_dropped,
               output, scratch, is_training);
@@ -2476,10 +2400,6 @@ void AttentionOp::apply_delta_cpu(const TensorView& query,
                                 TensorView& key_delta,
                                 TensorView& value_delta) const
 {
-    // CPU-only padding-aware fast path: uses Eigen MatrixMap directly on raw
-    // pointers, which requires host memory. Gated on !is_gpu() so that the
-    // FP32 fallback from apply_delta_gpu falls through to the unfused path
-    // below (which uses GPU-dispatched multiply/softmax).
     if (!is_gpu()
         && !use_causal_mask
         && !dropout.active()
@@ -2624,9 +2544,6 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
                                 TensorView& value_delta) const
 {
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    // Mirrors the forward path: backend is decided by the hosting layer at
-    // configuration time and locked in by forward_scratch_specs. The forward
-    // populated sdpa_cache iff use_sdpa is true.
     if (!use_sdpa)
     {
         apply_delta_gpu_unfused(query, key, value,
@@ -2656,11 +2573,6 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
 
     SDPACache::Entry* entry_ptr = sdpa_cache->find_entry(ck);
     if (!entry_ptr || !entry_ptr->fwd_graph)
-        // Under the current policy (layer-decided, no silent fallback) the
-        // forward path always populates the cache when use_sdpa is true, so a
-        // missing entry here means the cache key drifted between fwd and bwd
-        // (e.g. batch size changed mid-iteration). The unfused scratch is no
-        // longer allocated in that case — falling back would just crash later.
         throw runtime_error("AttentionOp::apply_delta_gpu: SDPA forward did not populate "
                             "a cache entry for this shape. Cache key drifted between "
                             "forward and backward (likely batch size changing across "
@@ -2716,13 +2628,10 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
 
 void AttentionOp::to_JSON(JsonWriter&) const
 {
-    // Per-call config (heads/seqs/causal_mask/dtype) lives at the layer level.
-    // DropoutOp rate is a runtime knob, not serialized — preserves existing schema.
 }
 
 void AttentionOp::from_JSON(const Json*)
 {
-    // No-op for the same reason.
 }
 
 
@@ -3082,9 +2991,6 @@ void EmbeddingLookupOp::set_parameters_glorot()
 {
     if (weights.empty()) return;
     const float limit = glorot_limit(vocabulary_size, embedding_dimension);
-    // Eigen's setRandom() bypasses the project's RNG (uses std::rand
-    // internally), which breaks determinism — see [random_utilities.cpp]
-    // for why everything else routes through the global generator.
     set_random_uniform(weights.as_vector(), -limit, limit);
     weights.as_matrix().row(0).setZero();
 }

@@ -119,15 +119,6 @@ TrainingResults AdaptiveMomentEstimation::train()
     set_scaling();
 
 #ifdef OPENNN_HAS_CUDA
-    // Some driver/GPU combos (verified on GTX 1050 Ti) hang the host loop
-    // non-deterministically when num_workers > 1 is paired with a Recurrent
-    // layer in pure-GPU mode. The hang reproduces even after reducing the
-    // per-batch kernel-submission count by ~40% via the Phase 3.E fused
-    // forward+backward kernels, so the root cause is unrelated to kernel
-    // submission rate and lives deeper in the CUDA runtime's host-thread
-    // interaction. Serializing the batch loader to a single worker is the
-    // only known workaround; cost is negligible because the host fill runs
-    // off the GPU critical path.
     if (on_gpu && neural_network->has(LayerType::Recurrent) && num_workers > 1)
         num_workers = 1;
 #endif
@@ -335,9 +326,6 @@ TrainingResults AdaptiveMomentEstimation::train()
             cout << "Restoring best parameters and states from epoch " << best_epoch
                  << " (validation error " << best_validation_error << ")\n";
 
-        // Use set_parameters (not memcpy) so the GPU path properly issues
-        // cudaMemcpy(H2D) and refreshes the BF16 mirror via
-        // cast_parameters_to_bf16. memcpy into a device pointer is UB.
         VectorR best_view(best_parameters.size());
         memcpy(best_view.data(), best_parameters.data(),
                     best_parameters.size() * sizeof(float));

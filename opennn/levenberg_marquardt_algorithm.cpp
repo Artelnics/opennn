@@ -55,9 +55,6 @@ void LevenbergMarquardtAlgorithm::set_default()
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter(const float new_damping_parameter)
 {
-    // Update both the live value and the "fresh-train" baseline. Without
-    // updating initial_damping_parameter, the next train() call would reset
-    // back to the previous initial, undoing the user's customization.
     initial_damping_parameter = clamp(new_damping_parameter, minimum_damping_parameter, maximum_damping_parameter);
     damping_parameter = initial_damping_parameter;
 }
@@ -138,10 +135,6 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
                                                    const ForwardPropagation& forward_propagation,
                                                    BackPropagationLM& back_propagation_lm)
 {
-    // LIMITATION: the current Jacobian computation only fills the columns of
-    // the LAST trainable Dense layer; the rest of the Jacobian stays zero.
-    // That works as a single-Dense regression solver but converges into a
-    // subspace if the network has more than one trainable Dense.
     NeuralNetwork* neural_network = loss->get_neural_network();
     const auto& layers = neural_network->get_layers();
 
@@ -165,7 +158,6 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
                             "layers. Use AdaptiveMomentEstimation, SGD, or "
                             "QuasiNewtonMethod instead.");
 
-    // Compute parameter offset up to the last trainable Dense layer
     const Index parameter_offset = transform_reduce(
         layers.begin(), layers.begin() + last_trainable_dense, Index(0), plus<>{},
         [](const unique_ptr<Layer>& l) { return l->get_is_trainable() ? l->get_parameters_number() : Index(0); });
@@ -205,22 +197,18 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense* layer,
 
     const MatrixMap inputs  = forward_propagation.views[layer_index][0][0].as_matrix();
 
-    // Output is in the last slot of views for this layer (slot 0 = input, last slot = output).
     const size_t output_slot = forward_propagation.views[layer_index].size() - 1;
     const MatrixMap outputs  = forward_propagation.views[layer_index][output_slot][0].as_matrix();
 
     const MatrixR act_deriv = activation_derivative(layer->get_activation_function(), outputs);
 
-    // Parameter layout (aligned): [bias(aligned) | weights(aligned) | gamma | beta]
     const Index bias_aligned  = get_aligned_size(num_neurons);
     const Index weight_offset = parameter_offset + bias_aligned;
 
-    // Bias derivatives: dE/db_j = act_deriv(s,j)
     for (Index j = 0; j < num_neurons; ++j)
         for (Index sample = 0; sample < batch_size; ++sample)
             jacobian(sample * num_neurons + j, parameter_offset + j) = act_deriv(sample, j);
 
-    // Weight derivatives: dE/dw_{k,j} = input_k * act_deriv(s,j)
     for (Index k = 0; k < num_inputs; ++k)
         for (Index j = 0; j < num_neurons; ++j)
         {
@@ -245,12 +233,6 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
     if (loss_name == "WeightedSquaredError")
         throw runtime_error("Levenberg-Marquardt algorithm is not implemented with weighted squared error.");
 
-    // Reset live training state. damping_parameter is the only mutable
-    // per-run state held as a class member; the update_parameters loop
-    // drives it up to ~1e6 when steps fail, and a saturated value carried
-    // over to the next train() call cripples the LM step size. Selection
-    // algorithms (GrowingNeurons / GrowingInputs) call train() repeatedly,
-    // so this is essential for them to behave correctly.
     damping_parameter = initial_damping_parameter;
 
     // Start training
@@ -290,9 +272,6 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
 
-    // Reuse the training FP for validation iff sample counts match exactly.
-    // LM is full-batch so splits typically differ — separate FP is the common
-    // case, but the alias activates for symmetric splits (e.g. 50/50).
     unique_ptr<ForwardPropagation> validation_forward_propagation;
 
     if (has_validation && validation_samples_number != training_samples_number)
@@ -463,10 +442,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         if (new_loss < current_loss)
         {
-            // Internal update — only the live damping_parameter, not the
-            // user-config initial. Going through set_damping_parameter() here
-            // would overwrite initial_damping_parameter and defeat the
-            // train()-start reset.
             damping_parameter = clamp(damping_parameter / damping_parameter_factor,
                                       minimum_damping_parameter,
                                       maximum_damping_parameter);

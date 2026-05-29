@@ -87,7 +87,6 @@ const Configuration::Resolved& Configuration::resolve_slow() const
 
     resolved.training_type = resolve_dtype(training_type, "training");
 
-    // Inference defaults to mirror training so the BF16 working copy (if any) is reused.
     resolved.inference_type = (inference_type == Type::Auto)
         ? resolved.training_type
         : resolve_dtype(inference_type, "inference");

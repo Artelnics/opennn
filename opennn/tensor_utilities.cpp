@@ -86,7 +86,7 @@ Backend::Backend()
     const cudaError_t status = cudaGetDeviceCount(&device_count);
     if (status != cudaSuccess || device_count == 0)
     {
-        cudaGetLastError(); // clear sticky error so later cuda*() calls don't inherit it
+        cudaGetLastError();
         cerr << "OpenNN: no CUDA device available (" << cudaGetErrorString(status)
              << "); running on CPU.\n";
         return;
@@ -101,7 +101,6 @@ Backend::Backend()
     CHECK_CUDNN(cudnnCreate(&cudnn_handle));
     CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
 
-    // OpTensor compute must be FP32 when input tensors are FP16/BF16 (cuDNN does not implement BF16/FP16 compute).
     CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
     CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
 #endif
@@ -131,8 +130,6 @@ void Backend::set_threads_number(int num_threads)
     thread_pool = make_unique<ThreadPool>(num_threads);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), num_threads);
 
-    // Eigen::initParallel() removed: deprecated in Eigen 3.4+, threading is
-    // initialised lazily on first use.
     Eigen::setNbThreads(num_threads);
     omp_set_num_threads(num_threads);
     omp_set_dynamic(0);

@@ -212,10 +212,6 @@ void Loss::set_normalization_coefficient()
 
     if (error == Error::NormalizedSquaredError)
     {
-        // NSE divides the squared-error sum by the total squared deviation of
-        // the training targets from their column means. Without this, NSE
-        // collapses to plain SSE (coefficient = 1), which biases multi-target
-        // joint regression toward whichever target has the larger scale.
         const vector<Index> training_indices = dataset->get_sample_indices("Training");
         const Shape target_shape = dataset->get_shape("Target");
 
@@ -299,8 +295,6 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
 #ifdef OPENNN_HAS_CUDA
     if (is_gpu())
     {
-        // CrossEntropy3d packs three masks (errors, valid, correct) of size
-        // token_count; other losses need one float per input element.
         const Index workspace_floats = (error == Error::CrossEntropy3d)
             ? 3 * (input.size() / input.shape.back())
             : input.size();

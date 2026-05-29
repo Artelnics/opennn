@@ -10,12 +10,6 @@
 
 #ifdef OPENNN_HAS_CUDA
 
-    // Read Configuration directly each call. The previous design cached the
-    // value at first call (magic statics), but Configuration::set() can run
-    // mid-process (examples, tests, multi-session runners) and the cache
-    // would silently go stale. Configuration::is_gpu() is an atomic read on
-    // the singleton — sub-nanosecond, and inlines away in tight dispatch.
-
     #define TRY_GPU_DISPATCH(view, ...) \
         (::opennn::is_gpu() \
             ? ((view).dispatch(__VA_ARGS__), true) \

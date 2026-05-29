@@ -28,19 +28,6 @@ struct BackPropagation;
 
 struct TrainingResults;
 
-// Persistent pool of worker threads. The previous design spawned a fresh
-// vector<jthread> per epoch — for long training runs (1000+ epochs) that
-// added thousands of unnecessary pthread_create/_join syscalls. Workers
-// are created once, then sleep on a condition_variable between epochs.
-//
-// Usage:
-//   pool.submit([&](){ /* worker body: claim atomic iterations, fill batches */ });
-//   ...consume ready[] in main thread...
-//   pool.wait();   // block until every worker has returned from its job
-//
-// Exception safety: if the consumer scope throws while workers are still
-// running, the caller must call wait() before unwinding (the worker closures
-// typically capture stack references). See train_epoch's try/catch.
 class WorkerPool
 {
 public:
@@ -55,9 +42,6 @@ public:
     void submit(function<void()> job);
     void wait();
 
-    // If any worker caught an exception during its job, rethrow it from
-    // the calling (consumer) thread and clear the stored error. Call this
-    // inside busy-wait loops to avoid hanging when a worker dies.
     [[nodiscard]] bool has_error() const noexcept
     {
         return error_pending_.load(memory_order_acquire);
@@ -65,6 +49,8 @@ public:
     void rethrow_if_error();
 
 private:
+    void worker_loop(stop_token st);
+
     vector<jthread> workers_;
     mutex                mutex_;
     condition_variable   cv_start_;
@@ -77,6 +63,17 @@ private:
     exception_ptr       worker_error_;
     atomic<bool>        error_pending_{false};
 };
+
+#ifdef OPENNN_HAS_CUDA
+struct DeviceResidentData;
+
+struct ResidentEpochState
+{
+    Buffer row_index_buffer{Device::CUDA}; 
+    const DeviceResidentData* data = nullptr; 
+    bool active = false;
+};
+#endif
 
 class Optimizer
 {
@@ -152,12 +149,14 @@ protected:
     void setup_device_training(const vector<Batch*>& batches);
     void teardown_device_training();
 
-    // All GPU work (kernels, cuBLAS, H→D copies) runs on Backend's single
-    // compute_stream. prefetch_batch enqueues the copy; the kernels that read
-    // it land later on the same stream, so ordering is implicit and
-    // wait_prefetch / record_batch_reuse have no work to do. They're kept as
-    // no-op hooks to leave the train_epoch / evaluate_epoch loop structure
-    // untouched and for future use if a real prefetch stream is reintroduced.
+#ifdef OPENNN_HAS_CUDA
+
+    void setup_resident_datasets();
+    void upload_resident_epoch_indices(ResidentEpochState& state,
+                                       const vector<vector<Index>>& batches,
+                                       Index batch_size);
+#endif
+
     void prefetch_batch(Batch& batch, Index sample_count);
     void wait_prefetch(Batch& batch);
     void record_batch_reuse(Batch& batch);
@@ -209,17 +208,15 @@ protected:
 
     int num_workers = 2;
 
-    // Created lazily on first train() call; sized at num_workers. Re-created
-    // if the user changes num_workers between train() invocations.
     unique_ptr<WorkerPool> worker_pool;
 
     Buffer prefetch_fp32_staging{Device::CUDA};
 
-    // Refreshed at the start of every train_epoch / evaluate_epoch call.
-    // Drives sync_device(): recurrent nets need a per-batch stream drain to
-    // keep the driver queue from saturating with their many small kernels;
-    // non-recurrent nets don't and benefit from the missing sync via
-    // CPU/GPU overlap. See sync_device() for the full rationale.
+#ifdef OPENNN_HAS_CUDA
+    ResidentEpochState resident_train_;
+    ResidentEpochState resident_validation_;
+#endif
+
     bool has_recurrent_layers_ = false;
 };
 

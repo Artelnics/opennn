@@ -228,15 +228,10 @@ void atomic_rename(const filesystem::path& from, const filesystem::path& to)
 }
 
 
-// --------------------------------------------------------------------------
-// CsvReader
-// --------------------------------------------------------------------------
 
 namespace
 {
 
-// Compacts the buffer by removing surrounding quotes and dropping any
-// separator that appears inside a quoted field. Done in-place.
 void strip_quotes_and_quoted_separators(string& buffer)
 {
     if (buffer.find('"') == string::npos) return;

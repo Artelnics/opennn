@@ -95,18 +95,12 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 #ifdef OPENNN_HAS_CUDA
     if (is_gpu())
     {
-        // Single-stream model: the backward kernels that wrote gradient and
-        // sgd_update_cuda both run on Backend::get_compute_stream(), so FIFO
-        // ordering already guarantees the update sees the fresh gradient. No
-        // explicit drain needed here.
         const Index parameters_number = neural_network->get_parameters_size();
 
         float* const velocity_ptr = optimization_data.views.empty()
             ? nullptr
             : optimization_data.views[Velocity].as<float>();
 
-        // BF16 mirror (if allocated) is refreshed inside the same kernel —
-        // saves a separate FP32→BF16 cast pass over the whole parameter set.
         PROFILE_SCOPE("optim:sgd_update_cuda");
         sgd_update_cuda(
             parameters_number,
@@ -274,9 +268,6 @@ TrainingResults StochasticGradientDescent::train()
     float validation_accuracy = 0.0f;
     Index validation_failures = 0;
 
-    // True for sequence/token-level cross-entropy losses (translation, language
-    // modelling, chat). Gates the per-token metrics (accuracy + perplexity)
-    // and the per-batch token-count plumbing in train_epoch / evaluate_epoch.
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
     bool stop_training = false;

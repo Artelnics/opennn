@@ -13,8 +13,6 @@
 namespace opennn
 {
 
-// Thread-safe positional reader. On POSIX uses pread(); on Windows uses
-// ReadFile with OVERLAPPED so the offset is per-call and not shared state.
 class FileReader
 {
 public:
@@ -42,9 +40,6 @@ private:
 #endif
 };
 
-
-// Streaming writer that lands on a .tmp file and renames atomically when
-// finish_with_rename() succeeds. Drops the .tmp on destruction otherwise.
 class FileWriter
 {
 public:
@@ -74,12 +69,6 @@ private:
 
 void atomic_rename(const filesystem::path& from, const filesystem::path& to);
 
-
-// CSV reader. Loads a file (or string) into a single buffer and tokenizes
-// each non-empty line into a vector of string_views into that buffer.
-// The buffer lives in Result, so the views stay valid as long as Result does.
-// Handles UTF-8 BOM, quoted fields (the separator inside quotes is ignored),
-// and CRLF line endings.
 class CsvReader
 {
 public:

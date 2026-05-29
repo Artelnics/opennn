@@ -360,7 +360,6 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_data_path(read_json_string(data_source_element, "Path"));
 
-    // Legacy: "Streaming" key may exist in old JSONs — read and discard.
     if (data_source_element->has("Streaming"))
         (void)read_json_bool(data_source_element, "Streaming");
 
@@ -406,7 +405,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     cache_path = data_path / ".cache" / "images.bin";
 
-    // 1) Try to use existing cache.
     if (filesystem::exists(cache_path))
     {
         try
@@ -443,9 +441,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
                 target_variable.type = single_target ? VariableType::Binary : VariableType::Categorical;
                 target_variable.scaler = ScalerMethod::None;
                 target_variable.name = "Class";
-                // Placeholder category names; the binary cache stores only
-                // labels as int32 indices, not the original folder names.
-                // The training/loss/optimizer use the count, not the names.
+
                 vector<string> placeholder_categories(size_t(header.num_classes));
                 for (size_t i = 0; i < placeholder_categories.size(); ++i)
                     placeholder_categories[i] = to_string(i);
@@ -468,7 +464,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
                 }
                 return;
             }
-            // Header doesn't match — close and regenerate.
             cache_reader.close();
         }
         catch (const exception&)
@@ -477,7 +472,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         }
     }
 
-    // 2) No valid cache — scan the image directory and build it.
     vector<filesystem::path> directory_path;
 
     for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(data_path))
@@ -485,7 +479,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
             && !current_directory.path().filename().string().starts_with('.'))
             directory_path.emplace_back(current_directory.path());
 
-    // Sort for reproducibility of the cache content.
     ranges::sort(directory_path);
 
     const Index folders_number = directory_path.size();
@@ -560,8 +553,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     sample_roles.assign(samples_number, SampleRole::Training);
 
-    // Write header (with placeholder, will rewrite after writing pixels) then
-    // pixels then labels into a tmp file, rename atomically at the end.
     record_bytes_ = uint64_t(pixels_number);
     labels_off_   = uint64_t(sizeof(ImageCacheHeader)) + uint64_t(samples_number) * record_bytes_;
     num_classes_  = uint32_t(folders_number);
@@ -580,8 +571,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     filesystem::create_directories(cache_path.parent_path());
     const filesystem::path tmp_path = cache_path.string() + ".tmp";
 
-    // Stream pixels directly to the cache file so large image datasets do not
-    // require RAM proportional to samples_number * pixels_per_image.
     vector<int32_t> labels_out;
     labels_out.resize(size_t(samples_number));
 
@@ -659,7 +648,6 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     {
         try
         {
-            // Thread-local staging buffer to avoid heap churn per call.
             thread_local vector<uint8_t> buf;
             buf.resize(size_t(pixels_per_image));
 

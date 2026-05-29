@@ -8,9 +8,6 @@
 
 #pragma once
 
-// Bounded-blocking-style concurrent queue used by the optimizer family
-// (background batch prefetch, async data loaders). Standard mutex + condvar
-// pattern; nothing tensor-specific.
 
 #include <queue>
 #include <mutex>

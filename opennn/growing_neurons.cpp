@@ -90,8 +90,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         neural_network->compile();
 
-        //neural_network->print();
-        // throw runtime_error("Checking the network");
 
         neuron_selection_results.neurons_number_history(epoch) = neurons_number;
 
@@ -126,8 +124,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
                 {
                     neuron_selection_results.optimal_neurons_number = neurons_number;
 #ifdef OPENNN_HAS_CUDA
-                    // Drag params back from device memory before snapshotting
-                    // their host-side bytes. No-op needed in CPU-only builds.
                     neural_network->copy_parameters_host();
 #endif
                     neuron_selection_results.optimal_parameters =

@@ -112,8 +112,6 @@ struct DropoutOp : Operator
 
 struct ActivationOp : Operator
 {
-    // Enum lives at namespace scope in tensor_utilities.h; this alias keeps
-    // existing call sites (`ActivationOp::Function::Tanh`) working unchanged.
     using Function = ActivationFunction;
 
     static const EnumMap<Function>& map() { return activation_function_map(); }
@@ -125,15 +123,8 @@ struct ActivationOp : Operator
 
     cudnnActivationDescriptor_t descriptor = nullptr;
 
-    // Backward override: when non-empty, back_propagate reads the activation's
-    // output from this slot instead of output_slots[0]. Used when a downstream
-    // operator (e.g. DropoutOp) overwrites the activation's output in place.
     vector<size_t> output_slots_backward;
 
-    // When true, a preceding operator already applied this activation through a
-    // fused GPU epilogue (cuBLASLt RELU_BIAS in Dense, cuDNN bias+activation in
-    // Convolutional), so forward_propagate skips the redundant pass on the GPU
-    // path. back_propagate still applies the derivative — fusion is forward-only.
     bool forward_fused = false;
 
     void set_function(Function new_function);
@@ -162,10 +153,6 @@ struct CombinationOp : Operator
     Index output_features = 0;
     Type  weight_type     = Type::FP32;
 
-    // When true, forward_propagate uses the cuBLASLt RELU_BIAS epilogue so the
-    // GEMM, bias and ReLU run in a single launch (also fused on CPU via
-    // linear_forward). Set by the hosting Dense layer when the activation is
-    // ReLU and no BatchNorm sits between the combination and the activation.
     bool  fuse_relu       = false;
 
     TensorView weights;
@@ -196,16 +183,6 @@ struct CombinationOp : Operator
 private:
 };
 
-// Elman-style recurrent op (simple RNN with tied weights over the time axis).
-// Forward (per step t): z[t] = X[t]·W_in + h[t-1]·W_rec + b ;  h[t] = σ(z[t])
-// Output of the op = h[T-1]. Hidden states and σ'(z) are stored across steps
-// so the backward pass can do BPTT without recomputing the activations.
-//
-// Slot convention (set by hosting layer in configure_operators()):
-//   input_slots  = {Input}                                       // 3D (batch, time, features)
-//   output_slots = {Output, HiddenStates, ActivationDerivatives} // first is principal output (2D), the other two are 3D internal buffers
-//
-// Activation: Tanh by default (sane RNN choice). Sigmoid / Identity / ReLU also accepted.
 struct RecurrentOp : Operator
 {
     enum BackwardSlot
@@ -225,11 +202,6 @@ struct RecurrentOp : Operator
     Type  weight_type     = Type::FP32;
     ActivationOp::Function activation = ActivationOp::Function::Tanh;
 
-    // When false (default), forward emits only the final hidden state h[T-1]
-    // and backward expects a rank-2 output_delta of shape (batch, output_features).
-    // When true, forward emits the full sequence (batch, time_steps, output_features)
-    // and backward expects a rank-3 output_delta of the same shape. Needed to
-    // stack Recurrent layers since the next one's input must be rank-2 per sample.
     bool return_sequences = false;
 
     TensorView bias;
@@ -284,15 +256,6 @@ private:
                          TensorView& next_carry_scratch,
                          TensorView& step_in_delta_scratch) const;
 
-    // Forward-only device-side scratch. Forward state must persist across
-    // timesteps within a single forward pass (notably the swap between
-    // step_hidden_buf and prev_hidden_buf carries h[t-1] into step t), so
-    // these stay as per-instance buffers rather than slots in the framework
-    // forward pool (which has no lifetime reuse).
-    //
-    // Backward-only scratch lives in the per-layer delta_views pool, declared
-    // by Recurrent::get_backward_specs and consumed via the BackwardSlot
-    // indices above.
     mutable Buffer step_input_buf      {Device::CUDA};   // (batch, in_features)
     mutable Buffer step_hidden_buf     {Device::CUDA};   // (batch, out_features)
     mutable Buffer prev_hidden_buf     {Device::CUDA};   // (batch, out_features)
@@ -328,9 +291,6 @@ struct BatchNormOp : Operator
 
     void init_defaults();
 
-    // Slot convention (set by hosting layer):
-    //   input_slots  = {input}
-    //   output_slots = {output, mean, inverse_variance}
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
 
@@ -396,10 +356,6 @@ struct ConvolutionOp : Operator
     TensorView weight_gradient;
     TensorView bias_gradient;
 
-    // Non-owning. When set (by the hosting Convolutional layer for a ReLU
-    // activation with no BatchNorm), apply_gpu fuses bias + activation into the
-    // single cudnnConvolutionBiasActivationForward call. Owned by the layer's
-    // ActivationOp. Null = no fusion (plain bias). CPU path ignores it.
     cudnnActivationDescriptor_t fused_activation = nullptr;
 
 #ifdef OPENNN_HAS_CUDA
@@ -412,10 +368,6 @@ struct ConvolutionOp : Operator
 
     size_t cudnn_workspace_size_ = 0;
 
-    // High-water-mark of the batch size for which the cuDNN plan
-    // (algorithms + workspaces) is currently valid. Lazy-initialized on the
-    // first apply_gpu and re-tuned only if a larger batch arrives (e.g. test
-    // batch larger than training).
     Index planned_batch_size = 0;
 #endif
 
@@ -498,17 +450,10 @@ struct MultiHeadProjectionOp : Operator
     Index input_features = 0;
     Type  compute_dtype  = Type::FP32;
 
-    // Which view inside views[input_slots[0]] to read. 0 for query path, 1 for
-    // source path; clamped to size()-1 so self-attention (single input view)
-    // works regardless.
     size_t input_view_index = 0;
 
-    // Slot holding the shared transpose-scratch buffer.
     vector<size_t> scratch_slots;
 
-    // Backward configuration. Self vs cross-attention is detected per-call from
-    // forward_views[input_slots[0]].size() (1 = self, 2 = cross). The two pairs
-    // below select destination slot and accumulate flag for each mode.
     vector<size_t> input_delta_slots_self;
     vector<size_t> input_delta_slots_cross;
     bool accumulate_input_delta_self  = false;
@@ -554,7 +499,7 @@ struct AttentionOp : Operator
 
     TensorSpec backward_scratch_spec(Index batch_size) const;
 
-    size_t source_view_index = 1;  // 1 = source path; clamped to size()-1 for self-attention
+    size_t source_view_index = 1;
 
     vector<size_t> scratch_slots;
     vector<size_t> attention_output_slots;
@@ -709,10 +654,6 @@ struct PoolOp : Operator
     PoolOp(const PoolOp&) = delete;
     PoolOp& operator=(const PoolOp&) = delete;
 
-    // Slot convention (set by Pooling layer in update_pool_operator):
-    //   input_slots  = {Input}
-    //   output_slots = {Output, MaximalIndices} for MaxPooling
-    //   output_slots = {Output}                  for AveragePooling
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
 

@@ -45,8 +45,6 @@ public:
     string decode_to_stream(const string& source, ostream& out);
     string decode_to_stream(const string& source, const SamplingConfig& config, ostream& out);
 
-    // Interactive REPL: reads prompts from cin, streams predictions to
-    // cout. Empty line or Ctrl+D exits.
     void chat();
     void chat(const SamplingConfig& config);
 

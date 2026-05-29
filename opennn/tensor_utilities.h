@@ -15,10 +15,6 @@
 namespace opennn
 {
 
-// Activation enum lives here (not in operators.h) so math_utilities.h can
-// reference it without pulling the full Operator / cuDNN frontend stack.
-// ActivationOp keeps a `using Function = ActivationFunction;` alias for
-// back-compat with code that says `ActivationOp::Function::Tanh`.
 enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax };
 
 [[nodiscard]] const EnumMap<ActivationFunction>& activation_function_map();
@@ -452,8 +448,6 @@ using array = Eigen::array<T, N>;
 [[nodiscard]] string shape_to_string(const Shape&, const string& = " ");
 [[nodiscard]] Shape string_to_shape(const string&, const string& = " ");
 
-// Boost-style hash combine. Mixes one or more values into a single size_t. Used
-// for plan/graph cache keys (cuBLASLt, cuDNN SDPA).
 template<typename... Vs>
 [[nodiscard]] size_t hash_combine(const Vs&... values)
 {
@@ -464,8 +458,6 @@ template<typename... Vs>
 
 #ifdef OPENNN_HAS_CUDA
 
-// RAII wrapper around cudaStream_t. Destroys the underlying stream in the
-// destructor so an exception thrown during training cannot leak the handle.
 struct CudaStream
 {
     cudaStream_t handle = nullptr;
@@ -575,12 +567,11 @@ inline void TensorView::fill(float value)
     if (!data) return;
 
 #ifdef OPENNN_HAS_CUDA
-    // Probe the pointer: set_parameters_random() may call fill() on host-resident
-    // TensorViews even when Device is already GPU.
+
     cudaPointerAttributes attr{};
     const cudaError_t err = cudaPointerGetAttributes(&attr, data);
     const bool gpu_data = (err == cudaSuccess) && (attr.type == cudaMemoryTypeDevice);
-    if (err != cudaSuccess) cudaGetLastError();   // clear sticky error from CPU pointer probe
+    if (err != cudaSuccess) cudaGetLastError();
 
     if (gpu_data)
     {
@@ -612,10 +603,6 @@ inline void TensorView::set_zero_async() const
 inline const float one = 1.0f;
 inline const float zero = 0.0f;
 
-// Sync D2H copy of a contiguous device buffer into an FP32 host buffer,
-// upcasting BF16 -> FP32 inline. Blocks on `stream`. Throws on unsupported
-// dtype. Allocates a uint16_t staging buffer for BF16 sources, so callers on
-// hot paths may prefer an inline version with a pre-allocated staging buffer.
 void copy_device_to_host_float(const void* device_src, Type src_dtype,
                                Index element_count, float* host_dst,
                                cudaStream_t stream);

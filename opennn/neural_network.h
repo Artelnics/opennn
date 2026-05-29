@@ -186,8 +186,6 @@ public:
 
     void cast_parameters_to_bf16();
 
-    // Returns nullptr when no BF16 mirror is allocated (FP32-only mode), so
-    // optimizer kernels can pass it straight through and skip the mirror write.
     [[nodiscard]] bfloat16* get_parameters_bf16_data()
     {
         return parameters_bf16.empty() ? nullptr : parameters_bf16.as<bfloat16>();
@@ -245,8 +243,6 @@ protected:
 
     Configuration::Resolved config;
 
-    // Cached by get_first/last_trainable_layer_index after first computation.
-    // Invalidated when the layer list changes (add_layer / clear).
     mutable Index first_trainable_cache_ = -1;
     mutable Index last_trainable_cache_  = -1;
 };
