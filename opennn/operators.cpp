@@ -72,10 +72,9 @@ void UpsampleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
 
-#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
         throw runtime_error("UpsampleOp GPU path is not implemented yet.");
-#endif
+
     apply(input, output);
 }
 
@@ -110,10 +109,9 @@ void UpsampleOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t
     TensorView& input_delta = get_input_delta(bp, layer);
     if (input_delta.empty()) return;
 
-#ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
         throw runtime_error("UpsampleOp GPU path is not implemented yet.");
-#endif
+
     apply_delta(output_delta, input_delta);
 }
 
@@ -167,10 +165,8 @@ void ConcatenateOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool
     if (inputs.size() != input_channels.size())
         throw runtime_error("Concatenate: input count mismatch.");
 
-#ifdef OPENNN_HAS_CUDA
     if (output.is_cuda())
         throw runtime_error("ConcatenateOp GPU path is not implemented yet.");
-#endif
 
     const Index batch_size = output.shape[0];
     Index total_channels = 0;
@@ -201,10 +197,8 @@ void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, siz
 {
     const TensorView& output_delta = get_output_delta(bp, layer);
 
-#ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
         throw runtime_error("ConcatenateOp GPU path is not implemented yet.");
-#endif
 
     const Index batch_size = output_delta.shape[0];
     Index total_channels = 0;
@@ -674,6 +668,13 @@ void BatchNormOp::apply_delta_gpu(const TensorView& input,
         EPSILON,
         mean.data, inverse_variance.data));
 }
+
+#else
+
+void BatchNormOp::apply_inference_gpu(const TensorView&, TensorView&)                                    { throw runtime_error("BatchNorm::apply_inference_gpu: CUDA support not compiled in."); }
+void BatchNormOp::apply_training_gpu (const TensorView&, TensorView&, TensorView&, TensorView&)          { throw runtime_error("BatchNorm::apply_training_gpu: CUDA support not compiled in."); }
+void BatchNormOp::apply_delta_gpu    (const TensorView&, const TensorView&, const TensorView&,
+                                    TensorView&) const                                                  { throw runtime_error("BatchNorm::apply_delta_gpu: CUDA support not compiled in."); }
 
 #endif
 
@@ -1279,6 +1280,21 @@ void RecurrentOp::apply_delta_gpu(const TensorView& input,
     });
 }
 
+#else
+
+void RecurrentOp::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&, bool)
+{
+    throw runtime_error("RecurrentOp::apply_gpu: CUDA support not compiled in.");
+}
+
+void RecurrentOp::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&,
+                                  const TensorView&, TensorView&,
+                                  TensorView&, TensorView&, TensorView&,
+                                  TensorView&, TensorView&) const
+{
+    throw runtime_error("RecurrentOp::apply_delta_gpu: CUDA support not compiled in.");
+}
+
 #endif
 
 void ConvolutionOp::set(Index new_input_h, Index new_input_w,
@@ -1518,18 +1534,15 @@ void ConvolutionOp::apply_delta_cpu(const TensorView& input,
 #pragma GCC diagnostic pop
 #endif
 
+#ifdef OPENNN_HAS_CUDA
+
 void ConvolutionOp::destroy_cuda()
 {
-#ifdef OPENNN_HAS_CUDA
     if (kernel_descriptor)      { cudnnDestroyFilterDescriptor(kernel_descriptor);           kernel_descriptor = nullptr; }
     if (convolution_descriptor) { cudnnDestroyConvolutionDescriptor(convolution_descriptor); convolution_descriptor = nullptr; }
     cudnn_workspace_size_ = 0;
     planned_batch_size = 0;
-#endif
 }
-
-#ifdef OPENNN_HAS_CUDA
-
 void ConvolutionOp::plan_convolution_algorithms(const TensorView& input, const TensorView& output)
 {
     cudnnHandle_t handle = Backend::get_cudnn_handle();
@@ -1687,6 +1700,12 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
         &zero,
         input_delta.get_descriptor(), input_delta.data));
 }
+
+#else
+
+void ConvolutionOp::destroy_cuda()                                                                  {}
+void ConvolutionOp::apply_gpu(const TensorView&, TensorView&, cudnnActivationDescriptor_t)          { throw runtime_error("Convolution::apply_gpu: CUDA support not compiled in."); }
+void ConvolutionOp::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("Convolution::apply_delta_gpu: CUDA support not compiled in."); }
 
 #endif
 
@@ -3107,14 +3126,12 @@ void PoolOp::apply_delta_cpu(const TensorView& output_delta,
         });
 }
 
+#ifdef OPENNN_HAS_CUDA
+
 void PoolOp::destroy_cuda()
 {
-#ifdef OPENNN_HAS_CUDA
     if (pooling_descriptor) { cudnnDestroyPoolingDescriptor(pooling_descriptor); pooling_descriptor = nullptr; }
-#endif
 }
-
-#ifdef OPENNN_HAS_CUDA
 
 void PoolOp::apply_gpu(const TensorView& input, TensorView& output)
 {
@@ -3140,6 +3157,12 @@ void PoolOp::apply_delta_gpu(const TensorView& input,
         &zero,
         input_delta.get_descriptor(),  input_delta.data));
 }
+
+#else
+
+void PoolOp::destroy_cuda()                                                                           {}
+void PoolOp::apply_gpu(const TensorView&, TensorView&)                                                { throw runtime_error("Pool::apply_gpu: CUDA support not compiled in."); }
+void PoolOp::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("Pool::apply_delta_gpu: CUDA support not compiled in."); }
 
 #endif
 
@@ -3347,10 +3370,9 @@ void DetectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
     const TensorView& input = get_input(fp, layer);
     TensorView& output = get_output(fp, layer);
 
-#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
         throw runtime_error("DetectionOp GPU path is not implemented yet.");
-#endif
+
     apply(input, output);
 }
 
@@ -3415,10 +3437,9 @@ void DetectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
 
     if (input_delta.empty()) return;
 
-#ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
         throw runtime_error("DetectionOp GPU path is not implemented yet.");
-#endif
+
     apply_delta(output, output_delta, input_delta);
 }
 
@@ -3905,12 +3926,12 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
                                         TensorView& candidate_delta_scratch,
                                         TensorView& output_delta_scratch,
                                         const TensorView& forget_gate,
-                                            const TensorView& input_gate,
-                                            const TensorView& candidate_gate,
-                                            const TensorView& output_gate,
-                                            const TensorView& cell_state,
-                                            const TensorView& hidden_state,
-                                            const TensorView& cell_activation) const
+                                        const TensorView& input_gate,
+                                        const TensorView& candidate_gate,
+                                        const TensorView& output_gate,
+                                        const TensorView& cell_state,
+                                        const TensorView& hidden_state,
+                                        const TensorView& cell_activation) const
 {
     if (!input.data || !output_delta.data || output_features == 0 || time_steps == 0) return;
 
