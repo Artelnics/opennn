@@ -73,7 +73,7 @@ private:
 
     bool nesterov = false;
 
-    Index batch_size = 1000;
+    Index batch_size = 100;
 
     type training_loss_goal = type(0);
 

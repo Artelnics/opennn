@@ -99,7 +99,7 @@ private:
 
    Index maximum_validation_failures = numeric_limits<Index>::max();
 
-   Index batch_size = 1000;
+   Index batch_size = 100;
 
 #ifdef OPENNN_CUDA
 
