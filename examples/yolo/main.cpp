@@ -255,21 +255,68 @@ int main()
         set_seed(42);
         Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
 
-        // Synthetic dataset: 64x64 BMPs, one colored block per image, two classes.
+        // ===== Configuration toggles =====
+        //
+        // Two independent switches: backbone architecture and dataset source.
+        // Keep both at their defaults to reproduce the Phase 2 baseline; flip
+        // them to exercise the Phase 3 additions.
+        //
+        // PASCAL VOC: download VOCdevkit/VOC2007 and point voc_root at it.
+        // The converter writes YOLO-format labels into <data_dir>/voc_labels
+        // (only the first time; subsequent runs reuse them).
+        // const auto backbone = YoloNetwork::Backbone::Vgg;
+        const auto backbone = YoloNetwork::Backbone::DarknetTiny;
 
-        const std::filesystem::path data_dir = "yolo_data";
-        const std::filesystem::path images_dir = data_dir / "images";
-        const std::filesystem::path labels_dir = data_dir / "labels";
+        // Softmax = mutually-exclusive classes (VOC, synthetic). Sigmoid =
+        // independent per-class labels (YOLOv3-style, multi-label datasets).
+        // Default stays Softmax so existing baselines reproduce exactly.
+        const auto class_activation = YoloNetwork::ClassActivation::Softmax;
+        // const auto class_activation = YoloNetwork::ClassActivation::Sigmoid;
 
-        generate_synthetic_dataset(images_dir, labels_dir, /*samples_per_class=*/256);
+        const bool use_voc = true;
+        const std::filesystem::path voc_root = "/home/alvaromartin/VOCdevkit/VOC2007";
+        const std::string voc_image_set = "trainval_small";
 
-        // Dataset (grid 4x4 over 128x128 input requires input H/W == grid*32).
-        // The minimal builder ends with a 3x3 conv, so grid_size must be >= 3.
+        // ===== Dataset =====
 
-        constexpr Index grid_size = 4;
-        constexpr Index boxes_per_cell = 2;
-        const Shape input_shape{128, 128, 3};
-        const std::vector<std::array<float, 2>> anchors{{0.25f, 0.25f}, {0.5f, 0.5f}};
+        const std::filesystem::path data_dir = use_voc ? "yolo_voc_data" : "yolo_data";
+        std::filesystem::path images_dir;
+        std::filesystem::path labels_dir;
+        Index grid_size;
+        Index boxes_per_cell;
+        Shape input_shape;
+        std::vector<std::array<float, 2>> anchors;
+
+        if (use_voc)
+        {
+            images_dir = voc_root / "JPEGImages";
+            labels_dir = data_dir / "voc_labels";
+            const Index converted =
+                YoloDataset::convert_voc_to_yolo(voc_root, voc_image_set, labels_dir);
+            std::cout << "Converted " << converted
+                      << " VOC samples to YOLO format in " << labels_dir << "\n";
+
+            grid_size = 13;
+            boxes_per_cell = 5;
+            input_shape = Shape{416, 416, 3};
+            // Standard YOLOv2 k-means anchors on VOC (in image-fraction units).
+            anchors = {{0.057f, 0.075f}, {0.169f, 0.130f}, {0.330f, 0.262f},
+                       {0.279f, 0.640f}, {0.778f, 0.808f}};
+        }
+        else
+        {
+            // Synthetic dataset: 64x64 BMPs, one colored block per image, two classes.
+            images_dir = data_dir / "images";
+            labels_dir = data_dir / "labels";
+            generate_synthetic_dataset(images_dir, labels_dir, /*samples_per_class=*/256);
+
+            // Grid 4x4 over 128x128 input requires input H/W == grid*32.
+            // The minimal Vgg builder ends with a 3x3 conv, so grid_size must be >= 3.
+            grid_size = 4;
+            boxes_per_cell = 2;
+            input_shape = Shape{128, 128, 3};
+            anchors = {{0.25f, 0.25f}, {0.5f, 0.5f}};
+        }
 
         YoloDataset dataset(images_dir, labels_dir, input_shape,
                             grid_size, boxes_per_cell, anchors);
@@ -297,7 +344,16 @@ int main()
         YoloNetwork yolo_network(input_shape,
                                  dataset.get_classes_number(),
                                  dataset.get_anchors(),
-                                 grid_size);
+                                 grid_size,
+                                 backbone,
+                                 class_activation);
+
+        std::cout << "Network: backbone="
+                  << (backbone == YoloNetwork::Backbone::Vgg ? "Vgg" : "DarknetTiny")
+                  << ", class_activation="
+                  << (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "Sigmoid" : "Softmax")
+                  << ", layers=" << yolo_network.get_layers_number()
+                  << ", parameters=" << yolo_network.get_parameters_number() << "\n";
 
         // Loosen the NMS confidence threshold so the demo prints something visible
         // even on an under-trained tiny model.
@@ -313,18 +369,36 @@ int main()
         TrainingStrategy training_strategy(&yolo_network, &dataset);
         training_strategy.set_loss("Yolo");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-        training_strategy.get_loss()->set_regularization("None");
+        // L2 weight decay is the brake on directional weight drift from the
+        // geometry-coupled YOLO loss (especially when GIoU/DIoU is enabled).
+        // Default weight 0.001 — matches every other example in the repo.
+        training_strategy.get_loss()->set_regularization("L2");
 
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
             training_strategy.get_optimization_algorithm());
         adam->set_batch_size(8);
-        adam->set_maximum_epochs(20);
+        adam->set_maximum_epochs(5);
         adam->set_display_period(1);
+        // Tighter global gradient clip than the 1.0 default — Adam is
+        // scale-invariant so this matters less for the step magnitude, but it
+        // still bounds the second-moment estimate's growth rate, which helps
+        // keep the t_w/t_h logits from saturating exp() under GIoU.
+        adam->set_gradient_clip_norm(0.1f);
 
         // Skip training if weights already exist on disk — lets you iterate on
         // visualization / inference code without retraining. Delete the file to
-        // force a fresh training run.
-        const std::filesystem::path weights_path = data_dir / "yolo_weights.bin";
+        // force a fresh training run. The filename encodes the backbone so
+        // switching architectures doesn't try to load incompatible weights.
+        const std::string weights_filename = std::string("yolo_weights_") +
+            (backbone == YoloNetwork::Backbone::Vgg ? "vgg" : "darknet") +
+            std::string(".bin");
+        std::filesystem::path weights_path = data_dir / weights_filename;
+        // Backward-compat: load the Phase 2 committed weights file if present.
+        const std::filesystem::path legacy_weights = data_dir / "yolo_weights.bin";
+        if (backbone == YoloNetwork::Backbone::Vgg
+        &&  !std::filesystem::exists(weights_path)
+        &&   std::filesystem::exists(legacy_weights))
+            weights_path = legacy_weights;
         if (std::filesystem::exists(weights_path))
         {
             yolo_network.load_parameters_binary(weights_path);

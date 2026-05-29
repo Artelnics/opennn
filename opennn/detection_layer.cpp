@@ -91,11 +91,18 @@ void Detection::configure_operator()
 void Detection::read_JSON_body(const Json* root)
 {
     set_anchors(string_to_anchors(read_json_string(root, "Anchors")));
+
+    // Missing → empty → Softmax: keeps Phase 1/2 saved networks loadable.
+    set_class_activation(read_json_string(root, "ClassActivation") == "Sigmoid"
+                         ? ClassActivation::Sigmoid
+                         : ClassActivation::Softmax);
 }
 
 void Detection::write_JSON_body(JsonWriter& writer) const
 {
     add_json_field(writer, "Anchors", anchors_to_string(detection.anchors));
+    add_json_field(writer, "ClassActivation",
+                   detection.class_activation == ClassActivation::Sigmoid ? "Sigmoid" : "Softmax");
 }
 
 REGISTER(Layer, Detection, "Detection")

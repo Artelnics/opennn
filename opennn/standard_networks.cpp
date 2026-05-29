@@ -422,7 +422,9 @@ ResNet::ResNet(const Shape& input_shape,
 YoloNetwork::YoloNetwork(const Shape& input_shape,
                          Index classes_number,
                          const vector<array<float, 2>>& anchors,
-                         Index grid_size) : NeuralNetwork()
+                         Index grid_size,
+                         Backbone backbone,
+                         ClassActivation class_activation) : NeuralNetwork()
 {
     if (input_shape.rank != 3)
         throw runtime_error("YoloNetwork: input shape must be rank 3 (H, W, C).");
@@ -432,30 +434,110 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         throw runtime_error("YoloNetwork: this minimal builder expects input H/W == grid_size * 32.");
 
     const Shape stride{1, 1};
+    const Shape stride_2{2, 2};
     const Shape pool{2, 2};
     const Shape pool_stride{2, 2};
     const Shape no_padding{0, 0};
 
-    const vector<Index> filters = {32, 64, 128, 256, 512};
+    // Conv with BatchNorm fused in (the 6th ctor flag). Explicit input wiring
+    // is needed so multiple branches can read the same tensor for skip-adds.
+    // Returns the new layer's global index.
+    auto add_conv = [&](Index input_index, const Shape& kernel_shape,
+                        const char* activation, const Shape& kernel_stride,
+                        bool batch_norm, const string& name) -> Index {
+        add_layer(make_unique<Convolutional>(
+                      get_layer(input_index)->get_output_shape(),
+                      kernel_shape, activation, kernel_stride, "Same",
+                      batch_norm, name),
+                  {input_index});
+        return get_layers_number() - 1;
+    };
 
-    for (Index i = 0; i < ssize(filters); ++i)
+    if (backbone == Backbone::Vgg)
     {
-        const Shape conv_input_shape = (i == 0) ? input_shape : get_output_shape();
+        const vector<Index> filters = {32, 64, 128, 256, 512};
 
-        add_layer(make_unique<Convolutional>(conv_input_shape,
-                                             Shape{3, 3, conv_input_shape[2], filters[size_t(i)]},
+        for (Index i = 0; i < ssize(filters); ++i)
+        {
+            const Shape conv_input_shape = (i == 0) ? input_shape : get_output_shape();
+
+            add_layer(make_unique<Convolutional>(conv_input_shape,
+                                                 Shape{3, 3, conv_input_shape[2], filters[size_t(i)]},
+                                                 "ReLU", stride, "Same", true,
+                                                 format("yolo_conv_{}", i + 1)));
+
+            add_layer(make_unique<Pooling>(get_output_shape(), pool, pool_stride,
+                                           no_padding, "MaxPooling",
+                                           format("yolo_pool_{}", i + 1)));
+        }
+
+        add_layer(make_unique<Convolutional>(get_output_shape(),
+                                             Shape{3, 3, get_output_shape()[2], 1024},
                                              "ReLU", stride, "Same", true,
-                                             format("yolo_conv_{}", i + 1)));
-
-        add_layer(make_unique<Pooling>(get_output_shape(), pool, pool_stride,
-                                       no_padding, "MaxPooling",
-                                       format("yolo_pool_{}", i + 1)));
+                                             "yolo_conv_6"));
     }
+    else // Backbone::DarknetTiny
+    {
+        // Darknet residual block: 1x1 reduce to half-channels → 3x3 restore →
+        // add(input). Both convs use BN; the final add has no activation, then
+        // a standalone ReLU layer matches the post-add ReLU used in ResNet().
+        // No projection on the skip path — block preserves channel count.
+        auto add_residual_block = [&](Index input_index, Index channels,
+                                      const string& prefix) -> Index {
+            const Index reduced = max<Index>(channels / 2, 1);
 
-    add_layer(make_unique<Convolutional>(get_output_shape(),
-                                         Shape{3, 3, get_output_shape()[2], 1024},
-                                         "ReLU", stride, "Same", true,
-                                         "yolo_conv_6"));
+            Index main_index = add_conv(input_index,
+                Shape{1, 1, channels, reduced}, "ReLU",
+                stride, true, prefix + "_conv1");
+            main_index = add_conv(main_index,
+                Shape{3, 3, reduced, channels}, "Identity",
+                stride, true, prefix + "_conv2");
+
+            add_layer(make_unique<Addition>(get_layer(main_index)->get_output_shape(),
+                                            prefix + "_add"),
+                      {main_index, input_index});
+            const Index add_index = get_layers_number() - 1;
+
+            add_layer(make_unique<Activation>(get_layer(add_index)->get_output_shape(),
+                                              "ReLU", prefix + "_relu"),
+                      {add_index});
+            return get_layers_number() - 1;
+        };
+
+        // Stem already halves resolution. Each subsequent stage = stride-2
+        // conv (downsample + channel expansion) + N residual blocks.
+        // {channels, blocks_per_stage}: trimmed Darknet-53 layout — total ~3.4M
+        // params, CPU-tractable, hits a 13x13 grid for 416x416 input (stem
+        // stride 2 + 4 stage downsamples = 5 total → 416/32 = 13).
+        const vector<pair<Index, Index>> stages = {
+            { 64, 1},
+            {128, 1},
+            {256, 1},
+            {512, 1},
+        };
+
+        // Stem: first layer in the network, no preceding layer to wire from.
+        add_layer(make_unique<Convolutional>(input_shape,
+                                             Shape{3, 3, input_shape[2], 32},
+                                             "ReLU", stride_2, "Same", true,
+                                             "darknet_stem"));
+        Index last_index = get_layers_number() - 1;
+
+        for (size_t s = 0; s < stages.size(); ++s)
+        {
+            const Index ch = stages[s].first;
+            const Index n  = stages[s].second;
+            const Index in_ch = get_layer(last_index)->get_output_shape()[2];
+
+            last_index = add_conv(last_index,
+                Shape{3, 3, in_ch, ch}, "ReLU",
+                stride_2, true, format("darknet_down_{}", s + 1));
+
+            for (Index b = 0; b < n; ++b)
+                last_index = add_residual_block(last_index, ch,
+                    format("darknet_s{}_b{}", s + 1, b));
+        }
+    }
 
     const Index detection_channels = ssize(anchors) * (5 + classes_number);
 
@@ -465,6 +547,10 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                                          "yolo_logits"));
 
     add_layer(make_unique<Detection>(get_output_shape(), anchors, "detection_layer"));
+    static_cast<Detection&>(*get_layers().back()).set_class_activation(
+        class_activation == ClassActivation::Sigmoid
+        ? Detection::ClassActivation::Sigmoid
+        : Detection::ClassActivation::Softmax);
 
     add_layer(make_unique<NonMaxSuppression>(get_output_shape(),
                                              ssize(anchors),

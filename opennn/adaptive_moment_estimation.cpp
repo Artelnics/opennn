@@ -371,7 +371,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     {
         PROFILE_SCOPE("optim:clip_gradient_norm");
-        clip_gradient_norm(back_propagation.gradient, 1.0f);
+        clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
     }
 
     const float iteration = static_cast<float>(optimization_data.iteration);

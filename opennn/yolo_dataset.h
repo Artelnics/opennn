@@ -116,6 +116,17 @@ public:
     const Shape& get_cache_input_shape() const { return cache_input_shape; }
     Index get_cache_grid_size() const { return cache_grid_size; }
 
+    // PASCAL VOC → YOLO converter. Reads VOC XML annotations under
+    // <voc_root>/Annotations and the image-id list under
+    // <voc_root>/ImageSets/Main/<image_set>.txt, then writes one YOLO .txt
+    // per image into <output_labels_dir> plus a classes.names file listing
+    // the 20 standard VOC classes in canonical order. Idempotent — re-running
+    // overwrites the labels but rebuilds nothing else. Returns the number of
+    // (image, label) pairs converted.
+    static Index convert_voc_to_yolo(const filesystem::path& voc_root,
+                                     const string& image_set,
+                                     const filesystem::path& output_labels_dir);
+
 private:
 
     filesystem::path images_directory;

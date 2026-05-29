@@ -83,6 +83,37 @@ private:
     void check(const vector<TensorView>& inputs, const TensorView& output) const;
 };
 
+struct UpsampleOp : Operator
+{
+    Index input_height = 0;
+    Index input_width = 0;
+    Index channels = 0;
+    Index scale_factor = 2;
+
+    void set(Index in_h, Index in_w, Index ch, Index scale);
+
+    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
+
+private:
+    void apply(const TensorView& input, TensorView& output) const;
+    void apply_delta(const TensorView& output_delta, TensorView& input_delta) const;
+};
+
+struct ConcatenateOp : Operator
+{
+    // All inputs share H,W but contribute their own channel count. Output
+    // channels = sum of per-input channels. Stored to slice deltas back.
+    Index height = 0;
+    Index width = 0;
+    vector<Index> input_channels;
+
+    void set(Index h, Index w, const vector<Index>& per_input_channels);
+
+    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
+    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
+};
+
 struct DropoutOp : Operator
 {
     float rate = 0.0f;
@@ -848,9 +879,15 @@ struct UnscaleOp : Operator
 
 struct DetectionOp : Operator
 {
+    // Softmax = mutually-exclusive classes (YOLO v1/v2). Sigmoid = independent
+    // per-class probabilities (YOLO v3+, multi-label datasets). Loss pairs each
+    // mode with the matching error: CE for Softmax, BCE for Sigmoid.
+    enum class ClassActivation { Softmax, Sigmoid };
+
     Index grid_size = 0;
     Index boxes_per_cell = 0;
     Index classes_number = 0;
+    ClassActivation class_activation = ClassActivation::Softmax;
 
     vector<array<float, 2>> anchors;
 

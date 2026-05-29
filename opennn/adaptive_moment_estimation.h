@@ -34,6 +34,14 @@ public:
    void set_beta_1(const float);
    void set_beta_2(const float);
 
+   // Global gradient L2-norm clip applied before each parameter update. The
+   // default 1.0 preserves the previously hard-coded behaviour, so every
+   // existing example keeps its exact training trajectory. Tighten this for
+   // detection-style losses (GIoU/DIoU) whose per-cell gradients carry a
+   // directional bias that benefits from a smaller per-step magnitude.
+   void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
+   float get_gradient_clip_norm() const { return gradient_clip_norm; }
+
    TrainingResults train() override;
 
    void update_parameters(BackPropagation&, OptimizerData&) const;
@@ -49,6 +57,8 @@ private:
    float beta_1 = 0.9f;
 
    float beta_2 = 0.999f;
+
+   float gradient_clip_norm = 1.0f;
 
    Index batch_size = 0;
 };
