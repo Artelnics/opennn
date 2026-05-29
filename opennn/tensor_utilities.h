@@ -304,6 +304,7 @@ struct TensorView
     Index byte_size() const noexcept { return size() * type_bytes(type); }
 
     bool empty() const noexcept { return shape.empty(); }
+    bool is_cuda() const noexcept { return device == Device::CUDA; }
 
     template<typename T>
     T* as() const noexcept

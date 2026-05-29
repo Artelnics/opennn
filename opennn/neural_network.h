@@ -35,8 +35,6 @@ public:
     bool is_cpu() const { return config.device == Device::CPU; }
 
     Type get_training_type()  const { return config.training_type; }
-    Type get_inference_type() const { return config.inference_type; }
-    Type get_compute_type(bool is_training) const { return is_training ? config.training_type : config.inference_type; }
 
     vector<vector<TensorSpec>> get_parameter_specs() const 
     { 

@@ -25,7 +25,7 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-        Configuration::instance().set(Device::Auto, Type::Auto, Type::FP32);
+        Configuration::instance().set(Device::Auto, Type::Auto);
 
         // Settings
 

@@ -86,7 +86,7 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
     const auto& source_layers = neural_network->get_source_layers();
     const Type compute_dtype = neural_network->is_gpu()
-        ? neural_network->get_compute_type(/*is_training=*/true)
+        ? neural_network->get_training_type()
         : Type::FP32;
 
     vector<DeltaEntry> deltas;

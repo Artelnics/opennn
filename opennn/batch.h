@@ -65,7 +65,7 @@ struct Batch
     bool is_empty() const;
 
     Index samples_number = 0;
-    Index current_sample_count = 0;     // set by fill(); may be < samples_number
+    Index current_sample_count = 0;     // May be < samples_number for the last batch.
 
     const Dataset* dataset = nullptr;
     Configuration::Resolved config;
@@ -84,25 +84,20 @@ struct Batch
     int target_contiguous = -1;
 
 #ifdef OPENNN_HAS_CUDA
-    void copy_device_async(const Index, cudaStream_t, float* fp32_staging);
+    void copy_device_async(cudaStream_t);
 
     void gather_device_async(const Index current_batch_size,
                              const Index* device_row_indices,
                              const float* resident_input, Index resident_input_features,
                              const float* resident_target, Index resident_target_features);
 
+    Buffer fp32_staging{Device::CUDA};
+
     cudaEvent_t h2d_done_event = nullptr;
     bool        h2d_done_recorded = false;
 #endif
 
     void wait_h2d_complete();
-
-    Index get_fp32_staging_bytes() const
-    {
-        return needs_fp32_staging
-            ? samples_number * input_features_number * Index(sizeof(float))
-            : Index(0);
-    }
 
     vector<TensorView> input_views_host_cache;
     TensorView target_view_host_cache;

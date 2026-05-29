@@ -103,6 +103,10 @@ void Batch::set(const Index new_samples_number,
 
 #ifdef OPENNN_HAS_CUDA
     needs_fp32_staging = bf16_input;
+    fp32_staging.resize_bytes(needs_fp32_staging
+        ? samples_number * input_features_number * Index(sizeof(float))
+        : Index(0),
+        Device::CUDA);
 
     if (!input_shape.empty() && input.data)
     {
@@ -212,8 +216,9 @@ Batch::~Batch()
     if (targets_host) cudaFreeHost(targets_host);
 }
 
-void Batch::copy_device_async(const Index current_batch_size, cudaStream_t stream, float* fp32_staging)
+void Batch::copy_device_async(cudaStream_t stream)
 {
+    const Index current_batch_size = current_sample_count;
     const Index input_size  = current_batch_size * input_features_number;
     const Index target_size = current_batch_size * target_features_number;
 
@@ -223,9 +228,9 @@ void Batch::copy_device_async(const Index current_batch_size, cudaStream_t strea
 
     if (needs_fp32_staging)
     {
-        assert(fp32_staging != nullptr);
-        copy_to_device(fp32_staging, inputs_host, input_size * sizeof(float));
-        cast_fp32_to_bf16_cuda(input_size, fp32_staging, input.as<bfloat16>(), stream);
+        assert(fp32_staging.bytes >= input_size * Index(sizeof(float)));
+        copy_to_device(fp32_staging.as<float>(), inputs_host, input_size * sizeof(float));
+        cast_fp32_to_bf16_cuda(input_size, fp32_staging.as<float>(), input.as<bfloat16>(), stream);
     }
     else
     {

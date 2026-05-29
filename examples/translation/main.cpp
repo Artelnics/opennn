@@ -30,7 +30,7 @@ int main()
     {
         cout << "OpenNN. Translation Example." << endl;
 
-        Configuration::instance().set(Device::Auto, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::Auto, Type::FP32);
 
         // Dataset
 

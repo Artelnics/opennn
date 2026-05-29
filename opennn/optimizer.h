@@ -31,6 +31,7 @@ struct TrainingResults;
 struct BatchFillSession
 {
     explicit BatchFillSession(Index batches_number);
+    ~BatchFillSession();
 
     BatchFillSession(const BatchFillSession&) = delete;
     BatchFillSession& operator=(const BatchFillSession&) = delete;
@@ -38,11 +39,20 @@ struct BatchFillSession
     void rethrow_if_error();
 
     unique_ptr<atomic<Batch*>[]> ready;
-    vector<jthread>              workers;
+    atomic<Index>                next_iteration{0};
+    atomic<bool>                 cancelled{false};
+
+    // Set by start_batch_workers; ~BatchFillSession uses it to unblock workers
+    // stuck in pop() if the consumer abandoned the session mid-epoch.
+    ThreadSafeQueue<Batch*>*     empty_queue = nullptr;
 
     mutex          error_mutex;
     exception_ptr  worker_error;
     atomic<bool>   error_pending{false};
+
+    // Declared last so ~vector joins all threads before the error state above
+    // is destroyed — workers may still be in their catch(...) handler.
+    vector<jthread> workers;
 };
 
 #ifdef OPENNN_HAS_CUDA
@@ -138,7 +148,7 @@ protected:
                                        Index batch_size);
 #endif
 
-    void prefetch_batch(Batch& batch, Index sample_count);
+    void prefetch_batch(Batch& batch);
 
     void sync_device(bool on_gpu);
 
@@ -229,8 +239,6 @@ protected:
     string name;
 
     int num_workers = 2;
-
-    Buffer prefetch_fp32_staging{Device::CUDA};
 
 #ifdef OPENNN_HAS_CUDA
     ResidentEpochState resident_train_;

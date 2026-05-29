@@ -160,10 +160,10 @@ int main()
         cout << "OpenNN. ResNet-50 ImageNet single-image test." << endl;
 
 #ifdef OPENNN_HAS_CUDA
-        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::FP32);
         Backend::instance();
 #else
-        Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CPU, Type::FP32);
 #endif
 
         const filesystem::path imagenette_path = "/home/artelnics/Documents/imagenette2_bmp_224";
@@ -262,10 +262,10 @@ int main()
         cout << "OpenNN. HIGGS 5x300 DNN max-batch benchmark." << endl;
 
 #ifdef OPENNN_HAS_CUDA
-        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::FP32);
         Backend::instance();
 #else
-        Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CPU, Type::FP32);
 #endif
 
         const filesystem::path dataset_path = "/home/artelnics/Documents/HIGGS.csv";
@@ -354,7 +354,7 @@ int main()
         cout << "OpenNN. HIGGS 5x300 DNN benchmark." << endl;
 
 #ifdef OPENNN_HAS_CUDA
-        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::FP32);
         Backend::instance();
 #endif
 
@@ -458,7 +458,7 @@ int main()
         cout << "OpenNN. train_1000_filter ResNet-18 ImageNet transfer learning." << endl;
 
 #ifdef OPENNN_HAS_CUDA
-        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
+        Configuration::instance().set(Device::CUDA, Type::BF16);
         Backend::instance();
 #endif
 
@@ -659,7 +659,7 @@ int main()
         cout << "OpenNN. ResNet-18 ImageNet pretrained Imagenette evaluation." << endl;
 
 #ifdef OPENNN_HAS_CUDA
-        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::FP32);
         Backend::instance();
 #endif
 
@@ -813,7 +813,7 @@ int main()
         //
         // ImageDataset now builds .cache/images.bin directly from PNG/BMP files.
 
-        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
+        Configuration::instance().set(Device::CUDA, Type::BF16);
         Backend::instance();
         set_seed(42);
 
@@ -1147,7 +1147,7 @@ int main()
         // Places365 converted for OpenNN:
         // one root folder with one BMP subfolder per class.
 
-        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
+        Configuration::instance().set(Device::CUDA, Type::BF16);
 
         const std::filesystem::path PLACES365_PATH =
             R"(\\Artelnics\data_sets\places365_bmp_224)";
@@ -1224,7 +1224,7 @@ int main()
 
         // ====================  TINYCHAT (instruction-tuning)  ====================
         /*
-        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
+        Configuration::instance().set(Device::CUDA, Type::BF16);
 
         const std::filesystem::path tinychat_src = "/home/artelnics/Documents/openNN/opennn/temp/tinychat.txt";
         // Half-sized cache (~2M pairs) — keeps the previous full cache around if it exists.
@@ -1329,7 +1329,7 @@ int main()
         // Pre-extracted .tsv produced by temp/OASST/prepare_oasst2_pairs.py from
         // the OpenAssistant ready_for_export trees (English subset, length-capped).
         /*
-        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
+        Configuration::instance().set(Device::CUDA, Type::BF16);
 
         set_seed(42);
 
@@ -1439,7 +1439,7 @@ int main()
         // 16 GB VRAM with batch=64 and vocab cap 25K. Designed for ~25-35h of
         // training on the 4080 (10 epochs). Won't OOM.
         /*
-        Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);
+        Configuration::instance().set(Device::CUDA, Type::BF16);
 
         set_seed(42);
 

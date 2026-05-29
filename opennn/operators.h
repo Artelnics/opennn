@@ -265,17 +265,20 @@ private:
                TensorView& activation_derivatives,
                TensorView& output,
                bool is_training);
+#ifdef OPENNN_HAS_CUDA
     void apply_gpu(const TensorView& input,
                    TensorView& hidden_states,
                    TensorView& activation_derivatives,
                    TensorView& output,
                    bool is_training);
+#endif
 
     void apply_delta(const TensorView& input,
                      const TensorView& hidden_states,
                      const TensorView& activation_derivatives,
                      const TensorView& output_delta,
                      TensorView& input_delta) const;
+#ifdef OPENNN_HAS_CUDA
     void apply_delta_gpu(const TensorView& input,
                          const TensorView& hidden_states,
                          const TensorView& activation_derivatives,
@@ -292,6 +295,7 @@ private:
     mutable Buffer prev_hidden_buf     {Device::CUDA};   // (batch, out_features)
     mutable Buffer step_derivs_buf     {Device::CUDA};   // (batch, out_features)
     mutable Buffer step_seq_delta_buf  {Device::CUDA};   // (batch, out_features) - sequence-mode backward scratch
+#endif
 };
 
 struct BatchNormOp : Operator
@@ -345,23 +349,29 @@ private:
     mutable VectorR delta_scale_scratch;
 
     void apply_inference_cpu(const TensorView& input, TensorView& output);
+#ifdef OPENNN_HAS_CUDA
     void apply_inference_gpu(const TensorView& input, TensorView& output);
+#endif
 
     void apply_training_cpu (const TensorView& input,
                              TensorView& mean, TensorView& inverse_variance,
                              TensorView& output);
+#ifdef OPENNN_HAS_CUDA
     void apply_training_gpu (const TensorView& input,
                              TensorView& mean, TensorView& inverse_variance,
                              TensorView& output);
+#endif
 
     void apply_delta_cpu(const TensorView& input,
                          const TensorView& mean,
                          const TensorView& inverse_variance,
                          TensorView& delta) const;
+#ifdef OPENNN_HAS_CUDA
     void apply_delta_gpu(const TensorView& input,
                          const TensorView& mean,
                          const TensorView& inverse_variance,
                          TensorView& delta) const;
+#endif
 };
 
 struct ConvolutionOp : Operator
@@ -434,14 +444,18 @@ struct ConvolutionOp : Operator
 
 private:
     void apply_cpu(const TensorView& input, TensorView& output);
+#ifdef OPENNN_HAS_CUDA
     void apply_gpu(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation = nullptr);
+#endif
 
     void apply_delta_cpu(const TensorView& input, const TensorView& output_delta,
                          TensorView& input_delta) const;
+#ifdef OPENNN_HAS_CUDA
     void apply_delta_gpu(const TensorView& input, const TensorView& output_delta,
                          TensorView& input_delta) const;
 
     void plan_convolution_algorithms(const TensorView& input, const TensorView& output);
+#endif
 
     array<pair<Index, Index>, 4> nhwc_padding() const;
 };
@@ -690,15 +704,19 @@ struct PoolOp : Operator
 
 private:
     void apply_cpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training);
+#ifdef OPENNN_HAS_CUDA
     void apply_gpu(const TensorView& input, TensorView& output);
+#endif
 
     void apply_delta_cpu(const TensorView& output_delta,
                          const TensorView& maximal_indices,
                          TensorView& input_delta) const;
+#ifdef OPENNN_HAS_CUDA
     void apply_delta_gpu(const TensorView& input,
                          const TensorView& output,
                          const TensorView& output_delta,
                          TensorView& input_delta) const;
+#endif
 };
 
 struct Pool3dOp : Operator

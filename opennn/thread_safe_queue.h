@@ -27,10 +27,13 @@ public:
         cond_.notify_one();
     }
 
+    // Returns T{} (nullptr for pointer T) if the queue was closed while empty.
+    // Used by BatchFillSession to unblock workers stuck in pop during cancellation.
     T pop()
     {
         unique_lock<mutex> lock(mutex_);
-        cond_.wait(lock, [this] { return !queue_.empty(); });
+        cond_.wait(lock, [this] { return !queue_.empty() || closed_; });
+        if (queue_.empty()) return T{};
         T item = move(queue_.front());
         queue_.pop();
         return item;
@@ -42,11 +45,24 @@ public:
         return queue_.empty();
     }
 
+    void close()
+    {
+        { lock_guard<mutex> lock(mutex_); closed_ = true; }
+        cond_.notify_all();
+    }
+
+    void reopen()
+    {
+        lock_guard<mutex> lock(mutex_);
+        closed_ = false;
+    }
+
 private:
 
     queue<T> queue_;
     mutable mutex mutex_;
     condition_variable cond_;
+    bool closed_ = false;
 };
 
 }

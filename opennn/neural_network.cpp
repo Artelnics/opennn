@@ -1393,8 +1393,7 @@ void NeuralNetwork::copy_parameters_device()
     cudaStream_t stream = Backend::get_compute_stream();
     parameters.migrate_to(Device::CUDA, stream);
 
-    if(config.training_type  == Type::BF16 ||
-       config.inference_type == Type::BF16)
+    if(config.training_type == Type::BF16)
     {
         parameters_bf16.resize_bytes(parameters.size_in_floats() * Index(sizeof(bfloat16)), Device::CUDA);
         cast_parameters_to_bf16();

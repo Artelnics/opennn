@@ -10,26 +10,17 @@
 
 #ifdef OPENNN_HAS_CUDA
 
-    #define OPENNN_VIEW_IS_CUDA(view) ((view).device == ::opennn::Device::CUDA)
+    #define OPENNN_VIEW_IS_CUDA(view) ((view).is_cuda())
 
     #define TRY_GPU_DISPATCH(view, ...) \
         (OPENNN_VIEW_IS_CUDA(view) \
             ? ((view).dispatch(__VA_ARGS__), true) \
             : false)
 
-    #define IF_GPU_VIEW(view, ...) \
-        do { \
-            if (OPENNN_VIEW_IS_CUDA(view)) { \
-                __VA_ARGS__ \
-            } \
-        } while (0)
-
 #else
 
     #define OPENNN_VIEW_IS_CUDA(view) (false)
     #define TRY_GPU_DISPATCH(view, ...) (false)
-
-    #define IF_GPU_VIEW(view, ...) ((void)0)
 
 #endif
 
