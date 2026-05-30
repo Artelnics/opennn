@@ -273,6 +273,7 @@ protected:
                                 float*,
                                 int contiguous = -1) const;
     void read_binary_header() const;
+    const vector<float>& load_binary_data_cache() const;
     void set_matrix_storage();
     void mark_data_changed() const { invalidate_data_buffer(); }
     void invalidate_data_buffer() const;
@@ -299,6 +300,9 @@ protected:
     StorageMode storage_mode = StorageMode::Matrix;
     mutable Index binary_rows_number = 0;
     mutable Index binary_columns_number = 0;
+
+    mutable vector<float> binary_data_cache;
+    mutable mutex binary_cache_mutex;
 
     mutable Buffer data_buffer{Device::CUDA};
     mutable Shape data_buffer_shape;

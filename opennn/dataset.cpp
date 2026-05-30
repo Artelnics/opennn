@@ -120,6 +120,7 @@ void Dataset::set_data_path(const filesystem::path& new_data_path)
     data_path = new_data_path;
     binary_rows_number = 0;
     binary_columns_number = 0;
+    binary_data_cache.clear();
     invalidate_data_buffer();
 }
 
@@ -1050,13 +1051,12 @@ void Dataset::read_binary_header() const
         throw runtime_error(format("Failed to read binary data header: {}", data_path.string()));
 }
 
-bool Dataset::try_fill_binary_tensor(const vector<Index>& sample_indices,
-                                     const vector<Index>& feature_indices,
-                                     float* output,
-                                     int contiguous_hint) const
+const vector<float>& Dataset::load_binary_data_cache() const
 {
-    if (storage_mode != StorageMode::BinaryFile) return false;
-    if (sample_indices.empty() || feature_indices.empty()) return true;
+    lock_guard<mutex> lock(binary_cache_mutex);
+
+    if (!binary_data_cache.empty())
+        return binary_data_cache;
 
     if (binary_rows_number == 0 || binary_columns_number == 0)
         read_binary_header();
@@ -1065,6 +1065,34 @@ bool Dataset::try_fill_binary_tensor(const vector<Index>& sample_indices,
     if (!file.is_open())
         throw runtime_error(format("Failed to open binary data file: {}", data_path.string()));
 
+    const size_t element_count = size_t(binary_rows_number) * size_t(binary_columns_number);
+    binary_data_cache.resize(element_count);
+
+    file.seekg(streamoff(2 * sizeof(Index)), ios::beg);
+    file.read(reinterpret_cast<char*>(binary_data_cache.data()),
+              streamsize(element_count * sizeof(float)));
+
+    if (!file)
+    {
+        binary_data_cache.clear();
+        throw runtime_error(format("Failed to read binary data file: {}", data_path.string()));
+    }
+
+    return binary_data_cache;
+}
+
+bool Dataset::try_fill_binary_tensor(const vector<Index>& sample_indices,
+                                     const vector<Index>& feature_indices,
+                                     float* output,
+                                     int contiguous_hint) const
+{
+    if (storage_mode != StorageMode::BinaryFile) return false;
+    if (sample_indices.empty() || feature_indices.empty()) return true;
+
+    // The whole file is read into memory once and every batch is gathered from it,
+    // avoiding a per-batch file open and per-element seeks.
+    const vector<float>& data = load_binary_data_cache();
+
     const Index columns_number = binary_columns_number;
     const Index features_number = ssize(feature_indices);
     const bool contiguous = contiguous_hint >= 0
@@ -1072,7 +1100,6 @@ bool Dataset::try_fill_binary_tensor(const vector<Index>& sample_indices,
                           : is_contiguous(feature_indices);
 
     const Index first_column = feature_indices.front();
-    const streamoff header_bytes = streamoff(2 * sizeof(Index));
 
     for (Index i = 0; i < ssize(sample_indices); ++i)
     {
@@ -1081,28 +1108,17 @@ bool Dataset::try_fill_binary_tensor(const vector<Index>& sample_indices,
             throw runtime_error("Binary data row index is out of range.");
 
         float* const dst = output + i * features_number;
+        const float* const src_row = data.data() + size_t(row) * size_t(columns_number);
 
         if (contiguous)
         {
-            const streamoff offset = header_bytes
-                + streamoff(row * columns_number + first_column) * streamoff(sizeof(float));
-            file.seekg(offset, ios::beg);
-            file.read(reinterpret_cast<char*>(dst), features_number * sizeof(float));
+            copy_n(src_row + first_column, features_number, dst);
         }
         else
         {
             for (Index j = 0; j < features_number; ++j)
-            {
-                const Index column = feature_indices[size_t(j)];
-                const streamoff offset = header_bytes
-                    + streamoff(row * columns_number + column) * streamoff(sizeof(float));
-                file.seekg(offset, ios::beg);
-                file.read(reinterpret_cast<char*>(dst + j), sizeof(float));
-            }
+                dst[j] = src_row[feature_indices[size_t(j)]];
         }
-
-        if (!file)
-            throw runtime_error(format("Failed to read binary data file: {}", data_path.string()));
     }
 
     return true;
@@ -1113,6 +1129,7 @@ void Dataset::set_matrix_storage()
     storage_mode = StorageMode::Matrix;
     binary_rows_number = 0;
     binary_columns_number = 0;
+    binary_data_cache.clear();
     invalidate_data_buffer();
 }
 
