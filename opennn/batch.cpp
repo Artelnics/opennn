@@ -222,10 +222,7 @@ void Batch::copy_device_async(cudaStream_t stream)
 
     copy_to_device(target.as<float>(), targets_host, target_size * sizeof(float));
 
-    if (!h2d_done_event)
-        CHECK_CUDA(cudaEventCreateWithFlags(&h2d_done_event, cudaEventDisableTiming));
-    CHECK_CUDA(cudaEventRecord(h2d_done_event, stream));
-    h2d_done_recorded = true;
+    record_h2d_done(stream);
 }
 
 void Batch::gather_device_async(const vector<Index>& row_indices,
@@ -283,6 +280,11 @@ void Batch::gather_device_async(const vector<Index>& row_indices,
                                           source_data,
                                           target.as<float>());
 
+    record_h2d_done(stream);
+}
+
+void Batch::record_h2d_done(cudaStream_t stream)
+{
     if (!h2d_done_event)
         CHECK_CUDA(cudaEventCreateWithFlags(&h2d_done_event, cudaEventDisableTiming));
     CHECK_CUDA(cudaEventRecord(h2d_done_event, stream));

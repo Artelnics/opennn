@@ -93,6 +93,8 @@ struct Batch
                              const vector<Index>& input_feature_indices,
                              const vector<Index>& target_feature_indices);
 
+    void record_h2d_done(cudaStream_t);
+
     Buffer fp32_staging{Device::CUDA};
     Buffer device_data_row_indices{Device::CUDA};
     Buffer device_data_input_feature_indices{Device::CUDA};

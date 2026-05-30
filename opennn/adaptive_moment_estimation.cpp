@@ -14,6 +14,7 @@
 #include "loss.h"
 #include "profiler.h"
 #include "batch.h"
+#include "cuda_dispatch.h"
 #include "adaptive_moment_estimation.h"
 
 #ifdef OPENNN_HAS_CUDA
@@ -68,8 +69,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     if (!loss || !loss->get_neural_network() || !loss->get_dataset())
         return results;
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
-    const bool on_gpu = neural_network->is_gpu();
+    const bool on_gpu = is_gpu();
 
     if (display) cout << "Training with adaptive moment estimation \"Adam\""
                      << (on_gpu ? " CUDA" : "") << " ...\n";
@@ -105,6 +105,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         : 0;
 
     warn_dropped_samples(training_batch_size, training_samples_number, "training");
+    
     if (has_validation)
         warn_dropped_samples(validation_batch_size, validation_samples_number, "validation");
 
@@ -113,17 +114,49 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     // Neural network
 
+    NeuralNetwork* neural_network = loss->get_neural_network();
+
     set_names();
     set_scaling();
 
-    BatchPools batch_pools;
-    setup_batch_pools(batch_pools,
-                      *dataset,
-                      *neural_network,
-                      training_batch_size,
-                      validation_batch_size,
-                      has_validation);
+#ifdef OPENNN_HAS_CUDA
+    // Some driver/GPU combos (verified on GTX 1050 Ti) hang the host loop
+    // non-deterministically when num_workers > 1 is paired with a Recurrent
+    // layer in pure-GPU mode. The hang reproduces even after reducing the
+    // per-batch kernel-submission count by ~40% via the Phase 3.E fused
+    // forward+backward kernels, so the root cause is unrelated to kernel
+    // submission rate and lives deeper in the CUDA runtime's host-thread
+    // interaction. Serializing the batch loader to a single worker is the
+    // only known workaround; cost is negligible because the host fill runs
+    // off the GPU critical path.
+    if (on_gpu && neural_network->has(LayerType::Recurrent) && num_workers > 1)
+        num_workers = 1;
+#endif
 
+    const int pool_size = on_gpu ? max(num_workers + 1, 3) : 1;
+
+    ThreadSafeQueue<Batch*> empty_training_queue;
+    vector<unique_ptr<Batch>> training_batch_pool;
+
+    for (int i = 0; i < pool_size; ++i)
+    {
+        training_batch_pool.push_back(make_unique<Batch>(training_batch_size, dataset));
+        empty_training_queue.push(training_batch_pool.back().get());
+    }
+
+    ThreadSafeQueue<Batch*> empty_validation_queue;
+    vector<unique_ptr<Batch>> validation_batch_pool;
+
+    const bool share_batch_pool = has_validation && validation_batch_size == training_batch_size;
+
+    if (has_validation && !share_batch_pool)
+        for (int i = 0; i < pool_size; ++i)
+        {
+            validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
+            empty_validation_queue.push(validation_batch_pool.back().get());
+        }
+
+    ThreadSafeQueue<Batch*>& validation_empty_q = share_batch_pool ? empty_training_queue : empty_validation_queue;
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
 
     loss->set_normalization_coefficient();
@@ -139,14 +172,20 @@ TrainingResults AdaptiveMomentEstimation::train()
         ? validation_forward_propagation.get()
         : nullptr;
 
-    setup_device_training();
+    vector<Batch*> all_batches;
+    all_batches.reserve(training_batch_pool.size() + validation_batch_pool.size());
+    for (auto& b : training_batch_pool)   all_batches.push_back(b.get());
+    for (auto& b : validation_batch_pool) all_batches.push_back(b.get());
+    setup_device_training(all_batches);
 
     // Optimization data
 
     const Index parameters_number = loss->get_neural_network()->get_parameters_size();
 
+    const Device device = current_device();
+
     OptimizerData optimization_data;
-    optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, neural_network->get_device());
+    optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, device);
 
     optimization_data.iteration = 0;
 
@@ -186,7 +225,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         const EpochStats train_stats = train_epoch(is_token_cross_entropy,
                                                    training_forward_propagation,
                                                    training_back_propagation,
-                                                   batch_pools.training_empty_queue,
+                                                   empty_training_queue,
                                                    training_batches,
                                                    input_feature_indices,
                                                    decoder_feature_indices,
@@ -204,7 +243,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
             const EpochStats val_stats = evaluate_epoch(is_token_cross_entropy,
                                                         *validation_fp,
-                                                        batch_pools.validation_queue(),
+                                                        validation_empty_q,
                                                         validation_batches,
                                                         input_feature_indices,
                                                         decoder_feature_indices,
@@ -227,7 +266,7 @@ TrainingResults AdaptiveMomentEstimation::train()
                 const float* src = neural_network->get_parameters_data();
                 const size_t bytes = size_t(psize) * sizeof(float);
 #ifdef OPENNN_HAS_CUDA
-                if (on_gpu)
+                if(Configuration::instance().is_gpu())
                 {
                     CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
                     CHECK_CUDA(cudaMemcpy(best_parameters.data(), src, bytes, cudaMemcpyDeviceToHost));
@@ -245,7 +284,7 @@ TrainingResults AdaptiveMomentEstimation::train()
                     const float* state_src = neural_network->get_states_data();
                     const size_t state_bytes = size_t(ssize) * sizeof(float);
 #ifdef OPENNN_HAS_CUDA
-                    if (on_gpu)
+                    if (Configuration::instance().is_gpu())
                     {
                         CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
                         CHECK_CUDA(cudaMemcpy(best_states.data(), state_src, state_bytes, cudaMemcpyDeviceToHost));
@@ -297,6 +336,9 @@ TrainingResults AdaptiveMomentEstimation::train()
             cout << "Restoring best parameters and states from epoch " << best_epoch
                  << " (validation error " << best_validation_error << ")\n";
 
+        // Use set_parameters (not memcpy) so the GPU path properly issues
+        // cudaMemcpy(H2D) and refreshes the BF16 mirror via
+        // cast_parameters_to_bf16. memcpy into a device pointer is UB.
         VectorR best_view(best_parameters.size());
         memcpy(best_view.data(), best_parameters.data(),
                     best_parameters.size() * sizeof(float));
@@ -338,9 +380,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const float bias_correction_1 = 1.0f - pow(beta_1, iteration);
     const float bias_correction_2 = 1.0f - pow(beta_2, iteration);
 
-#ifdef OPENNN_HAS_CUDA
-    if (neural_network->is_gpu())
-    {
+    IF_GPU({
         PROFILE_SCOPE("optim:adam_update_cuda");
         const Index parameters_number = neural_network->get_parameters_size();
 
@@ -359,8 +399,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             neural_network->get_parameters_bf16_data());
 
         return;
-    }
-#endif
+    });
 
     VectorMap parameters(neural_network->get_parameters_data(),
                          neural_network->get_parameters_size());
