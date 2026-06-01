@@ -32,11 +32,17 @@ endif()
 
 target_compile_features(opennn PUBLIC cxx_std_20)
 
-# Flatpak-host .so files often have epoch-zero mtimes, which makes GNU make
-# fail with "No rule to make target" when CMake embeds the full path. Use
-# -l<name> linker flags instead of the imported targets to sidestep this.
-find_package(ZLIB REQUIRED)
-target_link_libraries(opennn PUBLIC z)
+# ZLIB is only needed by the PNG support in image_dataset / image_utilities,
+# which are themselves excluded when the slim opennn_core lib is requested.
+# Make the dependency conditional so tabular-only builds (which is how the
+# IDC_benchmark and baseline_trainer consumers wire opennn in) do not need
+# a system ZLIB install. Use -l<name> instead of the ZLIB::ZLIB imported
+# target so Flatpak-host .so files with epoch-zero mtimes don't make GNU
+# make fail with "No rule to make target" (same workaround as JPEG below).
+if(OpenNN_BUILD_VISION)
+    find_package(ZLIB REQUIRED)
+    target_link_libraries(opennn PUBLIC z)
+endif()
 
 if(OpenNN_BUILD_VISION)
     find_package(JPEG REQUIRED)

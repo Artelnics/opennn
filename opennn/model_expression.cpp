@@ -343,6 +343,27 @@ string ModelExpression::process_body_line(const string& line, const vector<strin
     string processed = line;
     replace_all_appearances(processed, "[", "_");
     replace_all_appearances(processed, "]", "_");
+    // Substring substitution for compound LHS identifiers like
+    // `scaled_<raw>` (scaling_layer.cpp emits these with the RAW input
+    // name). The word-aware apply_name_mapping below skips these matches
+    // because the underscore prefix violates the word-boundary check, so
+    // we handle them first as plain substrings. We also try the
+    // space-replaced form because `rename_spaced_var_definitions` runs
+    // before this and pre-transforms multi-word LHS by replacing ' ' with
+    // '_' (so `scaled_Foo bar baz` arrives here as `scaled_Foo_bar_baz`).
+    const size_t count = std::min(input_names.size(), fixed_input_names.size());
+    for (size_t i = 0; i < count; ++i)
+    {
+        const string& raw = input_names[i];
+        const string& fix = fixed_input_names[i];
+        if (raw == fix) continue;
+        replace_all_appearances(processed, "scaled_" + raw, "scaled_" + fix);
+        string space_to_underscore = raw;
+        ranges::replace(space_to_underscore, ' ', '_');
+        if (space_to_underscore != raw)
+            replace_all_appearances(processed, "scaled_" + space_to_underscore,
+                                    "scaled_" + fix);
+    }
     apply_name_mapping(processed, input_names, fixed_input_names);
     return processed;
 }
@@ -904,7 +925,7 @@ string ModelExpression::get_expression_python() const
     emit_python_prelude(buffer);
     emit_python_class_header(buffer);
     emit_python_activations(buffer, expression);
-    emit_python_calculate_outputs(buffer, lines, has_softmax);
+    emit_python_calculate_outputs(buffer, expression, lines, has_softmax);
     emit_python_batch_and_main(buffer);
 
     string out = buffer.str();
@@ -950,11 +971,13 @@ void ModelExpression::emit_python_activations(ostringstream& buffer, const strin
 }
 
 void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
+                                                    const string& expression,
                                                     const vector<string>& lines,
                                                     bool has_softmax) const
 {
     const vector<string> input_names = neural_network->get_input_feature_names();
-    const vector<string> fixed_output_names = fix_names(neural_network->get_output_feature_names(), "output_");
+    const vector<string> output_names = neural_network->get_output_feature_names();
+    const vector<string> fixed_output_names = fix_names(output_names, "output_");
 
     buffer << "\tdef calculate_outputs(self, inputs):\n";
 
@@ -976,6 +999,14 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
         replace(processed_line, ";", "");
         buffer << "\t\t" << processed_line << "\n";
     }
+
+    // Re-bind raw output names (or their intermediate aliases) to the
+    // fixed/reserved-keyword-safe names so the `outputs = [...]` list
+    // below references defined variables. Mirrors the C/JS emitters.
+    const vector<string> output_fixups =
+        fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::Python);
+    for (const string& l : output_fixups)
+        buffer << "\t\t" << l << "\n";
 
     string return_list = "[";
     for (size_t i = 0; i < fixed_output_names.size(); ++i)
@@ -1041,7 +1072,14 @@ string ModelExpression::replace_reserved_keywords(const string& input)
     };
 
     static const unordered_map<string, string> special_words = {
-        {"min", "mi_n"}, {"max", "ma_x"}, {"exp", "ex_p"}, {"tanh", "ta_nh"}
+        {"min", "mi_n"}, {"max", "ma_x"}, {"exp", "ex_p"}, {"tanh", "ta_nh"},
+        // Python reserved keywords most likely to appear as feature/output
+        // names in domain datasets (yield in chemistry, class/return in
+        // generic ML). Substring-match means "yields" → "yield_s" etc.;
+        // acceptable since the same mapping is applied everywhere the
+        // name is referenced.
+        {"yield", "yield_"}, {"class", "class_"}, {"return", "return_"},
+        {"lambda", "lambda_"}, {"global", "global_"}
     };
 
     string out;

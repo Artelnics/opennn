@@ -622,6 +622,9 @@ void Optimizer::set_scaling()
 
             case 3:
             {
+#ifdef OPENNN_NO_VISION
+                throw runtime_error("Rank-3 (image) scaling requires the vision build (OPENNN_NO_VISION is set).");
+#else
                 auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
                 throw_if(!image_dataset, "Expected ImageDataset.");
 
@@ -629,6 +632,7 @@ void Optimizer::set_scaling()
                                                  scaling_layer->get_scalers(),
                                                  scaling_layer->get_min_range(),
                                                  scaling_layer->get_max_range());
+#endif
                 break;
             }
 

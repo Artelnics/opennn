@@ -937,10 +937,23 @@ void Dataset::check_separators(string_view line) const
         return;
     }
 
+    // Sanity check: warn only when another *structural* separator (Tab, Comma,
+    // Semicolon) is present in the data line — those almost never appear as
+    // field content and their presence with a different active separator is a
+    // strong signal the user picked the wrong one.
+    //
+    // Space is intentionally excluded: column headers ("Fly ash", "Coarse
+    // Aggr."), quoted string cells ("N,N,N-trimethyloctadecan"), and any
+    // non-numeric text universally contain spaces. Including Space here
+    // rejects most real-world CSVs (UCI, Olympus, HTE screens, etc.) and is
+    // not useful as a separator-mismatch heuristic.
     for (const auto& [sep, str, name] : separator_map)
-        if (sep != separator && line.find(str) != string_view::npos)
+    {
+        if (sep == separator || sep == Separator::Space) continue;
+        if (line.find(str) != string_view::npos)
             throw runtime_error(format("Found {} ('{}') in data file {}, but separator is {} ('{}').",
                                        name, str, data_path.string(), separator_name, separator_string));
+    }
 }
 
 bool Dataset::has_validation() const

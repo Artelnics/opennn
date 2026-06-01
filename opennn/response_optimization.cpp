@@ -67,6 +67,20 @@ inline vector<Index> filter_selected_indices_by_column(const MatrixR& matrix,
     return filtered;
 }
 
+inline ComparisonOp to_comparison_op(const ResponseOptimization::ConditionType condition)
+{
+    switch (condition)
+    {
+    case ResponseOptimization::ConditionType::EqualTo:        return ComparisonOp::EqualTo;
+    case ResponseOptimization::ConditionType::Between:        return ComparisonOp::Between;
+    case ResponseOptimization::ConditionType::GreaterEqualTo: return ComparisonOp::GreaterEqualTo;
+    case ResponseOptimization::ConditionType::LessEqualTo:    return ComparisonOp::LessEqualTo;
+    case ResponseOptimization::ConditionType::GreaterThan:    return ComparisonOp::GreaterThan;
+    case ResponseOptimization::ConditionType::LessThan:       return ComparisonOp::LessThan;
+    default:                                                  return ComparisonOp::None;
+    }
+}
+
 }
 
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
@@ -150,7 +164,7 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
 
     FormulaConstraint formula_constraint;
     formula_constraint.expression = expression;
-    formula_constraint.op = op;
+    formula_constraint.op = to_comparison_op(op);
     formula_constraint.low_bound = low;
     formula_constraint.up_bound = up;
     formula_constraint.uses_callback = false;
@@ -172,7 +186,7 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
     FormulaConstraint formula_constraint;
     formula_constraint.callback = move(callback);
     formula_constraint.uses_callback = true;
-    formula_constraint.op = op;
+    formula_constraint.op = to_comparison_op(op);
     formula_constraint.low_bound = low;
     formula_constraint.up_bound = up;
 
@@ -252,6 +266,12 @@ void ResponseOptimization::set_zoom_factor(float new_zoom_factor)
 void ResponseOptimization::set_relative_tolerance(float new_relative_tolerance)
 {
     relative_tolerance = new_relative_tolerance;
+}
+
+
+void ResponseOptimization::set_max_pareto_number(const Index new_max_pareto_number)
+{
+    max_pareto_number = new_max_pareto_number;
 }
 
 
@@ -636,25 +656,25 @@ void ResponseOptimization::apply_affine_input_swap(MatrixR& random_inputs,
 
         switch (formula_constraint.op)
         {
-        case ConditionType::EqualTo:
+        case ComparisonOp::EqualTo:
             target = low_bound;
             break;
 
-        case ConditionType::Between:
+        case ComparisonOp::Between:
             if (current_value >= low_bound && current_value <= up_bound)
                 continue;
             target = (current_value < low_bound) ? low_bound : up_bound;
             break;
 
-        case ConditionType::GreaterEqualTo:
-        case ConditionType::GreaterThan:
+        case ComparisonOp::GreaterEqualTo:
+        case ComparisonOp::GreaterThan:
             if (current_value >= low_bound)
                 continue;
             target = low_bound;
             break;
 
-        case ConditionType::LessEqualTo:
-        case ConditionType::LessThan:
+        case ComparisonOp::LessEqualTo:
+        case ComparisonOp::LessThan:
             if (current_value <= up_bound)
                 continue;
             target = up_bound;
@@ -854,23 +874,23 @@ bool ResponseOptimization::row_satisfies_formula_constraints(const VectorR& inpu
 
         switch (formula_constraint.op)
         {
-        case ConditionType::EqualTo:
+        case ComparisonOp::EqualTo:
             constraint_satisfied = abs(evaluated_value - low_bound)
                 <= max(EPSILON, abs(low_bound) * float(1e-4));
             break;
-        case ConditionType::Between:
+        case ComparisonOp::Between:
             constraint_satisfied = (evaluated_value >= low_bound) && (evaluated_value <= up_bound);
             break;
-        case ConditionType::GreaterEqualTo:
+        case ComparisonOp::GreaterEqualTo:
             constraint_satisfied = evaluated_value >= low_bound;
             break;
-        case ConditionType::LessEqualTo:
+        case ComparisonOp::LessEqualTo:
             constraint_satisfied = evaluated_value <= up_bound;
             break;
-        case ConditionType::GreaterThan:
+        case ComparisonOp::GreaterThan:
             constraint_satisfied = evaluated_value > low_bound;
             break;
-        case ConditionType::LessThan:
+        case ComparisonOp::LessThan:
             constraint_satisfied = evaluated_value < up_bound;
             break;
         default:
@@ -927,13 +947,45 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
         vector<Index> formula_feasible_indices;
         formula_feasible_indices.reserve(feasible_indices.size());
 
-        for (const Index row_index : feasible_indices)
+        if (all_formula_constraints_are_linear(formula_constraints))
         {
-            const VectorR input_row = inputs.row(row_index).transpose();
-            const VectorR output_row = outputs.row(row_index).transpose();
+            // All-linear shortcut: one matrix product evaluates every constraint for every surviving candidate.
+            const Index k     = static_cast<Index>(feasible_indices.size());
+            const Index n_in  = inputs.cols();
+            const Index n_out = outputs.cols();
 
-            if (row_satisfies_formula_constraints(input_row, output_row))
-                formula_feasible_indices.push_back(row_index);
+            MatrixR X(k, n_in);
+            MatrixR Y(k, n_out);
+            for (Index i = 0; i < k; ++i)
+            {
+                X.row(i) = inputs.row(feasible_indices[i]);
+                Y.row(i) = outputs.row(feasible_indices[i]);
+            }
+
+            const LinearConstraintSet linear_set = build_linear_constraint_set(formula_constraints, n_in, n_out);
+
+            const MatrixR values = X * linear_set.A.leftCols(n_in).transpose()
+                                 + Y * linear_set.A.rightCols(n_out).transpose();   // (k, m)
+
+            for (Index i = 0; i < k; ++i)
+            {
+                const bool feasible = ((values.row(i).transpose().array() >= linear_set.lower.array()) &&
+                                       (values.row(i).transpose().array() <= linear_set.upper.array())).all();
+
+                if (feasible)
+                    formula_feasible_indices.push_back(feasible_indices[i]);
+            }
+        }
+        else
+        {
+            for (const Index row_index : feasible_indices)
+            {
+                const VectorR input_row = inputs.row(row_index).transpose();
+                const VectorR output_row = outputs.row(row_index).transpose();
+
+                if (row_satisfies_formula_constraints(input_row, output_row))
+                    formula_feasible_indices.push_back(row_index);
+            }
         }
 
         feasible_indices = move(formula_feasible_indices);
@@ -1395,6 +1447,14 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
         global_pareto_outputs = pareto_pair.second;
 
         cout << "  - New Pareto front size: " << global_pareto_inputs.rows()  << endl;
+
+        if (max_pareto_number > 0 && global_pareto_inputs.rows() >= max_pareto_number)
+        {
+            cout << "> [Pareto cap] Front reached " << global_pareto_inputs.rows()
+                 << " points (cap=" << max_pareto_number
+                 << "). Stopping at iteration " << i + 1 << "." << endl;
+            break;
+        }
 
         if (global_pareto_inputs.rows() > 0)
         {
