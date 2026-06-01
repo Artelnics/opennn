@@ -64,17 +64,15 @@ public:
                      const vector<Index>&,
                      float*,
                      bool is_training,
-                     bool parallelize = true,
                      int = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       bool is_training,
-                      bool parallelize = true,
                       int = -1) const override;
 
-    void augment_inputs(float*, Index, bool = true) const override;
+    void augment_inputs(float*, Index) const override;
 
 private:
 
@@ -86,9 +84,9 @@ private:
 
     filesystem::path cache_path;
     mutable FileReader cache_reader;
-    uint64_t record_bytes_ = 0;
-    uint64_t labels_off_   = 0;
-    uint32_t num_classes_  = 0;
+    uint64_t record_bytes = 0;
+    uint64_t labels_offset = 0;
+    uint32_t classes_number = 0;
     vector<int32_t> labels_ram; 
 
     vector<string> labels_tokens;

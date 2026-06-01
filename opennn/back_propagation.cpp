@@ -11,7 +11,6 @@
 #include "neural_network.h"
 #include "forward_propagation.h"
 #include "math_utilities.h"
-#include "cuda_dispatch.h"
 
 namespace opennn
 {
@@ -56,17 +55,15 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
                 consumer_edges[source_layer].push_back({i, j});
     }
 
-    const Device device = current_device();
-
     const Index gradient_bytes = get_aligned_bytes(parameter_specs, Type::FP32);
-    gradient.resize_bytes(gradient_bytes, device);
+    gradient.resize_bytes(gradient_bytes, neural_network->get_device());
     gradient.setZero();
 
     gradient_views.resize(layers_number);
 
     float* pointer = gradient.as<float>();
     for (size_t i = 0; i < layers_number; ++i)
-        pointer = layers[i]->link_gradients(pointer, gradient_views[i]);
+        pointer = layers[i]->link_gradients(pointer, gradient_views[i], gradient.device_type);
 
     setup_delta_pool(backward_specs);
 }
@@ -88,7 +85,9 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
     const auto& source_layers = neural_network->get_source_layers();
-    const Type compute_dtype = is_gpu() ? neural_network->get_training_type() : Type::FP32;
+    const Type compute_dtype = neural_network->is_gpu()
+        ? neural_network->get_training_type()
+        : Type::FP32;
 
     vector<DeltaEntry> deltas;
 
@@ -134,6 +133,25 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         const Index step = last_trainable_layer_index - layer_index;
 
         deltas.push_back({layer_index, 0, {delta_shape, compute_dtype}, step, step});
+    }
+
+    // YOLO multi-head (FPN): every Detection layer is a training target —
+    // the Loss writes a per-head output-delta to slot 0 of each. Pool
+    // would otherwise only back the last-trainable Detection's slot 0.
+    // Lifetime: born at step 0 (loss writes all heads at once at the start of
+    // backward), dies when its layer is walked.
+    for (Index layer_index = first_trainable_layer_index; layer_index < last_trainable_layer_index; ++layer_index)
+    {
+        if (layers[layer_index]->get_type() != LayerType::Detection) continue;
+        if (!consumer_edges[layer_index].empty()) continue;
+
+        const Shape output_shape = layers[layer_index]->get_output_shape();
+        if (output_shape.empty()) continue;
+
+        const Shape delta_shape = Shape({batch_size}).append(output_shape);
+        const Index step = last_trainable_layer_index - layer_index;
+
+        deltas.push_back({layer_index, 0, {delta_shape, compute_dtype}, 0, step});
     }
 
     vector<vector<size_t>> births_by_step(size_t(max_step + 1));
@@ -199,13 +217,16 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
     for (Index i = 0; i < layers_number; ++i)
         delta_views[i].resize(backward_specs[i].size() + 1);
 
-    delta_pool.resize_bytes(peak_bytes, current_device());
+    delta_pool.resize_bytes(peak_bytes, neural_network->get_device());
     delta_pool.setZero();
 
     uint8_t* const base = delta_pool.as<uint8_t>();
 
     for (const auto& delta : deltas)
-        delta_views[delta.layer][delta.slot] = TensorView(base + delta.offset, delta.spec.shape, delta.spec.dtype);
+        delta_views[delta.layer][delta.slot] = TensorView(base + delta.offset,
+                                                          delta.spec.shape,
+                                                          delta.spec.dtype,
+                                                          delta_pool.device_type);
 
     for (Index i = first_trainable_layer_index; i < last_trainable_layer_index; ++i)
     {

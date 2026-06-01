@@ -109,7 +109,7 @@ int main()
     {
         cout << "OpenNN. Forecasting — multi-case validation suite." << endl;
 
-        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::FP32);
 
         vector<CaseResult> results;
 

@@ -251,19 +251,19 @@ VectorR calculate_spearman_ranks(const VectorR& x)
 
     VectorR ranks(size);
 
-    Index i = 0;
-    while (i < size)
+    Index tie_start = 0;
+    while (tie_start < size)
     {
-        Index j = i;
-        while (j + 1 < size && x(sorted_indices(j + 1)) == x(sorted_indices(i)))
-            ++j;
+        Index tie_end = tie_start;
+        while (tie_end + 1 < size && x(sorted_indices(tie_end + 1)) == x(sorted_indices(tie_start)))
+            ++tie_end;
 
-        const float average_rank = float(i + j + 2) / 2.0f;
+        const float average_rank = float(tie_start + tie_end + 2) / 2.0f;
 
-        for (Index k = i; k <= j; ++k)
-            ranks(sorted_indices(k)) = average_rank;
+        for (Index i = tie_start; i <= tie_end; ++i)
+            ranks(sorted_indices(i)) = average_rank;
 
-        i = j + 1;
+        tie_start = tie_end + 1;
     }
 
     return ranks;
@@ -606,17 +606,17 @@ Correlation point_biserial_correlation(const VectorR& continuous,
 
     const Index sample_count = x_filter.size();
 
-    const auto x_dbl = x_filter.cast<double>();
-    const double sum_all = x_dbl.sum();
-    const double sum_sq = x_dbl.squaredNorm();
+    const auto x_double = x_filter.cast<double>();
+    const double sum_all = x_double.sum();
+    const double sum_sq = x_double.squaredNorm();
 
-    const auto mask1 = (y_filter.array() > 0.5f);
-    const Index n1 = mask1.count();
-    const Index n0 = sample_count - n1;
-    const double sum1 = mask1.select(x_dbl.array(), 0.0).sum();
-    const double sum0 = sum_all - sum1;
+    const auto positive_mask = (y_filter.array() > 0.5f);
+    const Index positive_count = positive_mask.count();
+    const Index negative_count = sample_count - positive_count;
+    const double positive_sum = positive_mask.select(x_double.array(), 0.0).sum();
+    const double negative_sum = sum_all - positive_sum;
 
-    if (n1 == 0 || n0 == 0)
+    if (positive_count == 0 || negative_count == 0)
     {
         result.r = 0.0f;
         return result;
@@ -632,12 +632,12 @@ Correlation point_biserial_correlation(const VectorR& continuous,
     }
 
     const double s_x  = sqrt(variance);
-    const double M1   = sum1 / double(n1);
-    const double M0   = sum0 / double(n0);
-    const double r_pb = (M1 - M0) / s_x
-                        * sqrt(double(n1) * double(n0) / (double(sample_count) * double(sample_count)));
+    const double group_one_mean   = positive_sum / double(positive_count);
+    const double group_zero_mean   = negative_sum / double(negative_count);
+    const double point_biserial_r = (group_one_mean - group_zero_mean) / s_x
+                        * sqrt(double(positive_count) * double(negative_count) / (double(sample_count) * double(sample_count)));
 
-    result.r = float(clamp(r_pb, -1.0, 1.0));
+    result.r = float(clamp(point_biserial_r, -1.0, 1.0));
 
     const float z = r_correlation_to_z_correlation(result.r);
     const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z, sample_count);
@@ -663,7 +663,7 @@ Correlation eta_squared_correlation(const VectorR& continuous,
     }
 
     const Index sample_count = x_filter.size();
-    const Index n_cats     = y_filter.cols();
+    const Index categories_number     = y_filter.cols();
 
     const auto x_double = x_filter.cast<double>();
     const double grand_mean = x_double.mean();
@@ -677,9 +677,9 @@ Correlation eta_squared_correlation(const VectorR& continuous,
 
     double ss_between = 0;
 
-    for (Index cat = 0; cat < n_cats; ++cat)
+    for (Index i = 0; i < categories_number; ++i)
     {
-        const auto mask = (y_filter.col(cat).array() > 0.5f);
+        const auto mask = (y_filter.col(i).array() > 0.5f);
         const double group_sum = mask.select(x_double.array(), 0.0).sum();
         const Index group_count = mask.count();
 

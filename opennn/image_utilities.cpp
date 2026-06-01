@@ -602,7 +602,7 @@ void load_image(const filesystem::path& path,
         const Index pixels = expected_height * expected_width * expected_channels;
 
         if (divide_by_255)
-            for (Index k = 0; k < pixels; ++k) dst[k] = resized.data()[k] / 255.0f;
+            for (Index i = 0; i < pixels; ++i) dst[i] = resized.data()[i] / 255.0f;
         else
             copy_n(resized.data(), pixels, dst);
 
@@ -633,7 +633,7 @@ void load_image(const filesystem::path& path,
         const Index pixels = expected_height * expected_width * expected_channels;
 
         if (divide_by_255)
-            for (Index k = 0; k < pixels; ++k) dst[k] = resized.data()[k] / 255.0f;
+            for (Index i = 0; i < pixels; ++i) dst[i] = resized.data()[i] / 255.0f;
         else
             copy_n(resized.data(), pixels, dst);
         return;
@@ -679,7 +679,7 @@ void load_image(const filesystem::path& path,
     const Index pixels = expected_height * expected_width * expected_channels;
 
     if (divide_by_255)
-        for (Index k = 0; k < pixels; ++k) dst[k] = resized.data()[k] / 255.0f;
+        for (Index i = 0; i < pixels; ++i) dst[i] = resized.data()[i] / 255.0f;
     else
         copy_n(resized.data(), pixels, dst);
 }

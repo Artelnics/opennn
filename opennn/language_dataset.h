@@ -58,22 +58,21 @@ public:
                      const vector<Index>&,
                      float*,
                      bool is_training,
-                     bool parallelize = true,
                      int = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       bool is_training,
-                      bool parallelize = true,
                       int = -1) const override;
 
     void fill_decoder(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       bool is_training,
-                      bool parallelize = true,
                       int = -1) const override;
+
+    bool supports_bf16_inputs() const override { return false; }
 
     inline static const string PAD_TOKEN   = "[PAD]";     // 0
     inline static const string UNK_TOKEN   = "[UNK]";     // 1
@@ -101,11 +100,11 @@ private:
 
     void encode_streaming(const vector<vector<string_view>>&,
                           const vector<vector<string_view>>&,
-                          vector<vector<Index>>& in_idx,
-                          vector<vector<Index>>& tgt_idx) const;
+                          vector<vector<Index>>& input_indices,
+                          vector<vector<Index>>& target_indices) const;
 
-    void write_binary_cache(const vector<vector<Index>>& in_idx,
-                            const vector<vector<Index>>& tgt_idx,
+    void write_binary_cache(const vector<vector<Index>>& input_indices,
+                            const vector<vector<Index>>& target_indices,
                             bool has_decoder);
 
     bool try_load_binary_cache(Index expected_samples);
@@ -125,7 +124,7 @@ private:
 
     filesystem::path cache_path;
     mutable FileReader cache_reader;
-    uint64_t cache_data_off_ = 0;
+    uint64_t cache_data_offset = 0;
     vector<array<int64_t, 4>> offsets_table;   // (in_off, in_len, tgt_off, tgt_len)
 };
 

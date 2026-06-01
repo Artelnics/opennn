@@ -32,22 +32,26 @@ public:
                         bool = false,
                         const Codification& = Codification::UTF8);
 
-    [[nodiscard]] Index get_samples_number() const override { return data.rows(); }
-
-    [[nodiscard]] const MatrixR& get_data() const { return data; }
+    Index get_samples_number() const override
+    {
+        return storage_mode == StorageMode::BinaryFile && binary_rows_number > 0
+             ? binary_rows_number
+             : data.rows();
+    }
+    const MatrixR& get_data() const { return data; }
     void set_data(const MatrixR&);
     void set_data_constant(float);
 
-    [[nodiscard]] MatrixR get_data(const string&, const string&) const;
-    [[nodiscard]] MatrixR get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
+    MatrixR get_data(const string&, const string&) const;
+    MatrixR get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
 
-    [[nodiscard]] VectorR get_sample_data(Index) const;
+    VectorR get_sample_data(Index) const;
 
-    [[nodiscard]] MatrixR get_variable_data(Index) const;
-    [[nodiscard]] MatrixR get_variable_data(Index, const vector<Index>&) const;
-    [[nodiscard]] MatrixR get_variable_data(const string&) const;
+    MatrixR get_variable_data(Index) const;
+    MatrixR get_variable_data(Index, const vector<Index>&) const;
+    MatrixR get_variable_data(const string&) const;
 
-    [[nodiscard]] MatrixR get_feature_data(const string&) const;
+    MatrixR get_feature_data(const string&) const;
 
     void set(Index = 0, const Shape& = {}, const Shape& = {});
     void set(const filesystem::path&,
@@ -118,13 +122,13 @@ public:
     vector<vector<Index>> replace_Tukey_outliers_with_NaN(const float = 1.5f);
     void unuse_Tukey_outliers(const float = 1.5f);
 
-    [[nodiscard]] bool has_nan() const override;
-    [[nodiscard]] bool has_nan_row(Index) const;
+    bool has_nan() const override;
+    bool has_nan_row(Index) const;
 
-    [[nodiscard]] VectorI count_nans_per_variable() const;
-    [[nodiscard]] Index count_variables_with_nan() const;
-    [[nodiscard]] Index count_rows_with_nan() const;
-    [[nodiscard]] Index count_nan() const;
+    VectorI count_nans_per_variable() const;
+    Index count_variables_with_nan() const;
+    Index count_rows_with_nan() const;
+    Index count_nan() const;
 
     void save_data() const;
     void save_data_binary(const filesystem::path&) const;
@@ -146,34 +150,25 @@ public:
                      const vector<Index>&,
                      float*,
                      bool is_training,
-                     bool parallelize = true,
                      int contiguous = -1) const override;
 
     void fill_decoder(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       bool is_training,
-                      bool parallelize = true,
                       int contiguous = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       bool is_training,
-                      bool parallelize = true,
                       int contiguous = -1) const override;
 
-    bool ensure_device_resident(const string& sample_role) override;
-    [[nodiscard]] const DeviceResidentData* get_device_resident(const string& sample_role) const override;
+    bool supports_dense_feature_gather() const override { return true; }
 
 protected:
 
     MatrixR data;
-
-    DeviceResidentData device_resident_training;
-    DeviceResidentData device_resident_validation;
-    bool supports_device_residency() const { return true; }
-    DeviceResidentData* select_device_resident(const string& sample_role);
 
     string missing_values_label = "NA";
     MissingValuesMethod missing_values_method = MissingValuesMethod::Mean;

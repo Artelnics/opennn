@@ -1083,40 +1083,46 @@ template void gather_time_slice_cuda<float>        (const Index, const Index, co
 template void gather_time_slice_cuda<__nv_bfloat16>(const Index, const Index, const Index, const Index, const __nv_bfloat16*, __nv_bfloat16*);
 
 template<typename TSrc, typename TDst>
-__global__ void gather_rows_kernel(const int batch_size,
-                                   const int features,
-                                   const Index* __restrict__ row_indices,
-                                   const TSrc* __restrict__ src,
-                                   TDst* __restrict__ dst)
+__global__ void gather_columns_kernel(const int batch_size,
+                                      const int output_features,
+                                      const int source_features,
+                                      const Index* __restrict__ row_indices,
+                                      const Index* __restrict__ column_indices,
+                                      const TSrc* __restrict__ source,
+                                      TDst* __restrict__ destination)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    const int total = batch_size * features;
+    const int total = batch_size * output_features;
     if (idx >= total) return;
 
-    const int b = idx / features;
-    const int f = idx - b * features;
-    const Index src_row = row_indices[b];
-    dst[idx] = static_cast<TDst>(src[src_row * Index(features) + f]);
+    const int b = idx / output_features;
+    const int f = idx - b * output_features;
+    const Index source_row = row_indices[b];
+    const Index source_column = column_indices[f];
+    destination[idx] = static_cast<TDst>(source[source_row * Index(source_features) + source_column]);
 }
 
 template<typename TSrc, typename TDst>
-void gather_rows_cuda(const Index batch_size,
-                      const Index features,
-                      const Index* row_indices,
-                      const TSrc* src_matrix,
-                      TDst* dst)
+void gather_columns_cuda(const Index batch_size,
+                         const Index output_features,
+                         const Index source_features,
+                         const Index* row_indices,
+                         const Index* column_indices,
+                         const TSrc* source,
+                         TDst* destination)
 {
-    if (batch_size == 0 || features == 0) return;
-    const int total = static_cast<int>(batch_size * features);
-    gather_rows_kernel<TSrc, TDst><<<grid_size_for(total), block_size, 0,
-                                     opennn::Backend::get_compute_stream()>>>(
+    if (batch_size == 0 || output_features == 0) return;
+    const int total = static_cast<int>(batch_size * output_features);
+    gather_columns_kernel<TSrc, TDst><<<grid_size_for(total), block_size, 0,
+                                        opennn::Backend::get_compute_stream()>>>(
         static_cast<int>(batch_size),
-        static_cast<int>(features),
-        row_indices, src_matrix, dst);
+        static_cast<int>(output_features),
+        static_cast<int>(source_features),
+        row_indices, column_indices, source, destination);
 }
 
-template void gather_rows_cuda<float, float>        (const Index, const Index, const Index*, const float*,         float*);
-template void gather_rows_cuda<float, __nv_bfloat16>(const Index, const Index, const Index*, const float*,         __nv_bfloat16*);
+template void gather_columns_cuda<float, float>        (const Index, const Index, const Index, const Index*, const Index*, const float*, float*);
+template void gather_columns_cuda<float, __nv_bfloat16>(const Index, const Index, const Index, const Index*, const Index*, const float*, __nv_bfloat16*);
 
 template<typename T>
 __global__ void scatter_time_slice_kernel(const int batch,

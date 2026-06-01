@@ -111,7 +111,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     ranges::transform(correlation_indices,
                       correlations_rank_descending.data(),
-                      [&input_variable_indices](Index idx) { return input_variable_indices[idx]; });
+                      [&input_variable_indices](Index correlation_index) { return input_variable_indices[correlation_index]; });
 
     dataset->set_input_variables_unused();
 
@@ -313,8 +313,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         {
             for (Index j = 0; j < time_steps; ++j)
             {
-                string name = format("{}_lag{}", base_name.empty() ? "variable" : base_name, j);
-                final_feature_names.push_back(name);
+                string lag_name = format("{}_lag{}", base_name.empty() ? "variable" : base_name, j);
+                final_feature_names.push_back(lag_name);
             }
         }
         neural_network->set_input_names(final_feature_names);

@@ -27,7 +27,7 @@ public:
 
     using Creator = std::function<std::unique_ptr<T>()>;
 
-    [[nodiscard]] static Registry& instance()
+    static Registry& instance()
     {
         static Registry registry;
         return registry;
@@ -38,7 +38,7 @@ public:
         creators[name] = std::move(creator);
     }
 
-    [[nodiscard]] std::unique_ptr<T> create(const std::string& name) const
+    std::unique_ptr<T> create(const std::string& name) const
     {
         auto it = creators.find(name);
 
@@ -49,7 +49,7 @@ public:
 
     }
 
-    [[nodiscard]] std::vector<std::string> registered_names() const
+    std::vector<std::string> registered_names() const
     {
         std::vector<std::string> names;
 

@@ -72,7 +72,7 @@ TEST(NormalizedSquaredErrorTest, SetNormalizationCoefficientFromTrainingTargets)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<Dense>(Shape{1}, Shape{1}, "Identity"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
     neural_network.compile();
 
     Loss loss(&neural_network, &dataset);

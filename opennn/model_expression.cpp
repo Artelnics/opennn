@@ -482,7 +482,7 @@ void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
     for (const string& l : lines)
         buffer << "\tdouble " << process_body_line(l, input_names, fixed_input_names) << "\n";
 
-    const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::C);
+    const vector<string> fixed_outputs = fix_output_names(expression, output_names, ProgrammingLanguage::C);
     if (!fixed_outputs.empty())
     {
         buffer << "\n";
@@ -866,7 +866,7 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
         else                 buffer << "\tvar " << line << "\n";
     }
 
-    const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::JavaScript);
+    const vector<string> fixed_outputs = fix_output_names(expression, output_names, ProgrammingLanguage::JavaScript);
     for (const string& l : fixed_outputs)
         buffer << l << "\n";
 
@@ -1066,9 +1066,9 @@ string ModelExpression::replace_reserved_keywords(const string& input)
     return out;
 }
 
-vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
+vector<string> ModelExpression::fix_output_names(const string& str,
                                                            const vector<string>& outputs,
-                                                           const ProgrammingLanguage& programming_Language)
+                                                           const ProgrammingLanguage& programming_language)
 {
     vector<string> out;
     vector<string> tokens;
@@ -1104,7 +1104,7 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
         {ProgrammingLanguage::PHP,        {"$",       "$", ";"}}
     };
 
-    const DeclFormat& fmt = formats.at(programming_Language);
+    const DeclFormat& fmt = formats.at(programming_language);
     const size_t tokens_count = tokens.size();
 
     for (size_t i = 0; i < num_outputs; ++i)

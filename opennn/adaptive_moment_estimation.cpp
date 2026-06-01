@@ -105,6 +105,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         : 0;
 
     warn_dropped_samples(training_batch_size, training_samples_number, "training");
+    
     if (has_validation)
         warn_dropped_samples(validation_batch_size, validation_samples_number, "validation");
 
@@ -118,35 +119,14 @@ TrainingResults AdaptiveMomentEstimation::train()
     set_names();
     set_scaling();
 
-#ifdef OPENNN_HAS_CUDA
-    if (on_gpu && neural_network->has(LayerType::Recurrent) && num_workers > 1)
-        num_workers = 1;
-#endif
+    BatchPools batch_pools;
+    setup_batch_pools(batch_pools,
+                      *dataset,
+                      *neural_network,
+                      training_batch_size,
+                      validation_batch_size,
+                      has_validation);
 
-    const int pool_size = on_gpu ? max(num_workers + 1, 3) : 1;
-
-    ThreadSafeQueue<Batch*> empty_training_queue;
-    vector<unique_ptr<Batch>> training_batch_pool;
-
-    for (int i = 0; i < pool_size; ++i)
-    {
-        training_batch_pool.push_back(make_unique<Batch>(training_batch_size, dataset));
-        empty_training_queue.push(training_batch_pool.back().get());
-    }
-
-    ThreadSafeQueue<Batch*> empty_validation_queue;
-    vector<unique_ptr<Batch>> validation_batch_pool;
-
-    const bool share_batch_pool = has_validation && validation_batch_size == training_batch_size;
-
-    if (has_validation && !share_batch_pool)
-        for (int i = 0; i < pool_size; ++i)
-        {
-            validation_batch_pool.push_back(make_unique<Batch>(validation_batch_size, dataset));
-            empty_validation_queue.push(validation_batch_pool.back().get());
-        }
-
-    ThreadSafeQueue<Batch*>& validation_empty_q = share_batch_pool ? empty_training_queue : empty_validation_queue;
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
 
     loss->set_normalization_coefficient();
@@ -162,11 +142,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         ? validation_forward_propagation.get()
         : nullptr;
 
-    vector<Batch*> all_batches;
-    all_batches.reserve(training_batch_pool.size() + validation_batch_pool.size());
-    for (auto& b : training_batch_pool)   all_batches.push_back(b.get());
-    for (auto& b : validation_batch_pool) all_batches.push_back(b.get());
-    setup_device_training(all_batches);
+    setup_device_training();
 
     // Optimization data
 
@@ -215,7 +191,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         const EpochStats train_stats = train_epoch(is_token_cross_entropy,
                                                    training_forward_propagation,
                                                    training_back_propagation,
-                                                   empty_training_queue,
+                                                   batch_pools.training_empty_queue,
                                                    training_batches,
                                                    input_feature_indices,
                                                    decoder_feature_indices,
@@ -233,7 +209,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
             const EpochStats val_stats = evaluate_epoch(is_token_cross_entropy,
                                                         *validation_fp,
-                                                        validation_empty_q,
+                                                        batch_pools.validation_queue(),
                                                         validation_batches,
                                                         input_feature_indices,
                                                         decoder_feature_indices,
@@ -249,39 +225,39 @@ TrainingResults AdaptiveMomentEstimation::train()
                 best_epoch = epoch;
                 validation_failures = 0;
 
-                const Index psize = neural_network->get_parameters_size();
-                if(Index(best_parameters.size()) != psize)
-                    best_parameters.resize(psize);
+                const Index parameters_size = neural_network->get_parameters_size();
+                if(Index(best_parameters.size()) != parameters_size)
+                    best_parameters.resize(parameters_size);
 
-                const float* src = neural_network->get_parameters_data();
-                const size_t bytes = size_t(psize) * sizeof(float);
+                const float* parameters_source = neural_network->get_parameters_data();
+                const size_t parameters_bytes = size_t(parameters_size) * sizeof(float);
 #ifdef OPENNN_HAS_CUDA
                 if(Configuration::instance().is_gpu())
                 {
                     CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
-                    CHECK_CUDA(cudaMemcpy(best_parameters.data(), src, bytes, cudaMemcpyDeviceToHost));
+                    CHECK_CUDA(cudaMemcpy(best_parameters.data(), parameters_source, parameters_bytes, cudaMemcpyDeviceToHost));
                 }
                 else
 #endif
-                    memcpy(best_parameters.data(), src, bytes);
+                    memcpy(best_parameters.data(), parameters_source, parameters_bytes);
 
-                const Index ssize = neural_network->get_states_buffer_size();
-                if (ssize > 0)
+                const Index states_size = neural_network->get_states_buffer_size();
+                if (states_size > 0)
                 {
-                    if (Index(best_states.size()) != ssize)
-                        best_states.resize(ssize);
+                    if (Index(best_states.size()) != states_size)
+                        best_states.resize(states_size);
 
-                    const float* state_src = neural_network->get_states_data();
-                    const size_t state_bytes = size_t(ssize) * sizeof(float);
+                    const float* states_source = neural_network->get_states_data();
+                    const size_t states_bytes = size_t(states_size) * sizeof(float);
 #ifdef OPENNN_HAS_CUDA
                     if (Configuration::instance().is_gpu())
                     {
                         CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
-                        CHECK_CUDA(cudaMemcpy(best_states.data(), state_src, state_bytes, cudaMemcpyDeviceToHost));
+                        CHECK_CUDA(cudaMemcpy(best_states.data(), states_source, states_bytes, cudaMemcpyDeviceToHost));
                     }
                     else
 #endif
-                        memcpy(best_states.data(), state_src, state_bytes);
+                        memcpy(best_states.data(), states_source, states_bytes);
                 }
             }
             else
@@ -326,6 +302,9 @@ TrainingResults AdaptiveMomentEstimation::train()
             cout << "Restoring best parameters and states from epoch " << best_epoch
                  << " (validation error " << best_validation_error << ")\n";
 
+        // Use set_parameters (not memcpy) so the GPU path properly issues
+        // cudaMemcpy(H2D) and refreshes the BF16 mirror via
+        // cast_parameters_to_bf16. memcpy into a device pointer is UB.
         VectorR best_view(best_parameters.size());
         memcpy(best_view.data(), best_parameters.data(),
                     best_parameters.size() * sizeof(float));
@@ -367,7 +346,9 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const float bias_correction_1 = 1.0f - pow(beta_1, iteration);
     const float bias_correction_2 = 1.0f - pow(beta_2, iteration);
 
-    IF_GPU({
+#ifdef OPENNN_HAS_CUDA
+    if (neural_network->is_gpu())
+    {
         PROFILE_SCOPE("optim:adam_update_cuda");
         const Index parameters_number = neural_network->get_parameters_size();
 
@@ -386,7 +367,8 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             neural_network->get_parameters_bf16_data());
 
         return;
-    });
+    }
+#endif
 
     VectorMap parameters(neural_network->get_parameters_data(),
                          neural_network->get_parameters_size());

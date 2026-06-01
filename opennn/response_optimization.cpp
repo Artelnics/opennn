@@ -20,9 +20,9 @@ namespace opennn
 namespace
 {
 
-inline Eigen::array<Index, 3> array_3(const Index a, const Index b, const Index c)
+inline Eigen::array<Index, 3> array_3(const Index first_dimension, const Index second_dimension, const Index third_dimension)
 {
-    return Eigen::array<Index, 3>({a, b, c});
+    return Eigen::array<Index, 3>({first_dimension, second_dimension, third_dimension});
 }
 
 inline vector<Index> get_feature_dimensions(const vector<Variable>& variables)
@@ -554,11 +554,11 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                 random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array().round();
             else
             {
-                const float inf = input_domain.inferior_frontier(current_feature_index);
-                const float sup = input_domain.superior_frontier(current_feature_index);
-                const float range = sup - inf;
+                const float inferior = input_domain.inferior_frontier(current_feature_index);
+                const float superior = input_domain.superior_frontier(current_feature_index);
+                const float range = superior - inferior;
 
-                random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array() * range + inf;
+                random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array() * range + inferior;
             }
             current_feature_index++;
         }

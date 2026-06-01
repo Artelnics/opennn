@@ -67,11 +67,11 @@ private:
     VectorR distribution;
     vector<uint16_t> bf16_staging;
 
-    Index decoder_embedding_layer_index   = -1;
-    Index encoder_embedding_layer_index   = -1;
-    Index encoder_last_layer_index        = -1;
-    Index decoder_stack_first_layer_index = -1;
-    Index output_projection_layer_index   = -1;
+    Index decoder_embedding_index = -1;
+    Index encoder_embedding_index = -1;
+    Index encoder_last_index      = -1;
+    Index decoder_first_index     = -1;
+    Index output_projection_index = -1;
 
     void identify_layer_ranges();
     void encode_source(const string& source);

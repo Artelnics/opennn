@@ -223,46 +223,46 @@ namespace {
 struct Parser
 {
     const string& s;
-    size_t i = 0;
+    size_t position = 0;
 
     explicit Parser(const string& text) : s(text) {}
 
     void skip_ws()
     {
-        while (i < s.size())
+        while (position < s.size())
         {
-            char c = s[i];
-            if (c == ' ' || c == '\t' || c == '\n' || c == '\r') ++i;
+            char c = s[position];
+            if (c == ' ' || c == '\t' || c == '\n' || c == '\r') ++position;
             else break;
         }
     }
 
     [[noreturn]] void fail(const string& msg) const
     {
-        throw runtime_error(format("JSON parse error at {}: {}", i, msg));
+        throw runtime_error(format("JSON parse error at {}: {}", position, msg));
     }
 
     char peek()
     {
         skip_ws();
-        if (i >= s.size()) fail("unexpected end of input");
-        return s[i];
+        if (position >= s.size()) fail("unexpected end of input");
+        return s[position];
     }
 
     char consume()
     {
         skip_ws();
-        if (i >= s.size()) fail("unexpected end of input");
-        return s[i++];
+        if (position >= s.size()) fail("unexpected end of input");
+        return s[position++];
     }
 
     bool match(const char* word)
     {
         skip_ws();
         const size_t n = strlen(word);
-        if (i + n > s.size()) return false;
-        if (s.compare(i, n, word) != 0) return false;
-        i += n;
+        if (position + n > s.size()) return false;
+        if (s.compare(position, n, word) != 0) return false;
+        position += n;
         return true;
     }
 
@@ -270,14 +270,14 @@ struct Parser
     {
         if (consume() != '"') fail("expected '\"'");
         string out;
-        while (i < s.size())
+        while (position < s.size())
         {
-            char c = s[i++];
+            char c = s[position++];
             if (c == '"') return out;
             if (c == '\\')
             {
-                if (i >= s.size()) fail("bad escape");
-                char e = s[i++];
+                if (position >= s.size()) fail("bad escape");
+                char e = s[position++];
                 switch (e)
                 {
                 case '"':  out.push_back('"');  break;
@@ -289,11 +289,11 @@ struct Parser
                 case 'b':  out.push_back('\b'); break;
                 case 'f':  out.push_back('\f'); break;
                 case 'u': {
-                    if (i + 4 > s.size()) fail("bad \\u");
+                    if (position + 4 > s.size()) fail("bad \\u");
                     unsigned code = 0;
-                    for (int k = 0; k < 4; ++k)
+                    for (int i = 0; i < 4; ++i)
                     {
-                        char h = s[i++];
+                        char h = s[position++];
                         code <<= 4;
                         if (h >= '0' && h <= '9')      code |= unsigned(h - '0');
                         else if (h >= 'a' && h <= 'f') code |= unsigned(h - 'a' + 10);
@@ -326,19 +326,19 @@ struct Parser
     Json parse_number()
     {
         skip_ws();
-        const size_t start = i;
-        if (i < s.size() && s[i] == '-') ++i;
-        while (i < s.size() && isdigit(static_cast<unsigned char>(s[i]))) ++i;
-        if (i < s.size() && s[i] == '.') { ++i; while (i < s.size() && isdigit(static_cast<unsigned char>(s[i]))) ++i; }
-        if (i < s.size() && (s[i] == 'e' || s[i] == 'E'))
+        const size_t start = position;
+        if (position < s.size() && s[position] == '-') ++position;
+        while (position < s.size() && isdigit(static_cast<unsigned char>(s[position]))) ++position;
+        if (position < s.size() && s[position] == '.') { ++position; while (position < s.size() && isdigit(static_cast<unsigned char>(s[position]))) ++position; }
+        if (position < s.size() && (s[position] == 'e' || s[position] == 'E'))
         {
-            ++i;
-            if (i < s.size() && (s[i] == '+' || s[i] == '-')) ++i;
-            while (i < s.size() && isdigit(static_cast<unsigned char>(s[i]))) ++i;
+            ++position;
+            if (position < s.size() && (s[position] == '+' || s[position] == '-')) ++position;
+            while (position < s.size() && isdigit(static_cast<unsigned char>(s[position]))) ++position;
         }
         Json j;
         j.kind = Json::Kind::Number;
-        j.number_value = stod(s.substr(start, i - start));
+        j.number_value = stod(s.substr(start, position - start));
         return j;
     }
 
@@ -360,17 +360,17 @@ struct Parser
         if (consume() != '{') fail("expected '{'");
         Json j = Json::make_object();
         skip_ws();
-        if (i < s.size() && s[i] == '}') { ++i; return j; }
+        if (position < s.size() && s[position] == '}') { ++position; return j; }
         while (true)
         {
             string key = parse_string();
             skip_ws();
-            if (i >= s.size() || s[i] != ':') fail("expected ':'");
-            ++i;
+            if (position >= s.size() || s[position] != ':') fail("expected ':'");
+            ++position;
             j.object_value.emplace_back(move(key), parse_value());
             skip_ws();
-            if (i < s.size() && s[i] == ',') { ++i; continue; }
-            if (i < s.size() && s[i] == '}') { ++i; return j; }
+            if (position < s.size() && s[position] == ',') { ++position; continue; }
+            if (position < s.size() && s[position] == '}') { ++position; return j; }
             fail("expected ',' or '}'");
         }
     }
@@ -380,13 +380,13 @@ struct Parser
         if (consume() != '[') fail("expected '['");
         Json j = Json::make_array();
         skip_ws();
-        if (i < s.size() && s[i] == ']') { ++i; return j; }
+        if (position < s.size() && s[position] == ']') { ++position; return j; }
         while (true)
         {
             j.array_value.push_back(parse_value());
             skip_ws();
-            if (i < s.size() && s[i] == ',') { ++i; continue; }
-            if (i < s.size() && s[i] == ']') { ++i; return j; }
+            if (position < s.size() && s[position] == ',') { ++position; continue; }
+            if (position < s.size() && s[position] == ']') { ++position; return j; }
             fail("expected ',' or ']'");
         }
     }
@@ -399,7 +399,7 @@ Json Json::parse(const string& text)
     Parser p(text);
     Json v = p.parse_value();
     p.skip_ws();
-    if (p.i != text.size())
+    if (p.position != text.size())
         throw runtime_error("JSON parse: trailing data");
     return v;
 }

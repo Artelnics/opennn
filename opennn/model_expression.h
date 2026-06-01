@@ -65,7 +65,7 @@ private:
     static void rename_spaced_var_definitions(vector<string>&);
     static vector<string> prepare_body_lines(const string& expression);
     static vector<string> fix_names(const vector<string>&, const string& default_prefix);
-    static vector<string> fix_get_expression_outputs(const string&, const vector<string>&, const ProgrammingLanguage&);
+    static vector<string> fix_output_names(const string&, const vector<string>&, const ProgrammingLanguage&);
     static void apply_name_mapping(string&, const vector<string>& original, const vector<string>& mapped);
     static string process_body_line(const string&, const vector<string>& input_names, const vector<string>& fixed_input_names);
     static string replace_reserved_keywords(const string&);

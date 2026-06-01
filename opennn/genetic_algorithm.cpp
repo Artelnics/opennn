@@ -37,8 +37,8 @@ void GeneticAlgorithm::set_default()
 
     const Index individuals_number = 40;
 
-    original_input_variable_indices = dataset->get_variable_indices("Input");
-    original_target_variable_indices = dataset->get_variable_indices("Target");
+    original_input_indices = dataset->get_variable_indices("Input");
+    original_target_indices = dataset->get_variable_indices("Target");
 
     const Index genes_number = get_genes_number();
 
@@ -183,7 +183,7 @@ void GeneticAlgorithm::evaluate_population()
 
         const vector<Index> individual_variables_indices = get_true_indices(individual);
 
-        dataset->set_variable_indices(individual_variables_indices, original_target_variable_indices);
+        dataset->set_variable_indices(individual_variables_indices, original_target_indices);
 
         const Index input_features_number = dataset->get_features_number("Input");
 
@@ -205,7 +205,7 @@ void GeneticAlgorithm::evaluate_population()
                  << "Variables number: " << input_features_number << "\n"
                  << "Inputs number: " << dataset->get_variables_number("Input") << "\n";
 
-        dataset->set_variable_indices(original_input_variable_indices, original_target_variable_indices);
+        dataset->set_variable_indices(original_input_indices, original_target_indices);
     }
 
 }
@@ -272,15 +272,15 @@ VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& pare
 
     for (Index i = 0; i < genes_number; ++i)
     {
-        const bool p1 = parent_1(i);
-        const bool p2 = parent_2(i);
+        const bool parent_1_gene = parent_1(i);
+        const bool parent_2_gene = parent_2(i);
 
-        if (p1 && p2)
+        if (parent_1_gene && parent_2_gene)
         {
             intersection.push_back(i);
             descendent(i) = true;
         }
-        else if (p1 != p2)
+        else if (parent_1_gene != parent_2_gene)
             difference.push_back(i);
     }
 
@@ -398,21 +398,21 @@ void GeneticAlgorithm::perform_mutation()
 
         const Index swap_count = min(to_true_mutations.size(), to_false_mutations.size());
 
-        for (Index k = 0; k < swap_count; ++k)
+        for (Index j = 0; j < swap_count; ++j)
         {
-            individual(to_true_mutations[k]) = true;
-            individual(to_false_mutations[k]) = false;
+            individual(to_true_mutations[j]) = true;
+            individual(to_false_mutations[j]) = false;
         }
 
-        for (size_t k = swap_count; k < to_true_mutations.size() && current_inputs_number < maximum_inputs_number; ++k)
+        for (size_t j = swap_count; j < to_true_mutations.size() && current_inputs_number < maximum_inputs_number; ++j)
         {
-            individual(to_true_mutations[k]) = true;
+            individual(to_true_mutations[j]) = true;
             ++current_inputs_number;
         }
 
-        for (size_t k = swap_count; k < to_false_mutations.size() && current_inputs_number > minimum_inputs_number; ++k)
+        for (size_t j = swap_count; j < to_false_mutations.size() && current_inputs_number > minimum_inputs_number; ++j)
         {
-            individual(to_false_mutations[k]) = false;
+            individual(to_false_mutations[j]) = false;
             current_inputs_number--;
         }
 
@@ -428,8 +428,8 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     // Validation algorithm
 
-    original_input_variable_indices = dataset->get_variable_indices("Input");
-    original_target_variable_indices = dataset->get_variable_indices("Target");
+    original_input_indices = dataset->get_variable_indices("Input");
+    original_target_indices = dataset->get_variable_indices("Target");
     const vector<Index> time_variable_indices = dataset->get_variable_indices("Time");
 
     if (!dataset->has_validation())
@@ -477,7 +477,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
         input_selection_results.mean_validation_error_history(epoch) = validation_errors.mean();
         input_selection_results.mean_training_error_history(epoch) = training_errors.mean();
 
-        dataset->set_variable_indices(original_input_variable_indices, original_target_variable_indices);
+        dataset->set_variable_indices(original_input_indices, original_target_indices);
 
         if (optimal_validation_error < input_selection_results.optimum_validation_error)
         {
@@ -487,12 +487,12 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
             const vector<Index> best_input_indices = get_true_indices(input_selection_results.optimal_inputs);
 
-            dataset->set_variable_indices(best_input_indices, original_target_variable_indices);
+            dataset->set_variable_indices(best_input_indices, original_target_indices);
 
             input_selection_results.optimal_input_variable_names
                 = dataset->get_variable_names("Input");
 
-            dataset->set_variable_indices(original_input_variable_indices, original_target_variable_indices);
+            dataset->set_variable_indices(original_input_indices, original_target_indices);
 
             input_selection_results.optimal_parameters = individual_parameters(optimal_individual_index);
             input_selection_results.optimum_training_error = optimal_training_error;
@@ -558,7 +558,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     const vector<Index> optimal_variable_indices = get_true_indices(input_selection_results.optimal_inputs);
 
-    dataset->set_variable_indices(optimal_variable_indices, original_target_variable_indices);
+    dataset->set_variable_indices(optimal_variable_indices, original_target_indices);
 
     auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
     const vector<string> input_variable_scalers = tabular_dataset ? tabular_dataset->get_feature_scalers("Input") : vector<string>{};

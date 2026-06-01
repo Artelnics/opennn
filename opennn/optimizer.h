@@ -8,9 +8,8 @@
 
 #pragma once
 
-#include <condition_variable>
 #include <functional>
-#include <mutex>
+#include "batch.h"
 #include "json.h"
 #include "tensor_utilities.h"
 #include "thread_safe_queue.h"
@@ -21,59 +20,13 @@ namespace opennn
 inline constexpr float GRADIENT_NORM_EPS = 1e-6f;
 
 class Loss;
-struct Batch;
+class NeuralNetwork;
 struct Buffer;
 struct ForwardPropagation;
 struct BackPropagation;
 
 struct TrainingResults;
-
-class WorkerPool
-{
-public:
-    explicit WorkerPool(int num_workers);
-    ~WorkerPool();
-
-    WorkerPool(const WorkerPool&) = delete;
-    WorkerPool& operator=(const WorkerPool&) = delete;
-
-    [[nodiscard]] int size() const { return static_cast<int>(workers_.size()); }
-
-    void submit(function<void()> job);
-    void wait();
-
-    [[nodiscard]] bool has_error() const noexcept
-    {
-        return error_pending_.load(memory_order_acquire);
-    }
-    void rethrow_if_error();
-
-private:
-    void worker_loop(stop_token st);
-
-    vector<jthread> workers_;
-    mutex                mutex_;
-    condition_variable   cv_start_;
-    condition_variable   cv_done_;
-    function<void()>     current_job_;
-    uint64_t             generation_  = 0;
-    int                  outstanding_ = 0;
-
-    mutex               error_mutex_;
-    exception_ptr       worker_error_;
-    atomic<bool>        error_pending_{false};
-};
-
-#ifdef OPENNN_HAS_CUDA
-struct DeviceResidentData;
-
-struct ResidentEpochState
-{
-    Buffer row_index_buffer{Device::CUDA}; 
-    const DeviceResidentData* data = nullptr; 
-    bool active = false;
-};
-#endif
+struct BatchFillSession;
 
 class Optimizer
 {
@@ -109,7 +62,7 @@ public:
 
     void set_display_period(const Index new_display_period) { display_period = new_display_period; }
 
-    void set_num_workers(int n) { num_workers = max(1, n); }
+    void set_num_workers(int new_num_workers) { num_workers = max(1, new_num_workers); }
     int  get_num_workers() const { return num_workers; }
 
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
@@ -146,22 +99,12 @@ protected:
     void write_common_json(JsonWriter&) const;
     void read_common_json(const Json*);
 
-    void setup_device_training(const vector<Batch*>& batches);
+    void setup_device_training();
     void teardown_device_training();
 
-#ifdef OPENNN_HAS_CUDA
+    void prefetch_batch(Batch& batch);
 
-    void setup_resident_datasets();
-    void upload_resident_epoch_indices(ResidentEpochState& state,
-                                       const vector<vector<Index>>& batches,
-                                       Index batch_size);
-#endif
-
-    void prefetch_batch(Batch& batch, Index sample_count);
-    void wait_prefetch(Batch& batch);
-    void record_batch_reuse(Batch& batch);
-
-    void sync_device();
+    void sync_device(bool on_gpu);
 
     static void clip_gradient_norm(Buffer& gradient, float max_norm);
 
@@ -170,6 +113,41 @@ protected:
     void warn_dropped_samples(Index batch_size,
                               Index samples_number,
                               const char* context) const;
+
+    struct BatchPools
+    {
+        ThreadSafeQueue<Batch*> training_empty_queue;
+        ThreadSafeQueue<Batch*> validation_empty_queue;
+
+        vector<unique_ptr<Batch>> training_pool;
+        vector<unique_ptr<Batch>> validation_pool;
+
+        bool validation_uses_training_pool = false;
+
+        ThreadSafeQueue<Batch*>& validation_queue();
+    };
+
+    void setup_batch_pools(BatchPools&,
+                           Dataset&,
+                           NeuralNetwork&,
+                           Index training_batch_size,
+                           Index validation_batch_size,
+                           bool has_validation);
+
+    struct WorkerProfileCounters;
+
+    unique_ptr<BatchFillSession> start_batch_workers(
+        ThreadSafeQueue<Batch*>& empty_queue,
+        const vector<vector<Index>>& batches,
+        const vector<Index>& input_feature_indices,
+        const vector<Index>& decoder_feature_indices,
+        const vector<Index>& target_feature_indices,
+        bool is_training,
+        WorkerProfileCounters* profile_counters = nullptr);
+
+    int get_effective_num_workers(const NeuralNetwork&) const;
+    int get_batch_pool_size(const NeuralNetwork&) const;
+    void apply_effective_num_workers(const NeuralNetwork&);
 
     EpochStats train_epoch(bool tracks_accuracy,
                            ForwardPropagation& forward_propagation,
@@ -207,15 +185,6 @@ protected:
     string name;
 
     int num_workers = 2;
-
-    unique_ptr<WorkerPool> worker_pool;
-
-    Buffer prefetch_fp32_staging{Device::CUDA};
-
-#ifdef OPENNN_HAS_CUDA
-    ResidentEpochState resident_train_;
-    ResidentEpochState resident_validation_;
-#endif
 
     bool has_recurrent_layers_ = false;
 };

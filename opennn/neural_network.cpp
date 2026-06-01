@@ -13,7 +13,6 @@
 #include "dense_layer.h"
 #include "scaling_layer.h"
 #include "flatten_layer.h"
-#include "cuda_dispatch.h"
 #include "convolutional_layer.h"
 #include "image_utilities.h"
 #include "addition_layer.h"
@@ -69,7 +68,10 @@ void NeuralNetwork::compile()
     config = Configuration::instance().resolve();
 
     for (auto& layer : layers)
+    {
+        layer->set_compute_device(get_device());
         layer->set_compute_dtype(get_training_type());
+    }
 
     parameters.resize_bytes(get_aligned_bytes(get_parameter_specs(), Type::FP32), Device::CPU);
     parameters.setZero();
@@ -408,7 +410,7 @@ ActivationFunction NeuralNetwork::get_output_activation() const
 Index NeuralNetwork::get_parameters_number() const
 {
     return transform_reduce(layers.begin(), layers.end(), Index(0), plus<>{},
-        [](const unique_ptr<Layer>& l) { return l->get_parameters_number(); });
+        [](const unique_ptr<Layer>& layer) { return layer->get_parameters_number(); });
 }
 
 Index NeuralNetwork::get_first_trainable_layer_index() const
@@ -576,7 +578,9 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
     const vector<TensorView> input_views = {TensorView(const_cast<float*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
                                             TensorView(const_cast<float*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
 
-    IF_GPU({
+#ifdef OPENNN_HAS_CUDA
+    if (is_gpu())
+    {
         const MatrixR result_matrix = calculate_outputs_device(input_views, forward_propagation);
         const TensorView out = forward_propagation.get_outputs();
         if (out.shape.rank < 3)
@@ -586,7 +590,8 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
         memcpy(result.data(), result_matrix.data(),
                     size_t(result.size()) * sizeof(float));
         return result;
-    });
+    }
+#endif
 
     forward_propagate(input_views, forward_propagation, false);
 
@@ -600,7 +605,10 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     const Index batch_size = input_views[0].shape[0];
     ForwardPropagation forward_propagation(batch_size, this);
 
-    IF_GPU({ return calculate_outputs_device(input_views, forward_propagation); });
+#ifdef OPENNN_HAS_CUDA
+    if (is_gpu())
+        return calculate_outputs_device(input_views, forward_propagation);
+#endif
 
     forward_propagate(input_views, forward_propagation, false);
 
@@ -649,11 +657,11 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       Index first_layer_index,
                                       Index last_layer_index) const
 {
-    const auto pick_input = [&](size_t k) -> const TensorView& {
-        if (k >= input_view.size())
+    const auto pick_input = [&](size_t input_index) -> const TensorView& {
+        if (input_index >= input_view.size())
             throw runtime_error(format("NeuralNetwork::forward_propagate: input index {} out of range (have {} input views). Network wiring expects more inputs than were provided.",
-                                       k, input_view.size()));
-        return input_view[k];
+                                       input_index, input_view.size()));
+        return input_view[input_index];
     };
 
     for (Index i = first_layer_index; i <= last_layer_index; ++i)
@@ -661,14 +669,14 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         const vector<Index>& sources = source_layers[i];
         auto& input_slot = forward_propagation.views[i][0];
 
-        for (size_t k = 0; k < sources.size(); ++k)
+        for (size_t source_index = 0; source_index < sources.size(); ++source_index)
         {
-            const Index source_layer = sources[k];
+            const Index source_layer = sources[source_index];
 
             if (source_layer < 0)
-                input_slot[k] = pick_input(size_t(-source_layer - 1));
+                input_slot[source_index] = pick_input(size_t(-source_layer - 1));
             else if (is_training && source_layer < first_layer_index)
-                input_slot[k] = pick_input(k);
+                input_slot[source_index] = pick_input(source_index);
         }
 
         PROFILE_SCOPE("fwd:" + layers[i]->get_name());
@@ -1340,16 +1348,18 @@ void NeuralNetwork::link_parameters()
 
             void* slot_ptr = fp32_slot;
             Type view_type = Type::FP32;
+            Device view_device = parameters.device_type;
 
 #ifdef OPENNN_HAS_CUDA
             if (slot_dtype == Type::BF16 && bf16_base != nullptr)
             {
                 slot_ptr = bf16_base + offset;
                 view_type = Type::BF16;
+                view_device = Device::CUDA;
             }
 #endif
 
-            param_views.emplace_back(slot_ptr, shape, view_type);
+            param_views.emplace_back(slot_ptr, shape, view_type, view_device);
             offset += aligned;
         }
 
@@ -1359,10 +1369,19 @@ void NeuralNetwork::link_parameters()
 
 void NeuralNetwork::link_states()
 {
+    const Device state_device = states.empty()
+        ? parameters.device_type
+        : states.device_type;
+
+    link_states(state_device);
+}
+
+void NeuralNetwork::link_states(Device device)
+{
     float* state_pointer = states.as<float>();
 
     for (auto& layer : layers)
-        state_pointer = layer->link_states(state_pointer);
+        state_pointer = layer->link_states(state_pointer, device);
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -1374,8 +1393,7 @@ void NeuralNetwork::copy_parameters_device()
     cudaStream_t stream = Backend::get_compute_stream();
     parameters.migrate_to(Device::CUDA, stream);
 
-    if(config.training_type  == Type::BF16 ||
-       config.inference_type == Type::BF16)
+    if(config.training_type == Type::BF16)
     {
         parameters_bf16.resize_bytes(parameters.size_in_floats() * Index(sizeof(bfloat16)), Device::CUDA);
         cast_parameters_to_bf16();
@@ -1408,7 +1426,7 @@ void NeuralNetwork::copy_states_device()
     if (!states.empty())
         states.migrate_to(Device::CUDA, Backend::get_compute_stream());
 
-    link_states();
+    link_states(Device::CUDA);
 }
 
 void NeuralNetwork::copy_states_host()
@@ -1416,7 +1434,7 @@ void NeuralNetwork::copy_states_host()
     if (!states.empty())
         states.migrate_to(Device::CPU, Backend::get_compute_stream());
 
-    link_states();
+    link_states(Device::CPU);
 }
 
 MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
@@ -1428,19 +1446,22 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     cudaStream_t stream = Backend::get_compute_stream();
 
     vector<TensorView> input_views_gpu = input_views_cpu;
-    vector<float*>     input_devices(input_views_cpu.size(), nullptr);
+    vector<Buffer>     input_buffers(input_views_cpu.size());
 
     for (size_t i = 0; i < input_views_cpu.size(); ++i)
     {
-        const Index input_size = input_views_cpu[i].size();
-        if (input_size == 0) continue;
-        CHECK_CUDA(cudaMalloc(&input_devices[i], input_size * sizeof(float)));
-        CHECK_CUDA(cudaMemcpyAsync(input_devices[i],
+        const TensorView& source = input_views_cpu[i];
+        if (source.empty()) continue;
+        if (source.device == Device::CUDA) continue;
+
+        input_buffers[i].resize_bytes(source.byte_size(), Device::CUDA);
+        CHECK_CUDA(cudaMemcpyAsync(input_buffers[i].data,
                                    input_views_cpu[i].data,
-                                   input_size * sizeof(float),
+                                   source.byte_size(),
                                    cudaMemcpyHostToDevice,
                                    stream));
-        input_views_gpu[i].data = input_devices[i];
+        input_views_gpu[i].data = input_buffers[i].data;
+        input_views_gpu[i].device = Device::CUDA;
     }
 
     forward_propagate(input_views_gpu, forward_propagation, false);
@@ -1459,9 +1480,6 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
 
     copy_device_to_host_float(out_view.data, out_view.type, out_view.size(),
                               result.data(), stream);
-
-    for (float* p : input_devices)
-        if (p) CHECK_CUDA(cudaFree(p));
 
     return result;
 }

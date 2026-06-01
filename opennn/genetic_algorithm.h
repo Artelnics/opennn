@@ -21,7 +21,7 @@ public:
     GeneticAlgorithm(TrainingStrategy* = nullptr);
     Index get_individuals_number() const { return population.rows(); }
 
-    Index get_genes_number() const { return original_input_variable_indices.size(); }
+    Index get_genes_number() const { return original_input_indices.size(); }
 
     void set_default();
 
@@ -61,8 +61,8 @@ private:
 
     Tensor<VectorR, 1> individual_parameters;
 
-    vector<Index> original_input_variable_indices;
-    vector<Index> original_target_variable_indices;
+    vector<Index> original_input_indices;
+    vector<Index> original_target_indices;
 
     MatrixB population;
 

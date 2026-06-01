@@ -12,7 +12,6 @@
 #include "math_utilities.h"
 #include "neural_network.h"
 #include "unscaling_layer.h"
-#include "cuda_dispatch.h"
 #include "json.h"
 
 namespace opennn
@@ -71,7 +70,7 @@ void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
                                    descriptives.size(), new_descriptives.size()));
     descriptives = new_descriptives;
     op_storage_dirty = true;
-    refresh_op_storage(current_device());
+    refresh_op_storage(op_storage_device);
 }
 
 void Unscaling::set_min_max_range(float new_min, float new_max)
@@ -89,7 +88,7 @@ void Unscaling::set_scalers(const vector<string>& scalers_str)
                                    scalers.size(), scalers_str.size()));
     ranges::transform(scalers_str, scalers.begin(), string_to_scaler_method);
     op_storage_dirty = true;
-    refresh_op_storage(current_device());
+    refresh_op_storage(op_storage_device);
 }
 
 void Unscaling::set_scalers(const string& scaler)
@@ -97,17 +96,19 @@ void Unscaling::set_scalers(const string& scaler)
     const ScalerMethod method = string_to_scaler_method(scaler);
     ranges::fill(scalers, method);
     op_storage_dirty = true;
-    refresh_op_storage(current_device());
+    refresh_op_storage(op_storage_device);
 }
 
-float* Unscaling::link_states(float* pointer)
+float* Unscaling::link_states(float* pointer, Device device)
 {
-    refresh_op_storage(current_device());
+    refresh_op_storage(device);
     return pointer;
 }
 
 void Unscaling::refresh_op_storage(Device device)
 {
+    op_storage_device = device;
+
     const Index features = ssize(descriptives);
     const Index bytes    = 5 * features * Index(sizeof(float));
 
@@ -152,11 +153,11 @@ void Unscaling::refresh_op_storage(Device device)
 
     float* const base = op_storage.as<float>();
     const Shape shape{features};
-    unscale_op.minimums            = TensorView(base + 0 * features, shape, Type::FP32);
-    unscale_op.maximums            = TensorView(base + 1 * features, shape, Type::FP32);
-    unscale_op.means               = TensorView(base + 2 * features, shape, Type::FP32);
-    unscale_op.standard_deviations = TensorView(base + 3 * features, shape, Type::FP32);
-    unscale_op.scalers             = TensorView(base + 4 * features, shape, Type::FP32);
+    unscale_op.minimums            = TensorView(base + 0 * features, shape, Type::FP32, device);
+    unscale_op.maximums            = TensorView(base + 1 * features, shape, Type::FP32, device);
+    unscale_op.means               = TensorView(base + 2 * features, shape, Type::FP32, device);
+    unscale_op.standard_deviations = TensorView(base + 3 * features, shape, Type::FP32, device);
+    unscale_op.scalers             = TensorView(base + 4 * features, shape, Type::FP32, device);
 
     op_storage_dirty = false;
 }
@@ -195,7 +196,7 @@ void Unscaling::read_JSON_body(const Json* root_element)
     }
 
     op_storage_dirty = true;
-    refresh_op_storage(current_device());
+    refresh_op_storage(op_storage_device);
 }
 
 void Unscaling::write_JSON_body(JsonWriter& printer) const
@@ -237,7 +238,7 @@ string Unscaling::write_expression(const vector<string>& input_names,
 
     for (Index i = 0; i < outputs_number; ++i)
     {
-        const Descriptives& d = descriptives[size_t(i)];
+        const Descriptives& descriptive = descriptives[size_t(i)];
         using enum ScalerMethod;
         switch (scalers[size_t(i)])
         {
@@ -245,18 +246,18 @@ string Unscaling::write_expression(const vector<string>& input_names,
             buffer << output_names[i] << " = " << input_names[i] << ";\n";
             break;
         case MinimumMaximum:
-            if (abs(d.minimum - d.maximum) < EPSILON)
-                buffer << output_names[i] << "=" << d.minimum << ";\n";
+            if (abs(descriptive.minimum - descriptive.maximum) < EPSILON)
+                buffer << output_names[i] << "=" << descriptive.minimum << ";\n";
             else
                 buffer << output_names[i] << "=" << input_names[i] << "*"
-                       << "(" << (d.maximum - d.minimum) / (max_range - min_range)
-                       << ")+" << (d.minimum - min_range * (d.maximum - d.minimum) / (max_range - min_range)) << ";\n";
+                       << "(" << (descriptive.maximum - descriptive.minimum) / (max_range - min_range)
+                       << ")+" << (descriptive.minimum - min_range * (descriptive.maximum - descriptive.minimum) / (max_range - min_range)) << ";\n";
             break;
         case MeanStandardDeviation:
-            buffer << output_names[i] << "=" << input_names[i] << "*" << d.standard_deviation << "+" << d.mean << ";\n";
+            buffer << output_names[i] << "=" << input_names[i] << "*" << descriptive.standard_deviation << "+" << descriptive.mean << ";\n";
             break;
         case StandardDeviation:
-            buffer << output_names[i] << "=" << input_names[i] << "*" << d.standard_deviation << ";\n";
+            buffer << output_names[i] << "=" << input_names[i] << "*" << descriptive.standard_deviation << ";\n";
             break;
         case Logarithm:
             buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";

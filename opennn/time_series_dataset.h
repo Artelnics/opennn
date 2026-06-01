@@ -37,8 +37,6 @@ public:
 
     Tensor3 get_data(const string& sample_role, const string& feature_role) const;
 
-    [[nodiscard]] bool supports_device_residency() const override { return false; }
-
     void set_past_time_steps(const Index);
     void set_future_time_steps(const Index);
     void set_time_variable_index(const Index);
@@ -60,15 +58,15 @@ public:
                            const vector<Index>&,
                            float*,
                            bool is_training,
-                           bool parallelize = true,
                            int contiguous = -1) const override;
 
     void fill_targets(const vector<Index>&,
                             const vector<Index>&,
                             float*,
                             bool is_training,
-                            bool parallelize = true,
                             int contiguous = -1) const override;
+
+    bool supports_dense_feature_gather() const override { return false; }
 
     void resize_input_shape(Index) override;
 

@@ -41,7 +41,7 @@ Shape Normalization3d::get_output_shape() const
 
 vector<TensorSpec> Normalization3d::get_forward_specs(Index batch_size) const
 {
-    const Shape normalized_shape = is_gpu()
+    const Shape normalized_shape = get_compute_device() == Device::CUDA
         ? Shape{}
         : Shape{batch_size, sequence_length, embedding_dimension};
 

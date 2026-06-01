@@ -16,7 +16,9 @@ namespace opennn
 
 struct Batch
 {
-    Batch(const Index = 0, const Dataset* = nullptr);
+    Batch(Index,
+          const Dataset*,
+          const Configuration::Resolved&);
     ~Batch();
 
     Batch(const Batch&)            = delete;
@@ -24,29 +26,35 @@ struct Batch
     Batch(Batch&&)                 = delete;
     Batch& operator=(Batch&&)      = delete;
 
-    void set(const Index = 0, const Dataset* = nullptr);
+    void set(Index,
+             const Dataset*,
+             const Configuration::Resolved&);
 
     void fill(const vector<Index>&,
               const vector<Index>&,
               const vector<Index>&,
               const vector<Index>&,
-              bool is_training = true,
-              bool parallelize_samples = true);
+              bool is_training = true);
 
     const vector<TensorView>& get_inputs() const
     {
-#ifdef OPENNN_HAS_CUDA
-        if (is_gpu()) return input_views_cache;
-#endif
+        if (uses_cuda()) return input_views_cache;
         return input_views_host_cache;
     }
 
     const TensorView& get_targets() const
     {
-#ifdef OPENNN_HAS_CUDA
-        if (is_gpu()) return target_view_cache;
-#endif
+        if (uses_cuda()) return target_view_cache;
         return target_view_host_cache;
+    }
+
+    bool uses_cuda() const
+    {
+#ifdef OPENNN_HAS_CUDA
+        return config.device == Device::CUDA;
+#else
+        return false;
+#endif
     }
 
     Index get_samples_number() const;
@@ -56,9 +64,12 @@ struct Batch
     bool is_empty() const;
 
     Index samples_number = 0;
-    Index current_sample_count = 0;     // set by fill(); may be < samples_number
+    Index current_sample_count = 0;     // May be < samples_number for the last batch.
+    bool needs_device_copy = true;
+    bool use_device_data_buffer = false;
 
     const Dataset* dataset = nullptr;
+    Configuration::Resolved config;
 
     Buffer input;
     Shape input_shape;
@@ -74,20 +85,27 @@ struct Batch
     int target_contiguous = -1;
 
 #ifdef OPENNN_HAS_CUDA
-    void copy_device_async(const Index, cudaStream_t, float* fp32_staging);
+    void copy_device_async(cudaStream_t);
 
-    void gather_device_async(const Index current_batch_size,
-                             const Index* device_row_indices,
-                             const float* resident_input, Index resident_input_features,
-                             const float* resident_target, Index resident_target_features);
+    void gather_device_async(const vector<Index>& row_indices,
+                             const float* source_data,
+                             Index source_features,
+                             const vector<Index>& input_feature_indices,
+                             const vector<Index>& target_feature_indices);
+
+    void record_h2d_done(cudaStream_t);
+
+    Buffer fp32_staging{Device::CUDA};
+    Buffer device_data_row_indices{Device::CUDA};
+    Buffer device_data_input_feature_indices{Device::CUDA};
+    Buffer device_data_target_feature_indices{Device::CUDA};
+    vector<Index> device_data_row_indices_host;
 
     cudaEvent_t h2d_done_event = nullptr;
     bool        h2d_done_recorded = false;
 #endif
 
     void wait_h2d_complete();
-
-    Index get_input_elements() const { return samples_number * input_features_number; }
 
     vector<TensorView> input_views_host_cache;
     TensorView target_view_host_cache;
@@ -106,8 +124,6 @@ struct Batch
     Index inputs_host_allocated_size = 0;
     Index decoder_host_allocated_size = 0;
     Index targets_host_allocated_size = 0;
-
-    bool needs_fp32_staging = false;
 };
 
 }

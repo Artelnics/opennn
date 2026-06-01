@@ -12,12 +12,10 @@ namespace opennn
 {
 
 void Configuration::set(Device new_device,
-                        Type new_training_type,
-                        Type new_inference_type)
+                        Type new_training_type)
 {
     device         = new_device;
     training_type  = new_training_type;
-    inference_type = new_inference_type;
     cache_valid = false;
 }
 
@@ -66,7 +64,7 @@ const Configuration::Resolved& Configuration::resolve_slow() const
     const int  compute_capability = gpu ? cuda_compute_capability() : -1;
     const bool bf16_capable = gpu && (compute_capability >= 80);
 
-    auto resolve_dtype = [&](Type requested, const char* role) -> Type
+    auto resolve_dtype = [&](Type requested) -> Type
     {
         using enum Type;
         switch (requested)
@@ -75,21 +73,15 @@ const Configuration::Resolved& Configuration::resolve_slow() const
         case FP32: return FP32;
         case BF16:
             if (!gpu)
-                throw runtime_error(format("Configuration: BF16 {} requires CUDA.", role));
+                throw runtime_error("Configuration: BF16 requires CUDA.");
             if (!bf16_capable)
-                throw runtime_error(format("Configuration: BF16 {} requires CUDA compute capability >= 8.0 (Ampere+).", role));
+                throw runtime_error("Configuration: BF16 requires CUDA compute capability >= 8.0 (Ampere+).");
             return BF16;
-        case INT8:
-            throw runtime_error(format("Configuration: INT8 {} not yet supported (placeholder).", role));
         }
         return FP32;
     };
 
-    resolved.training_type = resolve_dtype(training_type, "training");
-
-    resolved.inference_type = (inference_type == Type::Auto)
-        ? resolved.training_type
-        : resolve_dtype(inference_type, "inference");
+    resolved.training_type = resolve_dtype(training_type);
 
     cached_resolved = resolved;
     cache_valid = true;

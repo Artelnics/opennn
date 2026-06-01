@@ -30,9 +30,14 @@ void TabularDataset::set_data(const MatrixR& new_data)
         throw runtime_error("Columns number is not equal to variables number");
 
     data = new_data;
+    set_matrix_storage();
 }
 
-void TabularDataset::set_data_constant(float new_value) { data.setConstant(new_value); }
+void TabularDataset::set_data_constant(float new_value)
+{
+    data.setConstant(new_value);
+    mark_data_changed();
+}
 
 void TabularDataset::set(const Index new_samples_number,
                          const Shape& new_input_shape,
@@ -50,6 +55,7 @@ void TabularDataset::set(const Index new_samples_number,
 
     target_shape = { new_targets_number };
     data.resize(new_samples_number, new_features_number);
+    set_matrix_storage();
     variables.resize(new_features_number);
 
     set_default();
@@ -186,86 +192,26 @@ void TabularDataset::load_data_binary()
 
     data.resize(rows_number, columns_number);
     file.read(reinterpret_cast<char*>(data.data()), rows_number * columns_number * sizeof(float));
+
+    set_matrix_storage();
 }
 
 void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices,
-                                 float* input_data, bool, bool parallelize, int contiguous) const
+                                 float* input_data, bool, int contiguous) const
 {
-    fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize, contiguous);
+    fill_tensor_data(data, sample_indices, input_indices, input_data, contiguous);
 }
 
 void TabularDataset::fill_decoder(const vector<Index>& sample_indices, const vector<Index>& decoder_indices,
-                                  float* decoder_data, bool, bool parallelize, int contiguous) const
+                                  float* decoder_data, bool, int contiguous) const
 {
-    fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, parallelize, contiguous);
+    fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, contiguous);
 }
 
 void TabularDataset::fill_targets(const vector<Index>& sample_indices, const vector<Index>& target_indices,
-                                  float* target_data, bool, bool parallelize, int contiguous) const
+                                  float* target_data, bool, int contiguous) const
 {
-    fill_tensor_data(data, sample_indices, target_indices, target_data, parallelize, contiguous);
-}
-
-DeviceResidentData* TabularDataset::select_device_resident(const string& sample_role)
-{
-    if (sample_role == "Training")   return &device_resident_training;
-    if (sample_role == "Validation") return &device_resident_validation;
-    return nullptr;
-}
-
-const DeviceResidentData* TabularDataset::get_device_resident(const string& sample_role) const
-{
-    const DeviceResidentData* res =
-        const_cast<TabularDataset*>(this)->select_device_resident(sample_role);
-    return (res && res->valid) ? res : nullptr;
-}
-
-bool TabularDataset::ensure_device_resident(const string& sample_role)
-{
-#ifdef OPENNN_HAS_CUDA
-    DeviceResidentData* res = select_device_resident(sample_role);
-    if (!res) return false;
-    if (res->valid) return true;
-
-    const vector<Index> input_feature_indices  = get_feature_indices("Input");
-    const vector<Index> target_feature_indices = get_feature_indices("Target");
-    const vector<Index> sample_indices = get_sample_indices(sample_role);
-
-    const Index rows  = Index(sample_indices.size());
-    const Index in_f  = Index(input_feature_indices.size());
-    const Index tgt_f = Index(target_feature_indices.size());
-    if (rows == 0 || in_f == 0) return false;
-
-    vector<float> input_host(size_t(rows) * size_t(in_f));
-    vector<float> target_host(size_t(rows) * size_t(tgt_f));
-    fill_inputs(sample_indices, input_feature_indices, input_host.data(),
-                /*is_training=*/false, /*parallelize=*/true);
-    fill_targets(sample_indices, target_feature_indices, target_host.data(),
-                 /*is_training=*/false, /*parallelize=*/true);
-
-    res->input.resize_bytes(Index(input_host.size()) * Index(sizeof(float)), Device::CUDA);
-    res->target.resize_bytes(Index(target_host.size()) * Index(sizeof(float)), Device::CUDA);
-
-    cudaStream_t stream = Backend::get_compute_stream();
-    CHECK_CUDA(cudaMemcpyAsync(res->input.data, input_host.data(),
-                               input_host.size() * sizeof(float), cudaMemcpyHostToDevice, stream));
-    CHECK_CUDA(cudaMemcpyAsync(res->target.data, target_host.data(),
-                               target_host.size() * sizeof(float), cudaMemcpyHostToDevice, stream));
-    CHECK_CUDA(cudaStreamSynchronize(stream));
-    
-    res->row_of.assign(size_t(get_samples_number()), Index(-1));
-    for (Index r = 0; r < rows; ++r)
-        res->row_of[size_t(sample_indices[size_t(r)])] = r;
-
-    res->rows = rows;
-    res->input_features = in_f;
-    res->target_features = tgt_f;
-    res->valid = true;
-    return true;
-#else
-    (void)sample_role;
-    return false;
-#endif
+    fill_tensor_data(data, sample_indices, target_indices, target_data, contiguous);
 }
 
 void TabularDataset::infer_variable_types_from_data()
@@ -305,6 +251,7 @@ void TabularDataset::resize_data_from_JSON(Index samples_number)
 {
     if (variables.empty()) data.resize(0, 0);
     else data = MatrixR::Zero(samples_number, get_features_number());
+    mark_data_changed();
 }
 
 TabularDataset::TabularDataset(const Index new_samples_number,
@@ -342,6 +289,8 @@ void TabularDataset::set(const filesystem::path& new_data_path,
     set_codification(new_codification);
 
     read_csv();
+
+    set_matrix_storage();
 
     set_default_variable_scalers();
 
@@ -785,6 +734,8 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
         if (unscale) unscale_image_minimum_maximum(map, feature_index);
         break;
     }
+
+    mark_data_changed();
 }
 
 vector<Descriptives> TabularDataset::scale_data()
@@ -824,11 +775,13 @@ void TabularDataset::unscale_features(const string& variable_role,
 void TabularDataset::set_data_random()
 {
     set_random_uniform(data);
+    mark_data_changed();
 }
 
 void TabularDataset::set_data_integer(const Index vocabulary_size)
 {
     set_random_integer(data, 0, vocabulary_size - 1);
+    mark_data_changed();
 }
 
 void TabularDataset::from_JSON(const JsonDocument& data_set_document)
@@ -921,6 +874,7 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
 
     Index feature_index = 0;
     Index used_feature_index = 0;
+    bool data_changed = false;
 
     for (Index i = 0; i < variables_number; ++i)
     {
@@ -956,8 +910,8 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
 
             for (Index j = 0; j < samples_number; ++j)
             {
-                const Index sample_idx = sample_indices[j];
-                const VectorR sample = get_sample_data(sample_idx);
+                const Index sample_index = sample_indices[j];
+                const VectorR sample = get_sample_data(sample_index);
                 const float value = sample(feature_index);
 
                 if (value < lower || value > upper)
@@ -966,7 +920,10 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
                     ++variables_outliers;
 
                     if (replace_with_nan)
-                        data(sample_idx, feature_index) = QUIET_NAN;
+                    {
+                        data(sample_index, feature_index) = QUIET_NAN;
+                        data_changed = true;
+                    }
                 }
             }
 
@@ -976,6 +933,9 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
             ++used_feature_index;
         }
     }
+
+    if (data_changed)
+        mark_data_changed();
 
     return return_values;
 }
@@ -1014,14 +974,16 @@ void TabularDataset::set_data_rosenbrock()
         for (Index j = 0; j < features_number - 1; ++j)
         {
             const float value = data(i, j);
-            const float a = 1.0f - value;
-            const float b = data(i, j + 1) - value * value;
+            const float first_term = 1.0f - value;
+            const float second_term = data(i, j + 1) - value * value;
 
-            rosenbrock += a * a + 100.0f * b * b;
+            rosenbrock += first_term * first_term + 100.0f * second_term * second_term;
         }
 
         data(i, features_number - 1) = rosenbrock;
     }
+
+    mark_data_changed();
 }
 
 void TabularDataset::set_data_binary_classification()
@@ -1034,6 +996,8 @@ void TabularDataset::set_data_binary_classification()
 #pragma omp parallel for
     for (Index i = 0; i < samples_number; ++i)
         data(i, features_number - 1) = float(random_bool());
+
+    mark_data_changed();
 }
 
 namespace {
@@ -1254,6 +1218,7 @@ void TabularDataset::read_csv()
 
     infer_variable_types_from_data();
     split_samples_random();
+    mark_data_changed();
 }
 
 static const vector<pair<TabularDataset::MissingValuesMethod, string>> missing_values_method_map = {
@@ -1356,6 +1321,7 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
     const Index samples_number = used_sample_indices.size();
     const Index features_number = used_feature_indices.size();
     const Index target_features_number = target_feature_indices.size();
+    bool data_changed = false;
 
     for (Index j = 0; j < features_number - target_features_number; ++j)
     {
@@ -1366,7 +1332,10 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
             const Index current_sample = used_sample_indices[i];
 
             if (isnan(data(current_sample, current_variable)))
+            {
                 data(current_sample, current_variable) = replacements(j);
+                data_changed = true;
+            }
         }
     }
 
@@ -1382,6 +1351,9 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
                 set_sample_role(current_sample, "None");
         }
     }
+
+    if (data_changed)
+        mark_data_changed();
 }
 
 void TabularDataset::impute_missing_values_interpolate()
@@ -1391,6 +1363,7 @@ void TabularDataset::impute_missing_values_interpolate()
     const vector<Index> target_feature_indices = get_feature_indices("Target");
 
     const Index samples_number = used_sample_indices.size();
+    bool data_changed = false;
 
     for (const Index current_variable : input_feature_indices)
     {
@@ -1400,15 +1373,15 @@ void TabularDataset::impute_missing_values_interpolate()
 
             if (!isnan(data(current_sample, current_variable))) continue;
 
-            Index x1 = 0, x2 = 0;
-            float x = 0.0f, y = 0.0f, y1 = 0.0f, y2 = 0.0f;
+            Index left_sample_index = 0, right_sample_index = 0;
+            float current_sample_position = 0.0f, interpolated_value = 0.0f, left_value = 0.0f, right_value = 0.0f;
 
             for (Index k = i - 1; k >= 0; k--)
             {
                 if (isnan(data(used_sample_indices[k], current_variable))) continue;
 
-                x1 = used_sample_indices[k];
-                y1 = data(x1, current_variable);
+                left_sample_index = used_sample_indices[k];
+                left_value = data(left_sample_index, current_variable);
                 break;
             }
 
@@ -1416,22 +1389,23 @@ void TabularDataset::impute_missing_values_interpolate()
             {
                 if (isnan(data(used_sample_indices[k], current_variable))) continue;
 
-                x2 = used_sample_indices[k];
-                y2 = data(x2, current_variable);
+                right_sample_index = used_sample_indices[k];
+                right_value = data(right_sample_index, current_variable);
                 break;
             }
 
-            if (x2 != x1)
+            if (right_sample_index != left_sample_index)
             {
-                x = float(current_sample);
-                y = y1 + (x - x1) * (y2 - y1) / (x2 - x1);
+                current_sample_position = float(current_sample);
+                interpolated_value = left_value + (current_sample_position - left_sample_index) * (right_value - left_value) / (right_sample_index - left_sample_index);
             }
             else
             {
-                y = y1;
+                interpolated_value = left_value;
             }
 
-            data(current_sample, current_variable) = y;
+            data(current_sample, current_variable) = interpolated_value;
+            data_changed = true;
         }
     }
 
@@ -1445,6 +1419,9 @@ void TabularDataset::impute_missing_values_interpolate()
                 set_sample_role(current_sample, "None");
         }
     }
+
+    if (data_changed)
+        mark_data_changed();
 }
 
 void TabularDataset::scrub_missing_values()

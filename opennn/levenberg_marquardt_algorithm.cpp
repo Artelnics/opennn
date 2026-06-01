@@ -101,7 +101,9 @@ void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
     back_propagation_lm.hessian.noalias() = factor * J.transpose() * J;
 
     const TensorView parameters(loss->get_neural_network()->get_parameters_data(),
-                                {loss->get_neural_network()->get_parameters_size()});
+                                {loss->get_neural_network()->get_parameters_size()},
+                                Type::FP32,
+                                loss->get_neural_network()->get_device());
     back_propagation_lm.regularization = loss->calculate_regularization(parameters);
     back_propagation_lm.loss = back_propagation_lm.error + back_propagation_lm.regularization;
 }
@@ -209,18 +211,20 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense* layer,
         for (Index sample = 0; sample < batch_size; ++sample)
             jacobian(sample * num_neurons + j, parameter_offset + j) = act_deriv(sample, j);
 
-    for (Index k = 0; k < num_inputs; ++k)
+    for (Index i = 0; i < num_inputs; ++i)
         for (Index j = 0; j < num_neurons; ++j)
         {
-            const Index col = weight_offset + k * num_neurons + j;
+            const Index col = weight_offset + i * num_neurons + j;
             for (Index sample = 0; sample < batch_size; ++sample)
-                jacobian(sample * num_neurons + j, col) = inputs(sample, k) * act_deriv(sample, j);
+                jacobian(sample * num_neurons + j, col) = inputs(sample, i) * act_deriv(sample, j);
         }
 }
 
 TrainingResults LevenbergMarquardtAlgorithm::train()
 {
-    if (is_gpu())
+    NeuralNetwork* neural_network = loss->get_neural_network();
+
+    if (neural_network->is_gpu())
         throw runtime_error("LevenbergMarquardtAlgorithm does not support GPU training: "
                             "its Jacobian and gradient computation map device pointers as host memory. "
                             "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
@@ -258,16 +262,14 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     // Neural network
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
-
     set_names();
 
     set_scaling();
 
-    Batch training_batch(training_samples_number, dataset);
+    Batch training_batch(training_samples_number, dataset, neural_network->get_config());
     training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices, true);
 
-    Batch validation_batch(validation_samples_number, dataset);
+    Batch validation_batch(validation_samples_number, dataset, neural_network->get_config());
     validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices, /*is_training=*/false);
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);

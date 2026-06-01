@@ -138,7 +138,7 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
     : transformer(new_transformer),
       language_dataset(new_language_dataset)
 {
-    if (!Configuration::instance().is_gpu())
+    if (!transformer.is_gpu())
         throw runtime_error("TransformerDecoder requires GPU configuration.");
 
     const Index input_sequence_length   = transformer.get_input_sequence_length();
@@ -176,10 +176,12 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
     char* const base = arena.as<char>();
     source_ids_device = TensorView(base,
                                    {batch_size, input_sequence_length},
-                                   Type::FP32);
+                                   Type::FP32,
+                                   Device::CUDA);
     target_ids_device = TensorView(base + source_bytes,
                                    {batch_size, decoder_sequence_length},
-                                   Type::FP32);
+                                   Type::FP32,
+                                   Device::CUDA);
 
     forward_propagation = make_unique<ForwardPropagation>(batch_size, &transformer);
 
@@ -206,11 +208,11 @@ void TransformerDecoder::identify_layer_ranges()
 
     if (layers[0]->get_label() != "decoder_embedding")
         throw runtime_error(format("TransformerDecoder: layer 0 expected to be 'decoder_embedding', found '{}'.", layers[0]->get_label()));
-    decoder_embedding_layer_index = 0;
+    decoder_embedding_index = 0;
 
     if (layers[1]->get_label() != "encoder_embedding")
         throw runtime_error(format("TransformerDecoder: layer 1 expected to be 'encoder_embedding', found '{}'.", layers[1]->get_label()));
-    encoder_embedding_layer_index = 1;
+    encoder_embedding_index = 1;
 
     const auto& source_layers = transformer.get_source_layers();
     Index first_cross_attention_index = -1;
@@ -230,19 +232,19 @@ void TransformerDecoder::identify_layer_ranges()
     if (cross_sources.size() < 2 || cross_sources[1] < 0)
         throw runtime_error("TransformerDecoder: first cross_attention layer must have 2 valid inputs (decoder, encoder).");
 
-    encoder_last_layer_index = cross_sources[1];
+    encoder_last_index = cross_sources[1];
 
-    decoder_stack_first_layer_index = encoder_last_layer_index + 1;
-    if (decoder_stack_first_layer_index >= layers_number)
+    decoder_first_index = encoder_last_index + 1;
+    if (decoder_first_index >= layers_number)
         throw runtime_error("TransformerDecoder: decoder stack first index out of range.");
-    if (layers[decoder_stack_first_layer_index]->get_label() != "decoder_self_attention_1")
+    if (layers[decoder_first_index]->get_label() != "decoder_self_attention_1")
         throw runtime_error(format("TransformerDecoder: layer after encoder expected to be 'decoder_self_attention_1', found '{}'.",
-                                   layers[decoder_stack_first_layer_index]->get_label()));
+                                   layers[decoder_first_index]->get_label()));
 
-    output_projection_layer_index = layers_number - 1;
-    if (layers[output_projection_layer_index]->get_label() != "output_projection")
+    output_projection_index = layers_number - 1;
+    if (layers[output_projection_index]->get_label() != "output_projection")
         throw runtime_error(format("TransformerDecoder: last layer expected to be 'output_projection', found '{}'.",
-                                   layers[output_projection_layer_index]->get_label()));
+                                   layers[output_projection_index]->get_label()));
 }
 
 void TransformerDecoder::reset_per_prompt_state()
@@ -292,8 +294,8 @@ void TransformerDecoder::encode_source(const string& source)
                                cudaMemcpyHostToDevice, stream));
 #endif
     transformer.forward_propagate(inputs, *forward_propagation, false,
-                                  encoder_embedding_layer_index,
-                                  encoder_last_layer_index);
+                                  encoder_embedding_index,
+                                  encoder_last_index);
 }
 
 Index TransformerDecoder::decode_step([[maybe_unused]] Index step_index,
@@ -304,12 +306,12 @@ Index TransformerDecoder::decode_step([[maybe_unused]] Index step_index,
 #endif
 
     transformer.forward_propagate(inputs, *forward_propagation, false,
-                                  decoder_embedding_layer_index,
-                                  decoder_embedding_layer_index);
+                                  decoder_embedding_index,
+                                  decoder_embedding_index);
 
     transformer.forward_propagate(inputs, *forward_propagation, false,
-                                  decoder_stack_first_layer_index,
-                                  output_projection_layer_index);
+                                  decoder_first_index,
+                                  output_projection_index);
 
 #ifdef OPENNN_HAS_CUDA
     const TensorView output_view = forward_propagation->get_outputs();
@@ -322,10 +324,10 @@ Index TransformerDecoder::decode_step([[maybe_unused]] Index step_index,
                                    vocabulary_size * sizeof(uint16_t),
                                    cudaMemcpyDeviceToHost, stream));
         CHECK_CUDA(cudaStreamSynchronize(stream));
-        for (Index k = 0; k < vocabulary_size; ++k)
+        for (Index i = 0; i < vocabulary_size; ++i)
         {
-            const uint32_t bits = static_cast<uint32_t>(bf16_staging[size_t(k)]) << 16;
-            memcpy(&distribution(k), &bits, sizeof(float));
+            const uint32_t bits = static_cast<uint32_t>(bf16_staging[size_t(i)]) << 16;
+            memcpy(&distribution(i), &bits, sizeof(float));
         }
     }
     else if (output_view.type == Type::FP32)

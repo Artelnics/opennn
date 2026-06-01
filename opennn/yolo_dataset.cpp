@@ -147,12 +147,12 @@ vector<YoloDataset::Box> read_yolo_boxes(const filesystem::path& label_path)
 
 uint64_t hash_anchors(const vector<array<float, 2>>& anchors)
 {
-    uint64_t h = 1469598103934665603ull;
+    uint64_t hash_value = 1469598103934665603ull;
 
     auto mix = [&](uint32_t value)
     {
-        h ^= value;
-        h *= 1099511628211ull;
+        hash_value ^= value;
+        hash_value *= 1099511628211ull;
     };
 
     mix(uint32_t(anchors.size()));
@@ -166,30 +166,30 @@ uint64_t hash_anchors(const vector<array<float, 2>>& anchors)
         mix(bits);
     }
 
-    return h;
+    return hash_value;
 }
 
 uint64_t hash_sources(const filesystem::path& images_dir,
                       const filesystem::path& labels_dir)
 {
-    uint64_t h = 1469598103934665603ull;
+    uint64_t hash_value = 1469598103934665603ull;
 
     auto mix_u64 = [&](uint64_t value)
     {
-        for (int b = 0; b < 8; ++b)
+        for (int i = 0; i < 8; ++i)
         {
-            h ^= (value >> (b * 8)) & 0xff;
-            h *= 1099511628211ull;
+            hash_value ^= (value >> (i * 8)) & 0xff;
+            hash_value *= 1099511628211ull;
         }
     };
 
     auto mix_bytes = [&](const void* data, size_t n)
     {
-        const uint8_t* p = static_cast<const uint8_t*>(data);
+        const uint8_t* byte_pointer = static_cast<const uint8_t*>(data);
         for (size_t i = 0; i < n; ++i)
         {
-            h ^= p[i];
-            h *= 1099511628211ull;
+            hash_value ^= byte_pointer[i];
+            hash_value *= 1099511628211ull;
         }
     };
 
@@ -225,7 +225,7 @@ uint64_t hash_sources(const filesystem::path& images_dir,
             mix_u64(0ull);
     }
 
-    return h;
+    return hash_value;
 }
 
 float yolo_iou_wh(const array<float, 2>& box, const array<float, 2>& anchor)
@@ -266,13 +266,13 @@ vector<array<float, 2>> calculate_yolo_anchors(const vector<vector<YoloDataset::
             float best_iou = -1.0f;
             Index best_anchor = 0;
 
-            for (Index a = 0; a < boxes_per_cell; ++a)
+            for (Index j = 0; j < boxes_per_cell; ++j)
             {
-                const float iou = yolo_iou_wh(boxes[i], anchors[size_t(a)]);
+                const float iou = yolo_iou_wh(boxes[i], anchors[size_t(j)]);
                 if (iou > best_iou)
                 {
                     best_iou = iou;
-                    best_anchor = a;
+                    best_anchor = j;
                 }
             }
 
@@ -291,11 +291,11 @@ vector<array<float, 2>> calculate_yolo_anchors(const vector<vector<YoloDataset::
             counts[size_t(a)]++;
         }
 
-        for (Index a = 0; a < boxes_per_cell; ++a)
-            if (counts[size_t(a)] > 0)
-                anchors[size_t(a)] = {
-                    sums[size_t(a)][0] / float(counts[size_t(a)]),
-                    sums[size_t(a)][1] / float(counts[size_t(a)])
+        for (Index i = 0; i < boxes_per_cell; ++i)
+            if (counts[size_t(i)] > 0)
+                anchors[size_t(i)] = {
+                    sums[size_t(i)][0] / float(counts[size_t(i)]),
+                    sums[size_t(i)][1] / float(counts[size_t(i)])
                 };
 
         if (!changed) break;
@@ -366,13 +366,13 @@ Index best_anchor_for_box(const YoloDataset::Box& box,
     float best_iou = -1.0f;
     Index best = 0;
 
-    for (Index a = 0; a < ssize(anchors); ++a)
+    for (Index i = 0; i < ssize(anchors); ++i)
     {
-        const float iou = yolo_iou_wh({box.w, box.h}, anchors[size_t(a)]);
+        const float iou = yolo_iou_wh({box.w, box.h}, anchors[size_t(i)]);
         if (iou > best_iou)
         {
             best_iou = iou;
-            best = a;
+            best = i;
         }
     }
 
@@ -412,21 +412,21 @@ AugmentationParams derive_augmentation_params(uint64_t epoch_counter,
                                               uint64_t sample_index,
                                               const AugmentationConfig& cfg)
 {
-    auto rand_unit = [](uint64_t& s) -> float
+    auto rand_unit = [](uint64_t& rng_state) -> float
     {
-        s = splitmix64(s);
-        return float(s >> 40) / float(1u << 24); // [0, 1)
+        rng_state = splitmix64(rng_state);
+        return float(rng_state >> 40) / float(1u << 24); // [0, 1)
     };
 
-    auto rand_signed = [&](uint64_t& s, float range) -> float
+    auto rand_signed = [&](uint64_t& rng_state, float range) -> float
     {
-        return (rand_unit(s) * 2.0f - 1.0f) * range;
+        return (rand_unit(rng_state) * 2.0f - 1.0f) * range;
     };
 
-    auto rand_scale = [&](uint64_t& s, float max_scale) -> float
+    auto rand_scale = [&](uint64_t& rng_state, float max_scale) -> float
     {
         // multiplier uniform in [1/max_scale, max_scale]
-        const float r = rand_unit(s);
+        const float r = rand_unit(rng_state);
         const float t = (r * 2.0f - 1.0f) * log(max_scale);
         return exp(t);
     };
@@ -507,22 +507,22 @@ void apply_geometric_to_image(const uint8_t* src, uint8_t* dst,
                               Index height, Index width, Index channels,
                               const AugmentationParams& p)
 {
-    const float orig_w = float(width);
-    const float orig_h = float(height);
-    const float src_x0 = p.crop_left * orig_w;
-    const float src_y0 = p.crop_top * orig_h;
-    const float src_x1 = (1.0f - p.crop_right) * orig_w;
-    const float src_y1 = (1.0f - p.crop_bottom) * orig_h;
-    const float crop_w = max(1.0f, src_x1 - src_x0);
-    const float crop_h = max(1.0f, src_y1 - src_y0);
+    const float original_width = float(width);
+    const float original_height = float(height);
+    const float source_x0 = p.crop_left * original_width;
+    const float source_y0 = p.crop_top * original_height;
+    const float source_x1 = (1.0f - p.crop_right) * original_width;
+    const float source_y1 = (1.0f - p.crop_bottom) * original_height;
+    const float crop_width = max(1.0f, source_x1 - source_x0);
+    const float crop_height = max(1.0f, source_y1 - source_y0);
 
     for (Index dy = 0; dy < height; ++dy)
     {
         for (Index dx = 0; dx < width; ++dx)
         {
             const Index out_x = p.flip ? (width - 1 - dx) : dx;
-            const float fx = src_x0 + (float(dx) + 0.5f) * crop_w / orig_w - 0.5f;
-            const float fy = src_y0 + (float(dy) + 0.5f) * crop_h / orig_h - 0.5f;
+            const float fx = source_x0 + (float(dx) + 0.5f) * crop_width / original_width - 0.5f;
+            const float fy = source_y0 + (float(dy) + 0.5f) * crop_height / original_height - 0.5f;
 
             const Index x0 = Index(floor(fx));
             const Index y0 = Index(floor(fy));
@@ -603,23 +603,23 @@ void bilinear_resize_uint8(const uint8_t* src,
 void apply_geometric_to_boxes(vector<YoloDataset::Box>& boxes,
                               const AugmentationParams& p)
 {
-    const float crop_w = max(1e-6f, 1.0f - p.crop_left - p.crop_right);
-    const float crop_h = max(1e-6f, 1.0f - p.crop_top - p.crop_bottom);
+    const float crop_width = max(1e-6f, 1.0f - p.crop_left - p.crop_right);
+    const float crop_height = max(1e-6f, 1.0f - p.crop_top - p.crop_bottom);
 
     vector<YoloDataset::Box> out;
     out.reserve(boxes.size());
 
     for (auto box : boxes)
     {
-        const float bx0 = box.x - 0.5f * box.w;
-        const float by0 = box.y - 0.5f * box.h;
-        const float bx1 = box.x + 0.5f * box.w;
-        const float by1 = box.y + 0.5f * box.h;
+        const float box_x0 = box.x - 0.5f * box.w;
+        const float box_y0 = box.y - 0.5f * box.h;
+        const float box_x1 = box.x + 0.5f * box.w;
+        const float box_y1 = box.y + 0.5f * box.h;
 
-        float nx0 = (bx0 - p.crop_left) / crop_w;
-        float ny0 = (by0 - p.crop_top)  / crop_h;
-        float nx1 = (bx1 - p.crop_left) / crop_w;
-        float ny1 = (by1 - p.crop_top)  / crop_h;
+        float nx0 = (box_x0 - p.crop_left) / crop_width;
+        float ny0 = (box_y0 - p.crop_top)  / crop_height;
+        float nx1 = (box_x1 - p.crop_left) / crop_width;
+        float ny1 = (box_y1 - p.crop_top)  / crop_height;
 
         nx0 = max(0.0f, min(1.0f, nx0));
         ny0 = max(0.0f, min(1.0f, ny0));
@@ -665,6 +665,73 @@ void make_target(const vector<YoloDataset::Box>& boxes,
 
         target[base + 0] = box.x * grid_size - float(col);
         target[base + 1] = box.y * grid_size - float(row);
+        target[base + 2] = box.w;
+        target[base + 3] = box.h;
+        target[base + 4] = 1.0f;
+        target[base + 5 + box.class_id] = 1.0f;
+    }
+}
+
+// Multi-scale (FPN): writes one flat target per sample concatenating the
+// per-head chunks in head order. Each ground-truth box is assigned to the
+// single best-IoU (head, anchor) pair across all heads — only that one head's
+// chunk receives a positive sample for that box; the other two heads have
+// objectness 0 at the matching cell. This matches YOLO v3's "best anchor wins"
+// assignment rule.
+void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
+                             const vector<vector<array<float, 2>>>& head_anchors,
+                             const vector<Index>& head_grid_sizes,
+                             Index boxes_per_head,
+                             Index classes_number,
+                             float* target)
+{
+    const Index values_per_box = 5 + classes_number;
+    const Index head_channels = boxes_per_head * values_per_box;
+
+    // Zero the whole multi-head buffer first.
+    Index total_floats = 0;
+    vector<Index> head_offsets(head_grid_sizes.size() + 1, 0);
+    for (size_t i = 0; i < head_grid_sizes.size(); ++i)
+    {
+        const Index head_floats = head_grid_sizes[i] * head_grid_sizes[i] * head_channels;
+        head_offsets[i + 1] = head_offsets[i] + head_floats;
+        total_floats += head_floats;
+    }
+    fill_n(target, total_floats, 0.0f);
+
+    for (const auto& box : boxes)
+    {
+        if (box.class_id < 0 || box.class_id >= classes_number)
+            continue;
+
+        // Best (head, anchor) by w/h IoU across all heads' anchors.
+        float best_iou = -1.0f;
+        size_t best_head = 0;
+        Index best_anchor_in_head = 0;
+        for (size_t i = 0; i < head_anchors.size(); ++i)
+        {
+            const vector<array<float, 2>>& anchors_h = head_anchors[i];
+            for (Index j = 0; j < ssize(anchors_h); ++j)
+            {
+                const float iou = yolo_iou_wh({box.w, box.h}, anchors_h[size_t(j)]);
+                if (iou > best_iou)
+                {
+                    best_iou = iou;
+                    best_head = i;
+                    best_anchor_in_head = j;
+                }
+            }
+        }
+
+        const Index grid_h = head_grid_sizes[best_head];
+        const Index col = min<Index>(grid_h - 1, max<Index>(0, Index(floor(box.x * grid_h))));
+        const Index row = min<Index>(grid_h - 1, max<Index>(0, Index(floor(box.y * grid_h))));
+        const Index base = head_offsets[best_head]
+                         + (row * grid_h + col) * head_channels
+                         + best_anchor_in_head * values_per_box;
+
+        target[base + 0] = box.x * grid_h - float(col);
+        target[base + 1] = box.y * grid_h - float(row);
         target[base + 2] = box.w;
         target[base + 3] = box.h;
         target[base + 4] = 1.0f;
@@ -858,9 +925,9 @@ vector<YoloDetection> decode_yolo_detections(const float* nms_output,
 
     vector<YoloDetection> detections;
 
-    for (Index k = 0; k < max_boxes; ++k)
+    for (Index i = 0; i < max_boxes; ++i)
     {
-        const float* row = nms_output + k * 6;
+        const float* row = nms_output + i * 6;
         const float score = row[4];
 
         if (score <= 0.0f) break;  // NMS writes kept boxes first; first zero terminates
@@ -1255,6 +1322,36 @@ void YoloDataset::set_runtime_input_shape(const Shape& new_shape)
     target_shape = {grid_size, grid_size, boxes_per_cell * (5 + classes_number)};
 }
 
+void YoloDataset::set_multi_scale_heads(const vector<Index>& grid_sizes,
+                                        const vector<vector<array<float, 2>>>& per_head_anchors)
+{
+    if (grid_sizes.empty() || grid_sizes.size() != per_head_anchors.size())
+        throw runtime_error("YoloDataset::set_multi_scale_heads: head counts must match and be non-zero.");
+
+    const Index per_head = ssize(per_head_anchors[0]);
+    if (per_head <= 0)
+        throw runtime_error("YoloDataset::set_multi_scale_heads: each head needs at least one anchor.");
+    for (const auto& a : per_head_anchors)
+        if (ssize(a) != per_head)
+            throw runtime_error("YoloDataset::set_multi_scale_heads: all heads must have the same boxes_per_head.");
+    for (Index g : grid_sizes)
+        if (g <= 0)
+            throw runtime_error("YoloDataset::set_multi_scale_heads: grid sizes must be positive.");
+
+    head_grid_sizes = grid_sizes;
+    head_anchors = per_head_anchors;
+    boxes_per_head = per_head;
+
+    // Flat target buffer = sum of per-head buffer sizes. The Loss decodes by
+    // querying the network's Detection layers for their grid sizes.
+    const Index values_per_box = 5 + classes_number;
+    Index total_floats = 0;
+    for (Index g : grid_sizes)
+        total_floats += g * g * boxes_per_head * values_per_box;
+    target_record_floats = total_floats;
+    target_shape = {target_record_floats};
+}
+
 void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
 {
     const uint64_t begin = boxes_offsets[size_t(sample_index)];
@@ -1283,7 +1380,6 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                               const vector<Index>&,
                               float* input_data,
                               bool is_training,
-                              bool parallelize,
                               int) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -1301,7 +1397,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
     const bool resize_needed = (input_shape[0] != cache_input_shape[0])
                             || (input_shape[1] != cache_input_shape[1]);
 
-    #pragma omp parallel for schedule(dynamic) if (parallelize)
+    #pragma omp parallel for schedule(dynamic)
     for (Index i = 0; i < batch_size; ++i)
     {
         try
@@ -1364,7 +1460,6 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                                const vector<Index>&,
                                float* target_data,
                                bool is_training,
-                               bool parallelize,
                                int) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -1377,11 +1472,13 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     AugmentationConfig cfg = augmentation;
 
     const bool grid_changed = (grid_size != cache_grid_size);
-    const bool reencode = augment || grid_changed;
+    // Multi-scale: the target_cache only stores single-scale targets — always
+    // re-encode from the boxes_cache, which is layout-independent.
+    const bool reencode = augment || grid_changed || is_multi_scale();
 
     string omp_error;
 
-    #pragma omp parallel for if (parallelize)
+    #pragma omp parallel for
     for (Index i = 0; i < batch_size; ++i)
     {
         try
@@ -1401,8 +1498,13 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                     apply_geometric_to_boxes(boxes, p);
                 }
 
-                make_target(boxes, anchors, grid_size, boxes_per_cell, classes_number,
-                            target_data + i * target_record_floats);
+                if (is_multi_scale())
+                    make_target_multi_scale(boxes, head_anchors, head_grid_sizes,
+                                            boxes_per_head, classes_number,
+                                            target_data + i * target_record_floats);
+                else
+                    make_target(boxes, anchors, grid_size, boxes_per_cell, classes_number,
+                                target_data + i * target_record_floats);
             }
             else
             {

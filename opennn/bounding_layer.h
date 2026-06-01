@@ -43,7 +43,7 @@ public:
     void set_upper_bounds(const VectorR&);
     void set_upper_bound(Index, float);
 
-    float* link_states(float*) override;
+    float* link_states(float*, Device) override;
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
@@ -59,6 +59,7 @@ private:
     vector<float> upper_bounds;
 
     Buffer op_storage;
+    Device op_storage_device = Device::CPU;
     bool   op_storage_dirty = true;
 
     BoundOp bound;

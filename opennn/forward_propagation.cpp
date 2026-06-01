@@ -32,8 +32,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     if (const Index total_bytes = get_aligned_bytes(forward_specs); total_bytes > 0)
     {
-        const Device device = current_device();
-        data.resize_bytes(total_bytes, device);
+        data.resize_bytes(total_bytes, neural_network->get_device());
         data.setZero();
     }
 
@@ -47,7 +46,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         {
             const auto& [shape, dtype] = specs[j];
             if (shape.size() == 0) continue;
-            views[i][j + 1][0] = TensorView(cursor, shape, dtype);
+            views[i][j + 1][0] = TensorView(cursor, shape, dtype, data.device_type);
             cursor += get_aligned_bytes(shape.size(), dtype);
         }
     }
@@ -58,16 +57,16 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         const vector<Index>& sources = source_layers[i];
         views[i][0].resize(sources.size());
 
-        for (size_t k = 0; k < sources.size(); ++k)
+        for (size_t j = 0; j < sources.size(); ++j)
         {
-            const Index source_layer = sources[k];
+            const Index source_layer = sources[j];
             if (source_layer < 0) continue;
 
             const size_t output_slot = forward_specs[source_layer].size();
             if (output_slot == 0) continue;
 
             if (const TensorView& source = views[source_layer][output_slot][0]; !source.empty())
-                views[i][0][k] = source;
+                views[i][0][j] = source;
         }
     }
 }

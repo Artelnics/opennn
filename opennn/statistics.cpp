@@ -1066,9 +1066,9 @@ VectorR median(const MatrixR& matrix,
         VectorR valid_values(valid_count);
         Index idx = 0;
 
-        for (Index k = 0; k < row_indices_size; ++k)
+        for (Index i = 0; i < row_indices_size; ++i)
         {
-            const float value = matrix(row_indices[k], column_index);
+            const float value = matrix(row_indices[i], column_index);
             if (isfinite(value))
                 valid_values(idx++) = value;
         }
@@ -1243,7 +1243,6 @@ void fill_tensor_data(const MatrixR& matrix,
                       const vector<Index>& row_indices,
                       const vector<Index>& column_indices,
                       float* __restrict tensor_data,
-                      bool parallelize,
                       int contiguous_hint)
 {
     const Index rows_number = row_indices.size();
@@ -1259,13 +1258,13 @@ void fill_tensor_data(const MatrixR& matrix,
 
     if (contiguous)
     {
-        #pragma omp parallel for schedule(static) if (parallelize)
+        #pragma omp parallel for schedule(static)
         for (Index i = 0; i < rows_number; ++i)
             memcpy(tensor_data + i * columns_number, &matrix(row_indices[i], column_indices[0]), static_cast<size_t>(columns_number) * sizeof(float));
     }
     else
     {
-        #pragma omp parallel for schedule(static) if (parallelize)
+        #pragma omp parallel for schedule(static)
         for (Index i = 0; i < rows_number; ++i)
         {
             const Index src_row = row_indices[i];

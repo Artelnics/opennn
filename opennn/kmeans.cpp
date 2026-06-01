@@ -41,9 +41,9 @@ void KMeans::fit(const MatrixR& data)
 
         for (Index row_index = 0; row_index < rows_number; ++row_index)
         {
-            const Index c = rows_cluster_labels(row_index);
-            cluster_centers.row(c) += data.row(row_index);
-            counts(c)++;
+            const Index cluster_index = rows_cluster_labels(row_index);
+            cluster_centers.row(cluster_index) += data.row(row_index);
+            counts(cluster_index)++;
         }
 
         for (Index cluster_index = 0; cluster_index < clusters_number; ++cluster_index)
@@ -94,15 +94,15 @@ Index KMeans::find_optimal_clusters(const VectorR& sum_squared_error_values) con
 {
     const Index cluster_number = sum_squared_error_values.size();
 
-    const float x1 = 1.0f;
-    const float y1 = sum_squared_error_values(0);
-    const float x2 = float(clusters_number);
-    const float y2 = sum_squared_error_values(clusters_number - 1);
+    const float first_x = 1.0f;
+    const float first_y = sum_squared_error_values(0);
+    const float last_x = float(clusters_number);
+    const float last_y = sum_squared_error_values(clusters_number - 1);
 
-    const float dx = x2 - x1;
-    const float dy = y2 - y1;
-    const float cross_term = x2 * y1 - y2 * x1;
-    const float inv_line_length = 1.0f / sqrt(dy * dy + dx * dx);
+    const float delta_x = last_x - first_x;
+    const float delta_y = last_y - first_y;
+    const float cross_term = last_x * first_y - last_y * first_x;
+    const float inv_line_length = 1.0f / sqrt(delta_y * delta_y + delta_x * delta_x);
 
     float max_distance = 0.0f;
     Index optimal_clusters_number = 1;
@@ -110,7 +110,7 @@ Index KMeans::find_optimal_clusters(const VectorR& sum_squared_error_values) con
     for (Index cluster_index = 1; cluster_index <= cluster_number; ++cluster_index)
     {
         const float perpendicular_distance
-            = abs(dy * float(cluster_index) - dx * sum_squared_error_values(cluster_index - 1) + cross_term) * inv_line_length;
+            = abs(delta_y * float(cluster_index) - delta_x * sum_squared_error_values(cluster_index - 1) + cross_term) * inv_line_length;
 
         if (perpendicular_distance > max_distance)
         {

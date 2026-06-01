@@ -90,14 +90,14 @@ VectorI LanguageDataset::calculate_target_distribution() const
 
     for (Index sample = 0; sample < samples_number; ++sample)
     {
-        const auto& off = offsets_table[size_t(sample)];
-        const int64_t tgt_off = off[2];
-        const int64_t tgt_len = off[3];
+        const auto& offsets = offsets_table[size_t(sample)];
+        const int64_t tgt_off = offsets[2];
+        const int64_t tgt_len = offsets[3];
         if (tgt_len < 1) continue;
 
         int32_t token = 0;
         cache_reader.read_at(&token, sizeof(token),
-                             cache_data_off_ + uint64_t(tgt_off) * sizeof(int32_t));
+                             cache_data_offset + uint64_t(tgt_off) * sizeof(int32_t));
         (token < 1) ? negatives++ : positives++;
     }
 
@@ -243,10 +243,10 @@ void LanguageDataset::read_txt()
 
     if (!try_load_binary_cache(samples_number))
     {
-        vector<vector<Index>> in_idx;
-        vector<vector<Index>> tgt_idx;
-        encode_streaming(input_document_tokens, target_document_tokens, in_idx, tgt_idx);
-        write_binary_cache(in_idx, tgt_idx, /*has_decoder=*/!decoder_shape.empty());
+        vector<vector<Index>> input_indices;
+        vector<vector<Index>> target_indices;
+        encode_streaming(input_document_tokens, target_document_tokens, input_indices, target_indices);
+        write_binary_cache(input_indices, target_indices, /*has_decoder=*/!decoder_shape.empty());
     }
 
     sample_roles.resize(samples_number);
@@ -437,13 +437,13 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
 
 void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_document_tokens,
                                        const vector<vector<string_view>>& target_document_tokens,
-                                       vector<vector<Index>>& in_idx,
-                                       vector<vector<Index>>& tgt_idx) const
+                                       vector<vector<Index>>& input_indices,
+                                       vector<vector<Index>>& target_indices) const
 {
     const Index samples_number = ssize(input_document_tokens);
 
-    in_idx.assign(samples_number, {});
-    tgt_idx.assign(samples_number, {});
+    input_indices.assign(samples_number, {});
+    target_indices.assign(samples_number, {});
 
     const unordered_map<string_view, Index> input_vocabulary_map = create_vocabulary_map(input_vocabulary);
     const unordered_map<string_view, Index> target_vocabulary_map = create_vocabulary_map(target_vocabulary);
@@ -452,20 +452,20 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
     for (Index sample = 0; sample < samples_number; ++sample)
     {
         const vector<string_view>& tokens = input_document_tokens[sample];
-        vector<Index>& dst = in_idx[sample];
+        vector<Index>& destination = input_indices[sample];
 
-        dst.reserve(tokens.size() + 2);
-        dst.push_back(Index(START_INDEX));
+        destination.reserve(tokens.size() + 2);
+        destination.push_back(Index(START_INDEX));
 
         for (size_t i = 0; i < tokens.size(); ++i)
         {
             if (1 + i >= size_t(maximum_input_sequence_length)) break;
             const auto it = input_vocabulary_map.find(tokens[i]);
-            dst.push_back(it != input_vocabulary_map.end() ? it->second : Index(UNK_INDEX));
+            destination.push_back(it != input_vocabulary_map.end() ? it->second : Index(UNK_INDEX));
         }
 
         if (1 + tokens.size() < size_t(maximum_input_sequence_length))
-            dst.push_back(Index(END_INDEX));
+            destination.push_back(Index(END_INDEX));
     }
 
     const bool has_decoder = !decoder_shape.empty();
@@ -477,19 +477,19 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
         for (Index sample = 0; sample < samples_number; ++sample)
         {
             const vector<string_view>& tokens = target_document_tokens[sample];
-            vector<Index>& dst = tgt_idx[sample];
+            vector<Index>& destination = target_indices[sample];
 
-            dst.reserve(tokens.size() + 1);
+            destination.reserve(tokens.size() + 1);
 
             for (size_t i = 0; i < tokens.size(); ++i)
             {
                 if (i >= size_t(maximum_target_sequence_length)) break;
                 const auto it = target_vocabulary_map.find(tokens[i]);
-                dst.push_back(it != target_vocabulary_map.end() ? it->second : Index(UNK_INDEX));
+                destination.push_back(it != target_vocabulary_map.end() ? it->second : Index(UNK_INDEX));
             }
 
             if (tokens.size() < size_t(maximum_target_sequence_length))
-                dst.push_back(Index(END_INDEX));
+                destination.push_back(Index(END_INDEX));
         }
     }
     else if (maximum_target_sequence_length == 1 && target_vocab_size == 6)
@@ -499,9 +499,9 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
             const string_view token = target_document_tokens[sample][0];
 
             if (contains(positive_words, token))
-                tgt_idx[sample] = {1};
+                target_indices[sample] = {1};
             else if (contains(negative_words, token))
-                tgt_idx[sample] = {0};
+                target_indices[sample] = {0};
             else
                 throw runtime_error("Unknown target value");
         }
@@ -512,7 +512,7 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
 
         for (Index sample = 0; sample < samples_number; ++sample)
         {
-            tgt_idx[sample].assign(maximum_target_sequence_length, 0);
+            target_indices[sample].assign(maximum_target_sequence_length, 0);
 
             const string_view token = target_document_tokens[sample][0];
             const auto it = target_vocabulary_map.find(token);
@@ -520,7 +520,7 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
             const Index col = vocab_index - reserved_count;
 
             if (col >= 0 && col < maximum_target_sequence_length)
-                tgt_idx[sample][col] = 1;
+                target_indices[sample][col] = 1;
         }
     }
     else
@@ -529,54 +529,54 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
         for (Index sample = 0; sample < samples_number; ++sample)
         {
             const vector<string_view>& tokens = target_document_tokens[sample];
-            vector<Index>& dst = tgt_idx[sample];
+            vector<Index>& destination = target_indices[sample];
 
-            dst.reserve(tokens.size() + 2);
-            dst.push_back(Index(START_INDEX));
+            destination.reserve(tokens.size() + 2);
+            destination.push_back(Index(START_INDEX));
 
             for (size_t i = 0; i < tokens.size(); ++i)
             {
                 if (1 + i >= size_t(maximum_target_sequence_length)) break;
                 const auto it = target_vocabulary_map.find(tokens[i]);
-                dst.push_back(it != target_vocabulary_map.end() ? it->second : Index(UNK_INDEX));
+                destination.push_back(it != target_vocabulary_map.end() ? it->second : Index(UNK_INDEX));
             }
 
             if (1 + tokens.size() < size_t(maximum_target_sequence_length))
-                dst.push_back(Index(END_INDEX));
+                destination.push_back(Index(END_INDEX));
         }
     }
 }
 
-void LanguageDataset::write_binary_cache(const vector<vector<Index>>& in_idx,
-                                         const vector<vector<Index>>& tgt_idx,
+void LanguageDataset::write_binary_cache(const vector<vector<Index>>& input_indices,
+                                         const vector<vector<Index>>& target_indices,
                                          bool has_decoder)
 {
-    const Index N = ssize(in_idx);
+    const Index samples_number = ssize(input_indices);
 
-    offsets_table.assign(size_t(N), array<int64_t, 4>{0, 0, 0, 0});
+    offsets_table.assign(size_t(samples_number), array<int64_t, 4>{0, 0, 0, 0});
 
     int64_t total_in_tokens = 0;
     int64_t total_tgt_tokens = 0;
-    for (Index i = 0; i < N; ++i)
+    for (Index i = 0; i < samples_number; ++i)
     {
         offsets_table[size_t(i)][0] = total_in_tokens;
-        offsets_table[size_t(i)][1] = int64_t(in_idx[size_t(i)].size());
+        offsets_table[size_t(i)][1] = int64_t(input_indices[size_t(i)].size());
         offsets_table[size_t(i)][2] = total_tgt_tokens;
-        offsets_table[size_t(i)][3] = int64_t(tgt_idx[size_t(i)].size());
-        total_in_tokens  += int64_t(in_idx[size_t(i)].size());
-        total_tgt_tokens += int64_t(tgt_idx[size_t(i)].size());
+        offsets_table[size_t(i)][3] = int64_t(target_indices[size_t(i)].size());
+        total_in_tokens  += int64_t(input_indices[size_t(i)].size());
+        total_tgt_tokens += int64_t(target_indices[size_t(i)].size());
     }
 
-    for (Index i = 0; i < N; ++i)
+    for (Index i = 0; i < samples_number; ++i)
         offsets_table[size_t(i)][2] += total_in_tokens;
 
-    cache_data_off_ = sizeof(LangCacheHeader)
-                    + uint64_t(N) * sizeof(array<int64_t, 4>);
+    cache_data_offset = sizeof(LangCacheHeader)
+                    + uint64_t(samples_number) * sizeof(array<int64_t, 4>);
 
     LangCacheHeader header{};
     memcpy(header.magic, LANG_CACHE_MAGIC, 8);
     header.version        = LANG_CACHE_VERSION;
-    header.num_samples    = uint64_t(N);
+    header.num_samples    = uint64_t(samples_number);
     header.input_max_len  = uint32_t(maximum_input_sequence_length);
     header.target_max_len = uint32_t(maximum_target_sequence_length);
     header.has_decoder    = has_decoder ? uint8_t(1) : uint8_t(0);
@@ -591,14 +591,14 @@ void LanguageDataset::write_binary_cache(const vector<vector<Index>>& in_idx,
 
     vector<int32_t> chunk;
     chunk.reserve(8192);
-    for (const auto& v : in_idx)
+    for (const auto& v : input_indices)
     {
         chunk.clear();
         chunk.reserve(v.size());
         for (Index t : v) chunk.push_back(int32_t(t));
         if (!chunk.empty()) writer.write(chunk.data(), chunk.size() * sizeof(int32_t));
     }
-    for (const auto& v : tgt_idx)
+    for (const auto& v : target_indices)
     {
         chunk.clear();
         chunk.reserve(v.size());
@@ -632,7 +632,7 @@ bool LanguageDataset::try_load_binary_cache(Index expected_samples)
         cache_reader.read_at(offsets_table.data(),
                              offsets_table.size() * sizeof(array<int64_t, 4>),
                              sizeof(LangCacheHeader));
-        cache_data_off_ = sizeof(LangCacheHeader)
+        cache_data_offset = sizeof(LangCacheHeader)
                         + uint64_t(header.num_samples) * sizeof(array<int64_t, 4>);
         return true;
     }
@@ -647,7 +647,6 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
                                   const vector<Index>& /*input_indices*/,
                                   float* input_data,
                                   bool /*is_training*/,
-                                  bool parallelize,
                                   int /*contiguous*/) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -655,17 +654,17 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
 
     fill_n(input_data, batch_size * seq_len, 0.0f);
 
-    #pragma omp parallel for if (parallelize)
+    #pragma omp parallel for
     for (Index i = 0; i < batch_size; ++i)
     {
-        const auto& off = offsets_table[size_t(sample_indices[i])];
-        const Index n = min(Index(off[1]), seq_len);
+        const auto& offsets = offsets_table[size_t(sample_indices[i])];
+        const Index n = min(Index(offsets[1]), seq_len);
         if (n <= 0) continue;
 
         thread_local vector<int32_t> buf;
         buf.resize(size_t(n));
         cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
-                             cache_data_off_ + uint64_t(off[0]) * sizeof(int32_t));
+                             cache_data_offset + uint64_t(offsets[0]) * sizeof(int32_t));
 
         for (Index j = 0; j < n; ++j)
             input_data[i * seq_len + j] = float(buf[size_t(j)]);
@@ -676,7 +675,6 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
                                    const vector<Index>& /*target_indices*/,
                                    float* target_data,
                                    bool /*is_training*/,
-                                   bool parallelize,
                                    int /*contiguous*/) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -684,17 +682,17 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
 
     fill_n(target_data, batch_size * seq_len, 0.0f);
 
-    #pragma omp parallel for if (parallelize)
+    #pragma omp parallel for
     for (Index i = 0; i < batch_size; ++i)
     {
-        const auto& off = offsets_table[size_t(sample_indices[i])];
-        const Index n = min(Index(off[3]), seq_len);
+        const auto& offsets = offsets_table[size_t(sample_indices[i])];
+        const Index n = min(Index(offsets[3]), seq_len);
         if (n <= 0) continue;
 
         thread_local vector<int32_t> buf;
         buf.resize(size_t(n));
         cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
-                             cache_data_off_ + uint64_t(off[2]) * sizeof(int32_t));
+                             cache_data_offset + uint64_t(offsets[2]) * sizeof(int32_t));
 
         for (Index j = 0; j < n; ++j)
             target_data[i * seq_len + j] = float(buf[size_t(j)]);
@@ -705,7 +703,6 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
                                    const vector<Index>& /*decoder_indices*/,
                                    float* decoder_data,
                                    bool /*is_training*/,
-                                   bool parallelize,
                                    int /*contiguous*/) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -713,19 +710,19 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
 
     fill_n(decoder_data, batch_size * seq_len, 0.0f);
 
-    #pragma omp parallel for if (parallelize)
+    #pragma omp parallel for
     for (Index i = 0; i < batch_size; ++i)
     {
         decoder_data[i * seq_len] = START_INDEX;
 
-        const auto& off = offsets_table[size_t(sample_indices[i])];
-        const Index n = min(Index(off[3]), seq_len - 1);
+        const auto& offsets = offsets_table[size_t(sample_indices[i])];
+        const Index n = min(Index(offsets[3]), seq_len - 1);
         if (n <= 0) continue;
 
         thread_local vector<int32_t> buf;
         buf.resize(size_t(n));
         cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
-                             cache_data_off_ + uint64_t(off[2]) * sizeof(int32_t));
+                             cache_data_offset + uint64_t(offsets[2]) * sizeof(int32_t));
 
         for (Index j = 0; j < n; ++j)
             decoder_data[i * seq_len + 1 + j] = float(buf[size_t(j)]);

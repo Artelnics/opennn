@@ -48,29 +48,29 @@ struct Operator
     vector<size_t> input_delta_slots = {1};
     vector<size_t> output_delta_slots = {0};
 
-    TensorView& get_input(ForwardPropagation& fp, size_t layer, size_t i = 0) const noexcept
+    TensorView& get_input(ForwardPropagation& fp, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return fp.views[layer][input_slots[i]][0];
+        return fp.views[layer][input_slots[slot_index]][0];
     }
 
-    vector<TensorView>& get_inputs(ForwardPropagation& fp, size_t layer, size_t i = 0) const noexcept
+    vector<TensorView>& get_inputs(ForwardPropagation& fp, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return fp.views[layer][input_slots[i]];
+        return fp.views[layer][input_slots[slot_index]];
     }
 
-    TensorView& get_output(ForwardPropagation& fp, size_t layer, size_t i = 0) const noexcept
+    TensorView& get_output(ForwardPropagation& fp, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return fp.views[layer][output_slots[i]][0];
+        return fp.views[layer][output_slots[slot_index]][0];
     }
 
-    TensorView& get_output_delta(BackPropagation& bp, size_t layer, size_t i = 0) const noexcept
+    TensorView& get_output_delta(BackPropagation& bp, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return bp.delta_views[layer][output_delta_slots[i]];
+        return bp.delta_views[layer][output_delta_slots[slot_index]];
     }
 
-    TensorView& get_input_delta(BackPropagation& bp, size_t layer, size_t i = 0) const noexcept
+    TensorView& get_input_delta(BackPropagation& bp, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return bp.delta_views[layer][input_delta_slots[i]];
+        return bp.delta_views[layer][input_delta_slots[slot_index]];
     }
 };
 
@@ -210,8 +210,6 @@ struct CombinationOp : Operator
                      const TensorView& input,
                      TensorView& input_delta,
                      bool accumulate_input_delta = false) const;
-
-private:
 };
 
 struct RecurrentOp : Operator
@@ -265,17 +263,20 @@ private:
                TensorView& activation_derivatives,
                TensorView& output,
                bool is_training);
+#ifdef OPENNN_HAS_CUDA
     void apply_gpu(const TensorView& input,
                    TensorView& hidden_states,
                    TensorView& activation_derivatives,
                    TensorView& output,
                    bool is_training);
+#endif
 
     void apply_delta(const TensorView& input,
                      const TensorView& hidden_states,
                      const TensorView& activation_derivatives,
                      const TensorView& output_delta,
                      TensorView& input_delta) const;
+#ifdef OPENNN_HAS_CUDA
     void apply_delta_gpu(const TensorView& input,
                          const TensorView& hidden_states,
                          const TensorView& activation_derivatives,
@@ -292,6 +293,7 @@ private:
     mutable Buffer prev_hidden_buf     {Device::CUDA};   // (batch, out_features)
     mutable Buffer step_derivs_buf     {Device::CUDA};   // (batch, out_features)
     mutable Buffer step_seq_delta_buf  {Device::CUDA};   // (batch, out_features) - sequence-mode backward scratch
+#endif
 };
 
 struct BatchNormOp : Operator
@@ -345,23 +347,29 @@ private:
     mutable VectorR delta_scale_scratch;
 
     void apply_inference_cpu(const TensorView& input, TensorView& output);
+#ifdef OPENNN_HAS_CUDA
     void apply_inference_gpu(const TensorView& input, TensorView& output);
+#endif
 
     void apply_training_cpu (const TensorView& input,
                              TensorView& mean, TensorView& inverse_variance,
                              TensorView& output);
+#ifdef OPENNN_HAS_CUDA
     void apply_training_gpu (const TensorView& input,
                              TensorView& mean, TensorView& inverse_variance,
                              TensorView& output);
+#endif
 
     void apply_delta_cpu(const TensorView& input,
                          const TensorView& mean,
                          const TensorView& inverse_variance,
                          TensorView& delta) const;
+#ifdef OPENNN_HAS_CUDA
     void apply_delta_gpu(const TensorView& input,
                          const TensorView& mean,
                          const TensorView& inverse_variance,
                          TensorView& delta) const;
+#endif
 };
 
 struct ConvolutionOp : Operator
@@ -434,14 +442,18 @@ struct ConvolutionOp : Operator
 
 private:
     void apply_cpu(const TensorView& input, TensorView& output);
+#ifdef OPENNN_HAS_CUDA
     void apply_gpu(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation = nullptr);
+#endif
 
     void apply_delta_cpu(const TensorView& input, const TensorView& output_delta,
                          TensorView& input_delta) const;
+#ifdef OPENNN_HAS_CUDA
     void apply_delta_gpu(const TensorView& input, const TensorView& output_delta,
                          TensorView& input_delta) const;
 
     void plan_convolution_algorithms(const TensorView& input, const TensorView& output);
+#endif
 
     array<pair<Index, Index>, 4> nhwc_padding() const;
 };
@@ -470,8 +482,6 @@ struct LayerNormOp : Operator
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
-
-private:
 };
 
 struct MultiHeadProjectionOp : Operator
@@ -522,7 +532,7 @@ struct AttentionOp : Operator
              Index query_sequence_length, Index source_sequence_length,
              bool use_causal_mask, Type compute_dtype);
 
-    static bool sdpa_supported(Type dtype);
+    static bool sdpa_supported(Type dtype, Device device);
 
     void set_dropout_rate(float rate) { dropout.set_rate(rate); }
 
@@ -537,9 +547,6 @@ struct AttentionOp : Operator
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
-
-    void to_JSON(JsonWriter& w) const override;
-    void from_JSON(const Json* parent) override;
 
     void destroy_cuda() override;
 
@@ -690,15 +697,19 @@ struct PoolOp : Operator
 
 private:
     void apply_cpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training);
+#ifdef OPENNN_HAS_CUDA
     void apply_gpu(const TensorView& input, TensorView& output);
+#endif
 
     void apply_delta_cpu(const TensorView& output_delta,
                          const TensorView& maximal_indices,
                          TensorView& input_delta) const;
+#ifdef OPENNN_HAS_CUDA
     void apply_delta_gpu(const TensorView& input,
                          const TensorView& output,
                          const TensorView& output_delta,
                          TensorView& input_delta) const;
+#endif
 };
 
 struct Pool3dOp : Operator
@@ -739,8 +750,6 @@ struct EmbeddingLookupOp : Operator
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
-
-private:
 };
 
 struct FlatOp : Operator

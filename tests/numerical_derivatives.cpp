@@ -31,7 +31,7 @@ float calculate_numerical_error(Loss& loss)
     const vector<Index> decoder_feature_indices  = dataset->get_feature_indices("Decoder");
     const vector<Index> target_feature_indices   = dataset->get_feature_indices("Target");
 
-    Batch batch(samples_number, dataset);
+    Batch batch(samples_number, dataset, neural_network->get_config());
     batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
@@ -58,7 +58,7 @@ VectorR calculate_gradient(Loss& loss)
     const vector<Index> decoder_feature_indices  = dataset->get_feature_indices("Decoder");
     const vector<Index> target_feature_indices   = dataset->get_feature_indices("Target");
 
-    Batch batch(samples_number, dataset);
+    Batch batch(samples_number, dataset, neural_network->get_config());
     batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
@@ -90,7 +90,7 @@ VectorR calculate_numerical_gradient(Loss& loss)
     const vector<Index> decoder_feature_indices  = dataset->get_feature_indices("Decoder");
     const vector<Index> target_feature_indices   = dataset->get_feature_indices("Target");
 
-    Batch batch(samples_number, dataset);
+    Batch batch(samples_number, dataset, neural_network->get_config());
     batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
@@ -141,7 +141,7 @@ VectorR calculate_numerical_input_deltas(Loss& loss)
     const vector<Index> input_feature_indices  = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
-    Batch batch(samples_number, dataset);
+    Batch batch(samples_number, dataset, neural_network->get_config());
     batch.fill(sample_indices, input_feature_indices, {}, target_feature_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
