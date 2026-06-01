@@ -153,7 +153,9 @@ Histogram::Histogram(const VectorR& probability_data)
     for (Index i = 0; i < probability_data.size(); ++i)
     {
         const float value = probability_data(i);
-        const Index corresponding_bin = int((value - data_minimum) * inv_step);
+        if (isnan(value)) continue;
+
+        const Index corresponding_bin = min(Index((value - data_minimum) * inv_step), Index(bins_number) - 1);
 
         frequencies(corresponding_bin)++;
     }

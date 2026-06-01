@@ -875,10 +875,8 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
         for (Index j = 0; j < inputs_number; ++j)
             replace_all_word_appearances(line, input_names[j], fixes_feature_names[j]);
 
-        if (has_softmax) replace_all_appearances(line, "Softmax", "___SOFTMAX_TOKEN___");
         for (const char* kw : math_keywords)
-            replace_all_appearances(line, kw, string("Math.") + kw);
-        if (has_softmax) replace_all_appearances(line, "___SOFTMAX_TOKEN___", "Softmax");
+            replace_all_word_appearances(line, kw, string("Math.") + kw);
 
         replace_all_appearances(line, "nan", "0");
         replace_all_appearances(line, "NaN", "0");
