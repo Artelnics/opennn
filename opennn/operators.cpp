@@ -2245,9 +2245,9 @@ static void build_sdpa_backward_graph(AttentionOp::SDPACache::Entry& entry,
     entry.bwd_O = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
                                 .set_name("O_bwd")
                                 .set_dim({k.batch_size, k.heads, k.q_seq, k.head_dim})
-                                .set_stride({k.q_seq * k.heads * k.head_dim,
+                                .set_stride({k.heads * k.q_seq * k.head_dim,
+                                             k.q_seq * k.head_dim,
                                              k.head_dim,
-                                             k.heads * k.head_dim,
                                              1}));
 
     entry.bwd_Stats = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
