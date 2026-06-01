@@ -12,7 +12,8 @@
 #include "neural_network.h"
 #include "variable.h"
 
-namespace opennn {
+namespace opennn
+{
 
 namespace {
 

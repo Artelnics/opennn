@@ -34,8 +34,7 @@ public:
 
 private:
 
-   Index neurons_increment = 0;
-
+    Index neurons_increment = 0;
 };
 
 }

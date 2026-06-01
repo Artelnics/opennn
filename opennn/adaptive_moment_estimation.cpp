@@ -302,9 +302,6 @@ TrainingResults AdaptiveMomentEstimation::train()
             cout << "Restoring best parameters and states from epoch " << best_epoch
                  << " (validation error " << best_validation_error << ")\n";
 
-        // Use set_parameters (not memcpy) so the GPU path properly issues
-        // cudaMemcpy(H2D) and refreshes the BF16 mirror via
-        // cast_parameters_to_bf16. memcpy into a device pointer is UB.
         VectorR best_view(best_parameters.size());
         memcpy(best_view.data(), best_parameters.data(),
                     best_parameters.size() * sizeof(float));

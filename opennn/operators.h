@@ -102,8 +102,6 @@ private:
 
 struct ConcatenateOp : Operator
 {
-    // All inputs share H,W but contribute their own channel count. Output
-    // channels = sum of per-input channels. Stored to slice deltas back.
     Index height = 0;
     Index width = 0;
     vector<Index> input_channels;
@@ -800,9 +798,6 @@ struct UnscaleOp : Operator
 
 struct DetectionOp : Operator
 {
-    // Softmax = mutually-exclusive classes (YOLO v1/v2). Sigmoid = independent
-    // per-class probabilities (YOLO v3+, multi-label datasets). Loss pairs each
-    // mode with the matching error: CE for Softmax, BCE for Sigmoid.
     enum class ClassActivation { Softmax, Sigmoid };
 
     Index grid_size = 0;

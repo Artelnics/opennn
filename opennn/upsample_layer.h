@@ -14,9 +14,6 @@
 namespace opennn
 {
 
-// Nearest-neighbor upsample along H, W. Used by YOLO v3 FPN heads to bring
-// stride-32 features back to stride-16/8 for concatenation with earlier
-// backbone stages.
 class Upsample final : public Layer
 {
 public:

@@ -9,6 +9,7 @@
 #include "tabular_dataset.h"
 #include "io_utilities.h"
 #include "scaling.h"
+#include "tensor_utilities.h"
 #include "random_utilities.h"
 #include <regex>
 
@@ -911,8 +912,7 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
             for (Index j = 0; j < samples_number; ++j)
             {
                 const Index sample_index = sample_indices[j];
-                const VectorR sample = get_sample_data(sample_index);
-                const float value = sample(feature_index);
+                const float value = data(sample_index, feature_index);
 
                 if (value < lower || value > upper)
                 {
@@ -1007,6 +1007,68 @@ float parse_float_or_nan(string_view token)
     float value;
     auto [ptr, ec] = from_chars(token.data(), token.data() + token.size(), value);
     return (ec == errc{} && ptr == token.data() + token.size()) ? value : NAN;
+}
+
+bool is_missing_token(string_view token, string_view missing_label)
+{
+    return token.empty() || token == missing_label;
+}
+
+void parse_numeric_token(MatrixR& data, Index sample_index, Index feature_index,
+                         string_view token, string_view missing_label)
+{
+    data(sample_index, feature_index) = is_missing_token(token, missing_label) ? NAN : parse_float_or_nan(token);
+}
+
+void parse_datetime_token(MatrixR& data, Index sample_index, Index feature_index,
+                          string_view token, string_view missing_label,
+                          Index gmt, const DateFormat& date_format)
+{
+    if (is_missing_token(token, missing_label))
+        data(sample_index, feature_index) = NAN;
+    else
+    {
+        const time_t timestamp = date_to_timestamp(string(token), gmt, date_format);
+
+        if (timestamp == -1)
+            throw runtime_error("Date format is unsupported or date is prior to 1970.");
+
+        data(sample_index, feature_index) = timestamp;
+    }
+}
+
+void parse_categorical_token(MatrixR& data, Index sample_index, const vector<Index>& feature_indices,
+                             string_view token, string_view missing_label,
+                             const unordered_map<string_view, Index>& category_map)
+{
+    if (is_missing_token(token, missing_label))
+        for (const Index cat_index : feature_indices)
+            data(sample_index, cat_index) = NAN;
+    else
+    {
+        auto it = category_map.find(token);
+        if (it != category_map.end())
+            data(sample_index, feature_indices[it->second]) = 1;
+    }
+}
+
+void parse_binary_token(MatrixR& data, Index sample_index, Index feature_index,
+                        string_view token, string_view missing_label,
+                        const vector<string>& categories)
+{
+    if (const bool is_positive = contains(positive_words, token); is_positive || contains(negative_words, token))
+        data(sample_index, feature_index) = is_positive ? 1 : 0;
+    else
+    {
+        if (is_missing_token(token, missing_label))
+            data(sample_index, feature_index) = NAN;
+        else if (!categories.empty() && token == categories[0])
+            data(sample_index, feature_index) = 0;
+        else if (categories.size() > 1 && token == categories[1])
+            data(sample_index, feature_index) = 1;
+        else
+            data(sample_index, feature_index) = parse_float_or_nan(token);
+    }
 }
 
 }
@@ -1169,48 +1231,16 @@ void TabularDataset::read_csv()
             case Constant:
                 break;
             case Numeric:
-                data(sample_index, feature_indices[0]) = is_missing(token) ? NAN : parse_float_or_nan(token);
+                parse_numeric_token(data, sample_index, feature_indices[0], token, missing_values_label);
                 break;
             case DateTime:
-                if (is_missing(token))
-                    data(sample_index, feature_indices[0]) = NAN;
-                else
-                {
-                    const time_t timestamp = date_to_timestamp(string(token), gmt, date_format);
-
-                    if (timestamp == -1)
-                        throw runtime_error("Date format is unsupported or date is prior to 1970.");
-
-                    data(sample_index, feature_indices[0]) = timestamp;
-                }
+                parse_datetime_token(data, sample_index, feature_indices[0], token, missing_values_label, gmt, date_format);
                 break;
             case Categorical:
-                if (is_missing(token))
-                    for (const Index cat_index : feature_indices)
-                        data(sample_index, cat_index) = NAN;
-                else
-                {
-                    auto it = category_maps[variable_index].find(token);
-                    if (it != category_maps[variable_index].end())
-                        data(sample_index, feature_indices[it->second]) = 1;
-                }
+                parse_categorical_token(data, sample_index, feature_indices, token, missing_values_label, category_maps[variable_index]);
                 break;
             case Binary:
-                if (const bool is_positive = contains(positive_words, token); is_positive || contains(negative_words, token))
-                    data(sample_index, feature_indices[0]) = is_positive ? 1 : 0;
-                else
-                {
-                    const vector<string>& categories = variable.categories;
-
-                    if (is_missing(token))
-                        data(sample_index, feature_indices[0]) = NAN;
-                    else if (!categories.empty() && token == categories[0])
-                        data(sample_index, feature_indices[0]) = 0;
-                    else if (categories.size() > 1 && token == categories[1])
-                        data(sample_index, feature_indices[0]) = 1;
-                    else
-                        data(sample_index, feature_indices[0]) = parse_float_or_nan(token);
-                }
+                parse_binary_token(data, sample_index, feature_indices[0], token, missing_values_label, variable.categories);
                 break;
             }
         }

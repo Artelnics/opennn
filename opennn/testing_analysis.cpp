@@ -255,10 +255,7 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
     const MatrixR errors = targets - outputs;
     MatrixR error_data(testing_samples_number, outputs_number);
 
-#pragma omp parallel for
-    for (Index i = 0; i < testing_samples_number; ++i)
-        for (Index j = 0; j < outputs_number; ++j)
-            error_data(i, j) = errors(i, j) * 100.0f / ranges(j);
+    error_data = ((errors.array() * 100.0f).rowwise() / ranges.transpose().array()).matrix();
 
     return error_data;
 }

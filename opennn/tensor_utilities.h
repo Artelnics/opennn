@@ -451,6 +451,14 @@ using array = Eigen::array<T, N>;
 string shape_to_string(const Shape&, const string& = " ");
 Shape string_to_shape(const string&, const string& = " ");
 
+inline bool is_contiguous(const vector<Index>& indices)
+{
+    return ranges::adjacent_find(indices,
+        [](Index a, Index b) { return b != a + 1; }) == indices.end();
+}
+
+void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, float*, int contiguous = -1);
+
 template<typename... Vs>
 size_t hash_combine(const Vs&... values)
 {

@@ -578,6 +578,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
         const float max = maximum(new_vector);
 
         const float length = (max - min) /float(bins_number);
+        const float inv_length = 1.0f / length;
 
         minimums(0) = min;
         maximums(0) = min + length;
@@ -599,19 +600,16 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
 
         for (Index i = 0; i < size; ++i)
         {
-            if (isnan(new_vector(i))) continue;
+            const float value = new_vector(i);
 
-            for (Index j = 0; j < bins_number - 1; ++j)
-            {
-                if (new_vector(i) >= minimums(j) && new_vector(i) < maximums(j))
-                {
-                    frequencies(j)++;
-                    break;
-                }
-            }
+            if (isnan(value) || value < minimums(0)) continue;
 
-            if (new_vector(i) >= minimums(bins_number - 1))
-                frequencies(bins_number - 1)++;
+            Index j = clamp(Index((value - min) * inv_length), Index(0), bins_number - 1);
+
+            while (j > 0 && value < minimums(j)) j--;
+            while (j < bins_number - 1 && value >= maximums(j)) j++;
+
+            frequencies(j)++;
         }
     }
 
@@ -640,6 +638,7 @@ Histogram histogram_centered(const VectorR& vector, float center, Index bins_num
     const float max = maximum(vector);
 
     const float length = (max - min)/float(bins_number);
+    const float inv_length = 1.0f / length;
 
     minimums(bin_center-1) = center - length;
     maximums(bin_center-1) = center + length;
@@ -669,12 +668,16 @@ Histogram histogram_centered(const VectorR& vector, float center, Index bins_num
 
     for (Index i = 0; i < size; ++i)
     {
-        for (Index j = 0; j < bins_number - 1; ++j)
-            if (vector(i) >= minimums(j) && vector(i) < maximums(j))
-                frequencies(j)++;
+        const float value = vector(i);
 
-        if (vector(i) >= minimums(bins_number - 1))
-            frequencies(bins_number - 1)++;
+        if (!(value >= minimums(0))) continue;
+
+        Index j = clamp(Index((value - minimums(0)) * inv_length), Index(0), bins_number - 1);
+
+        while (j > 0 && value < minimums(j)) j--;
+        while (j < bins_number - 1 && value >= maximums(j)) j++;
+
+        frequencies(j)++;
     }
 
     Histogram histogram(bins_number);
@@ -1237,44 +1240,6 @@ VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neig
 VectorR perform_Householder_QR_decomposition(const MatrixR& A, const VectorR& b)
 {
     return A.colPivHouseholderQr().solve(b);
-}
-
-void fill_tensor_data(const MatrixR& matrix,
-                      const vector<Index>& row_indices,
-                      const vector<Index>& column_indices,
-                      float* __restrict tensor_data,
-                      int contiguous_hint)
-{
-    const Index rows_number = row_indices.size();
-    const Index columns_number = column_indices.size();
-
-    if (rows_number == 0 || columns_number == 0) return;
-
-    const float* matrix_data = matrix.data();
-
-    const Index matrix_cols_number = matrix.cols();
-
-    const bool contiguous = (contiguous_hint >= 0) ? static_cast<bool>(contiguous_hint) : is_contiguous(column_indices);
-
-    if (contiguous)
-    {
-        #pragma omp parallel for schedule(static)
-        for (Index i = 0; i < rows_number; ++i)
-            memcpy(tensor_data + i * columns_number, &matrix(row_indices[i], column_indices[0]), static_cast<size_t>(columns_number) * sizeof(float));
-    }
-    else
-    {
-        #pragma omp parallel for schedule(static)
-        for (Index i = 0; i < rows_number; ++i)
-        {
-            const Index src_row = row_indices[i];
-            const float* src_row_ptr = matrix_data + src_row * matrix_cols_number;
-            float* dest_row_ptr = tensor_data + i * columns_number;
-
-            for (Index j = 0; j < columns_number; ++j)
-                dest_row_ptr[j] = src_row_ptr[column_indices[j]];
-        }
-    }
 }
 
 VectorR filter_missing_values(const VectorR& x)

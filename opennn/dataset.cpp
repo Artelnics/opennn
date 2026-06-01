@@ -8,6 +8,7 @@
 
 #include "dataset.h"
 #include "batch.h"
+#include "tensor_utilities.h"
 #include "random_utilities.h"
 #include <cstdlib>
 #include <regex>
@@ -1089,8 +1090,6 @@ bool Dataset::try_fill_binary_tensor(const vector<Index>& sample_indices,
     if (storage_mode != StorageMode::BinaryFile) return false;
     if (sample_indices.empty() || feature_indices.empty()) return true;
 
-    // The whole file is read into memory once and every batch is gathered from it,
-    // avoiding a per-batch file open and per-element seeks.
     const vector<float>& data = load_binary_data_cache();
 
     const Index columns_number = binary_columns_number;

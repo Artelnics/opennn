@@ -49,30 +49,6 @@ struct LtMatmulPlan
     }
 };
 
-struct LtMatmulPlanKey
-{
-    int m;
-    int n;
-    int k;
-    int transA;
-    int transB;
-    int epilogue;   // cublasLtEpilogue_t cast to int (e.g. BIAS, RELU_BIAS, BGRADA)
-    int io_dtype;   // cudaDataType_t for A and B (inputs)
-    int out_dtype;  // cudaDataType_t for C and D (outputs)
-
-    bool operator==(const LtMatmulPlanKey&) const noexcept = default;
-};
-
-struct LtMatmulPlanKeyHash
-{
-    size_t operator()(const LtMatmulPlanKey& key) const noexcept
-    {
-        return hash_combine(key.m, key.n, key.k,
-                            key.transA, key.transB, key.epilogue,
-                            key.io_dtype, key.out_dtype);
-    }
-};
-
 constexpr size_t cublas_lt_workspace_search_bytes() { return 32ull * 1024 * 1024; }
 
 namespace scratch

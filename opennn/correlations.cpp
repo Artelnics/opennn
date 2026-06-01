@@ -747,12 +747,12 @@ static const char* form_to_string(Correlation::Form form)
     using enum Correlation::Form;
     switch (form)
     {
-    case Identity:      return "linear";
+    case Identity:    return "linear";
     case Sigmoid:     return "logistic";
     case Logarithmic: return "logarithmic";
     case Exponential: return "exponential";
     case Power:       return "power";
-    default:                             return "";
+    default:          return "";
     }
 }
 

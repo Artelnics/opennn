@@ -66,11 +66,11 @@ private:
 #define REGISTER(BASE, CLASS, NAME) \
 namespace { \
     const bool CLASS##_registered = []() { \
-              Registry<BASE>::instance().register_component(NAME, []() { \
-                          return std::make_unique<CLASS>(); \
-                  }); \
-              return true; \
-      }(); \
+        Registry<BASE>::instance().register_component(NAME, []() { \
+            return std::make_unique<CLASS>(); \
+        }); \
+        return true; \
+    }(); \
 }
 
 void register_classes();

@@ -216,7 +216,7 @@ string Json::dump(int indent) const
     return out;
 }
 
-// -------- Parser --------
+// Parser
 
 namespace {
 

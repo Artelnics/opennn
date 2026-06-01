@@ -14,9 +14,6 @@
 namespace opennn
 {
 
-// n-ary concatenation along the channel axis. All inputs must agree on H and W;
-// channel counts add. Mirrors how YOLO v3 FPN heads merge an upsampled top-down
-// feature map with an earlier backbone stage of the same spatial size.
 class Concatenate final : public Layer
 {
 public:

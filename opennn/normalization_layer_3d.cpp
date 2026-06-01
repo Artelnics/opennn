@@ -10,8 +10,6 @@
 #include "tensor_utilities.h"
 #include "math_utilities.h"
 #include "normalization_layer_3d.h"
-#include "neural_network.h"
-#include "loss.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 

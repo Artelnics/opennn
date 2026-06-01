@@ -387,12 +387,9 @@ VectorI ImageDataset::calculate_target_distribution() const
     return distribution;
 }
 
-void ImageDataset::read_bmp(const Shape& new_input_shape)
+bool ImageDataset::try_load_image_cache(const Shape& new_input_shape,
+                                        const chrono::high_resolution_clock::time_point& start_time)
 {
-    const chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
-
-    cache_path = data_path / ".cache" / "images.bin";
-
     if (filesystem::exists(cache_path))
     {
         try
@@ -450,7 +447,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
                     cout << "Image cache loaded in " << ms << " ms ("
                          << header.num_samples << " samples).\n";
                 }
-                return;
+                return true;
             }
             cache_reader.close();
         }
@@ -459,6 +456,19 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
             cache_reader.close();
         }
     }
+
+    return false;
+}
+
+
+void ImageDataset::read_bmp(const Shape& new_input_shape)
+{
+    const chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
+
+    cache_path = data_path / ".cache" / "images.bin";
+
+    if (try_load_image_cache(new_input_shape, start_time))
+        return;
 
     vector<filesystem::path> directory_path;
 
@@ -575,12 +585,9 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     {
         load_image(paths[i], tmp.data(), height, width, channels, /*divide_by_255=*/false);
 
-        for (Index j = 0; j < pixels_number; ++j)
-        {
-            const float v = tmp[size_t(j)];
-            const int iv = int(v < 0.0f ? 0.0f : (v > 255.0f ? 255.0f : v) + 0.5f);
-            pixels[size_t(j)] = uint8_t(iv);
-        }
+        Map<Array<uint8_t, Dynamic, 1>>(pixels.data(), pixels_number) =
+            (Map<const Array<float, Dynamic, 1>>(tmp.data(), pixels_number)
+                .max(0.0f).min(255.0f) + 0.5f).cast<uint8_t>();
 
         writer.write(pixels.data(), pixels.size());
         labels_out[size_t(i)] = int32_t(labels[i]);
@@ -643,8 +650,8 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
             cache_reader.read_at(buf.data(), size_t(pixels_per_image), off);
 
             float* dst = input_data + i * pixels_per_image;
-            for (Index j = 0; j < pixels_per_image; ++j)
-                dst[j] = float(buf[size_t(j)]);
+            Map<Array<float, Dynamic, 1>>(dst, pixels_per_image) =
+                Map<const Array<uint8_t, Dynamic, 1>>(buf.data(), pixels_per_image).cast<float>();
         }
         catch (const exception& e)
         {
@@ -662,27 +669,23 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
 
     if (apply_scaling && has_scaling)
     {
+        const Index pixels_per_channel = pixels_per_image / channels;
+        const Map<const Array<float, 1, Dynamic>> scale_row(input_scale.data(), 1, channels);
+        const Map<const Array<float, 1, Dynamic>> offset_row(input_offset.data(), 1, channels);
+
         #pragma omp parallel for schedule(static)
         for (Index i = 0; i < batch_size; ++i)
         {
-            float* dst = input_data + i * pixels_per_image;
-            for (Index j = 0; j < pixels_per_image; ++j)
-            {
-                const Index channel = j % channels;
-                dst[j] = dst[j] * input_scale[size_t(channel)]
-                       + input_offset[size_t(channel)];
-            }
+            Map<MatrixR> image_pixels(input_data + i * pixels_per_image, pixels_per_channel, channels);
+            image_pixels.array().rowwise() *= scale_row;
+            image_pixels.array().rowwise() += offset_row;
         }
     }
     else if (use_default_scaling)
     {
         #pragma omp parallel for schedule(static)
         for (Index i = 0; i < batch_size; ++i)
-        {
-            float* dst = input_data + i * pixels_per_image;
-            for (Index j = 0; j < pixels_per_image; ++j)
-                dst[j] *= 1.0f / 255.0f;
-        }
+            Map<Array<float, Dynamic, 1>>(input_data + i * pixels_per_image, pixels_per_image) *= 1.0f / 255.0f;
     }
 }
 

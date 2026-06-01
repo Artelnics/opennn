@@ -360,7 +360,7 @@ ResNet::ResNet(const Shape& input_shape,
         return get_layers_number() - 1;
     };
 
-    // --- Network assembly ---
+    // Network assembly
 
     auto scaling_layer = make_unique<Scaling>(input_shape);
     scaling_layer->set_scalers("ImageMinMax");
@@ -432,9 +432,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     const Shape pool_stride{2, 2};
     const Shape no_padding{0, 0};
 
-    // Conv with BatchNorm fused in (the 6th ctor flag). Explicit input wiring
-    // is needed so multiple branches can read the same tensor for skip-adds.
-    // Returns the new layer's global index.
     auto add_conv = [&](Index input_index, const Shape& kernel_shape,
                         const char* activation, const Shape& kernel_stride,
                         bool batch_norm, const string& name) -> Index {
@@ -471,10 +468,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     }
     else // Backbone::DarknetTiny
     {
-        // Darknet residual block: 1x1 reduce to half-channels → 3x3 restore →
-        // add(input). Both convs use BN; the final add has no activation, then
-        // a standalone ReLU layer matches the post-add ReLU used in ResNet().
-        // No projection on the skip path — block preserves channel count.
         auto add_residual_block = [&](Index input_index, Index channels,
                                       const string& prefix) -> Index {
             const Index reduced = max<Index>(channels / 2, 1);
@@ -497,11 +490,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             return get_layers_number() - 1;
         };
 
-        // Stem already halves resolution. Each subsequent stage = stride-2
-        // conv (downsample + channel expansion) + N residual blocks.
-        // {channels, blocks_per_stage}: trimmed Darknet-53 layout — total ~3.4M
-        // params, CPU-tractable, hits a 13x13 grid for 416x416 input (stem
-        // stride 2 + 4 stage downsamples = 5 total → 416/32 = 13).
         const vector<pair<Index, Index>> stages = {
             { 64, 1},
             {128, 1},
@@ -516,10 +504,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                                              "darknet_stem"));
         Index last_index = get_layers_number() - 1;
 
-        // Capture the post-stage feature maps the FPN heads tap into.
-        // For 416x416 input: stem halves to 208, then 4 stages halve again
-        // each → C2=104 (stride 4), C3=52 (stride 8), C4=26 (stride 16),
-        // C5=13 (stride 32). FPN uses C3/C4/C5.
         Index c3_index = -1;
         Index c4_index = -1;
         Index c5_index = -1;
@@ -545,8 +529,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
         if (head_style == HeadStyle::FPN)
         {
-            // Sort anchors ascending by area so smallest 3 land on the stride-8
-            // (small-object) head and largest 3 on the stride-32 head.
             vector<array<float, 2>> anchors_sorted = anchors;
             ranges::sort(anchors_sorted, {},
                          [](const array<float, 2>& a) { return a[0] * a[1]; });
@@ -557,10 +539,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             const Index detection_channels_per_head = 3 * (5 + classes_number);
 
-            // Adds: 1x1 conv (yolo_logits_<name>) → Detection layer.
-            // The Detection layer becomes the head's terminal node; its index
-            // is the value returned. The Loss walks the network to find these
-            // and writes per-head targets/deltas into each.
             auto add_detection_head = [&](Index feature_index,
                                           const vector<array<float, 2>>& head_anchors,
                                           const string& name) -> Index {
@@ -580,9 +558,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 return get_layers_number() - 1;
             };
 
-            // Top-down lateral connections. Each scale gets a 1x1 conv before
-            // and after concat to mix channel info before detection.
-            // P5 = stride 32 — uses C5 directly.
             const Index p5_lateral = add_conv(c5_index,
                 Shape{1, 1, get_layer(c5_index)->get_output_shape()[2], 256},
                 "ReLU", stride, true, "fpn_p5_lateral");
@@ -631,8 +606,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 "ReLU", stride, true, "fpn_p3_lateral");
             add_detection_head(p3_lateral, anchors_small, "small");
 
-            // No NMS layer in FPN mode — boxes from all 3 heads must be merged
-            // before suppression. Inference helper does this externally.
             compile();
             set_parameters_random();
             return;

@@ -18,13 +18,7 @@ namespace
 
 string channels_to_string(const vector<Index>& channels)
 {
-    ostringstream buf;
-    for (size_t i = 0; i < channels.size(); ++i)
-    {
-        if (i != 0) buf << ' ';
-        buf << channels[i];
-    }
-    return buf.str();
+    return vector_to_string(channels, " ");
 }
 
 vector<Index> string_to_channels(const string& text)
@@ -79,8 +73,6 @@ void Concatenate::set(const Shape& new_input_shape,
     concatenate.input_channels = per_input_channels;
     set_label(new_label);
 
-    // Forward uses a single input slot (0) holding the vector of all inputs —
-    // same convention as Addition. Backward gets one slot per input delta.
     const size_t inputs_number = per_input_channels.size();
     vector<size_t> in_delta_slots;
     in_delta_slots.reserve(inputs_number);

@@ -27,8 +27,6 @@ public:
         cond_.notify_one();
     }
 
-    // Returns T{} (nullptr for pointer T) if the queue was closed while empty.
-    // Used by BatchFillSession to unblock workers stuck in pop during cancellation.
     T pop()
     {
         unique_lock<mutex> lock(mutex_);

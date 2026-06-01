@@ -77,6 +77,44 @@ Shape string_to_shape(const string& text, const string& separator)
     return result;
 }
 
+void fill_tensor_data(const MatrixR& matrix,
+                      const vector<Index>& row_indices,
+                      const vector<Index>& column_indices,
+                      float* __restrict tensor_data,
+                      int contiguous_hint)
+{
+    const Index rows_number = row_indices.size();
+    const Index columns_number = column_indices.size();
+
+    if (rows_number == 0 || columns_number == 0) return;
+
+    const float* matrix_data = matrix.data();
+
+    const Index matrix_cols_number = matrix.cols();
+
+    const bool contiguous = (contiguous_hint >= 0) ? static_cast<bool>(contiguous_hint) : is_contiguous(column_indices);
+
+    if (contiguous)
+    {
+        #pragma omp parallel for schedule(static)
+        for (Index i = 0; i < rows_number; ++i)
+            memcpy(tensor_data + i * columns_number, &matrix(row_indices[i], column_indices[0]), static_cast<size_t>(columns_number) * sizeof(float));
+    }
+    else
+    {
+        #pragma omp parallel for schedule(static)
+        for (Index i = 0; i < rows_number; ++i)
+        {
+            const Index src_row = row_indices[i];
+            const float* src_row_ptr = matrix_data + src_row * matrix_cols_number;
+            float* dest_row_ptr = tensor_data + i * columns_number;
+
+            for (Index j = 0; j < columns_number; ++j)
+                dest_row_ptr[j] = src_row_ptr[column_indices[j]];
+        }
+    }
+}
+
 Backend::Backend()
 {
     set_threads_number(0);

@@ -672,12 +672,6 @@ void make_target(const vector<YoloDataset::Box>& boxes,
     }
 }
 
-// Multi-scale (FPN): writes one flat target per sample concatenating the
-// per-head chunks in head order. Each ground-truth box is assigned to the
-// single best-IoU (head, anchor) pair across all heads — only that one head's
-// chunk receives a positive sample for that box; the other two heads have
-// objectness 0 at the matching cell. This matches YOLO v3's "best anchor wins"
-// assignment rule.
 void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
                              const vector<vector<array<float, 2>>>& head_anchors,
                              const vector<Index>& head_grid_sizes,
@@ -738,10 +732,6 @@ void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
         target[base + 5 + box.class_id] = 1.0f;
     }
 }
-
-// VOC XML annotation parsing. Tag-based, not a full XML parser: relies on the
-// well-known structure of PASCAL VOC annotations and is robust to whitespace
-// and ordering of child tags. Throws on malformed input.
 
 string read_voc_tag(const string& xml, const string& tag, size_t from = 0)
 {
@@ -892,8 +882,6 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
             const float bw = (box.xmax - box.xmin) / ann.width;
             const float bh = (box.ymax - box.ymin) / ann.height;
 
-            // Clamp slightly out-of-range coords that occur in some VOC files
-            // due to 1-indexed boundary conventions.
             auto clamp01 = [](float v) { return min(1.0f, max(0.0f, v)); };
             out << it->second << ' '
                 << clamp01(cx) << ' ' << clamp01(cy) << ' '
@@ -1342,8 +1330,6 @@ void YoloDataset::set_multi_scale_heads(const vector<Index>& grid_sizes,
     head_anchors = per_head_anchors;
     boxes_per_head = per_head;
 
-    // Flat target buffer = sum of per-head buffer sizes. The Loss decodes by
-    // querying the network's Detection layers for their grid sizes.
     const Index values_per_box = 5 + classes_number;
     Index total_floats = 0;
     for (Index g : grid_sizes)
@@ -1472,8 +1458,6 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     AugmentationConfig cfg = augmentation;
 
     const bool grid_changed = (grid_size != cache_grid_size);
-    // Multi-scale: the target_cache only stores single-scale targets — always
-    // re-encode from the boxes_cache, which is layout-independent.
     const bool reencode = augment || grid_changed || is_multi_scale();
 
     string omp_error;

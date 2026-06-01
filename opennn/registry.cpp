@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library+
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   R E G I S T R Y

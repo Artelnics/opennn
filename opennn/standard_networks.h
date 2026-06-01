@@ -81,22 +81,10 @@ class YoloNetwork : public NeuralNetwork
 {
 public:
 
-    // Vgg = the conv+pool stack used since Phase 1 (~6M params, no skip
-    // connections). DarknetTiny = residual blocks à la Darknet-53 trimmed
-    // for CPU tractability (~5.8M params). Default stays Vgg so existing call
-    // sites and saved weight files are unaffected.
     enum class Backbone { Vgg, DarknetTiny };
 
-    // Softmax = mutually-exclusive classes (YOLO v1/v2 + PASCAL VOC). Sigmoid
-    // = independent per-class probabilities (YOLO v3+, multi-label datasets).
-    // Default stays Softmax to preserve Phase 1/2 saved weights and behavior.
     enum class ClassActivation { Softmax, Sigmoid };
 
-    // Single = one detection head at stride 32 (YOLO v1/v2 style, single grid).
-    // FPN = three detection heads at strides 32 / 16 / 8 with top-down
-    // upsample+concat skip path à la YOLO v3. FPN requires Backbone::DarknetTiny
-    // (needs the stage-tap structure) and exactly 9 anchors (3 per scale,
-    // assigned smallest→stride-8, largest→stride-32).
     enum class HeadStyle { Single, FPN };
 
     YoloNetwork(const Shape& input_shape,

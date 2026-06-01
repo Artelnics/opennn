@@ -20,47 +20,42 @@ class AdaptiveMomentEstimation final : public Optimizer
 
 public:
 
-   enum DataSlot { GradientMoment, SquareGradientMoment };
+    enum DataSlot { GradientMoment, SquareGradientMoment };
 
-   AdaptiveMomentEstimation(Loss* = nullptr);
+    AdaptiveMomentEstimation(Loss* = nullptr);
 
-   Index get_samples_number() const;
+    Index get_samples_number() const;
 
-   void set_batch_size(const Index);
+    void set_batch_size(const Index);
 
-   void set_default();
-   
-   void set_learning_rate(const float);
-   void set_beta_1(const float);
-   void set_beta_2(const float);
+    void set_default();
 
-   // Global gradient L2-norm clip applied before each parameter update. The
-   // default 1.0 preserves the previously hard-coded behaviour, so every
-   // existing example keeps its exact training trajectory. Tighten this for
-   // detection-style losses (GIoU/DIoU) whose per-cell gradients carry a
-   // directional bias that benefits from a smaller per-step magnitude.
-   void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
-   float get_gradient_clip_norm() const { return gradient_clip_norm; }
+    void set_learning_rate(const float);
+    void set_beta_1(const float);
+    void set_beta_2(const float);
 
-   TrainingResults train() override;
+    void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
+    float get_gradient_clip_norm() const { return gradient_clip_norm; }
 
-   void update_parameters(BackPropagation&, OptimizerData&) const;
+    TrainingResults train() override;
 
-   void from_JSON(const JsonDocument&) override;
+    void update_parameters(BackPropagation&, OptimizerData&) const;
 
-   void to_JSON(JsonWriter&) const override;
+    void from_JSON(const JsonDocument&) override;
+
+    void to_JSON(JsonWriter&) const override;
 
 private:
 
-   float learning_rate = 0.001f;
+    float learning_rate = 0.001f;
 
-   float beta_1 = 0.9f;
+    float beta_1 = 0.9f;
 
-   float beta_2 = 0.999f;
+    float beta_2 = 0.999f;
 
-   float gradient_clip_norm = 1.0f;
+    float gradient_clip_norm = 1.0f;
 
-   Index batch_size = 0;
+    Index batch_size = 0;
 };
 
 }

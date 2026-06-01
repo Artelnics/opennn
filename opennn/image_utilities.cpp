@@ -358,6 +358,74 @@ void unfilter_png_rows_into(const vector<uint8_t>& inflated,
     }
 }
 
+static void decode_png_grayscale(const PngHeader& h,
+                                 const uint8_t* unfiltered,
+                                 float* dst,
+                                 float scale)
+{
+    for (Index y = 0; y < h.height; ++y)
+    {
+        const uint8_t* row = unfiltered + size_t(y) * size_t(h.width) * size_t(h.bytes_per_pixel);
+
+        for (Index x = 0; x < h.width; ++x)
+        {
+            const uint8_t* p = row + size_t(x) * size_t(h.bytes_per_pixel);
+            const Index out = (y * h.width + x) * h.channels;
+
+            dst[out] = float(p[0]) * scale;
+        }
+    }
+}
+
+
+static void decode_png_truecolor(const PngHeader& h,
+                                 const uint8_t* unfiltered,
+                                 float* dst,
+                                 float scale)
+{
+    for (Index y = 0; y < h.height; ++y)
+    {
+        const uint8_t* row = unfiltered + size_t(y) * size_t(h.width) * size_t(h.bytes_per_pixel);
+
+        for (Index x = 0; x < h.width; ++x)
+        {
+            const uint8_t* p = row + size_t(x) * size_t(h.bytes_per_pixel);
+            const Index out = (y * h.width + x) * h.channels;
+
+            dst[out + 0] = float(p[0]) * scale;
+            dst[out + 1] = float(p[1]) * scale;
+            dst[out + 2] = float(p[2]) * scale;
+        }
+    }
+}
+
+
+static void decode_png_palette(const PngHeader& h,
+                               const uint8_t* unfiltered,
+                               float* dst,
+                               float scale)
+{
+    for (Index y = 0; y < h.height; ++y)
+    {
+        const uint8_t* row = unfiltered + size_t(y) * size_t(h.width) * size_t(h.bytes_per_pixel);
+
+        for (Index x = 0; x < h.width; ++x)
+        {
+            const uint8_t* p = row + size_t(x) * size_t(h.bytes_per_pixel);
+            const Index out = (y * h.width + x) * h.channels;
+
+            const size_t pal = size_t(p[0]) * 3;
+            if (pal + 2 >= h.palette.size())
+                throw runtime_error("PNG palette index out of range.");
+
+            dst[out + 0] = float(h.palette[pal + 0]) * scale;
+            dst[out + 1] = float(h.palette[pal + 1]) * scale;
+            dst[out + 2] = float(h.palette[pal + 2]) * scale;
+        }
+    }
+}
+
+
 void decode_png_pixels(const PngHeader& h,
                        const vector<uint8_t>& compressed,
                        float* dst,
@@ -372,46 +440,23 @@ void decode_png_pixels(const PngHeader& h,
 
     const float scale = divide_by_255 ? (1.0f / 255.0f) : 1.0f;
 
-    for (Index y = 0; y < h.height; ++y)
+    switch (h.color_type)
     {
-        const uint8_t* row = unfiltered.data() + size_t(y) * size_t(h.width) * size_t(h.bytes_per_pixel);
-
-        for (Index x = 0; x < h.width; ++x)
-        {
-            const uint8_t* p = row + size_t(x) * size_t(h.bytes_per_pixel);
-            const Index out = (y * h.width + x) * h.channels;
-
-            switch (h.color_type)
-            {
-                case 0:
-                    dst[out] = float(p[0]) * scale;
-                    break;
-                case 2:
-                    dst[out + 0] = float(p[0]) * scale;
-                    dst[out + 1] = float(p[1]) * scale;
-                    dst[out + 2] = float(p[2]) * scale;
-                    break;
-                case 3:
-                {
-                    const size_t pal = size_t(p[0]) * 3;
-                    if (pal + 2 >= h.palette.size())
-                        throw runtime_error("PNG palette index out of range.");
-
-                    dst[out + 0] = float(h.palette[pal + 0]) * scale;
-                    dst[out + 1] = float(h.palette[pal + 1]) * scale;
-                    dst[out + 2] = float(h.palette[pal + 2]) * scale;
-                    break;
-                }
-                case 4:
-                    dst[out] = float(p[0]) * scale;
-                    break;
-                case 6:
-                    dst[out + 0] = float(p[0]) * scale;
-                    dst[out + 1] = float(p[1]) * scale;
-                    dst[out + 2] = float(p[2]) * scale;
-                    break;
-            }
-        }
+        case 0:
+            decode_png_grayscale(h, unfiltered.data(), dst, scale);
+            break;
+        case 2:
+            decode_png_truecolor(h, unfiltered.data(), dst, scale);
+            break;
+        case 3:
+            decode_png_palette(h, unfiltered.data(), dst, scale);
+            break;
+        case 4:
+            decode_png_grayscale(h, unfiltered.data(), dst, scale);
+            break;
+        case 6:
+            decode_png_truecolor(h, unfiltered.data(), dst, scale);
+            break;
     }
 }
 
@@ -486,8 +531,8 @@ JpegHeader decode_jpeg_pixels(const vector<uint8_t>& buffer,
         const Index y = cinfo.output_scanline;
         jpeg_read_scanlines(&cinfo, &row_ptr, 1);
         float* dst_row = dst + y * row_bytes;
-        for (size_t i = 0; i < row_bytes; ++i)
-            dst_row[i] = float(row[i]) * scale;
+        Map<Array<float, Dynamic, 1>>(dst_row, Index(row_bytes)) =
+            Map<const Array<uint8_t, Dynamic, 1>>(row.data(), Index(row_bytes)).cast<float>() * scale;
     }
 
     jpeg_finish_decompress(&cinfo);
@@ -602,7 +647,7 @@ void load_image(const filesystem::path& path,
         const Index pixels = expected_height * expected_width * expected_channels;
 
         if (divide_by_255)
-            for (Index i = 0; i < pixels; ++i) dst[i] = resized.data()[i] / 255.0f;
+            Map<Array<float, Dynamic, 1>>(dst, pixels) = Map<const Array<float, Dynamic, 1>>(resized.data(), pixels) / 255.0f;
         else
             copy_n(resized.data(), pixels, dst);
 
@@ -633,7 +678,7 @@ void load_image(const filesystem::path& path,
         const Index pixels = expected_height * expected_width * expected_channels;
 
         if (divide_by_255)
-            for (Index i = 0; i < pixels; ++i) dst[i] = resized.data()[i] / 255.0f;
+            Map<Array<float, Dynamic, 1>>(dst, pixels) = Map<const Array<float, Dynamic, 1>>(resized.data(), pixels) / 255.0f;
         else
             copy_n(resized.data(), pixels, dst);
         return;

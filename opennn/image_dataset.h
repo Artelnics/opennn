@@ -76,6 +76,9 @@ public:
 
 private:
 
+    bool try_load_image_cache(const Shape& new_input_shape,
+                              const chrono::high_resolution_clock::time_point& start_time);
+
     Index padding = 0;
 
     AugmentationSettings augmentation;
@@ -87,7 +90,7 @@ private:
     uint64_t record_bytes = 0;
     uint64_t labels_offset = 0;
     uint32_t classes_number = 0;
-    vector<int32_t> labels_ram; 
+    vector<int32_t> labels_ram;
 
     vector<string> labels_tokens;
 

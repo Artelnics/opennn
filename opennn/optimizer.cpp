@@ -50,8 +50,6 @@ struct BatchFillSession
 
     ~BatchFillSession()
     {
-        // If the consumer abandons the session mid-epoch, wake blocked pops
-        // and join workers before reopening the queue for the next epoch.
         cancelled.store(true, memory_order_release);
         if (empty_queue) empty_queue->close();
 
@@ -106,7 +104,7 @@ struct BatchFillSession
     vector<jthread> workers;
 };
 
-// --- Optimizer ---------------------------------------------------------------
+// Optimizer
 
 namespace
 {
@@ -920,13 +918,9 @@ void TrainingResults::print(const string &message) const
     Index best_epoch = final_epoch;
     if (validation_error_history.size() > 0)
     {
-        float best_val = numeric_limits<float>::max();
-        for (Index i = 0; i < validation_error_history.size(); ++i)
-            if (validation_error_history(i) < best_val)
-            {
-                best_val = validation_error_history(i);
-                best_epoch = i;
-            }
+        Eigen::Index best_validation_index;
+        validation_error_history.minCoeff(&best_validation_index);
+        best_epoch = Index(best_validation_index);
     }
 
     const bool restored_best_epoch = restored_best_parameters

@@ -83,13 +83,13 @@ protected:
 
     // Stopping criteria
 
-    float validation_error_goal;
+    float validation_error_goal = 0;
 
-    Index maximum_epochs;
+    Index maximum_epochs = 10;
 
     Index maximum_validation_failures = 100;
 
-    float maximum_time;
+    float maximum_time = 0;
 
     string name;
 };
@@ -118,7 +118,7 @@ struct InputsSelectionResults
 
     VectorR validation_error_history;
 
-    VectorR  mean_validation_error_history;
+    VectorR mean_validation_error_history;
 
     VectorR mean_training_error_history;
 

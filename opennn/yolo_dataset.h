@@ -66,13 +66,6 @@ public:
     const filesystem::path& get_image_path(Index i) const { return image_filenames[size_t(i)]; }
     const vector<filesystem::path>& get_image_paths() const { return image_filenames; }
 
-    // Multi-scale (FPN) target encoding. Empty head_grid_sizes = single-scale
-    // (the Phase-1/2 default). Configure via set_multi_scale_heads() AFTER the
-    // constructor. The targets become a flat buffer per sample concatenating the
-    // per-head chunks in network order — large-stride head first, small-stride
-    // head last. Each head uses boxes_per_head anchors from head_anchors[h];
-    // each ground-truth box is assigned to the single best-IoU (head, anchor)
-    // pair across all 3 heads.
     bool is_multi_scale() const { return !head_grid_sizes.empty(); }
     const vector<Index>& get_head_grid_sizes() const { return head_grid_sizes; }
     const vector<vector<array<float, 2>>>& get_head_anchors() const { return head_anchors; }
@@ -121,13 +114,6 @@ public:
     const Shape& get_cache_input_shape() const { return cache_input_shape; }
     Index get_cache_grid_size() const { return cache_grid_size; }
 
-    // PASCAL VOC → YOLO converter. Reads VOC XML annotations under
-    // <voc_root>/Annotations and the image-id list under
-    // <voc_root>/ImageSets/Main/<image_set>.txt, then writes one YOLO .txt
-    // per image into <output_labels_dir> plus a classes.names file listing
-    // the 20 standard VOC classes in canonical order. Idempotent — re-running
-    // overwrites the labels but rebuilds nothing else. Returns the number of
-    // (image, label) pairs converted.
     static Index convert_voc_to_yolo(const filesystem::path& voc_root,
                                      const string& image_set,
                                      const filesystem::path& output_labels_dir);

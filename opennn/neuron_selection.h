@@ -55,7 +55,7 @@ public:
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
-void check() const;
+    void check() const;
 
     virtual NeuronsSelectionResults perform_neurons_selection() = 0;
 

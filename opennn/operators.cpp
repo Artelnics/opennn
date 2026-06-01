@@ -126,8 +126,6 @@ void UpsampleOp::apply_delta(const TensorView& output_delta, TensorView& input_d
 
     fill_n(in_delta, input_delta.size(), 0.0f);
 
-    // Each input pixel receives the sum over its scale×scale output block.
-    // Parallelize over batch + input rows: contributions never collide.
     #pragma omp parallel for collapse(2)
     for (Index b = 0; b < batch_size; ++b)
         for (Index ih = 0; ih < input_height; ++ih)
@@ -2077,6 +2075,8 @@ struct AttentionOp::SDPACache
 namespace
 {
 
+float attention_scale(Index head_dim) { return 1.0f / sqrt(float(head_dim)); }
+
 auto sdpa_check = [](auto s, const string& what) {
     if (s.is_bad())
         throw runtime_error(format("SDPA {}: {}", what, s.get_message()));
@@ -2172,7 +2172,7 @@ static void build_sdpa_forward_graph(AttentionOp::SDPACache::Entry& entry,
                         .set_seq_len_q(entry.fwd_SeqLenQ)
                         .set_seq_len_kv(entry.fwd_SeqLenKV)
                         .set_causal_mask(k.causal)
-                        .set_attn_scale(1.0f / sqrt(float(k.head_dim)));
+                        .set_attn_scale(attention_scale(k.head_dim));
 
     if (!entry.seq_len_q_buf)  CHECK_CUDA(cudaMalloc(&entry.seq_len_q_buf,  size_t(k.batch_size) * sizeof(int32_t)));
     if (!entry.seq_len_kv_buf) CHECK_CUDA(cudaMalloc(&entry.seq_len_kv_buf, size_t(k.batch_size) * sizeof(int32_t)));
@@ -2256,7 +2256,7 @@ static void build_sdpa_backward_graph(AttentionOp::SDPACache::Entry& entry,
                             .set_seq_len_q(entry.bwd_SeqLenQ)
                             .set_seq_len_kv(entry.bwd_SeqLenKV)
                             .set_causal_mask(k.causal)
-                            .set_attn_scale(1.0f / sqrt(float(k.head_dim)));
+                            .set_attn_scale(attention_scale(k.head_dim));
 
     if (k.dropout_active)
     {
@@ -2455,12 +2455,7 @@ void AttentionOp::apply_cpu(const TensorView& query,
                 for (Index source_index = 0; source_index < source_sequence_length; ++source_index)
                 {
                     const float* source_row = source_batch + source_index * embedding_dimension;
-                    float max_abs = 0.0f;
-                    for (Index j = 0; j < embedding_dimension; ++j)
-                    {
-                        const float abs_value = abs(source_row[j]);
-                        if (abs_value > max_abs) max_abs = abs_value;
-                    }
+                    const float max_abs = Map<const Array<float, Dynamic, 1>>(source_row, embedding_dimension).abs().maxCoeff();
                     if (max_abs > EPSILON) continue;
 
                     for (Index row_index = 0; row_index < att_rows_per_batch; ++row_index)

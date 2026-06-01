@@ -93,8 +93,7 @@ void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
     if (new_lower_bounds.size() != ssize(lower_bounds))
         throw runtime_error(format("Bounding::set_lower_bounds: size mismatch (expected {}, got {}).",
                                    lower_bounds.size(), new_lower_bounds.size()));
-    for (Index i = 0; i < new_lower_bounds.size(); ++i)
-        lower_bounds[size_t(i)] = new_lower_bounds(i);
+    copy_n(new_lower_bounds.data(), new_lower_bounds.size(), lower_bounds.begin());
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);
 }
@@ -114,8 +113,7 @@ void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
     if (new_upper_bounds.size() != ssize(upper_bounds))
         throw runtime_error(format("Bounding::set_upper_bounds: size mismatch (expected {}, got {}).",
                                    upper_bounds.size(), new_upper_bounds.size()));
-    for (Index i = 0; i < new_upper_bounds.size(); ++i)
-        upper_bounds[size_t(i)] = new_upper_bounds(i);
+    copy_n(new_upper_bounds.data(), new_upper_bounds.size(), upper_bounds.begin());
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);
 }

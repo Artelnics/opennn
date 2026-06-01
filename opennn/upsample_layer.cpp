@@ -60,10 +60,6 @@ void Upsample::configure_operator()
 {
     if (input_shape.empty()) return;
     upsample.set(input_shape[0], input_shape[1], input_shape[2], upsample.scale_factor);
-    // Upsample has no trainable parameters but still produces an input delta
-    // so gradients flow to whatever feeds it. Mark it trainable for backward
-    // bookkeeping (input_delta buffer allocated) even though the parameter
-    // count is zero.
     is_trainable = true;
 }
 

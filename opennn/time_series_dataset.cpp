@@ -15,6 +15,55 @@
 namespace opennn
 {
 
+namespace
+{
+
+Index interpolate_gap(MatrixR& data,
+                      const vector<Index>& used_sample_indices,
+                      const Index used_samples_number,
+                      const Index feature_index,
+                      const Index start_missing)
+{
+    Index prev_index = start_missing - 1;
+    float prev_value = NAN;
+    while (prev_index >= 0 && isnan(prev_value))
+    {
+        prev_value = data(used_sample_indices[prev_index], feature_index);
+        if (isnan(prev_value)) prev_index--;
+    }
+
+    Index end_missing = start_missing;
+
+    while (end_missing < used_samples_number && isnan(data(used_sample_indices[end_missing], feature_index)))
+        ++end_missing;
+
+    const Index n_missing = end_missing - start_missing;
+
+    const float next_value = (end_missing < used_samples_number)
+        ? data(used_sample_indices[end_missing], feature_index) : NAN;
+
+    for (Index i = 0; i < n_missing; ++i)
+    {
+        const Index sample_i = used_sample_indices[start_missing + i];
+
+        if (isnan(prev_value))
+            data(sample_i, feature_index) = next_value;
+        else if (isnan(next_value))
+            data(sample_i, feature_index) = prev_value;
+        else
+        {
+            const float fraction = float(i + 1) / float(n_missing + 1);
+            const float value_interpolated = lerp(prev_value, next_value, fraction);
+
+            data(sample_i, feature_index) = value_interpolated;
+        }
+    }
+
+    return end_missing;
+}
+
+}
+
 TimeSeriesDataset::TimeSeriesDataset(const Index new_samples_number,
                                      const Shape& new_input_shape,
                                      const Shape& new_target_shape)
@@ -276,50 +325,17 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
     #pragma omp parallel for
     for (Index feature_index = 0; feature_index < get_features_number(); ++feature_index)
     {
-        for (Index i = 0; i < used_samples_number; ++i)
+        Index i = 0;
+
+        while (i < used_samples_number)
         {
-            const Index current_sample_index = used_sample_indices[i];
-
-            if (!isnan(data(current_sample_index, feature_index)))
+            if (!isnan(data(used_sample_indices[i], feature_index)))
+            {
+                ++i;
                 continue;
-
-            Index prev_index = i-1;
-            float prev_value = NAN;
-            while (prev_index >= 0 && isnan(prev_value))
-            {
-                prev_value = data(used_sample_indices[prev_index], feature_index);
-                if (isnan(prev_value)) prev_index--;
             }
 
-            const Index start_missing = i;
-            Index end_missing = i;
-
-            while (end_missing < used_samples_number && isnan(data(used_sample_indices[end_missing], feature_index)))
-                ++end_missing;
-
-            const Index n_missing = end_missing - start_missing;
-
-            const float next_value = (end_missing < used_samples_number)
-                ? data(used_sample_indices[end_missing], feature_index) : NAN;
-
-            for (Index k = 0; k < n_missing; ++k)
-            {
-                const Index sample_k = used_sample_indices[start_missing + k];
-
-                if (isnan(prev_value))
-                    data(sample_k, feature_index) = next_value;
-                else if (isnan(next_value))
-                    data(sample_k, feature_index) = prev_value;
-                else
-                {
-                    const float fraction = float(k + 1) / float(n_missing + 1);
-                    const float value_interpolated = lerp(prev_value, next_value, fraction);
-
-                    data(sample_k, feature_index) = value_interpolated;
-                }
-            }
-
-            i = end_missing;
+            i = interpolate_gap(data, used_sample_indices, used_samples_number, feature_index, i);
         }
     }
 
@@ -371,11 +387,10 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
 
     MatrixMap targets(target_data, batch_size, targets_number);
 
-    #pragma omp parallel for schedule(static)
-    for (Index i = 0; i < batch_size; ++i)
+    if (multi_target)
     {
-        if (multi_target)
-        {
+        #pragma omp parallel for schedule(static)
+        for (Index i = 0; i < batch_size; ++i)
             for (Index j = 0; j < target_columns; ++j)
                 for (Index k = 0; k < future_time_steps; ++k)
                 {
@@ -385,8 +400,11 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
                             ? data(target_row, target_indices[j])
                             : 0.0f;
                 }
-        }
-        else
+    }
+    else
+    {
+        #pragma omp parallel for schedule(static)
+        for (Index i = 0; i < batch_size; ++i)
         {
             const Index target_row = sample_indices[i] + past_time_steps + (future_time_steps - 1);
             for (Index j = 0; j < target_columns; ++j)
@@ -399,37 +417,7 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
 
 void TimeSeriesDataset::fill_gaps()
 {
-    const float start_time = 50;
-    const float end_time = 100;
-
-    const float period = 2;
-
-    const float new_samples_number = (end_time - start_time)/period;
-    const float new_features_number = get_features_number();
-
-    Tensor2 new_data(new_samples_number,  new_features_number);
-
-    float timestamp = 0;
-
-    float new_timestamp = 0;
-
-    Index row_index = 0;
-    const Index column_index = 0;
-
-    for (Index i = 0; i < new_samples_number; ++i)
-    {
-        new_timestamp = start_time + i*period;
-        timestamp = new_data(row_index, column_index);
-
-        if (new_timestamp == timestamp)
-        {
-            data.row(i) = data.row(row_index);
-
-            ++row_index;
-        }
-    }
-
-    mark_data_changed();
+    throw runtime_error("TimeSeriesDataset::fill_gaps: not implemented.");
 }
 
 MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_steps) const
@@ -557,34 +545,35 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
                                 : (samples_number == past_time_steps + 1) ? (past_time_steps - 1)
                                 : past_time_steps;
 
+    vector<Index> numeric_variable_indices;
+
+    for (Index i = 0; i < variables_number; ++i)
+        if (variables[i].role != VariableRole::None && variables[i].type == VariableType::Numeric)
+            numeric_variable_indices.push_back(i);
+
+    const Index numeric_variables_number = numeric_variable_indices.size();
+
     Tensor3 cross_correlations(input_target_numeric_variables_number,
                                input_target_numeric_variables_number,
                                new_past_time_steps);
 
     VectorR cross_correlations_vector(new_past_time_steps);
 
-    Index counter_i = 0;
-
-    for (Index i = 0; i < variables_number; ++i)
+    for (Index i = 0; i < numeric_variables_number; ++i)
     {
-        if (variables[i].role == VariableRole::None || variables[i].type != VariableType::Numeric)
-            continue;
+        const Index variable_i = numeric_variable_indices[i];
 
-        MatrixR input_i = get_variable_data(i);
+        MatrixR input_i = get_variable_data(variable_i);
 
-        if (display) cout << "Calculating " << variables[i].name << " cross correlations:" << "\n";
+        if (display) cout << "Calculating " << variables[variable_i].name << " cross correlations:" << "\n";
 
-        Index counter_j = 0;
-
-        for (Index j = 0; j < variables_number; ++j)
+        for (Index j = 0; j < numeric_variables_number; ++j)
         {
-            if (variables[j].role == VariableRole::None
-            || variables[j].type != VariableType::Numeric)
-                continue;
+            const Index variable_j = numeric_variable_indices[j];
 
-            MatrixR input_j = get_variable_data(j);
+            MatrixR input_j = get_variable_data(variable_j);
 
-            if (display) cout << "  vs. " << variables[j].name << "\n";
+            if (display) cout << "  vs. " << variables[variable_j].name << "\n";
 
             const Map<const VectorR> current_input_i(input_i.data(), input_i.rows());
             const Map<const VectorR> current_input_j(input_j.data(), input_j.rows());
@@ -592,12 +581,8 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
             cross_correlations_vector = opennn::cross_correlations(current_input_i, current_input_j, new_past_time_steps);
 
             for (Index k = 0; k < new_past_time_steps; ++k)
-                cross_correlations(counter_i, counter_j, k) = cross_correlations_vector(k);
-
-            ++counter_j;
+                cross_correlations(i, j, k) = cross_correlations_vector(k);
         }
-
-        ++counter_i;
     }
 
     return cross_correlations;

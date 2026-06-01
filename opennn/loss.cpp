@@ -32,8 +32,6 @@ struct GIoUResult
 {
     float giou = 0.0f;
     float iou  = 0.0f;
-    // Gradients of L = 1 - GIoU wrt the predicted box (cx, cy, w, h).
-    // Only populated by yolo_loss_giou_grad; left at zero by yolo_loss_giou_forward.
     float d_cx = 0.0f;
     float d_cy = 0.0f;
     float d_w  = 0.0f;
@@ -101,8 +99,6 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     r.iou  = (union_area > 0.0f) ? (intersection_area / union_area) : 0.0f;
     r.giou = (enclosing_area > 0.0f) ? (r.iou - (enclosing_area - union_area) / enclosing_area) : r.iou;
 
-    // Subgradient of max/min, averaged at the corner so locally-optimal edges
-    // do not generate a one-sided gradient that drifts the box parameters.
     constexpr float corner_eps = 1e-6f;
     auto max_grad = [&](float a, float b) -> float {
         if (a > b + corner_eps) return 1.0f;
@@ -173,10 +169,6 @@ bool yolo_uses_sigmoid_classes(const NeuralNetwork* nn)
     return false;
 }
 
-// Reusable cell-iteration kernel — takes B (boxes_per_cell) and C
-// (classes_number) as parameters so it can be called per-head for FPN. The
-// caller divides the accumulated error by batch_size externally for both
-// single-head and multi-head modes.
 float yolo_error_kernel(const TensorView& output,
                         const TensorView& target,
                         Index boxes_per_cell,
@@ -247,8 +239,6 @@ float yolo_error_kernel(const TensorView& output,
          + lambda_noobject * noobject_loss + class_loss;
 }
 
-// Single-head adapter — kept for backward compatibility. Multi-head dispatch
-// uses yolo_error_kernel directly.
 Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
                                       const TensorView& target,
                                       const Dataset* dataset,
@@ -266,10 +256,6 @@ Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
     return result;
 }
 
-// Reusable cell-iteration kernel for the gradient — takes explicit B, C and
-// an `inv_batch` divisor supplied by the caller. For multi-head, all heads
-// share the same inv_batch (the actual mini-batch size) so per-head deltas
-// remain scaled consistently regardless of the per-head spatial resolution.
 void yolo_gradient_kernel(const TensorView& output,
                           const TensorView& target,
                           const TensorView& output_delta,
@@ -319,9 +305,6 @@ void yolo_gradient_kernel(const TensorView& output,
 
                         if (sigmoid_classes)
                         {
-                            // dE/dp = (p - t) / (p (1-p)). DetectionOp's
-                            // sigmoid-Jacobian s(1-s) cancels the denominator,
-                            // so the in_delta lands at (p - t).
                             for (Index c = 0; c < classes_number; ++c)
                             {
                                 const float p = out[base + 5 + c];
@@ -344,8 +327,6 @@ void yolo_gradient_kernel(const TensorView& output,
             }
 }
 
-// Single-head adapter — kept for backward compatibility. Multi-head dispatch
-// uses yolo_gradient_kernel directly with shared inv_batch across heads.
 void yolo_gradient_cpu(const TensorView& output,
                        const TensorView& target,
                        const TensorView& output_delta,
@@ -361,8 +342,6 @@ void yolo_gradient_cpu(const TensorView& output,
     yolo_gradient_kernel(output, target, output_delta, boxes_per_cell, classes_number, sigmoid_classes, inv_batch);
 }
 
-// Walk layers, return Detection indices in network order. Multi-head (FPN)
-// returns ≥2 entries; single-head returns exactly one.
 vector<Index> yolo_detection_layer_indices(const NeuralNetwork* nn)
 {
     vector<Index> result;
@@ -374,10 +353,6 @@ vector<Index> yolo_detection_layer_indices(const NeuralNetwork* nn)
     return result;
 }
 
-// Multi-head error: walk Detection layers in order, slice flat target buffer
-// into per-head chunks (concatenated in network order as written by
-// YoloDataset::make_target_multi_scale), accumulate per-head loss. Returns
-// total / batch_size.
 Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& fp,
                                             const TensorView& target_flat,
                                             const Dataset* dataset,
@@ -409,14 +384,6 @@ Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& fp,
         const Shape head_shape = nn->get_layer(detection_idx)->get_output_shape();
         const Index head_floats = head_shape[0] * head_shape[1] * head_shape[2];
 
-        // Build a non-owning view into the target buffer for this head's chunk.
-        // Per-sample layout: [head0 | head1 | head2]; the target_flat buffer is
-        // batch-major over per_sample_floats.
-        // We can't naturally slice into a TensorView with the same H,W as
-        // head_output because the flat target chunk isn't strided like the
-        // output. Instead, build a synthetic strided "view" by computing
-        // per-cell offsets manually inside an inline call to the kernel —
-        // simplest is to materialize a head_target buffer on the fly.
         vector<float> head_target(size_t(batch_size) * size_t(head_floats));
         for (Index n = 0; n < batch_size; ++n)
             copy_n(tgt + n * per_sample_floats + head_offset,
@@ -435,9 +402,6 @@ Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& fp,
     return result;
 }
 
-// Multi-head gradient: same target slicing as above, writes per-head delta
-// directly into bp.delta_views[detection_idx][0]. inv_batch shared across
-// heads so the gradient magnitudes scale consistently.
 void yolo_gradient_cpu_multi(const ForwardPropagation& fp,
                              const TensorView& target_flat,
                              BackPropagation& bp,

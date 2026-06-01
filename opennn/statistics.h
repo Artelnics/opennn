@@ -177,12 +177,6 @@ pair<InputType, TargetType> filter_missing_values(const InputType& x, const Targ
     return { slice_rows(x, valid), slice_rows(y, valid) };
 }
 
-inline bool is_contiguous(const vector<Index>& indices)
-{
-    return ranges::adjacent_find(indices,
-        [](Index a, Index b) { return b != a + 1; }) == indices.end();
-}
-
 template <typename T>
 inline bool is_binary(const T& tensor)
 {
@@ -240,8 +234,6 @@ VectorI calculate_rank(const VectorR&, bool ascending = true);
 vector<Index> get_elements_greater_than(const vector<Index>&, Index);
 
 VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
-
-void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, float*, int contiguous = -1);
 
 VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
 

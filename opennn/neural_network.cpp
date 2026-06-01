@@ -30,6 +30,45 @@ static vector<Index> string_to_source_indices(const string&);
 static void validate_source_indices(const vector<Index>&, Index, Index);
 static void validate_source_arity(const Layer&, const vector<Index>&, Index);
 
+static void write_outputs_csv(ofstream& file,
+                              const vector<string>& input_names,
+                              const Tensor2& input_values,
+                              const vector<string>& output_names,
+                              const MatrixR& outputs,
+                              const Index outputs_number,
+                              const Index batch_size,
+                              const Index features_number)
+{
+    for (const auto& name : input_names)
+        file << name << ";";
+
+    for (size_t i = 0; i < size_t(outputs_number); ++i)
+    {
+        file << output_names[i];
+
+        if (i != output_names.size() - 1)
+            file << ";";
+    }
+
+    file << "\n";
+
+    for (Index i = 0; i < batch_size; ++i)
+    {
+        for (Index j = 0; j < features_number; ++j)
+            file << input_values(i, j) << ";";
+
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            file << outputs(i, j);
+
+            if (j != outputs_number - 1)
+                file << ";";
+        }
+
+        file << "\n";
+    }
+}
+
 NeuralNetwork::NeuralNetwork()
 {
     clear();
@@ -750,9 +789,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 
     const Index pixels_number = height * width * channels;
 
-    #pragma omp parallel for
-    for (Index j = 0; j < pixels_number; ++j)
-        input_data(j) = image(j);
+    copy_n(image.data(), pixels_number, input_data.data());
 
     const Matrix outputs = calculate_outputs(input_data);
 
@@ -1215,28 +1252,7 @@ void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_n
     const Index outputs_number = get_outputs_number();
     const Index batch_size = inputs.rows();
 
-    for (size_t i = 0; i < size_t(outputs_number); ++i)
-    {
-        file << output_names[i];
-
-        if (i != output_names.size() - 1)
-            file << ";";
-    }
-
-    file << "\n";
-
-    for (Index i = 0; i < batch_size; ++i)
-    {
-        for (Index j = 0; j < outputs_number; ++j)
-        {
-            file << outputs(i, j);
-
-            if (j != outputs_number-1)
-                file << ";";
-        }
-
-        file << "\n";
-    }
+    write_outputs_csv(file, {}, Tensor2(), output_names, outputs, outputs_number, batch_size, 0);
 
     file.close();
 }
@@ -1266,30 +1282,8 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
     const Index outputs_number = get_outputs_number();
 
     const vector<string> input_names = get_input_feature_names();
-    for (const auto& name : input_names)
-        file << name << ";";
 
-    for (size_t i = 0; i < size_t(outputs_number); ++i)
-    {
-        file << output_names[i];
-        if (i != output_names.size() - 1)
-            file << ";";
-    }
-    file << "\n";
-
-    for (Index i = 0; i < batch_size; ++i)
-    {
-        for (Index j = 0; j < features_number; ++j)
-            file << last_time_step_inputs(i, j) << ";";
-
-        for (Index j = 0; j < outputs_number; ++j)
-        {
-            file << outputs(i, j);
-            if (j != outputs_number - 1)
-                file << ";";
-        }
-        file << "\n";
-    }
+    write_outputs_csv(file, input_names, last_time_step_inputs, output_names, outputs, outputs_number, batch_size, features_number);
 
     file.close();
 }

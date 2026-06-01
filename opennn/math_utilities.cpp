@@ -533,14 +533,9 @@ static void layer_norm_forward_cpu(const TensorView& input, const TensorView& ga
         float* norm_row        = normalized_data + row * embedding_dimension;
         float* out_row         = output_data + row * embedding_dimension;
 
-        float sum = 0;
-        float sum_sq = 0;
-        for (Index dim = 0; dim < embedding_dimension; ++dim)
-        {
-            const float value = input_row[dim];
-            sum    += value;
-            sum_sq += value * value;
-        }
+        const Map<const Array<float, Dynamic, 1>> input_map(input_row, embedding_dimension);
+        const float sum    = input_map.sum();
+        const float sum_sq = input_map.square().sum();
 
         const float mean    = sum * inv_D;
         const float std_val = sqrt(sum_sq * inv_D - mean * mean + EPSILON);
@@ -590,23 +585,16 @@ static void layer_norm_backward_cpu(const TensorView& output_delta,
         float* input_delta_row        = input_delta_data + row * embedding_dimension;
         const float inv_std = 1.0f / std_data[row];
 
-        float sum_scaled_gradient      = 0;
-        float sum_scaled_gradient_norm = 0;
-        for (Index dim = 0; dim < embedding_dimension; ++dim)
-        {
-            const float scaled_gradient = gamma_data[dim] * output_delta_row[dim];
-            sum_scaled_gradient      += scaled_gradient;
-            sum_scaled_gradient_norm += scaled_gradient * norm_row[dim];
-        }
-        sum_scaled_gradient      *= inv_D;
-        sum_scaled_gradient_norm *= inv_D;
+        const Map<const Array<float, Dynamic, 1>> gamma_map(gamma_data, embedding_dimension);
+        const Map<const Array<float, Dynamic, 1>> output_delta_map(output_delta_row, embedding_dimension);
+        const Map<const Array<float, Dynamic, 1>> norm_map(norm_row, embedding_dimension);
+        Map<Array<float, Dynamic, 1>> input_delta_map(input_delta_row, embedding_dimension);
 
-        for (Index dim = 0; dim < embedding_dimension; ++dim)
-        {
-            const float scaled_gradient = gamma_data[dim] * output_delta_row[dim];
-            input_delta_row[dim] = (scaled_gradient - sum_scaled_gradient
-                                  - norm_row[dim] * sum_scaled_gradient_norm) * inv_std;
-        }
+        const float sum_scaled_gradient      = (gamma_map * output_delta_map).sum() * inv_D;
+        const float sum_scaled_gradient_norm = (gamma_map * output_delta_map * norm_map).sum() * inv_D;
+
+        input_delta_map = (gamma_map * output_delta_map - sum_scaled_gradient
+                          - norm_map * sum_scaled_gradient_norm) * inv_std;
     }
 }
 
@@ -757,13 +745,13 @@ static void max_pooling_3d_forward_cpu(const TensorView& input, TensorView& outp
         outputs.row(batch_index).setConstant(NEG_INFINITY);
 
         for (Index step = 0; step < sequence_length; ++step)
-            for (Index feature_index = 0; feature_index < features; ++feature_index)
-            {
-                const float value = inputs(batch_index, step, feature_index);
-                if (value <= outputs(batch_index, feature_index)) continue;
-                outputs(batch_index, feature_index) = value;
-                if (is_training) max_indices(batch_index, feature_index) = to_type(step);
-            }
+        {
+            const Map<const Array<float, 1, Dynamic>> step_features(&inputs(batch_index, step, 0), 1, features);
+            const auto greater = (step_features > outputs.row(batch_index).array()).eval();
+            if (is_training)
+                max_indices.row(batch_index).array() = greater.select(to_type(step), max_indices.row(batch_index).array());
+            outputs.row(batch_index).array() = greater.select(step_features, outputs.row(batch_index).array());
+        }
     }
 }
 

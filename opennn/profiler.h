@@ -11,7 +11,8 @@
 #include <cuda_runtime.h>
 #endif
 
-namespace opennn {
+namespace opennn
+{
 
 struct Stats
 {
