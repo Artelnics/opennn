@@ -72,9 +72,8 @@ vector<Index> Dataset::get_sample_roles_vector() const
 
     vector<Index> sample_roles_vector(samples_number);
 
-    transform(execution::par, sample_roles.begin(), sample_roles.end(),
-              sample_roles_vector.begin(),
-              [](SampleRole r) { return static_cast<Index>(r); });
+    ranges::transform(sample_roles, sample_roles_vector.begin(),
+                      [](SampleRole r) { return static_cast<Index>(r); });
 
     return sample_roles_vector;
 }

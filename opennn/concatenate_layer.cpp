@@ -45,8 +45,7 @@ Concatenate::Concatenate(const Shape& new_input_shape,
 Shape Concatenate::get_output_shape() const
 {
     if (input_shape.empty()) return {};
-    Index total_channels = 0;
-    for (Index c : concatenate.input_channels) total_channels += c;
+    const Index total_channels = accumulate(concatenate.input_channels.begin(), concatenate.input_channels.end(), Index(0));
     return { input_shape[0], input_shape[1], total_channels };
 }
 
@@ -73,12 +72,8 @@ void Concatenate::set(const Shape& new_input_shape,
     concatenate.input_channels = per_input_channels;
     set_label(new_label);
 
-    const size_t inputs_number = per_input_channels.size();
-    vector<size_t> in_delta_slots;
-    in_delta_slots.reserve(inputs_number);
-    for (size_t i = 0; i < inputs_number; ++i)
-        in_delta_slots.push_back(i + 1);
-    concatenate.input_delta_slots = in_delta_slots;
+    concatenate.input_delta_slots.resize(per_input_channels.size());
+    iota(concatenate.input_delta_slots.begin(), concatenate.input_delta_slots.end(), size_t(1));
 
     configure_operator();
 }

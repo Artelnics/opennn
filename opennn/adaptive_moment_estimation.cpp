@@ -152,7 +152,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     // Optimization data
 
-    const Index parameters_number = loss->get_neural_network()->get_parameters_size();
+    const Index parameters_number = neural_network->get_parameters_size();
 
     const Device device = current_device();
 

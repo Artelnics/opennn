@@ -145,23 +145,19 @@ void Bounding::refresh_op_storage(Device device)
         return;
     }
 
-    vector<float> staging(size_t(2 * features));
-    for (Index i = 0; i < features; ++i)
-    {
-        staging[size_t(0 * features + i)] = lower_bounds[size_t(i)];
-        staging[size_t(1 * features + i)] = upper_bounds[size_t(i)];
-    }
+    const size_t feature_bytes = size_t(features) * sizeof(float);
 
 #ifdef OPENNN_HAS_CUDA
     if (device == Device::CUDA)
     {
-        CHECK_CUDA(cudaMemcpy(op_storage.data, staging.data(),
-                              size_t(bytes), cudaMemcpyHostToDevice));
+        CHECK_CUDA(cudaMemcpy(op_storage.as<float>(),            lower_bounds.data(), feature_bytes, cudaMemcpyHostToDevice));
+        CHECK_CUDA(cudaMemcpy(op_storage.as<float>() + features, upper_bounds.data(), feature_bytes, cudaMemcpyHostToDevice));
     }
     else
 #endif
     {
-        memcpy(op_storage.data, staging.data(), size_t(bytes));
+        memcpy(op_storage.as<float>(),            lower_bounds.data(), feature_bytes);
+        memcpy(op_storage.as<float>() + features, upper_bounds.data(), feature_bytes);
     }
 
     float* const base = op_storage.as<float>();

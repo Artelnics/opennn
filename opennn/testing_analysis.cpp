@@ -406,7 +406,6 @@ VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
 {
 
     const Index batch_size = targets.rows();
-    const float two_batch  = 2.0f * static_cast<float>(batch_size);
 
     VectorR errors(5);
 
@@ -414,7 +413,7 @@ VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
 
     errors(0) = sum_squared;
 
-    errors(1) = sum_squared / two_batch;
+    errors(1) = sum_squared / (2.0f * float(batch_size));
 
     errors(2) = std::sqrt(errors(1));
 
@@ -1241,23 +1240,13 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const float decis
 
     const bool accuracy_is_one = abs(classification_accuracy - 1.0f) < EPSILON;
 
-    float positive_likelihood;
+    const float positive_likelihood = accuracy_is_one ? 1.0f
+        : (abs(1.0f - specificity) < EPSILON) ? 0.0f
+        : sensitivity / (1.0f - specificity);
 
-    if (accuracy_is_one)
-        positive_likelihood = 1.0f;
-    else if (abs(1.0f - specificity) < EPSILON)
-        positive_likelihood = 0.0f;
-    else
-        positive_likelihood = sensitivity/(1.0f - specificity);
-
-    float negative_likelihood;
-
-    if (accuracy_is_one)
-        negative_likelihood = 1.0f;
-    else if (abs(1.0f - sensitivity) < EPSILON)
-        negative_likelihood = 0.0f;
-    else
-        negative_likelihood = specificity/(1.0f - sensitivity);
+    const float negative_likelihood = accuracy_is_one ? 1.0f
+        : (abs(1.0f - sensitivity) < EPSILON) ? 0.0f
+        : specificity / (1.0f - sensitivity);
 
     const Index f1_denominator = 2 * true_positive + false_positive + false_negative;
     const float f1_score = (f1_denominator == 0)

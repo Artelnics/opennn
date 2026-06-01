@@ -92,9 +92,6 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
-
-    if(!neural_network)
-        return;
 }
 
 

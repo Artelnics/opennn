@@ -135,12 +135,11 @@ Correlation exponential_correlation(const VectorR& x, const VectorR& y)
 {
     Correlation exponential_correlation;
 
-    for(Index i = 0; i < y.size(); ++i)
-        if(!isnan(y(i)) && y(i) <= 0.0f)
-        {
-            exponential_correlation.r = NAN;
-            return exponential_correlation;
-        }
+    if ((y.array() <= 0.0f).any())
+    {
+        exponential_correlation.r = NAN;
+        return exponential_correlation;
+    }
 
     const VectorR log_y = y.array().log().matrix();
 
@@ -287,12 +286,11 @@ Correlation logarithmic_correlation(const VectorR& x,
 {
     Correlation logarithmic_correlation;
 
-    for(Index i = 0; i < x.size(); ++i)
-        if(!isnan(x(i)) && x(i) <= 0.0f)
-        {
-            logarithmic_correlation.r = NAN;
-            return logarithmic_correlation;
-        }
+    if ((x.array() <= 0.0f).any())
+    {
+        logarithmic_correlation.r = NAN;
+        return logarithmic_correlation;
+    }
 
     const VectorR log_x = x.array().log().matrix();
 
@@ -709,19 +707,11 @@ Correlation power_correlation(const VectorR& x, const VectorR& y)
 {
     Correlation power_correlation;
 
-    for(Index i = 0; i < x.size(); ++i)
-        if(!isnan(x(i)) && x(i) <= 0.0f)
-        {
-            power_correlation.r = NAN;
-            return power_correlation;
-        }
-
-    for(Index i = 0; i < y.size(); ++i)
-        if(!isnan(y(i)) && y(i) <= 0.0f)
-        {
-            power_correlation.r = NAN;
-            return power_correlation;
-        }
+    if ((x.array() <= 0.0f).any() || (y.array() <= 0.0f).any())
+    {
+        power_correlation.r = NAN;
+        return power_correlation;
+    }
 
     const VectorR log_x = x.array().log().matrix();
     const VectorR log_y = y.array().log().matrix();

@@ -164,11 +164,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
             if (display) cout << "Epoch " << epoch << "\nValidation error goal reached: " << training_results.get_validation_error() << "\n";
             neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::ValidationErrorGoal;
         }
-        else if (epoch >= maximum_epochs)
-        {
-            if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << "\n";
-            neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumEpochs;
-        }
         else if (validation_failures >= maximum_validation_failures)
         {
             if (display) cout << "Epoch " << epoch << "\nMaximum validation failures reached: " << validation_failures << "\n";

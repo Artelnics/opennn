@@ -27,9 +27,7 @@ Recurrent::Recurrent(const Shape& new_input_shape,
 vector<TensorSpec> Recurrent::get_forward_specs(Index batch_size) const
 {
     const Shape state_history {batch_size, time_steps, output_features};
-    const Shape final_state   {batch_size,             output_features};
-
-    const Shape output_shape = return_sequences ? state_history : final_state;
+    const Shape output_shape = return_sequences ? state_history : Shape{batch_size, output_features};
 
     return {
         {state_history, compute_dtype},  // Forward::HiddenStates          (batch, time, out)

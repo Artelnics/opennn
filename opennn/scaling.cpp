@@ -59,7 +59,7 @@ void scale_logarithmic(MatrixMap matrix, Index column_index)
 
     if (min_val <= 0)
     {
-        const float offset = abs(min_val) + 1.0 + EPSILON;
+        const float offset = abs(min_val) + 1.0f + EPSILON;
 
         column = (column.isNaN()).select(column, column + offset);
     }

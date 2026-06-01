@@ -1013,11 +1013,11 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
     views.clear();
     views.reserve(slot_shapes.size());
 
-    uint8_t* cursor = (total_bytes > 0) ? data.as<uint8_t>() : nullptr;
+    uint8_t* cursor = data.as<uint8_t>();
 
     for (const Shape& shape : slot_shapes)
     {
-        if (shape.size() > 0 && cursor)
+        if (shape.size() > 0)
         {
             views.emplace_back(cursor, shape, Type::FP32, data.device_type);
             cursor += get_aligned_bytes(shape.size(), Type::FP32);

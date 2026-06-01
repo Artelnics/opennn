@@ -167,8 +167,7 @@ void ConcatenateOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool
         throw runtime_error("ConcatenateOp GPU path is not implemented yet.");
 
     const Index batch_size = output.shape[0];
-    Index total_channels = 0;
-    for (Index c : input_channels) total_channels += c;
+    const Index total_channels = accumulate(input_channels.begin(), input_channels.end(), Index(0));
 
     float* dst = output.as<float>();
 
@@ -199,8 +198,7 @@ void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, siz
         throw runtime_error("ConcatenateOp GPU path is not implemented yet.");
 
     const Index batch_size = output_delta.shape[0];
-    Index total_channels = 0;
-    for (Index c : input_channels) total_channels += c;
+    const Index total_channels = accumulate(input_channels.begin(), input_channels.end(), Index(0));
 
     const float* delta = output_delta.as<float>();
 
@@ -3400,9 +3398,7 @@ void DetectionOp::apply(const TensorView& input, TensorView& output) const
                     }
                     else
                     {
-                        float max_logit = src[base + 5];
-                        for (Index c = 1; c < classes_number; ++c)
-                            max_logit = max(max_logit, src[base + 5 + c]);
+                        const float max_logit = *max_element(src + base + 5, src + base + 5 + classes_number);
 
                         float sum = 0.0f;
                         for (Index c = 0; c < classes_number; ++c)
@@ -3544,14 +3540,9 @@ void NonMaxSuppressionOp::apply(const TensorView& input, TensorView& output) con
                 {
                     const Index base = cell + box * values_per_box;
 
-                    Index best_class = 0;
-                    float best_probability = src[base + 5];
-                    for (Index c = 1; c < classes_number; ++c)
-                        if (src[base + 5 + c] > best_probability)
-                        {
-                            best_probability = src[base + 5 + c];
-                            best_class = c;
-                        }
+                    const float* best = max_element(src + base + 5, src + base + 5 + classes_number);
+                    const Index best_class = best - (src + base + 5);
+                    const float best_probability = *best;
 
                     const float score = src[base + 4] * best_probability;
                     if (score < confidence_threshold)
