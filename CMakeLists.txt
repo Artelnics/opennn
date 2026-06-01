@@ -133,22 +133,36 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     link_libraries(${CUDNN_LIBRARY})
 
     # cuDNN frontend (header-only C++ wrapper for the cuDNN graph API).
-    # Required for SDPA / Flash Attention. Install v1.10+ from
-    # https://github.com/NVIDIA/cudnn-frontend or set CUDNN_FRONTEND_INCLUDE_DIR
-    # explicitly. Older v1.x releases have API breaks; we target v1.10.x.
-    find_path(CUDNN_FRONTEND_INCLUDE_DIR
-        NAMES cudnn_frontend.h
-        HINTS ${CUDAToolkit_INCLUDE_DIRS}
-        PATHS /usr/local/include /usr/include
-              ${CMAKE_CURRENT_SOURCE_DIR}/../cudnn-frontend/include
-              ${CMAKE_CURRENT_SOURCE_DIR}/cudnn-frontend/include)
-
-    if(CUDNN_FRONTEND_INCLUDE_DIR)
-        message(STATUS "Found cudnn-frontend: ${CUDNN_FRONTEND_INCLUDE_DIR}")
-    endif()
+    # Required for SDPA / Flash Attention. Fetched at configure time; pinned
+    # to v1.12.1 (the version the project was previously vendoring as a submodule).
+    include(FetchContent)
+    FetchContent_Declare(
+        cudnn_frontend
+        GIT_REPOSITORY https://github.com/NVIDIA/cudnn-frontend.git
+        GIT_TAG        v1.12.1
+        GIT_SHALLOW    TRUE
+    )
+    set(CUDNN_FRONTEND_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
+    set(CUDNN_FRONTEND_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(CUDNN_FRONTEND_BUILD_PYTHON_BINDINGS OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(cudnn_frontend)
+    set(CUDNN_FRONTEND_INCLUDE_DIR ${cudnn_frontend_SOURCE_DIR}/include)
+    message(STATUS "Using cudnn-frontend (FetchContent): ${CUDNN_FRONTEND_INCLUDE_DIR}")
 else()
     set(OPENNN_HAS_CUDA OFF CACHE BOOL "")
 endif()
+
+include(FetchContent)
+FetchContent_Declare(
+    eigen
+    GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+    GIT_TAG        3.4.0
+    GIT_SHALLOW    TRUE
+)
+set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
+set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(eigen)
 
 add_subdirectory(opennn)
 

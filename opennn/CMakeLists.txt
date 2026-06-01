@@ -61,9 +61,7 @@ target_include_directories(opennn PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_include_directories(opennn SYSTEM PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../eigen>
-)
+target_link_libraries(opennn PUBLIC Eigen3::Eigen)
 
 if(APPLE)
     target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
@@ -97,18 +95,9 @@ if(OPENNN_HAS_CUDA)
         target_link_libraries(opennn PUBLIC ${CUDNN_LIBRARY})
         target_include_directories(opennn PUBLIC ${CUDNN_INCLUDE_DIR})
     endif()
-    find_path(CUDNN_FRONTEND_INCLUDE_DIR NAMES cudnn_frontend.h)
-    if(NOT CUDNN_FRONTEND_INCLUDE_DIR)
-        message(FATAL_ERROR
-            "OpenNN with OPENNN_HAS_CUDA=ON requires the cuDNN frontend headers "
-            "(cudnn_frontend.h). Install from https://github.com/NVIDIA/cudnn-frontend "
-            "and set CUDNN_FRONTEND_INCLUDE_DIR.")
-    endif()
+    # CUDNN_FRONTEND_INCLUDE_DIR is set by the root CMakeLists.txt's
+    # FetchContent_MakeAvailable(cudnn_frontend) block, so it is always present here.
     target_include_directories(opennn PUBLIC ${CUDNN_FRONTEND_INCLUDE_DIR})
-    # operators.cpp guards SDPA / Flash Attention with HAVE_CUDNN_FRONTEND.
-    # The find_path above already errors out if the header is missing, so when
-    # we get here it is always available — define the macro so the SDPA path
-    # is actually compiled in the CMake build (qmake sets it in cuda.pri).
     target_compile_definitions(opennn PUBLIC HAVE_CUDNN_FRONTEND)
 endif()
 
