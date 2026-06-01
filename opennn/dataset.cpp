@@ -23,16 +23,7 @@ VectorI Dataset::get_sample_role_numbers() const
     const Index samples_number = get_samples_number();
 
     for (Index i = 0; i < samples_number; ++i)
-    {
-        using enum SampleRole;
-        switch (sample_roles[i])
-        {
-        case Training:   count[0]++; break;
-        case Validation: count[1]++; break;
-        case Testing:    count[2]++; break;
-        case None:       count[3]++; break;
-        }
-    }
+        count[static_cast<Index>(sample_roles[i])]++;
 
     return count;
 }
@@ -904,20 +895,13 @@ void Dataset::read_data_file_preview(const vector<vector<string_view>>& all_rows
 
     data_file_preview.clear();
 
-    auto copy_row = [](const vector<string_view>& src) {
-        vector<string> dst;
-        dst.reserve(src.size());
-        for (string_view sv : src) dst.emplace_back(sv);
-        return dst;
-    };
-
     const Index first_rows = Index(min(static_cast<size_t>(num_first_rows_to_show), all_rows.size()));
 
     for (Index i = 0; i < first_rows; ++i)
-        data_file_preview.push_back(copy_row(all_rows[i]));
+        data_file_preview.emplace_back(all_rows[i].begin(), all_rows[i].end());
 
     if (all_rows.size() > num_first_rows_to_show)
-        data_file_preview.push_back(copy_row(all_rows.back()));
+        data_file_preview.emplace_back(all_rows.back().begin(), all_rows.back().end());
 }
 
 void Dataset::check_separators(string_view line) const

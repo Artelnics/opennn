@@ -256,9 +256,7 @@ void Optimizer::load(const filesystem::path& file_name)
 
 float Optimizer::get_elapsed_time(const time_t &beginning_time)
 {
-    time_t current_time;
-    time(&current_time);
-    return float(difftime(current_time, beginning_time));
+    return float(difftime(time(nullptr), beginning_time));
 }
 
 void Optimizer::warn_dropped_samples(Index batch_size,

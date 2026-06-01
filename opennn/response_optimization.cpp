@@ -332,21 +332,13 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
         if (current_cond.condition == ConditionType::Past)
             continue; // Skip this variable entirely for optimization purposes
 
-        if (is_input_request)
+        const bool keep = is_input_request ? (var_role == "Input")
+                                           : (var_role == "Target" || var_role == "InputTarget");
+        if (keep)
         {
-            if (var_role == "Input")
-            {
-                filtered_vars.push_back(variables_uncheked[i]);
-                filtered_desc.push_back(descriptives_uncheked[i]);
-            }
+            filtered_vars.push_back(variables_uncheked[i]);
+            filtered_desc.push_back(descriptives_uncheked[i]);
         }
-        else
-            if (var_role == "Target" || var_role == "InputTarget")
-            {
-                filtered_vars.push_back(variables_uncheked[i]);
-                filtered_desc.push_back(descriptives_uncheked[i]);
-            }
-
     }
 
     return {filtered_vars, filtered_desc};

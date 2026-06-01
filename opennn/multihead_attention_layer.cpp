@@ -101,9 +101,6 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     embedding_dimension    = new_embedding_dimension;
     heads_number           = new_heads_number;
 
-    operators = {&value_projection, &key_projection, &query_projection,
-                 &attention, &merge, &output_projection};
-
     set_label(new_label);
 
     if (new_heads_number == 0 && new_embedding_dimension == 0)

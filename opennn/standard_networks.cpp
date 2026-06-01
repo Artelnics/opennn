@@ -132,8 +132,6 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                                        const Shape& complexity_dimensions,
                                        const Shape& output_shape) : NeuralNetwork()
 {
-    clear();
-
     add_layer(make_unique<Scaling>(input_shape));
 
     const Index recurrent_count = complexity_dimensions.rank;
