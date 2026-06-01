@@ -46,6 +46,19 @@ void Addition::set(const Shape& new_input_shape, const string& new_label, Index 
     set_label(new_label);
 }
 
+void Addition::read_JSON_body(const Json* addition_layer_element)
+{
+    const Index new_inputs_number = read_json_index(addition_layer_element, "InputsNumber");
+
+    if (new_inputs_number >= 2)
+        set(input_shape, label, new_inputs_number);
+}
+
+void Addition::write_JSON_body(JsonWriter& printer) const
+{
+    add_json_field(printer, "InputsNumber", to_string(inputs_number));
+}
+
 REGISTER(Layer, Addition, "Addition")
 
 }

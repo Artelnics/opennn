@@ -1002,7 +1002,7 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
     // fixed/reserved-keyword-safe names so the `outputs = [...]` list
     // below references defined variables. Mirrors the C/JS emitters.
     const vector<string> output_fixups =
-        fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::Python);
+        fix_output_names(expression, output_names, ProgrammingLanguage::Python);
     for (const string& l : output_fixups)
         buffer << "\t\t" << l << "\n";
 

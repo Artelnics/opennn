@@ -3343,6 +3343,7 @@ void DetectionOp::set(const Shape& input_shape, const vector<array<float, 2>>& n
         throw runtime_error("DetectionOp: anchors are empty.");
 
     grid_size = input_shape[0];
+    grid_width = input_shape[1];
     boxes_per_cell = ssize(new_anchors);
     anchors = new_anchors;
 
@@ -3378,9 +3379,9 @@ void DetectionOp::apply(const TensorView& input, TensorView& output) const
     #pragma omp parallel for collapse(3)
     for (Index b = 0; b < batch_size; ++b)
         for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_size; ++col)
+            for (Index col = 0; col < grid_width; ++col)
             {
-                const Index cell = ((b * grid_size + row) * grid_size + col) * channels;
+                const Index cell = ((b * grid_size + row) * grid_width + col) * channels;
 
                 for (Index box = 0; box < boxes_per_cell; ++box)
                 {
@@ -3448,9 +3449,9 @@ void DetectionOp::apply_delta(const TensorView& output,
     #pragma omp parallel for collapse(3)
     for (Index b = 0; b < batch_size; ++b)
         for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_size; ++col)
+            for (Index col = 0; col < grid_width; ++col)
             {
-                const Index cell = ((b * grid_size + row) * grid_size + col) * channels;
+                const Index cell = ((b * grid_size + row) * grid_width + col) * channels;
 
                 for (Index box = 0; box < boxes_per_cell; ++box)
                 {

@@ -256,6 +256,7 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
     MatrixR error_data(testing_samples_number, outputs_number);
 
     error_data = ((errors.array() * 100.0f).rowwise() / ranges.transpose().array()).matrix();
+    error_data = error_data.array().isFinite().select(error_data.array(), 0.0f).matrix();
 
     return error_data;
 }
@@ -285,7 +286,8 @@ vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives()
 vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives(const MatrixR& targets,
                                                                                const MatrixR& outputs) const
 {
-    const MatrixR difference = 100.0f*(targets-outputs).array().abs()/targets.array();
+    MatrixR difference = 100.0f*(targets-outputs).array().abs()/targets.array();
+    difference = difference.array().isFinite().select(difference.array(), 0.0f).matrix();
 
     return descriptives(difference);
 }
@@ -353,7 +355,7 @@ Tensor<VectorI, 1> TestingAnalysis::calculate_maximal_errors(const Index samples
     const Index outputs_number = error_data.dimension(2);
     const Index testing_samples_number = error_data.dimension(0);
 
-    Tensor<VectorI, 1> maximal_errors(samples_number);
+    Tensor<VectorI, 1> maximal_errors(outputs_number);
 
     const Index stride = testing_samples_number * 3;
 

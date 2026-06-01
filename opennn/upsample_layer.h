@@ -29,6 +29,7 @@ public:
 
     void set(const Shape&, Index scale_factor, const string&);
     void set_input_shape(const Shape&) override;
+    void set_output_shape(const Shape&) override {}
     void set_scale_factor(Index);
 
     void read_JSON_body(const Json*) override;

@@ -139,6 +139,9 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
         h.palette.resize(num_palette_colors);
         h.is_grayscale = true;
 
+        if (size_t(14 + biSize) + size_t(num_palette_colors) * 4 > buffer.size())
+            throw runtime_error(format("Corrupted BMP: palette exceeds file size: {}", path_str));
+
         uint32_t pal_offset = 14 + biSize;
         for (uint32_t i = 0; i < num_palette_colors; ++i)
         {

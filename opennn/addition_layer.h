@@ -29,6 +29,9 @@ public:
 
     Index get_inputs_number() const { return inputs_number; }
 
+    void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
+
 private:
 
     AddOp add;

@@ -66,6 +66,7 @@ public:
              const string& = "convolutional_layer");
 
     void set_input_shape(const Shape&) override;
+    void set_output_shape(const Shape&) override {}
 
     void on_compute_dtype_changed() override { update_convolution_operator(); }
 

@@ -109,8 +109,8 @@ void Recurrent::set_input_shape(const Shape& new_input_shape)
 
 void Recurrent::set_output_shape(const Shape& new_output_shape)
 {
-    check_rank(new_output_shape, {1}, "Recurrent", "output");
-    output_features = new_output_shape[0];
+    check_rank(new_output_shape, {1, 2}, "Recurrent", "output");
+    output_features = new_output_shape[new_output_shape.rank - 1];
     configure_operators();
 }
 
@@ -125,11 +125,13 @@ void Recurrent::set_activation_function(const string& name)
 void Recurrent::read_JSON_body(const Json* recurrent_layer_element)
 {
     set_activation_function(read_json_string(recurrent_layer_element, "Activation"));
+    set_return_sequences(read_json_bool(recurrent_layer_element, "ReturnSequences"));
 }
 
 void Recurrent::write_JSON_body(JsonWriter& printer) const
 {
     add_json_field(printer, "Activation", get_activation_function());
+    add_json_field(printer, "ReturnSequences", to_string(return_sequences));
 }
 
 string Recurrent::write_expression(const vector<string>& feature_names,

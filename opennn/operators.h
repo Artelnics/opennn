@@ -801,6 +801,7 @@ struct DetectionOp : Operator
     enum class ClassActivation { Softmax, Sigmoid };
 
     Index grid_size = 0;
+    Index grid_width = 0;
     Index boxes_per_cell = 0;
     Index classes_number = 0;
     ClassActivation class_activation = ClassActivation::Softmax;
