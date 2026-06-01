@@ -34,19 +34,20 @@ static void write_outputs_csv(ofstream& file,
                               const vector<string>& input_names,
                               const Tensor2& input_values,
                               const vector<string>& output_names,
-                              const MatrixR& outputs,
-                              const Index outputs_number,
-                              const Index batch_size,
-                              const Index features_number)
+                              const MatrixR& outputs)
 {
+    const Index outputs_number = outputs.cols();
+    const Index batch_size = outputs.rows();
+    const Index features_number = input_values.size() == 0 ? 0 : input_values.dimension(1);
+
     for (const auto& name : input_names)
         file << name << ";";
 
-    for (size_t i = 0; i < size_t(outputs_number); ++i)
+    for (Index i = 0; i < outputs_number; ++i)
     {
         file << output_names[i];
 
-        if (i != output_names.size() - 1)
+        if (i + 1 < outputs_number)
             file << ";";
     }
 
@@ -115,6 +116,10 @@ void NeuralNetwork::compile()
     parameters.resize_bytes(get_aligned_bytes(get_parameter_specs(), Type::FP32), Device::CPU);
     parameters.setZero();
 
+#ifdef OPENNN_HAS_CUDA
+    parameters_bf16.resize_bytes(0, Device::CUDA);
+#endif
+
     link_parameters();
 
     states.resize_bytes(get_states_size() * Index(sizeof(float)), Device::CPU);
@@ -144,12 +149,15 @@ bool NeuralNetwork::has(LayerType type) const
 static vector<string> get_feature_names_from(const vector<Variable>& variables)
 {
     vector<string> feature_names;
-    feature_names.reserve(variables.size());
+    feature_names.reserve(size_t(transform_reduce(variables.begin(), variables.end(), Index(0), plus<>{},
+                                                  [](const Variable& variable) { return variable.feature_count(); })));
 
     for (const auto& variable : variables)
     {
-        const vector<string> names = variable.get_names();
-        feature_names.insert(feature_names.end(), names.begin(), names.end());
+        vector<string> names = variable.get_names();
+        feature_names.insert(feature_names.end(),
+                             make_move_iterator(names.begin()),
+                             make_move_iterator(names.end()));
     }
 
     return feature_names;
@@ -651,15 +659,7 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
 
     forward_propagate(input_views, forward_propagation, false);
 
-    const size_t layers_count = get_layers_number();
-    const TensorView out_view = (layers_count > 0
-                           && layers_count - 1 < forward_propagation.views.size()
-                           && forward_propagation.views[layers_count - 1].size() > 1
-                           && !forward_propagation.views[layers_count - 1].back().empty())
-                          ? forward_propagation.views[layers_count - 1].back()[0]
-                          : forward_propagation.get_last_trainable_layer_outputs();
-
-    return out_view.as_matrix();
+    return forward_propagation.get_outputs().as_matrix();
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
@@ -1249,10 +1249,7 @@ void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_n
 
     const vector<string> output_names = get_output_feature_names();
 
-    const Index outputs_number = get_outputs_number();
-    const Index batch_size = inputs.rows();
-
-    write_outputs_csv(file, {}, Tensor2(), output_names, outputs, outputs_number, batch_size, 0);
+    write_outputs_csv(file, {}, Tensor2(), output_names, outputs);
 
     file.close();
 }
@@ -1279,11 +1276,9 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
         throw runtime_error(format("Cannot open {} file.\n", file_name.string()));
 
     const vector<string> output_names = get_output_feature_names();
-    const Index outputs_number = get_outputs_number();
-
     const vector<string> input_names = get_input_feature_names();
 
-    write_outputs_csv(file, input_names, last_time_step_inputs, output_names, outputs, outputs_number, batch_size, features_number);
+    write_outputs_csv(file, input_names, last_time_step_inputs, output_names, outputs);
 
     file.close();
 }
@@ -1309,11 +1304,10 @@ vector<string> NeuralNetwork::get_names_string() const
 
 void NeuralNetwork::link_parameters()
 {
-    // Ignore the BF16 mirror when active Configuration is CPU (host can't read GPU memory).
     float* fp32_base = parameters.as<float>();
 
 #ifdef OPENNN_HAS_CUDA
-    bfloat16* bf16_base = (is_gpu() && !parameters_bf16.empty())
+    bfloat16* bf16_base = (parameters.device_type == Device::CUDA && !parameters_bf16.empty())
         ? parameters_bf16.as<bfloat16>()
         : nullptr;
 #endif
@@ -1382,15 +1376,23 @@ void NeuralNetwork::link_states(Device device)
 
 void NeuralNetwork::copy_parameters_device()
 {
-    if (parameters.empty()) return;
+    if (parameters.empty())
+    {
+        parameters_bf16.resize_bytes(0, Device::CUDA);
+        return;
+    }
 
     cudaStream_t stream = Backend::get_compute_stream();
     parameters.migrate_to(Device::CUDA, stream);
 
-    if(config.training_type == Type::BF16)
+    if (config.training_type == Type::BF16)
     {
         parameters_bf16.resize_bytes(parameters.size_in_floats() * Index(sizeof(bfloat16)), Device::CUDA);
         cast_parameters_to_bf16();
+    }
+    else
+    {
+        parameters_bf16.resize_bytes(0, Device::CUDA);
     }
 
     link_parameters();
@@ -1460,13 +1462,7 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
 
     forward_propagate(input_views_gpu, forward_propagation, false);
 
-    const size_t layers_count = get_layers_number();
-    const TensorView out_view = (layers_count > 0
-                           && layers_count - 1 < forward_propagation.views.size()
-                           && forward_propagation.views[layers_count - 1].size() > 1
-                           && !forward_propagation.views[layers_count - 1].back().empty())
-                          ? forward_propagation.views[layers_count - 1].back()[0]
-                          : forward_propagation.get_last_trainable_layer_outputs();
+    const TensorView out_view = forward_propagation.get_outputs();
 
     const Index batch_size = input_views_cpu[0].shape[0];
     const Index out_cols = out_view.size() / batch_size;

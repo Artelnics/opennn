@@ -16,11 +16,6 @@ namespace opennn
 namespace
 {
 
-string channels_to_string(const vector<Index>& channels)
-{
-    return vector_to_string(channels, " ");
-}
-
 vector<Index> string_to_channels(const string& text)
 {
     istringstream stream(text);
@@ -99,7 +94,7 @@ void Concatenate::read_JSON_body(const Json* root)
 
 void Concatenate::write_JSON_body(JsonWriter& writer) const
 {
-    add_json_field(writer, "InputChannels", channels_to_string(concatenate.input_channels));
+    add_json_field(writer, "InputChannels", vector_to_string(concatenate.input_channels, " "));
 }
 
 REGISTER(Layer, Concatenate, "Concatenate")

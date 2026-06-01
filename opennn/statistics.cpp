@@ -526,10 +526,12 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     VectorR centers(bins_number);
     VectorR frequencies = VectorR::Zero(bins_number);
 
+    const size_t unique_capacity = static_cast<size_t>(min(size, bins_number));
+
     vector<float> unique_values;
     unordered_set<float> unique_set;
-
-    unique_values.reserve(min<Index>(size, bins_number));
+    unique_values.reserve(unique_capacity);
+    unique_set.reserve(unique_capacity);
     unique_values.push_back(new_vector(0));
     unique_set.insert(new_vector(0));
 
@@ -1213,6 +1215,8 @@ VectorI calculate_rank(const VectorR& vector, bool ascending)
 vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
 {
     vector<Index> indices;
+    indices.reserve(data.size());
+
     ranges::copy_if(data, back_inserter(indices),
                     [bound](Index value) { return value > bound; });
     return indices;

@@ -111,16 +111,28 @@ void Dataset::set_data_path(const filesystem::path& new_data_path)
     data_path = new_data_path;
     binary_rows_number = 0;
     binary_columns_number = 0;
-    binary_data_cache.clear();
+    {
+        lock_guard<mutex> lock(binary_cache_mutex);
+        binary_data_cache.clear();
+    }
     invalidate_data_buffer();
 }
 
 void Dataset::set_storage_mode(StorageMode new_storage_mode)
 {
     storage_mode = new_storage_mode;
+    {
+        lock_guard<mutex> lock(binary_cache_mutex);
+        binary_data_cache.clear();
+    }
 
     if (storage_mode == StorageMode::BinaryFile)
         read_binary_header();
+    else
+    {
+        binary_rows_number = 0;
+        binary_columns_number = 0;
+    }
 
     invalidate_data_buffer();
 }
@@ -128,8 +140,7 @@ void Dataset::set_storage_mode(StorageMode new_storage_mode)
 void Dataset::use_binary_data_file(const filesystem::path& binary_data_file_name)
 {
     set_data_path(binary_data_file_name);
-    storage_mode = StorageMode::BinaryFile;
-    read_binary_header();
+    set_storage_mode(StorageMode::BinaryFile);
 
     if (sample_roles.empty())
         sample_roles.resize(binary_rows_number, SampleRole::Training);
@@ -340,13 +351,16 @@ void Dataset::set_default_variable_names()
 vector<string> Dataset::get_feature_names() const
 {
     vector<string> feature_names;
-    feature_names.reserve(variables.size());
+    feature_names.reserve(size_t(transform_reduce(variables.begin(), variables.end(), Index(0), plus<>{},
+                                                  [](const Variable& variable) { return variable.feature_count(); })));
 
     for (const auto& variable : variables)
     {
-        const vector<string> names = variable.get_names();
+        vector<string> names = variable.get_names();
 
-        feature_names.insert(feature_names.end(), names.begin(), names.end());
+        feature_names.insert(feature_names.end(),
+                             make_move_iterator(names.begin()),
+                             make_move_iterator(names.end()));
     }
     return feature_names;
 }
@@ -356,13 +370,16 @@ vector<string> Dataset::get_feature_names(const string& variable_role) const
     const auto vars = get_variables(variable_role);
 
     vector<string> feature_names;
-    feature_names.reserve(vars.size());
+    feature_names.reserve(size_t(transform_reduce(vars.begin(), vars.end(), Index(0), plus<>{},
+                                                  [](const Variable& variable) { return variable.feature_count(); })));
 
     for (const auto& variable : vars)
     {
-        const vector<string> names = variable.get_names();
+        vector<string> names = variable.get_names();
 
-        feature_names.insert(feature_names.end(), names.begin(), names.end());
+        feature_names.insert(feature_names.end(),
+                             make_move_iterator(names.begin()),
+                             make_move_iterator(names.end()));
     }
 
     return feature_names;
@@ -1046,6 +1063,9 @@ void Dataset::read_binary_header() const
 
     if (!file)
         throw runtime_error(format("Failed to read binary data header: {}", data_path.string()));
+
+    if (binary_columns_number < 0 || binary_rows_number < 0)
+        throw runtime_error(format("Invalid binary data header: {}", data_path.string()));
 }
 
 const vector<float>& Dataset::load_binary_data_cache() const
@@ -1063,6 +1083,15 @@ const vector<float>& Dataset::load_binary_data_cache() const
         throw runtime_error(format("Failed to open binary data file: {}", data_path.string()));
 
     const size_t element_count = size_t(binary_rows_number) * size_t(binary_columns_number);
+    const uintmax_t expected_bytes = uintmax_t(2 * sizeof(Index))
+                                   + uintmax_t(element_count) * uintmax_t(sizeof(float));
+    const uintmax_t file_bytes = filesystem::file_size(data_path);
+    if (file_bytes != expected_bytes)
+        throw runtime_error(format("Binary data file size mismatch for {} (got {} bytes, expected {} bytes).",
+                                   data_path.string(),
+                                   file_bytes,
+                                   expected_bytes));
+
     binary_data_cache.resize(element_count);
 
     file.seekg(streamoff(2 * sizeof(Index)), ios::beg);
@@ -1095,6 +1124,17 @@ bool Dataset::try_fill_binary_tensor(const vector<Index>& sample_indices,
                           : is_contiguous(feature_indices);
 
     const Index first_column = feature_indices.front();
+    if (contiguous)
+    {
+        if (first_column < 0 || first_column + features_number > columns_number)
+            throw runtime_error("Binary data feature index is out of range.");
+    }
+    else
+    {
+        for (const Index feature_index : feature_indices)
+            if (feature_index < 0 || feature_index >= columns_number)
+                throw runtime_error("Binary data feature index is out of range.");
+    }
 
     for (Index i = 0; i < ssize(sample_indices); ++i)
     {
@@ -1124,13 +1164,18 @@ void Dataset::set_matrix_storage()
     storage_mode = StorageMode::Matrix;
     binary_rows_number = 0;
     binary_columns_number = 0;
-    binary_data_cache.clear();
+    {
+        lock_guard<mutex> lock(binary_cache_mutex);
+        binary_data_cache.clear();
+    }
     invalidate_data_buffer();
 }
 
 void Dataset::invalidate_data_buffer() const
 {
+    lock_guard<mutex> lock(data_buffer_mutex);
     data_buffer_shape.clear();
+    data_buffer.resize_bytes(0, Device::CUDA);
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -1138,6 +1183,8 @@ void Dataset::invalidate_data_buffer() const
 bool Dataset::prepare_device_data_buffer() const
 {
     lock_guard<mutex> lock(data_buffer_mutex);
+
+    if (!supports_dense_feature_gather()) return false;
 
     const Index rows  = get_samples_number();
     const Index features = get_features_number();
@@ -1147,6 +1194,9 @@ bool Dataset::prepare_device_data_buffer() const
         && data_buffer.device_type == Device::CUDA
         && !data_buffer.empty())
         return true;
+
+    data_buffer_shape.clear();
+    data_buffer.resize_bytes(0, Device::CUDA);
 
     const Index buffer_bytes = rows * features * Index(sizeof(float));
 

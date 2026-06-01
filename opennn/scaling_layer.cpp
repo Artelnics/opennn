@@ -276,8 +276,8 @@ string Scaling::write_expression(const vector<string>& input_names,
     }
 
     string expression = buffer.str();
-    expression = regex_replace(expression, regex("\\+-"), "-");
-    expression = regex_replace(expression, regex("--"), "+");
+    replace(expression, "+-", "-");
+    replace(expression, "--", "+");
 
     return expression;
 }

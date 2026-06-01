@@ -112,7 +112,7 @@ vector<NamedColumn> ResponseOptimization::build_input_columns_for_formula() cons
 
     for (const Variable& variable : input_variables)
     {
-        const Index dimension = variable.is_categorical() ? variable.get_categories_number() : 1;
+        const Index dimension = variable.feature_count();
         const bool is_past = (get_condition(variable.name).condition == ConditionType::Past);
 
         if (variable.get_role() != "Input" || is_past)
@@ -139,7 +139,7 @@ vector<NamedColumn> ResponseOptimization::build_output_columns_for_formula() con
 
     for (const Variable& variable : output_variables)
     {
-        const Index dimension = variable.is_categorical() ? variable.get_categories_number() : 1;
+        const Index dimension = variable.feature_count();
 
         if (dimension == 1)
             output_columns.push_back({variable.name, output_column});
@@ -322,6 +322,8 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
 
     vector<Variable> filtered_vars;
     vector<Descriptives> filtered_desc;
+    filtered_vars.reserve(variables_uncheked.size());
+    filtered_desc.reserve(descriptives_uncheked.size());
 
     for (size_t i = 0; i < variables_uncheked.size(); ++i)
     {
@@ -430,7 +432,7 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
     {
         const bool is_input = (role == "Input");
 
-        const auto [variables, descriptives] = response_optimization.get_variables_and_descriptives(role);
+        const vector<Variable> variables = response_optimization.get_variables_and_descriptives(role).first;
 
         const vector<Index> feature_dimensions_by_role = get_feature_dimensions(variables);
 
@@ -540,7 +542,7 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
 
 MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain, const Index evaluations_count) const
 {
-    const auto [variables, descriptives] = get_variables_and_descriptives("Input");
+    const vector<Variable> variables = get_variables_and_descriptives("Input").first;
 
     const vector<Index> input_feature_dimensions = get_feature_dimensions(variables);
 
@@ -768,7 +770,7 @@ Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 
     for (const Variable& variable : input_variables)
     {
-        const Index dim = variable.is_categorical() ? variable.get_categories_number() : 1;
+        const Index dim = variable.feature_count();
 
         const Condition current_cond = get_condition(variable.name);
 
@@ -1182,7 +1184,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 {
     const Objectives objectives(*this);
 
-    const auto [input_variables, descriptives] = get_variables_and_descriptives("Input");
+    const vector<Variable> input_variables = get_variables_and_descriptives("Input").first;
 
     const Domain original_input_domain = get_original_domain("Input");
     const Domain original_output_domain = get_original_domain("Target");
@@ -1361,9 +1363,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 {
     Objectives objectives(*this);
 
-    const auto [input_variables, input_descriptives] = get_variables_and_descriptives("Input");
-
-    const auto [output_variables, output_descriptives] = get_variables_and_descriptives("Target");
+    const vector<Variable> input_variables = get_variables_and_descriptives("Input").first;
 
     const Domain original_input_domain = get_original_domain("Input");
     const Domain original_output_domain = get_original_domain("Target");

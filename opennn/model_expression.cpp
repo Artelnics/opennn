@@ -1114,6 +1114,7 @@ vector<string> ModelExpression::fix_output_names(const string& str,
     stringstream ss(str);
 
     const size_t num_outputs = outputs.size();
+    tokens.reserve(num_outputs);
 
     while (getline(ss, token, '\n'))
     {
@@ -1131,26 +1132,39 @@ vector<string> ModelExpression::fix_output_names(const string& str,
         return {};
 
     const vector<string> fixed_outputs = fix_names(outputs, "output_");
+    out.reserve(num_outputs);
 
-    struct DeclFormat { const char* lhs_prefix; const char* rhs_prefix; const char* suffix; };
-    static const unordered_map<ProgrammingLanguage, DeclFormat> formats =
+    const char* lhs_prefix = "";
+    const char* rhs_prefix = "";
+    const char* suffix = "";
+
+    using enum ProgrammingLanguage;
+    switch (programming_language)
     {
-        {ProgrammingLanguage::C,          {"double ", "",  ";"}},
-        {ProgrammingLanguage::JavaScript, {"\tvar ",  "",  ";"}},
-        {ProgrammingLanguage::Python,     {"",        "",  ""}},
-        {ProgrammingLanguage::PHP,        {"$",       "$", ";"}}
-    };
-
-    const DeclFormat& fmt = formats.at(programming_language);
-    const size_t tokens_count = tokens.size();
+    case C:
+        lhs_prefix = "double ";
+        suffix = ";";
+        break;
+    case JavaScript:
+        lhs_prefix = "\tvar ";
+        suffix = ";";
+        break;
+    case Python:
+        break;
+    case PHP:
+        lhs_prefix = "$";
+        rhs_prefix = "$";
+        suffix = ";";
+        break;
+    }
 
     for (size_t i = 0; i < num_outputs; ++i)
     {
-        const string intermediate_var_name = get_first_word(tokens[tokens_count - num_outputs + i]);
+        const string intermediate_var_name = get_first_word(tokens[tokens.size() - num_outputs + i]);
         const string& final_output_name = fixed_outputs[i];
 
         if (final_output_name != intermediate_var_name)
-            out.push_back(fmt.lhs_prefix + final_output_name + " = " + fmt.rhs_prefix + intermediate_var_name + fmt.suffix);
+            out.push_back(string(lhs_prefix) + final_output_name + " = " + rhs_prefix + intermediate_var_name + suffix);
     }
 
     return out;

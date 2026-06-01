@@ -450,8 +450,7 @@ Index Optimizer::get_maximum_batch_size() const
     {
 #ifdef OPENNN_HAS_CUDA
         size_t free_bytes = 0, total_bytes = 0;
-        if (cudaMemGetInfo(&free_bytes, &total_bytes) != cudaSuccess)
-            throw runtime_error("Optimizer::get_maximum_batch_size: cudaMemGetInfo failed.");
+        CHECK_CUDA(cudaMemGetInfo(&free_bytes, &total_bytes));
         available_bytes = Index(free_bytes);
 #else
         throw runtime_error("Optimizer::get_maximum_batch_size: CUDA not compiled in.");
@@ -997,9 +996,10 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
 {
     const Index total_bytes = get_aligned_bytes(slot_shapes, Type::FP32);
 
+    data.resize_bytes(total_bytes, device);
+
     if (total_bytes > 0)
     {
-        data.resize_bytes(total_bytes, device);
 #ifdef OPENNN_HAS_CUDA
         if (device == Device::CUDA)
             CHECK_CUDA(cudaMemsetAsync(data.data, 0, total_bytes, Backend::get_compute_stream()));

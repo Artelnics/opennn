@@ -52,6 +52,7 @@ public:
     std::vector<std::string> registered_names() const
     {
         std::vector<std::string> names;
+        names.reserve(creators.size());
 
         for (const auto& pair : creators)
             names.push_back(pair.first);

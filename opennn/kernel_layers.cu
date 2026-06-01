@@ -633,7 +633,7 @@ static void prepare_pooling_valid_mask(int B, int S, int F, const T* in,
     float* scratch = get_pooling_scratch(static_cast<size_t>(BS) + B);
     valid_mask = scratch;
     counts     = scratch + BS;
-    cudaMemsetAsync(counts, 0, B * sizeof(float), stream);
+    CHECK_CUDA(cudaMemsetAsync(counts, 0, B * sizeof(float), stream));
 
     pooling_3d_valid_mask_kernel<T><<<grid_size_for(BS), block_size, 0, stream>>>(BS, S, F, in, valid_mask, counts);
 }

@@ -346,10 +346,14 @@ vector<Index> yolo_detection_layer_indices(const NeuralNetwork* nn)
 {
     vector<Index> result;
     if (!nn) return result;
+
     const auto& layers = nn->get_layers();
+    result.reserve(layers.size());
+
     for (size_t i = 0; i < layers.size(); ++i)
         if (layers[i] && layers[i]->get_type() == LayerType::Detection)
             result.push_back(Index(i));
+
     return result;
 }
 
@@ -554,12 +558,12 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
     const TensorView target = batch.get_targets();
-    const bool on_gpu = neural_network && neural_network->is_gpu();
 
     EvaluationResult result;
 
     float* workspace_device = nullptr;
 #ifdef OPENNN_HAS_CUDA
+    const bool on_gpu = neural_network && neural_network->is_gpu();
     if (on_gpu)
     {
         const Index workspace_floats = (error == Error::CrossEntropy3d)

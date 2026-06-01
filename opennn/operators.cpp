@@ -288,8 +288,8 @@ void ActivationOp::set_function(Function new_function)
 {
     function = new_function;
 #ifdef OPENNN_HAS_CUDA
-    if (!descriptor) cudnnCreateActivationDescriptor(&descriptor);
-    cudnnSetActivationDescriptor(descriptor, to_cudnn_mode(function), CUDNN_PROPAGATE_NAN, 0.0);
+    if (!descriptor) CHECK_CUDNN(cudnnCreateActivationDescriptor(&descriptor));
+    CHECK_CUDNN(cudnnSetActivationDescriptor(descriptor, to_cudnn_mode(function), CUDNN_PROPAGATE_NAN, 0.0));
 #endif
 }
 

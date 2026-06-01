@@ -572,17 +572,14 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     filesystem::create_directories(cache_path.parent_path());
     const filesystem::path tmp_path = cache_path.string() + ".tmp";
 
-    vector<int32_t> labels_out;
-    labels_out.resize(size_t(samples_number));
+    vector<int32_t> labels_out(static_cast<size_t>(samples_number));
 
     FileWriter writer;
     writer.open(tmp_path);
     writer.write(&header, sizeof(header));
 
-    vector<float> tmp;
-    tmp.resize(size_t(pixels_number));
-    vector<uint8_t> pixels;
-    pixels.resize(size_t(pixels_number));
+    vector<float> tmp(static_cast<size_t>(pixels_number));
+    vector<uint8_t> pixels(static_cast<size_t>(pixels_number));
 
     for (Index i = 0; i < samples_number; ++i)
     {
@@ -648,8 +645,12 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
             thread_local vector<uint8_t> buf;
             buf.resize(size_t(pixels_per_image));
 
+            const Index sample_index = sample_indices[size_t(i)];
+            if (sample_index < 0 || sample_index >= ssize(labels_ram))
+                throw runtime_error("ImageDataset input sample index is out of range.");
+
             const uint64_t off = uint64_t(sizeof(ImageCacheHeader))
-                                + uint64_t(sample_indices[i]) * record_bytes;
+                                + uint64_t(sample_index) * record_bytes;
             cache_reader.read_at(buf.data(), size_t(pixels_per_image), off);
 
             float* dst = input_data + i * pixels_per_image;
@@ -700,6 +701,20 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
 {
     const Index batch_size = ssize(sample_indices);
     const Index targets_number = ssize(target_indices);
+
+    if (targets_number == 0) return;
+
+    for (const Index sample_index : sample_indices)
+        if (sample_index < 0 || sample_index >= ssize(labels_ram))
+            throw runtime_error("ImageDataset target sample index is out of range.");
+
+    if (targets_number > 1)
+        for (const Index sample_index : sample_indices)
+        {
+            const int32_t label = labels_ram[size_t(sample_index)];
+            if (label < 0 || label >= targets_number)
+                throw runtime_error("ImageDataset target label is out of range.");
+        }
 
     if (targets_number == 1)
     {

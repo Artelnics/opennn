@@ -354,6 +354,14 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
     const Index inputs_number = input_indices.size();
     const Index data_rows_number = data.rows();
 
+    for (const Index sample_index : sample_indices)
+        if (sample_index < 0 || sample_index >= data_rows_number)
+            throw runtime_error("TimeSeriesDataset input sample index is out of range.");
+
+    for (const Index input_index : input_indices)
+        if (input_index < 0 || input_index >= data.cols())
+            throw runtime_error("TimeSeriesDataset input feature index is out of range.");
+
     TensorMap3 inputs(input_data, batch_size, past_time_steps, inputs_number);
 
     #pragma omp parallel for schedule(static)
@@ -384,6 +392,14 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
     const Index targets_number = get_target_shape()[0];
     const Index total_rows_in_data = data.rows();
     const Index target_columns = ssize(target_indices);
+
+    for (const Index sample_index : sample_indices)
+        if (sample_index < 0 || sample_index >= total_rows_in_data)
+            throw runtime_error("TimeSeriesDataset target sample index is out of range.");
+
+    for (const Index target_index : target_indices)
+        if (target_index < 0 || target_index >= data.cols())
+            throw runtime_error("TimeSeriesDataset target feature index is out of range.");
 
     MatrixMap targets(target_data, batch_size, targets_number);
 
