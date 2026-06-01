@@ -159,12 +159,7 @@ int main()
 #if 0
         cout << "OpenNN. ResNet-50 ImageNet single-image test." << endl;
 
-#ifdef OPENNN_HAS_CUDA
-        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
-        Backend::instance();
-#else
         Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
-#endif
 
         const filesystem::path imagenette_path = "/home/artelnics/Documents/imagenette2_bmp_224";
         const filesystem::path resnet50_dir = "/home/artelnics/Documents/resnet-50";
@@ -261,12 +256,7 @@ int main()
 
         cout << "OpenNN. HIGGS 5x300 DNN max-batch benchmark." << endl;
 
-#ifdef OPENNN_HAS_CUDA
-        Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);
-        Backend::instance();
-#else
         Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);
-#endif
 
         const filesystem::path dataset_path = "/home/artelnics/Documents/HIGGS.csv";
 
@@ -320,13 +310,13 @@ int main()
         if (!sgd)
             throw runtime_error("StochasticGradientDescent optimizer not found.");
 
-        sgd->set_batch_size(1000000);
+        sgd->set_batch_size(100);
         sgd->set_initial_learning_rate(0.05f);
         sgd->set_initial_decay(0.0202f);
         sgd->set_momentum(0.9f);
         sgd->set_nesterov(false);
         sgd->set_num_workers(8);
-        sgd->set_maximum_epochs(20);
+        sgd->set_maximum_epochs(5);
         sgd->set_maximum_validation_failures(100);
         sgd->set_display_period(1);
 
@@ -336,16 +326,6 @@ int main()
         const double training_time = duration_cast<milliseconds>(t1 - t0).count() / 1000.0;
 
         cout << "\nTotal training time: " << training_time << " s" << endl;
-
-        TestingAnalysis testing_analysis(&network, &dataset);
-        testing_analysis.set_batch_size(500000);
-        const TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
-
-        cout << "\nROC analysis:" << endl;
-        cout << "Role: Testing" << endl;
-        cout << "AUC: " << roc_analysis.area_under_curve << endl;
-        cout << "Confidence limit: " << roc_analysis.confidence_limit << endl;
-        cout << "Optimal threshold: " << roc_analysis.optimal_threshold << endl;
 
         cout << "Bye!" << endl;
         return 0;
