@@ -160,7 +160,6 @@ void Backend::set_threads_number(int num_threads)
     if (num_threads <= 0)
     {
         num_threads = thread::hardware_concurrency();
-        if (num_threads > 1) num_threads /= 2;
         if (num_threads <= 0) num_threads = omp_get_max_threads();
         if (num_threads <= 0) num_threads = 1;
     }

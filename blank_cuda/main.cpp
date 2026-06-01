@@ -159,12 +159,7 @@ int main()
 #if 0
         cout << "OpenNN. ResNet-50 ImageNet single-image test." << endl;
 
-#ifdef OPENNN_HAS_CUDA
-        Configuration::instance().set(Device::CUDA, Type::FP32);
-        Backend::instance();
-#else
         Configuration::instance().set(Device::CPU, Type::FP32);
-#endif
 
         const filesystem::path imagenette_path = "/home/artelnics/Documents/imagenette2_bmp_224";
         const filesystem::path resnet50_dir = "/home/artelnics/Documents/resnet-50";
@@ -261,12 +256,8 @@ int main()
 
         cout << "OpenNN. HIGGS 5x300 DNN max-batch benchmark." << endl;
 
-#ifdef OPENNN_HAS_CUDA
-        Configuration::instance().set(Device::CUDA, Type::FP32);
-        Backend::instance();
-#else
         Configuration::instance().set(Device::CPU, Type::FP32);
-#endif
+        Backend::instance().set_threads_number(16);
 
         const filesystem::path dataset_path = "/home/artelnics/Documents/HIGGS.csv";
 
@@ -313,8 +304,7 @@ int main()
         TrainingStrategy training_strategy(&network, &dataset);
         training_strategy.set_loss("CrossEntropy");
         training_strategy.set_optimization_algorithm("StochasticGradientDescent");
-        training_strategy.get_loss()->set_regularization("L2");
-        training_strategy.get_loss()->set_regularization_weight(1.0e-5f);
+        training_strategy.get_loss()->set_regularization("NoRegularization");
 
         auto* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
         if (!sgd)
@@ -326,7 +316,7 @@ int main()
         sgd->set_momentum(0.9f);
         sgd->set_nesterov(false);
         sgd->set_num_workers(8);
-        sgd->set_maximum_epochs(5);
+        sgd->set_maximum_epochs(0);
         sgd->set_maximum_validation_failures(100);
         sgd->set_display_period(1);
 
