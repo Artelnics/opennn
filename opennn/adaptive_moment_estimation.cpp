@@ -42,11 +42,17 @@ void AdaptiveMomentEstimation::set_batch_size(const Index new_batch_size)
 
 void AdaptiveMomentEstimation::set_beta_1(const float new_beta_1)
 {
+    if (new_beta_1 < 0.0f || new_beta_1 >= 1.0f)
+        throw runtime_error("AdaptiveMomentEstimation::set_beta_1: beta_1 must be in [0, 1).");
+
     beta_1 = new_beta_1;
 }
 
 void AdaptiveMomentEstimation::set_beta_2(const float new_beta_2)
 {
+    if (new_beta_2 < 0.0f || new_beta_2 >= 1.0f)
+        throw runtime_error("AdaptiveMomentEstimation::set_beta_2: beta_2 must be in [0, 1).");
+
     beta_2 = new_beta_2;
 }
 

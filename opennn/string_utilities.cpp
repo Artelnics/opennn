@@ -404,7 +404,7 @@ string get_time(float time)
 void display_progress_bar(int completed, int total)
 {
     const int width = 50;
-    const float progress = static_cast<float>(completed) / total;
+    const float progress = total > 0 ? static_cast<float>(completed) / total : 0.0f;
     const int position = min(static_cast<int>(width * progress), width);
 
     cout << "\r[" << string(position, '=');

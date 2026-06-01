@@ -496,7 +496,11 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
     {
         for (Index sample = 0; sample < samples_number; ++sample)
         {
-            const string_view token = target_document_tokens[sample][0];
+            const vector<string_view>& sample_tokens = target_document_tokens[sample];
+            if (sample_tokens.empty())
+                throw runtime_error("Unknown target value");
+
+            const string_view token = sample_tokens[0];
 
             if (contains(positive_words, token))
                 target_indices[sample] = {1};
@@ -514,7 +518,11 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
         {
             target_indices[sample].assign(maximum_target_sequence_length, 0);
 
-            const string_view token = target_document_tokens[sample][0];
+            const vector<string_view>& sample_tokens = target_document_tokens[sample];
+            if (sample_tokens.empty())
+                continue;
+
+            const string_view token = sample_tokens[0];
             const auto it = target_vocabulary_map.find(token);
             const Index vocab_index = (it != target_vocabulary_map.end()) ? it->second : Index(UNK_INDEX);
             const Index col = vocab_index - reserved_count;

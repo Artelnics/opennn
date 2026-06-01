@@ -1204,6 +1204,8 @@ void TabularDataset::read_csv()
             ++rows_missing_values_number;
             for (size_t i = id_offset; i < tokens.size(); ++i)
             {
+                if (Index(i - id_offset) >= variables_number) break;
+
                 if (is_missing(tokens[i]))
                 {
                     ++missing_values_number;
@@ -1338,7 +1340,6 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> used_feature_indices = get_used_feature_indices();
-    const vector<Index> input_feature_indices = get_feature_indices("Input");
     const vector<Index> target_feature_indices = get_feature_indices("Target");
 
     if (used_sample_indices.empty() || used_feature_indices.empty())
@@ -1353,9 +1354,12 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
     const Index target_features_number = target_feature_indices.size();
     bool data_changed = false;
 
-    for (Index j = 0; j < features_number - target_features_number; ++j)
+    for (Index j = 0; j < features_number; ++j)
     {
-        const Index current_variable = input_feature_indices[j];
+        const Index current_variable = used_feature_indices[j];
+
+        if (ranges::find(target_feature_indices, current_variable) != target_feature_indices.end())
+            continue;
 
         for (Index i = 0; i < samples_number; ++i)
         {

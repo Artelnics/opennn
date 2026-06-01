@@ -180,8 +180,10 @@ static MatrixR activation_derivative(ActivationOp::Function activation_function,
     switch (activation_function)
     {
     case Identity:
-    case Softmax:
         return MatrixR::Ones(outputs.rows(), outputs.cols());
+    case Softmax:
+        throw runtime_error("LevenbergMarquardtAlgorithm: Softmax activation is not supported "
+                            "(non-diagonal Jacobian). Use AdaptiveMomentEstimation, SGD, or QuasiNewtonMethod.");
     case Sigmoid:
         return outputs.array() * (1.0f - outputs.array());
     case Tanh:

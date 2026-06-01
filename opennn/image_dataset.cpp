@@ -481,6 +481,9 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     const Index folders_number = directory_path.size();
 
+    if (folders_number < 2)
+        throw runtime_error("ImageDataset: image classification requires at least two class folders.");
+
     vector<filesystem::path> paths;
     vector<Index> labels;
 
