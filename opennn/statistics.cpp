@@ -442,10 +442,11 @@ VectorR quartiles(const VectorR& data)
     }
     else if (new_size == 2)
     {
-        const float sum = valid_data(0) + valid_data(1);
-        quartiles(0) = sum / 4.0f;
-        quartiles(1) = sum / 2.0f;
-        quartiles(2) = sum * 0.75f;
+        const float v0 = valid_data(0);
+        const float v1 = valid_data(1);
+        quartiles(0) = v0 + 0.25f * (v1 - v0);
+        quartiles(1) = v0 + 0.50f * (v1 - v0);
+        quartiles(2) = v0 + 0.75f * (v1 - v0);
     }
     else if (new_size == 3)
     {

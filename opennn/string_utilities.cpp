@@ -268,9 +268,9 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_components.tm_year = stoi(match[3]) - 1900;
 
         int hour = stoi(match[4]);
-        if (match[7].matched)
+        if (match[8].matched)
         {
-            const string ampm = match[7].str();
+            const string ampm = match[8].str();
             if (ampm == "PM" && hour < 12) hour += 12;
             if (ampm == "AM" && hour == 12) hour = 0;
         }

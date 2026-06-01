@@ -105,6 +105,12 @@ void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
                                 Type::FP32,
                                 loss->get_neural_network()->get_device());
     back_propagation_lm.regularization = loss->calculate_regularization(parameters);
+
+    loss->add_regularization_gradient(TensorView(back_propagation_lm.gradient.data(),
+                                                 { back_propagation_lm.gradient.size() },
+                                                 Type::FP32,
+                                                 parameters.device));
+
     back_propagation_lm.loss = back_propagation_lm.error + back_propagation_lm.regularization;
 }
 

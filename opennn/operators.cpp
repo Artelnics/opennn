@@ -1460,8 +1460,14 @@ void ConvolutionOp::apply_cpu(const TensorView& input, TensorView& output)
     {
         const TensorMap3 kernel_map = weights.as_tensor<3>(kernel_index);
 
-        outputs.chip(kernel_index, 3).device(get_device()) =
-            padded_inputs.convolve(kernel_map, conv_dims).reshape(out_slice_shape) + biases(kernel_index);
+        if (row_stride == 1 && column_stride == 1)
+            outputs.chip(kernel_index, 3).device(get_device()) =
+                padded_inputs.convolve(kernel_map, conv_dims).reshape(out_slice_shape) + biases(kernel_index);
+        else
+            outputs.chip(kernel_index, 3).device(get_device()) =
+                padded_inputs.convolve(kernel_map, conv_dims)
+                             .stride(array<Index, 4>({1, row_stride, column_stride, 1}))
+                             .reshape(out_slice_shape) + biases(kernel_index);
     }
 }
 
@@ -3488,6 +3494,7 @@ void NonMaxSuppressionOp::set(const Shape& input_shape,
         throw runtime_error("NonMaxSuppressionOp: boxes_per_cell must be positive.");
 
     grid_size = input_shape[0];
+    grid_width = input_shape[1];
     boxes_per_cell = new_boxes_per_cell;
     confidence_threshold = new_confidence_threshold;
     iou_threshold = new_iou_threshold;
@@ -3516,7 +3523,7 @@ void NonMaxSuppressionOp::apply(const TensorView& input, TensorView& output) con
     const Index batch_size = input.shape[0];
     const Index channels = input.shape[3];
     const Index values_per_box = 5 + classes_number;
-    const Index max_boxes = grid_size * grid_size * boxes_per_cell;
+    const Index max_boxes = grid_size * grid_width * boxes_per_cell;
 
     const float* src = input.as<float>();
     float* dst = output.as<float>();
@@ -3528,9 +3535,9 @@ void NonMaxSuppressionOp::apply(const TensorView& input, TensorView& output) con
         candidates.reserve(size_t(max_boxes));
 
         for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_size; ++col)
+            for (Index col = 0; col < grid_width; ++col)
             {
-                const Index cell = ((b * grid_size + row) * grid_size + col) * channels;
+                const Index cell = ((b * grid_size + row) * grid_width + col) * channels;
 
                 for (Index box = 0; box < boxes_per_cell; ++box)
                 {
@@ -3550,7 +3557,7 @@ void NonMaxSuppressionOp::apply(const TensorView& input, TensorView& output) con
                         continue;
 
                     candidates.push_back({
-                        (float(col) + src[base + 0]) / float(grid_size),
+                        (float(col) + src[base + 0]) / float(grid_width),
                         (float(row) + src[base + 1]) / float(grid_size),
                         src[base + 2],
                         src[base + 3],

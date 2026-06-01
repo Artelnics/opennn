@@ -952,7 +952,7 @@ void Loss::set_error(const string& new_name)
     throw runtime_error(format("Unknown loss method: {}", new_name));
 }
 
-void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
+void Loss::add_regularization_gradient(const TensorView& gradient) const
 {
     if (regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return;
 
@@ -964,15 +964,25 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
                                 { parameters_number },
                                 Type::FP32,
                                 neural_network->get_device());
-    TensorView gradient(back_propagation.gradient.as<float>(),
-                        { parameters_number },
-                        Type::FP32,
-                        back_propagation.gradient.device_type);
 
     if (regularization_method == Regularization::L1)
         l1_regularization_gradient(parameters, regularization_weight, gradient);
     else if (regularization_method == Regularization::L2)
         l2_regularization_gradient(parameters, regularization_weight, gradient);
+}
+
+void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
+{
+    if (regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return;
+
+    check_neural_network();
+
+    const Index parameters_number = neural_network->get_parameters_size();
+
+    add_regularization_gradient(TensorView(back_propagation.gradient.as<float>(),
+                                           { parameters_number },
+                                           Type::FP32,
+                                           back_propagation.gradient.device_type));
 }
 
 void Loss::regularization_from_JSON(const JsonDocument& document)

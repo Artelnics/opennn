@@ -124,7 +124,10 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     training_slope = gradient.dot(training_direction);
 
     if (training_slope >= 0.0f)
+    {
         training_direction = -gradient;
+        training_slope = gradient.dot(training_direction);
+    }
 
     optimization_data.initial_learning_rate = (old_learning_rate > 0.0f)
         ? old_learning_rate

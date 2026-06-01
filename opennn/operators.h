@@ -820,6 +820,7 @@ private:
 struct NonMaxSuppressionOp : Operator
 {
     Index grid_size = 0;
+    Index grid_width = 0;
     Index boxes_per_cell = 0;
     Index classes_number = 0;
     float confidence_threshold = 0.5f;

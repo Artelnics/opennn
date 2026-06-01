@@ -231,6 +231,9 @@ float z_correlation_to_r_correlation(const float z_correlation)
 
 pair<float, float> confidence_interval_z_correlation(const float z_correlation, Index sample_count)
 {
+    if (sample_count <= 3)
+        return { z_correlation, z_correlation };
+
     const float margin = 1.959964f / float(sqrt(sample_count - 3));
 
     return { z_correlation - margin, z_correlation + margin };
