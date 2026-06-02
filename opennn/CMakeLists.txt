@@ -12,6 +12,8 @@ file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 # unaffected; set OFF (with -DOpenNN_BUILD_VISION=OFF) for tabular-only
 # users who hit MSVC link.exe LNK1327 against the full vision lib.
 option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
+option(OpenNN_ENABLE_MKL "Use Intel MKL as Eigen BLAS/LAPACK backend" OFF)
+set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi/mkl/latest or extracted /usr prefix)")
 
 if(NOT OpenNN_BUILD_VISION)
     set(_opennn_vision_pattern
@@ -58,6 +60,34 @@ target_include_directories(opennn PUBLIC
 target_include_directories(opennn SYSTEM PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../eigen>
 )
+
+if(OpenNN_ENABLE_MKL)
+    if(OpenNN_MKL_ROOT)
+        set(_opennn_mkl_include "${OpenNN_MKL_ROOT}/include")
+        if(EXISTS "${_opennn_mkl_include}/mkl/mkl.h")
+            set(_opennn_mkl_include "${_opennn_mkl_include}/mkl")
+        endif()
+        set(_opennn_mkl_lib_dir "${OpenNN_MKL_ROOT}/lib")
+        if(EXISTS "${OpenNN_MKL_ROOT}/lib/x86_64-linux-gnu/libmkl_rt.so")
+            set(_opennn_mkl_lib_dir "${OpenNN_MKL_ROOT}/lib/x86_64-linux-gnu")
+        endif()
+    else()
+        set(_opennn_mkl_include "/usr/include/mkl")
+        set(_opennn_mkl_lib_dir "/usr/lib/x86_64-linux-gnu")
+    endif()
+
+    if(NOT EXISTS "${_opennn_mkl_include}/mkl.h")
+        message(FATAL_ERROR "OpenNN_ENABLE_MKL=ON but mkl.h was not found. Set OpenNN_MKL_ROOT.")
+    endif()
+    if(NOT EXISTS "${_opennn_mkl_lib_dir}/libmkl_rt.so")
+        message(FATAL_ERROR "OpenNN_ENABLE_MKL=ON but libmkl_rt.so was not found. Set OpenNN_MKL_ROOT.")
+    endif()
+
+    target_compile_definitions(opennn PUBLIC EIGEN_USE_MKL_ALL)
+    target_include_directories(opennn SYSTEM PUBLIC "${_opennn_mkl_include}")
+    target_link_libraries(opennn PUBLIC "${_opennn_mkl_lib_dir}/libmkl_rt.so" pthread m dl)
+    target_link_options(opennn PUBLIC "-Wl,-rpath,${_opennn_mkl_lib_dir}")
+endif()
 
 if(APPLE)
     target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
