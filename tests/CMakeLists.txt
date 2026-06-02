@@ -33,6 +33,7 @@ add_executable(run_tests test.cpp
 		growing_neurons_test.cpp
 		image_data_set_test.cpp
 		learning_rate_algorithm_test.cpp
+		long_short_term_memory_layer_test.cpp
 		levenberg_marquardt_algorithm_test.cpp
 		mean_squared_error_test.cpp
 		minkowski_error_test.cpp

@@ -13,6 +13,7 @@
 #include "dense_layer.h"
 #include "bounding_layer.h"
 #include "recurrent_layer.h"
+#include "long_short_term_memory_layer.h"
 #include "embedding_layer.h"
 #include "convolutional_layer.h"
 #include "detection_layer.h"
@@ -145,6 +146,44 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                                                      : format("recurrent_layer_{}", i + 1));
         if (!last) recurrent->set_return_sequences(true);
         add_layer(std::move(recurrent));
+    }
+
+    add_layer(make_unique<Dense>(get_output_shape(),
+                                 output_shape,
+                                 "Identity",
+                                 false,
+                                 "forecasting_layer"));
+
+    add_layer(make_unique<Unscaling>(output_shape));
+
+    auto bounding = make_unique<Bounding>(output_shape);
+    bounding->set_bounding_method("NoBounding");
+    add_layer(std::move(bounding));
+
+    compile();
+    set_parameters_glorot();
+}
+
+ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
+                                               const Shape& complexity_dimensions,
+                                               const Shape& output_shape) : NeuralNetwork()
+{
+    clear();
+
+    add_layer(make_unique<Scaling>(input_shape));
+
+    const Index lstm_count = complexity_dimensions.rank;
+    for (Index i = 0; i < lstm_count; ++i)
+    {
+        const bool last = (i == lstm_count - 1);
+        auto lstm = make_unique<LongShortTermMemory>(get_output_shape(),
+                                                     Shape{complexity_dimensions[i]},
+                                                     "Tanh",
+                                                     "Sigmoid",
+                                                     last ? "long_short_term_memory_layer"
+                                                          : format("long_short_term_memory_layer_{}", i + 1));
+        if (!last) lstm->set_return_sequences(true);
+        add_layer(std::move(lstm));
     }
 
     add_layer(make_unique<Dense>(get_output_shape(),

@@ -1,0 +1,199 @@
+#include "pch.h"
+
+#include "../opennn/tensor_utilities.h"
+#include "../opennn/long_short_term_memory_layer.h"
+#include "../opennn/neural_network.h"
+
+using namespace opennn;
+
+TEST(LongShortTermMemoryLayerTest, DefaultConstructor)
+{
+    LongShortTermMemory lstm_layer;
+
+    EXPECT_EQ(lstm_layer.get_inputs_number(), 0);
+    EXPECT_EQ(lstm_layer.get_outputs_number(), 0);
+}
+
+
+TEST(LongShortTermMemoryLayerTest, GeneralConstructor)
+{
+    const Index inputs_number   = random_integer(1, 10);
+    const Index neurons_number  = random_integer(1, 10);
+    const Index time_steps      = random_integer(1, 10);
+
+    LongShortTermMemory lstm_layer({ time_steps, inputs_number }, { neurons_number });
+
+    const Index parameters_number =
+        4 * neurons_number * (1 + inputs_number + neurons_number);
+
+    // Aligned parameter count >= raw parameter count
+    EXPECT_GE(lstm_layer.get_parameters_number(), parameters_number);
+    EXPECT_EQ(lstm_layer.get_input_shape(),  Shape({ time_steps, inputs_number }));
+    EXPECT_EQ(lstm_layer.get_output_shape(), Shape({ neurons_number }));
+}
+
+
+TEST(LongShortTermMemoryLayerTest, ReturnSequencesOutputShape)
+{
+    const Index inputs_number  = 4;
+    const Index neurons_number = 6;
+    const Index time_steps     = 5;
+
+    LongShortTermMemory lstm_layer({ time_steps, inputs_number }, { neurons_number });
+
+    // Default: return_sequences = false -> output is the last hidden state {H}
+    EXPECT_FALSE(lstm_layer.get_return_sequences());
+    EXPECT_EQ(lstm_layer.get_output_shape(), Shape({ neurons_number }));
+
+    lstm_layer.set_return_sequences(true);
+    EXPECT_TRUE(lstm_layer.get_return_sequences());
+    EXPECT_EQ(lstm_layer.get_output_shape(), Shape({ time_steps, neurons_number }));
+}
+
+
+TEST(LongShortTermMemoryLayerTest, ForwardPropagate)
+{
+    const Index outputs_number = 8;
+    const Index samples_number = 3;
+    const Index inputs_number  = 8;
+    const Index time_steps     = 3;
+
+    const vector<string> cell_activations = {"Tanh", "Sigmoid", "Identity"};
+
+    for (const string& act : cell_activations)
+    {
+        NeuralNetwork neural_network;
+        auto layer = make_unique<LongShortTermMemory>(
+            Shape{time_steps, inputs_number}, Shape{outputs_number});
+        layer->set_activation_function(act);
+        layer->set_recurrent_activation_function("Sigmoid");
+        neural_network.add_layer(std::move(layer));
+        neural_network.compile();
+
+        VectorMap(neural_network.get_parameters_data(),
+                  neural_network.get_parameters_size()).setConstant(type(0.1));
+
+        Tensor3 inputs(samples_number, time_steps, inputs_number);
+        inputs.setConstant(type(1));
+
+        ForwardPropagation forward_propagation(samples_number, &neural_network);
+        vector<TensorView> input_views = {
+            TensorView(inputs.data(),
+                       {samples_number, time_steps, inputs_number})
+        };
+        neural_network.forward_propagate(input_views, forward_propagation, true);
+
+        TensorView outputs_view = forward_propagation.get_outputs();
+        EXPECT_EQ(outputs_view.shape[0], samples_number)
+            << "cell activation=" << act;
+        EXPECT_EQ(outputs_view.shape[1], outputs_number)
+            << "cell activation=" << act;
+    }
+}
+
+
+TEST(LongShortTermMemoryLayerTest, ForwardPropagateReturnSequencesShape)
+{
+    const Index outputs_number = 4;
+    const Index samples_number = 2;
+    const Index inputs_number  = 5;
+    const Index time_steps     = 6;
+
+    NeuralNetwork neural_network;
+    auto layer = make_unique<LongShortTermMemory>(
+        Shape{time_steps, inputs_number}, Shape{outputs_number});
+    layer->set_return_sequences(true);
+    neural_network.add_layer(std::move(layer));
+    neural_network.compile();
+
+    VectorMap(neural_network.get_parameters_data(),
+              neural_network.get_parameters_size()).setConstant(type(0.05));
+
+    Tensor3 inputs(samples_number, time_steps, inputs_number);
+    inputs.setConstant(type(1));
+
+    ForwardPropagation forward_propagation(samples_number, &neural_network);
+    vector<TensorView> input_views = {
+        TensorView(inputs.data(),
+                   {samples_number, time_steps, inputs_number})
+    };
+    neural_network.forward_propagate(input_views, forward_propagation, true);
+
+    TensorView outputs_view = forward_propagation.get_outputs();
+
+    // With return_sequences=true the public output is rank-3 (B, T, H).
+    EXPECT_EQ(outputs_view.shape.rank, size_t(3));
+    EXPECT_EQ(outputs_view.shape[0], samples_number);
+    EXPECT_EQ(outputs_view.shape[1], time_steps);
+    EXPECT_EQ(outputs_view.shape[2], outputs_number);
+}
+
+
+TEST(LongShortTermMemoryLayerTest, StackTwoLSTMs)
+{
+    const Index inputs_number  = 3;
+    const Index hidden_1       = 6;
+    const Index hidden_2       = 4;
+    const Index time_steps     = 5;
+    const Index samples_number = 2;
+
+    NeuralNetwork neural_network;
+
+    auto lstm1 = make_unique<LongShortTermMemory>(
+        Shape{time_steps, inputs_number}, Shape{hidden_1});
+    lstm1->set_return_sequences(true);
+    neural_network.add_layer(std::move(lstm1));
+
+    auto lstm2 = make_unique<LongShortTermMemory>(
+        Shape{time_steps, hidden_1}, Shape{hidden_2});
+    neural_network.add_layer(std::move(lstm2));
+
+    neural_network.compile();
+
+    VectorMap(neural_network.get_parameters_data(),
+              neural_network.get_parameters_size()).setConstant(type(0.05));
+
+    Tensor3 inputs(samples_number, time_steps, inputs_number);
+    inputs.setConstant(type(1));
+
+    ForwardPropagation forward_propagation(samples_number, &neural_network);
+    vector<TensorView> input_views = {
+        TensorView(inputs.data(),
+                   {samples_number, time_steps, inputs_number})
+    };
+    neural_network.forward_propagate(input_views, forward_propagation, true);
+
+    TensorView outputs_view = forward_propagation.get_outputs();
+
+    // Last layer has return_sequences=false -> rank-2 (B, hidden_2).
+    EXPECT_EQ(outputs_view.shape[0], samples_number);
+    EXPECT_EQ(outputs_view.shape[1], hidden_2);
+}
+
+
+TEST(LongShortTermMemoryLayerTest, UnsupportedActivationThrows)
+{
+    LongShortTermMemory lstm_layer(Shape{3, 4}, Shape{5});
+
+    EXPECT_THROW(lstm_layer.set_activation_function("Softmax"), std::runtime_error);
+    EXPECT_THROW(lstm_layer.set_recurrent_activation_function("Softmax"), std::runtime_error);
+}
+
+
+TEST(LongShortTermMemoryLayerTest, ForgetBiasInitialisedToOne)
+{
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<LongShortTermMemory>(Shape{3, 2}, Shape{4}));
+    neural_network.compile();
+    neural_network.set_parameters_glorot();
+
+    const auto* lstm = dynamic_cast<const LongShortTermMemory*>(neural_network.get_layer(0).get());
+    ASSERT_NE(lstm, nullptr);
+
+    const TensorView& bf = lstm->get_forget_bias();
+    ASSERT_NE(bf.data, nullptr);
+    ASSERT_GT(bf.shape.size(), 0);
+    const float* bf_data = bf.as<float>();
+    for (Index i = 0; i < bf.shape.size(); ++i)
+        EXPECT_FLOAT_EQ(bf_data[i], 1.0f);
+}

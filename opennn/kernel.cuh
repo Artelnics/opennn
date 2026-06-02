@@ -184,6 +184,10 @@ void scatter_time_slice_cuda(const Index batch, const Index time_steps,
                              const T* src, T* dst);
 
 template<typename T>
+void transpose_2d_cuda(const Index rows, const Index cols,
+                       const T* src, T* dst);
+
+template<typename T>
 void rnn_step_bias_activation_cuda(const Index batch, const Index out_features,
                                    T* hidden, const T* bias,
                                    T* derivs_or_null, const int activation_id);

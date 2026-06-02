@@ -25,11 +25,18 @@ public:
                         const string& = "long_short_term_memory_layer");
 
     Shape get_input_shape()  const override { return input_shape; }
-    Shape get_output_shape() const override { return {output_features}; }
+    Shape get_output_shape() const override
+    {
+        return return_sequences ? Shape{get_time_steps(), output_features}
+                                : Shape{output_features};
+    }
 
     Index get_time_steps()      const { return input_shape.rank == 2 ? input_shape[0] : Index(0); }
     Index get_input_features()  const { return input_shape.rank == 2 ? input_shape[1] : Index(0); }
     Index get_output_features() const { return output_features; }
+
+    bool get_return_sequences() const { return return_sequences; }
+    void set_return_sequences(bool value);
 
     const TensorView& get_forget_bias()    const { return lstm_op.forget_bias; }
     const TensorView& get_input_bias()     const { return lstm_op.input_bias; }
@@ -65,6 +72,7 @@ public:
 private:
 
     Index output_features = 0;
+    bool  return_sequences = false;
 
     LongShortTermMemoryOp lstm_op;
 

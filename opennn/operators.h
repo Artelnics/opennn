@@ -843,14 +843,14 @@ struct LongShortTermMemoryOp : Operator
     enum ForwardSlot
     {
         InputSlot = 0,
-        OutputSlot,
         ForgetGateSlot,
         InputGateSlot,
         CandidateGateSlot,
         OutputGateSlot,
         CellStateSlot,
         HiddenStateSlot,
-        CellActivationSlot
+        CellActivationSlot,
+        OutputSlot
     };
 
     enum BackwardSlot
@@ -868,6 +868,8 @@ struct LongShortTermMemoryOp : Operator
     Index input_features  = 0;
     Index output_features = 0;
     Index time_steps      = 0;
+
+    bool return_sequences = false;
 
     ActivationOp::Function activation_function = ActivationOp::Function::Tanh;
     ActivationOp::Function recurrent_activation_function = ActivationOp::Function::Sigmoid;
@@ -918,6 +920,8 @@ struct LongShortTermMemoryOp : Operator
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
 
+    ~LongShortTermMemoryOp();
+
 private:
     void apply(const TensorView& input,
                TensorView& output,
@@ -945,6 +949,45 @@ private:
                      const TensorView& cell_state,
                      const TensorView& hidden_state,
                      const TensorView& cell_activation) const;
+
+    void apply_gpu(const TensorView& input,
+                   TensorView& output,
+                   bool return_seq) const;
+
+    void apply_delta_gpu(const TensorView& input,
+                         const TensorView& output_delta,
+                         TensorView& input_delta,
+                         bool return_seq) const;
+
+#ifdef OPENNN_HAS_CUDA
+    void ensure_cudnn_setup_(Index batch_size) const;
+    void pack_weights_to_cudnn_() const;
+    void unpack_gradients_from_cudnn_() const;
+#endif
+
+    mutable Buffer weight_space_buf    {Device::CUDA};
+    mutable Buffer dweight_space_buf   {Device::CUDA};
+    mutable Buffer workspace_buf       {Device::CUDA};
+    mutable Buffer reserve_space_buf   {Device::CUDA};
+    mutable Buffer y_buf               {Device::CUDA};   // (B, T, H) rank-3 y from cuDNN
+    mutable Buffer dy_buf              {Device::CUDA};   // (B, T, H) rank-3 dy for cuDNN
+    mutable Buffer seq_lengths_host_buf{Device::CPU};    // int32[batch], all equal to T
+    mutable Buffer seq_lengths_dev_buf {Device::CUDA};
+
+#ifdef OPENNN_HAS_CUDA
+    mutable cudnnRNNDescriptor_t      rnn_desc      = nullptr;
+    mutable cudnnRNNDataDescriptor_t  x_data_desc   = nullptr;
+    mutable cudnnRNNDataDescriptor_t  y_data_desc   = nullptr;
+    mutable cudnnTensorDescriptor_t   h_desc        = nullptr;
+    mutable cudnnTensorDescriptor_t   c_desc        = nullptr;
+    mutable cudnnDropoutDescriptor_t  dropout_desc  = nullptr;
+    mutable Buffer dropout_states_buf{Device::CUDA};
+#endif
+
+    mutable Index cached_batch_size = -1;
+    mutable Index cached_time_steps = -1;
+    mutable Index cached_input_features  = -1;
+    mutable Index cached_output_features = -1;
 };
 
 }

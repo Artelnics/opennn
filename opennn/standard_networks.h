@@ -43,6 +43,16 @@ public:
                        const Shape& output_shape);
 };
 
+class ForecastingLstmNetwork : public NeuralNetwork
+{
+
+public:
+
+    ForecastingLstmNetwork(const Shape& input_shape,
+                           const Shape& complexity_dimensions,
+                           const Shape& output_shape);
+};
+
 class AutoAssociationNetwork : public NeuralNetwork
 {
 

@@ -1164,6 +1164,39 @@ template void scatter_time_slice_cuda<float>        (const Index, const Index, c
 template void scatter_time_slice_cuda<__nv_bfloat16>(const Index, const Index, const Index, const Index, const __nv_bfloat16*, __nv_bfloat16*);
 
 template<typename T>
+__global__ void transpose_2d_kernel(const int rows,
+                                    const int cols,
+                                    const T* __restrict__ src,
+                                    T* __restrict__ dst)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    const int total = rows * cols;
+    if (idx >= total) return;
+
+    const int r = idx / cols;
+    const int c = idx - r * cols;
+    dst[c * rows + r] = src[r * cols + c];
+}
+
+template<typename T>
+void transpose_2d_cuda(const Index rows,
+                       const Index cols,
+                       const T* src,
+                       T* dst)
+{
+    if (rows == 0 || cols == 0) return;
+    const int total = static_cast<int>(rows * cols);
+    transpose_2d_kernel<T><<<grid_size_for(total), block_size, 0,
+                             opennn::Backend::get_compute_stream()>>>(
+        static_cast<int>(rows),
+        static_cast<int>(cols),
+        src, dst);
+}
+
+template void transpose_2d_cuda<float>        (const Index, const Index, const float*,         float*);
+template void transpose_2d_cuda<__nv_bfloat16>(const Index, const Index, const __nv_bfloat16*, __nv_bfloat16*);
+
+template<typename T>
 __global__ void rnn_step_bias_activation_kernel(const int total,
                                                 const int out_features,
                                                 T* __restrict__ hidden,

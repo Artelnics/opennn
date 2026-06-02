@@ -31,18 +31,20 @@ LongShortTermMemory::LongShortTermMemory(const Shape& new_input_shape,
 vector<TensorSpec> LongShortTermMemory::get_forward_specs(Index batch_size) const
 {
     const Index T = get_time_steps();
-    const Shape output_shape = Shape{batch_size}.append(get_output_shape());
     const Shape sequence_shape{batch_size, T, output_features};
+    const Shape output_shape = return_sequences
+        ? sequence_shape
+        : Shape{batch_size, output_features};
 
     return {
-        {output_shape,    compute_dtype},
-        {sequence_shape,  compute_dtype},
-        {sequence_shape,  compute_dtype},
-        {sequence_shape,  compute_dtype},
-        {sequence_shape,  compute_dtype},
-        {sequence_shape,  compute_dtype},
-        {sequence_shape,  compute_dtype},
-        {sequence_shape,  compute_dtype},
+        {sequence_shape,  compute_dtype}, // ForgetGateSlot
+        {sequence_shape,  compute_dtype}, // InputGateSlot
+        {sequence_shape,  compute_dtype}, // CandidateGateSlot
+        {sequence_shape,  compute_dtype}, // OutputGateSlot
+        {sequence_shape,  compute_dtype}, // CellStateSlot
+        {sequence_shape,  compute_dtype}, // HiddenStateSlot
+        {sequence_shape,  compute_dtype}, // CellActivationSlot
+        {output_shape,    compute_dtype}, // OutputSlot (principal output, last)
     };
 }
 
@@ -72,22 +74,31 @@ void LongShortTermMemory::configure_operators()
                 lstm_op.activation_function,
                 lstm_op.recurrent_activation_function);
 
+    lstm_op.return_sequences = return_sequences;
+
     using enum LongShortTermMemoryOp::ForwardSlot;
     using enum LongShortTermMemoryOp::BackwardSlot;
 
     lstm_op.input_slots = {InputSlot};
     lstm_op.output_slots = {
-        OutputSlot,
         ForgetGateSlot,
         InputGateSlot,
         CandidateGateSlot,
         OutputGateSlot,
         CellStateSlot,
         HiddenStateSlot,
-        CellActivationSlot
+        CellActivationSlot,
+        OutputSlot
     };
     lstm_op.output_delta_slots = {OutputDeltaSlot};
     lstm_op.input_delta_slots = {InputDeltaSlot};
+}
+
+void LongShortTermMemory::set_return_sequences(bool value)
+{
+    if (return_sequences == value) return;
+    return_sequences = value;
+    configure_operators();
 }
 
 void LongShortTermMemory::set(const Shape& new_input_shape,
@@ -167,12 +178,96 @@ void LongShortTermMemory::write_JSON_body(JsonWriter& printer) const
     add_json_field(printer, "RecurrentActivation", ActivationOp::to_string(lstm_op.recurrent_activation_function));
 }
 
-string LongShortTermMemory::write_expression(const vector<string>&,
+string LongShortTermMemory::write_expression(const vector<string>& feature_names,
                                              const vector<string>& output_names) const
 {
-    return output_names.empty()
-        ? "long_short_term_memory_output = LongShortTermMemory(input_sequence);\n"
-        : format("{} = LongShortTermMemory(input_sequence);\n", output_names.front());
+    if (parameters.size() < 12) return {};
+    for (Index p = 0; p < 12; ++p)
+        if (!parameters[p].data) return {};
+
+    VectorMap bf = parameters[0].as_vector();
+    VectorMap bi = parameters[1].as_vector();
+    VectorMap bg = parameters[2].as_vector();
+    VectorMap bo = parameters[3].as_vector();
+
+    MatrixMap Wf = parameters[4].as_matrix();
+    MatrixMap Wi = parameters[5].as_matrix();
+    MatrixMap Wg = parameters[6].as_matrix();
+    MatrixMap Wo = parameters[7].as_matrix();
+
+    MatrixMap Uf = parameters[8].as_matrix();
+    MatrixMap Ui = parameters[9].as_matrix();
+    MatrixMap Ug = parameters[10].as_matrix();
+    MatrixMap Uo = parameters[11].as_matrix();
+
+    const string act = ActivationOp::to_string(lstm_op.activation_function);
+    const string ract = ActivationOp::to_string(lstm_op.recurrent_activation_function);
+
+    const Index T = get_time_steps();
+    const Index F = get_input_features();
+    const Index H = output_features;
+
+    auto h_name = [&](Index t, Index j) -> string {
+        const string internal = format("lstm_h_{}_{}", t, j);
+        if (return_sequences)
+        {
+            const Index linear = t * H + j;
+            if (linear < ssize(output_names)) return output_names[linear];
+            return internal;
+        }
+        if (t == T - 1 && j < ssize(output_names)) return output_names[j];
+        return internal;
+    };
+
+    ostringstream buf;
+    buf.precision(10);
+
+    auto gate_expr = [&](const string& name,
+                         const string& activation,
+                         const VectorMap& b,
+                         const MatrixMap& W,
+                         const MatrixMap& U,
+                         Index t, Index j)
+    {
+        buf << name << " = " << activation << "( " << b(j);
+        for (Index k = 0; k < F; ++k)
+        {
+            const Index feature_index = t * F + k;
+            if (feature_index < ssize(feature_names))
+                buf << " + (" << feature_names[feature_index] << "*" << W(k, j) << ")";
+        }
+        if (t > 0)
+            for (Index p = 0; p < H; ++p)
+                buf << " + (" << h_name(t - 1, p) << "*" << U(p, j) << ")";
+        buf << " );\n";
+    };
+
+    for (Index t = 0; t < T; ++t)
+    {
+        for (Index j = 0; j < H; ++j)
+        {
+            const string f_var = format("lstm_f_{}_{}", t, j);
+            const string i_var = format("lstm_i_{}_{}", t, j);
+            const string g_var = format("lstm_g_{}_{}", t, j);
+            const string o_var = format("lstm_o_{}_{}", t, j);
+            const string c_var = format("lstm_c_{}_{}", t, j);
+
+            gate_expr(f_var, ract, bf, Wf, Uf, t, j);
+            gate_expr(i_var, ract, bi, Wi, Ui, t, j);
+            gate_expr(g_var, act,  bg, Wg, Ug, t, j);
+            gate_expr(o_var, ract, bo, Wo, Uo, t, j);
+
+            if (t > 0)
+                buf << c_var << " = (" << f_var << " * lstm_c_" << (t - 1) << "_" << j
+                    << ") + (" << i_var << " * " << g_var << ");\n";
+            else
+                buf << c_var << " = " << i_var << " * " << g_var << ";\n";
+
+            buf << h_name(t, j) << " = " << o_var << " * " << act << "( " << c_var << " );\n";
+        }
+    }
+
+    return buf.str();
 }
 
 REGISTER(Layer, LongShortTermMemory, "LongShortTermMemory")

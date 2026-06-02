@@ -128,6 +128,10 @@ public:
 
     float calculate_regularization(const VectorR&) const;
     float calculate_regularization(const TensorView&) const;
+
+    void add_regularization_gradient(BackPropagation&) const;
+    void add_regularization_gradient(const TensorView& gradient) const;
+
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;
@@ -139,7 +143,6 @@ public:
     static float calculate_h(const float);
 
     void print() const {}
-    void add_regularization_gradient(const TensorView& gradient) const;
 
 private:
 
@@ -159,8 +162,6 @@ private:
 
     void back_propagate_layers(ForwardPropagation&,
                                BackPropagation&) const;
-
-    void add_regularization_gradient(BackPropagation&) const;
 
     void calculate_output_deltas(const Batch&,
                                     const ForwardPropagation&,

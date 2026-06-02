@@ -58,6 +58,16 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_G
     add_compile_options(-Wno-interference-size)
 endif()
 
+# Silence noisy diagnostics that show up mainly through cudnn-frontend and
+# response_optimization switch statements. These are not bugs, just style
+# warnings that flooded the GPU build log.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(
+        $<$<COMPILE_LANGUAGE:CXX>:-Wno-switch-enum>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-parameter>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-result>)
+endif()
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wno-deprecated-declarations)
     add_compile_options(-Wno-global-constructors)
