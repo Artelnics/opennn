@@ -4,7 +4,6 @@
 .Python
 [Bb]in
 [Ii]nclude
-!googletest/include/
 
 x64
 Intel® VTune™ Profiler Results
@@ -326,3 +325,7 @@ tests/data/*.xml
 
 # Large local example data
 /examples/wwt_optimization/data/WWTP_PO4_NH4_removal.csv
+
+# Generated example data caches (regenerated at runtime from the source CSV/TXT/images)
+*.bin
+**/.cache/

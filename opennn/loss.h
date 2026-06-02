@@ -139,6 +139,7 @@ public:
     static float calculate_h(const float);
 
     void print() const {}
+    void add_regularization_gradient(const TensorView& gradient) const;
 
 private:
 
@@ -160,7 +161,6 @@ private:
                                BackPropagation&) const;
 
     void add_regularization_gradient(BackPropagation&) const;
-    void add_regularization_gradient(const TensorView& gradient) const;
 
     void calculate_output_deltas(const Batch&,
                                     const ForwardPropagation&,

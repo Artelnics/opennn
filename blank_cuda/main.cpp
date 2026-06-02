@@ -254,10 +254,14 @@ int main()
         return 0;
 #endif
 
-        cout << "OpenNN. HIGGS 5x300 DNN max-batch benchmark." << endl;
+        cout << "OpenNN. HIGGS 5x300 DNN GPU FP32 batch-1M benchmark." << endl;
 
-        Configuration::instance().set(Device::CPU, Type::FP32);
-        Backend::instance().set_threads_number(16);
+#ifdef OPENNN_HAS_CUDA
+        Configuration::instance().set(Device::CUDA, Type::FP32);
+        Backend::instance();
+#else
+        throw runtime_error("OpenNN was built without CUDA support.");
+#endif
 
         const filesystem::path dataset_path = "/home/artelnics/Documents/HIGGS.csv";
 
@@ -310,13 +314,13 @@ int main()
         if (!sgd)
             throw runtime_error("StochasticGradientDescent optimizer not found.");
 
-        sgd->set_batch_size(100);
+        sgd->set_batch_size(1'000'000);
         sgd->set_initial_learning_rate(0.05f);
         sgd->set_initial_decay(0.0202f);
         sgd->set_momentum(0.9f);
         sgd->set_nesterov(false);
         sgd->set_num_workers(8);
-        sgd->set_maximum_epochs(0);
+        sgd->set_maximum_epochs(4);
         sgd->set_maximum_validation_failures(100);
         sgd->set_display_period(1);
 
