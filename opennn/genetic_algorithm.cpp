@@ -142,7 +142,13 @@ void GeneticAlgorithm::set_default()
     // of 4 instead of the intended ceiling.
     elitism_size = (individuals_number + 3) / 4;
 
-    initialization_method = "Correlations";
+    // Default to random initialization. Correlation-biased init
+    // (initialize_population_correlations) was tried but gave worse results: it
+    // collapses initial diversity toward the same few high-univariate-correlation
+    // features, causing premature convergence and ignoring feature interactions /
+    // redundancy. Random init preserves the diversity the GA needs to explore
+    // feature-subset combinations. "Correlations" is still selectable explicitly.
+    initialization_method = "Random";
 }
 
 
@@ -321,18 +327,12 @@ void GeneticAlgorithm::initialize_population_correlations()
     const type* begin = weights_cumsum.data();
     const type* end   = begin + genes_number;
 
-    cout << "[DBG_GA] correlation-init feature weights:" << endl;                // DBG_GA
-    for(Index j = 0; j < genes_number; ++j)                                      // DBG_GA
-        cout << "  feature " << j << " weight=" << feature_weights(j) << endl;   // DBG_GA
-
     for(Index i = 0; i < individuals_number; i++)
     {
         individual_genes.setConstant(false);
 
         const Index true_count = random_integer(minimum_inputs_number, maximum_inputs_number);
 
-        Index safety_guard = 0;                                                  // DBG_GA
-        const Index safety_guard_limit = genes_number * 100;                     // DBG_GA
         while (count(individual_genes.data(), individual_genes.data() + genes_number, true) < true_count)
         {
             const type arrow = random_uniform(type(0), weights_sum);
@@ -341,11 +341,6 @@ void GeneticAlgorithm::initialize_population_correlations()
             if(j >= genes_number) j = genes_number - 1;
 
             individual_genes(j) = true;
-
-            if(++safety_guard > safety_guard_limit) {                            // DBG_GA
-                cout << "[DBG_GA] init_corr safety guard hit" << endl;           // DBG_GA
-                break;                                                           // DBG_GA
-            }                                                                    // DBG_GA
         }
 
         if (!individual_genes.any())
@@ -452,10 +447,6 @@ void GeneticAlgorithm::evaluate_population()
                 scaling_layer->set_descriptives(expanded_descriptives);
                 scaling_layer->set_scalers(expanded_scalers);
             }
-
-            cout << "[DBG_GA] ind " << i << " scaling restored: "    // DBG_GA
-                 << ind_descriptives.size() << " descriptives, "     // DBG_GA
-                 << ind_scalers.size() << " scalers" << endl;        // DBG_GA
         }
 
         neural_network->set_parameters_random();
@@ -520,12 +511,6 @@ void GeneticAlgorithm::perform_fitness_assignment()
     fitness.resize(n);
     for(Index i = 0; i < n; ++i)
         fitness(argsort_desc(i)) = type(i + 1);
-
-    cout << "[DBG_GA] fitness assignment:" << endl;                              // DBG_GA
-    for(Index i = 0; i < n; ++i)                                                 // DBG_GA
-        cout << "  ind " << i                                                    // DBG_GA
-             << " val_err=" << validation_errors(i)                              // DBG_GA
-             << " fitness=" << fitness(i) << endl;                               // DBG_GA
 }
 
 
@@ -553,8 +538,6 @@ void GeneticAlgorithm::perform_selection()
 
     // Bug 11 fix — clamp upper_bound result to [0, N-1] to avoid OOB when
     // arrow happens to equal fitness_sum due to float rounding.
-    Index safety_guard = 0;                                                       // DBG_GA
-    const Index safety_guard_limit = individuals_number * 100;                    // DBG_GA
     while (get_selected_individuals_number() < individuals_to_be_selected)
     {
         const type arrow = random_uniform(type(0), fitness_sum);
@@ -563,18 +546,7 @@ void GeneticAlgorithm::perform_selection()
         if(i >= individuals_number) i = individuals_number - 1;
 
         selection(i) = true;
-
-        if(++safety_guard > safety_guard_limit) {                                 // DBG_GA
-            cout << "[DBG_GA] perform_selection safety guard hit" << endl;        // DBG_GA
-            break;                                                                // DBG_GA
-        }                                                                         // DBG_GA
     }
-
-    cout << "[DBG_GA] selection mask (elitism_size=" << elitism_size              // DBG_GA
-         << ", to_select=" << individuals_to_be_selected << "):" << endl;        // DBG_GA
-    for(Index i = 0; i < individuals_number; ++i)                                 // DBG_GA
-        cout << "  ind " << i << " fitness=" << fitness(i)                        // DBG_GA
-             << " selected=" << (selection(i) ? "Y" : "N") << endl;               // DBG_GA
 }
 
 
@@ -686,10 +658,6 @@ void GeneticAlgorithm::perform_crossover()
         for(Index e = 0; e < elites_to_copy; ++e)
         {
             new_population.row(descendent_index) = population.row(fitness_argsort_desc(e));
-            cout << "[DBG_GA] elite preserved: copy ind "                           // DBG_GA
-                 << fitness_argsort_desc(e)                                         // DBG_GA
-                 << " (fitness=" << fitness(fitness_argsort_desc(e))                // DBG_GA
-                 << ") -> new pop row " << descendent_index << endl;                // DBG_GA
             descendent_index++;
         }
     }
@@ -735,8 +703,6 @@ void GeneticAlgorithm::perform_mutation()
     // preserved elites by perform_crossover (Bug 8). Mutating them would
     // defeat the point of elitism.
     const Index mutation_start = min(elitism_size, individuals_number);
-    cout << "[DBG_GA] mutation: skipping rows 0.." << mutation_start - 1          // DBG_GA
-         << " (preserved elites)" << endl;                                        // DBG_GA
 
     for(Index i = mutation_start; i < individuals_number; ++i)
     {
@@ -887,12 +853,6 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
             input_selection_results.optimum_training_error = training_errors(optimal_individual_index);
 
             input_selection_results.optimum_validation_error = validation_errors(optimal_individual_index);
-
-            cout << "[DBG_GA] new global best at gen " << epoch                    // DBG_GA
-                 << " ind=" << optimal_individual_index                            // DBG_GA
-                 << " train_err=" << training_errors(optimal_individual_index)    // DBG_GA
-                 << " val_err=" << validation_errors(optimal_individual_index)    // DBG_GA
-                 << endl;                                                          // DBG_GA
         }
         else
         {
