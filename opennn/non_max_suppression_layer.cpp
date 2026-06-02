@@ -69,7 +69,7 @@ void NonMaxSuppression::configure_operator()
 
 void NonMaxSuppression::read_JSON_body(const Json* root)
 {
-    nms.boxes_per_cell = Index(read_json_index(root, "BoxesPerCell"));
+    nms.boxes_per_cell = read_json_index(root, "BoxesPerCell");
     nms.confidence_threshold = read_json_type(root, "ConfidenceThreshold");
     nms.iou_threshold = read_json_type(root, "IouThreshold");
     configure_operator();

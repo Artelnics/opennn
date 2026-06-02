@@ -762,6 +762,79 @@ CompiledFormula compile_formula(const string& expression,
     return result;
 }
 
+
+bool all_formula_constraints_are_linear(const vector<FormulaConstraint>& formula_constraints)
+{
+    if (formula_constraints.empty())
+        return false;
+
+    for (const FormulaConstraint& formula_constraint : formula_constraints)
+        if (formula_constraint.uses_callback || formula_constraint.compiled.shape != FormulaShape::Affine)
+            return false;
+
+    return true;
+}
+
+
+LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>& formula_constraints,
+                                                const Index n_in,
+                                                const Index n_out)
+{
+    const Index m = static_cast<Index>(formula_constraints.size());
+
+    LinearConstraintSet linear_set;
+    linear_set.A     = MatrixR::Zero(m, n_in + n_out);
+    linear_set.lower = VectorR::Constant(m, -numeric_limits<float>::infinity());
+    linear_set.upper = VectorR::Constant(m,  numeric_limits<float>::infinity());
+
+    for (Index i = 0; i < m; ++i)
+    {
+        const FormulaConstraint& formula_constraint = formula_constraints[i];
+
+        for (const auto& [column, coefficient] : formula_constraint.compiled.affine_input_terms)
+            linear_set.A(i, column) += coefficient;
+
+        for (const auto& [column, coefficient] : formula_constraint.compiled.affine_output_terms)
+            linear_set.A(i, n_in + column) += coefficient;
+
+        // Move the affine constant to the RHS so that A·z is compared to (bound - affine_constant) directly.
+        const float c = formula_constraint.compiled.affine_constant;
+        const float low = formula_constraint.low_bound;
+        const float up  = formula_constraint.up_bound;
+
+        switch (formula_constraint.op)
+        {
+        case ComparisonOp::EqualTo:
+        {
+            const float tol = max(EPSILON, abs(low) * 1e-4f);
+            linear_set.lower(i) = low - c - tol;
+            linear_set.upper(i) = low - c + tol;
+            break;
+        }
+        case ComparisonOp::Between:
+            linear_set.lower(i) = low - c;
+            linear_set.upper(i) = up  - c;
+            break;
+        case ComparisonOp::GreaterEqualTo:
+            linear_set.lower(i) = low - c;
+            break;
+        case ComparisonOp::LessEqualTo:
+            linear_set.upper(i) = up - c;
+            break;
+        case ComparisonOp::GreaterThan:
+            linear_set.lower(i) = low - c + EPSILON;
+            break;
+        case ComparisonOp::LessThan:
+            linear_set.upper(i) = up - c - EPSILON;
+            break;
+        default:
+            break;
+        }
+    }
+
+    return linear_set;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

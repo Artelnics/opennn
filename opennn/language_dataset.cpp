@@ -332,12 +332,17 @@ void LanguageDataset::load_documents(string& buffer,
         throw runtime_error(format("Cannot open file {}", data_path.string()));
 
     const auto file_size = file.tellg();
+    if (file_size < 0)
+        throw runtime_error(format("Cannot determine file size for {}", data_path.string()));
+
     file.seekg(0);
 
     buffer.assign(static_cast<size_t>(file_size), '\0');
     if (file_size > 0)
         file.read(buffer.data(), file_size);
-    file.close();
+
+    if (!file)
+        throw runtime_error(format("Cannot read file {}", data_path.string()));
 
     for (char& c : buffer)
         c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
@@ -496,7 +501,11 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
     {
         for (Index sample = 0; sample < samples_number; ++sample)
         {
-            const string_view token = target_document_tokens[sample][0];
+            const vector<string_view>& sample_tokens = target_document_tokens[sample];
+            if (sample_tokens.empty())
+                throw runtime_error("Unknown target value");
+
+            const string_view token = sample_tokens[0];
 
             if (contains(positive_words, token))
                 target_indices[sample] = {1};
@@ -514,7 +523,11 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
         {
             target_indices[sample].assign(maximum_target_sequence_length, 0);
 
-            const string_view token = target_document_tokens[sample][0];
+            const vector<string_view>& sample_tokens = target_document_tokens[sample];
+            if (sample_tokens.empty())
+                continue;
+
+            const string_view token = sample_tokens[0];
             const auto it = target_vocabulary_map.find(token);
             const Index vocab_index = (it != target_vocabulary_map.end()) ? it->second : Index(UNK_INDEX);
             const Index col = vocab_index - reserved_count;
@@ -617,16 +630,21 @@ bool LanguageDataset::try_load_binary_cache(Index expected_samples)
     try
     {
         cache_reader.open(cache_path);
-        if (cache_reader.file_size() < sizeof(LangCacheHeader)) return false;
+        const uint64_t file_bytes = cache_reader.file_size();
+        if (file_bytes < sizeof(LangCacheHeader)) { cache_reader.close(); return false; }
 
         LangCacheHeader header{};
         cache_reader.read_at(&header, sizeof(header), 0);
 
-        if (memcmp(header.magic, LANG_CACHE_MAGIC, 8) != 0) return false;
-        if (header.version != LANG_CACHE_VERSION) return false;
-        if (Index(header.num_samples) != expected_samples) return false;
-        if (Index(header.input_max_len)  != maximum_input_sequence_length)  return false;
-        if (Index(header.target_max_len) != maximum_target_sequence_length) return false;
+        if (memcmp(header.magic, LANG_CACHE_MAGIC, 8) != 0) { cache_reader.close(); return false; }
+        if (header.version != LANG_CACHE_VERSION) { cache_reader.close(); return false; }
+        if (Index(header.num_samples) != expected_samples) { cache_reader.close(); return false; }
+        if (Index(header.input_max_len)  != maximum_input_sequence_length)  { cache_reader.close(); return false; }
+        if (Index(header.target_max_len) != maximum_target_sequence_length) { cache_reader.close(); return false; }
+        if (header.has_decoder != uint8_t(!decoder_shape.empty())) { cache_reader.close(); return false; }
+
+        const uint64_t offsets_bytes = header.num_samples * sizeof(array<int64_t, 4>);
+        if (file_bytes < sizeof(LangCacheHeader) + offsets_bytes) { cache_reader.close(); return false; }
 
         offsets_table.resize(size_t(header.num_samples));
         cache_reader.read_at(offsets_table.data(),
@@ -634,6 +652,25 @@ bool LanguageDataset::try_load_binary_cache(Index expected_samples)
                              sizeof(LangCacheHeader));
         cache_data_offset = sizeof(LangCacheHeader)
                         + uint64_t(header.num_samples) * sizeof(array<int64_t, 4>);
+
+        int64_t token_count = 0;
+        for (const array<int64_t, 4>& offsets : offsets_table)
+        {
+            if (offsets[0] < 0 || offsets[1] < 0 || offsets[2] < 0 || offsets[3] < 0
+            ||  offsets[0] > numeric_limits<int64_t>::max() - offsets[1]
+            ||  offsets[2] > numeric_limits<int64_t>::max() - offsets[3])
+            {
+                cache_reader.close();
+                return false;
+            }
+
+            token_count = max(token_count, offsets[0] + offsets[1]);
+            token_count = max(token_count, offsets[2] + offsets[3]);
+        }
+
+        const uint64_t expected_bytes = cache_data_offset + uint64_t(token_count) * sizeof(int32_t);
+        if (file_bytes != expected_bytes) { cache_reader.close(); return false; }
+
         return true;
     }
     catch (const exception&)
@@ -654,21 +691,38 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
 
     fill_n(input_data, batch_size * seq_len, 0.0f);
 
+    string omp_error;
+
     #pragma omp parallel for
     for (Index i = 0; i < batch_size; ++i)
     {
-        const auto& offsets = offsets_table[size_t(sample_indices[i])];
-        const Index n = min(Index(offsets[1]), seq_len);
-        if (n <= 0) continue;
+        try
+        {
+            const Index sample_index = sample_indices[size_t(i)];
+            if (sample_index < 0 || sample_index >= ssize(offsets_table))
+                throw runtime_error("LanguageDataset input sample index is out of range.");
 
-        thread_local vector<int32_t> buf;
-        buf.resize(size_t(n));
-        cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
-                             cache_data_offset + uint64_t(offsets[0]) * sizeof(int32_t));
+            const auto& offsets = offsets_table[size_t(sample_index)];
+            const Index n = min(Index(offsets[1]), seq_len);
+            if (n <= 0) continue;
 
-        for (Index j = 0; j < n; ++j)
-            input_data[i * seq_len + j] = float(buf[size_t(j)]);
+            thread_local vector<int32_t> buf;
+            buf.resize(size_t(n));
+            cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
+                                 cache_data_offset + uint64_t(offsets[0]) * sizeof(int32_t));
+
+            for (Index j = 0; j < n; ++j)
+                input_data[i * seq_len + j] = float(buf[size_t(j)]);
+        }
+        catch (const exception& e)
+        {
+            #pragma omp critical
+            { omp_error = e.what(); }
+        }
     }
+
+    if (!omp_error.empty())
+        throw runtime_error(omp_error);
 }
 
 void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
@@ -682,21 +736,38 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
 
     fill_n(target_data, batch_size * seq_len, 0.0f);
 
+    string omp_error;
+
     #pragma omp parallel for
     for (Index i = 0; i < batch_size; ++i)
     {
-        const auto& offsets = offsets_table[size_t(sample_indices[i])];
-        const Index n = min(Index(offsets[3]), seq_len);
-        if (n <= 0) continue;
+        try
+        {
+            const Index sample_index = sample_indices[size_t(i)];
+            if (sample_index < 0 || sample_index >= ssize(offsets_table))
+                throw runtime_error("LanguageDataset target sample index is out of range.");
 
-        thread_local vector<int32_t> buf;
-        buf.resize(size_t(n));
-        cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
-                             cache_data_offset + uint64_t(offsets[2]) * sizeof(int32_t));
+            const auto& offsets = offsets_table[size_t(sample_index)];
+            const Index n = min(Index(offsets[3]), seq_len);
+            if (n <= 0) continue;
 
-        for (Index j = 0; j < n; ++j)
-            target_data[i * seq_len + j] = float(buf[size_t(j)]);
+            thread_local vector<int32_t> buf;
+            buf.resize(size_t(n));
+            cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
+                                 cache_data_offset + uint64_t(offsets[2]) * sizeof(int32_t));
+
+            for (Index j = 0; j < n; ++j)
+                target_data[i * seq_len + j] = float(buf[size_t(j)]);
+        }
+        catch (const exception& e)
+        {
+            #pragma omp critical
+            { omp_error = e.what(); }
+        }
     }
+
+    if (!omp_error.empty())
+        throw runtime_error(omp_error);
 }
 
 void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
@@ -710,23 +781,40 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
 
     fill_n(decoder_data, batch_size * seq_len, 0.0f);
 
+    string omp_error;
+
     #pragma omp parallel for
     for (Index i = 0; i < batch_size; ++i)
     {
-        decoder_data[i * seq_len] = START_INDEX;
+        try
+        {
+            decoder_data[i * seq_len] = START_INDEX;
 
-        const auto& offsets = offsets_table[size_t(sample_indices[i])];
-        const Index n = min(Index(offsets[3]), seq_len - 1);
-        if (n <= 0) continue;
+            const Index sample_index = sample_indices[size_t(i)];
+            if (sample_index < 0 || sample_index >= ssize(offsets_table))
+                throw runtime_error("LanguageDataset decoder sample index is out of range.");
 
-        thread_local vector<int32_t> buf;
-        buf.resize(size_t(n));
-        cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
-                             cache_data_offset + uint64_t(offsets[2]) * sizeof(int32_t));
+            const auto& offsets = offsets_table[size_t(sample_index)];
+            const Index n = min(Index(offsets[3]), seq_len - 1);
+            if (n <= 0) continue;
 
-        for (Index j = 0; j < n; ++j)
-            decoder_data[i * seq_len + 1 + j] = float(buf[size_t(j)]);
+            thread_local vector<int32_t> buf;
+            buf.resize(size_t(n));
+            cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
+                                 cache_data_offset + uint64_t(offsets[2]) * sizeof(int32_t));
+
+            for (Index j = 0; j < n; ++j)
+                decoder_data[i * seq_len + 1 + j] = float(buf[size_t(j)]);
+        }
+        catch (const exception& e)
+        {
+            #pragma omp critical
+            { omp_error = e.what(); }
+        }
     }
+
+    if (!omp_error.empty())
+        throw runtime_error(omp_error);
 }
 
 }

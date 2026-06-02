@@ -57,6 +57,41 @@ CompiledFormula compile_formula(const string& expression,
                                               const vector<NamedColumn>& inputs,
                                               const vector<NamedColumn>& outputs);
 
+
+enum class ComparisonOp : uint8_t
+{
+    None, EqualTo, Between, GreaterEqualTo, LessEqualTo, GreaterThan, LessThan
+};
+
+
+struct FormulaConstraint
+{
+    string expression;
+    function<float(const VectorR&, const VectorR&)> callback;
+    bool uses_callback = false;
+
+    ComparisonOp op = ComparisonOp::None;
+    float low_bound = 0.0f;
+    float up_bound = 0.0f;
+
+    CompiledFormula compiled;
+};
+
+
+struct LinearConstraintSet
+{
+    MatrixR A;       // (m_constraints, n_inputs + n_outputs); first n_inputs cols are input coefficients
+    VectorR lower;   // (m_constraints), -infinity for one-sided upper-bound constraints
+    VectorR upper;   // (m_constraints), +infinity for one-sided lower-bound constraints
+};
+
+
+[[nodiscard]] bool all_formula_constraints_are_linear(const vector<FormulaConstraint>& formula_constraints);
+
+[[nodiscard]] LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>& formula_constraints,
+                                                              const Index n_in,
+                                                              const Index n_out);
+
 }
 
 // OpenNN: Open Neural Networks Library.

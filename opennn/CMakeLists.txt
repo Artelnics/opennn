@@ -34,11 +34,17 @@ endif()
 
 target_compile_features(opennn PUBLIC cxx_std_20)
 
-# Flatpak-host .so files often have epoch-zero mtimes, which makes GNU make
-# fail with "No rule to make target" when CMake embeds the full path. Use
-# -l<name> linker flags instead of the imported targets to sidestep this.
-find_package(ZLIB REQUIRED)
-target_link_libraries(opennn PUBLIC z)
+# ZLIB is only needed by the PNG support in image_dataset / image_utilities,
+# which are themselves excluded when the slim opennn_core lib is requested.
+# Make the dependency conditional so tabular-only builds (which is how the
+# IDC_benchmark and baseline_trainer consumers wire opennn in) do not need
+# a system ZLIB install. Use -l<name> instead of the ZLIB::ZLIB imported
+# target so Flatpak-host .so files with epoch-zero mtimes don't make GNU
+# make fail with "No rule to make target" (same workaround as JPEG below).
+if(OpenNN_BUILD_VISION)
+    find_package(ZLIB REQUIRED)
+    target_link_libraries(opennn PUBLIC z)
+endif()
 
 if(OpenNN_BUILD_VISION)
     find_package(JPEG REQUIRED)
@@ -57,9 +63,7 @@ target_include_directories(opennn PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_include_directories(opennn SYSTEM PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../eigen>
-)
+target_link_libraries(opennn PUBLIC Eigen3::Eigen)
 
 if(OpenNN_ENABLE_MKL)
     if(OpenNN_MKL_ROOT)
@@ -121,18 +125,9 @@ if(OPENNN_HAS_CUDA)
         target_link_libraries(opennn PUBLIC ${CUDNN_LIBRARY})
         target_include_directories(opennn PUBLIC ${CUDNN_INCLUDE_DIR})
     endif()
-    find_path(CUDNN_FRONTEND_INCLUDE_DIR NAMES cudnn_frontend.h)
-    if(NOT CUDNN_FRONTEND_INCLUDE_DIR)
-        message(FATAL_ERROR
-            "OpenNN with OPENNN_HAS_CUDA=ON requires the cuDNN frontend headers "
-            "(cudnn_frontend.h). Install from https://github.com/NVIDIA/cudnn-frontend "
-            "and set CUDNN_FRONTEND_INCLUDE_DIR.")
-    endif()
+    # CUDNN_FRONTEND_INCLUDE_DIR is set by the root CMakeLists.txt's
+    # FetchContent_MakeAvailable(cudnn_frontend) block, so it is always present here.
     target_include_directories(opennn PUBLIC ${CUDNN_FRONTEND_INCLUDE_DIR})
-    # operators.cpp guards SDPA / Flash Attention with HAVE_CUDNN_FRONTEND.
-    # The find_path above already errors out if the header is missing, so when
-    # we get here it is always available — define the macro so the SDPA path
-    # is actually compiled in the CMake build (qmake sets it in cuda.pri).
     target_compile_definitions(opennn PUBLIC HAVE_CUDNN_FRONTEND)
 endif()
 

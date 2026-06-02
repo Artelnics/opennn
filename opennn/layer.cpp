@@ -17,9 +17,12 @@ vector<TensorSpec> Layer::get_parameter_specs() const
     vector<TensorSpec> result;
     for (Operator* op : get_operators())
     {
-        const auto specs = op->parameter_specs();
-        result.insert(result.end(), specs.begin(), specs.end());
+        auto specs = op->parameter_specs();
+        result.insert(result.end(),
+                      make_move_iterator(specs.begin()),
+                      make_move_iterator(specs.end()));
     }
+
     return result;
 }
 
@@ -28,9 +31,12 @@ vector<TensorSpec> Layer::get_state_specs() const
     vector<TensorSpec> result;
     for (Operator* op : get_operators())
     {
-        const auto specs = op->state_specs();
-        result.insert(result.end(), specs.begin(), specs.end());
+        auto specs = op->state_specs();
+        result.insert(result.end(),
+                      make_move_iterator(specs.begin()),
+                      make_move_iterator(specs.end()));
     }
+
     return result;
 }
 

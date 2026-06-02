@@ -912,6 +912,7 @@ vector<YoloDetection> decode_yolo_detections(const float* nms_output,
     const float offset_y = (float(network_height) - scaled_height) * 0.5f;
 
     vector<YoloDetection> detections;
+    detections.reserve(max_boxes);
 
     for (Index i = 0; i < max_boxes; ++i)
     {
@@ -1073,6 +1074,15 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
         boxes_cache_reader.read_at(boxes_offsets.data(),
                                    boxes_offsets.size() * sizeof(uint64_t),
                                    boxes_header.offsets_byte_offset);
+        if (boxes_offsets.empty()
+        ||  boxes_offsets.front() != 0
+        ||  boxes_offsets.back() != boxes_header.total_boxes)
+            return false;
+
+        for (size_t i = 1; i < boxes_offsets.size(); ++i)
+            if (boxes_offsets[i] < boxes_offsets[i - 1])
+                return false;
+
         boxes_data_offset = boxes_header.boxes_byte_offset;
 
         const uint64_t expected_boxes_size = boxes_header.boxes_byte_offset
@@ -1340,8 +1350,14 @@ void YoloDataset::set_multi_scale_heads(const vector<Index>& grid_sizes,
 
 void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
 {
+    if (sample_index < 0 || sample_index >= samples_number)
+        throw runtime_error("YoloDataset box sample index is out of range.");
+
     const uint64_t begin = boxes_offsets[size_t(sample_index)];
     const uint64_t end   = boxes_offsets[size_t(sample_index) + 1];
+    if (end < begin)
+        throw runtime_error("YoloDataset box cache offsets are invalid.");
+
     const uint64_t count = end - begin;
 
     out.resize(size_t(count));
@@ -1393,8 +1409,12 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
             thread_local vector<uint8_t> resized_pixels;
             pixels.resize(size_t(cache_image_record_bytes));
 
+            const Index sample_index = sample_indices[size_t(i)];
+            if (sample_index < 0 || sample_index >= samples_number)
+                throw runtime_error("YoloDataset input sample index is out of range.");
+
             const uint64_t offset = sizeof(YoloImageCacheHeader)
-                + uint64_t(sample_indices[size_t(i)]) * uint64_t(cache_image_record_bytes);
+                + uint64_t(sample_index) * uint64_t(cache_image_record_bytes);
 
             image_cache_reader.read_at(pixels.data(), pixels.size(), offset);
 
@@ -1406,7 +1426,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                     cfg.jitter, cfg.exposure, cfg.saturation, cfg.hue, cfg.flip
                 };
                 const AugmentationParams p = derive_augmentation_params(
-                    epoch_seed, uint64_t(sample_indices[size_t(i)]), free_cfg);
+                    epoch_seed, uint64_t(sample_index), free_cfg);
 
                 aug_pixels.resize(size_t(cache_image_record_bytes));
                 apply_geometric_to_image(pixels.data(), aug_pixels.data(),
@@ -1467,10 +1487,14 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     {
         try
         {
+            const Index sample_index = sample_indices[size_t(i)];
+            if (sample_index < 0 || sample_index >= samples_number)
+                throw runtime_error("YoloDataset target sample index is out of range.");
+
             if (reencode)
             {
                 vector<Box> boxes;
-                read_sample_boxes(sample_indices[size_t(i)], boxes);
+                read_sample_boxes(sample_index, boxes);
 
                 if (augment)
                 {
@@ -1478,7 +1502,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                         cfg.jitter, cfg.exposure, cfg.saturation, cfg.hue, cfg.flip
                     };
                     const AugmentationParams p = derive_augmentation_params(
-                        epoch_seed, uint64_t(sample_indices[size_t(i)]), free_cfg);
+                        epoch_seed, uint64_t(sample_index), free_cfg);
                     apply_geometric_to_boxes(boxes, p);
                 }
 
@@ -1493,7 +1517,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
             else
             {
                 const uint64_t offset = target_data_offset
-                    + uint64_t(sample_indices[size_t(i)]) * uint64_t(cache_target_record_floats) * sizeof(float);
+                    + uint64_t(sample_index) * uint64_t(cache_target_record_floats) * sizeof(float);
 
                 target_cache_reader.read_at(target_data + i * target_record_floats,
                                             size_t(cache_target_record_floats) * sizeof(float),

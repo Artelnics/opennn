@@ -96,8 +96,8 @@ Index KMeans::find_optimal_clusters(const VectorR& sum_squared_error_values) con
 
     const float first_x = 1.0f;
     const float first_y = sum_squared_error_values(0);
-    const float last_x = float(clusters_number);
-    const float last_y = sum_squared_error_values(clusters_number - 1);
+    const float last_x = float(cluster_number);
+    const float last_y = sum_squared_error_values(cluster_number - 1);
 
     const float delta_x = last_x - first_x;
     const float delta_y = last_y - first_y;

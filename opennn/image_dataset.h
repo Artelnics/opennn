@@ -94,12 +94,6 @@ private:
 
     vector<string> labels_tokens;
 
-    Index width_no_padding = 0;
-
-    Index regions_number = 1000;
-    Index region_rows = 6;
-    Index region_variables = 6;
-
 };
 
 }

@@ -206,25 +206,14 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
 
 void Scaling::write_JSON_body(JsonWriter& printer) const
 {
-    const Index features = ssize(descriptives);
-
-    VectorR mins(features), maxs(features), mns(features), stds(features);
-    for (Index i = 0; i < features; ++i)
-    {
-        mins(i) = descriptives[size_t(i)].minimum;
-        maxs(i) = descriptives[size_t(i)].maximum;
-        mns(i)  = descriptives[size_t(i)].mean;
-        stds(i) = descriptives[size_t(i)].standard_deviation;
-    }
-
     vector<string> scaler_names(scalers.size());
     ranges::transform(scalers, scaler_names.begin(), scaler_method_to_string);
 
     write_json(printer, {
-        {"Means",              vector_to_string(mns)},
-        {"StandardDeviations", vector_to_string(stds)},
-        {"Minimums",           vector_to_string(mins)},
-        {"Maximums",           vector_to_string(maxs)},
+        {"Means",              vector_to_string(get_means())},
+        {"StandardDeviations", vector_to_string(get_standard_deviations())},
+        {"Minimums",           vector_to_string(get_minimums())},
+        {"Maximums",           vector_to_string(get_maximums())},
         {"Scalers",            vector_to_string(scaler_names)},
         {"MinRange",           to_string(min_range)},
         {"MaxRange",           to_string(max_range)}
@@ -287,8 +276,8 @@ string Scaling::write_expression(const vector<string>& input_names,
     }
 
     string expression = buffer.str();
-    expression = regex_replace(expression, regex("\\+-"), "-");
-    expression = regex_replace(expression, regex("--"), "+");
+    replace(expression, "+-", "-");
+    replace(expression, "--", "+");
 
     return expression;
 }

@@ -53,7 +53,7 @@ private:
     void emit_python_prelude(ostringstream&) const;
     void emit_python_class_header(ostringstream&) const;
     void emit_python_activations(ostringstream&, const string& expression) const;
-    void emit_python_calculate_outputs(ostringstream&, const vector<string>& lines, bool has_softmax) const;
+    void emit_python_calculate_outputs(ostringstream&, const string& expression, const vector<string>& lines, bool has_softmax) const;
     void emit_python_batch_and_main(ostringstream&) const;
 
     void emit_js_prelude(ostringstream&) const;

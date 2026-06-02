@@ -167,8 +167,7 @@ void ConcatenateOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool
         throw runtime_error("ConcatenateOp GPU path is not implemented yet.");
 
     const Index batch_size = output.shape[0];
-    Index total_channels = 0;
-    for (Index c : input_channels) total_channels += c;
+    const Index total_channels = accumulate(input_channels.begin(), input_channels.end(), Index(0));
 
     float* dst = output.as<float>();
 
@@ -199,8 +198,7 @@ void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, siz
         throw runtime_error("ConcatenateOp GPU path is not implemented yet.");
 
     const Index batch_size = output_delta.shape[0];
-    Index total_channels = 0;
-    for (Index c : input_channels) total_channels += c;
+    const Index total_channels = accumulate(input_channels.begin(), input_channels.end(), Index(0));
 
     const float* delta = output_delta.as<float>();
 
@@ -290,8 +288,8 @@ void ActivationOp::set_function(Function new_function)
 {
     function = new_function;
 #ifdef OPENNN_HAS_CUDA
-    if (!descriptor) cudnnCreateActivationDescriptor(&descriptor);
-    cudnnSetActivationDescriptor(descriptor, to_cudnn_mode(function), CUDNN_PROPAGATE_NAN, 0.0);
+    if (!descriptor) CHECK_CUDNN(cudnnCreateActivationDescriptor(&descriptor));
+    CHECK_CUDNN(cudnnSetActivationDescriptor(descriptor, to_cudnn_mode(function), CUDNN_PROPAGATE_NAN, 0.0));
 #endif
 }
 
@@ -1460,8 +1458,14 @@ void ConvolutionOp::apply_cpu(const TensorView& input, TensorView& output)
     {
         const TensorMap3 kernel_map = weights.as_tensor<3>(kernel_index);
 
-        outputs.chip(kernel_index, 3).device(get_device()) =
-            padded_inputs.convolve(kernel_map, conv_dims).reshape(out_slice_shape) + biases(kernel_index);
+        if (row_stride == 1 && column_stride == 1)
+            outputs.chip(kernel_index, 3).device(get_device()) =
+                padded_inputs.convolve(kernel_map, conv_dims).reshape(out_slice_shape) + biases(kernel_index);
+        else
+            outputs.chip(kernel_index, 3).device(get_device()) =
+                padded_inputs.convolve(kernel_map, conv_dims)
+                             .stride(array<Index, 4>({1, row_stride, column_stride, 1}))
+                             .reshape(out_slice_shape) + biases(kernel_index);
     }
 }
 
@@ -2239,9 +2243,9 @@ static void build_sdpa_backward_graph(AttentionOp::SDPACache::Entry& entry,
     entry.bwd_O = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
                                 .set_name("O_bwd")
                                 .set_dim({k.batch_size, k.heads, k.q_seq, k.head_dim})
-                                .set_stride({k.q_seq * k.heads * k.head_dim,
+                                .set_stride({k.heads * k.q_seq * k.head_dim,
+                                             k.q_seq * k.head_dim,
                                              k.head_dim,
-                                             k.heads * k.head_dim,
                                              1}));
 
     entry.bwd_Stats = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
@@ -3337,6 +3341,7 @@ void DetectionOp::set(const Shape& input_shape, const vector<array<float, 2>>& n
         throw runtime_error("DetectionOp: anchors are empty.");
 
     grid_size = input_shape[0];
+    grid_width = input_shape[1];
     boxes_per_cell = ssize(new_anchors);
     anchors = new_anchors;
 
@@ -3372,9 +3377,9 @@ void DetectionOp::apply(const TensorView& input, TensorView& output) const
     #pragma omp parallel for collapse(3)
     for (Index b = 0; b < batch_size; ++b)
         for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_size; ++col)
+            for (Index col = 0; col < grid_width; ++col)
             {
-                const Index cell = ((b * grid_size + row) * grid_size + col) * channels;
+                const Index cell = ((b * grid_size + row) * grid_width + col) * channels;
 
                 for (Index box = 0; box < boxes_per_cell; ++box)
                 {
@@ -3393,9 +3398,7 @@ void DetectionOp::apply(const TensorView& input, TensorView& output) const
                     }
                     else
                     {
-                        float max_logit = src[base + 5];
-                        for (Index c = 1; c < classes_number; ++c)
-                            max_logit = max(max_logit, src[base + 5 + c]);
+                        const float max_logit = *max_element(src + base + 5, src + base + 5 + classes_number);
 
                         float sum = 0.0f;
                         for (Index c = 0; c < classes_number; ++c)
@@ -3442,9 +3445,9 @@ void DetectionOp::apply_delta(const TensorView& output,
     #pragma omp parallel for collapse(3)
     for (Index b = 0; b < batch_size; ++b)
         for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_size; ++col)
+            for (Index col = 0; col < grid_width; ++col)
             {
-                const Index cell = ((b * grid_size + row) * grid_size + col) * channels;
+                const Index cell = ((b * grid_size + row) * grid_width + col) * channels;
 
                 for (Index box = 0; box < boxes_per_cell; ++box)
                 {
@@ -3488,6 +3491,7 @@ void NonMaxSuppressionOp::set(const Shape& input_shape,
         throw runtime_error("NonMaxSuppressionOp: boxes_per_cell must be positive.");
 
     grid_size = input_shape[0];
+    grid_width = input_shape[1];
     boxes_per_cell = new_boxes_per_cell;
     confidence_threshold = new_confidence_threshold;
     iou_threshold = new_iou_threshold;
@@ -3516,7 +3520,7 @@ void NonMaxSuppressionOp::apply(const TensorView& input, TensorView& output) con
     const Index batch_size = input.shape[0];
     const Index channels = input.shape[3];
     const Index values_per_box = 5 + classes_number;
-    const Index max_boxes = grid_size * grid_size * boxes_per_cell;
+    const Index max_boxes = grid_size * grid_width * boxes_per_cell;
 
     const float* src = input.as<float>();
     float* dst = output.as<float>();
@@ -3528,29 +3532,24 @@ void NonMaxSuppressionOp::apply(const TensorView& input, TensorView& output) con
         candidates.reserve(size_t(max_boxes));
 
         for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_size; ++col)
+            for (Index col = 0; col < grid_width; ++col)
             {
-                const Index cell = ((b * grid_size + row) * grid_size + col) * channels;
+                const Index cell = ((b * grid_size + row) * grid_width + col) * channels;
 
                 for (Index box = 0; box < boxes_per_cell; ++box)
                 {
                     const Index base = cell + box * values_per_box;
 
-                    Index best_class = 0;
-                    float best_probability = src[base + 5];
-                    for (Index c = 1; c < classes_number; ++c)
-                        if (src[base + 5 + c] > best_probability)
-                        {
-                            best_probability = src[base + 5 + c];
-                            best_class = c;
-                        }
+                    const float* best = max_element(src + base + 5, src + base + 5 + classes_number);
+                    const Index best_class = best - (src + base + 5);
+                    const float best_probability = *best;
 
                     const float score = src[base + 4] * best_probability;
                     if (score < confidence_threshold)
                         continue;
 
                     candidates.push_back({
-                        (float(col) + src[base + 0]) / float(grid_size),
+                        (float(col) + src[base + 0]) / float(grid_width),
                         (float(row) + src[base + 1]) / float(grid_size),
                         src[base + 2],
                         src[base + 3],

@@ -184,10 +184,10 @@ struct Buffer
     {
         if (new_bytes == bytes && device_type == new_device_type) return;
         free_buffer();
+        device_type = new_device_type;
         if (new_bytes == 0) return;
 
         data = alloc(new_device_type, new_bytes);
-        device_type = new_device_type;
         bytes = new_bytes;
     }
 

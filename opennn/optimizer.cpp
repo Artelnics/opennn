@@ -256,9 +256,7 @@ void Optimizer::load(const filesystem::path& file_name)
 
 float Optimizer::get_elapsed_time(const time_t &beginning_time)
 {
-    time_t current_time;
-    time(&current_time);
-    return float(difftime(current_time, beginning_time));
+    return float(difftime(time(nullptr), beginning_time));
 }
 
 void Optimizer::warn_dropped_samples(Index batch_size,
@@ -452,8 +450,7 @@ Index Optimizer::get_maximum_batch_size() const
     {
 #ifdef OPENNN_HAS_CUDA
         size_t free_bytes = 0, total_bytes = 0;
-        if (cudaMemGetInfo(&free_bytes, &total_bytes) != cudaSuccess)
-            throw runtime_error("Optimizer::get_maximum_batch_size: cudaMemGetInfo failed.");
+        CHECK_CUDA(cudaMemGetInfo(&free_bytes, &total_bytes));
         available_bytes = Index(free_bytes);
 #else
         throw runtime_error("Optimizer::get_maximum_batch_size: CUDA not compiled in.");
@@ -622,6 +619,9 @@ void Optimizer::set_scaling()
 
             case 3:
             {
+#ifdef OPENNN_NO_VISION
+                throw runtime_error("Rank-3 (image) scaling requires the vision build (OPENNN_NO_VISION is set).");
+#else
                 auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
                 throw_if(!image_dataset, "Expected ImageDataset.");
 
@@ -629,6 +629,7 @@ void Optimizer::set_scaling()
                                                  scaling_layer->get_scalers(),
                                                  scaling_layer->get_min_range(),
                                                  scaling_layer->get_max_range());
+#endif
                 break;
             }
 
@@ -995,9 +996,10 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
 {
     const Index total_bytes = get_aligned_bytes(slot_shapes, Type::FP32);
 
+    data.resize_bytes(total_bytes, device);
+
     if (total_bytes > 0)
     {
-        data.resize_bytes(total_bytes, device);
 #ifdef OPENNN_HAS_CUDA
         if (device == Device::CUDA)
             CHECK_CUDA(cudaMemsetAsync(data.data, 0, total_bytes, Backend::get_compute_stream()));
@@ -1009,11 +1011,11 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
     views.clear();
     views.reserve(slot_shapes.size());
 
-    uint8_t* cursor = (total_bytes > 0) ? data.as<uint8_t>() : nullptr;
+    uint8_t* cursor = data.as<uint8_t>();
 
     for (const Shape& shape : slot_shapes)
     {
-        if (shape.size() > 0 && cursor)
+        if (shape.size() > 0)
         {
             views.emplace_back(cursor, shape, Type::FP32, data.device_type);
             cursor += get_aligned_bytes(shape.size(), Type::FP32);

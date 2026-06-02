@@ -35,19 +35,6 @@ public:
             : condition(new_type), low_bound(new_low_bound), up_bound(new_up_bound) {}
     };
 
-    struct FormulaConstraint
-    {
-        string expression;
-        function<float(const VectorR&, const VectorR&)> callback;
-        bool uses_callback = false;
-
-        ConditionType op = ConditionType::None;
-        float low_bound = 0.0f;
-        float up_bound = 0.0f;
-
-        CompiledFormula compiled;
-    };
-
     struct Domain
     {
         Domain() = default;
@@ -122,6 +109,7 @@ public:
     void set_zoom_factor(float new_zoom_factor);
     void set_evaluations_number(const int new_evaluations_number);
     void set_relative_tolerance(float new_relative_tolerance);
+    void set_max_pareto_number(const Index new_max_pareto_number);
 
     void set_deformation_domain_factor(float new_deformation_domain_factor);
     float get_deformation_domain_factor();
@@ -204,6 +192,18 @@ private:
     float zoom_factor = 0.85f;
 
     float relative_tolerance = 1e-6f;
+
+    // Hard cap on the Pareto-front size between iterations. The MO loop's
+    // per-iter cost is dominated by `calculate_pareto` (O(N^2) where N is
+    // the candidate-set size) and the per-Pareto-point local sampling at
+    // the top of the next iter (which scales linearly with the front
+    // size). Once the front reaches this many points, further iterations
+    // are mostly Pareto-maintenance overhead with diminishing-return
+    // refinement, so we stop and return the current front. Set to 0 to
+    // disable. Default 5000 chosen so the cap rarely fires on the
+    // IDC_benchmark MO entries used in matched-budget pymoo comparisons
+    // but reliably kills the runaway growth seen at long iteration runs.
+    Index max_pareto_number = 5000;
 
     float deformation_domain_factor = 1.0f;
 

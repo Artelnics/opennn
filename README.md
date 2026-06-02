@@ -16,8 +16,13 @@ The documentation is composed by tutorials and examples to offer a complete over
 
 The documentation can be found at the official <a href="http://opennn.net" target="_blank">OpenNN site</a>.
 
-CMakeLists.txt are build files for CMake, it is also used by the CLion IDE.
+OpenNN is built with CMake. Qt Creator, CLion, and Visual Studio all open the top-level `CMakeLists.txt` directly. Note that OpenNN does not make use of the Qt library.
 
-The .pro files are project files for the Qt Creator IDE, which can be downloaded from its <a href="http://www.qt.io" target="_blank">site</a>. Note that OpenNN does not make use of the Qt library. 
+## Prerequisites
+
+- A C++20 compiler (MSVC 2019+, GCC 11+, or Clang 14+).
+- CMake >= 3.18.
+- For CUDA builds: NVIDIA CUDA Toolkit and cuDNN >= 9.0 installed on the system (via the NVIDIA installer, `apt install nvidia-cudnn`, or `vcpkg install cudnn`).
+- Eigen, googletest, and cudnn-frontend are fetched automatically on first `cmake` configure.
 
 OpenNN is developed by <a href="http://artelnics.com" target="_blank">Artelnics</a>, a company specialized in artificial intelligence. 

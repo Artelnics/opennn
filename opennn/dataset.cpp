@@ -23,16 +23,7 @@ VectorI Dataset::get_sample_role_numbers() const
     const Index samples_number = get_samples_number();
 
     for (Index i = 0; i < samples_number; ++i)
-    {
-        using enum SampleRole;
-        switch (sample_roles[i])
-        {
-        case Training:   count[0]++; break;
-        case Validation: count[1]++; break;
-        case Testing:    count[2]++; break;
-        case None:       count[3]++; break;
-        }
-    }
+        count[static_cast<Index>(sample_roles[i])]++;
 
     return count;
 }
@@ -72,9 +63,8 @@ vector<Index> Dataset::get_sample_roles_vector() const
 
     vector<Index> sample_roles_vector(samples_number);
 
-    transform(execution::par, sample_roles.begin(), sample_roles.end(),
-              sample_roles_vector.begin(),
-              [](SampleRole r) { return static_cast<Index>(r); });
+    ranges::transform(sample_roles, sample_roles_vector.begin(),
+                      [](SampleRole r) { return static_cast<Index>(r); });
 
     return sample_roles_vector;
 }
@@ -121,16 +111,28 @@ void Dataset::set_data_path(const filesystem::path& new_data_path)
     data_path = new_data_path;
     binary_rows_number = 0;
     binary_columns_number = 0;
-    binary_data_cache.clear();
+    {
+        lock_guard<mutex> lock(binary_cache_mutex);
+        binary_data_cache.clear();
+    }
     invalidate_data_buffer();
 }
 
 void Dataset::set_storage_mode(StorageMode new_storage_mode)
 {
     storage_mode = new_storage_mode;
+    {
+        lock_guard<mutex> lock(binary_cache_mutex);
+        binary_data_cache.clear();
+    }
 
     if (storage_mode == StorageMode::BinaryFile)
         read_binary_header();
+    else
+    {
+        binary_rows_number = 0;
+        binary_columns_number = 0;
+    }
 
     invalidate_data_buffer();
 }
@@ -138,8 +140,7 @@ void Dataset::set_storage_mode(StorageMode new_storage_mode)
 void Dataset::use_binary_data_file(const filesystem::path& binary_data_file_name)
 {
     set_data_path(binary_data_file_name);
-    storage_mode = StorageMode::BinaryFile;
-    read_binary_header();
+    set_storage_mode(StorageMode::BinaryFile);
 
     if (sample_roles.empty())
         sample_roles.resize(binary_rows_number, SampleRole::Training);
@@ -350,13 +351,16 @@ void Dataset::set_default_variable_names()
 vector<string> Dataset::get_feature_names() const
 {
     vector<string> feature_names;
-    feature_names.reserve(variables.size());
+    feature_names.reserve(size_t(transform_reduce(variables.begin(), variables.end(), Index(0), plus<>{},
+                                                  [](const Variable& variable) { return variable.feature_count(); })));
 
     for (const auto& variable : variables)
     {
-        const vector<string> names = variable.get_names();
+        vector<string> names = variable.get_names();
 
-        feature_names.insert(feature_names.end(), names.begin(), names.end());
+        feature_names.insert(feature_names.end(),
+                             make_move_iterator(names.begin()),
+                             make_move_iterator(names.end()));
     }
     return feature_names;
 }
@@ -366,13 +370,16 @@ vector<string> Dataset::get_feature_names(const string& variable_role) const
     const auto vars = get_variables(variable_role);
 
     vector<string> feature_names;
-    feature_names.reserve(vars.size());
+    feature_names.reserve(size_t(transform_reduce(vars.begin(), vars.end(), Index(0), plus<>{},
+                                                  [](const Variable& variable) { return variable.feature_count(); })));
 
     for (const auto& variable : vars)
     {
-        const vector<string> names = variable.get_names();
+        vector<string> names = variable.get_names();
 
-        feature_names.insert(feature_names.end(), names.begin(), names.end());
+        feature_names.insert(feature_names.end(),
+                             make_move_iterator(names.begin()),
+                             make_move_iterator(names.end()));
     }
 
     return feature_names;
@@ -905,20 +912,13 @@ void Dataset::read_data_file_preview(const vector<vector<string_view>>& all_rows
 
     data_file_preview.clear();
 
-    auto copy_row = [](const vector<string_view>& src) {
-        vector<string> dst;
-        dst.reserve(src.size());
-        for (string_view sv : src) dst.emplace_back(sv);
-        return dst;
-    };
-
     const Index first_rows = Index(min(static_cast<size_t>(num_first_rows_to_show), all_rows.size()));
 
     for (Index i = 0; i < first_rows; ++i)
-        data_file_preview.push_back(copy_row(all_rows[i]));
+        data_file_preview.emplace_back(all_rows[i].begin(), all_rows[i].end());
 
     if (all_rows.size() > num_first_rows_to_show)
-        data_file_preview.push_back(copy_row(all_rows.back()));
+        data_file_preview.emplace_back(all_rows.back().begin(), all_rows.back().end());
 }
 
 void Dataset::check_separators(string_view line) const
@@ -937,10 +937,23 @@ void Dataset::check_separators(string_view line) const
         return;
     }
 
+    // Sanity check: warn only when another *structural* separator (Tab, Comma,
+    // Semicolon) is present in the data line — those almost never appear as
+    // field content and their presence with a different active separator is a
+    // strong signal the user picked the wrong one.
+    //
+    // Space is intentionally excluded: column headers ("Fly ash", "Coarse
+    // Aggr."), quoted string cells ("N,N,N-trimethyloctadecan"), and any
+    // non-numeric text universally contain spaces. Including Space here
+    // rejects most real-world CSVs (UCI, Olympus, HTE screens, etc.) and is
+    // not useful as a separator-mismatch heuristic.
     for (const auto& [sep, str, name] : separator_map)
-        if (sep != separator && line.find(str) != string_view::npos)
+    {
+        if (sep == separator || sep == Separator::Space) continue;
+        if (line.find(str) != string_view::npos)
             throw runtime_error(format("Found {} ('{}') in data file {}, but separator is {} ('{}').",
                                        name, str, data_path.string(), separator_name, separator_string));
+    }
 }
 
 bool Dataset::has_validation() const
@@ -1050,6 +1063,9 @@ void Dataset::read_binary_header() const
 
     if (!file)
         throw runtime_error(format("Failed to read binary data header: {}", data_path.string()));
+
+    if (binary_columns_number < 0 || binary_rows_number < 0)
+        throw runtime_error(format("Invalid binary data header: {}", data_path.string()));
 }
 
 const vector<float>& Dataset::load_binary_data_cache() const
@@ -1067,6 +1083,15 @@ const vector<float>& Dataset::load_binary_data_cache() const
         throw runtime_error(format("Failed to open binary data file: {}", data_path.string()));
 
     const size_t element_count = size_t(binary_rows_number) * size_t(binary_columns_number);
+    const uintmax_t expected_bytes = uintmax_t(2 * sizeof(Index))
+                                   + uintmax_t(element_count) * uintmax_t(sizeof(float));
+    const uintmax_t file_bytes = filesystem::file_size(data_path);
+    if (file_bytes != expected_bytes)
+        throw runtime_error(format("Binary data file size mismatch for {} (got {} bytes, expected {} bytes).",
+                                   data_path.string(),
+                                   file_bytes,
+                                   expected_bytes));
+
     binary_data_cache.resize(element_count);
 
     file.seekg(streamoff(2 * sizeof(Index)), ios::beg);
@@ -1099,6 +1124,17 @@ bool Dataset::try_fill_binary_tensor(const vector<Index>& sample_indices,
                           : is_contiguous(feature_indices);
 
     const Index first_column = feature_indices.front();
+    if (contiguous)
+    {
+        if (first_column < 0 || first_column + features_number > columns_number)
+            throw runtime_error("Binary data feature index is out of range.");
+    }
+    else
+    {
+        for (const Index feature_index : feature_indices)
+            if (feature_index < 0 || feature_index >= columns_number)
+                throw runtime_error("Binary data feature index is out of range.");
+    }
 
     for (Index i = 0; i < ssize(sample_indices); ++i)
     {
@@ -1128,13 +1164,18 @@ void Dataset::set_matrix_storage()
     storage_mode = StorageMode::Matrix;
     binary_rows_number = 0;
     binary_columns_number = 0;
-    binary_data_cache.clear();
+    {
+        lock_guard<mutex> lock(binary_cache_mutex);
+        binary_data_cache.clear();
+    }
     invalidate_data_buffer();
 }
 
 void Dataset::invalidate_data_buffer() const
 {
+    lock_guard<mutex> lock(data_buffer_mutex);
     data_buffer_shape.clear();
+    data_buffer.resize_bytes(0, Device::CUDA);
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -1142,6 +1183,8 @@ void Dataset::invalidate_data_buffer() const
 bool Dataset::prepare_device_data_buffer() const
 {
     lock_guard<mutex> lock(data_buffer_mutex);
+
+    if (!supports_dense_feature_gather()) return false;
 
     const Index rows  = get_samples_number();
     const Index features = get_features_number();
@@ -1151,6 +1194,9 @@ bool Dataset::prepare_device_data_buffer() const
         && data_buffer.device_type == Device::CUDA
         && !data_buffer.empty())
         return true;
+
+    data_buffer_shape.clear();
+    data_buffer.resize_bytes(0, Device::CUDA);
 
     const Index buffer_bytes = rows * features * Index(sizeof(float));
 

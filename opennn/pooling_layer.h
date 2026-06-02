@@ -76,6 +76,7 @@ public:
              const string & = "pooling_layer");
 
     void set_input_shape(const Shape&) override;
+    void set_output_shape(const Shape&) override {}
     void set_pool_size(Index, Index);
     void set_row_stride(Index);
     void set_column_stride(Index);

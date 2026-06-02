@@ -38,6 +38,19 @@ void Batch::set(const Index new_samples_number,
     dataset = new_dataset;
     config = new_config;
 
+    input_shape.clear();
+    decoder_shape.clear();
+    target_shape.clear();
+    input_features_number = 0;
+    decoder_features_number = 0;
+    target_features_number = 0;
+    input_views_host_cache.clear();
+    target_view_host_cache = {};
+#ifdef OPENNN_HAS_CUDA
+    input_views_cache.clear();
+    target_view_cache = {};
+#endif
+
 #ifdef OPENNN_HAS_CUDA
     const bool on_gpu = uses_cuda();
     const bool bf16_input = on_gpu
@@ -56,19 +69,27 @@ void Batch::set(const Index new_samples_number,
                             [[maybe_unused]] Index device_elem_bytes)
     {
         const Shape& dataset_shape = dataset->get_shape(role);
-        if (dataset_shape.empty()) return;
+        if (dataset_shape.empty())
+        {
+#ifdef OPENNN_HAS_CUDA
+            buffer.resize_bytes(0, on_gpu ? Device::CUDA : Device::CPU);
+#else
+            buffer.resize_bytes(0, Device::CPU);
+#endif
+            return;
+        }
 
         shape = Shape({samples_number}).append(dataset_shape);
+        num_features = dataset_shape.size();
 
 #ifdef OPENNN_HAS_CUDA
         if (on_gpu)
         {
             buffer.resize_bytes(shape.size() * device_elem_bytes, Device::CUDA);
-            num_features = dataset_shape.size();
 
             if (const Index size = samples_number * num_features; size > host_alloc)
             {
-                if (host_buf) cudaFreeHost(host_buf);
+                if (host_buf) CHECK_CUDA(cudaFreeHost(host_buf));
                 CHECK_CUDA(cudaMallocHost(&host_buf, size * sizeof(float)));
                 host_alloc = size;
             }
@@ -89,8 +110,6 @@ void Batch::set(const Index new_samples_number,
                  decoder_features_number, decoder_host, decoder_host_allocated_size,
                  Index(sizeof(float)));
 
-    input_views_host_cache.clear();
-
     if (!decoder_shape.empty())
         input_views_host_cache.emplace_back(decoder.as<float>(), decoder_shape, Type::FP32, Device::CPU);
 
@@ -108,8 +127,6 @@ void Batch::set(const Index new_samples_number,
 
     if (!input_shape.empty() && input.data)
     {
-        input_views_cache.clear();
-
         if (!decoder_shape.empty() && decoder.data)
             input_views_cache.emplace_back(decoder.data, decoder_shape, Type::FP32, Device::CUDA);
 
@@ -200,6 +217,7 @@ void Batch::copy_device_async(cudaStream_t stream)
     const Index target_size = current_batch_size * target_features_number;
 
     auto copy_to_device = [&](void* destination, const void* source, Index bytes) {
+        if (bytes == 0) return;
         CHECK_CUDA(cudaMemcpyAsync(destination, source, bytes, cudaMemcpyHostToDevice, stream));
     };
 

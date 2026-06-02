@@ -153,7 +153,9 @@ Histogram::Histogram(const VectorR& probability_data)
     for (Index i = 0; i < probability_data.size(); ++i)
     {
         const float value = probability_data(i);
-        const Index corresponding_bin = int((value - data_minimum) * inv_step);
+        if (isnan(value)) continue;
+
+        const Index corresponding_bin = min(Index((value - data_minimum) * inv_step), Index(bins_number) - 1);
 
         frequencies(corresponding_bin)++;
     }
@@ -440,10 +442,11 @@ VectorR quartiles(const VectorR& data)
     }
     else if (new_size == 2)
     {
-        const float sum = valid_data(0) + valid_data(1);
-        quartiles(0) = sum / 4.0f;
-        quartiles(1) = sum / 2.0f;
-        quartiles(2) = sum * 0.75f;
+        const float v0 = valid_data(0);
+        const float v1 = valid_data(1);
+        quartiles(0) = v0 + 0.25f * (v1 - v0);
+        quartiles(1) = v0 + 0.50f * (v1 - v0);
+        quartiles(2) = v0 + 0.75f * (v1 - v0);
     }
     else if (new_size == 3)
     {
@@ -523,10 +526,12 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     VectorR centers(bins_number);
     VectorR frequencies = VectorR::Zero(bins_number);
 
+    const size_t unique_capacity = static_cast<size_t>(min(size, bins_number));
+
     vector<float> unique_values;
     unordered_set<float> unique_set;
-
-    unique_values.reserve(min<Index>(size, bins_number));
+    unique_values.reserve(unique_capacity);
+    unique_set.reserve(unique_capacity);
     unique_values.push_back(new_vector(0));
     unique_set.insert(new_vector(0));
 
@@ -1210,6 +1215,8 @@ VectorI calculate_rank(const VectorR& vector, bool ascending)
 vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
 {
     vector<Index> indices;
+    indices.reserve(data.size());
+
     ranges::copy_if(data, back_inserter(indices),
                     [bound](Index value) { return value > bound; });
     return indices;

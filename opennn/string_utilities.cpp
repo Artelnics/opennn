@@ -268,9 +268,9 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_components.tm_year = stoi(match[3]) - 1900;
 
         int hour = stoi(match[4]);
-        if (match[7].matched)
+        if (match[8].matched)
         {
-            const string ampm = match[7].str();
+            const string ampm = match[8].str();
             if (ampm == "PM" && hour < 12) hour += 12;
             if (ampm == "AM" && hour == 12) hour = 0;
         }
@@ -404,7 +404,7 @@ string get_time(float time)
 void display_progress_bar(int completed, int total)
 {
     const int width = 50;
-    const float progress = static_cast<float>(completed) / total;
+    const float progress = total > 0 ? static_cast<float>(completed) / total : 0.0f;
     const int position = min(static_cast<int>(width * progress), width);
 
     cout << "\r[" << string(position, '=');

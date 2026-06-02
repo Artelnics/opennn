@@ -189,7 +189,12 @@ public:
 
     bfloat16* get_parameters_bf16_data()
     {
-        return parameters_bf16.empty() ? nullptr : parameters_bf16.as<bfloat16>();
+        return parameters.device_type == Device::CUDA
+            && config.training_type == Type::BF16
+            && !parameters.empty()
+            && !parameters_bf16.empty()
+            ? parameters_bf16.as<bfloat16>()
+            : nullptr;
     }
 
     void copy_parameters_device();

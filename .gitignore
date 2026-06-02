@@ -31,6 +31,20 @@ pip-selfcheck.json
 .vscode/
 .claude/
 
+# CMake build dirs
+/build/
+**/_deps/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CMakeUserPresets.json
+
+# Legacy qmake / MSBuild artifacts (no longer the source of truth, but keep ignored
+# in case a local IDE regenerates them).
+*.pro.user
+*.vcxproj.user
+*.qtvscr
+
 #Blank
 /blank/main.cpp
 

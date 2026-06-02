@@ -63,6 +63,13 @@ void QuasiNewtonMethod::calculate_inverse_hessian(OptimizerData& optimization_da
 
     const float gradient_dot_hessian_dot_gradient = gradient_difference.dot(old_inverse_hessian_dot_gradient_difference);
 
+    if (parameters_difference_dot_gradient_difference <= EPSILON
+        || gradient_dot_hessian_dot_gradient <= EPSILON)
+    {
+        inverse_hessian = old_inverse_hessian;
+        return;
+    }
+
     bfgs = (parameter_differences / parameters_difference_dot_gradient_difference)
            - (old_inverse_hessian_dot_gradient_difference / gradient_dot_hessian_dot_gradient);
 
@@ -117,7 +124,10 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     training_slope = gradient.dot(training_direction);
 
     if (training_slope >= 0.0f)
+    {
         training_direction = -gradient;
+        training_slope = gradient.dot(training_direction);
+    }
 
     optimization_data.initial_learning_rate = (old_learning_rate > 0.0f)
         ? old_learning_rate

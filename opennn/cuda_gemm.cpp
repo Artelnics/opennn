@@ -162,11 +162,14 @@ const LtMatmulPlan& get_lt_gemm_plan(
 
     cublasLtMatmulHeuristicResult_t heuristic = {};
     int returned_results = 0;
-    cublasLtMatmulAlgoGetHeuristic(Backend::get_cublas_lt_handle(),
-                                   plan.op_desc,
-                                   plan.a_desc, plan.b_desc, plan.cd_desc, plan.cd_desc,
-                                   pref, 1, &heuristic, &returned_results);
-    cublasLtMatmulPreferenceDestroy(pref);
+    const cublasStatus_t heuristic_status =
+        cublasLtMatmulAlgoGetHeuristic(Backend::get_cublas_lt_handle(),
+                                       plan.op_desc,
+                                       plan.a_desc, plan.b_desc, plan.cd_desc, plan.cd_desc,
+                                       pref, 1, &heuristic, &returned_results);
+    const cublasStatus_t destroy_status = cublasLtMatmulPreferenceDestroy(pref);
+    CHECK_CUBLAS(heuristic_status);
+    CHECK_CUBLAS(destroy_status);
 
     if (returned_results > 0)
     {

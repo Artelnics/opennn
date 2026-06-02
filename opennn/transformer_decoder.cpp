@@ -46,11 +46,10 @@ Index sample_token(VectorR& probabilities,
     const Index vocabulary_size = probabilities.size();
 
     TransformerDecoder::SamplingConfig config = sampling_config;
-    if (config.temperature        < 0.0f)  config.temperature        = 0.0f;
+    config.temperature = max(config.temperature, 0.0f);
     if (config.repetition_penalty <= 0.0f) config.repetition_penalty = 1.0f;
-    if (config.top_k              < 0)     config.top_k              = 0;
-    if (config.top_p              < 0.0f)  config.top_p              = 0.0f;
-    if (config.top_p              > 1.0f)  config.top_p              = 1.0f;
+    config.top_k = max(config.top_k, Index(0));
+    config.top_p = clamp(config.top_p, 0.0f, 1.0f);
 
     if (config.temperature == 0.0f)
     {

@@ -343,6 +343,27 @@ string ModelExpression::process_body_line(const string& line, const vector<strin
     string processed = line;
     replace_all_appearances(processed, "[", "_");
     replace_all_appearances(processed, "]", "_");
+    // Substring substitution for compound LHS identifiers like
+    // `scaled_<raw>` (scaling_layer.cpp emits these with the RAW input
+    // name). The word-aware apply_name_mapping below skips these matches
+    // because the underscore prefix violates the word-boundary check, so
+    // we handle them first as plain substrings. We also try the
+    // space-replaced form because `rename_spaced_var_definitions` runs
+    // before this and pre-transforms multi-word LHS by replacing ' ' with
+    // '_' (so `scaled_Foo bar baz` arrives here as `scaled_Foo_bar_baz`).
+    const size_t count = std::min(input_names.size(), fixed_input_names.size());
+    for (size_t i = 0; i < count; ++i)
+    {
+        const string& raw = input_names[i];
+        const string& fix = fixed_input_names[i];
+        if (raw == fix) continue;
+        replace_all_appearances(processed, "scaled_" + raw, "scaled_" + fix);
+        string space_to_underscore = raw;
+        ranges::replace(space_to_underscore, ' ', '_');
+        if (space_to_underscore != raw)
+            replace_all_appearances(processed, "scaled_" + space_to_underscore,
+                                    "scaled_" + fix);
+    }
     apply_name_mapping(processed, input_names, fixed_input_names);
     return processed;
 }
@@ -854,10 +875,8 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
         for (Index j = 0; j < inputs_number; ++j)
             replace_all_word_appearances(line, input_names[j], fixes_feature_names[j]);
 
-        if (has_softmax) replace_all_appearances(line, "Softmax", "___SOFTMAX_TOKEN___");
         for (const char* kw : math_keywords)
-            replace_all_appearances(line, kw, string("Math.") + kw);
-        if (has_softmax) replace_all_appearances(line, "___SOFTMAX_TOKEN___", "Softmax");
+            replace_all_word_appearances(line, kw, string("Math.") + kw);
 
         replace_all_appearances(line, "nan", "0");
         replace_all_appearances(line, "NaN", "0");
@@ -904,7 +923,7 @@ string ModelExpression::get_expression_python() const
     emit_python_prelude(buffer);
     emit_python_class_header(buffer);
     emit_python_activations(buffer, expression);
-    emit_python_calculate_outputs(buffer, lines, has_softmax);
+    emit_python_calculate_outputs(buffer, expression, lines, has_softmax);
     emit_python_batch_and_main(buffer);
 
     string out = buffer.str();
@@ -950,11 +969,13 @@ void ModelExpression::emit_python_activations(ostringstream& buffer, const strin
 }
 
 void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
+                                                    const string& expression,
                                                     const vector<string>& lines,
                                                     bool has_softmax) const
 {
     const vector<string> input_names = neural_network->get_input_feature_names();
-    const vector<string> fixed_output_names = fix_names(neural_network->get_output_feature_names(), "output_");
+    const vector<string> output_names = neural_network->get_output_feature_names();
+    const vector<string> fixed_output_names = fix_names(output_names, "output_");
 
     buffer << "\tdef calculate_outputs(self, inputs):\n";
 
@@ -976,6 +997,14 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
         replace(processed_line, ";", "");
         buffer << "\t\t" << processed_line << "\n";
     }
+
+    // Re-bind raw output names (or their intermediate aliases) to the
+    // fixed/reserved-keyword-safe names so the `outputs = [...]` list
+    // below references defined variables. Mirrors the C/JS emitters.
+    const vector<string> output_fixups =
+        fix_output_names(expression, output_names, ProgrammingLanguage::Python);
+    for (const string& l : output_fixups)
+        buffer << "\t\t" << l << "\n";
 
     string return_list = "[";
     for (size_t i = 0; i < fixed_output_names.size(); ++i)
@@ -1041,7 +1070,14 @@ string ModelExpression::replace_reserved_keywords(const string& input)
     };
 
     static const unordered_map<string, string> special_words = {
-        {"min", "mi_n"}, {"max", "ma_x"}, {"exp", "ex_p"}, {"tanh", "ta_nh"}
+        {"min", "mi_n"}, {"max", "ma_x"}, {"exp", "ex_p"}, {"tanh", "ta_nh"},
+        // Python reserved keywords most likely to appear as feature/output
+        // names in domain datasets (yield in chemistry, class/return in
+        // generic ML). Substring-match means "yields" → "yield_s" etc.;
+        // acceptable since the same mapping is applied everywhere the
+        // name is referenced.
+        {"yield", "yield_"}, {"class", "class_"}, {"return", "return_"},
+        {"lambda", "lambda_"}, {"global", "global_"}
     };
 
     string out;
@@ -1078,6 +1114,7 @@ vector<string> ModelExpression::fix_output_names(const string& str,
     stringstream ss(str);
 
     const size_t num_outputs = outputs.size();
+    tokens.reserve(num_outputs);
 
     while (getline(ss, token, '\n'))
     {
@@ -1095,26 +1132,39 @@ vector<string> ModelExpression::fix_output_names(const string& str,
         return {};
 
     const vector<string> fixed_outputs = fix_names(outputs, "output_");
+    out.reserve(num_outputs);
 
-    struct DeclFormat { const char* lhs_prefix; const char* rhs_prefix; const char* suffix; };
-    static const unordered_map<ProgrammingLanguage, DeclFormat> formats =
+    const char* lhs_prefix = "";
+    const char* rhs_prefix = "";
+    const char* suffix = "";
+
+    using enum ProgrammingLanguage;
+    switch (programming_language)
     {
-        {ProgrammingLanguage::C,          {"double ", "",  ";"}},
-        {ProgrammingLanguage::JavaScript, {"\tvar ",  "",  ";"}},
-        {ProgrammingLanguage::Python,     {"",        "",  ""}},
-        {ProgrammingLanguage::PHP,        {"$",       "$", ";"}}
-    };
-
-    const DeclFormat& fmt = formats.at(programming_language);
-    const size_t tokens_count = tokens.size();
+    case C:
+        lhs_prefix = "double ";
+        suffix = ";";
+        break;
+    case JavaScript:
+        lhs_prefix = "\tvar ";
+        suffix = ";";
+        break;
+    case Python:
+        break;
+    case PHP:
+        lhs_prefix = "$";
+        rhs_prefix = "$";
+        suffix = ";";
+        break;
+    }
 
     for (size_t i = 0; i < num_outputs; ++i)
     {
-        const string intermediate_var_name = get_first_word(tokens[tokens_count - num_outputs + i]);
+        const string intermediate_var_name = get_first_word(tokens[tokens.size() - num_outputs + i]);
         const string& final_output_name = fixed_outputs[i];
 
         if (final_output_name != intermediate_var_name)
-            out.push_back(fmt.lhs_prefix + final_output_name + " = " + fmt.rhs_prefix + intermediate_var_name + fmt.suffix);
+            out.push_back(string(lhs_prefix) + final_output_name + " = " + rhs_prefix + intermediate_var_name + suffix);
     }
 
     return out;

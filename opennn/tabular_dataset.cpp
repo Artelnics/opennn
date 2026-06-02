@@ -160,6 +160,9 @@ void TabularDataset::save_data() const
         for (Index j = 0; j < features_number; ++j)
             file << data(i, j) << (j == features_number - 1 ? "\n" : separator_string);
     }
+
+    if (!file)
+        throw runtime_error(format("Failed to write matrix data file: {}", data_path.string()));
 }
 
 void TabularDataset::save_data_binary(const filesystem::path& binary_data_file_name) const
@@ -167,7 +170,7 @@ void TabularDataset::save_data_binary(const filesystem::path& binary_data_file_n
     ofstream file(binary_data_file_name, ios::binary);
 
     if (!file.is_open())
-        throw runtime_error("Cannot open data binary file.");
+        throw runtime_error(format("Cannot open data binary file: {}", binary_data_file_name.string()));
 
     const Index columns_number = data.cols();
     const Index rows_number = data.rows();
@@ -176,6 +179,9 @@ void TabularDataset::save_data_binary(const filesystem::path& binary_data_file_n
     file.write(reinterpret_cast<const char*>(&columns_number), sizeof(Index));
     file.write(reinterpret_cast<const char*>(&rows_number), sizeof(Index));
     file.write(reinterpret_cast<const char*>(data.data()), total_elements * sizeof(float));
+
+    if (!file)
+        throw runtime_error(format("Failed to write data binary file: {}", binary_data_file_name.string()));
 }
 
 void TabularDataset::load_data_binary()
@@ -191,8 +197,23 @@ void TabularDataset::load_data_binary()
     file.read(reinterpret_cast<char*>(&columns_number), sizeof(Index));
     file.read(reinterpret_cast<char*>(&rows_number), sizeof(Index));
 
+    if (!file || columns_number < 0 || rows_number < 0)
+        throw runtime_error(format("Invalid binary data header: {}", data_path.string()));
+
+    const uintmax_t expected_bytes = uintmax_t(2 * sizeof(Index))
+                                   + uintmax_t(rows_number) * uintmax_t(columns_number) * uintmax_t(sizeof(float));
+    const uintmax_t file_bytes = filesystem::file_size(data_path);
+    if (file_bytes != expected_bytes)
+        throw runtime_error(format("Binary data file size mismatch for {} (got {} bytes, expected {} bytes).",
+                                   data_path.string(),
+                                   file_bytes,
+                                   expected_bytes));
+
     data.resize(rows_number, columns_number);
     file.read(reinterpret_cast<char*>(data.data()), rows_number * columns_number * sizeof(float));
+
+    if (!file)
+        throw runtime_error(format("Failed to read binary data file: {}", data_path.string()));
 
     set_matrix_storage();
 }
@@ -950,6 +971,11 @@ void TabularDataset::unuse_Tukey_outliers(const float cleaning_parameter)
     const vector<vector<Index>> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 
     vector<Index> flat_outliers;
+    const size_t outliers_count = static_cast<size_t>(transform_reduce(
+        outliers_indices.begin(), outliers_indices.end(), Index(0), plus<>{},
+        [](const vector<Index>& indices) { return static_cast<Index>(indices.size()); }));
+    flat_outliers.reserve(outliers_count);
+
     for (const auto& per_feature : outliers_indices)
         flat_outliers.insert(flat_outliers.end(), per_feature.begin(), per_feature.end());
 
@@ -1148,8 +1174,11 @@ void TabularDataset::read_csv()
             has_sample_ids = true;
     }
 
-    const size_t columns_number = header_tokens.size();
-    const size_t id_offset = has_sample_ids ? 1 : 0;
+    const Index columns_number = ssize(header_tokens);
+    const Index id_offset = has_sample_ids ? 1 : 0;
+    if (columns_number <= id_offset)
+        throw runtime_error("Data file contains no variables.");
+
     const Index variables_number = columns_number - id_offset;
     variables.resize(variables_number);
 
@@ -1204,6 +1233,8 @@ void TabularDataset::read_csv()
             ++rows_missing_values_number;
             for (size_t i = id_offset; i < tokens.size(); ++i)
             {
+                if (Index(i - id_offset) >= variables_number) break;
+
                 if (is_missing(tokens[i]))
                 {
                     ++missing_values_number;
@@ -1338,7 +1369,6 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> used_feature_indices = get_used_feature_indices();
-    const vector<Index> input_feature_indices = get_feature_indices("Input");
     const vector<Index> target_feature_indices = get_feature_indices("Target");
 
     if (used_sample_indices.empty() || used_feature_indices.empty())
@@ -1353,9 +1383,12 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
     const Index target_features_number = target_feature_indices.size();
     bool data_changed = false;
 
-    for (Index j = 0; j < features_number - target_features_number; ++j)
+    for (Index j = 0; j < features_number; ++j)
     {
-        const Index current_variable = input_feature_indices[j];
+        const Index current_variable = used_feature_indices[j];
+
+        if (ranges::find(target_feature_indices, current_variable) != target_feature_indices.end())
+            continue;
 
         for (Index i = 0; i < samples_number; ++i)
         {

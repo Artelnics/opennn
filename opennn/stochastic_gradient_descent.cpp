@@ -230,7 +230,7 @@ TrainingResults StochasticGradientDescent::train()
 
     // Optimization data
 
-    const Index parameters_number = loss->get_neural_network()->get_parameters_size();
+    const Index parameters_number = neural_network->get_parameters_size();
     OptimizerData optimization_data;
     if (momentum > 0.0f)
         optimization_data.set({Shape{parameters_number}}, neural_network->get_device());
