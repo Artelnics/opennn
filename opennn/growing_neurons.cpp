@@ -105,7 +105,20 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
             training_results = training_strategy->train();
 
             const float training_error = training_results.get_training_error();
-            const float validation_error = training_results.get_validation_error();
+
+            // Score each candidate size by the best (minimum) validation error it
+            // reached during training, not by get_validation_error() (the final
+            // epoch). Validation early-stopping is off by default
+            // (maximum_validation_failures == INT_MAX) and maximum_epochs is large,
+            // so every candidate trains far past its best-generalizing epoch into
+            // the over-trained / diverged tail. There the final-epoch validation
+            // error grows with model capacity, so comparing final-epoch errors makes
+            // selection collapse to the smallest network and underfit. The best-epoch
+            // value is the size's true achievable generalization and is what neuron
+            // selection must compare.
+            const float validation_error = training_results.validation_error_history.size() > 0
+                ? training_results.validation_error_history.minCoeff()
+                : training_results.get_validation_error();
 
             if (display)
                 cout << "Trial: " << trial+1 << "\n"

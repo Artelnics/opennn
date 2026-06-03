@@ -200,10 +200,12 @@ private:
     // size). Once the front reaches this many points, further iterations
     // are mostly Pareto-maintenance overhead with diminishing-return
     // refinement, so we stop and return the current front. Set to 0 to
-    // disable. Default 5000 chosen so the cap rarely fires on the
-    // IDC_benchmark MO entries used in matched-budget pymoo comparisons
-    // but reliably kills the runaway growth seen at long iteration runs.
-    Index max_pareto_number = 5000;
+    // disable. Default 10000 — chosen after the IDC paper's concrete_uci_mo
+    // hyperparameter sweep showed the natural front saturates well below
+    // this on the case-study MO problems (≈5500 points), so the cap is a
+    // safety upper bound that rarely fires; raising it further does not
+    // increase |PF| or strength_max.
+    Index max_pareto_number = 10000;
 
     float deformation_domain_factor = 1.0f;
 
