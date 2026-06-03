@@ -642,7 +642,12 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 {
     const Index layers_number = get_layers_number();
 
-    const Index first_layer_index = is_training
+    const bool training_uses_input_preprocessing =
+        is_training
+        && layers_number > 0
+        && layers[0]->get_name() == "Scaling4d";
+
+    const Index first_layer_index = is_training && !training_uses_input_preprocessing
                                         ? get_first_trainable_layer_index()
                                         : 0;
 
@@ -1875,7 +1880,12 @@ void NeuralNetwork::forward_propagate(const vector<TensorViewCuda>& input_views_
 {
     const Index layers_number = get_layers_number();
 
-    const Index first_layer_index = is_training
+    const bool training_uses_input_preprocessing =
+        is_training
+        && layers_number > 0
+        && layers[0]->get_name() == "Scaling4d";
+
+    const Index first_layer_index = is_training && !training_uses_input_preprocessing
                                         ? get_first_trainable_layer_index()
                                         : 0;
 

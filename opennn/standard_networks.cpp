@@ -215,15 +215,17 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
     // but for the standard image-classification template we'd rather keep the
     // baseline minimal — users can add hidden Dense layers from the editor when
     // their problem actually benefits from one.
+    const string output_activation = output_shape.count() == 1 ? "Sigmoid" : "Softmax";
+
     add_layer(make_unique<Dense<2>>(get_output_shape(),
                                     output_shape,
-                                    "Softmax",
+                                    output_activation,
                                     false,
                                     "classification_layer"));
 
 
     this->compile();
-    this->set_parameters_random();
+    this->set_parameters_glorot();
 
     const Index inputs_number = get_inputs_number();
     //input_names.resize(inputs_number);

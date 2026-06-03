@@ -453,6 +453,8 @@ void ImageDataset::image_variables_from_XML(const XMLElement* variables_element)
 
         variable_element = variable_element->NextSiblingElement("Variable");
     }
+
+    set_shape("Target", {get_features_number("Target")});
 }
 
 
@@ -573,27 +575,12 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 
 vector<Descriptives> ImageDataset::scale_features(const string&)
 {
-    const Index samples_number = get_samples_number();
-    const Index input_features_number = get_features_number("Input");
-
-    #pragma omp parallel for
-    for(Index i = 0; i < samples_number; i++)
-        for(Index j = 0; j < input_features_number; j++)
-            data(i, j) /= type(255);
-
     return {};
 }
 
 
 void ImageDataset::unscale_features(const string&)
 {
-    const Index samples_number = get_samples_number();
-    const Index input_features_number = get_features_number("Input");
-
-    #pragma omp parallel for
-    for(Index i = 0; i < samples_number; i++)
-        for(Index j = 0; j < input_features_number; j++)
-            data(i, j) *= type(255);
 }
 
 

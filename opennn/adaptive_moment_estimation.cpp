@@ -478,6 +478,7 @@ void AdaptiveMomentEstimation::to_XML(XMLPrinter& printer) const
     printer.OpenElement("AdaptiveMomentEstimation");
 
     add_xml_element(printer, "BatchSize", to_string(batch_size));
+    add_xml_element(printer, "LearningRate", to_string(double(learning_rate)));
     add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
     add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));
@@ -498,6 +499,11 @@ void AdaptiveMomentEstimation::from_XML(const XMLDocument& document)
         throw runtime_error("Adaptive moment estimation element is nullptr.\n");
 
     set_batch_size(read_xml_index(root_element, "BatchSize"));
+
+    if(const XMLElement* learning_rate_element = root_element->FirstChildElement("LearningRate"))
+        if(learning_rate_element->GetText())
+            set_learning_rate(type(stod(learning_rate_element->GetText())));
+
     set_loss_goal(read_xml_type(root_element, "LossGoal"));
     set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
