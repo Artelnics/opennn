@@ -25,13 +25,11 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     batch_size = new_batch_size;
     loss_pointer = new_loss;
 
-    if (!loss_pointer)
-        throw runtime_error("loss is not set.");
+    throw_if(!loss_pointer, "loss is not set.");
 
     neural_network = loss_pointer->get_neural_network();
 
-    if (!neural_network)
-        throw runtime_error("neural network is not set.");
+    throw_if(!neural_network, "neural network is not set.");
 
     error = 0.0f;
     accuracy = 0.0f;
@@ -123,8 +121,7 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
     {
         const auto& edges = consumer_edges[layer_index];
 
-        if (edges.empty()) continue;
-        if (edges.size() == 1) continue;
+        if (edges.size() <= 1) continue;
 
         const Shape output_shape = layers[layer_index]->get_output_shape();
         if (output_shape.empty()) continue;
@@ -208,9 +205,10 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         }
     }
 
-    delta_views.resize(layers_number);
+    layer_output_deltas.assign(size_t(layers_number), TensorView{});
+    backward_slots.assign(size_t(layers_number), {});
     for (Index i = 0; i < layers_number; ++i)
-        delta_views[i].resize(backward_specs[i].size() + 1);
+        backward_slots[i].assign(backward_specs[i].size() + 1, TensorView{});
 
     delta_pool.resize_bytes(peak_bytes, neural_network->get_device());
     delta_pool.setZero();
@@ -218,10 +216,17 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
     uint8_t* const base = delta_pool.as<uint8_t>();
 
     for (const auto& delta : deltas)
-        delta_views[delta.layer][delta.slot] = TensorView(base + delta.offset,
-                                                          delta.spec.shape,
-                                                          delta.spec.dtype,
-                                                          delta_pool.device_type);
+    {
+        TensorView view(base + delta.offset,
+                        delta.spec.shape,
+                        delta.spec.dtype,
+                        delta_pool.device_type);
+
+        if (delta.slot == 0)
+            layer_output_deltas[delta.layer] = view;
+        else
+            backward_slots[delta.layer][delta.slot] = view;
+    }
 
     for (Index i = first_trainable_layer_index; i < last_trainable_layer_index; ++i)
     {
@@ -230,10 +235,10 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
 
         const auto& [consumer_layer, input_position] = edges.front();
         const size_t slot = input_position + 1;
-        const auto& consumer_deltas = delta_views[consumer_layer];
+        const auto& consumer_deltas = backward_slots[consumer_layer];
 
         if (slot < consumer_deltas.size() && !consumer_deltas[slot].empty())
-            delta_views[i][0] = consumer_deltas[slot];
+            layer_output_deltas[i] = consumer_deltas[slot];
     }
 }
 
@@ -242,14 +247,14 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     const auto& edges = consumer_edges[layer_index];
     if (edges.size() <= 1) return;
 
-    TensorView& destination = delta_views[layer_index][0];
+    TensorView& destination = layer_output_deltas[layer_index];
     if (!destination.data) return;
 
     destination.setZero();
 
     for (const auto& [consumer_layer, input_position] : edges)
     {
-        const TensorView& source = delta_views[consumer_layer][1 + input_position];
+        const TensorView& source = backward_slots[consumer_layer][1 + input_position];
         if (!source.data || source.size() != destination.size()) continue;
 
         add(destination, source, destination);
@@ -258,12 +263,12 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
 
 TensorView& BackPropagation::get_output_delta()
 {
-    return delta_views[neural_network->get_last_trainable_layer_index()][0];
+    return layer_output_deltas[neural_network->get_last_trainable_layer_index()];
 }
 
 const TensorView& BackPropagation::get_output_delta() const
 {
-    return delta_views[neural_network->get_last_trainable_layer_index()][0];
+    return layer_output_deltas[neural_network->get_last_trainable_layer_index()];
 }
 
 void BackPropagation::print() const

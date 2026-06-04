@@ -55,26 +55,26 @@ struct Shape
 
     Shape(size_t new_rank, Index value) : rank(new_rank)
     {
-        if (new_rank > MaxRank)
-            throw runtime_error(format("Shape: rank {} exceeds MaxRank={}.",
-                                       new_rank, MaxRank));
+        throw_if(new_rank > MaxRank,
+                 format("Shape: rank {} exceeds MaxRank={}.",
+                        new_rank, MaxRank));
         fill_n(dims, rank, value);
     }
 
     Shape(initializer_list<Index> list) : rank(list.size())
     {
-        if (list.size() > MaxRank)
-            throw runtime_error(format("Shape: initializer rank {} exceeds MaxRank={}.",
-                                       list.size(), MaxRank));
+        throw_if(list.size() > MaxRank,
+                 format("Shape: initializer rank {} exceeds MaxRank={}.",
+                        list.size(), MaxRank));
         copy_n(list.begin(), rank, dims);
     }
 
     template<typename It>
     Shape(It first, It last) : rank(size_t(distance(first, last)))
     {
-        if (rank > MaxRank)
-            throw runtime_error(format("Shape: iterator-pair rank {} exceeds MaxRank={}.",
-                                       rank, MaxRank));
+        throw_if(rank > MaxRank,
+                 format("Shape: iterator-pair rank {} exceeds MaxRank={}.",
+                        rank, MaxRank));
         copy_n(first, rank, dims);
     }
 
@@ -83,8 +83,8 @@ struct Shape
     const Index& operator[](size_t i) const noexcept { return dims[i]; }
     Index&                     operator[](size_t i)       noexcept { return dims[i]; }
 
-    Index&                     back()       { if (rank == 0) throw runtime_error("Shape::back() on empty"); return dims[rank - 1]; }
-    const Index& back() const { if (rank == 0) throw runtime_error("Shape::back() on empty"); return dims[rank - 1]; }
+    Index&                     back()       { throw_if(rank == 0, "Shape::back() on empty"); return dims[rank - 1]; }
+    const Index& back() const { throw_if(rank == 0, "Shape::back() on empty"); return dims[rank - 1]; }
 
     bool empty() const noexcept { return rank == 0; }
 
@@ -436,13 +436,6 @@ inline TensorView& view_at_slot_or(vector<TensorView>& views,
                                    TensorView& fallback)
 {
     return i < slots.size() ? views[slots[i]] : fallback;
-}
-
-inline TensorView& view_at_slot_or(vector<vector<TensorView>>& views,
-                                   const vector<size_t>& slots, size_t i,
-                                   TensorView& fallback)
-{
-    return i < slots.size() ? views[slots[i]][0] : fallback;
 }
 
 template<typename T, size_t N>

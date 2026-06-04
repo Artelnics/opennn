@@ -218,8 +218,8 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, c
 
 void minkowski_error(const TensorView& input, const TensorView& target, float power, float& error, float* workspace_device)
 {
-    if (workspace_device)
-        throw runtime_error("minkowski_error: GPU implementation not available.");
+    throw_if(workspace_device,
+             "minkowski_error: GPU implementation not available.");
 
     (void)workspace_device;
     const Index batch_size = input.shape[0];
@@ -232,8 +232,8 @@ void minkowski_error_gradient(const TensorView& input,
                               const TensorView& input_delta,
                               bool on_gpu)
 {
-    if (on_gpu)
-        throw runtime_error("minkowski_error_gradient: GPU implementation not available.");
+    throw_if(on_gpu,
+             "minkowski_error_gradient: GPU implementation not available.");
 
     const Index batch_size = input.shape[0];
     const VectorR difference_vec = input.as_vector() - target.as_vector();
@@ -301,15 +301,15 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
     for (Index token_index = 0; token_index < token_count; ++token_index)
     {
         const Index target_index = static_cast<Index>(targets_flat(token_index));
-        if (target_index > 0 && target_index < vocabulary_size)
-        {
-            total_log_loss -= log(outputs_flat(token_index, target_index) + EPSILON);
-            ++active_tokens;
+        
+        if (target_index <= 0 || target_index >= vocabulary_size) continue;
 
-            Index best_index;
-            outputs_flat.row(token_index).maxCoeff(&best_index);
-            if (best_index == target_index) ++correct_tokens;
-        }
+        total_log_loss -= log(outputs_flat(token_index, target_index) + EPSILON);
+        ++active_tokens;
+
+        Index best_index;
+        outputs_flat.row(token_index).maxCoeff(&best_index);
+        if (best_index == target_index) ++correct_tokens;
     }
 
     active_tokens_out = active_tokens;

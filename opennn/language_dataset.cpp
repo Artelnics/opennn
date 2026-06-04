@@ -328,12 +328,12 @@ void LanguageDataset::load_documents(string& buffer,
 {
     ifstream file(data_path, ios::binary | ios::ate);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open file {}", data_path.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open file {}", data_path.string()));
 
     const auto file_size = file.tellg();
-    if (file_size < 0)
-        throw runtime_error(format("Cannot determine file size for {}", data_path.string()));
+    throw_if(file_size < 0,
+             format("Cannot determine file size for {}", data_path.string()));
 
     file.seekg(0);
 
@@ -341,8 +341,8 @@ void LanguageDataset::load_documents(string& buffer,
     if (file_size > 0)
         file.read(buffer.data(), file_size);
 
-    if (!file)
-        throw runtime_error(format("Cannot read file {}", data_path.string()));
+    throw_if(!file,
+             format("Cannot read file {}", data_path.string()));
 
     for (char& c : buffer)
         c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
@@ -375,8 +375,8 @@ void LanguageDataset::load_documents(string& buffer,
 
         if (fields.size() != 2)
         {
-            if (strict_field_count)
-                throw runtime_error("Line must contain two fields: input and target.");
+            throw_if(strict_field_count,
+                     "Line must contain two fields: input and target.");
             continue;
         }
 
@@ -502,8 +502,8 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
         for (Index sample = 0; sample < samples_number; ++sample)
         {
             const vector<string_view>& sample_tokens = target_document_tokens[sample];
-            if (sample_tokens.empty())
-                throw runtime_error("Unknown target value");
+            throw_if(sample_tokens.empty(),
+                     "Unknown target value");
 
             const string_view token = sample_tokens[0];
 
@@ -699,8 +699,8 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
         try
         {
             const Index sample_index = sample_indices[size_t(i)];
-            if (sample_index < 0 || sample_index >= ssize(offsets_table))
-                throw runtime_error("LanguageDataset input sample index is out of range.");
+            throw_if(sample_index < 0 || sample_index >= ssize(offsets_table),
+                     "LanguageDataset input sample index is out of range.");
 
             const auto& offsets = offsets_table[size_t(sample_index)];
             const Index n = min(Index(offsets[1]), seq_len);
@@ -721,8 +721,8 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
         }
     }
 
-    if (!omp_error.empty())
-        throw runtime_error(omp_error);
+    throw_if(!omp_error.empty(),
+             omp_error);
 }
 
 void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
@@ -744,8 +744,8 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
         try
         {
             const Index sample_index = sample_indices[size_t(i)];
-            if (sample_index < 0 || sample_index >= ssize(offsets_table))
-                throw runtime_error("LanguageDataset target sample index is out of range.");
+            throw_if(sample_index < 0 || sample_index >= ssize(offsets_table),
+                     "LanguageDataset target sample index is out of range.");
 
             const auto& offsets = offsets_table[size_t(sample_index)];
             const Index n = min(Index(offsets[3]), seq_len);
@@ -766,8 +766,8 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
         }
     }
 
-    if (!omp_error.empty())
-        throw runtime_error(omp_error);
+    throw_if(!omp_error.empty(),
+             omp_error);
 }
 
 void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
@@ -791,8 +791,8 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
             decoder_data[i * seq_len] = START_INDEX;
 
             const Index sample_index = sample_indices[size_t(i)];
-            if (sample_index < 0 || sample_index >= ssize(offsets_table))
-                throw runtime_error("LanguageDataset decoder sample index is out of range.");
+            throw_if(sample_index < 0 || sample_index >= ssize(offsets_table),
+                     "LanguageDataset decoder sample index is out of range.");
 
             const auto& offsets = offsets_table[size_t(sample_index)];
             const Index n = min(Index(offsets[3]), seq_len - 1);
@@ -813,8 +813,8 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
         }
     }
 
-    if (!omp_error.empty())
-        throw runtime_error(omp_error);
+    throw_if(!omp_error.empty(),
+             omp_error);
 }
 
 }

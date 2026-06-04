@@ -42,8 +42,8 @@ string shape_to_string(const Shape& shape, const string& separator)
 
     ostringstream buffer;
 
-    if (size == 0)
-        throw runtime_error("Dimensions size must be greater than 0.\n");
+    throw_if(size == 0,
+             "Dimensions size must be greater than 0.\n");
 
     for (Index i = 0; i < size; ++i)
         buffer << shape[i] << separator;
@@ -55,8 +55,8 @@ Shape string_to_shape(const string& text, const string& separator)
 {
     Shape result;
 
-    if (text.empty())
-        throw runtime_error("Input string must not be empty.\n");
+    throw_if(text.empty(),
+             "Input string must not be empty.\n");
 
     stringstream stream(text);
     string token;

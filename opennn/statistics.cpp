@@ -82,8 +82,8 @@ void Descriptives::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if (!file.is_open())
-        throw runtime_error("Cannot open descriptives data file.\n");
+    throw_if(!file.is_open(),
+             "Cannot open descriptives data file.\n");
 
     file << "Minimum: " << minimum << "\n"
          << "Maximum: " << maximum << "\n"
@@ -1161,9 +1161,9 @@ MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
     if (block.size() == 0)
         return starting_matrix;
 
-    if (starting_matrix.cols() != block.cols())
-        throw runtime_error(format("append_rows: Column mismatch ({} vs {})",
-                                   starting_matrix.cols(), block.cols()));
+    throw_if(starting_matrix.cols() != block.cols(),
+             format("append_rows: Column mismatch ({} vs {})",
+                    starting_matrix.cols(), block.cols()));
 
     MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
 
@@ -1178,8 +1178,8 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
     const Index rows_unfiltered = outputs.rows();
     const Index variables_to_filter = outputs.cols();
 
-    if (minimums.size() != variables_to_filter || maximums.size() != variables_to_filter)
-        throw runtime_error("build_feasible_rows_mask: Minimums/maximums size mismatch with outputs columns.\n");
+    throw_if(minimums.size() != variables_to_filter || maximums.size() != variables_to_filter,
+             "build_feasible_rows_mask: Minimums/maximums size mismatch with outputs columns.\n");
 
     vector<Index> feasible_rows;
     feasible_rows.reserve(static_cast<size_t>(rows_unfiltered));

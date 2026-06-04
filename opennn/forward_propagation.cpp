@@ -19,54 +19,58 @@ ForwardPropagation::ForwardPropagation(const Index new_batch_size, NeuralNetwork
 
 void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neural_network)
 {
+    throw_if(!new_neural_network, "neural network is not set.");
+
     batch_size = new_batch_size;
     neural_network = new_neural_network;
 
-    throw_if(!neural_network, "neural network is not set.");
-
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
-    views.resize(layers_number);
+    input_views.resize(layers_number);
+    forward_slots.resize(layers_number);
 
     const auto forward_specs = neural_network->get_forward_specs(batch_size);
 
-    if (const Index total_bytes = get_aligned_bytes(forward_specs); total_bytes > 0)
-    {
-        data.resize_bytes(total_bytes, neural_network->get_device());
-        data.setZero();
-    }
+    throw_if(forward_specs.size() != layers_number,
+             format("ForwardPropagation::set: forward specs size ({}) does not match layers number ({}).",
+                    forward_specs.size(), layers_number));
+
+    const auto& source_layers = neural_network->get_source_layers();
+
+    throw_if(source_layers.size() != layers_number,
+             format("ForwardPropagation::set: source layers size ({}) does not match layers number ({}).",
+                    source_layers.size(), layers_number));
+
+    const Index total_bytes = get_aligned_bytes(forward_specs);
+    data.resize_bytes(total_bytes, neural_network->get_device());
+    data.setZero();
 
     uint8_t* cursor = data.as<uint8_t>();
     for (size_t i = 0; i < layers_number; ++i)
     {
         const auto& specs = forward_specs[i];
-        views[i].assign(specs.size() + 1, vector<TensorView>(1));
+        forward_slots[i].assign(specs.size() + 1, TensorView{});
 
         for (size_t j = 0; j < specs.size(); ++j)
         {
             const auto& [shape, dtype] = specs[j];
             if (shape.size() == 0) continue;
-            views[i][j + 1][0] = TensorView(cursor, shape, dtype, data.device_type);
+            forward_slots[i][j + 1] = TensorView(cursor, shape, dtype, data.device_type);
             cursor += get_aligned_bytes(shape.size(), dtype);
         }
     }
 
-    const auto& source_layers = neural_network->get_source_layers();
     for (size_t i = 0; i < layers_number; ++i)
     {
         const vector<Index>& sources = source_layers[i];
-        views[i][0].resize(sources.size());
+        input_views[i].resize(sources.size());
 
         for (size_t j = 0; j < sources.size(); ++j)
         {
             const Index source_layer = sources[j];
-            if (source_layer < 0) continue;
+            if (source_layer < 0 || forward_specs[source_layer].empty()) continue;
 
-            const size_t output_slot = forward_specs[source_layer].size();
-            if (output_slot == 0) continue;
-
-            if (const TensorView& source = views[source_layer][output_slot][0]; !source.empty())
-                views[i][0][j] = source;
+            input_views[i][j] = forward_slots[source_layer].back();
         }
     }
 }
@@ -78,11 +82,11 @@ TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
     const Index layer_index = neural_network->get_last_trainable_layer_index();
     
     if (layer_index < 0
-        || size_t(layer_index) >= views.size()
-        || views[layer_index].size() <= 1)
+        || size_t(layer_index) >= forward_slots.size()
+        || forward_slots[layer_index].size() <= 1)
         return {};
 
-    const TensorView& v = views[layer_index].back()[0];
+    const TensorView& v = forward_slots[layer_index].back();
     return v.empty() ? TensorView{} : v;
 }
 
@@ -93,10 +97,10 @@ TensorView ForwardPropagation::get_outputs() const
     const Index last = Index(neural_network->get_layers_number()) - 1;
     
     if (last >= 0
-        && size_t(last) < views.size()
-        && views[last].size() > 1)
+        && size_t(last) < forward_slots.size()
+        && forward_slots[last].size() > 1)
     {
-        const TensorView& v = views[last].back()[0];
+        const TensorView& v = forward_slots[last].back();
         if (!v.empty()) return v;
     }
 
@@ -106,6 +110,12 @@ TensorView ForwardPropagation::get_outputs() const
 void ForwardPropagation::print() const
 {
     cout << "Neural network forward propagation" << "\n";
+
+    if (!neural_network)
+    {
+        cout << "Neural network is not set." << "\n";
+        return;
+    }
 
     const size_t layers_number = neural_network->get_layers_number();
 

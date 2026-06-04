@@ -148,8 +148,7 @@ private:
 
     void check_neural_network() const
     {
-        if (!neural_network)
-            throw runtime_error("Loss error: neural network is not set.");
+        throw_if(!neural_network, "Loss error: neural network is not set.");
     }
 
     void add_regularization(BackPropagation&) const;

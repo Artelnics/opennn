@@ -137,23 +137,23 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
     : transformer(new_transformer),
       language_dataset(new_language_dataset)
 {
-    if (!transformer.is_gpu())
-        throw runtime_error("TransformerDecoder requires GPU configuration.");
+    throw_if(!transformer.is_gpu(),
+             "TransformerDecoder requires GPU configuration.");
 
     const Index input_sequence_length   = transformer.get_input_sequence_length();
     const Index decoder_sequence_length = transformer.get_decoder_sequence_length();
 
-    if (input_sequence_length != language_dataset.get_maximum_input_sequence_length())
-        throw runtime_error(format("TransformerDecoder: input sequence length mismatch (transformer={}, dataset={}).",
-                                   input_sequence_length, language_dataset.get_maximum_input_sequence_length()));
-    if (decoder_sequence_length != language_dataset.get_maximum_target_sequence_length())
-        throw runtime_error(format("TransformerDecoder: decoder sequence length mismatch (transformer={}, dataset={}).",
-                                   decoder_sequence_length, language_dataset.get_maximum_target_sequence_length()));
+    throw_if(input_sequence_length != language_dataset.get_maximum_input_sequence_length(),
+             format("TransformerDecoder: input sequence length mismatch (transformer={}, dataset={}).",
+                    input_sequence_length, language_dataset.get_maximum_input_sequence_length()));
+    throw_if(decoder_sequence_length != language_dataset.get_maximum_target_sequence_length(),
+             format("TransformerDecoder: decoder sequence length mismatch (transformer={}, dataset={}).",
+                    decoder_sequence_length, language_dataset.get_maximum_target_sequence_length()));
 
-    if (language_dataset.get_input_vocabulary_map().empty())
-        throw runtime_error("TransformerDecoder: dataset input vocabulary is empty.");
-    if (language_dataset.get_target_inverse_vocabulary_map().empty())
-        throw runtime_error("TransformerDecoder: dataset target vocabulary is empty.");
+    throw_if(language_dataset.get_input_vocabulary_map().empty(),
+             "TransformerDecoder: dataset input vocabulary is empty.");
+    throw_if(language_dataset.get_target_inverse_vocabulary_map().empty(),
+             "TransformerDecoder: dataset target vocabulary is empty.");
 
 #ifdef OPENNN_HAS_CUDA
     transformer.copy_parameters_device();
@@ -201,16 +201,16 @@ void TransformerDecoder::identify_layer_ranges()
     const auto& layers = transformer.get_layers();
     const Index layers_number = static_cast<Index>(layers.size());
 
-    if (layers_number < 4)
-        throw runtime_error(format("TransformerDecoder: unexpected layer count ({}). Transformer must have at least decoder_embedding + encoder_embedding + cross_attention + output_projection.",
-                                   layers_number));
+    throw_if(layers_number < 4,
+             format("TransformerDecoder: unexpected layer count ({}). Transformer must have at least decoder_embedding + encoder_embedding + cross_attention + output_projection.",
+                    layers_number));
 
-    if (layers[0]->get_label() != "decoder_embedding")
-        throw runtime_error(format("TransformerDecoder: layer 0 expected to be 'decoder_embedding', found '{}'.", layers[0]->get_label()));
+    throw_if(layers[0]->get_label() != "decoder_embedding",
+             format("TransformerDecoder: layer 0 expected to be 'decoder_embedding', found '{}'.", layers[0]->get_label()));
     decoder_embedding_index = 0;
 
-    if (layers[1]->get_label() != "encoder_embedding")
-        throw runtime_error(format("TransformerDecoder: layer 1 expected to be 'encoder_embedding', found '{}'.", layers[1]->get_label()));
+    throw_if(layers[1]->get_label() != "encoder_embedding",
+             format("TransformerDecoder: layer 1 expected to be 'encoder_embedding', found '{}'.", layers[1]->get_label()));
     encoder_embedding_index = 1;
 
     const auto& source_layers = transformer.get_source_layers();
@@ -224,26 +224,26 @@ void TransformerDecoder::identify_layer_ranges()
             break;
         }
     }
-    if (first_cross_attention_index < 0)
-        throw runtime_error("TransformerDecoder: no 'cross_attention_*' layer found.");
+    throw_if(first_cross_attention_index < 0,
+             "TransformerDecoder: no 'cross_attention_*' layer found.");
 
     const vector<Index>& cross_sources = source_layers[first_cross_attention_index];
-    if (cross_sources.size() < 2 || cross_sources[1] < 0)
-        throw runtime_error("TransformerDecoder: first cross_attention layer must have 2 valid inputs (decoder, encoder).");
+    throw_if(cross_sources.size() < 2 || cross_sources[1] < 0,
+             "TransformerDecoder: first cross_attention layer must have 2 valid inputs (decoder, encoder).");
 
     encoder_last_index = cross_sources[1];
 
     decoder_first_index = encoder_last_index + 1;
-    if (decoder_first_index >= layers_number)
-        throw runtime_error("TransformerDecoder: decoder stack first index out of range.");
-    if (layers[decoder_first_index]->get_label() != "decoder_self_attention_1")
-        throw runtime_error(format("TransformerDecoder: layer after encoder expected to be 'decoder_self_attention_1', found '{}'.",
-                                   layers[decoder_first_index]->get_label()));
+    throw_if(decoder_first_index >= layers_number,
+             "TransformerDecoder: decoder stack first index out of range.");
+    throw_if(layers[decoder_first_index]->get_label() != "decoder_self_attention_1",
+             format("TransformerDecoder: layer after encoder expected to be 'decoder_self_attention_1', found '{}'.",
+                    layers[decoder_first_index]->get_label()));
 
     output_projection_index = layers_number - 1;
-    if (layers[output_projection_index]->get_label() != "output_projection")
-        throw runtime_error(format("TransformerDecoder: last layer expected to be 'output_projection', found '{}'.",
-                                   layers[output_projection_index]->get_label()));
+    throw_if(layers[output_projection_index]->get_label() != "output_projection",
+             format("TransformerDecoder: last layer expected to be 'output_projection', found '{}'.",
+                    layers[output_projection_index]->get_label()));
 }
 
 void TransformerDecoder::reset_per_prompt_state()

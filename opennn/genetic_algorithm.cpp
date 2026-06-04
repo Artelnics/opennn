@@ -78,8 +78,8 @@ void GeneticAlgorithm::set_maximum_inputs_number(const Index new_maximum_inputs_
 
 void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number)
 {
-    if (!training_strategy || !training_strategy->get_dataset())
-        throw runtime_error("training strategy or dataset is not set.");
+    throw_if(!training_strategy || !training_strategy->get_dataset(),
+             "training strategy or dataset is not set.");
 
     const Index genes_number = get_genes_number();
 
@@ -430,9 +430,9 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
     original_target_indices = dataset->get_variable_indices("Target");
     const vector<Index> time_variable_indices = dataset->get_variable_indices("Time");
 
-    if (!dataset->has_validation())
-        throw runtime_error("dataset has no validation samples. "
-                            "The genetic algorithm uses validation error to rank individuals.");
+    throw_if(!dataset->has_validation(),
+             "dataset has no validation samples. "
+             "The genetic algorithm uses validation error to rank individuals.");
 
     InputsSelectionResults input_selection_results(maximum_epochs);
 

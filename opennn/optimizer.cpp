@@ -241,8 +241,7 @@ void Optimizer::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open file: {}", file_name.string()));
+    throw_if(!file.is_open(), format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
     to_JSON(printer);
@@ -426,16 +425,13 @@ void Optimizer::apply_effective_num_workers(const NeuralNetwork& neural_network)
 
 Index Optimizer::get_maximum_batch_size() const
 {
-    if (!loss)
-        throw runtime_error("Optimizer::get_maximum_batch_size: loss is not set.");
+    throw_if(!loss, "Optimizer::get_maximum_batch_size: loss is not set.");
 
     const Dataset* dataset = loss->get_dataset();
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
-    if (!dataset)
-        throw runtime_error("Optimizer::get_maximum_batch_size: dataset is not set.");
-    if (!neural_network)
-        throw runtime_error("Optimizer::get_maximum_batch_size: neural network is not set.");
+    throw_if(!dataset, "Optimizer::get_maximum_batch_size: dataset is not set.");
+    throw_if(!neural_network, "Optimizer::get_maximum_batch_size: neural network is not set.");
 
     const Index training_samples_number = dataset->get_samples_number("Training");
     if (training_samples_number <= 0) return 0;
@@ -461,14 +457,14 @@ Index Optimizer::get_maximum_batch_size() const
 #if defined(__linux__) || defined(__unix__)
         const long pages = sysconf(_SC_AVPHYS_PAGES);
         const long page_size = sysconf(_SC_PAGE_SIZE);
-        if (pages <= 0 || page_size <= 0)
-            throw runtime_error("Optimizer::get_maximum_batch_size: sysconf failed to query available RAM.");
+        throw_if(pages <= 0 || page_size <= 0,
+                 "Optimizer::get_maximum_batch_size: sysconf failed to query available RAM.");
         available_bytes = Index(pages) * Index(page_size);
 #elif defined(_WIN32)
         MEMORYSTATUSEX status;
         status.dwLength = sizeof(status);
-        if (!GlobalMemoryStatusEx(&status))
-            throw runtime_error("Optimizer::get_maximum_batch_size: GlobalMemoryStatusEx failed.");
+        throw_if(!GlobalMemoryStatusEx(&status),
+                 "Optimizer::get_maximum_batch_size: GlobalMemoryStatusEx failed.");
         available_bytes = Index(status.ullAvailPhys);
 #else
         throw runtime_error("Optimizer::get_maximum_batch_size: no portable API to query available RAM on this platform.");
@@ -492,9 +488,9 @@ Index Optimizer::get_maximum_batch_size() const
     fixed_bytes += parameters_aligned_size * Index(sizeof(float));
     fixed_bytes += 2 * slot_aligned_size * Index(sizeof(float));
 
-    if (fixed_bytes >= budget)
-        throw runtime_error(format("Optimizer::get_maximum_batch_size: fixed memory ({} MiB) exceeds 80% budget ({} MiB).",
-                                   fixed_bytes / (1ull << 20), budget / (1ull << 20)));
+    throw_if(fixed_bytes >= budget,
+             format("Optimizer::get_maximum_batch_size: fixed memory ({} MiB) exceeds 80% budget ({} MiB).",
+                    fixed_bytes / (1ull << 20), budget / (1ull << 20)));
 
     const Index dynamic_budget = budget - fixed_bytes;
 
@@ -551,10 +547,10 @@ Index Optimizer::get_maximum_batch_size() const
         return total;
     };
 
-    if (bytes_for_batch(1) > dynamic_budget)
-        throw runtime_error(format("Optimizer::get_maximum_batch_size: not enough memory for batch_size=1. "
-                                   "Need {} MiB, available {} MiB.",
-                                   bytes_for_batch(1) / (1ull << 20), dynamic_budget / (1ull << 20)));
+    throw_if(bytes_for_batch(1) > dynamic_budget,
+             format("Optimizer::get_maximum_batch_size: not enough memory for batch_size=1. "
+                    "Need {} MiB, available {} MiB.",
+                    bytes_for_batch(1) / (1ull << 20), dynamic_budget / (1ull << 20)));
 
     Index lo = 1;
     Index hi = training_samples_number;
@@ -715,8 +711,8 @@ void Optimizer::set_scaling()
         }
     }
 
-    if (ssize(unscaling_layer_descriptives) != unscaling_outputs)
-        throw runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
+    throw_if(ssize(unscaling_layer_descriptives) != unscaling_outputs,
+             "Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
 
     unscaling_layer->set_descriptives(unscaling_layer_descriptives);
     unscaling_layer->set_scalers(unscaling_layer_scalers);
@@ -902,8 +898,7 @@ void TrainingResults::save(const filesystem::path& file_name) const
 
     ofstream file(file_name);
 
-    if (!file)
-        throw runtime_error(format("TrainingResults::save: cannot open {}", file_name.string()));
+    throw_if(!file, format("TrainingResults::save: cannot open {}", file_name.string()));
 
     for (Index i = 0; i < override_results.dimension(0); ++i)
         file << override_results(i,0) << "; " << override_results(i,1) << "\n";

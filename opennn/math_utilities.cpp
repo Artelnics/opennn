@@ -254,8 +254,8 @@ static void copy_cpu(const TensorView& source, TensorView& destination)
 
 void copy(const TensorView& source, TensorView& destination)
 {
-    if (source.size() != destination.size())
-        throw runtime_error("Tensor sizes mismatch in copy operation.");
+    throw_if(source.size() != destination.size(),
+             "Tensor sizes mismatch in copy operation.");
 
 #ifdef OPENNN_HAS_CUDA
     if (source.is_cuda()) { copy_gpu(source, destination); return; }
@@ -274,8 +274,8 @@ void add(const TensorView& input_1,
          const TensorView& input_2,
          TensorView& output)
 {
-    if (input_1.size() != input_2.size() || input_1.size() != output.size())
-        throw runtime_error("Tensor dimensions do not match.");
+    throw_if(input_1.size() != input_2.size() || input_1.size() != output.size(),
+             "Tensor dimensions do not match.");
 
 #ifdef OPENNN_HAS_CUDA
     if (input_1.is_cuda()) { add_gpu(input_1, input_2, output); return; }

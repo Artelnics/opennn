@@ -34,8 +34,8 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
     operators = {&value_projection, &key_projection, &query_projection,
                  &attention, &merge, &output_projection};
 
-    if (new_query_dimensions[1] != new_source_dimensions[1])
-        throw runtime_error("embedding dimension must be the same for query and source.");
+    throw_if(new_query_dimensions[1] != new_source_dimensions[1],
+             "embedding dimension must be the same for query and source.");
 
     set(new_query_dimensions[0],
         new_source_dimensions[0],
@@ -106,11 +106,10 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     if (new_heads_number == 0 && new_embedding_dimension == 0)
         return;
 
-    if (new_heads_number <= 0)
-        throw runtime_error("Heads number must be greater than 0.");
+    throw_if(new_heads_number <= 0, "Heads number must be greater than 0.");
 
-    if (new_embedding_dimension % new_heads_number != 0)
-        throw runtime_error("The embedding dimension must be divisible by the number of heads.");
+    throw_if(new_embedding_dimension % new_heads_number != 0,
+             "The embedding dimension must be divisible by the number of heads.");
 
     const Index head_dimension = get_head_dimension();
 
@@ -194,8 +193,8 @@ void MultiHeadAttention::set_sdpa_min_sequence_length(Index new_threshold)
 
 void MultiHeadAttention::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.rank != 2)
-        throw runtime_error("MultiHeadAttention input shape must have rank 2.");
+    throw_if(new_input_shape.rank != 2,
+             "MultiHeadAttention input shape must have rank 2.");
 
     if (heads_number <= 0)
     {

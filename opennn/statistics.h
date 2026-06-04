@@ -164,8 +164,8 @@ VectorR filter_missing_values(const VectorR&);
 template<typename InputType, typename TargetType>
 pair<InputType, TargetType> filter_missing_values(const InputType& x, const TargetType& y)
 {
-    if (x.rows() != y.rows())
-        throw runtime_error("filter_missing_values: row count mismatch");
+    throw_if(x.rows() != y.rows(),
+             "filter_missing_values: row count mismatch");
 
     vector<Index> valid;
     valid.reserve(x.rows());

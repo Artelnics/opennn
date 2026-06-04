@@ -81,28 +81,23 @@ void Pooling::set(const Shape& new_input_shape,
                   const string& new_pooling_method,
                   const string& new_label)
 {
-    if (new_pool_dimensions.rank != 2)
-        throw runtime_error("Pool shape must be 2");
+    throw_if(new_pool_dimensions.rank != 2, "Pool shape must be 2");
 
-    if (new_stride_shape.rank != 2)
-        throw runtime_error("Stride shape must be 2");
+    throw_if(new_stride_shape.rank != 2, "Stride shape must be 2");
 
-    if (new_padding_dimensions.rank != 2)
-        throw runtime_error("Padding shape must be 2");
+    throw_if(new_padding_dimensions.rank != 2, "Padding shape must be 2");
 
-    if (new_stride_shape[0] <= 0 || new_stride_shape[1] <= 0)
-        throw runtime_error("Stride must be positive.");
+    throw_if(new_stride_shape[0] <= 0 || new_stride_shape[1] <= 0, "Stride must be positive.");
 
-    if (new_padding_dimensions[0] < 0 || new_padding_dimensions[1] < 0)
-        throw runtime_error("Padding shape cannot be negative");
+    throw_if(new_padding_dimensions[0] < 0 || new_padding_dimensions[1] < 0, "Padding shape cannot be negative");
 
-    if (new_pool_dimensions[0] > new_input_shape[0] + 2 * new_padding_dimensions[0]
-     || new_pool_dimensions[1] > new_input_shape[1] + 2 * new_padding_dimensions[1])
-        throw runtime_error("Pool shape cannot be bigger than padded input shape");
+    throw_if(new_pool_dimensions[0] > new_input_shape[0] + 2 * new_padding_dimensions[0]
+             || new_pool_dimensions[1] > new_input_shape[1] + 2 * new_padding_dimensions[1],
+             "Pool shape cannot be bigger than padded input shape");
 
-    if (new_stride_shape[0] > new_input_shape[0] + 2 * new_padding_dimensions[0]
-     || new_stride_shape[1] > new_input_shape[1] + 2 * new_padding_dimensions[1])
-        throw runtime_error("Stride shape cannot be bigger than padded input shape");
+    throw_if(new_stride_shape[0] > new_input_shape[0] + 2 * new_padding_dimensions[0]
+             || new_stride_shape[1] > new_input_shape[1] + 2 * new_padding_dimensions[1],
+             "Stride shape cannot be bigger than padded input shape");
 
     input_height    = new_input_shape[0];
     input_width     = new_input_shape[1];
@@ -126,8 +121,7 @@ void Pooling::set(const Shape& new_input_shape,
 
 void Pooling::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.rank != 3)
-        throw runtime_error("Input shape must be 3");
+    throw_if(new_input_shape.rank != 3, "Input shape must be 3");
 
     input_height = new_input_shape[0];
     input_width = new_input_shape[1];
@@ -146,8 +140,7 @@ void Pooling::set_pool_size(Index new_pool_rows_number, Index new_pool_columns_n
 
 void Pooling::set_row_stride(Index new_row_stride)
 {
-    if (new_row_stride <= 0)
-        throw runtime_error("Row stride must be positive.");
+    throw_if(new_row_stride <= 0, "Row stride must be positive.");
 
     row_stride = new_row_stride;
 
@@ -156,8 +149,7 @@ void Pooling::set_row_stride(Index new_row_stride)
 
 void Pooling::set_column_stride(Index new_column_stride)
 {
-    if (new_column_stride <= 0)
-        throw runtime_error("Column stride must be positive.");
+    throw_if(new_column_stride <= 0, "Column stride must be positive.");
 
     column_stride = new_column_stride;
 
@@ -166,8 +158,7 @@ void Pooling::set_column_stride(Index new_column_stride)
 
 void Pooling::set_padding_height(Index new_padding_height)
 {
-    if (new_padding_height < 0)
-        throw runtime_error("Padding height cannot be negative.");
+    throw_if(new_padding_height < 0, "Padding height cannot be negative.");
 
     padding_height = new_padding_height;
 
@@ -176,8 +167,7 @@ void Pooling::set_padding_height(Index new_padding_height)
 
 void Pooling::set_padding_width(Index new_padding_width)
 {
-    if (new_padding_width < 0)
-        throw runtime_error("Padding width cannot be negative.");
+    throw_if(new_padding_width < 0, "Padding width cannot be negative.");
 
     padding_width = new_padding_width;
 

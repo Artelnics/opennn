@@ -48,45 +48,39 @@ void NeuronSelection::check() const
 {
     // Optimization algorithm
 
-    if (!training_strategy)
-        throw runtime_error("training strategy is not set.");
+    throw_if(!training_strategy, "training strategy is not set.");
 
     // Loss
 
     const Loss* loss = training_strategy->get_loss();
 
-    if (!loss)
-        throw runtime_error("loss is not set.");
+    throw_if(!loss, "loss is not set.");
 
     // Neural network
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
-    if (!neural_network)
-        throw runtime_error("neural network is not set.");
+    throw_if(!neural_network, "neural network is not set.");
 
-    if (neural_network->get_layers_number() == 1)
-        throw runtime_error("Number of layers in neural network must be greater than 1.\n");
+    throw_if(neural_network->get_layers_number() == 1,
+             "Number of layers in neural network must be greater than 1.\n");
 
     // Dataset
 
     const Dataset* dataset = loss->get_dataset();
 
-    if (!dataset)
-        throw runtime_error("dataset is not set.");
+    throw_if(!dataset, "dataset is not set.");
 
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
-    if (validation_samples_number == 0)
-        throw runtime_error("Number of validation samples is zero.\n");
+    throw_if(validation_samples_number == 0, "Number of validation samples is zero.\n");
 }
 
 void NeuronSelection::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open file: {}", file_name.string()));
+    throw_if(!file.is_open(), format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
     to_JSON(printer);

@@ -32,8 +32,7 @@ void Addition::set(const Shape& new_input_shape, const string& new_label, Index 
 {
     check_rank(new_input_shape, {2, 3}, "Addition", "input");
 
-    if (new_inputs_number < 2)
-        throw runtime_error("Addition: inputs_number must be >= 2.");
+    throw_if(new_inputs_number < 2, "Addition: inputs_number must be >= 2.");
 
     input_shape = new_input_shape;
     inputs_number = new_inputs_number;

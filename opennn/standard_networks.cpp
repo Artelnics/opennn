@@ -247,8 +247,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                                        const Shape& complexity_dimensions,
                                                        const Shape& output_shape) : NeuralNetwork()
 {
-    if (input_shape.rank != 3)
-        throw runtime_error("Input shape size is not 3.");
+    throw_if(input_shape.rank != 3, "Input shape size is not 3.");
 
     auto scaling_layer = make_unique<Scaling>(input_shape);
     scaling_layer->set_scalers("ImageMinMax");
@@ -308,12 +307,10 @@ ResNet::ResNet(const Shape& input_shape,
                const Shape& output_shape,
                bool use_bottleneck) : NeuralNetwork()
 {
-    if (input_shape.rank != 3)
-        throw runtime_error("ResNet: input shape must be rank 3 (H, W, C).");
-    if (Index(blocks_per_stage.size()) != Index(initial_filters.rank))
-        throw runtime_error("ResNet: blocks_per_stage and initial_filters must have the same size.");
-    if (blocks_per_stage.empty())
-        throw runtime_error("ResNet: at least one stage is required.");
+    throw_if(input_shape.rank != 3, "ResNet: input shape must be rank 3 (H, W, C).");
+    throw_if(Index(blocks_per_stage.size()) != Index(initial_filters.rank),
+             "ResNet: blocks_per_stage and initial_filters must have the same size.");
+    throw_if(blocks_per_stage.empty(), "ResNet: at least one stage is required.");
 
     constexpr Index bottleneck_expansion = 4;
 
@@ -449,18 +446,17 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                          ClassActivation class_activation,
                          HeadStyle head_style) : NeuralNetwork()
 {
-    if (input_shape.rank != 3)
-        throw runtime_error("YoloNetwork: input shape must be rank 3 (H, W, C).");
-    if (classes_number <= 0 || anchors.empty())
-        throw runtime_error("YoloNetwork: classes_number and anchors must be valid.");
-    if (input_shape[0] != grid_size * 32 || input_shape[1] != grid_size * 32)
-        throw runtime_error("YoloNetwork: this minimal builder expects input H/W == grid_size * 32.");
+    throw_if(input_shape.rank != 3, "YoloNetwork: input shape must be rank 3 (H, W, C).");
+    throw_if(classes_number <= 0 || anchors.empty(),
+             "YoloNetwork: classes_number and anchors must be valid.");
+    throw_if(input_shape[0] != grid_size * 32 || input_shape[1] != grid_size * 32,
+             "YoloNetwork: this minimal builder expects input H/W == grid_size * 32.");
     if (head_style == HeadStyle::FPN)
     {
-        if (backbone != Backbone::DarknetTiny)
-            throw runtime_error("YoloNetwork: HeadStyle::FPN requires Backbone::DarknetTiny.");
-        if (ssize(anchors) != 9)
-            throw runtime_error("YoloNetwork: HeadStyle::FPN expects exactly 9 anchors (3 per scale).");
+        throw_if(backbone != Backbone::DarknetTiny,
+                 "YoloNetwork: HeadStyle::FPN requires Backbone::DarknetTiny.");
+        throw_if(ssize(anchors) != 9,
+                 "YoloNetwork: HeadStyle::FPN expects exactly 9 anchors (3 per scale).");
     }
 
     const Shape stride{1, 1};
@@ -717,18 +713,18 @@ Transformer::Transformer(Index input_sequence_length,
                          Index layers_number)
     : NeuralNetwork()
 {
-    if (input_sequence_length == 0 ||
-        decoder_sequence_length == 0 ||
-        input_vocabulary_size == 0 ||
-        output_vocabulary_size == 0 ||
-        embedding_dimension == 0 ||
-        heads_number == 0 ||
-        feed_forward_dimension == 0 ||
-        layers_number == 0)
-        throw runtime_error("Transformer: all dimensions must be > 0.");
+    throw_if(input_sequence_length == 0 ||
+             decoder_sequence_length == 0 ||
+             input_vocabulary_size == 0 ||
+             output_vocabulary_size == 0 ||
+             embedding_dimension == 0 ||
+             heads_number == 0 ||
+             feed_forward_dimension == 0 ||
+             layers_number == 0,
+             "Transformer: all dimensions must be > 0.");
 
-    if (embedding_dimension % heads_number != 0)
-        throw runtime_error("Transformer: embedding_dimension must be divisible by heads_number.");
+    throw_if(embedding_dimension % heads_number != 0,
+             "Transformer: embedding_dimension must be divisible by heads_number.");
 
     auto add_residual_and_norm = [&](const Shape& shape,
                                      const string& add_label,

@@ -122,11 +122,11 @@ ImageDataset::ImageDataset(const Index new_samples_number,
     if (new_samples_number == 0)
         return;
 
-    if (new_input_shape.rank != 3)
-        throw runtime_error("Input shape is not 3");
+    throw_if(new_input_shape.rank != 3,
+             "Input shape is not 3");
 
-    if (new_target_shape.rank != 1)
-        throw runtime_error("Target shape is not 1");
+    throw_if(new_target_shape.rank != 1,
+             "Target shape is not 1");
 
     input_shape = new_input_shape;
     target_shape = new_target_shape;
@@ -163,10 +163,10 @@ ImageDataset::ImageDataset(const Index new_samples_number,
 void ImageDataset::set_data_random()
 {
     const Index samples_number = ssize(labels_ram);
-    if (samples_number == 0)
-        throw runtime_error("ImageDataset::set_data_random: dataset has no samples; use the (samples, input_shape, target_shape) constructor first.");
-    if (record_bytes == 0 || input_shape.rank != 3)
-        throw runtime_error("ImageDataset::set_data_random: input_shape is not set.");
+    throw_if(samples_number == 0,
+             "ImageDataset::set_data_random: dataset has no samples; use the (samples, input_shape, target_shape) constructor first.");
+    throw_if(record_bytes == 0 || input_shape.rank != 3,
+             "ImageDataset::set_data_random: input_shape is not set.");
 
     cache_reader.close();
 
@@ -229,8 +229,8 @@ void ImageDataset::set_input_scaling(const vector<Descriptives>& descriptives,
                                      float max_range)
 {
     const Index channels = get_channels_number();
-    if (ssize(descriptives) != channels || ssize(scalers) != channels)
-        throw runtime_error("ImageDataset::set_input_scaling: channel count mismatch.");
+    throw_if(ssize(descriptives) != channels || ssize(scalers) != channels,
+             "ImageDataset::set_input_scaling: channel count mismatch.");
 
     input_scale.resize(size_t(channels));
     input_offset.resize(size_t(channels));
@@ -481,8 +481,8 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     const Index folders_number = directory_path.size();
 
-    if (folders_number < 2)
-        throw runtime_error("ImageDataset: image classification requires at least two class folders.");
+    throw_if(folders_number < 2,
+             "ImageDataset: image classification requires at least two class folders.");
 
     vector<filesystem::path> paths;
     vector<Index> labels;
@@ -504,8 +504,8 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     const Index samples_number = paths.size();
 
-    if (samples_number == 0)
-        throw runtime_error("No images in folder.");
+    throw_if(samples_number == 0,
+             "No images in folder.");
 
     const Tensor3 first_image = load_image(paths[0]);
 
@@ -513,8 +513,8 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     Index width = first_image.dimension(1);
     const Index channels = first_image.dimension(2);
 
-    if (new_input_shape[2] != channels && new_input_shape[2] != 0)
-        throw runtime_error("Different number of channels in new_input_shape.");
+    throw_if(new_input_shape[2] != channels && new_input_shape[2] != 0,
+             "Different number of channels in new_input_shape.");
 
     if (new_input_shape[0] != 0 && new_input_shape[1] != 0)
     {
@@ -646,8 +646,8 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
             buf.resize(size_t(pixels_per_image));
 
             const Index sample_index = sample_indices[size_t(i)];
-            if (sample_index < 0 || sample_index >= ssize(labels_ram))
-                throw runtime_error("ImageDataset input sample index is out of range.");
+            throw_if(sample_index < 0 || sample_index >= ssize(labels_ram),
+                     "ImageDataset input sample index is out of range.");
 
             const uint64_t off = uint64_t(sizeof(ImageCacheHeader))
                                 + uint64_t(sample_index) * record_bytes;
@@ -665,8 +665,8 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
         }
     }
 
-    if (!omp_error.empty())
-        throw runtime_error(omp_error);
+    throw_if(!omp_error.empty(),
+             omp_error);
 
     if (apply_augmentation)
         augment_inputs(input_data, batch_size);
@@ -705,15 +705,15 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
     if (targets_number == 0) return;
 
     for (const Index sample_index : sample_indices)
-        if (sample_index < 0 || sample_index >= ssize(labels_ram))
-            throw runtime_error("ImageDataset target sample index is out of range.");
+        throw_if(sample_index < 0 || sample_index >= ssize(labels_ram),
+                 "ImageDataset target sample index is out of range.");
 
     if (targets_number > 1)
         for (const Index sample_index : sample_indices)
         {
             const int32_t label = labels_ram[size_t(sample_index)];
-            if (label < 0 || label >= targets_number)
-                throw runtime_error("ImageDataset target label is out of range.");
+            throw_if(label < 0 || label >= targets_number,
+                     "ImageDataset target label is out of range.");
         }
 
     if (targets_number == 1)

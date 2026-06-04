@@ -129,8 +129,8 @@ void shuffle(VectorB& vector_to_shuffle)
 
 Index get_random_element(const vector<Index>& values)
 {
-    if (values.empty())
-        throw runtime_error("get_random_element: Input vector is empty.");
+    throw_if(values.empty(),
+             "get_random_element: Input vector is empty.");
 
     lock_guard<mutex> lock(rng_mutex);
     uniform_int_distribution<size_t> distribution(0, values.size() - 1);

@@ -60,12 +60,12 @@ void read_image_file(const filesystem::path& path, vector<uint8_t>& buffer)
     const string path_str = path.string();
 
     ifstream file(path, ios::binary | ios::ate);
-    if (!file)
-        throw runtime_error(format("Cannot open image file: {}", path_str));
+    throw_if(!file,
+             format("Cannot open image file: {}", path_str));
 
     const streamsize size = file.tellg();
-    if (size < 8)
-        throw runtime_error(format("File too small to be an image: {}", path_str));
+    throw_if(size < 8,
+             format("File too small to be an image: {}", path_str));
 
     file.seekg(0, ios::beg);
 
@@ -74,8 +74,8 @@ void read_image_file(const filesystem::path& path, vector<uint8_t>& buffer)
         buffer.reserve(byte_count);
     buffer.resize(byte_count);
 
-    if (!file.read(reinterpret_cast<char*>(buffer.data()), size))
-        throw runtime_error(format("Error reading image file: {}", path_str));
+    throw_if(!file.read(reinterpret_cast<char*>(buffer.data()), size),
+             format("Error reading image file: {}", path_str));
 }
 
 bool has_png_signature(const vector<uint8_t>& buffer)
@@ -99,22 +99,22 @@ uint32_t read_be32(const uint8_t* p)
 
 BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str)
 {
-    if (buffer.size() < 54)
-        throw runtime_error(format("File too small to be a BMP: {}", path_str));
+    throw_if(buffer.size() < 54,
+             format("File too small to be a BMP: {}", path_str));
 
     auto read_u16 = [&](int offset) { return static_cast<uint16_t>(buffer[offset] | (buffer[offset+1] << 8)); };
     auto read_u32 = [&](int offset) { return static_cast<uint32_t>(buffer[offset] | (buffer[offset+1] << 8) | (buffer[offset+2] << 16) | (buffer[offset+3] << 24)); };
     auto read_s32 = [&](int offset) { return static_cast<int32_t>(read_u32(offset)); };
 
-    if (read_u16(0) != 0x4D42)
-        throw runtime_error(format("Not a BMP file (invalid signature 'BM'): {}", path_str));
+    throw_if(read_u16(0) != 0x4D42,
+             format("Not a BMP file (invalid signature 'BM'): {}", path_str));
 
     BmpHeader h;
     h.bfOffBits = read_u32(10);
     const uint32_t biSize = read_u32(14);
 
-    if (biSize != 40)
-        throw runtime_error(format("Unsupported BMP DIB header size in file: {}", path_str));
+    throw_if(biSize != 40,
+             format("Unsupported BMP DIB header size in file: {}", path_str));
 
     const int32_t biWidth = read_s32(18);
     const int32_t biHeight_signed = read_s32(22);
@@ -123,24 +123,24 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
     const uint32_t biCompression = read_u32(30);
     const uint32_t biClrUsed = read_u32(46);
 
-    if (biWidth <= 0 || biHeight_signed == 0 || biPlanes != 1 || biCompression != 0)
-        throw runtime_error(format("Invalid or unsupported BMP format in file: {}", path_str));
-    if (h.biBitCount != 8 && h.biBitCount != 24 && h.biBitCount != 32)
-        throw runtime_error(format("Unsupported BMP bit count: {}", h.biBitCount));
+    throw_if(biWidth <= 0 || biHeight_signed == 0 || biPlanes != 1 || biCompression != 0,
+             format("Invalid or unsupported BMP format in file: {}", path_str));
+    throw_if(h.biBitCount != 8 && h.biBitCount != 24 && h.biBitCount != 32,
+             format("Unsupported BMP bit count: {}", h.biBitCount));
 
     h.is_grayscale = false;
 
     if (h.biBitCount == 8)
     {
         const uint32_t num_palette_colors = biClrUsed ? biClrUsed : 256;
-        if (num_palette_colors > 256)
-            throw runtime_error("Invalid palette size for 8-bit BMP.");
+        throw_if(num_palette_colors > 256,
+                 "Invalid palette size for 8-bit BMP.");
 
         h.palette.resize(num_palette_colors);
         h.is_grayscale = true;
 
-        if (size_t(14 + biSize) + size_t(num_palette_colors) * 4 > buffer.size())
-            throw runtime_error(format("Corrupted BMP: palette exceeds file size: {}", path_str));
+        throw_if(size_t(14 + biSize) + size_t(num_palette_colors) * 4 > buffer.size(),
+                 format("Corrupted BMP: palette exceeds file size: {}", path_str));
 
         uint32_t pal_offset = 14 + biSize;
         for (uint32_t i = 0; i < num_palette_colors; ++i)
@@ -162,8 +162,8 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
     h.bytes_per_pixel = (h.biBitCount == 32) ? 4 : (h.biBitCount == 24) ? 3 : 1;
     h.row_stride = ((h.width * h.bytes_per_pixel + 3) / 4) * 4;
 
-    if (h.bfOffBits + h.row_stride * h.height > Index(buffer.size()))
-        throw runtime_error("Corrupted BMP: Pixel data exceeds file size.");
+    throw_if(h.bfOffBits + h.row_stride * h.height > Index(buffer.size()),
+             "Corrupted BMP: Pixel data exceeds file size.");
 
     return h;
 }
@@ -228,8 +228,8 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
                            vector<uint8_t>& compressed,
                            const string& path_str)
 {
-    if (!has_png_signature(buffer))
-        throw runtime_error(format("Not a PNG file: {}", path_str));
+    throw_if(!has_png_signature(buffer),
+             format("Not a PNG file: {}", path_str));
 
     compressed.clear();
 
@@ -242,8 +242,8 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
         const uint32_t length = read_be32(buffer.data() + pos);
         pos += 4;
 
-        if (pos + 4 + size_t(length) + 4 > buffer.size())
-            throw runtime_error(format("Corrupted PNG chunk in file: {}", path_str));
+        throw_if(pos + 4 + size_t(length) + 4 > buffer.size(),
+                 format("Corrupted PNG chunk in file: {}", path_str));
 
         const string_view type(reinterpret_cast<const char*>(buffer.data() + pos), 4);
         pos += 4;
@@ -251,8 +251,8 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
 
         if (type == "IHDR")
         {
-            if (length != 13)
-                throw runtime_error(format("Invalid PNG IHDR in file: {}", path_str));
+            throw_if(length != 13,
+                     format("Invalid PNG IHDR in file: {}", path_str));
 
             h.width = Index(read_be32(data));
             h.height = Index(read_be32(data + 4));
@@ -296,11 +296,11 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
         pos += size_t(length) + 4;
     }
 
-    if (!saw_ihdr || compressed.empty())
-        throw runtime_error(format("Incomplete PNG file: {}", path_str));
+    throw_if(!saw_ihdr || compressed.empty(),
+             format("Incomplete PNG file: {}", path_str));
 
-    if (h.color_type == 3 && (h.palette.empty() || h.palette.size() % 3 != 0))
-        throw runtime_error(format("PNG palette missing or invalid in file: {}", path_str));
+    throw_if(h.color_type == 3 && (h.palette.empty() || h.palette.size() % 3 != 0),
+             format("PNG palette missing or invalid in file: {}", path_str));
 
     return h;
 }
@@ -319,8 +319,8 @@ void inflate_png_data_into(const vector<uint8_t>& compressed,
     const int zlib_status = uncompress(inflated.data(), &actual_size,
                                        compressed.data(), uLong(compressed.size()));
 
-    if (zlib_status != Z_OK || actual_size != expected_size)
-        throw runtime_error(format("Cannot decompress PNG image: {}", path_str));
+    throw_if(zlib_status != Z_OK || actual_size != expected_size,
+             format("Cannot decompress PNG image: {}", path_str));
 }
 
 void unfilter_png_rows_into(const vector<uint8_t>& inflated,
@@ -418,8 +418,8 @@ static void decode_png_palette(const PngHeader& h,
             const Index out = (y * h.width + x) * h.channels;
 
             const size_t pal = size_t(p[0]) * 3;
-            if (pal + 2 >= h.palette.size())
-                throw runtime_error("PNG palette index out of range.");
+            throw_if(pal + 2 >= h.palette.size(),
+                     "PNG palette index out of range.");
 
             dst[out + 0] = float(h.palette[pal + 0]) * scale;
             dst[out + 1] = float(h.palette[pal + 1]) * scale;
@@ -514,8 +514,8 @@ JpegHeader decode_jpeg_pixels(const vector<uint8_t>& buffer,
     jpeg_create_decompress(&cinfo);
     jpeg_mem_src(&cinfo, buffer.data(), buffer.size());
 
-    if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK)
-        throw runtime_error(format("JPEG: missing or corrupt header in {}", path_for_error));
+    throw_if(jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK,
+             format("JPEG: missing or corrupt header in {}", path_for_error));
 
     cinfo.out_color_space = (cinfo.num_components == 1) ? JCS_GRAYSCALE : JCS_RGB;
     jpeg_start_decompress(&cinfo);
@@ -634,8 +634,8 @@ void load_image(const filesystem::path& path,
         width = h.width;
         channels = h.channels;
 
-        if (channels != expected_channels)
-            throw runtime_error(format("Channel mismatch in image: {}", path.string()));
+        throw_if(channels != expected_channels,
+                 format("Channel mismatch in image: {}", path.string()));
 
         if (height == expected_height && width == expected_width)
         {
@@ -665,8 +665,8 @@ void load_image(const filesystem::path& path,
         width = h.width;
         channels = h.channels;
 
-        if (channels != expected_channels)
-            throw runtime_error(format("Channel mismatch in image: {}", path.string()));
+        throw_if(channels != expected_channels,
+                 format("Channel mismatch in image: {}", path.string()));
 
         if (height == expected_height && width == expected_width)
         {
@@ -687,8 +687,8 @@ void load_image(const filesystem::path& path,
         return;
     }
 
-    if (!has_jpeg_signature(buffer))
-        throw runtime_error(format("Unsupported image file: {}", path.string()));
+    throw_if(!has_jpeg_signature(buffer),
+             format("Unsupported image file: {}", path.string()));
 
     Index jh = 0, jw = 0, jc = 0;
     {
@@ -711,8 +711,8 @@ void load_image(const filesystem::path& path,
         jpeg_destroy_decompress(&cinfo);
     }
 
-    if (jc != expected_channels)
-        throw runtime_error(format("Channel mismatch in image: {}", path.string()));
+    throw_if(jc != expected_channels,
+             format("Channel mismatch in image: {}", path.string()));
 
     if (jh == expected_height && jw == expected_width)
     {

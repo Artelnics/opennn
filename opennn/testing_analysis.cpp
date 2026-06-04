@@ -28,11 +28,11 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, Dataset* new
 
 void TestingAnalysis::check() const
 {
-    if (!neural_network)
-        throw runtime_error("neural network is not set.");
+    throw_if(!neural_network,
+             "neural network is not set.");
 
-    if (!dataset)
-        throw runtime_error("dataset is not set.");
+    throw_if(!dataset,
+             "dataset is not set.");
 }
 
 Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const MatrixR& target, const MatrixR& output) const
@@ -67,8 +67,8 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     const Index testing_samples_number = dataset->get_samples_number("Testing");
 
-    if (testing_samples_number == 0)
-        throw runtime_error("Number of testing samples is zero.\n");
+    throw_if(testing_samples_number == 0,
+             "Number of testing samples is zero.\n");
 
 
     const Index outputs_number = neural_network->get_outputs_number();
@@ -103,8 +103,8 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
 
     const Index samples_number = dataset->get_samples_number(sample_role);
 
-    if (samples_number == 0)
-        throw runtime_error("Number of samples is zero.\n");
+    throw_if(samples_number == 0,
+             "Number of samples is zero.\n");
 
     const vector<Index> sample_indices = dataset->get_sample_indices(sample_role);
     const vector<Index> input_feature_indices  = dataset->get_feature_indices("Input");
@@ -191,8 +191,8 @@ Tensor3 TestingAnalysis::calculate_error_data() const
 
     const Index testing_samples_number = dataset->get_samples_number("Testing");
 
-    if (testing_samples_number == 0)
-        throw runtime_error("Number of testing samples is zero.\n");
+    throw_if(testing_samples_number == 0,
+             "Number of testing samples is zero.\n");
 
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -200,8 +200,8 @@ Tensor3 TestingAnalysis::calculate_error_data() const
 
     const auto* unscaling_layer = dynamic_cast<const Unscaling*>(neural_network->get_first("Unscaling"));
 
-    if (!unscaling_layer)
-        throw runtime_error("Unscaling layer not found.\n");
+    throw_if(!unscaling_layer,
+             "Unscaling layer not found.\n");
 
     const VectorR& output_minimums = unscaling_layer->get_minimums();
     const VectorR& output_maximums = unscaling_layer->get_maximums();
@@ -235,8 +235,8 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 
     const Index testing_samples_number = dataset->get_samples_number("Testing");
 
-    if (testing_samples_number == 0)
-        throw runtime_error("Number of testing samples is zero.\n");
+    throw_if(testing_samples_number == 0,
+             "Number of testing samples is zero.\n");
 
 
     const Index outputs_number = neural_network->get_outputs_number();
@@ -245,8 +245,8 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 
     const auto* unscaling_layer = dynamic_cast<const Unscaling*>(neural_network->get_first("Unscaling"));
 
-    if (!unscaling_layer)
-        throw runtime_error("Unscaling layer not found.\n");
+    throw_if(!unscaling_layer,
+             "Unscaling layer not found.\n");
 
     const VectorR& output_minimums = unscaling_layer->get_minimums();
     const VectorR& output_maximums = unscaling_layer->get_maximums();
@@ -646,19 +646,19 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
     const Index total_positives = positives_negatives_rate(0);
     const Index total_negatives = positives_negatives_rate(1);
 
-    if (total_positives == 0)
-        throw runtime_error(format("Number of positive samples ({}) must be greater than zero.\n", total_positives));
+    throw_if(total_positives == 0,
+             format("Number of positive samples ({}) must be greater than zero.\n", total_positives));
 
-    if (total_negatives == 0)
-        throw runtime_error(format("Number of negative samples ({}) must be greater than zero.\n", total_negatives));
+    throw_if(total_negatives == 0,
+             format("Number of negative samples ({}) must be greater than zero.\n", total_negatives));
 
     const Index points_number = 100;
 
-    if (targets.cols() != 1)
-        throw runtime_error(format("Number of of target variables ({}) must be one.\n", targets.cols()));
+    throw_if(targets.cols() != 1,
+             format("Number of of target variables ({}) must be one.\n", targets.cols()));
 
-    if (outputs.cols() != 1)
-        throw runtime_error(format("Number of of output variables ({}) must be one.\n", outputs.cols()));
+    throw_if(outputs.cols() != 1,
+             format("Number of of output variables ({}) must be one.\n", outputs.cols()));
 
     MatrixR roc_curve = MatrixR::Zero(points_number + 1, 3);
 
@@ -718,11 +718,11 @@ float TestingAnalysis::calculate_area_under_curve_confidence_limit(const MatrixR
     const Index total_positives = positives_negatives_rate[0];
     const Index total_negatives = positives_negatives_rate[1];
 
-    if (total_positives == 0)
-        throw runtime_error(format("Number of positive samples({}) must be greater than zero.\n", total_positives));
+    throw_if(total_positives == 0,
+             format("Number of positive samples({}) must be greater than zero.\n", total_positives));
 
-    if (total_negatives == 0)
-        throw runtime_error(format("Number of negative samples({}) must be greater than zero.\n", total_negatives));
+    throw_if(total_negatives == 0,
+             format("Number of negative samples({}) must be greater than zero.\n", total_negatives));
 
     const MatrixR roc_curve = calculate_roc_curve(targets, outputs);
 
@@ -775,8 +775,8 @@ MatrixR TestingAnalysis::calculate_cumulative_gain_impl(const MatrixR& targets, 
     const Index total = positive ? rates[0] : rates[1];
     const string label = positive ? "positive" : "negative";
 
-    if (total == 0)
-        throw runtime_error(format("Number of {} samples({}) must be greater than zero.\n", label, total));
+    throw_if(total == 0,
+             format("Number of {} samples({}) must be greater than zero.\n", label, total));
 
     const Index testing_samples_number = targets.rows();
 
@@ -1391,8 +1391,8 @@ void TestingAnalysis::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open file: {}", file_name.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
 

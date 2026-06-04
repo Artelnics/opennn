@@ -89,8 +89,8 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     if (current_learning_rate == 0.0f)
         return;
 
-    if (momentum > 0.0f && optimization_data.views.empty())
-        throw runtime_error("StochasticGradientDescent::update_parameters: velocity buffer is not initialized.");
+    throw_if(momentum > 0.0f && optimization_data.views.empty(),
+             "StochasticGradientDescent::update_parameters: velocity buffer is not initialized.");
 
 #ifdef OPENNN_HAS_CUDA
     if (neural_network->is_gpu())

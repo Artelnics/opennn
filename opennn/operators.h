@@ -50,27 +50,29 @@ struct Operator
 
     TensorView& get_input(ForwardPropagation& fp, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return fp.views[layer][input_slots[slot_index]][0];
+        const size_t slot = input_slots[slot_index];
+        return slot == 0 ? fp.input_views[layer][0] : fp.forward_slots[layer][slot];
     }
 
-    vector<TensorView>& get_inputs(ForwardPropagation& fp, size_t layer, size_t slot_index = 0) const noexcept
+    vector<TensorView>& get_inputs(ForwardPropagation& fp, size_t layer, size_t = 0) const noexcept
     {
-        return fp.views[layer][input_slots[slot_index]];
+        return fp.input_views[layer];
     }
 
     TensorView& get_output(ForwardPropagation& fp, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return fp.views[layer][output_slots[slot_index]][0];
+        return fp.forward_slots[layer][output_slots[slot_index]];
     }
 
     TensorView& get_output_delta(BackPropagation& bp, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return bp.delta_views[layer][output_delta_slots[slot_index]];
+        const size_t slot = output_delta_slots[slot_index];
+        return slot == 0 ? bp.layer_output_deltas[layer] : bp.backward_slots[layer][slot];
     }
 
     TensorView& get_input_delta(BackPropagation& bp, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return bp.delta_views[layer][input_delta_slots[slot_index]];
+        return bp.backward_slots[layer][input_delta_slots[slot_index]];
     }
 };
 

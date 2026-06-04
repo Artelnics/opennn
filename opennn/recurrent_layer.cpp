@@ -115,8 +115,8 @@ void Recurrent::set_output_shape(const Shape& new_output_shape)
 void Recurrent::set_activation_function(const string& name)
 {
     const ActivationOp::Function fn = ActivationOp::from_string(name);
-    if (fn == ActivationOp::Function::Softmax)
-        throw runtime_error("Recurrent: Softmax activation is not supported (use Tanh, Sigmoid, ReLU or Identity).");
+    throw_if(fn == ActivationOp::Function::Softmax,
+             "Recurrent: Softmax activation is not supported (use Tanh, Sigmoid, ReLU or Identity).");
     recurrent_op.activation = fn;
 }
 

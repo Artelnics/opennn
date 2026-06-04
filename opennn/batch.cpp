@@ -30,8 +30,7 @@ void Batch::set(const Index new_samples_number,
                 const Dataset* new_dataset,
                 const Configuration::Resolved& new_config)
 {
-    if (!new_dataset)
-        throw runtime_error("dataset is not set.");
+    throw_if(!new_dataset, "dataset is not set.");
 
     samples_number = new_samples_number;
 

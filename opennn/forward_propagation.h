@@ -17,9 +17,11 @@ class NeuralNetwork;
 
 struct ForwardPropagation
 {
-    ForwardPropagation(const Index = 0, NeuralNetwork* = nullptr);
+    ForwardPropagation() = default;
 
-    void set(const Index = 0, NeuralNetwork* = nullptr);
+    ForwardPropagation(Index, NeuralNetwork*);
+
+    void set(Index, NeuralNetwork*);
 
     TensorView get_last_trainable_layer_outputs() const;
 
@@ -32,7 +34,8 @@ struct ForwardPropagation
     NeuralNetwork* neural_network = nullptr;
 
     Buffer data;
-    vector<vector<vector<TensorView>>> views;
+    vector<vector<TensorView>> input_views;
+    vector<vector<TensorView>> forward_slots;
 };
 
 }

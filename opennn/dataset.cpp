@@ -561,9 +561,9 @@ void Dataset::set_variable_roles(const vector<string>& new_variables_roles)
 {
     const size_t new_variables_roles_size = new_variables_roles.size();
 
-    if (new_variables_roles_size != variables.size())
-        throw runtime_error(format("Size of variables uses ({}) must be equal to variables size ({}).\n",
-                                   new_variables_roles_size, variables.size()));
+    throw_if(new_variables_roles_size != variables.size(),
+             format("Size of variables uses ({}) must be equal to variables size ({}).\n",
+                    new_variables_roles_size, variables.size()));
 
     for (size_t i = 0; i < new_variables_roles.size(); ++i)
         variables[i].set_role(new_variables_roles[i]);
@@ -643,9 +643,9 @@ void Dataset::set_variable_names(const vector<string>& new_names)
     const Index new_names_size = new_names.size();
     const Index variables_number = get_variables_number();
 
-    if (new_names_size != variables_number)
-        throw runtime_error(format("Size of names ({}) is not equal to variables number ({}).\n",
-                                   new_names.size(), variables_number));
+    throw_if(new_names_size != variables_number,
+             format("Size of names ({}) is not equal to variables number ({}).\n",
+                    new_names.size(), variables_number));
 
     for (Index i = 0; i < variables_number; ++i)
         variables[i].name = get_trimmed(new_names[i]);
@@ -703,8 +703,8 @@ Index Dataset::get_variable_index(const string& variable_name) const
     auto it = ranges::find_if(variables,
                               [&](const Variable& v) { return v.name == variable_name; });
 
-    if (it == variables.end())
-        throw runtime_error(format("Cannot find {}\n", variable_name));
+    throw_if(it == variables.end(),
+             format("Cannot find {}\n", variable_name));
 
     return distance(variables.begin(), it);
 }
@@ -838,8 +838,8 @@ void Dataset::preview_data_to_JSON(JsonWriter &printer) const
 
 void Dataset::variables_from_JSON(const Json *variables_element)
 {
-    if (!variables_element)
-        throw runtime_error("Variables element is nullptr.\n");
+    throw_if(!variables_element,
+             "Variables element is nullptr.\n");
 
     set_variables_number(read_json_index(variables_element, "VariablesNumber"));
 
@@ -868,8 +868,8 @@ void Dataset::variables_from_JSON(const Json *variables_element)
 
 void Dataset::preview_data_from_JSON(const Json *preview_data_element)
 {
-    if (!preview_data_element)
-        throw runtime_error("Preview data element is nullptr.\n ");
+    throw_if(!preview_data_element,
+             "Preview data element is nullptr.\n ");
 
     if (const Index preview_size = read_json_index(preview_data_element, "PreviewSize"); preview_size > 0)
     {
@@ -888,8 +888,8 @@ void Dataset::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open file: {}", file_name.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open file: {}", file_name.string()));
 
     JsonWriter document;
 
@@ -931,8 +931,8 @@ void Dataset::check_separators(string_view line) const
         const bool has_any_separator = ranges::any_of(separator_map,
             [&](const auto& entry) { return line.find(get<1>(entry)) != string_view::npos; });
 
-        if (has_any_separator)
-            throw runtime_error(format("Separator '{}' not found in line {}.\n", separator_string, line));
+        throw_if(has_any_separator,
+                 format("Separator '{}' not found in line {}.\n", separator_string, line));
 
         return;
     }
@@ -950,9 +950,9 @@ void Dataset::check_separators(string_view line) const
     for (const auto& [sep, str, name] : separator_map)
     {
         if (sep == separator || sep == Separator::Space) continue;
-        if (line.find(str) != string_view::npos)
-            throw runtime_error(format("Found {} ('{}') in data file {}, but separator is {} ('{}').",
-                                       name, str, data_path.string(), separator_name, separator_string));
+        throw_if(line.find(str) != string_view::npos,
+                 format("Found {} ('{}') in data file {}, but separator is {} ('{}').",
+                        name, str, data_path.string(), separator_name, separator_string));
     }
 }
 
@@ -1055,17 +1055,17 @@ void Dataset::read_binary_header() const
 {
     ifstream file(data_path, ios::binary);
 
-    if (!file.is_open())
-        throw runtime_error(format("Failed to open binary data file: {}", data_path.string()));
+    throw_if(!file.is_open(),
+             format("Failed to open binary data file: {}", data_path.string()));
 
     file.read(reinterpret_cast<char*>(&binary_columns_number), sizeof(Index));
     file.read(reinterpret_cast<char*>(&binary_rows_number), sizeof(Index));
 
-    if (!file)
-        throw runtime_error(format("Failed to read binary data header: {}", data_path.string()));
+    throw_if(!file,
+             format("Failed to read binary data header: {}", data_path.string()));
 
-    if (binary_columns_number < 0 || binary_rows_number < 0)
-        throw runtime_error(format("Invalid binary data header: {}", data_path.string()));
+    throw_if(binary_columns_number < 0 || binary_rows_number < 0,
+             format("Invalid binary data header: {}", data_path.string()));
 }
 
 const vector<float>& Dataset::load_binary_data_cache() const
@@ -1079,18 +1079,18 @@ const vector<float>& Dataset::load_binary_data_cache() const
         read_binary_header();
 
     ifstream file(data_path, ios::binary);
-    if (!file.is_open())
-        throw runtime_error(format("Failed to open binary data file: {}", data_path.string()));
+    throw_if(!file.is_open(),
+             format("Failed to open binary data file: {}", data_path.string()));
 
     const size_t element_count = size_t(binary_rows_number) * size_t(binary_columns_number);
     const uintmax_t expected_bytes = uintmax_t(2 * sizeof(Index))
                                    + uintmax_t(element_count) * uintmax_t(sizeof(float));
     const uintmax_t file_bytes = filesystem::file_size(data_path);
-    if (file_bytes != expected_bytes)
-        throw runtime_error(format("Binary data file size mismatch for {} (got {} bytes, expected {} bytes).",
-                                   data_path.string(),
-                                   file_bytes,
-                                   expected_bytes));
+    throw_if(file_bytes != expected_bytes,
+             format("Binary data file size mismatch for {} (got {} bytes, expected {} bytes).",
+                    data_path.string(),
+                    file_bytes,
+                    expected_bytes));
 
     binary_data_cache.resize(element_count);
 
@@ -1126,21 +1126,21 @@ bool Dataset::try_fill_binary_tensor(const vector<Index>& sample_indices,
     const Index first_column = feature_indices.front();
     if (contiguous)
     {
-        if (first_column < 0 || first_column + features_number > columns_number)
-            throw runtime_error("Binary data feature index is out of range.");
+        throw_if(first_column < 0 || first_column + features_number > columns_number,
+                 "Binary data feature index is out of range.");
     }
     else
     {
         for (const Index feature_index : feature_indices)
-            if (feature_index < 0 || feature_index >= columns_number)
-                throw runtime_error("Binary data feature index is out of range.");
+            throw_if(feature_index < 0 || feature_index >= columns_number,
+                     "Binary data feature index is out of range.");
     }
 
     for (Index i = 0; i < ssize(sample_indices); ++i)
     {
         const Index row = sample_indices[size_t(i)];
-        if (row < 0 || row >= binary_rows_number)
-            throw runtime_error("Binary data row index is out of range.");
+        throw_if(row < 0 || row >= binary_rows_number,
+                 "Binary data row index is out of range.");
 
         float* const dst = output + i * features_number;
         const float* const src_row = data.data() + size_t(row) * size_t(columns_number);
@@ -1258,8 +1258,8 @@ bool Dataset::try_fill_from_device_data_buffer(Batch& batch,
 
 void Dataset::samples_from_JSON(const Json *samples_element)
 {
-    if (!samples_element)
-        throw runtime_error("Samples element is nullptr.\n");
+    throw_if(!samples_element,
+             "Samples element is nullptr.\n");
 
     const Index samples_number = read_json_index(samples_element, "SamplesNumber");
 

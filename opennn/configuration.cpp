@@ -53,8 +53,8 @@ const Configuration::Resolved& Configuration::resolve_slow() const
             resolved.device = CPU;
             break;
         case CUDA:
-            if (!has_cuda_gpu())
-                throw runtime_error("Configuration: CUDA requested but no GPU detected.");
+            throw_if(!has_cuda_gpu(),
+                     "Configuration: CUDA requested but no GPU detected.");
             resolved.device = CUDA;
             break;
         }
@@ -72,10 +72,10 @@ const Configuration::Resolved& Configuration::resolve_slow() const
         case Auto: return bf16_capable ? BF16 : FP32;
         case FP32: return FP32;
         case BF16:
-            if (!gpu)
-                throw runtime_error("Configuration: BF16 requires CUDA.");
-            if (!bf16_capable)
-                throw runtime_error("Configuration: BF16 requires CUDA compute capability >= 8.0 (Ampere+).");
+            throw_if(!gpu,
+                     "Configuration: BF16 requires CUDA.");
+            throw_if(!bf16_capable,
+                     "Configuration: BF16 requires CUDA compute capability >= 8.0 (Ampere+).");
             return BF16;
         }
         return FP32;
