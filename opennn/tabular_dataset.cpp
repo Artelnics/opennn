@@ -1335,23 +1335,22 @@ void TabularDataset::missing_values_from_JSON(const Json *missing_values_element
 
     missing_values_number = read_json_index(missing_values_element, "MissingValuesNumber");
 
-    if (missing_values_number > 0)
-    {
-        set_missing_values_method(read_json_string(missing_values_element, "MissingValuesMethod"));
+    if (missing_values_number <= 0) return;
 
-        const string variables_string = read_json_string_fallback(missing_values_element,
-            {"VariablesMissingValuesNumber", "RawVariablesMissingValuesNumber"});
+    set_missing_values_method(read_json_string(missing_values_element, "MissingValuesMethod"));
 
-        const vector<string> tokens = get_tokens(variables_string, " ");
+    const string variables_string = read_json_string_fallback(missing_values_element,
+        {"VariablesMissingValuesNumber", "RawVariablesMissingValuesNumber"});
 
-        variables_missing_values_number.resize(tokens.size());
-        for (size_t i = 0; i < tokens.size(); ++i)
-            if (!tokens[i].empty())
-                variables_missing_values_number(i) = stoi(tokens[i]);
+    const vector<string> tokens = get_tokens(variables_string, " ");
 
-        rows_missing_values_number = stol(read_json_string_fallback(missing_values_element,
-            {"SamplesMissingValuesNumber", "RowsMissingValuesNumber"}));
-    }
+    variables_missing_values_number.resize(tokens.size());
+    for (size_t i = 0; i < tokens.size(); ++i)
+        if (!tokens[i].empty())
+            variables_missing_values_number(i) = stoi(tokens[i]);
+
+    rows_missing_values_number = stol(read_json_string_fallback(missing_values_element,
+        {"SamplesMissingValuesNumber", "RowsMissingValuesNumber"}));
 }
 
 void TabularDataset::impute_missing_values_unuse()

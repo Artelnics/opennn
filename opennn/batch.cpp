@@ -32,7 +32,12 @@ void Batch::set(const Index new_samples_number,
 {
     throw_if(!new_dataset, "dataset is not set.");
 
+    wait_h2d_complete();
+
     samples_number = new_samples_number;
+    current_sample_count = new_samples_number;
+    needs_device_copy = true;
+    use_device_data_buffer = false;
 
     dataset = new_dataset;
     config = new_config;
@@ -45,6 +50,7 @@ void Batch::set(const Index new_samples_number,
     target_features_number = 0;
     input_views_host_cache.clear();
     target_view_host_cache = {};
+
 #ifdef OPENNN_HAS_CUDA
     input_views_cache.clear();
     target_view_cache = {};
@@ -162,21 +168,24 @@ void Batch::print() const
          << "Inputs:" << "\n"
          << "Input shape:" << input_shape << "\n";
 
-    if (input_shape.rank == 4)
-        cout << TensorMap4(const_cast<float*>(input.as<float>()),
-                           input_shape[0],
-                           input_shape[1],
-                           input_shape[2],
-                           input_shape[3]);
-    else if (input_shape.rank == 3)
-        cout << TensorMap3(const_cast<float*>(input.as<float>()),
-                           input_shape[0],
-                           input_shape[1],
-                           input_shape[2]);
-    else if (input_shape.rank == 2)
-        cout << MatrixMap(const_cast<float*>(input.as<float>()),
-                          input_shape[0],
-                          input_shape[1]);
+    if (input.data)
+    {
+        if (input_shape.rank == 4)
+            cout << TensorMap4(const_cast<float*>(input.as<float>()),
+                               input_shape[0],
+                               input_shape[1],
+                               input_shape[2],
+                               input_shape[3]);
+        else if (input_shape.rank == 3)
+            cout << TensorMap3(const_cast<float*>(input.as<float>()),
+                               input_shape[0],
+                               input_shape[1],
+                               input_shape[2]);
+        else if (input_shape.rank == 2)
+            cout << MatrixMap(const_cast<float*>(input.as<float>()),
+                              input_shape[0],
+                              input_shape[1]);
+    }
 
     cout << "\n";
 
@@ -189,14 +198,18 @@ void Batch::print() const
     cout << "Targets:" << "\n"
          << "Target shape:" << target_shape << "\n";
 
-    cout << MatrixMap(const_cast<float*>(target.as<float>()),
-                      target_shape[0],
-                      target_shape[1]) << "\n";
+    if (target.data)
+    {
+        if (target_shape.rank == 2)
+            cout << MatrixMap(const_cast<float*>(target.as<float>()),
+                              target_shape[0],
+                              target_shape[1]) << "\n";
+    }
 }
 
 bool Batch::is_empty() const
 {
-    return input.empty();
+    return input.empty() && decoder.empty() && target.empty();
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -212,32 +225,32 @@ Batch::~Batch()
 void Batch::copy_device_async(cudaStream_t stream)
 {
     const Index current_batch_size = current_sample_count;
-    const Index input_size  = current_batch_size * input_features_number;
-    const Index target_size = current_batch_size * target_features_number;
+    const Index input_values_count  = current_batch_size * input_features_number;
+    const Index target_values_count = current_batch_size * target_features_number;
 
-    auto copy_to_device = [&](void* destination, const void* source, Index bytes) {
-        if (bytes == 0) return;
+    auto copy_to_device_async = [&](void* destination, const void* source, Index bytes) {
+        if (bytes == 0 || !destination || !source) return;
         CHECK_CUDA(cudaMemcpyAsync(destination, source, bytes, cudaMemcpyHostToDevice, stream));
     };
 
     if (!fp32_staging.empty())
     {
-        assert(fp32_staging.bytes >= input_size * Index(sizeof(float)));
-        copy_to_device(fp32_staging.as<float>(), inputs_host, input_size * sizeof(float));
-        cast_fp32_to_bf16_cuda(input_size, fp32_staging.as<float>(), input.as<bfloat16>(), stream);
+        assert(fp32_staging.bytes >= input_values_count * Index(sizeof(float)));
+        copy_to_device_async(fp32_staging.as<float>(), inputs_host, input_values_count * sizeof(float));
+        cast_fp32_to_bf16_cuda(input_values_count, fp32_staging.as<float>(), input.as<bfloat16>(), stream);
     }
     else
     {
-        copy_to_device(input.as<float>(), inputs_host, input_size * sizeof(float));
+        copy_to_device_async(input.as<float>(), inputs_host, input_values_count * sizeof(float));
     }
 
     if (!decoder_shape.empty())
     {
-        const Index decoder_size = current_batch_size * decoder_features_number;
-        copy_to_device(decoder.as<float>(), decoder_host, decoder_size * sizeof(float));
+        const Index decoder_values_count = current_batch_size * decoder_features_number;
+        copy_to_device_async(decoder.as<float>(), decoder_host, decoder_values_count * sizeof(float));
     }
 
-    copy_to_device(target.as<float>(), targets_host, target_size * sizeof(float));
+    copy_to_device_async(target.as<float>(), targets_host, target_values_count * sizeof(float));
 
     record_h2d_done(stream);
 }

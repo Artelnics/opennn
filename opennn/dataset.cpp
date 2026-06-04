@@ -871,17 +871,17 @@ void Dataset::preview_data_from_JSON(const Json *preview_data_element)
     throw_if(!preview_data_element,
              "Preview data element is nullptr.\n ");
 
-    if (const Index preview_size = read_json_index(preview_data_element, "PreviewSize"); preview_size > 0)
-    {
-        data_file_preview.resize(preview_size);
+    const Index preview_size = read_json_index(preview_data_element, "PreviewSize");
+    if (preview_size <= 0) return;
 
-        for_json_items(preview_data_element, "Row", preview_size, [&](Index i, const Json* row)
-        {
-            const string text = read_json_string(row, "Text");
-            if (!text.empty())
-                data_file_preview[i] = get_tokens(text, ",");
-        });
-    }
+    data_file_preview.resize(preview_size);
+
+    for_json_items(preview_data_element, "Row", preview_size, [&](Index i, const Json* row)
+    {
+        const string text = read_json_string(row, "Text");
+        if (!text.empty())
+            data_file_preview[i] = get_tokens(text, ",");
+    });
 }
 
 void Dataset::save(const filesystem::path& file_name) const

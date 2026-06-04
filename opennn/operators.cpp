@@ -43,8 +43,8 @@ void AddOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t laye
 {
     const TensorView& output_delta = get_output_delta(bp, layer);
 
-    for (size_t s : input_delta_slots)
-        copy(output_delta, bp.backward_slots[layer][s]);
+    for (size_t i = 0; i < input_delta_slots.size(); ++i)
+        copy(output_delta, get_input_delta(bp, layer, i));
 }
 
 void AddOp::check(const vector<TensorView>& inputs, const TensorView& output) const
@@ -212,7 +212,7 @@ void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, siz
                 for (size_t i = 0; i < input_channels.size(); ++i)
                 {
                     const Index in_c = input_channels[i];
-                    TensorView& in_delta = bp.backward_slots[layer][input_delta_slots[i]];
+                    TensorView& in_delta = get_input_delta(bp, layer, i);
                     float* dst = in_delta.as<float>();
                     const Index in_idx = ((b * height + h) * width + w) * in_c;
                     for (Index c = 0; c < in_c; ++c)
@@ -234,11 +234,11 @@ void DropoutOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_
 {
     if (!is_training || !active()) return;
 
-    auto& fv = fp.forward_slots[layer];
+    auto& forward_slots = fp.forward_slots[layer];
     TensorView& output = get_output(fp, layer);
 
     if (!save_slots.empty())
-        copy(output, fv[save_slots[0]]);
+        copy(output, forward_slots[save_slots[0]]);
 
     dropout_forward(output, mask, rate);
 }
@@ -303,9 +303,7 @@ void ActivationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool 
     TensorView& output = get_output(fp, layer);
     if (output.empty()) return;
 
-#ifdef OPENNN_HAS_CUDA
     if (forward_fused && output.is_cuda()) return;
-#endif
 
     if (!input_slots.empty() && input_slots[0] != output_slots[0])
         copy(get_input(fp, layer), output);
@@ -471,26 +469,22 @@ void BatchNormOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
         TensorView& mean         = get_output(fp, layer, 1);
         TensorView& inv_variance = get_output(fp, layer, 2);
 
-#ifdef OPENNN_HAS_CUDA
         if (input.is_cuda())
         {
             apply_training_gpu(input, mean, inv_variance, output);
             invalidate_inference_cache();
             return;
         }
-#endif
         apply_training_cpu(input, mean, inv_variance, output);
         invalidate_inference_cache();
     }
     else
     {
-#ifdef OPENNN_HAS_CUDA
         if (input.is_cuda())
         {
             apply_inference_gpu(input, output);
             return;
         }
-#endif
         apply_inference_cpu(input, output);
     }
 }
@@ -500,13 +494,11 @@ void BatchNormOp::apply_delta(const TensorView& input,
                             const TensorView& inverse_variance,
                             TensorView& delta) const
 {
-#ifdef OPENNN_HAS_CUDA
     if (delta.is_cuda())
     {
         apply_delta_gpu(input, mean, inverse_variance, delta);
         return;
     }
-#endif
     apply_delta_cpu(input, mean, inverse_variance, delta);
 }
 
@@ -740,13 +732,13 @@ void CombinationOp::apply_delta(const TensorView& output_delta,
 
 void CombinationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
-    auto& dv = bp.backward_slots[layer];
+    auto& backward_slots = bp.backward_slots[layer];
 
     const TensorView& input        = get_input(fp, layer);
     const TensorView& output_delta = get_output_delta(bp, layer);
 
     TensorView empty;
-    TensorView& input_delta = view_at_slot_or(dv, input_delta_slots, 0, empty);
+    TensorView& input_delta = view_at_slot_or(backward_slots, input_delta_slots, 0, empty);
 
     apply_delta(output_delta, input, input_delta, false);
 }
@@ -813,50 +805,46 @@ void RecurrentOp::set_parameters_glorot()
 
 void RecurrentOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
 {
-    auto& fv = fp.forward_slots[layer];
+    auto& forward_slots = fp.forward_slots[layer];
     const TensorView& input             = get_input(fp, layer);
-    TensorView& output                  = fv[output_slots[0]];
-    TensorView& hidden_states           = fv[output_slots[1]];
-    TensorView& activation_derivatives  = fv[output_slots[2]];
+    TensorView& output                  = forward_slots[output_slots[0]];
+    TensorView& hidden_states           = forward_slots[output_slots[1]];
+    TensorView& activation_derivatives  = forward_slots[output_slots[2]];
 
-#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
         apply_gpu(input, hidden_states, activation_derivatives, output, is_training);
         return;
     }
-#endif
     apply(input, hidden_states, activation_derivatives, output, is_training);
 }
 
 void RecurrentOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
-    auto& fv = fp.forward_slots[layer];
-    auto& dv = bp.backward_slots[layer];
+    auto& forward_slots = fp.forward_slots[layer];
+    auto& backward_slots = bp.backward_slots[layer];
 
     const TensorView& input                    = get_input(fp, layer);
-    const TensorView& hidden_states            = fv[output_slots[1]];
-    const TensorView& activation_derivatives   = fv[output_slots[2]];
+    const TensorView& hidden_states            = forward_slots[output_slots[1]];
+    const TensorView& activation_derivatives   = forward_slots[output_slots[2]];
     const TensorView& output_delta             = get_output_delta(bp, layer);
 
     TensorView empty;
-    TensorView& input_delta = view_at_slot_or(dv, input_delta_slots, 0, empty);
+    TensorView& input_delta = view_at_slot_or(backward_slots, input_delta_slots, 0, empty);
 
-#ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
     {
-        TensorView& step_input_scratch    = dv[StepInputScratchSlot];
-        TensorView& step_prev_h_scratch   = dv[StepPrevHScratchSlot];
-        TensorView& delta_scratch         = dv[DeltaScratchSlot];
-        TensorView& next_carry_scratch    = dv[NextCarryScratchSlot];
-        TensorView& step_in_delta_scratch = dv[StepInDeltaScratchSlot];
+        TensorView& step_input_scratch    = backward_slots[StepInputScratchSlot];
+        TensorView& step_prev_h_scratch   = backward_slots[StepPrevHScratchSlot];
+        TensorView& delta_scratch         = backward_slots[DeltaScratchSlot];
+        TensorView& next_carry_scratch    = backward_slots[NextCarryScratchSlot];
+        TensorView& step_in_delta_scratch = backward_slots[StepInDeltaScratchSlot];
         apply_delta_gpu(input, hidden_states, activation_derivatives,
                         output_delta, input_delta,
                         step_input_scratch, step_prev_h_scratch,
                         delta_scratch, next_carry_scratch, step_in_delta_scratch);
         return;
     }
-#endif
     apply_delta(input, hidden_states, activation_derivatives, output_delta, input_delta);
 }
 
@@ -1386,37 +1374,33 @@ void ConvolutionOp::apply_delta(const TensorView& input,
                                 const TensorView& output_delta,
                                 TensorView& input_delta) const
 {
-#ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
     {
         apply_delta_gpu(input, output_delta, input_delta);
         return;
     }
-#endif
     apply_delta_cpu(input, output_delta, input_delta);
 }
 
 void ConvolutionOp::apply(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation)
 {
-#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
         apply_gpu(input, output, fused_activation);
         return;
     }
-#endif
     apply_cpu(input, output);
 }
 
 void ConvolutionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
-    auto& dv = bp.backward_slots[layer];
+    auto& backward_slots = bp.backward_slots[layer];
 
     const TensorView& input        = get_input(fp, layer);
     const TensorView& output_delta = get_output_delta(bp, layer);
 
     TensorView empty;
-    TensorView& input_delta = view_at_slot_or(dv, input_delta_slots, 0, empty);
+    TensorView& input_delta = view_at_slot_or(backward_slots, input_delta_slots, 0, empty);
 
     apply_delta(input, output_delta, input_delta);
 }
@@ -1777,7 +1761,7 @@ void MultiHeadProjectionOp::set(Index new_input_features, Index new_heads_number
 
 void MultiHeadProjectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
-    auto& fv = fp.forward_slots[layer];
+    auto& forward_slots = fp.forward_slots[layer];
     const auto& input_views = get_inputs(fp, layer);
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
     TensorView& head_output = get_output(fp, layer);
@@ -1788,7 +1772,7 @@ void MultiHeadProjectionOp::forward_propagate(ForwardPropagation& fp, size_t lay
     const Index heads_number   = head_output.shape[1];
     const Index head_dimension = head_output.shape[3];
 
-    TensorView& scratch     = fv[scratch_slots[0]];
+    TensorView& scratch     = forward_slots[scratch_slots[0]];
     TensorView  scratch_2d  = scratch.reshape({rows, input_features});
     TensorView  scratch_4d  = scratch.reshape({batch_size, seq_len, heads_number, head_dimension});
     TensorView  input_2d    = input.reshape({rows, input_features});
@@ -1799,8 +1783,8 @@ void MultiHeadProjectionOp::forward_propagate(ForwardPropagation& fp, size_t lay
 
 void MultiHeadProjectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
-    auto& fv = fp.forward_slots[layer];
-    auto& dv = bp.backward_slots[layer];
+    auto& forward_slots = fp.forward_slots[layer];
+    auto& backward_slots = bp.backward_slots[layer];
 
     const auto& input_views = get_inputs(fp, layer);
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
@@ -1814,14 +1798,14 @@ void MultiHeadProjectionOp::back_propagate(ForwardPropagation& fp, BackPropagati
     const Index heads_number   = head_delta.shape[1];
     const Index head_dimension = head_delta.shape[3];
 
-    TensorView& scratch     = fv[scratch_slots[0]];
+    TensorView& scratch     = forward_slots[scratch_slots[0]];
     TensorView  scratch_4d  = scratch.reshape({batch_size, seq_len, heads_number, head_dimension});
     TensorView  scratch_2d  = scratch.reshape({rows, input_features});
     TensorView  input_2d    = input.reshape({rows, input_features});
 
     merge_heads(head_delta, scratch_4d);
 
-    TensorView& input_delta    = dv[(self_attention ? input_delta_slots_self : input_delta_slots_cross)[0]];
+    TensorView& input_delta    = backward_slots[(self_attention ? input_delta_slots_self : input_delta_slots_cross)[0]];
     TensorView  input_delta_2d = input_delta.reshape({rows, input_features});
     const bool  accumulate     = self_attention ? accumulate_input_delta_self : accumulate_input_delta_cross;
 
@@ -2309,42 +2293,40 @@ void AttentionOp::destroy_cuda()
 
 void AttentionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
 {
-    auto& fv = fp.forward_slots[layer];
+    auto& forward_slots = fp.forward_slots[layer];
 
     const auto& src_views = get_inputs(fp, layer, 3);
     const TensorView& source_input = src_views[min(source_view_index, src_views.size() - 1)];
 
     const TensorView& query = get_input(fp, layer);
 
-    TensorView attention_out = fv[scratch_slots[0]].reshape(
+    TensorView attention_out = forward_slots[scratch_slots[0]].reshape(
         {fp.batch_size, query.shape[1], query.shape[2], query.shape[3]});
 
-#ifdef OPENNN_HAS_CUDA
     if (query.is_cuda())
     {
         apply_gpu(query, get_input(fp, layer, 1), get_input(fp, layer, 2), source_input,
                   get_output(fp, layer), get_output(fp, layer, 1),
-                  attention_out, fv[scratch_slots[0]].as<float>(), is_training);
+                  attention_out, forward_slots[scratch_slots[0]].as<float>(), is_training);
         return;
     }
-#endif
     apply_cpu(query, get_input(fp, layer, 1), get_input(fp, layer, 2), source_input,
               get_output(fp, layer), get_output(fp, layer, 1),
-              attention_out, fv[scratch_slots[0]].as<float>(), is_training);
+              attention_out, forward_slots[scratch_slots[0]].as<float>(), is_training);
 }
 
 void AttentionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
-    auto& fv = fp.forward_slots[layer];
+    auto& forward_slots = fp.forward_slots[layer];
 
     const TensorView& query             = get_input(fp, layer);
     const TensorView& key               = get_input(fp, layer, 1);
     const TensorView& value             = get_input(fp, layer, 2);
-    const TensorView& attention_output  = fv[attention_output_slots[0]];
+    const TensorView& attention_output  = forward_slots[attention_output_slots[0]];
     const TensorView& attention_weights = get_output(fp, layer);
     const TensorView& attention_weights_dropped = get_output(fp, layer, 1);
 
-    const TensorView output_delta = fv[scratch_slots[0]]
+    const TensorView output_delta = forward_slots[scratch_slots[0]]
         .reshape({fp.batch_size, query.shape[1], query.shape[2], query.shape[3]});
 
     TensorView& attention_weight_delta = get_output_delta(bp, layer);
@@ -2352,7 +2334,6 @@ void AttentionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
     TensorView& key_delta              = get_output_delta(bp, layer, 2);
     TensorView& value_delta            = get_output_delta(bp, layer, 3);
 
-#ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
     {
         apply_delta_gpu(query, key, value, attention_output,
@@ -2362,7 +2343,6 @@ void AttentionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
                         query_delta, key_delta, value_delta);
         return;
     }
-#endif
     apply_delta_cpu(query, key, value, attention_output,
                     attention_weights, attention_weights_dropped,
                     output_delta,
@@ -2910,34 +2890,31 @@ void PoolOp::set(Index input_h, Index input_w, Index input_c,
 
 void PoolOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
 {
-    auto& fv = fp.forward_slots[layer];
+    auto& forward_slots = fp.forward_slots[layer];
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
 
     TensorView empty;
-    TensorView& indices = view_at_slot_or(fv, output_slots, 1, empty);
+    TensorView& indices = view_at_slot_or(forward_slots, output_slots, 1, empty);
 
-#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
         apply_gpu(input, output);
         return;
     }
-#endif
     apply_cpu(input, output, indices, is_training);
 }
 
 void PoolOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
-    auto& fv = fp.forward_slots[layer];
+    auto& forward_slots = fp.forward_slots[layer];
 
     const TensorView& output_delta = get_output_delta(bp, layer);
     TensorView& input_delta        = get_input_delta(bp, layer);
 
     TensorView empty;
-    const TensorView& indices = view_at_slot_or(fv, output_slots, 1, empty);
+    const TensorView& indices = view_at_slot_or(forward_slots, output_slots, 1, empty);
 
-#ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
     {
         const TensorView& input = get_input(fp, layer);
@@ -2945,7 +2922,6 @@ void PoolOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t 
         apply_delta_gpu(input, output, output_delta, input_delta);
         return;
     }
-#endif
 
     apply_delta_cpu(output_delta, indices, input_delta);
 }
@@ -3762,17 +3738,17 @@ void LongShortTermMemoryOp::set_parameters_glorot()
 
 void LongShortTermMemoryOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
-    auto& slots = fp.forward_slots[layer];
+    auto& forward_slots = fp.forward_slots[layer];
 
-    TensorView& input = fp.input_views[layer][0];
-    TensorView& output = slots[OutputSlot];
-    TensorView& forget_gate = slots[ForgetGateSlot];
-    TensorView& input_gate = slots[InputGateSlot];
-    TensorView& candidate_gate = slots[CandidateGateSlot];
-    TensorView& output_gate = slots[OutputGateSlot];
-    TensorView& cell_state = slots[CellStateSlot];
-    TensorView& hidden_state = slots[HiddenStateSlot];
-    TensorView& cell_activation = slots[CellActivationSlot];
+    TensorView& input = get_input(fp, layer);
+    TensorView& output = forward_slots[OutputSlot];
+    TensorView& forget_gate = forward_slots[ForgetGateSlot];
+    TensorView& input_gate = forward_slots[InputGateSlot];
+    TensorView& candidate_gate = forward_slots[CandidateGateSlot];
+    TensorView& output_gate = forward_slots[OutputGateSlot];
+    TensorView& cell_state = forward_slots[CellStateSlot];
+    TensorView& hidden_state = forward_slots[HiddenStateSlot];
+    TensorView& cell_activation = forward_slots[CellActivationSlot];
 
     if (input.is_cuda())
     {
@@ -3892,28 +3868,28 @@ void LongShortTermMemoryOp::apply(const TensorView& input,
 
 void LongShortTermMemoryOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
-    auto& deltas = bp.backward_slots[layer];
-    if (deltas.size() <= OutputDeltaScratchSlot) return;
+    auto& backward_slots = bp.backward_slots[layer];
+    if (backward_slots.size() <= OutputDeltaScratchSlot) return;
 
-    const auto& slots = fp.forward_slots[layer];
+    const auto& forward_slots = fp.forward_slots[layer];
 
-    TensorView& input_delta = deltas[InputDeltaSlot];
-    TensorView& hidden_delta = deltas[HiddenDeltaScratchSlot];
-    TensorView& cell_delta = deltas[CellDeltaScratchSlot];
-    TensorView& forget_delta = deltas[ForgetDeltaScratchSlot];
-    TensorView& input_gate_delta = deltas[InputDeltaScratchSlot];
-    TensorView& candidate_delta = deltas[CandidateDeltaScratchSlot];
-    TensorView& output_gate_delta = deltas[OutputDeltaScratchSlot];
+    TensorView& input_delta = backward_slots[InputDeltaSlot];
+    TensorView& hidden_delta = backward_slots[HiddenDeltaScratchSlot];
+    TensorView& cell_delta = backward_slots[CellDeltaScratchSlot];
+    TensorView& forget_delta = backward_slots[ForgetDeltaScratchSlot];
+    TensorView& input_gate_delta = backward_slots[InputDeltaScratchSlot];
+    TensorView& candidate_delta = backward_slots[CandidateDeltaScratchSlot];
+    TensorView& output_gate_delta = backward_slots[OutputDeltaScratchSlot];
 
-    const TensorView& input = fp.input_views[layer][0];
+    const TensorView& input = get_input(fp, layer);
     const TensorView& output_delta = get_output_delta(bp, layer);
-    const TensorView& forget_gate = slots[ForgetGateSlot];
-    const TensorView& input_gate = slots[InputGateSlot];
-    const TensorView& candidate_gate = slots[CandidateGateSlot];
-    const TensorView& output_gate = slots[OutputGateSlot];
-    const TensorView& cell_state = slots[CellStateSlot];
-    const TensorView& hidden_state = slots[HiddenStateSlot];
-    const TensorView& cell_activation = slots[CellActivationSlot];
+    const TensorView& forget_gate = forward_slots[ForgetGateSlot];
+    const TensorView& input_gate = forward_slots[InputGateSlot];
+    const TensorView& candidate_gate = forward_slots[CandidateGateSlot];
+    const TensorView& output_gate = forward_slots[OutputGateSlot];
+    const TensorView& cell_state = forward_slots[CellStateSlot];
+    const TensorView& hidden_state = forward_slots[HiddenStateSlot];
+    const TensorView& cell_activation = forward_slots[CellActivationSlot];
 
     if (input.is_cuda())
     {

@@ -1032,31 +1032,29 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
     const Json* parameters_element = neural_network_element->first_child("Parameters");
     const string parameters_text   = parameters_element ? read_json_string(parameters_element, "Values") : string();
-    if (!parameters_text.empty())
+    if (parameters_text.empty()) return;
+
+    VectorR json_parameters;
+    string_to_vector(parameters_text, json_parameters);
+
+    if (json_parameters.size() <= 0) return;
+
+    if (json_parameters.size() != parameters.size_in_floats())
     {
-        VectorR json_parameters;
-        string_to_vector(parameters_text, json_parameters);
-
-        if (json_parameters.size() > 0)
-        {
-            if (json_parameters.size() != parameters.size_in_floats())
-            {
-                cout << "Warning: JSON parameter size (" << json_parameters.size()
-                     << ") differs from Compiled size (" << parameters.size_in_floats() << ").\n";
-            }
-
-            const Index elements_to_copy = min(parameters.size_in_floats(), json_parameters.size());
-
-#ifdef OPENNN_HAS_CUDA
-            const bool was_on_device = (parameters.device_type == Device::CUDA);
-            if (was_on_device) copy_parameters_host();
-#endif
-            std::copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
-#ifdef OPENNN_HAS_CUDA
-            if (was_on_device) copy_parameters_device();
-#endif
-        }
+        cout << "Warning: JSON parameter size (" << json_parameters.size()
+             << ") differs from Compiled size (" << parameters.size_in_floats() << ").\n";
     }
+
+    const Index elements_to_copy = min(parameters.size_in_floats(), json_parameters.size());
+
+#ifdef OPENNN_HAS_CUDA
+    const bool was_on_device = (parameters.device_type == Device::CUDA);
+    if (was_on_device) copy_parameters_host();
+#endif
+    std::copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
+#ifdef OPENNN_HAS_CUDA
+    if (was_on_device) copy_parameters_device();
+#endif
 }
 
 void NeuralNetwork::save(const filesystem::path& file_name) const

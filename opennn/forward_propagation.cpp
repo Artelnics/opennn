@@ -56,7 +56,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             const auto& [shape, dtype] = specs[j];
             if (shape.size() == 0) continue;
             forward_slots[i][j + 1] = TensorView(cursor, shape, dtype, data.device_type);
-            cursor += get_aligned_bytes(shape.size(), dtype);
+            cursor += get_aligned_bytes(specs[j]);
         }
     }
 

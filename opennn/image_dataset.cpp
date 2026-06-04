@@ -390,71 +390,70 @@ VectorI ImageDataset::calculate_target_distribution() const
 bool ImageDataset::try_load_image_cache(const Shape& new_input_shape,
                                         const chrono::high_resolution_clock::time_point& start_time)
 {
-    if (filesystem::exists(cache_path))
+    if (!filesystem::exists(cache_path)) return false;
+
+    try
     {
-        try
-        {
-            cache_reader.open(cache_path);
-            ImageCacheHeader header{};
-            const uint32_t expected_h = uint32_t(new_input_shape[0]);
-            const uint32_t expected_w = uint32_t(new_input_shape[1]);
-            const uint32_t expected_c = uint32_t(new_input_shape[2]);
+        cache_reader.open(cache_path);
+        ImageCacheHeader header{};
+        const uint32_t expected_h = uint32_t(new_input_shape[0]);
+        const uint32_t expected_w = uint32_t(new_input_shape[1]);
+        const uint32_t expected_c = uint32_t(new_input_shape[2]);
 
-            if (read_header(cache_reader, header)
-                && header_matches_request(header, expected_h, expected_w, expected_c)
-                && cache_reader.file_size() == header.labels_off
-                                              + header.num_samples * sizeof(int32_t))
+        if (read_header(cache_reader, header)
+            && header_matches_request(header, expected_h, expected_w, expected_c)
+            && cache_reader.file_size() == header.labels_off
+                                          + header.num_samples * sizeof(int32_t))
+        {
+            input_shape  = { Index(header.height), Index(header.width), Index(header.channels) };
+            target_shape = { Index(header.num_classes == 2 ? 1 : header.num_classes) };
+            record_bytes = header.record_bytes;
+            labels_offset   = header.labels_off;
+            classes_number  = header.num_classes;
+
+            const Index pixels_number = Index(header.record_bytes);
+            const bool single_target = (header.num_classes == 2);
+
+            variables.resize(pixels_number + 1);
+            for (Index i = 0; i < pixels_number; ++i)
             {
-                input_shape  = { Index(header.height), Index(header.width), Index(header.channels) };
-                target_shape = { Index(header.num_classes == 2 ? 1 : header.num_classes) };
-                record_bytes = header.record_bytes;
-                labels_offset   = header.labels_off;
-                classes_number  = header.num_classes;
-
-                const Index pixels_number = Index(header.record_bytes);
-                const bool single_target = (header.num_classes == 2);
-
-                variables.resize(pixels_number + 1);
-                for (Index i = 0; i < pixels_number; ++i)
-                {
-                    variables[i].type = VariableType::Numeric;
-                    variables[i].name = format("variable_{}", i + 1);
-                    variables[i].role = VariableRole::Input;
-                }
-                Variable& target_variable = variables[pixels_number];
-                target_variable.role = VariableRole::Target;
-                target_variable.type = single_target ? VariableType::Binary : VariableType::Categorical;
-                target_variable.scaler = ScalerMethod::None;
-                target_variable.name = "Class";
-
-                vector<string> placeholder_categories(size_t(header.num_classes));
-                for (size_t i = 0; i < placeholder_categories.size(); ++i)
-                    placeholder_categories[i] = to_string(i);
-                target_variable.set_categories(placeholder_categories);
-
-                labels_ram.resize(size_t(header.num_samples));
-                cache_reader.read_at(labels_ram.data(),
-                                     size_t(header.num_samples) * sizeof(int32_t),
-                                     labels_offset);
-
-                sample_roles.assign(size_t(header.num_samples), SampleRole::Training);
-                split_samples_random();
-
-                if (display)
-                {
-                    const long long ms = chrono::duration_cast<chrono::milliseconds>(
-                        chrono::high_resolution_clock::now() - start_time).count();
-                    cout << "Image cache loaded in " << ms << " ms ("
-                         << header.num_samples << " samples).\n";
-                }
-                return true;
+                variables[i].type = VariableType::Numeric;
+                variables[i].name = format("variable_{}", i + 1);
+                variables[i].role = VariableRole::Input;
             }
-            cache_reader.close();
+            Variable& target_variable = variables[pixels_number];
+            target_variable.role = VariableRole::Target;
+            target_variable.type = single_target ? VariableType::Binary : VariableType::Categorical;
+            target_variable.scaler = ScalerMethod::None;
+            target_variable.name = "Class";
+
+            vector<string> placeholder_categories(size_t(header.num_classes));
+            for (size_t i = 0; i < placeholder_categories.size(); ++i)
+                placeholder_categories[i] = to_string(i);
+            target_variable.set_categories(placeholder_categories);
+
+            labels_ram.resize(size_t(header.num_samples));
+            cache_reader.read_at(labels_ram.data(),
+                                 size_t(header.num_samples) * sizeof(int32_t),
+                                 labels_offset);
+
+            sample_roles.assign(size_t(header.num_samples), SampleRole::Training);
+            split_samples_random();
+
+            if (display)
+            {
+                const long long ms = chrono::duration_cast<chrono::milliseconds>(
+                    chrono::high_resolution_clock::now() - start_time).count();
+                cout << "Image cache loaded in " << ms << " ms ("
+                     << header.num_samples << " samples).\n";
+            }
+            return true;
         }
-        catch (const exception&)
-        {
-            cache_reader.close();
-        }
+        cache_reader.close();
+    }
+    catch (const exception&)
+    {
+        cache_reader.close();
     }
 
     return false;

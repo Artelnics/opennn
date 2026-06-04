@@ -138,10 +138,12 @@ inline Index get_aligned_size(const vector<vector<TensorSpec>>& specs)
         [](const auto& s) { return get_aligned_size(s); });
 }
 
+inline Index get_aligned_bytes(const TensorSpec& spec) { return get_aligned_bytes(spec.shape.size(), spec.dtype); }
+
 inline Index get_aligned_bytes(const vector<TensorSpec>& specs)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
-        [](const auto& spec) { return get_aligned_bytes(spec.shape.size(), spec.dtype); });
+        [](const TensorSpec& spec) { return get_aligned_bytes(spec); });
 }
 
 inline Index get_aligned_bytes(const vector<vector<TensorSpec>>& specs)
