@@ -19,6 +19,47 @@
 namespace opennn
 {
 
+#ifdef OPENNN_HAS_CUDA
+
+static void update_parameters_cuda(NeuralNetwork* neural_network,
+                                   BackPropagation& back_propagation,
+                                   OptimizerData& optimization_data,
+                                   float current_learning_rate,
+                                   float momentum,
+                                   bool nesterov)
+{
+    const Index parameters_number = neural_network->get_parameters_size();
+
+    float* const velocity_ptr = optimization_data.views.empty()
+        ? nullptr
+        : optimization_data.views[StochasticGradientDescent::Velocity].as<float>();
+
+    PROFILE_SCOPE("optim:sgd_update_cuda");
+    sgd_update_cuda(
+        parameters_number,
+        neural_network->get_parameters_data(),
+        velocity_ptr,
+        back_propagation.gradient.as<float>(),
+        current_learning_rate,
+        momentum,
+        nesterov,
+        neural_network->get_parameters_bf16_data());
+}
+
+#else
+
+static void update_parameters_cuda(NeuralNetwork*,
+                                   BackPropagation&,
+                                   OptimizerData&,
+                                   float,
+                                   float,
+                                   bool)
+{
+    throw runtime_error("update_parameters_cuda requires CUDA support.");
+}
+
+#endif
+
 StochasticGradientDescent::StochasticGradientDescent(Loss* new_loss)
     : Optimizer(new_loss)
 {
@@ -92,29 +133,12 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     throw_if(momentum > 0.0f && optimization_data.views.empty(),
              "StochasticGradientDescent::update_parameters: velocity buffer is not initialized.");
 
-#ifdef OPENNN_HAS_CUDA
     if (neural_network->is_gpu())
     {
-        const Index parameters_number = neural_network->get_parameters_size();
-
-        float* const velocity_ptr = optimization_data.views.empty()
-            ? nullptr
-            : optimization_data.views[Velocity].as<float>();
-
-        PROFILE_SCOPE("optim:sgd_update_cuda");
-        sgd_update_cuda(
-            parameters_number,
-            neural_network->get_parameters_data(),
-            velocity_ptr,
-            back_propagation.gradient.as<float>(),
-            current_learning_rate,
-            momentum,
-            nesterov,
-            neural_network->get_parameters_bf16_data());
-
+        update_parameters_cuda(neural_network, back_propagation, optimization_data,
+                               current_learning_rate, momentum, nesterov);
         return;
     }
-#endif
 
     VectorMap parameters(neural_network->get_parameters_data(),
                          neural_network->get_parameters_size());

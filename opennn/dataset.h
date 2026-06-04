@@ -278,14 +278,12 @@ protected:
     void mark_data_changed() const { invalidate_data_buffer(); }
     void invalidate_data_buffer() const;
 
-#ifdef OPENNN_HAS_CUDA
     bool try_fill_from_device_data_buffer(Batch&,
                                           const vector<Index>& sample_indices,
                                           const vector<Index>& input_indices,
                                           const vector<Index>& decoder_indices,
                                           const vector<Index>& target_indices) const;
     bool prepare_device_data_buffer() const;
-#endif
 
     Shape input_shape;
     Shape target_shape;

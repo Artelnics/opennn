@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "configuration.h"
 #include "layer.h"
 #include "tensor_utilities.h"
 #include "variable.h"
@@ -181,8 +182,6 @@ public:
                           const VectorR&,
                           ForwardPropagation&);
 
-#ifdef OPENNN_HAS_CUDA
-
 public:
 
     void cast_parameters_to_bf16();
@@ -206,8 +205,6 @@ public:
 private:
 
     MatrixR calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&);
-
-#endif
 
 public:
 

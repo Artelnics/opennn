@@ -44,38 +44,6 @@ void NeuronSelection::set_default()
     maximum_time = 3600.0f;
 }
 
-void NeuronSelection::check() const
-{
-    // Optimization algorithm
-
-    throw_if(!training_strategy, "training strategy is not set.");
-
-    // Loss
-
-    const Loss* loss = training_strategy->get_loss();
-
-    throw_if(!loss, "loss is not set.");
-
-    // Neural network
-
-    const NeuralNetwork* neural_network = loss->get_neural_network();
-
-    throw_if(!neural_network, "neural network is not set.");
-
-    throw_if(neural_network->get_layers_number() == 1,
-             "Number of layers in neural network must be greater than 1.\n");
-
-    // Dataset
-
-    const Dataset* dataset = loss->get_dataset();
-
-    throw_if(!dataset, "dataset is not set.");
-
-    const Index validation_samples_number = dataset->get_samples_number("Validation");
-
-    throw_if(validation_samples_number == 0, "Number of validation samples is zero.\n");
-}
-
 void NeuronSelection::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);

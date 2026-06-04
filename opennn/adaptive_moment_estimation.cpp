@@ -14,15 +14,58 @@
 #include "loss.h"
 #include "profiler.h"
 #include "batch.h"
+#include "configuration.h"
 #include "cuda_dispatch.h"
+#include "device_backend.h"
 #include "adaptive_moment_estimation.h"
-
-#ifdef OPENNN_HAS_CUDA
-#include <cuda_runtime.h>
-#endif
 
 namespace opennn
 {
+
+#ifdef OPENNN_HAS_CUDA
+
+static void update_parameters_cuda(NeuralNetwork* neural_network,
+                                   BackPropagation& back_propagation,
+                                   OptimizerData& optimization_data,
+                                   float beta_1,
+                                   float beta_2,
+                                   float learning_rate,
+                                   float bias_correction_1,
+                                   float bias_correction_2)
+{
+    PROFILE_SCOPE("optim:adam_update_cuda");
+    const Index parameters_number = neural_network->get_parameters_size();
+
+    adam_update_cuda(
+        parameters_number,
+        neural_network->get_parameters_data(),
+        optimization_data.views[AdaptiveMomentEstimation::GradientMoment].as<float>(),
+        optimization_data.views[AdaptiveMomentEstimation::SquareGradientMoment].as<float>(),
+        back_propagation.gradient.as<float>(),
+        beta_1,
+        beta_2,
+        learning_rate,
+        EPSILON,
+        bias_correction_1,
+        bias_correction_2,
+        neural_network->get_parameters_bf16_data());
+}
+
+#else
+
+static void update_parameters_cuda(NeuralNetwork*,
+                                   BackPropagation&,
+                                   OptimizerData&,
+                                   float,
+                                   float,
+                                   float,
+                                   float,
+                                   float)
+{
+    throw runtime_error("update_parameters_cuda requires CUDA support.");
+}
+
+#endif
 
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(Loss* new_loss)
     : Optimizer(new_loss)
@@ -237,14 +280,16 @@ TrainingResults AdaptiveMomentEstimation::train()
 
                 const float* parameters_source = neural_network->get_parameters_data();
                 const size_t parameters_bytes = size_t(parameters_size) * sizeof(float);
-#ifdef OPENNN_HAS_CUDA
-                if(Configuration::instance().is_gpu())
+                if (neural_network->is_gpu() && device::is_cuda_build())
                 {
-                    CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
-                    CHECK_CUDA(cudaMemcpy(best_parameters.data(), parameters_source, parameters_bytes, cudaMemcpyDeviceToHost));
+                    cudaStream_t stream = Backend::get_compute_stream();
+                    device::copy_async(best_parameters.data(), parameters_source,
+                                       Index(parameters_bytes),
+                                       device::CopyKind::DeviceToHost,
+                                       stream);
+                    device::synchronize(stream);
                 }
                 else
-#endif
                     memcpy(best_parameters.data(), parameters_source, parameters_bytes);
 
                 const Index states_size = neural_network->get_states_buffer_size();
@@ -255,14 +300,16 @@ TrainingResults AdaptiveMomentEstimation::train()
 
                     const float* states_source = neural_network->get_states_data();
                     const size_t states_bytes = size_t(states_size) * sizeof(float);
-#ifdef OPENNN_HAS_CUDA
-                    if (Configuration::instance().is_gpu())
+                    if (neural_network->is_gpu() && device::is_cuda_build())
                     {
-                        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
-                        CHECK_CUDA(cudaMemcpy(best_states.data(), states_source, states_bytes, cudaMemcpyDeviceToHost));
+                        cudaStream_t stream = Backend::get_compute_stream();
+                        device::copy_async(best_states.data(), states_source,
+                                           Index(states_bytes),
+                                           device::CopyKind::DeviceToHost,
+                                           stream);
+                        device::synchronize(stream);
                     }
                     else
-#endif
                         memcpy(best_states.data(), states_source, states_bytes);
                 }
             }
@@ -349,29 +396,13 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const float bias_correction_1 = 1.0f - pow(beta_1, iteration);
     const float bias_correction_2 = 1.0f - pow(beta_2, iteration);
 
-#ifdef OPENNN_HAS_CUDA
     if (neural_network->is_gpu())
     {
-        PROFILE_SCOPE("optim:adam_update_cuda");
-        const Index parameters_number = neural_network->get_parameters_size();
-
-        adam_update_cuda(
-            parameters_number,
-            neural_network->get_parameters_data(),
-            optimization_data.views[GradientMoment].as<float>(),
-            optimization_data.views[SquareGradientMoment].as<float>(),
-            back_propagation.gradient.as<float>(),
-            beta_1,
-            beta_2,
-            learning_rate,
-            EPSILON,
-            bias_correction_1,
-            bias_correction_2,
-            neural_network->get_parameters_bf16_data());
-
+        update_parameters_cuda(neural_network, back_propagation, optimization_data,
+                               beta_1, beta_2, learning_rate,
+                               bias_correction_1, bias_correction_2);
         return;
     }
-#endif
 
     VectorMap parameters(neural_network->get_parameters_data(),
                          neural_network->get_parameters_size());

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "math_utilities.h"
+#include "device_backend.h"
 #include "random_utilities.h"
 #include "cuda_dispatch.h"
 #include "cuda_gemm.h"
@@ -43,12 +44,6 @@ namespace opennn
 #define OPENNN_DECLARE_GPU_OP(name, sig) static void name sig;
 OPENNN_GPU_OPS(OPENNN_DECLARE_GPU_OP)
 #undef OPENNN_DECLARE_GPU_OP
-
-#ifndef OPENNN_HAS_CUDA
-#define OPENNN_STUB_GPU_OP(name, sig) static void name sig { throw runtime_error(#name ": CUDA support not compiled in."); }
-OPENNN_GPU_OPS(OPENNN_STUB_GPU_OP)
-#undef OPENNN_STUB_GPU_OP
-#endif
 
 void pad(const TensorView& input, TensorView& output)
 {
@@ -942,8 +937,9 @@ static void unscale_gpu(const TensorView& input,
 
 static void copy_gpu(const TensorView& source, TensorView& destination)
 {
-    CHECK_CUDA(cudaMemcpyAsync(destination.data, source.data, source.byte_size(),
-                               cudaMemcpyDeviceToDevice, Backend::get_compute_stream()));
+    device::copy_async(destination.data, source.data, source.byte_size(),
+                       device::CopyKind::DeviceToDevice,
+                       Backend::get_compute_stream());
 }
 
 static void add_gpu(const TensorView& input_1,
@@ -1023,7 +1019,7 @@ static void activation_forward_gpu(TensorView& output, ActivationFunction functi
         using T = decltype(tag);
         activation_forward_cuda<T>(output.size(), output.as<T>(), static_cast<int>(function));
     });
-    CHECK_CUDA(cudaPeekAtLastError());
+    device::check_last_error();
 }
 
 static void activation_backward_gpu(const TensorView& outputs, TensorView& delta, ActivationFunction function)
@@ -1033,7 +1029,7 @@ static void activation_backward_gpu(const TensorView& outputs, TensorView& delta
         using T = decltype(tag);
         activation_backward_cuda<T>(delta.size(), outputs.as<T>(), delta.as<T>(), static_cast<int>(function));
     });
-    CHECK_CUDA(cudaPeekAtLastError());
+    device::check_last_error();
 }
 
 static void dropout_forward_gpu(TensorView& output, Buffer& mask, float rate)
@@ -1256,6 +1252,12 @@ static void merge_heads_gpu(const TensorView& source, TensorView& destination)
                             to_int(head_dimension));
     });
 }
+
+#else
+
+#define OPENNN_STUB_GPU_OP(name, sig) static void name sig { throw runtime_error(#name ": CUDA support not compiled in."); }
+OPENNN_GPU_OPS(OPENNN_STUB_GPU_OP)
+#undef OPENNN_STUB_GPU_OP
 
 #endif // OPENNN_HAS_CUDA
 

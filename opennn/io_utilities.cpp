@@ -199,18 +199,6 @@ void FileWriter::finish_with_rename(const filesystem::path& final_path)
     tmp_path_.clear();
 }
 
-void FileWriter::abort()
-{
-    if (stream_.is_open()) stream_.close();
-    if (!tmp_path_.empty())
-    {
-        error_code ec;
-        filesystem::remove(tmp_path_, ec);
-        tmp_path_.clear();
-    }
-    finalized_ = true;
-}
-
 
 void atomic_rename(const filesystem::path& from, const filesystem::path& to)
 {
@@ -312,14 +300,6 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
     if (file_size > 0)
         file.read(result.buffer.data(), file_size);
 
-    parse(result);
-    return result;
-}
-
-CsvReader::Result CsvReader::read_string(string_view csv_text) const
-{
-    Result result;
-    result.buffer.assign(csv_text);
     parse(result);
     return result;
 }

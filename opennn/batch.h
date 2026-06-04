@@ -8,11 +8,21 @@
 
 #pragma once
 
+#include "configuration.h"
 #include "tensor_utilities.h"
 #include "dataset.h"
 
 namespace opennn
 {
+
+struct SlotBuffers
+{
+    Buffer buffer;
+    Shape  shape;
+    Index  features_number = 0;
+    float* host = nullptr;
+    Index  host_allocated_size = 0;
+};
 
 struct Batch
 {
@@ -50,11 +60,7 @@ struct Batch
 
     bool uses_cuda() const
     {
-#ifdef OPENNN_HAS_CUDA
-        return config.device == Device::CUDA;
-#else
-        return false;
-#endif
+        return config.device == Device::CUDA && device::is_cuda_build();
     }
 
     Index get_samples_number() const;
@@ -71,20 +77,14 @@ struct Batch
     const Dataset* dataset = nullptr;
     Configuration::Resolved config;
 
-    Buffer input;
-    Shape input_shape;
-
-    Buffer decoder;
-    Shape decoder_shape;
-
-    Buffer target;
-    Shape target_shape;
+    SlotBuffers input;
+    SlotBuffers decoder;
+    SlotBuffers target;
 
     int input_contiguous = -1;
     int decoder_contiguous = -1;
     int target_contiguous = -1;
 
-#ifdef OPENNN_HAS_CUDA
     void copy_device_async(cudaStream_t);
 
     void gather_device_async(const vector<Index>& row_indices,
@@ -101,9 +101,8 @@ struct Batch
     Buffer device_data_target_feature_indices{Device::CUDA};
     vector<Index> device_data_row_indices_host;
 
-    cudaEvent_t h2d_done_event = nullptr;
+    CudaEvent h2d_done_event;
     bool        h2d_done_recorded = false;
-#endif
 
     void wait_h2d_complete();
 
@@ -113,17 +112,6 @@ struct Batch
     vector<TensorView> input_views_cache;       // GPU views; populated only on CUDA mode
     TensorView target_view_cache;
 
-    Index input_features_number = 0;
-    Index decoder_features_number = 0;
-    Index target_features_number = 0;
-
-    float* inputs_host = nullptr;
-    float* decoder_host = nullptr;
-    float* targets_host = nullptr;
-
-    Index inputs_host_allocated_size = 0;
-    Index decoder_host_allocated_size = 0;
-    Index targets_host_allocated_size = 0;
 };
 
 }

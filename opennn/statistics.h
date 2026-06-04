@@ -17,11 +17,7 @@ struct Descriptives
 {
     Descriptives(const float = NAN, float = NAN, float = NAN, float = NAN);
 
-    VectorR to_tensor() const;
-
     void set(const float = NAN, float = NAN, float = NAN, float = NAN);
-
-    void save(const filesystem::path&) const;
 
     void print(const string& = "Descriptives:") const;
 
@@ -72,7 +68,6 @@ struct Histogram
 
     Histogram(const VectorR&, Index);
 
-    Histogram(const VectorR&);
     Index get_bins_number() const;
 
     Index count_empty_bins() const;
@@ -90,8 +85,6 @@ struct Histogram
     Index calculate_bin(const float) const;
 
     Index calculate_frequency(const float) const;
-
-    void save(const filesystem::path&) const;
 
     VectorR minimums;
 

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "transformer_decoder.h"
+#include "device_backend.h"
 #include "random_utilities.h"
 #include "string_utilities.h"
 
@@ -137,7 +138,7 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
     : transformer(new_transformer),
       language_dataset(new_language_dataset)
 {
-    throw_if(!transformer.is_gpu(),
+    throw_if(!transformer.is_gpu() || !device::is_cuda_build(),
              "TransformerDecoder requires GPU configuration.");
 
     const Index input_sequence_length   = transformer.get_input_sequence_length();
@@ -155,12 +156,10 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
     throw_if(language_dataset.get_target_inverse_vocabulary_map().empty(),
              "TransformerDecoder: dataset target vocabulary is empty.");
 
-#ifdef OPENNN_HAS_CUDA
     transformer.copy_parameters_device();
     transformer.link_parameters();
     transformer.copy_states_device();
     transformer.link_states();
-#endif
 
     identify_layer_ranges();
 
@@ -252,15 +251,14 @@ void TransformerDecoder::reset_per_prompt_state()
     target_ids(0, 0) = start_token_id;
     history.clear();
 
-#ifdef OPENNN_HAS_CUDA
     const Index decoder_sequence_length = transformer.get_decoder_sequence_length();
     constexpr Index batch_size = 1;
     cudaStream_t stream = Backend::get_compute_stream();
-    CHECK_CUDA(cudaMemcpyAsync(target_ids_device.data,
-                               target_ids.data(),
-                               batch_size * decoder_sequence_length * sizeof(float),
-                               cudaMemcpyHostToDevice, stream));
-#endif
+    device::copy_async(target_ids_device.data,
+                       target_ids.data(),
+                       batch_size * decoder_sequence_length * Index(sizeof(float)),
+                       device::CopyKind::HostToDevice,
+                       stream);
 }
 
 void TransformerDecoder::encode_source(const string& source)
@@ -284,14 +282,13 @@ void TransformerDecoder::encode_source(const string& source)
     if (write_index < input_sequence_length)
         source_ids(0, write_index) = end_token_id;
 
-#ifdef OPENNN_HAS_CUDA
     constexpr Index batch_size = 1;
     cudaStream_t stream = Backend::get_compute_stream();
-    CHECK_CUDA(cudaMemcpyAsync(source_ids_device.data,
-                               source_ids.data(),
-                               batch_size * input_sequence_length * sizeof(float),
-                               cudaMemcpyHostToDevice, stream));
-#endif
+    device::copy_async(source_ids_device.data,
+                       source_ids.data(),
+                       batch_size * input_sequence_length * Index(sizeof(float)),
+                       device::CopyKind::HostToDevice,
+                       stream);
     transformer.forward_propagate(inputs, *forward_propagation, false,
                                   encoder_embedding_index,
                                   encoder_last_index);
@@ -300,9 +297,7 @@ void TransformerDecoder::encode_source(const string& source)
 Index TransformerDecoder::decode_step([[maybe_unused]] Index step_index,
                                        const SamplingConfig& config)
 {
-#ifdef OPENNN_HAS_CUDA
     cudaStream_t stream = Backend::get_compute_stream();
-#endif
 
     transformer.forward_propagate(inputs, *forward_propagation, false,
                                   decoder_embedding_index,
@@ -312,17 +307,17 @@ Index TransformerDecoder::decode_step([[maybe_unused]] Index step_index,
                                   decoder_first_index,
                                   output_projection_index);
 
-#ifdef OPENNN_HAS_CUDA
     const TensorView output_view = forward_propagation->get_outputs();
     const Index vocabulary_size = output_view.shape[2];
     const Index slice_offset = (step_index - 1) * vocabulary_size;
     if (output_view.type == Type::BF16)
     {
-        CHECK_CUDA(cudaMemcpyAsync(bf16_staging.data(),
-                                   output_view.as<bfloat16>() + slice_offset,
-                                   vocabulary_size * sizeof(uint16_t),
-                                   cudaMemcpyDeviceToHost, stream));
-        CHECK_CUDA(cudaStreamSynchronize(stream));
+        device::copy_async(bf16_staging.data(),
+                           output_view.as<bfloat16>() + slice_offset,
+                           vocabulary_size * Index(sizeof(uint16_t)),
+                           device::CopyKind::DeviceToHost,
+                           stream);
+        device::synchronize(stream);
         for (Index i = 0; i < vocabulary_size; ++i)
         {
             const uint32_t bits = static_cast<uint32_t>(bf16_staging[size_t(i)]) << 16;
@@ -331,17 +326,17 @@ Index TransformerDecoder::decode_step([[maybe_unused]] Index step_index,
     }
     else if (output_view.type == Type::FP32)
     {
-        CHECK_CUDA(cudaMemcpyAsync(distribution.data(),
-                                   output_view.as<float>() + slice_offset,
-                                   vocabulary_size * sizeof(float),
-                                   cudaMemcpyDeviceToHost, stream));
-        CHECK_CUDA(cudaStreamSynchronize(stream));
+        device::copy_async(distribution.data(),
+                           output_view.as<float>() + slice_offset,
+                           vocabulary_size * Index(sizeof(float)),
+                           device::CopyKind::DeviceToHost,
+                           stream);
+        device::synchronize(stream);
     }
     else
     {
         throw runtime_error("TransformerDecoder: unsupported output dtype.");
     }
-#endif
 
     return sample_token(distribution, config, history);
 }
@@ -403,13 +398,12 @@ string TransformerDecoder::decode(const string& source,
         target_ids(0, i) = static_cast<float>(next_token_id);
         history.push_back(next_token_id);
 
-#ifdef OPENNN_HAS_CUDA
         cudaStream_t stream = Backend::get_compute_stream();
-        CHECK_CUDA(cudaMemcpyAsync(target_ids_device.as<float>() + i,
-                                   &target_ids(0, i),
-                                   sizeof(float),
-                                   cudaMemcpyHostToDevice, stream));
-#endif
+        device::copy_async(target_ids_device.as<float>() + i,
+                           &target_ids(0, i),
+                           Index(sizeof(float)),
+                           device::CopyKind::HostToDevice,
+                           stream);
 
         if (next_token_id == static_cast<Index>(end_token_id))
             break;

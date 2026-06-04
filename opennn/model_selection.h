@@ -29,7 +29,6 @@ public:
     void set(TrainingStrategy* new_training_strategy) { training_strategy = new_training_strategy; }
 
     void set_default();
-    void check() const;
 
     NeuronsSelectionResults perform_neurons_selection();
 

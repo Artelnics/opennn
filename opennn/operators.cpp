@@ -6,16 +6,13 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifdef OPENNN_HAS_CUDA
-#include <cuda_fp16.h>
 #ifdef HAVE_CUDNN_FRONTEND
 #include <cudnn_frontend.h>
 #endif
-#include "cuda_gemm.h"
-#include "kernel.cuh"
-#endif
 
 #include "operators.h"
+#include "cuda_gemm.h"
+#include "device_backend.h"
 #include "json.h"
 #include "random_utilities.h"
 #include "math_utilities.h"
@@ -26,6 +23,107 @@
 
 namespace opennn
 {
+
+#ifdef OPENNN_HAS_CUDA
+
+namespace
+{
+
+#ifdef HAVE_CUDNN_FRONTEND
+constexpr bool cudnn_frontend_available = true;
+#else
+constexpr bool cudnn_frontend_available = false;
+#endif
+
+void configure_activation_descriptor(cudnnActivationDescriptor_t& descriptor,
+                                     ActivationOp::Function function)
+{
+    if (!descriptor) CHECK_CUDNN(cudnnCreateActivationDescriptor(&descriptor));
+    CHECK_CUDNN(cudnnSetActivationDescriptor(descriptor,
+                                             ActivationOp::to_cudnn_mode(function),
+                                             CUDNN_PROPAGATE_NAN,
+                                             0.0));
+}
+
+void destroy_activation_descriptor(cudnnActivationDescriptor_t& descriptor)
+{
+    if (!descriptor) return;
+
+    cudnnDestroyActivationDescriptor(descriptor);
+    descriptor = nullptr;
+}
+
+void configure_convolution_descriptors(ConvolutionOp& op)
+{
+    op.planned_batch_size = 0;
+
+    if (op.kernels_number <= 0) return;
+
+    if (!op.kernel_descriptor) CHECK_CUDNN(cudnnCreateFilterDescriptor(&op.kernel_descriptor));
+    CHECK_CUDNN(cudnnSetFilter4dDescriptor(op.kernel_descriptor,
+                                           to_cudnn(op.compute_dtype),
+                                           CUDNN_TENSOR_NHWC,
+                                           to_int(op.kernels_number), to_int(op.kernel_channels),
+                                           to_int(op.kernel_height),  to_int(op.kernel_width)));
+
+    if (!op.convolution_descriptor) CHECK_CUDNN(cudnnCreateConvolutionDescriptor(&op.convolution_descriptor));
+    CHECK_CUDNN(cudnnSetConvolution2dDescriptor(op.convolution_descriptor,
+                                                to_int(op.padding_height), to_int(op.padding_width),
+                                                to_int(op.row_stride), to_int(op.column_stride),
+                                                1, 1,
+                                                CUDNN_CROSS_CORRELATION,
+                                                CUDNN_DATA_FLOAT));
+
+    CHECK_CUDNN(cudnnSetConvolutionMathType(op.convolution_descriptor,
+                                            CUDNN_TENSOR_OP_MATH_ALLOW_CONVERSION));
+}
+
+void configure_pooling_descriptor(PoolOp& op)
+{
+    if (op.pool_height <= 0 || op.pool_width <= 0) return;
+
+    if (!op.pooling_descriptor) CHECK_CUDNN(cudnnCreatePoolingDescriptor(&op.pooling_descriptor));
+
+    const cudnnPoolingMode_t mode = (op.method == PoolOp::Max)
+        ? CUDNN_POOLING_MAX
+        : CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
+
+    CHECK_CUDNN(cudnnSetPooling2dDescriptor(op.pooling_descriptor,
+                                            mode,
+                                            CUDNN_PROPAGATE_NAN,
+                                            to_int(op.pool_height), to_int(op.pool_width),
+                                            to_int(op.padding_height), to_int(op.padding_width),
+                                            to_int(op.row_stride), to_int(op.column_stride)));
+}
+
+}
+
+#else
+
+namespace
+{
+
+constexpr bool cudnn_frontend_available = false;
+
+void configure_activation_descriptor(cudnnActivationDescriptor_t&, ActivationOp::Function)
+{
+}
+
+void destroy_activation_descriptor(cudnnActivationDescriptor_t&)
+{
+}
+
+void configure_convolution_descriptors(ConvolutionOp&)
+{
+}
+
+void configure_pooling_descriptor(PoolOp&)
+{
+}
+
+}
+
+#endif
 
 void AddOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
@@ -251,10 +349,8 @@ void DropoutOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t 
 
 void DropoutOp::destroy_cuda()
 {
-#ifdef OPENNN_HAS_CUDA
     if (mask.device_type == Device::CUDA)
         mask.resize_bytes(0, Device::CUDA);
-#endif
 }
 
 void DropoutOp::to_JSON(JsonWriter& w) const
@@ -287,10 +383,7 @@ cudnnActivationMode_t ActivationOp::to_cudnn_mode(Function function)
 void ActivationOp::set_function(Function new_function)
 {
     function = new_function;
-#ifdef OPENNN_HAS_CUDA
-    if (!descriptor) CHECK_CUDNN(cudnnCreateActivationDescriptor(&descriptor));
-    CHECK_CUDNN(cudnnSetActivationDescriptor(descriptor, to_cudnn_mode(function), CUDNN_PROPAGATE_NAN, 0.0));
-#endif
+    configure_activation_descriptor(descriptor, function);
 }
 
 void ActivationOp::set_function(const string& name)
@@ -338,9 +431,7 @@ void ActivationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, s
 
 void ActivationOp::destroy_cuda()
 {
-#ifdef OPENNN_HAS_CUDA
-    if (descriptor) { cudnnDestroyActivationDescriptor(descriptor); descriptor = nullptr; }
-#endif
+    destroy_activation_descriptor(descriptor);
 }
 
 void ActivationOp::to_JSON(JsonWriter& w) const
@@ -1047,8 +1138,7 @@ namespace
 void zero_device_view(const TensorView& view)
 {
     if (!view.data || view.empty()) return;
-    CHECK_CUDA(cudaMemsetAsync(view.data, 0, view.byte_size(),
-                               Backend::get_compute_stream()));
+    device::set_zero_async(view.data, view.byte_size(), Backend::get_compute_stream());
 }
 
 void require_same_recurrent_dtype(const TensorView& reference,
@@ -1299,29 +1389,7 @@ void ConvolutionOp::set(Index new_input_h, Index new_input_w,
     padding_width    = new_padding_w;
     compute_dtype = new_compute_dtype;
 
-#ifdef OPENNN_HAS_CUDA
-
-    planned_batch_size = 0;
-
-    if (kernels_number <= 0) return;
-
-    if (!kernel_descriptor) CHECK_CUDNN(cudnnCreateFilterDescriptor(&kernel_descriptor));
-    CHECK_CUDNN(cudnnSetFilter4dDescriptor(kernel_descriptor,
-                                           to_cudnn(compute_dtype),
-                                           CUDNN_TENSOR_NHWC,
-                                           to_int(kernels_number), to_int(kernel_channels),
-                                           to_int(kernel_height),  to_int(kernel_width)));
-
-    if (!convolution_descriptor) CHECK_CUDNN(cudnnCreateConvolutionDescriptor(&convolution_descriptor));
-    CHECK_CUDNN(cudnnSetConvolution2dDescriptor(convolution_descriptor,
-                                                to_int(new_padding_h), to_int(new_padding_w),
-                                                to_int(new_row_stride), to_int(new_column_stride),
-                                                1, 1,
-                                                CUDNN_CROSS_CORRELATION,
-                                                CUDNN_DATA_FLOAT));
-
-    CHECK_CUDNN(cudnnSetConvolutionMathType(convolution_descriptor, CUDNN_TENSOR_OP_MATH_ALLOW_CONVERSION));
-#endif
+    configure_convolution_descriptors(*this);
 }
 
 vector<TensorSpec> ConvolutionOp::parameter_specs() const
@@ -1934,13 +2002,7 @@ TensorSpec AttentionOp::backward_scratch_spec(Index batch_size) const
 
 bool AttentionOp::sdpa_supported(Type dtype, Device device)
 {
-#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    return device == Device::CUDA && dtype == Type::BF16;
-#else
-    (void)dtype;
-    (void)device;
-    return false;
-#endif
+    return cudnn_frontend_available && device == Device::CUDA && dtype == Type::BF16;
 }
 
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
@@ -2046,13 +2108,13 @@ struct AttentionOp::SDPACache
     {
         for (auto& [_, e] : entries)
         {
-            if (e.fwd_workspace_buf) cudaFree(e.fwd_workspace_buf);
-            if (e.bwd_workspace_buf) cudaFree(e.bwd_workspace_buf);
-            if (e.stats_buf)         cudaFree(e.stats_buf);
-            if (e.seed_buf)          cudaFree(e.seed_buf);
-            if (e.offset_buf)        cudaFree(e.offset_buf);
-            if (e.seq_len_q_buf)     cudaFree(e.seq_len_q_buf);
-            if (e.seq_len_kv_buf)    cudaFree(e.seq_len_kv_buf);
+            device::deallocate(Device::CUDA, e.fwd_workspace_buf, 0);
+            device::deallocate(Device::CUDA, e.bwd_workspace_buf, 0);
+            device::deallocate(Device::CUDA, e.stats_buf, 0);
+            device::deallocate(Device::CUDA, e.seed_buf, 0);
+            device::deallocate(Device::CUDA, e.offset_buf, 0);
+            device::deallocate(Device::CUDA, e.seq_len_q_buf, 0);
+            device::deallocate(Device::CUDA, e.seq_len_kv_buf, 0);
         }
     }
 #endif  // OPENNN_HAS_CUDA && HAVE_CUDNN_FRONTEND
@@ -2162,8 +2224,12 @@ static void build_sdpa_forward_graph(AttentionOp::SDPACache::Entry& entry,
                         .set_causal_mask(k.causal)
                         .set_attn_scale(attention_scale(k.head_dim));
 
-    if (!entry.seq_len_q_buf)  CHECK_CUDA(cudaMalloc(&entry.seq_len_q_buf,  size_t(k.batch_size) * sizeof(int32_t)));
-    if (!entry.seq_len_kv_buf) CHECK_CUDA(cudaMalloc(&entry.seq_len_kv_buf, size_t(k.batch_size) * sizeof(int32_t)));
+    if (!entry.seq_len_q_buf)
+        entry.seq_len_q_buf = device::allocate(Device::CUDA,
+                                               Index(size_t(k.batch_size) * sizeof(int32_t)));
+    if (!entry.seq_len_kv_buf)
+        entry.seq_len_kv_buf = device::allocate(Device::CUDA,
+                                                Index(size_t(k.batch_size) * sizeof(int32_t)));
 
     if (k.dropout_active)
     {
@@ -2175,8 +2241,10 @@ static void build_sdpa_forward_graph(AttentionOp::SDPACache::Entry& entry,
                                          .set_data_type(cudnn_frontend::DataType_t::INT64));
         sdpa_options.set_dropout(dropout_rate, entry.fwd_Seed, entry.fwd_Offset);
 
-        if (!entry.seed_buf)   CHECK_CUDA(cudaMalloc(&entry.seed_buf,   sizeof(int64_t)));
-        if (!entry.offset_buf) CHECK_CUDA(cudaMalloc(&entry.offset_buf, sizeof(int64_t)));
+        if (!entry.seed_buf)
+            entry.seed_buf = device::allocate(Device::CUDA, Index(sizeof(int64_t)));
+        if (!entry.offset_buf)
+            entry.offset_buf = device::allocate(Device::CUDA, Index(sizeof(int64_t)));
     }
 
     auto [O, Stats] = graph->sdpa(entry.fwd_Q, entry.fwd_K, entry.fwd_V, sdpa_options);
@@ -2198,12 +2266,12 @@ static void build_sdpa_forward_graph(AttentionOp::SDPACache::Entry& entry,
     int64_t ws = 0;
     graph->get_workspace_size(ws);
     if (ws > 0)
-        CHECK_CUDA(cudaMalloc(&entry.fwd_workspace_buf, size_t(ws)));
+        entry.fwd_workspace_buf = device::allocate(Device::CUDA, Index(ws));
 
     if (k.is_training)
     {
         const size_t stats_bytes = size_t(k.batch_size * k.heads * k.q_seq) * sizeof(float);
-        CHECK_CUDA(cudaMalloc(&entry.stats_buf, stats_bytes));
+        entry.stats_buf = device::allocate(Device::CUDA, Index(stats_bytes));
     }
 
     entry.fwd_graph = graph;
@@ -2274,7 +2342,7 @@ static void build_sdpa_backward_graph(AttentionOp::SDPACache::Entry& entry,
     int64_t ws = 0;
     graph->get_workspace_size(ws);
     if (ws > 0)
-        CHECK_CUDA(cudaMalloc(&entry.bwd_workspace_buf, size_t(ws)));
+        entry.bwd_workspace_buf = device::allocate(Device::CUDA, Index(ws));
 
     entry.bwd_graph = graph;
 }
@@ -2521,10 +2589,12 @@ void AttentionOp::apply_gpu(const TensorView& query,
         sdpa_last_used_offset = sdpa_dropout_offset;
         const int64_t seed_value   = static_cast<int64_t>(sdpa_dropout_seed);
         const int64_t offset_value = static_cast<int64_t>(sdpa_last_used_offset);
-        CHECK_CUDA(cudaMemcpyAsync(entry.seed_buf,   &seed_value,   sizeof(int64_t),
-                                   cudaMemcpyHostToDevice, Backend::get_compute_stream()));
-        CHECK_CUDA(cudaMemcpyAsync(entry.offset_buf, &offset_value, sizeof(int64_t),
-                                   cudaMemcpyHostToDevice, Backend::get_compute_stream()));
+        device::copy_async(entry.seed_buf, &seed_value, Index(sizeof(int64_t)),
+                           device::CopyKind::HostToDevice,
+                           Backend::get_compute_stream());
+        device::copy_async(entry.offset_buf, &offset_value, Index(sizeof(int64_t)),
+                           device::CopyKind::HostToDevice,
+                           Backend::get_compute_stream());
         ++sdpa_dropout_offset;
     }
 
@@ -2781,10 +2851,12 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
     {
         const int64_t seed_value   = static_cast<int64_t>(sdpa_dropout_seed);
         const int64_t offset_value = static_cast<int64_t>(sdpa_last_used_offset);
-        CHECK_CUDA(cudaMemcpyAsync(entry.seed_buf,   &seed_value,   sizeof(int64_t),
-                                   cudaMemcpyHostToDevice, Backend::get_compute_stream()));
-        CHECK_CUDA(cudaMemcpyAsync(entry.offset_buf, &offset_value, sizeof(int64_t),
-                                   cudaMemcpyHostToDevice, Backend::get_compute_stream()));
+        device::copy_async(entry.seed_buf, &seed_value, Index(sizeof(int64_t)),
+                           device::CopyKind::HostToDevice,
+                           Backend::get_compute_stream());
+        device::copy_async(entry.offset_buf, &offset_value, Index(sizeof(int64_t)),
+                           device::CopyKind::HostToDevice,
+                           Backend::get_compute_stream());
     }
 
     unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tp;
@@ -2870,22 +2942,7 @@ void PoolOp::set(Index input_h, Index input_w, Index input_c,
     padding_width   = padding_w;
     method          = new_method;
 
-#ifdef OPENNN_HAS_CUDA
-    if (pool_height <= 0 || pool_width <= 0) return;
-
-    if (!pooling_descriptor) CHECK_CUDNN(cudnnCreatePoolingDescriptor(&pooling_descriptor));
-
-    const cudnnPoolingMode_t mode = (method == Max)
-        ? CUDNN_POOLING_MAX
-        : CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
-
-    CHECK_CUDNN(cudnnSetPooling2dDescriptor(pooling_descriptor,
-                                            mode,
-                                            CUDNN_PROPAGATE_NAN,
-                                            to_int(pool_height), to_int(pool_width),
-                                            to_int(padding_height), to_int(padding_width),
-                                            to_int(row_stride), to_int(column_stride)));
-#endif
+    configure_pooling_descriptor(*this);
 }
 
 void PoolOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
@@ -4172,11 +4229,10 @@ void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
         for (Index i = 0; i < batch_size; ++i) seq_h[i] = int32_t(T);
 
         seq_lengths_dev_buf.grow_to(batch_size * Index(sizeof(int32_t)));
-        CHECK_CUDA(cudaMemcpyAsync(
-            seq_lengths_dev_buf.data, seq_h,
-            batch_size * sizeof(int32_t),
-            cudaMemcpyHostToDevice,
-            Backend::get_compute_stream()));
+        device::copy_async(seq_lengths_dev_buf.data, seq_h,
+                           batch_size * Index(sizeof(int32_t)),
+                           device::CopyKind::HostToDevice,
+                           Backend::get_compute_stream());
 
         static float zero_pad_fill = 0.0f;
         CHECK_CUDNN(cudnnSetRNNDataDescriptor(
@@ -4233,10 +4289,8 @@ void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
 void LongShortTermMemoryOp::pack_weights_to_cudnn_() const
 {
     if (weight_space_buf.data && weight_space_buf.bytes > 0)
-        CHECK_CUDA(cudaMemsetAsync(
-            weight_space_buf.data, 0,
-            size_t(weight_space_buf.bytes),
-            Backend::get_compute_stream()));
+        device::set_zero_async(weight_space_buf.data, weight_space_buf.bytes,
+                               Backend::get_compute_stream());
 
     const TensorView* W[8] = {
         &input_weights,
@@ -4288,16 +4342,13 @@ void LongShortTermMemoryOp::pack_weights_to_cudnn_() const
         if (b_addr)
         {
             if (B[lin] && B[lin]->data)
-                CHECK_CUDA(cudaMemcpyAsync(
-                    b_addr, B[lin]->data,
-                    size_t(H) * sizeof(float),
-                    cudaMemcpyDeviceToDevice,
-                    Backend::get_compute_stream()));
+                device::copy_async(b_addr, B[lin]->data,
+                                   H * Index(sizeof(float)),
+                                   device::CopyKind::DeviceToDevice,
+                                   Backend::get_compute_stream());
             else
-                CHECK_CUDA(cudaMemsetAsync(
-                    b_addr, 0,
-                    size_t(H) * sizeof(float),
-                    Backend::get_compute_stream()));
+                device::set_zero_async(b_addr, H * Index(sizeof(float)),
+                                       Backend::get_compute_stream());
         }
     }
 
@@ -4355,11 +4406,10 @@ void LongShortTermMemoryOp::unpack_gradients_from_cudnn_() const
                                      m_addr, const_cast<float*>(gW[lin]->as<float>()));
 
         if (b_addr && gB[lin] && gB[lin]->data)
-            CHECK_CUDA(cudaMemcpyAsync(
-                const_cast<void*>(gB[lin]->data), b_addr,
-                size_t(H) * sizeof(float),
-                cudaMemcpyDeviceToDevice,
-                Backend::get_compute_stream()));
+            device::copy_async(const_cast<void*>(gB[lin]->data), b_addr,
+                               H * Index(sizeof(float)),
+                               device::CopyKind::DeviceToDevice,
+                               Backend::get_compute_stream());
     }
 
     cudnnDestroyTensorDescriptor(m_desc);
@@ -4375,7 +4425,7 @@ void LongShortTermMemoryOp::apply_gpu(const TensorView& input,
     const Index batch_size = input.shape[0];
     if (batch_size == 0) return;
 
-    CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
+    device::synchronize(Backend::get_compute_stream());
 
 #ifdef OPENNN_LSTM_GPU_DEBUG
     {
@@ -4392,7 +4442,7 @@ void LongShortTermMemoryOp::apply_gpu(const TensorView& input,
     // --- diagnostic gate (define OPENNN_LSTM_GPU_DEBUG to enable) ---
 #ifdef OPENNN_LSTM_GPU_DEBUG
     auto log = [&](const char* tag) {
-        cudaStreamSynchronize(Backend::get_compute_stream());
+        device::synchronize(Backend::get_compute_stream());
         std::cerr << "[lstm-gpu] " << tag << " B=" << batch_size
                   << " T=" << time_steps << " F=" << input_features
                   << " H=" << output_features << " ret_seq=" << return_seq << "\n";
@@ -4455,11 +4505,10 @@ void LongShortTermMemoryOp::apply_gpu(const TensorView& input,
 
     if (return_seq)
     {
-        CHECK_CUDA(cudaMemcpyAsync(
-            output.data, y_buf.data,
-            size_t(batch_size * T * H) * sizeof(float),
-            cudaMemcpyDeviceToDevice,
-            Backend::get_compute_stream()));
+        device::copy_async(output.data, y_buf.data,
+                           batch_size * T * H * Index(sizeof(float)),
+                           device::CopyKind::DeviceToDevice,
+                           Backend::get_compute_stream());
     }
     else
     {
@@ -4496,7 +4545,7 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
 
 #ifdef OPENNN_LSTM_GPU_DEBUG
     auto log = [&](const char* tag) {
-        cudaStreamSynchronize(Backend::get_compute_stream());
+        device::synchronize(Backend::get_compute_stream());
         std::cerr << "[lstm-gpu-bwd] " << tag
                   << " B=" << batch_size << " T=" << time_steps
                   << " F=" << input_features << " H=" << output_features
@@ -4517,16 +4566,14 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
     // Build the rank-3 dy that cuDNN expects.
     if (return_seq)
     {
-        CHECK_CUDA(cudaMemcpyAsync(
-            dy_buf.data, output_delta.data, y_bytes,
-            cudaMemcpyDeviceToDevice,
-            Backend::get_compute_stream()));
+        device::copy_async(dy_buf.data, output_delta.data, Index(y_bytes),
+                           device::CopyKind::DeviceToDevice,
+                           Backend::get_compute_stream());
     }
     else
     {
-        CHECK_CUDA(cudaMemsetAsync(
-            dy_buf.data, 0, y_bytes,
-            Backend::get_compute_stream()));
+        device::set_zero_async(dy_buf.data, Index(y_bytes),
+                               Backend::get_compute_stream());
         scatter_time_slice_cuda<float>(
             batch_size, T, H, T - 1,
             output_delta.as<float>(),
@@ -4552,10 +4599,8 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
     log("after cudnnRNNBackwardData_v8");
 #endif
 
-    CHECK_CUDA(cudaMemsetAsync(
-        dweight_space_buf.data, 0,
-        size_t(dweight_space_buf.bytes),
-        Backend::get_compute_stream()));
+    device::set_zero_async(dweight_space_buf.data, dweight_space_buf.bytes,
+                           Backend::get_compute_stream());
 
     CHECK_CUDNN(cudnnRNNBackwardWeights_v8(
         Backend::get_cudnn_handle(),

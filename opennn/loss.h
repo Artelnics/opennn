@@ -111,7 +111,6 @@ public:
                         ForwardPropagation&,
                         BackPropagation&) const;
 
-#ifdef OPENNN_HAS_CUDA
     bool supports_device_epoch_metrics() const;
 
     bool back_propagate_device_metrics(const Batch&,
@@ -124,7 +123,6 @@ public:
                                         const ForwardPropagation&,
                                         float* error_sum_device,
                                         float* accuracy_sum_device) const;
-#endif
 
     float calculate_regularization(const VectorR&) const;
     float calculate_regularization(const TensorView&) const;
@@ -176,10 +174,8 @@ protected:
     float negatives_weight = 1.0f;
     float minkowski_parameter = 1.5f;
 
-#ifdef OPENNN_HAS_CUDA
     mutable Buffer errors_device{Device::CUDA};
     mutable Buffer metric_results_device{Device::CUDA};
-#endif
 
     // Regularization
     Regularization regularization_method = Regularization::L2;

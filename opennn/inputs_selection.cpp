@@ -19,35 +19,6 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
     set(new_training_strategy);
 }
 
-void InputsSelection::check() const
-{
-    throw_if(!training_strategy, "training strategy is not set.");
-
-    // Loss
-
-    const Loss* loss = training_strategy->get_loss();
-
-    throw_if(!loss, "loss is not set.");
-
-    // Neural network
-
-    const NeuralNetwork* neural_network = loss->get_neural_network();
-
-    throw_if(!neural_network, "neural network is not set.");
-
-    throw_if(neural_network->is_empty(), "Neural network is empty.\n");
-
-    // Dataset
-
-    const Dataset* dataset = loss->get_dataset();
-
-    throw_if(!dataset, "dataset is not set.");
-
-    const Index validation_samples_number = dataset->get_samples_number("Validation");
-
-    throw_if(validation_samples_number == 0, "Number of validation samples is zero.\n");
-}
-
 InputsSelectionResults::InputsSelectionResults(const Index maximum_epochs)
 {
     set(maximum_epochs);

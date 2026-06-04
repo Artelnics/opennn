@@ -431,11 +431,6 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
     }
 }
 
-void TimeSeriesDataset::fill_gaps()
-{
-    throw runtime_error("TimeSeriesDataset::fill_gaps: not implemented.");
-}
-
 MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_steps) const
 {
     const Index samples_number = get_samples_number();

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
+#include "device_backend.h"
 #include "string_utilities.h"
 #include "tensor_utilities.h"
 #include "math_utilities.h"
@@ -139,14 +140,13 @@ void Unscaling::refresh_op_storage(Device device)
         staging[size_t(4 * features + i)] = float(int(scalers[size_t(i)]));
     }
 
-#ifdef OPENNN_HAS_CUDA
     if (device == Device::CUDA)
     {
-        CHECK_CUDA(cudaMemcpy(op_storage.data, staging.data(),
-                              size_t(bytes), cudaMemcpyHostToDevice));
+        opennn::device::copy_async(op_storage.data, staging.data(),
+                                   bytes,
+                                   opennn::device::CopyKind::HostToDevice);
     }
     else
-#endif
     {
         memcpy(op_storage.data, staging.data(), size_t(bytes));
     }

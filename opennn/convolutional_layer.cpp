@@ -54,11 +54,6 @@ Index Convolutional::get_output_width() const
         : (input_width - kernel_width) / column_stride + 1;
 }
 
-pair<Index, Index> Convolutional::get_padding() const
-{
-    return { get_padding_height(), get_padding_width() };
-}
-
 Index Convolutional::get_padding_height() const
 {
     if (!use_padding) return 0;
@@ -107,8 +102,9 @@ void Convolutional::update_convolution_operator()
                     get_padding_height(), get_padding_width(),
                     compute_dtype);
 
-    convolution.output_slots = batch_norm.active() ? vector<size_t>{ConvolutionView}
-                                                   : vector<size_t>{Output};
+    convolution.output_slots = batch_norm.active() 
+        ? vector<size_t>{ConvolutionView}
+        : vector<size_t>{Output};
 
     if (batch_norm.active())
     {

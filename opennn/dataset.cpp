@@ -8,6 +8,7 @@
 
 #include "dataset.h"
 #include "batch.h"
+#include "device_backend.h"
 #include "tensor_utilities.h"
 #include "random_utilities.h"
 #include <cstdlib>
@@ -990,7 +991,6 @@ void Dataset::fill_batch(Batch& batch,
                          const vector<Index>& target_indices,
                          bool is_training) const
 {
-#ifdef OPENNN_HAS_CUDA
     if (batch.use_device_data_buffer
         && batch.uses_cuda()
         && try_fill_from_device_data_buffer(batch,
@@ -1002,15 +1002,14 @@ void Dataset::fill_batch(Batch& batch,
         batch.needs_device_copy = false;
         return;
     }
-#endif
 
     batch.current_sample_count = ssize(sample_indices);
 
     const bool on_gpu = batch.uses_cuda();
 
-    float* const input_buffer   = on_gpu ? batch.inputs_host  : batch.input.as<float>();
-    float* const decoder_buffer = on_gpu ? batch.decoder_host : batch.decoder.as<float>();
-    float* const target_buffer  = on_gpu ? batch.targets_host : batch.target.as<float>();
+    float* const input_buffer   = on_gpu ? batch.input.host   : batch.input.buffer.as<float>();
+    float* const decoder_buffer = on_gpu ? batch.decoder.host : batch.decoder.buffer.as<float>();
+    float* const target_buffer  = on_gpu ? batch.target.host  : batch.target.buffer.as<float>();
 
     if (batch.input_contiguous < 0 && !input_indices.empty())
         batch.input_contiguous = is_contiguous(input_indices) ? 1 : 0;
@@ -1043,7 +1042,7 @@ void Dataset::fill_batch(Batch& batch,
 
     fill_from_storage(input_indices, input_buffer, batch.input_contiguous, &Dataset::fill_inputs);
 
-    if (!batch.decoder_shape.empty())
+    if (!batch.decoder.shape.empty())
         fill_from_storage(decoder_indices, decoder_buffer, batch.decoder_contiguous, &Dataset::fill_decoder);
 
     fill_from_storage(target_indices, target_buffer, batch.target_contiguous, &Dataset::fill_targets);
@@ -1178,10 +1177,10 @@ void Dataset::invalidate_data_buffer() const
     data_buffer.resize_bytes(0, Device::CUDA);
 }
 
-#ifdef OPENNN_HAS_CUDA
-
 bool Dataset::prepare_device_data_buffer() const
 {
+    if (!device::is_cuda_build()) return false;
+
     lock_guard<mutex> lock(data_buffer_mutex);
 
     if (!supports_dense_feature_gather()) return false;
@@ -1200,9 +1199,7 @@ bool Dataset::prepare_device_data_buffer() const
 
     const Index buffer_bytes = rows * features * Index(sizeof(float));
 
-    size_t free_bytes = 0;
-    size_t total_bytes = 0;
-    CHECK_CUDA(cudaMemGetInfo(&free_bytes, &total_bytes));
+    const size_t free_bytes = device::memory_info().first;
     const Index margin = Index(512) << 20;
     if (buffer_bytes + margin > Index(free_bytes)) return false;
 
@@ -1220,9 +1217,11 @@ bool Dataset::prepare_device_data_buffer() const
     data_buffer.resize_bytes(Index(host_data.size()) * Index(sizeof(float)), Device::CUDA);
 
     cudaStream_t stream = Backend::get_compute_stream();
-    CHECK_CUDA(cudaMemcpyAsync(data_buffer.data, host_data.data(),
-                               host_data.size() * sizeof(float), cudaMemcpyHostToDevice, stream));
-    CHECK_CUDA(cudaStreamSynchronize(stream));
+    device::copy_async(data_buffer.data, host_data.data(),
+                       Index(host_data.size()) * Index(sizeof(float)),
+                       device::CopyKind::HostToDevice,
+                       stream);
+    device::synchronize(stream);
 
     data_buffer_shape = {rows, features};
     return true;
@@ -1253,8 +1252,6 @@ bool Dataset::try_fill_from_device_data_buffer(Batch& batch,
 
     return true;
 }
-
-#endif
 
 void Dataset::samples_from_JSON(const Json *samples_element)
 {

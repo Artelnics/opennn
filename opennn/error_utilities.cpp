@@ -8,6 +8,7 @@
 
 #include "error_utilities.h"
 #include "cuda_dispatch.h"
+#include "device_backend.h"
 
 namespace opennn
 {
@@ -57,57 +58,99 @@ static float squared_norm_cuda(const float* data, Index size)
     return dot;
 }
 
+static void cross_entropy_3d_gradient_device_count_cuda(const TensorView& input,
+                                                        const TensorView& target,
+                                                        const TensorView& input_delta,
+                                                        const float* active_tokens_count_device)
+{
+    const Index vocabulary_size = input.shape.back();
+    const Index sequence_length = input.shape[input.get_rank() - 2];
+    const Index batch_size = input.size() / (sequence_length * vocabulary_size);
+
+    input.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        const size_t total = static_cast<size_t>(batch_size) * sequence_length * vocabulary_size;
+        cross_entropy_3d_multiple_backward_device_count_cuda<T>(
+            total, to_int(vocabulary_size),
+            input.as<T>(), target.as<float>(), input_delta.as<T>(),
+            active_tokens_count_device);
+    });
+}
+
+static void add_l1_regularization_gradient_cuda(const TensorView& parameters, float lambda, const TensorView& gradient)
+{
+    l1_gradient_cuda<float>(parameters.size(), gradient.as<float>(), parameters.as<float>(), lambda);
+}
+
+static void add_l2_regularization_gradient_cuda(const TensorView& parameters, float lambda, const TensorView& gradient)
+{
+    const int total_size = to_int(parameters.size());
+    CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), total_size,
+                              &lambda,         CUDA_R_32F,
+                              parameters.data, CUDA_R_32F, 1,
+                              gradient.data,   CUDA_R_32F, 1,
+                              CUDA_R_32F));
+}
+
+#else
+
+#define OPENNN_CUDA_STUBS(X) \
+    X(float, sum_squared_diff_cuda, (const TensorView&, const TensorView&, float*)) \
+    X(void,  scaled_diff_cuda, (const TensorView&, const TensorView&, float, const TensorView&)) \
+    X(float, sum_abs_cuda, (const float*, Index)) \
+    X(float, squared_norm_cuda, (const float*, Index)) \
+    X(void,  cross_entropy_3d_gradient_device_count_cuda, (const TensorView&, const TensorView&, const TensorView&, const float*)) \
+    X(void,  add_l1_regularization_gradient_cuda, (const TensorView&, float, const TensorView&)) \
+    X(void,  add_l2_regularization_gradient_cuda, (const TensorView&, float, const TensorView&))
+
+#define OPENNN_CUDA_STUB(ret, name, sig) static ret name sig { throw runtime_error(#name " requires CUDA support."); }
+OPENNN_CUDA_STUBS(OPENNN_CUDA_STUB)
+#undef OPENNN_CUDA_STUB
+#undef OPENNN_CUDA_STUBS
+
 #endif
 
 void mean_squared_error(const TensorView& input, const TensorView& target, float& error,
-                        [[maybe_unused]] float* workspace_device)
+                        float* workspace_device)
 {
     const Index batch_size = input.shape[0];
-#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
         error = sum_squared_diff_cuda(input, target, workspace_device) / to_int(2 * batch_size);
         return;
     }
-#endif
     error = (input.as_vector() - target.as_vector()).squaredNorm() / to_type(2 * batch_size);
 }
 
 void mean_squared_error_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta)
 {
     const Index batch_size = input.shape[0];
-#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
         scaled_diff_cuda(input, target, 1.0f / to_int(batch_size), input_delta);
         return;
     }
-#endif
     input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) / to_type(batch_size);
 }
 
 void normalized_squared_error(const TensorView& input, const TensorView& target, float coefficient, float& error,
-                              [[maybe_unused]] float* workspace_device)
+                              float* workspace_device)
 {
-#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
         error = sum_squared_diff_cuda(input, target, workspace_device) / (2.0f * (coefficient + EPSILON));
         return;
     }
-#endif
     error = (input.as_vector() - target.as_vector()).squaredNorm() / (2.0f * (coefficient + EPSILON));
 }
 
 void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, float coefficient, const TensorView& input_delta)
 {
-#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
         scaled_diff_cuda(input, target, 1.0f / (static_cast<float>(coefficient) + EPSILON), input_delta);
         return;
     }
-#endif
     input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) / (coefficient + EPSILON);
 }
 
@@ -274,9 +317,12 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
         CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
 
         float host_results[3];
-        CHECK_CUDA(cudaMemcpyAsync(host_results, device_results_ptr, 3 * sizeof(float),
-                                   cudaMemcpyDeviceToHost, Backend::get_compute_stream()));
-        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
+        cudaStream_t stream = Backend::get_compute_stream();
+        device::copy_async(host_results, device_results_ptr,
+                           3 * Index(sizeof(float)),
+                           device::CopyKind::DeviceToHost,
+                           stream);
+        device::synchronize(stream);
 
         const float sum_loss      = host_results[0];
         const float active_count  = host_results[1];
@@ -355,22 +401,13 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
 }
 
 void cross_entropy_3d_gradient_device_count(const TensorView& input, const TensorView& target, const TensorView& input_delta,
-                                            [[maybe_unused]] const float* active_tokens_count_device)
+                                            const float* active_tokens_count_device)
 {
-#ifdef OPENNN_HAS_CUDA
-    const Index vocabulary_size = input.shape.back();
-    const Index sequence_length = input.shape[input.get_rank() - 2];
-    const Index batch_size = input.size() / (sequence_length * vocabulary_size);
-
-    if (TRY_GPU_DISPATCH(input, [&](auto tag) {
-        using T = decltype(tag);
-        const size_t total = static_cast<size_t>(batch_size) * sequence_length * vocabulary_size;
-        cross_entropy_3d_multiple_backward_device_count_cuda<T>(
-            total, to_int(vocabulary_size),
-            input.as<T>(), target.as<float>(), input_delta.as<T>(),
-            active_tokens_count_device);
-    })) return;
-#endif
+    if (input.is_cuda())
+    {
+        cross_entropy_3d_gradient_device_count_cuda(input, target, input_delta, active_tokens_count_device);
+        return;
+    }
 
     Index active_tokens_count = 0;
     const Index token_count = (input.size() / input.shape.back());
@@ -386,54 +423,41 @@ void cross_entropy_3d_gradient_device_count(const TensorView& input, const Tenso
 
 void l1_regularization(const TensorView& parameters, float lambda, float& penalty)
 {
-#ifdef OPENNN_HAS_CUDA
     if (parameters.is_cuda())
     {
         penalty = lambda * sum_abs_cuda(parameters.as<float>(), parameters.size());
         return;
     }
-#endif
     penalty = lambda * parameters.as_vector().lpNorm<1>();
 }
 
 void l1_regularization_gradient(const TensorView& parameters, float lambda, const TensorView& gradient)
 {
-#ifdef OPENNN_HAS_CUDA
     if (parameters.is_cuda())
     {
-        l1_gradient_cuda<float>(parameters.size(), gradient.as<float>(), parameters.as<float>(), lambda);
+        add_l1_regularization_gradient_cuda(parameters, lambda, gradient);
         return;
     }
-#endif
     gradient.as_vector().array() += lambda * parameters.as_vector().array().sign();
 }
 
 void l2_regularization(const TensorView& parameters, float lambda, float& penalty)
 {
-#ifdef OPENNN_HAS_CUDA
     if (parameters.is_cuda())
     {
         penalty = 0.5f * lambda * squared_norm_cuda(parameters.as<float>(), parameters.size());
         return;
     }
-#endif
     penalty = 0.5f * lambda * parameters.as_vector().squaredNorm();
 }
 
 void l2_regularization_gradient(const TensorView& parameters, float lambda, const TensorView& gradient)
 {
-#ifdef OPENNN_HAS_CUDA
     if (parameters.is_cuda())
     {
-        const int total_size = to_int(parameters.size());
-        CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), total_size,
-                                  &lambda,         CUDA_R_32F,
-                                  parameters.data, CUDA_R_32F, 1,
-                                  gradient.data,   CUDA_R_32F, 1,
-                                  CUDA_R_32F));
+        add_l2_regularization_gradient_cuda(parameters, lambda, gradient);
         return;
     }
-#endif
     gradient.as_vector().noalias() += lambda * parameters.as_vector();
 }
 

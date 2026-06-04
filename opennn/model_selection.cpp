@@ -43,37 +43,6 @@ void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
     inputs_selection->set(training_strategy);
 }
 
-void ModelSelection::check() const
-{
-    // Optimization algorithm
-
-    throw_if(!training_strategy, "training strategy is not set.");
-
-    // Loss
-
-    const Loss* loss = training_strategy->get_loss();
-
-    throw_if(!loss, "loss is not set.");
-
-    // Neural network
-
-    const NeuralNetwork* neural_network = loss->get_neural_network();
-
-    throw_if(!neural_network, "neural network is not set.");
-
-    throw_if(neural_network->is_empty(), "Multilayer Dense is empty.\n");
-
-    // Dataset
-
-    const Dataset* dataset = loss->get_dataset();
-
-    throw_if(!dataset, "dataset is not set.");
-
-    const Index validation_samples_number = dataset->get_samples_number("Validation");
-
-    throw_if(validation_samples_number == 0, "Number of validation samples is zero.\n");
-}
-
 NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 {
     return neurons_selection->perform_neurons_selection();

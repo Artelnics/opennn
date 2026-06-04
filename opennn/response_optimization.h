@@ -142,8 +142,6 @@ public:
                                                                   const MatrixR& feasible_outputs,
                                                                   const Objectives& objectives) const;
 
-    MatrixR assemble_results(const MatrixR& inputs, const MatrixR& outputs) const;
-
     pair<MatrixR, MatrixR> calculate_pareto(const MatrixR& inputs, const MatrixR& outputs, const MatrixR& objective_matrix) const;
 
     pair<float, float> calculate_quality_metrics(const MatrixR& inputs,

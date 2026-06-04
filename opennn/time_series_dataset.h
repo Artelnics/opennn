@@ -28,8 +28,6 @@ public:
                       bool = false,
                       const Codification& = Codification::UTF8);
 
-    void fill_gaps();
-
     Index get_past_time_steps() const;
     Index get_future_time_steps() const;
     Index get_time_variable_index() const;

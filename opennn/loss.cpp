@@ -562,8 +562,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     EvaluationResult result;
 
     float* workspace_device = nullptr;
-#ifdef OPENNN_HAS_CUDA
-    const bool on_gpu = neural_network && neural_network->is_gpu();
+    const bool on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
     if (on_gpu)
     {
         const Index workspace_floats = (error == Error::CrossEntropy3d)
@@ -572,7 +571,6 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         errors_device.grow_to(workspace_floats * Index(sizeof(float)));
         workspace_device = errors_device.as<float>();
     }
-#endif
 
     using enum Error;
     switch (error)
@@ -624,15 +622,16 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     return result;
 }
 
-#ifdef OPENNN_HAS_CUDA
-
 bool Loss::supports_device_epoch_metrics() const
 {
-    return neural_network
+    return device::is_cuda_build()
+        && neural_network
         && neural_network->is_gpu()
         && error != Error::MinkowskiError
         && error != Error::Yolo;
 }
+
+#ifdef OPENNN_HAS_CUDA
 
 bool Loss::calculate_error_device_metrics(const Batch& batch,
                                           const ForwardPropagation& forward_propagation,
@@ -807,6 +806,25 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
     add_regularization_gradient(back_propagation);
 
     return true;
+}
+
+#else
+
+bool Loss::calculate_error_device_metrics(const Batch&,
+                                          const ForwardPropagation&,
+                                          float*,
+                                          float*) const
+{
+    return false;
+}
+
+bool Loss::back_propagate_device_metrics(const Batch&,
+                                         ForwardPropagation&,
+                                         BackPropagation&,
+                                         float*,
+                                         float*) const
+{
+    return false;
 }
 
 #endif

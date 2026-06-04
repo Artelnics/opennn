@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
+#include "device_backend.h"
 #include "tensor_utilities.h"
 #include "math_utilities.h"
 #include "bounding_layer.h"
@@ -145,19 +146,21 @@ void Bounding::refresh_op_storage(Device device)
         return;
     }
 
-    const size_t feature_bytes = size_t(features) * sizeof(float);
+    const Index feature_bytes = features * Index(sizeof(float));
 
-#ifdef OPENNN_HAS_CUDA
     if (device == Device::CUDA)
     {
-        CHECK_CUDA(cudaMemcpy(op_storage.as<float>(),            lower_bounds.data(), feature_bytes, cudaMemcpyHostToDevice));
-        CHECK_CUDA(cudaMemcpy(op_storage.as<float>() + features, upper_bounds.data(), feature_bytes, cudaMemcpyHostToDevice));
+        opennn::device::copy_async(op_storage.as<float>(), lower_bounds.data(),
+                                   feature_bytes,
+                                   opennn::device::CopyKind::HostToDevice);
+        opennn::device::copy_async(op_storage.as<float>() + features, upper_bounds.data(),
+                                   feature_bytes,
+                                   opennn::device::CopyKind::HostToDevice);
     }
     else
-#endif
     {
-        memcpy(op_storage.as<float>(),            lower_bounds.data(), feature_bytes);
-        memcpy(op_storage.as<float>() + features, upper_bounds.data(), feature_bytes);
+        memcpy(op_storage.as<float>(), lower_bounds.data(), static_cast<size_t>(feature_bytes));
+        memcpy(op_storage.as<float>() + features, upper_bounds.data(), static_cast<size_t>(feature_bytes));
     }
 
     float* const base = op_storage.as<float>();
