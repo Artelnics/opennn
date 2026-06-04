@@ -634,18 +634,15 @@ void ResponseOptimization::apply_affine_input_swap(MatrixR& random_inputs,
     const Index rows_number = random_inputs.rows();
     const Index terms_number = static_cast<Index>(affine_input_terms.size());
 
+    vector<Index> term_order(terms_number);
+    iota(term_order.begin(), term_order.end(), 0);
+
     for (Index row_index = 0; row_index < rows_number; ++row_index)
     {
-        // Evaluate the current constraint value: f = sum(ai * xi) + c.
-
-        float weighted_sum = 0;
+        float current_value = affine_constant;
 
         for (const auto& [column, coefficient] : affine_input_terms)
-            weighted_sum += coefficient * random_inputs(row_index, column);
-
-        const float current_value = weighted_sum + affine_constant;
-
-        // Determine the correction target based on the condition float.
+            current_value += coefficient * random_inputs(row_index, column);
 
         float target = current_value;
 
@@ -658,7 +655,7 @@ void ResponseOptimization::apply_affine_input_swap(MatrixR& random_inputs,
         case ComparisonOp::Between:
             if (current_value >= low_bound && current_value <= up_bound)
                 continue;
-            target = (current_value < low_bound) ? low_bound : up_bound;
+            target = random_uniform(low_bound, up_bound);
             break;
 
         case ComparisonOp::GreaterEqualTo:
@@ -679,79 +676,29 @@ void ResponseOptimization::apply_affine_input_swap(MatrixR& random_inputs,
             continue;
         }
 
+        shuffle_vector(term_order);
 
-        vector<bool> frozen(terms_number, false);
-        float residual_error = current_value - target;
+        float residual_error = target - current_value;
 
-        const Index max_redistribution_passes = terms_number;
-
-        for (Index pass = 0; pass < max_redistribution_passes && abs(residual_error) > EPSILON; ++pass)
+        for (const Index term_index : term_order)
         {
-            // Recompute active weighted sum and active sum of squared coefficients.
-
-            float active_weighted_sum = 0;
-            float active_sum_coefficients_squared = 0;
-
-            for (Index term_index = 0; term_index < terms_number; ++term_index)
-            {
-                if (frozen[term_index])
-                    continue;
-
-                const Index column = affine_input_terms[term_index].first;
-                const float coefficient = affine_input_terms[term_index].second;
-
-                active_weighted_sum += coefficient * random_inputs(row_index, column);
-                active_sum_coefficients_squared += coefficient * coefficient;
-            }
-
-            if (active_sum_coefficients_squared < EPSILON)
+            if (abs(residual_error) <= EPSILON)
                 break;
 
-            const float target_minus_constant = target - affine_constant;
+            const auto [column, coefficient] = affine_input_terms[term_index];
 
-            const bool use_proportional = abs(active_weighted_sum) > EPSILON
-                && (active_weighted_sum > 0) == (target_minus_constant > 0);
+            if (abs(coefficient) <= EPSILON)
+                continue;
 
-            float absorbed_correction = 0;
-            bool any_clamped = false;
+            const float old_value = random_inputs(row_index, column);
 
-            for (Index term_index = 0; term_index < terms_number; ++term_index)
-            {
-                if (frozen[term_index])
-                    continue;
+            const float corrected_value = max(input_domain.inferior_frontier(column),
+                                              min(input_domain.superior_frontier(column),
+                                                  old_value + residual_error / coefficient));
 
-                const Index column = affine_input_terms[term_index].first;
-                const float coefficient = affine_input_terms[term_index].second;
+            random_inputs(row_index, column) = corrected_value;
 
-                const float delta = use_proportional
-                    ? -residual_error * random_inputs(row_index, column) / active_weighted_sum
-                    : -residual_error * coefficient / active_sum_coefficients_squared;
-
-                const float old_value = random_inputs(row_index, column);
-                const float corrected_value = old_value + delta;
-
-                const float clamped_value = max(input_domain.inferior_frontier(column),
-                                               min(input_domain.superior_frontier(column),
-                                                   corrected_value));
-
-                random_inputs(row_index, column) = clamped_value;
-
-                // Track what this variable actually absorbed (in constraint-space).
-
-                absorbed_correction += coefficient * (clamped_value - old_value);
-
-                if (clamped_value != corrected_value)
-                {
-                    frozen[term_index] = true;
-                    any_clamped = true;
-                }
-            }
-
-
-            residual_error += absorbed_correction;
-
-            if (!any_clamped)
-                break;
+            residual_error -= coefficient * (corrected_value - old_value);
         }
     }
 }
