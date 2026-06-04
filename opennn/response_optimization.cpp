@@ -272,6 +272,12 @@ void ResponseOptimization::set_max_pareto_number(const Index new_max_pareto_numb
 }
 
 
+void ResponseOptimization::set_max_total_evaluations(const Index new_max_total_evaluations)
+{
+    max_total_evaluations = new_max_total_evaluations;
+}
+
+
 void ResponseOptimization::set_deformation_domain_factor(float new_deformation_domain_factor)
 {
     deformation_domain_factor = new_deformation_domain_factor;
@@ -1073,6 +1079,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
 {
     const MatrixR random_inputs = calculate_random_inputs(input_domain, evaluations_count);
     const MatrixR outputs = calculate_outputs(random_inputs);
+    evaluations_used += evaluations_count;   // total surrogate-evaluation budget tracking
     return filter_feasible_points(random_inputs, outputs, output_domain);
 }
 
@@ -1409,6 +1416,12 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 
         for (Index j = 0; j < global_pareto_inputs.rows(); j++)
         {
+            // Matched-budget stop: once the total surrogate-evaluation budget
+            // is spent, stop launching new local-sampling calls and use the
+            // candidates aggregated so far this iteration.
+            if (max_total_evaluations > 0 && evaluations_used >= max_total_evaluations)
+                break;
+
             auto [local_feasible_inputs, local_feasible_outputs] = sample_feasible_points(input_domains[j], original_output_domain);
 
             MatrixR local_objective_matrix  = objectives.extract(local_feasible_inputs, local_feasible_outputs);
@@ -1441,6 +1454,14 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
         {
             cout << "> [Pareto cap] Front reached " << global_pareto_inputs.rows()
                  << " points (cap=" << max_pareto_number
+                 << "). Stopping at iteration " << i + 1 << "." << endl;
+            break;
+        }
+
+        if (max_total_evaluations > 0 && evaluations_used >= max_total_evaluations)
+        {
+            cout << "> [Budget cap] Reached " << evaluations_used
+                 << " surrogate evaluations (budget=" << max_total_evaluations
                  << "). Stopping at iteration " << i + 1 << "." << endl;
             break;
         }
@@ -1486,6 +1507,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
         current_zoom *= zoom_factor;
     }
     cout << "\n> [Optimization Complete] Assembling final results..." << endl;
+    cout << "> Total surrogate evaluations used: " << evaluations_used << endl;
 
     return assemble_matrices(global_pareto_inputs, global_pareto_outputs);
 }
@@ -1580,6 +1602,8 @@ MatrixR ResponseOptimization::perform_response_optimization() const
 
     if (objectives_number == 0)
         throw runtime_error("No objectives found\n");
+
+    evaluations_used = 0;   // reset the total surrogate-evaluation budget counter
 
     return (objectives_number == 1)
         ? perform_single_objective_optimization()

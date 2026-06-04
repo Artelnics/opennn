@@ -110,6 +110,7 @@ public:
     void set_evaluations_number(const int new_evaluations_number);
     void set_relative_tolerance(float new_relative_tolerance);
     void set_max_pareto_number(const Index new_max_pareto_number);
+    void set_max_total_evaluations(const Index new_max_total_evaluations);
 
     void set_deformation_domain_factor(float new_deformation_domain_factor);
     float get_deformation_domain_factor();
@@ -206,6 +207,16 @@ private:
     // safety upper bound that rarely fires; raising it further does not
     // increase |PF| or strength_max.
     Index max_pareto_number = 10000;
+
+    // Optional hard cap on the TOTAL number of surrogate evaluations spent
+    // across the whole run (initial sampling + every per-Pareto-point local
+    // sampling in every iteration). 0 = unlimited (default; preserves the
+    // original behaviour exactly). When > 0, the MO/SO loop stops launching
+    // new sampling calls once `evaluations_used` reaches this budget, then
+    // returns the best front found so far. Used to run IDC under a matched
+    // surrogate-evaluation budget against population-based baselines.
+    Index max_total_evaluations = 0;
+    mutable Index evaluations_used = 0;
 
     float deformation_domain_factor = 1.0f;
 
