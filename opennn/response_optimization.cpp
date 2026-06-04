@@ -278,6 +278,12 @@ void ResponseOptimization::set_max_total_evaluations(const Index new_max_total_e
 }
 
 
+void ResponseOptimization::set_initial_sampling_factor(const Index new_initial_sampling_factor)
+{
+    initial_sampling_factor = max(Index(1), new_initial_sampling_factor);
+}
+
+
 void ResponseOptimization::set_deformation_domain_factor(float new_deformation_domain_factor)
 {
     deformation_domain_factor = new_deformation_domain_factor;
@@ -954,12 +960,15 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
 
 
 pair<MatrixR, MatrixR> ResponseOptimization::sample_feasible_points(const Domain& input_domain,
-                                                                    const Domain& output_domain) const
+                                                                    const Domain& output_domain,
+                                                                    const Index evaluations_multiplier) const
 {
-    if (formula_constraints.empty())
-        return generate_feasible_points(input_domain, output_domain, evaluations_number);
+    const Index multiplier = max(Index(1), evaluations_multiplier);
 
-    const Index base_evaluations = evaluations_number;
+    if (formula_constraints.empty())
+        return generate_feasible_points(input_domain, output_domain, evaluations_number * multiplier);
+
+    const Index base_evaluations = evaluations_number * multiplier;
     const Index evaluations_cap = base_evaluations * max_oversample_factor;
     const float low_ratio_threshold = min_feasible_ratio * float(0.25);
 
@@ -1322,7 +1331,10 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     const Domain original_input_domain = get_original_domain("Input");
     const Domain original_output_domain = get_original_domain("Target");
 
-    auto [first_feasible_inputs, first_feasible_outputs] = sample_feasible_points(original_input_domain, original_output_domain);
+    // The initial, full-domain pass draws a broader candidate set
+    // (initial_sampling_factor x evaluations_number) to seed the contraction
+    // from a wider sample; per-Pareto-point sampling below keeps the base count.
+    auto [first_feasible_inputs, first_feasible_outputs] = sample_feasible_points(original_input_domain, original_output_domain, initial_sampling_factor);
 
     if (first_feasible_inputs.rows() == 0)
     {

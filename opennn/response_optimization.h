@@ -111,6 +111,7 @@ public:
     void set_relative_tolerance(float new_relative_tolerance);
     void set_max_pareto_number(const Index new_max_pareto_number);
     void set_max_total_evaluations(const Index new_max_total_evaluations);
+    void set_initial_sampling_factor(const Index new_initial_sampling_factor);
 
     void set_deformation_domain_factor(float new_deformation_domain_factor);
     float get_deformation_domain_factor();
@@ -137,7 +138,8 @@ public:
                                                                 const Domain& output_domain) const;
 
     pair<MatrixR, MatrixR> sample_feasible_points(const Domain& input_domain,
-                                                                const Domain& output_domain) const;
+                                                                const Domain& output_domain,
+                                                                const Index evaluations_multiplier = 1) const;
 
     pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR& feasible_inputs,
                                                                   const MatrixR& feasible_outputs,
@@ -217,6 +219,16 @@ private:
     // surrogate-evaluation budget against population-based baselines.
     Index max_total_evaluations = 0;
     mutable Index evaluations_used = 0;
+
+    // Multiplier on the candidate count of the FIRST (initial, full-domain)
+    // multi-objective sampling only: the initial pass draws
+    // evaluations_number * initial_sampling_factor candidates, while every
+    // per-Pareto-point local sampling keeps the base evaluations_number. A
+    // larger initial set gives a broader domain to seed the contraction from.
+    // 1 = unchanged (default; preserves the original behaviour exactly). The
+    // extra initial cost is counted against max_total_evaluations like any
+    // other sampling, so the matched budget still holds.
+    Index initial_sampling_factor = 1;
 
     float deformation_domain_factor = 1.0f;
 
