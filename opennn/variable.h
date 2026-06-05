@@ -6,11 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#pragma once
+
 #include "pch.h"
 #include "tensor_utilities.h"
 #include "enum_map.h"
-
-#pragma once
 
 namespace opennn
 {
