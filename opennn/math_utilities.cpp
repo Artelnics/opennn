@@ -1068,12 +1068,12 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
     const cudaDataType_t io_type = output.cuda_dtype();
 
-    const LtMatmulPlan& plan = get_lt_gemm_plan(
+    run_lt_matmul_cached(
         output_columns, total_rows, input_columns,
         CUBLAS_OP_N, CUBLAS_OP_N,
-        epilogue, io_type, io_type);
-
-    run_lt_matmul(plan, weights.data, input_for_gemm, output.data, bias.data);
+        epilogue,
+        weights.data, input_for_gemm, output.data, bias.data,
+        io_type, io_type);
 }
 
 static void linear_backward_gpu(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
@@ -1086,14 +1086,13 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
 
-    const LtMatmulPlan& plan = get_lt_gemm_plan(
+    run_lt_matmul_cached(
         output_columns, input_columns, total_rows,
         CUBLAS_OP_N, CUBLAS_OP_T,
         CUBLASLT_EPILOGUE_BGRADA,
+        output_delta.data, input_for_gemm, weight_gradient.data, bias_gradient.as<float>(),
         output_delta.cuda_dtype(),
         CUDA_R_32F);
-
-    run_lt_matmul(plan, output_delta.data, input_for_gemm, weight_gradient.data, bias_gradient.as<float>());
 
     if (!input_delta.data || input_delta.size() == 0) return;
 
