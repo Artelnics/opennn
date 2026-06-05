@@ -66,8 +66,6 @@ public:
                             bool is_training,
                             int contiguous = -1) const override;
 
-    bool supports_dense_feature_gather() const override { return false; }
-
     void resize_input_shape(Index) override;
 
 private:

@@ -299,6 +299,11 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
                                      && !neural_network.has(LayerType::LongShortTermMemory)
                                      && !env_flag_enabled("OPENNN_DISABLE_DATA_BUFFER");
 
+#ifdef OPENNN_HAS_CUDA
+    if (use_device_data_buffer)
+        dataset.prepare_device_data_buffer();
+#endif
+
     auto fill_pool = [&](ThreadSafeQueue<Batch*>& queue,
                          vector<unique_ptr<Batch>>& pool,
                          Index batch_size)

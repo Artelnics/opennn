@@ -152,7 +152,7 @@ static void prepare_tinychat_pairs(const std::filesystem::path& src,
 }
 #endif
 
-int main()
+int main(int argc, char** argv)
 {
     try
     {
@@ -254,7 +254,112 @@ int main()
         return 0;
 #endif
 
-        cout << "OpenNN. HIGGS 5x300 DNN GPU FP32 batch-1M benchmark." << endl;
+#if 0
+        cout << "OpenNN. train_1000_filter_small CNN training." << endl;
+
+#ifdef OPENNN_HAS_CUDA
+        Configuration::instance().set(Device::CUDA, Type::BF16);
+        Backend::instance();
+#else
+        Configuration::instance().set(Device::CPU, Type::FP32);
+        Backend::instance();
+#endif
+
+        set_seed(42);
+
+        const filesystem::path dataset_path = "/home/artelnics/Documents/train_1000_filter_small";
+        const filesystem::path parameters_path =
+            "/home/artelnics/Documents/train_1000_filter_small_cnn_parameters.bin";
+
+        if (!filesystem::exists(dataset_path))
+            throw runtime_error("Dataset folder not found: " + dataset_path.string());
+
+        ImageDataset dataset(dataset_path);
+        dataset.split_samples_random(0.70, 0.15, 0.15);
+
+        AugmentationSettings augmentation;
+        augmentation.enabled = true;
+        augmentation.reflection_axis_x = true;
+        augmentation.reflection_axis_y = true;
+        augmentation.rotation_minimum = -6.0f;
+        augmentation.rotation_maximum = 6.0f;
+        augmentation.horizontal_translation_minimum = -6.0f;
+        augmentation.horizontal_translation_maximum = 6.0f;
+        augmentation.vertical_translation_minimum = -6.0f;
+        augmentation.vertical_translation_maximum = 6.0f;
+        dataset.set_augmentation(augmentation);
+
+        const Shape input_shape = dataset.get_shape("Input");
+        const Shape target_shape = dataset.get_shape("Target");
+
+        cout << "[DATASET] train=" << dataset.get_samples_number("Training")
+             << " val="            << dataset.get_samples_number("Validation")
+             << " test="           << dataset.get_samples_number("Testing")
+             << " input="          << input_shape[0] << "x" << input_shape[1] << "x" << input_shape[2]
+             << " target="         << target_shape[0]
+             << endl;
+
+        ImageClassificationNetwork network(input_shape,
+                                           Shape{16, 32, 64, 128},
+                                           target_shape);
+
+        cout << "CNN params=" << network.get_parameters_number()
+             << " (buffer=" << network.get_parameters_size() << ")" << endl;
+
+        TrainingStrategy training_strategy(&network, &dataset);
+        training_strategy.set_loss("CrossEntropy");
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        training_strategy.get_loss()->set_regularization("None");
+
+        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        if (!adam)
+            throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
+
+        adam->set_batch_size(32);
+        adam->set_learning_rate(1.0e-3f);
+        adam->set_num_workers(8);
+        adam->set_maximum_epochs(29);
+        adam->set_maximum_validation_failures(8);
+        adam->set_display_period(1);
+
+        const auto t0 = steady_clock::now();
+        training_strategy.train();
+        const auto t1 = steady_clock::now();
+
+        const double training_seconds = duration_cast<milliseconds>(t1 - t0).count() / 1000.0;
+        cout << "\nTotal training time: " << training_seconds << " s" << endl;
+
+        network.save_parameters_binary(parameters_path);
+        cout << "Saved parameters to " << parameters_path
+             << " (" << filesystem::file_size(parameters_path) / (1024 * 1024)
+             << " MiB)" << endl;
+
+        TestingAnalysis testing_analysis(&network, &dataset);
+        testing_analysis.set_batch_size(32);
+        const TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
+
+        cout << "\nROC analysis:" << endl;
+        cout << "Role: Testing" << endl;
+        cout << "AUC: " << roc_analysis.area_under_curve << endl;
+        cout << "Confidence limit: " << roc_analysis.confidence_limit << endl;
+        cout << "Optimal threshold: " << roc_analysis.optimal_threshold << endl;
+
+        cout << "\nConfusion matrix at threshold 0.5:\n"
+             << testing_analysis.calculate_confusion(0.5f) << endl;
+        cout << "\nConfusion matrix at optimal threshold:\n"
+             << testing_analysis.calculate_confusion(roc_analysis.optimal_threshold) << endl;
+
+        cout << "Bye!" << endl;
+        return 0;
+#endif
+
+#if 1
+        const Index batch_size = argc > 1
+            ? static_cast<Index>(stoll(argv[1]))
+            : Index(100);
+
+        cout << "OpenNN. HIGGS 5x300 DNN GPU FP32 benchmark."
+             << " batch=" << batch_size << endl;
 
 #ifdef OPENNN_HAS_CUDA
         Configuration::instance().set(Device::CUDA, Type::FP32);
@@ -262,6 +367,8 @@ int main()
 #else
         throw runtime_error("OpenNN was built without CUDA support.");
 #endif
+
+        set_seed(42);
 
         const filesystem::path dataset_path = "/home/artelnics/Documents/HIGGS.csv";
 
@@ -308,13 +415,14 @@ int main()
         TrainingStrategy training_strategy(&network, &dataset);
         training_strategy.set_loss("CrossEntropy");
         training_strategy.set_optimization_algorithm("StochasticGradientDescent");
-        training_strategy.get_loss()->set_regularization("NoRegularization");
+        training_strategy.get_loss()->set_regularization("L2");
+        training_strategy.get_loss()->set_regularization_weight(1.0e-5f);
 
         auto* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
         if (!sgd)
             throw runtime_error("StochasticGradientDescent optimizer not found.");
 
-        sgd->set_batch_size(1'000'000);
+        sgd->set_batch_size(batch_size);
         sgd->set_initial_learning_rate(0.05f);
         sgd->set_initial_decay(0.0202f);
         sgd->set_momentum(0.9f);
@@ -333,6 +441,7 @@ int main()
 
         cout << "Bye!" << endl;
         return 0;
+#endif
 
 #if 0
         cout << "OpenNN. HIGGS 5x300 DNN benchmark." << endl;

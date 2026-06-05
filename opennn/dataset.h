@@ -249,6 +249,10 @@ public:
     virtual bool supports_dense_feature_gather() const { return false; }
     virtual bool supports_bf16_inputs() const { return true; }
 
+#ifdef OPENNN_HAS_CUDA
+    bool prepare_device_data_buffer() const;
+#endif
+
     void fill_batch(Batch&,
                     const vector<Index>& sample_indices,
                     const vector<Index>& input_indices,
@@ -284,7 +288,6 @@ protected:
                                           const vector<Index>& input_indices,
                                           const vector<Index>& decoder_indices,
                                           const vector<Index>& target_indices) const;
-    bool prepare_device_data_buffer() const;
 #endif
 
     Shape input_shape;
