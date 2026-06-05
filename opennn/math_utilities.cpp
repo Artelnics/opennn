@@ -9,7 +9,6 @@
 #include "math_utilities.h"
 #include "device_backend.h"
 #include "random_utilities.h"
-#include "cuda_dispatch.h"
 #include "cuda_gemm.h"
 #include "profiler.h"
 

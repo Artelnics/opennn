@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "error_utilities.h"
-#include "cuda_dispatch.h"
 #include "device_backend.h"
 
 namespace opennn
@@ -108,6 +107,30 @@ OPENNN_CUDA_STUBS(OPENNN_CUDA_STUB)
 #undef OPENNN_CUDA_STUB
 #undef OPENNN_CUDA_STUBS
 
+template<typename T> void binary_cross_entropy_cuda(const Index, float*, const float*, const T*, const float)
+{ throw runtime_error("binary_cross_entropy_cuda requires CUDA support."); }
+
+template<typename T> void binary_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float, const float)
+{ throw runtime_error("binary_cross_entropy_gradient_cuda requires CUDA support."); }
+
+template<typename T> void multiple_cross_entropy_cuda(const Index, float*, const float*, const T*, const float)
+{ throw runtime_error("multiple_cross_entropy_cuda requires CUDA support."); }
+
+template<typename T> void multiple_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float)
+{ throw runtime_error("multiple_cross_entropy_gradient_cuda requires CUDA support."); }
+
+template<typename T> void weighted_squared_error_cuda(const Index, float*, const float*, const T*, const float, const float)
+{ throw runtime_error("weighted_squared_error_cuda requires CUDA support."); }
+
+template<typename T> void weighted_squared_error_gradient_cuda(const Index, T*, const float*, const T*, const float, const float, const float)
+{ throw runtime_error("weighted_squared_error_gradient_cuda requires CUDA support."); }
+
+template<typename T> void cross_entropy_3d_multiple_forward_cuda(const Index, const int, const T*, const float*, float*, float*, float*, const float)
+{ throw runtime_error("cross_entropy_3d_multiple_forward_cuda requires CUDA support."); }
+
+template<typename T> void cross_entropy_3d_multiple_backward_cuda(const Index, const int, const T*, const float*, T*, const float)
+{ throw runtime_error("cross_entropy_3d_multiple_backward_cuda requires CUDA support."); }
+
 #endif
 
 void mean_squared_error(const TensorView& input, const TensorView& target, float& error,
@@ -157,17 +180,20 @@ void normalized_squared_error_gradient(const TensorView& input, const TensorView
 void weighted_squared_error(const TensorView& input, const TensorView& target, float positive_weight, float negative_weight, float& error,
                             [[maybe_unused]] float* workspace_device)
 {
-    if (TRY_GPU_DISPATCH(input, [&](auto tag) {
-        using T = decltype(tag);
-        weighted_squared_error_cuda<T>(input.size(),
-                                       workspace_device,
-                                       target.as<float>(),
-                                       input.as<T>(),
-                                       positive_weight,
-                                       negative_weight);
+    if (input.is_cuda()) {
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            weighted_squared_error_cuda<T>(input.size(),
+                                           workspace_device,
+                                           target.as<float>(),
+                                           input.as<T>(),
+                                           positive_weight,
+                                           negative_weight);
 
-        error = 0.5f * sum_abs_cuda(workspace_device, input.size());
-    })) return;
+            error = 0.5f * sum_abs_cuda(workspace_device, input.size());
+        });
+        return;
+    }
 
     const auto inputs = input.as_vector().array();
     const auto targets = target.as_vector().array();
@@ -177,11 +203,14 @@ void weighted_squared_error(const TensorView& input, const TensorView& target, f
 
 void weighted_squared_error_gradient(const TensorView& input, const TensorView& target, float positive_weight, float negative_weight, float coefficient, const TensorView& input_delta)
 {
-    if (TRY_GPU_DISPATCH(input, [&](auto tag) {
-        using T = decltype(tag);
-        weighted_squared_error_gradient_cuda<T>(input.size(),
-            input_delta.as<T>(), target.as<float>(), input.as<T>(), positive_weight, negative_weight, coefficient);
-    })) return;
+    if (input.is_cuda()) {
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            weighted_squared_error_gradient_cuda<T>(input.size(),
+                input_delta.as<T>(), target.as<float>(), input.as<T>(), positive_weight, negative_weight, coefficient);
+        });
+        return;
+    }
 
     const auto inputs = input.as_vector().array();
     const auto targets = target.as_vector().array();
@@ -193,12 +222,15 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
 void binary_cross_entropy(const TensorView& input, const TensorView& target, float& error,
                           [[maybe_unused]] float* workspace_device)
 {
-    if (TRY_GPU_DISPATCH(input, [&](auto tag) {
-        using T = decltype(tag);
-        binary_cross_entropy_cuda<T>(input.size(),
-            workspace_device, target.as<float>(), input.as<T>(), EPSILON);
-        error = sum_abs_cuda(workspace_device, input.size()) / input.shape[0];
-    })) return;
+    if (input.is_cuda()) {
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            binary_cross_entropy_cuda<T>(input.size(),
+                workspace_device, target.as<float>(), input.as<T>(), EPSILON);
+            error = sum_abs_cuda(workspace_device, input.size()) / input.shape[0];
+        });
+        return;
+    }
     const Index samples_number = input.shape[0];
 
     const MatrixMap outputs = input.as_matrix();
@@ -215,12 +247,15 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, flo
 void categorical_cross_entropy(const TensorView& input, const TensorView& target, float& error,
                                [[maybe_unused]] float* workspace_device)
 {
-    if (TRY_GPU_DISPATCH(input, [&](auto tag) {
-        using T = decltype(tag);
-        multiple_cross_entropy_cuda<T>(input.size(),
-            workspace_device, target.as<float>(), input.as<T>(), EPSILON);
-        error = sum_abs_cuda(workspace_device, input.size()) / input.shape[0];
-    })) return;
+    if (input.is_cuda()) {
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            multiple_cross_entropy_cuda<T>(input.size(),
+                workspace_device, target.as<float>(), input.as<T>(), EPSILON);
+            error = sum_abs_cuda(workspace_device, input.size()) / input.shape[0];
+        });
+        return;
+    }
     const Index samples_number = input.shape[0];
 
     const MatrixMap outputs = input.as_matrix();
@@ -233,17 +268,20 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
 
 void cross_entropy_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta)
 {
-    if (TRY_GPU_DISPATCH(input, [&](auto tag) {
-        using T = decltype(tag);
-        const Index num_classes = input.shape.back();
-        const float scale = 1.0f / static_cast<float>(input.shape[0]);
-        if (num_classes == 1)
-            binary_cross_entropy_gradient_cuda<T>(input.size(),
-                input_delta.as<T>(), target.as<float>(), input.as<T>(), EPSILON, scale);
-        else
-            multiple_cross_entropy_gradient_cuda<T>(input.size(),
-                input_delta.as<T>(), target.as<float>(), input.as<T>(), scale);
-    })) return;
+    if (input.is_cuda()) {
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            const Index num_classes = input.shape.back();
+            const float scale = 1.0f / static_cast<float>(input.shape[0]);
+            if (num_classes == 1)
+                binary_cross_entropy_gradient_cuda<T>(input.size(),
+                    input_delta.as<T>(), target.as<float>(), input.as<T>(), EPSILON, scale);
+            else
+                multiple_cross_entropy_gradient_cuda<T>(input.size(),
+                    input_delta.as<T>(), target.as<float>(), input.as<T>(), scale);
+        });
+        return;
+    }
     const Index samples_number = input.shape[0];
     const Index num_classes = input.shape.back();
 
@@ -294,44 +332,47 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
     const Index sequence_length = input.shape[input.get_rank() - 2];
     const Index batch_size = input.size() / (sequence_length * vocabulary_size);
 
-    if (TRY_GPU_DISPATCH(input, [&](auto tag) {
-        using T = decltype(tag);
-        const size_t token_count = batch_size * sequence_length;
+    if (input.is_cuda()) {
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            const size_t token_count = batch_size * sequence_length;
 
-        float* valid_mask_device   = errors_device + token_count;
-        float* correct_mask_device = errors_device + 2 * token_count;
+            float* valid_mask_device   = errors_device + token_count;
+            float* correct_mask_device = errors_device + 2 * token_count;
 
-        cross_entropy_3d_multiple_forward_cuda<T>(token_count, to_int(vocabulary_size),
-            input.as<T>(), target.as<float>(),
-            errors_device, valid_mask_device, correct_mask_device, EPSILON);
+            cross_entropy_3d_multiple_forward_cuda<T>(token_count, to_int(vocabulary_size),
+                input.as<T>(), target.as<float>(),
+                errors_device, valid_mask_device, correct_mask_device, EPSILON);
 
-        static Buffer device_results(Device::CUDA);
-        device_results.grow_to(Index(3 * sizeof(float)));
-        float* device_results_ptr = device_results.as<float>();
+            static Buffer device_results(Device::CUDA);
+            device_results.grow_to(Index(3 * sizeof(float)));
+            float* device_results_ptr = device_results.as<float>();
 
-        cublasHandle_t handle = Backend::get_cublas_handle();
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), errors_device,       1, device_results_ptr + 0));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,   1, device_results_ptr + 1));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device, 1, device_results_ptr + 2));
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
+            cublasHandle_t handle = Backend::get_cublas_handle();
+            CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
+            CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), errors_device,       1, device_results_ptr + 0));
+            CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,   1, device_results_ptr + 1));
+            CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device, 1, device_results_ptr + 2));
+            CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
 
-        float host_results[3];
-        cudaStream_t stream = Backend::get_compute_stream();
-        device::copy_async(host_results, device_results_ptr,
-                           3 * Index(sizeof(float)),
-                           device::CopyKind::DeviceToHost,
-                           stream);
-        device::synchronize(stream);
+            float host_results[3];
+            cudaStream_t stream = Backend::get_compute_stream();
+            device::copy_async(host_results, device_results_ptr,
+                               3 * Index(sizeof(float)),
+                               device::CopyKind::DeviceToHost,
+                               stream);
+            device::synchronize(stream);
 
-        const float sum_loss      = host_results[0];
-        const float active_count  = host_results[1];
-        const float correct_count = host_results[2];
+            const float sum_loss      = host_results[0];
+            const float active_count  = host_results[1];
+            const float correct_count = host_results[2];
 
-        active_tokens_out = static_cast<Index>(active_count);
-        correct_tokens_out = static_cast<Index>(correct_count);
-        error = active_count > 0 ? sum_loss / active_count : 0.0f;
-    })) return;
+            active_tokens_out = static_cast<Index>(active_count);
+            correct_tokens_out = static_cast<Index>(correct_count);
+            error = active_count > 0 ? sum_loss / active_count : 0.0f;
+        });
+        return;
+    }
 
     (void)errors_device;
 
@@ -370,13 +411,16 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
     const Index sequence_length = input.shape[input.get_rank() - 2];
     const Index batch_size = input.size() / (sequence_length * vocabulary_size);
 
-    if (TRY_GPU_DISPATCH(input, [&](auto tag) {
-        using T = decltype(tag);
-        const float scale = active_tokens_count > 0 ? 1.0f / static_cast<float>(active_tokens_count) : 0.0f;
-        const size_t total = static_cast<size_t>(batch_size) * sequence_length * vocabulary_size;
-        cross_entropy_3d_multiple_backward_cuda<T>(total, to_int(vocabulary_size),
-            input.as<T>(), target.as<float>(), input_delta.as<T>(), scale);
-    })) return;
+    if (input.is_cuda()) {
+        input.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            const float scale = active_tokens_count > 0 ? 1.0f / static_cast<float>(active_tokens_count) : 0.0f;
+            const size_t total = static_cast<size_t>(batch_size) * sequence_length * vocabulary_size;
+            cross_entropy_3d_multiple_backward_cuda<T>(total, to_int(vocabulary_size),
+                input.as<T>(), target.as<float>(), input_delta.as<T>(), scale);
+        });
+        return;
+    }
     const Index token_count = batch_size * sequence_length;
     MatrixMap gradients_flat = input_delta.as_flat_matrix();
     const MatrixMap outputs_flat = input.as_flat_matrix();

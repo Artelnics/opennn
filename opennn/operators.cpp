@@ -16,7 +16,6 @@
 #include "json.h"
 #include "random_utilities.h"
 #include "math_utilities.h"
-#include "cuda_dispatch.h"
 #include "string_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -1642,7 +1641,7 @@ void ConvolutionOp::plan_convolution_algorithms(const TensorView& input, const T
         algorithm_filter, &bwd_filter_ws));
 
     cudnn_workspace_size_ = max({fwd_ws, bwd_data_ws, bwd_filter_ws});
-    scratch::ensure_cudnn_conv_workspace(cudnn_workspace_size_);
+    ensure_cudnn_conv_workspace(cudnn_workspace_size_);
 
     planned_batch_size = input.shape[0];
 }
@@ -1654,7 +1653,7 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
     if (input.shape[0] > planned_batch_size)
         plan_convolution_algorithms(input, output);
 
-    void* ws_ptr = scratch::ensure_cudnn_conv_workspace(cudnn_workspace_size_);
+    void* ws_ptr = ensure_cudnn_conv_workspace(cudnn_workspace_size_);
 
     if (fused_activation)
     {
@@ -1705,11 +1704,11 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 
     if (bf16)
     {
-        weight_gradient_bf16_scratch = scratch::ensure_bf16_gradient_scratch(weight_gradient.size());
+        weight_gradient_bf16_scratch = ensure_bf16_gradient_scratch(weight_gradient.size());
         weight_gradient_buffer = weight_gradient_bf16_scratch;
     }
 
-    void* ws_ptr = scratch::ensure_cudnn_conv_workspace(cudnn_workspace_size_);
+    void* ws_ptr = ensure_cudnn_conv_workspace(cudnn_workspace_size_);
 
     CHECK_CUDNN(cudnnConvolutionBackwardFilter(Backend::get_cudnn_handle(),
         &one,
@@ -1725,7 +1724,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 
     if (bf16)
     {
-        float* const output_delta_fp32 = scratch::ensure_fp32_upcast_scratch(output_delta.size());
+        float* const output_delta_fp32 = ensure_fp32_upcast_scratch(output_delta.size());
         cast_bf16_to_fp32_cuda(output_delta.size(),
                                output_delta.as<bfloat16>(),
                                output_delta_fp32);
@@ -2184,7 +2183,10 @@ void refresh_sdpa_sequence_lengths(AttentionOp::SDPACache::Entry& entry,
                                    const TensorView& source_input)
 {
     const bool ok = source_input.shape.rank == 3 && source_input.shape[0] == k.batch_size && source_input.shape[1] == k.src_seq
-        && TRY_GPU_DISPATCH(source_input, [&](auto tag) {
+        && source_input.is_cuda();
+
+    if (ok)
+        source_input.dispatch([&](auto tag) {
             using T = decltype(tag);
             attention_sequence_lengths_cuda<T>(to_int(k.batch_size),
                                                to_int(k.q_seq),
@@ -2483,18 +2485,20 @@ void AttentionOp::apply_cpu(const TensorView& query,
         const Index embedding_dimension = source_input.shape[2];
         const Index query_sequence_length = attention_weights.shape[2];
 
-        if (!TRY_GPU_DISPATCH(attention_weights, [&](auto tag) {
-            using T = decltype(tag);
-            attention_masks_cuda<T>(to_int(batch_size),
-                                    to_int(heads_number),
-                                    to_int(query_sequence_length),
-                                    to_int(source_sequence_length),
-                                    to_int(embedding_dimension),
-                                    source_input.as<T>(),
-                                    attention_weights.as<T>(),
-                                    reinterpret_cast<T*>(scratch),
-                                    use_causal_mask);
-        }))
+        if (attention_weights.is_cuda())
+            attention_weights.dispatch([&](auto tag) {
+                using T = decltype(tag);
+                attention_masks_cuda<T>(to_int(batch_size),
+                                        to_int(heads_number),
+                                        to_int(query_sequence_length),
+                                        to_int(source_sequence_length),
+                                        to_int(embedding_dimension),
+                                        source_input.as<T>(),
+                                        attention_weights.as<T>(),
+                                        reinterpret_cast<T*>(scratch),
+                                        use_causal_mask);
+            });
+        else
         {
             const Index att_rows_per_batch = heads_number * query_sequence_length;
 
