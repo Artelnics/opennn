@@ -924,6 +924,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
         for_json_items(inputs_element, "Input", inputs_number, [this](Index i, const Json* element) {
             input_variables[i].name = read_json_string(element, "Text");
+            input_variables[i].set_role("Input");
         });
     }
 
@@ -990,6 +991,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
         for_json_items(outputs_element, "Output", outputs_number, [this](Index i, const Json* element) {
             output_variables[i].name = read_json_string(element, "Text");
+            output_variables[i].set_role("Target");
         });
     }
 

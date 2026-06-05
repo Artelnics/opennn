@@ -9,8 +9,10 @@
 #include "pch.h"
 #include "formula_expression.h"
 #include "string_utilities.h"
+#include "random_utilities.h"
 
 #include <cctype>
+#include <Eigen/Dense>
 
 namespace opennn
 {
@@ -806,21 +808,18 @@ LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>&
         switch (formula_constraint.op)
         {
         case ComparisonOp::EqualTo:
-        {
-            const float tol = max(EPSILON, abs(low) * 1e-4f);
-            linear_set.lower(i) = low - c - tol;
-            linear_set.upper(i) = low - c + tol;
+            linear_set.lower(i) = low - c - bound_tolerance(low);
+            linear_set.upper(i) = low - c + bound_tolerance(low);
             break;
-        }
         case ComparisonOp::Between:
-            linear_set.lower(i) = low - c;
-            linear_set.upper(i) = up  - c;
+            linear_set.lower(i) = low - c - bound_tolerance(low);
+            linear_set.upper(i) = up  - c + bound_tolerance(up);
             break;
         case ComparisonOp::GreaterEqualTo:
-            linear_set.lower(i) = low - c;
+            linear_set.lower(i) = low - c - bound_tolerance(low);
             break;
         case ComparisonOp::LessEqualTo:
-            linear_set.upper(i) = up - c;
+            linear_set.upper(i) = up - c + bound_tolerance(up);
             break;
         case ComparisonOp::GreaterThan:
             linear_set.lower(i) = low - c + EPSILON;
@@ -834,6 +833,151 @@ LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>&
     }
 
     return linear_set;
+}
+
+
+void repair_affine_inputs(MatrixR& random_inputs,
+                          const VectorR& inferior_frontier,
+                          const VectorR& superior_frontier,
+                          const vector<FormulaConstraint>& formula_constraints,
+                          const Index max_correction_passes)
+{
+    vector<const FormulaConstraint*> affine_constraints;
+
+    for (const FormulaConstraint& constraint : formula_constraints)
+        if (!constraint.uses_callback
+            && constraint.op != ComparisonOp::None
+            && constraint.compiled.shape == FormulaShape::Affine
+            && constraint.compiled.scope == FormulaScope::InputsOnly
+            && !constraint.compiled.affine_input_terms.empty())
+            affine_constraints.push_back(&constraint);
+
+    if (affine_constraints.empty())
+        return;
+
+    const Index rows_number = random_inputs.rows();
+    const Index inputs_number = random_inputs.cols();
+    const Index constraints_number = static_cast<Index>(affine_constraints.size());
+
+    Index slacks_number = 0;
+    for (const FormulaConstraint* constraint : affine_constraints)
+        if (constraint->op != ComparisonOp::EqualTo)
+            ++slacks_number;
+
+    const Index augmented_number = inputs_number + slacks_number;
+
+    MatrixR augmented_matrix = MatrixR::Zero(constraints_number, augmented_number);
+    VectorR right_hand_side = VectorR::Zero(constraints_number);
+    VectorR slack_inferior = VectorR::Zero(slacks_number);
+    VectorR slack_superior = VectorR::Zero(slacks_number);
+
+    Index slack_index = 0;
+
+    for (Index i = 0; i < constraints_number; ++i)
+    {
+        const FormulaConstraint& constraint = *affine_constraints[i];
+        const float constant = constraint.compiled.affine_constant;
+        const float low = constraint.low_bound;
+        const float up = constraint.up_bound;
+
+        float expression_minimum = constant;
+        float expression_maximum = constant;
+
+        for (const auto& [column, coefficient] : constraint.compiled.affine_input_terms)
+        {
+            augmented_matrix(i, column) += coefficient;
+            expression_minimum += min(coefficient * inferior_frontier(column), coefficient * superior_frontier(column));
+            expression_maximum += max(coefficient * inferior_frontier(column), coefficient * superior_frontier(column));
+        }
+
+        switch (constraint.op)
+        {
+        case ComparisonOp::EqualTo:
+            right_hand_side(i) = low - constant;
+            break;
+
+        case ComparisonOp::Between:
+            augmented_matrix(i, inputs_number + slack_index) = -1;
+            right_hand_side(i) = low - constant;
+            slack_inferior(slack_index) = max(0.0f, expression_minimum - low);
+            slack_superior(slack_index) = max(slack_inferior(slack_index), min(up - low, expression_maximum - low));
+            ++slack_index;
+            break;
+
+        case ComparisonOp::GreaterEqualTo:
+        case ComparisonOp::GreaterThan:
+            augmented_matrix(i, inputs_number + slack_index) = -1;
+            right_hand_side(i) = low - constant;
+            slack_inferior(slack_index) = max(0.0f, expression_minimum - low);
+            slack_superior(slack_index) = max(slack_inferior(slack_index), expression_maximum - low);
+            ++slack_index;
+            break;
+
+        case ComparisonOp::LessEqualTo:
+        case ComparisonOp::LessThan:
+            augmented_matrix(i, inputs_number + slack_index) = 1;
+            right_hand_side(i) = up - constant;
+            slack_inferior(slack_index) = max(0.0f, up - expression_maximum);
+            slack_superior(slack_index) = max(slack_inferior(slack_index), up - expression_minimum);
+            ++slack_index;
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    MatrixR augmented_points(rows_number, augmented_number);
+    augmented_points.leftCols(inputs_number) = random_inputs;
+
+    if (slacks_number > 0)
+    {
+        MatrixR slack_points(rows_number, slacks_number);
+        set_random_uniform(slack_points, 0, 1);
+
+        for (Index j = 0; j < slacks_number; ++j)
+            slack_points.col(j) = (slack_inferior(j) + slack_points.col(j).array() * (slack_superior(j) - slack_inferior(j))).matrix();
+
+        augmented_points.rightCols(slacks_number) = slack_points;
+    }
+
+    MatrixR gram_matrix = augmented_matrix * augmented_matrix.transpose();
+    gram_matrix.diagonal().array() += EPSILON;
+    const auto gram_solver = gram_matrix.ldlt();
+
+    MatrixR affine_correction = MatrixR::Zero(rows_number, augmented_number);
+    MatrixR box_correction = MatrixR::Zero(rows_number, augmented_number);
+
+    const Index passes = max(Index(1), max_correction_passes);
+
+    for (Index pass = 0; pass < passes; ++pass)
+    {
+        const MatrixR shifted_points = augmented_points + affine_correction;
+
+        MatrixR residual = shifted_points * augmented_matrix.transpose();
+        residual.rowwise() -= right_hand_side.transpose();
+
+        const MatrixR projected_points = shifted_points - (gram_solver.solve(residual.transpose())).transpose() * augmented_matrix;
+        affine_correction = shifted_points - projected_points;
+
+        augmented_points = projected_points + box_correction;
+
+        for (Index j = 0; j < inputs_number; ++j)
+            augmented_points.col(j) = augmented_points.col(j).array().max(inferior_frontier(j)).min(superior_frontier(j)).matrix();
+
+        for (Index j = 0; j < slacks_number; ++j)
+            augmented_points.col(inputs_number + j) = augmented_points.col(inputs_number + j).array().max(slack_inferior(j)).min(slack_superior(j)).matrix();
+
+        box_correction = projected_points + box_correction - augmented_points;
+
+        MatrixR feasibility_residual = augmented_points * augmented_matrix.transpose();
+        feasibility_residual.rowwise() -= right_hand_side.transpose();
+
+        if (feasibility_residual.cwiseAbs().maxCoeff() <= EPSILON)
+            break;
+    }
+
+    random_inputs = augmented_points.leftCols(inputs_number);
 }
 
 }

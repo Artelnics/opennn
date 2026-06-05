@@ -608,105 +608,12 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
         }
     }
 
-    for (const FormulaConstraint& formula_constraint : formula_constraints)
-    {
-        if (formula_constraint.uses_callback)
-            continue;
-        if (formula_constraint.compiled.shape != FormulaShape::Affine)
-            continue;
-        if (formula_constraint.compiled.scope != FormulaScope::InputsOnly)
-            continue;
-
-        apply_affine_input_swap(random_inputs, formula_constraint, input_domain);
-    }
+    repair_affine_inputs(random_inputs,
+                         input_domain.inferior_frontier,
+                         input_domain.superior_frontier,
+                         formula_constraints);
 
     return random_inputs;
-}
-
-
-void ResponseOptimization::apply_affine_input_swap(MatrixR& random_inputs,
-                                                   const FormulaConstraint& formula_constraint,
-                                                   const Domain& input_domain) const
-{
-    const vector<pair<Index, float>>& affine_input_terms = formula_constraint.compiled.affine_input_terms;
-
-    if (affine_input_terms.empty())
-        return;
-
-    const float affine_constant = formula_constraint.compiled.affine_constant;
-    const float low_bound = formula_constraint.low_bound;
-    const float up_bound = formula_constraint.up_bound;
-
-    const Index rows_number = random_inputs.rows();
-    const Index terms_number = static_cast<Index>(affine_input_terms.size());
-
-    vector<Index> term_order(terms_number);
-    iota(term_order.begin(), term_order.end(), 0);
-
-    for (Index row_index = 0; row_index < rows_number; ++row_index)
-    {
-        float current_value = affine_constant;
-
-        for (const auto& [column, coefficient] : affine_input_terms)
-            current_value += coefficient * random_inputs(row_index, column);
-
-        float target = current_value;
-
-        switch (formula_constraint.op)
-        {
-        case ComparisonOp::EqualTo:
-            target = low_bound;
-            break;
-
-        case ComparisonOp::Between:
-            if (current_value >= low_bound && current_value <= up_bound)
-                continue;
-            target = random_uniform(low_bound, up_bound);
-            break;
-
-        case ComparisonOp::GreaterEqualTo:
-        case ComparisonOp::GreaterThan:
-            if (current_value >= low_bound)
-                continue;
-            target = low_bound;
-            break;
-
-        case ComparisonOp::LessEqualTo:
-        case ComparisonOp::LessThan:
-            if (current_value <= up_bound)
-                continue;
-            target = up_bound;
-            break;
-
-        default:
-            continue;
-        }
-
-        shuffle_vector(term_order);
-
-        float residual_error = target - current_value;
-
-        for (const Index term_index : term_order)
-        {
-            if (abs(residual_error) <= EPSILON)
-                break;
-
-            const auto [column, coefficient] = affine_input_terms[term_index];
-
-            if (abs(coefficient) <= EPSILON)
-                continue;
-
-            const float old_value = random_inputs(row_index, column);
-
-            const float corrected_value = max(input_domain.inferior_frontier(column),
-                                              min(input_domain.superior_frontier(column),
-                                                  old_value + residual_error / coefficient));
-
-            random_inputs(row_index, column) = corrected_value;
-
-            residual_error -= coefficient * (corrected_value - old_value);
-        }
-    }
 }
 
 
@@ -823,17 +730,17 @@ bool ResponseOptimization::row_satisfies_formula_constraints(const VectorR& inpu
         switch (formula_constraint.op)
         {
         case ComparisonOp::EqualTo:
-            constraint_satisfied = abs(evaluated_value - low_bound)
-                <= max(EPSILON, abs(low_bound) * float(1e-4));
+            constraint_satisfied = abs(evaluated_value - low_bound) <= bound_tolerance(low_bound);
             break;
         case ComparisonOp::Between:
-            constraint_satisfied = (evaluated_value >= low_bound) && (evaluated_value <= up_bound);
+            constraint_satisfied = (evaluated_value >= low_bound - bound_tolerance(low_bound))
+                                && (evaluated_value <= up_bound + bound_tolerance(up_bound));
             break;
         case ComparisonOp::GreaterEqualTo:
-            constraint_satisfied = evaluated_value >= low_bound;
+            constraint_satisfied = evaluated_value >= low_bound - bound_tolerance(low_bound);
             break;
         case ComparisonOp::LessEqualTo:
-            constraint_satisfied = evaluated_value <= up_bound;
+            constraint_satisfied = evaluated_value <= up_bound + bound_tolerance(up_bound);
             break;
         case ComparisonOp::GreaterThan:
             constraint_satisfied = evaluated_value > low_bound;

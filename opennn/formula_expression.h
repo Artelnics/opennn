@@ -86,11 +86,19 @@ struct LinearConstraintSet
 };
 
 
+inline float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * 1e-4f); }
+
 [[nodiscard]] bool all_formula_constraints_are_linear(const vector<FormulaConstraint>& formula_constraints);
 
 [[nodiscard]] LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>& formula_constraints,
                                                               const Index n_in,
                                                               const Index n_out);
+
+void repair_affine_inputs(MatrixR& random_inputs,
+                          const VectorR& inferior_frontier,
+                          const VectorR& superior_frontier,
+                          const vector<FormulaConstraint>& formula_constraints,
+                          Index max_correction_passes = 64);
 
 }
 

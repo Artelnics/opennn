@@ -164,10 +164,6 @@ private:
     vector<NamedColumn> build_input_columns_for_formula() const;
     vector<NamedColumn> build_output_columns_for_formula() const;
 
-    void apply_affine_input_swap(MatrixR& random_inputs,
-                                 const FormulaConstraint& formula_constraint,
-                                 const Domain& input_domain) const;
-
     bool row_satisfies_formula_constraints(const VectorR& input_row,
                                                          const VectorR& output_row) const;
 
