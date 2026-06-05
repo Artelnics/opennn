@@ -141,7 +141,11 @@ void AddOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t laye
     const TensorView& output_delta = get_output_delta(bp, layer);
 
     for (size_t i = 0; i < input_delta_slots.size(); ++i)
-        copy(output_delta, get_input_delta(bp, layer, i));
+    {
+        TensorView& input_delta = get_input_delta(bp, layer, i);
+        if (!input_delta.empty())
+            copy(output_delta, input_delta);
+    }
 }
 
 void AddOp::check(const vector<TensorView>& inputs, const TensorView& output) const
@@ -291,6 +295,14 @@ void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, siz
 {
     const TensorView& output_delta = get_output_delta(bp, layer);
 
+    const auto& backward_slots = bp.backward_slots[layer];
+    const bool needs_input_delta = ranges::any_of(input_delta_slots, [&](size_t slot)
+    {
+        return slot < backward_slots.size() && !backward_slots[slot].empty();
+    });
+
+    if (!needs_input_delta) return;
+
     throw_if(output_delta.is_cuda(),
              "ConcatenateOp GPU path is not implemented yet.");
 
@@ -310,6 +322,11 @@ void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, siz
                 {
                     const Index in_c = input_channels[i];
                     TensorView& in_delta = get_input_delta(bp, layer, i);
+                    if (in_delta.empty())
+                    {
+                        ch_offset += in_c;
+                        continue;
+                    }
                     float* dst = in_delta.as<float>();
                     const Index in_idx = ((b * height + h) * width + w) * in_c;
                     for (Index c = 0; c < in_c; ++c)
@@ -418,6 +435,7 @@ void ActivationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, s
     {
         const TensorView& output_delta = get_output_delta(bp, layer);
         TensorView& input_delta        = get_input_delta(bp, layer);
+        if (input_delta.empty()) return;
         copy(output_delta, input_delta);
         apply_delta(outputs, input_delta);
     }
@@ -1538,9 +1556,10 @@ void ConvolutionOp::apply_delta_cpu(const TensorView& input,
     bias_gradients.setZero();
     weight_gradients.setZero();
 
-    TensorMap4 in_gradient = input_delta.as_tensor<4>();
-    if (input_delta.data && input_delta.size() != 0)
-        in_gradient.setZero();
+    const bool write_input_delta = !input_delta.empty();
+    float* const input_delta_data = write_input_delta ? input_delta.as<float>() : nullptr;
+    if (write_input_delta)
+        fill_n(input_delta_data, input_delta.size(), 0.0f);
 
     const Index batch_size = output_deltas.dimension(0);
     const Index output_height = output_deltas.dimension(1);
@@ -1572,9 +1591,14 @@ void ConvolutionOp::apply_delta_cpu(const TensorView& input,
                                 weight_gradients(kernel_index, kernel_row, kernel_column, channel_index) +=
                                     inputs(image_index, input_row, input_column, channel_index) * delta;
 
-                                if (input_delta.data && input_delta.size() != 0)
-                                    in_gradient(image_index, input_row, input_column, channel_index) +=
+                                if (write_input_delta)
+                                {
+                                    const Index input_index = ((image_index * input_height + input_row)
+                                                              * input_width + input_column)
+                                                            * kernel_channels + channel_index;
+                                    input_delta_data[input_index] +=
                                         kernels(kernel_index, kernel_row, kernel_column, channel_index) * delta;
+                                }
                             }
                         }
                     }
@@ -1873,7 +1897,9 @@ void MultiHeadProjectionOp::back_propagate(ForwardPropagation& fp, BackPropagati
     merge_heads(head_delta, scratch_4d);
 
     TensorView& input_delta    = backward_slots[(self_attention ? input_delta_slots_self : input_delta_slots_cross)[0]];
-    TensorView  input_delta_2d = input_delta.reshape({rows, input_features});
+    TensorView  input_delta_2d = input_delta.empty()
+        ? TensorView{}
+        : input_delta.reshape({rows, input_features});
     const bool  accumulate     = self_attention ? accumulate_input_delta_self : accumulate_input_delta_cross;
 
     combination.apply_delta(scratch_2d, input_2d, input_delta_2d, accumulate);
@@ -2972,6 +2998,7 @@ void PoolOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t 
 
     const TensorView& output_delta = get_output_delta(bp, layer);
     TensorView& input_delta        = get_input_delta(bp, layer);
+    if (input_delta.empty()) return;
 
     TensorView empty;
     const TensorView& indices = view_at_slot_or(forward_slots, output_slots, 1, empty);
@@ -3003,6 +3030,7 @@ void Pool3dOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_
 {
     const TensorView& output_delta = get_output_delta(bp, layer);
     TensorView& input_delta        = get_input_delta(bp, layer);
+    if (input_delta.empty()) return;
 
     if (method == Max)
         max_pooling_3d_backward(get_output(fp, layer, 1), output_delta, input_delta);
@@ -3293,7 +3321,10 @@ void FlatOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_t
 
 void FlatOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
 {
-    copy(get_output_delta(bp, layer), get_input_delta(bp, layer));
+    TensorView& input_delta = get_input_delta(bp, layer);
+    if (input_delta.empty()) return;
+
+    copy(get_output_delta(bp, layer), input_delta);
 }
 
 void BoundOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
@@ -4003,7 +4034,8 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
 
     const float* x = input.as<float>();
     const float* out_delta = output_delta.as<float>();
-    float* in_delta = input_delta.as<float>();
+    const bool write_input_delta = !input_delta.empty();
+    float* in_delta = write_input_delta ? input_delta.as<float>() : nullptr;
 
     const float* f_gate = forget_gate.as<float>();
     const float* i_gate = input_gate.as<float>();
@@ -4104,13 +4136,15 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
                     gWg[wh] += xk * dg[h];
                     gWo[wh] += xk * do_gate[h];
 
-                    dx += df[h] * Wf[wh]
-                        + di[h] * Wi[wh]
-                        + dg[h] * Wg[wh]
-                        + do_gate[h] * Wo[wh];
+                    if (write_input_delta)
+                        dx += df[h] * Wf[wh]
+                            + di[h] * Wi[wh]
+                            + dg[h] * Wg[wh]
+                            + do_gate[h] * Wo[wh];
                 }
 
-                in_delta[(b * T + t) * F + k] = dx;
+                if (write_input_delta)
+                    in_delta[(b * T + t) * F + k] = dx;
             }
 
             for (Index j = 0; j < H; ++j)

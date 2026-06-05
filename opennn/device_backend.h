@@ -26,6 +26,8 @@ bool is_cuda_build() noexcept;
 bool has_cuda_device() noexcept;
 int cuda_compute_capability() noexcept;
 pair<size_t, size_t> memory_info();
+bool cuda_allocation_growth_forbidden() noexcept;
+void set_cuda_allocation_growth_forbidden(bool) noexcept;
 
 void* allocate(Device, Index);
 void deallocate(Device, void*, Index);
@@ -49,6 +51,7 @@ cudaEvent_t create_event();
 void destroy_event(cudaEvent_t);
 void record_event(cudaEvent_t, cudaStream_t);
 void synchronize_event(cudaEvent_t);
+void stream_wait_event(cudaStream_t, cudaEvent_t);
 
 }
 

@@ -45,7 +45,8 @@ namespace opennn
 static void clip_gradient_norm_device(Buffer& gradient, Index gradient_size, float max_norm)
 {
     static Buffer squared_norm_device(Device::CUDA);
-    squared_norm_device.grow_to(Index(sizeof(float)));
+    if (!squared_norm_device.data)
+        squared_norm_device.grow_to(Index(sizeof(float)));
     float* const squared_norm_ptr = squared_norm_device.as<float>();
 
     cublasHandle_t handle = Backend::get_cublas_handle();
@@ -1067,7 +1068,7 @@ void Optimizer::prefetch_batch(Batch& batch)
     if (!batch.uses_cuda()) return;
     if (!batch.needs_device_copy) return;
 
-    batch.copy_device_async(Backend::get_compute_stream());
+    batch.copy_device_async(Backend::get_transfer_stream());
 }
 
 void Optimizer::sync_device(bool on_gpu)
@@ -1234,6 +1235,8 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
             }
         }
 
+        if (on_gpu) current_batch->wait_h2d_on_compute_stream();
+
         {
             PROFILE_SCOPE("step:fwd_total");
             neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, true);
@@ -1384,6 +1387,8 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
             next_batch = session->wait(iteration + 1);
             prefetch_batch(*next_batch);
         }
+
+        if (on_gpu) current_batch->wait_h2d_on_compute_stream();
 
         neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, false);
         sync_cuda_for_debug(on_gpu);

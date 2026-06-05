@@ -314,4 +314,13 @@ void Batch::wait_h2d_complete()
     }
 }
 
+// Device-side wait: make the compute stream wait for this batch's H2D upload
+// (issued on the transfer stream) before any kernel consumes the data. Does not
+// touch h2d_done_recorded, which the fill worker uses for host-buffer reuse.
+void Batch::wait_h2d_on_compute_stream()
+{
+    if (h2d_done_recorded)
+        device::stream_wait_event(Backend::get_compute_stream(), h2d_done_event);
+}
+
 }

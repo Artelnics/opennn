@@ -94,6 +94,7 @@ static void fill_cuda(const TensorView& view, float value)
 }
 
 static void initialize_cuda_backend(cudaStream_t& compute_stream,
+                                    cudaStream_t& transfer_stream,
                                     cublasHandle_t& cublas_handle,
                                     cublasLtHandle_t& cublas_lt_handle,
                                     cudnnHandle_t& cudnn_handle,
@@ -106,6 +107,7 @@ static void initialize_cuda_backend(cudaStream_t& compute_stream,
     }
 
     compute_stream = device::create_stream(cudaStreamNonBlocking);
+    transfer_stream = device::create_stream(cudaStreamNonBlocking);
 
     CHECK_CUBLAS(cublasCreate(&cublas_handle));
     CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
@@ -122,6 +124,7 @@ static void initialize_cuda_backend(cudaStream_t& compute_stream,
 }
 
 static void destroy_cuda_backend(cudaStream_t& compute_stream,
+                                 cudaStream_t& transfer_stream,
                                  cublasHandle_t& cublas_handle,
                                  cublasLtHandle_t& cublas_lt_handle,
                                  cudnnHandle_t& cudnn_handle,
@@ -153,6 +156,9 @@ static void destroy_cuda_backend(cudaStream_t& compute_stream,
 
     device::destroy_stream(compute_stream);
     compute_stream = nullptr;
+
+    device::destroy_stream(transfer_stream);
+    transfer_stream = nullptr;
 }
 
 #else
@@ -178,6 +184,7 @@ static void fill_cuda(const TensorView&, float)
 }
 
 static void initialize_cuda_backend(cudaStream_t&,
+                                    cudaStream_t&,
                                     cublasHandle_t&,
                                     cublasLtHandle_t&,
                                     cudnnHandle_t&,
@@ -186,6 +193,7 @@ static void initialize_cuda_backend(cudaStream_t&,
 }
 
 static void destroy_cuda_backend(cudaStream_t&,
+                                 cudaStream_t&,
                                  cublasHandle_t&,
                                  cublasLtHandle_t&,
                                  cudnnHandle_t&,
@@ -293,6 +301,7 @@ Backend::Backend()
 {
     set_threads_number(0);
     initialize_cuda_backend(compute_stream,
+                            transfer_stream,
                             cublas_handle,
                             cublas_lt_handle,
                             cudnn_handle,
@@ -302,6 +311,7 @@ Backend::Backend()
 Backend::~Backend()
 {
     destroy_cuda_backend(compute_stream,
+                         transfer_stream,
                          cublas_handle,
                          cublas_lt_handle,
                          cudnn_handle,

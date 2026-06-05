@@ -76,21 +76,6 @@ static void cross_entropy_3d_gradient_device_count_cuda(const TensorView& input,
     });
 }
 
-static void add_l1_regularization_gradient_cuda(const TensorView& parameters, float lambda, const TensorView& gradient)
-{
-    l1_gradient_cuda<float>(parameters.size(), gradient.as<float>(), parameters.as<float>(), lambda);
-}
-
-static void add_l2_regularization_gradient_cuda(const TensorView& parameters, float lambda, const TensorView& gradient)
-{
-    const int total_size = to_int(parameters.size());
-    CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), total_size,
-                              &lambda,         CUDA_R_32F,
-                              parameters.data, CUDA_R_32F, 1,
-                              gradient.data,   CUDA_R_32F, 1,
-                              CUDA_R_32F));
-}
-
 #else
 
 #define OPENNN_CUDA_STUBS(X) \
@@ -98,9 +83,7 @@ static void add_l2_regularization_gradient_cuda(const TensorView& parameters, fl
     X(void,  scaled_diff_cuda, (const TensorView&, const TensorView&, float, const TensorView&)) \
     X(float, sum_abs_cuda, (const float*, Index)) \
     X(float, squared_norm_cuda, (const float*, Index)) \
-    X(void,  cross_entropy_3d_gradient_device_count_cuda, (const TensorView&, const TensorView&, const TensorView&, const float*)) \
-    X(void,  add_l1_regularization_gradient_cuda, (const TensorView&, float, const TensorView&)) \
-    X(void,  add_l2_regularization_gradient_cuda, (const TensorView&, float, const TensorView&))
+    X(void,  cross_entropy_3d_gradient_device_count_cuda, (const TensorView&, const TensorView&, const TensorView&, const float*))
 
 #define OPENNN_CUDA_STUB(ret, name, sig) static ret name sig { throw runtime_error(#name " requires CUDA support."); }
 OPENNN_CUDA_STUBS(OPENNN_CUDA_STUB)
@@ -479,7 +462,7 @@ void l1_regularization_gradient(const TensorView& parameters, float lambda, cons
 {
     if (parameters.is_cuda())
     {
-        add_l1_regularization_gradient_cuda(parameters, lambda, gradient);
+        l1_gradient_cuda<float>(parameters.size(), gradient.as<float>(), parameters.as<float>(), lambda);
         return;
     }
     gradient.as_vector().array() += lambda * parameters.as_vector().array().sign();
@@ -499,7 +482,12 @@ void l2_regularization_gradient(const TensorView& parameters, float lambda, cons
 {
     if (parameters.is_cuda())
     {
-        add_l2_regularization_gradient_cuda(parameters, lambda, gradient);
+        const int total_size = to_int(parameters.size());
+        CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), total_size,
+                                  &lambda,         CUDA_R_32F,
+                                  parameters.data, CUDA_R_32F, 1,
+                                  gradient.data,   CUDA_R_32F, 1,
+                                  CUDA_R_32F));
         return;
     }
     gradient.as_vector().noalias() += lambda * parameters.as_vector();

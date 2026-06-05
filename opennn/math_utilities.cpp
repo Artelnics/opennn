@@ -44,24 +44,6 @@ namespace opennn
 OPENNN_GPU_OPS(OPENNN_DECLARE_GPU_OP)
 #undef OPENNN_DECLARE_GPU_OP
 
-void pad(const TensorView& input, TensorView& output)
-{
-    const TensorMap4 input_map = input.as_tensor<4>();
-    TensorMap4 output_map = output.as_tensor<4>();
-
-    const Index padding_height = (output.shape[1] - input.shape[1]) / 2;
-    const Index padding_width = (output.shape[2] - input.shape[2]) / 2;
-
-    const array<pair<Index,Index>, 4> paddings = {
-        make_pair(Index(0), Index(0)),
-        make_pair(padding_height, padding_height),
-        make_pair(padding_width, padding_width),
-        make_pair(Index(0), Index(0))
-    };
-
-    output_map.device(get_device()) = input_map.pad(paddings);
-}
-
 static void bound_cpu(const TensorView& input,
                const TensorView& lower_bounds,
                const TensorView& upper_bounds,
@@ -547,6 +529,8 @@ static void layer_norm_backward_cpu(const TensorView& output_delta,
 
     beta_gradient.as_vector().noalias()  = output_delta_flat.colwise().sum();
     gamma_gradient.as_vector().noalias() = (output_delta_flat.array() * norm_flat.array()).matrix().colwise().sum();
+
+    if (input_delta.empty()) return;
 
     const float* output_delta_data = output_delta.as<float>();
     const float* norm_data         = normalized.as<float>();
@@ -1125,11 +1109,13 @@ static void layer_norm_backward_gpu(const TensorView& input, const TensorView& o
 
     input.dispatch([&](auto tag) {
         using T = decltype(tag);
+        T* input_delta_data = input_delta.empty() ? nullptr : input_delta.as<T>();
+
         layernorm_backward_cuda<T>(rows, cols,
                                    output_delta.as<T>(), input.as<T>(),
                                    means.as<float>(), standard_deviations.as<float>(),
                                    gamma.as<float>(),
-                                   input_delta.as<T>(),
+                                   input_delta_data,
                                    gamma_gradient.as<float>(), beta_gradient.as<float>());
     });
 }

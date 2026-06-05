@@ -269,6 +269,16 @@ struct Buffer
     void resize_bytes(Index new_bytes, Device new_device_type)
     {
         if (new_bytes == bytes && device_type == new_device_type) return;
+
+        const bool changes_cuda_allocation =
+            (device_type == Device::CUDA && data)
+            || (new_device_type == Device::CUDA && new_bytes > 0);
+        throw_if(changes_cuda_allocation && device::cuda_allocation_growth_forbidden(),
+                 format("CUDA buffer resize from {} to {} bytes while CUDA allocation growth is forbidden "
+                        "(warmup incomplete before CUDA graph capture).",
+                        bytes,
+                        new_bytes));
+
         free_buffer();
         device_type = new_device_type;
         if (new_bytes == 0) return;
@@ -566,6 +576,7 @@ public:
     static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
     static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn_handle; }
     static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
+    static cudaStream_t get_transfer_stream()                      { return instance().transfer_stream; }
     static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
 
 private:
@@ -579,6 +590,7 @@ private:
     cublasLtHandle_t cublas_lt_handle = nullptr;
     cudnnHandle_t cudnn_handle = nullptr;
     cudaStream_t compute_stream = nullptr;
+    cudaStream_t transfer_stream = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
 };
 

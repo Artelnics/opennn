@@ -8,11 +8,26 @@
 
 #include "device_backend.h"
 
+#include <atomic>
+
 namespace opennn::device
 {
 
 namespace
 {
+
+std::atomic_bool cuda_allocation_growth_forbidden_runtime{false};
+
+bool env_flag_enabled(const char* name) noexcept
+{
+    const char* value = getenv(name);
+    return value
+        && (strcmp(value, "1") == 0
+            || strcmp(value, "true") == 0
+            || strcmp(value, "TRUE") == 0
+            || strcmp(value, "on") == 0
+            || strcmp(value, "ON") == 0);
+}
 
 void throw_if_auto(Device device_type)
 {
@@ -182,6 +197,11 @@ void synchronize_event_impl(cudaEvent_t event)
     CHECK_CUDA(cudaEventSynchronize(event));
 }
 
+void stream_wait_event_impl(cudaStream_t stream, cudaEvent_t event)
+{
+    CHECK_CUDA(cudaStreamWaitEvent(stream, event, 0));
+}
+
 #else
 
 bool compiled_with_cuda() noexcept
@@ -286,6 +306,10 @@ void synchronize_event_impl(cudaEvent_t)
 {
 }
 
+void stream_wait_event_impl(cudaStream_t, cudaEvent_t)
+{
+}
+
 #endif
 
 }
@@ -310,6 +334,17 @@ pair<size_t, size_t> memory_info()
     return cuda_memory_info();
 }
 
+bool cuda_allocation_growth_forbidden() noexcept
+{
+    return cuda_allocation_growth_forbidden_runtime.load(std::memory_order_relaxed)
+        || env_flag_enabled("OPENNN_CUDA_NO_ALLOC_GROWTH");
+}
+
+void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept
+{
+    cuda_allocation_growth_forbidden_runtime.store(forbidden, std::memory_order_relaxed);
+}
+
 void* allocate(Device device_type, Index byte_count)
 {
     throw_if_auto(device_type);
@@ -318,7 +353,13 @@ void* allocate(Device device_type, Index byte_count)
     if (byte_count == 0) return nullptr;
 
     if (device_type == Device::CUDA)
+    {
+        throw_if(cuda_allocation_growth_forbidden(),
+                 format("CUDA allocation of {} bytes while CUDA allocation growth is forbidden "
+                        "(warmup incomplete before CUDA graph capture).",
+                        byte_count));
         return allocate_cuda(byte_count);
+    }
 
     return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
 }
@@ -452,6 +493,13 @@ void synchronize_event(cudaEvent_t event)
     if (!event) return;
 
     synchronize_event_impl(event);
+}
+
+void stream_wait_event(cudaStream_t stream, cudaEvent_t event)
+{
+    if (!event) return;
+
+    stream_wait_event_impl(stream, event);
 }
 
 }

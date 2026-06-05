@@ -102,11 +102,33 @@ namespace
         ~LtMatmulPreferenceGuard() { cublasLtMatmulPreferenceDestroy(pref); }
     };
 
+    bool env_flag_enabled(const char* name) noexcept
+    {
+        const char* value = getenv(name);
+        return value
+            && (strcmp(value, "1") == 0
+                || strcmp(value, "true") == 0
+                || strcmp(value, "TRUE") == 0
+                || strcmp(value, "on") == 0
+                || strcmp(value, "ON") == 0);
+    }
+
+    bool scratch_growth_forbidden() noexcept
+    {
+        return device::cuda_allocation_growth_forbidden()
+            || env_flag_enabled("OPENNN_CUDA_NO_SCRATCH_GROWTH");
+    }
+
     template <typename T>
     T* ensure_scratch(Buffer& buffer, Index n)
     {
         if (n * Index(sizeof(T)) > buffer.bytes && buffer.data)
+        {
+            throw_if(scratch_growth_forbidden(),
+                     "ensure_scratch: buffer growth while scratch growth is forbidden "
+                     "(warmup incomplete before CUDA graph capture).");
             device::synchronize(Backend::get_compute_stream());
+        }
         return buffer.ensure<T>(n);
     }
 }
@@ -170,6 +192,10 @@ static const LtMatmulPlan& get_lt_gemm_plan(
                               int(io_dtype), int(out_dtype)};
     auto it = lt_gemm_plans_.find(key);
     if (it != lt_gemm_plans_.end()) return it->second;
+
+    throw_if(scratch_growth_forbidden(),
+             "get_lt_gemm_plan: new GEMM plan requested while scratch growth is forbidden "
+             "(unseen shape during CUDA graph capture; warmup incomplete).");
 
     LtMatmulPlan plan;
 

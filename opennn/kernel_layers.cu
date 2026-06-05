@@ -914,7 +914,8 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
 {
     if (N == 0 || D == 0) return;
 
-    layernorm_backward_kernel<T><<<N, layernorm_threads(D), 0, opennn::Backend::get_compute_stream()>>>(N, D, dY, X, means, inv_vars, gamma, dX);
+    if (dX)
+        layernorm_backward_kernel<T><<<N, layernorm_threads(D), 0, opennn::Backend::get_compute_stream()>>>(N, D, dY, X, means, inv_vars, gamma, dX);
 
     constexpr int NUM_WARPS = 8;
     const dim3 block(32, NUM_WARPS);
