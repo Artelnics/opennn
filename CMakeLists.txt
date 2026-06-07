@@ -184,13 +184,10 @@ FetchContent_MakeAvailable(eigen)
 
 add_subdirectory(opennn)
 
-option(OpenNN_BUILD_BLANK "Build OpenNN blank" ON)
-if(OpenNN_BUILD_BLANK)
-    add_subdirectory(blank)
-endif()
+option(OpenNN_BUILD_BLANK "Build OpenNN blank examples" ON)
 
 if(OPENNN_HAS_CUDA)
-    add_subdirectory(blank_cuda)
+    option(OpenNN_BUILD_BLANK_CUDA "Build OpenNN CUDA blank example" ON)
 endif()
 
 option(OpenNN_BUILD_TESTS "Build OpenNN tests" OFF)

@@ -13,16 +13,21 @@ endif()
 
 project(examples)
 
+option(OpenNN_BUILD_BLANK "Build OpenNN blank examples" ON)
+
+if(OpenNN_BUILD_BLANK)
+    add_subdirectory(blank)
+endif()
+
 add_subdirectory(airfoil_self_noise)
 add_subdirectory(amazon_reviews)
 add_subdirectory(breast_cancer)
 add_subdirectory(emotion_analysis)
-add_subdirectory(forecasting)
+add_subdirectory(no2_forecasting)
 add_subdirectory(iris_plant)
 add_subdirectory(mnist)
 add_subdirectory(melanoma_cancer)
 add_subdirectory(translation)
-add_subdirectory(wwt_optimization)
 add_subdirectory(yolo)
 
 
