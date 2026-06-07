@@ -11,10 +11,10 @@ application.
 
 ## The result
 
-| | OpenNN | PyTorch |
-|---|---|---|
-| **Exports the trained model as standalone source?** | **yes — C, Python, JavaScript, PHP** | no |
-| **Runs with no ML runtime?** | **yes** (C export needs only a C compiler) | no — needs libtorch or onnxruntime |
+| | OpenNN | PyTorch | TensorFlow |
+|---|---|---|---|
+| **Exports the trained model as standalone source?** | **yes — C, Python, JavaScript, PHP** | no | no |
+| **Runs with no ML runtime?** | **yes** (C export needs only a C compiler) | no — needs libtorch or onnxruntime | no — needs the TF / TFLite runtime |
 
 OpenNN turns a trained network into a self-contained function in your target language.
 PyTorch's export paths (TorchScript, ONNX) produce a *model file* that still requires a
@@ -58,6 +58,11 @@ PyTorch has no equivalent "export to compilable source." Its two export paths bo
 
 Both are good for portability *between ML runtimes*, but neither lets you drop a trained model
 into a C/JS/PHP codebase, or a device with no ML stack, as plain source.
+
+**TensorFlow** is the same: its export formats — SavedModel and TFLite (`.tflite`) — are
+serialized models executed by the TensorFlow or TFLite runtime. TFLite targets small devices,
+but it is still an interpreter you ship and link, not compilable source with the weights baked
+in.
 
 ## Why it matters
 

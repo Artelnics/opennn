@@ -13,14 +13,15 @@ doing the **same job**: load a tabular regression dataset, build an identical ML
 it. We report RSS at two points — a **baseline** (framework loaded and model built, before
 training) and the **peak** during training — so the source of the difference is visible.
 
-## The two numbers
+## The numbers
 
-| | OpenNN | PyTorch | PyTorch / OpenNN |
+| | OpenNN | PyTorch | TensorFlow |
 |---|---|---|---|
-| **Baseline RSS** (model built, no training) | **9 MB** | **221 MB** | **≈ 24×** |
-| **Peak RSS** (during training) | **9 MB** | **295 MB** | **≈ 32×** |
+| **Baseline RSS** (model built, no training) | **9 MB** | **221 MB** | **485 MB** |
+| **Peak RSS** (during training) | **9 MB** | **295 MB** | **521 MB** |
+| Peak vs OpenNN | 1× | ≈32× | ≈56× |
 
-Both programs do the same thing on the same data: load `sum.csv` (1,000 rows × 100 numeric
+All three programs do the same thing on the same data: load `sum.csv` (1,000 rows × 100 numeric
 inputs + 1 target), build a 100 → 64 → 1 MLP, and train for 50 epochs (Adam, batch size 32,
 single-threaded). Each reports its own peak RSS via the OS (`getrusage` / `resource`).
 
@@ -29,11 +30,13 @@ single-threaded). Each reports its own peak RSS via the OS (`getrusage` / `resou
 * **OpenNN holds ~9 MB and barely moves.** Baseline and peak are the same to within
   measurement noise — the dataset and training buffers are tiny next to the already-small
   working set. The whole process, code and data, fits in single-digit megabytes.
-* **PyTorch starts at ~221 MB** before training — that is the Python interpreter plus the
-  `libtorch` runtime (and NumPy) resident in memory — and **rises to ~295 MB** during
-  training as autograd and optimizer buffers are allocated.
+* **PyTorch starts at ~221 MB** before training — the Python interpreter plus the `libtorch`
+  runtime (and NumPy) resident in memory — and **rises to ~295 MB** during training as autograd
+  and optimizer buffers are allocated.
+* **TensorFlow starts at ~485 MB** and **rises to ~521 MB** — the Keras/TF runtime carries an
+  even larger resident footprint than PyTorch before any training.
 
-So the gap is ~24× before any training and ~32× at peak. As with startup time, most of it is
+So the peak gap is ~32× for PyTorch and ~56× for TensorFlow. As with startup time, most of it is
 fixed framework overhead that is paid regardless of how small the model is.
 
 ## Why OpenNN uses so little

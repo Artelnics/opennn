@@ -10,18 +10,19 @@ deployed artifact runs at all on a clean system with nothing pre-installed.
 This note compares what it takes to deploy a trained model with OpenNN versus PyTorch on
 Linux x86_64.
 
-## The two numbers
+## The numbers
 
-| | OpenNN | PyTorch |
-|---|---|---|
-| **Packages to install** | **0** | **12** (torch + 11 deps) |
-| **Files installed** | **1** (the executable) | **21,755** |
-| **On-disk install** | **~6 MB** | **~946 MB** |
-| **Extra runtime required** | none | a Python interpreter |
-| **Runs on a clean machine (no toolchain, no Python)?** | **yes** | no |
+| | OpenNN | PyTorch | TensorFlow |
+|---|---|---|---|
+| **Packages to install** | **0** | **12** | **33** |
+| **Files installed** | **1** (the executable) | **21,755** | **21,213** |
+| **On-disk install** | **~6 MB** | **~946 MB** | **~1.6 GB** |
+| **Extra runtime required** | none | a Python interpreter | a Python interpreter |
+| **Runs on a clean machine (no toolchain, no Python)?** | **yes** | no | no |
 
-The OpenNN deployment is a single native executable. The PyTorch deployment is a Python
-package tree plus the interpreter to run it.
+The OpenNN deployment is a single native executable. The PyTorch and TensorFlow deployments are
+Python package trees plus the interpreter to run them — TensorFlow's is the largest, at 33
+packages and ~1.6 GB.
 
 ## What each requires
 
@@ -48,6 +49,11 @@ fsspec  filelock  typing_extensions  setuptools  pip
 …landing **21,755 files** and **~946 MB** in `site-packages`. And that is on top of a working
 **Python interpreter**, which is itself a prerequisite (and not counted above). On an
 air-gapped or minimal host you must provision Python and all of these before the model runs.
+
+**TensorFlow — 33 packages, ~21k files, ~1.6 GB, plus an interpreter.** A `pip install
+tensorflow-cpu` pulls **33 packages** (TF plus abseil, protobuf, gRPC, Keras, h2/grpcio,
+ml-dtypes, and more), landing **21,213 files** and **~1.6 GB** in `site-packages` — the
+largest of the three — again on top of a Python interpreter.
 
 ## Why it matters
 

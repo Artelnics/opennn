@@ -13,18 +13,19 @@ A framework with a large runtime pays that cost up front. Before PyTorch can run
 layer, it must start the Python interpreter and `import torch`, which loads its multi-hundred-
 megabyte native library. OpenNN, a native binary with the library linked in, simply runs.
 
-## The two numbers
+## The numbers
 
-| | OpenNN | PyTorch | PyTorch / OpenNN |
+| | OpenNN | PyTorch | TensorFlow |
 |---|---|---|---|
-| **Time-to-first-prediction (median)** | **36 ms** | **1,005 ms** | **≈ 28×** |
+| **Time-to-first-prediction (median)** | **36 ms** | **1,005 ms** | **1,685 ms** |
+| vs OpenNN | 1× | ≈28× | ≈47× |
 
 Each program does the same thing: build a small MLP (10 → 64 → 1), run one forward pass, print
-the result, and exit. We time the whole process, launch to exit, over 15 runs after warm-up,
+the result, and exit. We time the whole process, launch to exit, over many runs after warm-up,
 and report the median. (Measured on Linux x86_64; OpenNN built with g++ 13.3, CPU-only;
-PyTorch 2.12.0+cpu on CPython 3.12.)
+PyTorch 2.12.0+cpu and TensorFlow 2.21.0 on CPython 3.12.)
 
-## Where PyTorch's second goes
+## Where the second-plus goes
 
 The gap is almost entirely framework startup, not model work — the model here is trivial. Timed
 on the same machine:
@@ -32,13 +33,15 @@ on the same machine:
 | Step | Time |
 |---|---|
 | OpenNN: whole process (launch → first prediction) | ~36 ms |
-| Bare Python interpreter (`python -c pass`, no torch) | ~9 ms |
+| Bare Python interpreter (`python -c pass`, no framework) | ~9 ms |
 | Python + `import torch` + model + predict | ~1,005 ms |
+| Python + `import tensorflow` + model + predict | ~1,685 ms |
 | → `import torch` alone adds | **~995 ms** |
+| → `import tensorflow` alone adds | **~1,675 ms** |
 
-The standout: **`import torch` by itself costs ~1 second** — loading and initializing the
-framework's large native library dominates everything else. Python's own interpreter starts in
-single-digit milliseconds; it is the framework, not the language, that is slow to load.
+The standout: **importing the framework costs 1–1.7 seconds** — loading and initializing its
+large native library dominates everything else. Python's own interpreter starts in single-digit
+milliseconds; it is the framework, not the language, that is slow to load.
 
 ## Why OpenNN is faster to start
 

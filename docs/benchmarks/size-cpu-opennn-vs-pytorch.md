@@ -22,15 +22,16 @@ CPU application ships in **~3.2 MB**. Same job, ≈138× less to deploy.
 
 This note compares the two, CPU-only, on Linux x86_64.
 
-## The two numbers
+## The numbers
 
-| | OpenNN | PyTorch | PyTorch / OpenNN |
+| | OpenNN | PyTorch | TensorFlow |
 |---|---|---|---|
-| **CPU deployment size** | **3.2 MB** | **442 MB** | **≈ 138×** |
+| **CPU runtime library** | **3.2 MB** | **442 MB** | **752 MB** |
+| vs OpenNN | 1× | ≈138× | ≈235× |
 
-Note this is generous to PyTorch: the OpenNN figure is a complete, ready-to-run application,
-while the PyTorch figure is only its core runtime library (`libtorch_cpu.so`), before your
-own code or the Python interpreter are added on top.
+Note this is generous to PyTorch and TensorFlow: the OpenNN figure is a complete, ready-to-run
+application, while the others are only the core runtime library (`libtorch_cpu.so` /
+`libtensorflow_cc.so`), before your own code or the Python interpreter are added on top.
 
 ## What each number is
 
@@ -56,6 +57,12 @@ distribution (`libtorch-shared-with-deps-2.12.0+cpu.zip`, Linux x86_64) is **441
 (421.3 MiB) — 99% of the runtime libraries in that package. This single library holds the
 ATen tensor/autograd engine with Intel MKL and oneDNN statically linked in, which is why it
 is so large. Read directly from `download.pytorch.org/libtorch/cpu/` on 2026-06-07.
+
+**TensorFlow — 752 MB (measured).** `libtensorflow_cc.so.2`, the core C++ runtime in the
+`tensorflow-cpu` 2.21.0 wheel (Linux x86_64, CPython 3.12), is **751.6 MB** — the single
+largest file in the install. With its companion `libtensorflow_framework.so.2` (62 MB) the
+runtime is ~814 MB, and the whole `tensorflow/` package directory is ~1.3 GB. Measured by
+sizing the `.so` files in a clean virtual environment.
 
 ## Why the gap is so large
 
