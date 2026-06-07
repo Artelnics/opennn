@@ -3,7 +3,7 @@
 //
 //   S C A L I N G   S O U R C E
 //
-//   Artificial Intelligence Techniques, SL
+//   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include "statistics.h"

@@ -8,6 +8,7 @@
 
 #include "pch.h"
 #include "formula_expression.h"
+#include "string_utilities.h"
 
 #include <cctype>
 
@@ -74,7 +75,7 @@ struct Lexer
 
                 token.kind = Token::Kind::Number;
                 token.text = source.substr(token_start, position - token_start);
-                token.number = stof(token.text);
+                token.number = parse_float(token.text, "FormulaParser: numeric literal");
                 tokens.push_back(move(token));
                 continue;
             }

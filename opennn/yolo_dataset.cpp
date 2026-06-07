@@ -10,6 +10,7 @@
 #include "image_utilities.h"
 #include "io_utilities.h"
 #include "json.h"
+#include "string_utilities.h"
 
 namespace opennn
 {
@@ -773,8 +774,8 @@ VocAnnotation parse_voc_xml(const filesystem::path& xml_path)
 
     VocAnnotation annotation;
     const string size_block = read_voc_tag(xml, "size");
-    annotation.width  = stof(read_voc_tag(size_block, "width"));
-    annotation.height = stof(read_voc_tag(size_block, "height"));
+    annotation.width  = parse_float(read_voc_tag(size_block, "width"),  "VOC annotation: width");
+    annotation.height = parse_float(read_voc_tag(size_block, "height"), "VOC annotation: height");
 
     throw_if(annotation.width <= 0.0f || annotation.height <= 0.0f,
              format("VOC annotation has invalid size: {}", xml_path.string()));
@@ -792,10 +793,10 @@ VocAnnotation parse_voc_xml(const filesystem::path& xml_path)
         const string bbox = read_voc_tag(obj, "bndbox");
         VocBox box;
         box.class_name = read_voc_tag(obj, "name");
-        box.xmin = stof(read_voc_tag(bbox, "xmin"));
-        box.ymin = stof(read_voc_tag(bbox, "ymin"));
-        box.xmax = stof(read_voc_tag(bbox, "xmax"));
-        box.ymax = stof(read_voc_tag(bbox, "ymax"));
+        box.xmin = parse_float(read_voc_tag(bbox, "xmin"), "VOC bndbox: xmin");
+        box.ymin = parse_float(read_voc_tag(bbox, "ymin"), "VOC bndbox: ymin");
+        box.xmax = parse_float(read_voc_tag(bbox, "xmax"), "VOC bndbox: xmax");
+        box.ymax = parse_float(read_voc_tag(bbox, "ymax"), "VOC bndbox: ymax");
         annotation.boxes.push_back(box);
 
         cursor = obj_end + strlen("</object>");

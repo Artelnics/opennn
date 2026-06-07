@@ -32,10 +32,10 @@ struct GIoUResult
 {
     float giou = 0.0f;
     float iou  = 0.0f;
-    float d_cx = 0.0f;
-    float d_cy = 0.0f;
-    float d_w  = 0.0f;
-    float d_h  = 0.0f;
+    float cx_gradient = 0.0f;
+    float cy_gradient = 0.0f;
+    float w_gradient  = 0.0f;
+    float h_gradient  = 0.0f;
 };
 
 GIoUResult yolo_loss_giou_forward(const float* pred, const float* gt)
@@ -142,10 +142,10 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     const float d_loss_top = loss_grad_corner(d_intersection_top, d_area_top, d_enclosing_top);
     const float d_loss_bottom = loss_grad_corner(d_intersection_bottom, d_area_bottom, d_enclosing_bottom);
 
-    r.d_cx = d_loss_left + d_loss_right;
-    r.d_cy = d_loss_top + d_loss_bottom;
-    r.d_w  = 0.5f * (d_loss_right - d_loss_left);
-    r.d_h  = 0.5f * (d_loss_bottom - d_loss_top);
+    r.cx_gradient = d_loss_left + d_loss_right;
+    r.cy_gradient = d_loss_top + d_loss_bottom;
+    r.w_gradient  = 0.5f * (d_loss_right - d_loss_left);
+    r.h_gradient  = 0.5f * (d_loss_bottom - d_loss_top);
     return r;
 }
 
@@ -297,10 +297,10 @@ void yolo_gradient_kernel(const TensorView& output,
                         const GIoUResult g = yolo_loss_giou_grad(output_box, target_box);
 
                         const float scale = lambda_giou * inv_batch;
-                        delta[base + 0] = scale * clamp(g.d_cx, -grad_clip, grad_clip);
-                        delta[base + 1] = scale * clamp(g.d_cy, -grad_clip, grad_clip);
-                        delta[base + 2] = scale * clamp(g.d_w,  -grad_clip, grad_clip);
-                        delta[base + 3] = scale * clamp(g.d_h,  -grad_clip, grad_clip);
+                        delta[base + 0] = scale * clamp(g.cx_gradient, -grad_clip, grad_clip);
+                        delta[base + 1] = scale * clamp(g.cy_gradient, -grad_clip, grad_clip);
+                        delta[base + 2] = scale * clamp(g.w_gradient,  -grad_clip, grad_clip);
+                        delta[base + 3] = scale * clamp(g.h_gradient,  -grad_clip, grad_clip);
                         delta[base + 4] = 2.0f * (out[base + 4] - g.iou) * inv_batch;
 
                         if (sigmoid_classes)
@@ -1010,7 +1010,7 @@ void Loss::regularization_from_JSON(const JsonDocument& document)
     set_regularization(read_json_string(root_element, "Type"));
 
     if (root_element->has("RegularizationWeight"))
-        set_regularization_weight(float(read_json_type(root_element, "RegularizationWeight")));
+        set_regularization_weight(float(read_json_float(root_element, "RegularizationWeight")));
 }
 
 void Loss::regularization_to_JSON(JsonWriter& file_stream) const
@@ -1061,18 +1061,18 @@ void Loss::from_JSON(const JsonDocument& document)
     set_error(read_json_string(root, "Method"));
 
     set_regularization(read_json_string(root, "Regularization"));
-    regularization_weight = read_json_type(root, "RegularizationWeight");
+    regularization_weight = read_json_float(root, "RegularizationWeight");
 
-    if (root->first_child("NormalizationCoefficient"))
-        normalization_coefficient = read_json_type(root, "NormalizationCoefficient");
+    if (root->find("NormalizationCoefficient"))
+        normalization_coefficient = read_json_float(root, "NormalizationCoefficient");
 
-    if (root->first_child("PositivesWeight")) {
-        positives_weight = read_json_type(root, "PositivesWeight");
-        negatives_weight = read_json_type(root, "NegativesWeight");
+    if (root->find("PositivesWeight")) {
+        positives_weight = read_json_float(root, "PositivesWeight");
+        negatives_weight = read_json_float(root, "NegativesWeight");
     }
 
-    if (root->first_child("MinkowskiParameter"))
-        minkowski_parameter = read_json_type(root, "MinkowskiParameter");
+    if (root->find("MinkowskiParameter"))
+        minkowski_parameter = read_json_float(root, "MinkowskiParameter");
 }
 
 }

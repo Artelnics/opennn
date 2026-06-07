@@ -286,7 +286,7 @@ vector<Index> Dataset::get_feature_dimensions() const
         if (!variable.is_used())
             continue;
 
-        feature_dimensions[i] = variable.feature_count();
+        feature_dimensions[i] = variable.get_feature_count();
 
         ++i;
     }
@@ -353,7 +353,7 @@ vector<string> Dataset::get_feature_names() const
 {
     vector<string> feature_names;
     feature_names.reserve(size_t(transform_reduce(variables.begin(), variables.end(), Index(0), plus<>{},
-                                                  [](const Variable& variable) { return variable.feature_count(); })));
+                                                  [](const Variable& variable) { return variable.get_feature_count(); })));
 
     for (const auto& variable : variables)
     {
@@ -372,7 +372,7 @@ vector<string> Dataset::get_feature_names(const string& variable_role) const
 
     vector<string> feature_names;
     feature_names.reserve(size_t(transform_reduce(vars.begin(), vars.end(), Index(0), plus<>{},
-                                                  [](const Variable& variable) { return variable.feature_count(); })));
+                                                  [](const Variable& variable) { return variable.get_feature_count(); })));
 
     for (const auto& variable : vars)
     {
@@ -394,7 +394,7 @@ Shape Dataset::get_shape(const string& variable_role) const
     if (role == VariableRole::Target)  return target_shape;
     if (role == VariableRole::Decoder) return decoder_shape;
 
-    throw invalid_argument("get_shape: Invalid variable role string: " + variable_role);
+    throw runtime_error("get_shape: Invalid variable role string: " + variable_role);
 }
 
 void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
@@ -408,7 +408,7 @@ void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
     else if (role == VariableRole::Decoder)
         decoder_shape = new_shape;
     else
-        throw invalid_argument("set_shape: Invalid variable role string: " + variable_role);
+        throw runtime_error("set_shape: Invalid variable role string: " + variable_role);
 
     invalidate_data_buffer();
 }
@@ -424,9 +424,9 @@ vector<Index> Dataset::get_feature_indices(const string& variable_role) const
 
     for (const Variable& variable : variables)
     {
-        const Index count = variable.feature_count();
+        const Index count = variable.get_feature_count();
 
-        if (!role_matches(variable.role, role_type))
+        if (!role_applies_to(variable.role, role_type))
         {
             feature_index += count;
             continue;
@@ -447,7 +447,7 @@ vector<Index> Dataset::get_variable_indices(const string& variable_role) const
     indices.reserve(get_variables_number(variable_role));
 
     for (size_t i = 0; i < variables.size(); ++i)
-        if (role_matches(variables[i].role, role_type))
+        if (role_applies_to(variables[i].role, role_type))
             indices.push_back(i);
 
     return indices;
@@ -483,7 +483,7 @@ vector<string> Dataset::get_variable_names(const string& variable_role) const
     names.reserve(get_variables_number(variable_role));
 
     for (const Variable& variable : variables)
-        if (role_matches(variable.role, role_type))
+        if (role_applies_to(variable.role, role_type))
             names.push_back(variable.name);
 
     return names;
@@ -494,7 +494,7 @@ Index Dataset::get_variables_number(const string& variable_role) const
     const VariableRole role_type = string_to_variable_role(variable_role);
 
     return ranges::count_if(variables,
-                            [role_type](const Variable& v) { return role_matches(v.role, role_type); });
+                            [role_type](const Variable& v) { return role_applies_to(v.role, role_type); });
 }
 
 Index Dataset::get_used_variables_number() const
@@ -513,7 +513,7 @@ vector<Variable> Dataset::get_variables(const string& variable_role) const
     const VariableRole role_type = string_to_variable_role(variable_role);
 
     ranges::copy_if(variables, back_inserter(this_variables),
-                    [role_type](const Variable& var) { return role_matches(var.role, role_type); });
+                    [role_type](const Variable& var) { return role_applies_to(var.role, role_type); });
 
     return this_variables;
 }
@@ -521,7 +521,7 @@ vector<Variable> Dataset::get_variables(const string& variable_role) const
 Index Dataset::get_features_number() const
 {
     return accumulate(variables.begin(), variables.end(), 0,
-                      [](Index sum, const Variable& var) { return sum + var.feature_count(); });
+                      [](Index sum, const Variable& var) { return sum + var.get_feature_count(); });
 }
 
 Index Dataset::get_features_number(const string& variable_role) const
@@ -529,7 +529,7 @@ Index Dataset::get_features_number(const string& variable_role) const
     const VariableRole role_type = string_to_variable_role(variable_role);
 
     return transform_reduce(variables.begin(), variables.end(), Index(0), plus<>{},
-        [&](const Variable& v) { return role_matches(v.role, role_type) ? v.feature_count() : Index(0); });
+        [&](const Variable& v) { return role_applies_to(v.role, role_type) ? v.get_feature_count() : Index(0); });
 }
 
 vector<Index> Dataset::get_used_feature_indices() const
@@ -543,7 +543,7 @@ vector<Index> Dataset::get_used_feature_indices() const
 
     for (const Variable& variable : variables)
     {
-        const Index count = variable.feature_count();
+        const Index count = variable.get_feature_count();
 
         if (variable.role == VariableRole::None || variable.role == VariableRole::Time)
         {
@@ -599,6 +599,9 @@ void Dataset::set_input_variables_unused()
 
 void Dataset::set_variable_role(const Index index, const string& new_role)
 {
+    throw_if(index < 0 || index >= ssize(variables),
+             format("Dataset::set_variable_role: index {} out of range [0, {}).",
+                    index, variables.size()));
     variables[index].set_role(new_role);
     invalidate_data_buffer();
 }
@@ -610,6 +613,9 @@ void Dataset::set_variable_role(const string& name, const string& new_role)
 
 void Dataset::set_variable_type(const Index index, const VariableType& new_type)
 {
+    throw_if(index < 0 || index >= ssize(variables),
+             format("Dataset::set_variable_type: index {} out of range [0, {}).",
+                    index, variables.size()));
     variables[index].type = new_type;
     invalidate_data_buffer();
 }
@@ -718,7 +724,7 @@ Index Dataset::get_variable_index(const Index feature_index) const
 
     for (Index i = 0; i < variables_number; ++i)
     {
-        features_seen += variables[i].feature_count();
+        features_seen += variables[i].get_feature_count();
 
         if (feature_index < features_seen)
             return i;
@@ -742,9 +748,9 @@ vector<vector<Index>> Dataset::get_feature_indices() const
 vector<Index> Dataset::get_feature_indices(const Index variable_index) const
 {
     const Index index = transform_reduce(variables.begin(), variables.begin() + variable_index,
-        Index(0), plus<>{}, [](const Variable& v) { return v.feature_count(); });
+        Index(0), plus<>{}, [](const Variable& v) { return v.get_feature_count(); });
 
-    vector<Index> indices(variables[variable_index].feature_count());
+    vector<Index> indices(variables[variable_index].get_feature_count());
     iota(indices.begin(), indices.end(), index);
 
     return indices;
@@ -855,7 +861,7 @@ void Dataset::variables_from_JSON(const Json *variables_element)
 
         if (variable.is_categorical() || variable.is_binary())
         {
-            const Json* categories_element = el->first_child("Categories");
+            const Json* categories_element = el->find("Categories");
 
             if (categories_element)
                 variable.categories = get_tokens(read_json_string(el, "Categories"), ";");

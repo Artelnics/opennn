@@ -1,16 +1,16 @@
-# Graph Report - opennn  (2026-06-04)
+# Graph Report - opennn  (2026-06-07)
 
 ## Corpus Check
-- 325 files · ~853,000 words
+- 325 files · ~854,255 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4196 nodes · 8660 edges · 326 communities (267 shown, 59 thin omitted)
-- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 961 edges (avg confidence: 0.8)
+- 4248 nodes · 8786 edges · 326 communities (266 shown, 60 thin omitted)
+- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 989 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9927d0ba`
+- Built from commit: `25ff9ef3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -110,7 +110,6 @@
 - [[_COMMUNITY_Community 92|Community 92]]
 - [[_COMMUNITY_Community 93|Community 93]]
 - [[_COMMUNITY_Community 94|Community 94]]
-- [[_COMMUNITY_Community 95|Community 95]]
 - [[_COMMUNITY_Community 96|Community 96]]
 - [[_COMMUNITY_Community 97|Community 97]]
 - [[_COMMUNITY_Community 98|Community 98]]
@@ -126,7 +125,6 @@
 - [[_COMMUNITY_Community 108|Community 108]]
 - [[_COMMUNITY_Community 109|Community 109]]
 - [[_COMMUNITY_Community 110|Community 110]]
-- [[_COMMUNITY_Community 111|Community 111]]
 - [[_COMMUNITY_Community 112|Community 112]]
 - [[_COMMUNITY_Community 113|Community 113]]
 - [[_COMMUNITY_Community 114|Community 114]]
@@ -149,7 +147,6 @@
 - [[_COMMUNITY_Community 131|Community 131]]
 - [[_COMMUNITY_Community 132|Community 132]]
 - [[_COMMUNITY_Community 133|Community 133]]
-- [[_COMMUNITY_Community 134|Community 134]]
 - [[_COMMUNITY_Community 135|Community 135]]
 - [[_COMMUNITY_Community 136|Community 136]]
 - [[_COMMUNITY_Community 137|Community 137]]
@@ -184,7 +181,6 @@
 - [[_COMMUNITY_Community 166|Community 166]]
 - [[_COMMUNITY_Community 167|Community 167]]
 - [[_COMMUNITY_Community 168|Community 168]]
-- [[_COMMUNITY_Community 169|Community 169]]
 - [[_COMMUNITY_Community 170|Community 170]]
 - [[_COMMUNITY_Community 171|Community 171]]
 - [[_COMMUNITY_Community 172|Community 172]]
@@ -193,13 +189,10 @@
 - [[_COMMUNITY_Community 175|Community 175]]
 - [[_COMMUNITY_Community 176|Community 176]]
 - [[_COMMUNITY_Community 177|Community 177]]
-- [[_COMMUNITY_Community 178|Community 178]]
 - [[_COMMUNITY_Community 179|Community 179]]
 - [[_COMMUNITY_Community 180|Community 180]]
-- [[_COMMUNITY_Community 181|Community 181]]
 - [[_COMMUNITY_Community 182|Community 182]]
 - [[_COMMUNITY_Community 183|Community 183]]
-- [[_COMMUNITY_Community 184|Community 184]]
 - [[_COMMUNITY_Community 185|Community 185]]
 - [[_COMMUNITY_Community 186|Community 186]]
 - [[_COMMUNITY_Community 187|Community 187]]
@@ -221,6 +214,7 @@
 - [[_COMMUNITY_Community 204|Community 204]]
 - [[_COMMUNITY_Community 205|Community 205]]
 - [[_COMMUNITY_Community 206|Community 206]]
+- [[_COMMUNITY_Community 207|Community 207]]
 - [[_COMMUNITY_Community 208|Community 208]]
 - [[_COMMUNITY_Community 209|Community 209]]
 - [[_COMMUNITY_Community 210|Community 210]]
@@ -262,6 +256,7 @@
 - [[_COMMUNITY_Community 247|Community 247]]
 - [[_COMMUNITY_Community 248|Community 248]]
 - [[_COMMUNITY_Community 249|Community 249]]
+- [[_COMMUNITY_Community 250|Community 250]]
 - [[_COMMUNITY_Community 251|Community 251]]
 - [[_COMMUNITY_Community 252|Community 252]]
 - [[_COMMUNITY_Community 253|Community 253]]
@@ -285,18 +280,23 @@
 - [[_COMMUNITY_Community 279|Community 279]]
 - [[_COMMUNITY_Community 286|Community 286]]
 - [[_COMMUNITY_Community 327|Community 327]]
+- [[_COMMUNITY_Community 330|Community 330]]
+- [[_COMMUNITY_Community 331|Community 331]]
+- [[_COMMUNITY_Community 332|Community 332]]
+- [[_COMMUNITY_Community 338|Community 338]]
+- [[_COMMUNITY_Community 339|Community 339]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `throw_if()` - 245 edges
+1. `throw_if()` - 248 edges
 2. `TensorView` - 70 edges
 3. `Entry` - 39 edges
 4. `MatrixR` - 38 edges
 5. `read_json_string()` - 36 edges
 6. `TEST()` - 34 edges
 7. `Index` - 31 edges
-8. `add_json_field()` - 31 edges
-9. `TEST()` - 31 edges
-10. `string` - 30 edges
+8. `string` - 31 edges
+9. `add_json_field()` - 31 edges
+10. `TEST()` - 31 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `set_beta_1()` --calls--> `throw_if()`  [INFERRED]
@@ -313,7 +313,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (326 total, 59 thin omitted)
+## Communities (326 total, 60 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.05
@@ -332,40 +332,40 @@ Cohesion: 0.12
 Nodes (71): cudnnBackendDescriptor_t, cudnnDataType_t, cudnnPointwiseMode_t, MHA_Layout, Operation, PointWiseDesc, shared_ptr, string (+63 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.08
-Nodes (72): Error, EvaluationResult, add_l1_regularization_gradient_cuda(), add_l2_regularization_gradient_cuda(), binary_cross_entropy(), categorical_cross_entropy(), Index, TensorView (+64 more)
+Cohesion: 0.06
+Nodes (85): Error, EvaluationResult, add_l1_regularization_gradient_cuda(), add_l2_regularization_gradient_cuda(), binary_cross_entropy(), binary_cross_entropy_cuda(), binary_cross_entropy_gradient_cuda(), categorical_cross_entropy() (+77 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.08
-Nodes (69): add(), add_cpu(), add_gpu(), average_pooling_3d_backward(), average_pooling_3d_backward_cpu(), average_pooling_3d_backward_gpu(), average_pooling_3d_forward(), average_pooling_3d_forward_cpu() (+61 more)
+Nodes (72): activation_backward(), activation_backward_cpu(), activation_backward_gpu(), activation_forward(), activation_forward_cpu(), activation_forward_gpu(), add(), add_cpu() (+64 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.08
 Nodes (63): ComparisonOp, Condition, ConditionType, Domain, Objectives, apply_affine_input_swap(), array_3(), assemble_matrices() (+55 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.09
-Nodes (66): apply_name_mapping(), build_expression(), Layer, NeuralNetwork, path, string, vector, emit_c_activations() (+58 more)
+Cohesion: 0.06
+Nodes (90): apply_name_mapping(), build_expression(), Layer, NeuralNetwork, path, string, vector, emit_c_activations() (+82 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.06
 Nodes (60): Autocorrelation, CrossCorrelation, ExponentialCorrelation, Flatten, Form, LinearCorrelation, LogarithmicCorrelation, LogisticCorrelation (+52 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.09
-Nodes (52): CopyKind, cudaEvent_t, cudaMemcpyKind, allocate(), allocate_cuda(), allocate_pinned_host(), allocate_pinned_host_impl(), available_cuda_device() (+44 more)
+Cohesion: 0.08
+Nodes (58): CopyKind, cudaEvent_t, cudaMemcpyKind, allocate(), allocate_cuda(), allocate_pinned_host(), allocate_pinned_host_impl(), available_cuda_device() (+50 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.11
-Nodes (40): apply(), apply_cpu(), apply_delta(), apply_delta_cpu(), apply_delta_gpu(), apply_delta_gpu_unfused(), apply_delta_unfused(), apply_gpu() (+32 more)
+Nodes (39): apply(), apply_cpu(), apply_delta(), apply_delta_cpu(), apply_delta_gpu(), apply_delta_gpu_unfused(), apply_delta_unfused(), apply_gpu() (+31 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.10
-Nodes (59): Batch, Index, Shape, string, Variable, VariableType, vector, VectorI (+51 more)
+Cohesion: 0.09
+Nodes (64): check_separators(), Batch, Index, path, string, string_view, Variable, VariableType (+56 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.09
-Nodes (47): JsonDocument, from_JSON(), Json, read_JSON_body(), Json, preview_data_from_JSON(), samples_from_JSON(), set_codification() (+39 more)
+Cohesion: 0.11
+Nodes (35): Json, read_JSON_body(), Json, preview_data_from_JSON(), samples_from_JSON(), set_codification(), set_separator_name(), variables_from_JSON() (+27 more)
 
 ### Community 13 - "Community 13"
 Cohesion: 0.08
@@ -373,7 +373,7 @@ Nodes (43): AstPtr, CompiledFormula, Kind, LinearConstraintSet, accumulate_into(
 
 ### Community 14 - "Community 14"
 Cohesion: 0.06
-Nodes (47): CacheKey, attention_scale(), bhsd_input(), bhsd_output(), build_sdpa_backward_graph(), build_sdpa_forward_graph(), build_sdpa_graph_common(), cudnnHandle_t (+39 more)
+Nodes (32): Entry, bwd_dK, bwd_dO, bwd_dQ, bwd_dV, bwd_graph, bwd_K, bwd_O (+24 more)
 
 ### Community 15 - "Community 15"
 Cohesion: 0.15
@@ -388,8 +388,8 @@ Cohesion: 0.05
 Nodes (42): AffineEqualityLandsOnHyperplane, AffineInputConstraintFiltersResults, ApproximationNetwork, CallbackConstraintFilters, ConstantScalingDistributesOverSum, DivisionByConstantIsAffine, DivisionByVariableIsNonlinear, EmptyExpressionThrows (+34 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.13
-Nodes (20): BuildPlanPolicy_t, intptr_t, string, object, error_code_t, HeurMode_t, build(), build_operation_graph() (+12 more)
+Cohesion: 0.12
+Nodes (23): intptr_t, string, intptr_t, object, optional, uid_t, unordered_map, error_code_t (+15 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.06
@@ -397,7 +397,7 @@ Nodes (34): BoundingTest, main(), testing::TestWithParam<Pooling3dConfig>, testi
 
 ### Community 20 - "Community 20"
 Cohesion: 0.11
-Nodes (33): BatchPools, apply_effective_num_workers(), check_stopping_condition(), clip_gradient_norm(), clip_gradient_norm_device(), Buffer, Dataset, Index (+25 more)
+Nodes (33): BatchPools, apply_effective_num_workers(), clip_gradient_norm(), clip_gradient_norm_device(), Buffer, Dataset, Index, JsonWriter (+25 more)
 
 ### Community 21 - "Community 21"
 Cohesion: 0.14
@@ -412,16 +412,16 @@ Cohesion: 0.10
 Nodes (20): half1, half1, explicit, half1, T_ELEM, Surface(), cpu_float2half_rn(), cpu_half2float() (+12 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.19
-Nodes (18): j_common_ptr, decode_png_grayscale(), decode_png_palette(), decode_png_pixels(), decode_png_truecolor(), inflate_png_data_into(), jpeg_error_exit_throw(), jpeg_output_silent() (+10 more)
+Cohesion: 0.16
+Nodes (32): main(), Index, path, string, vector, decode_bmp_pixels(), decode_jpeg_pixels(), decode_png_grayscale() (+24 more)
 
 ### Community 25 - "Community 25"
-Cohesion: 0.12
-Nodes (27): get_variable_data(), calculate_autocorrelations(), calculate_cross_correlations(), calculate_cross_correlations_spearman(), Codification, Index, JsonWriter, MatrixR (+19 more)
+Cohesion: 0.13
+Nodes (25): get_variable_data(), calculate_autocorrelations(), calculate_cross_correlations(), calculate_cross_correlations_spearman(), Codification, Index, MatrixR, path (+17 more)
 
 ### Community 26 - "Community 26"
-Cohesion: 0.15
-Nodes (31): add_field(), as_bool(), as_long(), as_string(), begin_array(), begin_array_object(), c_str(), initializer_list (+23 more)
+Cohesion: 0.18
+Nodes (27): add_field(), as_string(), begin_array(), begin_array_object(), c_str(), Json, JsonDocument, path (+19 more)
 
 ### Community 27 - "Community 27"
 Cohesion: 0.19
@@ -432,40 +432,40 @@ Cohesion: 0.09
 Nodes (27): NoObjectGradientMatchesNumericalGradient, build_yolo_network(), array, Index, initializer_list, NeuralNetwork, path, vector (+19 more)
 
 ### Community 29 - "Community 29"
-Cohesion: 0.19
-Nodes (21): Descriptives, Device, JsonWriter, Shape, string, vector, VectorR, descriptives_field() (+13 more)
+Cohesion: 0.21
+Nodes (15): cublasHandle_t, cublasLtHandle_t, cudnnOpTensorDescriptor_t, Dense, copy_device_to_host_float(), cudaStream_t, cudnnHandle_t, Index (+7 more)
 
 ### Community 30 - "Community 30"
 Cohesion: 0.15
-Nodes (27): BackPropagationLM, Dense, activation_derivative(), back_propagate(), BackPropagationLM(), calculate_error(), calculate_errors(), calculate_squared_errors() (+19 more)
+Nodes (26): BackPropagationLM, activation_derivative(), back_propagate(), BackPropagationLM(), calculate_error(), calculate_errors(), calculate_squared_errors(), compute_jacobian() (+18 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.08
 Nodes (23): half, Surface, T, uid_t, unordered_map, equal_tensors(), SdpaBwdTestData, bias_tensor (+15 more)
 
 ### Community 32 - "Community 32"
-Cohesion: 0.12
-Nodes (29): assign_fitness(), configure_neural_network_inputs(), Dataset, Index, InputsSelectionResults, JsonDocument, JsonWriter, NeuralNetwork (+21 more)
+Cohesion: 0.13
+Nodes (27): assign_fitness(), configure_neural_network_inputs(), Dataset, Index, InputsSelectionResults, JsonWriter, NeuralNetwork, TrainingStrategy (+19 more)
 
 ### Community 33 - "Community 33"
-Cohesion: 0.13
-Nodes (27): AugmentationSettings, FileReader, split_samples_random(), calculate_target_distribution(), Descriptives, Index, pair, path (+19 more)
+Cohesion: 0.18
+Nodes (18): AugmentationSettings, calculate_target_distribution(), Descriptives, Index, pair, ScalerMethod, vector, VectorI (+10 more)
 
 ### Community 34 - "Community 34"
-Cohesion: 0.23
-Nodes (19): Index, get_output_height(), Shape, string, TensorSpec, vector, get_forward_specs(), get_output_shape() (+11 more)
+Cohesion: 0.20
+Nodes (21): Index, Json, get_output_height(), Shape, string, TensorSpec, vector, get_forward_specs() (+13 more)
 
 ### Community 35 - "Community 35"
 Cohesion: 0.11
 Nodes (23): cudaError_t, cudnnDataType_t, cudnnStatus_t, half1, string, cudnnTensorFormat_t, check_device_arch_newer_than(), checkCudaError() (+15 more)
 
 ### Community 36 - "Community 36"
-Cohesion: 0.16
-Nodes (18): EpochStats, BackPropagation, Batch, ForwardPropagation, function, path, unique_ptr, vector (+10 more)
+Cohesion: 0.10
+Nodes (30): EpochStats, exception_ptr, jthread, BatchFillSession, cancelled, empty_queue, error_mutex, error_pending (+22 more)
 
 ### Community 37 - "Community 37"
-Cohesion: 0.10
-Nodes (30): bfloat16, cublasComputeType_t, cublasOperation_t, Buffer, cudaDataType_t, Index, TensorView, Type (+22 more)
+Cohesion: 0.11
+Nodes (33): bfloat16, cublasComputeType_t, cublasLtMatmulPreference_t, cublasOperation_t, Buffer, cublasLtEpilogue_t, cudaDataType_t, Index (+25 more)
 
 ### Community 38 - "Community 38"
 Cohesion: 0.19
@@ -480,32 +480,32 @@ Cohesion: 0.36
 Nodes (24): cudnnBackendDescriptor_t, cudnnDataType_t, cudnnPointwiseMode_t, MHA_Layout, Operation, PointWiseDesc, Tensor, vector (+16 more)
 
 ### Community 41 - "Community 41"
-Cohesion: 0.17
-Nodes (31): BehaviorNote_t, ConvolutionMode_t, array, DataType_t, module_, shared_ptr, string, Tensor_attributes (+23 more)
+Cohesion: 0.13
+Nodes (39): BehaviorNote_t, BuildPlanPolicy_t, ConvolutionMode_t, array, DataType_t, module_, shared_ptr, string (+31 more)
 
 ### Community 42 - "Community 42"
 Cohesion: 0.15
 Nodes (18): arrow_mask(), constant_bound_mask(), create_container_and_page_table(), decode_mask(), diag_bound_mask(), padding_mask(), softcap(), test_sdpa_with_flexible_graph() (+10 more)
 
 ### Community 43 - "Community 43"
-Cohesion: 0.13
-Nodes (17): main(), main(), main(), Index, MatrixMap, MatrixR, T, vector (+9 more)
+Cohesion: 0.23
+Nodes (15): TrainingResults, train(), check_stopping_condition(), time_t, TrainingResults, get_elapsed_time(), set_names(), set_scaling() (+7 more)
 
 ### Community 44 - "Community 44"
-Cohesion: 0.18
-Nodes (20): check_separators(), JsonWriter, string_view, get_codification_string(), get_separator_name(), get_separator_string(), preview_data_to_JSON(), samples_to_JSON() (+12 more)
+Cohesion: 0.15
+Nodes (28): JsonWriter, get_codification_string(), get_separator_name(), preview_data_to_JSON(), samples_to_JSON(), variables_to_JSON(), JsonWriter, to_JSON() (+20 more)
 
 ### Community 45 - "Community 45"
 Cohesion: 0.09
 Nodes (21): AbsoluteErrorDescriptives, AreaUnderCurve, BinaryClassificationTests, CumulativeGain, ErrorData, ErrorDataDescriptives, ErrorDataHistograms, FalseNegativeSamples (+13 more)
 
 ### Community 46 - "Community 46"
-Cohesion: 0.28
-Nodes (22): Box, adjust_boxes_to_letterbox(), apply_geometric_to_boxes(), best_anchor_for_box(), build_cache(), calculate_yolo_anchors(), array, Index (+14 more)
+Cohesion: 0.26
+Nodes (27): Box, adjust_boxes_to_letterbox(), apply_geometric_to_boxes(), best_anchor_for_box(), build_cache(), calculate_yolo_anchors(), array, Index (+19 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.14
-Nodes (24): get_name, Device, Index, JsonDocument, JsonWriter, Shape, TensorSpec, TensorView (+16 more)
+Cohesion: 0.17
+Nodes (21): get_name, Device, Index, JsonDocument, JsonWriter, Shape, TensorSpec, TensorView (+13 more)
 
 ### Community 48 - "Community 48"
 Cohesion: 0.20
@@ -516,8 +516,8 @@ Cohesion: 0.35
 Nodes (20): class_, DataType_t, PyGraph, shared_ptr, string, Tensor_attributes, vector, NormFwdPhase_t (+12 more)
 
 ### Community 50 - "Community 50"
-Cohesion: 0.24
-Nodes (12): cublasHandle_t, cublasLtHandle_t, cudnnOpTensorDescriptor_t, copy_device_to_host_float(), cudaStream_t, cudnnHandle_t, Index, Backend() (+4 more)
+Cohesion: 0.17
+Nodes (11): cublasLtMatmulAlgo_t, cublasLtMatmulDesc_t, cublasLtMatrixLayout_t, LtMatmulPlan, a_desc, algo, algo_valid, b_desc (+3 more)
 
 ### Community 51 - "Community 51"
 Cohesion: 0.18
@@ -565,7 +565,7 @@ Nodes (18): check(), InputsSelectionResults, JsonDocument, JsonWriter, NeuronsSe
 
 ### Community 62 - "Community 62"
 Cohesion: 0.19
-Nodes (17): Index, JsonWriter, Shape, string, TensorSpec, vector, get_backward_specs(), get_forward_specs() (+9 more)
+Nodes (18): Index, JsonWriter, Shape, string, TensorSpec, vector, get_backward_specs(), get_forward_specs() (+10 more)
 
 ### Community 63 - "Community 63"
 Cohesion: 0.16
@@ -576,8 +576,8 @@ Cohesion: 0.22
 Nodes (16): string, vector, build_lstm(), build_recurrent(), format_seconds(), main(), pick_winner(), print_agg() (+8 more)
 
 ### Community 65 - "Community 65"
-Cohesion: 0.29
-Nodes (10): cudnnTensorDescriptor_t, TensorView, ThreadPoolDevice, fill(), fill_cuda(), get_descriptor(), get_thread_pool_device(), set_descriptor() (+2 more)
+Cohesion: 0.17
+Nodes (10): LtMatmulPlanKey, epilogue, io_dtype, k, m, n, out_dtype, transA (+2 more)
 
 ### Community 66 - "Community 66"
 Cohesion: 0.20
@@ -592,40 +592,40 @@ Cohesion: 0.26
 Nodes (16): array, class_, DataType_t, object, optional, PyGraph, shared_ptr, string (+8 more)
 
 ### Community 69 - "Community 69"
-Cohesion: 0.31
-Nodes (10): intptr_t, optional, uid_t, unordered_map, KnobType_t, create_execution_plan(), execute(), execute_plan_at_index() (+2 more)
+Cohesion: 0.25
+Nodes (7): AugmentationConfig, mutable, augmentation(), augmentation_counter(), namespace, opennn(), set_augmentation()
 
 ### Community 70 - "Community 70"
-Cohesion: 0.30
-Nodes (14): array, path, vector, draw_rect_outline(), generate_synthetic_dataset(), Image24, height, rgb (+6 more)
+Cohesion: 0.09
+Nodes (20): ForgetBiasInitialisedToOne, ForwardPropagateReturnSequencesShape, LongShortTermMemoryLayerTest, main(), make_dataset(), main(), RecurrentLayerTest, ReturnSequencesOutputShape (+12 more)
 
 ### Community 71 - "Community 71"
 Cohesion: 0.17
 Nodes (14): get_dataset(), get_neural_network(), Dataset, EnumMap, NeuralNetwork, string, virtual, map() (+6 more)
 
 ### Community 72 - "Community 72"
-Cohesion: 0.17
-Nodes (12): get_loss(), Index, Loss, get_maximum_batch_size(), set(), warn_dropped_samples(), virtual, set_display() (+4 more)
+Cohesion: 0.13
+Nodes (15): mutex, get_loss(), Index, Loss, get_maximum_batch_size(), set(), warn_dropped_samples(), virtual (+7 more)
 
 ### Community 73 - "Community 73"
-Cohesion: 0.26
-Nodes (12): begin(), end(), get_aligned_bytes(), get_aligned_size(), namespace, TensorSpec, Type, vector (+4 more)
+Cohesion: 0.25
+Nodes (8): JsonWriter, write_JSON_body(), activation_function_from_string(), ActivationFunction, Shape, string, set_descriptor(), shape_to_string()
 
 ### Community 74 - "Community 74"
 Cohesion: 0.12
 Nodes (16): testing::TestWithParam<ConvolutionalLayerConfig>, ConvolutionalLayerConfig, activation_function, batch_normalization, convolution_type, input_shape, kernel_shape, stride_shape (+8 more)
 
 ### Community 75 - "Community 75"
-Cohesion: 0.13
-Nodes (13): atomic, AugmentationConfig, mutable, time_point, Optimizer::WorkerProfileCounters, fill_us, fills, pop_us (+5 more)
+Cohesion: 0.12
+Nodes (10): atomic, namespace, opennn(), namespace, opennn(), time_point, Optimizer::WorkerProfileCounters, fill_us (+2 more)
 
 ### Community 76 - "Community 76"
 Cohesion: 0.17
 Nodes (14): _compiled_module, KernelCache, module_, shared_ptr, string, intptr_t, m, create_kernel_cache_helper() (+6 more)
 
 ### Community 77 - "Community 77"
-Cohesion: 0.27
-Nodes (13): Batch(), copy_device_async(), cudaStream_t, Dataset, Index, vector, fill(), gather_device_async() (+5 more)
+Cohesion: 0.22
+Nodes (14): Batch(), copy_device_async(), cudaStream_t, Dataset, Index, vector, fill(), gather_device_async() (+6 more)
 
 ### Community 78 - "Community 78"
 Cohesion: 0.23
@@ -634,10 +634,6 @@ Nodes (15): Concatenate(), configure_operator(), Index, Json, JsonWriter, Shape,
 ### Community 79 - "Community 79"
 Cohesion: 0.29
 Nodes (15): anchors_to_string(), configure_operator(), array, Json, JsonWriter, Shape, string, vector (+7 more)
-
-### Community 80 - "Community 80"
-Cohesion: 0.18
-Nodes (11): PoolWindow, batch, channel, in_col_start, in_row_start, out_col, out_row, pc_end (+3 more)
 
 ### Community 81 - "Community 81"
 Cohesion: 0.12
@@ -664,20 +660,20 @@ Cohesion: 0.13
 Nodes (15): Shape, Scenario, batch_size, csv_file, description, extra_targets, future, hidden (+7 more)
 
 ### Community 87 - "Community 87"
-Cohesion: 0.24
-Nodes (10): as_double(), read_json_type(), JsonDocument, from_JSON(), set_minimum_loss_decrease(), JsonDocument, from_JSON(), regularization_from_JSON() (+2 more)
+Cohesion: 0.12
+Nodes (29): JsonDocument, from_JSON(), JsonDocument, from_JSON(), JsonDocument, from_JSON(), JsonDocument, from_JSON() (+21 more)
 
 ### Community 88 - "Community 88"
-Cohesion: 0.12
-Nodes (14): exception_ptr, jthread, mutex, BatchFillSession, cancelled, empty_queue, error_mutex, error_pending (+6 more)
+Cohesion: 0.36
+Nodes (8): backward_scratch_spec(), check(), TensorSpec, vector, forward_scratch_specs(), get_contiguous_source_lengths(), parameter_specs(), state_specs()
 
 ### Community 89 - "Community 89"
-Cohesion: 0.10
-Nodes (28): AdaptiveMomentEstimation(), BackPropagation, Index, JsonWriter, Loss, NeuralNetwork, OptimizerData, TrainingResults (+20 more)
+Cohesion: 0.16
+Nodes (15): AdaptiveMomentEstimation(), BackPropagation, Index, JsonWriter, Loss, NeuralNetwork, OptimizerData, get_samples_number() (+7 more)
 
 ### Community 90 - "Community 90"
-Cohesion: 0.44
-Nodes (9): print(), augment_inputs(), Tensor3, reflect_image_horizontal(), reflect_image_vertical(), rotate_image(), translate_image_x(), translate_image_y() (+1 more)
+Cohesion: 0.54
+Nodes (8): augment_inputs(), Tensor3, reflect_image_horizontal(), reflect_image_vertical(), rotate_image(), translate_image_x(), translate_image_y(), TensorMap3
 
 ### Community 91 - "Community 91"
 Cohesion: 0.19
@@ -692,12 +688,8 @@ Cohesion: 0.19
 Nodes (13): check(), Index, path, string, TrainingStrategy, load(), NeuronSelection(), NeuronsSelectionResults() (+5 more)
 
 ### Community 94 - "Community 94"
-Cohesion: 0.22
-Nodes (14): apply_color_jitter(), apply_geometric_to_image(), AugmentationConfig, exposure, flip, hue, jitter, saturation (+6 more)
-
-### Community 95 - "Community 95"
-Cohesion: 0.22
-Nodes (15): convert_voc_to_yolo(), JsonWriter, to_JSON(), path, Shape, string, has_image_extension(), hash_sources() (+7 more)
+Cohesion: 0.33
+Nodes (7): cudnnTensorDescriptor_t, TensorView, fill(), fill_cuda(), get_descriptor(), setZero(), uses_cuda_fill()
 
 ### Community 96 - "Community 96"
 Cohesion: 0.14
@@ -735,6 +727,10 @@ Nodes (12): Addition(), Index, Json, JsonWriter, Shape, string, TensorSpec, vect
 Cohesion: 0.21
 Nodes (14): Index, InputsSelectionResults, JsonDocument, JsonWriter, TrainingStrategy, from_JSON(), get_maximum_inputs_number(), get_minimum_inputs_number() (+6 more)
 
+### Community 105 - "Community 105"
+Cohesion: 0.13
+Nodes (17): main(), main(), main(), Index, MatrixMap, MatrixR, T, vector (+9 more)
+
 ### Community 106 - "Community 106"
 Cohesion: 0.08
 Nodes (26): EnumMap, string, map(), sample_role_to_string(), string_to_sample_role(), namespace, opennn(), from_string() (+18 more)
@@ -755,21 +751,17 @@ Nodes (12): 0. *Optional*: Lock Clocks, 1. Build docker container, 2. Run Benchm
 Cohesion: 0.18
 Nodes (11): conv_shape_params, c, h, k, n, r, s, w (+3 more)
 
-### Community 111 - "Community 111"
-Cohesion: 0.29
-Nodes (7): JsonWriter, write_JSON_body(), activation_function_from_string(), ActivationFunction, Shape, string, shape_to_string()
-
 ### Community 112 - "Community 112"
-Cohesion: 0.17
-Nodes (12): header_matches_request(), ImageCacheHeader, channels, height, labels_off, magic, num_classes, num_samples (+4 more)
+Cohesion: 0.14
+Nodes (14): FileReader, header_matches_request(), ImageCacheHeader, channels, height, labels_off, magic, num_classes (+6 more)
 
 ### Community 113 - "Community 113"
 Cohesion: 0.26
 Nodes (11): Index, Shape, string, TensorSpec, vector, get_forward_specs(), get_input_shape(), get_output_shape() (+3 more)
 
 ### Community 114 - "Community 114"
-Cohesion: 0.23
-Nodes (13): Index, JsonDocument, JsonWriter, string, VariableType, vector, from_JSON(), get_categories_number() (+5 more)
+Cohesion: 0.29
+Nodes (11): Index, JsonDocument, string, VariableType, vector, from_JSON(), get_categories_number(), get_names() (+3 more)
 
 ### Community 115 - "Community 115"
 Cohesion: 0.18
@@ -812,8 +804,8 @@ Cohesion: 0.24
 Nodes (10): get_output_shape(), EnumMap, Json, LayerType, string, virtual, layer_type_to_string(), map() (+2 more)
 
 ### Community 125 - "Community 125"
-Cohesion: 0.27
-Nodes (12): configure_operator(), Index, Json, JsonWriter, Shape, string, get_output_shape(), NonMaxSuppression() (+4 more)
+Cohesion: 0.33
+Nodes (10): configure_operator(), Index, JsonWriter, Shape, string, get_output_shape(), NonMaxSuppression(), set() (+2 more)
 
 ### Community 126 - "Community 126"
 Cohesion: 0.25
@@ -847,17 +839,13 @@ Nodes (9): GrowingNeuronsTest, NeuronsIncrement, NeuronsSelection, OptimalNeuron
 Cohesion: 0.31
 Nodes (8): accumulate_output_deltas(), BackPropagation(), Index, Loss, TensorSpec, vector, set(), setup_delta_pool()
 
-### Community 134 - "Community 134"
-Cohesion: 0.33
-Nodes (7): path, load(), set_data_path(), set_storage_mode(), use_binary_data_file(), resize_data_from_JSON(), StorageMode
-
 ### Community 135 - "Community 135"
 Cohesion: 0.33
 Nodes (8): class, ApproximationNetwork(), AutoAssociationNetwork(), ClassificationNetwork(), ForecastingLstmNetwork(), ForecastingNetwork(), ImageClassificationNetwork(), NeuralNetwork()
 
 ### Community 136 - "Community 136"
-Cohesion: 0.20
-Nodes (10): VocAnnotation, boxes, height, width, VocBox, class_name, xmax, xmin (+2 more)
+Cohesion: 0.15
+Nodes (18): convert_voc_to_yolo(), path, string, has_image_extension(), parse_voc_xml(), read_voc_tag(), read_yolo_boxes(), read_yolo_classes() (+10 more)
 
 ### Community 137 - "Community 137"
 Cohesion: 0.20
@@ -872,8 +860,8 @@ Cohesion: 0.20
 Nodes (9): Attention-benchmark, Bprop, Contents, Forward, Fwd + Bprop, Pytorch adoption, Results, Sample output (+1 more)
 
 ### Community 140 - "Community 140"
-Cohesion: 0.21
-Nodes (11): Index, JsonDocument, JsonWriter, NeuronsSelectionResults, TrainingStrategy, from_JSON(), GrowingNeurons(), perform_neurons_selection() (+3 more)
+Cohesion: 0.24
+Nodes (9): Index, JsonWriter, NeuronsSelectionResults, TrainingStrategy, GrowingNeurons(), perform_neurons_selection(), set_default(), set_neurons_increment() (+1 more)
 
 ### Community 141 - "Community 141"
 Cohesion: 0.33
@@ -884,8 +872,8 @@ Cohesion: 0.28
 Nodes (5): time_point, ScenarioProgress, done, started, total
 
 ### Community 144 - "Community 144"
-Cohesion: 0.47
-Nodes (9): calculate_input_target_variable_correlations(), calculate_input_target_variable_pearson_correlations(), calculate_input_target_variable_spearman_correlations(), calculate_input_variable_correlations(), calculate_input_variable_pearson_correlations(), calculate_input_variable_spearman_correlations(), Correlation, Method (+1 more)
+Cohesion: 0.26
+Nodes (15): Shape, get_variable_indices(), set_shape(), calculate_input_target_variable_correlations(), calculate_input_target_variable_pearson_correlations(), calculate_input_target_variable_spearman_correlations(), calculate_input_variable_correlations(), calculate_input_variable_pearson_correlations() (+7 more)
 
 ### Community 145 - "Community 145"
 Cohesion: 0.33
@@ -900,12 +888,12 @@ Cohesion: 0.28
 Nodes (8): Index, get_output_height(), PoolingMethod, Shape, string, pooling_method_to_string(), set_output_shape(), string_to_pooling_method()
 
 ### Community 148 - "Community 148"
-Cohesion: 0.09
-Nodes (52): MissingValuesMethod, get_feature_indices(), get_used_sample_indices(), set_sample_role(), random_bool(), calculate_correlations_rank(), calculate_feature_descriptives(), calculate_missing_values_statistics() (+44 more)
+Cohesion: 0.30
+Nodes (14): array, path, vector, draw_rect_outline(), generate_synthetic_dataset(), Image24, height, rgb (+6 more)
 
 ### Community 149 - "Community 149"
-Cohesion: 0.22
-Nodes (9): AugmentationParams, crop_bottom, crop_left, crop_right, crop_top, exposure_mul, flip, hue_shift (+1 more)
+Cohesion: 0.09
+Nodes (23): apply_color_jitter(), apply_geometric_to_image(), AugmentationConfig, exposure, flip, hue, jitter, saturation (+15 more)
 
 ### Community 150 - "Community 150"
 Cohesion: 0.22
@@ -983,17 +971,13 @@ Nodes (6): GrowingInputsTest, InputSelectionKnownResult, DefaultConstructor, Gen
 Cohesion: 0.29
 Nodes (6): LevenbergMarquardtAlgorithmTest, DefaultConstructor, GeneralConstructor, Train, TEST(), TrainReducesError
 
-### Community 169 - "Community 169"
-Cohesion: 0.21
-Nodes (7): cudaDataType_t, namespace, opennn(), create(), cuda_dtype(), destroy(), cudaDataType_t
-
 ### Community 170 - "Community 170"
 Cohesion: 0.38
 Nodes (6): Index, namespace, get_samples_number(), opennn(), set_maximum_vocabulary_size(), set_minimum_token_frequency()
 
 ### Community 171 - "Community 171"
-Cohesion: 0.06
-Nodes (49): ConvolutionOp, cudnnActivationDescriptor_t, cudnnActivationMode_t, AttentionOp(), AttentionOp::SDPACache, backward_scratch_spec(), check(), configure_activation_descriptor() (+41 more)
+Cohesion: 0.07
+Nodes (52): CacheKey, ConvolutionOp, cudnnActivationDescriptor_t, cudnnActivationMode_t, attention_scale(), AttentionOp(), AttentionOp::SDPACache, bhsd_input() (+44 more)
 
 ### Community 172 - "Community 172"
 Cohesion: 0.43
@@ -1008,8 +992,8 @@ Cohesion: 0.50
 Nodes (4): Index, path, prepare_tinychat_pairs(), write_synthetic_pairs()
 
 ### Community 175 - "Community 175"
-Cohesion: 0.18
-Nodes (10): BackPropagateConvolutional, BackPropagateDense2d, BackPropagateEmbedding, BackPropagateMultiheadAttention, BackPropagatePooling, BackPropagateRecurrent, MeanSquaredErrorTest, DefaultConstructor (+2 more)
+Cohesion: 0.14
+Nodes (31): set_matrix_storage(), is_date_time_string(), is_numeric_string(), Codification, DateFormat, MatrixR, path, Shape (+23 more)
 
 ### Community 176 - "Community 176"
 Cohesion: 0.40
@@ -1019,10 +1003,6 @@ Nodes (5): Graph, shared_ptr, phase_t, create_sdpa_forward_graph_with_paged_cach
 Cohesion: 0.47
 Nodes (6): cudnnBackendDescriptor_t, allowAll(), isDownConvertingInputs(), isNonDeterministic(), isNonDeterministicOrisDownConverting(), isReducedPrecisionReduction()
 
-### Community 178 - "Community 178"
-Cohesion: 0.67
-Nodes (3): Device, set(), Shape
-
 ### Community 179 - "Community 179"
 Cohesion: 0.40
 Nodes (3): Device, Type, set()
@@ -1031,10 +1011,6 @@ Nodes (3): Device, Type, set()
 Cohesion: 0.33
 Nodes (6): YoloBoxRecord, class_id, h, w, x, y
 
-### Community 181 - "Community 181"
-Cohesion: 0.19
-Nodes (21): main(), Index, path, string, vector, decode_bmp_pixels(), decode_jpeg_pixels(), has_bmp_signature() (+13 more)
-
 ### Community 182 - "Community 182"
 Cohesion: 0.33
 Nodes (5): ScalingLayerTest, DefaultConstructor, ForwardPropagate, GeneralConstructor, TEST()
@@ -1042,10 +1018,6 @@ Nodes (5): ScalingLayerTest, DefaultConstructor, ForwardPropagate, GeneralConstr
 ### Community 183 - "Community 183"
 Cohesion: 0.33
 Nodes (5): DefaultConstructor, ForwardPropagate, GeneralConstructor, TEST(), UnscalingTest
-
-### Community 184 - "Community 184"
-Cohesion: 0.09
-Nodes (20): ForgetBiasInitialisedToOne, ForwardPropagateReturnSequencesShape, LongShortTermMemoryLayerTest, main(), make_dataset(), main(), RecurrentLayerTest, ReturnSequencesOutputShape (+12 more)
 
 ### Community 185 - "Community 185"
 Cohesion: 0.40
@@ -1080,12 +1052,12 @@ Cohesion: 0.40
 Nodes (4): device_data_input_feature_indices(), Buffer, namespace, opennn()
 
 ### Community 193 - "Community 193"
-Cohesion: 0.33
-Nodes (5): namespace, opennn(), scratch(), Buffer, swap()
+Cohesion: 0.29
+Nodes (11): begin(), end(), get_aligned_bytes(), get_aligned_size(), namespace, TensorSpec, vector, is_contiguous() (+3 more)
 
 ### Community 194 - "Community 194"
-Cohesion: 0.67
-Nodes (3): Shape, TensorView, reshape()
+Cohesion: 0.25
+Nodes (8): cudaDataType_t, cuda_dtype(), cudaDataType_t, cudnnDataType_t, Type, to_cuda(), to_cudnn(), type_bytes()
 
 ### Community 196 - "Community 196"
 Cohesion: 0.60
@@ -1127,6 +1099,10 @@ Nodes (3): Graph, shared_ptr, create_sdpa_forward_graph_with_custom_dropout()
 Cohesion: 0.50
 Nodes (3): Graph, shared_ptr, create_sdpa_forward_graph_with_paged_caches()
 
+### Community 207 - "Community 207"
+Cohesion: 0.33
+Nodes (5): namespace, opennn(), scratch(), Buffer, swap()
+
 ### Community 208 - "Community 208"
 Cohesion: 0.50
 Nodes (3): Json reproducer, Notes, Usage
@@ -1140,8 +1116,8 @@ Cohesion: 0.83
 Nodes (3): Shape, Flatten(), set()
 
 ### Community 211 - "Community 211"
-Cohesion: 0.12
-Nodes (32): set_matrix_storage(), Codification, DateFormat, MatrixR, path, Shape, string, string_view (+24 more)
+Cohesion: 0.09
+Nodes (55): MissingValuesMethod, get_feature_indices(), get_used_sample_indices(), set_sample_role(), random_bool(), calculate_correlations_rank(), calculate_feature_descriptives(), calculate_missing_values_statistics() (+47 more)
 
 ### Community 213 - "Community 213"
 Cohesion: 0.83
@@ -1152,32 +1128,52 @@ Cohesion: 0.67
 Nodes (3): cudnnBackendDescriptor_t, allowAll(), isRuntimeCompilation()
 
 ### Community 222 - "Community 222"
-Cohesion: 0.22
-Nodes (6): namespace, opennn(), namespace, opennn(), namespace, opennn()
+Cohesion: 0.52
+Nodes (7): split_samples_random(), path, Shape, time_point, ImageDataset(), read_bmp(), try_load_image_cache()
 
-### Community 327 - "Community 327"
-Cohesion: 0.48
-Nodes (7): activation_backward(), activation_backward_cpu(), activation_backward_gpu(), activation_forward(), activation_forward_cpu(), activation_forward_gpu(), ActivationFunction
+### Community 250 - "Community 250"
+Cohesion: 0.50
+Nodes (4): ActivationFunction(), Shape, TensorView, reshape()
+
+### Community 330 - "Community 330"
+Cohesion: 0.40
+Nodes (4): namespace, opennn(), create(), destroy()
+
+### Community 331 - "Community 331"
+Cohesion: 0.50
+Nodes (4): JpegHeader, channels, height, width
+
+### Community 332 - "Community 332"
+Cohesion: 0.67
+Nodes (3): j_common_ptr, jpeg_error_exit_throw(), jpeg_output_silent()
+
+### Community 338 - "Community 338"
+Cohesion: 0.18
+Nodes (10): BackPropagateConvolutional, BackPropagateDense2d, BackPropagateEmbedding, BackPropagateMultiheadAttention, BackPropagatePooling, BackPropagateRecurrent, MeanSquaredErrorTest, DefaultConstructor (+2 more)
+
+### Community 339 - "Community 339"
+Cohesion: 0.18
+Nodes (11): PoolWindow, batch, channel, in_col_start, in_row_start, out_col, out_row, pc_end (+3 more)
 
 ## Knowledge Gaps
-- **1182 isolated node(s):** `Index`, `cudnn_data_type`, `bool`, `heur_mode`, `object` (+1177 more)
+- **1198 isolated node(s):** `Index`, `cudnn_data_type`, `bool`, `heur_mode`, `object` (+1193 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **59 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **60 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `throw_if()` connect `Community 18` to `Community 0`, `Community 1`, `Community 130`, `Community 2`, `Community 4`, `Community 133`, `Community 5`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 11`, `Community 12`, `Community 13`, `Community 14`, `Community 15`, `Community 16`, `Community 146`, `Community 20`, `Community 21`, `Community 24`, `Community 25`, `Community 26`, `Community 29`, `Community 30`, `Community 6`, `Community 32`, `Community 33`, `Community 34`, `Community 41`, `Community 171`, `Community 44`, `Community 43`, `Community 46`, `Community 47`, `Community 48`, `Community 51`, `Community 52`, `Community 181`, `Community 56`, `Community 57`, `Community 61`, `Community 62`, `Community 66`, `Community 69`, `Community 76`, `Community 77`, `Community 83`, `Community 211`, `Community 87`, `Community 89`, `Community 91`, `Community 93`, `Community 94`, `Community 95`, `Community 99`, `Community 103`, `Community 111`?**
-  _High betweenness centrality (0.407) - this node is a cross-community bridge._
-- **Why does `random_integer()` connect `Community 32` to `Community 33`, `Community 2`, `Community 5`, `Community 6`, `Community 43`, `Community 174`, `Community 175`, `Community 116`, `Community 55`, `Community 184`, `Community 92`, `Community 126`?**
+- **Why does `throw_if()` connect `Community 18` to `Community 0`, `Community 1`, `Community 130`, `Community 2`, `Community 4`, `Community 133`, `Community 5`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 11`, `Community 12`, `Community 13`, `Community 6`, `Community 15`, `Community 16`, `Community 136`, `Community 146`, `Community 20`, `Community 21`, `Community 149`, `Community 24`, `Community 25`, `Community 26`, `Community 30`, `Community 32`, `Community 33`, `Community 34`, `Community 37`, `Community 41`, `Community 171`, `Community 43`, `Community 46`, `Community 47`, `Community 175`, `Community 48`, `Community 51`, `Community 52`, `Community 56`, `Community 57`, `Community 61`, `Community 62`, `Community 66`, `Community 73`, `Community 76`, `Community 77`, `Community 83`, `Community 211`, `Community 87`, `Community 88`, `Community 89`, `Community 91`, `Community 93`, `Community 222`, `Community 99`, `Community 103`, `Community 105`?**
+  _High betweenness centrality (0.432) - this node is a cross-community bridge._
+- **Why does `random_integer()` connect `Community 32` to `Community 33`, `Community 2`, `Community 5`, `Community 6`, `Community 70`, `Community 105`, `Community 174`, `Community 338`, `Community 116`, `Community 55`, `Community 92`, `Community 126`?**
+  _High betweenness centrality (0.040) - this node is a cross-community bridge._
+- **Why does `run_multi_seed()` connect `Community 152` to `Community 64`, `Community 105`, `Community 41`, `Community 143`, `Community 86`, `Community 118`?**
   _High betweenness centrality (0.034) - this node is a cross-community bridge._
-- **Why does `run_multi_seed()` connect `Community 152` to `Community 64`, `Community 43`, `Community 143`, `Community 18`, `Community 86`, `Community 118`?**
-  _High betweenness centrality (0.034) - this node is a cross-community bridge._
-- **Are the 242 inferred relationships involving `throw_if()` (e.g. with `run_fp8_conv_descale_descale_amax_scale()` and `run_fp8_conv_scale()`) actually correct?**
-  _`throw_if()` has 242 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 245 inferred relationships involving `throw_if()` (e.g. with `run_fp8_conv_descale_descale_amax_scale()` and `run_fp8_conv_scale()`) actually correct?**
+  _`throw_if()` has 245 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 31 inferred relationships involving `read_json_string()` (e.g. with `read_JSON_body()` and `read_JSON_body()`) actually correct?**
   _`read_json_string()` has 31 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Index`, `Training Performance Measurement  This script is to measure the training perfo`, `Use Pytorch Benchmark on the forward pass of an arbitrary function.` to the rest of the system?**
-  _1200 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1216 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.05263157894736842 - nodes in this community are weakly interconnected._

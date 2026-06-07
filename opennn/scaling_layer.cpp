@@ -17,20 +17,6 @@
 namespace opennn
 {
 
-namespace
-{
-
-VectorR descriptives_field(const vector<Descriptives>& descriptives,
-                           float Descriptives::* member)
-{
-    VectorR values(ssize(descriptives));
-    for (Index i = 0; i < values.size(); ++i)
-        values(i) = descriptives[size_t(i)].*member;
-    return values;
-}
-
-}
-
 Scaling::Scaling(const Shape& new_input_shape)
     : Layer(LayerType::Scaling, false)
 {
@@ -196,9 +182,9 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
     }
 
     if (scaling_layer_element->has("MinRange"))
-        min_range = float(stof(read_json_string(scaling_layer_element, "MinRange")));
+        min_range = parse_float(read_json_string(scaling_layer_element, "MinRange"), "Scaling: MinRange");
     if (scaling_layer_element->has("MaxRange"))
-        max_range = float(stof(read_json_string(scaling_layer_element, "MaxRange")));
+        max_range = parse_float(read_json_string(scaling_layer_element, "MaxRange"), "Scaling: MaxRange");
 
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);

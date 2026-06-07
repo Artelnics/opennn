@@ -18,20 +18,6 @@
 namespace opennn
 {
 
-namespace
-{
-
-VectorR descriptives_field(const vector<Descriptives>& descriptives,
-                           float Descriptives::* member)
-{
-    VectorR values(ssize(descriptives));
-    for (Index i = 0; i < values.size(); ++i)
-        values(i) = descriptives[size_t(i)].*member;
-    return values;
-}
-
-}
-
 VectorR Unscaling::get_minimums()            const { return descriptives_field(descriptives, &Descriptives::minimum); }
 VectorR Unscaling::get_maximums()            const { return descriptives_field(descriptives, &Descriptives::maximum); }
 VectorR Unscaling::get_means()               const { return descriptives_field(descriptives, &Descriptives::mean); }
@@ -167,9 +153,9 @@ void Unscaling::read_JSON_body(const Json* root_element)
     if (!root_element) return;
 
     if (root_element->has("MinRange"))
-        min_range = float(stof(read_json_string(root_element, "MinRange")));
+        min_range = parse_float(read_json_string(root_element, "MinRange"), "Unscaling: MinRange");
     if (root_element->has("MaxRange"))
-        max_range = float(stof(read_json_string(root_element, "MaxRange")));
+        max_range = parse_float(read_json_string(root_element, "MaxRange"), "Unscaling: MaxRange");
 
     const Json* neurons_array = root_element->find("Neurons");
     if (!neurons_array || !neurons_array->is_array()) return;
@@ -189,10 +175,10 @@ void Unscaling::read_JSON_body(const Json* root_element)
         throw_if(tokens.size() < 4,
                  format("Unscaling::read_JSON_body: neuron {} \"Descriptives\" has {} tokens, expected 4.",
                         i, tokens.size()));
-        descriptives[i].minimum            = float(stof(tokens[0]));
-        descriptives[i].maximum            = float(stof(tokens[1]));
-        descriptives[i].mean               = float(stof(tokens[2]));
-        descriptives[i].standard_deviation = float(stof(tokens[3]));
+        descriptives[i].minimum            = parse_float(tokens[0], "Unscaling: Descriptives");
+        descriptives[i].maximum            = parse_float(tokens[1], "Unscaling: Descriptives");
+        descriptives[i].mean               = parse_float(tokens[2], "Unscaling: Descriptives");
+        descriptives[i].standard_deviation = parse_float(tokens[3], "Unscaling: Descriptives");
     }
 
     op_storage_dirty = true;

@@ -99,7 +99,7 @@ VectorR TabularDataset::get_sample_data(Index index) const { return data.row(ind
 MatrixR TabularDataset::get_variable_data(Index variable_index) const
 {
     const Index start_column = get_feature_indices(variable_index)[0];
-    return data.block(0, start_column, data.rows(), variables[variable_index].feature_count());
+    return data.block(0, start_column, data.rows(), variables[variable_index].get_feature_count());
 }
 
 MatrixR TabularDataset::get_variable_data(Index variable_index, const vector<Index>& row_indices) const
@@ -245,7 +245,7 @@ void TabularDataset::infer_variable_types_from_data()
     for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
     {
         Variable& variable = variables[variable_index];
-        const Index advance = variable.feature_count();
+        const Index advance = variable.get_feature_count();
 
         if (variable.type == VariableType::Numeric)
         {
@@ -348,7 +348,7 @@ vector<string> TabularDataset::unuse_uncorrelated_variables(const float minimum_
 
         for (Index j = 0; j < target_variables_number; ++j)
         {
-            const float correlation_value = correlations(i, j).r;
+            const float correlation_value = correlations(i, j).coefficient;
 
             if (!isnan(correlation_value) && abs(correlation_value) >= minimum_correlation)
             {
@@ -389,7 +389,7 @@ vector<string> TabularDataset::unuse_collinear_variables(const float maximum_cor
         {
             if (i == j) continue;
 
-            const float abs_r = abs(correlations(i, j).r);
+            const float abs_r = abs(correlations(i, j).coefficient);
             if (!isnan(abs_r))
             {
                 if (abs_r >= maximum_correlation)
@@ -411,7 +411,7 @@ vector<string> TabularDataset::unuse_collinear_variables(const float maximum_cor
             if (to_be_removed[i] || to_be_removed[j])
                 continue;
 
-            const float r = correlations(i, j).r;
+            const float r = correlations(i, j).coefficient;
 
             if (!isnan(r) && abs(r) >= maximum_correlation)
             {
@@ -457,7 +457,7 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
     {
         if (variable.role == VariableRole::None)
         {
-            feature_index += variable.feature_count();
+            feature_index += variable.get_feature_count();
             continue;
         }
 
@@ -551,7 +551,7 @@ vector<BoxPlot> TabularDataset::calculate_variables_box_plots() const
             && variable.role != VariableRole::None)
             box_plots[i] = box_plot(data.col(feature_index), used_sample_indices);
 
-        feature_index += variable.feature_count();
+        feature_index += variable.get_feature_count();
     }
 
     return box_plots;
@@ -683,8 +683,8 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
 
             correlations(i, j) = correlation_function(input_i, input_j);
 
-            if (correlations(i, j).r > 1.0f - EPSILON)
-                correlations(i, j).r = 1.0f;
+            if (correlations(i, j).coefficient > 1.0f - EPSILON)
+                correlations(i, j).coefficient = 1.0f;
 
             correlations(j, i) = correlations(i, j);
         }
@@ -904,55 +904,54 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
 
         if (variable.role == VariableRole::None)
         {
-            feature_index += variable.feature_count();
+            feature_index += variable.get_feature_count();
             continue;
         }
 
         if (variable.is_categorical() || variable.is_binary() || variable.type == VariableType::DateTime)
         {
-            feature_index += variable.feature_count();
+            feature_index += variable.get_feature_count();
             ++used_feature_index;
             continue;
         }
-        else
+
+        // Numeric variable: feature_count is always 1, so feature_index advances by 1 below.
+        const float interquartile_range = box_plots[i].third_quartile - box_plots[i].first_quartile;
+
+        if (interquartile_range < EPSILON)
         {
-            const float interquartile_range = box_plots[i].third_quartile - box_plots[i].first_quartile;
-
-            if (interquartile_range < EPSILON)
-            {
-                ++feature_index;
-                ++used_feature_index;
-                continue;
-            }
-
-            const float lower = box_plots[i].first_quartile - cleaning_parameter * interquartile_range;
-            const float upper = box_plots[i].third_quartile + cleaning_parameter * interquartile_range;
-
-            Index variables_outliers = 0;
-
-            for (Index j = 0; j < samples_number; ++j)
-            {
-                const Index sample_index = sample_indices[j];
-                const float value = data(sample_index, feature_index);
-
-                if (value < lower || value > upper)
-                {
-                    return_values[0][j] = 1;
-                    ++variables_outliers;
-
-                    if (replace_with_nan)
-                    {
-                        data(sample_index, feature_index) = QUIET_NAN;
-                        data_changed = true;
-                    }
-                }
-            }
-
-            return_values[1][used_feature_index] = variables_outliers;
-
             ++feature_index;
             ++used_feature_index;
+            continue;
         }
+
+        const float lower = box_plots[i].first_quartile - cleaning_parameter * interquartile_range;
+        const float upper = box_plots[i].third_quartile + cleaning_parameter * interquartile_range;
+
+        Index variables_outliers = 0;
+
+        for (Index j = 0; j < samples_number; ++j)
+        {
+            const Index sample_index = sample_indices[j];
+            const float value = data(sample_index, feature_index);
+
+            if (value < lower || value > upper)
+            {
+                return_values[0][j] = 1;
+                ++variables_outliers;
+
+                if (replace_with_nan)
+                {
+                    data(sample_index, feature_index) = QUIET_NAN;
+                    data_changed = true;
+                }
+            }
+        }
+
+        return_values[1][used_feature_index] = variables_outliers;
+
+        ++feature_index;
+        ++used_feature_index;
     }
 
     if (data_changed)
@@ -1347,10 +1346,10 @@ void TabularDataset::missing_values_from_JSON(const Json *missing_values_element
     variables_missing_values_number.resize(tokens.size());
     for (size_t i = 0; i < tokens.size(); ++i)
         if (!tokens[i].empty())
-            variables_missing_values_number(i) = stoi(tokens[i]);
+            variables_missing_values_number(i) = parse_int(tokens[i], "VariablesMissingValuesNumber");
 
-    rows_missing_values_number = stol(read_json_string_fallback(missing_values_element,
-        {"SamplesMissingValuesNumber", "RowsMissingValuesNumber"}));
+    rows_missing_values_number = parse_long(read_json_string_fallback(missing_values_element,
+        {"SamplesMissingValuesNumber", "RowsMissingValuesNumber"}), "SamplesMissingValuesNumber");
 }
 
 void TabularDataset::impute_missing_values_unuse()
@@ -1590,7 +1589,7 @@ vector<string> TabularDataset::get_feature_scalers(const string& variable_role) 
     scalers.reserve(get_features_number(variable_role));
 
     for (const Variable& var : role_variables)
-        scalers.insert(scalers.end(), var.feature_count(), scaler_method_to_string(var.scaler));
+        scalers.insert(scalers.end(), var.get_feature_count(), scaler_method_to_string(var.scaler));
 
     return scalers;
 }
@@ -1655,14 +1654,14 @@ DateFormat TabularDataset::infer_dataset_date_format(const vector<Variable>& var
                 const int part2 = stoi(date_parts[2].str());
 
                 if (part1 > 12)
-                    return DMY;
+                    return Dmy;
                 if (part2 > 12)
-                    return MDY;
+                    return Mdy;
             }
         }
     }
 
-    return AUTO;
+    return Auto;
 }
 
 void TabularDataset::to_JSON(JsonWriter& printer) const

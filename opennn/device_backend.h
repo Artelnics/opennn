@@ -44,7 +44,7 @@ cudaStream_t create_stream(unsigned);
 void destroy_stream(cudaStream_t);
 
 void* allocate_pinned_host(Index);
-void free_pinned_host(void*);
+void deallocate_pinned_host(void*);
 
 cudaEvent_t create_event(unsigned);
 cudaEvent_t create_event();

@@ -378,7 +378,7 @@ void DropoutOp::to_JSON(JsonWriter& w) const
 void DropoutOp::from_JSON(const Json* parent)
 {
     if (parent && parent->has("DropoutRate"))
-        set_rate(float(read_json_type(parent, "DropoutRate")));
+        set_rate(float(read_json_float(parent, "DropoutRate")));
 }
 
 cudnnActivationMode_t ActivationOp::to_cudnn_mode(Function function)
@@ -528,7 +528,7 @@ void BatchNormOp::to_JSON(JsonWriter& w) const
 void BatchNormOp::from_JSON(const Json* parent)
 {
     if (parent && parent->has("Momentum"))
-        momentum = float(read_json_type(parent, "Momentum"));
+        momentum = float(read_json_float(parent, "Momentum"));
 }
 
 void BatchNormOp::load_state_from_JSON(const Json* parent)
@@ -4178,16 +4178,6 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
 
 #ifdef OPENNN_HAS_CUDA
 
-LongShortTermMemoryOp::~LongShortTermMemoryOp()
-{
-    if (rnn_desc)     cudnnDestroyRNNDescriptor(rnn_desc);
-    if (x_data_desc)  cudnnDestroyRNNDataDescriptor(x_data_desc);
-    if (y_data_desc)  cudnnDestroyRNNDataDescriptor(y_data_desc);
-    if (h_desc)       cudnnDestroyTensorDescriptor(h_desc);
-    if (c_desc)       cudnnDestroyTensorDescriptor(c_desc);
-    if (dropout_desc) cudnnDestroyDropoutDescriptor(dropout_desc);
-}
-
 void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
 {
     using F_ = ActivationOp::Function;
@@ -4211,10 +4201,15 @@ void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
 
     if (topology_changed)
     {
-        if (rnn_desc) CHECK_CUDNN(cudnnDestroyRNNDescriptor(rnn_desc));
-        CHECK_CUDNN(cudnnCreateRNNDescriptor(&rnn_desc));
+        rnn_desc.reset();
+        CHECK_CUDNN(cudnnCreateRNNDescriptor(&rnn_desc.handle));
+        rnn_desc.deleter = &cudnnDestroyRNNDescriptor;
 
-        if (!dropout_desc) CHECK_CUDNN(cudnnCreateDropoutDescriptor(&dropout_desc));
+        if (!dropout_desc)
+        {
+            CHECK_CUDNN(cudnnCreateDropoutDescriptor(&dropout_desc.handle));
+            dropout_desc.deleter = &cudnnDestroyDropoutDescriptor;
+        }
         size_t dropout_states_bytes = 0;
         CHECK_CUDNN(cudnnDropoutGetStatesSize(
             Backend::get_cudnn_handle(), &dropout_states_bytes));
@@ -4256,10 +4251,12 @@ void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
 
     if (data_shape_changed || topology_changed)
     {
-        if (x_data_desc) CHECK_CUDNN(cudnnDestroyRNNDataDescriptor(x_data_desc));
-        if (y_data_desc) CHECK_CUDNN(cudnnDestroyRNNDataDescriptor(y_data_desc));
-        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&x_data_desc));
-        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&y_data_desc));
+        x_data_desc.reset();
+        y_data_desc.reset();
+        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&x_data_desc.handle));
+        x_data_desc.deleter = &cudnnDestroyRNNDataDescriptor;
+        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&y_data_desc.handle));
+        y_data_desc.deleter = &cudnnDestroyRNNDataDescriptor;
 
         // seqLengthArray: host int32[batch_size], all entries equal to T.
         seq_lengths_host_buf.grow_to(batch_size * Index(sizeof(int32_t)));
@@ -4284,8 +4281,16 @@ void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
             int(T), int(batch_size), int(H),
             seq_h, &zero_pad_fill));
 
-        if (!h_desc) CHECK_CUDNN(cudnnCreateTensorDescriptor(&h_desc));
-        if (!c_desc) CHECK_CUDNN(cudnnCreateTensorDescriptor(&c_desc));
+        if (!h_desc)
+        {
+            CHECK_CUDNN(cudnnCreateTensorDescriptor(&h_desc.handle));
+            h_desc.deleter = &cudnnDestroyTensorDescriptor;
+        }
+        if (!c_desc)
+        {
+            CHECK_CUDNN(cudnnCreateTensorDescriptor(&c_desc.handle));
+            c_desc.deleter = &cudnnDestroyTensorDescriptor;
+        }
         const int dimA[3]    = {1, int(batch_size), int(H)};
         const int strideA[3] = {int(batch_size * H), int(H), 1};
         CHECK_CUDNN(cudnnSetTensorNdDescriptor(h_desc, CUDNN_DATA_FLOAT, 3, dimA, strideA));
@@ -4351,10 +4356,12 @@ void LongShortTermMemoryOp::pack_weights_to_cudnn_() const
     const Index F = input_features;
     const Index H = output_features;
 
-    cudnnTensorDescriptor_t m_desc = nullptr;
-    cudnnTensorDescriptor_t b_desc = nullptr;
-    CHECK_CUDNN(cudnnCreateTensorDescriptor(&m_desc));
-    CHECK_CUDNN(cudnnCreateTensorDescriptor(&b_desc));
+    CudnnDescriptor<cudnnTensorDescriptor_t> m_desc;
+    CudnnDescriptor<cudnnTensorDescriptor_t> b_desc;
+    CHECK_CUDNN(cudnnCreateTensorDescriptor(&m_desc.handle));
+    m_desc.deleter = &cudnnDestroyTensorDescriptor;
+    CHECK_CUDNN(cudnnCreateTensorDescriptor(&b_desc.handle));
+    b_desc.deleter = &cudnnDestroyTensorDescriptor;
 
     for (int lin = 0; lin < 8; ++lin)
     {
@@ -4389,9 +4396,6 @@ void LongShortTermMemoryOp::pack_weights_to_cudnn_() const
                                        Backend::get_compute_stream());
         }
     }
-
-    cudnnDestroyTensorDescriptor(m_desc);
-    cudnnDestroyTensorDescriptor(b_desc);
 }
 
 void LongShortTermMemoryOp::unpack_gradients_from_cudnn_() const
@@ -4418,10 +4422,12 @@ void LongShortTermMemoryOp::unpack_gradients_from_cudnn_() const
     const Index F = input_features;
     const Index H = output_features;
 
-    cudnnTensorDescriptor_t m_desc = nullptr;
-    cudnnTensorDescriptor_t b_desc = nullptr;
-    CHECK_CUDNN(cudnnCreateTensorDescriptor(&m_desc));
-    CHECK_CUDNN(cudnnCreateTensorDescriptor(&b_desc));
+    CudnnDescriptor<cudnnTensorDescriptor_t> m_desc;
+    CudnnDescriptor<cudnnTensorDescriptor_t> b_desc;
+    CHECK_CUDNN(cudnnCreateTensorDescriptor(&m_desc.handle));
+    m_desc.deleter = &cudnnDestroyTensorDescriptor;
+    CHECK_CUDNN(cudnnCreateTensorDescriptor(&b_desc.handle));
+    b_desc.deleter = &cudnnDestroyTensorDescriptor;
 
     for (int lin = 0; lin < 8; ++lin)
     {
@@ -4449,9 +4455,6 @@ void LongShortTermMemoryOp::unpack_gradients_from_cudnn_() const
                                device::CopyKind::DeviceToDevice,
                                Backend::get_compute_stream());
     }
-
-    cudnnDestroyTensorDescriptor(m_desc);
-    cudnnDestroyTensorDescriptor(b_desc);
 }
 
 void LongShortTermMemoryOp::apply_gpu(const TensorView& input,
@@ -4662,8 +4665,6 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
 }
 
 #else   // !OPENNN_HAS_CUDA -- stubs that throw if invoked
-
-LongShortTermMemoryOp::~LongShortTermMemoryOp() = default;
 
 void LongShortTermMemoryOp::apply_gpu(const TensorView&, TensorView&, bool) const
 {

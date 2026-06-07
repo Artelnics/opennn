@@ -3,7 +3,7 @@
 //
 //   T E N S O R S   S O U R C E
 //
-//   Artificial Intelligence Techniques, SL
+//   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include "tensor_utilities.h"

@@ -526,7 +526,7 @@ void write_json(JsonWriter& writer,
         writer.add_field(kv.first, kv.second);
 }
 
-float read_json_type(const Json* root, const string& field)
+float read_json_float(const Json* root, const string& field)
 {
     if (!root) return 0.0f;
     const Json* v = root->find(field);

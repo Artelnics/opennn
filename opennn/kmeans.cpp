@@ -3,7 +3,7 @@
 //
 // K - M E A N S   C L A S S
 //
-// Artificial Intelligence Techniques SL
+//   Artificial Intelligence Techniques SL
 // artelnics@artelnics.com
 
 #include "kmeans.h"

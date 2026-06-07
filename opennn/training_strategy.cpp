@@ -171,7 +171,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
     const string loss_method = read_json_string(loss_element, "Error");
 
-    const Json* loss_method_element = loss_element->first_child(loss_method.c_str());
+    const Json* loss_method_element = loss_element->find(loss_method.c_str());
 
     throw_if(!loss_method_element, format("{} element is nullptr.\n", loss_method));
 
@@ -186,7 +186,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
     const string optimization_method = read_json_string(optimization_algorithm_element, "OptimizationMethod");
 
-    const Json* optimization_method_element = optimization_algorithm_element->first_child(optimization_method.c_str());
+    const Json* optimization_method_element = optimization_algorithm_element->find(optimization_method.c_str());
 
     throw_if(!optimization_method_element, format("{} element is nullptr.\n", optimization_method));
 
@@ -195,7 +195,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
     // Regularization
 
-    const Json* regularization_element = loss_element->first_child("Regularization");
+    const Json* regularization_element = loss_element->find("Regularization");
 
     if (regularization_element)
         loss->regularization_from_JSON(JsonDocument::wrap("Regularization", *regularization_element));

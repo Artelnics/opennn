@@ -30,7 +30,7 @@ inline vector<Index> get_feature_dimensions(const vector<Variable>& variables)
     vector<Index> dimensions;
     dimensions.reserve(variables.size());
     for (const Variable& var : variables)
-        dimensions.push_back(var.feature_count());
+        dimensions.push_back(var.get_feature_count());
     return dimensions;
 }
 
@@ -38,7 +38,7 @@ inline Index get_features_number(const vector<Variable>& variables)
 {
     Index count = 0;
     for (const Variable& var : variables)
-        count += var.feature_count();
+        count += var.get_feature_count();
     return count;
 }
 
@@ -112,7 +112,7 @@ vector<NamedColumn> ResponseOptimization::build_input_columns_for_formula() cons
 
     for (const Variable& variable : input_variables)
     {
-        const Index dimension = variable.feature_count();
+        const Index dimension = variable.get_feature_count();
         const bool is_past = (get_condition(variable.name).condition == ConditionType::Past);
 
         if (variable.get_role() != "Input" || is_past)
@@ -139,7 +139,7 @@ vector<NamedColumn> ResponseOptimization::build_output_columns_for_formula() con
 
     for (const Variable& variable : output_variables)
     {
-        const Index dimension = variable.feature_count();
+        const Index dimension = variable.get_feature_count();
 
         if (dimension == 1)
             output_columns.push_back({variable.name, output_column});
@@ -768,7 +768,7 @@ Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 
     for (const Variable& variable : input_variables)
     {
-        const Index dim = variable.feature_count();
+        const Index dim = variable.get_feature_count();
 
         const Condition current_cond = get_condition(variable.name);
 

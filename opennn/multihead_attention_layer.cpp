@@ -122,7 +122,7 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
                   query_sequence_length, source_sequence_length,
                   new_use_causal_mask, compute_dtype);
 
-    attention.use_sdpa = select_use_sdpa();
+    attention.use_sdpa = should_use_sdpa();
 
     for (auto* proj : {&query_projection, &key_projection, &value_projection})
     {
@@ -170,7 +170,7 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     merge.output_delta_slots = {ConcatenatedOutputDelta};
 }
 
-bool MultiHeadAttention::select_use_sdpa() const
+bool MultiHeadAttention::should_use_sdpa() const
 {
     if (!sdpa_auto) return false;
     if (!AttentionOp::sdpa_supported(compute_dtype, compute_device)) return false;
@@ -182,13 +182,13 @@ bool MultiHeadAttention::select_use_sdpa() const
 void MultiHeadAttention::set_sdpa_auto(bool new_sdpa_auto)
 {
     sdpa_auto = new_sdpa_auto;
-    attention.use_sdpa = select_use_sdpa();
+    attention.use_sdpa = should_use_sdpa();
 }
 
 void MultiHeadAttention::set_sdpa_min_sequence_length(Index new_threshold)
 {
     sdpa_min_sequence_length = new_threshold;
-    attention.use_sdpa = select_use_sdpa();
+    attention.use_sdpa = should_use_sdpa();
 }
 
 void MultiHeadAttention::set_input_shape(const Shape& new_input_shape)

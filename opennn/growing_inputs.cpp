@@ -358,10 +358,10 @@ void GrowingInputs::from_JSON(const JsonDocument& document)
     const Json* root_element = get_json_root(document, "GrowingInputs");
 
     set_trials_number(read_json_index(root_element, "TrialsNumber"));
-    set_validation_error_goal(read_json_type(root_element,
+    set_validation_error_goal(read_json_float(root_element,
         root_element->has("ValidationErrorGoal") ? "ValidationErrorGoal" : "SelectionErrorGoal"));
     set_maximum_epochs(read_json_index(root_element, "MaximumEpochsNumber"));
-    set_maximum_time(read_json_type(root_element, "MaximumTime"));
+    set_maximum_time(read_json_float(root_element, "MaximumTime"));
     set_minimum_inputs_number(read_json_index(root_element, "MinimumInputsNumber"));
     set_maximum_inputs_number(read_json_index(root_element, "MaximumInputsNumber"));
     set_maximum_validation_failures(read_json_index(root_element,

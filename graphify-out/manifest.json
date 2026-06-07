@@ -600,8 +600,8 @@
     "semantic_hash": ""
   },
   "opennn/adaptive_moment_estimation.cpp": {
-    "mtime": 1780594080.820804,
-    "ast_hash": "e99792d4322ea63f8f2547abf1706166",
+    "mtime": 1780688586.7060993,
+    "ast_hash": "bb22cf4277608ee7d2970c749151dd7f",
     "semantic_hash": ""
   },
   "opennn/adaptive_moment_estimation.h": {
@@ -620,8 +620,8 @@
     "semantic_hash": ""
   },
   "opennn/back_propagation.cpp": {
-    "mtime": 1780585901.498592,
-    "ast_hash": "a60da1fd28077481ea9e400f5b7179ec",
+    "mtime": 1780692519.806942,
+    "ast_hash": "c87bc0d2df8fac9615bc72c072dfda78",
     "semantic_hash": ""
   },
   "opennn/back_propagation.h": {
@@ -630,13 +630,13 @@
     "semantic_hash": ""
   },
   "opennn/batch.cpp": {
-    "mtime": 1780593527.5283449,
-    "ast_hash": "3819ca1ac2b39903e22e5da580067479",
+    "mtime": 1780833590.7827165,
+    "ast_hash": "f594a3d648affcc65b477f257b3e8934",
     "semantic_hash": ""
   },
   "opennn/batch.h": {
-    "mtime": 1780594080.8188057,
-    "ast_hash": "8df5956fc7d450de5b4529433f1df748",
+    "mtime": 1780695477.3544197,
+    "ast_hash": "326ba2f6555a97980d00368d23c695c0",
     "semantic_hash": ""
   },
   "opennn/bounding_layer.cpp": {
@@ -665,8 +665,8 @@
     "semantic_hash": ""
   },
   "opennn/configuration.h": {
-    "mtime": 1780594012.65441,
-    "ast_hash": "72802eead3c135b239620e89a62d41c7",
+    "mtime": 1780594363.099173,
+    "ast_hash": "6628e7cc811d7126c2a7278d02ffedf0",
     "semantic_hash": ""
   },
   "opennn/convolutional_layer.cpp": {
@@ -680,33 +680,28 @@
     "semantic_hash": ""
   },
   "opennn/correlations.cpp": {
-    "mtime": 1780581974.9929419,
-    "ast_hash": "784a0d49faac92b50194e49b5daa6922",
+    "mtime": 1780832899.7297695,
+    "ast_hash": "31fc1c1a98458f1c36861db425188e0b",
     "semantic_hash": ""
   },
   "opennn/correlations.h": {
-    "mtime": 1780342701.3773777,
-    "ast_hash": "71e498c1200ac98ed7c09ad721ddd49a",
-    "semantic_hash": ""
-  },
-  "opennn/cuda_dispatch.h": {
-    "mtime": 1780066288.979254,
-    "ast_hash": "afe118599ae7bffc1c1a603fd4457bc1",
+    "mtime": 1780832854.2803495,
+    "ast_hash": "eed2b3b763cceee3ac72fda51920a19b",
     "semantic_hash": ""
   },
   "opennn/cuda_gemm.cpp": {
-    "mtime": 1780592043.6718168,
-    "ast_hash": "fbe2c556f2d44483155575d7402d94ea",
+    "mtime": 1780694998.5961494,
+    "ast_hash": "719965abb765a4600f20b52b3cc4ed94",
     "semantic_hash": ""
   },
   "opennn/cuda_gemm.h": {
-    "mtime": 1780592038.7766755,
-    "ast_hash": "99efb460d00a04111c4210d0ebaa7307",
+    "mtime": 1780686260.4245586,
+    "ast_hash": "1fb940eaffbfd9b7d44440d8979bd403",
     "semantic_hash": ""
   },
   "opennn/dataset.cpp": {
-    "mtime": 1780593861.6802087,
-    "ast_hash": "e2baf1ca7b8f96815a5bd7e15408fe50",
+    "mtime": 1780835427.0366266,
+    "ast_hash": "e2ab710e7d873a628354368647052907",
     "semantic_hash": ""
   },
   "opennn/dataset.h": {
@@ -750,8 +745,8 @@
     "semantic_hash": ""
   },
   "opennn/error_utilities.cpp": {
-    "mtime": 1780593841.6278775,
-    "ast_hash": "1fda6915c2624a327e8a9525be92383b",
+    "mtime": 1780690682.2449284,
+    "ast_hash": "757e7561ea1190af6a73b4fae04737fa",
     "semantic_hash": ""
   },
   "opennn/error_utilities.h": {
@@ -770,8 +765,8 @@
     "semantic_hash": ""
   },
   "opennn/formula_expression.cpp": {
-    "mtime": 1780581974.9699793,
-    "ast_hash": "2eda9f3bb8bf5410351d60e9498ad2e2",
+    "mtime": 1780836600.110077,
+    "ast_hash": "776ac675c85e46b6157c7fb50c5ef990",
     "semantic_hash": ""
   },
   "opennn/formula_expression.h": {
@@ -790,8 +785,8 @@
     "semantic_hash": ""
   },
   "opennn/genetic_algorithm.cpp": {
-    "mtime": 1780580997.435209,
-    "ast_hash": "70b70793660497ac844d0661830b2358",
+    "mtime": 1780833424.99086,
+    "ast_hash": "a565edd52d4daa9faf77b8c4ea0a74d6",
     "semantic_hash": ""
   },
   "opennn/genetic_algorithm.h": {
@@ -800,8 +795,8 @@
     "semantic_hash": ""
   },
   "opennn/growing_inputs.cpp": {
-    "mtime": 1780590880.387885,
-    "ast_hash": "78b4c5fc3c50c9064e258852e312863f",
+    "mtime": 1780833424.9927561,
+    "ast_hash": "916e6db995f1f4c3baff7ad07ec5a277",
     "semantic_hash": ""
   },
   "opennn/growing_inputs.h": {
@@ -810,8 +805,8 @@
     "semantic_hash": ""
   },
   "opennn/growing_neurons.cpp": {
-    "mtime": 1780590886.2891986,
-    "ast_hash": "4dc355b1383826bd44c3dad1adfdebbf",
+    "mtime": 1780833424.9922533,
+    "ast_hash": "616b6293b5daf8009593e17a9c243de5",
     "semantic_hash": ""
   },
   "opennn/growing_neurons.h": {
@@ -820,8 +815,8 @@
     "semantic_hash": ""
   },
   "opennn/image_dataset.cpp": {
-    "mtime": 1780584156.0889854,
-    "ast_hash": "2d000c0996d26c138bfe1577701f3a7d",
+    "mtime": 1780833424.9939222,
+    "ast_hash": "c4eecc2689f97b66ebc1c915e7d39cab",
     "semantic_hash": ""
   },
   "opennn/image_dataset.h": {
@@ -860,18 +855,18 @@
     "semantic_hash": ""
   },
   "opennn/json.cpp": {
-    "mtime": 1780583178.5785842,
-    "ast_hash": "972b4b7af31f7d5d52f6ce6fca5ff6ff",
+    "mtime": 1780833424.989859,
+    "ast_hash": "3d0a274115a8bdb335a79b2615d3db2b",
     "semantic_hash": ""
   },
   "opennn/json.h": {
-    "mtime": 1780582086.7416675,
-    "ast_hash": "416172e4e0c4456d090a1fbe30e79a24",
+    "mtime": 1780833445.6566114,
+    "ast_hash": "eea7c40314ab44538647d551607a4b88",
     "semantic_hash": ""
   },
   "opennn/kmeans.cpp": {
-    "mtime": 1780344845.5244217,
-    "ast_hash": "71f7c72adb291b05e7834d8cbaf7672c",
+    "mtime": 1780831460.8928676,
+    "ast_hash": "1ee90aa310bf96017cdbbf1a56640099",
     "semantic_hash": ""
   },
   "opennn/kmeans.h": {
@@ -900,13 +895,13 @@
     "semantic_hash": ""
   },
   "opennn/levenberg_marquardt_algorithm.cpp": {
-    "mtime": 1780583109.6498413,
-    "ast_hash": "19e0fa62966644415039bfffeca1b0f1",
+    "mtime": 1780833424.996477,
+    "ast_hash": "5407c658f35f578c8b50d25a3aa416d5",
     "semantic_hash": ""
   },
   "opennn/levenberg_marquardt_algorithm.h": {
-    "mtime": 1780060766.426105,
-    "ast_hash": "602e0a5beaf34e5d2c109dedd6daeccc",
+    "mtime": 1780689699.466996,
+    "ast_hash": "4bdcc88bea27158bc5e7bfe24ab4e47d",
     "semantic_hash": ""
   },
   "opennn/long_short_term_memory_layer.cpp": {
@@ -920,8 +915,8 @@
     "semantic_hash": ""
   },
   "opennn/loss.cpp": {
-    "mtime": 1780593861.6812007,
-    "ast_hash": "448c67feb241eff5a1693ea020fde533",
+    "mtime": 1780833576.4703982,
+    "ast_hash": "0d4a8256d2aff87c87bc76d7f957bd73",
     "semantic_hash": ""
   },
   "opennn/loss.h": {
@@ -930,13 +925,13 @@
     "semantic_hash": ""
   },
   "opennn/math_utilities.cpp": {
-    "mtime": 1780591803.3151848,
-    "ast_hash": "de23d17ede347962807b3f8500bb03a4",
+    "mtime": 1780693394.0696273,
+    "ast_hash": "1c2044e465576c97e2c8a9f7bdaef0bf",
     "semantic_hash": ""
   },
   "opennn/math_utilities.h": {
-    "mtime": 1779742522.2687654,
-    "ast_hash": "4d48c829c11a651568329ac4ab2c12c2",
+    "mtime": 1780690403.1180978,
+    "ast_hash": "0281fbeb1d5b040b4d3f7f39f6948552",
     "semantic_hash": ""
   },
   "opennn/model_expression.cpp": {
@@ -950,8 +945,8 @@
     "semantic_hash": ""
   },
   "opennn/model_selection.cpp": {
-    "mtime": 1780592966.5022788,
-    "ast_hash": "6b0e238e62943947751a0d2280f08c8b",
+    "mtime": 1780833576.4748087,
+    "ast_hash": "b769285d6a61850a2572ceb30a6d98a4",
     "semantic_hash": ""
   },
   "opennn/model_selection.h": {
@@ -960,18 +955,18 @@
     "semantic_hash": ""
   },
   "opennn/multihead_attention_layer.cpp": {
-    "mtime": 1780580835.164749,
-    "ast_hash": "dc7f05dd7ee2a87cac331190bfedaf50",
+    "mtime": 1780833435.6232886,
+    "ast_hash": "56f6bd0fb21e2dce99777e52bc669980",
     "semantic_hash": ""
   },
   "opennn/multihead_attention_layer.h": {
-    "mtime": 1779456514.0061464,
-    "ast_hash": "ff105a0bc73a8eed29e5c8acc34dc15f",
+    "mtime": 1780833435.6202886,
+    "ast_hash": "8c2f4f7b5b9d0632b8ff720b65227a4b",
     "semantic_hash": ""
   },
   "opennn/neural_network.cpp": {
-    "mtime": 1780590437.3431978,
-    "ast_hash": "d53311d54f6fc6763822dbe05a2e8d61",
+    "mtime": 1780833576.4724,
+    "ast_hash": "64a85c5aeb5cfaf3f69a59e3706c8f8b",
     "semantic_hash": ""
   },
   "opennn/neural_network.h": {
@@ -990,8 +985,8 @@
     "semantic_hash": ""
   },
   "opennn/non_max_suppression_layer.cpp": {
-    "mtime": 1780347864.1498387,
-    "ast_hash": "0bb6366ed0ed236b94f7226135e256e5",
+    "mtime": 1780833424.996477,
+    "ast_hash": "1296ec86de611abae6eb23aff8d72b88",
     "semantic_hash": ""
   },
   "opennn/non_max_suppression_layer.h": {
@@ -1010,18 +1005,18 @@
     "semantic_hash": ""
   },
   "opennn/operators.cpp": {
-    "mtime": 1780593135.6782548,
-    "ast_hash": "5304ccb0674aea4f19a21cb0d706a741",
+    "mtime": 1780835045.845218,
+    "ast_hash": "689a3918a6a637cd556a2245e2b9db8b",
     "semantic_hash": ""
   },
   "opennn/operators.h": {
-    "mtime": 1780591564.0764332,
-    "ast_hash": "0dc3b55218e3ff18a2e7e0567294493a",
+    "mtime": 1780834626.0632167,
+    "ast_hash": "bb8a7801c049016eee39feee443b32bd",
     "semantic_hash": ""
   },
   "opennn/optimizer.cpp": {
-    "mtime": 1780593861.6822004,
-    "ast_hash": "e262d04520e24fe296ade9a6bf1f7cef",
+    "mtime": 1780833424.9984832,
+    "ast_hash": "0c5e3c5b176420cf72b4a790fa191ba1",
     "semantic_hash": ""
   },
   "opennn/optimizer.h": {
@@ -1035,8 +1030,8 @@
     "semantic_hash": ""
   },
   "opennn/pch.h": {
-    "mtime": 1780592611.609684,
-    "ast_hash": "d424ad0e3c27eb33ae8b7680e69d3354",
+    "mtime": 1780689831.3109975,
+    "ast_hash": "4289b62dae70b56d831d38aeeb522ec6",
     "semantic_hash": ""
   },
   "opennn/pooling_layer.cpp": {
@@ -1065,8 +1060,8 @@
     "semantic_hash": ""
   },
   "opennn/quasi_newton_method.cpp": {
-    "mtime": 1780580998.4728224,
-    "ast_hash": "ffcacc736ee88c13bb0e12646fa5278f",
+    "mtime": 1780833425.0014856,
+    "ast_hash": "178e6c6936779d1369faeed1efb2e3e9",
     "semantic_hash": ""
   },
   "opennn/quasi_newton_method.h": {
@@ -1075,8 +1070,8 @@
     "semantic_hash": ""
   },
   "opennn/random_utilities.cpp": {
-    "mtime": 1780581803.130267,
-    "ast_hash": "1ee02a15bda76016906bfe4e34fd2f9c",
+    "mtime": 1780831460.8778613,
+    "ast_hash": "773a7a37fda1412f91612921ca90f9fe",
     "semantic_hash": ""
   },
   "opennn/random_utilities.h": {
@@ -1105,8 +1100,8 @@
     "semantic_hash": ""
   },
   "opennn/response_optimization.cpp": {
-    "mtime": 1780581974.9917045,
-    "ast_hash": "09cbbfe75730e94f46d71ab48c982d01",
+    "mtime": 1780833016.5716555,
+    "ast_hash": "597a7b3d498982312c699f83e3f2b0fb",
     "semantic_hash": ""
   },
   "opennn/response_optimization.h": {
@@ -1115,18 +1110,18 @@
     "semantic_hash": ""
   },
   "opennn/scaling.cpp": {
-    "mtime": 1780581974.987703,
-    "ast_hash": "4407bcc867c758cc0d4697f5f5ca5304",
+    "mtime": 1780831460.8828666,
+    "ast_hash": "1f73853892515b6f70557f5a65010ebe",
     "semantic_hash": ""
   },
   "opennn/scaling.h": {
-    "mtime": 1778185727.951439,
-    "ast_hash": "4f4b8f8961cd27de7f34b3b6f6f45663",
+    "mtime": 1780831460.8838644,
+    "ast_hash": "6d4281015c5ca854d1327cd715911838",
     "semantic_hash": ""
   },
   "opennn/scaling_layer.cpp": {
-    "mtime": 1780589290.647822,
-    "ast_hash": "a00eb947c37f1c903a0459acbcaed3bc",
+    "mtime": 1780836627.8246913,
+    "ast_hash": "a42f9624648826e24df2d11d917bf811",
     "semantic_hash": ""
   },
   "opennn/scaling_layer.h": {
@@ -1145,13 +1140,13 @@
     "semantic_hash": ""
   },
   "opennn/statistics.cpp": {
-    "mtime": 1780593954.9806483,
-    "ast_hash": "f0c10960df054df0692e485f71bc9ef2",
+    "mtime": 1780831460.8858638,
+    "ast_hash": "4c551bde9825a6a049fc4c810955c6a8",
     "semantic_hash": ""
   },
   "opennn/statistics.h": {
-    "mtime": 1780592916.248968,
-    "ast_hash": "eaeaa4bc3e9e6aa39bd2a2ecab883705",
+    "mtime": 1780835212.6438534,
+    "ast_hash": "e173c0ae3409392a9499c540b35590f6",
     "semantic_hash": ""
   },
   "opennn/stochastic_gradient_descent.cpp": {
@@ -1165,18 +1160,18 @@
     "semantic_hash": ""
   },
   "opennn/string_utilities.cpp": {
-    "mtime": 1780345528.130933,
-    "ast_hash": "3e83f4c15eb0250f6577d01a126b5268",
+    "mtime": 1780836547.9201634,
+    "ast_hash": "f7960e0bdc4f33e103c4cb31a79beb6c",
     "semantic_hash": ""
   },
   "opennn/string_utilities.h": {
-    "mtime": 1780061229.5608025,
-    "ast_hash": "2a3422235660426c4d5e9e415e82fcf5",
+    "mtime": 1780836539.000556,
+    "ast_hash": "962fb743363bc5c3f468c1ddc36406bf",
     "semantic_hash": ""
   },
   "opennn/tabular_dataset.cpp": {
-    "mtime": 1780584147.5800366,
-    "ast_hash": "7de4b63103774e126713303a1148d093",
+    "mtime": 1780836613.4220734,
+    "ast_hash": "b6ddf755094252559e58a948c5b29a44",
     "semantic_hash": ""
   },
   "opennn/tabular_dataset.h": {
@@ -1185,18 +1180,18 @@
     "semantic_hash": ""
   },
   "opennn/tensor_utilities.cpp": {
-    "mtime": 1780593861.6778245,
-    "ast_hash": "9ccf0d6a0a92c8ae35472e1b81cc387e",
+    "mtime": 1780831460.8908956,
+    "ast_hash": "f8403ab36afd9271c3ad6319e67ff9cb",
     "semantic_hash": ""
   },
   "opennn/tensor_utilities.h": {
-    "mtime": 1780594012.6554127,
-    "ast_hash": "efafb8cf003d01627acb340b9ef0500c",
+    "mtime": 1780695388.252585,
+    "ast_hash": "0ae93391ad9ce849650ea3ec682479dc",
     "semantic_hash": ""
   },
   "opennn/testing_analysis.cpp": {
-    "mtime": 1780581974.9847038,
-    "ast_hash": "a3edad12dd166bc57c26764599faab15",
+    "mtime": 1780832879.5867598,
+    "ast_hash": "99ff456b59999d7b3f81a59d08235176",
     "semantic_hash": ""
   },
   "opennn/testing_analysis.h": {
@@ -1210,8 +1205,8 @@
     "semantic_hash": ""
   },
   "opennn/time_series_dataset.cpp": {
-    "mtime": 1780593018.0234075,
-    "ast_hash": "4c93a1d2553dce6a083df45e3a052a33",
+    "mtime": 1780836606.51885,
+    "ast_hash": "842d3c5763fada8693d5a13d856ecd41",
     "semantic_hash": ""
   },
   "opennn/time_series_dataset.h": {
@@ -1220,8 +1215,8 @@
     "semantic_hash": ""
   },
   "opennn/training_strategy.cpp": {
-    "mtime": 1780581002.589019,
-    "ast_hash": "22ec45cfb22d5c0ca1af6e6f1e6aae78",
+    "mtime": 1780833576.4724,
+    "ast_hash": "f1381f7b1cbc863d491101215a74db30",
     "semantic_hash": ""
   },
   "opennn/training_strategy.h": {
@@ -1240,8 +1235,8 @@
     "semantic_hash": ""
   },
   "opennn/unscaling_layer.cpp": {
-    "mtime": 1780589290.647822,
-    "ast_hash": "5c1e134f21e095264a6584546cc6d3d5",
+    "mtime": 1780836638.94287,
+    "ast_hash": "e8719154ee34d183c83e4e4d218ba1c5",
     "semantic_hash": ""
   },
   "opennn/unscaling_layer.h": {
@@ -1265,13 +1260,13 @@
     "semantic_hash": ""
   },
   "opennn/variable.h": {
-    "mtime": 1779052280.0262897,
-    "ast_hash": "b261d5dd6ec89a308c418366a249206d",
+    "mtime": 1780832939.1199005,
+    "ast_hash": "bf6d06e3d65226509d810c6f9d4cc119",
     "semantic_hash": ""
   },
   "opennn/yolo_dataset.cpp": {
-    "mtime": 1780581974.978086,
-    "ast_hash": "712ac963b21959cb0e9d2481f0760d20",
+    "mtime": 1780836661.3677437,
+    "ast_hash": "c2692afb4fbd4c6f684161ff2a47e252",
     "semantic_hash": ""
   },
   "opennn/yolo_dataset.h": {
@@ -2060,18 +2055,23 @@
     "semantic_hash": ""
   },
   "opennn/device_backend.cpp": {
-    "mtime": 1780593832.1863387,
-    "ast_hash": "1e50df946aa9128d4c60c532c4c9a1af",
+    "mtime": 1780833590.7827165,
+    "ast_hash": "55d99469e9529b4416d77babca617fd9",
     "semantic_hash": ""
   },
   "opennn/device_backend.h": {
-    "mtime": 1780593832.1863387,
-    "ast_hash": "85386a65e12ccbaeabb73c980b943776",
+    "mtime": 1780833590.779811,
+    "ast_hash": "bc02ab616494c953c48f22d31ebb9c7e",
     "semantic_hash": ""
   },
-  "opennn/device_types.h": {
-    "mtime": 1780593832.183218,
-    "ast_hash": "abf71b2b3787730f9f0b70456d21ffa4",
+  "opennn/types.h": {
+    "mtime": 1780594261.3852599,
+    "ast_hash": "03a8ac2844ca3b71d461870dfb893787",
+    "semantic_hash": ""
+  },
+  "profile_backward_gemm.sh": {
+    "mtime": 1780694694.1097407,
+    "ast_hash": "5ee3b35baf8412ee5a733ec7017c1b7b",
     "semantic_hash": ""
   }
 }

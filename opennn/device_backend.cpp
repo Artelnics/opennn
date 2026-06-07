@@ -164,7 +164,7 @@ void* allocate_pinned_host_impl(Index byte_count)
     return host_pointer;
 }
 
-void free_pinned_host_impl(void* pointer)
+void deallocate_pinned_host_impl(void* pointer)
 {
     cudaFreeHost(pointer);
 }
@@ -279,7 +279,7 @@ void* allocate_pinned_host_impl(Index byte_count)
     return host_pointer;
 }
 
-void free_pinned_host_impl(void* pointer)
+void deallocate_pinned_host_impl(void* pointer)
 {
     free(pointer);
 }
@@ -459,11 +459,11 @@ void* allocate_pinned_host(Index byte_count)
     return allocate_pinned_host_impl(byte_count);
 }
 
-void free_pinned_host(void* pointer)
+void deallocate_pinned_host(void* pointer)
 {
     if (!pointer) return;
 
-    free_pinned_host_impl(pointer);
+    deallocate_pinned_host_impl(pointer);
 }
 
 cudaEvent_t create_event(unsigned flags)

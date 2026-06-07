@@ -74,7 +74,7 @@ void Batch::set(const Index new_samples_number,
 
         if (const Index size = samples_number * slot.features_number; size > slot.host_allocated_size)
         {
-            device::free_pinned_host(slot.host);
+            device::deallocate_pinned_host(slot.host);
             slot.host = nullptr;
             slot.host_allocated_size = 0;
             slot.host = static_cast<float*>(
@@ -180,9 +180,9 @@ bool Batch::is_empty() const
 Batch::~Batch()
 {
     wait_h2d_complete();
-    device::free_pinned_host(input.host);
-    device::free_pinned_host(decoder.host);
-    device::free_pinned_host(target.host);
+    device::deallocate_pinned_host(input.host);
+    device::deallocate_pinned_host(decoder.host);
+    device::deallocate_pinned_host(target.host);
 }
 
 #ifdef OPENNN_HAS_CUDA

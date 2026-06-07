@@ -215,31 +215,31 @@ void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
     set_has_header(read_json_bool(data_source_element, "HasHeader"));
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
     set_missing_values_label(read_json_string(data_source_element, "MissingValuesLabel"));
-    set_past_time_steps(stoi(read_json_string(data_source_element, "LagsNumber")));
-    set_future_time_steps(stoi(read_json_string(data_source_element, "StepsAhead")));
+    set_past_time_steps(parse_int(read_json_string(data_source_element, "LagsNumber"), "LagsNumber"));
+    set_future_time_steps(parse_int(read_json_string(data_source_element, "StepsAhead"), "StepsAhead"));
     set_codification(read_json_string(data_source_element, "Codification"));
 
     // Variables
 
-    const Json* variables_element = data_set_element->first_child("Variables");
+    const Json* variables_element = data_set_element->find("Variables");
 
     variables_from_JSON(variables_element);
 
     // Samples
 
-    const Json* samples_element = data_set_element->first_child("Samples");
+    const Json* samples_element = data_set_element->find("Samples");
 
     samples_from_JSON(samples_element);
 
     // Missing values
 
-    const Json* missing_values_element = data_set_element->first_child("MissingValues");
+    const Json* missing_values_element = data_set_element->find("MissingValues");
 
     missing_values_from_JSON(missing_values_element);
 
     // Preview data
 
-    const Json* preview_data_element = data_set_element->first_child("PreviewData");
+    const Json* preview_data_element = data_set_element->find("PreviewData");
 
     preview_data_from_JSON(preview_data_element);
 

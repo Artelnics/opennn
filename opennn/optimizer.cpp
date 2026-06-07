@@ -847,11 +847,11 @@ void Optimizer::write_common_json(JsonWriter& printer) const
 
 void Optimizer::read_common_json(const Json* root_element)
 {
-    set_loss_goal(read_json_type(root_element, "LossGoal"));
+    set_loss_goal(read_json_float(root_element, "LossGoal"));
     set_maximum_validation_failures(read_json_index(root_element,
         root_element->has("MaximumValidationFailures") ? "MaximumValidationFailures" : "MaximumSelectionFailures"));
     set_maximum_epochs(read_json_index(root_element, "MaximumEpochsNumber"));
-    set_maximum_time(read_json_type(root_element, "MaximumTime"));
+    set_maximum_time(read_json_float(root_element, "MaximumTime"));
 }
 
 TrainingResults::TrainingResults(const Index epochs_number)
