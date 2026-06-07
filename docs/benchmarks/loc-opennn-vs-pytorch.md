@@ -2,20 +2,30 @@
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-07.*
 
-This note compares the amount of first-party native source code behind OpenNN and PyTorch.
-It is not a speed benchmark, and it is not a complete capability comparison. It is a
-scope measurement: how much C/C++ implementation source is in the native library layer
-that an application depends on.
+This note compares the amount of first-party native source code behind OpenNN, PyTorch, and
+TensorFlow. It is not a speed benchmark, and it is not a complete capability comparison. It is
+a scope measurement: how much C/C++ implementation source is in the native library layer that
+an application depends on.
 
 The short version:
 
-| Scope | OpenNN | PyTorch | PyTorch / OpenNN |
+| Scope | OpenNN | PyTorch | TensorFlow |
 |---|---:|---:|---:|
-| Native C/C++ source LOC | 34,926 | 834,319 | 23.9x |
-| Native C/C++ plus CUDA/HIP LOC | 37,069 | 920,576 | 24.8x |
+| Native C/C++ source LOC | 34,926 | 834,319 | 1,792,182 |
+| Native C/C++ plus CUDA/HIP LOC | 37,069 | 920,576 | 1,792,182 |
+| vs OpenNN (C/C++) | 1× | 24× | 51× |
 
-The counts use `cloc 2.08` and count code lines only. Blank lines and comment lines are
-not included.
+The counts use `cloc` and count code lines only (blank and comment lines excluded). Two
+methodology notes for the TensorFlow figure, in the interest of accuracy:
+
+* **Tests are co-located in TensorFlow's source.** Of TF's 1,792,182 native LOC, ~507,000
+  are `*_test.*` files sitting alongside the implementation. Excluding them gives ~1,285,000
+  non-test native LOC — still ~37× OpenNN. PyTorch's counted directories separate most tests,
+  so its figure is closer to non-test already; the headline row counts each project's native
+  directories as-is.
+* **CUDA:** TF's CUDA/HIP total equals its C/C++ total here because the counted directories
+  contain no `.cu` files — TF generates much of its GPU code through other mechanisms — so the
+  `.cu/.cuh` extensions add nothing to the count for TF.
 
 ## What is counted
 
@@ -45,6 +55,20 @@ This scope is chosen to compare native library implementation against native lib
 implementation. It includes PyTorch's tensor/runtime core (`aten`, `c10`), C++ bindings
 and autograd/runtime glue (`torch/csrc`), and the remaining native runtime surface in
 `caffe2`.
+
+For TensorFlow, the counted source is the first-party native runtime subset from TensorFlow
+`v2.21.0` (revision `a481b10260dfdf833a1b16007eead49c1d7febf3`), excluding `third_party/`:
+
+```text
+tensorflow/core/
+tensorflow/c/
+tensorflow/cc/
+tensorflow/compiler/
+tensorflow/lite/
+```
+
+This mirrors the PyTorch scope: TF's runtime core (`core`), its C and C++ APIs (`c`, `cc`),
+the compiler/XLA-facing native code (`compiler`), and the TFLite runtime (`lite`).
 
 ## What is not counted
 

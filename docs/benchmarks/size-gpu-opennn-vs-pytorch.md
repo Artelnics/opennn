@@ -24,16 +24,17 @@ the same hardware.
 This note compares the two for a **CNN**, GPU-accelerated, on Linux x86_64 with CUDA. Both
 sides are the *minimum* a real deployment needs to run the model.
 
-## The two numbers
+## The numbers
 
-| | OpenNN | PyTorch | PyTorch / OpenNN |
+| | OpenNN | PyTorch | TensorFlow |
 |---|---|---|---|
-| **GPU (CNN) deployment size** | **~1.3 GB** | **~5.0 GB** | **≈ 4×** |
+| **GPU (CNN) deployment size** | **~1.3 GB** | **~5.0 GB** | **~6.2 GB** |
+| vs OpenNN | 1× | ≈4× | ≈5× |
 
-Both figures are dominated by NVIDIA's GPU libraries, which *both* frameworks depend on — so
-this gap is far smaller than the CPU one (≈138×). The difference is how much each ships:
-OpenNN ships only the NVIDIA libraries its CNN actually loads, plus a ~5 MB binary; PyTorch
-ships a larger NVIDIA bundle plus its own multi-gigabyte CUDA runtime.
+All three figures are dominated by NVIDIA's GPU libraries, which they *all* depend on — so the
+gaps are far smaller than the CPU one (≈138×). The difference is how much each ships: OpenNN
+ships only the NVIDIA libraries its CNN actually loads, plus a ~5 MB binary; PyTorch and
+TensorFlow each bundle the full NVIDIA CUDA set plus their own multi-gigabyte runtime.
 
 ## What each number is
 
@@ -71,6 +72,18 @@ PyTorch's cuDNN bundle (~0.98 GB) is larger than OpenNN's (~0.73 GB) because it 
 cuDNN component — including the RNN/advanced library a CNN never uses — for any model. On top
 of those shared NVIDIA libraries, PyTorch adds its own ~1.53 GB `libtorch_cuda.so`, which has
 no OpenNN counterpart: OpenNN's GPU kernels live in its 5 MB binary.
+
+**TensorFlow — ~6.2 GB (measured).** A `pip install tensorflow[and-cuda]` (TF 2.21.0, Linux
+x86_64) lands **6.2 GB** in `site-packages`. Its largest parts:
+
+| Component | Size |
+|---|---|
+| bundled NVIDIA CUDA packages (`nvidia-*`: cuDNN, cuBLAS, cuSPARSE, cuSOLVER, cuFFT, NCCL, …) | ~4.1 GB |
+| `libtensorflow_cc.so.2` (TF's own CUDA-enabled C++ engine) | ~1.05 GB |
+| `libtensorflow_framework.so.2` and the rest | ~1.0 GB |
+
+Like PyTorch, TensorFlow bundles the full NVIDIA CUDA stack regardless of the model, plus its
+own multi-gigabyte runtime — the largest GPU footprint of the three.
 
 ## Why the gap is far smaller than on CPU
 
