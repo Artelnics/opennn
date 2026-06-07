@@ -301,7 +301,7 @@ __global__ void split_heads_scalar_kernel(const int n, const T* __restrict__ in,
         const int s = (i / (D * H)) % S;
         const int b = i / (D * H * S);
 
-        out[((b * H + h) * S + s) * D + d] = in[i];
+        out[((int64_t(b) * H + h) * S + s) * D + d] = in[i];
     }
 }
 
@@ -318,7 +318,7 @@ __global__ void split_heads_vec_kernel(const int n_vec, const T* __restrict__ in
         const int s = (i / (D_vec * H)) % S;
         const int b = i / (D_vec * H * S);
 
-        out_v[((b * H + h) * S + s) * D_vec + d] = in_v[i];
+        out_v[((int64_t(b) * H + h) * S + s) * D_vec + d] = in_v[i];
     }
 }
 
@@ -354,7 +354,7 @@ __global__ void merge_heads_scalar_kernel(const int n, const T* __restrict__ in,
         const int h = (i / (D * S)) % H;
         const int b = i / (D * S * H);
 
-        out[((b * S + s) * H + h) * D + d] = in[i];
+        out[((int64_t(b) * S + s) * H + h) * D + d] = in[i];
     }
 }
 
@@ -371,7 +371,7 @@ __global__ void merge_heads_vec_kernel(const int n_vec, const T* __restrict__ in
         const int h = (i / (D_vec * S)) % H;
         const int b = i / (D_vec * S * H);
 
-        out_v[((b * S + s) * H + h) * D_vec + d] = in_v[i];
+        out_v[((int64_t(b) * S + s) * H + h) * D_vec + d] = in_v[i];
     }
 }
 
@@ -525,7 +525,7 @@ __global__ void max_pooling_3d_forward_kernel(const int n, const T* __restrict__
 
         for (int s = 0; s < S; ++s)
         {
-            const float val = static_cast<float>(in[(b * S + s) * F + f]);
+            const float val = static_cast<float>(in[(int64_t(b) * S + s) * F + f]);
             if (val > max_val) { max_val = val; max_index = s; }
         }
 
@@ -556,7 +556,7 @@ __global__ void max_pooling_3d_backward_kernel(const int n, const T* __restrict_
         const int b = idx / F;
         const int max_s = static_cast<int>(indices[idx]);
 
-        in_gradient[(b * S + max_s) * F + f] = delta[idx];
+        in_gradient[(int64_t(b) * S + max_s) * F + f] = delta[idx];
     }
 }
 
@@ -589,7 +589,7 @@ __global__ void pooling_3d_valid_mask_kernel(const int BS, const int S, const in
     const int bs = blockIdx.x * blockDim.x + threadIdx.x;
     if (bs >= BS) return;
 
-    const T* token = in + bs * F;
+    const T* token = in + int64_t(bs) * F;
     bool valid = false;
     for (int f = 0; f < F; ++f)
         if (fabsf(static_cast<float>(token[f])) > 1e-7f) { valid = true; break; }
@@ -615,7 +615,7 @@ __global__ void average_pooling_3d_forward_kernel(const int n, const T* __restri
         float sum = 0.0f;
         for (int s = 0; s < S; ++s)
         {
-            const int bs = b * S + s;
+            const int64_t bs = int64_t(b) * S + s;
             sum += valid_mask[bs] * static_cast<float>(in[bs * F + f]);
         }
 
@@ -673,7 +673,7 @@ __global__ void average_pooling_3d_backward_kernel(const int n, const T* __restr
         const float gradient_val = static_cast<float>(delta[idx]) / count;
         for (int s = 0; s < S; ++s)
         {
-            const int bs = b * S + s;
+            const int64_t bs = int64_t(b) * S + s;
             in_gradient[bs * F + f] = static_cast<T>(valid_mask[bs] * gradient_val);
         }
     }
@@ -1213,27 +1213,7 @@ __global__ void rnn_step_bias_activation_kernel(const int total,
 
     float h;
     float dh;
-    switch (activation_id)
-    {
-        case 1:  // Sigmoid
-            h  = 1.0f / (1.0f + expf(-z));
-            dh = h * (1.0f - h);
-            break;
-        case 2:  // Tanh
-            h  = tanhf(z);
-            dh = 1.0f - h * h;
-            break;
-        case 3:  // ReLU
-            h  = z > 0.0f ? z : 0.0f;
-            dh = z > 0.0f ? 1.0f : 0.0f;
-            break;
-        case 0:  // Identity
-        case 4:  // Softmax (degenerate for RNN; treat as Identity)
-        default:
-            h  = z;
-            dh = 1.0f;
-            break;
-    }
+    rnn_activation(activation_id, z, h, dh);
 
     hidden[idx] = static_cast<T>(h);
     if (derivs) derivs[idx] = static_cast<T>(dh);
@@ -1301,27 +1281,7 @@ __global__ void rnn_step_fused_forward_kernel(const int batch,
 
     float h_out;
     float dh_out;
-    switch (activation_id)
-    {
-        case 1:  // Sigmoid
-            h_out  = 1.0f / (1.0f + expf(-z));
-            dh_out = h_out * (1.0f - h_out);
-            break;
-        case 2:  // Tanh
-            h_out  = tanhf(z);
-            dh_out = 1.0f - h_out * h_out;
-            break;
-        case 3:  // ReLU
-            h_out  = z > 0.0f ? z : 0.0f;
-            dh_out = z > 0.0f ? 1.0f : 0.0f;
-            break;
-        case 0:  // Identity
-        case 4:  // Softmax (degenerate per-step → identity)
-        default:
-            h_out  = z;
-            dh_out = 1.0f;
-            break;
-    }
+    rnn_activation(activation_id, z, h_out, dh_out);
 
     step_hidden[b * out_features + j] = static_cast<T>(h_out);
     if (derivs) derivs[b * out_features + j] = static_cast<T>(dh_out);
@@ -1463,6 +1423,9 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
                                       float* bias_grad)
 {
     if (batch == 0 || out_features == 0) return;
+
+    throw_if(t < 0 || t >= time_steps,
+             format("rnn_step_fused_backward_pre_cuda: time step {} out of range [0, {}).", t, time_steps));
 
     const int total = static_cast<int>(batch * out_features);
     rnn_step_fused_backward_pre_kernel<T><<<grid_size_for(total), block_size, 0,

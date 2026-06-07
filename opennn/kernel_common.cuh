@@ -36,4 +36,31 @@ static inline bool are_float4_aligned(const Ptrs*... ptrs)
     return (is_float4_aligned(ptrs) && ...);
 }
 
+// Per-step RNN activation: computes output h and its derivative dh w.r.t. the
+// pre-activation z. Identity (0) and Softmax (4, degenerate per-step) -> identity.
+__device__ inline void rnn_activation(int activation_id, float z, float& h, float& dh)
+{
+    switch (activation_id)
+    {
+        case 1:  // Sigmoid
+            h  = 1.0f / (1.0f + expf(-z));
+            dh = h * (1.0f - h);
+            break;
+        case 2:  // Tanh
+            h  = tanhf(z);
+            dh = 1.0f - h * h;
+            break;
+        case 3:  // ReLU
+            h  = z > 0.0f ? z : 0.0f;
+            dh = z > 0.0f ? 1.0f : 0.0f;
+            break;
+        case 0:  // Identity
+        case 4:  // Softmax (degenerate per-step -> identity)
+        default:
+            h  = z;
+            dh = 1.0f;
+            break;
+    }
+}
+
 #endif // KERNEL_COMMON_CUH

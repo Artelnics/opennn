@@ -108,7 +108,12 @@ ActivationFunction activation_function_from_string(const string& name);
 static constexpr Index ALIGN_BYTES = EIGEN_MAX_ALIGN_BYTES;
 static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(float);
 
-inline int to_int(Index value) { return static_cast<int>(value); }
+inline int to_int(Index value)
+{
+    throw_if(value > Index(numeric_limits<int>::max()) || value < Index(numeric_limits<int>::min()),
+             format("to_int: value {} exceeds int range.", value));
+    return static_cast<int>(value);
+}
 inline float to_type(Index value) { return static_cast<float>(value); }
 
 inline Index align_up(Index value, Index alignment)
