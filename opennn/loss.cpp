@@ -256,6 +256,13 @@ Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
     return result;
 }
 
+// MSVC 19.5x (VS 2026) crashes its optimizer (CL access violation / C1001)
+// generating code for this deeply nested loop when the Eigen-heavy PCH is in
+// scope at /O2. Compile just this function unoptimized on MSVC; it is not on a
+// hot path (CPU YOLO gradient reference kernel).
+#ifdef _MSC_VER
+#pragma optimize("", off)
+#endif
 void yolo_gradient_kernel(const TensorView& output,
                           const TensorView& target,
                           const TensorView& output_delta,
@@ -326,6 +333,9 @@ void yolo_gradient_kernel(const TensorView& output,
                 }
             }
 }
+#ifdef _MSC_VER
+#pragma optimize("", on)
+#endif
 
 void yolo_gradient_cpu(const TensorView& output,
                        const TensorView& target,

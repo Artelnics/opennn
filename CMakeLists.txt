@@ -22,7 +22,15 @@ elseif(MSVC)
 endif()
 
 include(CheckIPOSupported)
-option(OpenNN_ENABLE_LTO "Enable interprocedural optimization/LTO for OpenNN release builds" ON)
+# MSVC 19.5x (VS 2026) crashes (C1001 in the LTCG "Generating code" pass) when
+# optimizing the YOLO gradient loop in loss.cpp under whole-program LTO, so
+# default LTO OFF there; it works on GCC/Clang. Override with -DOpenNN_ENABLE_LTO=ON.
+if(MSVC)
+    set(_opennn_lto_default OFF)
+else()
+    set(_opennn_lto_default ON)
+endif()
+option(OpenNN_ENABLE_LTO "Enable interprocedural optimization/LTO for OpenNN release builds" ${_opennn_lto_default})
 if(OpenNN_ENABLE_LTO)
     check_ipo_supported(RESULT OPENNN_LTO_OK)
     if(OPENNN_LTO_OK)
