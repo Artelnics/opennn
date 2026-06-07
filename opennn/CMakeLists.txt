@@ -149,6 +149,18 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
     target_link_libraries(opennn PUBLIC stdc++fs)
 endif()
 
+# libstdc++'s parallel algorithms (std::execution::par, used in image_dataset.cpp)
+# are implemented on top of Intel TBB, so GCC/Clang builds must link it. MSVC's
+# parallel STL has no such dependency. PUBLIC so consumers inherit the link.
+if(NOT MSVC)
+    find_package(TBB QUIET)
+    if(TBB_FOUND)
+        target_link_libraries(opennn PUBLIC TBB::tbb)
+    else()
+        target_link_libraries(opennn PUBLIC tbb)
+    endif()
+endif()
+
 target_include_directories(opennn PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
