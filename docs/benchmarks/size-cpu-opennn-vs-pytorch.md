@@ -2,31 +2,54 @@
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-07. Linux x86_64.*
 
-When you deploy a trained model to a CPU-only target — an edge device, an embedded board, a
-slim container — the size of the inference runtime matters. This note compares the on-disk
-footprint of an **OpenNN** application against **PyTorch**, CPU-only, on Linux x86_64.
+Not every model gets to run in a data center. A vibration monitor on a factory motor, a
+camera on a drone, a sensor hub in a medical device, a point-of-sale terminal, a microcontroller
+gateway on a remote pipeline — for a growing number of applications, the model has to run
+*on the device*, close to the data, with no GPU and often no network. On those targets the
+constraint is rarely raw compute; it is **space**. Storage is measured in tens or hundreds of
+megabytes, firmware images have hard size budgets, and over-the-air updates have to fit
+through a thin pipe.
+
+That is exactly where the usual deep-learning stack becomes the problem. A mainstream
+framework's CPU runtime is enormous: PyTorch's `libtorch_cpu` library alone is **~442 MB** —
+before you add your own application, the Python interpreter, or anything else. On a device
+with a 256 MB partition, the inference engine doesn't even fit. The model isn't the problem;
+the library is.
+
+This is the gap **OpenNN** is built for. Because it is a C++ library that compiles directly
+into your executable — with header-only math and no bundled tensor runtime — an equivalent
+CPU application ships in **~3.2 MB**. Same job, ≈138× less to deploy.
+
+This note compares the two, CPU-only, on Linux x86_64.
 
 ## The two numbers
 
-| | OpenNN | PyTorch |
-|---|---|---|
-| **CPU deployment size** | **3.2 MB** | **442 MB** |
+| | OpenNN | PyTorch | PyTorch / OpenNN |
+|---|---|---|---|
+| **CPU deployment size** | **3.2 MB** | **442 MB** | **≈ 138×** |
 
-OpenNN is **~140× smaller**. The OpenNN figure is the complete, ready-to-run executable; the
-PyTorch figure is its core runtime library (`libtorch_cpu.so`) alone, before adding your
-application on top.
+Note this is generous to PyTorch: the OpenNN figure is a complete, ready-to-run application,
+while the PyTorch figure is only its core runtime library (`libtorch_cpu.so`), before your
+own code or the Python interpreter are added on top.
 
 ## What each number is
 
 **OpenNN — 3.2 MB (measured).** OpenNN is a C++ library that links statically into your
 executable; its math backend, Eigen, is header-only and gets inlined, so there is no
-separate runtime, interpreter, or BLAS library to ship. We built a complete tabular
-example (`examples/iris_plant`: load a CSV, build and train a network, evaluate) on Linux
-x86_64 with g++ 13.3, Release, `-DOpenNN_DISABLE_CUDA=ON`. The resulting stripped
-executable is **3.23 MB** (3.70 MB unstripped). Its only shared-library dependencies, per
-`ldd`, are the standard Linux runtime that ships with the OS/toolchain (`libstdc++`,
-`libc`, `libm`, `libgcc_s`, `libgomp` for OpenMP, `libtbb` for parallel STL) — no CUDA, no
-bundled BLAS.
+separate runtime, interpreter, or BLAS library to ship. A complete OpenNN application,
+built on Linux x86_64 (g++ 13.3, Release, `-DOpenNN_DISABLE_CUDA=ON`), is **~3.2 MB** as a
+stripped executable. The size is set by the OpenNN code linked into the binary rather than
+by the network you build, so it is representative rather than a hand-picked best case. Its
+only shared-library dependencies, per `ldd`, are the standard Linux runtime that ships with
+the OS/toolchain (`libstdc++`, `libc`, `libm`, `libgcc_s`, `libgomp` for OpenMP, `libtbb`
+for parallel STL) — no CUDA, no bundled BLAS.
+
+And that ~3.2 MB is the *whole* library: **the same binary both trains and runs inference.**
+The measured application builds a network, trains it, and evaluates it — all in one
+executable. There is no separate, slimmed-down inference runtime to export to, as is usual
+when a model is trained with a heavy framework and then shipped to a lightweight engine. A
+device running OpenNN can not only run a model but also retrain or fine-tune it on-device,
+at the same footprint.
 
 **PyTorch — 442 MB (primary source).** `libtorch_cpu.so` from the official LibTorch CPU
 distribution (`libtorch-shared-with-deps-2.12.0+cpu.zip`, Linux x86_64) is **441.8 MB**
@@ -56,6 +79,9 @@ regardless of how little of it a given model uses.
   extra build effort; the 442 MB figure is the standard CPU distribution.
 
 ## Reproducing the OpenNN number
+
+Any of the example targets gives ~3.2 MB; `iris_plant` is used here just as a concrete
+command.
 
 ```bash
 cmake -S . -B build-cpu -DOpenNN_DISABLE_CUDA=ON -DCMAKE_BUILD_TYPE=Release -DOpenNN_BUILD_EXAMPLES=ON
