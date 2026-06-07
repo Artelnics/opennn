@@ -80,6 +80,16 @@ cmake --build . --config Release
 The repository includes example apps for quick validation and experimentation.
 
 - `examples/blank` — minimal CPU example and optional CUDA benchmark
+- `examples/airfoil_self_noise` — approximation (regression) on tabular data
+- `examples/iris_plant` — classification on tabular data
+- `examples/breast_cancer` — classification on tabular data
+- `examples/no2_forecasting` — time-series forecasting
+- `examples/amazon_reviews` — text classification
+- `examples/emotion_analysis` — text classification
+- `examples/translation` — sequence-to-sequence transformer
+- `examples/mnist` — image classification
+- `examples/melanoma_cancer` — image classification
+- `examples/yolo` — object detection
 
 ## Documentation
 
