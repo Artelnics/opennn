@@ -2511,6 +2511,7 @@ void AttentionOp::apply_cpu(const TensorView& query,
         const Index embedding_dimension = source_input.shape[2];
         const Index query_sequence_length = attention_weights.shape[2];
 
+#ifdef OPENNN_HAS_CUDA
         if (attention_weights.is_cuda())
             attention_weights.dispatch([&](auto tag) {
                 using T = decltype(tag);
@@ -2525,6 +2526,7 @@ void AttentionOp::apply_cpu(const TensorView& query,
                                         use_causal_mask);
             });
         else
+#endif
         {
             const Index att_rows_per_batch = heads_number * query_sequence_length;
 

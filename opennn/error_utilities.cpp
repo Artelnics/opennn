@@ -315,6 +315,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
     const Index sequence_length = input.shape[input.get_rank() - 2];
     const Index batch_size = input.size() / (sequence_length * vocabulary_size);
 
+#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda()) {
         input.dispatch([&](auto tag) {
             using T = decltype(tag);
@@ -357,6 +358,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
         });
         return;
     }
+#endif
 
     (void)errors_device;
 
@@ -461,11 +463,13 @@ void l1_regularization(const TensorView& parameters, float lambda, float& penalt
 
 void l1_regularization_gradient(const TensorView& parameters, float lambda, const TensorView& gradient)
 {
+#ifdef OPENNN_HAS_CUDA
     if (parameters.is_cuda())
     {
         l1_gradient_cuda<float>(parameters.size(), gradient.as<float>(), parameters.as<float>(), lambda);
         return;
     }
+#endif
     gradient.as_vector().array() += lambda * parameters.as_vector().array().sign();
 }
 
@@ -481,6 +485,7 @@ void l2_regularization(const TensorView& parameters, float lambda, float& penalt
 
 void l2_regularization_gradient(const TensorView& parameters, float lambda, const TensorView& gradient)
 {
+#ifdef OPENNN_HAS_CUDA
     if (parameters.is_cuda())
     {
         const int total_size = to_int(parameters.size());
@@ -491,6 +496,7 @@ void l2_regularization_gradient(const TensorView& parameters, float lambda, cons
                                   CUDA_R_32F));
         return;
     }
+#endif
     gradient.as_vector().noalias() += lambda * parameters.as_vector();
 }
 
