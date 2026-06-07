@@ -1,4 +1,4 @@
-# Peak memory: OpenNN vs PyTorch (Linux)
+# Peak memory: OpenNN vs PyTorch vs TensorFlow (Linux)
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-07. Linux x86_64.*
 
