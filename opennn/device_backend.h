@@ -40,6 +40,29 @@ void copy_async(void*, const void*, Index, CopyKind, cudaStream_t = nullptr);
 void synchronize(cudaStream_t = nullptr);
 void check_last_error();
 
+#ifdef OPENNN_HAS_CUDA
+struct CublasPointerModeGuard
+{
+    cublasHandle_t handle = nullptr;
+    cublasPointerMode_t previous_mode = CUBLAS_POINTER_MODE_HOST;
+
+    CublasPointerModeGuard(cublasHandle_t new_handle, cublasPointerMode_t mode)
+        : handle(new_handle)
+    {
+        CHECK_CUBLAS(cublasGetPointerMode(handle, &previous_mode));
+        CHECK_CUBLAS(cublasSetPointerMode(handle, mode));
+    }
+
+    CublasPointerModeGuard(const CublasPointerModeGuard&) = delete;
+    CublasPointerModeGuard& operator=(const CublasPointerModeGuard&) = delete;
+
+    ~CublasPointerModeGuard() noexcept
+    {
+        if (handle) cublasSetPointerMode(handle, previous_mode);
+    }
+};
+#endif
+
 cudaStream_t create_stream(unsigned);
 void destroy_stream(cudaStream_t);
 

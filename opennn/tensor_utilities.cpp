@@ -341,6 +341,16 @@ Backend& Backend::instance()
     return device;
 }
 
+namespace device
+{
+
+cudaStream_t get_compute_stream()
+{
+    return Backend::get_compute_stream();
+}
+
+}
+
 ThreadPoolDevice* Backend::get_thread_pool_device()
 {
     return thread_pool_device.get();

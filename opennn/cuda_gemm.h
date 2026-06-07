@@ -44,11 +44,10 @@ void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
 
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
                                int m, int n, int k,
-                               const void* A, int lda, long long stride_a,
-                               const void* B, int ldb, long long stride_b,
-                               void* C, int ldc, long long stride_c,
+                               const void* A, cudaDataType_t Atype, int lda, long long stride_a,
+                               const void* B, cudaDataType_t Btype, int ldb, long long stride_b,
+                               void* C, cudaDataType_t Ctype, int ldc, long long stride_c,
                                int batch_count,
-                               cudaDataType_t io_dtype = CUDA_R_32F,
                                float alpha = 1.0f, float beta = 0.0f);
 
 }

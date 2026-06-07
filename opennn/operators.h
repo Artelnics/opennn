@@ -23,7 +23,11 @@ template<typename Handle>
 struct CudnnDescriptor
 {
     Handle handle = nullptr;
+#ifdef OPENNN_HAS_CUDA
+    cudnnStatus_t (*deleter)(Handle) = nullptr;
+#else
     void (*deleter)(Handle) = nullptr;
+#endif
 
     CudnnDescriptor() = default;
 

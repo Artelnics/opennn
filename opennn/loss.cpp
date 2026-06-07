@@ -657,17 +657,19 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
 
     auto reduce_abs_and_accumulate = [&](Index n, float scale)
     {
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(n), workspace, 1, results_device));
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
+        {
+            device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
+            CHECK_CUBLAS(cublasSasum(handle, to_int(n), workspace, 1, results_device));
+        }
         accumulate_scaled_metric_cuda(results_device, scale, error_sum_device);
     };
 
     auto reduce_dot_and_accumulate = [&](Index n, float scale)
     {
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
-        CHECK_CUBLAS(cublasSdot(handle, to_int(n), workspace, 1, workspace, 1, results_device));
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
+        {
+            device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
+            CHECK_CUBLAS(cublasSdot(handle, to_int(n), workspace, 1, workspace, 1, results_device));
+        }
         accumulate_scaled_metric_cuda(results_device, scale, error_sum_device);
     };
 
@@ -731,11 +733,12 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
                 input.as<T>(), target.as<float>(), workspace, valid_mask_device, correct_mask_device, EPSILON);
         });
 
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), workspace,             1, results_device + 0));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,     1, results_device + 1));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device,   1, results_device + 2));
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
+        {
+            device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
+            CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), workspace,             1, results_device + 0));
+            CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,     1, results_device + 1));
+            CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device,   1, results_device + 2));
+        }
 
         accumulate_cross_entropy_3d_metrics_cuda(results_device, error_sum_device, accuracy_sum_device);
         return true;

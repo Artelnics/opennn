@@ -76,15 +76,24 @@ namespace
         }
     };
 
-    Buffer cublas_lt_workspace_(Device::CUDA);
+    struct CudaGemmThreadState
+    {
+        Buffer cublas_lt_workspace{Device::CUDA};
 
-    Buffer bf16_input_(Device::CUDA);
-    Buffer bf16_gradient_(Device::CUDA);
-    Buffer fp32_upcast_(Device::CUDA);
+        Buffer bf16_input{Device::CUDA};
+        Buffer bf16_gradient{Device::CUDA};
+        Buffer fp32_upcast{Device::CUDA};
 
-    Buffer cudnn_conv_workspace_(Device::CUDA);
+        Buffer cudnn_conv_workspace{Device::CUDA};
 
-    unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans_;
+        unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans;
+    };
+
+    CudaGemmThreadState& thread_state()
+    {
+        thread_local CudaGemmThreadState state;
+        return state;
+    }
 
     constexpr size_t cublas_lt_workspace_search_bytes = 32ull * 1024 * 1024;
 
@@ -135,27 +144,27 @@ namespace
 
 void* ensure_cublas_lt_workspace(size_t min_bytes)
 {
-    return ensure_scratch<uint8_t>(cublas_lt_workspace_, Index(min_bytes));
+    return ensure_scratch<uint8_t>(thread_state().cublas_lt_workspace, Index(min_bytes));
 }
 
 bfloat16* ensure_bf16_input_scratch(Index n)
 {
-    return ensure_scratch<bfloat16>(bf16_input_, n);
+    return ensure_scratch<bfloat16>(thread_state().bf16_input, n);
 }
 
 bfloat16* ensure_bf16_gradient_scratch(Index n)
 {
-    return ensure_scratch<bfloat16>(bf16_gradient_, n);
+    return ensure_scratch<bfloat16>(thread_state().bf16_gradient, n);
 }
 
 float* ensure_fp32_upcast_scratch(Index n)
 {
-    return ensure_scratch<float>(fp32_upcast_, n);
+    return ensure_scratch<float>(thread_state().fp32_upcast, n);
 }
 
 void* ensure_cudnn_conv_workspace(size_t min_bytes)
 {
-    return ensure_scratch<uint8_t>(cudnn_conv_workspace_, Index(min_bytes));
+    return ensure_scratch<uint8_t>(thread_state().cudnn_conv_workspace, Index(min_bytes));
 }
 
 const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
@@ -190,8 +199,9 @@ static const LtMatmulPlan& get_lt_gemm_plan(
     const LtMatmulPlanKey key{m, n, k,
                               int(transA), int(transB), int(epilogue),
                               int(io_dtype), int(out_dtype)};
-    auto it = lt_gemm_plans_.find(key);
-    if (it != lt_gemm_plans_.end()) return it->second;
+    auto& plans = thread_state().lt_gemm_plans;
+    auto it = plans.find(key);
+    if (it != plans.end()) return it->second;
 
     throw_if(scratch_growth_forbidden(),
              "get_lt_gemm_plan: new GEMM plan requested while scratch growth is forbidden "
@@ -242,7 +252,7 @@ static const LtMatmulPlan& get_lt_gemm_plan(
         ensure_cublas_lt_workspace(plan.workspace_size);
     }
 
-    return lt_gemm_plans_.emplace(key, std::move(plan)).first->second;
+    return plans.emplace(key, std::move(plan)).first->second;
 }
 
 void run_lt_matmul_cached(
@@ -295,22 +305,21 @@ void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
 
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
                                int m, int n, int k,
-                               const void* A, int lda, long long stride_a,
-                               const void* B, int ldb, long long stride_b,
-                               void* C, int ldc, long long stride_c,
+                               const void* A, cudaDataType_t Atype, int lda, long long stride_a,
+                               const void* B, cudaDataType_t Btype, int ldb, long long stride_b,
+                               void* C, cudaDataType_t Ctype, int ldc, long long stride_c,
                                int batch_count,
-                               cudaDataType_t io_dtype,
                                float alpha, float beta)
 {
-    const cublasComputeType_t compute = gemm_compute_type(io_dtype);
+    const cublasComputeType_t compute = gemm_compute_type(Atype, Btype);
     CHECK_CUBLAS(cublasGemmStridedBatchedEx(Backend::get_cublas_handle(),
                                             transa, transb,
                                             m, n, k,
                                             &alpha,
-                                            A, io_dtype, lda, stride_a,
-                                            B, io_dtype, ldb, stride_b,
+                                            A, Atype, lda, stride_a,
+                                            B, Btype, ldb, stride_b,
                                             &beta,
-                                            C, io_dtype, ldc, stride_c,
+                                            C, Ctype, ldc, stride_c,
                                             batch_count,
                                             compute,
                                             CUBLAS_GEMM_DEFAULT));
@@ -377,11 +386,10 @@ void gemm_cuda(cublasOperation_t, cublasOperation_t,
 
 void gemm_strided_batched_cuda(cublasOperation_t, cublasOperation_t,
                                int, int, int,
-                               const void*, int, long long,
-                               const void*, int, long long,
-                               void*, int, long long,
+                               const void*, cudaDataType_t, int, long long,
+                               const void*, cudaDataType_t, int, long long,
+                               void*, cudaDataType_t, int, long long,
                                int,
-                               cudaDataType_t,
                                float, float)
 {
     throw runtime_error("gemm_strided_batched_cuda requires CUDA support.");

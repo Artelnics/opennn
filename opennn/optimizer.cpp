@@ -44,19 +44,20 @@ namespace opennn
 
 static void clip_gradient_norm_device(Buffer& gradient, Index gradient_size, float max_norm)
 {
-    static Buffer squared_norm_device(Device::CUDA);
+    thread_local Buffer squared_norm_device(Device::CUDA);
     if (!squared_norm_device.data)
         squared_norm_device.grow_to(Index(sizeof(float)));
     float* const squared_norm_ptr = squared_norm_device.as<float>();
 
     cublasHandle_t handle = Backend::get_cublas_handle();
-    CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
-    CHECK_CUBLAS(cublasSdot(handle,
-                            to_int(gradient_size),
-                            gradient.as<float>(), 1,
-                            gradient.as<float>(), 1,
-                            squared_norm_ptr));
-    CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
+    {
+        device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
+        CHECK_CUBLAS(cublasSdot(handle,
+                                to_int(gradient_size),
+                                gradient.as<float>(), 1,
+                                gradient.as<float>(), 1,
+                                squared_norm_ptr));
+    }
 
     clip_gradient_norm_cuda(gradient_size, gradient.as<float>(), squared_norm_ptr, max_norm, GRADIENT_NORM_EPS);
 }

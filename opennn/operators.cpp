@@ -1317,7 +1317,7 @@ void RecurrentOp::apply_delta_gpu(const TensorView& input,
                 if (!first_iter)
                 {
                     const float alpha = 1.0f;
-                    const int   n     = static_cast<int>(batch_size * output_features);
+                    const int   n     = to_int(batch_size * output_features);
                     CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), n,
                                               &alpha, CUDA_R_32F,
                                               next_carry_scratch.data, axpy_dtype, 1,

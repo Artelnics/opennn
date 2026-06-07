@@ -23,9 +23,9 @@ void bounding_cuda(const Index n, const int features,
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    bounding_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, features, input, lower, upper, output);
+    OPENNN_CUDA_LAUNCH(bounding_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, features, input, lower, upper, output));
 }
 
 template void bounding_cuda<float,         float>        (const Index, const int, const float*,         const float*, const float*, float*);
@@ -91,11 +91,11 @@ void scale_cuda(const Index n, const int features,
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    scale_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, features,
-                                                                  input, minimums, maximums, means, stds, scalers,
-                                                                  min_range, max_range, output);
+    OPENNN_CUDA_LAUNCH(scale_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, features,
+                                                                   input, minimums, maximums, means, stds, scalers,
+                                                                   min_range, max_range, output));
 }
 
 template void scale_cuda<float,         float>        (const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, float*);
@@ -158,11 +158,11 @@ void unscale_cuda(const Index n, const int features,
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    unscale_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, features,
+    OPENNN_CUDA_LAUNCH(unscale_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, features,
                                                                     input, minimums, maximums, means, stds, scalers,
-                                                                    min_range, max_range, output);
+                                                                    min_range, max_range, output));
 }
 
 template void unscale_cuda<float,         float>        (const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, float*);
@@ -184,8 +184,8 @@ template<typename TIn>
 void diff_to_fp32_cuda(const Index n, const TIn* input, const float* target, float* output)
 {
     if (n == 0) return;
-    const int total = static_cast<int>(n);
-    diff_to_fp32_kernel<TIn><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, input, target, output);
+    const int total = checked_int(n);
+    OPENNN_CUDA_LAUNCH(diff_to_fp32_kernel<TIn><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, input, target, output));
 }
 
 template void diff_to_fp32_cuda<float>        (const Index, const float*,         const float*, float*);
@@ -210,8 +210,8 @@ void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target
                             float scale, TOut* output)
 {
     if (n == 0) return;
-    const int total = static_cast<int>(n);
-    scaled_diff_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, input, target, scale, output);
+    const int total = checked_int(n);
+    OPENNN_CUDA_LAUNCH(scaled_diff_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, input, target, scale, output));
 }
 
 template void scaled_diff_cuda_typed<float,         float>        (const Index, const float*,         const float*, float, float*);
@@ -249,11 +249,11 @@ void embedding_forward_cuda(const Index n, const float* inputs, const float* wei
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    embedding_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
+    OPENNN_CUDA_LAUNCH(embedding_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
         total, inputs, weights, positional_encoding, outputs,
-        sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
+        sequence_length, embedding_dimension, vocabulary_size, scale_embedding));
 }
 
 template void embedding_forward_cuda<float>        (const Index, const float*, const float*, const float*, float*,         const int, const int, const int, const bool);
@@ -281,11 +281,11 @@ void embedding_backward_cuda(const Index n, const float* inputs, const T* output
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    embedding_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
+    OPENNN_CUDA_LAUNCH(embedding_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
         total, inputs, output_deltas, weight_gradients,
-        embedding_dimension, vocabulary_size, scale_embedding);
+        embedding_dimension, vocabulary_size, scale_embedding));
 }
 
 template void embedding_backward_cuda<float>        (const Index, const float*, const float*,         float*, const int, const int, const bool);
@@ -331,13 +331,13 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
     {
         const int vec_width = static_cast<int>(16 / sizeof(T));
         const int D_vec     = D / vec_width;
-        const int n_vec     = static_cast<int>(n) / vec_width;
-        split_heads_vec_kernel<T><<<grid_size_for(n_vec), block_size, 0, opennn::Backend::get_compute_stream()>>>(n_vec, in, out, S, H, D_vec);
+        const int n_vec     = checked_int(n / vec_width);
+        OPENNN_CUDA_LAUNCH(split_heads_vec_kernel<T><<<grid_size_for(n_vec), block_size, 0, opennn::device::get_compute_stream()>>>(n_vec, in, out, S, H, D_vec));
     }
     else
     {
-        const int total = static_cast<int>(n);
-        split_heads_scalar_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, in, out, S, H, D);
+        const int total = checked_int(n);
+        OPENNN_CUDA_LAUNCH(split_heads_scalar_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, in, out, S, H, D));
     }
 }
 
@@ -384,13 +384,13 @@ void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int
     {
         const int vec_width = static_cast<int>(16 / sizeof(T));
         const int D_vec     = D / vec_width;
-        const int n_vec     = static_cast<int>(n) / vec_width;
-        merge_heads_vec_kernel<T><<<grid_size_for(n_vec), block_size, 0, opennn::Backend::get_compute_stream()>>>(n_vec, in, out, S, H, D_vec);
+        const int n_vec     = checked_int(n / vec_width);
+        OPENNN_CUDA_LAUNCH(merge_heads_vec_kernel<T><<<grid_size_for(n_vec), block_size, 0, opennn::device::get_compute_stream()>>>(n_vec, in, out, S, H, D_vec));
     }
     else
     {
-        const int total = static_cast<int>(n);
-        merge_heads_scalar_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, in, out, S, H, D);
+        const int total = checked_int(n);
+        OPENNN_CUDA_LAUNCH(merge_heads_scalar_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, in, out, S, H, D));
     }
 }
 
@@ -434,14 +434,14 @@ void attention_masks_cuda(const int batch_size, const int heads_number,
 {
     const int num_tokens = batch_size * source_sequence_length;
     if (num_tokens > 0)
-        padding_mask_kernel<T><<<grid_size_for(num_tokens), block_size, 0, opennn::Backend::get_compute_stream()>>>(
-            num_tokens, source_input, padding_mask, embedding_dimension);
+        OPENNN_CUDA_LAUNCH(padding_mask_kernel<T><<<grid_size_for(num_tokens), block_size, 0, opennn::device::get_compute_stream()>>>(
+            num_tokens, source_input, padding_mask, embedding_dimension));
 
     const int n = batch_size * heads_number * query_sequence_length * source_sequence_length;
     if (n > 0)
-        fused_masks_kernel<T><<<grid_size_for(n), block_size, 0, opennn::Backend::get_compute_stream()>>>(
+        OPENNN_CUDA_LAUNCH(fused_masks_kernel<T><<<grid_size_for(n), block_size, 0, opennn::device::get_compute_stream()>>>(
             n, attention_weights, padding_mask, heads_number,
-            query_sequence_length, source_sequence_length, use_causal_mask);
+            query_sequence_length, source_sequence_length, use_causal_mask));
 }
 
 template void attention_masks_cuda<float>        (int, int, int, int, int, const float*,         float*,         float*,         bool);
@@ -499,14 +499,14 @@ void attention_sequence_lengths_cuda(const int batch_size,
                                      int32_t* source_lengths)
 {
     if (batch_size > 0)
-        attention_sequence_lengths_kernel<T><<<batch_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(
+        OPENNN_CUDA_LAUNCH(attention_sequence_lengths_kernel<T><<<batch_size, block_size, 0, opennn::device::get_compute_stream()>>>(
             batch_size,
             query_sequence_length,
             source_sequence_length,
             embedding_dimension,
             source_input,
             query_lengths,
-            source_lengths);
+            source_lengths));
 }
 
 template void attention_sequence_lengths_cuda<float>        (int, int, int, int, const float*,         int32_t*, int32_t*);
@@ -539,9 +539,9 @@ void max_pooling_3d_forward_cuda(const Index n, const T* in, T* out, float* indi
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    max_pooling_3d_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, in, out, indices, S, F);
+    OPENNN_CUDA_LAUNCH(max_pooling_3d_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, in, out, indices, S, F));
 }
 
 template void max_pooling_3d_forward_cuda<float>        (const Index, const float*,         float*,         float*, const int, const int);
@@ -565,19 +565,49 @@ void max_pooling_3d_backward_cuda(const Index n, const T* delta, T* in_gradient,
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    max_pooling_3d_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, delta, in_gradient, indices, S, F);
+    OPENNN_CUDA_LAUNCH(max_pooling_3d_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, delta, in_gradient, indices, S, F));
 }
 
 template void max_pooling_3d_backward_cuda<float>        (const Index, const float*,         float*,         const float*, const int, const int);
 template void max_pooling_3d_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const float*, const int, const int);
 
-namespace { opennn::Buffer pooling_scratch_(opennn::Device::CUDA); }
+namespace
+{
+
+struct PoolingScratch
+{
+    void* data = nullptr;
+    Index bytes = 0;
+
+    float* ensure(Index floats_needed)
+    {
+        const Index new_bytes = floats_needed * Index(sizeof(float));
+        if (new_bytes <= bytes) return static_cast<float*>(data);
+
+        if (data) opennn::device::deallocate(opennn::Device::CUDA, data, bytes);
+        data = opennn::device::allocate(opennn::Device::CUDA, new_bytes);
+        bytes = new_bytes;
+        return static_cast<float*>(data);
+    }
+
+    ~PoolingScratch()
+    {
+        if (data) opennn::device::deallocate(opennn::Device::CUDA, data, bytes);
+    }
+};
+
+PoolingScratch pooling_scratch_;
+
+}
 
 static float* get_pooling_scratch(size_t floats_needed)
 {
-    return pooling_scratch_.ensure<float>(Index(floats_needed));
+    checked_host_condition(
+        floats_needed > static_cast<size_t>(std::numeric_limits<Index>::max()),
+        "pooling scratch size exceeds Index range.");
+    return pooling_scratch_.ensure(Index(floats_needed));
 }
 
 template<typename T>
@@ -627,15 +657,15 @@ template<typename T>
 static void prepare_pooling_valid_mask(int B, int S, int F, const T* in,
                                        float*& valid_mask, float*& counts)
 {
-    const int BS = B * S;
-    cudaStream_t stream = opennn::Backend::get_compute_stream();
+    const int BS = checked_int(Index(B) * S);
+    cudaStream_t stream = opennn::device::get_compute_stream();
 
     float* scratch = get_pooling_scratch(static_cast<size_t>(BS) + B);
     valid_mask = scratch;
     counts     = scratch + BS;
-    CHECK_CUDA(cudaMemsetAsync(counts, 0, B * sizeof(float), stream));
+    opennn::device::set_zero_async(counts, Index(B) * Index(sizeof(float)), stream);
 
-    pooling_3d_valid_mask_kernel<T><<<grid_size_for(BS), block_size, 0, stream>>>(BS, S, F, in, valid_mask, counts);
+    OPENNN_CUDA_LAUNCH(pooling_3d_valid_mask_kernel<T><<<grid_size_for(BS), block_size, 0, stream>>>(BS, S, F, in, valid_mask, counts));
 }
 
 template<typename T>
@@ -643,14 +673,14 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
     const int B = total / F;
 
     float* valid_mask = nullptr;
     float* counts     = nullptr;
     prepare_pooling_valid_mask(B, S, F, in, valid_mask, counts);
 
-    average_pooling_3d_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, in, out, S, F, valid_mask, counts);
+    OPENNN_CUDA_LAUNCH(average_pooling_3d_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, in, out, S, F, valid_mask, counts));
 }
 
 template void average_pooling_3d_forward_cuda<float>        (const Index, const float*,         float*,         const int, const int);
@@ -684,14 +714,14 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
     const int B = total / F;
 
     float* valid_mask = nullptr;
     float* counts     = nullptr;
     prepare_pooling_valid_mask(B, S, F, in, valid_mask, counts);
 
-    average_pooling_3d_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, delta, in_gradient, S, F, valid_mask, counts);
+    OPENNN_CUDA_LAUNCH(average_pooling_3d_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, delta, in_gradient, S, F, valid_mask, counts));
 }
 
 template void average_pooling_3d_backward_cuda<float>        (const Index, const float*,         const float*,         float*,         const int, const int);
@@ -785,7 +815,7 @@ void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* m
 {
     if (N == 0 || D == 0) return;
 
-    layernorm_forward_kernel<T><<<N, layernorm_threads(D), 0, opennn::Backend::get_compute_stream()>>>(N, D, X, Y, means, inv_vars, gamma, beta, eps);
+    OPENNN_CUDA_LAUNCH(layernorm_forward_kernel<T><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(N, D, X, Y, means, inv_vars, gamma, beta, eps));
 }
 
 template void layernorm_forward_cuda<float>        (const int, const int, const float*,         float*,         float*, float*, const float*, const float*, const float);
@@ -915,13 +945,14 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
     if (N == 0 || D == 0) return;
 
     if (dX)
-        layernorm_backward_kernel<T><<<N, layernorm_threads(D), 0, opennn::Backend::get_compute_stream()>>>(N, D, dY, X, means, inv_vars, gamma, dX);
+        OPENNN_CUDA_LAUNCH(layernorm_backward_kernel<T><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(N, D, dY, X, means, inv_vars, gamma, dX));
 
     constexpr int NUM_WARPS = 8;
     const dim3 block(32, NUM_WARPS);
     const int grid_x = (D + 31) / 32;
-    layernorm_gamma_beta_gradient_coalesced_kernel<T, NUM_WARPS><<<grid_x, block, 0, opennn::Backend::get_compute_stream()>>>(
-        N, D, dY, X, means, inv_vars, dGamma, dBeta);
+    layernorm_gamma_beta_gradient_coalesced_kernel<T, NUM_WARPS><<<grid_x, block, 0,
+        opennn::device::get_compute_stream()>>>(N, D, dY, X, means, inv_vars, dGamma, dBeta);
+    opennn::device::check_last_error();
 }
 
 template void layernorm_backward_cuda<float>        (const int, const int, const float*,         const float*,         const float*, const float*, const float*, float*,         float*, float*);
@@ -951,8 +982,8 @@ void activation_forward_cuda(const Index n, T* data, const int function)
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
-    activation_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, data, function);
+    const int total = checked_int(n);
+    OPENNN_CUDA_LAUNCH(activation_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, data, function));
 }
 
 template void activation_forward_cuda<float>        (const Index, float*,         const int);
@@ -983,8 +1014,8 @@ void activation_backward_cuda(const Index n, const T* outputs, T* delta, const i
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
-    activation_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, outputs, delta, function);
+    const int total = checked_int(n);
+    OPENNN_CUDA_LAUNCH(activation_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, outputs, delta, function));
 }
 
 template void activation_backward_cuda<float>        (const Index, const float*,         float*,         const int);
@@ -1010,10 +1041,10 @@ void dropout_forward_cuda(const Index n, T* output, uint8_t* mask, const float r
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
     const float scale = 1.0f / (1.0f - rate);
 
-    dropout_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, output, mask, scale, rate, seed);
+    OPENNN_CUDA_LAUNCH(dropout_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, output, mask, scale, rate, seed));
 }
 
 template void dropout_forward_cuda<float>        (const Index, float*,         uint8_t*, const float, const unsigned long long);
@@ -1035,10 +1066,10 @@ void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta,
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
     const float scale = 1.0f / (1.0f - rate);
 
-    dropout_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(total, output_delta, input_delta, mask, scale);
+    OPENNN_CUDA_LAUNCH(dropout_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, output_delta, input_delta, mask, scale));
 }
 
 template void dropout_backward_cuda<float>        (const Index, const float*,         float*,         const uint8_t*, const float);
@@ -1070,14 +1101,14 @@ void gather_time_slice_cuda(const Index batch,
                             T* dst)
 {
     if (batch == 0 || features == 0) return;
-    const int total = static_cast<int>(batch * features);
-    gather_time_slice_kernel<T><<<grid_size_for(total), block_size, 0,
-                                  opennn::Backend::get_compute_stream()>>>(
-        static_cast<int>(batch),
-        static_cast<int>(time_steps),
-        static_cast<int>(features),
-        static_cast<int>(t),
-        src, dst);
+    const int total = checked_int(batch * features);
+    OPENNN_CUDA_LAUNCH(gather_time_slice_kernel<T><<<grid_size_for(total), block_size, 0,
+                                  opennn::device::get_compute_stream()>>>(
+        checked_int(batch),
+        checked_int(time_steps),
+        checked_int(features),
+        checked_int(t),
+        src, dst));
 }
 
 template void gather_time_slice_cuda<float>        (const Index, const Index, const Index, const Index, const float*,         float*);
@@ -1113,13 +1144,13 @@ void gather_columns_cuda(const Index batch_size,
                          TDst* destination)
 {
     if (batch_size == 0 || output_features == 0) return;
-    const int total = static_cast<int>(batch_size * output_features);
-    gather_columns_kernel<TSrc, TDst><<<grid_size_for(total), block_size, 0,
-                                        opennn::Backend::get_compute_stream()>>>(
-        static_cast<int>(batch_size),
-        static_cast<int>(output_features),
-        static_cast<int>(source_features),
-        row_indices, column_indices, source, destination);
+    const int total = checked_int(batch_size * output_features);
+    OPENNN_CUDA_LAUNCH(gather_columns_kernel<TSrc, TDst><<<grid_size_for(total), block_size, 0,
+                                        opennn::device::get_compute_stream()>>>(
+        checked_int(batch_size),
+        checked_int(output_features),
+        checked_int(source_features),
+        row_indices, column_indices, source, destination));
 }
 
 template void gather_columns_cuda<float, float>        (const Index, const Index, const Index, const Index*, const Index*, const float*, float*);
@@ -1151,14 +1182,14 @@ void scatter_time_slice_cuda(const Index batch,
                              T* dst)
 {
     if (batch == 0 || features == 0) return;
-    const int total = static_cast<int>(batch * features);
-    scatter_time_slice_kernel<T><<<grid_size_for(total), block_size, 0,
-                                   opennn::Backend::get_compute_stream()>>>(
-        static_cast<int>(batch),
-        static_cast<int>(time_steps),
-        static_cast<int>(features),
-        static_cast<int>(t),
-        src, dst);
+    const int total = checked_int(batch * features);
+    OPENNN_CUDA_LAUNCH(scatter_time_slice_kernel<T><<<grid_size_for(total), block_size, 0,
+                                   opennn::device::get_compute_stream()>>>(
+        checked_int(batch),
+        checked_int(time_steps),
+        checked_int(features),
+        checked_int(t),
+        src, dst));
 }
 
 template void scatter_time_slice_cuda<float>        (const Index, const Index, const Index, const Index, const float*,         float*);
@@ -1186,12 +1217,12 @@ void transpose_2d_cuda(const Index rows,
                        T* dst)
 {
     if (rows == 0 || cols == 0) return;
-    const int total = static_cast<int>(rows * cols);
-    transpose_2d_kernel<T><<<grid_size_for(total), block_size, 0,
-                             opennn::Backend::get_compute_stream()>>>(
-        static_cast<int>(rows),
-        static_cast<int>(cols),
-        src, dst);
+    const int total = checked_int(rows * cols);
+    OPENNN_CUDA_LAUNCH(transpose_2d_kernel<T><<<grid_size_for(total), block_size, 0,
+                             opennn::device::get_compute_stream()>>>(
+        checked_int(rows),
+        checked_int(cols),
+        src, dst));
 }
 
 template void transpose_2d_cuda<float>        (const Index, const Index, const float*,         float*);
@@ -1228,12 +1259,12 @@ void rnn_step_bias_activation_cuda(const Index batch,
                                    const int activation_id)
 {
     if (batch == 0 || out_features == 0) return;
-    const int total = static_cast<int>(batch * out_features);
-    rnn_step_bias_activation_kernel<T><<<grid_size_for(total), block_size, 0,
-                                         opennn::Backend::get_compute_stream()>>>(
+    const int total = checked_int(batch * out_features);
+    OPENNN_CUDA_LAUNCH(rnn_step_bias_activation_kernel<T><<<grid_size_for(total), block_size, 0,
+                                         opennn::device::get_compute_stream()>>>(
         total,
-        static_cast<int>(out_features),
-        hidden, bias, derivs_or_null, activation_id);
+        checked_int(out_features),
+        hidden, bias, derivs_or_null, activation_id));
 }
 
 template void rnn_step_bias_activation_cuda<float>        (const Index, const Index, float*,         const float*,         float*,         const int);
@@ -1302,18 +1333,20 @@ void rnn_step_fused_forward_cuda(const Index batch,
 {
     if (batch == 0 || out_features == 0) return;
 
-    const int block_size = static_cast<int>(out_features);
-    const int grid_size  = static_cast<int>(batch);
+    const int block_size = checked_int(out_features);
+    const int grid_size  = checked_int(batch);
+    checked_host_condition(block_size > 1024,
+                           "rnn_step_fused_forward_cuda: out_features exceeds CUDA max threads per block.");
     const Index shmem_floats = in_features + (prev_hidden ? out_features : Index(0));
     const size_t shmem_bytes = static_cast<size_t>(shmem_floats) * sizeof(float);
 
-    rnn_step_fused_forward_kernel<T><<<grid_size, block_size, shmem_bytes,
-                                       opennn::Backend::get_compute_stream()>>>(
-        static_cast<int>(batch),
-        static_cast<int>(in_features),
-        static_cast<int>(out_features),
+    OPENNN_CUDA_LAUNCH(rnn_step_fused_forward_kernel<T><<<grid_size, block_size, shmem_bytes,
+                                       opennn::device::get_compute_stream()>>>(
+        checked_int(batch),
+        checked_int(in_features),
+        checked_int(out_features),
         step_input, prev_hidden, W_in, W_rec, bias,
-        step_hidden, derivs_or_null, activation_id);
+        step_hidden, derivs_or_null, activation_id));
 }
 
 template void rnn_step_fused_forward_cuda<float>        (const Index, const Index, const Index, const float*,         const float*,         const float*,         const float*,         const float*,         float*,         float*,         const int);
@@ -1334,10 +1367,10 @@ template<typename T>
 void rnn_elementwise_multiply_cuda(const Index n, T* dst, const T* a)
 {
     if (n == 0) return;
-    const int total = static_cast<int>(n);
-    rnn_elementwise_multiply_kernel<T><<<grid_size_for(total), block_size, 0,
-                                         opennn::Backend::get_compute_stream()>>>(
-        total, dst, a);
+    const int total = checked_int(n);
+    OPENNN_CUDA_LAUNCH(rnn_elementwise_multiply_kernel<T><<<grid_size_for(total), block_size, 0,
+                                         opennn::device::get_compute_stream()>>>(
+        total, dst, a));
 }
 
 template void rnn_elementwise_multiply_cuda<float>        (const Index, float*,         const float*);
@@ -1366,12 +1399,12 @@ void rnn_accumulate_bias_grad_cuda(const Index batch,
                                    float* bias_grad)
 {
     if (batch == 0 || features == 0) return;
-    const int total = static_cast<int>(features);
-    rnn_accumulate_bias_grad_kernel<T><<<grid_size_for(total), block_size, 0,
-                                         opennn::Backend::get_compute_stream()>>>(
-        static_cast<int>(batch),
-        static_cast<int>(features),
-        delta, bias_grad);
+    const int total = checked_int(features);
+    OPENNN_CUDA_LAUNCH(rnn_accumulate_bias_grad_kernel<T><<<grid_size_for(total), block_size, 0,
+                                         opennn::device::get_compute_stream()>>>(
+        checked_int(batch),
+        checked_int(features),
+        delta, bias_grad));
 }
 
 template void rnn_accumulate_bias_grad_cuda<float>        (const Index, const Index, const float*,         float*);
@@ -1424,20 +1457,20 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
 {
     if (batch == 0 || out_features == 0) return;
 
-    throw_if(t < 0 || t >= time_steps,
-             format("rnn_step_fused_backward_pre_cuda: time step {} out of range [0, {}).", t, time_steps));
+    checked_host_condition(t < 0 || t >= time_steps,
+                           "rnn_step_fused_backward_pre_cuda: time step out of range.");
 
-    const int total = static_cast<int>(batch * out_features);
-    rnn_step_fused_backward_pre_kernel<T><<<grid_size_for(total), block_size, 0,
-                                            opennn::Backend::get_compute_stream()>>>(
-        static_cast<int>(batch),
-        static_cast<int>(out_features),
-        static_cast<int>(time_steps),
-        static_cast<int>(t),
+    const int total = checked_int(batch * out_features);
+    OPENNN_CUDA_LAUNCH(rnn_step_fused_backward_pre_kernel<T><<<grid_size_for(total), block_size, 0,
+                                            opennn::device::get_compute_stream()>>>(
+        checked_int(batch),
+        checked_int(out_features),
+        checked_int(time_steps),
+        checked_int(t),
         first_iter,
         output_delta, next_carry,
         activation_derivatives,
-        delta, bias_grad);
+        delta, bias_grad));
 }
 
 template void rnn_step_fused_backward_pre_cuda<float>        (const Index, const Index, const Index, const Index, const bool, const float*,         const float*,         const float*,         float*,         float*);

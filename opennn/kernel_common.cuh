@@ -3,9 +3,11 @@
 
 #include <cstdint>
 #include <cfloat>
+#include <limits>
+#include <stdexcept>
 
-#include "tensor_utilities.h"
 #include "kernel.cuh"
+#include "cuda_runtime_context.cuh"
 
 static constexpr int block_size = 256;
 
@@ -18,6 +20,25 @@ static inline int grid_size_for(int n)
 {
     return ceil_div(n, block_size);
 }
+
+static inline int checked_int(Index value)
+{
+    if (value > Index(std::numeric_limits<int>::max())
+        || value < Index(std::numeric_limits<int>::min()))
+        throw std::runtime_error("CUDA wrapper value exceeds int range.");
+    return static_cast<int>(value);
+}
+
+static inline void checked_host_condition(bool condition, const char* message)
+{
+    if (condition) throw std::runtime_error(message);
+}
+
+#define OPENNN_CUDA_LAUNCH(...) \
+    do {                        \
+        __VA_ARGS__;            \
+        opennn::device::check_last_error(); \
+    } while (false)
 
 static inline int vector_work_size(int total, int n_vec, int vec_width)
 {

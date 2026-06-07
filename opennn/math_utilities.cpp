@@ -976,11 +976,10 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
     else
         gemm_strided_batched_cuda(operation_b, operation_a,
                                   output_columns, output_rows, inner_dimension,
-                                  input_b.data, cols_b, stride_b,
-                                  input_a.data, cols_a, stride_a,
-                                  output.data,  output_columns, stride_output,
+                                  input_b.data, input_b.cuda_dtype(), cols_b, stride_b,
+                                  input_a.data, input_a.cuda_dtype(), cols_a, stride_a,
+                                  output.data,  output.cuda_dtype(), output_columns, stride_output,
                                   batch_count,
-                                  output.cuda_dtype(),
                                   alpha, beta);
 }
 

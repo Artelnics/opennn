@@ -1,16 +1,16 @@
 # Graph Report - opennn  (2026-06-07)
 
 ## Corpus Check
-- 325 files · ~854,255 words
+- 325 files · ~854,299 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4248 nodes · 8786 edges · 326 communities (266 shown, 60 thin omitted)
+- 4248 nodes · 8786 edges · 324 communities (265 shown, 59 thin omitted)
 - Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 989 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `25ff9ef3`
+- Built from commit: `a0626b73`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -65,7 +65,6 @@
 - [[_COMMUNITY_Community 47|Community 47]]
 - [[_COMMUNITY_Community 48|Community 48]]
 - [[_COMMUNITY_Community 49|Community 49]]
-- [[_COMMUNITY_Community 50|Community 50]]
 - [[_COMMUNITY_Community 51|Community 51]]
 - [[_COMMUNITY_Community 52|Community 52]]
 - [[_COMMUNITY_Community 53|Community 53]]
@@ -103,7 +102,6 @@
 - [[_COMMUNITY_Community 85|Community 85]]
 - [[_COMMUNITY_Community 86|Community 86]]
 - [[_COMMUNITY_Community 87|Community 87]]
-- [[_COMMUNITY_Community 88|Community 88]]
 - [[_COMMUNITY_Community 89|Community 89]]
 - [[_COMMUNITY_Community 90|Community 90]]
 - [[_COMMUNITY_Community 91|Community 91]]
@@ -313,7 +311,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (326 total, 60 thin omitted)
+## Communities (324 total, 59 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.05
@@ -356,16 +354,16 @@ Cohesion: 0.08
 Nodes (58): CopyKind, cudaEvent_t, cudaMemcpyKind, allocate(), allocate_cuda(), allocate_pinned_host(), allocate_pinned_host_impl(), available_cuda_device() (+50 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.11
-Nodes (39): apply(), apply_cpu(), apply_delta(), apply_delta_cpu(), apply_delta_gpu(), apply_delta_gpu_unfused(), apply_delta_unfused(), apply_gpu() (+31 more)
+Cohesion: 0.10
+Nodes (42): apply(), apply_cpu(), apply_delta(), apply_delta_cpu(), apply_delta_gpu(), apply_delta_gpu_unfused(), apply_delta_unfused(), apply_gpu() (+34 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.09
-Nodes (64): check_separators(), Batch, Index, path, string, string_view, Variable, VariableType (+56 more)
+Nodes (62): Batch, Index, path, string, Variable, VariableType, vector, VectorI (+54 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.11
-Nodes (35): Json, read_JSON_body(), Json, preview_data_from_JSON(), samples_from_JSON(), set_codification(), set_separator_name(), variables_from_JSON() (+27 more)
+Cohesion: 0.13
+Nodes (33): Json, read_JSON_body(), Json, preview_data_from_JSON(), samples_from_JSON(), set_codification(), set_separator_name(), variables_from_JSON() (+25 more)
 
 ### Community 13 - "Community 13"
 Cohesion: 0.08
@@ -420,8 +418,8 @@ Cohesion: 0.13
 Nodes (25): get_variable_data(), calculate_autocorrelations(), calculate_cross_correlations(), calculate_cross_correlations_spearman(), Codification, Index, MatrixR, path (+17 more)
 
 ### Community 26 - "Community 26"
-Cohesion: 0.18
-Nodes (27): add_field(), as_string(), begin_array(), begin_array_object(), c_str(), Json, JsonDocument, path (+19 more)
+Cohesion: 0.17
+Nodes (26): add_field(), as_long(), as_string(), begin_array(), begin_array_object(), c_str(), Json, JsonDocument (+18 more)
 
 ### Community 27 - "Community 27"
 Cohesion: 0.19
@@ -464,8 +462,8 @@ Cohesion: 0.10
 Nodes (30): EpochStats, exception_ptr, jthread, BatchFillSession, cancelled, empty_queue, error_mutex, error_pending (+22 more)
 
 ### Community 37 - "Community 37"
-Cohesion: 0.11
-Nodes (33): bfloat16, cublasComputeType_t, cublasLtMatmulPreference_t, cublasOperation_t, Buffer, cublasLtEpilogue_t, cudaDataType_t, Index (+25 more)
+Cohesion: 0.07
+Nodes (44): bfloat16, cublasComputeType_t, cublasLtMatmulAlgo_t, cublasLtMatmulDesc_t, cublasLtMatmulPreference_t, cublasLtMatrixLayout_t, cublasOperation_t, Buffer (+36 more)
 
 ### Community 38 - "Community 38"
 Cohesion: 0.19
@@ -492,8 +490,8 @@ Cohesion: 0.23
 Nodes (15): TrainingResults, train(), check_stopping_condition(), time_t, TrainingResults, get_elapsed_time(), set_names(), set_scaling() (+7 more)
 
 ### Community 44 - "Community 44"
-Cohesion: 0.15
-Nodes (28): JsonWriter, get_codification_string(), get_separator_name(), preview_data_to_JSON(), samples_to_JSON(), variables_to_JSON(), JsonWriter, to_JSON() (+20 more)
+Cohesion: 0.14
+Nodes (30): check_separators(), JsonWriter, string_view, get_codification_string(), get_separator_name(), get_separator_string(), preview_data_to_JSON(), samples_to_JSON() (+22 more)
 
 ### Community 45 - "Community 45"
 Cohesion: 0.09
@@ -514,10 +512,6 @@ Nodes (21): LanguageDataset, assemble_output_string(), chat(), Index, string, Tr
 ### Community 49 - "Community 49"
 Cohesion: 0.35
 Nodes (20): class_, DataType_t, PyGraph, shared_ptr, string, Tensor_attributes, vector, NormFwdPhase_t (+12 more)
-
-### Community 50 - "Community 50"
-Cohesion: 0.17
-Nodes (11): cublasLtMatmulAlgo_t, cublasLtMatmulDesc_t, cublasLtMatrixLayout_t, LtMatmulPlan, a_desc, algo, algo_valid, b_desc (+3 more)
 
 ### Community 51 - "Community 51"
 Cohesion: 0.18
@@ -660,12 +654,8 @@ Cohesion: 0.13
 Nodes (15): Shape, Scenario, batch_size, csv_file, description, extra_targets, future, hidden (+7 more)
 
 ### Community 87 - "Community 87"
-Cohesion: 0.12
-Nodes (29): JsonDocument, from_JSON(), JsonDocument, from_JSON(), JsonDocument, from_JSON(), JsonDocument, from_JSON() (+21 more)
-
-### Community 88 - "Community 88"
-Cohesion: 0.36
-Nodes (8): backward_scratch_spec(), check(), TensorSpec, vector, forward_scratch_specs(), get_contiguous_source_lengths(), parameter_specs(), state_specs()
+Cohesion: 0.11
+Nodes (31): JsonDocument, from_JSON(), JsonDocument, from_JSON(), JsonDocument, from_JSON(), JsonDocument, from_JSON() (+23 more)
 
 ### Community 89 - "Community 89"
 Cohesion: 0.16
@@ -872,8 +862,8 @@ Cohesion: 0.28
 Nodes (5): time_point, ScenarioProgress, done, started, total
 
 ### Community 144 - "Community 144"
-Cohesion: 0.26
-Nodes (15): Shape, get_variable_indices(), set_shape(), calculate_input_target_variable_correlations(), calculate_input_target_variable_pearson_correlations(), calculate_input_target_variable_spearman_correlations(), calculate_input_variable_correlations(), calculate_input_variable_pearson_correlations() (+7 more)
+Cohesion: 0.23
+Nodes (16): Shape, get_shape(), get_variable_indices(), set_shape(), calculate_input_target_variable_correlations(), calculate_input_target_variable_pearson_correlations(), calculate_input_target_variable_spearman_correlations(), calculate_input_variable_correlations() (+8 more)
 
 ### Community 145 - "Community 145"
 Cohesion: 0.33
@@ -976,8 +966,8 @@ Cohesion: 0.38
 Nodes (6): Index, namespace, get_samples_number(), opennn(), set_maximum_vocabulary_size(), set_minimum_token_frequency()
 
 ### Community 171 - "Community 171"
-Cohesion: 0.07
-Nodes (52): CacheKey, ConvolutionOp, cudnnActivationDescriptor_t, cudnnActivationMode_t, attention_scale(), AttentionOp(), AttentionOp::SDPACache, bhsd_input() (+44 more)
+Cohesion: 0.06
+Nodes (57): CacheKey, ConvolutionOp, cudnnActivationDescriptor_t, cudnnActivationMode_t, attention_scale(), AttentionOp(), AttentionOp::SDPACache, backward_scratch_spec() (+49 more)
 
 ### Community 172 - "Community 172"
 Cohesion: 0.43
@@ -992,8 +982,8 @@ Cohesion: 0.50
 Nodes (4): Index, path, prepare_tinychat_pairs(), write_synthetic_pairs()
 
 ### Community 175 - "Community 175"
-Cohesion: 0.14
-Nodes (31): set_matrix_storage(), is_date_time_string(), is_numeric_string(), Codification, DateFormat, MatrixR, path, Shape (+23 more)
+Cohesion: 0.13
+Nodes (32): set_matrix_storage(), set_separator_string(), is_date_time_string(), is_numeric_string(), Codification, DateFormat, MatrixR, path (+24 more)
 
 ### Community 176 - "Community 176"
 Cohesion: 0.40
@@ -1052,12 +1042,12 @@ Cohesion: 0.40
 Nodes (4): device_data_input_feature_indices(), Buffer, namespace, opennn()
 
 ### Community 193 - "Community 193"
-Cohesion: 0.29
-Nodes (11): begin(), end(), get_aligned_bytes(), get_aligned_size(), namespace, TensorSpec, vector, is_contiguous() (+3 more)
+Cohesion: 0.26
+Nodes (12): begin(), end(), get_aligned_bytes(), get_aligned_size(), namespace, TensorSpec, vector, is_contiguous() (+4 more)
 
 ### Community 194 - "Community 194"
-Cohesion: 0.25
-Nodes (8): cudaDataType_t, cuda_dtype(), cudaDataType_t, cudnnDataType_t, Type, to_cuda(), to_cudnn(), type_bytes()
+Cohesion: 0.29
+Nodes (7): cudaDataType_t, cuda_dtype(), cudaDataType_t, cudnnDataType_t, Type, to_cuda(), to_cudnn()
 
 ### Community 196 - "Community 196"
 Cohesion: 0.60
@@ -1117,7 +1107,7 @@ Nodes (3): Shape, Flatten(), set()
 
 ### Community 211 - "Community 211"
 Cohesion: 0.09
-Nodes (55): MissingValuesMethod, get_feature_indices(), get_used_sample_indices(), set_sample_role(), random_bool(), calculate_correlations_rank(), calculate_feature_descriptives(), calculate_missing_values_statistics() (+47 more)
+Nodes (53): MissingValuesMethod, get_feature_indices(), set_sample_role(), random_bool(), calculate_correlations_rank(), calculate_feature_descriptives(), calculate_missing_values_statistics(), calculate_target_distribution() (+45 more)
 
 ### Community 213 - "Community 213"
 Cohesion: 0.83
@@ -1134,6 +1124,10 @@ Nodes (7): split_samples_random(), path, Shape, time_point, ImageDataset(), read
 ### Community 250 - "Community 250"
 Cohesion: 0.50
 Nodes (4): ActivationFunction(), Shape, TensorView, reshape()
+
+### Community 327 - "Community 327"
+Cohesion: 0.45
+Nodes (3): parse(), Parser, position
 
 ### Community 330 - "Community 330"
 Cohesion: 0.40
@@ -1158,12 +1152,12 @@ Nodes (11): PoolWindow, batch, channel, in_col_start, in_row_start, out_col, out
 ## Knowledge Gaps
 - **1198 isolated node(s):** `Index`, `cudnn_data_type`, `bool`, `heur_mode`, `object` (+1193 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **60 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **59 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `throw_if()` connect `Community 18` to `Community 0`, `Community 1`, `Community 130`, `Community 2`, `Community 4`, `Community 133`, `Community 5`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 11`, `Community 12`, `Community 13`, `Community 6`, `Community 15`, `Community 16`, `Community 136`, `Community 146`, `Community 20`, `Community 21`, `Community 149`, `Community 24`, `Community 25`, `Community 26`, `Community 30`, `Community 32`, `Community 33`, `Community 34`, `Community 37`, `Community 41`, `Community 171`, `Community 43`, `Community 46`, `Community 47`, `Community 175`, `Community 48`, `Community 51`, `Community 52`, `Community 56`, `Community 57`, `Community 61`, `Community 62`, `Community 66`, `Community 73`, `Community 76`, `Community 77`, `Community 83`, `Community 211`, `Community 87`, `Community 88`, `Community 89`, `Community 91`, `Community 93`, `Community 222`, `Community 99`, `Community 103`, `Community 105`?**
+- **Why does `throw_if()` connect `Community 18` to `Community 0`, `Community 1`, `Community 130`, `Community 2`, `Community 4`, `Community 133`, `Community 5`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 11`, `Community 12`, `Community 13`, `Community 6`, `Community 15`, `Community 16`, `Community 136`, `Community 146`, `Community 20`, `Community 21`, `Community 149`, `Community 24`, `Community 25`, `Community 26`, `Community 30`, `Community 32`, `Community 33`, `Community 34`, `Community 37`, `Community 41`, `Community 171`, `Community 44`, `Community 43`, `Community 46`, `Community 47`, `Community 175`, `Community 48`, `Community 51`, `Community 52`, `Community 56`, `Community 57`, `Community 61`, `Community 62`, `Community 66`, `Community 327`, `Community 73`, `Community 76`, `Community 77`, `Community 83`, `Community 87`, `Community 89`, `Community 91`, `Community 93`, `Community 222`, `Community 99`, `Community 103`, `Community 105`?**
   _High betweenness centrality (0.432) - this node is a cross-community bridge._
 - **Why does `random_integer()` connect `Community 32` to `Community 33`, `Community 2`, `Community 5`, `Community 6`, `Community 70`, `Community 105`, `Community 174`, `Community 338`, `Community 116`, `Community 55`, `Community 92`, `Community 126`?**
   _High betweenness centrality (0.040) - this node is a cross-community bridge._
