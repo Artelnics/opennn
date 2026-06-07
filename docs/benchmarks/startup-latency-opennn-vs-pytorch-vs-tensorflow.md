@@ -49,7 +49,7 @@ OpenNN is a native executable with the library statically linked in: the OS maps
 and jumps to `main`. There is no interpreter to boot and no large shared library to load and
 initialize. PyTorch pays for the Python runtime plus the load-time initialization of
 `libtorch` (the same large library measured in the
-[CPU size benchmark](size-cpu-opennn-vs-pytorch.md)) on every process start.
+[CPU size benchmark](size-cpu-opennn-vs-pytorch-vs-tensorflow.md)) on every process start.
 
 ## Why it matters
 

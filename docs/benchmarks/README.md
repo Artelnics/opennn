@@ -16,33 +16,33 @@ links to the full note with methodology and reproduction steps.
 
 | Benchmark | OpenNN | PyTorch | TensorFlow |
 |---|---:|---:|---:|
-| [CPU runtime size](size-cpu-opennn-vs-pytorch.md) | **3.2 MB** | 442 MB | 752 MB |
-| [GPU (CNN) deployment](size-gpu-opennn-vs-pytorch.md) | **~1.3 GB** | ~5.0 GB | ~6.2 GB |
-| [Startup latency](startup-latency-opennn-vs-pytorch.md) | **36 ms** | 1,005 ms | 1,685 ms |
-| [Peak memory (training)](peak-memory-opennn-vs-pytorch.md) | **9 MB** | 295 MB | 521 MB |
-| [Install size / packages](dependencies-opennn-vs-pytorch.md) | **1 file, 0 pkgs** | 946 MB, 12 pkgs | 1.6 GB, 33 pkgs |
-| [Native source LOC](loc-opennn-vs-pytorch.md) | **34,926** | 834,319 | 1,792,182 |
-| [Standalone code export](code-export-opennn-vs-pytorch.md) | **C/Py/JS/PHP source** | needs a runtime | needs a runtime |
+| [CPU runtime size](size-cpu-opennn-vs-pytorch-vs-tensorflow.md) | **3.2 MB** | 442 MB | 752 MB |
+| [GPU (CNN) deployment](size-gpu-opennn-vs-pytorch-vs-tensorflow.md) | **~1.3 GB** | ~5.0 GB | ~6.2 GB |
+| [Startup latency](startup-latency-opennn-vs-pytorch-vs-tensorflow.md) | **36 ms** | 1,005 ms | 1,685 ms |
+| [Peak memory (training)](peak-memory-opennn-vs-pytorch-vs-tensorflow.md) | **9 MB** | 295 MB | 521 MB |
+| [Install size / packages](dependencies-opennn-vs-pytorch-vs-tensorflow.md) | **1 file, 0 pkgs** | 946 MB, 12 pkgs | 1.6 GB, 33 pkgs |
+| [Native source LOC](loc-opennn-vs-pytorch-vs-tensorflow.md) | **34,926** | 834,319 | 1,792,182 |
+| [Standalone code export](code-export-opennn-vs-pytorch-vs-tensorflow.md) | **C/Py/JS/PHP source** | needs a runtime | needs a runtime |
 
 OpenNN is the smallest on every footprint axis, starts an order of magnitude faster, and is the
 only one of the three that can export a trained model as dependency-free source.
 
 ## The benchmarks
 
-* **[Deployment size on CPU](size-cpu-opennn-vs-pytorch.md)** — the runtime library a CPU app
+* **[Deployment size on CPU](size-cpu-opennn-vs-pytorch-vs-tensorflow.md)** — the runtime library a CPU app
   ships: a 3.2 MB OpenNN executable vs the 442 MB `libtorch_cpu` / 752 MB `libtensorflow_cc`.
-* **[Deployment size on GPU](size-gpu-opennn-vs-pytorch.md)** — a CNN's CUDA footprint. Here the
+* **[Deployment size on GPU](size-gpu-opennn-vs-pytorch-vs-tensorflow.md)** — a CNN's CUDA footprint. Here the
   gap narrows because NVIDIA's cuBLAS/cuDNN dominate all three; OpenNN still wins by shipping
   only the libraries its model loads.
-* **[Startup latency](startup-latency-opennn-vs-pytorch.md)** — time-to-first-prediction. A
+* **[Startup latency](startup-latency-opennn-vs-pytorch-vs-tensorflow.md)** — time-to-first-prediction. A
   native binary starts in tens of milliseconds; `import torch` / `import tensorflow` cost ~1–1.7 s.
-* **[Peak memory](peak-memory-opennn-vs-pytorch.md)** — resident memory for the same small
+* **[Peak memory](peak-memory-opennn-vs-pytorch-vs-tensorflow.md)** — resident memory for the same small
   training job: ~9 MB vs hundreds of MB of fixed framework overhead.
-* **[Dependencies & install friction](dependencies-opennn-vs-pytorch.md)** — one self-contained
+* **[Dependencies & install friction](dependencies-opennn-vs-pytorch-vs-tensorflow.md)** — one self-contained
   file that runs on a clean machine, vs Python plus a 12–33 package tree.
-* **[Source lines of code](loc-opennn-vs-pytorch.md)** — the size of the native library layer
+* **[Source lines of code](loc-opennn-vs-pytorch-vs-tensorflow.md)** — the size of the native library layer
   behind each project.
-* **[Model export to standalone code](code-export-opennn-vs-pytorch.md)** — OpenNN emits a
+* **[Model export to standalone code](code-export-opennn-vs-pytorch-vs-tensorflow.md)** — OpenNN emits a
   trained model as compilable C/Python/JavaScript/PHP; the frameworks export model files that
   still need their runtime.
 

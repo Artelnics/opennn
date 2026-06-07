@@ -52,7 +52,7 @@ PyTorch has no equivalent "export to compilable source." Its two export paths bo
 *serialized model* that needs a runtime to run:
 
 * **TorchScript** (`torch.jit.save` → `.pt`): loaded and executed by `libtorch` — the same
-  ~442 MB CPU runtime measured in the [CPU size benchmark](size-cpu-opennn-vs-pytorch.md).
+  ~442 MB CPU runtime measured in the [CPU size benchmark](size-cpu-opennn-vs-pytorch-vs-tensorflow.md).
 * **ONNX** (`torch.onnx.export` → `.onnx`): runs under ONNX Runtime or another inference
   engine, which must be installed on the target.
 
