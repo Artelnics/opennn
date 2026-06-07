@@ -112,20 +112,26 @@ if(OpenNN_BUILD_VISION)
 
         file(MAKE_DIRECTORY ${_opennn_jpeg_include_dir} ${_opennn_jpeg_lib_dir})
 
+        set(_opennn_jpeg_cmake_args
+            -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+            -DENABLE_SHARED=OFF
+            -DENABLE_STATIC=ON
+            -DWITH_JAVA=OFF
+            -DWITH_SIMD=OFF
+            -DWITH_TESTS=OFF
+            -DWITH_TURBOJPEG=OFF)
+
+        if(MSVC)
+            list(APPEND _opennn_jpeg_cmake_args -DWITH_CRT_DLL=ON)
+        endif()
+
         ExternalProject_Add(
             opennn_libjpeg_turbo_ep
             URL https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/3.0.4.tar.gz
             URL_HASH SHA256=0270f9496ad6d69e743f1e7b9e3e9398f5b4d606b6a47744df4b73df50f62e38
             DOWNLOAD_EXTRACT_TIMESTAMP TRUE
             INSTALL_DIR ${_opennn_jpeg_install_dir}
-            CMAKE_ARGS
-                -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-                -DENABLE_SHARED=OFF
-                -DENABLE_STATIC=ON
-                -DWITH_JAVA=OFF
-                -DWITH_SIMD=OFF
-                -DWITH_TESTS=OFF
-                -DWITH_TURBOJPEG=OFF
+            CMAKE_ARGS ${_opennn_jpeg_cmake_args}
             BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG>
             INSTALL_COMMAND
                 ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG> --component include

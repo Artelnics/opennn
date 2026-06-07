@@ -108,5 +108,5 @@ Contributions are welcome. If you want to help improve OpenNN, please follow the
 
 ## License
 
-OpenNN is distributed under the terms of the [MIT License](LICENSE.txt).
+OpenNN is distributed under the terms of the GNU Lesser General Public License. See [LICENSE.txt](LICENSE.txt) and the per-file license notices for details.
 

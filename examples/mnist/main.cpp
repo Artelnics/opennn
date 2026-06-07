@@ -35,7 +35,7 @@ int main()
 
         // Dataset
 
-        ImageDataset image_dataset("../data/mnist_data");
+        ImageDataset image_dataset("../data");
 
         // Neural network
 

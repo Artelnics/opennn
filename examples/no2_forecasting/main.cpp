@@ -146,7 +146,7 @@ unique_ptr<TimeSeriesDataset> load_dataset(const Scenario& s)
 {
     auto ds = make_unique<TimeSeriesDataset>(DATA_DIR + s.csv_file,
                                              s.separator,
-                                             /*has_header=*/false,
+                                             /*has_header=*/true,
                                              /*has_sample_ids=*/false);
     for (Index col : s.extra_targets)
         ds->set_variable_role(col, "InputTarget");
@@ -486,25 +486,25 @@ void print_combined_summary(const vector<ScenarioVerdict>& cpu_vs,
 const vector<Scenario>& scenarios()
 {
     static const vector<Scenario> v = {
-        // -------- LIGHT (original S1-S4) --------
-        {"S1", "Sine, past=5, future=1",
-            "funcion_seno_inputTarget.csv", ",",
+        // -------- LIGHT --------
+        {"S1", "Madrid NO2, past=5, future=1",
+            "madridNO2forecasting.csv", ",",
             5, 1, false, {},
             Shape{8}, 0.01f, 64, /*ep*/300, /*pat*/25},
 
-        {"S2", "Twopendulum, past=5, future=1",
-            "twopendulum.csv", ";",
-            5, 1, false, {},
+        {"S2", "Madrid NO2, past=10, future=1",
+            "madridNO2forecasting.csv", ",",
+            10, 1, false, {},
             Shape{16}, 0.01f, 64, 300, 25},
 
-        {"S3", "Twopendulum, past=5, future=3",
-            "twopendulum.csv", ";",
-            5, 3, true, {},
+        {"S3", "Madrid NO2, past=10, future=3",
+            "madridNO2forecasting.csv", ",",
+            10, 3, true, {},
             Shape{24}, 0.005f, 64, 300, 25},
 
-        {"S4", "Sine, past=5, future=5 (multi-target)",
-            "funcion_seno_inputTarget.csv", ",",
-            5, 5, true, {},
+        {"S4", "Madrid NO2, past=20, future=5 (multi-target)",
+            "madridNO2forecasting.csv", ",",
+            20, 5, true, {},
             Shape{16}, 0.01f, 64, 300, 25},
 
         // -------- MEDIUM: longer windows on twopendulum --------
