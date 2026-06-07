@@ -21,7 +21,25 @@ if(NOT OpenNN_BUILD_VISION)
     list(FILTER CPP_SOURCES EXCLUDE REGEX "${_opennn_vision_pattern}")
 endif()
 
-add_library(opennn STATIC ${CPP_SOURCES} ${HEADER_FILES})
+# A static lib is an archive of every TU's objects, so the heavy Eigen / STL /
+# cuDNN-frontend template instantiations are duplicated across all 72 objects
+# (the linker only dedups them when building an exe/dll). A shared lib dedups
+# at link time into one much smaller binary. Default OFF to keep the proven
+# static build; enable with -DOpenNN_BUILD_SHARED=ON.
+option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (DLL) instead of static" OFF)
+if(OpenNN_BUILD_SHARED)
+    set(_opennn_lib_type SHARED)
+else()
+    set(_opennn_lib_type STATIC)
+endif()
+
+add_library(opennn ${_opennn_lib_type} ${CPP_SOURCES} ${HEADER_FILES})
+
+# The headers carry no __declspec(dllexport), so let CMake auto-generate the
+# export table from every symbol when building the DLL on Windows.
+if(OpenNN_BUILD_SHARED AND WIN32)
+    set_target_properties(opennn PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
 
 if(NOT OpenNN_BUILD_VISION)
     target_compile_definitions(opennn PUBLIC OPENNN_NO_VISION)
