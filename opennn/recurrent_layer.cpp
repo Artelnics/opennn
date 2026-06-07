@@ -27,12 +27,11 @@ Recurrent::Recurrent(const Shape& new_input_shape,
 vector<TensorSpec> Recurrent::get_forward_specs(Index batch_size) const
 {
     const Shape state_history {batch_size, time_steps, output_features};
-    const Shape output_shape = return_sequences ? state_history : Shape{batch_size, output_features};
 
     return {
         {state_history, compute_dtype},  // Forward::HiddenStates          (batch, time, out)
         {state_history, compute_dtype},  // Forward::ActivationDerivatives (batch, time, out)
-        {output_shape,  compute_dtype},  // Forward::Output                — last
+        {return_sequences ? state_history : Shape{batch_size, output_features}, compute_dtype},  // Forward::Output — last
     };
 }
 
@@ -40,12 +39,11 @@ vector<TensorSpec> Recurrent::get_backward_specs(Index batch_size) const
 {
     if (!is_trainable) return {};
 
-    const Shape input_delta_shape = Shape{batch_size}.append(get_input_shape());
     const Shape step_in_shape  {batch_size, input_features};
     const Shape step_out_shape {batch_size, output_features};
 
     return {
-        {input_delta_shape, compute_dtype},  // InputDeltaSlot
+        {Shape{batch_size}.append(get_input_shape()), compute_dtype},  // InputDeltaSlot
         {step_in_shape,     compute_dtype},  // StepInputScratchSlot
         {step_out_shape,    compute_dtype},  // StepPrevHScratchSlot
         {step_out_shape,    compute_dtype},  // DeltaScratchSlot

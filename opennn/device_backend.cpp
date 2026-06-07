@@ -107,10 +107,8 @@ void set_zero_cuda(void* data, Index byte_count)
 
 void set_zero_async_impl(void* data, Index byte_count, cudaStream_t stream)
 {
-    if (stream)
-        CHECK_CUDA(cudaMemsetAsync(data, 0, static_cast<size_t>(byte_count), stream));
-    else
-        CHECK_CUDA(cudaMemset(data, 0, static_cast<size_t>(byte_count)));
+    CHECK_CUDA(stream ? cudaMemsetAsync(data, 0, static_cast<size_t>(byte_count), stream)
+                      : cudaMemset(data, 0, static_cast<size_t>(byte_count)));
 }
 
 void copy_async_impl(void* destination,
