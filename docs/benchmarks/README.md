@@ -16,6 +16,7 @@ links to the full note with methodology and reproduction steps.
 
 | Benchmark | OpenNN | PyTorch | TensorFlow |
 |---|---:|---:|---:|
+| [Accuracy (R², Rosenbrock)](accuracy-opennn-vs-pytorch-vs-tensorflow.md) | **0.988** | 0.988 | 0.987 |
 | [CPU runtime size](size-cpu-opennn-vs-pytorch-vs-tensorflow.md) | **3.2 MB** | 442 MB | 752 MB |
 | [GPU (CNN) deployment](size-gpu-opennn-vs-pytorch-vs-tensorflow.md) | **~1.3 GB** | ~5.0 GB | ~6.2 GB |
 | [Startup latency](startup-latency-opennn-vs-pytorch-vs-tensorflow.md) | **36 ms** | 1,005 ms | 1,685 ms |
@@ -24,11 +25,15 @@ links to the full note with methodology and reproduction steps.
 | [Native source LOC](loc-opennn-vs-pytorch-vs-tensorflow.md) | **34,926** | 834,319 | 1,792,182 |
 | [Standalone code export](code-export-opennn-vs-pytorch-vs-tensorflow.md) | **C/Py/JS/PHP source** | needs a runtime | needs a runtime |
 
-OpenNN is the smallest on every footprint axis, starts an order of magnitude faster, and is the
-only one of the three that can export a trained model as dependency-free source.
+OpenNN is the smallest on every footprint axis, starts an order of magnitude faster, is the
+only one of the three that can export a trained model as dependency-free source — and reaches
+the **same accuracy** as PyTorch and TensorFlow on an identical task.
 
 ## The benchmarks
 
+* **[Numerical accuracy](accuracy-opennn-vs-pytorch-vs-tensorflow.md)** — same network, data, and
+  optimizer in all three: OpenNN matches PyTorch and TensorFlow (R² ≈ 0.988) on the Rosenbrock
+  approximation benchmark. The lean footprint costs nothing in accuracy.
 * **[Deployment size on CPU](size-cpu-opennn-vs-pytorch-vs-tensorflow.md)** — the runtime library a CPU app
   ships: a 3.2 MB OpenNN executable vs the 442 MB `libtorch_cpu` / 752 MB `libtensorflow_cc`.
 * **[Deployment size on GPU](size-gpu-opennn-vs-pytorch-vs-tensorflow.md)** — a CNN's CUDA footprint. Here the
