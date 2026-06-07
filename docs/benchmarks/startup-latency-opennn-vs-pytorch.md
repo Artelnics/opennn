@@ -1,6 +1,6 @@
-# Startup latency: OpenNN vs PyTorch
+# Startup latency: OpenNN vs PyTorch (Linux)
 
-*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-07. Windows x64.*
+*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-07. Linux x86_64.*
 
 Size on disk is one cost of a heavy framework; **time** is another. Many applications run a
 model in short, frequent bursts rather than one long session: a command-line tool invoked per
@@ -17,29 +17,28 @@ megabyte native library. OpenNN, a native binary with the library linked in, sim
 
 | | OpenNN | PyTorch | PyTorch / OpenNN |
 |---|---|---|---|
-| **Time-to-first-prediction (median)** | **85 ms** | **1,406 ms** | **≈ 16×** |
+| **Time-to-first-prediction (median)** | **36 ms** | **1,005 ms** | **≈ 28×** |
 
 Each program does the same thing: build a small MLP (10 → 64 → 1), run one forward pass, print
 the result, and exit. We time the whole process, launch to exit, over 15 runs after warm-up,
-and report the median. (Measured on Windows x64; OpenNN built with MSVC, PyTorch 2.10.0+cpu on
-CPython 3.13.)
+and report the median. (Measured on Linux x86_64; OpenNN built with g++ 13.3, CPU-only;
+PyTorch 2.12.0+cpu on CPython 3.12.)
 
-## Where PyTorch's 1.4 seconds goes
+## Where PyTorch's second goes
 
 The gap is almost entirely framework startup, not model work — the model here is trivial. Timed
 on the same machine:
 
 | Step | Time |
 |---|---|
-| OpenNN: whole process (launch → first prediction) | ~85 ms |
-| Bare Python interpreter (`python -c pass`, no torch) | ~134 ms |
-| Python + `import torch` + model + predict | ~1,406 ms |
-| → `import torch` alone adds | **~1,270 ms** |
+| OpenNN: whole process (launch → first prediction) | ~36 ms |
+| Bare Python interpreter (`python -c pass`, no torch) | ~9 ms |
+| Python + `import torch` + model + predict | ~1,005 ms |
+| → `import torch` alone adds | **~995 ms** |
 
-Two things stand out. First, **`import torch` by itself costs ~1.27 s** — loading and
-initializing the framework's native library dominates everything else. Second, OpenNN's
-*entire* run (~85 ms) is faster than Python's interpreter startup alone (~134 ms), before
-PyTorch is even imported.
+The standout: **`import torch` by itself costs ~1 second** — loading and initializing the
+framework's large native library dominates everything else. Python's own interpreter starts in
+single-digit milliseconds; it is the framework, not the language, that is slow to load.
 
 ## Why OpenNN is faster to start
 
@@ -51,9 +50,9 @@ initialize. PyTorch pays for the Python runtime plus the load-time initializatio
 
 ## Why it matters
 
-* **Cold-start / serverless:** when you pay startup per invocation, ~1.4 s vs ~85 ms is the
+* **Cold-start / serverless:** when you pay startup per invocation, ~1 s vs ~36 ms is the
   difference between a responsive function and a sluggish one.
-* **CLI tools:** a command run once per file feels instant at 85 ms and laggy at >1 s.
+* **CLI tools:** a command run once per file feels instant at ~36 ms and laggy at ~1 s.
 * **Edge / duty-cycled devices:** a sensor that wakes, predicts, and sleeps spends far less
   energy and wall-clock time with a native binary.
 * **Interactivity:** short-lived UI helper processes start without a visible delay.
@@ -65,17 +64,19 @@ initialize. PyTorch pays for the Python runtime plus the load-time initializatio
   on the workload.
 * The model is deliberately tiny so the numbers reflect framework startup, which is the point.
   A larger model adds compute time to *both* sides on top of these baselines.
-* Measured on Windows x64 (PyTorch 2.10.0+cpu, CPython 3.13). Absolute numbers vary with
-  machine, disk, and OS, but the order-of-magnitude gap is structural — interpreter + large
-  shared library vs. a native binary.
+* Measured on Linux x86_64 (g++ 13.3 CPU-only OpenNN; PyTorch 2.12.0+cpu, CPython 3.12).
+  Absolute numbers vary with machine, disk, and OS, but the order-of-magnitude gap is
+  structural — interpreter + large shared library vs. a native binary.
 * PyTorch numbers are CPU-only; a CUDA build's `import torch` is typically slower still, as it
   also initializes the GPU libraries.
 
 ## Reproducing
 
-The two equivalent programs and the timing harness are in
-[`docs/benchmarks/startup/`](startup/): `opennn_startup.cpp` (build it against the OpenNN
-library) and `pytorch_startup.py`. Time each end-to-end, e.g. with repeated runs of
-`Measure-Command { ./opennn_startup.exe }` and `Measure-Command { python pytorch_startup.py }`
-(Windows) or `hyperfine ./opennn_startup 'python pytorch_startup.py'` (cross-platform), taking
-the median after a few warm-up runs.
+The two equivalent programs are in [`docs/benchmarks/startup/`](startup/):
+`opennn_startup.cpp` (build it against the OpenNN library) and `pytorch_startup.py`. Time each
+end-to-end and take the median after a few warm-up runs, e.g.:
+
+```bash
+hyperfine --warmup 3 ./opennn_startup 'python pytorch_startup.py'
+# or a simple loop with: t0=$(date +%s.%N); ./opennn_startup; t1=$(date +%s.%N)
+```
