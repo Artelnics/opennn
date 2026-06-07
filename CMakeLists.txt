@@ -152,12 +152,12 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
 
     # cuDNN frontend (header-only C++ wrapper for the cuDNN graph API).
     # Required for SDPA / Flash Attention. Fetched at configure time; pinned
-    # to v1.12.1 (the version the project was previously vendoring as a submodule).
+    # to v1.22.1 (the newest release compatible with cuDNN 9.20).
     include(FetchContent)
     FetchContent_Declare(
         cudnn_frontend
         GIT_REPOSITORY https://github.com/NVIDIA/cudnn-frontend.git
-        GIT_TAG        v1.12.1
+        GIT_TAG        v1.22.1
         GIT_SHALLOW    TRUE
     )
     set(CUDNN_FRONTEND_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)

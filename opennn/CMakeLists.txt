@@ -74,8 +74,8 @@ if(OpenNN_BUILD_VISION)
     else()
         FetchContent_Declare(
             opennn_zlib
-            URL https://zlib.net/fossils/zlib-1.3.1.tar.gz
-            URL_HASH SHA256=9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23
+            URL https://zlib.net/fossils/zlib-1.3.2.tar.gz
+            URL_HASH SHA256=bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16
             DOWNLOAD_EXTRACT_TIMESTAMP TRUE
         )
         FetchContent_MakeAvailable(opennn_zlib)
@@ -127,8 +127,8 @@ if(OpenNN_BUILD_VISION)
 
         ExternalProject_Add(
             opennn_libjpeg_turbo_ep
-            URL https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/3.0.4.tar.gz
-            URL_HASH SHA256=0270f9496ad6d69e743f1e7b9e3e9398f5b4d606b6a47744df4b73df50f62e38
+            URL https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/3.1.4.tar.gz
+            URL_HASH SHA256=3a581ad5a3060cee69487aae0bc71a1f3be94b89f92215e32b43742ec4a5055c
             DOWNLOAD_EXTRACT_TIMESTAMP TRUE
             INSTALL_DIR ${_opennn_jpeg_install_dir}
             CMAKE_ARGS ${_opennn_jpeg_cmake_args}
