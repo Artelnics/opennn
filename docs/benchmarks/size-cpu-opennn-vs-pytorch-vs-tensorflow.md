@@ -24,14 +24,16 @@ This note compares the two, CPU-only, on Linux x86_64.
 
 ## The numbers
 
-| | OpenNN | PyTorch | TensorFlow |
-|---|---|---|---|
-| **CPU runtime library** | **3.2 MB** | **442 MB** | **752 MB** |
-| vs OpenNN | 1× | ≈138× | ≈235× |
+| | OpenNN | ONNX Runtime | PyTorch | TensorFlow |
+|---|---|---|---|---|
+| **CPU runtime library** | **3.2 MB** | **22 MB** | **442 MB** | **752 MB** |
+| vs OpenNN | 1× | ≈7× | ≈138× | ≈235× |
 
-Note this is generous to PyTorch and TensorFlow: the OpenNN figure is a complete, ready-to-run
-application, while the others are only the core runtime library (`libtorch_cpu.so` /
-`libtensorflow_cc.so`), before your own code or the Python interpreter are added on top.
+Note this is generous to the others: the OpenNN figure is a complete, ready-to-run
+application, while the rest are only the core runtime library (`libonnxruntime.so` /
+`libtorch_cpu.so` / `libtensorflow_cc.so`), before your own code or the Python interpreter are
+added on top. ONNX Runtime is an inference-only engine (it cannot train), included here because
+its runtime library is directly comparable.
 
 ## What each number is
 
@@ -63,6 +65,12 @@ is so large. Read directly from `download.pytorch.org/libtorch/cpu/` on 2026-06-
 largest file in the install. With its companion `libtensorflow_framework.so.2` (62 MB) the
 runtime is ~814 MB, and the whole `tensorflow/` package directory is ~1.3 GB. Measured by
 sizing the `.so` files in a clean virtual environment.
+
+**ONNX Runtime — 22 MB (measured).** `libonnxruntime.so` from the `onnxruntime` 1.26.0 wheel
+(Linux x86_64) is **22.0 MB** — far smaller than the full frameworks because ORT is a
+purpose-built *inference* engine, not a training framework. It is still ~7× the OpenNN
+executable, and unlike OpenNN it cannot train: you ship a model trained elsewhere plus this
+runtime, whereas OpenNN's 3.2 MB binary both trains and infers.
 
 ## Why the gap is so large
 

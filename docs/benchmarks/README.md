@@ -14,20 +14,26 @@ links to the full note with methodology and reproduction steps.
 
 ## Summary
 
-| Benchmark | OpenNN | PyTorch | TensorFlow |
-|---|---:|---:|---:|
-| [Accuracy (R², Rosenbrock)](accuracy-opennn-vs-pytorch-vs-tensorflow.md) | **0.988** | 0.988 | 0.987 |
-| [CPU runtime size](size-cpu-opennn-vs-pytorch-vs-tensorflow.md) | **3.2 MB** | 442 MB | 752 MB |
-| [GPU (CNN) deployment](size-gpu-opennn-vs-pytorch-vs-tensorflow.md) | **~1.3 GB** | ~5.0 GB | ~6.2 GB |
-| [Startup latency](startup-latency-opennn-vs-pytorch-vs-tensorflow.md) | **36 ms** | 1,005 ms | 1,685 ms |
-| [Peak memory (training)](peak-memory-opennn-vs-pytorch-vs-tensorflow.md) | **9 MB** | 295 MB | 521 MB |
-| [Install size / packages](dependencies-opennn-vs-pytorch-vs-tensorflow.md) | **1 file, 0 pkgs** | 946 MB, 12 pkgs | 1.6 GB, 33 pkgs |
-| [Native source LOC](loc-opennn-vs-pytorch-vs-tensorflow.md) | **34,926** | 834,319 | 1,792,182 |
-| [Standalone code export](code-export-opennn-vs-pytorch-vs-tensorflow.md) | **C/Py/JS/PHP source** | needs a runtime | needs a runtime |
+| Benchmark | OpenNN | ONNX Runtime | PyTorch | TensorFlow |
+|---|---:|---:|---:|---:|
+| [Accuracy (R², Rosenbrock)](accuracy-opennn-vs-pytorch-vs-tensorflow.md) | **0.988** | n/a | 0.988 | 0.987 |
+| [CPU runtime size](size-cpu-opennn-vs-pytorch-vs-tensorflow.md) | **3.2 MB** | 22 MB | 442 MB | 752 MB |
+| [GPU (CNN) deployment](size-gpu-opennn-vs-pytorch-vs-tensorflow.md) | **~1.3 GB** | ~2.0 GB | ~5.0 GB | ~6.2 GB |
+| [Startup latency](startup-latency-opennn-vs-pytorch-vs-tensorflow.md) | **36 ms** | 237 ms | 1,005 ms | 1,685 ms |
+| [Peak memory (training)](peak-memory-opennn-vs-pytorch-vs-tensorflow.md) | **9 MB** | n/a | 295 MB | 521 MB |
+| [Install size / packages](dependencies-opennn-vs-pytorch-vs-tensorflow.md) | **1 file, 0 pkgs** | 140 MB, 6 pkgs | 946 MB, 12 pkgs | 1.6 GB, 33 pkgs |
+| [Native source LOC](loc-opennn-vs-pytorch-vs-tensorflow.md) | **34,926** | — | 834,319 | 1,792,182 |
+| [Standalone code export](code-export-opennn-vs-pytorch-vs-tensorflow.md) | **C/Py/JS/PHP source** | n/a | needs a runtime | needs a runtime |
 
 OpenNN is the smallest on every footprint axis, starts an order of magnitude faster, is the
-only one of the three that can export a trained model as dependency-free source — and reaches
-the **same accuracy** as PyTorch and TensorFlow on an identical task.
+only one that can export a trained model as dependency-free source — and reaches the **same
+accuracy** as PyTorch and TensorFlow on an identical task.
+
+**ONNX Runtime** is included on the axes where it is directly comparable (runtime size, startup,
+install, GPU). It is an *inference-only* engine — it cannot train and does not define a model —
+so accuracy, training memory, and code export are marked **n/a**. It is the lightest of the
+three frameworks, but OpenNN is smaller still on every shared axis and, unlike ORT, trains and
+infers in one self-contained binary.
 
 ## The benchmarks
 

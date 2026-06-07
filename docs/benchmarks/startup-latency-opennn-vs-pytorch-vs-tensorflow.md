@@ -15,15 +15,16 @@ megabyte native library. OpenNN, a native binary with the library linked in, sim
 
 ## The numbers
 
-| | OpenNN | PyTorch | TensorFlow |
-|---|---|---|---|
-| **Time-to-first-prediction (median)** | **36 ms** | **1,005 ms** | **1,685 ms** |
-| vs OpenNN | 1× | ≈28× | ≈47× |
+| | OpenNN | ONNX Runtime | PyTorch | TensorFlow |
+|---|---|---|---|---|
+| **Time-to-first-prediction (median)** | **36 ms** | **237 ms** | **1,005 ms** | **1,685 ms** |
+| vs OpenNN | 1× | ≈7× | ≈28× | ≈47× |
 
-Each program does the same thing: build a small MLP (10 → 64 → 1), run one forward pass, print
-the result, and exit. We time the whole process, launch to exit, over many runs after warm-up,
-and report the median. (Measured on Linux x86_64; OpenNN built with g++ 13.3, CPU-only;
-PyTorch 2.12.0+cpu and TensorFlow 2.21.0 on CPython 3.12.)
+Each program does the same thing: prepare a small MLP (10 → 64 → 1), run one forward pass,
+print the result, and exit. We time the whole process, launch to exit, over many runs after
+warm-up, and report the median. (Measured on Linux x86_64; OpenNN built with g++ 13.3,
+CPU-only; ONNX Runtime 1.26.0, PyTorch 2.12.0+cpu, and TensorFlow 2.21.0 on CPython 3.12.
+ONNX Runtime loads a pre-built `.onnx` model — it is an inference engine and cannot train.)
 
 ## Where the second-plus goes
 
@@ -34,10 +35,14 @@ on the same machine:
 |---|---|
 | OpenNN: whole process (launch → first prediction) | ~36 ms |
 | Bare Python interpreter (`python -c pass`, no framework) | ~9 ms |
+| Python + `import onnxruntime` + load model + infer | ~237 ms |
 | Python + `import torch` + model + predict | ~1,005 ms |
 | Python + `import tensorflow` + model + predict | ~1,685 ms |
 | → `import torch` alone adds | **~995 ms** |
 | → `import tensorflow` alone adds | **~1,675 ms** |
+
+ONNX Runtime, built for lean inference, starts far faster than the full frameworks (~237 ms)
+but is still ~7× OpenNN's native binary, which pays no interpreter or framework-load cost.
 
 The standout: **importing the framework costs 1–1.7 seconds** — loading and initializing its
 large native library dominates everything else. Python's own interpreter starts in single-digit

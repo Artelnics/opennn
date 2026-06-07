@@ -26,15 +26,16 @@ sides are the *minimum* a real deployment needs to run the model.
 
 ## The numbers
 
-| | OpenNN | PyTorch | TensorFlow |
-|---|---|---|---|
-| **GPU (CNN) deployment size** | **~1.3 GB** | **~5.0 GB** | **~6.2 GB** |
-| vs OpenNN | 1× | ≈4× | ≈5× |
+| | OpenNN | ONNX Runtime | PyTorch | TensorFlow |
+|---|---|---|---|---|
+| **GPU (CNN) deployment size** | **~1.3 GB** | **~2.0 GB** | **~5.0 GB** | **~6.2 GB** |
+| vs OpenNN | 1× | ≈1.5× | ≈4× | ≈5× |
 
-All three figures are dominated by NVIDIA's GPU libraries, which they *all* depend on — so the
-gaps are far smaller than the CPU one (≈138×). The difference is how much each ships: OpenNN
-ships only the NVIDIA libraries its CNN actually loads, plus a ~5 MB binary; PyTorch and
-TensorFlow each bundle the full NVIDIA CUDA set plus their own multi-gigabyte runtime.
+All figures are dominated by NVIDIA's GPU libraries, which they *all* depend on — so the gaps
+are far smaller than the CPU one (≈138×). The difference is how much each ships: OpenNN ships
+only the NVIDIA libraries its CNN actually loads, plus a ~5 MB binary; ONNX Runtime adds its
+~438 MB GPU package on top of the CUDA stack; PyTorch and TensorFlow bundle the full NVIDIA set
+plus their own multi-gigabyte runtime.
 
 ## What each number is
 
@@ -84,6 +85,23 @@ x86_64) lands **6.2 GB** in `site-packages`. Its largest parts:
 
 Like PyTorch, TensorFlow bundles the full NVIDIA CUDA stack regardless of the model, plus its
 own multi-gigabyte runtime — the largest GPU footprint of the three.
+
+**ONNX Runtime — ~2.0 GB (measured).** The `onnxruntime-gpu` 1.26.0 package is **438 MB**
+(its `libonnxruntime_providers_cuda.so` alone is 382 MB), and it bundles *no* CUDA libraries —
+`ldd` of the CUDA provider shows it loads the system `libcublas`, `libcublasLt`, `libcudart`,
+`libcudnn`, `libcufft`, and `libcurand`. Sizing those (cuDNN's loader pulls in its engine
+sub-libs) gives ~1.55 GB, for a real deployment of **~2.0 GB**:
+
+| Component | Size |
+|---|---|
+| `onnxruntime-gpu` package (incl. 382 MB CUDA provider) | ~438 MB |
+| cuBLAS (`libcublas` + `libcublasLt`) | ~586 MB |
+| cuDNN (loader + engine libraries) | ~725 MB |
+| cuFFT + cuRand | ~238 MB |
+
+ONNX Runtime is the lightest GPU deployment after OpenNN — it has no multi-gigabyte framework
+engine — but at ~1.5× OpenNN it links cuFFT and cuRand that OpenNN's CNN never loads, plus its
+own 438 MB package.
 
 ## Why the gap is far smaller than on CPU
 

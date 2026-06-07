@@ -12,16 +12,18 @@ Linux x86_64.
 
 ## The numbers
 
-| | OpenNN | PyTorch | TensorFlow |
-|---|---|---|---|
-| **Packages to install** | **0** | **12** | **33** |
-| **Files installed** | **1** (the executable) | **21,755** | **21,213** |
-| **On-disk install** | **~6 MB** | **~946 MB** | **~1.6 GB** |
-| **Extra runtime required** | none | a Python interpreter | a Python interpreter |
-| **Runs on a clean machine (no toolchain, no Python)?** | **yes** | no | no |
+| | OpenNN | ONNX Runtime | PyTorch | TensorFlow |
+|---|---|---|---|---|
+| **Packages to install** | **0** | **6** | **12** | **33** |
+| **Files installed** | **1** (the executable) | **2,997** | **21,755** | **21,213** |
+| **On-disk install** | **~6 MB** | **~140 MB** | **~946 MB** | **~1.6 GB** |
+| **Extra runtime required** | none | a Python interpreter | a Python interpreter | a Python interpreter |
+| **Runs on a clean machine (no toolchain, no Python)?** | **yes** | no | no | no |
 
-The OpenNN deployment is a single native executable. The PyTorch and TensorFlow deployments are
-Python package trees plus the interpreter to run them — TensorFlow's is the largest, at 33
+The OpenNN deployment is a single native executable. ONNX Runtime, PyTorch, and TensorFlow are
+Python package trees plus the interpreter to run them. ONNX Runtime is the lightest of the
+three frameworks (it is inference-only), but still 6 packages and ~140 MB versus OpenNN's
+single file — TensorFlow's is the largest, at 33
 packages and ~1.6 GB.
 
 ## What each requires
@@ -54,6 +56,12 @@ air-gapped or minimal host you must provision Python and all of these before the
 tensorflow-cpu` pulls **33 packages** (TF plus abseil, protobuf, gRPC, Keras, h2/grpcio,
 ml-dtypes, and more), landing **21,213 files** and **~1.6 GB** in `site-packages` — the
 largest of the three — again on top of a Python interpreter.
+
+**ONNX Runtime — 6 packages, ~3k files, ~140 MB, plus an interpreter.** A `pip install
+onnxruntime` pulls **6 packages** (onnxruntime, numpy, protobuf, flatbuffers, packaging, pip),
+landing **2,997 files** and **~140 MB** — the lightest framework here, since ORT only runs
+inference. It still needs a Python interpreter and a model trained elsewhere, whereas OpenNN's
+one file trains and runs the model itself.
 
 ## Why it matters
 
