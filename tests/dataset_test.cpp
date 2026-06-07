@@ -542,10 +542,10 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     Tensor<Correlation, 2> input_target_raw_variable_correlations = dataset.calculate_input_target_variable_pearson_correlations();
 
-    EXPECT_EQ(input_target_raw_variable_correlations(0, 0).r, 1.0);
+    EXPECT_EQ(input_target_raw_variable_correlations(0, 0).coefficient, 1.0);
 
-    EXPECT_EQ(input_target_raw_variable_correlations(1,0).r, 1.0);
-    EXPECT_EQ(input_target_raw_variable_correlations(2, 0).r, -1.0);
+    EXPECT_EQ(input_target_raw_variable_correlations(1,0).coefficient, 1.0);
+    EXPECT_EQ(input_target_raw_variable_correlations(2, 0).coefficient, -1.0);
 
     // Test 2 (numeric and numeric non trivial case)
 
@@ -569,8 +569,8 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     for(Index i = 0; i < input_target_raw_variable_correlations.dimension(0); ++i)
         for(Index j = 0; j < input_target_raw_variable_correlations.dimension(1); ++j)
-            EXPECT_TRUE(-1 < input_target_raw_variable_correlations(i, j).r
-                        && input_target_raw_variable_correlations(i, j).r < 1);
+            EXPECT_TRUE(-1 < input_target_raw_variable_correlations(i, j).coefficient
+                        && input_target_raw_variable_correlations(i, j).coefficient < 1);
 
     // Test 3 (binary and binary non trivial case)
 
@@ -589,13 +589,13 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     input_target_raw_variable_correlations = dataset.calculate_input_target_variable_pearson_correlations();
 
-    EXPECT_EQ(input_target_raw_variable_correlations(0,0).r, 1);
+    EXPECT_EQ(input_target_raw_variable_correlations(0,0).coefficient, 1);
     EXPECT_EQ(input_target_raw_variable_correlations(0,0).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(isnan(input_target_raw_variable_correlations(1,0).r));
+    EXPECT_TRUE(isnan(input_target_raw_variable_correlations(1,0).coefficient));
     EXPECT_EQ(input_target_raw_variable_correlations(1,0).form, Correlation::Form::Identity);
 
-    EXPECT_EQ(input_target_raw_variable_correlations(2,0).r, -1);
+    EXPECT_EQ(input_target_raw_variable_correlations(2,0).coefficient, -1);
     EXPECT_EQ(input_target_raw_variable_correlations(2,0).form, Correlation::Form::Identity);
 
     // Test 4 (binary and binary trivial case)
@@ -617,7 +617,7 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     for(Index i = 0; i < input_target_raw_variable_correlations.size(); i++)
     {
-        EXPECT_EQ(input_target_raw_variable_correlations(i).r, 1);
+        EXPECT_EQ(input_target_raw_variable_correlations(i).coefficient, 1);
         EXPECT_EQ(input_target_raw_variable_correlations(i).form, Correlation::Form::Identity);
     }
 
@@ -654,17 +654,17 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     Tensor<Correlation, 2> input_correlations = dataset.calculate_input_variable_pearson_correlations();
 
-    EXPECT_EQ(input_correlations(0,0).r, 1);
-    EXPECT_EQ(input_correlations(0,1).r, 1);
-    EXPECT_EQ(input_correlations(0,2).r, -1);
+    EXPECT_EQ(input_correlations(0,0).coefficient, 1);
+    EXPECT_EQ(input_correlations(0,1).coefficient, 1);
+    EXPECT_EQ(input_correlations(0,2).coefficient, -1);
 
-    EXPECT_EQ(input_correlations(1,0).r, 1);
-    EXPECT_EQ(input_correlations(1,1).r, 1);
-    EXPECT_EQ(input_correlations(1,2).r, -1);
+    EXPECT_EQ(input_correlations(1,0).coefficient, 1);
+    EXPECT_EQ(input_correlations(1,1).coefficient, 1);
+    EXPECT_EQ(input_correlations(1,2).coefficient, -1);
 
-    EXPECT_EQ(input_correlations(2,0).r, -1);
-    EXPECT_EQ(input_correlations(2,1).r, -1);
-    EXPECT_EQ(input_correlations(2,2).r, 1);
+    EXPECT_EQ(input_correlations(2,0).coefficient, -1);
+    EXPECT_EQ(input_correlations(2,1).coefficient, -1);
+    EXPECT_EQ(input_correlations(2,2).coefficient, 1);
     
     // Test 2 (numeric and numeric non trivial case)
 
@@ -685,10 +685,10 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     for(Index i = 0; i <  dataset.get_variables_number("Input"); i++)
     {
-        EXPECT_EQ(input_correlations(i,i).r, 1);
+        EXPECT_EQ(input_correlations(i,i).coefficient, 1);
 
         for(Index j = 0; i < j ; j++)
-            EXPECT_TRUE(-1 < input_correlations(i,j).r && input_correlations(i,j).r < 1);
+            EXPECT_TRUE(-1 < input_correlations(i,j).coefficient && input_correlations(i,j).coefficient < 1);
     }
     
     // Test 3 (binary and binary non trivial case)
@@ -709,23 +709,23 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     input_correlations = dataset.calculate_input_variable_pearson_correlations();
 
-    EXPECT_EQ(input_correlations(0,0).r, 1);
+    EXPECT_EQ(input_correlations(0,0).coefficient, 1);
     EXPECT_EQ(input_correlations(0,0).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(isnan(input_correlations(1,0).r));
+    EXPECT_TRUE(isnan(input_correlations(1,0).coefficient));
 
     EXPECT_EQ(input_correlations(1,0).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(isnan(input_correlations(1,1).r));
+    EXPECT_TRUE(isnan(input_correlations(1,1).coefficient));
     EXPECT_EQ(input_correlations(1,1).form, Correlation::Form::Identity);
 
-    EXPECT_EQ(input_correlations(2,0).r, -1);
+    EXPECT_EQ(input_correlations(2,0).coefficient, -1);
     EXPECT_EQ(input_correlations(2,0).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(isnan(input_correlations(2,1).r));
+    EXPECT_TRUE(isnan(input_correlations(2,1).coefficient));
     EXPECT_EQ(input_correlations(2,1).form, Correlation::Form::Identity);
 
-    EXPECT_EQ(input_correlations(2,2).r, 1);
+    EXPECT_EQ(input_correlations(2,2).coefficient, 1);
     EXPECT_EQ(input_correlations(2,2).form, Correlation::Form::Identity);
     
     // Test 4 (binary and binary trivial case)
@@ -745,31 +745,31 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     
     input_correlations = dataset.calculate_input_variable_pearson_correlations();
 
-    EXPECT_EQ(input_correlations(0,0).r, 1);
+    EXPECT_EQ(input_correlations(0,0).coefficient, 1);
     EXPECT_EQ(input_correlations(0,0).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(input_correlations(0,1).r < 0 && input_correlations(0,1).r > -1);
+    EXPECT_TRUE(input_correlations(0,1).coefficient < 0 && input_correlations(0,1).coefficient > -1);
     EXPECT_EQ(input_correlations(0,1).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(input_correlations(0,2).r < 0 && input_correlations(0,2).r > -1);
+    EXPECT_TRUE(input_correlations(0,2).coefficient < 0 && input_correlations(0,2).coefficient > -1);
     EXPECT_EQ(input_correlations(0,2).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(input_correlations(1,0).r < 0 && input_correlations(1,0).r > -1);
+    EXPECT_TRUE(input_correlations(1,0).coefficient < 0 && input_correlations(1,0).coefficient > -1);
     EXPECT_EQ(input_correlations(1,0).form, Correlation::Form::Identity);
 
-    EXPECT_EQ(input_correlations(1,1).r, 1);
+    EXPECT_EQ(input_correlations(1,1).coefficient, 1);
     EXPECT_EQ(input_correlations(1,1).form, Correlation::Form::Identity);
 
-    EXPECT_EQ(input_correlations(1,2).r, -0.5);
+    EXPECT_EQ(input_correlations(1,2).coefficient, -0.5);
     EXPECT_EQ(input_correlations(1,2).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(input_correlations(2,0).r < 0 && input_correlations(2,0).r > -1);
+    EXPECT_TRUE(input_correlations(2,0).coefficient < 0 && input_correlations(2,0).coefficient > -1);
     EXPECT_EQ(input_correlations(2,0).form, Correlation::Form::Identity);
 
-    EXPECT_EQ(input_correlations(2,1).r, -0.5);
+    EXPECT_EQ(input_correlations(2,1).coefficient, -0.5);
     EXPECT_EQ(input_correlations(2,1).form, Correlation::Form::Identity);
 
-    EXPECT_EQ(input_correlations(2,2).r, 1);
+    EXPECT_EQ(input_correlations(2,2).coefficient, 1);
     EXPECT_EQ(input_correlations(2,2).form, Correlation::Form::Identity);
     
     // Test 5 (categorical and categorical)
@@ -789,22 +789,22 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
 
 
-    EXPECT_EQ(input_correlations(0,0).r, 1);
+    EXPECT_EQ(input_correlations(0,0).coefficient, 1);
     EXPECT_EQ(input_correlations(0,0).form, Correlation::Form::Identity);
 
-    EXPECT_LT(input_correlations(1,0).r, 1);
+    EXPECT_LT(input_correlations(1,0).coefficient, 1);
     EXPECT_EQ(input_correlations(1,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(1,1).r, 1);
+    EXPECT_EQ(input_correlations(1,1).coefficient, 1);
     EXPECT_EQ(input_correlations(1,1).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(-1 < input_correlations(2, 0).r && input_correlations(2, 0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2, 0).coefficient && input_correlations(2, 0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_TRUE(-1 < input_correlations(2, 1).r && input_correlations(2, 1).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2, 1).coefficient && input_correlations(2, 1).coefficient < 1);
     EXPECT_EQ(input_correlations(2, 1).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(2,2).r, 1);
+    EXPECT_EQ(input_correlations(2,2).coefficient, 1);
     EXPECT_EQ(input_correlations(2,2).form, Correlation::Form::Identity);
  
     // Test 6 (numeric and binary)
@@ -819,21 +819,21 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
-    EXPECT_EQ(input_correlations(0,0).r, 1);
+    EXPECT_EQ(input_correlations(0,0).coefficient, 1);
 
-    EXPECT_TRUE(-1 < input_correlations(1,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(1,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(1,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(1,1).r , 1);
+    EXPECT_EQ(input_correlations(1,1).coefficient , 1);
     EXPECT_EQ(input_correlations(1,1).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(-1 < input_correlations(2,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_TRUE(-1 < input_correlations(2,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,1).form, Correlation::Form::Identity);
 
-    EXPECT_EQ(input_correlations(2,2).r, 1);
+    EXPECT_EQ(input_correlations(2,2).coefficient, 1);
     EXPECT_EQ(input_correlations(2,2).form, Correlation::Form::Identity);
 
     // Test 7 (numeric and categorical)
@@ -848,20 +848,20 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
-    EXPECT_EQ(input_correlations(0,0).r, 1);
+    EXPECT_EQ(input_correlations(0,0).coefficient, 1);
 
-    EXPECT_TRUE(-1 < input_correlations(1,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(1,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(1,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(1,1).r, 1);
+    EXPECT_EQ(input_correlations(1,1).coefficient, 1);
 
-    EXPECT_TRUE(-1 < input_correlations(2,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_TRUE(-1 < input_correlations(2,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,1).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(2,2).r, 1);
+    EXPECT_EQ(input_correlations(2,2).coefficient, 1);
     EXPECT_EQ(input_correlations(2,2).form, Correlation::Form::Identity);
     
     // Test 8 (binary and categorical)
@@ -876,22 +876,22 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
-    EXPECT_EQ(input_correlations(0,0).r, 1);
+    EXPECT_EQ(input_correlations(0,0).coefficient, 1);
     EXPECT_EQ(input_correlations(0,0).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(-1 < input_correlations(1,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(1,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(1,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(1,1).r, 1);
+    EXPECT_EQ(input_correlations(1,1).coefficient, 1);
     EXPECT_EQ(input_correlations(1,1).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(-1 < input_correlations(2,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_TRUE(-1 < input_correlations(2,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,1).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(2,2).r, 1);
+    EXPECT_EQ(input_correlations(2,2).coefficient, 1);
     EXPECT_EQ(input_correlations(2,2).form, Correlation::Form::Identity);
     
     // Test 9 (categorical and categorical)
@@ -909,22 +909,22 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
-    EXPECT_EQ(input_correlations(0,0).r, 1);
+    EXPECT_EQ(input_correlations(0,0).coefficient, 1);
     EXPECT_EQ(input_correlations(0,0).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(-1 < input_correlations(1,0).r && input_correlations(1,0).r <= 1);
+    EXPECT_TRUE(-1 < input_correlations(1,0).coefficient && input_correlations(1,0).coefficient <= 1);
     EXPECT_EQ(input_correlations(1,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(1,1).r, 1);
+    EXPECT_EQ(input_correlations(1,1).coefficient, 1);
     EXPECT_EQ(input_correlations(1,1).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(-1 < input_correlations(2,0).r && input_correlations(2,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,0).coefficient && input_correlations(2,0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_TRUE(-1 < input_correlations(2,1).r && input_correlations(2,1).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,1).coefficient && input_correlations(2,1).coefficient < 1);
     EXPECT_EQ(input_correlations(2,1).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(2,2).r, 1);
+    EXPECT_EQ(input_correlations(2,2).coefficient, 1);
     EXPECT_EQ(input_correlations(2,2).form, Correlation::Form::Identity);
     
     // Test 10 (numeric and binary)
@@ -940,21 +940,21 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
-    EXPECT_EQ(input_correlations(0,0).r, 1);
+    EXPECT_EQ(input_correlations(0,0).coefficient, 1);
 
-    EXPECT_TRUE(-1 < input_correlations(1,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(1,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(1,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(1,1).r, 1);
+    EXPECT_EQ(input_correlations(1,1).coefficient, 1);
     EXPECT_EQ(input_correlations(1,1).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(-1 < input_correlations(2,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_TRUE(-1 < input_correlations(2,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,1).form, Correlation::Form::Identity);
 
-    EXPECT_EQ(input_correlations(2,2).r, 1);
+    EXPECT_EQ(input_correlations(2,2).coefficient, 1);
     EXPECT_EQ(input_correlations(2,2).form, Correlation::Form::Identity);
 
     // Test 11 (numeric and categorical)
@@ -969,20 +969,20 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
-    EXPECT_EQ(input_correlations(0,0).r, 1);
+    EXPECT_EQ(input_correlations(0,0).coefficient, 1);
 
-    EXPECT_TRUE(-1 < input_correlations(1,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(1,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(1,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(1,1).r, 1);
+    EXPECT_EQ(input_correlations(1,1).coefficient, 1);
 
-    EXPECT_TRUE(-1 < input_correlations(2,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_TRUE(-1 < input_correlations(2,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,1).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(2,2).r, 1);
+    EXPECT_EQ(input_correlations(2,2).coefficient, 1);
     EXPECT_EQ(input_correlations(2,2).form, Correlation::Form::Identity);
     
     // Test 12 (binary and categorical)
@@ -997,22 +997,22 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
-    EXPECT_EQ(input_correlations(0,0).r, 1);
+    EXPECT_EQ(input_correlations(0,0).coefficient, 1);
     EXPECT_EQ(input_correlations(0,0).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(-1 < input_correlations(1,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(1,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(1,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(1,1).r, 1);
+    EXPECT_EQ(input_correlations(1,1).coefficient, 1);
     EXPECT_EQ(input_correlations(1,1).form, Correlation::Form::Identity);
 
-    EXPECT_TRUE(-1 < input_correlations(2,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,0).form, Correlation::Form::Sigmoid);
 
-    EXPECT_TRUE(-1 < input_correlations(2,0).r && input_correlations(1,0).r < 1);
+    EXPECT_TRUE(-1 < input_correlations(2,0).coefficient && input_correlations(1,0).coefficient < 1);
     EXPECT_EQ(input_correlations(2,1).form, Correlation::Form::Sigmoid);
 
-    EXPECT_EQ(input_correlations(2,2).r, 1);
+    EXPECT_EQ(input_correlations(2,2).coefficient, 1);
     EXPECT_EQ(input_correlations(2,2).form, Correlation::Form::Identity);
 
 

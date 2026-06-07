@@ -24,14 +24,14 @@ add_executable(run_tests test.cpp
 		correlations_test.cpp
 		cross_entropy_error_3d_test.cpp
 		cross_entropy_error_test.cpp
-		data_set_test.cpp
+		dataset_test.cpp
 		dense_layer_test.cpp
 		embedding_layer_test.cpp
 		flatten_layer_test.cpp
 		genetic_algorithm_test.cpp
 		growing_inputs_test.cpp
 		growing_neurons_test.cpp
-		image_data_set_test.cpp
+		image_dataset_test.cpp
 		learning_rate_algorithm_test.cpp
 		long_short_term_memory_layer_test.cpp
 		levenberg_marquardt_algorithm_test.cpp
@@ -53,7 +53,7 @@ add_executable(run_tests test.cpp
 		stochastic_gradient_descent_test.cpp
 		tensors_test.cpp
 		testing_analysis_test.cpp
-		time_series_data_set_test.cpp
+		time_series_dataset_test.cpp
 		training_strategy_test.cpp
 		transformer_test.cpp
 		unscaling_layer_test.cpp
